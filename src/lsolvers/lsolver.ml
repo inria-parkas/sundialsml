@@ -238,7 +238,7 @@ module Direct = struct (* {{{ *)
           attached = false;
         })
 
-    let unwrap Lsolver_impl.Direct.({ solver = Custom (ldata, _) }) = ldata
+    let unwrap { Lsolver_impl.Direct.solver = Custom (ldata, _) } = ldata
 
   end (* }}} *)
 end (* }}} *)
@@ -538,7 +538,7 @@ module Iterative = struct (* {{{ *)
           attached = false;
         })
 
-    let unwrap Lsolver_impl.Iterative.({ solver = Custom (ldata, _) }) = ldata
+    let unwrap { Lsolver_impl.Iterative.solver = Custom (ldata, _) } = ldata
 
   end (* }}} *)
 end (* }}} *)

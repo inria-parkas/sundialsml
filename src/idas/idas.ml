@@ -857,7 +857,7 @@ module Adjoint = struct (* {{{ *)
       | _ -> ()
 
     (* Sundials < 3.0.0 *)
-    let make_compat (type s tag) hasjac usesens
+    let make_compat (type s) (type tag) hasjac usesens
         (solver : (s, 'nd, 'nk, tag) Lsolver_impl.Direct.solver)
         (mat : ('k, s, 'nd, 'nk) Matrix.t) bs =
       let parent, which = parent_and_which bs in
@@ -872,10 +872,12 @@ module Adjoint = struct (* {{{ *)
           c_dls_lapack_dense parent which m hasjac usesens
 
       | Lsolver_impl.Direct.Band ->
-          let Matrix.Band.({ n; mu; ml }) = Matrix.(Band.dims (unwrap mat)) in
+          let open Matrix.Band in
+          let { n; mu; ml } = dims (Matrix.unwrap mat) in
           c_dls_band (parent, which) (n, mu, ml) hasjac usesens
       | Lsolver_impl.Direct.LapackBand ->
-          let Matrix.Band.({ n; mu; ml }) = Matrix.(Band.dims (unwrap mat)) in
+          let open Matrix.Band in
+          let { n; mu; ml } = dims (Matrix.unwrap mat) in
           c_dls_lapack_band (parent, which) (n, mu, ml) hasjac usesens
 
       | Lsolver_impl.Direct.Klu sinfo ->
@@ -915,7 +917,7 @@ module Adjoint = struct (* {{{ *)
       | Dense | Band -> ()
       | _ -> if jac = None then invalid_arg "A Jacobian function is required"
 
-    let set_ls_callbacks (type m tag)
+    let set_ls_callbacks (type m) (type tag)
           ?(jac : m jac_fn option)
           (solver : (m, 'nd, 'nk, tag) Lsolver_impl.Direct.solver)
           (mat : ('mk, m, 'nd, 'nk) Matrix.t) session =
@@ -996,7 +998,8 @@ module Adjoint = struct (* {{{ *)
          -> unit
       = "c_idas_adj_dls_set_linear_solver"
 
-    let make Lsolver_impl.Direct.({ rawptr; solver } as ls) ?jac mat bs nv =
+    let make ({ Lsolver_impl.Direct.rawptr; Lsolver_impl.Direct.solver } as ls)
+             ?jac mat bs nv =
       let session = tosession bs in
       let parent, which = parent_and_which bs in
       let use_sens = match jac with Some (WithSens _) -> true | _ -> false in
@@ -1122,9 +1125,11 @@ module Adjoint = struct (* {{{ *)
       = "c_idas_adj_spils_set_linear_solver"
 
     let make (type s)
-          Lsolver_impl.Iterative.({ rawptr; solver;
-                                    compat = ({ maxl; gs_type } as compat) }
-                                      as lsolver)
+          ({ Lsolver_impl.Iterative.rawptr;
+             Lsolver_impl.Iterative.solver;
+             Lsolver_impl.Iterative.compat =
+               ({ Lsolver_impl.Iterative.maxl;
+                  Lsolver_impl.Iterative.gs_type } as compat) } as lsolver)
           ?jac_times_vec (prec_type, set_prec) bs nv =
       let session = tosession bs in
       let parent, which = parent_and_which bs in

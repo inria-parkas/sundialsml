@@ -445,7 +445,7 @@ module Sparse = struct (* {{{ *)
     = "ml_matrix_sparse_from_dense"
 
   let from_dense (type s) (sformat : s sformat)
-        droptol Dense.({ rawptr; valid }) =
+        droptol { rawptr; valid } =
     if check_valid && not valid then raise Invalidated;
     if Sundials_config.safe && droptol < 0.0 then invalid_arg "droptol";
     if Sundials_config.safe then
@@ -459,7 +459,7 @@ module Sparse = struct (* {{{ *)
     = "ml_matrix_sparse_from_band"
 
   let from_band (type s) (sformat : s sformat)
-        droptol Band.({ rawptr; valid }) =
+        droptol { rawptr; valid } =
     if check_valid && not valid then raise Invalidated;
     if Sundials_config.safe && droptol < 0.0 then invalid_arg "droptol";
     if Sundials_config.safe then

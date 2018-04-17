@@ -153,7 +153,7 @@ module Direct = struct (* {{{ *)
     | _ -> ()
 
   (* Sundials < 3.0.0 *)
-  let make_compat (type s tag) hasjac
+  let make_compat (type s) (type tag) hasjac
         (solver : (s, 'nd, 'nk, tag) Lsolver_impl.Direct.solver)
         (mat : ('k, s, 'nd, 'nk) Matrix.t) session =
     match solver with
@@ -167,10 +167,12 @@ module Direct = struct (* {{{ *)
         c_dls_lapack_dense session m hasjac
 
     | Lsolver_impl.Direct.Band ->
-        let Matrix.Band.({ n; mu; ml }) = Matrix.(Band.dims (unwrap mat)) in
+        let open Matrix.Band in
+        let { n; mu; ml } = dims (Matrix.unwrap mat) in
         c_dls_band session n mu ml hasjac
     | Lsolver_impl.Direct.LapackBand ->
-        let Matrix.Band.({ n; mu; ml }) = Matrix.(Band.dims (unwrap mat)) in
+        let open Matrix.Band in
+        let { n; mu; ml } = dims (Matrix.unwrap mat) in
         c_dls_lapack_band session n mu ml hasjac
 
     | Lsolver_impl.Direct.Klu sinfo ->
@@ -208,7 +210,7 @@ module Direct = struct (* {{{ *)
     | Dense | Band -> ()
     | _ -> if jac = None then invalid_arg "A Jacobian function is required"
 
-  let set_ls_callbacks (type m tag)
+  let set_ls_callbacks (type m) (type tag)
         ?jac (solver : (m, 'nd, 'nk, tag) Lsolver_impl.Direct.solver)
         (mat : ('mk, m, 'nd, 'nk) Matrix.t) session =
     let cb = { jacfn = (match jac with None -> no_callback | Some f -> f);
@@ -244,7 +246,8 @@ module Direct = struct (* {{{ *)
       -> unit
     = "c_arkode_dls_set_linear_solver"
 
-  let make Lsolver_impl.Direct.({ rawptr; solver } as ls) ?jac mat session nv =
+  let make ({ Lsolver_impl.Direct.rawptr; Lsolver_impl.Direct.solver } as ls)
+           ?jac mat session nv =
     set_ls_callbacks ?jac solver mat session;
     if in_compat_mode then make_compat (jac <> None) solver mat session
     else c_dls_set_linear_solver session rawptr mat (jac <> None);
@@ -396,8 +399,11 @@ module Iterative = struct (* {{{ *)
                                             init_preconditioner solve setup)
 
   let make (type s)
-        Lsolver_impl.Iterative.({ rawptr; solver;
-                                 compat = ({ maxl; gs_type } as compat) } as ls)
+        ({ Lsolver_impl.Iterative.rawptr;
+           Lsolver_impl.Iterative.solver;
+           Lsolver_impl.Iterative.compat =
+             ({ Lsolver_impl.Iterative.maxl;
+                Lsolver_impl.Iterative.gs_type } as compat) } as ls)
         ?jac_times_vec (prec_type, set_prec) session nv =
     let jac_times_setup, jac_times_vec =
       match jac_times_vec with None -> None, None
@@ -692,7 +698,7 @@ module Mass = struct (* {{{ *)
       | _ -> ()
 
     (* Sundials < 3.0.0 *)
-    let make_compat (type s tag)
+    let make_compat (type s) (type tag)
           (solver : (s, 'nd, 'nk, tag) Lsolver_impl.Direct.solver)
           (mat : ('k, s, 'nd, 'nk) Matrix.t) session =
       match solver with
@@ -706,10 +712,12 @@ module Mass = struct (* {{{ *)
           c_dls_mass_lapack_dense session m
 
       | Lsolver_impl.Direct.Band ->
-          let Matrix.Band.({ n; mu; ml }) = Matrix.(Band.dims (unwrap mat)) in
+          let open Matrix.Band in
+          let { n; mu; ml } = dims (Matrix.unwrap mat) in
           c_dls_mass_band session n mu ml
       | Lsolver_impl.Direct.LapackBand ->
-          let Matrix.Band.({ n; mu; ml }) = Matrix.(Band.dims (unwrap mat)) in
+          let open Matrix.Band in
+          let { n; mu; ml } = dims (Matrix.unwrap mat) in
           c_dls_mass_lapack_band session n mu ml
 
       | Lsolver_impl.Direct.Klu sinfo ->
@@ -742,7 +750,7 @@ module Mass = struct (* {{{ *)
     | Lsolver_impl.Direct.Custom _ ->
         assert false
 
-    let set_mass_callbacks (type m tag)
+    let set_mass_callbacks (type m) (type tag)
           (massfn : m mass_fn)
           (solver : (m, 'nd, 'nk, tag) Lsolver_impl.Direct.solver)
           (mat : ('mk, m, 'nd, 'nk) Matrix.t) session =
@@ -777,8 +785,8 @@ module Mass = struct (* {{{ *)
         -> unit
       = "c_arkode_dls_set_mass_linear_solver"
 
-    let make Lsolver_impl.Direct.({ rawptr; solver }) massfn time_dep mat
-        session nv =
+    let make { Lsolver_impl.Direct.rawptr; Lsolver_impl.Direct.solver }
+             massfn time_dep mat session nv =
       set_mass_callbacks massfn solver mat session;
       if in_compat_mode then make_compat solver mat session
       else c_dls_set_mass_linear_solver session rawptr mat time_dep
@@ -942,8 +950,11 @@ module Mass = struct (* {{{ *)
                                               init_preconditioner solve setup)
 
     let make (type s)
-          Lsolver_impl.Iterative.({ rawptr; solver;
-                                    compat = ({ maxl; gs_type } as compat) })
+          ({ Lsolver_impl.Iterative.rawptr;
+             Lsolver_impl.Iterative.solver;
+             Lsolver_impl.Iterative.compat =
+               ({ Lsolver_impl.Iterative.maxl;
+                  Lsolver_impl.Iterative.gs_type } as compat) })
           ?mass_times_setup mass_times_vec time_dep (prec_type, set_prec)
           session nv =
       if in_compat_mode then begin
