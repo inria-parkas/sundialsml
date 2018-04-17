@@ -20,13 +20,6 @@
 
     @cvode <node9#s:dls>  The DLS Modules *)
 
-(** Raised by {!DenseMatrix.getrf} and {!ArrayDenseMatrix.getrf} on a zero
-    diagonal element during factorization. The argument gives the column
-    index (from 1).
-
-    @cvode <node9#ss:dense> DenseGETRF/denseGETRF *)
-exception ZeroDiagonalElement of int
-
 (** {2 Dense matrices} *)
 
 (** Dense matrices as passed to callback functions.
@@ -136,7 +129,7 @@ module DenseMatrix :
         original matrix [a]).
 
         @cvode <node9#ss:dense> DenseGETRF
-        @raise ZeroDiagonalElement Zero found in matrix diagonal *)
+        @raise Lsolver.ZeroDiagonalElement Zero found in matrix diagonal *)
     val getrf    : t -> Sundials.LintArray.t -> unit
 
     (** [getrs a p b] finds the solution of [ax = b] using an LU factorization
@@ -271,7 +264,7 @@ module ArrayDenseMatrix :
         original matrix [a]).
 
         @cvode <node9#ss:dense> denseGETRF
-        @raise ZeroDiagonalElement Zero found in matrix diagonal *)
+        @raise Lsolver.ZeroDiagonalElement Zero found in matrix diagonal *)
     val getrf : t -> Sundials.LintArray.t -> unit
 
     (** [getrs a p b] finds the solution of [ax = b] using an LU factorization

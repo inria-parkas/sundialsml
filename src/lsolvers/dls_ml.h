@@ -19,16 +19,6 @@
 
 #define DLSMAT(v) (*(DlsMat *)Data_custom_val(v))
 
-/* This enum must list exceptions in the same order as the call to
- * c_register_exns in dls.ml.  */
-enum dls_exn_index {
-    DLS_EXN_ZeroDiagonalElement = 0,
-    DLS_EXN_SET_SIZE
-};
-
-#define DLS_EXN(name)     REGISTERED_EXN(DLS, name)
-#define DLS_EXN_TAG(name) REGISTERED_EXN_TAG(DLS, name)
-
 enum dls_densematrix_index {
   RECORD_DLS_DENSEMATRIX_PAYLOAD    = 0,
   RECORD_DLS_DENSEMATRIX_DLSMAT,

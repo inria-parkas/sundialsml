@@ -15,8 +15,6 @@ type real_array = Sundials.RealArray.t
 
 (* direct linear solvers functions *)
 
-exception ZeroDiagonalElement of int
-
 (* note: uses DENSE_ELEM rather than the more efficient DENSE_COL. *)
 module DenseMatrix =
   struct
@@ -530,13 +528,3 @@ module ArrayBandMatrix =
     let gbtrs a smu ml p b = gbtrs' a (smu, ml) p b
   end
 
-
-(* Let C code know about some of the values in this module.  *)
-external c_init_module : exn array -> unit =
-  "c_dls_init_module"
-
-let _ =
-  c_init_module
-    (* Exceptions must be listed in the same order as
-       dls_exn_index.  *)
-    [|ZeroDiagonalElement 0|]

@@ -28,13 +28,7 @@
 
 #include "../sundials/sundials_ml.h"
 #include "../lsolvers/dls_ml.h"
-
-CAMLprim value c_dls_init_module (value exns)
-{
-    CAMLparam1 (exns);
-    REGISTER_EXNS (DLS, exns);
-    CAMLreturn (Val_unit);
-}
+#include "../lsolvers/lsolver_ml.h"
 
 /* Shared matrix functions */
 
@@ -175,7 +169,7 @@ CAMLprim value c_densematrix_getrf(value va, value vp)
     int r = DenseGETRF(a, INDEX_ARRAY(vp));
 
     if (r != 0)
-	caml_raise_with_arg(DLS_EXN_TAG(ZeroDiagonalElement), Val_int(r));
+	caml_raise_with_arg(LSOLVER_EXN_TAG(ZeroDiagonalElement), Val_int(r));
 
     CAMLreturn (Val_unit);
 }
@@ -367,7 +361,7 @@ CAMLprim value c_arraydensematrix_getrf(value va, value vp)
     int r = denseGETRF(ARRAY2_ACOLS(va), m, n, INDEX_ARRAY(vp));
 
     if (r != 0) {
-	caml_raise_with_arg(DLS_EXN_TAG(ZeroDiagonalElement),
+	caml_raise_with_arg(LSOLVER_EXN_TAG(ZeroDiagonalElement),
 			    Val_long(r));
     }
     CAMLreturn (Val_unit);
