@@ -127,10 +127,10 @@ CAMLprim value c_cvode_superlumt_set_ordering (value vcvode_mem, value vorder)
 CAMLprim value c_cvode_superlumt_get_num_jac_evals(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
+    long int r = 0;
 #if SUNDIALS_LIB_VERSION < 300
     void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
 
-    long int r;
     int flag = CVSlsGetNumJacEvals(cvode_mem, &r);
     CHECK_FLAG("CVSlsGetNumJacEvals", flag);
 

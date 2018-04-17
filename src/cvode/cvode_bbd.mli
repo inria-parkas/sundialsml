@@ -21,11 +21,11 @@
 
 (** Alias for sessions based on parallel nvectors. *)
 type parallel_session =
-      (Nvector_parallel.data, Nvector_parallel.kind) Cvode.session
+  (Nvector_parallel.data, Nvector_parallel.kind) Cvode.session
 
 (** Alias for preconditioners based on parallel nvectors. *)
 type parallel_preconditioner =
-      (Nvector_parallel.data, Nvector_parallel.kind) Cvode.Spils.preconditioner
+  (Nvector_parallel.data, Nvector_parallel.kind) Cvode.Iterative.preconditioner
 
 (** The bandwidths for the difference quotient Jacobian operation. *)
 type bandwidths = Cvode_impl.CvodeBbdTypes.bandwidths =

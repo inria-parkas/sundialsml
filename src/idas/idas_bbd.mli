@@ -22,12 +22,12 @@
 
 (** Alias for sessions based on parallel nvectors. *)
 type parallel_bsession =
-      (Nvector_parallel.data, Nvector_parallel.kind) Idas.Adjoint.bsession
+  (Nvector_parallel.data, Nvector_parallel.kind) Idas.Adjoint.bsession
 
 (** Alias for preconditioners based on parallel nvectors. *)
 type parallel_preconditioner =
-      (Nvector_parallel.data, Nvector_parallel.kind)
-                          Idas.Adjoint.Spils.preconditioner
+  (Nvector_parallel.data, Nvector_parallel.kind)
+                          Idas.Adjoint.Iterative.preconditioner
 
 (** The bandwidths for the difference quotient Jacobian operation. *)
 type bandwidths = Ida_bbd.bandwidths =

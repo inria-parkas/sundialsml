@@ -118,10 +118,10 @@ CAMLprim value c_kinsol_superlumt_set_ordering (value vkin_mem, value vorder)
 CAMLprim value c_kinsol_superlumt_get_num_jac_evals(value vkin_mem)
 {
     CAMLparam1(vkin_mem);
+    long int r = 0;
 #if SUNDIALS_LIB_VERSION < 300
     void *kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
 
-    long int r;
     int flag = KINSlsGetNumJacEvals(kin_mem, &r);
     CHECK_FLAG("KINSlsGetNumJacEvals", flag);
 #else

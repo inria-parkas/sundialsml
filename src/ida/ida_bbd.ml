@@ -15,9 +15,9 @@ include Ida_impl
 include IdaBbdTypes
 
 type parallel_session =
-        (Nvector_parallel.data, Nvector_parallel.kind) Ida.session
+  (Nvector_parallel.data, Nvector_parallel.kind) Ida.session
 type parallel_preconditioner =
-        (Nvector_parallel.data, Nvector_parallel.kind) SpilsTypes.preconditioner
+  (Nvector_parallel.data, Nvector_parallel.kind) SpilsTypes.preconditioner
 
 module Impl = IdaBbdParamTypes
 type local_fn = Nvector_parallel.data Impl.local_fn
@@ -35,15 +35,15 @@ external c_bbd_prec_init
     : parallel_session -> int -> bandwidths -> float -> bool -> unit
     = "c_ida_bbd_prec_init"
 
-let init_preconditioner dqrely bandwidths precfns session nv nv' =
+let init_preconditioner dqrely bandwidths precfns session nv =
   let ba, _, _ = Nvector.unwrap nv in
   let localn   = Sundials.RealArray.length ba in
   c_bbd_prec_init session localn bandwidths dqrely (precfns.comm_fn <> None);
   session.ls_precfns <- BBDPrecFns (bbd_precfns precfns)
 
 let prec_left ?(dqrely=0.0) bandwidths ?comm local_fn =
-  SpilsTypes.InternalPrecLeft
-    (init_preconditioner dqrely bandwidths { local_fn; comm_fn = comm })
+  Lsolver_impl.Iterative.(PrecLeft,
+    init_preconditioner dqrely bandwidths { local_fn; comm_fn = comm })
 
 external c_bbd_prec_reinit
     : parallel_session -> int -> int -> float -> unit

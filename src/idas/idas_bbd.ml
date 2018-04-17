@@ -46,7 +46,7 @@ let parent_and_which s =
   | BwdSensExt se -> (se.parent, se.which)
   | _ -> failwith "Internal error: bsession invalid"
 
-let init_preconditioner dqrely bandwidths precfns bs parent which nv nv' =
+let init_preconditioner dqrely bandwidths precfns bs parent which nv =
   let ba, _, _ = Nvector.unwrap nv in
   let localn   = Sundials.RealArray.length ba in
   c_bbd_prec_initb (parent, which) localn bandwidths dqrely
@@ -54,8 +54,8 @@ let init_preconditioner dqrely bandwidths precfns bs parent which nv nv' =
   (tosession bs).ls_precfns <- BBBDPrecFns (bbd_precfns precfns)
 
 let prec_left ?(dqrely=0.0) bandwidths ?comm local_fn =
-  AdjointTypes.SpilsTypes.InternalPrecLeft
-    (init_preconditioner dqrely bandwidths { local_fn; comm_fn = comm })
+  Lsolver_impl.Iterative.(PrecLeft,
+    init_preconditioner dqrely bandwidths { local_fn; comm_fn = comm })
 
 external c_bbd_prec_reinitb
     : parallel_session -> int -> int -> int -> float -> unit

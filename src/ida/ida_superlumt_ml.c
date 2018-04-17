@@ -132,10 +132,10 @@ CAMLprim value c_ida_superlumt_set_ordering (value vida_mem, value vorder)
 CAMLprim value c_ida_superlumt_get_num_jac_evals(value vida_mem)
 {
     CAMLparam1(vida_mem);
+    long int r = 0;
 #if SUNDIALS_LIB_VERSION < 300
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
 
-    long int r;
     int flag = IDASlsGetNumJacEvals(ida_mem, &r);
     CHECK_FLAG("IDASlsGetNumJacEvals", flag);
 #else

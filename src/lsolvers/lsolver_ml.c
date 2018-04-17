@@ -94,7 +94,7 @@ CAMLprim value ml_lsolver_dense(value vnvec, value vdmat)
 
     if (ls == NULL) {
 	if (SUNDenseMatrix_Rows(dmat) != SUNDenseMatrix_Columns(dmat))
-	    LSOLVER_EXN(MatrixNotSquare);
+	    caml_raise_constant(LSOLVER_EXN(MatrixNotSquare));
 
 	caml_raise_out_of_memory();
     }
@@ -114,7 +114,7 @@ CAMLprim value ml_lsolver_lapack_dense(value vnvec, value vdmat)
 
     if (ls == NULL) {
 	if (SUNDenseMatrix_Rows(bmat) != SUNDenseMatrix_Columns(bmat))
-	    LSOLVER_EXN(MatrixNotSquare);
+	    caml_raise_constant(LSOLVER_EXN(MatrixNotSquare));
 
 	caml_raise_out_of_memory();
     }
@@ -134,7 +134,7 @@ CAMLprim value ml_lsolver_band(value vnvec, value vbmat)
 
     if (ls == NULL) {
 	if (SUNBandMatrix_Rows(bmat) != SUNBandMatrix_Columns(bmat))
-	    LSOLVER_EXN(MatrixNotSquare);
+	    caml_raise_constant(LSOLVER_EXN(MatrixNotSquare));
 
 	caml_raise_out_of_memory();
     }
@@ -154,7 +154,7 @@ CAMLprim value ml_lsolver_lapack_band(value vnvec, value vbmat)
 
     if (ls == NULL) {
 	if (SUNBandMatrix_Rows(bmat) != SUNBandMatrix_Columns(bmat))
-	    LSOLVER_EXN(MatrixNotSquare);
+	    caml_raise_constant(LSOLVER_EXN(MatrixNotSquare));
 
 	caml_raise_out_of_memory();
     }
@@ -174,7 +174,7 @@ CAMLprim value ml_lsolver_klu(value vnvec, value vsmat)
 
     if (ls == NULL) {
 	if (SUNSparseMatrix_Rows(smat) != SUNSparseMatrix_Columns(smat))
-	    LSOLVER_EXN(MatrixNotSquare);
+	    caml_raise_constant(LSOLVER_EXN(MatrixNotSquare));
 
 	caml_raise_out_of_memory();
     }
@@ -215,7 +215,7 @@ CAMLprim value ml_lsolver_superlumt(value vnvec, value vsmat, value vnthreads)
 
     if (ls == NULL) {
 	if (SUNSparseMatrix_Rows(smat) != SUNSparseMatrix_Columns(smat))
-	    LSOLVER_EXN(MatrixNotSquare);
+	    caml_raise_constant(LSOLVER_EXN(MatrixNotSquare));
 
 	caml_raise_out_of_memory();
     }
@@ -309,7 +309,7 @@ CAMLprim void ml_lsolver_set_prec_type(value vcptr, value vsolver,
     }
 
     if ((old_pretype == PREC_NONE) && (pretype != PREC_NONE))
-	LSOLVER_EXN(IllegalPrecType);
+	caml_raise_constant(LSOLVER_EXN(IllegalPrecType));
 
     // ignore returned values
     switch (Int_val(vsolver)) {

@@ -134,10 +134,10 @@ CAMLprim value c_arkode_superlumt_set_ordering (value varkode_mem,
 CAMLprim value c_arkode_superlumt_get_num_jac_evals(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
+    long int r = 0;
 #if SUNDIALS_LIB_VERSION < 300
     void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
 
-    long int r;
     int flag = ARKSlsGetNumJacEvals(arkode_mem, &r);
     CHECK_FLAG("ARKSlsGetNumJacEvals", flag);
 #else
@@ -225,10 +225,10 @@ CAMLprim value c_arkode_mass_superlumt_set_ordering (value varkode_mem,
 CAMLprim value c_arkode_superlumt_get_num_mass_evals(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
+    long int r = 0;
 #if SUNDIALS_LIB_VERSION < 300
     void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
 
-    long int r;
     int flag = ARKSlsGetNumMassEvals(arkode_mem, &r);
     CHECK_FLAG("ARKSlsGetNumMassEvals", flag);
 #else

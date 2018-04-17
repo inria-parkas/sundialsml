@@ -180,7 +180,7 @@ CAMLprim void ml_matrix_dense_scale_add(value vc, value vcptra, value vcptrb)
 
 #if SUNDIALS_ML_SAFE == 1
     if ((contenta->M != contentb->M) || (contenta->N != contentb->N))
-	MATRIX_EXN(IncompatibleArguments);
+	caml_raise_constant(MATRIX_EXN(IncompatibleArguments));
 #endif
 
     // adapted from SUNMatScaleAdd_Dense
@@ -467,7 +467,8 @@ CAMLprim void ml_matrix_band_copy(value vcptra, value vb)
     B = MAT_CONTENT_BAND(vcptrb);
 
 #if SUNDIALS_ML_SAFE == 1
-    if (A->M != B->M || A->N != B->N) MATRIX_EXN(IncompatibleArguments);
+    if (A->M != B->M || A->N != B->N)
+	caml_raise_constant(MATRIX_EXN(IncompatibleArguments));
 #endif
 
     /* Grow B if A's bandwidth is larger */
@@ -551,12 +552,12 @@ static void matrix_band_scale_add_new(value vc, value va, value vcptrb)
 	    C_colj[i] = c * A_colj[i];
     }
     free(A_cols);
-  
+
     /* add B into new matrix */
     for (j=0; j < B->N; j++) {
 	B_colj = B->cols[j] + B->s_mu;
 	C_colj = C->cols[j] + C->s_mu;
-	    
+
 	for (i= - B->mu; i <= B->ml; i++)
 	    C_colj[i] += B_colj[i];
     }
@@ -572,7 +573,7 @@ CAMLprim void ml_matrix_band_scale_add(value vc, value va, value vcptrb)
     realtype *A_colj, *B_colj;
     MAT_CONTENT_BAND_TYPE A, B;
     sundials_ml_index i, j;
-    
+
     vcptra = Field(va, RECORD_MAT_MATRIXCONTENT_RAWPTR);
     A = MAT_CONTENT_BAND(vcptra);
     B = MAT_CONTENT_BAND(vcptrb);
@@ -747,7 +748,7 @@ static void zero_sparse(MAT_CONTENT_SPARSE_TYPE A)
 	data[i] = 0.0;
 	indexvals[i] = 0;
     }
-    for (i=0; i < A->NP; i++) 
+    for (i=0; i < A->NP; i++)
 	indexptrs[i] = 0;
     indexptrs[A->NP] = 0;
 }
@@ -838,7 +839,7 @@ static value matrix_sparse_create_mat(sundials_ml_index m, sundials_ml_index n,
 
     matrix_sparse_create_vcptr(m, n, nnz, sformat,
 			       &vdata, &vidxvals, &vidxptrs, &vcptr);
-    
+
     vpayload = caml_alloc_tuple(RECORD_MAT_SPARSEDATA_SIZE);
     Store_field(vpayload, RECORD_MAT_SPARSEDATA_IDXVALS, vidxvals);
     Store_field(vpayload, RECORD_MAT_SPARSEDATA_IDXPTRS, vidxptrs);
@@ -911,7 +912,7 @@ CAMLprim value ml_matrix_sparse_from_dense(value vsformat, value vcptrad,
 	for (j=0; j < N; j++) {
 	    As_indexptrs[j] = nnz;
 	    for (i=0; i<M; i++) {
-		if ( SUNRabs(Ad->cols[j][i]) > droptol ) { 
+		if ( SUNRabs(Ad->cols[j][i]) > droptol ) {
 		    As_indexvals[nnz] = i;
 		    As_data[nnz++] = Ad->cols[j][i];
 		}
@@ -922,7 +923,7 @@ CAMLprim value ml_matrix_sparse_from_dense(value vsformat, value vcptrad,
 	for (i=0; i < M; i++) {
 	    As_indexptrs[i] = nnz;
 	    for (j=0; j < N; j++) {
-		if ( SUNRabs(Ad->cols[j][i]) > droptol ) { 
+		if ( SUNRabs(Ad->cols[j][i]) > droptol ) {
 		    As_indexvals[nnz] = j;
 		    As_data[nnz++] = Ad->cols[j][i];
 		}
@@ -990,7 +991,7 @@ CAMLprim value ml_matrix_sparse_from_band(value vsformat, value vcptrab,
 	for (i=0; i < M; i++) {
 	    As_indexptrs[i] = nnz;
 	    for (j=SUNMAX(0, i - Ab->ml); j <= SUNMIN(N-1, i + Ab->s_mu); j++) {
-		if ( SUNRabs(Ab->cols[j][i - j + Ab->s_mu] ) > droptol ) { 
+		if ( SUNRabs(Ab->cols[j][i - j + Ab->s_mu] ) > droptol ) {
 		    As_indexvals[nnz] = j;
 		    As_data[nnz++] = Ab->cols[j][i - j + Ab->s_mu];
 		}
@@ -1007,7 +1008,7 @@ CAMLprim value ml_matrix_sparse_size(value vcptr)
     CAMLparam1(vcptr);
     CAMLlocal1(vr);
     MAT_CONTENT_SPARSE_TYPE a = MAT_CONTENT_SPARSE(vcptr);
-    
+
     vr = caml_alloc_tuple(2);
     Store_field(vr, 0, Val_long(a->M));
     Store_field(vr, 1, Val_long(a->N));
@@ -1020,7 +1021,7 @@ CAMLprim value ml_matrix_sparse_dims(value vcptr)
     CAMLparam1(vcptr);
     CAMLlocal1(vr);
     MAT_CONTENT_SPARSE_TYPE content = MAT_CONTENT_SPARSE(vcptr);
-    
+
     vr = caml_alloc_tuple(2);
     Store_field(vr, 0, Val_long(content->NNZ));
     Store_field(vr, 1, Val_long(content->NP));
@@ -1322,8 +1323,8 @@ CAMLprim void ml_matrix_sparse_scale_add(value vc, value va, value vcptrb)
 
 	    /* fill entries of C with this column's data */
 	    for (i=0; i < M; i++) {
-		if ( w[i] > 0 ) { 
-		    Ci[nz] = i;  
+		if ( w[i] > 0 ) {
+		    Ci[nz] = i;
 		    Cx[nz++] = x[i];
 		}
 	    }
@@ -1406,7 +1407,7 @@ CAMLprim void ml_matrix_sparse_scale_addi(value vc, value va)
 	N = A->M;
     }
 
-    /* determine if A already contains values on the diagonal (hence 
+    /* determine if A already contains values on the diagonal (hence
        no memory allocation necessary), and calculate the number of non-zeroes
        required if we create a new matrix (instead of reallocating). */
     newmat = 0;
@@ -1487,8 +1488,8 @@ CAMLprim void ml_matrix_sparse_scale_addi(value vc, value va)
 
 	    /* fill entries of C with this column's (row's) data */
 	    for (i=0; i < M; i++) {
-		if ( w[i] > 0 ) { 
-		    Ci[nz] = i;  
+		if ( w[i] > 0 ) {
+		    Ci[nz] = i;
 		    Cx[nz++] = x[i];
 		}
 	    }
@@ -1614,7 +1615,7 @@ CAMLprim void ml_matrix_sparse_copy(value vcptra, value vb)
     /* Perform operation */
     A_nz = A_indexptrs[A->NP];
 
-    /* ensure that B is allocated with at least as 
+    /* ensure that B is allocated with at least as
     much memory as we have nonzeros in A */
     if (B->NNZ < A_nz) matrix_sparse_resize(vb, A_nz, 0, 1); // no-copy, free
 
@@ -1788,7 +1789,7 @@ CAMLprim value ml_matrix_sparse_rewrap(value vm)
     void *ba_data;
     sundials_ml_index *idxptrs, *idxvals;
     int format;
-    
+
     vcptr = Field(va, RECORD_MAT_MATRIXCONTENT_RAWPTR);
     content = MAT_CONTENT_SPARSE(vcptr);
 
