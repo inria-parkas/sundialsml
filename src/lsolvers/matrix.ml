@@ -420,7 +420,7 @@ module Sparse = struct (* {{{ *)
     data    : Sundials.RealArray.t;
     sformat : 's sformat;
   }
-    
+
   type cptr
 
   type 's t = ('s data, cptr) matrix_content
@@ -763,42 +763,39 @@ type 'nk band =
 type ('s, 'nk) sparse =
   (standard, 's Sparse.t, Nvector_serial.data, [>Nvector_serial.kind] as 'nk) t
 
-external c_wrap : id -> 'a -> cptr
+external c_wrap : id -> 'content_cptr -> 'm -> cptr
   = "ml_matrix_wrap"
 
-let wrap_dense data = {
+let wrap_dense (data : Dense.t) = {
     payload = data;
-    rawptr  = c_wrap Dense data;
+    rawptr  = c_wrap Dense data.rawptr data;
     id      = Dense;
     mat_ops = Dense.ops;
   }
 
 let make_dense m n x = wrap_dense (Dense.make m n x)
 
-let wrap_band data = {
+let wrap_band (data : Band.t) = {
     payload = data;
-    rawptr  = c_wrap Band data;
+    rawptr  = c_wrap Band data.rawptr data;
     id      = Band;
     mat_ops = Band.ops;
   }
 
 let make_band dims x = wrap_band (Band.make dims x)
 
-let wrap_sparse data = {
+let wrap_sparse (data : 'f Sparse.t) = {
     payload = data;
-    rawptr  = c_wrap Sparse data;
+    rawptr  = c_wrap Sparse data.rawptr data;
     id      = Sparse;
     mat_ops = Sparse.ops;
   }
 
 let make_sparse sfmt m n nnz = wrap_sparse (Sparse.make sfmt m n nnz)
 
-external c_wrap_custom : ('m, 'd, 'k) matrix_ops -> 'm -> cptr
-  = "ml_matrix_wrap_custom"
-
 let wrap_custom ops data = {
     payload = data;
-    rawptr  = c_wrap_custom ops data;
+    rawptr  = c_wrap Custom ops data;
     id      = Custom;
     mat_ops = ops;
   }
