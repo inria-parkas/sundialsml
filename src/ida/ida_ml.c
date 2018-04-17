@@ -67,7 +67,6 @@
 #endif
 
 #include <stdio.h>
-#include "../lsolvers/spils_ml.h"
 
 #define MAX_ERRMSG_LEN 256
 
@@ -1662,7 +1661,7 @@ CAMLprim value c_ida_spils_set_gs_type(value vida_mem, value vgstype)
     CAMLparam2(vida_mem, vgstype);
 #if SUNDIALS_LIB_VERSION < 300
     int flag = IDASpilsSetGSType(IDA_MEM_FROM_ML(vida_mem),
-				 spils_gs_type(vgstype));
+				 lsolver_gs_type(vgstype));
     CHECK_FLAG("IDASpilsSetGSType", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));

@@ -1634,7 +1634,7 @@ CAMLprim value c_cvodes_adj_spils_banded_spgmr(value vparent_which_vnb,
 
     flag = CVodeSetIterTypeB (cvode_mem, which, CV_NEWTON);
     SCHECK_FLAG ("CVodeSetIterTypeB", flag);
-    flag = CVSpgmrB (cvode_mem, which, spils_precond_type (vtype),
+    flag = CVSpgmrB (cvode_mem, which, lsolver_precond_type (vtype),
 		     Int_val (vmaxl));
     SCHECK_FLAG ("CVSpgmrB", flag);
     flag = CVBandPrecInitB (cvode_mem, which, neqs,
@@ -1659,7 +1659,7 @@ CAMLprim value c_cvodes_adj_spils_banded_spbcg(value vparent_which_vnb,
 
     flag = CVodeSetIterTypeB (cvode_mem, which, CV_NEWTON);
     SCHECK_FLAG ("CVodeSetIterTypeB", flag);
-    flag = CVSpbcgB (cvode_mem, which, spils_precond_type (vtype),
+    flag = CVSpbcgB (cvode_mem, which, lsolver_precond_type (vtype),
 		     Int_val (vmaxl));
     SCHECK_FLAG ("CVSpbcgB", flag);
     flag = CVBandPrecInitB (cvode_mem, which, nbeqs,
@@ -1684,7 +1684,7 @@ CAMLprim value c_cvodes_adj_spils_banded_sptfqmr(value vparent_which_vnb,
 
     flag = CVodeSetIterTypeB (cvode_mem, which, CV_NEWTON);
     SCHECK_FLAG ("CVodeSetIterTypeB", flag);
-    flag = CVSptfqmrB (cvode_mem, which, spils_precond_type (vtype),
+    flag = CVSptfqmrB (cvode_mem, which, lsolver_precond_type (vtype),
 		       Int_val (vmaxl));
     SCHECK_FLAG ("CVSptfqmrB", flag);
     flag = CVBandPrecInitB (cvode_mem, which, nbeqs,
@@ -2504,7 +2504,7 @@ CAMLprim value c_cvodes_adj_spils_spgmr (value vparent, value vwhich,
 
     flag = CVodeSetIterTypeB (cvode_mem, which, CV_NEWTON);
     SCHECK_FLAG ("CVodeSetIterTypeB", flag);
-    flag = CVSpgmrB (cvode_mem, which, spils_precond_type (vtype),
+    flag = CVSpgmrB (cvode_mem, which, lsolver_precond_type (vtype),
 		     Int_val (vmaxl));
     SCHECK_FLAG ("CVSpgmrB", flag);
 #else
@@ -2524,7 +2524,7 @@ CAMLprim value c_cvodes_adj_spils_spbcg (value vparent, value vwhich,
 
     flag = CVodeSetIterTypeB (cvode_mem, which, CV_NEWTON);
     SCHECK_FLAG ("CVodeSetIterTypeB", flag);
-    flag = CVSpbcgB (cvode_mem, which, spils_precond_type (vtype),
+    flag = CVSpbcgB (cvode_mem, which, lsolver_precond_type (vtype),
 		     Int_val (vmaxl));
     SCHECK_FLAG ("CVSpbcgB", flag);
 #else
@@ -2544,7 +2544,7 @@ CAMLprim value c_cvodes_adj_spils_sptfqmr (value vparent, value vwhich,
 
     flag = CVodeSetIterTypeB (cvode_mem, which, CV_NEWTON);
     SCHECK_FLAG ("CVodeSetIterTypeB", flag);
-    flag = CVSptfqmrB (cvode_mem, which, spils_precond_type (vtype),
+    flag = CVSptfqmrB (cvode_mem, which, lsolver_precond_type (vtype),
 		       Int_val (vmaxl));
     SCHECK_FLAG ("CVSptfqmrB", flag);
 #else
@@ -2678,7 +2678,7 @@ CAMLprim value c_cvodes_adj_spils_set_prec_type(value vparent, value vwhich,
     CAMLparam3(vparent, vwhich, vptype);
 #if SUNDIALS_LIB_VERSION < 300
     int flag = CVSpilsSetPrecTypeB(CVODE_MEM_FROM_ML(vparent),
-				   Int_val(vwhich), spils_precond_type(vptype));
+				   Int_val(vwhich), lsolver_precond_type(vptype));
     SCHECK_FLAG("CVSpilsSetPrecTypeB", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -2692,7 +2692,7 @@ CAMLprim value c_cvodes_adj_spils_set_gs_type(value vparent, value vwhich,
     CAMLparam3(vparent, vwhich, vgstype);
 #if SUNDIALS_LIB_VERSION < 300
     int flag = CVSpilsSetGSTypeB(CVODE_MEM_FROM_ML(vparent), Int_val(vwhich),
-				 spils_gs_type(vgstype));
+				 lsolver_gs_type(vgstype));
     SCHECK_FLAG("CVSpilsSetGSTypeB", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));

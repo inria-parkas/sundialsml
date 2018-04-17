@@ -229,7 +229,7 @@ module Iterative : sig (* {{{ *)
   (** The type of Gram-Schmidt orthogonalization in iterative linear solvers.
 
       @nocvode <node> ModifiedGS/ClassicalGS *)
-  type gramschmidt_type = Spils.gramschmidt_type =
+  type gramschmidt_type = Lsolver_impl.Iterative.gramschmidt_type =
     | ModifiedGS   (** Modified Gram-Schmidt orthogonalization
                        {cconst MODIFIED_GS} *)
     | ClassicalGS  (** Classical Gram Schmidt orthogonalization
@@ -312,7 +312,7 @@ module Iterative : sig (* {{{ *)
   (** The type of preconditioning in Krylov solvers.
 
       @nocvode <node> Preconditioning *)
-  type preconditioning_type = Spils.preconditioning_type =
+  type preconditioning_type = Lsolver_impl.Iterative.preconditioning_type =
     | PrecNone    (** No preconditioning *)
     | PrecLeft    (** {% $(P^{-1}A)x = P^{-1}b$ %} *)
     | PrecRight   (** {% $(AP^{-1})Px = b$ %} *)
@@ -515,4 +515,9 @@ exception IllegalPrecType
 (** Indicates that an internal callback, identified by the first argument,
     returned the given unknown error code. *)
 exception InternalFailure of (string * int)
+
+(** Raised if a zero diagonal element is found during factorization using a
+    low-level routine like {!Spils.qr_fact} or {!Spils.qr_sol}.
+    The argument gives the equation number (from 1). *)
+exception ZeroDiagonalElement of int
 

@@ -189,12 +189,12 @@ end (* }}} *)
 module Iterative = struct (* {{{ *)
 
   (* Must correspond with lsolver_ml.h:lsolver_gramschmidt_type_tag *)
-  type gramschmidt_type = Spils.gramschmidt_type =
+  type gramschmidt_type =
     | ModifiedGS
     | ClassicalGS
 
   (* Must correspond with lsolver_ml.h:lsolver_preconditioning_type_tag *)
-  type preconditioning_type = Spils.preconditioning_type =
+  type preconditioning_type =
     | PrecNone
     | PrecLeft
     | PrecRight

@@ -1247,7 +1247,7 @@ CAMLprim value c_cvode_spils_set_prec_type(value vcvode_mem, value vptype)
     CAMLparam2(vcvode_mem, vptype);
 #if SUNDIALS_LIB_VERSION < 300
     int flag = CVSpilsSetPrecType(CVODE_MEM_FROM_ML(vcvode_mem),
-				  spils_precond_type(vptype));
+				  lsolver_precond_type(vptype));
     CHECK_FLAG("CVSpilsSetPrecType", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -1568,7 +1568,7 @@ CAMLprim value c_cvode_spils_set_gs_type(value vcvode_mem, value vgstype)
 #if SUNDIALS_LIB_VERSION < 300
 
     int flag = CVSpilsSetGSType(CVODE_MEM_FROM_ML(vcvode_mem),
-				spils_gs_type(vgstype));
+				lsolver_gs_type(vgstype));
     CHECK_FLAG("CVSpilsSetGSType", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -1783,7 +1783,7 @@ CAMLprim value c_cvode_spils_spgmr (value vcvode_mem, value vmaxl, value vtype)
 
     flag = CVodeSetIterType (cvode_mem, CV_NEWTON);
     CHECK_FLAG ("CVodeSetIterType", flag);
-    flag = CVSpgmr (cvode_mem, spils_precond_type (vtype), Int_val (vmaxl));
+    flag = CVSpgmr (cvode_mem, lsolver_precond_type (vtype), Int_val (vmaxl));
     CHECK_FLAG ("CVSpgmr", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -1800,7 +1800,7 @@ CAMLprim value c_cvode_spils_spbcg (value vcvode_mem, value vmaxl, value vtype)
 
     flag = CVodeSetIterType (cvode_mem, CV_NEWTON);
     CHECK_FLAG ("CVodeSetIterType", flag);
-    flag = CVSpbcg (cvode_mem, spils_precond_type (vtype), Int_val (vmaxl));
+    flag = CVSpbcg (cvode_mem, lsolver_precond_type (vtype), Int_val (vmaxl));
     CHECK_FLAG ("CVSpbcg", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -1818,7 +1818,7 @@ CAMLprim value c_cvode_spils_sptfqmr (value vcvode_mem, value vmaxl,
 
     flag = CVodeSetIterType (cvode_mem, CV_NEWTON);
     CHECK_FLAG ("CVodeSetIterType", flag);
-    flag = CVSptfqmr (cvode_mem, spils_precond_type (vtype), Int_val (vmaxl));
+    flag = CVSptfqmr (cvode_mem, lsolver_precond_type (vtype), Int_val (vmaxl));
     CHECK_FLAG ("CVSptfqmr", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));

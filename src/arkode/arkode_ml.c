@@ -1816,7 +1816,7 @@ CAMLprim value c_arkode_spils_set_prec_type(value varkode_mem, value vptype)
     CAMLparam2(varkode_mem, vptype);
 #if SUNDIALS_LIB_VERSION < 300
     int flag = ARKSpilsSetPrecType(ARKODE_MEM_FROM_ML(varkode_mem),
-				  spils_precond_type(vptype));
+				   lsolver_precond_type(vptype));
     CHECK_FLAG("ARKSpilsSetPrecType", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -1830,7 +1830,7 @@ CAMLprim value c_arkode_spils_set_mass_prec_type(value varkode_mem,
     CAMLparam2(varkode_mem, vptype);
 #if SUNDIALS_LIB_VERSION < 300
     int flag = ARKSpilsSetMassPrecType(ARKODE_MEM_FROM_ML(varkode_mem),
-				       spils_precond_type(vptype));
+				       lsolver_precond_type(vptype));
     CHECK_FLAG("ARKSpilsSetMassPrecType", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -2745,7 +2745,7 @@ CAMLprim value c_arkode_spils_set_gs_type(value varkode_mem, value vgstype)
     CAMLparam2(varkode_mem, vgstype);
 #if SUNDIALS_LIB_VERSION < 300
     int flag = ARKSpilsSetGSType(ARKODE_MEM_FROM_ML(varkode_mem),
-				spils_gs_type(vgstype));
+				 lsolver_gs_type(vgstype));
     CHECK_FLAG("ARKSpilsSetGSType", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -2758,7 +2758,7 @@ CAMLprim value c_arkode_spils_set_mass_gs_type(value varkode_mem, value vgstype)
     CAMLparam2(varkode_mem, vgstype);
 #if SUNDIALS_LIB_VERSION < 300
     int flag = ARKSpilsSetMassGSType(ARKODE_MEM_FROM_ML(varkode_mem),
-				     spils_gs_type(vgstype));
+				     lsolver_gs_type(vgstype));
     CHECK_FLAG("ARKSpilsSetMassGSType", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -3024,7 +3024,7 @@ CAMLprim value c_arkode_spils_spgmr (value varkode_mem,
     void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
     int flag;
 
-    flag = ARKSpgmr (arkode_mem, spils_precond_type (vtype), Int_val (vmaxl));
+    flag = ARKSpgmr (arkode_mem, lsolver_precond_type (vtype), Int_val (vmaxl));
     CHECK_FLAG ("ARKSpgmr", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -3040,7 +3040,7 @@ CAMLprim value c_arkode_spils_spbcgs (value varkode_mem,
     void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
     int flag;
 
-    flag = ARKSpbcg (arkode_mem, spils_precond_type (vtype), Int_val (vmaxl));
+    flag = ARKSpbcg (arkode_mem, lsolver_precond_type (vtype), Int_val (vmaxl));
     CHECK_FLAG ("ARKSpbcg", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -3056,7 +3056,7 @@ CAMLprim value c_arkode_spils_sptfqmr (value varkode_mem, value vmaxl,
     void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
     int flag;
 
-    flag = ARKSptfqmr (arkode_mem, spils_precond_type (vtype), Int_val (vmaxl));
+    flag = ARKSptfqmr (arkode_mem, lsolver_precond_type (vtype), Int_val (vmaxl));
     CHECK_FLAG ("ARKSptfqmr", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -3072,7 +3072,7 @@ CAMLprim value c_arkode_spils_spfgmr (value varkode_mem, value vmaxl,
     void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
     int flag;
 
-    flag = ARKSpfgmr (arkode_mem, spils_precond_type (vtype), Int_val (vmaxl));
+    flag = ARKSpfgmr (arkode_mem, lsolver_precond_type (vtype), Int_val (vmaxl));
     CHECK_FLAG ("ARKSpfgmr", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -3087,7 +3087,7 @@ CAMLprim value c_arkode_spils_pcg (value varkode_mem, value vmaxl, value vtype)
     void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
     int flag;
 
-    flag = ARKPcg (arkode_mem, spils_precond_type (vtype), Int_val (vmaxl));
+    flag = ARKPcg (arkode_mem, lsolver_precond_type (vtype), Int_val (vmaxl));
     CHECK_FLAG ("ARKPcg", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -3237,7 +3237,7 @@ CAMLprim value c_arkode_spils_mass_spgmr (value varkode_mem,
     ARKodeMem arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
     int flag;
 
-    flag = ARKMassSpgmr (arkode_mem, spils_precond_type (vtype),
+    flag = ARKMassSpgmr (arkode_mem, lsolver_precond_type (vtype),
 				     Int_val (vmaxl),
 				     masstimesfn,
 				     arkode_mem->ark_user_data);
@@ -3256,7 +3256,7 @@ CAMLprim value c_arkode_spils_mass_spbcgs (value varkode_mem,
     ARKodeMem arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
     int flag;
 
-    flag = ARKMassSpbcg (arkode_mem, spils_precond_type (vtype),
+    flag = ARKMassSpbcg (arkode_mem, lsolver_precond_type (vtype),
 				     Int_val (vmaxl),
 				     masstimesfn,
 				     arkode_mem->ark_user_data);
@@ -3275,7 +3275,7 @@ CAMLprim value c_arkode_spils_mass_sptfqmr (value varkode_mem,
     ARKodeMem arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
     int flag;
 
-    flag = ARKMassSptfqmr (arkode_mem, spils_precond_type (vtype),
+    flag = ARKMassSptfqmr (arkode_mem, lsolver_precond_type (vtype),
 				       Int_val (vmaxl),
 				       masstimesfn,
 				       arkode_mem->ark_user_data);
@@ -3294,7 +3294,7 @@ CAMLprim value c_arkode_spils_mass_spfgmr (value varkode_mem,
     ARKodeMem arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
     int flag;
 
-    flag = ARKMassSpfgmr (arkode_mem, spils_precond_type (vtype),
+    flag = ARKMassSpfgmr (arkode_mem, lsolver_precond_type (vtype),
 				      Int_val (vmaxl),
 				      masstimesfn,
 				      arkode_mem->ark_user_data);
@@ -3313,7 +3313,7 @@ CAMLprim value c_arkode_spils_mass_pcg (value varkode_mem,
     ARKodeMem arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
     int flag;
 
-    flag = ARKMassPcg (arkode_mem, spils_precond_type (vtype),
+    flag = ARKMassPcg (arkode_mem, lsolver_precond_type (vtype),
 				   Int_val (vmaxl),
 				   masstimesfn,
 				   arkode_mem->ark_user_data);

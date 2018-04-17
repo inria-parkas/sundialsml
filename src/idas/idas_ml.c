@@ -2009,7 +2009,7 @@ CAMLprim value c_idas_adj_spils_set_gs_type(value vparent, value vwhich,
     CAMLparam3(vparent, vwhich, vgstype);
 #if SUNDIALS_LIB_VERSION < 300
     int flag = IDASpilsSetGSTypeB(IDA_MEM_FROM_ML(vparent), Int_val(vwhich),
-				 spils_gs_type(vgstype));
+				  lsolver_gs_type(vgstype));
     SCHECK_FLAG("IDASpilsSetGSTypeB", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));

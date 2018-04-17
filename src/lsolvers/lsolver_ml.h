@@ -24,6 +24,16 @@
 
 #endif
 
+enum preconditioning_type_tag {
+  VARIANT_SPILS_PRECONDITIONING_TYPE_PREC_TYPE_NONE  = 0,
+  VARIANT_SPILS_PRECONDITIONING_TYPE_PREC_TYPE_LEFT,
+  VARIANT_SPILS_PRECONDITIONING_TYPE_PREC_TYPE_RIGHT,
+  VARIANT_SPILS_PRECONDITIONING_TYPE_PREC_TYPE_BOTH,
+};
+
+int lsolver_precond_type(value);
+int lsolver_gs_type(value);
+
 enum lsolver_iterative_solver_tag {
     VARIANT_LSOLVER_ITERATIVE_SOLVER_SPBCGS = 0,
     VARIANT_LSOLVER_ITERATIVE_SOLVER_SPFGMR,
@@ -102,6 +112,7 @@ enum lsolver_exn_index {
     LSOLVER_EXN_PackageFailure,
     LSOLVER_EXN_IllegalPrecType,
     LSOLVER_EXN_InternalFailure,
+    LSOLVER_EXN_ZeroDiagonalElement,
     LSOLVER_EXN_SET_SIZE
 };
 

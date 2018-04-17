@@ -239,7 +239,7 @@ CAMLprim void ml_lsolver_superlumt_set_ordering(value vcptr, value vordering)
  * Iterative
  */
 
-static int lsolver_precond_type(value vptype)
+int lsolver_precond_type(value vptype)
 {
     switch (Int_val(vptype)) {
     case VARIANT_LSOLVER_PRECONDITIONING_TYPE_PREC_TYPE_NONE:
@@ -258,7 +258,7 @@ static int lsolver_precond_type(value vptype)
     return -1;
 }
 
-static int lsolver_gs_type(value vgstype)
+int lsolver_gs_type(value vgstype)
 {
     switch (Int_val(vgstype)) {
     case VARIANT_LSOLVER_GRAMSCHMIDT_TYPE_MODIFIEDGS:

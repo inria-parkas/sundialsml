@@ -328,24 +328,24 @@ module Iterative = struct (* {{{ *)
   (* Sundials < 3.0.0 *)
   external c_spgmr
     : ('a, 'k) session
-      -> int -> Lsolver_impl.Iterative.preconditioning_type -> unit
+      -> int -> Lsolver.Iterative.preconditioning_type -> unit
     = "c_cvode_spils_spgmr"
 
   (* Sundials < 3.0.0 *)
   external c_spbcg
     : ('a, 'k) session
-      -> int -> Lsolver_impl.Iterative.preconditioning_type -> unit
+      -> int -> Lsolver.Iterative.preconditioning_type -> unit
     = "c_cvode_spils_spbcg"
 
   (* Sundials < 3.0.0 *)
   external c_sptfqmr
     : ('a, 'k) session
-      -> int -> Lsolver_impl.Iterative.preconditioning_type -> unit
+      -> int -> Lsolver.Iterative.preconditioning_type -> unit
     = "c_cvode_spils_sptfqmr"
 
   (* Sundials < 3.0.0 *)
   external c_set_gs_type
-    : ('a, 'k) session -> Lsolver_impl.Iterative.gramschmidt_type -> unit
+    : ('a, 'k) session -> Lsolver.Iterative.gramschmidt_type -> unit
     = "c_cvode_spils_set_gs_type"
 
   (* Sundials < 3.0.0 *)
@@ -354,7 +354,7 @@ module Iterative = struct (* {{{ *)
 
   (* Sundials < 3.0.0 *)
   external c_set_prec_type
-      : ('a, 'k) session -> Spils.preconditioning_type -> unit
+      : ('a, 'k) session -> Lsolver.Iterative.preconditioning_type -> unit
       = "c_cvode_spils_set_prec_type"
 
   let old_set_maxl s maxl =
