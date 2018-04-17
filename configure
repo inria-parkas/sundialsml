@@ -783,6 +783,24 @@ ${debug_configure} || \
     rm -f ./lib${test_stem}.* ./dll${test_stem}.* \
 	./${test_stem}.* ./${test_c_stem}.*
 
+# Sundials matrices and linear solvers
+matrix_libs=
+lsolver_libs=
+
+if [ ${sundials} -ge 300 ]; then
+    matrix_libs="-lsundials_sunmatrixdense"
+    matrix_libs="${matrix_libs} -lsundials_sunmatrixband"
+    matrix_libs="${matrix_libs} -lsundials_sunmatrixsparse"
+
+    lsolver_libs="-lsundials_sunlinsoldense"
+    lsolver_libs="${lsolver_libs} -lsundials_sunlinsolband"
+    lsolver_libs="${lsolver_libs} -lsundials_sunlinsolpcg"
+    lsolver_libs="${lsolver_libs} -lsundials_sunlinsolspbcgs"
+    lsolver_libs="${lsolver_libs} -lsundials_sunlinsolspfgmr"
+    lsolver_libs="${lsolver_libs} -lsundials_sunlinsolspgmr"
+    lsolver_libs="${lsolver_libs} -lsundials_sunlinsolsptfqmr"
+fi
+
 # Check for LAPACK support
 unset lapack_lib
 if [ $sundials -gt 0 ]; then
@@ -810,6 +828,10 @@ else
     lapack_info=" (with lapack: ${lapack_lib})"
     lapack_enabled=1
     blas_libs="-lblas"
+    if [ ${sundials} -ge 300 ]; then
+	lsolver_libs="${lsolver_libs} -lsundials_sunlinsollapackband"
+	lsolver_libs="${lsolver_libs} -lsundials_sunlinsollapackdense"
+    fi
 fi
 
 # Check for SUPERLUMT and KLU
@@ -839,6 +861,9 @@ if [ $sundials -ge 260 ]; then
 		klu_info="installed"
 		klu_libs="-lklu -lamd -lcolamd -lbtf -lsuitesparseconfig"
 		sparse_libs="$sparse_libs $klu_libs"
+		if [ ${sundials} -ge 300 ]; then
+		    lsolver_libs="${lsolver_libs} -lsundials_sunlinsolklu"
+		fi
 	    else
 		klu_info='disabled'
 	    fi;;
@@ -856,6 +881,10 @@ if [ $sundials -ge 260 ]; then
 		sparse_libs="$sparse_libs $superlumt_libs"
 		blas_libs="-lblas"
 		#sparse_libs="$sparse_libs -lsuperlu_mt_OPENMP -lopenmp"
+		if [ ${sundials} -ge 300 ]; then
+		    lsolver_libs="${lsolver_libs} -lsundials_sunlinsolsuperlumt"
+		fi
+
 		test_stem=__configure_test_c_file__superlumt
 		test_cmd="$CC $test_stem.c ${superlumt_libs} ${blas_libs} ${Lsuperlumt_lib_path} -o ${test_stem}${XX}"
 		cat > $test_stem.c <<EOF
@@ -1215,6 +1244,8 @@ cat ${LOG}
 	 s#@nvecopenmp_enabled@#${nvecopenmp_enabled}#;
 	 s#@serial_nvec_libs@#${serial_nvec_libs}#;
 	 s#@sparse_libs@#${sparse_libs}#;
+	 s#@matrix_libs@#${matrix_libs}#;
+	 s#@lsolver_libs@#${lsolver_libs}#;
 	 s#@cc@#${CC}#;
 	 s#@cpp@#${CPP}#;
 	 s#@mpicc@#${mpicc}#;
