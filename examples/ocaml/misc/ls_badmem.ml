@@ -12,11 +12,11 @@ let f t y yd = yd.{0} <- 1.0
 let y = Sundials.RealArray.of_array [| 0.0 |]
 let y_nv = Nvector_serial.wrap y
 
-let s1 = Cvode.init Cvode.Adams
-                    (Cvode.Newton
-                      (Cvode.Spils.spgmr Cvode.Spils.prec_none))
-                    Cvode.default_tolerances
-                    f 0.0 y_nv;;
+let s1 = Cvode.(init Adams
+                    (Newton
+                      Spils.(make (Lsolver.Iterative.spgmr y_nv) prec_none))
+                    default_tolerances
+                    f 0.0 y_nv);;
 
 let i = Cvode.Spils.get_num_lin_iters s1;;
 printf "Spils.get_num_lin_iters s1 = %d\n" i;;

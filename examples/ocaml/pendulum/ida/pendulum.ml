@@ -143,7 +143,6 @@ let args = [
 
 
 (* Setup & auxiliary functions *)
-module Matrix = Dls.DenseMatrix
 
 let pi = 4. *. atan (1.)
 
@@ -243,112 +242,113 @@ let jac params out =
   and vx = vars.{vx_i} and vx' = vars'.{vx_i}
   and vy = vars.{vy_i} and vy' = vars'.{vy_i}
   and p  = vars.{p_i} in
-  Matrix.set out vx_x  x_i  (-.c);
-  Matrix.set out vx_x  y_i  (0.);
-  Matrix.set out vx_x  vx_i (1.);
-  Matrix.set out vx_x  vy_i (0.);
-  Matrix.set out vx_x  p_i  (0.);
-  Matrix.set out vy_y  x_i  (0.);
-  Matrix.set out vy_y  y_i  (-.c);
-  Matrix.set out vy_y  vx_i (0.);
-  Matrix.set out vy_y  vy_i (1.);
-  Matrix.set out vy_y  p_i  (0.);
-  Matrix.set out acc_x x_i  (-.p);
-  Matrix.set out acc_x y_i  (0.);
-  Matrix.set out acc_x vx_i (c);
-  Matrix.set out acc_x vy_i (0.);
-  Matrix.set out acc_x p_i  (-.x);
-  Matrix.set out acc_y x_i  (0.);
-  Matrix.set out acc_y y_i  (-.p);
-  Matrix.set out acc_y vx_i (0.);
-  Matrix.set out acc_y vy_i (c);
-  Matrix.set out acc_y p_i  (-.y);
+  let open Matrix.Dense in
+  set out vx_x  x_i  (-.c);
+  set out vx_x  y_i  (0.);
+  set out vx_x  vx_i (1.);
+  set out vx_x  vy_i (0.);
+  set out vx_x  p_i  (0.);
+  set out vy_y  x_i  (0.);
+  set out vy_y  y_i  (-.c);
+  set out vy_y  vx_i (0.);
+  set out vy_y  vy_i (1.);
+  set out vy_y  p_i  (0.);
+  set out acc_x x_i  (-.p);
+  set out acc_x y_i  (0.);
+  set out acc_x vx_i (c);
+  set out acc_x vy_i (0.);
+  set out acc_x p_i  (-.x);
+  set out acc_y x_i  (0.);
+  set out acc_y y_i  (-.p);
+  set out acc_y vx_i (0.);
+  set out acc_y vy_i (c);
+  set out acc_y p_i  (-.y);
 
   match !constraint_form with
   | C_xx_yy_rr ->
-    (Matrix.set out constr  x_i (2.*.x);
-     Matrix.set out constr  y_i (2.*.y);
-     Matrix.set out constr  vx_i (0.);
-     Matrix.set out constr  vy_i (0.);
-     Matrix.set out constr  p_i (0.))
+    (set out constr  x_i (2.*.x);
+     set out constr  y_i (2.*.y);
+     set out constr  vx_i (0.);
+     set out constr  vy_i (0.);
+     set out constr  p_i (0.))
   | C_xx'_yy' ->
-    (Matrix.set out constr  x_i (c*.x +. x');
-     Matrix.set out constr  y_i (c*.y +. y');
-     Matrix.set out constr  vx_i (0.);
-     Matrix.set out constr  vy_i (0.);
-     Matrix.set out constr  p_i (0.))
+    (set out constr  x_i (c*.x +. x');
+     set out constr  y_i (c*.y +. y');
+     set out constr  vx_i (0.);
+     set out constr  vy_i (0.);
+     set out constr  p_i (0.))
   | C_vxx_yy' ->
-    (Matrix.set out constr  x_i (vx);
-     Matrix.set out constr  y_i (c*.y +. y');
-     Matrix.set out constr  vx_i (x);
-     Matrix.set out constr  vy_i (0.);
-     Matrix.set out constr  p_i (0.))
+    (set out constr  x_i (vx);
+     set out constr  y_i (c*.y +. y');
+     set out constr  vx_i (x);
+     set out constr  vy_i (0.);
+     set out constr  p_i (0.))
   | C_xx'_vyy ->
-    (Matrix.set out constr  x_i (c*.x +. x');
-     Matrix.set out constr  y_i (vy);
-     Matrix.set out constr  vx_i (0.);
-     Matrix.set out constr  vy_i (y);
-     Matrix.set out constr  p_i (0.))
+    (set out constr  x_i (c*.x +. x');
+     set out constr  y_i (vy);
+     set out constr  vx_i (0.);
+     set out constr  vy_i (y);
+     set out constr  p_i (0.))
   | C_vxx_vyy ->
-    (Matrix.set out constr  x_i (vx);
-     Matrix.set out constr  y_i (vy);
-     Matrix.set out constr  vx_i (x);
-     Matrix.set out constr  vy_i (y);
-     Matrix.set out constr  p_i (0.))
+    (set out constr  x_i (vx);
+     set out constr  y_i (vy);
+     set out constr  vx_i (x);
+     set out constr  vy_i (y);
+     set out constr  p_i (0.))
   | C_vx'x_vy'y_x'x'_y'y' ->
-    (Matrix.set out constr  x_i (2.*.c*.x' +. vx');
-     Matrix.set out constr  y_i (2.*.c*.y' +. vy');
-     Matrix.set out constr  vx_i (c*.x);
-     Matrix.set out constr  vy_i (c*.y);
-     Matrix.set out constr  p_i (0.))
+    (set out constr  x_i (2.*.c*.x' +. vx');
+     set out constr  y_i (2.*.c*.y' +. vy');
+     set out constr  vx_i (c*.x);
+     set out constr  vy_i (c*.y);
+     set out constr  p_i (0.))
   | C_vx'x_vy'y_x'x'_vyy' ->
-    (Matrix.set out constr  x_i (2.*.c*.x' +. vx');
-     Matrix.set out constr  y_i (c*.vy +. vy');
-     Matrix.set out constr  vx_i (c*.x);
-     Matrix.set out constr  vy_i (c*.y +. y');
-     Matrix.set out constr  p_i (0.))
+    (set out constr  x_i (2.*.c*.x' +. vx');
+     set out constr  y_i (c*.vy +. vy');
+     set out constr  vx_i (c*.x);
+     set out constr  vy_i (c*.y +. y');
+     set out constr  p_i (0.))
   | C_vx'x_vy'y_x'x'_vyvy ->
-    (Matrix.set out constr  x_i (2.*.c*.x' +. vx');
-     Matrix.set out constr  y_i (vy');
-     Matrix.set out constr  vx_i (c*.x);
-     Matrix.set out constr  vy_i (c*.y +. 2.*.vy);
-     Matrix.set out constr  p_i (0.))
+    (set out constr  x_i (2.*.c*.x' +. vx');
+     set out constr  y_i (vy');
+     set out constr  vx_i (c*.x);
+     set out constr  vy_i (c*.y +. 2.*.vy);
+     set out constr  p_i (0.))
   | C_vx'x_vy'y_vxx'_y'y' ->
-    (Matrix.set out constr  x_i (c*.vx +. vx');
-     Matrix.set out constr  y_i (2.*.c*.y' +. vy');
-     Matrix.set out constr  vx_i (c*.x +. x');
-     Matrix.set out constr  vy_i (c*.y);
-     Matrix.set out constr  p_i (0.))
+    (set out constr  x_i (c*.vx +. vx');
+     set out constr  y_i (2.*.c*.y' +. vy');
+     set out constr  vx_i (c*.x +. x');
+     set out constr  vy_i (c*.y);
+     set out constr  p_i (0.))
   | C_vx'x_vy'y_vxx'_vyy' ->
-    (Matrix.set out constr  x_i (c*.vx +. vx');
-     Matrix.set out constr  y_i (c*.vy +. vy');
-     Matrix.set out constr  vx_i (c*.x +. x');
-     Matrix.set out constr  vy_i (c*.y +. y');
-     Matrix.set out constr  p_i (0.))
+    (set out constr  x_i (c*.vx +. vx');
+     set out constr  y_i (c*.vy +. vy');
+     set out constr  vx_i (c*.x +. x');
+     set out constr  vy_i (c*.y +. y');
+     set out constr  p_i (0.))
   | C_vx'x_vy'y_vxx'_vyvy ->
-    (Matrix.set out constr  x_i (c*.vx +. vx');
-     Matrix.set out constr  y_i (vy');
-     Matrix.set out constr  vx_i (c*.x +. x');
-     Matrix.set out constr  vy_i (c*.y +. 2.*.vy);
-     Matrix.set out constr  p_i (0.))
+    (set out constr  x_i (c*.vx +. vx');
+     set out constr  y_i (vy');
+     set out constr  vx_i (c*.x +. x');
+     set out constr  vy_i (c*.y +. 2.*.vy);
+     set out constr  p_i (0.))
   | C_vx'x_vy'y_vxvx_y'y' ->
-    (Matrix.set out constr  x_i (vx');
-     Matrix.set out constr  y_i (2.*.c*.y' +. vy');
-     Matrix.set out constr  vx_i (c*.x +. 2.*.vx);
-     Matrix.set out constr  vy_i (c*.y);
-     Matrix.set out constr  p_i (0.))
+    (set out constr  x_i (vx');
+     set out constr  y_i (2.*.c*.y' +. vy');
+     set out constr  vx_i (c*.x +. 2.*.vx);
+     set out constr  vy_i (c*.y);
+     set out constr  p_i (0.))
   | C_vx'x_vy'y_vxvx_vyy' ->
-    (Matrix.set out constr  x_i (vx');
-     Matrix.set out constr  y_i (c*.vy +. vy');
-     Matrix.set out constr  vx_i (c*.x +. 2.*.vx);
-     Matrix.set out constr  vy_i (c*.y +. y');
-     Matrix.set out constr  p_i (0.))
+    (set out constr  x_i (vx');
+     set out constr  y_i (c*.vy +. vy');
+     set out constr  vx_i (c*.x +. 2.*.vx);
+     set out constr  vy_i (c*.y +. y');
+     set out constr  p_i (0.))
   | C_vx'x_vy'y_vxvx_vyvy ->
-    (Matrix.set out constr  x_i (vx');
-     Matrix.set out constr  y_i (vy');
-     Matrix.set out constr  vx_i (c*.x +. 2.*.vx);
-     Matrix.set out constr  vy_i (c*.y +. 2.*.vy);
-     Matrix.set out constr  p_i (0.))
+    (set out constr  x_i (vx');
+     set out constr  y_i (vy');
+     set out constr  vx_i (c*.x +. 2.*.vx);
+     set out constr  vy_i (c*.y +. 2.*.vy);
+     set out constr  p_i (0.))
 
 (* The root function -- computes distance from the wall along x axis.  The wall
    is a line that connects pivot = (0,0) and wall = (wx,wy) where wall is a
@@ -397,7 +397,7 @@ let check_satisfaction =
       begin
         let norm = Nvector_serial.DataOps.n_vmaxnorm res in
         if norm > 1e-5 then
-          raise (Failure 
+          raise (Failure
                    (Printf.sprintf "initial residue too large: t = %g, ||res||=%g\nvars  = %s\nvars' = %s\nres   = %s\n"
                       t norm (show_nvector vars)
                       (show_nvector vars') (show_nvector res)))
@@ -425,15 +425,16 @@ let main () =
 
   if !use_analytical_correction then init_from_xy_vxvy vars vars';
 
+  let jacm = Matrix.make_dense 5 5 0.0 in
+  let dense_solver = Lsolver.Direct.dense nv_vars jacm in
   let solver =
-    if !use_analytical_jac then Ida.Dls.dense ~jac:jac ()
-    else Ida.Dls.dense ()
+    if !use_analytical_jac then Ida.Dls.make dense_solver ~jac:jac jacm
+    else Ida.Dls.make dense_solver jacm
   in
   let ida = Ida.init solver (Ida.SStolerances (1e-9, 1e-9)) residual
                      ~roots:(1, roots) 0. nv_vars nv_vars'
   in
   Ida.set_all_root_directions ida Sundials.RootDirs.Decreasing;
-  if !use_analytical_jac then Ida.Dls.set_dense_jac_fn ida jac;
 
   Ida.set_id ida var_types;
   Ida.set_suppress_alg ida true;
