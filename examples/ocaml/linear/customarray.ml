@@ -42,10 +42,8 @@ module Custom = struct
       done
     done
 
-  let m_matvec a vx vy =
+  let m_matvec a x y =
     let m, n = m_size a in
-    let x = Nvector_serial.unwrap vx in
-    let y = Nvector_serial.unwrap vy in
     for i = 0 to m - 1 do
       y.{i} <- 0.0;
       for j = 0 to n - 1 do

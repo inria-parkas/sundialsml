@@ -219,8 +219,8 @@ CAMLprim void ml_matrix_dense_matvec(value vcptra, value vx, value vy)
     realtype *col_j, *xd, *yd;
     MAT_CONTENT_DENSE_TYPE a = MAT_CONTENT_DENSE(vcptra);
 
-    xd = N_VGetArrayPointer(NVEC_VAL(vx));
-    yd = N_VGetArrayPointer(NVEC_VAL(vy));
+    xd = REAL_ARRAY(vx);
+    yd = REAL_ARRAY(vy);
 
     // Adapted from SUNMatMatvec_Dense
     for (i=0; i < a->M; i++)
@@ -646,8 +646,8 @@ CAMLprim void ml_matrix_band_matvec(value va, value vx, value vy)
     realtype *col_j, *xd, *yd;
     MAT_CONTENT_BAND_TYPE a = MAT_CONTENT_BAND(va);
 
-    xd = N_VGetArrayPointer(NVEC_VAL(vx));
-    yd = N_VGetArrayPointer(NVEC_VAL(vy));
+    xd = REAL_ARRAY(vx);
+    yd = REAL_ARRAY(vy);
 
     // Adapted directly from SUNMatMatvec_Band
     for (i=0; i < a->M; i++)
@@ -1545,8 +1545,8 @@ CAMLprim void ml_matrix_sparse_matvec(value vcptra, value vx, value vy)
     sundials_ml_index *Ap, *Ai;
     realtype *Ax, *xd, *yd;
 
-    xd = N_VGetArrayPointer(NVEC_VAL(vx));
-    yd = N_VGetArrayPointer(NVEC_VAL(vy));
+    xd = REAL_ARRAY(vx);
+    yd = REAL_ARRAY(vy);
 
 #if SUNDIALS_LIB_VERSION >= 270
     Ap = A->indexptrs;
@@ -2219,7 +2219,7 @@ CAMLprim void ml_matrix_scale_addi(value vc, value va)
 CAMLprim void ml_matrix_matvec(value va, value vx, value vy)
 {
     CAMLparam3(va, vx, vy);
-    if (SUNMatMatvec(MAT_VAL(va), NVEC_VAL(vx), NVEC_VAL(vx)))
+    if (SUNMatMatvec(MAT_VAL(va), NVEC_VAL(vx), NVEC_VAL(vy)))
 	caml_failwith("SUNMatMatvec");
     CAMLreturn0;
 }

@@ -30,7 +30,7 @@ type ('m, 'd, 'k) matrix_ops = {
 
   m_scale_addi : float -> 'm -> unit;
 
-  m_matvec     : 'm -> ('d, 'k) Nvector.t -> ('d, 'k) Nvector.t -> unit;
+  m_matvec     : 'm -> 'd -> 'd -> unit;
 
   m_space      : 'm -> int * int;
 }
@@ -156,14 +156,15 @@ module Dense = struct (* {{{ *)
     if check_valid && not valid then raise Invalidated;
     c_scale_addi c rawptr
 
-  external c_matvec : cptr -> 'k serial_nvector -> 'k serial_nvector -> unit
+  external c_matvec
+    : cptr -> Sundials.RealArray.t -> Sundials.RealArray.t -> unit
     = "ml_matrix_dense_matvec"
 
   let matvec { rawptr; payload; valid } x y =
     if check_valid && not valid then raise Invalidated;
     if Sundials_config.safe then begin
-      let xl = Sundials.RealArray.length (Nvector.unwrap x) in
-      let yl = Sundials.RealArray.length (Nvector.unwrap y) in
+      let xl = Sundials.RealArray.length x in
+      let yl = Sundials.RealArray.length y in
       let m, n = Bigarray.Array2.(dim2 payload, dim1 payload) in
       if n <> xl || m <> yl then raise IncompatibleArguments
     end;
@@ -342,14 +343,15 @@ module Band = struct (* {{{ *)
     if check_valid && not valid then raise Invalidated;
     c_scale_addi c rawptr
 
-  external c_matvec : cptr -> 'a serial_nvector -> 'a serial_nvector -> unit
+  external c_matvec
+    : cptr -> Sundials.RealArray.t -> Sundials.RealArray.t -> unit
     = "ml_matrix_band_matvec"
 
   let matvec { rawptr; payload = { data; dims = { n } }; valid } x y =
     if check_valid && not valid then raise Invalidated;
     if Sundials_config.safe then begin
-      let xl = Sundials.RealArray.length (Nvector.unwrap x) in
-      let yl = Sundials.RealArray.length (Nvector.unwrap y) in
+      let xl = Sundials.RealArray.length x in
+      let yl = Sundials.RealArray.length y in
       if n <> yl || n <> xl then raise IncompatibleArguments
     end;
     c_matvec rawptr x y
@@ -660,14 +662,15 @@ module Sparse = struct (* {{{ *)
     if check_valid && not valid then raise Invalidated;
     c_scale_addi c a
 
-  external c_matvec : cptr -> 'a serial_nvector -> 'a serial_nvector -> unit
+  external c_matvec
+    : cptr -> Sundials.RealArray.t -> Sundials.RealArray.t -> unit
     = "ml_matrix_sparse_matvec"
 
   let matvec { rawptr; valid } x y =
     if check_valid && not valid then raise Invalidated;
     if Sundials_config.safe then begin
-      let xl = Sundials.RealArray.length (Nvector.unwrap x) in
-      let yl = Sundials.RealArray.length (Nvector.unwrap y) in
+      let xl = Sundials.RealArray.length x in
+      let yl = Sundials.RealArray.length y in
       let m, n = c_size rawptr in
       if n <> xl || m <> yl then raise IncompatibleArguments
     end;
@@ -936,7 +939,7 @@ external c_matvec
 
 let matvec ({ payload = a; mat_ops = { m_matvec } } as m) x y =
   match Sundials.sundials_version with
-  | 2,_,_ -> m_matvec a x y
+  | 2,_,_ -> m_matvec a (Nvector.unwrap x) (Nvector.unwrap y)
   | _ -> c_matvec m x y
 
 external c_zero : ('k, 'm, 'nd, 'nk) t -> unit

@@ -82,7 +82,7 @@ let main () =
   S.scale_add 1.0 a b;
   printf "a = a + b: a=@\n%a@\n" print_mat a;
 
-  S.matvec a (Nvector_serial.wrap x) (Nvector_serial.wrap y);
+  S.matvec a x y;
   printf "y = A*x: x=@\n%a@\ny=@\n%a@\n" print_vec x print_vec y;
 
   ();;

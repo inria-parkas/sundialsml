@@ -44,7 +44,7 @@ type ('m, 'd, 'k) matrix_ops = { (* {{{ *)
   m_scale_addi : float -> 'm -> unit;
   (** [m_scale_addi c a] calculates $a = ca + I$. *)
 
-  m_matvec    : 'm -> ('d, 'k) Nvector.t -> ('d, 'k) Nvector.t -> unit;
+  m_matvec    : 'm -> 'd -> 'd -> unit;
   (** [m_matvec a x y] calculates $y = ax$. *)
 
   m_space     : 'm -> int * int;
@@ -166,8 +166,7 @@ module Dense : (* {{{ *)
 
         @nocvode <node> SUNMatMatvec
         @nocvode <node> SUNMatMatvec_Dense *)
-    val matvec :
-      t -> 'nk Nvector_serial.any -> 'nk Nvector_serial.any -> unit
+    val matvec : t -> Sundials.RealArray.t -> Sundials.RealArray.t -> unit
 
     (** Fills a matrix with zeros.
 
@@ -338,8 +337,7 @@ module Band : (* {{{ *)
 
         @nocvode <node> SUNMatMatvec
         @nocvode <node> SUNMatMatvec_Band *)
-    val matvec :
-      t -> 'nk Nvector_serial.any -> 'nk Nvector_serial.any -> unit
+    val matvec : t -> Sundials.RealArray.t -> Sundials.RealArray.t -> unit
 
     (** Fills a matrix with zeros.
 
@@ -554,8 +552,7 @@ module Sparse : (* {{{ *)
 
         @nocvode <node> SUNMatMatvec
         @nocvode <node> SUNMatMatvec_Sparse *)
-    val matvec :
-      's t -> 'nk Nvector_serial.any -> 'nk Nvector_serial.any -> unit
+    val matvec : 's t -> Sundials.RealArray.t -> Sundials.RealArray.t -> unit
 
     (** Fills a matrix with zeros.
 
