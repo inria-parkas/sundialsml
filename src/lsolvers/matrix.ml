@@ -159,7 +159,7 @@ module Dense = struct (* {{{ *)
   external c_matvec : cptr -> 'k serial_nvector -> 'k serial_nvector -> unit
     = "ml_matrix_dense_matvec"
 
-  let matvec { rawptr; payload; valid } ~x ~y =
+  let matvec { rawptr; payload; valid } x y =
     if check_valid && not valid then raise Invalidated;
     if Sundials_config.safe then begin
       let xl = Sundials.RealArray.length (Nvector.unwrap x) in
@@ -345,7 +345,7 @@ module Band = struct (* {{{ *)
   external c_matvec : cptr -> 'a serial_nvector -> 'a serial_nvector -> unit
     = "ml_matrix_band_matvec"
 
-  let matvec { rawptr; payload = { data; dims = { n } }; valid } ~x ~y =
+  let matvec { rawptr; payload = { data; dims = { n } }; valid } x y =
     if check_valid && not valid then raise Invalidated;
     if Sundials_config.safe then begin
       let xl = Sundials.RealArray.length (Nvector.unwrap x) in
@@ -663,7 +663,7 @@ module Sparse = struct (* {{{ *)
   external c_matvec : cptr -> 'a serial_nvector -> 'a serial_nvector -> unit
     = "ml_matrix_sparse_matvec"
 
-  let matvec { rawptr; valid } ~x ~y =
+  let matvec { rawptr; valid } x y =
     if check_valid && not valid then raise Invalidated;
     if Sundials_config.safe then begin
       let xl = Sundials.RealArray.length (Nvector.unwrap x) in
@@ -758,7 +758,7 @@ module ArrayDense = struct (* {{{ *)
   external matvec' : t -> real_array -> real_array -> unit
       = "c_arraydensematrix_matvec"
 
-  let matvec a ~x ~y = matvec' a x y
+  let matvec a x y = matvec' a x y
 
   external getrf : t -> lint_array -> unit
       = "c_arraydensematrix_getrf"
@@ -825,7 +825,7 @@ module ArrayBand = struct (* {{{ *)
   external matvec' : t -> int * int * int -> real_array -> real_array -> unit
       = "c_arraybandmatrix_matvec"
 
-  let matvec a smu mu ml ~x ~y = matvec' a (mu, ml, smu) x y
+  let matvec a smu mu ml x y = matvec' a (mu, ml, smu) x y
 
   external gbtrf' : t -> int * int * int -> lint_array -> unit
       = "c_arraybandmatrix_gbtrf"
@@ -934,7 +934,7 @@ external c_matvec
   : ('k, 'm, 'nd, 'nk) t -> ('d, 'k) Nvector.t -> ('d, 'k) Nvector.t -> unit
   = "ml_matrix_matvec"
 
-let matvec ({ payload = a; mat_ops = { m_matvec } } as m) ~x ~y =
+let matvec ({ payload = a; mat_ops = { m_matvec } } as m) x y =
   match Sundials.sundials_version with
   | 2,_,_ -> m_matvec a x y
   | _ -> c_matvec m x y

@@ -162,12 +162,12 @@ module Dense : (* {{{ *)
         @nocvode <node> SUNMatScaleAddI_Dense *)
     val scale_addi : float -> t -> unit
 
-    (** Compute the matrix-vector product $y = Ax$.
+    (** The call [matvec a x y] computes the matrix-vector product $y = Ax$.
 
         @nocvode <node> SUNMatMatvec
         @nocvode <node> SUNMatMatvec_Dense *)
     val matvec :
-      t -> x:'nk Nvector_serial.any -> y:'nk Nvector_serial.any -> unit
+      t -> 'nk Nvector_serial.any -> 'nk Nvector_serial.any -> unit
 
     (** Fills a matrix with zeros.
 
@@ -334,12 +334,12 @@ module Band : (* {{{ *)
         @nocvode <node> SUNMatScaleAddI_Band *)
     val scale_addi : float -> t -> unit
 
-    (** Compute the matrix-vector product $y = Ax$.
+    (** The call [matvec a x y] computes the matrix-vector product $y = Ax$.
 
         @nocvode <node> SUNMatMatvec
         @nocvode <node> SUNMatMatvec_Band *)
     val matvec :
-      t -> x:'nk Nvector_serial.any -> y:'nk Nvector_serial.any -> unit
+      t -> 'nk Nvector_serial.any -> 'nk Nvector_serial.any -> unit
 
     (** Fills a matrix with zeros.
 
@@ -550,12 +550,12 @@ module Sparse : (* {{{ *)
         @nocvode <node> SUNMatScaleAddI_Sparse *)
     val scale_addi   : float -> 's t -> unit
 
-    (** Compute the matrix-vector product $y = Ax$.
+    (** The call [matvec a x y] computes the matrix-vector product $y = Ax$.
 
         @nocvode <node> SUNMatMatvec
         @nocvode <node> SUNMatMatvec_Sparse *)
     val matvec :
-      's t -> x:'nk Nvector_serial.any -> y:'nk Nvector_serial.any -> unit
+      's t -> 'nk Nvector_serial.any -> 'nk Nvector_serial.any -> unit
 
     (** Fills a matrix with zeros.
 
@@ -658,11 +658,11 @@ module ArrayDense : sig (* {{{ *)
       @cvode <node9#ss:dense> denseAddIdentity *)
   val add_identity : t -> unit
 
-  (** Compute the matrix-vector product $y = Ax$.
+  (** The call [matvec a x y] computes the matrix-vector product $y = Ax$.
 
       @nocvode <node9#ss:dense> denseMatvec
       @since 2.6.0 *)
-  val matvec : t -> x:Sundials.RealArray.t -> y:Sundials.RealArray.t -> unit
+  val matvec : t -> Sundials.RealArray.t -> Sundials.RealArray.t -> unit
 
   (** [blit src dst] copies the contents of [src] into [dst]. Both
       must have the same size.
@@ -794,12 +794,13 @@ module ArrayBand : sig (* {{{ *)
       @cvode <node9#ss:band> bandAddIdentity *)
   val add_identity : t -> smu -> unit
 
-  (** Compute the matrix-vector product $y = Ax$.
+  (** The call [matvec a smu mu ml x y] computes the matrix-vector product
+      $y = Ax$.
 
       @nocvode <node9#ss:band> bandMatvec
       @since 2.6.0 *)
   val matvec : t -> smu -> mu -> ml
-                -> x:Sundials.RealArray.t -> y:Sundials.RealArray.t -> unit
+                -> Sundials.RealArray.t -> Sundials.RealArray.t -> unit
 
   (** [blit src dst src_smu dst_smu copy_mu copy_ml] copies the contents
       of [src] into [dst]. The storage upper bandwidths of [src] and [dst]
@@ -947,12 +948,12 @@ val scale_add : float -> ('k, 'm, 'nd, 'nk) t -> ('k, 'm, 'nd, 'nk) t -> unit
     @nocvode <node> SUNMatScaleAddI *)
 val scale_addi : float -> ('k, 'm, 'nd, 'nk) t -> unit
 
-(** Compute the matrix-vector product $y = Ax$.
+(** The call [matvec a x y] computes the matrix-vector product $y = Ax$.
 
     @nocvode <node> SUNMatMatvec *)
 val matvec :
-  ('k, 'm, 'nd, 'nk) t -> x:('nd, 'nk) Nvector.t
-                       -> y:('nd, 'nk) Nvector.t -> unit
+  ('k, 'm, 'nd, 'nk) t -> ('nd, 'nk) Nvector.t
+                       -> ('nd, 'nk) Nvector.t -> unit
 
 (** Fills a matrix with zeros.
 
