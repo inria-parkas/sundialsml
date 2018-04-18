@@ -713,7 +713,7 @@ CAMLprim value c_ida_dls_set_linear_solver (value vida_mem, value vlsolv,
     CAMLparam4(vida_mem, vlsolv, vjmat, vhasjac);
 #if SUNDIALS_LIB_VERSION >= 300
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
-    SUNLinearSolver lsolv = LSOLVER(vlsolv);
+    SUNLinearSolver lsolv = LSOLVER_VAL(vlsolv);
     SUNMatrix jmat = MAT_VAL(vjmat);
     int flag;
 
@@ -734,7 +734,7 @@ CAMLprim value c_ida_spils_set_linear_solver (value vida_mem, value vlsolv)
     CAMLparam2(vida_mem, vlsolv);
 #if SUNDIALS_LIB_VERSION >= 300
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
-    SUNLinearSolver lsolv = LSOLVER(vlsolv);
+    SUNLinearSolver lsolv = LSOLVER_VAL(vlsolv);
     int flag;
 
     flag = IDASpilsSetLinearSolver(ida_mem, lsolv);

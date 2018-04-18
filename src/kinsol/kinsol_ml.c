@@ -669,7 +669,7 @@ CAMLprim value c_kinsol_dls_set_linear_solver (value vkin_mem, value vlsolv,
     CAMLparam4(vkin_mem, vlsolv, vjmat, vhasjac);
 #if SUNDIALS_LIB_VERSION >= 300
     void *kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
-    SUNLinearSolver lsolv = LSOLVER(vlsolv);
+    SUNLinearSolver lsolv = LSOLVER_VAL(vlsolv);
     SUNMatrix jmat = MAT_VAL(vjmat);
     int flag;
 
@@ -690,7 +690,7 @@ CAMLprim value c_kinsol_spils_set_linear_solver (value vkin_mem, value vlsolv)
     CAMLparam2(vkin_mem, vlsolv);
 #if SUNDIALS_LIB_VERSION >= 300
     void *kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
-    SUNLinearSolver lsolv = LSOLVER(vlsolv);
+    SUNLinearSolver lsolv = LSOLVER_VAL(vlsolv);
     int flag;
 
     flag = KINSpilsSetLinearSolver(kin_mem, lsolv);

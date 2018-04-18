@@ -19,8 +19,7 @@
 #if SUNDIALS_LIB_VERSION >= 300
 
 // turn a cptr into SUNLinearSolver
-#define LSOLVER(v) (*(SUNLinearSolver *)Data_custom_val(v))
-#define LSOLVER_CPTR(v) (*(void **)Data_custom_val(v))
+#define LSOLVER_VAL(v) (*(SUNLinearSolver *)Data_custom_val(v))
 
 #endif
 

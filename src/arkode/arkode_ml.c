@@ -839,7 +839,7 @@ CAMLprim value c_arkode_dls_set_linear_solver (value varkode_mem, value vlsolv,
     CAMLparam4(varkode_mem, vlsolv, vjmat, vhasjac);
 #if SUNDIALS_LIB_VERSION >= 300
     void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
-    SUNLinearSolver lsolv = LSOLVER(vlsolv);
+    SUNLinearSolver lsolv = LSOLVER_VAL(vlsolv);
     SUNMatrix jmat = MAT_VAL(vjmat);
     int flag;
 
@@ -861,7 +861,7 @@ CAMLprim value c_arkode_spils_set_linear_solver (value varkode_mem,
     CAMLparam2(varkode_mem, vlsolv);
 #if SUNDIALS_LIB_VERSION >= 300
     void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
-    SUNLinearSolver lsolv = LSOLVER(vlsolv);
+    SUNLinearSolver lsolv = LSOLVER_VAL(vlsolv);
     int flag;
 
     flag = ARKSpilsSetLinearSolver(arkode_mem, lsolv);
@@ -1304,7 +1304,7 @@ CAMLprim value c_arkode_dls_set_mass_linear_solver (value varkode_mem,
     CAMLparam4(varkode_mem, vlsolv, vjmat, vtime_dep);
 #if SUNDIALS_LIB_VERSION >= 300
     void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
-    SUNLinearSolver lsolv = LSOLVER(vlsolv);
+    SUNLinearSolver lsolv = LSOLVER_VAL(vlsolv);
     SUNMatrix jmat = MAT_VAL(vjmat);
     int flag;
 
@@ -1327,7 +1327,7 @@ CAMLprim value c_arkode_spils_set_mass_linear_solver (value varkode_mem,
     CAMLparam4(varkode_mem, vlsolv, vhassetup, vtime_dep);
 #if SUNDIALS_LIB_VERSION >= 300
     void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
-    SUNLinearSolver lsolv = LSOLVER(vlsolv);
+    SUNLinearSolver lsolv = LSOLVER_VAL(vlsolv);
     int flag;
 
     flag = ARKSpilsSetMassLinearSolver(arkode_mem, lsolv, Bool_val(vtime_dep));

@@ -760,7 +760,7 @@ CAMLprim value c_cvode_dls_set_linear_solver (value vcvode_mem, value vlsolv,
     CAMLparam4(vcvode_mem, vlsolv, vjmat, vhasjac);
 #if SUNDIALS_LIB_VERSION >= 300
     void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
-    SUNLinearSolver lsolv = LSOLVER(vlsolv);
+    SUNLinearSolver lsolv = LSOLVER_VAL(vlsolv);
     SUNMatrix jmat = MAT_VAL(vjmat);
     int flag;
 
@@ -783,7 +783,7 @@ CAMLprim value c_cvode_spils_set_linear_solver (value vcvode_mem, value vlsolv)
     CAMLparam2(vcvode_mem, vlsolv);
 #if SUNDIALS_LIB_VERSION >= 300
     void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
-    SUNLinearSolver lsolv = LSOLVER(vlsolv);
+    SUNLinearSolver lsolv = LSOLVER_VAL(vlsolv);
     int flag;
 
     flag = CVodeSetIterType (cvode_mem, CV_NEWTON);

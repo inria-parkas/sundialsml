@@ -66,7 +66,7 @@ CAMLprim void ml_lsolver_init_module (value exns)
 #if SUNDIALS_LIB_VERSION >= 300
 static void finalize_lsolver(value vls)
 {
-    SUNLinearSolver ls = LSOLVER(vls);
+    SUNLinearSolver ls = LSOLVER_VAL(vls);
     if (ls) SUNLinSolFree(ls);
 }
 
@@ -76,7 +76,7 @@ static value alloc_lsolver(SUNLinearSolver ls)
     CAMLlocal1(vcptr);
 
     vcptr = caml_alloc_final(1, &finalize_lsolver, 1, 20);
-    LSOLVER_CPTR(vcptr) = ls;
+    LSOLVER_VAL(vcptr) = ls;
 
     CAMLreturn(vcptr);
 }
@@ -191,7 +191,7 @@ CAMLprim void ml_lsolver_klu_reinit(value vcptr, value vsmat)
     CAMLparam2(vcptr, vsmat);
 #if SUNDIALS_LIB_VERSION >= 300 && defined SUNDIALS_ML_KLU
     // reinit is done at ML level; nnz arg is ignore when reinit_type = 2
-    SUNKLUReInit(LSOLVER(vcptr), MAT_VAL(vsmat), 0, 2);
+    SUNKLUReInit(LSOLVER_VAL(vcptr), MAT_VAL(vsmat), 0, 2);
 #endif
     CAMLreturn0;
 }
@@ -201,7 +201,7 @@ CAMLprim void ml_lsolver_klu_set_ordering(value vcptr, value vordering)
     CAMLparam2(vcptr, vordering);
 #if SUNDIALS_LIB_VERSION >= 300 && defined SUNDIALS_ML_KLU
     // ignore return value
-    SUNKLUSetOrdering(LSOLVER(vcptr), Int_val(vordering));
+    SUNKLUSetOrdering(LSOLVER_VAL(vcptr), Int_val(vordering));
 #endif
     CAMLreturn0;
 }
@@ -231,7 +231,7 @@ CAMLprim void ml_lsolver_superlumt_set_ordering(value vcptr, value vordering)
 {
     CAMLparam2(vcptr, vordering);
 #if SUNDIALS_LIB_VERSION >= 300 && defined SUNDIALS_ML_SUPERLUMT
-    SUNSuperLUMTSetOrdering(LSOLVER(vcptr), Int_val(vordering));
+    SUNSuperLUMTSetOrdering(LSOLVER_VAL(vcptr), Int_val(vordering));
 #endif
     CAMLreturn0;
 }
@@ -280,7 +280,7 @@ CAMLprim void ml_lsolver_set_prec_type(value vcptr, value vsolver,
 #if SUNDIALS_LIB_VERSION >= 300
     int old_pretype = PREC_NONE;
     int pretype = lsolver_precond_type(vpretype);
-    SUNLinearSolver lsolv = LSOLVER(vcptr);
+    SUNLinearSolver lsolv = LSOLVER_VAL(vcptr);
 
     switch (Int_val(vsolver)) {
 	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPFGMR:
@@ -346,15 +346,15 @@ CAMLprim void ml_lsolver_set_maxl(value vcptr, value vsolver, value vmaxl)
 #if SUNDIALS_LIB_VERSION >= 300
     switch (Int_val(vsolver)) {
 	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPBCGS:
-	    SUNSPBCGSSetMaxl(LSOLVER(vcptr), Int_val(vmaxl));
+	    SUNSPBCGSSetMaxl(LSOLVER_VAL(vcptr), Int_val(vmaxl));
 	    break;
 
 	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPTFQMR:
-	    SUNSPTFQMRSetMaxl(LSOLVER(vcptr), Int_val(vmaxl));
+	    SUNSPTFQMRSetMaxl(LSOLVER_VAL(vcptr), Int_val(vmaxl));
 	    break;
 
 	case VARIANT_LSOLVER_ITERATIVE_SOLVER_PCG:
-	    SUNPCGSetMaxl(LSOLVER(vcptr), Int_val(vmaxl));
+	    SUNPCGSetMaxl(LSOLVER_VAL(vcptr), Int_val(vmaxl));
 	    break;
 
 	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPFGMR:
@@ -373,11 +373,11 @@ CAMLprim void ml_lsolver_set_gs_type(value vcptr, value vsolver, value vgst)
 #if SUNDIALS_LIB_VERSION >= 300
     switch (Int_val(vsolver)) {
 	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPFGMR:
-	    SUNSPFGMRSetGSType(LSOLVER(vcptr), lsolver_gs_type(vgst));
+	    SUNSPFGMRSetGSType(LSOLVER_VAL(vcptr), lsolver_gs_type(vgst));
 	    break;
 
 	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPGMR:
-	    SUNSPGMRSetGSType(LSOLVER(vcptr), lsolver_gs_type(vgst));
+	    SUNSPGMRSetGSType(LSOLVER_VAL(vcptr), lsolver_gs_type(vgst));
 	    break;
 
 	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPBCGS:
@@ -398,11 +398,11 @@ CAMLprim void ml_lsolver_set_max_restarts(value vcptr, value vsolver,
 #if SUNDIALS_LIB_VERSION >= 300
     switch (Int_val(vsolver)) {
 	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPFGMR:
-	    SUNSPFGMRSetMaxRestarts(LSOLVER(vcptr), Int_val(vmaxr));
+	    SUNSPFGMRSetMaxRestarts(LSOLVER_VAL(vcptr), Int_val(vmaxr));
 	    break;
 
 	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPGMR:
-	    SUNSPGMRSetMaxRestarts(LSOLVER(vcptr), Int_val(vmaxr));
+	    SUNSPGMRSetMaxRestarts(LSOLVER_VAL(vcptr), Int_val(vmaxr));
 	    break;
 
 	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPBCGS:
