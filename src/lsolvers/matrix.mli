@@ -62,7 +62,8 @@ exception Invalidated
 exception IncompatibleArguments
 
 (** Raised if a zero diagonal element is found during factorization using a
-    low-level routine like {!Spils.qr_fact}, {!Spils.qr_sol},
+    low-level routine like {!Lsolver.Iterative.Algorithms.qr_fact},
+    {!Lsolver.Iterative.Algorithms.qr_sol},
     or {!Matrix.ArrayDense.getrf}.
     The argument gives the equation number (from 1). *)
 exception ZeroDiagonalElement of int

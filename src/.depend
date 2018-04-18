@@ -26,11 +26,10 @@ kinsol/kinsol.cmi : sundials/sundials.cmi nvectors/nvector_serial.cmi \
     nvectors/nvector.cmi lsolvers/matrix.cmi lsolvers/lsolver.cmi \
     kinsol/kinsol_impl.cmo
 kinsol/kinsol_bbd.cmi : nvectors/nvector_parallel.cmi kinsol/kinsol.cmi
-lsolvers/lsolver.cmi : nvectors/nvector_serial.cmi nvectors/nvector.cmi \
-    lsolvers/matrix.cmi lsolvers/lsolver_impl.cmo
+lsolvers/lsolver.cmi : sundials/sundials.cmi nvectors/nvector_serial.cmi \
+    nvectors/nvector.cmi lsolvers/matrix.cmi lsolvers/lsolver_impl.cmo
 lsolvers/matrix.cmi : sundials/sundials.cmi nvectors/nvector_serial.cmi \
     nvectors/nvector.cmi
-lsolvers/spils.cmi : sundials/sundials.cmi nvectors/nvector.cmi
 nvectors/nvector.cmi :
 nvectors/nvector_array.cmi : nvectors/nvector_custom.cmi \
     nvectors/nvector.cmi
@@ -165,10 +164,6 @@ lsolvers/matrix.cmx : sundials/sundials_config.cmx sundials/sundials.cmx \
     nvectors/nvector_serial.cmx nvectors/nvector.cmx lsolvers/matrix.cmi
 lsolvers/matrix_top.cmo : sundials/sundials_top.cmi
 lsolvers/matrix_top.cmx : sundials/sundials_top.cmx
-lsolvers/spils.cmo : sundials/sundials.cmi nvectors/nvector.cmi \
-    lsolvers/spils.cmi
-lsolvers/spils.cmx : sundials/sundials.cmx nvectors/nvector.cmx \
-    lsolvers/spils.cmi
 nvectors/nvector.cmo : nvectors/nvector.cmi
 nvectors/nvector.cmx : nvectors/nvector.cmi
 nvectors/nvector_array.cmo : sundials/sundials.cmi \

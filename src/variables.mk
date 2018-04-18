@@ -24,15 +24,13 @@ include ../config
 COBJ_COMMON = sundials/sundials_ml$(XO)	\
 	      lsolvers/matrix_ml$(XO)	\
 	      lsolvers/lsolver_ml$(XO)	\
-	      nvectors/nvector_ml$(XO)	\
-	      lsolvers/spils_ml$(XO)
+	      nvectors/nvector_ml$(XO)
 
 COBJ_MAIN = $(COBJ_COMMON) kinsol/kinsol_ml$(XO) $(ARKODE_COBJ_MAIN)
 
 MLOBJ_MAIN =	sundials/sundials_config.cmo	\
 		sundials/sundials.cmo		\
 		nvectors/nvector.cmo		\
-		lsolvers/spils.cmo		\
 		lsolvers/matrix.cmo		\
 		lsolvers/lsolver_impl.cmo	\
 		lsolvers/lsolver.cmo		\

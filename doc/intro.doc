@@ -187,7 +187,7 @@ appropriate [init] or [reinit] functions to configure sessions.
 {2:api API Reference}
 
 {!modules: Sundials}
-{!modules: Matrix Lsolver Spils}
+{!modules: Matrix Lsolver}
 {!modules: Nvector Nvector_serial Nvector_parallel
 	   Nvector_pthreads Nvector_openmp
 	   Nvector_custom Nvector_array}
