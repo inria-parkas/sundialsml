@@ -786,7 +786,7 @@ module Adjoint = struct (* {{{ *)
     let parent, which = parent_and_which bs in
     c_set_max_step parent which hmaxb
 
-  module Direct = struct (* {{{ *)
+  module Dls = struct (* {{{ *)
     include DirectTypes
 
     (* Sundials < 3.0.0 *)
@@ -1040,12 +1040,12 @@ module Adjoint = struct (* {{{ *)
             cb.jmat <- None
         | _ -> ()
 
-    let get_work_space bs = Ida.Direct.get_work_space (tosession bs)
-    let get_num_jac_evals bs = Ida.Direct.get_num_jac_evals (tosession bs)
-    let get_num_res_evals bs = Ida.Direct.get_num_res_evals (tosession bs)
+    let get_work_space bs = Ida.Dls.get_work_space (tosession bs)
+    let get_num_jac_evals bs = Ida.Dls.get_num_jac_evals (tosession bs)
+    let get_num_res_evals bs = Ida.Dls.get_num_res_evals (tosession bs)
   end (* }}} *)
 
-  module Iterative = struct (* {{{ *)
+  module Spils = struct (* {{{ *)
     include SpilsTypes
 
     (* Sundials < 3.0.0 *)
@@ -1239,28 +1239,28 @@ module Adjoint = struct (* {{{ *)
       set_eps_lin bs epsl
 
     let get_work_space bs =
-      Ida.Iterative.get_work_space (tosession bs)
+      Ida.Spils.get_work_space (tosession bs)
 
     let get_num_lin_iters bs =
-      Ida.Iterative.get_num_lin_iters (tosession bs)
+      Ida.Spils.get_num_lin_iters (tosession bs)
 
     let get_num_conv_fails bs =
-      Ida.Iterative.get_num_conv_fails (tosession bs)
+      Ida.Spils.get_num_conv_fails (tosession bs)
 
     let get_num_prec_evals bs =
-      Ida.Iterative.get_num_prec_evals (tosession bs)
+      Ida.Spils.get_num_prec_evals (tosession bs)
 
     let get_num_prec_solves bs =
-      Ida.Iterative.get_num_prec_solves (tosession bs)
+      Ida.Spils.get_num_prec_solves (tosession bs)
 
     let get_num_jtsetup_evals bs =
-      Ida.Iterative.get_num_jtsetup_evals (tosession bs)
+      Ida.Spils.get_num_jtsetup_evals (tosession bs)
 
     let get_num_jtimes_evals bs =
-      Ida.Iterative.get_num_jtimes_evals (tosession bs)
+      Ida.Spils.get_num_jtimes_evals (tosession bs)
 
     let get_num_res_evals bs =
-      Ida.Iterative.get_num_res_evals (tosession bs)
+      Ida.Spils.get_num_res_evals (tosession bs)
   end (* }}} *)
 
   module Alternate = struct (* {{{ *)
@@ -1317,7 +1317,7 @@ module Adjoint = struct (* {{{ *)
       = "c_idas_adj_bsession_finalize"
 
   let bsession_finalize s =
-    Direct.invalidate_callback s;
+    Dls.invalidate_callback s;
     c_bsession_finalize s
 
   external c_init_backward

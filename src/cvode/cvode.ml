@@ -99,7 +99,7 @@ module Diag = struct (* {{{ *)
 
 end (* }}} *)
 
-module Direct = struct (* {{{ *)
+module Dls = struct (* {{{ *)
   include DirectTypes
 
   (* Sundials < 3.0.0 *)
@@ -325,7 +325,7 @@ module Direct = struct (* {{{ *)
 
 end (* }}} *)
 
-module Iterative = struct (* {{{ *)
+module Spils = struct (* {{{ *)
   include SpilsTypes
 
   (* Sundials < 3.0.0 *)
@@ -662,7 +662,7 @@ external c_session_finalize : ('a, 'kind) session -> unit
     = "c_cvode_session_finalize"
 
 let session_finalize s =
-  Direct.invalidate_callback s;
+  Dls.invalidate_callback s;
   c_session_finalize s
 
 external c_init
@@ -716,7 +716,7 @@ external c_reinit
 
 let reinit session ?iter ?roots t0 y0 =
   if Sundials_config.safe then session.checkvec y0;
-  Direct.invalidate_callback session;
+  Dls.invalidate_callback session;
   c_reinit session t0 y0;
   (match iter with
    | None -> ()

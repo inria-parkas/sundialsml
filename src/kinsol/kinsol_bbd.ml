@@ -17,7 +17,7 @@ include KinsolBbdTypes
 type parallel_session =
       (Nvector_parallel.data, Nvector_parallel.kind) Kinsol.session
 type parallel_preconditioner =
-      (Nvector_parallel.data, Nvector_parallel.kind) Kinsol.Iterative.preconditioner
+      (Nvector_parallel.data, Nvector_parallel.kind) Kinsol.Spils.preconditioner
 
 module Impl = KinsolBbdParamTypes
 type local_fn = Nvector_parallel.data Impl.local_fn

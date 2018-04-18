@@ -20,7 +20,7 @@ type data = Nvector_parallel.data
 type kind = Nvector_parallel.kind
 
 type parallel_session = (data, kind) session
-type parallel_preconditioner = (data, kind) Cvode.Iterative.preconditioner
+type parallel_preconditioner = (data, kind) Cvode.Spils.preconditioner
 
 module Impl = CvodeBbdParamTypes
 type local_fn = data Impl.local_fn

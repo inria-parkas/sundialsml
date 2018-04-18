@@ -27,7 +27,7 @@ type parallel_bsession =
 (** Alias for preconditioners based on parallel nvectors. *)
 type parallel_preconditioner =
   (Nvector_parallel.data, Nvector_parallel.kind)
-                          Idas.Adjoint.Iterative.preconditioner
+                          Idas.Adjoint.Spils.preconditioner
 
 (** The bandwidths for the difference quotient Jacobian operation. *)
 type bandwidths = Ida_bbd.bandwidths =

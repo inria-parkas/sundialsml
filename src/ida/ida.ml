@@ -88,7 +88,7 @@ let root_init session (nroots, rootsfn) =
   c_root_init session nroots;
   session.rootsfn <- rootsfn
 
-module Direct = struct (* {{{ *)
+module Dls = struct (* {{{ *)
   include DirectTypes
 
   (* Sundials < 3.0.0 *)
@@ -311,7 +311,7 @@ module Direct = struct (* {{{ *)
     get_num_res_evals s
 end (* }}} *)
 
-module Iterative = struct (* {{{ *)
+module Spils = struct (* {{{ *)
   include SpilsTypes
 
   (* Sundials < 3.0.0 *)
@@ -567,7 +567,7 @@ external c_session_finalize : ('a, 'kind) session -> unit
     = "c_ida_session_finalize"
 
 let session_finalize s =
-  Direct.invalidate_callback s;
+  Dls.invalidate_callback s;
   c_session_finalize s
 
 external c_init : ('a, 'k) session Weak.t -> float
@@ -627,7 +627,7 @@ let reinit session ?linsolv ?roots t0 y0 y'0 =
   if Sundials_config.safe then
     (session.checkvec y0;
      session.checkvec y'0);
-  Direct.invalidate_callback session;
+  Dls.invalidate_callback session;
   c_reinit session t0 y0 y'0;
   (match linsolv with
    | None -> ()

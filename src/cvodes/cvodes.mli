@@ -982,7 +982,7 @@ module Adjoint : sig (* {{{ *)
   end (* }}} *)
 
   (** Direct Linear Solvers operating on dense, banded, and sparse matrices. *)
-  module Direct : sig (* {{{ *)
+  module Dls : sig (* {{{ *)
 
     (** Callback functions that compute dense approximations to a Jacobian
         matrix without forward sensitivities. In the call [jac arg jm],
@@ -1083,12 +1083,12 @@ module Adjoint : sig (* {{{ *)
 
   end (* }}} *)
 
-  (** Iterative Linear Solvers.
+  (** Scaled Preconditioned Iterative Linear Solvers.
 
       @cvodes <node7#ss:optional_output_b> Optional output functions for the backward problem.
       @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB
       @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB *)
-  module Iterative : sig (* {{{ *)
+  module Spils : sig (* {{{ *)
     (** {3:precond Preconditioners} *)
 
     (** Arguments passed to the preconditioner solver function.

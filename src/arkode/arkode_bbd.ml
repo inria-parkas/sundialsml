@@ -20,7 +20,7 @@ type data = Nvector_parallel.data
 type kind = Nvector_parallel.kind
 
 type parallel_session = (data, kind) session
-type parallel_preconditioner = (data, kind) Arkode.Iterative.preconditioner
+type parallel_preconditioner = (data, kind) Arkode.Spils.preconditioner
 
 module Impl = ArkodeBbdParamTypes
 type local_fn = data Impl.local_fn

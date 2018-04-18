@@ -703,7 +703,7 @@ module Adjoint = struct (* {{{ *)
 
   end (* }}} *)
 
-  module Direct = struct (* {{{ *)
+  module Dls = struct (* {{{ *)
     include DirectTypes
 
     (* Sundials < 3.0.0 *)
@@ -952,12 +952,12 @@ module Adjoint = struct (* {{{ *)
             cb.jmat <- None
         | _ -> ()
 
-    let get_work_space bs = Cvode.Direct.get_work_space (tosession bs)
-    let get_num_jac_evals bs = Cvode.Direct.get_num_jac_evals (tosession bs)
-    let get_num_rhs_evals bs = Cvode.Direct.get_num_rhs_evals (tosession bs)
+    let get_work_space bs = Cvode.Dls.get_work_space (tosession bs)
+    let get_num_jac_evals bs = Cvode.Dls.get_num_jac_evals (tosession bs)
+    let get_num_rhs_evals bs = Cvode.Dls.get_num_rhs_evals (tosession bs)
   end (* }}} *)
 
-  module Iterative = struct (* {{{ *)
+  module Spils = struct (* {{{ *)
     include SpilsTypes
 
     (* Sundials < 3.0.0 *)
@@ -1171,28 +1171,28 @@ module Adjoint = struct (* {{{ *)
       set_eps_lin bs epsl
 
     let get_work_space bs =
-      Cvode.Iterative.get_work_space (tosession bs)
+      Cvode.Spils.get_work_space (tosession bs)
 
     let get_num_lin_iters bs =
-      Cvode.Iterative.get_num_lin_iters (tosession bs)
+      Cvode.Spils.get_num_lin_iters (tosession bs)
 
     let get_num_conv_fails bs =
-      Cvode.Iterative.get_num_conv_fails (tosession bs)
+      Cvode.Spils.get_num_conv_fails (tosession bs)
 
     let get_num_prec_evals bs =
-      Cvode.Iterative.get_num_prec_evals (tosession bs)
+      Cvode.Spils.get_num_prec_evals (tosession bs)
 
     let get_num_prec_solves bs =
-      Cvode.Iterative.get_num_prec_solves (tosession bs)
+      Cvode.Spils.get_num_prec_solves (tosession bs)
 
     let get_num_jtsetup_evals bs =
-      Cvode.Iterative.get_num_jtsetup_evals (tosession bs)
+      Cvode.Spils.get_num_jtsetup_evals (tosession bs)
 
     let get_num_jtimes_evals bs =
-      Cvode.Iterative.get_num_jtimes_evals (tosession bs)
+      Cvode.Spils.get_num_jtimes_evals (tosession bs)
 
     let get_num_rhs_evals bs =
-      Cvode.Iterative.get_num_rhs_evals (tosession bs)
+      Cvode.Spils.get_num_rhs_evals (tosession bs)
 
     module Banded = struct (* {{{ *)
 
@@ -1219,10 +1219,10 @@ module Adjoint = struct (* {{{ *)
                                                 init_preconditioner bandrange)
 
       let get_work_space bs =
-        Cvode.Iterative.Banded.get_work_space (tosession bs)
+        Cvode.Spils.Banded.get_work_space (tosession bs)
 
       let get_num_rhs_evals bs =
-        Cvode.Iterative.Banded.get_num_rhs_evals (tosession bs)
+        Cvode.Spils.Banded.get_num_rhs_evals (tosession bs)
     end (* }}} *)
   end (* }}} *)
 
@@ -1280,7 +1280,7 @@ module Adjoint = struct (* {{{ *)
       = "c_cvodes_adj_bsession_finalize"
 
   let bsession_finalize s =
-    Direct.invalidate_callback s;
+    Dls.invalidate_callback s;
     c_bsession_finalize s
 
   external c_init_backward

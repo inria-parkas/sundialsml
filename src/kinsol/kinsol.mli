@@ -85,7 +85,7 @@ type ('t, 'd) jacobian_arg = ('t, 'd) Kinsol_impl.jacobian_arg =
 
     @kinsol <node5#sss:optin_dls> Direct linear solvers optional input functions
     @kinsol <node5#sss:optout_dls> Direct linear solvers optional output functions *)
-module Direct : sig (* {{{ *)
+module Dls : sig (* {{{ *)
 
   (** Callback functions that compute dense approximations to a Jacobian
       matrix. In the call [jac arg jm], [arg] is a {!jacobian_arg}
@@ -144,11 +144,11 @@ module Direct : sig (* {{{ *)
 
 end (* }}} *)
 
-(** Iterative Linear Solvers.
+(** Scaled Preconditioned Iterative Linear Solvers.
 
     @kinsol <node5#sss:optin_spils> Iterative linear solvers optional input functions.
     @kinsol <node5#sss:optout_spils> Iterative linear solvers optional output functions. *)
-module Iterative : sig (* {{{ *)
+module Spils : sig (* {{{ *)
   (** {3:precond Preconditioners} *)
 
   (** Arguments passed to the preconditioner solver function.

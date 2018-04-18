@@ -56,7 +56,7 @@ type 'k serial_linear_solver = (RealArray.t, 'k) linear_solver
 
 let int_default = function None -> 0 | Some v -> v
 
-module Direct = struct (* {{{ *)
+module Dls = struct (* {{{ *)
   include DirectTypes
 
   (* Sundials < 3.0.0 *)
@@ -283,7 +283,7 @@ module Direct = struct (* {{{ *)
     get_num_func_evals s
 end (* }}} *)
 
-module Iterative = struct (* {{{ *)
+module Spils = struct (* {{{ *)
   include SpilsTypes
 
   (* Sundials < 3.0.0 *)
@@ -616,7 +616,7 @@ external c_session_finalize : ('a, 'k) session -> unit
     = "c_kinsol_session_finalize"
 
 let session_finalize s =
-  Direct.invalidate_callback s;
+  Dls.invalidate_callback s;
   c_session_finalize s
 
 let init ?max_iters ?maa ?linsolv f u0 =
