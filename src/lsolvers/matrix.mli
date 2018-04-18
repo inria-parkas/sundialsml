@@ -64,7 +64,7 @@ module Dense : (* {{{ *)
   sig
     (* TODO: check documentation links *)
     (** A dense matrix. Values of this type are typically passed to linear
-        solver callback functions (like {!Cvode.dense_jac_fn}, 
+        solver callback functions (like {!Cvode.dense_jac_fn},
         {!Ida.dense_jac_fn}, and {!Kinsol.dense_jac_fn}).
 
         @nocvode <node> The SUNMatrix_Dense implementation *)
@@ -153,7 +153,7 @@ module Dense : (* {{{ *)
     val scale_addi : float -> t -> unit
 
     (** Compute the matrix-vector product $y = Ax$.
-    
+
         @nocvode <node> SUNMatMatvec
         @nocvode <node> SUNMatMatvec_Dense *)
     val matvec :
@@ -174,7 +174,7 @@ module Dense : (* {{{ *)
 
     (** [lrw, liw = space a] returns the storage requirements of [a] as
         [lrw] realtype words and [liw] integer words.
-    
+
         @nocvode <node> SUNMatSpace
         @nocvode <node> SUNMatSpace_Dense *)
     val space : t -> int * int
@@ -192,7 +192,7 @@ module Band : (* {{{ *)
   sig
     (* TODO: check documentation links *)
     (** A band matrix. Values of this type are typically passed to linear
-        solver callback functions (like {!Cvode.dense_jac_fn}, 
+        solver callback functions (like {!Cvode.dense_jac_fn},
         {!Ida.dense_jac_fn}, and {!Kinsol.dense_jac_fn}).
 
         @nocvode <node> The SUNMatrix_Band implementation *)
@@ -326,7 +326,7 @@ module Band : (* {{{ *)
     val scale_addi : float -> t -> unit
 
     (** Compute the matrix-vector product $y = Ax$.
-    
+
         @nocvode <node> SUNMatMatvec
         @nocvode <node> SUNMatMatvec_Band *)
     val matvec :
@@ -351,7 +351,7 @@ module Band : (* {{{ *)
 
     (** [lrw, liw = space a] returns the storage requirements of [a] as
         [lrw] realtype words and [liw] integer words.
-    
+
         @nocvode <node> SUNMatSpace
         @nocvode <node> SUNMatSpace_Band *)
     val space : t -> int * int
@@ -377,7 +377,7 @@ module Sparse : (* {{{ *)
 
     (* TODO: check documentation links *)
     (** A spare matrix. Values of this type are typically passed to linear
-        solver callback functions (like {!Cvode.dense_jac_fn}, 
+        solver callback functions (like {!Cvode.dense_jac_fn},
         {!Ida.dense_jac_fn}, and {!Kinsol.dense_jac_fn}).
 
         @nocvode <node> The SUNMatrix_Sparse implementation *)
@@ -502,7 +502,7 @@ module Sparse : (* {{{ *)
 
     (** Reallocates the underlying arrays to the given number of non-zero
         elements, or otherwise to the current number of non-zero elements .
-        
+
         NB: The {!resize} operation may replace the underlying storage of the
         matrix argument. In this case, any previously 'unwrapped' array is no
         longer associated with the matrix storage.
@@ -540,7 +540,7 @@ module Sparse : (* {{{ *)
     val scale_addi   : float -> 's t -> unit
 
     (** Compute the matrix-vector product $y = Ax$.
-    
+
         @nocvode <node> SUNMatMatvec
         @nocvode <node> SUNMatMatvec_Sparse *)
     val matvec :
@@ -567,7 +567,7 @@ module Sparse : (* {{{ *)
 
     (** [lrw, liw = space a] returns the storage requirements of [a] as
         [lrw] realtype words and [liw] integer words.
-    
+
         @nocvode <node> SUNMatSpace
         @nocvode <node> SUNMatSpace_Sparse *)
     val space : 's t -> int * int
@@ -612,7 +612,7 @@ type custom
     whether the matrix is {!standard} or {!custom}. The ['nd] and ['nk] type
     arguments track the compatiblity of the {{!matrix_ops}m_matvec} vector
     parameters.
- 
+
     @nocvode <node> SUNMatrix *)
 type ('k, 'm, 'nd, 'nk) t
 
@@ -669,7 +669,7 @@ val wrap_sparse : 's Sparse.t -> ('s, 'nk) sparse
 val wrap_custom : ('m, 'nd, 'nk) matrix_ops -> 'm -> (custom, 'm, 'nd, 'nk) t
 
 (** Matrix internal type identifiers.
- 
+
     @nocvode <node> SUNMatrix_ID *)
 type id =
   | Dense

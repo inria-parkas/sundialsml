@@ -39,7 +39,7 @@ module Direct : sig (* {{{ *)
 
   (** A direct linear solver.
       The type variables specify the Jacobian matrix (['matrix]), the
-      {!Nvector.nvector} data (['data]) and kind (['kind]), and a 
+      {!Nvector.nvector} data (['data]) and kind (['kind]), and a
       ['tag] used to identify specific solver features.
 
       @nocvode <node> Description of the SUNLinearSolver module
@@ -263,17 +263,17 @@ module Iterative : sig (* {{{ *)
       is used as a template.
 
       NB: [max_restarts] is ignored in Sundials < 3.0.0.
-      
+
       @nocvode <node> SUNSPGMR *)
   val spgmr : ?maxl:int -> ?max_restarts:int
-              -> ?gs_type:gramschmidt_type 
+              -> ?gs_type:gramschmidt_type
               -> ('d, 'k) Nvector.t -> ('d, 'k, [`Spgmr]) t
 
   (** Krylov iterative with the scaled preconditioned transpose-free
       quasi-minimal residual (SPTFQMR) method. The [maxl] arguments gives the
       maximum dimension of the Krylov subspace (defaults to 5). The nvector
       argument is used as a template.
-      
+
       @nocvode <node> SUNSPTFQMR *)
   val sptfqmr : ?maxl:int -> ('d, 'k) Nvector.t -> ('d, 'k, [`Sptfqmr]) t
 
@@ -304,7 +304,7 @@ module Iterative : sig (* {{{ *)
   (** Sets the number of GMRES restarts to allow.
 
       NB: This feature is not supported by Sundials < 3.0.0.
- 
+
       @nocvode <node> SUNSPGMRSetMaxRestarts
       @nocvode <node> SUNSPFGMRSetMaxRestarts *)
   val set_max_restarts : ('d, 'k, [< `Spfgmr|`Spgmr]) t -> int -> unit
@@ -362,7 +362,7 @@ module Iterative : sig (* {{{ *)
       -> float
       -> bool
       -> unit
- 
+
     (** The operations required to implement an iterative linear solver.
         Failure should be indicated by raising an exception (preferably
         one of the exceptions in the {!module:Lsolver} package). Raising
@@ -392,7 +392,7 @@ module Iterative : sig (* {{{ *)
             and [solve]. *)
 
       set_preconditioner
-        : ('lsolver 
+        : ('lsolver
            -> psetupfn option
            -> ('data, 'kind) psolvefn option
            -> unit) option;

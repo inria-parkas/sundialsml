@@ -203,7 +203,7 @@ module ArrayBandMatrix : sig (* {{{ *)
   val add_identity : t -> smu -> unit
 
   (** Compute the matrix-vector product $y = Ax$.
-  
+
       @nocvode <node9#ss:band> bandMatvec
       @since 2.6.0 *)
   val matvec : t -> smu -> mu -> ml

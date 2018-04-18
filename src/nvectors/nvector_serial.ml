@@ -7,7 +7,7 @@ type 'k any = (data, [>kind] as 'k) Nvector.t
 external c_wrap : Sundials.RealArray.t -> (Sundials.RealArray.t -> bool) -> t
   = "ml_nvec_wrap_serial"
 
-let wrap v = 
+let wrap v =
   let len = Sundials.RealArray.length v in
   c_wrap v (fun v' -> len = Sundials.RealArray.length v')
 

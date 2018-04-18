@@ -156,7 +156,7 @@ module Direct = struct (* {{{ *)
     | SlsKluCallback _ | BSlsKluCallback _ | BSlsKluCallbackSens _ ->
         c_klu_reinit session n (match onnz with None -> 0 | Some nnz -> nnz)
     | _ -> ()
-  
+
   (* Sundials < 3.0.0 *)
   let superlumt_set_ordering session ordering =
     match session.ls_callbacks with

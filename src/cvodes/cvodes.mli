@@ -43,7 +43,7 @@ open Sundials
 type ('data, 'kind) session = ('data, 'kind) Cvode.session
 
 (** Integration of pure quadrature equations.
- 
+
     Adds a vector $y_Q$ of $N_Q$ quadrature variables defined by
     {% $\frac{\mathrm{d} y_Q}{\mathrm{d}t} = f_Q(t, y, p)$%}. The values of
     these variables are calculated more efficiently since they are excluded
@@ -191,7 +191,7 @@ module Quadrature : sig (* {{{ *)
 end (* }}} *)
 
 (** (Forward) Sensitivity analysis of ODEs with respect to their parameters.
- 
+
     Formalizes the dependency of a set of ODEs on $N_p$ parameters $p$ and
     calculates the sensitivities $s$ of the solution $y$ to a subset of
     {% $N_s \leq N_p$%} of those parameters;
@@ -577,7 +577,7 @@ module Sensitivity : sig (* {{{ *)
         number of calls to the quadrature function ([nfqevals]) and the
         number of error test failures due to quadrature variables
         ([nqetfails]).
-     
+
         @cvodes <node6#ss:quad_sens_optional_output> CVodeGetQuadSensStats
         @return ([nfqevals], [nqetfails]) *)
     val get_stats : ('d, 'k) Cvode.session -> int * int
@@ -605,7 +605,7 @@ module Sensitivity : sig (* {{{ *)
         sensitivity quadrature function had repeated recoverable errors
         during the estimation of an initial step size (if quadrature
         variables are included in error tests).
-      
+
         @cvodes <node6#SECTION00642000000000000000> CV_REPTD_QSRHSFUNC_ERR *)
     exception RepeatedQuadSensRhsFuncFailure
 
@@ -613,7 +613,7 @@ module Sensitivity : sig (* {{{ *)
         recovery was possible. This failure mode is rare, as it can occur
         only if the quadrature function fails recoverably after an error
         test failed while at order one.
-      
+
         @cvodes <node6#SECTION00642000000000000000> CV_UNREC_QSRHSFUNC_ERR *)
     exception UnrecoverableQuadSensRhsFuncFailure
   end (* }}} *)
@@ -821,7 +821,7 @@ module Sensitivity : sig (* {{{ *)
   (** The sensitivity function had a recoverable error, but no recovery was
       possible. This error can only occur after an error test failure at
       order one.
-   
+
     @cvodes <node6#SECTION00623000000000000000> CV_UNREC_SRHSFUNC_ERR *)
   exception UnrecoverableSensRhsFuncFailure
 
@@ -832,7 +832,7 @@ module Sensitivity : sig (* {{{ *)
 end (* }}} *)
 
 (** (Adjoint) Sensitivity analysis of ODEs with respect to their parameters.
- 
+
     Provides an alternative to forward sensitivity analysis, which can become
     prohibitively expensive. This technique does not calculate sensitivities,
     but rather gradients with respect to the parameters of a relatively few
@@ -850,7 +850,7 @@ end (* }}} *)
       {- {{:#set}Modifying the solver}}
       {- {{:#get}Querying the solver}}
       {- {{:#exceptions}Exceptions}}}
-  
+
     @cvodes <node7#ss:skeleton_adj> Enhanced Skeleton for Adjoint Sensitivity Analysis
     @cvodes <node7#s:adjoint> Using CVODES for Adjoint Sensitivity Analysis
     @cvodes <node3#ss:adj_sensi> Adjoint sensitivity analysis *)
@@ -945,7 +945,7 @@ module Adjoint : sig (* {{{ *)
   (** Arguments common to Jacobian callback functions.
 
       @cvodes <node7#ss:densejac_b> CVDlsDenseJacFnB
-      @cvodes <node7#ss:bandjac_b> CVDlsBandJacFnB 
+      @cvodes <node7#ss:bandjac_b> CVDlsBandJacFnB
       @cvodes <node7#ss:jtimesv_b> CVSpilsJacTimesVecFnB
       @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB
       @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB *)
@@ -1715,7 +1715,7 @@ module Adjoint : sig (* {{{ *)
       @cvodes <node7#sss:cvinitb> CVodeInitB
       @cvodes <node7#sss:cvinitb> CVodeInitBS
       @cvodes <node7#sss:cvtolerances_b> CVodeSStolerancesB
-      @cvodes <node7#sss:cvtolerances_b> CVodeSVtolerancesB 
+      @cvodes <node7#sss:cvtolerances_b> CVodeSVtolerancesB
       @raise AdjointNotInitialized The {!init} function has not been called.
       @raise BadFinalTime The final time is outside the interval over which the forward problem was solved. *)
   val init_backward :

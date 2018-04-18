@@ -59,7 +59,7 @@ type local_fn = float
     for the execution of {!local_fn}.
     In the call [cfn t y y'], [t] is the independent variable (time), [y] is
     the dependent variable vector, and [y'] is the derivative vector.
- 
+
     Raising {!Sundials.RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.
 

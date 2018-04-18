@@ -19,7 +19,7 @@ let make nthreads n iv = wrap nthreads (Sundials.RealArray.make n iv)
 
 external num_threads : t -> int
   = "ml_nvec_pthreads_num_threads"
- 
+
 module Ops = struct
   type t = (Sundials.RealArray.t, kind) Nvector.t
 

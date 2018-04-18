@@ -74,8 +74,8 @@ type 'd double = 'd * 'd
 (** Workspaces with three temporary vectors. *)
 type 'd triple = 'd * 'd * 'd
 
-(** Arguments common to Jacobian callback functions.    
- 
+(** Arguments common to Jacobian callback functions.
+
     @cvode <node5#ss:djacFn> CVDlsDenseJacFn
     @cvode <node5#ss:bjacFn> CVDlsBandJacFn
     @cvode <node5#ss:jtimesfn> CVSpilsJacTimesVecFn
@@ -330,7 +330,7 @@ module Iterative : sig (* {{{ *)
   (** Callback functions that preprocess or evaluate Jacobian-related data
       needed by the jac_times_vec_fn. In the call [jac_times_setup_fn arg],
       [arg] is a {!jacobian_arg} with no work vectors.
-    
+
       Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
       Any other exception is treated as an unrecoverable error.
 
@@ -345,7 +345,7 @@ module Iterative : sig (* {{{ *)
       work vector, [v] is the vector multiplying the Jacobian, and [jv] is
       the vector in which to store the
       result—{% $\mathtt{jv} = J\mathtt{v}$%}.
-    
+
       Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
       Any other exception is treated as an unrecoverable error.
 
@@ -746,7 +746,7 @@ type solver_result =
     @cvode <node5#sss:cvode> CVode (CV_NORMAL)
     @raise IllInput Missing or illegal solver inputs.
     @raise TooClose The initial and final times are too close to each other and not initial step size was specified.
-    
+
     @raise TooMuchWork The requested time could not be reached in [mxstep] internal steps.
     @raise TooMuchAccuracy The requested accuracy could not be satisfied.
     @raise ErrFailure Too many error test failures within a step or at the minimum step size.
@@ -1070,7 +1070,7 @@ val get_num_g_evals : ('d, 'k) session -> int
     of the error weight vector becomes zero during time stepping, or the
     linear solver initialization function failed, or a root was found both at
     [t] and very near [t].
- 
+
  @cvode <node5#sss:cvode> CV_ILL_INPUT *)
 exception IllInput
 
@@ -1087,7 +1087,7 @@ exception TooClose
 exception TooMuchWork
 
 (** The requested accuracy could not be satisfied.
- 
+
     @cvode <node5#sss:cvode> CV_TOO_MUCH_ACC *)
 exception TooMuchAccuracy
 
@@ -1095,31 +1095,31 @@ exception TooMuchAccuracy
     See {!set_max_err_test_fails} and {!set_min_step}.
 
     @cvode <node5#sss:cvode> CV_ERR_FAILURE *)
-exception ErrFailure                
+exception ErrFailure
 
 (** Too many convergence test failures within a step or at the minimum step
     size. See {!set_max_conv_fails} and {!set_min_step}.
- 
+
     @cvode <node5#sss:cvode> CV_CONV_FAILURE *)
 exception ConvergenceFailure
 
 (** Linear solver initialization failed.
- 
+
     @cvode <node5#sss:cvode> CV_LINIT_FAIL *)
-exception LinearInitFailure         
+exception LinearInitFailure
 
 (** Linear solver setup failed in an unrecoverable manner.
 
     @cvode <node5#sss:cvode> CV_LSETUP_FAIL *)
-exception LinearSetupFailure        
+exception LinearSetupFailure
 
 (** Linear solver solution failed in an unrecoverable manner.
 
     @cvode <node5#sss:cvode> CV_LSOLVE_FAIL *)
-exception LinearSolveFailure        
+exception LinearSolveFailure
 
 (** The right-hand side function failed in an unrecoverable manner.
-  
+
     @cvode <node5#sss:cvode> CV_RHSFUNC_FAIL *)
 exception RhsFuncFailure
 
@@ -1137,14 +1137,14 @@ exception RepeatedRhsFuncFailure
 (** The right-hand side function had a recoverable error, but no recovery was
     possible. This error can only occur after an error test failure at order
     one.
-  
+
     @cvode <node5#sss:cvode> CV_UNREC_RHSFUNC_ERR *)
 exception UnrecoverableRhsFuncFailure
 
 (** The rootfinding function failed.
-  
+
     @cvode <node5#sss:cvode> CV_RTFUNC_FAIL *)
-exception RootFuncFailure           
+exception RootFuncFailure
 
 (** Raised by {!get_dky} for invalid order values.
 
@@ -1152,7 +1152,7 @@ exception RootFuncFailure
 exception BadK
 
 (** Raised by {!get_dky} for invalid time values.
- 
+
     @cvode <node5#ss:optional_dky> CVodeGetDky (CV_BAD_T) *)
 exception BadT
 

@@ -709,10 +709,10 @@ let version = Sundials_config.version
 let sundials_version = Sundials_config.sundials_version
 let lapack_enabled = Sundials_config.lapack_enabled
 let mpi_enabled = Sundials_config.mpi_enabled
-let klu_enabled = Sundials_config.klu_enabled 
-let superlumt_enabled = Sundials_config.superlumt_enabled 
-let nvecpthreads_enabled = Sundials_config.nvecpthreads_enabled 
-let nvecopenmp_enabled = Sundials_config.nvecopenmp_enabled 
+let klu_enabled = Sundials_config.klu_enabled
+let superlumt_enabled = Sundials_config.superlumt_enabled
+let nvecpthreads_enabled = Sundials_config.nvecpthreads_enabled
+let nvecopenmp_enabled = Sundials_config.nvecopenmp_enabled
 
 (* Let C code know about some of the values in this module, and obtain
    a few parameters from the C side.  *)

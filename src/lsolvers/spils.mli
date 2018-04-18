@@ -19,7 +19,7 @@
 (***********************************************************************)
 
 (** Scaled Preconditioned Iterative Linear Solvers routines.
- 
+
     Global constants and general purpose solver routines.
 
     @version VERSION()
@@ -60,7 +60,7 @@ val qr_sol : Sundials.RealArray2.t
   - [h] is the output [k] by [k] Hessenberg matrix of inner products,
   - [k] specifies the vector in [v] to be orthogonalized against previous ones,
         and,
-  - [p] is the number of previous vectors in [v] to orthogonalize against.    
+  - [p] is the number of previous vectors in [v] to orthogonalize against.
 
   The vector [v[k]] is orthogonalized against the [p] unit vectors at
   [v.{k-1}], [v.{k-2}], ..., [v.{k-p}].
@@ -84,7 +84,7 @@ val modified_gs : (('d, 'k) Nvector.t) array
   - [h] is the output [k] by [k] Hessenberg matrix of inner products,
   - [k] specifies the vector in [v] to be orthogonalized against previous ones,
         and,
-  - [p] is the number of previous vectors in [v] to orthogonalize against.    
+  - [p] is the number of previous vectors in [v] to orthogonalize against.
   - [temp] and [s] are used as workspaces.
 
   The vector [v[k]] is orthogonalized against the [p] unit vectors at

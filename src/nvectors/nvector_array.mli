@@ -63,4 +63,4 @@ module MakeOps : functor (A : sig
 
 (** Nvector on {{:OCAML_DOC_ROOT(Array.html)} Array}s of [float]s. *)
 include ARRAY_NVECTOR with type data = float array
- 
+

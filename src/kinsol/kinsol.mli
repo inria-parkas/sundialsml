@@ -42,7 +42,7 @@
 open Sundials
 
 (** A session with the KINSOL solver.
- 
+
     An example session with Kinsol ({openfile kinsol_skel.ml}): {[
 #include "../../examples/ocaml/skeletons/kinsol_skel.ml"
     ]}
@@ -68,8 +68,8 @@ type 'kind serial_linear_solver = (Nvector_serial.data, 'kind) linear_solver
 (** Workspaces with two temporary vectors. *)
 type 'd double = 'd * 'd
 
-(** Arguments common to Jacobian callback functions.    
- 
+(** Arguments common to Jacobian callback functions.
+
     @kinsol <node5#ss:djacFn> KINDlsDenseJacFn
     @kinsol <node5#ss:bjacFn> KINDlsBandJacFn
     @kinsol <node5#ss:psolveFn> KINSpilsPrecSolveFn
@@ -82,7 +82,7 @@ type ('t, 'd) jacobian_arg = ('t, 'd) Kinsol_impl.jacobian_arg =
   }
 
 (** Direct Linear Solvers operating on dense, banded, and sparse matrices.
-    
+
     @kinsol <node5#sss:optin_dls> Direct linear solvers optional input functions
     @kinsol <node5#sss:optout_dls> Direct linear solvers optional output functions *)
 module Direct : sig (* {{{ *)
@@ -362,7 +362,7 @@ module Alternate : sig (* {{{ *)
       This function optionally returns the {i L2}-norm of the product $Jp$
       ($\lVert D_F J p \rVert_2$) and the dot product of the scaled $F$
       vector and the scaled vector $Jp$ ($(D_F F)\cdot(D_F J p)$).
-      
+
       Raising {!Sundials.RecoverableFailure} indicates an error where
       recovery may be possible by calling the {!lsetup} function again.
       Other exceptions are treated as unrecoverable errors.
@@ -485,7 +485,7 @@ type result =
 
     The function either returns a {!result} or raises one of the exceptions
     listed below.
- 
+
     @kinsol <node5#sss:kinsol> KINSol
     @raise MissingLinearSolver A linear solver is required but was not given.
     @raise IllInput Missing or illegal solver inputs.

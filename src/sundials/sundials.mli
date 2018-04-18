@@ -511,7 +511,7 @@ module Constraint :
     val to_float : t -> float
 
     (** Map floating-point constants to constraint values.
-        
+
         @raise Invalid_argument The given value is not a legal constraint. *)
     val of_float : float -> t
   end

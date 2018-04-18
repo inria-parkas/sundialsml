@@ -11,7 +11,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(** The Pthreads nvectors of Sundials (requires pthreads). 
+(** The Pthreads nvectors of Sundials (requires pthreads).
 
     @version VERSION()
     @author Timothy Bourke (Inria/ENS)

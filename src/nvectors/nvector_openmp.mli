@@ -11,7 +11,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(** The OpenMP nvectors of Sundials (requires OpenMP). 
+(** The OpenMP nvectors of Sundials (requires OpenMP).
 
     @version VERSION()
     @author Timothy Bourke (Inria/ENS)

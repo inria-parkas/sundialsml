@@ -77,8 +77,8 @@ type 'd double = 'd * 'd
 (** Workspaces with three temporary vectors. *)
 type 'd triple = 'd * 'd * 'd
 
-(** Arguments common to Jacobian callback functions.    
-   
+(** Arguments common to Jacobian callback functions.
+
     @ida <node5#ss:djacFn> IDADlsDenseJacFn
     @ida <node5#ss:bjacFn> IDADlsBandJacFn
     @ida <node5#ss:jtimesFn> IDASpilsJacTimesVecFn
@@ -239,7 +239,7 @@ module Iterative : sig (* {{{ *)
   (** Callback functions that preprocess or evaluate Jacobian-related data
       needed by the jac_times_vec_fn. In the call [jac_times_setup_fn arg],
       [arg] is a {!jacobian_arg} with no work vectors.
-    
+
       Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
       Any other exception is treated as an unrecoverable error.
 
@@ -254,7 +254,7 @@ module Iterative : sig (* {{{ *)
       work vectors, [v] is the vector multiplying the Jacobian, and [jv] is
       the vector in which to store the
       result—{% $\mathtt{jv} = J\mathtt{v}$%}.
-    
+
       Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
       Any other exception is treated as an unrecoverable error.
 
@@ -624,7 +624,7 @@ module VarId :
     val to_float : t -> float
 
     (** Map floating-point constants to id values.
-        
+
         @raise Invalid_argument The given value is not a legal id. *)
     val of_float : float -> t
   end (* }}} *)
@@ -641,7 +641,7 @@ val set_id : ('d, 'k) session -> ('d,'k) Nvector.t -> unit
     specified either in the call or by a prior call to {!init} or {!set_id}.
     Suppressing local error tests for algebraic variables is {i discouraged}
     for DAE systems of index 1 and {i encouraged} for systems of index 2 or
-    more. 
+    more.
 
     @ida <node5#sss:optin_main> IDASetId
     @ida <node5#sss:optin_main> IDASetSuppressAlg *)
@@ -1077,7 +1077,7 @@ val get_num_g_evals : ('d, 'k) session -> int
     of the error weight vector becomes zero during time stepping, or the
     linear solver initialization function failed, or a root was found both at
     [t] and very near [t].
- 
+
     @ida <node5#sss:idasolve> IDA_ILL_INPUT *)
 exception IllInput
 
@@ -1095,28 +1095,28 @@ exception TooMuchAccuracy
 (** Too many error test failures within a step. See {!set_max_err_test_fails}.
 
     @ida <node5#sss:idasolve> IDA_ERR_FAIL *)
-exception ErrFailure                
+exception ErrFailure
 
 (** Too many convergence test failures within a step,
     or Newton convergence failed. See {!set_max_conv_fails}.
 
     @ida <node5#sss:idasolve> IDA_CONV_FAIL *)
-exception ConvergenceFailure        
+exception ConvergenceFailure
 
 (** Linear solver initialization failed.
 
     @ida <node5#sss:idasolve> IDA_LINIT_FAIL *)
-exception LinearInitFailure         
+exception LinearInitFailure
 
 (** Linear solver setup failed in an unrecoverable manner.
 
     @ida <node5#sss:idasolve> IDA_LSETUP_FAIL *)
-exception LinearSetupFailure        
+exception LinearSetupFailure
 
 (** Linear solver solution failed in an unrecoverable manner.
 
     @ida <node5#sss:idasolve> IDA_LSOLVE_FAIL *)
-exception LinearSolveFailure        
+exception LinearSolveFailure
 
 (** The residual function failed in an unrecoverable manner.
 
@@ -1126,7 +1126,7 @@ exception ResFuncFailure
 (** The residual function had a recoverable error when first called.
 
     @ida <node5#ss:idacalcic> IDA_FIRST_RES_FAIL *)
-exception FirstResFuncFailure       
+exception FirstResFuncFailure
 
 (** Too many convergence test failures, or unable to estimate the initial step
     size, due to repeated recoverable errors in the residual function.
@@ -1137,32 +1137,32 @@ exception RepeatedResFuncFailure
 (** The rootfinding function failed.
 
     @ida <node5#sss:idasolve> IDA_RTFUNC_FAIL *)
-exception RootFuncFailure           
+exception RootFuncFailure
 
 (** No solution satisfying the inequality constraints could be found.
- 
+
     @ida <node5#ss:idacalcic> IDA_CONSTR_FAIL *)
 exception ConstraintFailure
 
 (** Linesearch could not find a solution with a step larger than steptol in
     weighted RMS norm.
- 
+
     @ida <node5#ss:idacalcic> IDA_LINESEARCH_FAIL *)
 exception LinesearchFailure
 
 (** A recoverable error occurred in a callback but no recovery was possible.
- 
+
     @ida <node5#ss:idacalcic> IDA_NO_RECOVERY *)
 exception NoRecovery
 
 (** A component of the error weight vector, either for the input value or a
     corrected value, is zero.
- 
+
     @ida <node5#ss:idacalcic> IDA_BAD_EWT *)
 exception BadEwt
 
 (** Raised by {!get_dky} for invalid order values.
- 
+
     @ida <node5#ss:optional_dky> IDAGetDky (IDA_BAD_K) *)
 exception BadK
 

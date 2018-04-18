@@ -11,7 +11,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(** The standard parallel nvectors of Sundials (requires MPI). 
+(** The standard parallel nvectors of Sundials (requires MPI).
 
     @version VERSION()
     @author Timothy Bourke (Inria/ENS)

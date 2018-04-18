@@ -34,7 +34,7 @@ type ('data, 'kind) nvector = ('data, 'kind) t
 (** [unwrap nv] returns the data underlying the nvector [nv]. *)
 val unwrap : ('data, 'kind) t -> 'data
 
-(** Raised when an nvector argument is incompatible with a session. 
+(** Raised when an nvector argument is incompatible with a session.
     For example, when a solver session was initialized with an nvector
     having 10 elements, and a later call passes an nvector with only
     9 elements. The exact details depend on the nvector instantiation. *)
