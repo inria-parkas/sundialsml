@@ -515,9 +515,3 @@ exception IllegalPrecType
     returned the given unknown error code. *)
 exception InternalFailure of (string * int)
 
-(** Raised if a zero diagonal element is found during factorization using a
-    low-level routine like {!Spils.qr_fact}, {!Spils.qr_sol},
-    {!Dls.DenseMatrix.getrf}, or {!Dls.ArrayDenseMatrix.getrf}.
-    The argument gives the equation number (from 1). *)
-exception ZeroDiagonalElement of int
-

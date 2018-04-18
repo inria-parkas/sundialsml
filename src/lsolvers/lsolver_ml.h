@@ -112,7 +112,6 @@ enum lsolver_exn_index {
     LSOLVER_EXN_PackageFailure,
     LSOLVER_EXN_IllegalPrecType,
     LSOLVER_EXN_InternalFailure,
-    LSOLVER_EXN_ZeroDiagonalElement,
     LSOLVER_EXN_SET_SIZE
 };
 

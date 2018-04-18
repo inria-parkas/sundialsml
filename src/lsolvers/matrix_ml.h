@@ -269,6 +269,7 @@ enum mat_matrix_index {
 enum mat_exn_index {
     MATRIX_EXN_Invalidated = 0,
     MATRIX_EXN_IncompatibleArguments,
+    MATRIX_EXN_ZeroDiagonalElement,
     MATRIX_EXN_SET_SIZE
 };
 

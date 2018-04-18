@@ -36,7 +36,7 @@
     {% $\begin{bmatrix} c & -s \\ s & c \end{bmatrix}$ %}. It is stored in
     the [2n] elements of [q] as [[|c; s; c; s; ...; c; s|]].
 
-    @raise Lsolver.ZeroDiagonalElement Zero found in matrix diagonal *)
+    @raise Matrix.ZeroDiagonalElement Zero found in matrix diagonal *)
 val qr_fact : Sundials.RealArray2.t
               -> Sundials.RealArray.t
               -> bool
@@ -48,7 +48,7 @@ val qr_fact : Sundials.RealArray2.t
     rotations used to factor it—both computed by {!qr_fact}. The function
     computes the [n+1] elements of [b] to solve $Rx = Qb$.
 
-    @raise Lsolver.ZeroDiagonalElement Zero found in matrix diagonal *)
+    @raise Matrix.ZeroDiagonalElement Zero found in matrix diagonal *)
 val qr_sol : Sundials.RealArray2.t
              -> Sundials.RealArray.t
              -> Sundials.RealArray.t

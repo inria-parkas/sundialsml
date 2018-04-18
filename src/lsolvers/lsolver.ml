@@ -31,7 +31,6 @@ exception LUfactFailure
 exception PackageFailure of bool
 exception IllegalPrecType
 exception InternalFailure of (string * int)
-exception ZeroDiagonalElement of int
 
 module Direct = struct (* {{{ *)
   include Lsolver_impl.Direct
@@ -566,6 +565,5 @@ let _ =
       PackageFailure false;
       IllegalPrecType;
       InternalFailure ("", 0);
-      ZeroDiagonalElement 0;
     |]
 

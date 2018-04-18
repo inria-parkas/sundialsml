@@ -25,7 +25,7 @@
 #include <caml/fail.h>
 #include <caml/bigarray.h>
 
-#include "../lsolvers/lsolver_ml.h"
+#include "../lsolvers/matrix_ml.h"
 #include "../nvectors/nvector_ml.h"
 
 CAMLprim value c_spils_modified_gs(value vv, value vh, value vk, value vp)
@@ -130,7 +130,7 @@ CAMLprim value c_spils_qr_fact(value vh, value vq, value vnewjob)
     r = QRfact(hn, ARRAY2_ACOLS(vh), REAL_ARRAY(vq), Bool_val(vnewjob));
 
     if (r != 0) {
-	caml_raise_with_arg(LSOLVER_EXN_TAG(ZeroDiagonalElement),
+	caml_raise_with_arg(MATRIX_EXN_TAG(ZeroDiagonalElement),
 			    Val_long(r));
     }
 
@@ -158,7 +158,7 @@ CAMLprim value c_spils_qr_sol(value vh, value vq, value vb)
     r = QRsol(hn, ARRAY2_ACOLS(vh), REAL_ARRAY(vq), REAL_ARRAY(vb));
 
     if (r != 0) {
-	caml_raise_with_arg(LSOLVER_EXN_TAG(ZeroDiagonalElement),
+	caml_raise_with_arg(MATRIX_EXN_TAG(ZeroDiagonalElement),
 			    Val_long(r));
     }
 

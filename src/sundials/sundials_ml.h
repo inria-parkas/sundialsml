@@ -110,8 +110,6 @@ enum sundials_exn_set_index {
     IDAS_EXN_SET,
     KINSOL_EXN_SET,
     ARKODE_EXN_SET,
-    DLS_EXN_SET,
-    SPILS_EXN_SET,
     NVECTOR_PARALLEL_EXN_SET,
     MATRIX_EXN_SET,
     LSOLVER_EXN_SET,
