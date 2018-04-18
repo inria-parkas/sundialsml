@@ -40,6 +40,8 @@ band.byte.diff: band.byte.log
 band.opt.diff: band.opt.log
 sparse.byte.diff: sparse.byte.log
 sparse.opt.diff: sparse.opt.log
+customarray.byte.diff: customarray.byte.log
+customarray.opt.diff: customarray.opt.log
 
 arrayband.byte: arrayband.ml $(SUNDIALS_CMA)
 arrayband.opt: arrayband.ml $(SUNDIALS_CMXA)
