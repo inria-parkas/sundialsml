@@ -420,8 +420,6 @@ query="SUNDIALS_PACKAGE_VERSION"
 sundials_version=`printf "#include %s\n%s" "${include}" "${query}" \
 		    | ${CPP} ${cppflags} ${Isundials_inc_path} -P 2>>${logfile} \
 		    | tail -1 | sed -e 's/ //g' -e 's/"//g'`
-sls_ml_xo=
-sls_cmo=
 Lsundials_arkode=
 arkode_mlobj_main=
 arkode_cobj_main=
@@ -448,8 +446,6 @@ else
 	    error="${error}\n\tsundials >= 2.5.0 required" ;;
 	2.5.*) sundials=250;;
 	*)  sundials=260
-	    sls_ml_xo=lsolvers/sls_ml${XO}
-	    sls_cmo=lsolvers/sls.cmo
 	    Lsundials_arkode=-lsundials_arkode
 	    arkode_mlobj_main='arkode/arkode_impl.cmo arkode/arkode.cmo'
 	    arkode_cobj_main=arkode/arkode_ml${XO}
@@ -1238,8 +1234,6 @@ cat ${LOG}
 	 s#@lapack_enabled@#${lapack_enabled}#;
 	 s#@klu_enabled@#${klu_enabled}#;
 	 s#@superlumt_enabled@#${superlumt_enabled}#;
-	 s#@sls_ml_xo@#${sls_ml_xo}#;
-	 s#@sls_cmo@#${sls_cmo}#;
 	 s#@nvecpthreads_enabled@#${nvecpthreads_enabled}#;
 	 s#@nvecopenmp_enabled@#${nvecopenmp_enabled}#;
 	 s#@serial_nvec_libs@#${serial_nvec_libs}#;

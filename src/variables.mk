@@ -25,7 +25,6 @@ COBJ_COMMON = sundials/sundials_ml$(XO)	\
 	      lsolvers/matrix_ml$(XO)	\
 	      lsolvers/lsolver_ml$(XO)	\
 	      lsolvers/dls_ml$(XO)	\
-	      $(SLS_ML_XO)		\
 	      nvectors/nvector_ml$(XO)	\
 	      lsolvers/spils_ml$(XO)
 
@@ -34,10 +33,7 @@ COBJ_MAIN = $(COBJ_COMMON) kinsol/kinsol_ml$(XO) $(ARKODE_COBJ_MAIN)
 MLOBJ_MAIN =	sundials/sundials_config.cmo	\
 		sundials/sundials.cmo		\
 		nvectors/nvector.cmo		\
-		lsolvers/dls_impl.cmo		\
 		lsolvers/dls.cmo		\
-		lsolvers/sls_impl.cmo		\
-		$(SLS_CMO)			\
 		lsolvers/spils.cmo		\
 		lsolvers/matrix.cmo		\
 		lsolvers/lsolver_impl.cmo	\
@@ -120,10 +116,8 @@ CMI_OPENMP =	$(MLOBJ_OPENMP:.cmo=.cmi)
 ### Objects specific to sundials_top_*.cma.
 
 MLOBJ_TOP = sundials/sundials_top.cmo		\
-	    lsolvers/dls_top.cmo		\
 	    lsolvers/matrix_top.cmo		\
-	    nvectors/nvector_serial_top.cmo	\
-	    $(SLS_CMO:.cmo=_top.cmo)
+	    nvectors/nvector_serial_top.cmo
 
 MLOBJ_TOP_MPI = nvectors/nvector_parallel_top.cmo
 

@@ -66,10 +66,3 @@ There are two types of matrix pointer: `dlsmat` (`DenseMatrix.t` and
 blocks using `caml_alloc_final` (by `c_dls_dense_wrap` and
 `c_sls_sparse_wrap`).
 
-SPILS Solvers
--------------
-
-Pointers can be created to sessions of the various SPILS solvers (e.g., the
-field of type `Spils.SPGMR.memrec` within `Spils.SPGMR.t`). These pointers
-are created as custom blocks using `caml_alloc_final` (by `c_spils_*_make`).
-

@@ -28,7 +28,7 @@
    To avoid repeating the types' definitions in Cvode, Cvodes,
    Cvode_bbd, and Cvodes_bbd, we "include Cvode_impl" from each
    module.  However, some submodules' types clash (for example
-   Cvode.Spils.prec_solve_fn and Cvodes.Adjoint.Spils.prec_solve_fn),
+   Cvode.Iterative.prec_solve_fn and Cvodes.Adjoint.Iterative.prec_solve_fn),
    so we need to reproduce to some extent the submodules present in
    Cvode and Cvodes.  Hence the behemoth you see below.
 

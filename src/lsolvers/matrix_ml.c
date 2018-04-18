@@ -26,8 +26,6 @@
 #include <sundials/sundials_types.h>
 #include <sundials/sundials_direct.h>
 #include <sundials/sundials_sparse.h>
-#include "../lsolvers/sls_ml.h"
-#include "../lsolvers/dls_ml.h"
 #endif
 
 #include <sundials/sundials_nvector.h>
@@ -720,7 +718,7 @@ static void finalize_mat_content_sparse(value vcptra)
        bigarrays are finalized */
     free(content);
 
-#elif SUNDIALS_LIB_VERSION >= 270 // (as per finalize_slsmat)
+#elif SUNDIALS_LIB_VERSION >= 270
     SparseDestroyMat(SLSMAT(va));
 
 #else // SUNDIALS_LIB_VERSION < 270

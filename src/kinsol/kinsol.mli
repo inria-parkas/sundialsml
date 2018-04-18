@@ -493,7 +493,7 @@ type result =
     @raise MaxIterationsReached The maximum number of nonlinear iterations was reached.
     @raise MaxNewtonStepExceeded Five consecutive steps satisfied a scaled step length test.
     @raise LineSearchBetaConditionFailure  Line search could not satisfy the beta-condition.
-    @raise LinearSolverNoRecovery The {!Spils.prec_solve_fn} callback raised {!Sundials.RecoverableFailure} but the preconditioner is already current.
+    @raise LinearSolverNoRecovery The {!Iterative.prec_solve_fn} callback raised {!Sundials.RecoverableFailure} but the preconditioner is already current.
     @raise LinearSolverInitFailure Linear solver initialization failed.
     @raise LinearSetupFailure Linear solver setup failed unrecoverably.
     @raise LinearSolveFailure Linear solver solution failed unrecoverably.

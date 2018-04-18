@@ -18,6 +18,9 @@
 
 #if SUNDIALS_LIB_VERSION >= 300
 #include <sundials/sundials_matrix.h>
+#else
+#include <sundials/sundials_dense.h>
+#include <sundials/sundials_sparse.h>
 #endif
 
 /*  OCaml matrix interface : Sundials >= 3.0.0
@@ -181,6 +184,9 @@ struct csmat {
 #define MAT_VAL(v) (MAT_CVAL(Field(v, 1)))
 
 #else // SUNDIALS_LIB_VERSION < 300
+#define DLSMAT(v) (*(DlsMat *)Data_custom_val(v))
+#define SLSMAT(v) (*(SlsMat *)Data_custom_val(v))
+
 #define MAT_CONTENT_DENSE(v)  DLSMAT(v)
 #define MAT_CONTENT_BAND(v)   DLSMAT(v)
 #define MAT_CONTENT_SPARSE(v) SLSMAT(v)
