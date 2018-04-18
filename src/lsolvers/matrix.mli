@@ -74,8 +74,8 @@ exception ZeroDiagonalElement of int
 module Dense : (* {{{ *)
   sig
     (** A dense matrix. Values of this type are typically passed to linear
-        solver callback functions (like {!Cvode.Direct.jac_fn},
-        {!Ida.Direct.jac_fn}, and {!Kinsol.Direct.jac_fn}).
+        solver callback functions (like {!Cvode.Dls.jac_fn},
+        {!Ida.Dls.jac_fn}, and {!Kinsol.Dls.jac_fn}).
 
         @nocvode <node> The SUNMatrix_Dense implementation *)
     type t
@@ -201,8 +201,8 @@ module Dense : (* {{{ *)
 module Band : (* {{{ *)
   sig
     (** A band matrix. Values of this type are typically passed to linear
-        solver callback functions (like {!Cvode.Direct.jac_fn},
-        {!Ida.Direct.jac_fn}, and {!Kinsol.Direct.jac_fn}).
+        solver callback functions (like {!Cvode.Dls.jac_fn},
+        {!Ida.Dls.jac_fn}, and {!Kinsol.Dls.jac_fn}).
 
         @nocvode <node> The SUNMatrix_Band implementation *)
     type t
@@ -385,8 +385,8 @@ module Sparse : (* {{{ *)
       | CSR : csr sformat (** Compressed-sparse-row format ([CSR_MAT]). *)
 
     (** A sparse matrix. Values of this type are typically passed to linear
-        solver callback functions (like {!Cvode.Direct.jac_fn},
-        {!Ida.Direct.jac_fn}, and {!Kinsol.Direct.jac_fn}).
+        solver callback functions (like {!Cvode.Dls.jac_fn},
+        {!Ida.Dls.jac_fn}, and {!Kinsol.Dls.jac_fn}).
 
         @nocvode <node> The SUNMatrix_Sparse implementation *)
     type 's t
@@ -881,7 +881,7 @@ val make_dense : int -> int -> float -> 'nk dense
 val wrap_dense : Dense.t -> 'nk dense
 
 (** [make dimensions x] returns a (band) matrix with the given
-    {!dimensions} and all elements initialized to [x].
+    {!Band.dimensions} and all elements initialized to [x].
 
     @nocvode <node> SUNBandMatrix *)
 val make_band : Band.dimensions -> float -> 'nk band
@@ -895,7 +895,8 @@ val wrap_band : Band.t -> 'nk band
 (** [make m n nnz] returns an [m] by [n] matrix in the specified format with
     a potential for [nnz] non-zero elements. All elements are initially zero.
 
-    The {{!sformat}CSR} format is only available from Sundials 2.7.0 onwards.
+    The {{!Sparse.sformat}CSR} format is only available from Sundials 2.7.0
+    onwards.
 
     @nocvode <node> SUNSparseMatrix *)
 val make_sparse : 's Sparse.sformat -> int -> int -> int -> ('s, 'nk) sparse
@@ -929,7 +930,7 @@ val get_ops : ('k, 'm, 'nd, 'nk) t -> ('m, 'nd, 'nk) matrix_ops
 val get_id : ('k, 'm, 'nd, 'nk) t -> id
 
 (** Direct access to the underlying storage array, which is accessed
-    column first (unlike in {!get}).
+    column first (unlike in {!Dense.get}, {!Band.get}, and {!Sparse.get}).
 
     @nocvode <node> SM_CONTENT_B *)
 val unwrap : ('k, 'm, 'nd, 'nk) t -> 'm

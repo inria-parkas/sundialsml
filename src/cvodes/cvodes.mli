@@ -1582,8 +1582,8 @@ module Adjoint : sig (* {{{ *)
         Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
         Any other exception is treated as an unrecoverable error.
 
-        {warning The vectors in {!lsolve_args} should not be accessed
-                 after the function returns.}
+        {warning The vectors in {!Cvode.Alternate.lsolve_args} should not
+            be accessed after the function returns.}
 
         @cvodes <node8#SECTION00830000000000000000> lsolve
         @cvodes <node3#e:Newtonmat> IVP solution (Eq. 2.5) *)

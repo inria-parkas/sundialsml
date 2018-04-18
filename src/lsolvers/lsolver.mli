@@ -20,8 +20,8 @@
     The generic operations defined herein apply to the linear solver types
     {!Direct.t} and {!Iterative.t}. Solver-specific configuration and status
     operations are defined in the different solver modules and applied to
-    session types, for example, {!Cvode.Direct.get_work_space} and
-    {!Arkode.Iterative.set_eps_lin}.
+    session types, for example, {!Cvode.Dls.get_work_space} and
+    {!Arkode.Spils.set_eps_lin}.
 
     @version VERSION()
     @author Timothy Bourke (Inria/ENS)
@@ -62,7 +62,7 @@ module Direct : sig (* {{{ *)
     -> (Matrix.Dense.t, 'k, tag) serial_t
 
   (** Creates a direct linear solver on dense matrices using LAPACK.
-      See {!make}. Only available if {!Sundials.lapack_enabled}.
+      See {!dense}. Only available if {!Sundials.lapack_enabled}.
 
     @nocvode <node> SUNLapackDense *)
   val lapack_dense :
@@ -81,7 +81,7 @@ module Direct : sig (* {{{ *)
     -> (Matrix.Band.t, 'k, tag) serial_t
 
   (** Creates a direct linear solver on banded matrices using LAPACK.
-      See {!make}. Only available if {!Sundials.lapack_enabled}.
+      See {!band}. Only available if {!Sundials.lapack_enabled}.
 
     @nocvode <node> SUNLapackBand *)
   val lapack_band :
@@ -599,7 +599,7 @@ exception LUfactFailure
     {cconst SUNLS_PACKAGE_FAIL_REC/_UNREC} *)
 exception PackageFailure of bool
 
-(** Raised by {!set_prec_type} if the given type is not allowed. *)
+(** Raised by {!Iterative.set_prec_type} if the given type is not allowed. *)
 exception IllegalPrecType
 
 (** Indicates that an internal callback, identified by the first argument,

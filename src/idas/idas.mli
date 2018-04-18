@@ -1421,7 +1421,7 @@ module Adjoint : sig (* {{{ *)
       indicate that a recoverable error has occurred. Any other exception is
       treated as an unrecoverable error.
 
-      {warning The vectors in {!lsetup_args} should not be
+      {warning The vectors in {!Ida.Alternate.lsetup_args} should not be
                accessed after the function returns.}
 
       @idas <node8#SECTION00820000000000000000> lsetup *)

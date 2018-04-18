@@ -849,7 +849,7 @@ module Mass : sig (* {{{ *)
     val get_num_mtsetup_evals : ('d, 'k) session -> int
 
     (** Returns the cumulative number of calls to the mass-matrix-vector
-        product function ({!times_vec_fn}).
+        product function ({!mass_times_vec_fn}).
 
         @noarkode <node> ARKSpilsGetNumMtimesEvals
         @since Sundials 2.6.3 *)
