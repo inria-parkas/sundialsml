@@ -321,10 +321,10 @@ module Iterative : sig (* {{{ *)
   (** Change the preconditioning direction without modifying callback
       functions.
 
-      Raises {IllegalPrecType} if the current preconditioner
+      Raises {!IllegalPrecType} if the current preconditioner
       is {{!preconditioning_type}PrecNone} and the given argument is not
       (since no callback functions are specified in this case. May raise
-      {IllegalPrecType} if the given type is not allowed by the underlying
+      {!IllegalPrecType} if the given type is not allowed by the underlying
       solver.
 
       @nocvode <node> SUNPCGSetPrecType
