@@ -155,8 +155,8 @@ module Direct : sig (* {{{ *)
       ?ordering:ordering
       -> nthreads:int
       -> 'k Nvector_serial.any
-      -> (Matrix.csc, 'k) Matrix.sparse
-      -> (Matrix.csc Matrix.Sparse.t, 'k, tag) serial_t
+      -> (Matrix.Sparse.csc, 'k) Matrix.sparse
+      -> (Matrix.Sparse.csc Matrix.Sparse.t, 'k, tag) serial_t
 
     (** Sets the ordering algorithm used to minimize fill-in.
 
@@ -235,7 +235,7 @@ module Iterative : sig (* {{{ *)
     | ClassicalGS  (** Classical Gram Schmidt orthogonalization
                        {cconst CLASSICAL_GS} *)
 
-  (** {3:iter_solvers Solvers} *)
+  (** {3:solvers Solvers} *)
 
   (** Krylov iterative solver using the scaled preconditioned biconjugate
       stabilized (Bi-CGStab) method. The [maxl] arguments gives the maximum
@@ -284,55 +284,6 @@ module Iterative : sig (* {{{ *)
 
       @nocvode <node> SUNPCG *)
   val pcg : ?maxl:int -> ('d, 'k) Nvector.t -> ('d, 'k, [`Pcg]) t
-
-  (** {3:iter_param Solver parameters} *)
-
-  (** Updates the number of linear solver iterations to allow.
-
-      @nocvode <node> SUNSPBCGSSetMaxl
-      @nocvode <node> SUNSPTFQMRSetMaxl
-      @nocvode <node> SUNPCGSetMaxl *)
-  val set_maxl : ('d, 'k, [< `Spbcgs|`Sptfqmr|`Pcg]) t -> int -> unit
-
-  (** Sets the Gram-Schmidt orthogonalization to use.
-
-      @nocvode <node> SUNSPGMRSetGSType
-      @nocvode <node> SUNSPFGMRSetGSType *)
-  val set_gs_type :
-    ('d, 'k, [< `Spfgmr|`Spgmr]) t -> gramschmidt_type -> unit
-
-  (** Sets the number of GMRES restarts to allow.
-
-      NB: This feature is not supported by Sundials < 3.0.0.
-
-      @nocvode <node> SUNSPGMRSetMaxRestarts
-      @nocvode <node> SUNSPFGMRSetMaxRestarts *)
-  val set_max_restarts : ('d, 'k, [< `Spfgmr|`Spgmr]) t -> int -> unit
-
-  (** The type of preconditioning in Krylov solvers.
-
-      @nocvode <node> Preconditioning *)
-  type preconditioning_type = Lsolver_impl.Iterative.preconditioning_type =
-    | PrecNone    (** No preconditioning *)
-    | PrecLeft    (** {% $(P^{-1}A)x = P^{-1}b$ %} *)
-    | PrecRight   (** {% $(AP^{-1})Px = b$ %} *)
-    | PrecBoth    (** {% $(P_L^{-1}AP_R^{-1})P_Rx = P_L^{-1}b$ %} *)
-
-  (** Change the preconditioning direction without modifying callback
-      functions.
-
-      Raises {!IllegalPrecType} if the current preconditioner
-      is {{!preconditioning_type}PrecNone} and the given argument is not
-      (since no callback functions are specified in this case. May raise
-      {!IllegalPrecType} if the given type is not allowed by the underlying
-      solver.
-
-      @nocvode <node> SUNPCGSetPrecType
-      @nocvode <node> SUNSPBCGSSetPrecType
-      @nocvode <node> SUNSPFGMRSetPrecType
-      @nocvode <node> SUNSPGMRSetPrecType
-      @nocvode <node> SUNSPTFQMRSetPrecType *)
-  val set_prec_type : ('d, 'k, 'f) t -> preconditioning_type -> unit
 
   (** Custom iterative linear solvers. *)
   module Custom : sig (* {{{ *)
@@ -449,9 +400,59 @@ module Iterative : sig (* {{{ *)
 
   end (* }}} *)
 
+
+  (** {3:parameters Solver parameters} *)
+
+  (** Updates the number of linear solver iterations to allow.
+
+      @nocvode <node> SUNSPBCGSSetMaxl
+      @nocvode <node> SUNSPTFQMRSetMaxl
+      @nocvode <node> SUNPCGSetMaxl *)
+  val set_maxl : ('d, 'k, [< `Spbcgs|`Sptfqmr|`Pcg]) t -> int -> unit
+
+  (** Sets the Gram-Schmidt orthogonalization to use.
+
+      @nocvode <node> SUNSPGMRSetGSType
+      @nocvode <node> SUNSPFGMRSetGSType *)
+  val set_gs_type :
+    ('d, 'k, [< `Spfgmr|`Spgmr]) t -> gramschmidt_type -> unit
+
+  (** Sets the number of GMRES restarts to allow.
+
+      NB: This feature is not supported by Sundials < 3.0.0.
+
+      @nocvode <node> SUNSPGMRSetMaxRestarts
+      @nocvode <node> SUNSPFGMRSetMaxRestarts *)
+  val set_max_restarts : ('d, 'k, [< `Spfgmr|`Spgmr]) t -> int -> unit
+
+  (** The type of preconditioning in Krylov solvers.
+
+      @nocvode <node> Preconditioning *)
+  type preconditioning_type = Lsolver_impl.Iterative.preconditioning_type =
+    | PrecNone    (** No preconditioning *)
+    | PrecLeft    (** {% $(P^{-1}A)x = P^{-1}b$ %} *)
+    | PrecRight   (** {% $(AP^{-1})Px = b$ %} *)
+    | PrecBoth    (** {% $(P_L^{-1}AP_R^{-1})P_Rx = P_L^{-1}b$ %} *)
+
+  (** Change the preconditioning direction without modifying callback
+      functions.
+
+      Raises {!IllegalPrecType} if the current preconditioner
+      is {{!preconditioning_type}PrecNone} and the given argument is not
+      (since no callback functions are specified in this case. May raise
+      {!IllegalPrecType} if the given type is not allowed by the underlying
+      solver.
+
+      @nocvode <node> SUNPCGSetPrecType
+      @nocvode <node> SUNSPBCGSSetPrecType
+      @nocvode <node> SUNSPFGMRSetPrecType
+      @nocvode <node> SUNSPGMRSetPrecType
+      @nocvode <node> SUNSPTFQMRSetPrecType *)
+  val set_prec_type : ('d, 'k, 'f) t -> preconditioning_type -> unit
+
 end (* }}} *)
 
-(** {2 Exceptions} *)
+(** {2:exceptions Exceptions} *)
 
 (** Raised on an unrecoverable failure in a linear solver. The argument is
     [true] for a recoverable failure and [false] for an unrecoverable one.
@@ -460,8 +461,6 @@ exception UnrecoverableFailure of bool
 
 (** Raised when creating a linear solver if the given matrix is not square. *)
 exception MatrixNotSquare
-
-(** {2 Exceptions} *)
 
 (** Raised on an attempt to associate a linear solver instance with more than
     one session. *)

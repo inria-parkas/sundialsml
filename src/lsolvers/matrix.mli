@@ -21,6 +21,8 @@
     @nocvode <node> Description of the SUNMatrix module
     @since 3.0.0 *)
 
+(** {2:shared Shared definitions} *)
+
 (** Generic operations that all matrix types must implement. Failure is
     signalled by raising an exception.
 
@@ -59,18 +61,19 @@ exception Invalidated
 (** Raised if matrix operation arguments are mutually incompatible. *)
 exception IncompatibleArguments
 
+(** {2:content Matrix content} *)
+
 (** Dense matrices *)
 module Dense : (* {{{ *)
   sig
-    (* TODO: check documentation links *)
     (** A dense matrix. Values of this type are typically passed to linear
-        solver callback functions (like {!Cvode.dense_jac_fn},
-        {!Ida.dense_jac_fn}, and {!Kinsol.dense_jac_fn}).
+        solver callback functions (like {!Cvode.Direct.jac_fn},
+        {!Ida.Direct.jac_fn}, and {!Kinsol.Direct.jac_fn}).
 
         @nocvode <node> The SUNMatrix_Dense implementation *)
     type t
 
-    (** {4 Basic access} *)
+    (** {3:basic Basic access} *)
 
     (** [make m n x] returns an [m] by [n] dense matrix with elements set
         to [x].
@@ -135,7 +138,7 @@ module Dense : (* {{{ *)
         @nocvode <node> SM_CONTENT_D *)
     val unwrap : t -> Sundials.real_array2
 
-    (** {4 Operations} *)
+    (** {3:ops Operations} *)
 
     (** Operations on dense matrices. *)
     val ops : (t, Nvector_serial.data, [>Nvector_serial.kind] as 'k) matrix_ops
@@ -179,7 +182,7 @@ module Dense : (* {{{ *)
         @nocvode <node> SUNMatSpace_Dense *)
     val space : t -> int * int
 
-    (** {4 Low-level details} *)
+    (** {3:lowlevel Low-level details} *)
 
     (** Called internally when the corresponding value in the underlying
         library ceases to exist. Has no effect when
@@ -190,10 +193,9 @@ module Dense : (* {{{ *)
 (** Banded matrices *)
 module Band : (* {{{ *)
   sig
-    (* TODO: check documentation links *)
     (** A band matrix. Values of this type are typically passed to linear
-        solver callback functions (like {!Cvode.dense_jac_fn},
-        {!Ida.dense_jac_fn}, and {!Kinsol.dense_jac_fn}).
+        solver callback functions (like {!Cvode.Direct.jac_fn},
+        {!Ida.Direct.jac_fn}, and {!Kinsol.Direct.jac_fn}).
 
         @nocvode <node> The SUNMatrix_Band implementation *)
     type t
@@ -209,7 +211,7 @@ module Band : (* {{{ *)
         ml  : int;  (** Lower bandwidth. *)
       }
 
-    (** {4 Basic access} *)
+    (** {3:basic Basic access} *)
 
     (** Returns a band matrix with the given {!dimensions} and all elements
         initialized to the given value.
@@ -303,7 +305,7 @@ module Band : (* {{{ *)
         @nocvode <node> SM_CONTENT_B *)
     val unwrap : t -> Sundials.real_array2
 
-    (** {4 Operations} *)
+    (** {3:ops Operations} *)
 
     (** Operations on dense matrices. *)
 
@@ -356,7 +358,7 @@ module Band : (* {{{ *)
         @nocvode <node> SUNMatSpace_Band *)
     val space : t -> int * int
 
-    (** {4 Low-level details} *)
+    (** {3:lowlevel Low-level details} *)
 
     (** Called internally when the corresponding value in the underlying
         library ceases to exist. Has no effect when
@@ -375,10 +377,9 @@ module Sparse : (* {{{ *)
       | CSC : csc sformat (** Compressed-sparse-column format ([CSC_MAT]). *)
       | CSR : csr sformat (** Compressed-sparse-row format ([CSR_MAT]). *)
 
-    (* TODO: check documentation links *)
-    (** A spare matrix. Values of this type are typically passed to linear
-        solver callback functions (like {!Cvode.dense_jac_fn},
-        {!Ida.dense_jac_fn}, and {!Kinsol.dense_jac_fn}).
+    (** A sparse matrix. Values of this type are typically passed to linear
+        solver callback functions (like {!Cvode.Direct.jac_fn},
+        {!Ida.Direct.jac_fn}, and {!Kinsol.Direct.jac_fn}).
 
         @nocvode <node> The SUNMatrix_Sparse implementation *)
     type 's t
@@ -387,13 +388,14 @@ module Sparse : (* {{{ *)
     type index_array =
       (int, Bigarray.int_elt, Bigarray.c_layout) Bigarray.Array1.t
 
-    (** {4 Basic access} *)
+    (** {3:basic Basic access} *)
 
     (** [make fmt m n nnz] returns an [m] by [n] sparse matrix in the
         specified format with a potential for [nnz] non-zero elements.
         All elements are initially zero.
 
-        The {!sformat.CSR} format is only available from Sundials 2.7.0 onwards.
+        The {{!sformat}CSR} format is only available from Sundials 2.7.0
+        onwards.
 
         @nocvode <node> SUNSparseMatrix *)
     val make : 's sformat -> int -> int -> int -> 's t
@@ -401,7 +403,8 @@ module Sparse : (* {{{ *)
     (** Creates a sparse matrix in in the specified format from a dense matrix
         by copying all values of magnitude greater than the given tolerance.
 
-        The {!sformat.CSR} format is only available from Sundials 2.7.0 onwards.
+        The {{!sformat}CSR} format is only available from Sundials 2.7.0
+        onwards.
 
         @nocvode <node> SUNSparseFromDenseMatrix *)
     val from_dense : 's sformat -> float -> Dense.t -> 's t
@@ -409,7 +412,8 @@ module Sparse : (* {{{ *)
     (** Creates a sparse matrix in the specified format from a band matrix by
         copying all values of magnitude greater than the given tolerance.
 
-        The {!sformat.CSR} format is only available from Sundials 2.7.0 onwards.
+        The {{!sformat}CSR} format is only available from Sundials 2.7.0
+        onwards.
 
         @nocvode <node> SUNSparseFromBandMatrix *)
     val from_band : 's sformat -> float -> Band.t -> 's t
@@ -510,7 +514,7 @@ module Sparse : (* {{{ *)
         @nocvode <node> SUNSparseMatrix_Reallocate *)
     val resize : ?nnz:int -> 's t -> unit
 
-    (** {4 Operations} *)
+    (** {3:ops Operations} *)
 
     (** Operations on dense matrices. *)
     val ops : ('s t, Nvector_serial.data, [>Nvector_serial.kind]) matrix_ops
@@ -572,7 +576,7 @@ module Sparse : (* {{{ *)
         @nocvode <node> SUNMatSpace_Sparse *)
     val space : 's t -> int * int
 
-    (** {4 Low-level details} *)
+    (** {3:lowlevel Low-level details} *)
 
     (** [set_rowval a idx i] sets the [idx]th row to [i]. *)
     val set_rowval : csc t -> int -> int -> unit
@@ -599,8 +603,7 @@ module Sparse : (* {{{ *)
     val invalidate : 's t -> unit
   end (* }}} *)
 
-type csc = Sparse.csc
-type csr = Sparse.csr
+(** {2:generic Generic matrices} *)
 
 (** Distinguishes a library-supplied matrix from a custom one. *)
 type standard
@@ -616,12 +619,15 @@ type custom
     @nocvode <node> SUNMatrix *)
 type ('k, 'm, 'nd, 'nk) t
 
+(** Generic matrix with Dense content. *)
 type 'nk dense =
   (standard, Dense.t, Nvector_serial.data, [>Nvector_serial.kind] as 'nk) t
 
+(** Generic matrix with Band content. *)
 type 'nk band =
   (standard, Band.t, Nvector_serial.data, [>Nvector_serial.kind] as 'nk) t
 
+(** Generic matrix with Sparse content. *)
 type ('s, 'nk) sparse =
   (standard, 's Sparse.t, Nvector_serial.data, [>Nvector_serial.kind] as 'nk) t
 
@@ -652,7 +658,7 @@ val wrap_band : Band.t -> 'nk band
 (** [make m n nnz] returns an [m] by [n] matrix in the specified format with
     a potential for [nnz] non-zero elements. All elements are initially zero.
 
-    The {!sformat.CSR} format is only available from Sundials 2.7.0 onwards.
+    The {{!sformat}CSR} format is only available from Sundials 2.7.0 onwards.
 
     @nocvode <node> SUNSparseMatrix *)
 val make_sparse : 's Sparse.sformat -> int -> int -> int -> ('s, 'nk) sparse
@@ -691,7 +697,7 @@ val get_id : ('k, 'm, 'nd, 'nk) t -> id
     @nocvode <node> SM_CONTENT_B *)
 val unwrap : ('k, 'm, 'nd, 'nk) t -> 'm
 
-(** {4 Operations} *)
+(** {3 Operations} *)
 
 (** [scale_add c A B] calculates $A = cA + B$.
 

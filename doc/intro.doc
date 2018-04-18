@@ -69,8 +69,8 @@ Functions have been renamed according to a regular scheme. Leading {e
 module identifiers} are replaced by module paths, words
 beginning with an uppercase letter are separated by underscores and put
 into lowercase. For instance, [IdaSetErrHandlerFn], becomes
-{!Ida.set_err_handler_fn}, and [CVSpilsSetJacTimesVecFn] becomes
-{!Cvode.Spils.set_jac_times_vec_fn}.
+{!Ida.set_err_handler_fn}, and [CVSpilsSetJacTimes] becomes
+{!Cvode.Spils.set_jac_times}.
 
 Constants are replaced by variant types in most cases. They are renamed by
 conversion to {e CamlCase} and the removal of underscores. For instance,
@@ -176,7 +176,6 @@ that use parallel nvectors—see {!Cvode_bbd}, {!Cvodes_bbd}, {!Ida_bbd},
 
 The SuperLU_MT and KLU routines are only available to sessions that use
 serial, Pthreads, or OpenMP nvectors.
-Callback functions update the Jacobian matrix as an {!Sls.SparseMatrix.t}.
 
 Each solver module has a distinct linear solver type, e.g.,
 {!Cvode.linear_solver} or {!Cvodes.Adjoint.linear_solver}. As for nvectors,
@@ -188,7 +187,7 @@ appropriate [init] or [reinit] functions to configure sessions.
 {2:api API Reference}
 
 {!modules: Sundials}
-{!modules: Dls Spils Sls}
+{!modules: Matrix Lsolver Dls Spils}
 {!modules: Nvector Nvector_serial Nvector_parallel
 	   Nvector_pthreads Nvector_openmp
 	   Nvector_custom Nvector_array}

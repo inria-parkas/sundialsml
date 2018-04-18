@@ -734,9 +734,6 @@ end (* }}} *)
 type standard
 type custom
 
-type csc = Sparse.csc
-type csr = Sparse.csr
-
 (* Must correspond with matrix_ml.h:mat_matrix_id_tag *)
 type id =
   | Dense
