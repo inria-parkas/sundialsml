@@ -338,10 +338,6 @@ module Spils = struct (* {{{ *)
   external c_set_maxl : ('a, 'k) session -> int -> unit
     = "c_ida_spils_set_maxl"
 
-  (* Sundials < 3.0.0 *)
-  external c_set_max_restarts : ('a, 'k) session -> int -> unit
-    = "c_ida_spils_set_max_restarts"
-
   let old_set_maxl s maxl =
     ls_check_spils s;
     c_set_maxl s maxl
