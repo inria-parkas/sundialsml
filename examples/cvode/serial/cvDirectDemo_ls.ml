@@ -58,13 +58,11 @@
 
 module RealArray = Sundials.RealArray
 module Roots = Sundials.Roots
-module Densematrix = Dls.DenseMatrix
-module Bandmatrix = Dls.BandMatrix
 let unwrap = Nvector.unwrap
 
 let printf = Printf.printf
 
-let bandset bm i j v = Dls.BandMatrix.set bm i j v
+let bandset = Matrix.Band.set
 
 (* Shared Problem Constants *)
 
@@ -121,16 +119,16 @@ let jac1 { Cvode.jac_y = y } j =
   let y0 = y.{0} in
   let y1 = y.{1} in
   (* previously calls to DENSE_ELEM: *)
-  let set = Dls.DenseMatrix.set j in
+  let set = Matrix.Dense.set j in
   set 0 1 one;
   set 1 0 (-. two *. p1_eta *. y0 *. y1 -. one);
   set 1 1 (p1_eta *. (one -. sqr y0))
 
-let jac2 {Cvode.mupper=mu; Cvode.mlower=ml} arg jac =
+let jac2 arg jac =
   (*
      The components of f(t,y) which depend on y    are
                                                i,j
-     f    , f      , and f      : 
+     f    , f      , and f      :
       i,j    i+1,j        i,j+1
 
      f    = -2 y    + alpha1 * y      + alpha2 * y
@@ -151,14 +149,14 @@ let jac2 {Cvode.mupper=mu; Cvode.mlower=ml} arg jac =
     done
   done
 
-let prepare_next_run cvode_mem lmm miter mu ml t y =
+let prepare_next_run cvode_mem lmm miter neq mu ml t y =
   printf "\n\n-------------------------------------------------------------";
-  
+
   printf "\n\nLinear Multistep Method : ";
   (match lmm with
    | Cvode.Adams -> printf "ADAMS\n"
    | Cvode.BDF -> printf "BDF\n");
-  
+
   printf "Iteration               : ";
 
   (* Func comes first and is set via init; for all other cases, reinit.  *)
@@ -171,14 +169,18 @@ let prepare_next_run cvode_mem lmm miter mu ml t y =
     match miter with
     | Dense_User -> begin
           printf "Dense, User-Supplied Jacobian\n";
-          Cvode.(reinit cvode_mem t y
-                        ~iter:(Newton (Dls.dense ~jac:jac1 ())))
+          let dmat = Matrix.(make_dense neq neq 0.0) in
+          let solver = Cvode.Dls.(make Lsolver.Direct.(dense y dmat)
+                                       ~jac:jac1 dmat)
+          in
+          Cvode.(reinit cvode_mem t y ~iter:(Newton solver))
         end
 
     | Dense_DQ -> begin
           printf("Dense, Difference Quotient Jacobian\n");
-          Cvode.(reinit cvode_mem t y
-                        ~iter:(Newton (Dls.dense ())))
+          let dmat = Matrix.(make_dense neq neq 0.0) in
+          let solver = Cvode.Dls.(make Lsolver.Direct.(dense y dmat) dmat) in
+          Cvode.(reinit cvode_mem t y ~iter:(Newton solver))
         end
 
     | Diag -> begin
@@ -188,14 +190,21 @@ let prepare_next_run cvode_mem lmm miter mu ml t y =
 
     | Band_User -> begin
           printf("Band, User-Supplied Jacobian\n");
-          Cvode.(reinit cvode_mem t y
-            ~iter:(Newton (Dls.band { mupper = mu; mlower = ml } ~jac:jac2)))
+          let bmat = Matrix.(make_band
+                       Band.({ n = neq; mu = mu; ml = ml; smu = mu }) 0.0)
+          in
+          let solver = Cvode.Dls.(make Lsolver.Direct.(band y bmat)
+                                       ~jac:jac2 bmat) in
+          Cvode.(reinit cvode_mem t y ~iter:(Newton solver))
         end
 
     | Band_DQ -> begin
           printf("Band, Difference Quotient Jacobian\n");
-          Cvode.(reinit cvode_mem t y
-            ~iter:(Newton (Dls.band { mupper = mu; mlower = ml })))
+          let bmat = Matrix.(make_band
+                       Band.({ n = neq; mu = mu; ml = ml; smu = mu }) 0.0)
+          in
+          let solver = Cvode.Dls.(make Lsolver.Direct.(band y bmat) bmat) in
+          Cvode.(reinit cvode_mem t y ~iter:(Newton solver))
         end
 
     | Func -> assert false
@@ -220,7 +229,7 @@ let print_final_stats cvode_mem miter ero =
   printf " Number of nonlinear iterations           = %4d \n"   nni;
   printf " Number of nonlinear convergence failures = %4d \n"   ncfn;
   printf " Number of error test failures            = %4d \n\n" netf;
-  
+
   if miter != Func then begin
     let nje, nfeLS, (lenrwLS, leniwLS) =
       match miter with
@@ -290,7 +299,7 @@ let problem1 () =
       (* Func comes first and is set via init; for all other cases, reinit.  *)
       if miter <> Func then init_y ();
 
-      prepare_next_run cvode_mem lmm miter 0 0 p1_t0 y;
+      prepare_next_run cvode_mem lmm miter p1_neq 0 0 p1_t0 y;
 
       print_header1 ();
 
@@ -359,14 +368,14 @@ let print_output2 t erm qu hu =
 
 let f2 t (ydata : RealArray.t) (dydata : RealArray.t) =
   (*
-     Excluding boundaries, 
+     Excluding boundaries,
 
      ydot    = f    = -2 y    + alpha1 * y      + alpha2 * y
          i,j    i,j       i,j             i-1,j             i,j-1
   *)
   for j = 0 to p2_meshy - 1 do
     for i = 0 to p2_meshx - 1 do
-      let k = i + j * p2_meshx in 
+      let k = i + j * p2_meshx in
       let d = -. two *. ydata.{k} in
       let d = d +. (if (i == 0) then 0.0 else p2_alph1 *. ydata.{k - 1}) in
       let d = d +. (if (j == 0) then 0.0 else p2_alph2 *. ydata.{k - p2_meshx})
@@ -379,7 +388,7 @@ let max_error (ydata : RealArray.t) t =
   if t = zero then zero
   else
     let ex = if (t <= thirty) then exp(-. two *. t) else zero in
-    
+
     let max_error = ref zero in
 
     let jfact_inv = ref one in
@@ -411,7 +420,7 @@ let problem2 () =
 
       (* Func comes first and is set via init; for all other cases, reinit.  *)
       if miter <> Func then init_y ();
-      prepare_next_run cvode_mem lmm miter p2_mu p2_ml p2_t0 y;
+      prepare_next_run cvode_mem lmm miter p2_neq p2_mu p2_ml p2_t0 y;
       print_header2 ();
 
       let tout = ref p2_t1 in

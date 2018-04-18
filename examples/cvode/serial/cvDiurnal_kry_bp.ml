@@ -35,7 +35,6 @@
 
 module RealArray = Sundials.RealArray
 module Roots  = Sundials.Roots
-module Direct = Dls.ArrayDenseMatrix
 open Bigarray
 let unwrap = Nvector.unwrap
 
@@ -51,7 +50,7 @@ let num_species   = 2           (* number of species         *)
 let kh            = 4.0e-6      (* horizontal diffusivity Kh *)
 let vel           = 0.001       (* advection velocity V      *)
 let kv0           = 1.0e-8      (* coefficient in Kv(y)      *)
-let q1            = 1.63e-16    (* coefficients q1, q2, c3   *) 
+let q1            = 1.63e-16    (* coefficients q1, q2, c3   *)
 let q2            = 4.66e-16
 let c3            = 3.7e16
 let a3            = 22.62       (* coefficient in expression for q3(t) *)
@@ -63,13 +62,13 @@ let t0            = zero        (* initial time *)
 let nout          = 12          (* number of output times *)
 let twohr         = 7200.0      (* number of seconds in two hours  *)
 let halfday       = 4.32e4      (* number of seconds in a half day *)
-let pi            = 3.1415926535898 (* pi *) 
+let pi            = 3.1415926535898 (* pi *)
 
 let xmin          = zero        (* grid boundaries in x  *)
-let xmax          = 20.0           
+let xmax          = 20.0
 let ymin          = 30.0        (* grid boundaries in y  *)
 let ymax          = 50.0
-let xmid          = 10.0        (* grid midpoints in x,y *)          
+let xmid          = 10.0        (* grid midpoints in x,y *)
 let ymid          = 40.0
 
 let mx            = 10          (* mx = number of x mesh points *)
@@ -91,12 +90,12 @@ let neq      = (num_species * mm) (* neq = number of equations *)
    mathematical 3-dimensional structure of the dependent variable vector
    to the underlying 1-dimensional storage. IJth is defined in order to
    write code which indexes into small dense matrices with a (row,column)
-   pair, where 1 <= row, column <= NUM_SPECIES.   
-   
+   pair, where 1 <= row, column <= NUM_SPECIES.
+
    IJKth(vdata,i,j,k) references the element in the vdata array for
    species i at mesh point (j,k), where 1 <= i <= NUM_SPECIES,
    0 <= j <= MX-1, 0 <= k <= MY-1. The vdata array is obtained via
-   the macro call vdata = NV_DATA_S(v), where v is an N_Vector. 
+   the macro call vdata = NV_DATA_S(v), where v is an N_Vector.
    For each mesh point (j,k), the elements for species i and i+1 are
    contiguous within vdata.
 
@@ -108,7 +107,7 @@ let neq      = (num_species * mm) (* neq = number of equations *)
 let ijkth (v : RealArray.t) i j k       = v.{i - 1 + j * num_species + k * nsmx}
 let set_ijkth (v : RealArray.t) i j k e = v.{i - 1 + j * num_species + k * nsmx} <- e
 
-(* Type : UserData 
+(* Type : UserData
    contains preconditioner blocks, pivot arrays, and problem constants *)
 
 type user_data = {
@@ -132,7 +131,7 @@ let init_user_data () =
     and dx = (xmax -. xmin) /. float (mx - 1)
     and dy = (ymax -. ymin) /. float (my - 1)
     in
-    { 
+    {
         q4 = 0.0;
         om = om;
         dx = dx;
@@ -323,21 +322,22 @@ let main () =
   and reltol = rtol
   in
 
-  (* Call CVodeCreate to create the solver memory and specify the 
+  (* Call CVodeCreate to create the solver memory and specify the
    * Backward Differentiation Formula and the use of a Newton iteration *)
   (* Set the pointer to user-defined data *)
   (* Call CVBandPreInit to initialize band preconditioner *)
-  (* Call CVSpgmr to specify the linear solver CVSPGMR 
+  (* Call CVSpgmr to specify the linear solver CVSPGMR
    * with left preconditioning and the maximum Krylov dimension maxl *)
   let mu = 2
   and ml = 2
   in
+  let lsolver = Lsolver.Iterative.(spgmr u) in
   let cvode_mem = Cvode.(
-    init BDF
-      (Newton Spils.(spgmr (Banded.prec_left { mupper = mu; mlower = ml})))
-      (SStolerances (reltol, abstol))
-      (f data) t0 u
-  ) in
+    init BDF (Newton Spils.(make lsolver
+                      Banded.(prec_left { mupper = mu; mlower = ml})))
+             (SStolerances (reltol, abstol))
+             (f data) t0 u)
+  in
 
   print_intro mu ml;
 
@@ -345,7 +345,7 @@ let main () =
 
   let jpre_loop jpre jpre_str =
     printf "\n\nPreconditioner type is:  jpre = %s\n\n" jpre_str;
-    
+
     (* In loop over output points, call CVode, print results, test for error *)
     let tout = ref twohr in
     for iout = 1 to nout do
@@ -353,12 +353,12 @@ let main () =
       print_output cvode_mem (unwrap u) t;
       tout := !tout +. twohr
     done;
-    
+
     (* Print final statistics *)
     print_final_stats cvode_mem
   in (* End of jpre loop *)
 
-  jpre_loop Spils.PrecLeft  "PREC_LEFT";
+  jpre_loop Lsolver.Iterative.PrecLeft  "PREC_LEFT";
 
   (* On second run, re-initialize u, the solver, and CVSPGMR *)
   set_initial_profiles (unwrap u) data.dx data.dy;
@@ -379,15 +379,15 @@ let main () =
    | 2,5,_ ->
       Cvode.reinit cvode_mem t0 u
    | _ ->
-      let bandrange = { Cvode.mupper = mu; Cvode.mlower = ml } in
+      let bandrange = Cvode.Spils.Banded.({ mupper = mu; mlower = ml }) in
       Cvode.reinit cvode_mem t0 u
-        ~iter:Cvode.(Newton Spils.(spgmr (Banded.prec_right bandrange))));
+        ~iter:Cvode.(Newton Spils.(make lsolver (Banded.prec_right bandrange))));
 
-  Cvode.Spils.set_prec_type cvode_mem Spils.PrecRight;
+  Lsolver.Iterative.(set_prec_type lsolver PrecRight);
   printf "\n\n-------------------------------------------------------";
   printf "------------\n";
-    
-  jpre_loop Spils.PrecRight "PREC_RIGHT"
+
+  jpre_loop Lsolver.Iterative.PrecRight "PREC_RIGHT"
 
 (* Check environment variables for extra arguments.  *)
 let reps =

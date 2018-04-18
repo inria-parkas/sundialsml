@@ -40,7 +40,7 @@ let vmax_norm = Nvector_serial.Ops.n_vmaxnorm
 
 (* Header files with a description of contents used in cvbanx.c *)
 
-let set bm i j v = Dls.BandMatrix.set bm i j v
+let set = Matrix.Band.set
 
 (* Problem Constants *)
 
@@ -65,11 +65,11 @@ let five  = 5.0
 
 (* IJth is defined in order to isolate the translation from the
    mathematical 2-dimensional structure of the dependent variable vector
-   to the underlying 1-dimensional storage. 
+   to the underlying 1-dimensional storage.
    IJth(vdata,i,j) references the element in the vdata array for
    u at mesh point (i,j), where 1 <= i <= MX, 1 <= j <= MY.
    The vdata array is obtained via the macro call vdata = NV_DATA_S(v),
-   where v is an N_Vector. 
+   where v is an N_Vector.
    The variables are ordered by the y index j, then by the x index i. *)
 let set_ijth (vdata : RealArray.t) i j e = vdata.{(j-1) + (i-1)*my} <- e
 
@@ -116,7 +116,7 @@ let f data t (udata : RealArray.t) (dudata : RealArray.t) =
 
 (* Jacobian routine. Compute J(t,u). *)
 
-let jac data {Cvode.mupper=mupper; Cvode.mlower=mlower} arg jmat =
+let jac data arg jmat =
   (*
     The components of f = udot that depend on u(i,j) are
     f(i,j), f(i-1,j), f(i+1,j), f(i,j-1), f(i,j+1), with
@@ -214,14 +214,18 @@ let main () =
 
   set_ic (unwrap u) data;  (* Initialize u vector *)
 
-  (* Call CVodeCreate to create the solver memory and specify the 
+  (* Call CVodeCreate to create the solver memory and specify the
    * Backward Differentiation Formula and the use of a Newton iteration *)
   (* Call CVodeInit to initialize the integrator memory and specify the
    * user's right hand side function in u'=f(t,u), the inital time T0, and
    * the initial dependent variable vector u. *)
   (* Call CVBand to specify the CVBAND band linear solver *)
   (* Set the user-supplied Jacobian routine Jac *)
-  let solver = Cvode.(Dls.band {mupper = my; mlower = my} ~jac:(jac data)) in
+  let mjac = Matrix.(make_band
+                       Band.({n = neq; mu = my; smu = my; ml = my}) 0.0) in
+  let solver = Cvode.Dls.(make Lsolver.Direct.(lapack_band u mjac)
+                               ~jac:(jac data) mjac)
+  in
   let cvode_mem = Cvode.(init BDF (Newton solver)
                              (SStolerances (reltol, abstol))
                              (f data) t0 u)
