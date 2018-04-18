@@ -2,12 +2,12 @@
 open Sundials
 open Bigarray
 
-module M = Dls.BandMatrix
+module M = Matrix.Band
 let printf = Format.printf
 let fprintf = Format.fprintf
 
 let print_mat out m =
-  let {M.n; M.mu; M.ml; M.smu} = M.size m in
+  let {M.n; M.mu; M.ml; M.smu} = M.dims m in
   fprintf out "@[<v>";
   for i = 0 to n - 1 do
     fprintf out "@[<h>";
@@ -21,7 +21,7 @@ let print_mat out m =
   fprintf out "@]"
 
 let print_factored_mat out m =
-  let {M.n; M.mu; M.ml; M.smu} = M.size m in
+  let {M.n; M.mu; M.ml; M.smu} = M.dims m in
   fprintf out "@[<v>";
   for i = 0 to n - 1 do
     fprintf out "@[<h>";
@@ -59,6 +59,7 @@ let smu = min (n - 1) (mu + ml);;
 
 let main () =
   let a = M.create {M.n; M.mu; M.ml; M.smu} in
+  let zero = M.make {M.n; M.mu; M.ml; M.smu} 0.0 in
 
   M.set a 0 0 ( 1.0);
   M.set a 0 1 ( 2.0);
@@ -83,22 +84,24 @@ let main () =
   (try
     let x = RealArray.of_array [| 1.0; 2.0; 3.0; 4.0; 5.0 |] in
     let y = RealArray.create n in
-    M.matvec a x y;
+    M.matvec a (Nvector_serial.wrap x) (Nvector_serial.wrap y);
     printf "matvec: y=@\n%a@\n\n" print_vec y
   with NotImplementedBySundialsVersion -> ());
 
   let b = M.create {M.n; M.mu; M.ml; M.smu} in
-  M.blit a b mu ml;
+  M.blit a b;
 
-  M.scale 2.0 b;
+  M.scale_add 2.0 b zero;
   printf "scale copy x2: b=@\n%a@\n" print_mat b;
 
-  M.add_identity b;
+  M.scale_addi 1.0 b;
   printf "add identity: b=@\n%a@\n" print_mat b;
+
+  let a_ra2 = Sundials.RealArray2.wrap (M.unwrap a) in
 
   let p = LintArray.create 5 in
   Array1.fill p 0;
-  M.gbtrf a p;
+  Matrix.ArrayBand.gbtrf a_ra2 smu mu ml p;
   printf "getrf: a=@\n%a@\n" print_factored_mat a;
   printf "       p=@\n%a@\n@\n" print_p p;
 
@@ -108,7 +111,7 @@ let main () =
   s.{2} <- 31.0;
   s.{3} <- 53.0;
   s.{4} <- 45.0;
-  M.gbtrs a p s;
+  Matrix.ArrayBand.gbtrs a_ra2 smu ml p s;
   printf "getrs: s=@\n%a@\n" print_vec s;;
 
 main ();;

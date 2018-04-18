@@ -2,7 +2,7 @@
 open Sundials
 open Bigarray
 
-module M = Dls.ArrayDenseMatrix
+module M = Matrix.ArrayDense
 let printf = Format.printf
 let fprintf = Format.fprintf
 

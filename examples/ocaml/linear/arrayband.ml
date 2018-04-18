@@ -2,7 +2,7 @@
 open Sundials
 open Bigarray
 
-module M = Dls.ArrayBandMatrix
+module M = Matrix.ArrayBand
 let printf = Format.printf
 let fprintf = Format.fprintf
 

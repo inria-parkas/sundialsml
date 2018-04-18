@@ -3,3 +3,5 @@ arraydense.exe
 band.exe
 dense.exe
 sparse.exe
+customarray.exe
+customarray.c

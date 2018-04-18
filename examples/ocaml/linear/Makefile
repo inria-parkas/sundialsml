@@ -10,10 +10,10 @@ EXAMPLES = arraydense.byte arraydense.opt 		\
 	   sparse.byte sparse.opt			\
 	   arrayband.byte arrayband.opt 		\
 	   band.byte band.opt				\
-	   noband.byte noband.opt			\
-	   spils_nvector1.byte spils_nvector1.opt	\
-	   spils_serial1.byte spils_serial1.opt
-CEXAMPLES = arraydense.exe dense.exe arrayband.exe band.exe sparse.exe
+	   customarray.byte customarray.opt		\
+	   noband.byte noband.opt
+CEXAMPLES = arraydense.exe dense.exe arrayband.exe band.exe customarray.exe
+    # sparse.exe # Sundials >= 3.0.0, no implementation in libs
 
 CFLAGS += -Wall
 
@@ -50,6 +50,9 @@ band.opt: band.ml $(SUNDIALS_CMXA)
 noband.byte: noband.ml $(SUNDIALS_CMA)
 noband.opt: noband.ml $(SUNDIALS_CMXA)
 
+customarray.c: dense.c
+	cp $< $@
+
 spils_nvector1.byte: spils_nvector1.ml $(SUNDIALS_CMA)
 spils_nvector1.opt: spils_nvector1.ml $(SUNDIALS_CMXA)
 
@@ -57,6 +60,7 @@ spils_serial1.byte: spils_serial1.ml $(SUNDIALS_CMA)
 spils_serial1.opt: spils_serial1.ml $(SUNDIALS_CMXA)
 
 clean:
+	-@rm -f customarray.c
 	-@rm -f $(EXAMPLES) $(CEXAMPLES)
 	-@rm -f $(EXAMPLES:.byte=.cmo) $(EXAMPLES:.byte=.cmx)
 	-@rm -f $(EXAMPLES:.byte=.cmt) $(EXAMPLES:.byte=.cmti)

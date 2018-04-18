@@ -2,7 +2,7 @@
 open Sundials
 open Bigarray
 
-module M = Dls.DenseMatrix
+module M = Matrix.Dense
 let printf = Format.printf
 let fprintf = Format.fprintf
 
@@ -69,18 +69,20 @@ M.set a 4 4 ( 5.0);
 
 printf "initially: a=@\n%a@\n" print_mat a;;
 
-let p = LintArray.create nrows;;
-Array1.fill p 0;
-M.getrf a p;
-printf "getrf: a=@\n%a@\n" print_mat a;
-printf "       p=@\n%a@\n@\n" print_p p;;
+let a_ra2 = Sundials.RealArray2.wrap (M.unwrap a) in
 
-let s = RealArray.create nrows;;
+let p = LintArray.create nrows in
+Array1.fill p 0;
+Matrix.ArrayDense.getrf a_ra2 p;
+printf "getrf: a=@\n%a@\n" print_mat a;
+printf "       p=@\n%a@\n@\n" print_p p;
+
+let s = RealArray.create nrows in
 s.{0} <-  5.0;
 s.{1} <- 15.0;
 s.{2} <- 31.0;
 s.{3} <- 53.0;
 s.{4} <- 45.0;
-M.getrs a p s;
+Matrix.ArrayDense.getrs a_ra2 p s;
 printf "getrs: s=@\n%a@\n" print_vec s;;
 

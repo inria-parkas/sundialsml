@@ -2,7 +2,7 @@
 open Sundials
 open Bigarray
 
-module M = Dls.DenseMatrix
+module M = Matrix.Dense
 let printf = Format.printf
 let fprintf = Format.fprintf
 
@@ -38,6 +38,7 @@ let nrows, ncols = 3, 3;;
 
 let main () =
   let a = M.create nrows ncols in
+  let zero = M.make nrows ncols 0.0 in
 
   M.set a 0 0 ( 1.0);
   M.set a 0 1 ( 2.0);
@@ -56,22 +57,24 @@ let main () =
   (try
     let x = RealArray.of_array [| 1.0; 2.0; 3.0 |] in
     let y = RealArray.create nrows in
-    M.matvec a x y;
+    M.matvec a (Nvector_serial.wrap x) (Nvector_serial.wrap y);
     printf "matvec: y=@\n%a@\n\n" print_vec y
   with NotImplementedBySundialsVersion -> ());
 
   let b = M.create nrows ncols in
   M.blit a b;
 
-  M.scale 2.0 b;
+  M.scale_add 2.0 b zero;
   printf "scale copy x2: b=@\n%a@\n" print_mat b;
 
-  M.add_identity b;
+  M.scale_addi 1.0 b;
   printf "add identity: b=@\n%a@\n" print_mat b;
+
+  let a_ra2 = Sundials.RealArray2.wrap (M.unwrap a) in
 
   let p = LintArray.create nrows in
   Array1.fill p 0;
-  M.getrf a p;
+  Matrix.ArrayDense.getrf a_ra2 p;
   printf "getrf: a=@\n%a@\n" print_mat a;
   printf "       p=@\n%a@\n@\n" print_p p;
 
@@ -79,7 +82,7 @@ let main () =
   s.{0} <-  5.0;
   s.{1} <- 18.0;
   s.{2} <-  6.0;
-  M.getrs a p s;
+  Matrix.ArrayDense.getrs a_ra2 p s;
   printf "getrs: s=@\n%a@\n" print_vec s;
   ();;
 

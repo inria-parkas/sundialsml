@@ -75,7 +75,11 @@ int main(int argc, char** argv)
     }
 
     printf("initially da=\n");
+#if SUNDIALS_LIB_VERSION >= 300
+    PrintMat(da, stdout);
+#else
     PrintMat(da);
+#endif
     printf("\n");
 
 #if SUNDIALS_LIB_VERSION >= 270
