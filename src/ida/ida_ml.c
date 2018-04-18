@@ -789,7 +789,7 @@ CAMLprim value c_ida_spils_spgmr (value vida_mem, value vmaxl)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_spils_spbcg (value vida_mem, value vmaxl)
+CAMLprim value c_ida_spils_spbcgs (value vida_mem, value vmaxl)
 {
     CAMLparam2 (vida_mem, vmaxl);
 #if SUNDIALS_LIB_VERSION < 300

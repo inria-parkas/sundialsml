@@ -320,9 +320,9 @@ module Spils = struct (* {{{ *)
     = "c_ida_spils_spgmr"
 
   (* Sundials < 3.0.0 *)
-  external c_spbcg
+  external c_spbcgs
     : ('a, 'k) session -> int -> unit
-    = "c_ida_spils_spbcg"
+    = "c_ida_spils_spbcgs"
 
   (* Sundials < 3.0.0 *)
   external c_sptfqmr
@@ -399,7 +399,7 @@ module Spils = struct (* {{{ *)
            (match gs_type with None -> () | Some t -> c_set_gs_type session t);
            compat.set_gs_type <- old_set_gs_type session
        | Spbcgs ->
-           c_spbcg session maxl;
+           c_spbcgs session maxl;
            compat.set_maxl <- old_set_maxl session
        | Sptfqmr ->
            c_sptfqmr session maxl;

@@ -970,7 +970,7 @@ module Adjoint = struct (* {{{ *)
     external c_spbcgs
       : ('a, 'k) session -> int -> int
         -> Lsolver.Iterative.preconditioning_type -> unit
-      = "c_cvodes_adj_spils_spbcg"
+      = "c_cvodes_adj_spils_spbcgs"
 
     (* Sundials < 3.0.0 *)
     external c_sptfqmr

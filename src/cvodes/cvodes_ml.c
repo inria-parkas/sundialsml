@@ -1621,81 +1621,6 @@ CAMLprim value c_cvodes_adj_spils_set_linear_solver (value vparent, value vwhich
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_adj_spils_banded_spgmr(value vparent_which_vnb,
-					       value vmupper, value vmlower,
-					       value vmaxl, value vtype)
-{
-    CAMLparam5 (vparent_which_vnb, vmupper, vmlower, vmaxl, vtype);
-#if SUNDIALS_LIB_VERSION < 300
-    void *cvode_mem = CVODE_MEM_FROM_ML (Field(vparent_which_vnb, 0));
-    int which = Int_val(Field(vparent_which_vnb, 1));
-    long neqs = Long_val(Field(vparent_which_vnb, 2));
-    int flag;
-
-    flag = CVodeSetIterTypeB (cvode_mem, which, CV_NEWTON);
-    SCHECK_FLAG ("CVodeSetIterTypeB", flag);
-    flag = CVSpgmrB (cvode_mem, which, lsolver_precond_type (vtype),
-		     Int_val (vmaxl));
-    SCHECK_FLAG ("CVSpgmrB", flag);
-    flag = CVBandPrecInitB (cvode_mem, which, neqs,
-			    Long_val (vmupper), Long_val (vmlower));
-    SCHECK_FLAG ("CVBandPrecInitB", flag);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value c_cvodes_adj_spils_banded_spbcg(value vparent_which_vnb,
-					       value vmupper, value vmlower,
-					       value vmaxl, value vtype)
-{
-    CAMLparam5 (vparent_which_vnb, vmupper, vmlower, vmaxl, vtype);
-#if SUNDIALS_LIB_VERSION < 300
-    void *cvode_mem = CVODE_MEM_FROM_ML (Field(vparent_which_vnb, 0));
-    int which = Int_val(Field(vparent_which_vnb, 1));
-    long nbeqs = Long_val(Field(vparent_which_vnb, 2));
-    int flag;
-
-    flag = CVodeSetIterTypeB (cvode_mem, which, CV_NEWTON);
-    SCHECK_FLAG ("CVodeSetIterTypeB", flag);
-    flag = CVSpbcgB (cvode_mem, which, lsolver_precond_type (vtype),
-		     Int_val (vmaxl));
-    SCHECK_FLAG ("CVSpbcgB", flag);
-    flag = CVBandPrecInitB (cvode_mem, which, nbeqs,
-			    Long_val (vmupper), Long_val (vmlower));
-    SCHECK_FLAG ("CVBandPrecInitB", flag);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value c_cvodes_adj_spils_banded_sptfqmr(value vparent_which_vnb,
-						 value vmupper, value vmlower,
-						 value vmaxl, value vtype)
-{
-    CAMLparam5 (vparent_which_vnb, vmupper, vmlower, vmaxl, vtype);
-#if SUNDIALS_LIB_VERSION < 300
-    void *cvode_mem = CVODE_MEM_FROM_ML (Field(vparent_which_vnb, 0));
-    int which = Int_val(Field(vparent_which_vnb, 1));
-    long nbeqs = Long_val(Field(vparent_which_vnb, 2));
-    int flag;
-
-    flag = CVodeSetIterTypeB (cvode_mem, which, CV_NEWTON);
-    SCHECK_FLAG ("CVodeSetIterTypeB", flag);
-    flag = CVSptfqmrB (cvode_mem, which, lsolver_precond_type (vtype),
-		       Int_val (vmaxl));
-    SCHECK_FLAG ("CVSptfqmrB", flag);
-    flag = CVBandPrecInitB (cvode_mem, which, nbeqs,
-			    Long_val (vmupper), Long_val (vmlower));
-    SCHECK_FLAG ("CVBandPrecInitB", flag);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-    CAMLreturn (Val_unit);
-}
-
 CAMLprim value c_cvodes_adj_init_backward(value vparent, value weakref,
 					 value vargs, value vwithsens)
 {
@@ -2513,8 +2438,8 @@ CAMLprim value c_cvodes_adj_spils_spgmr (value vparent, value vwhich,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_adj_spils_spbcg (value vparent, value vwhich,
-					 value vmaxl, value vtype)
+CAMLprim value c_cvodes_adj_spils_spbcgs (value vparent, value vwhich,
+					  value vmaxl, value vtype)
 {
     CAMLparam4 (vparent, vwhich, vmaxl, vtype);
 #if SUNDIALS_LIB_VERSION < 300

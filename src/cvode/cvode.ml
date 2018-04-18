@@ -335,10 +335,10 @@ module Spils = struct (* {{{ *)
     = "c_cvode_spils_spgmr"
 
   (* Sundials < 3.0.0 *)
-  external c_spbcg
+  external c_spbcgs
     : ('a, 'k) session
       -> int -> Lsolver.Iterative.preconditioning_type -> unit
-    = "c_cvode_spils_spbcg"
+    = "c_cvode_spils_spbcgs"
 
   (* Sundials < 3.0.0 *)
   external c_sptfqmr
@@ -421,7 +421,7 @@ module Spils = struct (* {{{ *)
            compat.set_gs_type <- old_set_gs_type session;
            compat.set_prec_type <- old_set_prec_type session
        | Spbcgs ->
-           c_spbcg session maxl prec_type;
+           c_spbcgs session maxl prec_type;
            compat.set_maxl <- old_set_maxl session;
            compat.set_prec_type <- old_set_prec_type session
        | Sptfqmr ->

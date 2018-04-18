@@ -870,7 +870,7 @@ module Mass = struct (* {{{ *)
     external c_spbcgs
       : ('a, 'k) session
         -> int -> Lsolver_impl.Iterative.preconditioning_type -> unit
-      = "c_arkode_spils_mass_spbcg"
+      = "c_arkode_spils_mass_spbcgs"
 
     (* Sundials < 3.0.0 *)
     external c_sptfqmr

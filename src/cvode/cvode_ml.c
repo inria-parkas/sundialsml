@@ -1791,7 +1791,7 @@ CAMLprim value c_cvode_spils_spgmr (value vcvode_mem, value vmaxl, value vtype)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_spils_spbcg (value vcvode_mem, value vmaxl, value vtype)
+CAMLprim value c_cvode_spils_spbcgs (value vcvode_mem, value vmaxl, value vtype)
 {
     CAMLparam3 (vcvode_mem, vmaxl, vtype);
 #if SUNDIALS_LIB_VERSION < 300
