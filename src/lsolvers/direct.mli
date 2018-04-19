@@ -118,6 +118,17 @@ module Klu : sig (* {{{ *)
 
 end (* }}} *)
 
+(** Creates a direct linear solver on sparse matrices using KLU.
+    See {!Klu.make}.
+
+    @raise Sundials.NotImplementedBySundialsVersion Solver not available.
+    @nocvode <node> SUNKLU *)
+val klu :
+  ?ordering:Klu.ordering
+  -> 'k Nvector_serial.any
+  -> ('s, 'k) Matrix.sparse
+  -> ('s Matrix.Sparse.t, 'k, Klu.tag) serial_t
+
 (** SuperLUMT direct linear solver operating on sparse matrices (requires
     SuperLUMT). *)
 module Superlumt : sig (* {{{ *)
@@ -152,6 +163,18 @@ module Superlumt : sig (* {{{ *)
     -> ordering -> unit
 
 end (* }}} *)
+
+(** Creates a direct linear solver on sparse matrices using SuperLUMT.
+    See {!Superlumt.make}.
+
+    @raise Sundials.NotImplementedBySundialsVersion Solver not available.
+    @nocvode <node> SUNSuperLUMT *)
+val superlumt :
+  ?ordering:Superlumt.ordering
+  -> nthreads:int
+  -> 'k Nvector_serial.any
+  -> (Matrix.Sparse.csc, 'k) Matrix.sparse
+  -> (Matrix.Sparse.csc Matrix.Sparse.t, 'k, Superlumt.tag) serial_t
 
 (** Custom direct linear solvers. *)
 module Custom : sig (* {{{ *)

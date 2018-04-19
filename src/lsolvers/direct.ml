@@ -133,6 +133,8 @@ module Klu = struct (* {{{ *)
 
 end (* }}} *)
 
+let klu = Klu.make
+
 module Superlumt = struct (* {{{ *)
   include Lsolver_impl.Superlumt
 
@@ -171,6 +173,8 @@ module Superlumt = struct (* {{{ *)
     else c_set_ordering cptr ordering
 
 end (* }}} *)
+
+let superlumt = Superlumt.make
 
 module Custom = struct (* {{{ *)
 
