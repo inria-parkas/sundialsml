@@ -1168,7 +1168,7 @@ module Adjoint = struct (* {{{ *)
         c_spils_set_linear_solver parent which rawptr;
         Lsolver_impl.Iterative.attach lsolver;
         session.ls_solver <- Lsolver_impl.IterativeSolver lsolver;
-        Lsolver_impl.Iterative.(c_set_prec_type rawptr solver prec_type);
+        Lsolver_impl.Iterative.(c_set_prec_type rawptr solver prec_type false);
         set_prec bs parent which nv;
         let has_setup, has_times, use_sens =
           match jac_times_vec with

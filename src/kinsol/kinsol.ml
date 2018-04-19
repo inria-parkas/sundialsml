@@ -361,7 +361,7 @@ module Spils = struct (* {{{ *)
       c_spils_set_linear_solver session rawptr;
       Lsolver_impl.Iterative.attach ls;
       session.ls_solver <- Lsolver_impl.IterativeSolver ls;
-      Lsolver_impl.Iterative.(c_set_prec_type rawptr solver prec_type);
+      Lsolver_impl.Iterative.(c_set_prec_type rawptr solver prec_type false);
       set_prec session nv;
       session.ls_callbacks <- SpilsCallback jac_times_vec;
       if jac_times_vec <> None then c_set_jac_times_vec_fn session true

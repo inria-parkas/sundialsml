@@ -247,7 +247,10 @@ module Iterative = struct (* {{{ *)
     s.attached <- true
 
   external c_set_prec_type
-    : ('nd, 'nk) cptr -> ('nd, 'nk, 't) solver -> preconditioning_type -> unit
+    : ('nd, 'nk) cptr -> ('nd, 'nk, 't) solver
+      -> preconditioning_type
+      -> bool
+      -> unit
     = "ml_lsolver_set_prec_type"
 
 end (* }}} *)

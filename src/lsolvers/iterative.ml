@@ -54,7 +54,7 @@ let set_max_restarts { rawptr; solver; compat } max_restarts =
 let set_prec_type { rawptr; solver; compat; check_prec_type } prec_type =
   if not (check_prec_type prec_type) then raise Lsolver.IllegalPrecType;
   if in_compat_mode then compat.set_prec_type prec_type
-  else c_set_prec_type rawptr solver prec_type
+  else c_set_prec_type rawptr solver prec_type true
 
 let default = function
   | Some x -> x
