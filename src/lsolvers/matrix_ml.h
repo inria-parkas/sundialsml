@@ -159,6 +159,14 @@
     SUNLinearSolverContent_Dense for Matrix.Dense.t.
  */
 
+enum mat_matrix_index {
+    RECORD_MAT_MATRIX_PAYLOAD   = 0,
+    RECORD_MAT_MATRIX_RAWPTR,
+    RECORD_MAT_MATRIX_ID,
+    RECORD_MAT_MATRIX_MATOPS,
+    RECORD_MAT_MATRIX_SIZE /* This has to come last. */
+};
+
 #if SUNDIALS_LIB_VERSION >= 300
 #define SUNMAT(v) (*(SUNMatrix *)Data_custom_val(v))
 
@@ -181,7 +189,7 @@ struct csmat {
 // MAT_CVAL turns an OCaml matrix cptr into a c-sunmatrix
 #define MAT_CVAL(v) (*(SUNMatrix *)Data_custom_val(v))
 // MAT_VAL turns an OCaml Matrix.t into a c-sunmatrix
-#define MAT_VAL(v) (MAT_CVAL(Field(v, 1)))
+#define MAT_VAL(v) (MAT_CVAL(Field(v, RECORD_MAT_MATRIX_RAWPTR)))
 
 #else // SUNDIALS_LIB_VERSION < 300
 #define DLSMAT(v) (*(DlsMat *)Data_custom_val(v))
@@ -252,14 +260,6 @@ enum mat_sparse_data_index {
     RECORD_MAT_SPARSEDATA_DATA,
     RECORD_MAT_SPARSEDATA_SFORMAT,
     RECORD_MAT_SPARSEDATA_SIZE /* This has to come last. */
-};
-
-enum mat_matrix_index {
-    RECORD_MAT_MATRIX_PAYLOAD   = 0,
-    RECORD_MAT_MATRIX_RAWPTR,
-    RECORD_MAT_MATRIX_ID,
-    RECORD_MAT_MATRIX_MATOPS,
-    RECORD_MAT_MATRIX_SIZE /* This has to come last. */
 };
 
 #define MAT_UNWRAP(v) (Field(v, RECORD_MAT_MATRIX_PAYLOAD))

@@ -13,6 +13,7 @@
 exception SolverInUse = Lsolver_impl.SolverInUse
 exception UnrecoverableFailure of bool
 exception MatrixNotSquare
+exception InsufficientStorageUpperBandwidth
 exception ATimesFailure of bool
 exception PSetFailure of bool
 exception PSolveFailure of bool
@@ -36,6 +37,7 @@ let _ =
        lsolver_exn_index.  *)
     [|UnrecoverableFailure false;
       MatrixNotSquare;
+      InsufficientStorageUpperBandwidth;
       Invalid_argument ""; (* Standard OCaml exception *)
       ATimesFailure false;
       PSetFailure false;

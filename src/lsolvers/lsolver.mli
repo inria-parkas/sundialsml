@@ -35,6 +35,10 @@ exception UnrecoverableFailure of bool
 (** Raised when creating a linear solver if the given matrix is not square. *)
 exception MatrixNotSquare
 
+(** Raised when the storage upper bandwidth ([smu]) of a {!Band.t} is
+    insufficient for use in a particular linear solver. *)
+exception InsufficientStorageUpperBandwidth
+
 (** Raised on an attempt to associate a linear solver instance with more than
     one session. *)
 exception SolverInUse

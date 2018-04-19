@@ -29,6 +29,7 @@
 #include <sunlinsol/sunlinsol_spfgmr.h>
 #include <sunlinsol/sunlinsol_spgmr.h>
 #include <sunlinsol/sunlinsol_sptfqmr.h>
+#include <sundials/sundials_math.h>
 
 #ifdef SUNDIALS_ML_KLU
 #include <sunlinsol/sunlinsol_klu.h>
@@ -137,6 +138,12 @@ CAMLprim value ml_lsolver_band(value vnvec, value vbmat)
 	if (SUNBandMatrix_Rows(bmat) != SUNBandMatrix_Columns(bmat))
 	    caml_raise_constant(LSOLVER_EXN(MatrixNotSquare));
 
+	if (SUNBandMatrix_StoredUpperBandwidth(bmat) <
+	    SUNMIN(SUNBandMatrix_Rows(bmat) - 1,
+		   SUNBandMatrix_LowerBandwidth(bmat)
+		   + SUNBandMatrix_UpperBandwidth(bmat)))
+	    caml_raise_constant(LSOLVER_EXN(InsufficientStorageUpperBandwidth));
+
 	caml_raise_out_of_memory();
     }
 
@@ -156,6 +163,12 @@ CAMLprim value ml_lsolver_lapack_band(value vnvec, value vbmat)
     if (ls == NULL) {
 	if (SUNBandMatrix_Rows(bmat) != SUNBandMatrix_Columns(bmat))
 	    caml_raise_constant(LSOLVER_EXN(MatrixNotSquare));
+
+	if (SUNBandMatrix_StoredUpperBandwidth(bmat) <
+	    SUNMIN(SUNBandMatrix_Rows(bmat) - 1,
+		   SUNBandMatrix_LowerBandwidth(bmat)
+		   + SUNBandMatrix_UpperBandwidth(bmat)))
+	    caml_raise_constant(LSOLVER_EXN(InsufficientStorageUpperBandwidth));
 
 	caml_raise_out_of_memory();
     }
