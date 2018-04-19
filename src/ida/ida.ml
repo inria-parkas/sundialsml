@@ -247,9 +247,9 @@ module Dls = struct (* {{{ *)
       -> unit
     = "c_ida_dls_set_linear_solver"
 
-  let make (type m)
-        ({ Lsolver_impl.Direct.rawptr; Lsolver_impl.Direct.solver } as ls)
-        ?jac mat session nv =
+  let solver (type m)
+             ({ Lsolver_impl.Direct.rawptr; Lsolver_impl.Direct.solver } as ls)
+             ?jac mat session nv =
     set_ls_callbacks ?jac solver mat session;
     if in_compat_mode then make_compat (jac <> None) solver mat session
     else c_dls_set_linear_solver session rawptr mat (jac <> None);
@@ -374,7 +374,7 @@ module Spils = struct (* {{{ *)
     | PrecNone | PrecLeft -> true
     | PrecRight | PrecBoth -> false
 
-  let make (type s)
+  let solver (type s)
         ({ Lsolver_impl.Iterative.rawptr;
            Lsolver_impl.Iterative.solver;
            Lsolver_impl.Iterative.compat =
@@ -512,7 +512,7 @@ module Alternate = struct (* {{{ *)
     : ('data, 'kind) session -> bool -> bool -> unit
     = "c_ida_set_alternate"
 
-  let make f s nv =
+  let solver f s nv =
     let { linit; lsetup; lsolve } as cb = f s nv in
     c_set_alternate s (linit <> None) (lsetup <> None);
     s.ls_precfns <- NoPrecFns;

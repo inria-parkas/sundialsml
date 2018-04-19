@@ -131,7 +131,7 @@ module Dls : sig (* {{{ *)
 
       @nocvode <node> IDADlsSetLinearSolver
       @nocvode <node> IDADlsSetJacFn *)
-  val make :
+  val solver :
     ('m, 'kind, 't) Lsolver.Direct.serial_t ->
     ?jac:'m jac_fn ->
     ('k, 'm, Nvector_serial.data, 'kind) Matrix.t ->
@@ -276,7 +276,7 @@ module Spils : sig (* {{{ *)
 
       @nocvode <node> IDASpilsSetLinearSolver
       @nocvode <node> IDASpilsSetJacTimes *)
-  val make :
+  val solver :
     ('d, 'k, 'f) Lsolver.Iterative.t
     -> ?jac_times_vec:'d jac_times_setup_fn option * 'd jac_times_vec_fn
     -> ('d, 'k) preconditioner
@@ -486,7 +486,7 @@ module Alternate : sig (* {{{ *)
       callbacks. The creation function is passed a session and a vector.
       The latter indicates the problem size and can, for example, be
       cloned. *)
-  val make :
+  val solver :
         (('data, 'kind) session
           -> ('data, 'kind) Nvector.t
           -> ('data, 'kind) callbacks)

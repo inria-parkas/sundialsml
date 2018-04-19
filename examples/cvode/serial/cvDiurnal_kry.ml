@@ -539,7 +539,7 @@ let main () =
   let cvode_mem = Cvode.(
     init BDF
       (Newton
-          Spils.(make lsolver ~jac_times_vec:(None, jtv data)
+          Spils.(solver lsolver ~jac_times_vec:(None, jtv data)
                       (prec_left ~setup:(precond data) (psolve data))))
       (SStolerances (reltol, abstol))
       (f data) t0 u

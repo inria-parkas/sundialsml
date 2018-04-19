@@ -425,11 +425,11 @@ let main () =
 
   if !use_analytical_correction then init_from_xy_vxvy vars vars';
 
-  let jacm = Matrix.make_dense 5 5 0.0 in
+  let jacm = Matrix.dense 5 in
   let dense_solver = Lsolver.Direct.dense nv_vars jacm in
   let solver =
-    if !use_analytical_jac then Ida.Dls.make dense_solver ~jac:jac jacm
-    else Ida.Dls.make dense_solver jacm
+    if !use_analytical_jac then Ida.Dls.solver dense_solver ~jac:jac jacm
+    else Ida.Dls.solver dense_solver jacm
   in
   let ida = Ida.init solver (Ida.SStolerances (1e-9, 1e-9)) residual
                      ~roots:(1, roots) 0. nv_vars nv_vars'

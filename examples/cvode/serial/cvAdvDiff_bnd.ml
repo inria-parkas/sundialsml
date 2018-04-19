@@ -221,10 +221,9 @@ let main () =
    * the initial dependent variable vector u. *)
   (* Call CVBand to specify the CVBAND band linear solver *)
   (* Set the user-supplied Jacobian routine Jac *)
-  let mjac = Matrix.(make_band
-                       Band.({n = neq; mu = my; smu = my; ml = my}) 0.0) in
-  let solver = Cvode.Dls.(make Lsolver.Direct.(lapack_band u mjac)
-                               ~jac:(jac data) mjac)
+  let mjac = Matrix.(band ~mu:my neq) in
+  let solver = Cvode.Dls.(solver Lsolver.Direct.(lapack_band u mjac)
+                                 ~jac:(jac data) mjac)
   in
   let cvode_mem = Cvode.(init BDF (Newton solver)
                              (SStolerances (reltol, abstol))

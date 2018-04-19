@@ -333,7 +333,7 @@ let main () =
   in
   let lsolver = Lsolver.Iterative.(spgmr u) in
   let cvode_mem = Cvode.(
-    init BDF (Newton Spils.(make lsolver
+    init BDF (Newton Spils.(solver lsolver
                       Banded.(prec_left { mupper = mu; mlower = ml})))
              (SStolerances (reltol, abstol))
              (f data) t0 u)
@@ -381,7 +381,7 @@ let main () =
    | _ ->
       let bandrange = Cvode.Spils.Banded.({ mupper = mu; mlower = ml }) in
       Cvode.reinit cvode_mem t0 u
-        ~iter:Cvode.(Newton Spils.(make lsolver (Banded.prec_right bandrange))));
+        ~iter:Cvode.(Newton Spils.(solver lsolver (Banded.prec_right bandrange))));
 
   Lsolver.Iterative.(set_prec_type lsolver PrecRight);
   printf "\n\n-------------------------------------------------------";

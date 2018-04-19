@@ -910,8 +910,8 @@ module Adjoint = struct (* {{{ *)
         -> unit
       = "c_cvodes_adj_dls_set_linear_solver"
 
-    let make ({ Lsolver_impl.Direct.rawptr; Lsolver_impl.Direct.solver } as ls)
-             ?jac mat bs nv =
+    let solver ({ Lsolver_impl.Direct.rawptr; Lsolver_impl.Direct.solver } as ls)
+               ?jac mat bs nv =
       let session = tosession bs in
       let parent, which = parent_and_which bs in
       let use_sens = match jac with Some (WithSens _) -> true | _ -> false in
@@ -1054,7 +1054,7 @@ module Adjoint = struct (* {{{ *)
     : ('a, 'k) session -> int -> ('a, 'k) Lsolver_impl.Iterative.cptr -> unit
       = "c_cvodes_adj_spils_set_linear_solver"
 
-    let make (type s)
+    let solver (type s)
           ({ Lsolver_impl.Iterative.rawptr;
              Lsolver_impl.Iterative.solver;
              Lsolver_impl.Iterative.compat =
@@ -1266,7 +1266,7 @@ module Adjoint = struct (* {{{ *)
 
     let get_gammas bs = Cvode.Alternate.get_gammas (tosession bs)
 
-    let make f bs nv =
+    let solver f bs nv =
       let { linit; lsetup; lsolve } as cb = f bs nv in
       let s = tosession bs in
       let parent, which = parent_and_which bs in
