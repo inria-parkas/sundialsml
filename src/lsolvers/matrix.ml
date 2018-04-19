@@ -882,7 +882,9 @@ let wrap_dense (data : Dense.t) = {
     mat_ops = Dense.ops;
   }
 
-let make_dense m n x = wrap_dense (Dense.make m n x)
+let dense ?m ?(i=0.0) n =
+  let m = match m with Some m -> m | None -> n in
+  wrap_dense (Dense.make m n i)
 
 let wrap_band (data : Band.t) = {
     payload = data;
@@ -891,7 +893,8 @@ let wrap_band (data : Band.t) = {
     mat_ops = Band.ops;
   }
 
-let make_band dims x = wrap_band (Band.make dims x)
+let band ?(mu=2) ?(smu=2) ?(ml=2) ?(i=0.0) n =
+  wrap_band (Band.(make { n; mu; smu; ml } i))
 
 let wrap_sparse (data : 'f Sparse.t) = {
     payload = data;
@@ -900,7 +903,10 @@ let wrap_sparse (data : 'f Sparse.t) = {
     mat_ops = Sparse.ops;
   }
 
-let make_sparse sfmt m n nnz = wrap_sparse (Sparse.make sfmt m n nnz)
+let sparse sfmt ?m ?nnz n =
+  let m = match m with Some m -> m | None -> n in
+  let nnz = match nnz with Some nnz -> nnz | None -> n / 10 in
+  wrap_sparse (Sparse.make sfmt m n nnz)
 
 let wrap_custom ops data = {
     payload = data;

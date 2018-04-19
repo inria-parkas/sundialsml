@@ -866,11 +866,12 @@ type 'nk band =
 type ('s, 'nk) sparse =
   (standard, 's Sparse.t, Nvector_serial.data, [>Nvector_serial.kind] as 'nk) t
 
-(** [make m n x] returns an [m] by [n] (dense) matrix with elements set
-    to [x].
+(* By default, [dense n] returns an [n] by [n] dense matrix with all elements
+   initialized to [0.0]. Optional arguments allow specifying the number of rows
+   ([m]) and the initial value ([i]).
 
     @nocvode <node> SUNDenseMatrix *)
-val make_dense : int -> int -> float -> 'nk dense
+val dense : ?m:int -> ?i:float -> int -> 'nk dense
 
 (** Creates a (dense) matrix by wrapping an existing dense matrix. The two
     values share the same underlying storage.
@@ -878,11 +879,14 @@ val make_dense : int -> int -> float -> 'nk dense
     @nocvode <node> SUNDenseMatrix *)
 val wrap_dense : Dense.t -> 'nk dense
 
-(** [make dimensions x] returns a (band) matrix with the given
-    {!Band.dimensions} and all elements initialized to [x].
+(** By default, [band n] returns an [n] by [n] band matrix with all bandwidths
+    equal to 2 and all values initialized to [0.0].
+    Optional arguments allow specifying the upper bandwidth [mu], the lower
+    bandwidth [ml], the storage upper bandwidth [smu] and the initial
+    values [i].
 
     @nocvode <node> SUNBandMatrix *)
-val make_band : Band.dimensions -> float -> 'nk band
+val band : ?mu:int -> ?smu:int -> ?ml:int -> ?i:float -> int -> 'nk band
 
 (** Creates a (band) matrix by wrapping an existing band matrix. The two
     values share the same underlying storage.
@@ -890,14 +894,16 @@ val make_band : Band.dimensions -> float -> 'nk band
     @nocvode <node> SUNBandMatrix *)
 val wrap_band : Band.t -> 'nk band
 
-(** [make m n nnz] returns an [m] by [n] matrix in the specified format with
-    a potential for [nnz] non-zero elements. All elements are initially zero.
+(** By default, [sparse format n] returns an [n] by [n] sparse matrix with
+    the capacity for [n / 10] non-zero elements and all elements initialized
+    to [0.0]. Optional arguments allow specifying the number of rows [m], and
+    the number of non-zero elements [nnz].
 
     The {{!Sparse.sformat}CSR} format is only available from Sundials 2.7.0
     onwards.
 
     @nocvode <node> SUNSparseMatrix *)
-val make_sparse : 's Sparse.sformat -> int -> int -> int -> ('s, 'nk) sparse
+val sparse : 's Sparse.sformat -> ?m:int -> ?nnz:int -> int -> ('s, 'nk) sparse
 
 (** Creates a (sparse) matrix by wrapping an existing sparse matrix. The two
     values share the same underlying storage.
