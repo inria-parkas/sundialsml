@@ -894,16 +894,23 @@ val band : ?mu:int -> ?smu:int -> ?ml:int -> ?i:float -> int -> 'nk band
     @nocvode <node> SUNBandMatrix *)
 val wrap_band : Band.t -> 'nk band
 
-(** By default, [sparse format n] returns an [n] by [n] sparse matrix with
-    the capacity for [n / 10] non-zero elements and all elements initialized
-    to [0.0]. Optional arguments allow specifying the number of rows [m], and
-    the number of non-zero elements [nnz].
+(** By default, [sparse_csc n] returns an [n] by [n] sparse matrix in
+    {{!Sparse.sformat}CSC} format with the capacity for [n / 10] non-zero
+    elements and all elements initialized to [0.0]. Optional arguments allow
+    specifying the number of rows [m], and the number of non-zero
+    elements [nnz].
+
+    @nocvode <node> SUNSparseMatrix *)
+val sparse_csc : ?m:int -> ?nnz:int -> int -> (Sparse.csc, 'nk) sparse
+
+(** As for {!sparse_csc} but the returned matrix is in {{!Sparse.sformat}CSR}
+    format.
 
     The {{!Sparse.sformat}CSR} format is only available from Sundials 2.7.0
     onwards.
 
     @nocvode <node> SUNSparseMatrix *)
-val sparse : 's Sparse.sformat -> ?m:int -> ?nnz:int -> int -> ('s, 'nk) sparse
+val sparse_csr : ?m:int -> ?nnz:int -> int -> (Sparse.csr, 'nk) sparse
 
 (** Creates a (sparse) matrix by wrapping an existing sparse matrix. The two
     values share the same underlying storage.

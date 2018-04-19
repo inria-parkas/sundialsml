@@ -905,10 +905,15 @@ let wrap_sparse (data : 'f Sparse.t) = {
     mat_ops = Sparse.ops;
   }
 
-let sparse sfmt ?m ?nnz n =
+let sparse_csc ?m ?nnz n =
   let m = match m with Some m -> m | None -> n in
   let nnz = match nnz with Some nnz -> nnz | None -> n / 10 in
-  wrap_sparse (Sparse.make sfmt m n nnz)
+  wrap_sparse Sparse.(make CSC m n nnz)
+
+let sparse_csr ?m ?nnz n =
+  let m = match m with Some m -> m | None -> n in
+  let nnz = match nnz with Some nnz -> nnz | None -> n / 10 in
+  wrap_sparse Sparse.(make CSR m n nnz)
 
 let wrap_custom ops data = {
     payload = data;
