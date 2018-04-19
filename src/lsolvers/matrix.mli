@@ -884,6 +884,7 @@ val wrap_dense : Dense.t -> 'nk dense
     Optional arguments allow specifying the upper bandwidth [mu], the lower
     bandwidth [ml], the storage upper bandwidth [smu] and the initial
     values [i]. If [mu] is given but not [smu], then [smu] is set to [mu].
+    If [mu] is given but not [ml], then [ml] is set to [mu].
 
     @nocvode <node> SUNBandMatrix *)
 val band : ?mu:int -> ?smu:int -> ?ml:int -> ?i:float -> int -> 'nk band
