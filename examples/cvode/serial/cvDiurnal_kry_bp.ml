@@ -377,13 +377,15 @@ let main () =
   *)
   (match Sundials.sundials_version with
    | 2,5,_ ->
-      Cvode.reinit cvode_mem t0 u
+      Cvode.reinit cvode_mem t0 u;
+      Iterative.(set_prec_type lsolver PrecRight);
    | _ ->
-      let bandrange = Cvode.Spils.Banded.({ mupper = mu; mlower = ml }) in
       Cvode.reinit cvode_mem t0 u
-        ~iter:Cvode.(Newton Spils.(solver lsolver (Banded.prec_right bandrange))));
+        ~iter:Cvode.(Newton Spils.(solver
+                             Iterative.(spgmr u)
+                             (Banded.(prec_right { mupper = mu; mlower = ml}))))
+  );
 
-  Iterative.(set_prec_type lsolver PrecRight);
   printf "\n\n-------------------------------------------------------";
   printf "------------\n";
 
