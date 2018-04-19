@@ -76,7 +76,7 @@ into lowercase. For instance, [IdaSetErrHandlerFn], becomes
 Constants are replaced by variant types in most cases. They are renamed by
 conversion to {e CamlCase} and the removal of underscores. For instance,
 [PREC_NONE] becomes
-{{!Lsolver.Iterative.preconditioning_type}Lsolver.Iterative.PrecNone}.
+{{!Iterative.preconditioning_type}Iterative.PrecNone}.
 Exception names are sometimes renamed for consistency and to make them more
 self explanatory.
 For instance, the return codes [CV_FIRST_RHSFUNC_ERR] and
@@ -186,7 +186,7 @@ Additionally, {!Cvode} provides banded preconditioners
 for sessions that use serial, Pthreads, or OpenMP nvectors.
 Access to the underlying solver
 routines on bigarrays is provided via the submodules of
-{!Lsolver.Iterative.Algorithms}.
+{!Iterative.Algorithms}.
 Parallel Band-Block-Diagonal (BBD) preconditioners are available to sessions
 that use parallel nvectors—see {!Cvode_bbd}, {!Cvodes_bbd}, {!Ida_bbd},
 {!Idas_bbd}, and {!Kinsol_bbd}.
@@ -196,8 +196,7 @@ serial, Pthreads, or OpenMP nvectors.
 
 Using a linear solver requires three steps:
 {ol
-    {- Create a generic instance of type {!Lsolver.Direct.t} or
-	{!Lsolver.Iterative.t}}
+    {- Create a generic instance of type {!Direct.t} or {!Iterative.t}}
     {- Use it to instantiate a solver-specific instance, e.g., of type
 	{!Cvode.linear_solver} or {!Cvodes.Adjoint.linear_solver}.}
     {- Pass the solver-specific instance to appropriate [init] or [reinit]
@@ -209,12 +208,12 @@ Any given generic instance, and hence a solver-specific instance, of a
 linear solver can only be associated with one solver session.
 
 Custom linear solvers can be created by providing a set of operations to
-either {!Lsolver.Direct.Custom.make} or {!Lsolver.Iterative.Custom.make}.
+either {!Direct.Custom.make} or {!Iterative.Custom.make}.
 
 {2:api API Reference}
 
 {!modules: Sundials}
-{!modules: Matrix Lsolver}
+{!modules: Matrix Lsolver Direct Iterative}
 {!modules: Nvector Nvector_serial Nvector_parallel
 	   Nvector_pthreads Nvector_openmp
 	   Nvector_custom Nvector_array}
@@ -294,7 +293,7 @@ For {b OS X}, we found the following worked:
 }
 
 The [configure] script detects and automatically enables optional
-features.  Lapack solvers, like {!Lsolver.Direct.lapack_dense}, are enabled
+features.  Lapack solvers, like {!Direct.lapack_dense}, are enabled
 if Sundials was built with lapack support (see also {!Sundials.lapack_enabled}).
 The KLU and SuperLU_MT solvers, and the Pthreads and OpenMP nvectors are
 only enabled if Sundials was built with them.

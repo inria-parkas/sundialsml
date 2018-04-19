@@ -130,7 +130,7 @@ module Dls : sig (* {{{ *)
       @nocvode <node> ARKDlsSetLinearSolver
       @nocvode <node> ARKDlsSetJacFn *)
   val solver :
-    ('m, 'kind, 't) Lsolver.Direct.serial_t ->
+    ('m, 'kind, 't) Direct.serial_t ->
     ?jac:'m jac_fn ->
     ('k, 'm, Nvector_serial.data, 'kind) Matrix.t ->
     'kind serial_linear_solver
@@ -355,7 +355,7 @@ module Spils : sig (* {{{ *)
         @nocvode <node> ARKSpilsSetLinearSolver
         @nocvode <node> ARKSpilsSetJacTimes *)
     val solver :
-      ('d, 'k, 'f) Lsolver.Iterative.t
+      ('d, 'k, 'f) Iterative.t
       -> ?jac_times_vec:'d jac_times_setup_fn option * 'd jac_times_vec_fn
       -> ('d, 'k) preconditioner
       -> ('d, 'k) linear_solver
@@ -638,7 +638,7 @@ module Mass : sig (* {{{ *)
         @nocvode <node> ARKDlsSetMassLinearSolver
         @nocvode <node> ARKDlsSetMassFn *)
     val solver :
-      ('m, 'kind, 't) Lsolver.Direct.serial_t
+      ('m, 'kind, 't) Direct.serial_t
       -> 'm mass_fn
       -> bool
       -> ('k, 'm, Nvector_serial.data, 'kind) Matrix.t
@@ -806,7 +806,7 @@ module Mass : sig (* {{{ *)
         @nocvode <node> ARKSpilsSetMassLinearSolver
         @nocvode <node> ARKSpilsSetMassTimes *)
     val solver :
-      ('d, 'k, 'f) Lsolver.Iterative.t
+      ('d, 'k, 'f) Iterative.t
       -> ?mass_times_setup:mass_times_setup_fn
       -> 'd mass_times_vec_fn
       -> bool

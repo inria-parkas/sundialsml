@@ -426,7 +426,7 @@ let main () =
   if !use_analytical_correction then init_from_xy_vxvy vars vars';
 
   let jacm = Matrix.dense 5 in
-  let dense_solver = Lsolver.Direct.dense nv_vars jacm in
+  let dense_solver = Direct.dense nv_vars jacm in
   let solver =
     if !use_analytical_jac then Ida.Dls.solver dense_solver ~jac:jac jacm
     else Ida.Dls.solver dense_solver jacm

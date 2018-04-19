@@ -222,12 +222,12 @@ let main () =
   (* Call CVLapackBand to specify the CVBAND band linear solver *)
   (* Set the user-supplied Jacobian routine Jac *)
   let mjac = Matrix.(band ~mu:my neq) in
-  let solver = Cvode.Dls.(solver Lsolver.Direct.(lapack_band u mjac)
-                                 ~jac:(jac data) mjac)
   in
-  let cvode_mem = Cvode.(init BDF (Newton solver)
-                             (SStolerances (reltol, abstol))
-                             (f data) t0 u)
+  let cvode_mem = Cvode.(init BDF
+                    (Newton Dls.(solver Direct.(lapack_band u mjac)
+                                        ~jac:(jac data) mjac))
+                    (SStolerances (reltol, abstol))
+                    (f data) t0 u)
   in
 
   (* In loop over output points: call CVode, print results, test for errors *)

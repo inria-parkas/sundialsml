@@ -126,7 +126,7 @@ module Dls = struct (* {{{ *)
 
   (* Sundials < 3.0.0 *)
   external c_klu_set_ordering
-    : 'k serial_session -> Lsolver.Direct.Klu.ordering -> unit
+    : 'k serial_session -> Direct.Klu.ordering -> unit
     = "c_cvode_klu_set_ordering"
 
   (* Sundials < 3.0.0 *)
@@ -140,7 +140,7 @@ module Dls = struct (* {{{ *)
 
   (* Sundials < 3.0.0 *)
   external c_superlumt_set_ordering
-    : 'k serial_session -> Lsolver.Direct.Superlumt.ordering -> unit
+    : 'k serial_session -> Direct.Superlumt.ordering -> unit
     = "c_cvode_superlumt_set_ordering"
 
   (* Sundials < 3.0.0 *)
@@ -331,24 +331,24 @@ module Spils = struct (* {{{ *)
   (* Sundials < 3.0.0 *)
   external c_spgmr
     : ('a, 'k) session
-      -> int -> Lsolver.Iterative.preconditioning_type -> unit
+      -> int -> Iterative.preconditioning_type -> unit
     = "c_cvode_spils_spgmr"
 
   (* Sundials < 3.0.0 *)
   external c_spbcgs
     : ('a, 'k) session
-      -> int -> Lsolver.Iterative.preconditioning_type -> unit
+      -> int -> Iterative.preconditioning_type -> unit
     = "c_cvode_spils_spbcgs"
 
   (* Sundials < 3.0.0 *)
   external c_sptfqmr
     : ('a, 'k) session
-      -> int -> Lsolver.Iterative.preconditioning_type -> unit
+      -> int -> Iterative.preconditioning_type -> unit
     = "c_cvode_spils_sptfqmr"
 
   (* Sundials < 3.0.0 *)
   external c_set_gs_type
-    : ('a, 'k) session -> Lsolver.Iterative.gramschmidt_type -> unit
+    : ('a, 'k) session -> Iterative.gramschmidt_type -> unit
     = "c_cvode_spils_set_gs_type"
 
   (* Sundials < 3.0.0 *)
@@ -357,7 +357,7 @@ module Spils = struct (* {{{ *)
 
   (* Sundials < 3.0.0 *)
   external c_set_prec_type
-      : ('a, 'k) session -> Lsolver.Iterative.preconditioning_type -> unit
+      : ('a, 'k) session -> Iterative.preconditioning_type -> unit
       = "c_cvode_spils_set_prec_type"
 
   let old_set_maxl s maxl =

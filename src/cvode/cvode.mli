@@ -149,7 +149,7 @@ module Dls : sig (* {{{ *)
       @nocvode <node> CVDlsSetLinearSolver
       @nocvode <node> CVDlsSetJacFn *)
   val solver :
-    ('m, 'kind, 'tag) Lsolver.Direct.serial_t ->
+    ('m, 'kind, 'tag) Direct.serial_t ->
     ?jac:'m jac_fn ->
     ('k, 'm, Nvector_serial.data, 'kind) Matrix.t ->
     'kind serial_linear_solver
@@ -369,7 +369,7 @@ module Spils : sig (* {{{ *)
       @nocvode <node> CVSpilsSetLinearSolver
       @nocvode <node> CVSpilsSetJacTimes *)
   val solver :
-    ('d, 'k, 'f) Lsolver.Iterative.t
+    ('d, 'k, 'f) Iterative.t
     -> ?jac_times_vec:'d jac_times_setup_fn option * 'd jac_times_vec_fn
     -> ('d, 'k) preconditioner
     -> ('d, 'k) linear_solver

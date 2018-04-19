@@ -16,11 +16,11 @@ let y = Nvector_serial.wrap yd
       implicit component, and root-finding if necessary. It is also possible to
       specify a mass matrix solver. *)
 let m = Matrix.dense 2
-let lsolv = Arkode.Dls.solver (Lsolver.Direct.dense y m) m
 let s = Arkode.(
   init
     (ImEx { explicit = f_e;
-            implicit = (f_i, Newton lsolv, Linear true); })
+            implicit = (f_i, Newton Arkode.Dls.(solver (Direct.dense y m) m),
+                        Linear true); })
     (SStolerances (1e-4, 1e-9))
     ~roots:(1, g)
     0.0
