@@ -11,6 +11,8 @@ unset stubdir
 unset docdir
 unset install_docs
 enable_mpi=1
+enable_klu=1
+enable_superlumt=1
 unset enable_debug
 unset mathjax
 opt_compiler=1
@@ -72,6 +74,10 @@ do
 	install_docs=0;;
     --disable-mpi)
 	enable_mpi=0;;
+    --disable-klu)
+	enable_klu=0;;
+    --disable-superlumt)
+	enable_superlumt=0;;
     --enable-debug)
 	ocaml_tweaks="${ocaml_tweaks} debug"
 	enable_debug=1;;
@@ -114,6 +120,8 @@ do
 	Optional Features:
 	  --disable-doc          do not install html documentation
 	  --disable-mpi          build without parallel features
+	  --disable-klu		 build without KLU features
+	  --disable-superlumt	 build without SuperLU/MT features
 	  --no-lib-path          do not record paths in the OCaml library
 	  --enable-debug         enable assertions and debug symbols
 	  --unsafe               no bounds or other runtime checks
