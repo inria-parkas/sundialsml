@@ -9,11 +9,11 @@
  * OCaml port: Timothy Bourke, Inria, Dec 2015.
  * -----------------------------------------------------------------
  * Example problem:
- * 
+ *
  * The following is a simple example problem, with the coding
  * needed for its solution by CVODE. The problem is from
  * chemical kinetics, and consists of the following three rate
- * equations:         
+ * equations:
  *    dy1/dt = -.04*y1 + 1.e4*y2*y3
  *    dy2/dt = .04*y1 - 1.e4*y2*y3 - 3.e7*(y2)^2
  *    dy3/dt = 3.e7*(y2)^2
@@ -68,8 +68,8 @@ let g t (y : RealArray.t) (gout : RealArray.t) =
   gout.{1} <- y.{2} -. 0.01
 
 let jac {Cvode.jac_y = (y : RealArray.t)} smat =
-  let set_col = Sls.SparseMatrix.set_col smat in
-  let set = Sls.SparseMatrix.set smat in
+  let set_col = Matrix.Sparse.set_col smat in
+  let set = Matrix.Sparse.set smat in
   set_col 0 0;
   set_col 1 3;
   set_col 2 6;
@@ -86,7 +86,7 @@ let jac {Cvode.jac_y = (y : RealArray.t)} smat =
   set 6 0 (1.0e4 *. y.{1});
   set 7 1 (-1.0e4 *. y.{1});
   set 8 2 0.00
-  
+
 let print_output =
   printf "At t = %0.4e      y =%14.6e  %14.6e  %14.6e\n"
 
@@ -103,7 +103,7 @@ let print_final_stats s =
   and netf    = get_num_err_test_fails s
   and nni     = get_num_nonlin_solv_iters s
   and ncfn    = get_num_nonlin_solv_conv_fails s
-  and nje     = Sls.Klu.get_num_jac_evals s
+  and nje     = Dls.get_num_jac_evals s
   and nge     = get_num_g_evals s
   in
   printf "\nFinal Statistics:\n";
@@ -134,7 +134,7 @@ let main () =
 
   printf " \n3-species kinetics problem\n\n";
 
-  (* Call CVodeCreate to create the solver memory and specify the 
+  (* Call CVodeCreate to create the solver memory and specify the
    * Backward Differentiation Formula and the use of a Newton iteration *)
   (* Call CVodeInit to initialize the integrator memory and specify the
    * user's right hand side function in y'=f(t,y), the inital time T0, and
@@ -142,8 +142,9 @@ let main () =
   (* Call CVodeRootInit to specify the root function g with 2 components *)
   (* Call CVDense to specify the CVDENSE dense linear solver *)
   (* Set the Jacobian routine to Jac (user-supplied) *)
+  let m = Matrix.sparse_csc ~nnz neq in
   let cvode_mem =
-    Cvode.(init BDF (Newton (Sls.Klu.solver_csc jac nnz))
+    Cvode.(init BDF (Newton Dls.(solver Direct.(klu y m) ~jac m))
                 (SVtolerances (rtol, (Nvector_serial.wrap abstol))) f
                 ~roots:(nroots, g) t0 y)
   in

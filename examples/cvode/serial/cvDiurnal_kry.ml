@@ -535,7 +535,7 @@ let main () =
    * with left preconditioning and the maximum Krylov dimension maxl *)
   (* set the Jacobian-times-vector function *)
   (* Set the preconditioner solve and setup functions *)
-  let lsolver = Lsolver.Iterative.spgmr u in
+  let lsolver = Iterative.spgmr u in
   let cvode_mem = Cvode.(
     init BDF
       (Newton
@@ -546,7 +546,7 @@ let main () =
   ) in
 
   (* Set modified Gram-Schmidt orthogonalization *)
-  Lsolver.Iterative.(set_gs_type lsolver ModifiedGS);
+  Iterative.(set_gs_type lsolver ModifiedGS);
 
   (* In loop over output points, call CVode, print results, test for error *)
 

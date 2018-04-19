@@ -9,11 +9,11 @@
  * OCaml port: Timothy Bourke, Inria, Sep 2010.
  * -----------------------------------------------------------------
  * Example problem:
- * 
+ *
  * The following is a simple example problem, with the coding
  * needed for its solution by CVODE. The problem is from
  * chemical kinetics, and consists of the following three rate
- * equations:         
+ * equations:
  *    dy1/dt = -.04*y1 + 1.e4*y2*y3
  *    dy2/dt = .04*y1 - 1.e4*y2*y3 - 3.e7*(y2)^2
  *    dy3/dt = 3.e7*(y2)^2
@@ -44,7 +44,7 @@ let set_ith (v : RealArray.t) i e = v.{i - 1} <- e
 
 (* Test the Alt module *)
 
-module DM = Dls.ArrayDenseMatrix
+module DM = Matrix.ArrayDense
 module LintArray = Sundials.LintArray
 
 type cvdls_mem = {
@@ -111,7 +111,7 @@ let alternate_dense jacfn =
   in
 
   let solver =
-    Alt.make (fun s nv ->
+    Alt.solver (fun s nv ->
         let n = RealArray.length (unvec nv) in
         let mem = {
           nstlj  = 0;
@@ -164,7 +164,7 @@ let jac tn (y : RealArray.t) fpred jmat tmp =
   jmatdata.{1, 1} <- (-1.0e4 *. y.{2} -. 6.0e7 *. y.{1});
   jmatdata.{2, 1} <- (-1.0e4 *. y.{1});
   jmatdata.{1, 2} <- (6.0e7 *. y.{1})
-  
+
 let ewt y w =
   let atol = [| atol1; atol2; atol3 |] in
   for i = 1 to 3 do
@@ -213,7 +213,7 @@ let main () =
 
   printf " \n3-species kinetics problem\n\n";
 
-  (* Call CVodeCreate to create the solver memory and specify the 
+  (* Call CVodeCreate to create the solver memory and specify the
    * Backward Differentiation Formula and the use of a Newton iteration *)
   (* Call CVodeInit to initialize the integrator memory and specify the
    * user's right hand side function in y'=f(t,y), the inital time T0, and

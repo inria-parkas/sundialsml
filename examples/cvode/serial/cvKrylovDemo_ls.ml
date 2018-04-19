@@ -43,7 +43,7 @@ module RealArray = Sundials.RealArray
 module RealArray2 = Sundials.RealArray2
 module LintArray = Sundials.LintArray
 module Roots  = Sundials.Roots
-module Densemat = Dls.ArrayDenseMatrix
+module Densemat = Matrix.ArrayDense
 open Bigarray
 let unvec = Nvector.unwrap
 let unwrap = RealArray2.unwrap
@@ -60,7 +60,7 @@ let num_species   = 2           (* number of species         *)
 let kh            = 4.0e-6      (* horizontal diffusivity Kh *)
 let vel           = 0.001       (* advection velocity V      *)
 let kv0           = 1.0e-8      (* coefficient in Kv(y)      *)
-let q1            = 1.63e-16    (* coefficients q1, q2, c3   *) 
+let q1            = 1.63e-16    (* coefficients q1, q2, c3   *)
 let q2            = 4.66e-16
 let c3            = 3.7e16
 let a3            = 22.62       (* coefficient in expression for q3(t) *)
@@ -72,13 +72,13 @@ let t0            = zero        (* initial time *)
 let nout          = 12          (* number of output times *)
 let twohr         = 7200.0      (* number of seconds in two hours  *)
 let halfday       = 4.32e4      (* number of seconds in a half day *)
-let pi            = 3.1415926535898  (* pi *) 
+let pi            = 3.1415926535898  (* pi *)
 
 let xmin          = zero        (* grid boundaries in x  *)
-let xmax          = 20.0           
+let xmax          = 20.0
 let ymin          = 30.0        (* grid boundaries in y  *)
 let ymax          = 50.0
-let xmid          = 10.0        (* grid midpoints in x,y *)          
+let xmid          = 10.0        (* grid midpoints in x,y *)
 let ymid          = 40.0
 
 let mx            = 10          (* MX = number of x mesh points *)
@@ -104,26 +104,26 @@ type linear_solver =  UseSpgmr | UseSpbcg | UseSptfqmr
    mathematical 3-dimensional structure of the dependent variable vector
    to the underlying 1-dimensional storage. IJth is defined in order to
    write code which indexes into dense matrices with a (row,column)
-   pair, where 1 <= row, column <= NUM_SPECIES.   
-   
+   pair, where 1 <= row, column <= NUM_SPECIES.
+
    IJKth(vdata,i,j,k) references the element in the vdata array for
    species i at mesh point (j,k), where 1 <= i <= NUM_SPECIES,
    0 <= j <= MX-1, 0 <= k <= MY-1. The vdata array is obtained via
-   the macro call vdata = NV_DATA_S(v), where v is an N_Vector. 
+   the macro call vdata = NV_DATA_S(v), where v is an N_Vector.
    For each mesh point (j,k), the elements for species i and i+1 are
    contiguous within vdata.
 
    IJth(a,i,j) references the (i,j)th entry of the matrix realtype **a,
-   where 1 <= i,j <= NUM_SPECIES. The small matrix routines in 
-   sundials_dense.h work with matrices stored by column in a 2-dimensional 
+   where 1 <= i,j <= NUM_SPECIES. The small matrix routines in
+   sundials_dense.h work with matrices stored by column in a 2-dimensional
    array. In C, arrays are indexed starting at 0, not 1. *)
 
 let ijkth (v : RealArray.t) i j k       = v.{i - 1 + j * num_species + k * nsmx}
 let set_ijkth (v : RealArray.t) i j k e = v.{i - 1 + j * num_species + k * nsmx} <- e
 
-let set_ijth (v : real_array2) i j e = v.{j - 1, i - 1} <- e
+let set_ijth (v : Sundials.real_array2) i j e = v.{j - 1, i - 1} <- e
 
-(* Type : UserData 
+(* Type : UserData
    contains preconditioner blocks, pivot arrays, and problem constants *)
 
 type user_data = {
@@ -329,7 +329,7 @@ let f data t (udata : RealArray.t) (dudata : RealArray.t) =
 
       (* Load all terms into udot. *)
       dudata.{0 + jx * num_species + jy * nsmx}
-                                        <- vertd1 +. hord1 +. horad1 +. rkin1; 
+                                        <- vertd1 +. hord1 +. horad1 +. rkin1;
       dudata.{1 + jx * num_species + jy * nsmx}
                                         <- vertd2 +. hord2 +. horad2 +. rkin2
     done
@@ -342,7 +342,7 @@ let precond data jacarg jok gamma =
   let { jac_t   = tn;
         jac_y   = (udata : RealArray.t);
         jac_fy  = fudata;
-        jac_tmp = (vtemp1, vtemp2, vtemp)
+        jac_tmp = ()
       } = jacarg
   in
 
@@ -370,8 +370,8 @@ let precond data jacarg jok gamma =
       and verdco = data.vdco
       and hordco = data.hdco
       in
-      
-      (* Compute 2x2 diagonal Jacobian blocks (using q4 values 
+
+      (* Compute 2x2 diagonal Jacobian blocks (using q4 values
          computed on the last f call).  Load into P. *)
       for jy = 0 to my - 1 do
         let ydn = ymin +. (float jy -. 0.5) *. dely in
@@ -404,7 +404,7 @@ let precond data jacarg jok gamma =
       Densemat.scale (-. gamma) p.(jx).(jy)
     done
   done;
-  
+
   (* Add identity matrix and do LU decompositions on blocks in place. *)
   for jx = 0 to mx - 1 do
     for jy = 0 to my - 1 do
@@ -430,7 +430,7 @@ let psolve data jac_arg solve_arg (zdata : RealArray.t) =
   in
 
   Array1.blit r zdata;
-  
+
   (* Solve the block-diagonal system Px = r using LU factors stored
      in P and pivot data in pivot, and return the solution in z. *)
   for jx = 0 to mx - 1 do
@@ -448,7 +448,7 @@ let psolve data jac_arg solve_arg (zdata : RealArray.t) =
 
 let main () =
 
-  (* Allocate memory, and set problem data, initial values, tolerances *) 
+  (* Allocate memory, and set problem data, initial values, tolerances *)
   let u = Nvector_serial.make neq 0.0 in
   let data = alloc_user_data () in
   init_user_data data;
@@ -458,10 +458,10 @@ let main () =
   and reltol = rtol
   in
 
-  (* Call CVodeCreate to create the solver memory and specify the 
+  (* Call CVodeCreate to create the solver memory and specify the
    * Backward Differentiation Formula and the use of a Newton iteration *)
   (* Set the pointer to user-defined data *)
-  (* Call CVSpgmr to specify the linear solver CVSPGMR 
+  (* Call CVSpgmr to specify the linear solver CVSPGMR
    * with left preconditioning and the maximum Krylov dimension maxl *)
   (* Call CVodeInit to initialize the integrator memory and specify the
    * user's right hand side function in u'=f(t,u), the inital time T0, and
@@ -495,16 +495,15 @@ let main () =
         printf " \n| SPGMR |\n";
         printf " -------\n";
 
-        (* Call CVSpgmr to specify the linear solver CVSPGMR 
+        (* Call CVSpgmr to specify the linear solver CVSPGMR
            with left preconditioning and the maximum Krylov dimension maxl *)
+        (* Set modified Gram-Schmidt orthogonalization, preconditioner
+           setup and solve routines Precond and PSolve, and the pointer
+           to the user-defined block data *)
         Cvode.(reinit cvode_mem t0 u
           ~iter:(Newton
-               Spils.(spgmr (prec_left ~setup:(precond data) (psolve data)))));
-
-        (* Set modified Gram-Schmidt orthogonalization, preconditioner 
-           setup and solve routines Precond and PSolve, and the pointer 
-           to the user-defined block data *)
-        Cvode.Spils.set_gs_type cvode_mem Spils.ModifiedGS
+               Spils.(solver Iterative.(spgmr ~gs_type:ModifiedGS u)
+                             (prec_left ~setup:(precond data) (psolve data)))));
       end
 
     (* (b) SPBCG *)
@@ -514,11 +513,12 @@ let main () =
         printf " \n| SPBCG |\n";
         printf " -------\n";
 
-        (* Call CVSpbcg to specify the linear solver CVSPBCG 
+        (* Call CVSpbcg to specify the linear solver CVSPBCG
            with left preconditioning and the maximum Krylov dimension maxl *)
         Cvode.(reinit cvode_mem t0 u
           ~iter:(Newton
-               Spils.(spbcg (prec_left ~setup:(precond data) (psolve data)))))
+               Spils.(solver Iterative.(spbcgs u)
+                             (prec_left ~setup:(precond data) (psolve data)))));
       end
 
     (* (c) SPTFQMR *)
@@ -532,7 +532,8 @@ let main () =
            with left preconditioning and the maximum Krylov dimension maxl *)
         Cvode.(reinit cvode_mem t0 u
           ~iter:(Newton
-               Spils.(sptfqmr (prec_left ~setup:(precond data) (psolve data)))))
+               Spils.(solver Iterative.(sptfqmr u)
+                             (prec_left ~setup:(precond data) (psolve data)))))
       end);
 
     (* In loop over output points, call CVode, print results, test for error *)

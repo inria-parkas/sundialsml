@@ -331,7 +331,7 @@ let main () =
   let mu = 2
   and ml = 2
   in
-  let lsolver = Lsolver.Iterative.(spgmr u) in
+  let lsolver = Iterative.(spgmr u) in
   let cvode_mem = Cvode.(
     init BDF (Newton Spils.(solver lsolver
                       Banded.(prec_left { mupper = mu; mlower = ml})))
@@ -358,7 +358,7 @@ let main () =
     print_final_stats cvode_mem
   in (* End of jpre loop *)
 
-  jpre_loop Lsolver.Iterative.PrecLeft  "PREC_LEFT";
+  jpre_loop Iterative.PrecLeft  "PREC_LEFT";
 
   (* On second run, re-initialize u, the solver, and CVSPGMR *)
   set_initial_profiles (unwrap u) data.dx data.dy;
@@ -383,11 +383,11 @@ let main () =
       Cvode.reinit cvode_mem t0 u
         ~iter:Cvode.(Newton Spils.(solver lsolver (Banded.prec_right bandrange))));
 
-  Lsolver.Iterative.(set_prec_type lsolver PrecRight);
+  Iterative.(set_prec_type lsolver PrecRight);
   printf "\n\n-------------------------------------------------------";
   printf "------------\n";
 
-  jpre_loop Lsolver.Iterative.PrecRight "PREC_RIGHT"
+  jpre_loop Iterative.PrecRight "PREC_RIGHT"
 
 (* Check environment variables for extra arguments.  *)
 let reps =
