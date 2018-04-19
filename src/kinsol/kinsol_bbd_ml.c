@@ -47,7 +47,7 @@ CAMLprim value c_kinsol_bbd_init_module (value cbs)
 /* Sundials 2.5.0 User's Guide incorrectly states that KINLocalFn
  * returns void.  The comment in kinsol_bbdpre.h says it should return
  * 0 for success, non-zero otherwise.  */
-static int bbdlocal(long int nlocal, N_Vector u, N_Vector gval, void *user_data)
+static int bbdlocal(sundials_ml_index nlocal, N_Vector u, N_Vector gval, void *user_data)
 {
     CAMLparam0();
     CAMLlocalN(args, 2);
@@ -70,7 +70,7 @@ static int bbdlocal(long int nlocal, N_Vector u, N_Vector gval, void *user_data)
 /* Sundials 2.5.0 User's Guide incorrectly states that KINCommFn
  * returns void.  The comment in kinsol_bbdpre.h says it should return
  * 0 for success, non-zero otherwise.  */
-static int bbdcomm(long int nlocal, N_Vector u, void *user_data)
+static int bbdcomm(sundials_ml_index nlocal, N_Vector u, void *user_data)
 {
     CAMLparam0();
     CAMLlocal2(session, cb);
