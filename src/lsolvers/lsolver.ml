@@ -10,7 +10,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-exception SolverInUse = Lsolver_impl.SolverInUse
+exception LinearSolverInUse = Lsolver_impl.LinearSolverInUse
 exception UnrecoverableFailure of bool
 exception MatrixNotSquare
 exception InsufficientStorageUpperBandwidth

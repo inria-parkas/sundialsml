@@ -41,7 +41,7 @@ exception InsufficientStorageUpperBandwidth
 
 (** Raised on an attempt to associate a linear solver instance with more than
     one session. *)
-exception SolverInUse
+exception LinearSolverInUse
 
 (** Indicates failure of an atimes function. The argument is [true] for a
     recoverable failure and [false] for an unrecoverable one.

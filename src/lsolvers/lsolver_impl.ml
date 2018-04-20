@@ -18,7 +18,7 @@
    be opaque outside of Sundials/ML, we simply do not install the
    lsolver_impl.cmi file. *)
 
-exception SolverInUse
+exception LinearSolverInUse
 
 module Klu = struct (* {{{ *)
 
@@ -181,7 +181,7 @@ module Direct = struct (* {{{ *)
   }
 
   let attach ({ attached } as s) =
-    if attached then raise SolverInUse;
+    if attached then raise LinearSolverInUse;
     s.attached <- true
 
 end (* }}} *)
@@ -243,7 +243,7 @@ module Iterative = struct (* {{{ *)
   }
 
   let attach ({ attached } as s) =
-    if attached then raise SolverInUse;
+    if attached then raise LinearSolverInUse;
     s.attached <- true
 
   external c_set_prec_type
