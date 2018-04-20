@@ -3,39 +3,39 @@
  *---------------------------------------------------------------
  * OCaml port: Timothy Bourke, Inria, Jan 2016.
  *---------------------------------------------------------------
- * Copyright (c) 2015, Southern Methodist University and 
+ * Copyright (c) 2015, Southern Methodist University and
  * Lawrence Livermore National Security
  *
- * This work was performed under the auspices of the U.S. Department 
- * of Energy by Southern Methodist University and Lawrence Livermore 
+ * This work was performed under the auspices of the U.S. Department
+ * of Energy by Southern Methodist University and Lawrence Livermore
  * National Laboratory under Contract DE-AC52-07NA27344.
- * Produced at Southern Methodist University and the Lawrence 
+ * Produced at Southern Methodist University and the Lawrence
  * Livermore National Laboratory.
  *
  * All rights reserved.
  * For details, see the LICENSE file.
  *---------------------------------------------------------------
  * Example problem:
- * 
+ *
  * The following test simulates a simple 1D heat equation,
  *    u_t = k*u_xx + f
  * for t in [0, 10], x in [0, 1], with initial conditions
  *    u(0,x) =  0
- * Dirichlet boundary conditions, i.e. 
+ * Dirichlet boundary conditions, i.e.
  *    u_t(t,0) = u_t(t,1) = 0,
  * and a heating term of the form
  *    f = 2*exp(-200*(x-0.25)*(x-0.25))
  *        - exp(-400*(x-0.7)*(x-0.7))
  *        + exp(-500*(x-0.4)*(x-0.4))
  *        - 2*exp(-600*(x-0.55)*(x-0.55));
- * 
- * The spatial derivatives are computed using a three-point 
+ *
+ * The spatial derivatives are computed using a three-point
  * centered stencil (second order for a uniform mesh).  The data
  * is initially uniformly distributed over N points in the interval
  * [0, 1], but as the simulation proceeds the mesh is adapted.
  *
- * This program solves the problem with a DIRK method, solved with 
- * a Newton iteration and PCG linear solver, with a user-supplied 
+ * This program solves the problem with a DIRK method, solved with
+ * a Newton iteration and PCG linear solver, with a user-supplied
  * Jacobian-vector product routine.
  *---------------------------------------------------------------*)
 
@@ -55,13 +55,13 @@ type user_data = {
     refine_tol : float;       (* adaptivity tolerance *)
   }
 
-(* Adapts the current mesh, using a simple adaptivity strategy of 
-   refining when an approximation of the scaled second-derivative is 
-   too large.  We only do this in one sweep, so no attempt is made to 
+(* Adapts the current mesh, using a simple adaptivity strategy of
+   refining when an approximation of the scaled second-derivative is
+   too large.  We only do this in one sweep, so no attempt is made to
    ensure the resulting mesh meets these same criteria after adaptivity:
       y [input] -- the current solution vector
       nnew [output] -- the size of the new mesh
-      udata [input] -- the current system information 
+      udata [input] -- the current system information
    The return for this function is a pointer to the new mesh. *)
 let adapt_mesh { x = xold; n; refine_tol } (y : RealArray.t) =
   (* create marking array *)
@@ -80,7 +80,7 @@ let adapt_mesh { x = xold; n; refine_tol } (y : RealArray.t) =
   (*   } *)
   (* } *)
 
-  (* perform marking: 
+  (* perform marking:
       0 -> leave alone
       1 -> refine *)
   for i=1 to n-1-1 do
@@ -103,7 +103,7 @@ let adapt_mesh { x = xold; n; refine_tol } (y : RealArray.t) =
   let j= ref 1 in
   (* iterate over old intervals *)
   for i=0 to n-1-1 do
-    (* if mark is 0, reuse old interval *) 
+    (* if mark is 0, reuse old interval *)
     if marks.(i) = 0 then (xnew.{!j} <- xold.{i+1}; incr j)
     else if marks.(i) = 1 then begin
       (* if mark is 1, refine old interval *)
@@ -132,7 +132,7 @@ let adapt_mesh { x = xold; n; refine_tol } (y : RealArray.t) =
                        (allocated prior to calling project) *)
 let project nold (xold : RealArray.t) (yold : RealArray.t)
             nnew (xnew : RealArray.t) (ynew : RealArray.t) =
-  (* loop over new mesh, finding corresponding interval within old mesh, 
+  (* loop over new mesh, finding corresponding interval within old mesh,
      and perform piecewise linear interpolation from yold to ynew *)
   let iv= ref 0 in
   for i=0 to nnew - 1 do
@@ -145,7 +145,7 @@ let project nold (xold : RealArray.t) (yold : RealArray.t)
        iv := nold-1     (* just in case it wasn't found above *)
      with Exit -> ());
 
-    (* perform interpolation *) 
+    (* perform interpolation *)
     ynew.{i} <-
          yold.{!iv}  *.(xnew.{i}-.xold.{!iv+1})/.(xold.{!iv}  -.xold.{!iv+1})
       +. yold.{!iv+1}*.(xnew.{i}-.xold.{!iv})  /.(xold.{!iv+1}-.xold.{!iv});
@@ -185,7 +185,7 @@ let jac { n; k; x } _ (v : RealArray.t) (jv : RealArray.t) =
   for i=1 to n-1-1 do
     let dxL = x.{i} -. x.{i-1} in
     let dxR = x.{i+1} -. x.{i} in
-    jv.{i} <- v.{i-1} *. k *. 2.0 /. (dxL *. (dxL +. dxR)) 
+    jv.{i} <- v.{i-1} *. k *. 2.0 /. (dxL *. (dxL +. dxR))
            -. v.{i}   *. k *. 2.0 /. (dxL *. dxR)
            +. v.{i+1} *. k *. 2.0 /. (dxR *. (dxL +. dxR))
   done;
@@ -240,7 +240,9 @@ let main () =
   let arkode_mem = Arkode.(
     init
       (Implicit (f udata,
-                 Newton Spils.(pcg ~maxl:n_mesh ~jac_times_vec:jac prec_none),
+                 Newton Spils.(solver Iterative.(pcg ~maxl:n_mesh y)
+                                      ~jac_times_vec:(None, jac)
+                                      prec_none),
                  Nonlinear))
       (SStolerances (rtol, atol))
       t0
@@ -292,7 +294,7 @@ let main () =
 
       (* create N_Vector of new length *)
       let y2 = Nvector_serial.make nnew 0.0 in
-      
+
       (* project solution onto new mesh *)
       project udata.n udata.x data nnew xnew (Nvector.unwrap y2);
 
@@ -302,7 +304,9 @@ let main () =
 
       (* call ARKodeResize to notify integrator of change in mesh *)
       Arkode.(resize arkode_mem
-        ~linsolv:(Spils.(pcg ~maxl:nnew ~jac_times_vec:jac prec_none))
+        ~linsolv:Spils.(solver Iterative.(pcg ~maxl:nnew y)
+                               ~jac_times_vec:(None, jac)
+                               prec_none)
         (SStolerances (rtol, atol))
         hscale y2 t);
 

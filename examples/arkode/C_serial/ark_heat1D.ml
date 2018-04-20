@@ -3,39 +3,39 @@
  *---------------------------------------------------------------
  * OCaml port: Timothy Bourke, Inria, Jan 2016.
  *---------------------------------------------------------------
- * Copyright (c) 2015, Southern Methodist University and 
+ * Copyright (c) 2015, Southern Methodist University and
  * Lawrence Livermore National Security
  *
- * This work was performed under the auspices of the U.S. Department 
- * of Energy by Southern Methodist University and Lawrence Livermore 
+ * This work was performed under the auspices of the U.S. Department
+ * of Energy by Southern Methodist University and Lawrence Livermore
  * National Laboratory under Contract DE-AC52-07NA27344.
- * Produced at Southern Methodist University and the Lawrence 
+ * Produced at Southern Methodist University and the Lawrence
  * Livermore National Laboratory.
  *
  * All rights reserved.
  * For details, see the LICENSE file.
  *---------------------------------------------------------------
  * Example problem:
- * 
+ *
  * The following test simulates a simple 1D heat equation,
  *    u_t = k*u_xx + f
  * for t in [0, 10], x in [0, 1], with initial conditions
  *    u(0,x) =  0
- * Dirichlet boundary conditions, i.e. 
+ * Dirichlet boundary conditions, i.e.
  *    u_t(t,0) = u_t(t,1) = 0,
  * and a point-source heating term,
  *    f = 1 for x=0.5.
- * 
- * The spatial derivatives are computed using second-order 
- * centered differences, with the data distributed over N points 
+ *
+ * The spatial derivatives are computed using second-order
+ * centered differences, with the data distributed over N points
  * on a uniform spatial grid.
  *
  * This program solves the problem with either an ERK or DIRK
- * method.  For the DIRK method, we use a Newton iteration with 
- * the PCG linear solver, and a user-supplied Jacobian-vector 
+ * method.  For the DIRK method, we use a Newton iteration with
+ * the PCG linear solver, and a user-supplied Jacobian-vector
  * product routine.
  *
- * 100 outputs are printed at equal intervals, and run statistics 
+ * 100 outputs are printed at equal intervals, and run statistics
  * are printed at the end.
  *---------------------------------------------------------------*)
 
@@ -122,7 +122,9 @@ let main () =
     init
       (Implicit
         (f udata,
-         Newton Spils.(pcg ~maxl:mesh_n ~jac_times_vec:(jac udata) prec_none),
+         Newton Spils.(solver Iterative.(pcg ~maxl:mesh_n y)
+                              ~jac_times_vec:(None, jac udata)
+                              prec_none),
          Linear true))
       (SStolerances (rtol, atol))
       t0
@@ -159,7 +161,7 @@ let main () =
   printf "  %10.6f  %10.6f\n" t0 (sqrt((n_vdotprod y y)/.float mesh_n));
   (try
      for iout=0 to nt-1 do
- 
+
        (* call integrator *)
        let t, _ = Arkode.solve_normal arkode_mem !tout y in
        (* print solution stats *)

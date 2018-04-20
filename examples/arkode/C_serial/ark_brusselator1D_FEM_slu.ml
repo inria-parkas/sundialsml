@@ -3,22 +3,22 @@
  *---------------------------------------------------------------
  * OCaml port: Timothy Bourke, Inria, Jan 2016.
  *---------------------------------------------------------------
- * Copyright (c) 2015, Southern Methodist University and 
+ * Copyright (c) 2015, Southern Methodist University and
  * Lawrence Livermore National Security
  *
- * This work was performed under the auspices of the U.S. Department 
- * of Energy by Southern Methodist University and Lawrence Livermore 
+ * This work was performed under the auspices of the U.S. Department
+ * of Energy by Southern Methodist University and Lawrence Livermore
  * National Laboratory under Contract DE-AC52-07NA27344.
- * Produced at Southern Methodist University and the Lawrence 
+ * Produced at Southern Methodist University and the Lawrence
  * Livermore National Laboratory.
  *
  * All rights reserved.
  * For details, see the LICENSE file.
  *---------------------------------------------------------------
  * Example problem:
- * 
- * The following test simulates a brusselator problem from chemical 
- * kinetics.  This is a PDE system with 3 comp1.0nts, Y = [u,v,w], 
+ *
+ * The following test simulates a brusselator problem from chemical
+ * kinetics.  This is a PDE system with 3 comp1.0nts, Y = [u,v,w],
  * satisfying the equations,
  *    u_t = du*u_xx + a - (w+1)*u + v*u^2
  *    v_t = dv*v_xx + w*u - v*u^2
@@ -27,27 +27,27 @@
  *    u(0,x) =  a  + 0.1*sin(pi*x)
  *    v(0,x) = b/a + 0.1*sin(pi*x)
  *    w(0,x) =  b  + 0.1*sin(pi*x),
- * and with stationary boundary conditions, i.e. 
+ * and with stationary boundary conditions, i.e.
  *    u_t(t,0) = u_t(t,1) = 0
  *    v_t(t,0) = v_t(t,1) = 0
  *    w_t(t,0) = w_t(t,1) = 0.
- * 
- * Here, we use a piecewise linear Galerkin finite element 
- * discretization in space, where all element-wise integrals are 
- * computed using 3-node Gaussian quadrature (since we will have 
- * quartic polynomials in the reaction terms for the u_t and v_t 
- * equations, including the test function).  The time derivative 
- * terms for this system will include a mass matrix, giving rise 
+ *
+ * Here, we use a piecewise linear Galerkin finite element
+ * discretization in space, where all element-wise integrals are
+ * computed using 3-node Gaussian quadrature (since we will have
+ * quartic polynomials in the reaction terms for the u_t and v_t
+ * equations, including the test function).  The time derivative
+ * terms for this system will include a mass matrix, giving rise
  * to an ODE system of the form
  *      M y_t = L y + R(y),
- * where M is the block mass matrix for each comp1.0nt, L is 
- * the block Laplace operator for each comp1.0nt, and R(y) is 
- * a 3x3 block comprised of the nonlinear reaction terms for 
- * each comp1.0nt.  Since it it highly inefficient to rewrite 
+ * where M is the block mass matrix for each comp1.0nt, L is
+ * the block Laplace operator for each comp1.0nt, and R(y) is
+ * a 3x3 block comprised of the nonlinear reaction terms for
+ * each comp1.0nt.  Since it it highly inefficient to rewrite
  * this system as
  *      y_t = M^{-1}(L y + R(y)),
  * we solve this system using ARKode, with a user-supplied mass
- * matrix.  We therefore provide functions to evaluate the ODE RHS 
+ * matrix.  We therefore provide functions to evaluate the ODE RHS
  *    f(t,y) = L y + R(y),
  * its Jacobian
  *    J(t,y) = L + dR/dy,
@@ -56,7 +56,7 @@
  * This program solves the problem with the DIRK method, using a
  * Newton iteration with the ARKSUPERLUMT sparse linear solver.
  *
- * 100 outputs are printed at equal time intervals, and run 
+ * 100 outputs are printed at equal time intervals, and run
  * statistics are printed at the end.
  *---------------------------------------------------------------*)
 
@@ -98,15 +98,16 @@ type user_data = {
   dv  : float;                          (* diffusion coeff for v   *)
   dw  : float;                          (* diffusion coeff for w   *)
   ep  : float;                          (* stiffness parameter     *)
-  mutable r : Sls.SparseMatrix.t_csc option (* temporary storage       *)
+  mutable r : Matrix.Sparse.csc Matrix.Sparse.t option
+                                        (* temporary storage       *)
 }
 
 (* Routine to compute the Laplace matrix *)
 let laplace_matrix { n; du; dv; dw; x } l =
   let nz = ref 0 in
-  let set_col j = Sls.SparseMatrix.set_col l j !nz in
-  let set j v = (Sls.SparseMatrix.set l !nz j v; incr nz) in
-  
+  let set_col j = Matrix.Sparse.set_col l j !nz in
+  let set j v = (Matrix.Sparse.set l !nz j v; incr nz) in
+
   (* iterate over columns, filling in Laplace matrix entries *)
   for i=0 to n-1 do
     (* dependence on u at this node *)
@@ -195,8 +196,8 @@ let laplace_matrix { n; du; dv; dw; x } l =
 (* Routine to compute the Jacobian matrix from R(y) *)
 let reaction_jac { n; ep; x } (y : RealArray.t) jac =
   let nz = ref 0 in
-  let set_col j = Sls.SparseMatrix.set_col jac j !nz in
-  let set j v = (Sls.SparseMatrix.set jac !nz j v; incr nz) in
+  let set_col j = Matrix.Sparse.set_col jac j !nz in
+  let set j v = (Matrix.Sparse.set jac !nz j v; incr nz) in
 
   (* iterate over columns, filling in reaction Jacobian *)
   for i=0 to n-1 do
@@ -207,7 +208,7 @@ let reaction_jac { n; ep; x } (y : RealArray.t) jac =
 
     (* set nodal value shortcuts *)
     let ul, vl, wl =
-      if i > 0 then y.{idx (i-1) 0}, y.{idx (i-1) 1}, y.{idx (i-1) 2} 
+      if i > 0 then y.{idx (i-1) 0}, y.{idx (i-1) 1}, y.{idx (i-1) 2}
       else 0.0, 0.0, 0.0 in
 
     let uc = y.{idx i 0} in
@@ -219,7 +220,7 @@ let reaction_jac { n; ep; x } (y : RealArray.t) jac =
       else 0.0, 0.0, 0.0 in
 
     let u1l, v1l, w1l, u2l, v2l, w2l, u3l, v3l, w3l =
-      if i > 0 then 
+      if i > 0 then
         eval(ul,uc,xl,xc,x1(xl,xc)),
         eval(vl,vc,xl,xc,x1(xl,xc)),
         eval(wl,wc,xl,xc,x1(xl,xc)),
@@ -523,7 +524,7 @@ let f_rx { n; a; b; ep; x } t (y : RealArray.t) (ydot : RealArray.t) =
       let w = eval(wl,wr,xl,xr,x3(xl,xr)) in
       let f3 = (a -. (w+.1.0)*.u +. v*.u*.u) *. chiL(xl,xr,x3(xl,xr)) in
       ydot.{idx i 0} <- ydot.{idx i 0} +. quad(f1,f2,f3,xl,xr);
-    
+
       (*  v *)
       let u = eval(ul,ur,xl,xr,x1(xl,xr)) in
       let v = eval(vl,vr,xl,xr,x1(xl,xr)) in
@@ -538,7 +539,7 @@ let f_rx { n; a; b; ep; x } t (y : RealArray.t) (ydot : RealArray.t) =
       let w = eval(wl,wr,xl,xr,x3(xl,xr)) in
       let f3 = (w*.u -. v*.u*.u) *. chiL(xl,xr,x3(xl,xr)) in
       ydot.{idx i 1} <- ydot.{idx i 1} +. quad(f1,f2,f3,xl,xr);
-    
+
       (*  w *)
       let u = eval(ul,ur,xl,xr,x1(xl,xr)) in
       (* let v = eval(vl,vr,xl,xr,x1(xl,xr)) in *)
@@ -570,7 +571,7 @@ let f_rx { n; a; b; ep; x } t (y : RealArray.t) (ydot : RealArray.t) =
       let w = eval(wl,wr,xl,xr,x3(xl,xr)) in
       let f3 = (a -. (w+.1.0)*.u +. v*.u*.u) *. chiR(xl,xr,x3(xl,xr)) in
       ydot.{idx (i+1) 0} <- ydot.{idx (i+1) 0} +. quad(f1,f2,f3,xl,xr);
-    
+
       (*  v *)
       let u = eval(ul,ur,xl,xr,x1(xl,xr)) in
       let v = eval(vl,vr,xl,xr,x1(xl,xr)) in
@@ -585,7 +586,7 @@ let f_rx { n; a; b; ep; x } t (y : RealArray.t) (ydot : RealArray.t) =
       let w = eval(wl,wr,xl,xr,x3(xl,xr)) in
       let f3 = (w*.u -. v*.u*.u) *. chiR(xl,xr,x3(xl,xr)) in
       ydot.{idx (i+1) 1} <- ydot.{idx (i+1) 1} +. quad(f1,f2,f3,xl,xr);
-    
+
       (*  w *)
       let u = eval(ul,ur,xl,xr,x1(xl,xr)) in
       (* let v = eval(vl,vr,xl,xr,x1(xl,xr)) in *)
@@ -634,7 +635,7 @@ let f_diff { n; du; dv; dw; x } t (y : RealArray.t) (ydot : RealArray.t) =
       (*  v *)
       let f1 = -.dv *. eval_x(vl,vr,xl,xr) *. chiL_x(xl,xr) in
       ydot.{idx i 1} <- ydot.{idx i 1} +. quad(f1,f1,f1,xl,xr);
-      
+
       (*  w *)
       let f1 = -.dw *. eval_x(wl,wr,xl,xr) *. chiL_x(xl,xr) in
       ydot.{idx i 2} <- ydot.{idx i 2} +. quad(f1,f1,f1,xl,xr)
@@ -656,7 +657,7 @@ let f_diff { n; du; dv; dw; x } t (y : RealArray.t) (ydot : RealArray.t) =
   done
 
 (* Routine to compute the ODE RHS function f(t,y), where system is of the form
-        M y_t = f(t,y) := Ly + R(y) 
+        M y_t = f(t,y) := Ly + R(y)
    This routine only computes the f(t,y), leaving (M y_t) al1.0. *)
 let f ud t y ydot =
   (* clear out RHS (to be careful) *)
@@ -668,13 +669,14 @@ let f ud t y ydot =
 
 (* Interface routine to compute the Jacobian of the full RHS function, f(y) *)
 let jac ud { Arkode.jac_y = (y : RealArray.t) } j =
-  let m, n, nnz = Sls.SparseMatrix.size j in
+  let m, n = Matrix.Sparse.size j in
+  let nnz, _ = Matrix.Sparse.dims j in
 
   (* ensure that Jac is the correct size *)
   if (m <> ud.n*3) || (n <> ud.n*3) then
     (printf "Jacobian calculation error: matrix is the wrong size!\n";
      raise Sundials.RecoverableFailure);
-  
+
   (* Fill in the Laplace matrix *)
   laplace_matrix ud j;
 
@@ -682,18 +684,18 @@ let jac ud { Arkode.jac_y = (y : RealArray.t) } j =
   (match ud.r with
    | Some _ -> ()
    | None ->
-      try ud.r <- Some (Sls.SparseMatrix.make_csc m n nnz)
+      try ud.r <- Some Matrix.Sparse.(make CSC m n nnz)
       with _ ->
         (printf "Jac: error in allocating R matrix!\n";
          raise Sundials.RecoverableFailure));
-      
+
   (* Add in the Jacobian of the reaction terms matrix *)
   (match ud.r with
    | None -> raise Sundials.RecoverableFailure
    | Some r -> begin
        reaction_jac ud y r;
        (* Add R to J *)
-       try Sls.SparseMatrix.add j r
+       try Matrix.Sparse.scale_add 1.0 j r
        with _ ->
          (printf "Jac: error in adding sparse matrices!\n";
           raise Sundials.RecoverableFailure)
@@ -702,8 +704,8 @@ let jac ud { Arkode.jac_y = (y : RealArray.t) } j =
 (* Routine to compute the mass matrix multiplying y_t. *)
 let mass_matrix { n; x } t _ m =
   let nz = ref 0 in
-  let set_col j = Sls.SparseMatrix.set_col m j !nz in
-  let set j v = (Sls.SparseMatrix.set m !nz j v; incr nz) in
+  let set_col j = Matrix.Sparse.set_col m j !nz in
+  let set j v = (Matrix.Sparse.set m !nz j v; incr nz) in
 
   (* iterate over columns, filling in matrix entries *)
   for i=0 to n-1 do
@@ -862,7 +864,7 @@ let main () =
     ep = 1.0e-5;        (* stiffness parameter *)
     r  = None;
 
-    (* allocate and set up spatial mesh; this [arbitrarily] clusters 
+    (* allocate and set up spatial mesh; this [arbitrarily] clusters
        more intervals near the end points of the interval *)
     x  = RealArray.init n_mesh
           (fun i -> let z = -5.0 +. h*.float i in
@@ -905,23 +907,25 @@ let main () =
     (unwrap vmask).{idx i 1} <- 1.0;
     (unwrap wmask).{idx i 2} <- 1.0
   done;
-  
+
   (* Call ARKodeInit to initialize the integrator memory and specify the
      hand-side side function in y'=f(t,y), the inital time t0, and
      the initial dependent variable vector y.  Note: since this
      problem is fully implicit, we set f_E to NULL and f_I to f. *)
   let nnz = 15 * neq in
+  let m1 = Matrix.sparse_csc ~nnz neq in
+  let m2 = Matrix.sparse_csc ~nnz neq in
   let arkode_mem = Arkode.(
     init
       (Arkode.Implicit
         (f udata,
-         Newton (Sls.Superlumt.solver_csc (jac udata)
-                    ~nnz:nnz ~nthreads:num_threads),
+         Newton Dls.(solver Direct.(superlumt ~nthreads:num_threads y m1)
+                            ~jac:(jac udata) m1),
          Nonlinear))
       (SStolerances (reltol, abstol))
       ~restol:(ResStolerance abstol)
-      ~mass:(Sls.Superlumt.Mass.solver_csc (mass_matrix udata)
-                  ~nnz:nnz ~nthreads:num_threads)
+      ~mass:Mass.Dls.(solver Direct.(superlumt ~nthreads:num_threads y m2)
+                             (mass_matrix udata) false m2)
       t0
       y
   ) in
@@ -958,7 +962,7 @@ let main () =
      for iout=0 to nt-1 do
        (* call integrator *)
        let t, _ = Arkode.solve_normal arkode_mem !tout y in
- 
+
        (* access/print solution statistics *)
        let u = n_vwl2norm y umask in
        let u = sqrt(u*.u/. float n_mesh) in
@@ -969,7 +973,7 @@ let main () =
        printf "  %10.6f  %10.6f  %10.6f  %10.6f\n" t u v w;
        (* successful solve: update output time *)
        tout := min (!tout +. dTout) tf;
- 
+
        (* output results to disk *)
        for i=0 to n_mesh-1 do
          fprintf ufid " %.16e" data.{idx i 0};
@@ -998,7 +1002,7 @@ let main () =
   let nni      = get_num_nonlin_solv_iters arkode_mem in
   let ncfn     = get_num_nonlin_solv_conv_fails arkode_mem in
   let nms      = get_num_mass_solves arkode_mem in
-  let nje      = Sls.Superlumt.get_num_jac_evals arkode_mem in
+  let nje      = Dls.get_num_jac_evals arkode_mem in
 
   printf "\nFinal Solver Statistics:\n";
   printf "   Internal solver steps = %d (attempted = %d)\n" nst nst_a;

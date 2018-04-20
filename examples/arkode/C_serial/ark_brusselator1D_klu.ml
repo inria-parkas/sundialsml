@@ -3,22 +3,22 @@
  *---------------------------------------------------------------
  * OCaml port: Timothy Bourke, Inria, Jan 2016.
  *---------------------------------------------------------------
- * Copyright (c) 2015, Southern Methodist University and 
+ * Copyright (c) 2015, Southern Methodist University and
  * Lawrence Livermore National Security
  *
- * This work was performed under the auspices of the U.S. Department 
- * of Energy by Southern Methodist University and Lawrence Livermore 
+ * This work was performed under the auspices of the U.S. Department
+ * of Energy by Southern Methodist University and Lawrence Livermore
  * National Laboratory under Contract DE-AC52-07NA27344.
- * Produced at Southern Methodist University and the Lawrence 
+ * Produced at Southern Methodist University and the Lawrence
  * Livermore National Laboratory.
  *
  * All rights reserved.
  * For details, see the LICENSE file.
  *---------------------------------------------------------------
  * Example problem:
- * 
- * The following test simulates a brusselator problem from chemical 
- * kinetics.  This is n PDE system with 3 components, Y = [u,v,w], 
+ *
+ * The following test simulates a brusselator problem from chemical
+ * kinetics.  This is n PDE system with 3 components, Y = [u,v,w],
  * satisfying the equations,
  *    u_t = du*u_xx + a - (w+1)*u + v*u^2
  *    v_t = dv*v_xx + w*u - v*u^2
@@ -27,27 +27,27 @@
  *    u(0,x) =  a  + 0.1*sin(pi*x)
  *    v(0,x) = b/a + 0.1*sin(pi*x)
  *    w(0,x) =  b  + 0.1*sin(pi*x),
- * and with stationary boundary conditions, i.e. 
+ * and with stationary boundary conditions, i.e.
  *    u_t(t,0) = u_t(t,1) = 0,
  *    v_t(t,0) = v_t(t,1) = 0,
  *    w_t(t,0) = w_t(t,1) = 0.
- * Note: these can also be implemented as Dirichlet boundary 
+ * Note: these can also be implemented as Dirichlet boundary
  * conditions with values identical to the initial conditions.
- * 
- * The spatial derivatives are computed using second-order 
- * centered differences, with the data distributed over N points 
+ *
+ * The spatial derivatives are computed using second-order
+ * centered differences, with the data distributed over N points
  * on a uniform spatial grid.
  *
- * The number of spatial points N, the parameters a, b, du, dv, 
- * dw and ep, as well as the desired relative and absolute solver 
- * tolerances, are provided in the input file 
+ * The number of spatial points N, the parameters a, b, du, dv,
+ * dw and ep, as well as the desired relative and absolute solver
+ * tolerances, are provided in the input file
  * input_brusselator1D.txt.
- * 
+ *
  * This program solves the problem with the DIRK method, using a
- * Newton iteration.  The inner linear systems are solved using 
+ * Newton iteration.  The inner linear systems are solved using
  * the ARKKLU linear solver.
  *
- * 100 outputs are printed at equal intervals, and run statistics 
+ * 100 outputs are printed at equal intervals, and run statistics
  * are printed at the end.
  *---------------------------------------------------------------*)
 
@@ -70,7 +70,7 @@ type user_data = {
     dv : float;      (* diffusion coeff for v   *)
     dw : float;      (* diffusion coeff for w   *)
     ep : float;      (* stiffness parameter     *)
-    mutable r  : Sls.SparseMatrix.t_csc option
+    mutable r  : Matrix.Sparse.csc Matrix.Sparse.t option
                      (* temporary storage       *)
   }
 
@@ -112,14 +112,14 @@ let f ud t (y : RealArray.t) (dy : RealArray.t) =
    We add the result into Jac and do not erase what was already there *)
 let laplace_matrix ud jac =
   let nz = ref 0 in
-  let set_col j = Sls.SparseMatrix.set_col jac j !nz in
-  let set j v = (Sls.SparseMatrix.set jac !nz j v; incr nz) in
+  let set_col j = Matrix.Sparse.set_col jac j !nz in
+  let set j v = (Matrix.Sparse.set jac !nz j v; incr nz) in
 
   (* set first column to zero *)
   set_col (idx 0 0);
   set_col (idx 0 1);
   set_col (idx 0 2);
-  
+
   (* iterate over nodes, filling in Laplacian entries depending on these *)
   let uconst  = ud.du /. ud.dx /. ud.dx in
   let uconst2 = -2.0 *. uconst in
@@ -152,7 +152,7 @@ let laplace_matrix ud jac =
   set_col (idx (ud.n-1) 0);
   set_col (idx (ud.n-1) 1);
   set_col (idx (ud.n-1) 2);
-  
+
   (* end of data *)
   set_col ((idx (ud.n-1) 2)+1)
 
@@ -160,14 +160,14 @@ let laplace_matrix ud jac =
    We add the result into Jac and do not erase what was already there *)
 let reaction_jac ud (y : RealArray.t) jac =
   let nz = ref 0 in
-  let set_col j = Sls.SparseMatrix.set_col jac j !nz in
-  let set j v = (Sls.SparseMatrix.set jac !nz j v; incr nz) in
+  let set_col j = Matrix.Sparse.set_col jac j !nz in
+  let set j v = (Matrix.Sparse.set jac !nz j v; incr nz) in
 
   (* set first matrix column to zero *)
   set_col (idx 0 0);
   set_col (idx 0 1);
   set_col (idx 0 2);
-  
+
   (* iterate over interior nodes, filling in Jacobian entries *)
   for i=1 to ud.n-1-1 do
     (* set nodal value shortcuts *)
@@ -203,13 +203,14 @@ let reaction_jac ud (y : RealArray.t) jac =
 
 (* Jacobian routine to compute J(t,y) = df/dy. *)
 let jac ud { Arkode.jac_y = (y : RealArray.t) } j =
-  let m, n, nnz = Sls.SparseMatrix.size j in
+  let m, n = Matrix.Sparse.size j in
+  let nnz, _ = Matrix.Sparse.dims j in
 
   (* ensure that Jac is the correct size *)
   if (m <> ud.n*3) || (n <> ud.n*3) then
     (printf "Jacobian calculation error: matrix is the wrong size!\n";
      raise Sundials.RecoverableFailure);
-  
+
   (* Fill in the Laplace matrix *)
   laplace_matrix ud j;
 
@@ -217,18 +218,18 @@ let jac ud { Arkode.jac_y = (y : RealArray.t) } j =
   (match ud.r with
    | Some _ -> ()
    | None ->
-      try ud.r <- Some (Sls.SparseMatrix.make_csc m n nnz)
+      try ud.r <- Some Matrix.Sparse.(make CSC m n nnz)
       with _ ->
         (printf "Jacobian calculation error in allocating R matrix!\n";
          raise Sundials.RecoverableFailure));
-      
+
   (* Add in the Jacobian of the reaction terms matrix *)
   (match ud.r with
    | None -> raise Sundials.RecoverableFailure
    | Some r -> begin
        reaction_jac ud y r;
        (* Add R to J *)
-       try Sls.SparseMatrix.add j r
+       try Matrix.Sparse.scale_add 1.0 j r
        with _ ->
          (printf "Jacobian calculation error in adding sparse matrices!\n";
           raise Sundials.RecoverableFailure)
@@ -308,10 +309,12 @@ let main () =
      the initial dependent variable vector y.  Note: since this
      problem is fully implicit, we set f_E to NULL and f_I to f. *)
   let nnz = 5*neq in
+  let m = Matrix.sparse_csc ~nnz neq in
   let arkode_mem = Arkode.(
     init
       (Implicit (f udata,
-                 Newton (Sls.Klu.solver_csc (jac udata) nnz), Nonlinear))
+                 Newton Dls.(solver Direct.(klu y m) ~jac:(jac udata) m),
+       Nonlinear))
       (SStolerances (reltol, abstol))
       t0
       y
@@ -349,7 +352,7 @@ let main () =
      for iout=0 to nt-1 do
        (* call integrator *)
        let t, _ = Arkode.solve_normal arkode_mem !tout y in
- 
+
        (* access/print solution statistics *)
        let u = n_vwl2norm y umask in
        let u = sqrt(u*.u/. float n_mesh) in
@@ -360,7 +363,7 @@ let main () =
        printf "  %10.6f  %10.6f  %10.6f  %10.6f\n" t u v w;
        (* successful solve: update output time *)
        tout := min (!tout +. dTout) tf;
- 
+
        (* output results to disk *)
        for i=0 to n_mesh-1 do
          fprintf ufid " %.16e" data.{idx i 0};
@@ -388,7 +391,7 @@ let main () =
   let netf     = get_num_err_test_fails arkode_mem in
   let nni      = get_num_nonlin_solv_iters arkode_mem in
   let ncfn     = get_num_nonlin_solv_conv_fails arkode_mem in
-  let nje      = Sls.Klu.get_num_jac_evals arkode_mem in
+  let nje      = Dls.get_num_jac_evals arkode_mem in
 
   printf "\nFinal Solver Statistics:\n";
   printf "   Internal solver steps = %d (attempted = %d)\n" nst nst_a;

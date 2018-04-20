@@ -3,27 +3,27 @@
  *---------------------------------------------------------------
  * OCaml port: Timothy Bourke, Inria, Jan 2016.
  *---------------------------------------------------------------
- * Copyright (c) 2015, Southern Methodist University and 
+ * Copyright (c) 2015, Southern Methodist University and
  * Lawrence Livermore National Security
  *
- * This work was performed under the auspices of the U.S. Department 
- * of Energy by Southern Methodist University and Lawrence Livermore 
+ * This work was performed under the auspices of the U.S. Department
+ * of Energy by Southern Methodist University and Lawrence Livermore
  * National Laboratory under Contract DE-AC52-07NA27344.
- * Produced at Southern Methodist University and the Lawrence 
+ * Produced at Southern Methodist University and the Lawrence
  * Livermore National Laboratory.
  *
  * All rights reserved.
  * For details, see the LICENSE file.
  *---------------------------------------------------------------
  * Example problem:
- * 
- * The following is a simple example problem with analytical 
+ *
+ * The following is a simple example problem with analytical
  * solution,
  *     dy/dt = (t+1)*exp(-y)
- * for t in the interval [0.0, 10.0], with initial condition: y=0. 
- * This has analytical solution 
+ * for t in the interval [0.0, 10.0], with initial condition: y=0.
+ * This has analytical solution
  *      y(t) = log(0.5*t^2 + t + 1)
- * 
+ *
  * This program solves the problem with the ERK method.
  * Output is printed every 1.0 units of time (10 total).
  * Run statistics (optional outputs) are printed at the end.
@@ -70,7 +70,7 @@ let main () =
   fprintf ufid "# t u\n";
 
   (* output initial condition to disk *)
-  fprintf ufid " %.16e %.16e\n" t0 data.{0};  
+  fprintf ufid " %.16e %.16e\n" t0 data.{0};
 
   (* Main time-stepping loop: calls ARKode to perform the integration, then
      prints results.  Stops when the final time has been reached *)
@@ -84,7 +84,7 @@ let main () =
        let t', _ = Arkode.solve_normal arkode_mem !tout y in
        t := t';
        printf "  %10.6f  %10.6f\n" t' data.{0};      (* access/print solution *)
-       fprintf ufid " %.16e %.16e\n" t' data.{0};  
+       fprintf ufid " %.16e %.16e\n" t' data.{0};
        (* successful solve: update time *)
        tout := min (!tout +. dTout) tf
      done

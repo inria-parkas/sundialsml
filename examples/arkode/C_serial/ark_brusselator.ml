@@ -3,57 +3,57 @@
  *---------------------------------------------------------------
  * OCaml port: Timothy Bourke, Inria, Jan 2016.
  *---------------------------------------------------------------
- * Copyright (c) 2015, Southern Methodist University and 
+ * Copyright (c) 2015, Southern Methodist University and
  * Lawrence Livermore National Security
  *
- * This work was performed under the auspices of the U.S. Department 
- * of Energy by Southern Methodist University and Lawrence Livermore 
+ * This work was performed under the auspices of the U.S. Department
+ * of Energy by Southern Methodist University and Lawrence Livermore
  * National Laboratory under Contract DE-AC52-07NA27344.
- * Produced at Southern Methodist University and the Lawrence 
+ * Produced at Southern Methodist University and the Lawrence
  * Livermore National Laboratory.
  *
  * All rights reserved.
  * For details, see the LICENSE file.
  *---------------------------------------------------------------
  * Example problem:
- * 
- * The following test simulates a brusselator problem from chemical 
- * kinetics.  This is an ODE system with 3 components, Y = [u,v,w], 
+ *
+ * The following test simulates a brusselator problem from chemical
+ * kinetics.  This is an ODE system with 3 components, Y = [u,v,w],
  * satisfying the equations,
  *    du/dt = a - (w+1)*u + v*u^2
  *    dv/dt = w*u - v*u^2
  *    dw/dt = (b-w)/ep - w*u
- * for t in the interval [0.0, 10.0], with initial conditions 
- * Y0 = [u0,v0,w0]. 
- * 
+ * for t in the interval [0.0, 10.0], with initial conditions
+ * Y0 = [u0,v0,w0].
+ *
  * We have 3 different testing scenarios:
  *
  * Test 1:  u0=3.9,  v0=1.1,  w0=2.8,  a=1.2,  b=2.5,  ep=1.0e-5
- *    Here, all three components exhibit a rapid transient change 
- *    during the first 0.2 time units, followed by a slow and 
+ *    Here, all three components exhibit a rapid transient change
+ *    during the first 0.2 time units, followed by a slow and
  *    smooth evolution.
  *
  * Test 2:  u0=1.2,  v0=3.1,  w0=3,  a=1,  b=3.5,  ep=5.0e-6
- *    Here, w experiences a fast initial transient, jumping 0.5 
- *    within a few steps.  All values proceed smoothly until 
- *    around t=6.5, when both u and v undergo a sharp transition, 
- *    with u increaseing from around 0.5 to 5 and v decreasing 
+ *    Here, w experiences a fast initial transient, jumping 0.5
+ *    within a few steps.  All values proceed smoothly until
+ *    around t=6.5, when both u and v undergo a sharp transition,
+ *    with u increaseing from around 0.5 to 5 and v decreasing
  *    from around 6 to 1 in less than 0.5 time units.  After this
- *    transition, both u and v continue to evolve somewhat 
+ *    transition, both u and v continue to evolve somewhat
  *    rapidly for another 1.4 time units, and finish off smoothly.
  *
  * Test 3:  u0=3,  v0=3,  w0=3.5,  a=0.5,  b=3,  ep=5.0e-4
- *    Here, all components undergo very rapid initial transients 
- *    during the first 0.3 time units, and all then proceed very 
+ *    Here, all components undergo very rapid initial transients
+ *    during the first 0.3 time units, and all then proceed very
  *    smoothly for the remainder of the simulation.
  *
  * This file is hard-coded to use test 2.
- * 
+ *
  * This program solves the problem with the DIRK method, using a
  * Newton iteration with the ARKDENSE dense linear solver, and a
  * user-supplied Jacobian routine.
  *
- * 100 outputs are printed at equal intervals, and run statistics 
+ * 100 outputs are printed at equal intervals, and run statistics
  * are printed at the end.
  *-----------------------------------------------------------------*)
 
@@ -83,7 +83,7 @@ let jac rdata { Arkode.jac_y = y } j =
   let w = y.{2} in
 
   (* fill in the Jacobian *)
-  let open Dls.DenseMatrix in
+  let open Matrix.Dense in
   set j 0 0 (-.(w+.1.0) +. 2.0*.u*.v);
   set j 0 1 (u*.u);
   set j 0 2 (-.u);
@@ -161,9 +161,12 @@ let main () =
      hand-side side function in y'=f(t,y), the inital time t0, and
      the initial dependent variable vector y.  Note: since this
      problem is fully implicit, we set f_E to NULL and f_I to f. *)
+  let m = Matrix.dense 3 in
   let arkode_mem = Arkode.(
     init
-      (Implicit (f rdata, Newton (Dls.dense ~jac:(jac rdata) ()), Nonlinear))
+      (Implicit (f rdata, Newton Dls.(solver Direct.(dense y m)
+                                             ~jac:(jac rdata) m),
+       Nonlinear))
       (SStolerances (reltol, abstol))
       t0
       y
@@ -187,7 +190,7 @@ let main () =
        let t, _ = Arkode.solve_normal arkode_mem !tout y in
        (* access/print solution *)
        printf "  %10.6f  %10.6f  %10.6f  %10.6f\n" t data.{0} data.{1} data.{2};
-       fprintf ufid " %.16e %.16e %.16e %.16e\n" t data.{0} data.{1} data.{2};  
+       fprintf ufid " %.16e %.16e %.16e %.16e\n" t data.{0} data.{1} data.{2};
        (* successful solve: update time *)
        tout := min (!tout +. dTout) tf
      done

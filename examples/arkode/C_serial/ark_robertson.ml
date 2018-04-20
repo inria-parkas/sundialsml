@@ -3,36 +3,36 @@
  *---------------------------------------------------------------
  * OCaml port: Timothy Bourke, Inria, Jan 2016.
  *---------------------------------------------------------------
- * Copyright (c) 2015, Southern Methodist University and 
+ * Copyright (c) 2015, Southern Methodist University and
  * Lawrence Livermore National Security
  *
- * This work was performed under the auspices of the U.S. Department 
- * of Energy by Southern Methodist University and Lawrence Livermore 
+ * This work was performed under the auspices of the U.S. Department
+ * of Energy by Southern Methodist University and Lawrence Livermore
  * National Laboratory under Contract DE-AC52-07NA27344.
- * Produced at Southern Methodist University and the Lawrence 
+ * Produced at Southern Methodist University and the Lawrence
  * Livermore National Laboratory.
  *
  * All rights reserved.
  * For details, see the LICENSE file.
  *---------------------------------------------------------------
  * Example problem:
- * 
- * The following test simulates the Robertson problem, 
- * corresponding to the kinetics of an autocatalytic reaction.  
+ *
+ * The following test simulates the Robertson problem,
+ * corresponding to the kinetics of an autocatalytic reaction.
  * This is an ODE system with 3 components, Y = [u,v,w], satisfying
  * the equations,
  *    du/dt = -0.04*u + 1e4*v*w
  *    dv/dt = 0.04*u - 1e4*v*w - 3e7*v^2
  *    dw/dt = 3e7*v^2
- * for t in the interval [0.0, 1e11], with initial conditions 
- * Y0 = [1,0,0]. 
- * 
- * This program solves the problem with one of the solvers, ERK, 
- * DIRK or ARK.  For DIRK and ARK, implicit subsystems are solved 
- * using a Newton iteration with the ARKDENSE dense linear solver, 
+ * for t in the interval [0.0, 1e11], with initial conditions
+ * Y0 = [1,0,0].
+ *
+ * This program solves the problem with one of the solvers, ERK,
+ * DIRK or ARK.  For DIRK and ARK, implicit subsystems are solved
+ * using a Newton iteration with the ARKDENSE dense linear solver,
  * and a user-supplied Jacobian routine.
  *
- * 100 outputs are printed at equal intervals, and run statistics 
+ * 100 outputs are printed at equal intervals, and run statistics
  * are printed at the end.
  *---------------------------------------------------------------*)
 
@@ -62,7 +62,7 @@ let jac { Arkode.jac_y = (y : RealArray.t) } j =
   let w = y.{2} in
 
   (* Fill in the Jacobian of the ODE RHS function *)
-  let open Dls.DenseMatrix in
+  let open Matrix.Dense in
   set j 0 0 (-0.04);
   set j 0 1 (1.e4*.w);
   set j 0 2 (1.e4*.v);
@@ -102,9 +102,11 @@ let main () =
      hand-side side function in y'=f(t,y), the inital time t0, and
      the initial dependent variable vector y.  Note: since this
      problem is fully implicit, we set f_E to NULL and f_I to f. *)
+  let m = Matrix.dense 3 in
   let arkode_mem = Arkode.(
     init
-      (Implicit (f, Newton (Dls.dense ~jac:jac ()), Nonlinear))
+      (Implicit (f, Newton Dls.(solver Direct.(dense y_nv m) ~jac:jac m),
+       Nonlinear))
       (SStolerances (reltol, abstol))
       t0
       y_nv
@@ -135,7 +137,7 @@ let main () =
      for iout=0 to nt-1 do
        (* call integrator *)
        let t, _ = Arkode.solve_normal arkode_mem !tout y_nv in
- 
+
        (* access/print solution *)
        printf "  %10.3e  %12.5e  %12.5e  %12.5e\n" t y.{0} y.{1} y.{2};
        fprintf ufid " %.16e %.16e %.16e %.16e\n" t y.{0} y.{1} y.{2};

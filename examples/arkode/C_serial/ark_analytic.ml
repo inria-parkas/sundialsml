@@ -3,30 +3,30 @@
  *---------------------------------------------------------------
  * OCaml port: Timothy Bourke, Inria, Jan 2016.
  *---------------------------------------------------------------
- * Copyright (c) 2015, Southern Methodist University and 
+ * Copyright (c) 2015, Southern Methodist University and
  * Lawrence Livermore National Security
  *
- * This work was performed under the auspices of the U.S. Department 
- * of Energy by Southern Methodist University and Lawrence Livermore 
+ * This work was performed under the auspices of the U.S. Department
+ * of Energy by Southern Methodist University and Lawrence Livermore
  * National Laboratory under Contract DE-AC52-07NA27344.
- * Produced at Southern Methodist University and the Lawrence 
+ * Produced at Southern Methodist University and the Lawrence
  * Livermore National Laboratory.
  *
  * All rights reserved.
  * For details, see the LICENSE file.
  *---------------------------------------------------------------
  * Example problem:
- * 
- * The following is a simple example problem with analytical 
+ *
+ * The following is a simple example problem with analytical
  * solution,
  *    dy/dt = lamda*y + 1/(1+t^2) - lamda*atan(t)
- * for t in the interval [0.0, 10.0], with initial condition: y=0. 
- * 
- * The stiffness of the problem is directly proportional to the 
+ * for t in the interval [0.0, 10.0], with initial condition: y=0.
+ *
+ * The stiffness of the problem is directly proportional to the
  * value of "lamda".  The value of lamda should be negative to
- * result in a well-posed ODE; for values with magnitude larger 
+ * result in a well-posed ODE; for values with magnitude larger
  * than 100 the problem becomes quite stiff.
- * 
+ *
  * This program solves the problem with the DIRK method,
  * Newton iteration with the ARKDENSE dense linear solver, and a
  * user-supplied Jacobian routine.
@@ -49,7 +49,7 @@ let f lamda t (y : RealArray.t) (ydot : RealArray.t) =
 (* Jacobian routine to compute J(t,y) = df/dy. *)
 let jac lamda _ j =
   (* Fill in Jacobian of f: "DENSE_ELEM" accesses the (0,0) entry of J *)
-  Dls.DenseMatrix.set j 0 0 lamda
+  Matrix.Dense.set j 0 0 lamda
 
 (* Main Program *)
 let main () =
@@ -76,9 +76,12 @@ let main () =
      hand-side side function in y'=f(t,y), the inital time t0, and
      the initial dependent variable vector y.  Note: since this
      problem is fully implicit, we set f_E to NULL and f_I to f. *)
+  let m = Matrix.dense neq in
   let arkode_mem = Arkode.(
     init
-      (Implicit (f lamda, Newton (Dls.dense ~jac:(jac lamda) ()), Linear false))
+      (Implicit (f lamda, Newton Dls.(solver Direct.(dense y m)
+                                             ~jac:(jac lamda) m),
+                 Linear false))
       (SStolerances (reltol, abstol))
       t0
       y
@@ -88,7 +91,7 @@ let main () =
   fprintf ufid "# t u\n";
 
   (* output initial condition to disk *)
-  fprintf ufid " %.16e %.16e\n" t0 data.{0};  
+  fprintf ufid " %.16e %.16e\n" t0 data.{0};
 
   (* Main time-stepping loop: calls ARKode to perform the integration, then
      prints results.  Stops when the final time has been reached *)
@@ -102,7 +105,7 @@ let main () =
        let t', _ = Arkode.solve_normal arkode_mem !tout y in
        t := t';
        printf "  %10.6f  %10.6f\n" t' data.{0};     (* access/print solution *)
-       fprintf ufid " %.16e %.16e\n" t' data.{0};  
+       fprintf ufid " %.16e %.16e\n" t' data.{0};
        (* successful solve: update time *)
        tout := min (!tout +. dTout) tf
      done

@@ -3,13 +3,13 @@
  *---------------------------------------------------------------
  * OCaml port: Timothy Bourke, Inria, Jan 2016.
  * --------------------------------------------------------------------
- * Copyright (c) 2015, Southern Methodist University and 
+ * Copyright (c) 2015, Southern Methodist University and
  * Lawrence Livermore National Security
  *
- * This work was performed under the auspices of the U.S. Department 
- * of Energy by Southern Methodist University and Lawrence Livermore 
+ * This work was performed under the auspices of the U.S. Department
+ * of Energy by Southern Methodist University and Lawrence Livermore
  * National Laboratory under Contract DE-AC52-07NA27344.
- * Produced at Southern Methodist University and the Lawrence 
+ * Produced at Southern Methodist University and the Lawrence
  * Livermore National Laboratory.
  *
  * All rights reserved.
@@ -17,7 +17,7 @@
  *---------------------------------------------------------------
  * Demonstration program for ARKODE - Krylov linear solver.
  * ODE system from ns-species interaction PDE in 2 dimensions.
- * 
+ *
  * This program solves a stiff ODE system that arises from a system
  * of partial differential equations. The PDE system is a food web
  * population model, with predator-prey interaction and diffusion on
@@ -30,14 +30,14 @@
  *
  *    i               i      i
  *  dc /dt  =  d(i)*(c    + c   )  +  f (x,y,c)  (i=1,...,ns)
- *                    xx     yy        i   
+ *                    xx     yy        i
  *
  * where
  *
  *                 i          ns         j
  *  f (x,y,c)  =  c *(b(i) + sum a(i,j)*c )
- *   i                       j=1                                         
- *                                                                       
+ *   i                       j=1
+ *
  * The number of species is ns = 2*np, with the first np being prey
  * and the last np being predators. The coefficients a(i,j), b(i),
  * d(i) are:
@@ -83,7 +83,7 @@
  * but there should be no such messages.
  *
  * Note: This program requires the dense linear solver functions
- * newDenseMat, newIntArray, denseAddIdentity, denseGETRF, denseGETRS, 
+ * newDenseMat, newIntArray, denseAddIdentity, denseGETRF, denseGETRS,
  * destroyMat and destroyArray.
  *
  * Note: This program assumes the sequential implementation for the
@@ -100,7 +100,7 @@
 module RealArray = Sundials.RealArray
 module LintArray = Sundials.LintArray
 module Roots = Sundials.Roots
-module Densemat = Dls.ArrayDenseMatrix
+module Densemat = Matrix.ArrayDense
 open Bigarray
 let unwrap = Nvector.unwrap
 
@@ -202,6 +202,7 @@ type web_data = {
 
     fsave     : RealArray.t;
 
+    tmp       : RealArray.t;
     rewt      : Nvector_serial.t;
 
     mutable arkode_mem : Nvector_serial.kind Arkode.serial_session option;
@@ -211,7 +212,7 @@ type web_data = {
 
 (*
   This routine computes the interaction rates for the species
-  c_1, ... ,c_ns (stored in c[0],...,c[ns-1]), at one spatial point 
+  c_1, ... ,c_ns (stored in c[0],...,c[ns-1]), at one spatial point
   and at time t.
 *)
 let web_rates wdata x y ((c : RealArray.t), c_off)
@@ -270,15 +271,13 @@ let v_sum_prods ((u : RealArray.t), u_off) p ((q : RealArray.t), q_off) v
  This routine can be regarded as a prototype for the general case
  of a block-diagonal preconditioner. The blocks are of size mp, and
  there are ngrp=ngx*ngy blocks computed in the block-grouping scheme.
-*) 
+*)
 let precond wdata jacarg jok gamma =
   let { Arkode.jac_t   = t;
         Arkode.jac_y   = (cdata : RealArray.t);
-        Arkode.jac_fy  = fc;
-        Arkode.jac_tmp = (vtemp1, _, _)
-      } = jacarg
+        Arkode.jac_fy  = fc } = jacarg
   in
-  let f1 = vtemp1 in
+  let f1 = wdata.tmp in
   let arkode_mem =
     match wdata.arkode_mem with
     | Some c -> c | None -> assert false
@@ -299,13 +298,13 @@ let precond wdata jacarg jok gamma =
   and fsave  = wdata.fsave
   in
   (* Make mp calls to fblock to approximate each diagonal block of Jacobian.
-     Here, fsave contains the base value of the rate vector and 
+     Here, fsave contains the base value of the rate vector and
      r0 is a minimum increment factor for the difference quotient. *)
-  
+
   let fac = Nvector_serial.DataOps.n_vwrmsnorm fc rewtdata in
   let r0 = 1000.0 *. abs_float gamma *. uround *. float neq *. fac in
   let r0 = if r0 = zero then one else r0 in
-  
+
   for igy = 0 to ngy - 1 do
     let jy = jyr.(igy) in
     let if00 = jy * mxmp in
@@ -330,7 +329,7 @@ let precond wdata jacarg jok gamma =
       done
     done
   done;
-  
+
   (* Add identity matrix and do LU decompositions on blocks. *)
   let f ig p_ig =
     Densemat.add_identity p_ig;
@@ -381,7 +380,7 @@ let gs_iter wdata gamma zd xd =
 
   (* Write matrix as P = D - L - U.
      Load local arrays beta, beta2, gam, gam2, and cof1. *)
-  
+
   for i = 0 to ns - 1 do
     let temp = one /. (one +. 2.0 *. gamma *. (cox.(i) +. coy.(i))) in
     beta.(i)  <- gamma *. cox.(i) *. temp;
@@ -390,7 +389,7 @@ let gs_iter wdata gamma zd xd =
     gam2.(i)  <- 2.0 *. gam.(i);
     cof1.(i)  <- temp
   done;
-  
+
   (* Begin iteration loop.
      Load vector x with (D-inverse)*z for first iteration. *)
   for jy = 0 to my - 1 do
@@ -401,13 +400,13 @@ let gs_iter wdata gamma zd xd =
     done
   done;
   Array1.fill zd zero;
-  
+
   (* Looping point for iterations. *)
-  
+
   for iter = 1 to itmax do
-    
+
     (* Calculate (D-inverse)*U*x if not the first iteration. *)
-    
+
     if (iter > 1) then
       for jy = 0 to my - 1 do
         let iyoff = mxns * jy in
@@ -466,9 +465,9 @@ let gs_iter wdata gamma zd xd =
           | _ -> assert false
         done
       done;  (* end if (iter > 1) *)
-    
+
     (* Overwrite x with [(I - (D-inverse)*L)-inverse]*x. *)
-    
+
     for jy = 0 to my - 1 do
       let iyoff = mxns * jy in
       for jx = 0 to mx - 1 do (* order of loops matters *)
@@ -528,7 +527,7 @@ let gs_iter wdata gamma zd xd =
         | _ -> assert false
       done
     done;
-    
+
     (* Add increment x to z : z <- z+x *)
     Nvector_serial.DataOps.n_vlinearsum one zd one xd zd
   done
@@ -544,15 +543,13 @@ let gs_iter wdata gamma zd xd =
   blocks in P, and pivot information in pivot, and returns the result in z.
 *)
 let psolve wdata jac_arg solve_arg z =
-  let { Arkode.jac_tmp = vtemp; } = jac_arg
-  and { Arkode.Spils.rhs = r;
-        Arkode.Spils.gamma = gamma } = solve_arg
+  let { Arkode.Spils.rhs = r; Arkode.Spils.gamma = gamma } = solve_arg
   in
   Array1.blit r z;
 
   (* call GSIter for Gauss-Seidel iterations *)
-  gs_iter wdata gamma z vtemp;
-  
+  gs_iter wdata gamma z wdata.tmp;
+
   (* Do backsolves for inverse of block-diagonal preconditioner factor *)
   let p     = wdata.p
   and pivot = wdata.pivot
@@ -563,7 +560,7 @@ let psolve wdata jac_arg solve_arg z =
   and jigx  = wdata.jigx
   and jigy  = wdata.jigy
   in
-  
+
   let iv = ref 0 in
   for jy = 0 to my - 1 do
     let igy = jigy.(jy) in
@@ -593,7 +590,7 @@ let f wdata t cdata (cdotdata : RealArray.t) =
   and dx    = wdata.dx
   and dy    = wdata.dy
   in
-   
+
   for jy = 0 to my - 1 do
     let y = float jy *. dy in
     let iyoff = mxns*jy in
@@ -695,6 +692,7 @@ let alloc_user_data () =
 
       fsave     = RealArray.create neq;
 
+      tmp       = RealArray.create neq;
       rewt      = Nvector_serial.wrap (RealArray.create neq);
 
       arkode_mem = None;
@@ -783,9 +781,9 @@ let print_intro () =
 
 let print_header jpre gstype =
   printf "\n\nPreconditioner type is           jpre = %s\n"
-    (if jpre = Spils.PrecLeft then "PREC_LEFT" else "PREC_RIGHT");
+    (if jpre = Iterative.PrecLeft then "PREC_LEFT" else "PREC_RIGHT");
   printf"\nGram-Schmidt method type is    gstype = %s\n\n\n"
-    (if gstype = Spils.ModifiedGS then "MODIFIED_GS" else "CLASSICAL_GS")
+    (if gstype = Iterative.ModifiedGS then "MODIFIED_GS" else "CLASSICAL_GS")
 
 let print_all_species (cdata : RealArray.t) ns mxns t =
   printf "c values at t = %g:\n\n" t;
@@ -864,12 +862,13 @@ let main () =
   cinit wdata (unwrap c);
 
   (* Call ARKodeInit or ARKodeReInit, then ARKSpgmr to set up problem *)
+  let lsolver= Iterative.(spgmr ~maxl:maxl c) in
   let arkode_mem = Arkode.(
     init
       (Implicit
         (f wdata,
-         Newton Spils.(spgmr ~maxl:maxl
-                             (prec_left ~setup:(precond wdata) (psolve wdata))),
+         Newton Spils.(solver lsolver
+                         (prec_left ~setup:(precond wdata) (psolve wdata))),
          Nonlinear))
       (SStolerances (reltol, abstol))
       t0
@@ -878,7 +877,7 @@ let main () =
   wdata.arkode_mem <- Some arkode_mem;
   Arkode.set_max_num_steps arkode_mem 1000;
   Arkode.set_nonlin_conv_coef arkode_mem 1.0e-3;
-  Arkode.Spils.set_gs_type arkode_mem Spils.ModifiedGS;
+  Iterative.(set_gs_type lsolver ModifiedGS);
   Arkode.Spils.set_eps_lin arkode_mem delt;
 
   let ns   = wdata.ns
@@ -887,7 +886,7 @@ let main () =
 
   (* Print problem description *)
   print_intro ();
-  
+
   let firstrun = ref true in
   let run jpre gstype =
     (* Initialize c and print heading *)
@@ -899,10 +898,10 @@ let main () =
       print_all_species (unwrap c) ns mxns t0
     else begin
       Arkode.reinit arkode_mem t0 c;
-      Arkode.Spils.set_prec_type arkode_mem jpre;
-      Arkode.Spils.set_gs_type arkode_mem gstype
+      Iterative.(set_prec_type lsolver jpre);
+      Iterative.(set_gs_type lsolver gstype)
     end;
-    
+
     (* Loop over output points, call ARKode, print sample solution values. *)
     let tout = ref t1 in
     for iout = 1 to nout do
@@ -912,15 +911,15 @@ let main () =
         then print_all_species (unwrap c) ns mxns t;
       tout := if !tout > 0.9 then !tout +. dtout else !tout *. tout_mult
     done;
-    
+
     (* Print final statistics, and loop for next case *)
     print_final_stats arkode_mem;
 
     firstrun := false
   in
-      
+
   (* Loop over jpre and gstype (four cases) *)
-  let open Spils in
+  let open Iterative in
   run PrecLeft  ModifiedGS;
   run PrecLeft  ClassicalGS;
   run PrecRight ModifiedGS;
