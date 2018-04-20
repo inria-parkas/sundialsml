@@ -846,7 +846,7 @@ module Adjoint = struct (* {{{ *)
     (* Sundials < 3.0.0 *)
     external c_superlumt_set_ordering
       : 'k serial_session -> Direct.Superlumt.ordering -> unit
-      = "c_idas_superlumt_set_ordering"
+      = "c_ida_superlumt_set_ordering"
 
     (* Sundials < 3.0.0 *)
     let superlumt_set_ordering session ordering =
