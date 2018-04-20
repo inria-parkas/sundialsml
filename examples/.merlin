@@ -8,3 +8,6 @@ B ../src/kinsol
 B ../src/lsolvers
 B ../src/nvectors
 B ../src/sundials
+
+PKG mpi
+

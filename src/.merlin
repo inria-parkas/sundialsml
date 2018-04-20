@@ -20,3 +20,5 @@ S lsolvers
 S nvectors
 S sundials
 
+PKG mpi
+
