@@ -153,6 +153,32 @@ static N_Vector clone_serial(N_Vector w)
     CAMLreturnT(N_Vector, v);
 }
 
+/*
+ * N_VCloneEmpty is used in Sundials as a "light-weight" way to wrap
+ * array data for use in calculations with N_Vectors. At the time of
+ * writing (Sundials 3.1.0), this feature is only used in the *DenseDQJac
+ * routines (e.g., cvDlsDenseDQJac) and the cloned N_Vectors are never
+ * passed back into OCaml. So, we do not bother to reproduce the backlink.
+ *
+ * If the use of this feature is generalized, it will be necessary to
+ * duplicate the backlink, and to override the N_VSetArrayPointer function
+ * to update the backlink appropriately. Currently, N_VSetArrayPointer is
+ * only used in the *DenseDQJac functions and in the *_bbdpre
+ * implementations (which only use N_Vectors locally and never pass them
+ * back into OCaml).
+ */
+static N_Vector clone_empty_serial(N_Vector w)
+{
+    N_Vector v;
+
+    v = N_VCloneEmpty_Serial(w);
+    v->ops->nvdestroy = N_VDestroy_Serial;
+    v->ops->nvclone = NULL;
+    v->ops->nvcloneempty = NULL;
+
+    return v;
+}
+
 /* Creation from OCaml.  */
 /* Adapted from sundials-2.5.0/src/nvec_ser/nvector_serial.c:
    N_VNewEmpty_Serial */
@@ -174,7 +200,7 @@ CAMLprim value ml_nvec_wrap_serial(value payload, value checkfn)
 
     /* Create vector operation structure */
     ops->nvclone           = clone_serial;		    /* ours */
-    ops->nvcloneempty      = NULL;
+    ops->nvcloneempty      = clone_empty_serial;	    /* ours */
     /* This is registered but only ever called for C-allocated clones. */
     ops->nvdestroy         = free_cnvec;
 #if SUNDIALS_LIB_VERSION >= 270
