@@ -87,7 +87,7 @@
 module RealArray = Sundials.RealArray
 module LintArray = Sundials.LintArray
 module Adj = Cvodes.Adjoint
-module Densemat = Dls.ArrayDenseMatrix
+module Densemat = Matrix.ArrayDense
 open Bigarray
 let unwrap = Nvector.unwrap
 
@@ -180,6 +180,7 @@ type web_data = {
     fsave     : RealArray.t;
     fbsave    : RealArray.t;
 
+    tmp       : RealArray.t;
     rewt      : Nvector_serial.t;
     rewtb     : Nvector_serial.t;
 
@@ -298,6 +299,7 @@ let alloc_user_data () =
       fsave      = RealArray.create neq;
       fbsave     = RealArray.create neq;
 
+      tmp        = RealArray.create neq;
       rewt       = Nvector_serial.make (neq + 1) 0.0;
 
       (* The original C code uses rewt for forward solving where the length is
@@ -375,7 +377,7 @@ let cinit wdata (cdata : RealArray.t) =
 
 (*
  * This routine computes the interaction rates for the species
- * c_1, ... ,c_ns (stored in c[0],...,c[ns-1]), at one spatial point 
+ * c_1, ... ,c_ns (stored in c[0],...,c[ns-1]), at one spatial point
  * and at time t.
  *)
 
@@ -415,7 +417,7 @@ let web_rates_b wdata x y ((c : RealArray.t), c_off)
   for i = 0 to ns - 1 do
     rate.{rate_off + i} <- bcoef.(i) *. fac
   done;
-  
+
   for j = 0 to ns - 1 do
     for i = 0 to ns - 1 do
       rate.{rate_off + i} <-
@@ -476,7 +478,7 @@ let gs_iter wdata =
   in
   (* Write matrix as P = D - L - U.
      Load local arrays beta, beta2, gam, gam2, and cof1. *)
-  
+
   for i = 0 to ns - 1 do
     let temp = 1.0 /. (1.0 +. 2.0 *. gamma *. (cox.(i) +. coy.(i))) in
     beta.(i)  <- gamma *. cox.(i) *. temp;
@@ -485,7 +487,7 @@ let gs_iter wdata =
     gam2.(i)  <- 2.0 *. gam.(i);
     cof1.(i)  <- temp
   done;
-  
+
   (* Begin iteration loop.
      Load vector x with (D-inverse)*z for first iteration. *)
   for jy = 0 to my - 1 do
@@ -496,13 +498,13 @@ let gs_iter wdata =
     done
   done;
   Array1.fill zd 0.0;
-  
+
   (* Looping point for iterations. *)
-  
+
   for iter = 1 to itmax do
-    
+
     (* Calculate (D-inverse)*U*x if not the first iteration. *)
-    
+
     if (iter > 1) then
       for jy = 0 to my - 1 do
         let iyoff = mxns * jy in
@@ -561,9 +563,9 @@ let gs_iter wdata =
           | _ -> assert false
         done
       done;  (* end if (iter > 1) *)
-    
+
     (* Overwrite x with [(I - (D-inverse)*L)-inverse]*x. *)
-    
+
     for jy = 0 to my - 1 do
       let iyoff = mxns * jy in
       for jx = 0 to mx - 1 do (* order of loops matters *)
@@ -623,7 +625,7 @@ let gs_iter wdata =
         | _ -> assert false
       done
     done;
-    
+
     (* Add increment x to z : z <- z+x *)
     nvlinearsum 1.0 zd 1.0 xd zd
   done
@@ -670,7 +672,7 @@ let double_intgr (cdata : RealArray.t) i wdata =
   done;
   intgr_x := !intgr_x +. cdata.{(i-1) + (mx-1)*ns + jy*mxns};
   intgr_x := !intgr_x *. 0.5 *. dx;
-  
+
   let intgr_xy = ref !intgr_x in
   for jy = 1 to my-2 do
     intgr_x := cdata.{(i-1)+jy*mxns};
@@ -681,7 +683,7 @@ let double_intgr (cdata : RealArray.t) i wdata =
     intgr_x := !intgr_x *. 0.5 *. dx;
     intgr_xy := !intgr_xy +. 2.0 *. !intgr_x
   done;
-  
+
   let jy = my-1 in
   intgr_x := cdata.{(i-1) + jy*mxns};
   for jx = 1 to mx-2 do
@@ -689,7 +691,7 @@ let double_intgr (cdata : RealArray.t) i wdata =
   done;
   intgr_x := !intgr_x +. cdata.{(i-1) + (mx-1)*ns + jy*mxns};
   intgr_x := !intgr_x *. 0.5 *. dx;
-  
+
   intgr_xy := !intgr_xy +. !intgr_x;
   intgr_xy := !intgr_xy *. 0.5 *. dy;
 
@@ -760,15 +762,13 @@ let f wdata t (cdata : RealArray.t) (cdotdata : RealArray.t) =
  * of a block-diagonal preconditioner. The blocks are of size mp, and
  * there are ngrp=ngx*ngy blocks computed in the block-grouping scheme.
  *)
- 
+
 let precond wdata jacarg jok gamma =
   let { Cvode.jac_t   = t;
         Cvode.jac_y   = cdata;
-        Cvode.jac_fy  = fc;
-        Cvode.jac_tmp = (vtemp1, _, _)
-      } = jacarg
+        Cvode.jac_fy  = fc } = jacarg
   in
-  let f1 = vtemp1 in
+  let f1 = wdata.tmp in
   let cvode_mem =
     match wdata.cvode_mem with
     | Some c -> c | None -> assert false
@@ -789,13 +789,13 @@ let precond wdata jacarg jok gamma =
   and fsave  = wdata.fsave
   in
   (* Make mp calls to fblock to approximate each diagonal block of Jacobian.
-     Here, fsave contains the base value of the rate vector and 
+     Here, fsave contains the base value of the rate vector and
      r0 is a minimum increment factor for the difference quotient. *)
 
   let fac = nvwrmsnorm fc rewtdata in
   let r0 = 1000.0 *. abs_float gamma *. uround *. float (neq + 1) *. fac in
   let r0 = if r0 = 0.0 then 1.0 else r0 in
-  
+
   for igy = 0 to ngy - 1 do
     let jy = jyr.(igy) in
     let if00 = jy * mxmp in
@@ -820,7 +820,7 @@ let precond wdata jacarg jok gamma =
       done
     done
   done;
-  
+
   (* Add identity matrix and do LU decompositions on blocks. *)
   let f ig p_ig =
     Densemat.add_identity p_ig;
@@ -841,14 +841,12 @@ let precond wdata jacarg jok gamma =
  *)
 
 let psolve wdata jac_arg solve_arg (z : RealArray.t) =
-  let { Cvode.jac_tmp = vtemp; } = jac_arg
-  and { Cvode.Spils.rhs = r; Cvode.Spils.gamma = gamma } = solve_arg
-  in
+  let { Cvode.Spils.rhs = r; Cvode.Spils.gamma = gamma } = solve_arg in
   Array1.blit r z;
 
   (* call GSIter for Gauss-Seidel iterations *)
-  gs_iter wdata gamma z vtemp;
-  
+  gs_iter wdata gamma z wdata.tmp;
+
   (* Do backsolves for inverse of block-diagonal preconditioner factor *)
   let p     = wdata.p
   and pivot = wdata.pivot
@@ -859,7 +857,7 @@ let psolve wdata jac_arg solve_arg (z : RealArray.t) =
   and jigx  = wdata.jigx
   and jigy  = wdata.jigy
   in
-  
+
   let iv = ref 0 in
   for jy = 0 to my - 1 do
     let igy = jigy.(jy) in
@@ -876,7 +874,7 @@ let psolve wdata jac_arg solve_arg (z : RealArray.t) =
 (*
  * This routine computes the right-hand side of the adjoint ODE system and
  * returns it in cBdot. The interaction rates are computed by calls to WebRates,
- * and these are saved in fsave for use in preconditioning. The adjoint 
+ * and these are saved in fsave for use in preconditioning. The adjoint
  * interaction rates are computed by calls to WebRatesB.
  *)
 
@@ -920,7 +918,7 @@ let fB : web_data -> RealArray.t Adj.brhsfn_no_sens =
         let dcxli = cBdata.{ici} -. cBdata.{ici - idxl} in
         let dcxui = cBdata.{ici + idxu} -. cBdata.{ici} in
         (* Collect terms and load cdot elements. *)
-        cBdotdata.{ici} <- -. coy.(i-1)*.(dcyui -. dcyli) 
+        cBdotdata.{ici} <- -. coy.(i-1)*.(dcyui -. dcyli)
                            -. cox.(i-1)*.(dcxui -. dcxli)
                            -. fBsave.{ici}
                            -. gu.{i-1}
@@ -935,11 +933,9 @@ let precondb wdata jacarg jok gamma =
   let { jac_t   = t;
         jac_y   = cdata;
         jac_yb  = cBdata;
-        jac_fyb = fcBdata;
-        jac_tmp = (vtemp1, _, _)
-      } = jacarg
+        jac_fyb = fcBdata } = jacarg
   in
-  let f1 = vtemp1 in
+  let f1 = wdata.tmp in
   let cvode_mem =
     match wdata.cvode_memb with
     | Some c -> c | None -> assert false
@@ -960,7 +956,7 @@ let precondb wdata jacarg jok gamma =
   and fsave  = wdata.fsave
   in
   (* Make mp calls to fblock to approximate each diagonal block of Jacobian.
-     Here, fsave contains the base value of the rate vector and 
+     Here, fsave contains the base value of the rate vector and
      r0 is a minimum increment factor for the difference quotient. *)
 
   let fac = nvwrmsnorm fcBdata rewtdata in
@@ -1005,15 +1001,13 @@ let precondb wdata jacarg jok gamma =
 let psolveb wdata =
   let cache = RealArray.create ns in
   fun jac_arg solve_arg z ->
-  let { Adj.jac_tmp = vtemp; } = jac_arg
-  and { Adj.Spils.rhs = r; Adj.Spils.gamma = gamma } = solve_arg
-  in
+  let Adj.Spils.({ rhs = r; gamma = gamma }) = solve_arg in
   Array1.blit r z;
 
   (* call GSIter for Gauss-Seidel iterations
      (same routine but with gamma=-gamma) *)
-  gs_iter wdata (-.gamma) z vtemp;
-  
+  gs_iter wdata (-.gamma) z wdata.tmp;
+
   (* Do backsolves for inverse of block-diagonal preconditioner factor *)
   let p     = wdata.p
   and pivot = wdata.pivot
@@ -1024,7 +1018,7 @@ let psolveb wdata =
   and jigx  = wdata.jigx
   and jigy  = wdata.jigy
   in
-  
+
   let iv = ref 0 in
   for jy = 0 to my - 1 do
     let igy = jigy.(jy) in
@@ -1075,7 +1069,8 @@ let main () =
   let cvode_mem =
     Cvode.(init
         BDF
-        (Newton Spils.(spgmr (prec_left ~setup:(precond wdata) (psolve wdata))))
+        (Newton Spils.(solver Iterative.(spgmr c)
+                              (prec_left ~setup:(precond wdata) (psolve wdata))))
         (SStolerances (reltol, abstol))
         (f wdata) t0 c)
   in
@@ -1110,8 +1105,9 @@ let main () =
     Adj.(init_backward
       cvode_mem
       Cvode.BDF
-      (Newton Spils.(spgmr (prec_left ~setup:(precondb wdata)
-                                      (psolveb wdata))))
+      (Newton Spils.(solver
+                       Iterative.(spgmr cB)
+                       (prec_left ~setup:(precondb wdata) (psolveb wdata))))
       (SStolerances (reltolb, abstolb))
       (NoSens (fB wdata))
       tout

@@ -2,7 +2,7 @@
  * -----------------------------------------------------------------
  * $Revision: 1.4 $
  * $Date: 2011/11/23 23:53:02 $
- * ----------------------------------------------------------------- 
+ * -----------------------------------------------------------------
  * Programmer(s): Radu Serban @ LLNL
  * -----------------------------------------------------------------
  * OCaml port: Timothy Bourke, Inria, Jun 2014.
@@ -29,13 +29,13 @@
  * tolerance.
  * Output is printed in decades from t = .4 to t = 4.e10.
  * Run statistics (optional outputs) are printed at the end.
- * 
+ *
  * Optionally, CVODES can compute sensitivities with respect to
  * the problem parameters p1, p2, and p3 of the following quantity:
  *   G = int_t0^t1 g(t,p,y) dt
  * where
  *   g(t,p,y) = y3
- *        
+ *
  * The gradient dG/dp is obtained as:
  *   dG/dp = int_t0^t1 (g_p - lambda^T f_p ) dt - lambda^T(t0)*y0_p
  *         = - xi^T(t0) - lambda^T(t0)*y0_p
@@ -45,7 +45,7 @@
  * and
  *   d(xi)/dt = - (f_p)^T * lambda + (g_p)^T
  *   xi(t1) = 0
- * 
+ *
  * During the backward integration, CVODES also evaluates G as
  *   G = - phi(t0)
  * where
@@ -58,7 +58,7 @@ module Quad = Cvodes.Quadrature
 module Adj = Cvodes.Adjoint
 module QuadAdj = Cvodes.Adjoint.Quadrature
 module RealArray = Sundials.RealArray
-module Densemat = Dls.DenseMatrix
+module Densemat = Matrix.Dense
 let unwrap = Nvector.unwrap
 
 let printf = Printf.printf
@@ -118,7 +118,7 @@ let jac data { Cvode.jac_y = (y : RealArray.t) } jmat =
   and p2 = data.p.(1)
   and p3 = data.p.(2)
   in
-  let set = Dls.DenseMatrix.set jmat in
+  let set = Matrix.Dense.set jmat in
   set 0 0 (-.p1);
   set 0 1 (p2*.y.{2});
   set 0 2 (p2*.y.{1});
@@ -130,7 +130,7 @@ let jac data { Cvode.jac_y = (y : RealArray.t) } jmat =
 (* fQ routine. Compute fQ(t,y). *)
 
 let fQ data t (y : RealArray.t) (qdot : RealArray.t) = qdot.{0} <- y.{2}
- 
+
 (* EwtSet function. Computes the error weights at the current solution. *)
 
 let atol = Array.of_list [ atol1; atol2; atol3 ]
@@ -173,10 +173,10 @@ let jacb data { Adj.jac_y = (y : RealArray.t) } jbmat =
   and p2 = data.p.(1)
   and p3 = data.p.(2)
   in
-  let set = Dls.DenseMatrix.set jbmat in
+  let set = Matrix.Dense.set jbmat in
   (* Load JB *)
   set 0 0 (p1);
-  set 0 1 (-.p1); 
+  set 0 1 (-.p1);
   set 1 0 (-.p2*.y.{2});
   set 1 1 (p2*.y.{2}+.2.0*.p3*.y.{1});
   set 1 2 (-.2.0*.p3*.y.{1});
@@ -272,8 +272,10 @@ let main () =
   (* Create and allocate CVODES memory for forward run *)
   printf "Create and allocate CVODES memory for forward runs\n";
 
+  let m = Matrix.dense neq in
   let cvode_mem =
-    Cvode.(init BDF (Newton (Dls.dense ~jac:(jac data) ()))
+    Cvode.(init BDF (Newton Dls.(solver Direct.(dense y m)
+                                        ~jac:(jac data) m))
                 (WFtolerances (ewt data)) (f data) t0 y)
   in
 
@@ -287,7 +289,7 @@ let main () =
   printf "Forward integration ... ";
   let _, ncheck, _ = Adj.forward_normal cvode_mem tout y in
   let nst = Cvode.get_num_steps cvode_mem in
-  
+
   printf "done ( nst = %d )\n" nst;
   printf "\nncheck = %d\n\n"  ncheck;
   ignore (Quad.get cvode_mem q);
@@ -316,10 +318,12 @@ let main () =
   (* Create and allocate CVODES memory for backward run *)
   printf "Create and allocate CVODES memory for backward run\n";
 
+  let m = Matrix.dense neq in
   let cvode_memB =
     Adj.(init_backward
           cvode_mem Cvode.BDF
-                    (Newton Dls.(dense ~jac:(DenseNoSens (jacb data)) ()))
+                    (Newton Dls.(solver Direct.(dense yB m)
+                                        ~jac:(NoSens (jacb data)) m))
                     (SStolerances (reltolB, abstolB))
                     (NoSens (fB data))
                     tb1 yB)

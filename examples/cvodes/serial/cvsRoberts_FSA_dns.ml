@@ -49,7 +49,7 @@
 
 module Sens = Cvodes.Sensitivity
 module RealArray = Sundials.RealArray
-module Densemat = Dls.DenseMatrix
+module Densemat = Matrix.Dense
 let unwrap = Nvector.unwrap
 
 let printf = Printf.printf
@@ -100,7 +100,7 @@ let jac data { Cvode.jac_y = (y : RealArray.t) } jmat =
   and p2 = data.p.(1)
   and p3 = data.p.(2)
   in
-  let set = Dls.DenseMatrix.set jmat in
+  let set = Matrix.Dense.set jmat in
   set 0 0 (-.p1);
   set 0 1 (p2*.y.{2});
   set 0 2 (p2*.y.{1});
@@ -108,7 +108,7 @@ let jac data { Cvode.jac_y = (y : RealArray.t) } jmat =
   set 1 1 (-.p2*.y.{2}-.2.0*.p3*.y.{1});
   set 1 2 (-.p2*.y.{1});
   set 2 1 (2.0*.p3*.y.{1})
- 
+
 (* fS routine. Compute sensitivity r.h.s. *)
 
 let fS : user_data -> RealArray.t Sens.sensrhsfn1 =
@@ -159,7 +159,7 @@ let process_args () =
   let argv = Sys.argv in
   let argc = Array.length argv in
   if argc < 2 then wrong_args argv.(0);
-  
+
   let sensi =
     if argv.(1) = "-nosensi" then false
     else if argv.(1) = "-sensi" then true
@@ -278,8 +278,9 @@ let main () =
   let y = Nvector_serial.wrap ydata in
 
   (* Create CVODES object *)
+  let m = Matrix.dense neq in
   let cvode_mem =
-    Cvode.(init BDF (Newton (Dls.dense ~jac:(jac data) ()))
+    Cvode.(init BDF (Newton Dls.(solver Direct.(dense y m) ~jac:(jac data) m))
                 (WFtolerances (ewt data)) (f data) t0 y)
   in
 
@@ -316,7 +317,7 @@ let main () =
       end
   in
   (* In loop over output points, call CVode, print results, test for error *)
-  
+
   print_string "\n\n\
                 ===========================================\
                 ============================\n\

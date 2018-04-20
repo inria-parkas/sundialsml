@@ -68,7 +68,7 @@ let ns    = 2
 
 let zero  = 0.0
 
-(* Type : UserData 
+(* Type : UserData
    contains problem parameters, grid constants, work array. *)
 
 type user_data = {
@@ -110,7 +110,7 @@ let process_args () =
   let argv = Sys.argv in
   let argc = Array.length argv in
   if argc < 2 then wrong_args argv.(0);
-  
+
   let sensi =
     if argv.(1) = "-nosensi" then false
     else if argv.(1) = "-sensi" then true

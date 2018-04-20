@@ -2,7 +2,7 @@
  * -----------------------------------------------------------------
  * $Revision: 1.4 $
  * $Date: 2011/11/23 23:53:02 $
- * ----------------------------------------------------------------- 
+ * -----------------------------------------------------------------
  * Programmer(s): Ting Yan @ SMU
  *      Based on cvsRoberts_ASAi_dns.c and modified to use KLU
  * Programmer(s): Radu Serban @ LLNL
@@ -31,13 +31,13 @@
  * tolerance.
  * Output is printed in decades from t = .4 to t = 4.e10.
  * Run statistics (optional outputs) are printed at the end.
- * 
+ *
  * Optionally, CVODES can compute sensitivities with respect to
  * the problem parameters p1, p2, and p3 of the following quantity:
  *   G = int_t0^t1 g(t,p,y) dt
  * where
  *   g(t,p,y) = y3
- *        
+ *
  * The gradient dG/dp is obtained as:
  *   dG/dp = int_t0^t1 (g_p - lambda^T f_p ) dt - lambda^T(t0)*y0_p
  *         = - xi^T(t0) - lambda^T(t0)*y0_p
@@ -47,7 +47,7 @@
  * and
  *   d(xi)/dt = - (f_p)^T * lambda + (g_p)^T
  *   xi(t1) = 0
- * 
+ *
  * During the backward integration, CVODES also evaluates G as
  *   G = - phi(t0)
  * where
@@ -60,7 +60,7 @@ module Quad = Cvodes.Quadrature
 module Adj = Cvodes.Adjoint
 module QuadAdj = Cvodes.Adjoint.Quadrature
 module RealArray = Sundials.RealArray
-module Densemat = Dls.DenseMatrix
+module Densemat = Matrix.Dense
 let unwrap = Nvector.unwrap
 
 let printf = Printf.printf
@@ -116,13 +116,13 @@ let f data t (y : RealArray.t) (ydot : RealArray.t) =
 (* Jacobian routine. Compute J(t,y). *)
 
 let jac data {Cvode.jac_y = (y : RealArray.t)} smat =
-  let set_col = Sls.SparseMatrix.set_col smat in
-  let set = Sls.SparseMatrix.set smat in
+  let set_col = Matrix.Sparse.set_col smat in
+  let set = Matrix.Sparse.set smat in
   let p1 = data.p.(0)
   and p2 = data.p.(1)
   and p3 = data.p.(2)
   in
-  Sls.SparseMatrix.set_to_zero smat;
+  Matrix.Sparse.set_to_zero smat;
 
   set_col 0 0;
   set_col 1 3;
@@ -144,7 +144,7 @@ let jac data {Cvode.jac_y = (y : RealArray.t)} smat =
 (* fQ routine. Compute fQ(t,y). *)
 
 let fQ data t (y : RealArray.t) (qdot : RealArray.t) = qdot.{0} <- y.{2}
- 
+
 (* EwtSet function. Computes the error weights at the current solution. *)
 
 let atol = Array.of_list [ atol1; atol2; atol3 ]
@@ -183,13 +183,13 @@ let fB : user_data -> RealArray.t Adj.brhsfn_no_sens =
 (* JacB routine. Compute JB(t,y,yB). *)
 
 let jacb data { Adj.jac_y = (y : RealArray.t) } smat =
-  let set_col = Sls.SparseMatrix.set_col smat in
-  let set = Sls.SparseMatrix.set smat in
+  let set_col = Matrix.Sparse.set_col smat in
+  let set = Matrix.Sparse.set smat in
   let p1 = data.p.(0)
   and p2 = data.p.(1)
   and p3 = data.p.(2)
   in
-  Sls.SparseMatrix.set_to_zero smat;
+  Matrix.Sparse.set_to_zero smat;
 
   set_col 0 0;
   set_col 1 3;
@@ -298,8 +298,9 @@ let main () =
   printf "Create and allocate CVODES memory for forward runs\n";
 
   let nnz = neq * neq in
+  let m = Matrix.sparse_csc ~nnz neq in
   let cvode_mem =
-    Cvode.(init BDF (Newton Sls.Klu.(solver_csc (jac data) nnz))
+    Cvode.(init BDF (Newton Dls.(solver Direct.(klu y m) ~jac:(jac data) m))
                 (WFtolerances (ewt data)) (f data) t0 y)
   in
 
@@ -313,7 +314,7 @@ let main () =
   printf "Forward integration ... ";
   let _, ncheck, _ = Adj.forward_normal cvode_mem tout y in
   let nst = Cvode.get_num_steps cvode_mem in
-  
+
   printf "done ( nst = %d )\n" nst;
   printf "\nncheck = %d\n\n"  ncheck;
   ignore (Quad.get cvode_mem q);
@@ -342,10 +343,12 @@ let main () =
   (* Create and allocate CVODES memory for backward run *)
   printf "Create and allocate CVODES memory for backward run\n";
 
+  let m = Matrix.sparse_csc ~nnz neq in
   let cvode_memB =
     Adj.(init_backward
           cvode_mem Cvode.BDF
-                    (Newton Sls.(Klu.solver_csc (NoSens (jacb data)) nnz))
+                    (Newton Dls.(solver Direct.(klu yB m)
+                                        ~jac:(NoSens (jacb data)) m))
                     (SStolerances (reltolB, abstolB))
                     (NoSens (fB data))
                     tb1 yB)

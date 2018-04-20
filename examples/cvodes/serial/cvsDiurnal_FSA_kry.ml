@@ -52,7 +52,7 @@
 module RealArray = Sundials.RealArray
 module RealArray2 = Sundials.RealArray2
 module LintArray = Sundials.LintArray
-module Direct = Dls.ArrayDenseMatrix
+module Direct = Matrix.ArrayDense
 module Sens = Cvodes.Sensitivity
 open Bigarray
 let unvec = Nvector.unwrap
@@ -74,13 +74,13 @@ let t0          = zero             (* initial time *)
 let nout        = 12               (* number of output times *)
 let twohr       = 7200.0           (* number of seconds in two hours  *)
 let halfday     = 4.32e4           (* number of seconds in a half day *)
-let pi          = 3.1415926535898  (* pi *) 
+let pi          = 3.1415926535898  (* pi *)
 
 let xmin        = zero             (* grid boundaries in x  *)
-let xmax        = 20.0           
+let xmax        = 20.0
 let zmin        = 30.0             (* grid boundaries in z  *)
 let zmax        = 50.0
-let xmid        = 10.0             (* grid midpoints in x,z *)          
+let xmid        = 10.0             (* grid midpoints in x,z *)
 let zmid        = 40.0
 
 let mx          = 15               (* mx = number of x mesh points *)
@@ -104,12 +104,12 @@ let ns = 2
    mathematical 3-dimensional structure of the dependent variable vector
    to the underlying 1-dimensional storage. IJth is defined in order to
    write code which indexes into small dense matrices with a (row,column)
-   pair, where 1 <= row, column <= NUM_SPECIES.   
-   
+   pair, where 1 <= row, column <= NUM_SPECIES.
+
    IJKth(vdata,i,j,k) references the element in the vdata array for
    species i at mesh point (j,k), where 1 <= i <= NUM_SPECIES,
    0 <= j <= MX-1, 0 <= k <= MZ-1. The vdata array is obtained via
-   the macro call vdata = NV_DATA_S(v), where v is an N_Vector. 
+   the macro call vdata = NV_DATA_S(v), where v is an N_Vector.
    For each mesh point (j,k), the elements for species i and i+1 are
    contiguous within vdata.
 
@@ -122,7 +122,7 @@ let ijkth (v : RealArray.t) i j k       = v.{i - 1 + j * num_species + k * nsmx}
 let set_ijkth (v : RealArray.t) i j k e
         = v.{i - 1 + j * num_species + k * nsmx} <- e
 
-(* Type : UserData 
+(* Type : UserData
    contains preconditioner blocks, pivot arrays, and problem constants *)
 
 type user_data = {
@@ -167,7 +167,7 @@ let alloc_user_data () =
 (* Load problem constants in data *)
 
 let init_user_data data =
-  let q1            = 1.63e-16 in   (* coefficients q1, q2, c3   *) 
+  let q1            = 1.63e-16 in   (* coefficients q1, q2, c3   *)
   let q2            = 4.66e-16 in
   let c3            = 3.7e16   in
   let a3            = 22.62    in   (* coefficient in expression for q3(t) *)
@@ -225,7 +225,7 @@ let print_output s t y =
   in
   printf "%8.3e %2d  %8.3e %5d\n"  t qu hu nst;
   printf "                                Solution       ";
-  printf "%12.4e %12.4e \n" (ijkth ydata 1 0 0) (ijkth ydata 1 (mx-1) (mz-1)); 
+  printf "%12.4e %12.4e \n" (ijkth ydata 1 0 0) (ijkth ydata 1 (mx-1) (mz-1));
   printf "                                               ";
   printf "%12.4e %12.4e \n" (ijkth ydata 2 0 0) (ijkth ydata 2 (mx-1) (mz-1))
 
@@ -233,16 +233,16 @@ let print_output s t y =
 
 let print_output_s uS =
   let sdata = unvec uS.(0) in
-  printf "                                ----------------------------------------\n"; 
+  printf "                                ----------------------------------------\n";
   printf "                                Sensitivity 1  ";
-  printf "%12.4e %12.4e \n" (ijkth sdata 1 0 0) (ijkth sdata 1 (mx-1) (mz-1)); 
+  printf "%12.4e %12.4e \n" (ijkth sdata 1 0 0) (ijkth sdata 1 (mx-1) (mz-1));
   printf "                                               ";
   printf "%12.4e %12.4e \n" (ijkth sdata 2 0 0) (ijkth sdata 2 (mx-1) (mz-1));
 
   let sdata = unvec uS.(1) in
-  printf "                                ----------------------------------------\n"; 
+  printf "                                ----------------------------------------\n";
   printf "                                Sensitivity 2  ";
-  printf "%12.4e %12.4e \n" (ijkth sdata 1 0 0) (ijkth sdata 1 (mx-1) (mz-1)); 
+  printf "%12.4e %12.4e \n" (ijkth sdata 1 0 0) (ijkth sdata 1 (mx-1) (mz-1));
   printf "                                               ";
   printf "%12.4e %12.4e \n" (ijkth sdata 2 0 0) (ijkth sdata 2 (mx-1) (mz-1))
 
@@ -289,7 +289,7 @@ let print_final_stats s sensi =
 
 let f data t (ydata : RealArray.t) (ydot : RealArray.t) =
   (* Load problem coefficients and parameters *)
-  let q1  = data.params.{0} 
+  let q1  = data.params.{0}
   and q2  = data.params.{1}
   and c3  = data.params.{2}
   and a3  = data.params.{3}
@@ -370,12 +370,10 @@ let f data t (ydata : RealArray.t) (ydot : RealArray.t) =
 let precond data jacarg jok gamma =
   let { Cvode.jac_t   = tn;
         Cvode.jac_y   = (ydata : RealArray.t);
-        Cvode.jac_fy  = fydata;
-        Cvode.jac_tmp = (vtemp1, vtemp2, vtemp)
-      } = jacarg
+        Cvode.jac_fy  = fydata } = jacarg
   in
   (* Load problem coefficients and parameters *)
-  let q1  = data.params.{0} 
+  let q1  = data.params.{0}
   and q2  = data.params.{1}
   and c3  = data.params.{2} in
 
@@ -403,8 +401,8 @@ let precond data jacarg jok gamma =
       and verdco = data.vdco
       and hordco = data.hdco
       in
-      
-      (* Compute 2x2 diagonal Jacobian blocks (using q4 values 
+
+      (* Compute 2x2 diagonal Jacobian blocks (using q4 values
          computed on the last f call).  Load into P. *)
       for jz = 0 to mz - 1 do
         let zdn = zmin +. (float jz -. 0.5) *. delz in
@@ -437,7 +435,7 @@ let precond data jacarg jok gamma =
       Direct.scale (-. gamma) p.(jx).(jz)
     done
   done;
-  
+
   (* Add identity matrix and do LU decompositions on blocks in place. *)
   for jx = 0 to mx - 1 do
     for jz = 0 to mz - 1 do
@@ -463,7 +461,7 @@ let psolve data jac_arg solve_arg (zdata : RealArray.t) =
   in
 
   Bigarray.Array1.blit r zdata;
-  
+
   (* Solve the block-diagonal system Px = r using LU factors stored
      in P and pivot data in pivot, and return the solution in z. *)
   for jx = 0 to mx - 1 do
@@ -486,7 +484,7 @@ let process_args () =
   let argv = Sys.argv in
   let argc = Array.length argv in
   if argc < 2 then wrong_args argv.(0);
-  
+
   let sensi =
     if argv.(1) = "-nosensi" then false
     else if argv.(1) = "-sensi" then true
@@ -533,7 +531,8 @@ let main () =
   (* Create CVODES object *)
   let cvode_mem =
     Cvode.(init BDF
-      (Newton Spils.(spgmr (prec_left ~setup:(precond data) (psolve data))))
+      (Newton Spils.(solver Iterative.(spgmr y)
+                            (prec_left ~setup:(precond data) (psolve data))))
       (SStolerances (reltol, abstol))
       (f data) t0 y)
   in

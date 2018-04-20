@@ -49,7 +49,7 @@ let printf = Printf.printf
 
 (* Header files with a description of contents used in cvbanx.c *)
 
-let set bm i j v = Dls.BandMatrix.set bm i j v
+let set bm i j v = Matrix.Band.set bm i j v
 
 (* Problem Constants *)
 
@@ -77,11 +77,11 @@ let five  = 5.0
 
 (* IJth is defined in order to isolate the translation from the
    mathematical 2-dimensional structure of the dependent variable vector
-   to the underlying 1-dimensional storage. 
+   to the underlying 1-dimensional storage.
    IJth(vdata,i,j) references the element in the vdata array for
    u at mesh point (i,j), where 1 <= i <= MX, 1 <= j <= MY.
    The vdata array is obtained via the macro call vdata = N_VDATA_S(v),
-   where v is an N_Vector. 
+   where v is an N_Vector.
    The variables are ordered by the y index j, then by the x index i. *)
 
 let ijth (vdata : RealArray.t) i j = vdata.{(j-1) + (i-1)*my}
@@ -132,7 +132,7 @@ let f data t udata dudata =
 
 (* Jac function. Jacobian of forward ODE. *)
 
-let jac data {Cvode.mupper=mupper; Cvode.mlower=mlower} arg jmat =
+let jac data arg jmat =
   (*
     The components of f = udot that depend on u(i,j) are
     f(i,j), f(i-1,j), f(i+1,j), f(i,j-1), f(i,j+1), with
@@ -191,12 +191,10 @@ let fB data args uBdot =
 
 (* JacB function. Jacobian of backward ODE. *)
 
-let jacb data { Adjoint.mupper = muB; Adjoint.mlower = mlB }
-              { Adjoint.jac_t = tB;
+let jacb data { Adjoint.jac_t = tB;
                 Adjoint.jac_y = u;
                 Adjoint.jac_yb = uB;
-                Adjoint.jac_fyb = fuB;
-                Adjoint.jac_tmp = (tmp1B, tmp2B, tmp3B) } jb =
+                Adjoint.jac_fyb = fuB } jb =
 
   (* The Jacobian of the adjoint system is: JB = -J^T *)
   let hordc = data.hdcoef in
@@ -285,10 +283,10 @@ let main () =
   printf "\nCreate and allocate CVODES memory for forward runs\n";
 
   (* Call CVBand with  bandwidths ml = mu = MY, *)
-  let solver = Cvode.Dls.band {Cvode.mupper = my; Cvode.mlower = my}
-                              ~jac:(jac data)
-  in
-  let cvode_mem = Cvode.(init BDF (Newton solver)
+  let m = Matrix.band ~mu:my neq in
+  let cvode_mem = Cvode.(init BDF
+                           (Newton Dls.(solver Direct.(band u_nvec m)
+                                               ~jac:(jac data) m))
                               (SStolerances (reltol, abstol))
                               (f data) t0 u_nvec)
   in
@@ -309,12 +307,12 @@ let main () =
   (* Create and allocate CVODES memory for backward run *)
   printf "\nCreate and allocate CVODES memory for backward run\n";
 
-  let bsolver = Adjoint.(Dls.band {mupper = my; mlower = my}
-                                 ~jac:(Dls.BandNoSens (jacb data))) in
+  let m = Matrix.band ~mu:my neq in
   let bcvode_mem =
     Adjoint.(init_backward cvode_mem
               Cvode.BDF
-              (Newton bsolver)
+              (Newton Dls.(solver Direct.(band uB m)
+                                  ~jac:(NoSens (jacb data)) m))
               (SStolerances (rtolb, atol))
               (NoSens (fB data)) tout uB) in
 

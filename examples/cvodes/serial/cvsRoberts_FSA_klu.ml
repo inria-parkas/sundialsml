@@ -13,7 +13,7 @@
  * Example problem:
  *
  * The following is a simple example problem, with the coding
- * needed for its solution by CVODES for Forward Sensitivity 
+ * needed for its solution by CVODES for Forward Sensitivity
  * Analysis. The problem is from chemical kinetics, and consists
  * of the following three rate equations:
  *    dy1/dt = -p1*y1 + p2*y2*y3
@@ -98,13 +98,13 @@ let f data t (y : RealArray.t) (ydot : RealArray.t) =
 (* Jacobian routine. Compute J(t,y). *)
 
 let jac data {Cvode.jac_y = (y : RealArray.t)} smat =
-  let set_col = Sls.SparseMatrix.set_col smat in
-  let set = Sls.SparseMatrix.set smat in
+  let set_col = Matrix.Sparse.set_col smat in
+  let set = Matrix.Sparse.set smat in
   let p1 = data.p.(0)
   and p2 = data.p.(1)
   and p3 = data.p.(2)
   in
-  Sls.SparseMatrix.set_to_zero smat;
+  Matrix.Sparse.set_to_zero smat;
 
   set_col 0 0;
   set_col 1 3;
@@ -122,7 +122,7 @@ let jac data {Cvode.jac_y = (y : RealArray.t)} smat =
   set 6 0 (p2 *. y.{1});
   set 7 1 (-.p2 *. y.{1});
   set 8 2 0.00
- 
+
 (* fS routine. Compute sensitivity r.h.s. *)
 
 let fS : user_data -> RealArray.t Sens.sensrhsfn1 =
@@ -174,7 +174,7 @@ let process_args () =
   let argc = Array.length argv in
   let name = argv.(0) in
   if argc < 2 then wrong_args name;
-  
+
   let sensi =
     if argv.(1) = "-nosensi" then false
     else if argv.(1) = "-sensi" then true
@@ -268,7 +268,7 @@ let print_final_stats s sensi =
     print_newline ()
   end;
 
-  let nje   = Sls.Klu.get_num_jac_evals s
+  let nje   = Dls.get_num_jac_evals s
   in
   print_string_5d "\nnje    = " nje;
   print_newline ()
@@ -292,8 +292,9 @@ let main () =
 
   (* Create CVODES object *)
   let nnz = neq * neq in
+  let m = Matrix.sparse_csc ~nnz neq in
   let cvode_mem =
-    Cvode.(init BDF (Newton Sls.Klu.(solver_csc (jac data) nnz))
+    Cvode.(init BDF (Newton Dls.(solver Direct.(klu y m) ~jac:(jac data) m))
                 (WFtolerances (ewt data)) (f data) t0 y)
   in
 
@@ -330,7 +331,7 @@ let main () =
       end
   in
   (* In loop over output points, call CVode, print results, test for error *)
-  
+
   print_string "\n\n\
                 ===========================================\
                 ============================\n\

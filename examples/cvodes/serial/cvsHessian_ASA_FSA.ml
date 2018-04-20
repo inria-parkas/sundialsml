@@ -2,7 +2,7 @@
  * -----------------------------------------------------------------
  * $Revision: 1.2 $
  * $Date: 2010/12/01 22:57:59 $
- * ----------------------------------------------------------------- 
+ * -----------------------------------------------------------------
  * Programmer(s): Radu Serban @ LLNL
  * -----------------------------------------------------------------
  * OCaml port: Timothy Bourke, Inria, Jun 2014.
@@ -65,7 +65,7 @@ type user_data = {
 
 let f data t (y : RealArray.t) (ydot : RealArray.t) =
   let p1 = data.p1
-  and p2 = data.p2 in 
+  and p2 = data.p2 in
   ydot.{0} <- -.p1*.y.{0}*.y.{0} -. y.{2};
   ydot.{1} <- -.y.{1};
   ydot.{2} <- -.p2*.p2*.y.{1}*.y.{2}
@@ -123,7 +123,7 @@ let fB1 : user_data -> RealArray.t Adj.brhsfn_with_sens =
   let y = args.Adj.y
   and yB = args.Adj.yb
   in
-  let p1 = data.p1 
+  let p1 = data.p1
   and p2 = data.p2
   in
   let s1 = yS.(0).{0} (* sensitivity 1 *)
@@ -175,7 +175,7 @@ let fB2 : user_data -> RealArray.t Adj.brhsfn_with_sens =
   let y = args.Adj.y
   and yB = args.Adj.yb
   in
-  let p1 = data.p1 
+  let p1 = data.p1
   and p2 = data.p2
   in
   let s1 = yS.(1).{0} (* sensitivity 2 *)
@@ -260,10 +260,10 @@ let print_fwd_stats cvode_mem =
   in
   printf " Number steps: %5d\n\n" nst;
   printf " Function evaluations:\n";
-  printf "  f:        %5d\n  fQ:       %5d\n  fS:       %5d\n  fQS:      %5d\n" 
+  printf "  f:        %5d\n  fQ:       %5d\n  fS:       %5d\n  fQS:      %5d\n"
          nfe nfQe nfSe nfQSe;
   printf " Error test failures:\n";
-  printf "  netf:     %5d\n  netfQ:    %5d\n  netfS:    %5d\n  netfQS:   %5d\n" 
+  printf "  netf:     %5d\n  netfQ:    %5d\n  netfS:    %5d\n  netfQS:   %5d\n"
          netf netfQ netfS netfQS;
   printf " Linear solver setups:\n";
   printf "  nsetups:  %5d\n  nsetupsS: %5d\n" nsetups nsetupsS;
@@ -341,9 +341,10 @@ let main () =
   let yQS = Array.init np (fun _ -> Nvector_serial.make 1 zero) in
 
   (* Create and initialize forward problem *)
+  let m = Matrix.dense neq in
   let cvode_mem =
     Cvode.(init BDF
-                (Newton (Dls.dense ()))
+                (Newton Dls.(solver Direct.(dense y m) m))
                 (SStolerances (reltol, abstol))
                 (f data)
                 t0
@@ -405,9 +406,10 @@ let main () =
   let yQB2 = make np2 zero in
 
   (* Create and initialize backward problems (one for each column of the Hessian) *)
+  let m = Matrix.dense neq in
   let cvode_memB1 =
     Adj.(init_backward cvode_mem Cvode.BDF
-                                 (Newton (Dls.dense ()))
+                                 (Newton Dls.(solver Direct.(dense yB1 m) m))
                                  (SStolerances (reltol, abstolB))
                                  (WithSens (fB1 data))
                                  tf yB1)
@@ -415,9 +417,10 @@ let main () =
   QuadAdj.(init cvode_memB1 (WithSens (fQB1 data)) yQB1);
   QuadAdj.(set_tolerances cvode_memB1 (SStolerances (reltol, abstolQB)));
 
+  let m = Matrix.dense neq in
   let cvode_memB2 =
     Adj.(init_backward cvode_mem Cvode.BDF
-                                 (Newton (Dls.dense ()))
+                                 (Newton Dls.(solver Direct.(dense yB2 m) m))
                                  (SStolerances (reltol, abstolB))
                                  (WithSens (fB2 data))
                                  tf yB2)
@@ -471,9 +474,10 @@ let main () =
   printf "del_p = %g\n\n" dp;
 
   RealArray.fill (unwrap y) one;
+  let m = Matrix.dense neq in
   let cvode_mem =
     Cvode.(init BDF
-                (Newton (Dls.dense ()))
+                (Newton Dls.(solver Direct.(dense y m) m))
                 (SStolerances (reltol, abstol))
                 (f data)
                 t0
@@ -510,7 +514,7 @@ let main () =
                                           (ith (unwrap y) 2)
                                           (ith (unwrap y) 3);
   printf "     G:   %12.4e\n" (ith (unwrap yQ) 1);
- 
+
   data.p1 <- data.p1 +. dp;
 
   grdG_fwd.(0)  <- (gp-.g)/.dp;
@@ -534,7 +538,7 @@ let main () =
                                           (ith (unwrap y) 2)
                                           (ith (unwrap y) 3);
   printf "     G:   %12.4e\n" (ith (unwrap yQ) 1);
- 
+
   data.p2 <- data.p2 -. 2.0*.dp;
 
   RealArray.fill (unwrap y) one;
