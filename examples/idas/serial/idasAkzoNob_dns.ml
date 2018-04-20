@@ -14,12 +14,12 @@
  * -----------------------------------------------------------------
  * Adjoint sensitivity example problem
  *
- * This IVP is a stiff system of 6 non-linear DAEs of index 1. The 
- * problem originates from Akzo Nobel Central research in Arnhern, 
- * The Netherlands, and describes a chemical process in which 2 
+ * This IVP is a stiff system of 6 non-linear DAEs of index 1. The
+ * problem originates from Akzo Nobel Central research in Arnhern,
+ * The Netherlands, and describes a chemical process in which 2
  * species are mixed, while carbon dioxide is continuously added.
- * See http://pitagora.dm.uniba.it/~testset/report/chemakzo.pdf  
- * 
+ * See http://pitagora.dm.uniba.it/~testset/report/chemakzo.pdf
+ *
  * -----------------------------------------------------------------
  *)
 module RealArray = Sundials.RealArray
@@ -51,7 +51,7 @@ let t0 = 0.0
 let t1 = 1e-8  (* first time for output *)
 
 let tf = 180.0 (* Final time. *)
-let nf = 25    (* Total number of outputs. *) 
+let nf = 25    (* Total number of outputs. *)
 
 let rtol =  1.0e-08
 let atol =  1.0e-10
@@ -195,7 +195,9 @@ let main () =
   in
 
   (* Call IDACreate and IDAInit to initialize IDA memory *)
-  let mem = Ida.(init (Dls.dense ()) (SStolerances (rtol,atol))
+  let m = Matrix.dense neq in
+  let mem = Ida.(init Dls.(solver Direct.(dense wyy m) m)
+                      (SStolerances (rtol,atol))
                       (res data) t0 wyy wyp)
   in
 

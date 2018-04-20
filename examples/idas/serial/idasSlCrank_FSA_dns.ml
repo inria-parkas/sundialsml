@@ -9,8 +9,8 @@
  * -----------------------------------------------------------------
  * Simulation of a slider-crank mechanism modelled with 3 generalized
  * coordinates: crank angle, connecting bar angle, and slider location.
- * The mechanism moves under the action of a constant horizontal 
- * force applied to the connecting rod and a spring-damper connecting 
+ * The mechanism moves under the action of a constant horizontal
+ * force applied to the connecting rod and a spring-damper connecting
  * the crank and connecting rod.
  *
  * The equations of motion are formulated as a system of stabilized
@@ -161,11 +161,11 @@ let ressc data tres (yval : RealArray.t) (ypval : RealArray.t)
 
   rval.{0} <- ypval.{0} -. qd +. a*.s1*.mu1 -. a*.c1*.mu2;
   rval.{1} <- ypval.{1} -. xd +. mu1;
-  rval.{2} <- ypval.{2} -. pd +. s2*.mu1 -. c2*.mu2; 
+  rval.{2} <- ypval.{2} -. pd +. s2*.mu1 -. c2*.mu2;
 
   rval.{3} <- j1*.ypval.{3} -. _Q.{0} +. a*.s1*.lam1 -. a*.c1*.lam2;
   rval.{4} <- m2*.ypval.{4} -. _Q.{1} +. lam1;
-  rval.{5} <- j2*.ypval.{5} -. _Q.{2} +. s2*.lam1 -. c2*.lam2; 
+  rval.{5} <- j2*.ypval.{5} -. _Q.{2} +. s2*.lam1 -. c2*.lam2;
 
   rval.{6} <- x -. c2 -. a*.c1;
   rval.{7} <- -.s2 -. a*.s1;
@@ -286,8 +286,9 @@ let main () =
 
   (* IDA initialization *)
   (* Call IDADense and set up the linear solver. *)
+  let m = Matrix.dense neq in
   let mem =
-    Ida.(init (Dls.dense ())
+    Ida.(init Dls.(solver Direct.(dense wyy m) m)
               (SStolerances (rtolf, atolf))
               (ressc data)
               ~varid:wid
@@ -345,8 +346,9 @@ let main () =
   set_ic data yy yp;
 
   (* Call IDADense and set up the linear solver. *)
+  let m = Matrix.dense neq in
   let mem =
-    Ida.(init (Dls.dense ())
+    Ida.(init Dls.(solver Direct.(dense wyy m) m)
               (SStolerances (rtolfd, atolfd))
               (ressc data)
               ~varid:wid

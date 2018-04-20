@@ -2,7 +2,7 @@
  * -----------------------------------------------------------------
  * $Revision: 1.2 $
  * $Date: 2010/12/01 23:05:10 $
- * ----------------------------------------------------------------- 
+ * -----------------------------------------------------------------
  * Programmer(s): Radu Serban and Cosmin Petra @ LLNL
  * Programmer(s): Ting Yan @ SMU
  *      Based on idasRoberts_ASAi_dns.c and modified to use KLU
@@ -17,8 +17,8 @@
  * -----------------------------------------------------------------
  * Adjoint sensitivity example problem.
  *
- * This simple example problem for IDAS, due to Robertson, 
- * is from chemical kinetics, and consists of the following three 
+ * This simple example problem for IDAS, due to Robertson,
+ * is from chemical kinetics, and consists of the following three
  * equations:
  *
  *      dy1/dt + p1*y1 - p2*y2*y3            = 0
@@ -39,7 +39,7 @@
  *   g(t,p,y) = y3
  *
  * The gradient dG/dp is obtained as:
- *   dG/dp = int_t0^t1 (g_p - lambda^T F_p ) dt - 
+ *   dG/dp = int_t0^t1 (g_p - lambda^T F_p ) dt -
  *           lambda^T*F_y'*y_p | _t0^t1
  *         = int_t0^t1 (lambda^T*F_p) dt
  * where lambda and are solutions of the adjoint system:
@@ -104,7 +104,7 @@ type user_data = { p : RealArray.t }
  *)
 
 (*
- * f routine. Compute f(t,y). 
+ * f routine. Compute f(t,y).
 *)
 
 let res data t (yy : RealArray.t) (yp : RealArray.t) (rval : RealArray.t) =
@@ -124,19 +124,19 @@ let res data t (yy : RealArray.t) (yp : RealArray.t) (rval : RealArray.t) =
   rval.{0} <- rval.{0} +. yp1;
   rval.{2} <- y1+.y2+.y3-.1.0
 
-(* 
- * Jacobian routine. Compute J(t,y). 
+(*
+ * Jacobian routine. Compute J(t,y).
 *)
 
 let jac data { Ida.jac_y = (yval : RealArray.t);
                Ida.jac_coef = cj } jacmat =
-  let set_col = Sls.SparseMatrix.set_col jacmat in
-  let set = Sls.SparseMatrix.set jacmat in
+  let set_col = Matrix.Sparse.set_col jacmat in
+  let set = Matrix.Sparse.set jacmat in
   let p1 = data.p.{0}
   and p2 = data.p.{1}
   and p3 = data.p.{2}
   in
-  Sls.SparseMatrix.set_to_zero jacmat;
+  Matrix.Sparse.set_to_zero jacmat;
 
   set_col 0 0;
   set_col 1 3;
@@ -156,7 +156,7 @@ let jac data { Ida.jac_y = (yval : RealArray.t);
   set 8 2 (1.0)
 
 (*
- * rhsQ routine. Compute fQ(t,y). 
+ * rhsQ routine. Compute fQ(t,y).
 *)
 
 let rhsQ data t (yy : RealArray.t) yp (qdot : RealArray.t) =
@@ -206,15 +206,15 @@ let jacB data { Adjoint.jac_coef = cj; Adjoint.jac_y = (yy : RealArray.t) } jB =
 
   let p1 = data.p.{0} and p2 = data.p.{1} and p3 = data.p.{2} in
 
-  let set = Dls.DenseMatrix.set jB in
+  let set = Matrix.Dense.set jB in
   set 0 0 (-.p1+.cj);
   set 0 1 (p1);
-  set 0 2 (-.1.0);     
+  set 0 2 (-.1.0);
 
   set 1 0 (p2*.y3);
-  set 1 1 (-.(p2*.y3+.2.0*.p3*.y2)+.cj); 
+  set 1 1 (-.(p2*.y3+.2.0*.p3*.y2)+.cj);
   set 1 2 (-.1.0);
-                     
+
   set 2 0 (p2*.y2);
   set 2 1 (-.p2*.y2);
   set 2 2 (-.1.0)
@@ -222,13 +222,13 @@ let jacB data { Adjoint.jac_coef = cj; Adjoint.jac_y = (yy : RealArray.t) } jB =
 (*Jacobian for backward problem. *)
 let jacB data { Adjoint.jac_coef = cj;
                 Adjoint.jac_y = (yb : RealArray.t) } jacmat =
-  let set_col = Sls.SparseMatrix.set_col jacmat in
-  let set = Sls.SparseMatrix.set jacmat in
+  let set_col = Matrix.Sparse.set_col jacmat in
+  let set = Matrix.Sparse.set jacmat in
   let p1 = data.p.{0}
   and p2 = data.p.{1}
   and p3 = data.p.{2}
   in
-  Sls.SparseMatrix.set_to_zero jacmat;
+  Matrix.Sparse.set_to_zero jacmat;
 
   set_col 0 0;
   set_col 1 3;
@@ -275,9 +275,9 @@ let rhsQB : user_data -> RealArray.t AdjQuad.bquadrhsfn_no_sens =
 let print_output tfinal yB ypB qB =
   printf "--------------------------------------------------------\n";
   printf "tB0:        %12.4e\n" tfinal;
-  printf "dG/dp:      %12.4e %12.4e %12.4e\n" 
+  printf "dG/dp:      %12.4e %12.4e %12.4e\n"
          (-.qB.{0}) (-.qB.{1}) (-.qB.{2});
-  printf "lambda(t0): %12.4e %12.4e %12.4e\n" 
+  printf "lambda(t0): %12.4e %12.4e %12.4e\n"
          yB.{0} yB.{1} yB.{2};
   printf "--------------------------------------------------------\n\n"
 
@@ -327,8 +327,10 @@ let main () =
 
   let nthreads = 1 in
   let nnz = neq * neq in
+  let m = Matrix.sparse_csc ~nnz neq in
   let ida_mem =
-    Ida.(init (Sls.Superlumt.solver_csc (jac data) ~nnz:nnz ~nthreads:nthreads)
+    Ida.(init Dls.(solver Direct.(superlumt ~nthreads:nthreads wyy m)
+                          ~jac:(jac data) m)
               (WFtolerances (ewt data))
               (res data)
               t0
@@ -373,11 +375,11 @@ let main () =
   (* Allocate yB (i.e. lambda_0). *)
   (* Consistently initialize yB. *)
   let yB = RealArray.of_array [|0.0;0.0;1.0|] in
-    
+
   (* Allocate ypB (i.e. lambda'_0). *)
   (* Consistently initialize ypB. *)
   let ypB = RealArray.of_array [|1.0;1.0;0.0|] in
-  
+
   (* Set the scalar relative tolerance reltolB *)
   let reltolB = rtol in
 
@@ -394,10 +396,11 @@ let main () =
   and wypB = wrap ypB
   in
 
+  let m = Matrix.sparse_csc ~nnz neq in
   let indexB =
     Adjoint.(init_backward ida_mem
-                           Sls.(Superlumt.solver_csc (NoSens (jacB data))
-                                  ~nnz:nnz ~nthreads:nthreads)
+               Dls.(solver Direct.(superlumt ~nthreads:nthreads wyB m)
+                           ~jac:(NoSens (jacB data)) m)
                            (SStolerances (reltolB, abstolB))
                            (NoSens (resB data))
                            tb2 wyB wypB)
@@ -405,7 +408,7 @@ let main () =
   Adjoint.set_max_num_steps indexB 1000;
 
   (* Quadrature for backward problem. *)
- 
+
   (* Initialize qB *)
   let qB = RealArray.of_array [|0.0; 0.0; 0.0|] in
   let wqB = wrap qB in
@@ -452,7 +455,7 @@ let main () =
   (* Also reinitialize quadratures. *)
   AdjQuad.(init indexB (NoSens (rhsQB data)) wqB);
 
-  (* Use IDACalcICB to compute consistent initial conditions 
+  (* Use IDACalcICB to compute consistent initial conditions
      for this backward problem. *)
 
   let wyyTB1 = wrap yyTB1

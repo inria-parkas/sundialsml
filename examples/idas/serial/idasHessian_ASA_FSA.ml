@@ -2,7 +2,7 @@
  * -----------------------------------------------------------------
  * $Revision: 1.1 $
  * $Date: 2007/10/25 20:03:39 $
- * ----------------------------------------------------------------- 
+ * -----------------------------------------------------------------
  * Programmer(s): Radu Serban and Cosmin Petra @ LLNL
  * -----------------------------------------------------------------
  * OCaml port: Jun Inoue, Inria, Jul 2014.
@@ -13,22 +13,22 @@
  * For details, see the LICENSE file.
  * -----------------------------------------------------------------
  *
- * Hessian using adjoint sensitivity example problem. 
- * 
- * This simple example problem for IDAS, due to Robertson, 
- * is from chemical kinetics, and consists of the following three 
+ * Hessian using adjoint sensitivity example problem.
+ *
+ * This simple example problem for IDAS, due to Robertson,
+ * is from chemical kinetics, and consists of the following three
  * equations:
  *
- *   [ y1' + p1 * y1 - p2 * y2 * y3              = 0 
- *   [ y2' - p1 * y1 + p2 * y2 * y3 + p3 * y2^2  = 0 
- *   [ y1 + y2 + y3 -1                               = 0 
- * 
+ *   [ y1' + p1 * y1 - p2 * y2 * y3              = 0
+ *   [ y2' - p1 * y1 + p2 * y2 * y3 + p3 * y2^2  = 0
+ *   [ y1 + y2 + y3 -1                               = 0
+ *
  *        [1]        [-p1]
- *   y(0)=[0]  y'(0)=[ p1]   p1 = 0.04   p2 = 1e4   p3 = 1e07   
+ *   y(0)=[0]  y'(0)=[ p1]   p1 = 0.04   p2 = 1e4   p3 = 1e07
  *        [0]        [ 0 ]
  *
  *       80
- *      / 
+ *      /
  *  G = | 0.5 * (y1^2 + y2^2 + y3^2) dt
  *      /
  *      0
@@ -368,8 +368,9 @@ let main () =
 
   (* Forward problem's setup. *)
   let ti = t0 in
+  let m = Matrix.dense neq in
   let ida_mem =
-    Ida.(init (Dls.dense ())
+    Ida.(init Dls.(solver Direct.(dense wyy m) m)
               (SStolerances (rtol,atol))
               (res data)
               ti
@@ -438,8 +439,9 @@ let main () =
   and wqB1  = wrap qB1
   in
 
+  let m = Matrix.dense neq in
   let indexB1 =
-    Adjoint.(init_backward ida_mem (Dls.dense ())
+    Adjoint.(init_backward ida_mem Dls.(solver Direct.(dense wyyB1 m) m)
                            (SStolerances (rtola, atola))
                            (WithSens (resBS1 data))
                            tf wyyB1 wypB1)
@@ -448,7 +450,7 @@ let main () =
   AdjQuad.(init indexB1 (WithSens (rhsQBS1 data)) wqB1);
 
   (******************************
-  * BACKWARD PROBLEM #2  
+  * BACKWARD PROBLEM #2
   *******************************)
 
   (* Consistent IC. *)
@@ -474,8 +476,9 @@ let main () =
   and wqB2  = wrap qB2
   in
 
+  let m = Matrix.dense neq in
   let indexB2 =
-    Adjoint.(init_backward ida_mem (Dls.dense ())
+    Adjoint.(init_backward ida_mem Dls.(solver Direct.(dense wyyB2 m) m)
                            (SStolerances (rtola, atola))
                            (WithSens (resBS2 data))
                            tf
@@ -538,8 +541,9 @@ let main () =
   yp.{2} <- 0.0;
   nvconst 0.0 q;
 
+  let m = Matrix.dense neq in
   let ida_mem =
-    Ida.(init (Dls.dense ())
+    Ida.(init Dls.(solver Direct.(dense wyy m) m)
               (SStolerances (rtolFD, atolFD))
               (res data)
               ti wyy wyp)
@@ -583,7 +587,7 @@ let main () =
   * Forward FD for p2
   ********************)
   (*restore p1*)
-  data.p.{0} <- data.p.{0} +. dp1; 
+  data.p.{0} <- data.p.{0} +. dp1;
   data.p.{1} <- data.p.{1} +. dp2;
 
   yy.{0} <- 1.0; yy.{1} <- 0.0; yy.{2} <- 0.0;

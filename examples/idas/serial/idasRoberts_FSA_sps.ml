@@ -12,8 +12,8 @@
  * -----------------------------------------------------------------
  * Example problem:
  *
- * This simple example problem for IDA, due to Robertson, 
- * is from chemical kinetics, and consists of the following three 
+ * This simple example problem for IDA, due to Robertson,
+ * is from chemical kinetics, and consists of the following three
  * equations:
  *
  *      dy1/dt = -p1*y1 + p2*y2*y3
@@ -29,7 +29,7 @@
  * The sensitivity right hand side is given analytically through the
  * user routine fS (of type SensRhs1Fn).
  * Any of two sensitivity methods (SIMULTANEOUS and STAGGERED can be
- * used and sensitivities may be included in the error test or not 
+ * used and sensitivities may be included in the error test or not
  *(error control set on TRUE or FALSE, respectively).
  *
  * Execution:
@@ -105,19 +105,19 @@ let process_args () =
     end
   else (None, false)
 
-(* 
- * Jacobian routine. Compute J(t,y). 
+(*
+ * Jacobian routine. Compute J(t,y).
 *)
 
 let jac data { Ida.jac_y = (yval : RealArray.t);
                Ida.jac_coef = cj } jacmat =
-  let set_col = Sls.SparseMatrix.set_col jacmat in
-  let set = Sls.SparseMatrix.set jacmat in
+  let set_col = Matrix.Sparse.set_col jacmat in
+  let set = Matrix.Sparse.set jacmat in
   let p1 = data.p.{0}
   and p2 = data.p.{1}
   and p3 = data.p.{2}
   in
-  Sls.SparseMatrix.set_to_zero jacmat;
+  Matrix.Sparse.set_to_zero jacmat;
 
   set_col 0 0;
   set_col 1 3;
@@ -319,8 +319,10 @@ let main () =
 
   let nthreads = 1 in
   let nnz = neq * neq in
-  let ida_mem = Ida.(init (Sls.Superlumt.solver_csc (jac data)
-                            ~nnz:nnz ~nthreads:nthreads)
+  let m = Matrix.sparse_csc ~nnz neq in
+  let ida_mem = Ida.(init Dls.(solver
+                                 Direct.(superlumt ~nthreads:nthreads wy m)
+                                 ~jac:(jac data) m)
                           tol (res data) t0 wy wyp) in
 
   printf "\n3-species chemical kinetics problem\n";
@@ -336,7 +338,7 @@ let main () =
       let yS = Array.init ns (fun _ -> Nvector_serial.make neq 0.0) in
       let ypS = Array.init ns (fun _ -> Nvector_serial.make neq 0.0) in
       (*
-        * Only non-zero sensitivity I.C. are ypS[0]: 
+        * Only non-zero sensitivity I.C. are ypS[0]:
         * - Ith(ypS[0],1) = -ONE;
         * - Ith(ypS[0],2) =  ONE;
         *

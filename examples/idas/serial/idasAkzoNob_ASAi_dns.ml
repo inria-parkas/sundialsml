@@ -14,16 +14,16 @@
  * -----------------------------------------------------------------
  * Adjoint sensitivity example problem
  *
- * This IVP is a stiff system of 6 non-linear DAEs of index 1. The 
- * problem originates from Akzo Nobel Central research in Arnhern, 
- * The Netherlands, and describes a chemical process in which 2 
+ * This IVP is a stiff system of 6 non-linear DAEs of index 1. The
+ * problem originates from Akzo Nobel Central research in Arnhern,
+ * The Netherlands, and describes a chemical process in which 2
  * species are mixed, while carbon dioxide is continuously added.
- * See http://pitagora.dm.uniba.it/~testset/report/chemakzo.pdf  
- * 
+ * See http://pitagora.dm.uniba.it/~testset/report/chemakzo.pdf
+ *
  * IDAS also computes the sensitivities with respect to initial
  * conditions of the following quantity:
  *   G = int_t0^t1 y1 dt
- * The sensitivity of G is the solution of the adjoint system at t0. 
+ * The sensitivity of G is the solution of the adjoint system at t0.
  * -----------------------------------------------------------------
  *)
 module RealArray = Sundials.RealArray
@@ -112,13 +112,13 @@ let res data t (yy : RealArray.t) (yd : RealArray.t) (res : RealArray.t) =
   res.{5} <- ks*.y1*.y4 -. y6
 
 (*
- * rhsQ routine. Computes quadrature(t,y). 
+ * rhsQ routine. Computes quadrature(t,y).
  *)
 let rhsQ data t yy yp qdot =
   qdot.{0} <- yy.{0}
 
 (*
- * resB routine. Residual for adjoint system. 
+ * resB routine. Residual for adjoint system.
  *)
 let resB : user_data -> RealArray.t Adjoint.bresfn_no_sens =
   fun data { Adjoint.y = yy; Adjoint.yb = yyB; Adjoint.yb' = ypB } rrB ->
@@ -166,7 +166,7 @@ let resB : user_data -> RealArray.t Adjoint.bresfn_no_sens =
   let tmp1 = k1 *. y1*.y1to3 *. (y2tohalf/.y2)
   and tmp2 = k4 *. y6*.y6 *. (y2tohalf/.y2)
   in
-  rrB.{1} <- ypB2 -. tmp1*.yB1 -. (0.25*.tmp1 +. 0.25*.tmp2 +. klA)*.yB2 
+  rrB.{1} <- ypB2 -. tmp1*.yB1 -. (0.25*.tmp1 +. 0.25*.tmp2 +. klA)*.yB2
     +. 0.5*.tmp1*.yB3 +. 0.5*.tmp2*.yB5;
 
   rrB.{2} <- ypB3 +. k2*.y4*.(yB1-.yB3-.yB4+.yB5);
@@ -174,7 +174,7 @@ let resB : user_data -> RealArray.t Adjoint.bresfn_no_sens =
   let tmp1 = k3*.y1*.y4
   and tmp2 = k2*.y3
   in
-  rrB.{3} <- ypB4 +. (tmp2-.2.0*.tmp1)*.yB1 -. 2.0*.tmp1*.yB2 -. tmp2*.yB3 
+  rrB.{3} <- ypB4 +. (tmp2-.2.0*.tmp1)*.yB1 -. 2.0*.tmp1*.yB2 -. tmp2*.yB3
     -. (tmp2+.4.0*.tmp1)*.yB4 +. tmp2*.yB5 +. ks*.y1*.yB6;
 
   rrB.{4} <- ypB5 -. k2overk*.y1*.(yB1-.yB3-.yB4+.yB5);
@@ -245,7 +245,9 @@ let main () =
   in
 
   (* Call IDACreate and IDAInit to initialize IDA memory *)
-  let mem = Ida.(init (Dls.dense ()) (SStolerances (rtol,atol))
+  let m = Matrix.dense neq in
+  let mem = Ida.(init Dls.(solver Direct.(dense wyy m) m)
+                      (SStolerances (rtol,atol))
                       (res data) t0 wyy wyp)
   in
 
@@ -285,7 +287,8 @@ let main () =
   and wypB = Nvector_serial.wrap ypB
   in
 
-  let indexB = Adjoint.(init_backward mem (Dls.dense ())
+  let m = Matrix.dense neq in
+  let indexB = Adjoint.(init_backward mem Dls.(solver Direct.(dense wyB m) m)
                                       (SStolerances (rtolb, atolb))
                                       (NoSens (resB data))
                                       tf wyB wypB)

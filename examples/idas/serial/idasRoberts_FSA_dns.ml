@@ -9,8 +9,8 @@
  * -----------------------------------------------------------------
  * Example problem:
  *
- * This simple example problem for IDA, due to Robertson, 
- * is from chemical kinetics, and consists of the following three 
+ * This simple example problem for IDA, due to Robertson,
+ * is from chemical kinetics, and consists of the following three
  * equations:
  *
  *      dy1/dt = -p1*y1 + p2*y2*y3
@@ -26,7 +26,7 @@
  * The sensitivity right hand side is given analytically through the
  * user routine fS (of type SensRhs1Fn).
  * Any of two sensitivity methods (SIMULTANEOUS and STAGGERED can be
- * used and sensitivities may be included in the error test or not 
+ * used and sensitivities may be included in the error test or not
  *(error control set on TRUE or FALSE, respectively).
  *
  * Execution:
@@ -291,7 +291,9 @@ let main () =
   and abstol = RealArray.of_array [|1.0e-8; 1.0e-14; 1.0e-6|] in
   let tol = Ida.SVtolerances (reltol, wrap abstol) in
 
-  let ida_mem = Ida.(init (Dls.dense ()) tol (res data) t0 wy wyp) in
+  let m = Matrix.dense 3 in
+  let ida_mem = Ida.(init Dls.(solver Direct.(dense wy m) m)
+                          tol (res data) t0 wy wyp) in
 
   printf "\n3-species chemical kinetics problem\n";
 
@@ -306,7 +308,7 @@ let main () =
       let yS = Array.init ns (fun _ -> Nvector_serial.make neq 0.0) in
       let ypS = Array.init ns (fun _ -> Nvector_serial.make neq 0.0) in
       (*
-        * Only non-zero sensitivity I.C. are ypS[0]: 
+        * Only non-zero sensitivity I.C. are ypS[0]:
         * - Ith(ypS[0],1) = -ONE;
         * - Ith(ypS[0],2) =  ONE;
         *
