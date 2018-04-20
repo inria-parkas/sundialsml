@@ -15,28 +15,28 @@
  *             C.A. Floudas, P.M. Pardalos et al.
  *             Kluwer Academic Publishers, 1999.
  * Test problem 4 from Section 14.1, Chapter 14: Ferraris and Tronconi
- * 
+ *
  * This problem involves a blend of trigonometric and exponential terms.
  *    0.5 sin(x1 x2) - 0.25 x2/pi - 0.5 x1 = 0
  *    (1-0.25/pi) ( exp(2 x1)-e ) + e x2 / pi - 2 e x1 = 0
  * such that
  *    0.25 <= x1 <=1.0
  *    1.5 <= x2 <= 2 pi
- * 
+ *
  * The treatment of the bound constraints on x1 and x2 is done using
  * the additional variables
  *    l1 = x1 - x1_min >= 0
  *    L1 = x1 - x1_max <= 0
  *    l2 = x2 - x2_min >= 0
  *    L2 = x2 - x2_max >= 0
- * 
+ *
  * and using the constraint feature in KINSOL to impose
  *    l1 >= 0    l2 >= 0
  *    L1 <= 0    L2 <= 0
- * 
+ *
  * The Ferraris-Tronconi test problem has two known solutions.
- * The nonlinear system is solved by KINSOL using different 
- * combinations of globalization and Jacobian update strategies 
+ * The nonlinear system is solved by KINSOL using different
+ * combinations of globalization and Jacobian update strategies
  * and with different initial guesses (leading to one or the other
  * of the known solutions).
  *
@@ -174,7 +174,9 @@ let main () =
   let scsteptol = stol in
 
   (* Call KINDense to specify the linear solver *)
-  let kmem = Kinsol.init ~linsolv:(Kinsol.Dls.dense ()) func u_nvec in
+  let m = Matrix.dense neq in
+  let kmem = Kinsol.(init ~linsolv:Dls.(solver Direct.(dense u_nvec m) m)
+                          func u_nvec) in
   Kinsol.set_constraints kmem c_nvec;
   Kinsol.set_func_norm_tol kmem fnormtol;
   Kinsol.set_scaled_step_tol kmem scsteptol;

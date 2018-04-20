@@ -8,13 +8,13 @@
  * OCaml port: Timothy Bourke, Inria, May 2015.
  * -----------------------------------------------------------------
  * Example problem:
- * 
+ *
  * The following is a simple example problem, with the coding
- * needed for its solution by the accelerated fixed point solver in 
- * KINSOL. 
- * The problem is from chemical kinetics, and consists of solving 
- * the first time step in a Backward Euler solution for the 
- * following three rate equations:         
+ * needed for its solution by the accelerated fixed point solver in
+ * KINSOL.
+ * The problem is from chemical kinetics, and consists of solving
+ * the first time step in a Backward Euler solution for the
+ * following three rate equations:
  *    dy1/dt = -.04*y1 + 1.e4*y2*y3
  *    dy2/dt = .04*y1 - 1.e4*y2*y3 - 3.e2*(y2)^2
  *    dy3/dt = 3.e2*(y2)^2
@@ -76,15 +76,15 @@ let print_final_stats kmem =
 
 let main () =
   (* Print problem description *)
-  
-  printf "Example problem from chemical kinetics solving\n"; 
+
+  printf "Example problem from chemical kinetics solving\n";
   printf "the first time step in a Backward Euler solution for the\n";
   printf "following three rate equations:\n";
   printf "    dy1/dt = -.04*y1 + 1.e4*y2*y3\n";
   printf "    dy2/dt = .04*y1 - 1.e4*y2*y3 - 3.e2*(y2)^2\n";
   printf "    dy3/dt = 3.e2*(y2)^2\n";
   printf "on the interval from t = 0.0 to t = 0.1, with initial\n";
-  printf "conditions: y1 = 1.0, y2 = y3 = 0.\n"; 
+  printf "conditions: y1 = 1.0, y2 = y3 = 0.\n";
   printf "Solution method: Anderson accelerated fixed point iteration.\n";
 
   (* Create vectors for solution and scales *)

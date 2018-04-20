@@ -40,11 +40,11 @@ let two  = 2.0
 
 (* IJth is defined in order to isolate the translation from the
    mathematical 2-dimensional structure of the dependent variable vector
-   to the underlying 1-dimensional storage. 
+   to the underlying 1-dimensional storage.
    IJth(vdata,i,j) references the element in the vdata array for
    u at mesh point (i,j), where 1 <= i <= NX, 1 <= j <= NY.
    The vdata array is obtained via the macro call vdata = NV_DATA_S(v),
-   where v is an N_Vector. 
+   where v is an N_Vector.
    The variables are ordered by the y index j, then by the x index i. *)
 let ijth (v : RealArray.t) i j = v.{(j - 1) + (i - 1)*ny}
 let set_ijth (v : RealArray.t) i j e = v.{(j - 1) + (i - 1)*ny} <- e
@@ -135,18 +135,19 @@ let main () =
   printf "Problem size: %2d x %2d = %4d\n" nx ny neq;
 
   (* -------------
-   * Initial guess 
+   * Initial guess
    * ------------- *)
   let y = Nvector_serial.make neq zero in
 
   (* -----------------------------------------
    * Initialize and allocate memory for KINSOL
    * y is used as a template
-   * Attach band linear solver 
+   * Attach band linear solver
    * ----------------------------------------- *)
-  let kmem = Kinsol.(init ~linsolv:(Dls.band {mupper=ny; mlower=ny}) func y) in
+  let m = Matrix.band ~mu:ny ~ml:ny neq in
+  let kmem = Kinsol.(init ~linsolv:Dls.(solver Direct.(band y m) m) func y) in
   (* -------------------
-   * Set optional inputs 
+   * Set optional inputs
    * ------------------- *)
 
   (* Specify stopping tolerance based on residual *)
@@ -164,7 +165,7 @@ let main () =
   Kinsol.set_max_sub_setup_calls kmem 1;
 
   (* ----------------------------
-   * Call KINSol to solve problem 
+   * Call KINSol to solve problem
    * ---------------------------- *)
 
   (* No scaling used *)
@@ -180,7 +181,7 @@ let main () =
 
 
   (* ------------------------------------
-   * Print solution and solver statistics 
+   * Print solution and solver statistics
    * ------------------------------------ *)
 
   (* Get scaled norm of the system function *)

@@ -19,10 +19,10 @@
  * population model, with predator-prey interaction and diffusion
  * on the unit square in two dimensions. The dependent variable
  * vector is the following:
- * 
+ *
  *       1   2         ns
  * c = (c , c ,  ..., c  )     (denoted by the variable cc)
- * 
+ *
  * and the PDE's are as follows:
  *
  *                    i       i
@@ -56,7 +56,7 @@
  *
  * The PDEs are discretized by central differencing on an MX by
  * MY mesh.
- * 
+ *
  * The nonlinear system is solved by KINSOL using the method
  * specified in local variable globalstrat.
  *
@@ -85,7 +85,7 @@
 module RealArray = Sundials.RealArray
 module RealArray2 = Sundials.RealArray2
 module LintArray = Sundials.LintArray
-module Dense = Dls.ArrayDenseMatrix
+module Dense = Matrix.ArrayDense
 let unvec = Nvector.unwrap
 open Bigarray
 
@@ -100,9 +100,9 @@ let set_ith v i e = v.{i - 1} <- e
 (* Problem Constants *)
 
 let num_species =   6  (* must equal 2*(number of prey or predators)
-                              number of prey = number of predators       *) 
+                              number of prey = number of predators       *)
 
-let pi          = 3.1415926535898   (* pi *) 
+let pi          = 3.1415926535898   (* pi *)
 
 let mx          = 5                 (* MX = number of x mesh points *)
 let my          = 5                 (* MY = number of y mesh points *)
@@ -129,21 +129,21 @@ let predin      = 30000.0(* initial guess for predator concs.      *)
 (* Linear Solver Loop Constants *)
 
 type linear_solver =
-  | Use_Spgmr     (* 0 *)
-  | Use_Spbcg     (* 1 *)
-  | Use_Sptfqmr   (* 2 *)
-  | Use_Spfgmr    (* 3 *)
+  | Use_Spgmr   (* 0 *)
+  | Use_Spbcgs  (* 1 *)
+  | Use_Sptfqmr (* 2 *)
+  | Use_Spfgmr  (* 3 *)
 
 (* User-defined vector access macro: IJ_Vptr *)
 
 (* ij_vptr is defined in order to translate from the underlying 3D structure
    of the dependent variable vector to the 1D storage scheme for an N-vector.
-   ij_vptr vv i j  returns a pointer to the location in vv corresponding to 
+   ij_vptr vv i j  returns a pointer to the location in vv corresponding to
    indices is = 0, jx = i, jy = j.    *)
 let ij_vptr_idx i j = i*num_species + j*nsmx
 let ij_vptr vv i j = subarray vv (ij_vptr_idx i j) num_species
 
-(* Type : UserData 
+(* Type : UserData
    contains preconditioner blocks, pivot arrays, and problem constants *)
 
 let p =
@@ -203,7 +203,7 @@ let init_user_data =
   done
 
 (* Dot product routine for realtype arrays *)
-let dot_prod size (x1 : RealArray.t) x1off (x2 : real_array2) x2r =
+let dot_prod size (x1 : RealArray.t) x1off (x2 : Sundials.real_array2) x2r =
   let temp =ref zero in
   for i = 0 to size - 1 do
     temp := !temp +. x1.{x1off + i} *. x2.{x2r, i}
@@ -216,7 +216,7 @@ let web_rate xx yy (cxy : RealArray.t) cxyoff (ratesxy : RealArray.t) ratesxyoff
   for i = 0 to num_species - 1 do
     ratesxy.{ratesxyoff + i} <- dot_prod num_species cxy cxyoff acoef i
   done;
-  
+
   let fac = one +. alpha *. xx *. yy in
   for i = 0 to num_species - 1 do
     ratesxy.{ratesxyoff + i} <- cxy.{cxyoff + i} *. (bcoef.{i} *. fac
@@ -228,7 +228,7 @@ let web_rate xx yy (cxy : RealArray.t) cxyoff (ratesxy : RealArray.t) ratesxyoff
 let func (cc : RealArray.t) (fval : RealArray.t) =
   let delx = dx in
   let dely = dy in
-  
+
   (* Loop over all mesh points, evaluating rate array at each point*)
   for jy = 0 to my - 1 do
     let yy = dely *. float(jy) in
@@ -236,7 +236,7 @@ let func (cc : RealArray.t) (fval : RealArray.t) =
     (* Set lower/upper index shifts, special at boundaries. *)
     let idyl = if jy <> 0    then nsmx else -nsmx in
     let idyu = if jy <> my-1 then nsmx else -nsmx in
-    
+
     for jx = 0 to mx - 1 do
       let xx = delx *. float(jx) in
 
@@ -252,11 +252,11 @@ let func (cc : RealArray.t) (fval : RealArray.t) =
         (* Differencing in x direction *)
         let dcyli = cc.{off + is} -. cc.{off - idyl + is} in
         let dcyui = cc.{off + idyu + is} -. cc.{off + is} in
-        
+
         (* Differencing in y direction *)
         let dcxli = cc.{off + is} -. cc.{off - idxl + is} in
         let dcxri = cc.{off + idxr+is} -. cc.{off + is} in
-        
+
         (* Compute the total rate value at (xx,yy) *)
         fval.{off + is} <- coy.{is} *. (dcyui -. dcyli)
                     +. cox.{is} *. (dcxri -. dcxli) +. rates.{off + is}
@@ -270,27 +270,26 @@ let perturb_rates = Sundials.RealArray.create num_species
 
 (* Preconditioner setup routine. Generate and preprocess P. *)
 let prec_setup_bd { Kinsol.jac_u=cc;
-                    Kinsol.jac_fu=fval;
-                    Kinsol.jac_tmp=(vtemp1, vtemp2)}
+                    Kinsol.jac_fu=fval; }
                   { Kinsol.Spils.uscale=cscale;
                     Kinsol.Spils.fscale=fscale } =
-  
+
   let delx = dx in
   let dely = dy in
 
   let fac = nvwl2norm fval fscale in
   let r0 = thousand *. uround *. fac *. float(neq) in
   let r0 = if r0 = zero then one else r0 in
-  
+
   (* Loop over spatial points; get size NUM_SPECIES Jacobian block at each *)
   for jy = 0 to my - 1 do
     let yy = float(jy) *. dely in
-    
+
     for jx = 0 to mx - 1 do
       let xx = float(jx) *. delx in
       let pxy = p.(jx).(jy) in
       let off = ij_vptr_idx jx jy in
-      
+
       (* Compute difference quotients of interaction rate fn. *)
       for j = 0 to num_species - 1 do
         let csave = cc.{off + j} in  (* Save the j,jx,jy element of cc *)
@@ -298,26 +297,25 @@ let prec_setup_bd { Kinsol.jac_u=cc;
         cc.{off + j} <- cc.{off + j} +. r; (* Perturb the j,jx,jy element of cc *)
         let fac = one/.r in
         web_rate xx yy cc off perturb_rates 0;
-        
+
         (* Restore j,jx,jy element of cc *)
         cc.{off + j} <- csave;
-        
+
         (* Load the j-th column of difference quotients *)
         let pxydata = unwrap pxy in
         for i = 0 to num_species - 1 do
           pxydata.{j, i} <- (perturb_rates.{i} -. rates.{off + i}) *. fac
         done
       done; (* end of j loop *)
-      
+
       (* Do LU decomposition of size NUM_SPECIES preconditioner block *)
       Dense.getrf pxy pivot.(jx).(jy)
     done (* end of jx loop *)
   done (* end of jy loop *)
-  
+
 (* Preconditioner solve routine *)
 let prec_solve_bd { Kinsol.jac_u=cc;
-                    Kinsol.jac_fu=fval;
-                    Kinsol.jac_tmp=ftem}
+                    Kinsol.jac_fu=fval }
                   { Kinsol.Spils.uscale=cscale;
                     Kinsol.Spils.fscale=fscale }
                   vv =
@@ -363,7 +361,7 @@ let print_header globalstrategy maxl maxlrst fnormtol scsteptol linsolver =
    | Use_Spgmr ->
      printf "Linear solver is SPGMR with maxl = %d, maxlrst = %d\n"
             maxl maxlrst
-   | Use_Spbcg -> printf "Linear solver is SPBCG with maxl = %d\n" maxl
+   | Use_Spbcgs -> printf "Linear solver is SPBCG with maxl = %d\n" maxl
    | Use_Sptfqmr -> printf "Linear solver is SPTFQMR with maxl = %d\n" maxl
    | Use_Spfgmr ->
      printf "Linear solver is SPFGMR with maxl = %d, maxlrst = %d\n"
@@ -389,7 +387,7 @@ let print_output cc =
     if ((is mod 6)*6 = is) then printf "\n";
     printf " %g" ct.{is}
   done;
-  
+
   let jy = my-1 in
   let jx = mx-1 in
   let ct = ij_vptr cc jx jy in
@@ -408,7 +406,7 @@ let last_preconditioner =
   | _ -> Use_Spfgmr
 
 (* Print final statistics contained in iopt *)
-let print_final_stats kmem linsolver =
+let print_final_stats (type m) kmem linsolver =
   let open Kinsol in
   let nni   = get_num_nonlin_solv_iters kmem in
   let nfe   = get_num_func_evals kmem in
@@ -423,6 +421,9 @@ let print_final_stats kmem linsolver =
   printf "nps    = %5d    npe   = %5d     ncfl  = %5d\n" nps npe ncfl;
   if linsolver <> last_preconditioner then
     printf "\n=========================================================\n\n"
+
+type ('data, 'kind) any =
+  Any : ('data, 'kind, 'iter) Iterative.t -> ('data, 'kind) any
 
 (* MAIN PROGRAM *)
 let main () =
@@ -441,18 +442,16 @@ let main () =
   let constraints = Nvector_serial.make neq two in
 
   let go linsolver =
-    if linsolver != Use_Spgmr then set_initial_profiles (unvec cc) (unvec sc);
-    let spils =
+    let lsolver =
       match linsolver with
       | Use_Spgmr ->
+          set_initial_profiles (unvec cc) (unvec sc);
           printf " -------";
           printf " \n| SPGMR |\n";
           printf " -------\n";
-          Kinsol.Spils.(spgmr ~maxl:!maxl ~max_restarts:!maxlrst
-                              (prec_right ~setup:prec_setup_bd
-                                          ~solve:prec_solve_bd ()))
+          Any Iterative.(spgmr ~maxl:!maxl ~max_restarts:!maxlrst cc)
 
-      | Use_Spbcg ->
+      | Use_Spbcgs ->
           printf " -------";
           printf " \n| SPBCG |\n";
           printf " -------\n";
@@ -461,9 +460,8 @@ let main () =
             routines PrecSetupBD and PrecSolveBD, and the pointer to the user block
             data. *)
           maxl := 15;
-          Kinsol.Spils.(spbcg ~maxl:(!maxl)
-                              (prec_right ~setup:prec_setup_bd
-                                          ~solve:prec_solve_bd ()))
+          Any Iterative.(spbcgs ~maxl:(!maxl) cc)
+
       | Use_Sptfqmr ->
           printf " ---------";
           printf " \n| SPTFQMR |\n";
@@ -473,9 +471,7 @@ let main () =
              preconditioner routines PrecSetupBD and PrecSolveBD, and the pointer to
              the user block data. *)
           maxl := 25;
-          Kinsol.Spils.(sptfqmr ~maxl:(!maxl)
-                                (prec_right ~setup:prec_setup_bd
-                                            ~solve:prec_solve_bd ()))
+          Any Iterative.(sptfqmr ~maxl:(!maxl) cc)
 
       | Use_Spfgmr ->
           printf " -------";
@@ -487,14 +483,15 @@ let main () =
              the user block data. *)
           maxl := 15;
           maxlrst := 2;
-          Kinsol.Spils.(spfgmr ~maxl:(!maxl) ~max_restarts:(!maxlrst)
-                               (prec_right ~setup:prec_setup_bd
-                                           ~solve:prec_solve_bd ()))
+          Any Iterative.(spfgmr ~maxl:(!maxl) ~max_restarts:(!maxlrst) cc)
     in
     (* Call KINCreate/KINInit to initialize KINSOL using the linear solver
        KINSPGMR with preconditioner routines prec_setup_bd
        and prec_solve_bd. *)
-    let kmem = Kinsol.(init ~linsolv:spils func cc) in
+    let kmem = match lsolver with
+      Any ls -> Kinsol.(init ~linsolv:Spils.(solver ls
+                             (prec_right ~setup:prec_setup_bd prec_solve_bd))
+                             func cc) in
     Kinsol.set_constraints kmem constraints;
     Kinsol.set_func_norm_tol kmem fnormtol;
     Kinsol.set_scaled_step_tol kmem scsteptol;
@@ -512,12 +509,12 @@ let main () =
     printf("\n\nComputed equilibrium species concentrations:\n");
     print_output (unvec cc);
 
-    (* Print final statistics and free memory *)  
+    (* Print final statistics and free memory *)
     print_final_stats kmem linsolver
   in
   match Sundials.sundials_version with
-  | 2,5,_ -> List.iter go [ Use_Spgmr; Use_Spbcg; Use_Sptfqmr ]
-  | _     -> List.iter go [ Use_Spgmr; Use_Spbcg; Use_Sptfqmr; Use_Spfgmr ]
+  | 2,5,_ -> List.iter go [ Use_Spgmr; Use_Spbcgs; Use_Sptfqmr ]
+  | _     -> List.iter go [ Use_Spgmr; Use_Spbcgs; Use_Sptfqmr; Use_Spfgmr ]
 
 (* Check environment variables for extra arguments.  *)
 let reps =

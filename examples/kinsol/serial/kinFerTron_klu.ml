@@ -15,28 +15,28 @@
  *             C.A. Floudas, P.M. Pardalos et al.
  *             Kluwer Academic Publishers, 1999.
  * Test problem 4 from Section 14.1, Chapter 14: Ferraris and Tronconi
- * 
+ *
  * This problem involves a blend of trigonometric and exponential terms.
  *    0.5 sin(x1 x2) - 0.25 x2/pi - 0.5 x1 = 0
  *    (1-0.25/pi) ( exp(2 x1)-e ) + e x2 / pi - 2 e x1 = 0
  * such that
  *    0.25 <= x1 <=1.0
  *    1.5 <= x2 <= 2 pi
- * 
+ *
  * The treatment of the bound constraints on x1 and x2 is done using
  * the additional variables
  *    l1 = x1 - x1_min >= 0
  *    L1 = x1 - x1_max <= 0
  *    l2 = x2 - x2_min >= 0
  *    L2 = x2 - x2_max >= 0
- * 
+ *
  * and using the constraint feature in KINSOL to impose
  *    l1 >= 0    l2 >= 0
  *    L1 <= 0    L2 <= 0
- * 
+ *
  * The Ferraris-Tronconi test problem has two known solutions.
- * The nonlinear system is solved by KINSOL using different 
- * combinations of globalization and Jacobian update strategies 
+ * The nonlinear system is solved by KINSOL using different
+ * combinations of globalization and Jacobian update strategies
  * and with different initial guesses (leading to one or the other
  * of the known solutions).
  *
@@ -73,9 +73,9 @@ let lb = RealArray.create nvar
 let ub = RealArray.create nvar
 
 let jac { Kinsol.jac_u = (y : RealArray.t) } jacmat =
-  let set_row = Sls.SparseMatrix.set_row jacmat in
-  let set = Sls.SparseMatrix.set jacmat in
-  Sls.SparseMatrix.set_to_zero jacmat;
+  let set_row = Matrix.Sparse.set_row jacmat in
+  let set = Matrix.Sparse.set jacmat in
+  Matrix.Sparse.set_to_zero jacmat;
 
   set_row 0  0;
   set_row 1  2;
@@ -93,7 +93,7 @@ let jac { Kinsol.jac_u = (y : RealArray.t) } jacmat =
 
   set  4 0 (-.one);
   set  5 2 (one);
- 
+
   set  6 0 (-.one);
   set  7 3 (one);
 
@@ -160,7 +160,7 @@ let print_final_stats kmem =
   let open Kinsol in
   let nni  = get_num_nonlin_solv_iters kmem in
   let nfe  = get_num_func_evals kmem in
-  let nje  = Sls.Klu.get_num_jac_evals kmem in
+  let nje  = Dls.get_num_jac_evals kmem in
   print_string "Final Statistics:\n";
   printf "  nni = %5d    nfe  = %5d \n  nje = %5d    \n" nni nfe nje
 
@@ -204,7 +204,9 @@ let main () =
   let nnz = 12 in
 
   (* Call KINKlu to specify the linear solver *)
-  let kmem = Kinsol.(init ~linsolv:(Sls.Klu.solver_csr jac nnz) func u_nvec) in
+  let m = Matrix.sparse_csr ~nnz neq in
+  let kmem = Kinsol.(init ~linsolv:Dls.(solver Direct.(klu u_nvec m) ~jac m)
+                          func u_nvec) in
   Kinsol.set_constraints kmem c_nvec;
   Kinsol.set_func_norm_tol kmem fnormtol;
   Kinsol.set_scaled_step_tol kmem scsteptol;

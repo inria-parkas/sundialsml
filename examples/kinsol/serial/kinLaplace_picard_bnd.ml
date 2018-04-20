@@ -18,7 +18,7 @@
  * The nonlinear system is solved by KINSOL using the Picard
  * iteration and the BAND linear solver.
  *
- * This file is strongly based on the kinLaplace_bnd.c file 
+ * This file is strongly based on the kinLaplace_bnd.c file
  * developed by Radu Serban.
  * -----------------------------------------------------------------
  *)
@@ -43,22 +43,19 @@ let two  = 2.0
 
 (* IJth is defined in order to isolate the translation from the
    mathematical 2-dimensional structure of the dependent variable vector
-   to the underlying 1-dimensional storage. 
+   to the underlying 1-dimensional storage.
    IJth(vdata,i,j) references the element in the vdata array for
    u at mesh point (i,j), where 1 <= i <= NX, 1 <= j <= NY.
    The vdata array is obtained via the macro call vdata = NV_DATA_S(v),
-   where v is an N_Vector. 
+   where v is an N_Vector.
    The variables are ordered by the y index j, then by the x index i. *)
 let ijth (v : RealArray.t) i j = v.{(j - 1) + (i - 1)*ny}
 let set_ijth (v : RealArray.t) i j e = v.{(j - 1) + (i - 1)*ny} <- e
 
-let bandset bm i j v = Dls.BandMatrix.set bm i j v
+let bandset bm i j v = Matrix.Band.set bm i j v
 
 (* Jacobian function *)
-let jac bandrange
-        { Kinsol.jac_u   = (yd : RealArray.t);
-          Kinsol.jac_fu  = f;
-          Kinsol.jac_tmp = (tmp1, tmp2)} jac =
+let jac { Kinsol.jac_u = (yd : RealArray.t); Kinsol.jac_fu  = f } jac =
 
   let dx  = 1.0 /. float(nx+1) in
   let dy  = 1.0 /. float(ny+1) in
@@ -170,7 +167,7 @@ let main () =
   printf "Problem size: %2d x %2d = %4d\n" nx ny neq;
 
   (* -------------
-   * Initial guess 
+   * Initial guess
    * ------------- *)
   let y = Nvector_serial.make neq zero in
 
@@ -178,23 +175,24 @@ let main () =
    * Initialize and allocate memory for KINSOL
    * set parameters for Anderson acceleration
    * y is used as a template
-   * Attach band linear solver 
+   * Attach band linear solver
    * Use acceleration with up to 3 prior residuals
    * ----------------------------------------- *)
+  let m = Matrix.band ~mu:ny ~ml:ny neq in
   let kmem = Kinsol.(init ~maa:3
-                ~linsolv:(Dls.band ~jac:jac {mupper=ny; mlower=ny})
-                func y)
+                          ~linsolv:Dls.(solver Direct.(band y m) ~jac:jac m)
+                          func y)
   in
 
   (* -------------------
-   * Set optional inputs 
+   * Set optional inputs
    * ------------------- *)
 
   (* Specify stopping tolerance based on residual *)
   Kinsol.set_func_norm_tol kmem ftol;
 
   (* ----------------------------
-   * Call KINSol to solve problem 
+   * Call KINSol to solve problem
    * ---------------------------- *)
 
   (* No scaling used *)
@@ -210,7 +208,7 @@ let main () =
             scale);           (* scaling vector for function values fval *)
 
   (* ------------------------------------
-   * Print solution and solver statistics 
+   * Print solution and solver statistics
    * ------------------------------------ *)
 
   (* Get scaled norm of the system function *)

@@ -13,7 +13,7 @@
  *             C.A. Floudas, P.M. Pardalos et al.
  *             Kluwer Academic Publishers, 1999.
  * Test problem 6 from Section 14.1, Chapter 14
- * 
+ *
  * The nonlinear system is solved by KINSOL using the DENSE linear
  * solver.
  *
@@ -28,7 +28,7 @@ let printf = Printf.printf
 
 (* Problem Constants *)
 
-let nvar  = 8              (* variables *) 
+let nvar  = 8              (* variables *)
 let neq   = 3*nvar         (* equations + bounds *)
 
 let ftol  = 1.e-5 (* function tolerance *)
@@ -53,9 +53,9 @@ let func (yd : RealArray.t) (fd : RealArray.t) =
   and x8 = yd.{7} and l8 = yd.{15} and u8 = yd.{23} in
 
   (* Nonlinear equations *)
-  let eq1 = - 0.1238*.x1 +. x7 -. 0.001637*.x2 
+  let eq1 = - 0.1238*.x1 +. x7 -. 0.001637*.x2
     -. 0.9338*.x4 +. 0.004731*.x1*.x3 -. 0.3578*.x2*.x3 -. 0.3571 in
-  let eq2 = 0.2638*.x1 -. x7 -. 0.07745*.x2 
+  let eq2 = 0.2638*.x1 -. x7 -. 0.07745*.x2
     -. 0.6734*.x4 +. 0.2238*.x1*.x3 +. 0.7623*.x2*.x3 -. 0.6022 in
   let eq3 = 0.3578*.x1 +. 0.004731*.x2 +. x6*.x8 in
   let eq4 = -. 0.7623*.x1 +. 0.2238*.x2 +. 0.3461 in
@@ -107,11 +107,11 @@ let jac { Kinsol.jac_u   = (yd : RealArray.t);
   and x8 = yd.{7} in
 
   (* Nonlinear equations *)
-  let set_ijth r c = Dls.DenseMatrix.set j (r - 1) (c - 1) in
+  let set_ijth r c = Matrix.Dense.set j (r - 1) (c - 1) in
 
-  (* 
-     - 0.1238*x1 + x7 - 0.001637*x2 
-     - 0.9338*x4 + 0.004731*x1*x3 - 0.3578*x2*x3 - 0.3571 
+  (*
+     - 0.1238*x1 + x7 - 0.001637*x2
+     - 0.9338*x4 + 0.004731*x1*x3 - 0.3578*x2*x3 - 0.3571
   *)
   set_ijth 1 1 (- 0.1238 +. 0.004731*.x3);
   set_ijth 1 2 (- 0.001637 -. 0.3578*.x3);
@@ -120,7 +120,7 @@ let jac { Kinsol.jac_u   = (yd : RealArray.t);
   set_ijth 1 7 (1.0);
 
   (*
-    0.2638*x1 - x7 - 0.07745*x2 
+    0.2638*x1 - x7 - 0.07745*x2
     - 0.6734*x4 + 0.2238*x1*x3 + 0.7623*x2*x3 - 0.6022
   *)
   set_ijth 2 1 (0.2638 +. 0.2238*.x3);
@@ -224,7 +224,9 @@ let main () =
 
   (* Initialize and allocate memory for KINSOL *)
   (* Attach dense linear solver *)
-  let kmem = Kinsol.(init ~linsolv:(Dls.dense ~jac:jac ()) func y) in
+  let m = Matrix.dense neq in
+  let kmem = Kinsol.(init ~linsolv:Dls.(solver Direct.(dense y m) ~jac:jac m)
+                       func y) in
 
   (* Set optional inputs *)
   let constraints = RealArray.make neq zero in
@@ -253,7 +255,7 @@ let main () =
   printf "\nComputed solution:\n";
   print_output ydata;
 
-  (* Print final statistics and free memory *)  
+  (* Print final statistics and free memory *)
   print_final_stats kmem
 
 (* Check environment variables for extra arguments.  *)

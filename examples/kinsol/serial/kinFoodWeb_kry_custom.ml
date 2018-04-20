@@ -15,10 +15,10 @@
  * population model, with predator-prey interaction and diffusion
  * on the unit square in two dimensions. The dependent variable
  * vector is the following:
- * 
+ *
  *       1   2         ns
  * c = (c , c ,  ..., c  )     (denoted by the variable cc)
- * 
+ *
  * and the PDE's are as follows:
  *
  *                    i       i
@@ -52,7 +52,7 @@
  *
  * The PDEs are discretized by central differencing on an MX by
  * MY mesh.
- * 
+ *
  * The nonlinear system is solved by KINSOL using the method
  * specified in local variable globalstrat.
  *
@@ -80,7 +80,7 @@
 
 (* NB: compile with -unsafe ... *)
 
-module Dense = Dls.ArrayDenseMatrix
+module Dense = Matrix.ArrayDense
 module RealArray = Sundials.RealArray
 module RealArray2 = Sundials.RealArray2
 module LintArray = Sundials.LintArray
@@ -95,9 +95,9 @@ let nvwl2norm = Nvector_array.DataOps.n_vwl2norm
 (* Problem Constants *)
 
 let num_species =   6  (* must equal 2*(number of prey or predators)
-                              number of prey = number of predators       *) 
+                              number of prey = number of predators       *)
 
-let pi          = 3.1415926535898   (* pi *) 
+let pi          = 3.1415926535898   (* pi *)
 
 let mx          = 8                 (* MX = number of x mesh points *)
 let my          = 8                 (* MY = number of y mesh points *)
@@ -122,11 +122,11 @@ let predin      = 30000.0(* initial guess for predator concs.      *)
 
 (* ij_vptr is defined in order to translate from the underlying 3D structure
    of the dependent variable vector to the 1D storage scheme for an N-vector.
-   ij_vptr vv i j  returns a pointer to the location in vv corresponding to 
+   ij_vptr vv i j  returns a pointer to the location in vv corresponding to
    indices is = 0, jx = i, jy = j.    *)
 let ij_vptr_idx i j = i*num_species + j*nsmx
 
-(* Type : UserData 
+(* Type : UserData
    contains preconditioner blocks, pivot arrays, and problem constants *)
 
 let p =
@@ -200,7 +200,7 @@ let web_rate xx yy (cxy, cidx) (ratesxy, ridx) =
     done;
     ratesxy.(ridx+i) <- !temp
   done;
-  
+
   let fac = 1.0 +. alpha *. xx *. yy in
   for i = 0 to num_species - 1 do
     ratesxy.(ridx+i) <- cxy.(cidx+i) *. (bcoef.(i) *. fac +. ratesxy.(ridx+i))
@@ -211,7 +211,7 @@ let web_rate xx yy (cxy, cidx) (ratesxy, ridx) =
 let func cc fval =
   let delx = dx in
   let dely = dy in
-  
+
   (* Loop over all mesh points, evaluating rate array at each point*)
   for jy = 0 to my - 1 do
     let yy = dely *. float(jy) in
@@ -219,7 +219,7 @@ let func cc fval =
     (* Set lower/upper index shifts, special at boundaries. *)
     let idyl = if jy <> 0    then nsmx else -nsmx in
     let idyu = if jy <> my-1 then nsmx else -nsmx in
-    
+
     for jx = 0 to mx - 1 do
       let xx = delx *. float(jx) in
 
@@ -235,11 +235,11 @@ let func cc fval =
         (* Differencing in x direction *)
         let dcyli = cc.(idx + is) -. cc.(idx - idyl + is) in
         let dcyui = cc.(idx + idyu + is) -. cc.(idx + is) in
-        
+
         (* Differencing in y direction *)
         let dcxli = cc.(idx + is) -. cc.(idx - idxl + is) in
         let dcxri = cc.(idx + idxr+is) -. cc.(idx + is) in
-        
+
         (* Compute the total rate value at (xx,yy) *)
         fval.(idx + is) <- coy.(is) *. (dcyui -. dcyli)
                             +. cox.(is) *. (dcxri -. dcxli) +. rates.(idx + is)
@@ -250,28 +250,27 @@ let func cc fval =
 
 (* Preconditioner setup routine. Generate and preprocess P. *)
 let prec_setup_bd { Kinsol.jac_u=cc;
-                    Kinsol.jac_fu=fval;
-                    Kinsol.jac_tmp=(vtemp1, vtemp2)}
+                    Kinsol.jac_fu=fval }
                   { Kinsol.Spils.uscale=cscale;
                     Kinsol.Spils.fscale=fscale } =
   let perturb_rates = Array.make num_species 0.0 in
-  
+
   let delx = dx in
   let dely = dy in
 
   let fac = nvwl2norm fval fscale in
   let r0 = thousand *. uround *. fac *. float(neq) in
   let r0 = if r0 = 0.0 then 1.0 else r0 in
-  
+
   (* Loop over spatial points; get size NUM_SPECIES Jacobian block at each *)
   for jy = 0 to my - 1 do
     let yy = float(jy) *. dely in
-    
+
     for jx = 0 to mx - 1 do
       let xx = float(jx) *. delx in
       let pxy = p.(jx).(jy) in
       let idx = ij_vptr_idx jx jy in
-      
+
       (* Compute difference quotients of interaction rate fn. *)
       for j = 0 to num_species - 1 do
         let csave = cc.(idx+j) in  (* Save the j,jx,jy element of cc *)
@@ -279,22 +278,22 @@ let prec_setup_bd { Kinsol.jac_u=cc;
         cc.(idx+j) <- cc.(idx+j) +. r; (* Perturb the j,jx,jy element of cc *)
         let fac = 1.0/.r in
         web_rate xx yy (cc,idx) (perturb_rates,0);
-        
+
         (* Restore j,jx,jy element of cc *)
         cc.(idx+j) <- csave;
-        
+
         (* Load the j-th column of difference quotients *)
         let pxydata = unwrap pxy in
         for i = 0 to num_species - 1 do
           pxydata.{j, i} <- (perturb_rates.(i) -. rates.(idx+i)) *. fac
         done
       done; (* end of j loop *)
-      
+
       (* Do LU decomposition of size NUM_SPECIES preconditioner block *)
       Dense.getrf pxy pivot.(jx).(jy)
     done (* end of jx loop *)
   done (* end of jy loop *)
-  
+
 (* Preconditioner solve routine *)
 let vxy = RealArray.create num_species
 
@@ -375,7 +374,7 @@ let print_output cc =
     if ((is mod 6)*6 = is) then printf "\n";
     printf " %g" cc.(ct+is)
   done;
-  
+
   let jy = my-1 in
   let jx = mx-1 in
   let ct = ij_vptr_idx jx jy in
@@ -423,9 +422,9 @@ let main () =
      KINSPGMR with preconditioner routines prec_setup_bd
      and prec_solve_bd. *)
   let kmem = Kinsol.(init
-              ~linsolv:Spils.(spgmr ~maxl:maxl ~max_restarts:maxlrst
-                                    (prec_right ~setup:prec_setup_bd
-                                                ~solve:prec_solve_bd ()))
+              ~linsolv:Spils.(solver
+                 Iterative.(spgmr ~maxl:maxl ~max_restarts:maxlrst ccnv)
+                 (prec_right ~setup:prec_setup_bd prec_solve_bd))
               func ccnv) in
   Kinsol.set_constraints kmem (wrap (Array.make neq 2.0));
   Kinsol.set_func_norm_tol kmem fnormtol;
@@ -444,7 +443,7 @@ let main () =
   printf("\n\nComputed equilibrium species concentrations:\n");
   print_output cc;
 
-  (* Print final statistics and free memory *)  
+  (* Print final statistics and free memory *)
   print_final_stats kmem
 
 (* Check environment variables for extra arguments.  *)

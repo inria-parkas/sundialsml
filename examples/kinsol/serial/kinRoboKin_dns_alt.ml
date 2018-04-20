@@ -13,7 +13,7 @@
  *             C.A. Floudas, P.M. Pardalos et al.
  *             Kluwer Academic Publishers, 1999.
  * Test problem 6 from Section 14.1, Chapter 14
- * 
+ *
  * The nonlinear system is solved by KINSOL using the DENSE linear
  * solver.
  *
@@ -25,7 +25,7 @@
 
 (* Test the Cvode.Alternate module *)
 
-module DM = Dls.ArrayDenseMatrix
+module DM = Matrix.ArrayDense
 module LintArray = Sundials.LintArray
 module RealArray = Sundials.RealArray
 module RealArray2 = Sundials.RealArray2
@@ -68,7 +68,7 @@ let alternate_dense jacfn =
   in
 
   let solver =
-    Kinsol.Alternate.(make (fun s nv ->
+    Kinsol.Alternate.(solver (fun s nv ->
         let n = RealArray.length (Nvector.unwrap nv) in
         let mem = {
           dj     = DM.create n n;
@@ -86,7 +86,7 @@ let alternate_dense jacfn =
 
 (* Problem Constants *)
 
-let nvar  = 8              (* variables *) 
+let nvar  = 8              (* variables *)
 let neq   = 3*nvar         (* equations + bounds *)
 
 let ftol  = 1.e-5 (* function tolerance *)
@@ -99,7 +99,7 @@ let two   = 2.0
 let ith v i = v.{i - 1}
 let set_ith v i e = v.{i - 1} <- e
 
-let set_ijth (m : real_array2) i j e = m.{j - 1, i - 1} <- e
+let set_ijth (m : Sundials.real_array2) i j e = m.{j - 1, i - 1} <- e
 
 (* System function *)
 let func (yd : RealArray.t) (fd : RealArray.t) =
@@ -113,9 +113,9 @@ let func (yd : RealArray.t) (fd : RealArray.t) =
   and x8 = yd.{7} and l8 = yd.{15} and u8 = yd.{23} in
 
   (* Nonlinear equations *)
-  let eq1 = - 0.1238*.x1 +. x7 -. 0.001637*.x2 
+  let eq1 = - 0.1238*.x1 +. x7 -. 0.001637*.x2
     -. 0.9338*.x4 +. 0.004731*.x1*.x3 -. 0.3578*.x2*.x3 -. 0.3571 in
-  let eq2 = 0.2638*.x1 -. x7 -. 0.07745*.x2 
+  let eq2 = 0.2638*.x1 -. x7 -. 0.07745*.x2
     -. 0.6734*.x4 +. 0.2238*.x1*.x3 +. 0.7623*.x2*.x3 -. 0.6022 in
   let eq3 = 0.3578*.x1 +. 0.004731*.x2 +. x6*.x8 in
   let eq4 = -. 0.7623*.x1 +. 0.2238*.x2 +. 0.3461 in
@@ -168,9 +168,9 @@ let jac (yd : RealArray.t) f jm =
 
   (* Nonlinear equations *)
 
-  (* 
-     - 0.1238*x1 + x7 - 0.001637*x2 
-     - 0.9338*x4 + 0.004731*x1*x3 - 0.3578*x2*x3 - 0.3571 
+  (*
+     - 0.1238*x1 + x7 - 0.001637*x2
+     - 0.9338*x4 + 0.004731*x1*x3 - 0.3578*x2*x3 - 0.3571
   *)
   j.{0, 0} <- - 0.1238 +. 0.004731*.x3;
   j.{1, 0} <- - 0.001637 -. 0.3578*.x3;
@@ -179,7 +179,7 @@ let jac (yd : RealArray.t) f jm =
   j.{6, 0} <- 1.0;
 
   (*
-    0.2638*x1 - x7 - 0.07745*x2 
+    0.2638*x1 - x7 - 0.07745*x2
     - 0.6734*x4 + 0.2238*x1*x3 + 0.7623*x2*x3 - 0.6022
   *)
   j.{0, 1} <- 0.2638 +. 0.2238*.x3;
@@ -310,7 +310,7 @@ let main () =
   printf "\nComputed solution:\n";
   print_output ydata;
 
-  (* Print final statistics and free memory *)  
+  (* Print final statistics and free memory *)
   let nfeD, nje = get_stats () in
   print_final_stats kmem nfeD nje
 
