@@ -848,7 +848,7 @@ let precond wdata jacarg jok gamma =
  *)
 
 let psolve wdata jac_arg solve_arg z =
-  let Cvode.Spils.({ rhs = r; gamma = gamma }) = solve_arg in
+  let { Cvode.Spils.rhs = r; Cvode.Spils.gamma = gamma } = solve_arg in
   Array1.blit r z;
 
   (* call GSIter for Gauss-Seidel iterations *)
@@ -1000,7 +1000,7 @@ let precondb wdata jacarg jok gamma =
 (* Preconditioner solve function for the backward problem *)
 
 let psolveb wdata jac_arg solve_arg (z : RealArray.t) =
-  let Adj.Spils.({ rhs = r; gamma = gamma }) = solve_arg in
+  let { Adj.Spils.rhs = r; Adj.Spils.gamma = gamma } = solve_arg in
   Array1.blit r z;
 
   (* call GSIter for Gauss-Seidel iterations
