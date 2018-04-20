@@ -3,22 +3,22 @@
  *---------------------------------------------------------------
  * OCaml port: Timothy Bourke, Inria, Jan 2016.
  *---------------------------------------------------------------
- * Copyright (c) 2015, Southern Methodist University and 
+ * Copyright (c) 2015, Southern Methodist University and
  * Lawrence Livermore National Security
  *
- * This work was performed under the auspices of the U.S. Department 
- * of Energy by Southern Methodist University and Lawrence Livermore 
+ * This work was performed under the auspices of the U.S. Department
+ * of Energy by Southern Methodist University and Lawrence Livermore
  * National Laboratory under Contract DE-AC52-07NA27344.
- * Produced at Southern Methodist University and the Lawrence 
+ * Produced at Southern Methodist University and the Lawrence
  * Livermore National Laboratory.
  *
  * All rights reserved.
  * For details, see the LICENSE file.
  *---------------------------------------------------------------
  * Example problem:
- * 
- * The following test simulates a brusselator problem from chemical 
- * kinetics.  This is n PDE system with 3 components, Y = [u,v,w], 
+ *
+ * The following test simulates a brusselator problem from chemical
+ * kinetics.  This is n PDE system with 3 components, Y = [u,v,w],
  * satisfying the equations,
  *    u_t = du*u_xx + a - (w+1)*u + v*u^2
  *    v_t = dv*v_xx + w*u - v*u^2
@@ -27,24 +27,24 @@
  *    u(0,x) =  a  + 0.1*sin(pi*x)
  *    v(0,x) = b/a + 0.1*sin(pi*x)
  *    w(0,x) =  b  + 0.1*sin(pi*x),
- * and with stationary boundary conditions, i.e. 
+ * and with stationary boundary conditions, i.e.
  *    u_t(t,0) = u_t(t,1) = 0,
  *    v_t(t,0) = v_t(t,1) = 0,
  *    w_t(t,0) = w_t(t,1) = 0.
- * Note: these can also be implemented as Dirichlet boundary 
+ * Note: these can also be implemented as Dirichlet boundary
  * conditions with values identical to the initial conditions.
- * 
- * The spatial derivatives are computed using second-order 
- * centered differences, with the data distributed over N points 
+ *
+ * The spatial derivatives are computed using second-order
+ * centered differences, with the data distributed over N points
  * on a uniform spatial grid.
  *
  * This program solves the problem with the DIRK method, using a
  * Newton iteration with the ARKBAND band linear solver, and a
- * user-supplied Jacobian routine.  This example uses the OpenMP 
- * vector kernel, and employs OpenMP threading within the 
+ * user-supplied Jacobian routine.  This example uses the OpenMP
+ * vector kernel, and employs OpenMP threading within the
  * right-hand side and Jacobian construction functions.
  *
- * 100 outputs are printed at equal intervals, and run statistics 
+ * 100 outputs are printed at equal intervals, and run statistics
  * are printed at the end.
  *---------------------------------------------------------------*)
 
@@ -107,7 +107,7 @@ let f ud t y dy =
 (* Routine to compute the stiffness matrix from (L*y), scaled by the factor c.
    We add the result into Jac and do not erase what was already there *)
 let laplace_matrix ud c jac =
-  let inc_elem i j inc = Dls.BandMatrix.update jac i j (fun v -> v +. inc) in
+  let inc_elem i j inc = Matrix.Band.update jac i j (fun v -> v +. inc) in
 
   (* iterate over intervals, filling in Jacobian entries *)
   for i=1 to ud.n-1-1 do
@@ -126,7 +126,7 @@ let laplace_matrix ud c jac =
 (* Routine to compute the Jacobian matrix from R(y), scaled by the factor c.
    We add the result into Jac and do not erase what was already there *)
 let reaction_jac ud c y jac =
-  let inc_elem i j inc = Dls.BandMatrix.update jac i j (fun v -> v +. inc) in
+  let inc_elem i j inc = Matrix.Band.update jac i j (fun v -> v +. inc) in
 
   (* iterate over nodes, filling in Jacobian entries *)
   for i=1 to ud.n-1-1 do
@@ -153,7 +153,7 @@ let reaction_jac ud c y jac =
   done
 
 (* Jacobian routine to compute J(t,y) = df/dy. *)
-let jac ud _ { Arkode.jac_y = y } j =
+let jac ud { Arkode.jac_y = y } j =
   (* Fill in the Laplace matrix *)
   laplace_matrix ud 1.0 j;
   (* Add in the Jacobian of the reaction terms matrix *)
@@ -237,10 +237,11 @@ let main () =
      hand-side side function in y'=f(t,y), the inital time t0, and
      the initial dependent variable vector y.  Note: since this
      problem is fully implicit, we set f_E to NULL and f_I to f. *)
+  let m = Matrix.band ~smu:8 ~mu:4 ~ml:4 neq in
   let arkode_mem = Arkode.(
     init
       (Implicit (f udata,
-                 Newton (Dls.band ~jac:(jac udata) {mupper = 4; mlower = 4}),
+                 Newton Dls.(solver Direct.(band y m) ~jac:(jac udata) m),
                  Nonlinear))
       (SStolerances (reltol, abstol))
       t0
@@ -279,7 +280,7 @@ let main () =
      for iout=0 to nt-1 do
        (* call integrator *)
        let t, _ = Arkode.solve_normal arkode_mem !tout y in
- 
+
        (* access/print solution statistics *)
        let u = n_vwl2norm y umask in
        let u = sqrt(u*.u/. float n_mesh) in
@@ -290,7 +291,7 @@ let main () =
        printf "  %10.6f  %10.6f  %10.6f  %10.6f\n" t u v w;
        (* successful solve: update output time *)
        tout := min (!tout +. dTout) tf;
- 
+
        (* output results to disk *)
        for i=0 to n_mesh-1 do
          fprintf ufid " %.16e" data.{idx i 0};

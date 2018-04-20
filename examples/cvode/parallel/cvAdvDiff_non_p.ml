@@ -54,7 +54,7 @@ let t1 =    0.5    (* first output time         *)
 let dtout = 0.5    (* output time increment     *)
 let nout =  10     (* number of output times    *)
 
-(* Type : UserData 
+(* Type : UserData
    contains grid constants, parallel machine parameters, work array. *)
 
 type user_data = {
@@ -123,9 +123,9 @@ let f data t (udata, _, _) (dudata, _, _) =
 
   (* Extract parameters for parallel computation. *)
   let comm      = data.comm in
-  let npes      = data.npes in        (* Number of processes. *) 
+  let npes      = data.npes in        (* Number of processes. *)
   let my_pe     = data.my_pe in       (* Current process number. *)
-  let my_length = Array1.dim udata in (* Number of local elements of u. *) 
+  let my_length = Array1.dim udata in (* Number of local elements of u. *)
   let z         = data.z in
 
   (* Compute related parameters. *)

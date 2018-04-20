@@ -648,13 +648,14 @@ let main () =
   let mukeep = 1 in
   let mlkeep = 1 in
 
-  let linsolv =
-    Ida.Spils.spgmr ~maxl:12
-      Ida_bbd.(prec_left ~dqrely:zero { mudq; mldq; mukeep; mlkeep; }
-                         (reslocal data))
-  in
-  let mem = Ida.(init linsolv (SStolerances (rtol,atol))
-                      (heatres data) ~varid:id t0 uu up)
+  let mem =
+    Ida.(init
+      Spils.(solver Iterative.(spgmr ~maxl:12 uu)
+                    Ida_bbd.(prec_left ~dqrely:zero
+                                       { mudq; mldq; mukeep; mlkeep }
+                                       (reslocal data)))
+      (SStolerances (rtol,atol))
+      (heatres data) ~varid:id t0 uu up)
   in
   Ida.set_suppress_alg mem true;
   Ida.set_constraints mem constraints;

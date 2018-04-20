@@ -17,25 +17,25 @@
  * The mathematical problem solved in this example is a DAE system
  * that arises from a system of partial differential equations after
  * spatial discretization.
- * 
+ *
  * The PDE system is a two-species time-dependent PDE known as
  * Brusselator PDE and models a chemically reacting system.
  *
- *                  
- *  du/dt = eps(u  + u) + u^2 v -(B+1)u + A  
+ *
+ *  du/dt = eps(u  + u) + u^2 v -(B+1)u + A
  *               xx   yy
  *                                              domain [0,L]X[0,L]
  *  dv/dt = eps(v  + v) - u^2 v + Bu
  *               xx   yy
  *
  *  B.C. : Neumann
- *  I.C. : u(x,y,t0) = u0(x,y) =  1  - 0.5*cos(pi*y/L) 
- *         v(x,y,t0) = v0(x,y) = 3.5 - 2.5*cos(pi*x/L) 
+ *  I.C. : u(x,y,t0) = u0(x,y) =  1  - 0.5*cos(pi*y/L)
+ *         v(x,y,t0) = v0(x,y) = 3.5 - 2.5*cos(pi*x/L)
  *
  * The PDEs are discretized by central differencing on a MX by MY
- * mesh, and so the system size Neq is the product MX*MY*NUM_SPECIES. 
- * The system is actually implemented on submeshes, processor by 
- * processor, with an MXSUB by MYSUB mesh on each of NPEX * NPEY 
+ * mesh, and so the system size Neq is the product MX*MY*NUM_SPECIES.
+ * The system is actually implemented on submeshes, processor by
+ * processor, with an MXSUB by MYSUB mesh on each of NPEX * NPEY
  * processors.
  *)
 
@@ -827,12 +827,14 @@ let main () =
   let mukeep = 2 in
   let mlkeep = 2 in
   let maxl = 16 in
-  let linsolv =
-    Ida.Spils.spgmr ~maxl:maxl
-      Ida_bbd.(prec_left ~dqrely:zero { mudq; mldq; mukeep; mlkeep; }
-                         (reslocal data))
-  in
-  let mem = Ida.(init linsolv (SStolerances (rtol,atol)) (res data) t0 uv uvp)
+  let mem =
+    Ida.(init
+      Spils.(solver Iterative.(spgmr ~maxl uv)
+                    Ida_bbd.(prec_left ~dqrely:zero
+                                       { mudq; mldq; mukeep; mlkeep }
+                                       (reslocal data)))
+      (SStolerances (rtol,atol))
+      (res data) t0 uv uvp)
   in
 
   (* Call IDACalcIC (with default options) to correct the initial values. *)

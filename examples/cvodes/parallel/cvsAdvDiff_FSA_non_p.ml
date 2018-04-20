@@ -75,7 +75,7 @@ let ns =    2
 
 let zero =  0.0
 
-(* Type : UserData 
+(* Type : UserData
    contains problem parameters, grid constants, work array. *)
 
 type user_data = {
@@ -111,7 +111,7 @@ let process_args my_pe =
   let argv = Sys.argv in
   let argc = Array.length argv in
   if argc < 2 then wrong_args my_pe argv.(0);
-  
+
   let sensi =
     if argv.(1) = "-nosensi" then false
     else if argv.(1) = "-sensi" then true
@@ -222,9 +222,9 @@ let f data t (udata, _, _) (dudata, _, _) =
 
   (* Extract parameters for parallel computation. *)
   let comm = data.comm in
-  let npes = data.npes in             (* Number of processes. *) 
+  let npes = data.npes in             (* Number of processes. *)
   let my_pe = data.my_pe in           (* Current process number. *)
-  let my_length = Array1.dim udata in (* Number of local elements of u. *) 
+  let my_length = Array1.dim udata in (* Number of local elements of u. *)
   let z = data.z in
 
   (* Compute related parameters. *)
@@ -308,7 +308,7 @@ let main () =
                               t0
                               u)
   in
- 
+
   if my_pe = 0 then begin
     printf "\n1-D advection-diffusion equation, mesh size =%3d \n" mx;
     printf "\nNumber of PEs = %3d \n" npes;

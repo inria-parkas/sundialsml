@@ -31,19 +31,19 @@
  * Output is printed at t = .1, .2, ..., 1.
  * Run statistics (optional outputs) are printed at the end.
  *
- * Optionally, we can set the number of threads from environment 
+ * Optionally, we can set the number of threads from environment
  * variable or command line. To check the current value for number
  * of threads from environment:
  *      % echo $OMP_NUM_THREADS
  *
  * Execution:
  *
- * If the user want to use the default value or the number of threads 
+ * If the user want to use the default value or the number of threads
  * from environment value:
- *      % ./cvAdvDiff_bnd_omp 
+ *      % ./cvAdvDiff_bnd_omp
  * If the user want to specify the number of threads to use
  *      % ./cvAdvDiff_bnd_omp num_threads
- * where num_threads is the number of threads the user want to use 
+ * where num_threads is the number of threads the user want to use
  * -----------------------------------------------------------------
  *)
 
@@ -56,7 +56,7 @@ let vmax_norm = Nvector_openmp.Ops.n_vmaxnorm
 
 (* Header files with a description of contents used in cvbanx.c *)
 
-let set bm i j v = Dls.BandMatrix.set bm i j v
+let set bm i j v = Matrix.Band.set bm i j v
 
 (* Problem Constants *)
 
@@ -81,11 +81,11 @@ let five  = 5.0
 
 (* IJth is defined in order to isolate the translation from the
    mathematical 2-dimensional structure of the dependent variable vector
-   to the underlying 1-dimensional storage. 
+   to the underlying 1-dimensional storage.
    IJth(vdata,i,j) references the element in the vdata array for
    u at mesh point (i,j), where 1 <= i <= MX, 1 <= j <= MY.
    The vdata array is obtained via the macro call vdata = NV_DATA_S(v),
-   where v is an N_Vector. 
+   where v is an N_Vector.
    The variables are ordered by the y index j, then by the x index i. *)
 let set_ijth (vdata : RealArray.t) i j e = vdata.{(j-1) + (i-1)*my} <- e
 
@@ -132,7 +132,7 @@ let f data t (udata : RealArray.t) (dudata : RealArray.t) =
 
 (* Jacobian routine. Compute J(t,u). *)
 
-let jac data {Cvode.mupper=mupper; Cvode.mlower=mlower} arg jmat =
+let jac data arg jmat =
   (*
     The components of f = udot that depend on u(i,j) are
     f(i,j), f(i-1,j), f(i+1,j), f(i,j-1), f(i,j+1), with
@@ -237,15 +237,17 @@ let main () =
 
   set_ic (unwrap u) data;  (* Initialize u vector *)
 
-  (* Call CVodeCreate to create the solver memory and specify the 
+  (* Call CVodeCreate to create the solver memory and specify the
    * Backward Differentiation Formula and the use of a Newton iteration *)
   (* Call CVodeInit to initialize the integrator memory and specify the
    * user's right hand side function in u'=f(t,u), the inital time T0, and
    * the initial dependent variable vector u. *)
   (* Call CVBand to specify the CVBAND band linear solver *)
   (* Set the user-supplied Jacobian routine Jac *)
-  let solver = Cvode.(Dls.band {mupper = my; mlower = my} ~jac:(jac data)) in
-  let cvode_mem = Cvode.(init BDF (Newton solver)
+  let m = Matrix.band ~smu:(2*my) ~mu:my ~ml:my neq in
+  let cvode_mem = Cvode.(init BDF (Newton
+                                    Dls.(solver Direct.(band u m)
+                                                ~jac:(jac data) m))
                              (SStolerances (reltol, abstol))
                              (f data) t0 u)
   in

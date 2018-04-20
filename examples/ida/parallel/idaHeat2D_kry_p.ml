@@ -610,13 +610,13 @@ let main () =
   (* Call IDACreate and IDAMalloc to initialize solution. *)
   (* Call IDASpgmr to specify the linear solver. *)
 
-  let linsolv =
-    Ida.Spils.(spgmr (prec_left ~setup:(psetup_heat data) (psolve_heat data)))
-  in
   let mem =
-    Ida.init linsolv (Ida.SStolerances (rtol, atol))
+    Ida.(init
+      Spils.(solver Iterative.(spgmr uu)
+                    (prec_left ~setup:(psetup_heat data) (psolve_heat data)))
+      (SStolerances (rtol, atol))
       (res_heat data)
-      t0 uu up
+      t0 uu up)
   in
   Ida.set_id mem id;
   Ida.set_suppress_alg mem true;

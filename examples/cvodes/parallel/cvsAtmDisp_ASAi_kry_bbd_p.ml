@@ -80,7 +80,7 @@ let npz =
 (* Parameters for source Gaussians *)
 
 let g1_ampl =   1.0
-let g1_sigma =  1.7 
+let g1_sigma =  1.7
 let g1_x =      4.0
 let g1_y =      8.0
 let g1_z =      8.0
@@ -135,7 +135,7 @@ let two =  2.0
  *------------------------------------------------------------------
  *)
 
-let rec enum i n = if i = n then [] else i::enum (i + 1) n 
+let rec enum i n = if i = n then [] else i::enum (i + 1) n
 let dims = enum 0 dim
 
 let takedim xs =
@@ -196,13 +196,13 @@ let set_ijth_ext =
 
 (*
  *------------------------------------------------------------------
- * Type definition: ProblemData 
+ * Type definition: ProblemData
  *------------------------------------------------------------------
  *)
 
 type problem_data = {
     (* Domain *)
-    xmin      : float array; (* "left" boundaries *)  
+    xmin      : float array; (* "left" boundaries *)
     xmax      : float array; (* "right" boundaries *)
     m         : int array;   (* number of grid points *)
     dx        : float array; (* grid spacing *)
@@ -210,20 +210,20 @@ type problem_data = {
 
     (* Parallel stuff *)
     comm : Mpi.communicator; (* MPI communicator *)
-    myId      : int;         (* process id *) 
+    myId      : int;         (* process id *)
     npes      : int;         (* total number of processes *)
     num_procs : int array;   (* number of processes in each direction *)
     nbr_left  : int array;   (* MPI ID of "left" neighbor *)
     nbr_right : int array;   (* MPI ID of "right" neighbor *)
     m_start   : int array;   (* "left" index in the global domain *)
-    l_m       : int array;   (* number of local grid points *) 
+    l_m       : int array;   (* number of local grid points *)
 
     y_ext            : RealArray.t; (* extended data array *)
     mutable buf_send : RealArray.t; (* Send buffer *)
     mutable buf_size : int;         (* Buffer size *)
 
     (* Source *)
-    p         : Nvector.t;   (* Source parameters *) 
+    p         : Nvector.t;   (* Source parameters *)
   }
 
 (*
@@ -281,7 +281,7 @@ let set_data comm npes myId =
   (* Calculate grid spacing and differential volume *)
   let dx = Array.init dim (fun i -> (xmax.(i) -. xmin.(i)) /. float (m.(i) - 1)) in
   let dOmega = Array.fold_left (fun a dx -> a *. dx) one dx in
-  
+
   (* Set partitioning *)
   let num_procs = Array.of_list (takedim [ npx; npy; npz ]) in
   let n         = Array.copy num_procs in
@@ -300,20 +300,20 @@ let set_data comm npes myId =
         r @ [if (dv mod n.(i)) = n.(i)-1 then myId else myId + off])
       (myId, 1, []) dims)
   in
- 
-  (* Compute the local subdomains 
-     m_start: left border in global index space 
+
+  (* Compute the local subdomains
+     m_start: left border in global index space
      l_m:     length of the subdomain *)
   let m_start = array_of_second (
     List.fold_left (function (dv, r) -> fun i ->
         dv / n.(i), r @ [ (dv mod n.(i)) * nd.(i) ])
       (myId, []) dims)
   in
-  let l_m = Array.of_list (List.map (fun i -> 
+  let l_m = Array.of_list (List.map (fun i ->
         if nbr_right.(i) = myId then m.(i) - m_start.(i) else nd.(i)) dims)
   in
 
-  (* Allocate memory for the y_ext array 
+  (* Allocate memory for the y_ext array
      (local solution + data from neighbors) *)
   let yext_size = List.fold_left (fun s i -> s * (l_m.(i) + 2)) 1 dims in
 
@@ -356,7 +356,7 @@ let set_data comm npes myId =
 
 (*
  *------------------------------------------------------------------
- * f_comm: 
+ * f_comm:
  * Function for inter-process communication
  * Used both for the forward and backward phase.
  *------------------------------------------------------------------
@@ -365,12 +365,12 @@ let set_data comm npes myId =
 let f_comm d t ((ydata : RealArray.t), _, _) =
   let comm = d.comm in
   let id = d.myId in
-  
+
   (* extract data from domain*)
   let n = Array.copy d.num_procs in
   let l_m = Array.copy d.l_m in
   let yextdata = d.y_ext in
-  
+
   (* Calculate required buffer size *)
   let size = (Array.fold_left (fun s l -> s * l) 1 l_m)
              / (Array.fold_left min max_int l_m)
@@ -382,7 +382,7 @@ let f_comm d t ((ydata : RealArray.t), _, _) =
     d.buf_size <- size
   end;
   let buf_send = d.buf_send in
-  
+
   (* Compute the communication pattern; who sends first? *)
   (* if proc_cond==1 , process sends first in this dimension *)
   let proc_cond = Array.make dim 0 in
@@ -425,7 +425,7 @@ let f_comm d t ((ydata : RealArray.t), _, _) =
             fill_send_buf ()
           done
         else fill_send_buf ();
-          
+
         let buf_recv =
           if proc_cond.(d) = 1 then begin
             (* Send buf_send and receive into buf_recv *)
@@ -459,11 +459,11 @@ let f_comm d t ((ydata : RealArray.t), _, _) =
         else empty_recv_buf ()
       end
     done (* end loop over direction *)
-  done (* end loop over dimension *) 
+  done (* end loop over dimension *)
 
 (*
  *------------------------------------------------------------------
- * Load_yext: 
+ * Load_yext:
  * copies data from src (y or yB) into y_ext, which already contains
  * data from neighboring processes.
  *------------------------------------------------------------------
@@ -708,7 +708,7 @@ let output_gradient data myId qB =
           fprintf fid "clear x%d y%d z%d p%d g%d;\n" ip ip ip ip ip
         end
       done;
-      
+
       if sundials_270_or_later then begin
         fprintf fid "\nfigure(1)\n";
         fprintf fid "view(3)\n";
@@ -759,7 +759,7 @@ let output_gradient data myId qB =
           fprintf fid "axis tight\n";
           fprintf fid "box on\n";
           fprintf fid "colorbar('Position', [0.5 0.1 0.025 0.8])\n";
-          
+
           fprintf fid "\nax(2) = subplot(1,2,2);\n";
           fprintf fid "s = surf(x%d,y%d,p%d);\n" ip ip ip;
           fprintf fid "set(s, 'CData', g%d);\n" ip;
@@ -778,7 +778,7 @@ let output_gradient data myId qB =
           fprintf fid "hold on\n";
           fprintf fid "axis tight\n";
           fprintf fid "box on\n";
-          
+
           fprintf fid "\nsubplot(1,2,2)\n";
           fprintf fid "s=surf(x%d,y%d,p%d);\n" ip ip ip;
           fprintf fid "set(s,'CData',g%d);\n" ip;
@@ -843,7 +843,7 @@ let f_local data t ((ydata : RealArray.t), _, _)
         i.(0) <- k;
         x.(0) <- xmin.(0) +. float (m_start.(0)+i.(0))*.dx.(0);
 
-        let c = ijth_ext l_m ydata i in               
+        let c = ijth_ext l_m ydata i in
 
         (* Source term*)
         set_ijth l_m dydata i (ijth l_m pdata i);
@@ -925,7 +925,7 @@ let fB_local data { Adj.t = t;
   let v = Array.make dim zero in
   let i = Array.make dim 0 in
   let x = Array.make dim zero in
- 
+
   (* local domain is [xmin+(m_start)*dx, xmin+(m_start+l_m-1)*dx] *)
   let f () =
     for j=0 to l_m.(1)-1 do
@@ -940,7 +940,7 @@ let fB_local data { Adj.t = t;
         i.(0) <- k;
         x.(0) <- xmin.(0) +. float (m_start.(0)+i.(0))*.dx.(0);
 
-        let c = ijth_ext l_m yBdata i in               
+        let c = ijth_ext l_m yBdata i in
 
         (* Source term for adjoint PDE *)
         set_ijth l_m dyBdata i (-. ijth l_m ydata i);
@@ -1028,31 +1028,31 @@ let main () =
 
   if myId = 0 then print_header ();
 
-  (*-------------------------- 
+  (*--------------------------
     Forward integration phase
     --------------------------*)
 
   (* Allocate space for y and set it with the I.C. *)
   let y = Nvector.make l_neq neq comm zero in
-  
+
   (* Allocate and initialize qB (local contribution to cost) *)
   let q = Nvector.make 1 npes comm zero in
 
   (* Attach preconditioner and linear solver modules *)
-  let spgmr = Cvode.Spils.spgmr
-                Bbd.(prec_left { mudq = d.l_m.(0) + 1;
-                                 mldq = d.l_m.(0) + 1;
-                                 mukeep = 2;
-                                 mlkeep = 2; }
-                               (f_local d))
-  in
   (* Create CVODES object, attach user data, and allocate space *)
   let abstol, reltol = atol, rtol in
-  let cvode_mem = Cvode.(init BDF (Newton spgmr)
-                              (SStolerances (reltol, abstol))
-                              (f d) ti y)
+  let cvode_mem =
+    Cvode.(init BDF
+      (Newton Spils.(solver Iterative.(spgmr y)
+                            Bbd.(prec_left { mudq = d.l_m.(0) + 1;
+                                             mldq = d.l_m.(0) + 1;
+                                             mukeep = 2;
+                                             mlkeep = 2; }
+                                           (f_local d))))
+      (SStolerances (reltol, abstol))
+      (f d) ti y)
   in
-  
+
   (* Initialize quadrature calculations *)
   let abstolQ = atol_q in
   let reltolQ = rtol_q in
@@ -1077,10 +1077,10 @@ let main () =
   (* Print statistics for forward run *)
   if myId = 0 then print_final_stats cvode_mem;
 
-  (*-------------------------- 
+  (*--------------------------
     Backward integration phase
     --------------------------*)
- 
+
   (* Allocate and initialize yB *)
   let yB = Nvector.make l_neq neq comm zero in
 
@@ -1088,21 +1088,19 @@ let main () =
   let qB = Nvector.make l_neq neq comm zero in
 
   (* Attach preconditioner and linear solver modules *)
-  let bspgmr = Adj.Spils.spgmr
-                Adjbbd.(prec_left { mudq = d.l_m.(0) + 1;
-                                    mldq = d.l_m.(0) + 1;
-                                    mukeep = 2;
-                                    mlkeep = 2; }
-                                   (fB_local d))
-  in
-
   (* Create and allocate backward CVODE memory *)
   let abstolB = atol_b in
   let reltolB = rtol_b in
   let cvode_memB =
     Adj.(init_backward cvode_mem
                        Cvode.BDF
-                       (Newton bspgmr)
+                       (Newton Spils.(solver
+                          Iterative.(spgmr yB)
+                          Adjbbd.(prec_left { mudq = d.l_m.(0) + 1;
+                                              mldq = d.l_m.(0) + 1;
+                                              mukeep = 2;
+                                              mlkeep = 2; }
+                                             (fB_local d))))
                        (SStolerances (reltolB, abstolB))
                        (NoSens (fB d))
                        tf yB)
@@ -1118,7 +1116,7 @@ let main () =
   if myId = 0 then printf "Begin backward integration... ";
   Adj.backward_normal cvode_mem ti;
   if myId = 0 then printf "done.\n";
-  
+
   (* Extract solution *)
   ignore (Adj.get cvode_memB yB);
 

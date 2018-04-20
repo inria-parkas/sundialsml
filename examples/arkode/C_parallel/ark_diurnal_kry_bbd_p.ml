@@ -3,13 +3,13 @@
  *---------------------------------------------------------------
  * OCaml port: Timothy Bourke, Inria, Jan 2016.
  *---------------------------------------------------------------
- * Copyright (c) 2015, Southern Methodist University and 
+ * Copyright (c) 2015, Southern Methodist University and
  * Lawrence Livermore National Security
  *
- * This work was performed under the auspices of the U.S. Department 
- * of Energy by Southern Methodist University and Lawrence Livermore 
+ * This work was performed under the auspices of the U.S. Department
+ * of Energy by Southern Methodist University and Lawrence Livermore
  * National Laboratory under Contract DE-AC52-07NA27344.
- * Produced at Southern Methodist University and the Lawrence 
+ * Produced at Southern Methodist University and the Lawrence
  * Livermore National Laboratory.
  *
  * All rights reserved.
@@ -89,7 +89,7 @@ let nvars =    2            (* number of species         *)
 let kh =       4.0e-6       (* horizontal diffusivity Kh *)
 let vel =      0.001        (* advection velocity V      *)
 let kv0 =      1.0e-8       (* coefficient in Kv(y)      *)
-let q1 =       1.63e-16     (* coefficients q1, q2, c3   *) 
+let q1 =       1.63e-16     (* coefficients q1, q2, c3   *)
 let q2 =       4.66e-16
 let c3 =       3.7e16
 let a3 =       22.62        (* coefficient in expression for q3(t) *)
@@ -101,10 +101,10 @@ let t0 =       0.0          (* initial time *)
 let nout =     12           (* number of output times *)
 let twohr =    7200.0       (* number of seconds in two hours  *)
 let halfday =  4.32e4       (* number of seconds in a half day *)
-let pi =       3.1415926535898  (* pi *) 
+let pi =       3.1415926535898  (* pi *)
 
 let xmin =     0.0          (* grid boundaries in x  *)
-let xmax =     20.0           
+let xmax =     20.0
 let ymin =     30.0         (* grid boundaries in y  *)
 let ymax =     50.0
 
@@ -125,7 +125,7 @@ let floor =    100.0        (* value of C1 or C2 at which tolerances *)
                             (* change from relative to absolute      *)
 let atol =     rtol*.floor  (* scalar absolute tolerance *)
 
-(* Type : UserData 
+(* Type : UserData
    contains problem constants, extended dependent variable array,
    grid constants, processor indices, MPI communicator *)
 
@@ -140,7 +140,7 @@ type user_data = {
         vdco       : float;
 
         uext       : RealArray.t;
-        
+
         my_pe      : int;
         isubx      : int;
         isuby      : int;
@@ -216,7 +216,7 @@ let set_initial_profiles data u =
       let x  = xmin +. (float jx)*.dx in
       let cx = sqr(0.1*.(x -. xmid)) in
       let cx = 1.0 -. cx +. 0.5*.(sqr cx) in
-      udata.{!offset  } <- c1_scale *. cx *. cy; 
+      udata.{!offset  } <- c1_scale *. cx *. cy;
       udata.{!offset+1} <- c2_scale *. cx *. cy;
       offset := !offset + 2
     done
@@ -249,7 +249,7 @@ let print_output s my_pe comm u t =
   end;
 
   (* On PE 0, receive c1,c2 at top right, then print performance data
-     and sampled solution values *) 
+     and sampled solution values *)
   if my_pe = 0 then begin
     if npelast <> 0 then begin
       let buf = (Mpi.receive npelast 0 comm : RealArray.t) in
@@ -296,9 +296,9 @@ let print_final_stats s =
   let lenrwBBDP, leniwBBDP = BBD.get_work_space s in
   let ngevalsBBDP = BBD.get_num_gfn_evals s in
   printf "In ARKBBDPRE: real/integer local work space sizes = %d, %d\n"
-                                                          lenrwBBDP leniwBBDP;  
+                                                          lenrwBBDP leniwBBDP;
   printf "             no. flocal evals. = %d\n" ngevalsBBDP
- 
+
 (* Routine to send boundary data to neighboring PEs *)
 
 let bsend comm my_pe isubx isuby dsizex dsizey (udata : RealArray.t) =
@@ -330,7 +330,7 @@ let bsend comm my_pe isubx isuby dsizex dsizey (udata : RealArray.t) =
     done;
     Mpi.send buf (my_pe+1) 0 comm
   end
- 
+
 (* Routine to start receiving boundary data from neighboring PEs.
    Notes:
    1) buffer should be able to hold 2*NVARS*MYSUB realtype entries, should be
@@ -426,7 +426,7 @@ let fucomm data t ((udata : RealArray.t),_,_) =
   (* Finish receiving boundary data from neighboring PEs *)
   brecvwait request isubx isuby nvmxsub uext
 
-(* fcalc routine. Compute f(t,y).  This routine assumes that communication 
+(* fcalc routine. Compute f(t,y).  This routine assumes that communication
    between processors of data needed to calculate f has already been done,
    and this data is in the work array uext. *)
 
@@ -471,7 +471,7 @@ let flocal data t ((udata : RealArray.t),_,_) ((dudata : RealArray.t),_,_) =
   and hordco = data.hdco
   and horaco = data.haco
   in
-  (* Set diurnal rate coefficients as functions of t, and save q4 in 
+  (* Set diurnal rate coefficients as functions of t, and save q4 in
   data block for use by preconditioner evaluation routine *)
   let s = sin(data.om *. t) in
   let q3, q4coef =
@@ -520,14 +520,14 @@ let flocal data t ((udata : RealArray.t),_,_) ((dudata : RealArray.t),_,_) =
       let horad2 = horaco*.(c2rt -. c2lt) in
       (* Load all terms into dudata *)
       let offsetu = lx*nvars + ly*nvmxsub in
-      dudata.{offsetu}   <- vertd1 +. hord1 +. horad1 +. rkin1; 
+      dudata.{offsetu}   <- vertd1 +. hord1 +. horad1 +. rkin1;
       dudata.{offsetu+1} <- vertd2 +. hord2 +. horad2 +. rkin2
     done
   done
 
 (***************** Functions Called by the Solver *************************)
 
-(* f routine.  Evaluate f(t,y).  First call fucomm to do communication of 
+(* f routine.  Evaluate f(t,y).  First call fucomm to do communication of
    subgrid boundary data into uext.  Then calculate f by a call to flocal. *)
 
 let f data t u du =
@@ -560,7 +560,7 @@ let main () =
   (* Allocate and load user data block *)
   let data = init_user_data my_pe comm in
 
-  (* Allocate u, and set initial values and tolerances *) 
+  (* Allocate u, and set initial values and tolerances *)
   let u = Nvector_parallel.make local_N neq comm 0.0 in
   set_initial_profiles data u;
   let abstol = atol
@@ -571,10 +571,11 @@ let main () =
   let mldq   = mudq in
   let mukeep = nvars in
   let mlkeep = mukeep in
+  let lsolver = Iterative.(spgmr u) in
   let arkode_mem = Arkode.(
     init
       (Implicit (f data,
-                 Newton (Spils.spgmr BBD.(prec_left
+                 Newton Spils.(solver lsolver BBD.(prec_left
                             { mudq   = mudq;   mldq = mldq;
                               mukeep = mukeep; mlkeep = mlkeep }
                             (flocal data))),
@@ -584,18 +585,18 @@ let main () =
       u
   ) in
   Arkode.set_max_num_steps arkode_mem 10000;
-    
+
   (* Print heading *)
   if my_pe = 0 then print_intro npes mudq mldq mukeep mlkeep;
 
   let solve_problem jpre =
     (* On second run, re-initialize u, the integrator, ARKBBDPRE,
        and ARKSPGMR *)
-    if jpre = Spils.PrecRight then begin
+    if jpre = Iterative.PrecRight then begin
       set_initial_profiles data u;
       Arkode.reinit arkode_mem t0 u;
       BBD.reinit arkode_mem mudq mldq;
-      Arkode.Spils.set_prec_type arkode_mem Spils.PrecRight;
+      Iterative.(set_prec_type lsolver PrecRight);
 
       if my_pe = 0 then begin
         printf "\n\n-------------------------------------------------------";
@@ -605,7 +606,7 @@ let main () =
 
     if my_pe = 0 then
       printf "\n\nPreconditioner type is:  jpre = %s\n\n"
-             (if jpre = Spils.PrecLeft then "PREC_LEFT" else "PREC_RIGHT");
+             (if jpre = Iterative.PrecLeft then "PREC_LEFT" else "PREC_RIGHT");
 
     (* In loop over output points, call ARKode, print results, test for error *)
     let tout = ref twohr in
@@ -615,10 +616,10 @@ let main () =
       tout := !tout +. twohr
     done;
 
-    (* Print final statistics *)  
+    (* Print final statistics *)
     if my_pe = 0 then print_final_stats arkode_mem
   in
-  List.iter solve_problem [Spils.PrecLeft; Spils.PrecRight]
+  List.iter solve_problem Iterative.([PrecLeft; PrecRight])
 
 (* Check environment variables for extra arguments.  *)
 let reps =

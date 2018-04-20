@@ -128,7 +128,7 @@ let bytes x = header_and_empty_array_size + x * float_cell_size
 let nprey =       1        (* Number of prey (= number of predators). *)
 let num_species = 2*nprey
 
-let pi =          3.1415926535898 (* pi *) 
+let pi =          3.1415926535898 (* pi *)
 let fourpi =      (4.0*.pi)        (* 4 pi *)
 
 let mxsub =       10    (* Number of x mesh points per processor subgrid *)
@@ -153,17 +153,17 @@ let rtol =        1.e-5  (*  rtol tolerance *)
 let atol =        1.e-5  (*  atol tolerance *)
 let zero =        0.     (* 0. *)
 let one =         1.0    (* 1. *)
-let nout =        6  
+let nout =        6
 let tmult =       10.0   (* Multiplier for tout values *)
 let tadd =        0.3    (* Increment for tout values *)
 
 (* User-defined vector accessor macro IJ_Vptr. *)
 
 (*
- * IJ_Vptr is defined in order to express the underlying 3-d structure of the 
+ * IJ_Vptr is defined in order to express the underlying 3-d structure of the
  * dependent variable vector from its underlying 1-d storage (an N_Vector).
- * IJ_Vptr(vv,i,j) returns a pointer to the location in vv corresponding to 
- * species index is = 0, x-index ix = i, and y-index jy = j.                
+ * IJ_Vptr(vv,i,j) returns a pointer to the location in vv corresponding to
+ * species index is = 0, x-index ix = i, and y-index jy = j.
  *)
 let ij_index i j = i*num_species + j*nsmxsub
 
@@ -246,7 +246,7 @@ let bsend comm my_pe isubx isuby dsizex dsizey udata =
  * (1) buffer should be able to hold 2*NUM_SPECIES*MYSUB realtype entries,
  *     should be passed to both the BRecvPost and BRecvWait functions, and
  *     should not be manipulated between the two calls.
- * (2) request should have 4 entries, and is also passed in both calls.  
+ * (2) request should have 4 entries, and is also passed in both calls.
  *)
 
 let brecvpost comm my_pe isubx isuby dsizex dsizey =
@@ -277,7 +277,7 @@ let brecvpost comm my_pe isubx isuby dsizex dsizey =
  * (1) buffer should be able to hold 2*NUM_SPECIES*MYSUB realtype entries,
  *     should be passed to both the BRecvPost and BRecvWait functions, and
  *     should not be manipulated between the two calls.
- * (2) request should have 4 entries, and is also passed in both calls.  
+ * (2) request should have 4 entries, and is also passed in both calls.
  *)
 
 let brecvwait request isubx isuby dsizex cext =
@@ -324,7 +324,7 @@ let brecvwait request isubx isuby dsizex cext =
  * interior subgrid boundaries (ghost cell data).  It loads this data
  * into a work array cext (the local portion of c, extended).
  * The message-passing uses blocking sends, non-blocking receives,
- * and receive-waiting, in routines BRecvPost, BSend, BRecvWait.         
+ * and receive-waiting, in routines BRecvPost, BSend, BRecvWait.
  *)
 
 let rescomm webdata tt cc cp =
@@ -389,7 +389,7 @@ let web_rates webdata x y ((cxy : RealArray.t), cxy_off)
  * locations in cext.  Then the reaction and diffusion terms are
  * evaluated in terms of the cext array, and the residuals are formed.
  * The reaction terms are saved separately in the vector webdata.rates
- * for use by the preconditioner setup routine.                          
+ * for use by the preconditioner setup routine.
  *)
 
 let reslocal webdata tt cc ((cp : RealArray.t), _, _)
@@ -507,7 +507,7 @@ let reslocal webdata tt cc ((cp : RealArray.t), _, _)
  * resweb: System residual function for predator-prey system.
  * To compute the residual function F, this routine calls:
  * rescomm, for needed communication, and then
- * reslocal, for computation of the residuals on this processor.      
+ * reslocal, for computation of the residuals on this processor.
  *)
 
 let resweb webdata tt cc cp rr =
@@ -526,7 +526,7 @@ let resweb webdata tt cc cp rr =
  *)
 
 (*
- * InitUserData: Load problem constants in webdata (of type UserData).   
+ * InitUserData: Load problem constants in webdata (of type UserData).
  *)
 
 
@@ -724,7 +724,7 @@ let print_output webdata mem cc tt comm =
   end
 
 (*
- * PrintFinalStats: Print final run data contained in iopt.              
+ * PrintFinalStats: Print final run data contained in iopt.
  *)
 
 let print_final_stats mem =
@@ -817,14 +817,14 @@ let main () =
   let maxl = 16 in
   let mudq = nsmxsub and mldq = nsmxsub
   and mukeep = 2 and mlkeep = 2 in
-  let linsolver =
-    Ida.Spils.spgmr ~maxl:maxl
-      Ida_bbd.(prec_left ~dqrely:zero { mudq; mldq; mukeep; mlkeep; }
-         (reslocal webdata ))
-  in
   let mem =
-    Ida.init linsolver (Ida.SStolerances (rtol,atol))
-      (resweb webdata) t0 cc cp
+    Ida.(init
+      Spils.(solver Iterative.(spgmr ~maxl cc)
+                    Ida_bbd.(prec_left ~dqrely:zero
+                                       { mudq; mldq; mukeep; mlkeep }
+                                       (reslocal webdata)))
+      (SStolerances (rtol,atol))
+      (resweb webdata) t0 cc cp)
   in
 
   (* Call IDACalcIC (with default options) to correct the initial values. *)

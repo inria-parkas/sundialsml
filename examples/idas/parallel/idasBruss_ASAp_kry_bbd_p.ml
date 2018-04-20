@@ -1165,12 +1165,15 @@ let main () =
   let mukeep = 2 in
   let mlkeep = 2 in
   let maxl = 16 in
-  let linsolv =
-    Ida.Spils.spgmr ~maxl:maxl
-      Ida_bbd.(prec_left ~dqrely:zero { mudq; mldq; mukeep; mlkeep; }
-                         (reslocal data))
-  in
-  let mem = Ida.(init linsolv (SStolerances (rtol,atol)) (res data) t0 uv uvp)
+  let mem =
+    Ida.(init
+      Spils.(solver Iterative.(spgmr ~maxl uv)
+                    Ida_bbd.(prec_left ~dqrely:zero
+                                       { mudq; mldq; mukeep; mlkeep }
+                                       (reslocal data)))
+      (SStolerances (rtol,atol))
+      (res data)
+      t0 uv uvp)
   in
 
   (* Initialize adjoint module. *)
@@ -1220,18 +1223,17 @@ let main () =
   let mldq = nsmxsub in
   let mukeep = 2 in
   let mlkeep = 2 in
-  let linsolv =
-    Adjoint.Spils.spgmr ~maxl:maxl
-      Idas_bbd.(prec_left ~dqrely:zero { mudq; mldq; mukeep; mlkeep; }
-                          (resBlocal data))
-  in
   let indexB =
-    Adjoint.(init_backward mem
-                           linsolv
-                           (SStolerances (rtol,atol))
-                           (NoSens (resB data))
-                           ~varid:id
-                           tend uvB uvpB)
+    Adjoint.(init_backward
+       mem
+       Spils.(solver Iterative.(spgmr ~maxl uvB)
+                     Idas_bbd.(prec_left ~dqrely:zero
+                                         { mudq; mldq; mukeep; mlkeep }
+                                         (resBlocal data)))
+       (SStolerances (rtol,atol))
+       (NoSens (resB data))
+       ~varid:id
+       tend uvB uvpB)
   in
 
   Adjoint.backward_normal mem tbegin;

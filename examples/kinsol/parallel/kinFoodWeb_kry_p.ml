@@ -83,7 +83,7 @@ module Nvector = Nvector_parallel
 module RealArray = Sundials.RealArray
 module RealArray2 = Sundials.RealArray2
 module LintArray = Sundials.LintArray
-module Dense = Dls.ArrayDenseMatrix
+module Dense = Matrix.ArrayDense
 open Bigarray
 let local_array = Nvector.local_array
 
@@ -99,9 +99,9 @@ let nvwl2norm = Nvector.DataOps.n_vwl2norm
 (* Problem Constants *)
 
 let num_species =   6  (* must equal 2*(number of prey or predators)
-                              number of prey = number of predators       *) 
+                              number of prey = number of predators       *)
 
-let pi          = 3.1415926535898   (* pi *) 
+let pi          = 3.1415926535898   (* pi *)
 
 let npex        = 2            (* number of processors in the x-direction  *)
 let npey        = 2            (* number of processors in the y-direction  *)
@@ -134,18 +134,18 @@ let predin      = 30000.0(* initial guess for predator concs.      *)
 
 (* ij_vptr is defined in order to translate from the underlying 3D structure
    of the dependent variable vector to the 1D storage scheme for an N-vector.
-   ij_vptr vv i j  returns a pointer to the location in vv corresponding to 
+   ij_vptr vv i j  returns a pointer to the location in vv corresponding to
    indices is = 0, jx = i, jy = j.    *)
 let ij_vptr_idx i j = i*num_species + j*nsmxsub
 let ij_vptr vv i j = subarray vv (ij_vptr_idx i j) num_species
 
-(* Type : UserData 
+(* Type : UserData
    contains preconditioner blocks, pivot arrays, and problem constants *)
 
 type user_data = {
   p     : RealArray2.t array array;
   pivot : LintArray.t array array;
-  acoef : real_array2;
+  acoef : Sundials.real_array2;
   bcoef : RealArray.t;
   cox   : RealArray.t;
   coy   : RealArray.t;
@@ -264,7 +264,7 @@ let bsend comm my_pe isubx isuby dsizex dsizey (udata : RealArray.t) =
     done;
     Mpi.send buf (my_pe+1) 0 comm
   end
- 
+
 (* Routine to start receiving boundary data from neighboring PEs.
    Notes:
    1) buffer should be able to hold 2*num_species*MYSUB realtype entries, should be
@@ -339,7 +339,7 @@ let brecvwait request isubx isuby dsizex (cext : RealArray.t) =
     done
   end
 
-(* ccomm routine.  This routine performs all communication 
+(* ccomm routine.  This routine performs all communication
    between processors of data needed to calculate f. *)
 
 let ccomm data (udata : RealArray.t) =
@@ -371,7 +371,7 @@ let web_rate data xx yy ((cxy : RealArray.t), cxy_off)
                                       +. cxy.{cxy_off + j} *. acoef.{i, j}
     done
   done;
-  
+
   let fac = one +. alpha *. xx *. yy in
   for i = 0 to num_species - 1 do
     ratesxy.{ratesxy_off + i} <- cxy.{cxy_off + i} *. (bcoef.{i}
@@ -381,7 +381,7 @@ let web_rate data xx yy ((cxy : RealArray.t), cxy_off)
 (* System function for predator-prey system - calculation part *)
 
 let fcalcprpr data (cdata : RealArray.t) (fval : RealArray.t) =
-  
+
   (* Get subgrid indices, data sizes, extended work array cext *)
   let isubx = data.isubx in
   let isuby = data.isuby in
@@ -436,12 +436,12 @@ let fcalcprpr data (cdata : RealArray.t) (fval : RealArray.t) =
         cext.{!offsetce+i} <- cdata.{!offsetc+i}
       done
     done;
-  
+
   (* Loop over all mesh points, evaluating rate arra at each point *)
   let delx = dx in
   let dely = dy in
   let shifty = (mxsub+2)*num_species in
-  
+
   for jy = 0 to mysub - 1 do
     let yy = dely*.float (jy + isuby * mysub) in
 
@@ -449,7 +449,7 @@ let fcalcprpr data (cdata : RealArray.t) (fval : RealArray.t) =
       let xx = delx *. float (jx + isubx * mxsub) in
 
       let off = ij_vptr_idx jx jy in
-      
+
       web_rate data xx yy (cdata, off) (rates, off);
 
       let offsetc = (jx+1)*num_species + (jy+1)*nsmxsub2 in
@@ -457,17 +457,17 @@ let fcalcprpr data (cdata : RealArray.t) (fval : RealArray.t) =
       let offsetcu = offsetc + shifty in
       let offsetcl = offsetc - num_species in
       let offsetcr = offsetc + num_species in
-      
+
       for is = 0 to num_species - 1 do
-        
+
         (* differencing in x *)
         let dcydi = cext.{offsetc+is}  -. cext.{offsetcd+is} in
         let dcyui = cext.{offsetcu+is} -. cext.{offsetc+is} in
-        
+
         (* differencing in y *)
         let dcxli = cext.{offsetc+is}  -. cext.{offsetcl+is} in
         let dcxri = cext.{offsetcr+is} -. cext.{offsetc+is} in
-        
+
         (* compute the value at xx , yy *)
         fval.{off + is} <- data.coy.{is} *. (dcyui -. dcydi)
                            +. data.cox.{is} *. (dcxri -. dcxli)
@@ -477,9 +477,9 @@ let fcalcprpr data (cdata : RealArray.t) (fval : RealArray.t) =
   done (* end of jy loop *)
 
 (*
- * System function routine.  Evaluate funcprpr(cc).  First call ccomm to do 
+ * System function routine.  Evaluate funcprpr(cc).  First call ccomm to do
  *  communication of subgrid boundary data into cext.  Then calculate funcprpr
- *  by a call to fcalcprpr. 
+ *  by a call to fcalcprpr.
  *)
 
 let funcprpr data (cdata, _, _) (fvdata, _, _) =
@@ -492,29 +492,28 @@ let funcprpr data (cdata, _, _) (fvdata, _, _) =
 (* Preconditioner setup routine. Generate and preprocess P. *)
 let precondbd data
               { Kinsol.jac_u=(cc, _, _);
-                Kinsol.jac_fu=fval;
-                Kinsol.jac_tmp=(vtemp1, vtemp2)}
+                Kinsol.jac_fu=fval }
               { Kinsol.Spils.uscale=(cscale, _, _);
                 Kinsol.Spils.fscale=fscale } =
   let perturb_rates = RealArray.create num_species in
   let rates = data.rates in
-  
+
   let delx = dx in
   let dely = dy in
 
   let fac = nvwl2norm fval fscale in
   let r0 = thousand *. uround *. fac *. float(neq) in
   let r0 = if r0 = zero then one else r0 in
-  
+
   (* Loop over spatial points; get size NUM_SPECIES Jacobian block at each *)
   for jy = 0 to mysub - 1 do
     let yy = float (jy + data.isuby * mysub) *. dely in
-    
+
     for jx = 0 to mxsub - 1 do
       let xx = float (jx + data.isubx * mxsub) *. delx in
       let pxy = data.p.(jx).(jy) in
       let off = ij_vptr_idx jx jy in
-      
+
       (* Compute difference quotients of interaction rate fn. *)
       for j = 0 to num_species - 1 do
         let csave = cc.{off+j} in  (* Save the j,jx,jy element of cc *)
@@ -522,27 +521,26 @@ let precondbd data
         cc.{off+j} <- cc.{off+j} +. r; (* Perturb the j,jx,jy element of cc *)
         let fac = one/.r in
         web_rate data xx yy (cc, off) (perturb_rates, 0);
-        
+
         (* Restore j,jx,jy element of cc *)
         cc.{off+j} <- csave;
-        
+
         (* Load the j-th column of difference quotients *)
         let pxydata = unwrap pxy in
         for i = 0 to num_species - 1 do
           pxydata.{j, i} <- (perturb_rates.{i} -. rates.{off+i}) *. fac
         done
       done; (* end of j loop *)
-      
+
       (* Do LU decomposition of size NUM_SPECIES preconditioner block *)
       Dense.getrf pxy data.pivot.(jx).(jy)
     done (* end of jx loop *)
   done (* end of jy loop *)
-  
+
 (* Preconditioner solve routine *)
 let psolvebd data
              { Kinsol.jac_u=cc;
-               Kinsol.jac_fu=fval;
-               Kinsol.jac_tmp=ftem}
+               Kinsol.jac_fu=fval }
              { Kinsol.Spils.uscale=cscale;
                Kinsol.Spils.fscale=fscale }
              (vv, _, _) =
@@ -599,26 +597,26 @@ let print_output my_pe comm cc =
   let npelast = npex*npey - 1 in
   let ct = local_array cc in
   let i0 = num_species*(mxsub*mysub-1) in
-  
+
   (* Send the cc values (for all species) at the top right mesh point to PE 0 *)
   if my_pe = npelast then begin
     if npelast <> 0 then Mpi.send (slice ct i0 num_species) 0 0 comm
   end;
-  
-  (* On PE 0, receive the cc values at top right, then print performance data 
+
+  (* On PE 0, receive the cc values at top right, then print performance data
      and sampled solution values *)
   if my_pe = 0 then begin
     let tempc =
       if npelast <> 0 then (Mpi.receive npelast 0 comm : RealArray.t)
       else RealArray.init num_species (fun is -> ct.{i0 + is})
     in
-    
+
     printf "\nAt bottom left:";
     for is = 0 to num_species - 1 do
       if (is mod 6)*6 = is then printf "\n";
       printf " %g" ct.{is}
     done;
-    
+
     printf "\n\nAt top right:";
     for is = 0 to num_species - 1 do
       if (is mod 6)*6 = is then printf "\n";
@@ -681,9 +679,9 @@ let main () =
      and psolvebd. *)
   let kmem =
     Kinsol.(init ~max_iters:250
-                 ~linsolv:Spils.(spgmr ~maxl:maxl ~max_restarts:maxlrst
-                                       (prec_right ~setup:(precondbd data)
-                                                   ~solve:(psolvebd data) ()))
+                 ~linsolv:Spils.(solver
+                    Iterative.(spgmr ~maxl:maxl ~max_restarts:maxlrst cc)
+                    (prec_right ~setup:(precondbd data) (psolvebd data)))
                  (funcprpr data) cc) in
   Kinsol.set_constraints kmem (Nvector.make local_N neq comm 0.0);
   Kinsol.set_func_norm_tol kmem fnormtol;
@@ -702,7 +700,7 @@ let main () =
   if my_pe = 0 then printf("\n\nComputed equilibrium species concentrations:\n");
   if my_pe = 0 || my_pe = npelast then print_output my_pe comm cc;
 
-  (* Print final statistics and free memory *)  
+  (* Print final statistics and free memory *)
   if my_pe = 0 then print_final_stats kmem
 
 (* Check environment variables for extra arguments.  *)

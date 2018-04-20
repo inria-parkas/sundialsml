@@ -68,7 +68,7 @@
 
 module RealArray = Sundials.RealArray
 module LintArray = Sundials.LintArray
-module Direct = Dls.ArrayDenseMatrix
+module Direct = Matrix.ArrayDense
 module Sens = Cvodes.Sensitivity
 open Bigarray
 let local_array = Nvector_parallel.local_array
@@ -99,10 +99,10 @@ let t0 =        0.0            (* initial time                         *)
 let nout =      12             (* number of output times               *)
 let twohr =     7200.0         (* number of seconds in two hours       *)
 let halfday =   4.32e4         (* number of seconds in a half day      *)
-let pi =        3.1415926535898 (* pi                        *) 
+let pi =        3.1415926535898 (* pi                        *)
 
 let xmin =      0.0            (* grid boundaries in x                 *)
-let xmax =      20.0          
+let xmax =      20.0
 let ymin =      30.0           (* grid boundaries in y                 *)
 let ymax =      50.0
 
@@ -132,7 +132,7 @@ let zero =      0.0
 (* User-defined matrix accessor macro: IJth *)
 
 (* IJth is defined in order to write code which indexes into small dense
-   matrices with a (row,column) pair, where 1 <= row,column <= NVARS.   
+   matrices with a (row,column) pair, where 1 <= row,column <= NVARS.
 
    IJth(a,i,j) references the (i,j)th entry of the small matrix realtype **a,
    where 1 <= i,j <= NVARS. The small matrix routines in sundials_dense.h
@@ -141,8 +141,8 @@ let zero =      0.0
 
 let set_ijth v i j e = Direct.set v (i - 1) (j - 1) e
 
-(* Types : UserData and PreconData 
-   contain problem parameters, problem constants, preconditioner blocks, 
+(* Types : UserData and PreconData
+   contain problem parameters, problem constants, preconditioner blocks,
    pivot arrays, grid constants, and processor indices, as
    well as data needed for preconditioning *)
 
@@ -196,7 +196,7 @@ let process_args my_pe =
   let argv = Sys.argv in
   let argc = Array.length argv in
   if argc < 2 then wrong_args my_pe argv.(0);
-  
+
   let sensi =
     if argv.(1) = "-nosensi" then false
     else if argv.(1) = "-sensi" then true
@@ -228,7 +228,7 @@ let init_user_data my_pe comm =
   let new_y_arr elinit _ = Array.init mysub elinit in
   let new_xy_arr elinit  = Array.init mxsub (new_y_arr elinit) in
 
-  let q1            = 1.63e-16 in   (* coefficients q1, q2, c3   *) 
+  let q1            = 1.63e-16 in   (* coefficients q1, q2, c3   *)
   let q2            = 4.66e-16 in
   let c3            = 3.7e16   in
   let a3            = 22.62    in   (* coefficient in expression for q3(t) *)
@@ -301,7 +301,7 @@ let set_initial_profiles data u =
       let x  = xmin +. (float jx)*.dx in
       let cx = sqr(0.1*.(x -. xmid)) in
       let cx = 1.0 -. cx +. 0.5*.(sqr cx) in
-      udata.{!offset  } <- c1_scale *. cx *. cy; 
+      udata.{!offset  } <- c1_scale *. cx *. cy;
       udata.{!offset+1} <- c2_scale *. cx *. cy;
       offset := !offset + 2
     done
@@ -338,13 +338,13 @@ let bsend comm my_pe isubx isuby dsizex dsizey udata =
     done;
     Mpi.send buf (my_pe+1) 0 comm
   end
- 
+
 (* Routine to start receiving boundary data from neighboring PEs.
  * Notes:
  *  1) buffer should be able to hold 2*NVARS*MYSUB realtype entries, should be
  *     passed to both the BRecvPost and BRecvWait functions, and should not
  *     be manipulated between the two calls.
- *  2) request should have 4 entries, and should be passed in both calls also. 
+ *  2) request should have 4 entries, and should be passed in both calls also.
  *)
 
 let brecvpost comm my_pe isubx isuby dsizex dsizey =
@@ -370,13 +370,13 @@ let brecvpost comm my_pe isubx isuby dsizex dsizey =
   in
   Array.of_list [r0; r1; r2; r3]
 
-(* 
+(*
  * Routine to finish receiving boundary data from neighboring PEs.
  * Notes:
  *  1) buffer should be able to hold 2*NVARS*MYSUB realtype entries, should be
  *     passed to both the BRecvPost and BRecvWait functions, and should not
  *     be manipulated between the two calls.
- *  2) request should have 4 entries, and should be passed in both calls also. 
+ *  2) request should have 4 entries, and should be passed in both calls also.
  *)
 
 let brecvwait request isubx isuby dsizex uext =
@@ -416,7 +416,7 @@ let brecvwait request isubx isuby dsizex uext =
     done
   end
 
-(* ucomm routine.  This routine performs all communication 
+(* ucomm routine.  This routine performs all communication
  * between processors of data needed to calculate f. *)
 
 let ucomm data t udata =
@@ -437,7 +437,7 @@ let ucomm data t udata =
   (* Finish receiving boundary data from neighboring PEs *)
   brecvwait request isubx isuby nvmxsub uext
 
-(* fcalc routine. Compute f(t,y).  This routine assumes that communication 
+(* fcalc routine. Compute f(t,y).  This routine assumes that communication
  * between processors of data needed to calculate f has already been done,
  * and this data is in the work array uext. *)
 
@@ -491,7 +491,7 @@ let fcalc data t (udata : RealArray.t) (dudata : RealArray.t) =
   and hordco = data.hdco
   and horaco = data.haco
   in
-  (* Set diurnal rate coefficients as functions of t, and save q4 in 
+  (* Set diurnal rate coefficients as functions of t, and save q4 in
   data block for use by preconditioner evaluation routine *)
   let s = sin(data.om *. t) in
   let q3, q4coef =
@@ -540,7 +540,7 @@ let fcalc data t (udata : RealArray.t) (dudata : RealArray.t) =
       let horad2 = horaco*.(c2rt -. c2lt) in
       (* Load all terms into dudata *)
       let offsetu = lx*nvars + ly*nvmxsub in
-      dudata.{offsetu}   <- vertd1 +. hord1 +. horad1 +. rkin1; 
+      dudata.{offsetu}   <- vertd1 +. hord1 +. horad1 +. rkin1;
       dudata.{offsetu+1} <- vertd2 +. hord2 +. horad2 +. rkin2
     done
   done
@@ -561,7 +561,7 @@ let print_output s my_pe comm u t =
   end;
 
   (* On PE 0, receive c at top right, then print performance data
-     and sampled solution values *) 
+     and sampled solution values *)
   if my_pe = 0 then begin
     if npelast <> 0 then begin
       let buf = (Mpi.receive npelast 0 comm : RealArray.t) in
@@ -574,7 +574,7 @@ let print_output s my_pe comm u t =
     in
     printf "%8.3e %2d  %8.3e %5d\n" t qu hu nst;
     printf "                                Solution       ";
-    printf "%12.4e %12.4e \n" udata.{0} tempu.{0}; 
+    printf "%12.4e %12.4e \n" udata.{0} tempu.{0};
     printf "                                               ";
     printf "%12.4e %12.4e \n" udata.{1} tempu.{1};
   end
@@ -596,7 +596,7 @@ let print_output_s my_pe comm uS =
       else (temps.{0} <- sdata.{i0}; temps.{1} <- sdata.{i1})
     end;
 
-    (* On PE 0, receive sx at top right, then print sampled sensitivity values *) 
+    (* On PE 0, receive sx at top right, then print sampled sensitivity values *)
     if my_pe = 0 then begin
       if npelast <> 0 then begin
         let buf = (Mpi.receive npelast 0 comm : RealArray.t) in
@@ -604,7 +604,7 @@ let print_output_s my_pe comm uS =
       end;
       printf "                                ----------------------------------------\n";
       printf "                                Sensitivity %d  " i;
-      printf "%12.4e %12.4e \n" sdata.{0} temps.{0}; 
+      printf "%12.4e %12.4e \n" sdata.{0} temps.{0};
       printf "                                               ";
       printf "%12.4e %12.4e \n" sdata.{1} temps.{1}
     end
@@ -650,7 +650,7 @@ let print_final_stats s sensi =
  *--------------------------------------------------------------------
  *)
 
-(* f routine.  Evaluate f(t,y).  First call ucomm to do communication of 
+(* f routine.  Evaluate f(t,y).  First call ucomm to do communication of
  * subgrid boundary data into uext.  Then calculate f by a call to fcalc. *)
 
 let f data t ((udata : RealArray.t),_,_) ((dudata : RealArray.t),_,_) =
@@ -698,7 +698,7 @@ let precond data jacarg jok gamma =
       and verdco = data.vdco
       and hordco = data.hdco
       in
-      (* Compute 2x2 diagonal Jacobian blocks (using q4 values 
+      (* Compute 2x2 diagonal Jacobian blocks (using q4 values
          computed on the last f call).  Load into P. *)
       for ly = 0 to mysub - 1 do
         let jy  = ly + isuby*mysub in
@@ -732,7 +732,7 @@ let precond data jacarg jok gamma =
       Direct.scale (-. gamma) p.(lx).(ly)
     done
   done;
-  
+
   (* Add identity matrix and do LU decompositions on blocks in place. *)
   for lx = 0 to mxsub - 1 do
     for ly = 0 to mysub - 1 do
@@ -798,7 +798,7 @@ let main () =
   (* Allocate and load user data block; allocate preconditioner block *)
   let data = init_user_data my_pe comm in
 
-  (* Allocate u, and set initial values and tolerances *) 
+  (* Allocate u, and set initial values and tolerances *)
   let u = Nvector_parallel.make local_N neq comm 0.0 in
   set_initial_profiles data u;
   let abstol = atol
@@ -807,12 +807,13 @@ let main () =
   (* Create CVODES object, set optional input, allocate memory *)
   let cvode_mem =
     Cvode.(init BDF
-          (Newton Spils.(spgmr (prec_left ~setup:(precond data) (psolve data))))
-          (SStolerances (reltol, abstol))
-          (f data) t0 u)
+      (Newton Spils.(solver Iterative.(spgmr u)
+                            (prec_left ~setup:(precond data) (psolve data))))
+      (SStolerances (reltol, abstol))
+      (f data) t0 u)
   in
   Cvode.set_max_num_steps cvode_mem 2000;
-    
+
   if my_pe = 0 then
     printf "\n2-species diurnal advection-diffusion problem\n";
 

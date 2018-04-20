@@ -212,7 +212,7 @@ let f data t ((udata : RealArray.t), _, _) ((dudata : RealArray.t), _, _) =
   let comm      = data.comm in
   let npes      = data.npes in
   let my_pe     = data.my_pe in
-  
+
   (* If this process is inactive, return now *)
   if my_pe <> npes then begin
     (* Extract problem constants from data *)
@@ -298,7 +298,7 @@ let fB data { Adjoint.y = ((udata : RealArray.t), _, _);
       let data_out = RealArray.of_list [ udata.{my_length-1}; uBdata.{my_length-1} ] in
       Mpi.send data_out my_pe_p1 0 comm
     end;
-    
+
     (* Receive needed data from processes before and after current process. *)
     let uLeft, uBLeft =
       if my_pe <> 0 then
@@ -316,12 +316,12 @@ let fB data { Adjoint.y = ((udata : RealArray.t), _, _);
 
     (* Loop over all grid points in current process. *)
     for i=0 to my_length - 1 do
-      
+
       (* Extract uB at x_i and two neighboring points *)
       let uBi = uBdata.{i} in
       let uBlt = if i = 0 then uBLeft else uBdata.{i-1} in
       let uBrt = if i = my_length-1 then uBRight else uBdata.{i+1} in
-      
+
       (* Set diffusion and advection terms and load into udot *)
       let hdiff = hordc*.(uBlt -. two*.uBi +. uBrt) in
       let hadv = horac*.(uBrt -. uBlt) in
@@ -404,10 +404,10 @@ let main () =
       z2      = Array.make local_n 0.0;
     } in
 
-  (*------------------------- 
+  (*-------------------------
     Forward integration phase
     -------------------------*)
-  
+
   (* Set relative and absolute tolerances for forward phase *)
   let reltol = zero in
   let abstol = atol in
@@ -433,7 +433,7 @@ let main () =
     ---------------------------*)
   let g_val = compute_g data u in
 
-  (*-------------------------- 
+  (*--------------------------
     Backward integration phase
     --------------------------*)
   (* Activate last process for integration of the quadrature equations *)

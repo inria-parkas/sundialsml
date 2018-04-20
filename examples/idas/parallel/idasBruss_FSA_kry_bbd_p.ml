@@ -838,12 +838,14 @@ let main () =
   let mukeep = 2 in
   let mlkeep = 2 in
   let maxl = 16 in
-  let linsolv =
-    Ida.Spils.spgmr ~maxl:maxl
-      Ida_bbd.(prec_left ~dqrely:zero { mudq; mldq; mukeep; mlkeep; }
-                         (reslocal data))
-  in
-  let mem = Ida.(init linsolv (SStolerances (rtol,atol)) (res data) t0 uv uvp)
+  let mem =
+    Ida.(init
+      Spils.(solver Iterative.(spgmr ~maxl uv)
+                    Ida_bbd.(prec_left ~dqrely:zero
+                                       { mudq; mldq; mukeep; mlkeep }
+                                       (reslocal data)))
+      (SStolerances (rtol,atol))
+      (res data) t0 uv uvp)
   in
 
   (* Enable forward sensitivity analysis. *)

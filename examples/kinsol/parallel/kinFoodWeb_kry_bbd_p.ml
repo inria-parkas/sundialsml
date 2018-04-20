@@ -86,7 +86,7 @@ module Nvector = Nvector_parallel
 module RealArray = Sundials.RealArray
 module RealArray2 = Sundials.RealArray2
 module LintArray = Sundials.LintArray
-module Dense = Dls.ArrayDenseMatrix
+module Dense = Matrix.ArrayDense
 module Bbd = Kinsol_bbd
 open Bigarray
 let local_array = Nvector_parallel.local_array
@@ -104,9 +104,9 @@ let nvwl2norm = Nvector.DataOps.n_vwl2norm
 (* Problem Constants *)
 
 let num_species =   6  (* must equal 2*(number of prey or predators)
-                              number of prey = number of predators       *) 
+                              number of prey = number of predators       *)
 
-let pi          = 3.1415926535898   (* pi *) 
+let pi          = 3.1415926535898   (* pi *)
 
 let npex        = 2            (* number of processors in the x-direction  *)
 let npey        = 2            (* number of processors in the y-direction  *)
@@ -139,7 +139,7 @@ let predin      = 30000.0(* initial guess for predator concs.      *)
 
 (* ij_vptr is defined in order to translate from the underlying 3D structure
    of the dependent variable vector to the 1D storage scheme for an N-vector.
-   ij_vptr vv i j  returns a pointer to the location in vv corresponding to 
+   ij_vptr vv i j  returns a pointer to the location in vv corresponding to
    indices is = 0, jx = i, jy = j.    *)
 let ij_vptr_idx i j = i*num_species + j*nsmxsub
 let ij_vptr vv i j = subarray vv (ij_vptr_idx i j) num_species
@@ -148,7 +148,7 @@ let ij_vptr vv i j = subarray vv (ij_vptr_idx i j) num_species
    contains problem constants and extended array *)
 
 type user_data = {
-  acoef : real_array2;
+  acoef : Sundials.real_array2;
   bcoef : RealArray.t;
   cox   : RealArray.t;
   coy   : RealArray.t;
@@ -261,7 +261,7 @@ let bsend comm my_pe isubx isuby dsizex dsizey udata =
     done;
     Mpi.send buf (my_pe+1) 0 comm
   end
- 
+
 (* Routine to start receiving boundary data from neighboring PEs.
    Notes:
    1) buffer should be able to hold 2*num_species*MYSUB realtype entries, should be
@@ -336,7 +336,7 @@ let brecvwait request isubx isuby dsizex cext =
     done
   end
 
-(* ccomm routine.  This routine performs all communication 
+(* ccomm routine.  This routine performs all communication
    between processors of data needed to calculate f. *)
 
 let ccomm data udata =
@@ -368,7 +368,7 @@ let web_rate data xx yy ((cxy : RealArray.t), cxy_off)
                                       +. cxy.{cxy_off + j} *. acoef.{i, j}
     done
   done;
-  
+
   let fac = one +. alpha *. xx *. yy in
   for i = 0 to num_species - 1 do
     ratesxy.{ratesxy_off + i} <- cxy.{cxy_off + i} *. (bcoef.{i}
@@ -378,7 +378,7 @@ let web_rate data xx yy ((cxy : RealArray.t), cxy_off)
 (* System function for predator-prey system - calculation part *)
 
 let func_local data (cdata, _, _) (fval, _, _) =
-  
+
   (* Get subgrid indices, data sizes, extended work array cext *)
   let isubx = data.isubx in
   let isuby = data.isuby in
@@ -433,12 +433,12 @@ let func_local data (cdata, _, _) (fval, _, _) =
         cext.{!offsetce+i} <- cdata.{!offsetc+i}
       done
     done;
-  
+
   (* Loop over all mesh points, evaluating rate arra at each point *)
   let delx = dx in
   let dely = dy in
   let shifty = (mxsub+2)*num_species in
-  
+
   for jy = 0 to mysub - 1 do
     let yy = dely*.float (jy + isuby * mysub) in
 
@@ -453,17 +453,17 @@ let func_local data (cdata, _, _) (fval, _, _) =
       let offsetcu = offsetc + shifty in
       let offsetcl = offsetc - num_species in
       let offsetcr = offsetc + num_species in
-      
+
       for is = 0 to num_species - 1 do
-        
+
         (* differencing in x *)
         let dcydi = cext.{offsetc+is}  -. cext.{offsetcd+is} in
         let dcyui = cext.{offsetcu+is} -. cext.{offsetc+is} in
-        
+
         (* differencing in y *)
         let dcxli = cext.{offsetc+is}  -. cext.{offsetcl+is} in
         let dcxri = cext.{offsetcr+is} -. cext.{offsetc+is} in
-        
+
         (* compute the value at xx , yy *)
         fval.{off + is} <- data.coy.{is} *. (dcyui -. dcydi)
                            +. data.cox.{is} *. (dcxri -. dcxli)
@@ -530,26 +530,26 @@ let print_output my_pe comm cc =
   let npelast = npex*npey - 1 in
   let ct = local_array cc in
   let i0 = num_species*(mxsub*mysub-1) in
-  
+
   (* Send the cc values (for all species) at the top right mesh point to PE 0 *)
   if my_pe = npelast then begin
     if npelast <> 0 then Mpi.send (slice ct i0 num_species) 0 0 comm
   end;
-  
-  (* On PE 0, receive the cc values at top right, then print performance data 
+
+  (* On PE 0, receive the cc values at top right, then print performance data
      and sampled solution values *)
   if my_pe = 0 then begin
     let tempc =
       if npelast <> 0 then (Mpi.receive npelast 0 comm : RealArray.t)
       else RealArray.init num_species (fun is -> ct.{i0 + is})
     in
-    
+
     printf "\nAt bottom left:";
     for is = 0 to num_species - 1 do
       if (is mod 6)*6 = is then printf "\n";
       printf " %g" ct.{is}
     done;
-    
+
     printf "\n\nAt top right:";
     for is = 0 to num_species - 1 do
       if (is mod 6)*6 = is then printf "\n";
@@ -617,10 +617,10 @@ let main () =
   let mlkeep = num_species in
   let kmem =
     Kinsol.(init
-        ~linsolv:(Spils.spgmr ~maxl:maxl ~max_restarts:maxlrst
-                              (Kinsol_bbd.prec_right
-                                  Bbd.({ mudq; mldq; mukeep; mlkeep; })
-                                  (func_local data)))
+        ~linsolv:Spils.(solver
+          Iterative.(spgmr ~maxl:maxl ~max_restarts:maxlrst cc)
+          (Kinsol_bbd.prec_right Bbd.({ mudq; mldq; mukeep; mlkeep })
+                                 (func_local data)))
         (func data) cc) in
   Kinsol.set_constraints kmem (Nvector.make local_N neq comm 0.0);
   Kinsol.set_func_norm_tol kmem fnormtol;
@@ -640,7 +640,7 @@ let main () =
   if my_pe = 0 then printf("\n\nComputed equilibrium species concentrations:\n");
   if my_pe = 0 || my_pe = npelast then print_output my_pe comm cc;
 
-  (* Print final statistics and free memory *)  
+  (* Print final statistics and free memory *)
   if my_pe = 0 then print_final_stats kmem
 
 (* Check environment variables for extra arguments.  *)

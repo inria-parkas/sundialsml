@@ -17,10 +17,10 @@
  * population model, with predator-prey interaction and diffusion
  * on the unit square in two dimensions. The dependent variable
  * vector is the following:
- * 
+ *
  *       1   2         ns
  * c = (c , c ,  ..., c  )     (denoted by the variable cc)
- * 
+ *
  * and the PDE's are as follows:
  *
  *                    i       i
@@ -54,7 +54,7 @@
  *
  * The PDEs are discretized by central differencing on an MX by
  * MY mesh.
- * 
+ *
  * The nonlinear system is solved by KINSOL using the method
  * specified in local variable globalstrat.
  *
@@ -64,19 +64,19 @@
  * Constraints are imposed to make all components of the solution
  * positive.
  *
- * Optionally, we can set the number of threads from environment 
+ * Optionally, we can set the number of threads from environment
  * variable or command line. To check the current value for number
  * of threads from environment:
  *      % echo $OMP_NUM_THREADS
  *
  * Execution:
  *
- * If the user want to use the default value or the number of threads 
+ * If the user want to use the default value or the number of threads
  * from environment value:
- *      % ./kinFoodWeb_kry_omp 
+ *      % ./kinFoodWeb_kry_omp
  * If the user want to specify the number of threads to use
  *      % ./kinFoodWeb_kry_omp num_threads
- * where num_threads is the number of threads the user want to use 
+ * where num_threads is the number of threads the user want to use
  *
  * -----------------------------------------------------------------
  * References:
@@ -98,7 +98,7 @@
 module RealArray = Sundials.RealArray
 module RealArray2 = Sundials.RealArray2
 module LintArray = Sundials.LintArray
-module Dense = Dls.ArrayDenseMatrix
+module Dense = Matrix.ArrayDense
 let unvec = Nvector.unwrap
 open Bigarray
 
@@ -109,9 +109,9 @@ let nvwl2norm = Nvector_serial.DataOps.n_vwl2norm
 (* Problem Constants *)
 
 let num_species =   6  (* must equal 2*(number of prey or predators)
-                              number of prey = number of predators       *) 
+                              number of prey = number of predators       *)
 
-let pi          = 3.1415926535898   (* pi *) 
+let pi          = 3.1415926535898   (* pi *)
 
 let mx          = 8                 (* MX = number of x mesh points *)
 let my          = 8                 (* MY = number of y mesh points *)
@@ -136,11 +136,11 @@ let predin      = 30000.0(* initial guess for predator concs.      *)
 
 (* ij_vptr is defined in order to translate from the underlying 3D structure
    of the dependent variable vector to the 1D storage scheme for an N-vector.
-   ij_vptr vv i j  returns a pointer to the location in vv corresponding to 
+   ij_vptr vv i j  returns a pointer to the location in vv corresponding to
    indices is = 0, jx = i, jy = j.    *)
 let ij_vptr_idx i j = i*num_species + j*nsmx
 
-(* Type : UserData 
+(* Type : UserData
    contains preconditioner blocks, pivot arrays, and problem constants *)
 
 let p =
@@ -200,7 +200,7 @@ let init_user_data =
   done
 
 (* Dot product routine for realtype arrays *)
-let dot_prod size (x1 : RealArray.t) x1off (x2 : real_array2) x2r =
+let dot_prod size (x1 : RealArray.t) x1off (x2 : Sundials.real_array2) x2r =
   let temp =ref 0.0 in
   for i = 0 to size - 1 do
     temp := !temp +. x1.{x1off + i} *. x2.{x2r, i}
@@ -213,7 +213,7 @@ let web_rate xx yy (cxy : RealArray.t) cxyoff (ratesxy : RealArray.t) ratesxyoff
   for i = 0 to num_species - 1 do
     ratesxy.{ratesxyoff + i} <- dot_prod num_species cxy cxyoff acoef i
   done;
-  
+
   let fac = 1.0 +. alpha *. xx *. yy in
   for i = 0 to num_species - 1 do
     ratesxy.{ratesxyoff + i} <- cxy.{cxyoff + i} *. (bcoef.{i} *. fac
@@ -226,7 +226,7 @@ let web_rate xx yy (cxy : RealArray.t) cxyoff (ratesxy : RealArray.t) ratesxyoff
 let func (cc : RealArray.t) (fval : RealArray.t) =
   let delx = dx in
   let dely = dy in
-  
+
   (* Loop over all mesh points, evaluating rate array at each point*)
   for jy = 0 to my - 1 do
     let yy = dely *. float(jy) in
@@ -234,7 +234,7 @@ let func (cc : RealArray.t) (fval : RealArray.t) =
     (* Set lower/upper index shifts, special at boundaries. *)
     let idyl = if jy <> 0    then nsmx else -nsmx in
     let idyu = if jy <> my-1 then nsmx else -nsmx in
-    
+
     for jx = 0 to mx - 1 do
       let xx = delx *. float(jx) in
 
@@ -250,11 +250,11 @@ let func (cc : RealArray.t) (fval : RealArray.t) =
         (* Differencing in x direction *)
         let dcyli = cc.{off + is} -. cc.{off - idyl + is} in
         let dcyui = cc.{off + idyu + is} -. cc.{off + is} in
-        
+
         (* Differencing in y direction *)
         let dcxli = cc.{off + is} -. cc.{off - idxl + is} in
         let dcxri = cc.{off + idxr+is} -. cc.{off + is} in
-        
+
         (* Compute the total rate value at (xx,yy) *)
         fval.{off + is} <- coy.{is} *. (dcyui -. dcyli)
                     +. cox.{is} *. (dcxri -. dcxli) +. rates.{off + is}
@@ -265,28 +265,27 @@ let func (cc : RealArray.t) (fval : RealArray.t) =
 
 (* Preconditioner setup routine. Generate and preprocess P. *)
 let prec_setup_bd { Kinsol.jac_u=cc;
-                    Kinsol.jac_fu=fval;
-                    Kinsol.jac_tmp=(vtemp1, vtemp2)}
+                    Kinsol.jac_fu=fval }
                   { Kinsol.Spils.uscale=cscale;
                     Kinsol.Spils.fscale=fscale } =
   let perturb_rates = Sundials.RealArray.make num_species 0.0 in
-  
+
   let delx = dx in
   let dely = dy in
 
   let fac = nvwl2norm fval fscale in
   let r0 = thousand *. uround *. fac *. float(neq) in
   let r0 = if r0 = 0.0 then 1.0 else r0 in
-  
+
   (* Loop over spatial points; get size NUM_SPECIES Jacobian block at each *)
   for jy = 0 to my - 1 do
     let yy = float(jy) *. dely in
-    
+
     for jx = 0 to mx - 1 do
       let xx = float(jx) *. delx in
       let pxy = p.(jx).(jy) in
       let off = ij_vptr_idx jx jy in
-      
+
       (* Compute difference quotients of interaction rate fn. *)
       for j = 0 to num_species - 1 do
         let csave = cc.{off + j} in  (* Save the j,jx,jy element of cc *)
@@ -294,22 +293,22 @@ let prec_setup_bd { Kinsol.jac_u=cc;
         cc.{off + j} <- cc.{off + j} +. r; (* Perturb the j,jx,jy element of cc *)
         let fac = 1.0/.r in
         web_rate xx yy cc off perturb_rates 0;
-        
+
         (* Restore j,jx,jy element of cc *)
         cc.{off + j} <- csave;
-        
+
         (* Load the j-th column of difference quotients *)
         let pxydata = unwrap pxy in
         for i = 0 to num_species - 1 do
           pxydata.{j, i} <- (perturb_rates.{i} -. rates.{off + i}) *. fac
         done
       done; (* end of j loop *)
-      
+
       (* Do LU decomposition of size NUM_SPECIES preconditioner block *)
       Dense.getrf pxy pivot.(jx).(jy)
     done (* end of jx loop *)
   done (* end of jy loop *)
-  
+
 (* Preconditioner solve routine *)
 let prec_solve_bd _ _ (vv : RealArray.t) =
   for jx = 0 to mx - 1 do
@@ -370,7 +369,7 @@ let print_output cc =
     if ((is mod 6)*6 = is) then printf "\n";
     printf " %g" cc.{ct+is}
   done;
-  
+
   let jy = my-1 in
   let jx = mx-1 in
   let ct = ij_vptr_idx jx jy in
@@ -424,9 +423,9 @@ let main () =
      KINSPGMR with preconditioner routines prec_setup_bd
      and prec_solve_bd. *)
   let kmem = Kinsol.(init
-              ~linsolv:Spils.(spgmr ~maxl:maxl ~max_restarts:maxlrst
-                                    (prec_right ~setup:prec_setup_bd
-                                                ~solve:prec_solve_bd ()))
+              ~linsolv:Spils.(solver
+                Iterative.(spgmr ~maxl ~max_restarts:maxlrst cc)
+                (prec_right ~setup:prec_setup_bd prec_solve_bd))
               func cc) in
   Kinsol.set_constraints kmem (Nvector_openmp.make num_threads neq 2.0);
   Kinsol.set_func_norm_tol kmem fnormtol;
@@ -445,7 +444,7 @@ let main () =
   printf("\n\nComputed equilibrium species concentrations:\n");
   print_output (unvec cc);
 
-  (* Print final statistics and free memory *)  
+  (* Print final statistics and free memory *)
   print_final_stats kmem;
   printf "num_threads = %i\n" num_threads
 

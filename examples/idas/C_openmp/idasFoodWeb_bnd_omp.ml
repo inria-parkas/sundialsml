@@ -13,7 +13,7 @@
  * -----------------------------------------------------------------
  * Example program for IDAS: Food web problem.
  *
- * This example program (OpenMP version) uses the IDABAND linear 
+ * This example program (OpenMP version) uses the IDABAND linear
  * solver, and IDACalcIC for initial condition calculation.
  *
  * The mathematical problem solved in this example is a DAE system
@@ -70,19 +70,19 @@
  * The DAE system is solved by IDAS using the IDABAND linear solver.
  * Output is printed at t = 0, .001, .01, .1, .4, .7, 1.
  *
- * Optionally, we can set the number of threads from environment 
+ * Optionally, we can set the number of threads from environment
  * variable or command line. To check the current value for number
  * of threads from environment:
  *      % echo $OMP_NUM_THREADS
  *
  * Execution:
  *
- * If the user want to use the default value or the number of threads 
+ * If the user want to use the default value or the number of threads
  * from environment value:
- *      % ./idasFoodWeb_bnd_omp 
+ *      % ./idasFoodWeb_bnd_omp
  * If the user want to specify the number of threads to use
  *      % ./idasFoodWeb_bnd_omp num_threads
- * where num_threads is the number of threads the user want to use 
+ * where num_threads is the number of threads the user want to use
  *
  * -----------------------------------------------------------------
  * References:
@@ -105,7 +105,6 @@
 module RealArray = Sundials.RealArray
 module RealArray2 = Sundials.RealArray2
 module Roots = Sundials.Roots
-module Matrix = Dls.ArrayDenseMatrix
 
 let printf = Printf.printf
 
@@ -162,7 +161,7 @@ type user_data =
     my    : int;
     dx    : float;
     dy    : float;
-    acoef : Matrix.t;
+    acoef : Matrix.ArrayDense.t;
     cox   : float array;
     coy   : float array;
     bcoef : float array;
@@ -179,7 +178,7 @@ let init_user_data () =
       np    = nprey;
       dx    = ax /. float_of_int (mx-1);
       dy    = ay /. float_of_int (my-1);
-      acoef = Matrix.create num_species num_species;
+      acoef = Matrix.ArrayDense.create num_species num_species;
       cox   = Array.make num_species 0.;
       coy   = Array.make num_species 0.;
       bcoef = Array.make num_species 0.;
@@ -199,18 +198,19 @@ let init_user_data () =
   and dx2 = dx *. dx
   and dy2 = dy *. dy in
 
+  let open Matrix.ArrayDense in
   for i = 0 to np-1 do
     (* Fill in the portion of acoef in the four quadrants, row by row. *)
     for j = 0 to np-1 do
-      Matrix.set acoef (np+j) i      (-. gg);
-      Matrix.set acoef j      (i+np)      ee;
-      Matrix.set acoef j      i           0.;
-      Matrix.set acoef (np+j) (i+np)      0.;
+      set acoef (np+j) i      (-. gg);
+      set acoef j      (i+np)      ee;
+      set acoef j      i           0.;
+      set acoef (np+j) (i+np)      0.;
     done;
 
     (* Reset the diagonal elements of acoef to -AA.  *)
-    Matrix.set acoef i i (-. aa);
-    Matrix.set acoef (i+np) (i+np) (-. aa);
+    set acoef i i (-. aa);
+    set acoef (i+np) (i+np) (-. aa);
 
     (* Set coefficients for b and diffusion terms.  *)
     bcoef.(i) <- bb; bcoef.(i+np) <- -. bb;
@@ -242,9 +242,9 @@ let web_rates webdata x y ((cxy : RealArray.t), cxy_off)
                                     +. ratesxy.{ratesxy_off + is} )
   done
 
-(* fweb: Rate function for the food-web problem.                        
- * This routine computes the right-hand sides of the system equations,   
- * consisting of the diffusion term and interaction term.                
+(* fweb: Rate function for the food-web problem.
+ * This routine computes the right-hand sides of the system equations,
+ * consisting of the diffusion term and interaction term.
  * The interaction term is computed by the function WebRates.  *)
 let fweb webdata t c (crate : RealArray.t) =
   let cox = webdata.cox
@@ -260,7 +260,7 @@ let fweb webdata t c (crate : RealArray.t) =
       let xx = webdata.dx *. float_of_int jx
       and idxu = if jx <> mx-1 then num_species else -num_species
       and idxl = if jx <> 0    then num_species else -num_species in
-      
+
       (* Get interaction vector at this grid point. *)
       web_rates webdata xx yy (c, index jx jy 0)
                               (webdata.rates, index jx jy 0);
@@ -353,10 +353,10 @@ let print_header mu ml rtol atol =
   printf "    | nst  k      h\n";
   printf "-----------------------------------------------------------\n\n";
 ;;
-(* 
+(*
  * PrintOutput: Print output values at output time t = tt.
  * Selected run statistics are printed.  Then values of the concentrations
- * are printed for the bottom left and top right grid points only.  
+ * are printed for the bottom left and top right grid points only.
  *)
 
 let print_output mem c t =
@@ -376,8 +376,8 @@ let print_output mem c t =
   done;
   printf "\n"
 
-(* 
- * PrintFinalStats: Print final run data contained in iopt.              
+(*
+ * PrintFinalStats: Print final run data contained in iopt.
  *)
 
 let print_final_stats mem =
@@ -425,9 +425,13 @@ let main () =
   (* Call IDACreate and IDABand to initialize IDA including the linear
      solver. *)
   let mu = nsmx and ml = nsmx in
-  let solver = Ida.Dls.band { Ida.mupper = mu; Ida.mlower = ml } in
-  let mem = Ida.init solver (Ida.SStolerances (rtol, atol))
-                     (resweb webdata) t0 wc wc' in
+  let m = Matrix.band ~smu:(mu+ml) ~mu:mu ~ml:ml neq in
+  let mem =
+    Ida.(init
+      Dls.(solver Direct.(band wc m) m)
+      (SStolerances (rtol, atol))
+      (resweb webdata) t0 wc wc')
+  in
   let tout1 = 0.001 in
   Ida.calc_ic_ya_yd' mem ~varid:(Nvector_openmp.wrap num_threads id) tout1;
 

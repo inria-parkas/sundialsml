@@ -129,7 +129,7 @@ let bytes x = header_and_empty_array_size + x * float_cell_size
 let nprey =       1        (* Number of prey (= number of predators). *)
 let num_species = 2*nprey
 
-let pi =          3.1415926535898   (* pi *) 
+let pi =          3.1415926535898   (* pi *)
 let fourpi =      (4.0*.pi)          (* 4 pi *)
 
 let mxsub =       10    (* Number of x mesh points per processor subgrid *)
@@ -152,15 +152,15 @@ let ax =          1.0    (* Total range of x variable *)
 let ay =          1.0    (* Total range of y variable *)
 let rtol =        1.e-5  (*  rtol tolerance *)
 let atol =        1.e-5  (*  atol tolerance *)
-let nout =        6  
+let nout =        6
 let tmult =       10.0   (* Multiplier for tout values *)
 let tadd =        0.3    (* Increment for tout values *)
 
 (* User-defined vector accessor macro IJ_Vptr. *)
 
-(* IJ_Vptr is defined in order to express the underlying 3-d structure of the 
+(* IJ_Vptr is defined in order to express the underlying 3-d structure of the
    dependent variable vector from its underlying 1-d storage (an N_Vector).
-   IJ_Vptr(vv,i,j) returns a pointer to the location in vv corresponding to 
+   IJ_Vptr(vv,i,j) returns a pointer to the location in vv corresponding to
    species index is = 0, x-index ix = i, and y-index jy = j.                *)
 
 let ij_vptr_idx i j = i*num_species + j*nsmxsub
@@ -302,7 +302,7 @@ let print_header system_size maxl rtol atol =
  * PrintOutput: Print output values at output time t = tt.
  * Selected run statistics are printed.  Then values of c1 and c2
  * are printed for the bottom left and top right grid points only.
- * (NOTE: This routine is specific to the case NUM_SPECIES = 2.)         
+ * (NOTE: This routine is specific to the case NUM_SPECIES = 2.)
  *)
 
 let print_output webdata comm mem ((cdata : RealArray.t),_,_) tt =
@@ -333,7 +333,7 @@ let print_output webdata comm mem ((cdata : RealArray.t),_,_) tt =
     let nst   = Ida.get_num_steps mem in
     let hused = Ida.get_last_step mem in
 
-    printf "%8.2e %12.4e %12.4e   | %3d  %1d %12.4e\n" 
+    printf "%8.2e %12.4e %12.4e   | %3d  %1d %12.4e\n"
            tt cdata.{0} clast.{0} nst kused hused;
     for i = 1 to num_species - 1 do
       printf "         %12.4e %12.4e   |\n" cdata.{i} clast.{i}
@@ -342,7 +342,7 @@ let print_output webdata comm mem ((cdata : RealArray.t),_,_) tt =
   end
 
 (*
- * PrintFinalStats: Print final run data contained in iopt.              
+ * PrintFinalStats: Print final run data contained in iopt.
  *)
 
 let print_final_stats mem =
@@ -423,7 +423,7 @@ let bsend comm my_pe isubx isuby dsizex dsizey udata =
  * (1) buffer should be able to hold 2*NUM_SPECIES*MYSUB realtype entries,
  *     should be passed to both the BRecvPost and BRecvWait functions, and
  *     should not be manipulated between the two calls.
- * (2) request should have 4 entries, and is also passed in both calls.  
+ * (2) request should have 4 entries, and is also passed in both calls.
  *)
 
 let brecvpost comm my_pe isubx isuby dsizex dsizey =
@@ -454,7 +454,7 @@ let brecvpost comm my_pe isubx isuby dsizex dsizey =
  * (1) buffer should be able to hold 2*NUM_SPECIES*MYSUB realtype entries,
  *     should be passed to both the BRecvPost and BRecvWait functions, and
  *     should not be manipulated between the two calls.
- * (2) request should have 4 entries, and is also passed in both calls.  
+ * (2) request should have 4 entries, and is also passed in both calls.
  *)
 
 let brecvwait request isubx isuby dsizex cext =
@@ -496,7 +496,7 @@ let brecvwait request isubx isuby dsizex cext =
 
 (*
  * WebRates: Evaluate reaction rates at a given spatial point.
- * At a given (x,y), evaluate the array of ns reaction terms R. 
+ * At a given (x,y), evaluate the array of ns reaction terms R.
  *)
 
 let web_rates webdata xx yy ((cxy : RealArray.t), cxy_off)
@@ -646,7 +646,7 @@ let reslocal webdata tt cc cp res =
  * interior subgrid boundaries (ghost cell data).  It loads this data
  * into a work array cext (the local portion of c, extended).
  * The message-passing uses blocking sends, non-blocking receives,
- * and receive-waiting, in routines BRecvPost, BSend, BRecvWait.         
+ * and receive-waiting, in routines BRecvPost, BSend, BRecvWait.
  *)
 
 let rescomm webdata cc cp =
@@ -685,7 +685,7 @@ let resweb webdata tt cc cp res =
  * (1.0e5) is loaded as the initial guess for the predator cc values.
  * The id values are set to 1 for the prey and 0 for the predators.
  * The prey cp values are set according to the given system, and
- * the predator cp values are set to zero.                               
+ * the predator cp values are set to zero.
  *)
 
 let set_initial_profiles webdata cc cp id res =
@@ -741,7 +741,7 @@ let set_initial_profiles webdata cc cp id res =
  * preconditoner pp.  At each spatial point, a block of pp is computed
  * by way of difference quotients on the reaction rates R.
  * The base value of R are taken from webdata.rates, as set by webres.
- * Each block is LU-factored, for later solution of the linear systems.  
+ * Each block is LU-factored, for later solution of the linear systems.
  *)
 
 let precondbd webdata jac =
@@ -805,8 +805,8 @@ let precondbd webdata jac =
       done; (* End of js loop. *)
 
       (* Do LU decomposition of matrix block for grid point (ix,jy). *)
-      (try Dls.ArrayDenseMatrix.getrf pxy webdata.pivot.(ix).(jy)
-       with Dls.ZeroDiagonalElement _ -> raise Sundials.RecoverableFailure)
+      (try Matrix.ArrayDense.getrf pxy webdata.pivot.(ix).(jy)
+       with Matrix.ZeroDiagonalElement _ -> raise Sundials.RecoverableFailure)
 
     done (* End of ix loop. *)
   done (* End of jy loop. *)
@@ -814,7 +814,7 @@ let precondbd webdata jac =
 (*
  * PSolvebd: Preconditioner solve routine.
  * This routine applies the LU factorization of the blocks of the
- * preconditioner PP, to compute the solution of PP * zvec = rvec.       
+ * preconditioner PP, to compute the solution of PP * zvec = rvec.
  *)
 
 let psolvebd webdata jac rvec zvec delta =
@@ -824,13 +824,13 @@ let psolvebd webdata jac rvec zvec delta =
   for ix = 0 to mxsub-1 do
     for jy = 0 to mysub-1 do
 
-      (* For grid point (ix,jy), do backsolve on local vector. 
+      (* For grid point (ix,jy), do backsolve on local vector.
          zxy is the address of the local portion of zvec, and
          Pxy is the address of the corresponding block of PP.  *)
       let zxy = ij_vptr zvec ix jy in
       let pxy = webdata.pp.(ix).(jy) in
       let pivot = webdata.pivot.(ix).(jy) in
-      Dls.ArrayDenseMatrix.getrs pxy pivot zxy;
+      Matrix.ArrayDense.getrs pxy pivot zxy;
     done (* End of jy loop. *)
   done (* End of ix loop. *)
 
@@ -851,7 +851,7 @@ let main () =
     if thispe = 0 then
       fprintf stderr
         "\nMPI_ERROR(0): npes = %d not equal to NPEX*NPEY = %d\n"
-	npes (npex*npey)
+        npes (npex*npey)
     ;
     exit 1
   end;
@@ -888,14 +888,13 @@ let main () =
      the preconditioner routines supplied (Precondbd and PSolvebd).
      maxl (max. Krylov subspace dim.) is set to 16. *)
   let maxl = 16 in
-  let linsolv =
-    Ida.Spils.(spgmr ~maxl:maxl
-                  (prec_left ~setup:(precondbd webdata) (psolvebd webdata)))
-  in
   let mem =
-    Ida.init linsolv (Ida.SStolerances (rtol, atol))
+    Ida.(init
+      Spils.(solver Iterative.(spgmr ~maxl cc)
+                    (prec_left ~setup:(precondbd webdata) (psolvebd webdata)))
+      (SStolerances (rtol, atol))
       (resweb webdata)
-      t0 cc cp
+      t0 cc cp)
   in
   webdata.ida_mem <- Some mem;
 

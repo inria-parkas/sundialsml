@@ -3,13 +3,13 @@
  *-----------------------------------------------------------------
  * OCaml port: Timothy Bourke, Inria, Jan 2016.
  *---------------------------------------------------------------
- * Copyright (c) 2015, Southern Methodist University and 
+ * Copyright (c) 2015, Southern Methodist University and
  * Lawrence Livermore National Security
  *
- * This work was performed under the auspices of the U.S. Department 
- * of Energy by Southern Methodist University and Lawrence Livermore 
+ * This work was performed under the auspices of the U.S. Department
+ * of Energy by Southern Methodist University and Lawrence Livermore
  * National Laboratory under Contract DE-AC52-07NA27344.
- * Produced at Southern Methodist University and the Lawrence 
+ * Produced at Southern Methodist University and the Lawrence
  * Livermore National Laboratory.
  *
  * All rights reserved.
@@ -51,7 +51,7 @@
  * on completion.
  *
  * This version uses MPI for user routines.
- * 
+ *
  * Execution: mpiexec -n N ark_diurnal_kry_p   with N = NPEX*NPEY
  * (see constants below).
  * -----------------------------------------------------------------
@@ -59,7 +59,7 @@
 
 module RealArray = Sundials.RealArray
 module Roots  = Sundials.Roots
-module Direct = Dls.ArrayDenseMatrix
+module Direct = Matrix.ArrayDense
 open Bigarray
 
 let local_array = Nvector_parallel.local_array
@@ -86,7 +86,7 @@ let nvars =    2            (* number of species         *)
 let kh =       4.0e-6       (* horizontal diffusivity Kh *)
 let vel =      0.001        (* advection velocity V      *)
 let kv0 =      1.0e-8       (* coefficient in Kv(y)      *)
-let q1 =       1.63e-16     (* coefficients q1, q2, c3   *) 
+let q1 =       1.63e-16     (* coefficients q1, q2, c3   *)
 let q2 =       4.66e-16
 let c3 =       3.7e16
 let a3 =       22.62        (* coefficient in expression for q3(t) *)
@@ -98,10 +98,10 @@ let t0 =       0.0          (* initial time *)
 let nout =     12           (* number of output times *)
 let twohr =    7200.0       (* number of seconds in two hours  *)
 let halfday =  4.32e4       (* number of seconds in a half day *)
-let pi =       3.1415926535898  (* pi *) 
+let pi =       3.1415926535898  (* pi *)
 
 let xmin =     0.0          (* grid boundaries in x  *)
-let xmax =     20.0           
+let xmax =     20.0
 let ymin =     30.0         (* grid boundaries in y  *)
 let ymax =     50.0
 
@@ -125,7 +125,7 @@ let atol =     rtol*.floor  (* scalar absolute tolerance *)
 (* User-defined matrix accessor macro: IJth
 
    IJth is defined in order to write code which indexes into dense
-   matrices with a (row,column) pair, where 1 <= row,column <= NVARS.   
+   matrices with a (row,column) pair, where 1 <= row,column <= NVARS.
 
    IJth(a,i,j) references the (i,j)th entry of the small matrix realtype **a,
    where 1 <= i,j <= NVARS. The small matrix routines in sundials_dense.h
@@ -134,8 +134,8 @@ let atol =     rtol*.floor  (* scalar absolute tolerance *)
 let ijth v i j       = Direct.get v (i - 1) (j - 1)
 let set_ijth v i j e = Direct.set v (i - 1) (j - 1) e
 
-(* Type : UserData 
-   contains problem constants, preconditioner blocks, pivot arrays, 
+(* Type : UserData
+   contains problem constants, preconditioner blocks, pivot arrays,
    grid constants, and processor indices, as well as data needed
    for the preconditiner *)
 type user_data = {
@@ -149,7 +149,7 @@ type user_data = {
         vdco       : float;
 
         uext       : RealArray.t;
-        
+
         my_pe      : int;
         isubx      : int;
         isuby      : int;
@@ -241,7 +241,7 @@ let set_initial_profiles data u =
       let x  = xmin +. (float jx)*.dx in
       let cx = sqr(0.1*.(x -. xmid)) in
       let cx = 1.0 -. cx +. 0.5*.(sqr cx) in
-      udata.{!offset  } <- c1_scale *. cx *. cy; 
+      udata.{!offset  } <- c1_scale *. cx *. cy;
       udata.{!offset+1} <- c2_scale *. cx *. cy;
       offset := !offset + 2
     done
@@ -263,7 +263,7 @@ let print_output s my_pe comm u t =
   end;
 
   (* On PE 0, receive c1,c2 at top right, then print performance data
-     and sampled solution values *) 
+     and sampled solution values *)
   if my_pe = 0 then begin
     if npelast <> 0 then begin
       let buf = (Mpi.receive npelast 0 comm : RealArray.t) in
@@ -305,8 +305,8 @@ let print_final_stats s =
   printf "nni     = %5d     nli     = %5d\n" nni nli;
   printf "nsetups = %5d     netf    = %5d\n" nsetups netf;
   printf "npe     = %5d     nps     = %5d\n" npe nps;
-  printf "ncfn    = %5d     ncfl    = %5d\n\n" ncfn ncfl 
- 
+  printf "ncfn    = %5d     ncfl    = %5d\n\n" ncfn ncfl
+
 (* Routine to send boundary data to neighboring PEs *)
 
 let bsend comm my_pe isubx isuby dsizex dsizey (udata : RealArray.t) =
@@ -338,7 +338,7 @@ let bsend comm my_pe isubx isuby dsizex dsizey (udata : RealArray.t) =
     done;
     Mpi.send buf (my_pe+1) 0 comm
   end
- 
+
 (* Routine to start receiving boundary data from neighboring PEs.
    Notes:
    1) buffer should be able to hold 2*NVARS*MYSUB realtype entries, should be
@@ -413,7 +413,7 @@ let brecvwait request isubx isuby dsizex (uext : RealArray.t) =
     done
   end
 
-(* ucomm routine.  This routine performs all communication 
+(* ucomm routine.  This routine performs all communication
    between processors of data needed to calculate f. *)
 
 let ucomm data t udata =
@@ -434,7 +434,7 @@ let ucomm data t udata =
   (* Finish receiving boundary data from neighboring PEs *)
   brecvwait request isubx isuby nvmxsub uext
 
-(* fcalc routine. Compute f(t,y).  This routine assumes that communication 
+(* fcalc routine. Compute f(t,y).  This routine assumes that communication
    between processors of data needed to calculate f has already been done,
    and this data is in the work array uext. *)
 
@@ -479,7 +479,7 @@ let fcalc data t (udata : RealArray.t) (dudata : RealArray.t) =
   and hordco = data.hdco
   and horaco = data.haco
   in
-  (* Set diurnal rate coefficients as functions of t, and save q4 in 
+  (* Set diurnal rate coefficients as functions of t, and save q4 in
   data block for use by preconditioner evaluation routine *)
   let s = sin(data.om *. t) in
   let q3, q4coef =
@@ -528,14 +528,14 @@ let fcalc data t (udata : RealArray.t) (dudata : RealArray.t) =
       let horad2 = horaco*.(c2rt -. c2lt) in
       (* Load all terms into dudata *)
       let offsetu = lx*nvars + ly*nvmxsub in
-      dudata.{offsetu}   <- vertd1 +. hord1 +. horad1 +. rkin1; 
+      dudata.{offsetu}   <- vertd1 +. hord1 +. horad1 +. rkin1;
       dudata.{offsetu+1} <- vertd2 +. hord2 +. horad2 +. rkin2
     done
   done
 
 (***************** Functions Called by the Solver *************************)
 
-(* f routine.  Evaluate f(t,y).  First call ucomm to do communication of 
+(* f routine.  Evaluate f(t,y).  First call ucomm to do communication of
    subgrid boundary data into uext.  Then calculate f by a call to fcalc. *)
 
 let f data t ((udata : RealArray.t),_,_) ((dudata : RealArray.t),_,_) =
@@ -576,7 +576,7 @@ let precond data jacarg jok gamma =
       and verdco = data.vdco
       and hordco = data.hdco
       in
-      (* Compute 2x2 diagonal Jacobian blocks (using q4 values 
+      (* Compute 2x2 diagonal Jacobian blocks (using q4 values
          computed on the last f call).  Load into P. *)
       for ly = 0 to mysub - 1 do
         let jy  = ly + isuby*mysub in
@@ -610,7 +610,7 @@ let precond data jacarg jok gamma =
       Direct.scale (-. gamma) p.(lx).(ly)
     done
   done;
-  
+
   (* Add identity matrix and do LU decompositions on blocks in place. *)
   for lx = 0 to mxsub - 1 do
     for ly = 0 to mysub - 1 do
@@ -668,7 +668,7 @@ let main () =
   (* Allocate and load user data block; allocate preconditioner block *)
   let data = init_user_data my_pe comm in
 
-  (* Allocate u, and set initial values and tolerances *) 
+  (* Allocate u, and set initial values and tolerances *)
   let u = Nvector_parallel.make local_N neq comm 0.0 in
   set_initial_profiles data u;
   let abstol = atol
@@ -678,15 +678,16 @@ let main () =
   let arkode_mem = Arkode.(
     init
       (Implicit (f data,
-                 Newton Spils.(spgmr (prec_left ~setup:(precond data)
-                                                (psolve data))),
-                 Nonlinear))
+           Newton Spils.(solver Iterative.(spgmr u)
+                                (prec_left ~setup:(precond data)
+                                           (psolve data))),
+       Nonlinear))
       (SStolerances (reltol, abstol))
       t0
       u)
   in
   Arkode.set_max_num_steps arkode_mem 10000;
-    
+
   if my_pe = 0 then
     printf "\n2-species diurnal advection-diffusion problem\n\n";
 
@@ -698,7 +699,7 @@ let main () =
     tout := !tout +. twohr
   done;
 
-  (* Print final statistics *)  
+  (* Print final statistics *)
   if my_pe = 0 then print_final_stats arkode_mem
 
 (* Check environment variables for extra arguments.  *)
