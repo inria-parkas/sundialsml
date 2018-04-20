@@ -5,7 +5,7 @@
  * -----------------------------------------------------------------
  * Programmer(s): Chris Nguyen @ LLNL
  * -----------------------------------------------------------------
- * Example problem for IDA: 2D heat equation, serial, sparse. 
+ * Example problem for IDA: 2D heat equation, serial, sparse.
  * Based on idaHeat2D_bnd.c and idaRoberts_klu.c
  * -----------------------------------------------------------------
  * OCaml port: Jun Inoue, Inria, Aug 2014.
@@ -26,7 +26,7 @@
  * system of size N = mgrid^2. Here mgrid = 10.
  *
  * The system is solved with IDA using the banded linear system
- * solver and default difference-quotient Jacobian. 
+ * solver and default difference-quotient Jacobian.
  * For purposes of illustration,
  * IDACalcIC is called to compute correct values at the boundary,
  * given incorrect values as input initial guesses. The constraints
@@ -58,13 +58,13 @@ type user_data = { mm : int; dx : float; coeff : float }
 let jac_heat3 { Ida.jac_y = (yval : RealArray.t);
                 Ida.jac_coef = cj }
               jacmat =
-  let set_col = Sls.SparseMatrix.set_col jacmat in
-  let set = Sls.SparseMatrix.set jacmat in
+  let set_col = Matrix.Sparse.set_col jacmat in
+  let set = Matrix.Sparse.set jacmat in
   let dx = 1.0/.float(mgrid - 1) in
   let beta = 4.0/.(dx*.dx) +. cj in
 
   (* initialize Jacobian matrix *)
-  Sls.SparseMatrix.set_to_zero jacmat;
+  Matrix.Sparse.set_to_zero jacmat;
 
   (* set up number of elements in each column *)
   set_col 0 0;
@@ -77,18 +77,18 @@ let jac_heat3 { Ida.jac_y = (yval : RealArray.t);
   set_col 7 10;
   set_col 8 12;
   set_col 9 13;
-  
+
   (* set up data and row values stored *)
-  set 0 0 1.0;  
+  set 0 0 1.0;
   set 1 1 1.0;
-  set 2 4 (-1.0/.(dx*.dx));  
+  set 2 4 (-1.0/.(dx*.dx));
   set 3 2 1.0;
   set 4 3 1.0;
-  set 5 4 (-1.0/.(dx*.dx));  
+  set 5 4 (-1.0/.(dx*.dx));
   set 6 4 (beta);
   set 7 4 (-1.0/.(dx*.dx));
   set 8 5 1.0;
-  set 9 6 1.0; 
+  set 9 6 1.0;
   set 10 4 (-1.0/.(dx*.dx));
   set 11 7 1.0;
   set 12 8 1.0
@@ -97,10 +97,10 @@ let jac_heat3 { Ida.jac_y = (yval : RealArray.t);
 let jac_heat { Ida.jac_y = (yval : RealArray.t);
                Ida.jac_coef = cj }
               jacmat =
-  let get_col = Sls.SparseMatrix.get_col jacmat in
-  let set_col = Sls.SparseMatrix.set_col jacmat in
-  let set_data = Sls.SparseMatrix.set_data jacmat in
-  let set_rowval = Sls.SparseMatrix.set_rowval jacmat in
+  let get_col = Matrix.Sparse.get_col jacmat in
+  let set_col = Matrix.Sparse.set_col jacmat in
+  let set_data = Matrix.Sparse.set_data jacmat in
+  let set_rowval = Matrix.Sparse.set_rowval jacmat in
   let dx = 1.0/.float(mgrid - 1) in
   let beta = 4.0/.(dx*.dx) +. cj in
 
@@ -110,8 +110,8 @@ let jac_heat { Ida.jac_y = (yval : RealArray.t);
   in
 
   (* initialize Jacobian matrix *)
-  Sls.SparseMatrix.set_to_zero jacmat;
-  
+  Matrix.Sparse.set_to_zero jacmat;
+
   (* ---- set up number of elements in each column ---- *)
 
   (**** first column block ****)
@@ -132,7 +132,7 @@ let jac_heat { Ida.jac_y = (yval : RealArray.t);
   done;
   set_col (2*mgrid-1) (2*mgrid+4*(mgrid-2)-2);
   set_col (2*mgrid)   (2*mgrid+4*(mgrid-2));
-  
+
   (**** repeated (mgrid-4 times) middle column blocks ****)
   for i=0 to mgrid-5 do
     let repeat = i * mgrid in (* shift that accounts for accumulated
@@ -140,18 +140,18 @@ let jac_heat { Ida.jac_y = (yval : RealArray.t);
 
     set_col (2*mgrid+1+repeat)   ((get_col (2*mgrid+1+repeat-1))+2);
     set_col (2*mgrid+1+repeat+1) ((get_col (2*mgrid+1+repeat))+4);
-    
+
     (* count by fives in the middle *)
     for j=0 to mgrid-5 do
       set_col (2*mgrid+1+repeat+2+j) (get_col (2*mgrid+1+repeat+1+j) + 5)
     done;
-   
+
     set_col (2*mgrid+1+repeat+(mgrid-4)+2)
             ((get_col (2*mgrid+1+repeat+(mgrid-4)+1))+4);
     set_col (2*mgrid+1+repeat+(mgrid-4)+3)
             ((get_col (2*mgrid+1+repeat+(mgrid-4)+2))+2)
   done;
-  
+
   (**** last-1 column block ****)
   set_col (mgrid*mgrid-2*mgrid+1) (total-2*mgrid-4*(mgrid-2)+2);
   set_col (mgrid*mgrid-2*mgrid+2) (total-2*mgrid-4*(mgrid-2)+5);
@@ -199,7 +199,7 @@ let jac_heat { Ida.jac_y = (yval : RealArray.t);
   set_data (2*mgrid+4*(mgrid-2)-3) (-1.0/.(dx*.dx));
   set_data (2*mgrid+4*(mgrid-2)-2) (-1.0/.(dx*.dx));
   set_data (2*mgrid+4*(mgrid-2)-1) (1.0);
-    
+
   (**** repeated (mgrid-4 times) middle column blocks ****)
   for i=0 to mgrid-4-1 do
     (* shift that accounts for accumulated columns and elements *)
@@ -207,7 +207,7 @@ let jac_heat { Ida.jac_y = (yval : RealArray.t);
 
     set_data (2*mgrid+4*(mgrid-2)+repeat)   (1.0);
     set_data (2*mgrid+4*(mgrid-2)+repeat+1) (-1.0/.(dx*.dx));
-    
+
     set_data (2*mgrid+4*(mgrid-2)+repeat+2) (-1.0/.(dx*.dx));
     set_data (2*mgrid+4*(mgrid-2)+repeat+3) (beta);
     set_data (2*mgrid+4*(mgrid-2)+repeat+4) (-1.0/.(dx*.dx));
@@ -222,16 +222,16 @@ let jac_heat { Ida.jac_y = (yval : RealArray.t);
       set_data (2*mgrid+4*(mgrid-2)+repeat+9+5*j)  (-1.0/.(dx*.dx));
       set_data (2*mgrid+4*(mgrid-2)+repeat+10+5*j) (-1.0/.(dx*.dx));
     done;
-    
+
     set_data (2*mgrid+4*(mgrid-2)+repeat+(mgrid-4)*5+6) (-1.0/.(dx*.dx));
     set_data (2*mgrid+4*(mgrid-2)+repeat+(mgrid-4)*5+7) (-1.0/.(dx*.dx));
     set_data (2*mgrid+4*(mgrid-2)+repeat+(mgrid-4)*5+8) (beta);
     set_data (2*mgrid+4*(mgrid-2)+repeat+(mgrid-4)*5+9) (-1.0/.(dx*.dx));
-    
+
     set_data (2*mgrid+4*(mgrid-2)+repeat+(mgrid-4)*5+10) (-1.0/.(dx*.dx));
     set_data (2*mgrid+4*(mgrid-2)+repeat+(mgrid-4)*5+11) (1.0)
   done;
-  
+
   (**** last-1 column block ****)
   set_data (total-6*(mgrid-2)-4) (1.0);
   set_data (total-6*(mgrid-2)-3) (-1.0/.(dx*.dx));
@@ -260,7 +260,7 @@ let jac_heat { Ida.jac_y = (yval : RealArray.t);
   loop ~from:(total-2*(mgrid-2))   ~upto:(total-1) ~inc:2
     (fun i -> set_data (i) 1.0);
   set_data (total-1) (1.0);
-  
+
   (* ---- row values ---- *)
 
   (**** first block ****)
@@ -270,7 +270,7 @@ let jac_heat { Ida.jac_y = (yval : RealArray.t);
     (fun i -> set_rowval (i) ((i+1)/2));
   loop ~from:2 ~upto:(mgrid+(mgrid-2)-1) ~inc:2
     (fun i -> set_rowval (i) (i/2+mgrid)); (* i+1 unnecessary here *)
-  
+
   (**** second column block ****)
   set_rowval (mgrid+mgrid-2) (mgrid);
   set_rowval (mgrid+mgrid-1) (mgrid+1);
@@ -291,7 +291,7 @@ let jac_heat { Ida.jac_y = (yval : RealArray.t);
   set_rowval (2*mgrid+4*(mgrid-2)-3) (2*mgrid+(mgrid-2));
   set_rowval (2*mgrid+4*(mgrid-2)-2) (mgrid+(mgrid-2));
   set_rowval (2*mgrid+4*(mgrid-2)-1) (mgrid+(mgrid-2)+1);
-  
+
   (**** repeated (mgrid-4 times) middle column blocks ****)
   for i=0 to mgrid-4-1 do
     (* shift that accounts for accumulated columns and elements *)
@@ -300,7 +300,7 @@ let jac_heat { Ida.jac_y = (yval : RealArray.t);
                (mgrid+(mgrid-2)+2+mgrid*i);
     set_rowval (2*mgrid+4*(mgrid-2)+repeat+1)
                (mgrid+(mgrid-2)+2+mgrid*i+1);
-    
+
     set_rowval (2*mgrid+4*(mgrid-2)+repeat+2)
                (mgrid+(mgrid-2)+2+mgrid*i+1-mgrid);
     set_rowval (2*mgrid+4*(mgrid-2)+repeat+3)
@@ -309,7 +309,7 @@ let jac_heat { Ida.jac_y = (yval : RealArray.t);
                (mgrid+(mgrid-2)+2+mgrid*i+2); (* *this *)
     set_rowval (2*mgrid+4*(mgrid-2)+repeat+5)
                (mgrid+(mgrid-2)+2+mgrid*i+1+mgrid);
-    
+
     (* 5 in 5*j chosen since there are 5 elements in each column *)
     (* column repeats mgrid-4 times within the outer loop *)
     for j=0 to mgrid-4-1 do
@@ -324,7 +324,7 @@ let jac_heat { Ida.jac_y = (yval : RealArray.t);
       set_rowval (2*mgrid+4*(mgrid-2)+repeat+10+5*j)
                  (mgrid+(mgrid-2)+2+mgrid*i+1+mgrid+1+j)
     done;
-    
+
     set_rowval (2*mgrid+4*(mgrid-2)+repeat+(mgrid-4)*5+6)
                (mgrid+(mgrid-2)+2+mgrid*i-2);
     set_rowval (2*mgrid+4*(mgrid-2)+repeat+(mgrid-4)*5+7)
@@ -339,7 +339,7 @@ let jac_heat { Ida.jac_y = (yval : RealArray.t);
     set_rowval (2*mgrid+4*(mgrid-2)+repeat+(mgrid-4)*5+11)
                (mgrid+(mgrid-2)+2+mgrid*i-2+mgrid+1)
   done;
-  
+
   (**** last-1 column block ****)
   set_rowval (total-6*(mgrid-2)-4)
              (mgrid*mgrid-1-2*(mgrid-1)-1);
@@ -380,12 +380,12 @@ let jac_heat { Ida.jac_y = (yval : RealArray.t);
   (*; PrintSparseMat(JacMat)*)
 
 (*
- * heatres: heat equation system residual function                       
- * This uses 5-point central differencing on the interior points, and    
- * includes algebraic equations for the boundary values.                 
- * So for each interior point, the residual component has the form       
- *    res_i = u'_i - (central difference)_i                              
- * while for each boundary point, it is res_i = u_i.                     
+ * heatres: heat equation system residual function
+ * This uses 5-point central differencing on the interior points, and
+ * includes algebraic equations for the boundary values.
+ * So for each interior point, the residual component has the form
+ *    res_i = u'_i - (central difference)_i
+ * while for each boundary point, it is res_i = u_i.
  *)
 let heatres t (u : RealArray.t) (u' : RealArray.t) resval data =
   let mm = data.mm
@@ -471,7 +471,7 @@ let print_output mem t u =
   and nni   = get_num_nonlin_solv_iters mem
   and nre   = get_num_res_evals mem
   and hused = get_last_step mem
-  and nje   = Sls.Klu.get_num_jac_evals mem
+  and nje   = Dls.get_num_jac_evals mem
   in
   printf " %5.2f %13.5e  %d  %3d  %3d  %3d  %4d  %9.2e \n"
          t umax kused nst nni nje nre hused
@@ -520,8 +520,9 @@ let main () =
     else if mgrid = 3 then jac_heat3
     else failwith "mgrid size is too small to run."
   in
+  let m = Matrix.sparse_csc ~nnz neq in
   let mem =
-    Ida.(init (Sls.Klu.solver_csc jacfn nnz)
+    Ida.(init Dls.(solver Direct.(klu wu m) ~jac:jacfn m)
               (SStolerances (rtol, atol))
               (fun t u u' r -> heatres t u u' r data)
               t0 wu wu')

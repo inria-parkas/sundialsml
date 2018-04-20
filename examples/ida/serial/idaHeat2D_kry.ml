@@ -47,7 +47,7 @@ let printf = Printf.printf
 
 (* User data *)
 type user_data =
-  {  
+  {
     mm    : int;                        (* number of grid points *)
     dx    : float;
     coeff : float;
@@ -55,20 +55,20 @@ type user_data =
   }
 
 (*
- * resHeat: heat equation system residual function (user-supplied)      
- * This uses 5-point central differencing on the interior points, and   
- * includes algebraic equations for the boundary values.                
- * So for each interior point, the residual component has the form      
- *    res_i = u'_i - (central difference)_i                             
- * while for each boundary point, it is res_i = u_i.                     
+ * resHeat: heat equation system residual function (user-supplied)
+ * This uses 5-point central differencing on the interior points, and
+ * includes algebraic equations for the boundary values.
+ * So for each interior point, the residual component has the form
+ *    res_i = u'_i - (central difference)_i
+ * while for each boundary point, it is res_i = u_i.
  *)
 let res_heat data t (u : RealArray.t) (u' : RealArray.t) r =
   let coeff = data.coeff
   and mm    = data.mm in
-  
+
   (* Initialize r to u, to take care of boundary equations. *)
   RealArray.blit u r;
-  
+
   (* Loop over interior points; set res = up - (central difference).  *)
   for j = 1 to mgrid-2 do
     let offset = mm*j in
@@ -81,20 +81,20 @@ let res_heat data t (u : RealArray.t) (u' : RealArray.t) r =
   done
 
 (*
- * p_setup_heat: setup for diagonal preconditioner for idaHeat2D_kry.   
- *                                                                 
- * The optional user-supplied functions p_setup_heat and          
- * p_solve_heat together must define the left preconditoner        
- * matrix P approximating the system Jacobian matrix               
- *                   J = dF/du + cj*dF/du'                         
- * (where the DAE system is F(t,u,u') = 0), and solve the linear   
- * systems P z = r.   This is done in this case by keeping only    
- * the diagonal elements of the J matrix above, storing them as    
- * inverses in a vector pp, when computed in p_setup_heat, for    
- * subsequent use in p_solve_heat.                                 
- *                                                                 
- * In this instance, only cj and data (user data structure, with    
- * pp etc.) are used from the p_setup_heat argument list.         
+ * p_setup_heat: setup for diagonal preconditioner for idaHeat2D_kry.
+ *
+ * The optional user-supplied functions p_setup_heat and
+ * p_solve_heat together must define the left preconditoner
+ * matrix P approximating the system Jacobian matrix
+ *                   J = dF/du + cj*dF/du'
+ * (where the DAE system is F(t,u,u') = 0), and solve the linear
+ * systems P z = r.   This is done in this case by keeping only
+ * the diagonal elements of the J matrix above, storing them as
+ * inverses in a vector pp, when computed in p_setup_heat, for
+ * subsequent use in p_solve_heat.
+ *
+ * In this instance, only cj and data (user data structure, with
+ * pp etc.) are used from the p_setup_heat argument list.
  *)
 let p_setup_heat data jac =
   let pp = data.pp
@@ -105,7 +105,7 @@ let p_setup_heat data jac =
   (* Initialize the entire vector to 1., then set the interior points to the
      correct value for preconditioning. *)
   RealArray.fill pp 1.;
-  
+
   (* Compute the inverse of the preconditioner diagonal elements. *)
   let pelinv = 1. /. (c_j +. 4.*.data.coeff) in
 
@@ -118,10 +118,10 @@ let p_setup_heat data jac =
   done
 
 (*
- * p_solve_heat: solve preconditioner linear system.              
- * This routine multiplies the input vector rvec by the vector pp 
- * containing the inverse diagonal Jacobian elements (previously  
- * computed in PrecondHeateq), returning the result in zvec.      
+ * p_solve_heat: solve preconditioner linear system.
+ * This routine multiplies the input vector rvec by the vector pp
+ * containing the inverse diagonal Jacobian elements (previously
+ * computed in PrecondHeateq), returning the result in zvec.
  *)
 let p_solve_heat data jac rvec zvec delta =
   nvprod data.pp rvec zvec
@@ -233,23 +233,23 @@ let main () =
 
   (* Call IDACreate to initialize solution with SPGMR linear solver.  *)
 
-  let solver =
-    Ida.Spils.(spgmr ~maxl:5
-                (prec_left ~setup:(p_setup_heat data) (p_solve_heat data)))
-  in
-  let mem = Ida.init solver (Ida.SStolerances (rtol, atol))
-                     (res_heat data) t0 wu wu' in
+  let lsolver = Iterative.(spgmr ~maxl:5 wu) in
+  let mem = Ida.(init Spils.(solver
+                        lsolver (prec_left ~setup:(p_setup_heat data)
+                                                  (p_solve_heat data)))
+              (SStolerances (rtol, atol))
+              (res_heat data) t0 wu wu') in
   Ida.set_constraints mem (Nvector_serial.wrap constraints);
 
   (* Print output heading. *)
   print_header rtol atol;
 
-  (* 
+  (*
    * -------------------------------------------------------------------------
-   * CASE I 
+   * CASE I
    * -------------------------------------------------------------------------
    *)
-  
+
   (* Print case number, output table heading, and initial line of table. *)
 
   printf "\n\nCase 1: gsytpe = MODIFIED_GS\n";
@@ -280,16 +280,16 @@ let main () =
    * CASE II
    * -------------------------------------------------------------------------
    *)
-  
+
   (* Re-initialize u, u'. *)
 
   set_initial_profile data u u' res;
-  
+
   (* Re-initialize IDA and IDASPGMR *)
 
   Ida.reinit mem t0 wu wu';
-  Ida.Spils.set_gs_type mem Spils.ClassicalGS;
-  
+  Iterative.(set_gs_type lsolver ClassicalGS);
+
   (* Print case number, output table heading, and initial line of table. *)
   printf "\n\nCase 2: gstype = CLASSICAL_GS\n";
   printf "\n   Output Summary (umax = max-norm of solution) \n\n";

@@ -214,7 +214,9 @@ let main () =
   in
 
   (* IDA initialization *)
-  let mem = Ida.(init (Dls.dense ()) (SStolerances (rtol, atol))
+  let m = Matrix.dense neq in
+  let mem = Ida.(init Dls.(solver Direct.(dense wy m) m)
+                      (SStolerances (rtol, atol))
                       (ressc data) ~varid:(Nvector_serial.wrap id) t0 wy wy') in
   Ida.set_suppress_alg mem true;
 

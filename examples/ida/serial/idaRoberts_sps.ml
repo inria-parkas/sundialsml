@@ -8,8 +8,8 @@
  * OCaml port: Jun Inoue, Inria, Aug 2014.
  *             Timothy Bourke, Inria, Jan 2016.
  * -----------------------------------------------------------------
- * This simple example problem for IDA, due to Robertson, 
- * is from chemical kinetics, and consists of the following three 
+ * This simple example problem for IDA, due to Robertson,
+ * is from chemical kinetics, and consists of the following three
  * equations:
 
  *      dy1/dt = -.04*y1 + 1.e4*y2*y3
@@ -69,14 +69,14 @@ and print_output ida t y =
   and nst   = Ida.get_num_steps ida
   and hused = Ida.get_last_step ida
   in
-  printf "%10.4e %12.4e %12.4e %12.4e | %3d  %1d %12.4e\n" 
+  printf "%10.4e %12.4e %12.4e %12.4e | %3d  %1d %12.4e\n"
     t y.{0} y.{1} y.{2} nst kused hused
 
 and print_final_stats ida =
   let open Ida in
   let nst  = get_num_steps ida
   and nre  = get_num_res_evals ida
-  and nje  = Sls.Superlumt.get_num_jac_evals ida
+  and nje  = Dls.get_num_jac_evals ida
   and nni  = get_num_nonlin_solv_iters ida
   and netf = get_num_err_test_fails ida
   and ncfn = get_num_nonlin_solv_conv_fails ida
@@ -113,8 +113,8 @@ let resrob tres (y : RealArray.t) (yp : RealArray.t) (rr : RealArray.t) =
 let jacrob { Ida.jac_y = (yval : RealArray.t);
              Ida.jac_coef = cj }
            jacmat =
-  let set_col = Sls.SparseMatrix.set_col jacmat in
-  let set = Sls.SparseMatrix.set jacmat in
+  let set_col = Matrix.Sparse.set_col jacmat in
+  let set = Matrix.Sparse.set jacmat in
 
   set_col 0 0;
   set_col 1 3;
@@ -165,8 +165,9 @@ let main () =
 
   (* Call IDACreate, IDAInit, and IDARootInit to initialize IDA memory with
    * a 2-component root function and the dense direct linear solver.  *)
+  let m = Matrix.sparse_csc ~nnz:(neq*neq) neq in
   let ida_mem =
-    Ida.(init (Sls.Superlumt.solver_csc jacrob ~nnz:(neq*neq) ~nthreads:1)
+    Ida.(init Dls.(solver Direct.(superlumt ~nthreads:1 wy m) ~jac:jacrob m)
               (SVtolerances (rtol, Nvector_serial.wrap avtol))
               resrob ~roots:(nroots, grob) t0 wy wy')
   in

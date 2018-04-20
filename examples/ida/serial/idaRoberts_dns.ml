@@ -8,8 +8,8 @@
  * -----------------------------------------------------------------
  * OCaml port: Jun Inoue, Inria, Aug 2014.
  * -----------------------------------------------------------------
- * This simple example problem for IDA, due to Robertson, 
- * is from chemical kinetics, and consists of the following three 
+ * This simple example problem for IDA, due to Robertson,
+ * is from chemical kinetics, and consists of the following three
  * equations:
 
  *      dy1/dt = -.04*y1 + 1.e4*y2*y3
@@ -69,7 +69,7 @@ and print_output ida t y =
   and nst = Ida.get_num_steps ida
   and hused = Ida.get_last_step ida
   in
-  printf "%10.4e %12.4e %12.4e %12.4e | %3d  %1d %12.4e\n" 
+  printf "%10.4e %12.4e %12.4e %12.4e | %3d  %1d %12.4e\n"
     t y.{0} y.{1} y.{2} nst kused hused
 
 and print_final_stats ida =
@@ -118,7 +118,7 @@ and jacrob params jj =
       Ida.jac_y=(y : RealArray.t);
       Ida.jac_res=resvec }
     ->
-  let set = Dls.DenseMatrix.set jj in
+  let set = Matrix.Dense.set jj in
   set 0 0 (-. 0.04 -. cj);
   set 1 0 (0.04);
   set 2 0 (1.);
@@ -161,8 +161,9 @@ let main () =
 
   (* Call IDACreate, IDAInit, and IDARootInit to initialize IDA memory with
    * a 2-component root function and the dense direct linear solver.  *)
+  let m = Matrix.dense neq in
   let ida_mem =
-    Ida.(init (Dls.dense ~jac:jacrob ())
+    Ida.(init Dls.(solver Direct.(dense wy m) ~jac:jacrob m)
               (SVtolerances (rtol, Nvector_serial.wrap avtol))
               resrob ~roots:(nroots, grob) t0 wy wy')
   in

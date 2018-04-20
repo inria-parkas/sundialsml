@@ -108,12 +108,12 @@ let print_output mem t u linsolver =
 
 
 (*
- * resHeat: heat equation system residual function (user-supplied)      
- * This uses 5-point central differencing on the interior points, and   
- * includes algebraic equations for the boundary values.                
- * So for each interior point, the residual component has the form      
- *    res_i = u'_i - (central difference)_i                             
- * while for each boundary point, it is res_i = u_i.                     
+ * resHeat: heat equation system residual function (user-supplied)
+ * This uses 5-point central differencing on the interior points, and
+ * includes algebraic equations for the boundary values.
+ * So for each interior point, the residual component has the form
+ *    res_i = u'_i - (central difference)_i
+ * while for each boundary point, it is res_i = u_i.
  *)
 let res_heat data t u (u' : RealArray.t) res =
   let coeff = data.coeff
@@ -134,20 +134,20 @@ let res_heat data t u (u' : RealArray.t) res =
   done
 
 (*
- * PsetupHeat: setup for diagonal preconditioner.   
- *                                                                 
- * The optional user-supplied functions PsetupHeat and          
- * PsolveHeat together must define the left preconditoner        
- * matrix P approximating the system Jacobian matrix               
- *                   J = dF/du + cj*dF/du'                         
- * (where the DAE system is F(t,u,u') = 0), and solve the linear   
- * systems P z = r.   This is done in this case by keeping only    
- * the diagonal elements of the J matrix above, storing them as    
- * inverses in a vector pp, when computed in PsetupHeat, for    
- * subsequent use in PsolveHeat.                                 
- *                                                                 
- * In this instance, only cj and data (user data structure, with    
- * pp etc.) are used from the PsetupdHeat argument list.         
+ * PsetupHeat: setup for diagonal preconditioner.
+ *
+ * The optional user-supplied functions PsetupHeat and
+ * PsolveHeat together must define the left preconditoner
+ * matrix P approximating the system Jacobian matrix
+ *                   J = dF/du + cj*dF/du'
+ * (where the DAE system is F(t,u,u') = 0), and solve the linear
+ * systems P z = r.   This is done in this case by keeping only
+ * the diagonal elements of the J matrix above, storing them as
+ * inverses in a vector pp, when computed in PsetupHeat, for
+ * subsequent use in PsolveHeat.
+ *
+ * In this instance, only cj and data (user data structure, with
+ * pp etc.) are used from the PsetupdHeat argument list.
  *)
 let p_setup_heat data jac =
   let c_j = jac.Ida.jac_coef
@@ -157,7 +157,7 @@ let p_setup_heat data jac =
   (* Initialize the entire vector to 1., then set the interior points to the
      correct value for preconditioning. *)
   RealArray.fill data.pp 1.;
-    
+
   (* Compute the inverse of the preconditioner diagonal elements. *)
   let pelinv = 1./.(c_j +. 4.*.data.coeff) in
 
@@ -170,10 +170,10 @@ let p_setup_heat data jac =
   done
 
 (*
- * PsolveHeat: solve preconditioner linear system.              
- * This routine multiplies the input vector rvec by the vector pp 
- * containing the inverse diagonal Jacobian elements (previously  
- * computed in PrecondHeateq), returning the result in zvec.      
+ * PsolveHeat: solve preconditioner linear system.
+ * This routine multiplies the input vector rvec by the vector pp
+ * containing the inverse diagonal Jacobian elements (previously
+ * computed in PrecondHeateq), returning the result in zvec.
  *)
 let p_solve_heat data jac r z delta =
   nvprod data.pp r z
@@ -253,7 +253,9 @@ let main() =
 
   (* Call IDACreate with dummy linear solver *)
 
-  let mem = Ida.(init (Dls.dense ()) (SStolerances (rtol, atol))
+  let m = Matrix.dense neq in
+  let mem = Ida.(init Dls.(solver Direct.(dense wu m) m)
+                      (SStolerances (rtol, atol))
                       (res_heat data) t0 wu wu') in
   Ida.set_constraints mem (Nvector_serial.wrap constraints);
 
@@ -281,20 +283,23 @@ let main() =
                       printf " \n| SPGMR |\n";
                       printf " -------\n";
                       flush stdout;
-                      Ida.reinit mem ~linsolv:(Ida.Spils.spgmr prec)
-                        t0 wu wu')
+                      Ida.(reinit mem
+                        ~linsolv:Spils.(solver Iterative.(spgmr wu) prec)
+                        t0 wu wu'))
       | USE_SPBCG -> (printf " -------";
                       printf " \n| SPBCG |\n";
                       printf " -------\n";
                       flush stdout;
-                      Ida.reinit mem ~linsolv:(Ida.Spils.spbcg prec)
-                        t0 wu wu')
+                      Ida.(reinit mem
+                        ~linsolv:Spils.(solver Iterative.(spbcgs wu) prec)
+                        t0 wu wu'))
       | USE_SPTFQMR -> (printf " ---------";
                         printf " \n| SPTFQMR |\n";
                         printf " ---------\n";
                       flush stdout;
-                        Ida.reinit mem ~linsolv:(Ida.Spils.sptfqmr prec)
-                          t0 wu wu')
+                        Ida.(reinit mem
+                          ~linsolv:Spils.(solver Iterative.(sptfqmr wu) prec)
+                          t0 wu wu'))
     end;
 
     (* Print output heading. *)

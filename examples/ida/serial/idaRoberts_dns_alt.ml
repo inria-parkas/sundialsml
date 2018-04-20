@@ -8,8 +8,8 @@
  * -----------------------------------------------------------------
  * OCaml port: Jun Inoue, Inria, Aug 2014.
  * -----------------------------------------------------------------
- * This simple example problem for IDA, due to Robertson, 
- * is from chemical kinetics, and consists of the following three 
+ * This simple example problem for IDA, due to Robertson,
+ * is from chemical kinetics, and consists of the following three
  * equations:
 
  *      dy1/dt = -.04*y1 + 1.e4*y2*y3
@@ -31,7 +31,7 @@
 module RealArray = Sundials.RealArray
 module Roots = Sundials.Roots
 module Alt = Ida.Alternate
-module DM = Dls.ArrayDenseMatrix
+module DM = Matrix.ArrayDense
 module LintArray = Sundials.LintArray
 
 let printf = Printf.printf
@@ -90,17 +90,17 @@ module AltDense = struct
     in
 
     let solver =
-      Alt.make (fun s nv nv' ->
+      Alt.(solver (fun s nv ->
           let n = RealArray.length (Nvector.unwrap nv) in
           let mem = { jj = DM.create n n;
                       pivots = LintArray.create n;
                     }
           in
           {
-            Alt.linit = Some (linit mem);
-            Alt.lsetup = Some (lsetup mem);
-            Alt.lsolve = lsolve mem;
-          })
+            linit = Some (linit mem);
+            lsetup = Some (lsetup mem);
+            lsolve = lsolve mem;
+          }))
     in
     (solver, fun () -> (0, !nje))
 end
@@ -149,7 +149,7 @@ and print_output ida t y =
   and nst   = Ida.get_num_steps ida
   and hused = Ida.get_last_step ida
   in
-  printf "%10.4e %12.4e %12.4e %12.4e | %3d  %1d %12.4e\n" 
+  printf "%10.4e %12.4e %12.4e %12.4e | %3d  %1d %12.4e\n"
     t y.{0} y.{1} y.{2} nst kused hused
 
 and print_final_stats ida nreLS nje =
