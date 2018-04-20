@@ -168,12 +168,15 @@ enum mat_matrix_index {
 };
 
 #if SUNDIALS_LIB_VERSION >= 300
-#define SUNMAT(v) (*(SUNMatrix *)Data_custom_val(v))
 
+/* Map a matrix_content.rawptr to a (void *) to a MAT_CONTENT_*_TYPE */
 #define MAT_CONTENT(v) (*(void **)Data_custom_val(v))
+
+/* Map a matrix_content.rawptr to a pointer to a MAT_CONTENT_*_TYPE */
 #define MAT_CONTENT_DENSE(v)  (*(SUNMatrixContent_Dense *)Data_custom_val(v))
 #define MAT_CONTENT_BAND(v)   (*(SUNMatrixContent_Band *)Data_custom_val(v))
 #define MAT_CONTENT_SPARSE(v) (*(SUNMatrixContent_Sparse *)Data_custom_val(v))
+
 #define MAT_CONTENT_DENSE_TYPE SUNMatrixContent_Dense
 #define MAT_CONTENT_BAND_TYPE SUNMatrixContent_Band
 #define MAT_CONTENT_SPARSE_TYPE SUNMatrixContent_Sparse
@@ -186,7 +189,7 @@ struct csmat {
 // Return the OCaml version of the sunmatrix payload
 #define MAT_BACKLINK(smat) (((struct csmat *)smat)->backlink)
 
-// MAT_CVAL turns an OCaml matrix cptr into a c-sunmatrix
+/* Map a Matrix.rawptr to a SUNMatrix */
 #define MAT_CVAL(v) (*(SUNMatrix *)Data_custom_val(v))
 // MAT_VAL turns an OCaml Matrix.t into a c-sunmatrix
 #define MAT_VAL(v) (MAT_CVAL(Field(v, RECORD_MAT_MATRIX_RAWPTR)))

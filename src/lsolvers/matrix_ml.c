@@ -2074,7 +2074,7 @@ CAMLprim value ml_matrix_wrap(value vid, value vcontent, value vpayload)
 		? &finalize_caml_custom_smat
 		: &finalize_caml_smat,
 	    1, 20);
-    SUNMAT(vr) = smat;
+    MAT_CVAL(vr) = smat;
 
 #else // SUNDIALS_LIB_VERSION < 300
     vr = Val_unit;
