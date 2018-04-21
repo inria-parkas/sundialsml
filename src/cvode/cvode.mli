@@ -118,6 +118,7 @@ end (* }}} *)
     @cvode <node5#sss:optin_dls> Direct linear solvers optional input functions
     @cvode <node5#sss:optout_dls> Direct linear solvers optional output functions *)
 module Dls : sig (* {{{ *)
+  include module type of Direct
 
   (** Callback functions that compute approximations to a Jacobian
       matrix. In the call [jac arg jm], [arg] is a {!jacobian_arg} with

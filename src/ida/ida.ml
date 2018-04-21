@@ -90,6 +90,7 @@ let root_init session (nroots, rootsfn) =
 
 module Dls = struct (* {{{ *)
   include DirectTypes
+  include Direct
 
   (* Sundials < 3.0.0 *)
   external c_dls_dense : 'k serial_session -> int -> bool -> unit
