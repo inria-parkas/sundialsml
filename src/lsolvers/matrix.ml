@@ -19,7 +19,7 @@ type 'k serial_nvector
   = (Nvector_serial.data, [>Nvector_serial.kind] as 'k) Nvector.t
 
 (* Must correspond with matrix_ml.h:mat_matrix_ops_index *)
-type ('m, 'd, 'k) matrix_ops = {
+type ('m, 'd) matrix_ops = {
   m_clone      : 'm -> 'm;
 
   m_zero       : 'm -> unit;
@@ -855,7 +855,7 @@ type ('k, 'm, 'nd, 'nk) t = {
   payload : 'm;
   rawptr  : cptr;
   id      : id;
-  mat_ops : ('m, 'nd, 'nk) matrix_ops;
+  mat_ops : ('m, 'nd) matrix_ops;
 }
 
 type 'nk dense =
