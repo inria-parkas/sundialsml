@@ -38,7 +38,7 @@ let _ =
        lsolver_exn_index.  *)
     [|UnrecoverableFailure false;
       MatrixNotSquare;
-      MatrixVectorMismatch
+      MatrixVectorMismatch;
       InsufficientStorageUpperBandwidth;
       Invalid_argument ""; (* Standard OCaml exception *)
       ATimesFailure false;

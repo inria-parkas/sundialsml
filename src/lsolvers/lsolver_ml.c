@@ -44,6 +44,7 @@
 #include <sunlinsol/sunlinsol_lapackdense.h>
 #endif
 
+#include <nvector/nvector_serial.h>
 #endif
 
 #include <caml/mlvalues.h>
@@ -98,6 +99,9 @@ CAMLprim value ml_lsolver_dense(value vnvec, value vdmat)
 	if (SUNDenseMatrix_Rows(dmat) != SUNDenseMatrix_Columns(dmat))
 	    caml_raise_constant(LSOLVER_EXN(MatrixNotSquare));
 
+	if (SUNDenseMatrix_Rows(dmat) != NV_LENGTH_S(NVEC_VAL(vnvec)))
+	    caml_raise_constant(LSOLVER_EXN(MatrixVectorMismatch));
+
 	caml_raise_out_of_memory();
     }
 
@@ -117,6 +121,9 @@ CAMLprim value ml_lsolver_lapack_dense(value vnvec, value vdmat)
     if (ls == NULL) {
 	if (SUNDenseMatrix_Rows(bmat) != SUNDenseMatrix_Columns(bmat))
 	    caml_raise_constant(LSOLVER_EXN(MatrixNotSquare));
+
+	if (SUNDenseMatrix_Rows(dmat) != NV_LENGTH_S(NVEC_VAL(vnvec)))
+	    caml_raise_constant(LSOLVER_EXN(MatrixVectorMismatch));
 
 	caml_raise_out_of_memory();
     }
@@ -144,6 +151,9 @@ CAMLprim value ml_lsolver_band(value vnvec, value vbmat)
 		   + SUNBandMatrix_UpperBandwidth(bmat)))
 	    caml_raise_constant(LSOLVER_EXN(InsufficientStorageUpperBandwidth));
 
+	if (SUNBandMatrix_Rows(bmat) != NV_LENGTH_S(NVEC_VAL(vnvec)))
+	    caml_raise_constant(LSOLVER_EXN(MatrixVectorMismatch));
+
 	caml_raise_out_of_memory();
     }
 
@@ -170,6 +180,9 @@ CAMLprim value ml_lsolver_lapack_band(value vnvec, value vbmat)
 		   + SUNBandMatrix_UpperBandwidth(bmat)))
 	    caml_raise_constant(LSOLVER_EXN(InsufficientStorageUpperBandwidth));
 
+	if (SUNBandMatrix_Rows(bmat) != NV_LENGTH_S(NVEC_VAL(vnvec)))
+	    caml_raise_constant(LSOLVER_EXN(MatrixVectorMismatch));
+
 	caml_raise_out_of_memory();
     }
 
@@ -189,6 +202,9 @@ CAMLprim value ml_lsolver_klu(value vnvec, value vsmat)
     if (ls == NULL) {
 	if (SUNSparseMatrix_Rows(smat) != SUNSparseMatrix_Columns(smat))
 	    caml_raise_constant(LSOLVER_EXN(MatrixNotSquare));
+
+	if (SUNBandMatrix_Rows(smat) != NV_LENGTH_S(NVEC_VAL(vnvec)))
+	    caml_raise_constant(LSOLVER_EXN(MatrixVectorMismatch));
 
 	caml_raise_out_of_memory();
     }
@@ -230,6 +246,9 @@ CAMLprim value ml_lsolver_superlumt(value vnvec, value vsmat, value vnthreads)
     if (ls == NULL) {
 	if (SUNSparseMatrix_Rows(smat) != SUNSparseMatrix_Columns(smat))
 	    caml_raise_constant(LSOLVER_EXN(MatrixNotSquare));
+
+	if (SUNBandMatrix_Rows(smat) != NV_LENGTH_S(NVEC_VAL(vnvec)))
+	    caml_raise_constant(LSOLVER_EXN(MatrixVectorMismatch));
 
 	caml_raise_out_of_memory();
     }
