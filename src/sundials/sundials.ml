@@ -31,666 +31,657 @@ exception NotImplementedBySundialsVersion
 
 (* Note the type annotations are redundant because there's already a .mli, but
    explicit annotations improve performance for bigarrays.  *)
-module RealArray =
-  struct
-    open Bigarray
+module RealArray = struct (* {{{ *)
+  open Bigarray
 
-    let kind = float64
-    let layout = c_layout
-    type t = (float, float64_elt, c_layout) Array1.t
+  let kind = float64
+  let layout = c_layout
+  type t = (float, float64_elt, c_layout) Array1.t
 
-    let create : int -> t = Array1.create kind layout
-    let of_array : float array -> t = Array1.of_array kind layout
+  let create : int -> t = Array1.create kind layout
+  let of_array : float array -> t = Array1.of_array kind layout
 
-    let fill : t -> float -> unit = Array1.fill
+  let fill : t -> float -> unit = Array1.fill
 
-    let make size x =
-      let a = create size in
-      fill a x;
-      a
+  let make size x =
+    let a = create size in
+    fill a x;
+    a
 
-    let init size f =
-      let a = create size in
-      for i = 0 to size - 1 do
-        a.{i} <- f i
-      done;
-      a
+  let init size f =
+    let a = create size in
+    for i = 0 to size - 1 do
+      a.{i} <- f i
+    done;
+    a
 
-    let length : t -> int = Array1.dim
+  let length : t -> int = Array1.dim
 
-    let ppi ?(start="[") ?(stop="]") ?(sep=";")
-            ?(item=fun f->Format.fprintf f "%2d=% -14e")
-            fmt a =
-      Format.pp_print_string fmt start;
-      Format.pp_open_hovbox fmt 0;
-      for i = 0 to length a - 1 do
-        if i > 0 then (
-          Format.pp_print_string fmt sep;
-          Format.pp_print_space fmt ();
-        );
-        item fmt i a.{i}
-      done;
-      Format.pp_close_box fmt ();
-      Format.pp_print_string fmt stop
+  let ppi ?(start="[") ?(stop="]") ?(sep=";")
+          ?(item=fun f->Format.fprintf f "%2d=% -14e")
+          fmt a =
+    Format.pp_print_string fmt start;
+    Format.pp_open_hovbox fmt 0;
+    for i = 0 to length a - 1 do
+      if i > 0 then (
+        Format.pp_print_string fmt sep;
+        Format.pp_print_space fmt ();
+      );
+      item fmt i a.{i}
+    done;
+    Format.pp_close_box fmt ();
+    Format.pp_print_string fmt stop
 
-    let pp fmt a = ppi fmt a
-      ~item:(fun fmt _ x -> Format.fprintf fmt "% -14e" x)
+  let pp fmt a = ppi fmt a
+    ~item:(fun fmt _ x -> Format.fprintf fmt "% -14e" x)
 
-    let blit_some src isrc dst idst len =
-      if Sundials_config.safe &&
-         (len < 0 || isrc < 0 || isrc + len >= length src
-          || idst < 0 || idst + len >= length dst)
-      then invalid_arg "RealArray.blit_some";
-      for k = 0 to len - 1 do
-        Array1.unsafe_set dst (idst + k) (Array1.unsafe_get src (isrc + k))
-      done
+  let blit_some src isrc dst idst len =
+    if Sundials_config.safe &&
+       (len < 0 || isrc < 0 || isrc + len >= length src
+        || idst < 0 || idst + len >= length dst)
+    then invalid_arg "RealArray.blit_some";
+    for k = 0 to len - 1 do
+      Array1.unsafe_set dst (idst + k) (Array1.unsafe_get src (isrc + k))
+    done
 
-    let blit = Array1.blit
+  let blit = Array1.blit
 
-    let copy src =
-      let dst = create (length src) in
-      Array1.blit src dst;
-      dst
+  let copy src =
+    let dst = create (length src) in
+    Array1.blit src dst;
+    dst
 
-    let sub = Array1.sub
+  let sub = Array1.sub
 
-    let of_list src = of_array (Array.of_list src)
+  let of_list src = of_array (Array.of_list src)
 
-    let to_list v =
-      let rec go ls i =
-        if i < 0 then ls
-        else go (v.{i}::ls) (i-1)
-      in go [] (length v - 1)
+  let to_list v =
+    let rec go ls i =
+      if i < 0 then ls
+      else go (v.{i}::ls) (i-1)
+    in go [] (length v - 1)
 
-    let into_array (src : t) dst =
-      let n = length src in
-      if Sundials_config.safe && n <> Array.length dst
-      then invalid_arg "into_array: array sizes do not match";
-      for i = 1 to n-1 do
-        dst.(i) <- src.{i}
-      done
+  let into_array (src : t) dst =
+    let n = length src in
+    if Sundials_config.safe && n <> Array.length dst
+    then invalid_arg "into_array: array sizes do not match";
+    for i = 1 to n-1 do
+      dst.(i) <- src.{i}
+    done
 
-    let to_array (v : t) =
-      let n = length v in
-      let a = Array.make n v.{0} in
-      for i = 1 to n-1 do
-        a.(i) <- v.{i}
-      done;
-      a
+  let to_array (v : t) =
+    let n = length v in
+    let a = Array.make n v.{0} in
+    for i = 1 to n-1 do
+      a.(i) <- v.{i}
+    done;
+    a
 
-    let fold_left f b (v : t) =
-      let n = length v in
-      let rec go acc i =
-        if i < n then go (f acc v.{i}) (i+1)
-        else acc
-      in go b 0
+  let fold_left f b (v : t) =
+    let n = length v in
+    let rec go acc i =
+      if i < n then go (f acc v.{i}) (i+1)
+      else acc
+    in go b 0
 
-    let fold_right f (v : t) b =
-      let rec go acc i =
-        if i >= 0 then go (f v.{i} acc) (i-1)
-        else acc
-      in go b (length v - 1)
+  let fold_right f (v : t) b =
+    let rec go acc i =
+      if i >= 0 then go (f v.{i} acc) (i-1)
+      else acc
+    in go b (length v - 1)
 
-    let iter f (v : t) =
-      for i = 0 to (length v - 1) do
-        f v.{i}
-      done
+  let iter f (v : t) =
+    for i = 0 to (length v - 1) do
+      f v.{i}
+    done
 
-    let map f (v : t) =
-      for i = 0 to (length v - 1) do
-        v.{i} <- f v.{i}
-      done
+  let map f (v : t) =
+    for i = 0 to (length v - 1) do
+      v.{i} <- f v.{i}
+    done
 
-    let iteri f (v : t) =
-      for i = 0 to (length v - 1) do
-        f i v.{i}
-      done
+  let iteri f (v : t) =
+    for i = 0 to (length v - 1) do
+      f i v.{i}
+    done
 
-    let mapi f (v : t) =
-      for i = 0 to (length v - 1) do
-        v.{i} <- f i v.{i}
-      done
-  end
+  let mapi f (v : t) =
+    for i = 0 to (length v - 1) do
+      v.{i} <- f i v.{i}
+    done
+end (* }}} *)
 
 type real_array2 =
   (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
 
-module RealArray2 =
-  struct
-    open Bigarray
+module RealArray2 = struct (* {{{ *)
+  open Bigarray
 
-    let make_data = Array2.create float64 c_layout
+  let make_data = Array2.create float64 c_layout
 
-    type t = real_array2 * Obj.t
+  type t = real_array2 * Obj.t
 
-    external wrap : real_array2 -> t
-      = "c_sundials_realarray2_wrap"
+  external wrap : real_array2 -> t
+    = "c_sundials_realarray2_wrap"
 
-    let unwrap = fst
+  let unwrap = fst
 
-    let create nr nc =
-      let d = Array2.create float64 c_layout nc nr
-      in wrap d
+  let create nr nc =
+    let d = Array2.create float64 c_layout nc nr
+    in wrap d
 
-    let make nr nc v =
-      let d = Array2.create float64 c_layout nc nr
-      in
-      Array2.fill d v;
-      wrap d
+  let make nr nc v =
+    let d = Array2.create float64 c_layout nc nr
+    in
+    Array2.fill d v;
+    wrap d
 
-    let size a =
-      let d = unwrap a in
-      (Array2.dim2 d, Array2.dim1 d)
+  let size a =
+    let d = unwrap a in
+    (Array2.dim2 d, Array2.dim1 d)
 
-    let ppi ?(start="[") ?(rowstart="[") ?(stop="]") ?(rowstop="]")
-            ?(sep=";") ?(rowsep=";")
-            ?(item=fun f -> Format.fprintf f "(%2d,%2d)=% -14e")
-            fmt a =
-      let d = unwrap a in
-      let ni, nj = Array2.dim2 d - 1, Array2.dim1 d - 1 in
-      Format.pp_print_string fmt start;
-      Format.pp_open_vbox fmt 0;
-      for i = 0 to ni do
-        if i > 0 then (
-          Format.pp_print_string fmt rowsep;
-          Format.pp_print_cut fmt ()
+  let ppi ?(start="[") ?(rowstart="[") ?(stop="]") ?(rowstop="]")
+          ?(sep=";") ?(rowsep=";")
+          ?(item=fun f -> Format.fprintf f "(%2d,%2d)=% -14e")
+          fmt a =
+    let d = unwrap a in
+    let ni, nj = Array2.dim2 d - 1, Array2.dim1 d - 1 in
+    Format.pp_print_string fmt start;
+    Format.pp_open_vbox fmt 0;
+    for i = 0 to ni do
+      if i > 0 then (
+        Format.pp_print_string fmt rowsep;
+        Format.pp_print_cut fmt ()
+      );
+
+      Format.pp_print_string fmt rowstart;
+      Format.pp_open_hovbox fmt 0;
+      for j = 0 to nj do
+        if j > 0 then (
+          Format.pp_print_string fmt sep;
+          Format.pp_print_space fmt ();
         );
-
-        Format.pp_print_string fmt rowstart;
-        Format.pp_open_hovbox fmt 0;
-        for j = 0 to nj do
-          if j > 0 then (
-            Format.pp_print_string fmt sep;
-            Format.pp_print_space fmt ();
-          );
-          item fmt i j d.{j, i}
-        done;
-        Format.pp_close_box fmt ();
-        Format.pp_print_string fmt rowstop
-
+        item fmt i j d.{j, i}
       done;
       Format.pp_close_box fmt ();
-      Format.pp_print_string fmt stop
+      Format.pp_print_string fmt rowstop
 
-    let pp fmt a = ppi fmt a
-      ~item:(fun fmt _ _ x -> Format.fprintf fmt "% -14e" x)
+    done;
+    Format.pp_close_box fmt ();
+    Format.pp_print_string fmt stop
 
-    let get x i j = Array2.get (unwrap x) j i
-    let set x i j = Array2.set (unwrap x) j i
+  let pp fmt a = ppi fmt a
+    ~item:(fun fmt _ _ x -> Format.fprintf fmt "% -14e" x)
 
-    let col x j = Array2.slice_left (unwrap x) j
+  let get x i j = Array2.get (unwrap x) j i
+  let set x i j = Array2.set (unwrap x) j i
 
-    let copy a =
-      let d = unwrap a in
-      let c = Array2.dim1 d in
-      let r = Array2.dim2 d in
-      let d' = Array2.create float64 c_layout c r in
-      Array2.blit d d';
-      wrap d'
+  let col x j = Array2.slice_left (unwrap x) j
 
-    let blit a1 a2 =
-      Array2.blit (unwrap a1) (unwrap a2)
-  end
+  let copy a =
+    let d = unwrap a in
+    let c = Array2.dim1 d in
+    let r = Array2.dim2 d in
+    let d' = Array2.create float64 c_layout c r in
+    Array2.blit d d';
+    wrap d'
+
+  let blit a1 a2 =
+    Array2.blit (unwrap a1) (unwrap a2)
+end (* }}} *)
 
 
 (* Opaque arrays *)
 
-module type ArrayBaseOps =
-  sig
-    type t
-    type elt
-    val error_name : string
-    val create : int -> t
-    val get : t -> int -> elt
-    val set : t -> int -> elt -> unit
-    val length : t -> int
-  end
+module type ArrayBaseOps = sig (* {{{ *)
+  type t
+  type elt
+  val error_name : string
+  val create : int -> t
+  val get : t -> int -> elt
+  val set : t -> int -> elt -> unit
+  val length : t -> int
+end (* }}} *)
 
-module ArrayLike (A : ArrayBaseOps) =
-  struct
-    include A
+module ArrayLike (A : ArrayBaseOps) = struct (* {{{ *)
+  include A
 
-    let make n x =
-      let a = create n in
-      for i = 0 to n-1 do
-        set a i x
-      done;
-      a
+  let make n x =
+    let a = create n in
+    for i = 0 to n-1 do
+      set a i x
+    done;
+    a
 
-    let copy a =
-      let n = length a in
-      let b = create n in
-      for i = 0 to n-1 do
-        set b i (get a i)
-      done;
+  let copy a =
+    let n = length a in
+    let b = create n in
+    for i = 0 to n-1 do
+      set b i (get a i)
+    done;
+    b
+
+  let fold_left f x a =
+    let n = length a in
+    let rec go x i =
+      if i >= n then x
+      else go (f x (get a i)) (i+1)
+    in go x 0
+
+  let fold_right f a x =
+    let rec go x i =
+      if i < 0 then x
+      else go (f (get a i) x) (i-1)
+    in go x (length a - 1)
+
+  let iteri f a =
+    for i = 0 to length a - 1 do
+      f i (get a i)
+    done
+
+  let iter f a = iteri (fun _ x -> f x) a
+
+  let mapi f a =
+    let n = length a in
+    let b = create n in
+    for i = 0 to n-1 do
+      set b i (f i (get a i))
+    done;
+    b
+
+  let map f a = mapi (fun _ x -> f x) a
+
+  let mapi_overwrite f a =
+    for i = 0 to length a - 1 do
+      set a i (f i (get a i))
+    done;
+    a
+
+  let map_overwrite f a = mapi_overwrite (fun _ x -> f x) a
+
+  let of_array a =
+    let n = Array.length a in
+    let b = create n in
+    for i = 0 to n-1 do
+      set b i a.(i)
+    done;
+    b
+
+  let of_list a =
+    let n = List.length a in
+    let b = create n in
+    ignore (List.fold_left (fun i x -> set b i x; (i+1)) 0 a);
+    b
+
+  let to_array a =
+    let n = length a in
+    if n = 0 then [||]
+    else
+      let b = Array.make n (get a 0) in
+      iteri (fun i ai -> b.(i) <- ai) a;
       b
 
-    let fold_left f x a =
-      let n = length a in
-      let rec go x i =
-        if i >= n then x
-        else go (f x (get a i)) (i+1)
-      in go x 0
+  let to_list a = fold_right (fun x xs -> x::xs) a []
 
-    let fold_right f a x =
-      let rec go x i =
-        if i < 0 then x
-        else go (f (get a i) x) (i-1)
-      in go x (length a - 1)
+  let fill a x =
+    for i = 0 to length a - 1 do
+      set a i x
+    done
 
-    let iteri f a =
-      for i = 0 to length a - 1 do
-        f i (get a i)
+  let blit_some a oa b ob len =
+    let na = length a
+    and nb = length b in
+    if Sundials_config.safe &&
+       (len < 0 || oa < 0 || na < oa+len || ob < 0 || nb < ob+len)
+    then invalid_arg (Printf.sprintf "%s.blit" error_name)
+    else
+      for i = 0 to len-1 do
+        set b (ob + i) (get a (oa + i))
       done
 
-    let iter f a = iteri (fun _ x -> f x) a
+  let blit a b =
+    for i = 0 to min (length a) (length b) - 1 do
+      set b i (get a i)
+    done
 
-    let mapi f a =
-      let n = length a in
-      let b = create n in
-      for i = 0 to n-1 do
-        set b i (f i (get a i))
-      done;
-      b
-
-    let map f a = mapi (fun _ x -> f x) a
-
-    let mapi_overwrite f a =
-      for i = 0 to length a - 1 do
-        set a i (f i (get a i))
-      done;
-      a
-
-    let map_overwrite f a = mapi_overwrite (fun _ x -> f x) a
-
-    let of_array a =
-      let n = Array.length a in
-      let b = create n in
-      for i = 0 to n-1 do
-        set b i a.(i)
-      done;
-      b
-
-    let of_list a =
-      let n = List.length a in
-      let b = create n in
-      ignore (List.fold_left (fun i x -> set b i x; (i+1)) 0 a);
-      b
-
-    let to_array a =
-      let n = length a in
-      if n = 0 then [||]
-      else
-        let b = Array.make n (get a 0) in
-        iteri (fun i ai -> b.(i) <- ai) a;
-        b
-
-    let to_list a = fold_right (fun x xs -> x::xs) a []
-
-    let fill a x =
-      for i = 0 to length a - 1 do
-        set a i x
-      done
-
-    let blit_some a oa b ob len =
-      let na = length a
-      and nb = length b in
-      if Sundials_config.safe &&
-         (len < 0 || oa < 0 || na < oa+len || ob < 0 || nb < ob+len)
-      then invalid_arg (Printf.sprintf "%s.blit" error_name)
-      else
-        for i = 0 to len-1 do
-          set b (ob + i) (get a (oa + i))
-        done
-
-    let blit a b =
-      for i = 0 to min (length a) (length b) - 1 do
-        set b i (get a i)
-      done
-
-    let init n f =
-      let a = create n in
-      for i = 0 to n-1 do
-        set a i (f i)
-      done;
-      a
-  end
+  let init n f =
+    let a = create n in
+    for i = 0 to n-1 do
+      set a i (f i)
+    done;
+    a
+end (* }}} *)
 
 (* root arrays *)
 
-module LintArray =
-  struct
-    open Bigarray
+module LintArray = struct (* {{{ *)
+  open Bigarray
 
-    type t = (int, int_elt, c_layout) Array1.t
+  type t = (int, int_elt, c_layout) Array1.t
 
-    let create = Array1.create int RealArray.layout
+  let create = Array1.create int RealArray.layout
 
-    let make n x =
-      let v = create n in
-      Array1.fill v x;
-      v
+  let make n x =
+    let v = create n in
+    Array1.fill v x;
+    v
 
-    let pp fmt a =
-      Format.pp_print_string fmt "[";
-      Format.pp_open_hovbox fmt 0;
-      for i = 0 to Array1.dim a - 1 do
-        if i > 0 then (
-          Format.pp_print_string fmt ";";
-          Format.pp_print_space fmt ();
-        );
-        Format.fprintf fmt "% 6d" a.{i}
-      done;
-      Format.pp_close_box fmt ();
-      Format.pp_print_string fmt "]"
+  let pp fmt a =
+    Format.pp_print_string fmt "[";
+    Format.pp_open_hovbox fmt 0;
+    for i = 0 to Array1.dim a - 1 do
+      if i > 0 then (
+        Format.pp_print_string fmt ";";
+        Format.pp_print_space fmt ();
+      );
+      Format.fprintf fmt "% 6d" a.{i}
+    done;
+    Format.pp_close_box fmt ();
+    Format.pp_print_string fmt "]"
 
-    let ppi ?(start="[") ?(stop="]") ?(sep=";")
-            ?(item=fun fmt ->Format.fprintf fmt "%2d=% 6d")
-            fmt a =
-      Format.pp_print_string fmt start;
-      Format.pp_open_hovbox fmt 0;
-      for i = 0 to Array1.dim a - 1 do
-        if i > 0 then (
-          Format.pp_print_string fmt sep;
-          Format.pp_print_space fmt ();
-        );
-        item fmt i a.{i}
-      done;
-      Format.pp_close_box fmt ();
-      Format.pp_print_string fmt stop
+  let ppi ?(start="[") ?(stop="]") ?(sep=";")
+          ?(item=fun fmt ->Format.fprintf fmt "%2d=% 6d")
+          fmt a =
+    Format.pp_print_string fmt start;
+    Format.pp_open_hovbox fmt 0;
+    for i = 0 to Array1.dim a - 1 do
+      if i > 0 then (
+        Format.pp_print_string fmt sep;
+        Format.pp_print_space fmt ();
+      );
+      item fmt i a.{i}
+    done;
+    Format.pp_close_box fmt ();
+    Format.pp_print_string fmt stop
 
-  end
+end (* }}} *)
 
-module Roots =
-  struct
-    open Bigarray
+module Roots = struct (* {{{ *)
+  open Bigarray
+  type t = (int32, int32_elt, c_layout) Array1.t
+
+  type r =
+    | NoRoot
+    | Rising
+    | Falling
+
+  let root_of_int32 = function
+    | 1l -> Rising
+    | -1l -> Falling
+    | 0l -> NoRoot
+    | n ->
+      failwith
+        (Printf.sprintf
+           "Sundials.Roots.root_of_int32: invalid root event %ld" n)
+
+  let root_of_int = function
+    |  1 -> Rising
+    | -1 -> Falling
+    |  0 -> NoRoot
+    | n ->
+      failwith
+        ("Sundials.Roots.root_of_int: invalid root event " ^ string_of_int n)
+
+  let int32_of_root x =
+    match x with
+    | NoRoot -> 0l
+    | Rising -> 1l
+    | Falling -> -1l
+
+  let int_of_root x =
+    match x with
+    | NoRoot -> 0
+    | Rising -> 1
+    | Falling -> -1
+
+  let reset v = Array1.fill v 0l
+
+  let detected roots i = roots.{i} <> 0l
+  let get roots i = root_of_int32 (roots.{i})
+  let set a i v = a.{i} <- int32_of_root v
+
+  let create n =
+    let a = Array1.create int32 c_layout n in
+    reset a;
+    a
+
+  let length = Array1.dim
+
+  let string_of_root e =
+    match e with
+    | NoRoot  -> "_"
+    | Rising  -> "R"
+    | Falling -> "F"
+
+  let pp fmt a =
+    Format.pp_print_string fmt "[";
+    Format.pp_open_hovbox fmt 0;
+    for i = 0 to length a - 1 do
+      if i > 0 then (
+        Format.pp_print_string fmt ";";
+        Format.pp_print_space fmt ();
+      );
+      Format.pp_print_string fmt (string_of_root (root_of_int32 a.{i}))
+    done;
+    Format.pp_close_box fmt ();
+    Format.pp_print_string fmt "]"
+
+  let ppi ?(start="[") ?(stop="]") ?(sep=";")
+          ?(item=fun fmt i e ->
+                    Format.pp_print_int fmt i;
+                    Format.pp_print_string fmt "=";
+                    Format.pp_print_string fmt (string_of_root e))
+          fmt a =
+    Format.pp_print_string fmt start;
+    Format.pp_open_hovbox fmt 0;
+    for i = 0 to length a - 1 do
+      if i > 0 then (
+        Format.pp_print_string fmt sep;
+        Format.pp_print_space fmt ();
+      );
+      item fmt i (root_of_int32 a.{i})
+    done;
+    Format.pp_close_box fmt ();
+    Format.pp_print_string fmt stop
+
+  module A = ArrayLike (struct (* {{{ *)
     type t = (int32, int32_elt, c_layout) Array1.t
+    and elt = r
+    let error_name = "Roots"
+    let get = get
+    let set = set
+    let create = create
+    let length = length
+  end (* }}} *))
 
-    type r =
-      | NoRoot
-      | Rising
-      | Falling
+  let make n x = A.make n x
+  let copy = A.copy
+  let init = A.init
+  let fold_left = A.fold_left
+  let fold_right = A.fold_right
 
-    let root_of_int32 = function
-      | 1l -> Rising
-      | -1l -> Falling
-      | 0l -> NoRoot
-      | n ->
-        failwith
-          (Printf.sprintf
-             "Sundials.Roots.root_of_int32: invalid root event %ld" n)
+  let of_array = A.of_array
+  let of_list = A.of_list
+  let to_array = A.to_array
+  let to_list = A.to_list
 
-    let root_of_int = function
-      |  1 -> Rising
-      | -1 -> Falling
-      |  0 -> NoRoot
-      | n ->
-        failwith
-          ("Sundials.Roots.root_of_int: invalid root event " ^ string_of_int n)
+  let fill = A.fill
+  let blit_some = A.blit_some
+  let blit = A.blit
 
-    let int32_of_root x =
-      match x with
-      | NoRoot -> 0l
-      | Rising -> 1l
-      | Falling -> -1l
+  let rising  roots i = roots.{i} = 1l
+  let falling roots i = roots.{i} = -1l
 
-    let int_of_root x =
-      match x with
-      | NoRoot -> 0
-      | Rising -> 1
-      | Falling -> -1
+  let set_noroot a i = set a i NoRoot
+  let set_rising a i = set a i Rising
+  let set_falling a i = set a i Falling
 
-    let reset v = Array1.fill v 0l
+  let iteri = A.iteri
+  let iter = A.iter
 
-    let detected roots i = roots.{i} <> 0l
-    let get roots i = root_of_int32 (roots.{i})
-    let set a i v = a.{i} <- int32_of_root v
+  let exists a =
+    let n = length a in
+    let rec go i = a.{i} <> 0l || (i < n-1 && go (i+1)) in
+    go 0
+end (* }}} *)
 
-    let create n =
-      let a = Array1.create int32 c_layout n in
-      reset a;
-      a
+module RootDirs = struct (* {{{ *)
+  open Bigarray
+  type t = (int32, int32_elt, c_layout) Array1.t
 
-    let length = Array1.dim
+  type d =
+    | Increasing
+    | Decreasing
+    | IncreasingOrDecreasing
 
-    let string_of_root e =
-      match e with
-      | NoRoot  -> "_"
-      | Rising  -> "R"
-      | Falling -> "F"
+  let int32_of_rootdir x =
+    match x with
+    | Increasing -> 1l
+    | Decreasing -> -1l
+    | IncreasingOrDecreasing -> 0l
 
-    let pp fmt a =
-      Format.pp_print_string fmt "[";
-      Format.pp_open_hovbox fmt 0;
-      for i = 0 to length a - 1 do
-        if i > 0 then (
-          Format.pp_print_string fmt ";";
-          Format.pp_print_space fmt ();
-        );
-        Format.pp_print_string fmt (string_of_root (root_of_int32 a.{i}))
-      done;
-      Format.pp_close_box fmt ();
-      Format.pp_print_string fmt "]"
+  let rootdir_of_int32 x =
+    match x with
+    | 1l -> Increasing
+    | -1l -> Decreasing
+    | 0l -> IncreasingOrDecreasing
+    | n ->
+      failwith
+        (Printf.sprintf
+           "Sundials.Roots.rootdir_of_int32: invalid root direction %ld" n)
 
-    let ppi ?(start="[") ?(stop="]") ?(sep=";")
-            ?(item=fun fmt i e ->
-                      Format.pp_print_int fmt i;
-                      Format.pp_print_string fmt "=";
-                      Format.pp_print_string fmt (string_of_root e))
-            fmt a =
-      Format.pp_print_string fmt start;
-      Format.pp_open_hovbox fmt 0;
-      for i = 0 to length a - 1 do
-        if i > 0 then (
-          Format.pp_print_string fmt sep;
-          Format.pp_print_space fmt ();
-        );
-        item fmt i (root_of_int32 a.{i})
-      done;
-      Format.pp_close_box fmt ();
-      Format.pp_print_string fmt stop
+  let make n x =
+    let a = Array1.create int32 c_layout n in
+    Array1.fill a (int32_of_rootdir x);
+    a
 
-    module A = ArrayLike (struct
+  let create n = make n IncreasingOrDecreasing
+
+  let length a = Array1.dim a
+
+  let string_of_rootdir e =
+    match e with
+    | Increasing -> "R"
+    | Decreasing -> "F"
+    | IncreasingOrDecreasing -> "E"
+
+  let pp fmt a =
+    Format.pp_print_string fmt "[";
+    Format.pp_open_hovbox fmt 0;
+    for i = 0 to length a - 1 do
+      if i > 0 then (
+        Format.pp_print_string fmt ";";
+        Format.pp_print_space fmt ();
+      );
+      Format.pp_print_string fmt (string_of_rootdir (rootdir_of_int32 a.{i}))
+    done;
+    Format.pp_close_box fmt ();
+    Format.pp_print_string fmt "]"
+
+  let ppi ?(start="[") ?(stop="]") ?(sep=";")
+          ?(item=fun fmt i e ->
+                    Format.pp_print_int fmt i;
+                    Format.pp_print_string fmt "=";
+                    Format.pp_print_string fmt (string_of_rootdir e))
+          fmt a =
+    Format.pp_print_string fmt start;
+    Format.pp_open_hovbox fmt 0;
+    for i = 0 to length a - 1 do
+      if i > 0 then (
+        Format.pp_print_string fmt sep;
+        Format.pp_print_space fmt ();
+      );
+      item fmt i (rootdir_of_int32 a.{i})
+    done;
+    Format.pp_close_box fmt ();
+    Format.pp_print_string fmt stop
+
+  let copy n src =
+    let nsrc = Array.length src in
+    let a = Array1.create int32 c_layout n in
+    if n > nsrc
+    then Array1.fill a (int32_of_rootdir IncreasingOrDecreasing);
+    for i = 0 to min n nsrc - 1 do
+      a.{i} <- int32_of_rootdir src.(i)
+    done;
+    a
+
+  let set a i v = a.{i} <- int32_of_rootdir v
+  let get a i = rootdir_of_int32 a.{i}
+
+  module A = ArrayLike (
+    struct (* {{{ *)
       type t = (int32, int32_elt, c_layout) Array1.t
-      and elt = r
-      let error_name = "Roots"
-      let get = get
-      let set = set
+      and elt = d
+      let error_name = "RootDirs"
       let create = create
+      let set = set
+      let get = get
       let length = length
-    end)
+    end (* }}} *))
 
-    let make n x = A.make n x
-    let copy = A.copy
-    let init = A.init
-    let fold_left = A.fold_left
-    let fold_right = A.fold_right
+  let of_array  = A.of_array
+  let of_list   = A.of_list
+  let to_array  = A.to_array
+  let to_list   = A.to_list
+  let fill      = A.fill
+  let blit_some = A.blit_some
+  let blit      = A.blit
 
-    let of_array = A.of_array
-    let of_list = A.of_list
-    let to_array = A.to_array
-    let to_list = A.to_list
+  let init = A.init
 
-    let fill = A.fill
-    let blit_some = A.blit_some
-    let blit = A.blit
+end (* }}} *)
 
-    let rising  roots i = roots.{i} = 1l
-    let falling roots i = roots.{i} = -1l
+module Constraint = struct (* {{{ *)
+  let unconstrained = 0.0
+  let geq_zero =  1.0
+  let leq_zero = -1.0
+  let gt_zero  =  2.0
+  let lt_zero  = -2.0
 
-    let set_noroot a i = set a i NoRoot
-    let set_rising a i = set a i Rising
-    let set_falling a i = set a i Falling
+  type t =
+  | Unconstrained
+  | GeqZero
+  | LeqZero
+  | GtZero
+  | LtZero
 
-    let iteri = A.iteri
-    let iter = A.iter
+  let of_float = function
+    |  0.0 -> Unconstrained
+    |  1.0 -> GeqZero
+    | -1.0 -> LeqZero
+    |  2.0 -> GtZero
+    | -2.0 -> LtZero
+    |    f -> raise (Invalid_argument
+                    ("invalid constraint: " ^ string_of_float f))
+  let to_float = function
+    | Unconstrained -> 0.0
+    | GeqZero       -> 1.0
+    | LeqZero       -> -1.0
+    | GtZero        -> 2.0
+    | LtZero        -> -2.0
+end (* }}} *)
 
-    let exists a =
-      let n = length a in
-      let rec go i = a.{i} <> 0l || (i < n-1 && go (i+1)) in
-      go 0
-  end
+module Logfile = struct (* {{{ *)
+  type t
 
-module RootDirs =
-  struct
-    open Bigarray
-    type t = (int32, int32_elt, c_layout) Array1.t
+  external c_stderr : unit -> t
+    = "c_sundials_stderr"
 
-    type d =
-      | Increasing
-      | Decreasing
-      | IncreasingOrDecreasing
+  external c_stdout : unit -> t
+    = "c_sundials_stdout"
 
-    let int32_of_rootdir x =
-      match x with
-      | Increasing -> 1l
-      | Decreasing -> -1l
-      | IncreasingOrDecreasing -> 0l
+  external fopen : string -> bool -> t
+    = "c_sundials_fopen"
 
-    let rootdir_of_int32 x =
-      match x with
-      | 1l -> Increasing
-      | -1l -> Decreasing
-      | 0l -> IncreasingOrDecreasing
-      | n ->
-        failwith
-          (Printf.sprintf
-             "Sundials.Roots.rootdir_of_int32: invalid root direction %ld" n)
+  let stderr = c_stderr ()
+  let stdout = c_stdout ()
 
-    let make n x =
-      let a = Array1.create int32 c_layout n in
-      Array1.fill a (int32_of_rootdir x);
-      a
+  let openfile ?(trunc=false) fpath = fopen fpath trunc
 
-    let create n = make n IncreasingOrDecreasing
-
-    let length a = Array1.dim a
-
-    let string_of_rootdir e =
-      match e with
-      | Increasing -> "R"
-      | Decreasing -> "F"
-      | IncreasingOrDecreasing -> "E"
-
-    let pp fmt a =
-      Format.pp_print_string fmt "[";
-      Format.pp_open_hovbox fmt 0;
-      for i = 0 to length a - 1 do
-        if i > 0 then (
-          Format.pp_print_string fmt ";";
-          Format.pp_print_space fmt ();
-        );
-        Format.pp_print_string fmt (string_of_rootdir (rootdir_of_int32 a.{i}))
-      done;
-      Format.pp_close_box fmt ();
-      Format.pp_print_string fmt "]"
-
-    let ppi ?(start="[") ?(stop="]") ?(sep=";")
-            ?(item=fun fmt i e ->
-                      Format.pp_print_int fmt i;
-                      Format.pp_print_string fmt "=";
-                      Format.pp_print_string fmt (string_of_rootdir e))
-            fmt a =
-      Format.pp_print_string fmt start;
-      Format.pp_open_hovbox fmt 0;
-      for i = 0 to length a - 1 do
-        if i > 0 then (
-          Format.pp_print_string fmt sep;
-          Format.pp_print_space fmt ();
-        );
-        item fmt i (rootdir_of_int32 a.{i})
-      done;
-      Format.pp_close_box fmt ();
-      Format.pp_print_string fmt stop
-
-    let copy n src =
-      let nsrc = Array.length src in
-      let a = Array1.create int32 c_layout n in
-      if n > nsrc
-      then Array1.fill a (int32_of_rootdir IncreasingOrDecreasing);
-      for i = 0 to min n nsrc - 1 do
-        a.{i} <- int32_of_rootdir src.(i)
-      done;
-      a
-
-    let set a i v = a.{i} <- int32_of_rootdir v
-    let get a i = rootdir_of_int32 a.{i}
-
-    module A = ArrayLike (
-      struct
-        type t = (int32, int32_elt, c_layout) Array1.t
-        and elt = d
-        let error_name = "RootDirs"
-        let create = create
-        let set = set
-        let get = get
-        let length = length
-      end)
-
-    let of_array  = A.of_array
-    let of_list   = A.of_list
-    let to_array  = A.to_array
-    let to_list   = A.to_list
-    let fill      = A.fill
-    let blit_some = A.blit_some
-    let blit      = A.blit
-
-    let init = A.init
-
-  end
-
-module Constraint =
-  struct
-    let unconstrained = 0.0
-    let geq_zero =  1.0
-    let leq_zero = -1.0
-    let gt_zero  =  2.0
-    let lt_zero  = -2.0
-
-    type t =
-    | Unconstrained
-    | GeqZero
-    | LeqZero
-    | GtZero
-    | LtZero
-
-    let of_float = function
-      |  0.0 -> Unconstrained
-      |  1.0 -> GeqZero
-      | -1.0 -> LeqZero
-      |  2.0 -> GtZero
-      | -2.0 -> LtZero
-      |    f -> raise (Invalid_argument
-                      ("invalid constraint: " ^ string_of_float f))
-    let to_float = function
-      | Unconstrained -> 0.0
-      | GeqZero       -> 1.0
-      | LeqZero       -> -1.0
-      | GtZero        -> 2.0
-      | LtZero        -> -2.0
-  end
-
-module Logfile =
-  struct
-    type t
-
-    external c_stderr : unit -> t
-      = "c_sundials_stderr"
-
-    external c_stdout : unit -> t
-      = "c_sundials_stdout"
-
-    external fopen : string -> bool -> t
-      = "c_sundials_fopen"
-
-    let stderr = c_stderr ()
-    let stdout = c_stdout ()
-
-    let openfile ?(trunc=false) fpath = fopen fpath trunc
-
-    external flush : t -> unit
-      = "c_sundials_fflush"
-  end
+  external flush : t -> unit
+    = "c_sundials_fflush"
+end (* }}} *)
 
 type solver_result =
   | Continue
