@@ -47,11 +47,14 @@ let tmult  = 10.0     (* output time factor     *)
 let nout   = 12       (* number of output times *)
 let nroots = 2        (* number of root functions *)
 
+let idadense =
+  match Sundials.sundials_version with 2,_,_ -> "IDADENSE" | _ -> "DENSE"
+
 let print_header rtol avtol yy =
   let open Printf in
   printf "\nidaRoberts_dns: Robertson kinetics DAE serial example problem for IDA\n";
   printf "         Three equation chemical kinetics problem.\n\n";
-  printf "Linear solver: IDADENSE, with user-supplied Jacobian.\n";
+  printf "Linear solver: %s, with user-supplied Jacobian.\n" idadense;
 
   printf "Tolerance parameters:  rtol = %g   atol = %g %g %g \n"
     rtol avtol.{0} avtol.{1} avtol.{2};

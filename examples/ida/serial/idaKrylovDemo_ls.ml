@@ -66,6 +66,13 @@ let printf = Printf.printf
  * Print first lines of output (problem description)
  *)
 
+let idaspgmr =
+  match Sundials.sundials_version with 2,_,_ -> "IDASPGMR" | _ -> "SPGMR"
+let idaspbcg =
+  match Sundials.sundials_version with 2,_,_ -> "IDASPBCG" | _ -> "SPBCG"
+let idasptfqmr =
+  match Sundials.sundials_version with 2,_,_ -> "IDASPTFQMR" | _ -> "SPTFQMR"
+
 let print_header rtol atol linsolver =
   printf "\nidaKrylovDemo_ls: Heat equation, serial example problem for IDA\n";
   printf "               Discretized heat equation on 2D unit square.\n";
@@ -78,12 +85,11 @@ let print_header rtol atol linsolver =
 
   match linsolver with
   | USE_SPGMR ->
-    printf "Linear solver: IDASPGMR, preconditioner using diagonal elements. \n"
+    printf "Linear solver: %s, preconditioner using diagonal elements. \n" idaspgmr
   | USE_SPBCG ->
-    printf "Linear solver: IDASPBCG, preconditioner using diagonal elements. \n"
+    printf "Linear solver: %s, preconditioner using diagonal elements. \n" idaspbcg
   | USE_SPTFQMR ->
-    printf "Linear solver: IDASPTFQMR, preconditioner using diagonal elements. \n"
-
+    printf "Linear solver: %s, preconditioner using diagonal elements. \n" idasptfqmr
 (*
  * print_output: print max norm of solution and current solver statistics
  *)
@@ -286,9 +292,13 @@ let main() =
                       Ida.(reinit mem
                         ~linsolv:Spils.(solver Iterative.(spgmr wu) prec)
                         t0 wu wu'))
-      | USE_SPBCG -> (printf " -------";
-                      printf " \n| SPBCG |\n";
-                      printf " -------\n";
+      | USE_SPBCG -> ((match Sundials.sundials_version with
+                       | 2,_,_ -> printf " -------";
+                                  printf " \n| SPBCG |\n";
+                                  printf " -------\n"
+                       | _ ->     printf " -------";
+                                  printf " \n| SPBCGS |\n";
+                                  printf " -------\n");
                       flush stdout;
                       Ida.(reinit mem
                         ~linsolv:Spils.(solver Iterative.(spbcgs wu) prec)

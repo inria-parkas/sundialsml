@@ -452,9 +452,13 @@ let main () =
           Any Iterative.(spgmr ~maxl:!maxl ~max_restarts:!maxlrst cc)
 
       | Use_Spbcgs ->
-          printf " -------";
-          printf " \n| SPBCG |\n";
-          printf " -------\n";
+          (match Sundials.sundials_version with
+           | 2,_,_ -> printf " ------- \n";
+                      printf "| SPBCG |\n";
+                      printf " -------\n"
+           | _     -> printf " -------- \n";
+                      printf "| SPBCGS |\n";
+                      printf " --------\n");
 
           (* Call KINSpbcg to specify the linear solver KINSPBCG with preconditioner
             routines PrecSetupBD and PrecSolveBD, and the pointer to the user block

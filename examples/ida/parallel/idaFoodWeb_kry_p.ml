@@ -280,6 +280,11 @@ let alloc_init_user_data comm local_N system_size thispe npes =
  * Print first lines of output (problem description)
  *)
 
+let spgmr = match Sundials.sundials_version with
+  | 2,_,_ -> "IDASPGMR"
+  | _ -> "SUNSPGMR"
+
+
 let print_header system_size maxl rtol atol =
   printf "\nidaFoodWeb_kry_p: Predator-prey DAE parallel example problem for IDA \n\n";
   printf "Number of species ns: %d" num_species;
@@ -288,7 +293,7 @@ let print_header system_size maxl rtol atol =
   printf "Subgrid dimensions: %d x %d" mxsub mysub;
   printf "     Processor array: %d x %d\n" npex npey;
   printf "Tolerance parameters:  rtol = %g   atol = %g\n" rtol atol;
-  printf "Linear solver: IDASPGMR     Max. Krylov dimension maxl: %d\n" maxl;
+  printf "Linear solver: %s     Max. Krylov dimension maxl: %d\n" spgmr maxl;
   printf "Preconditioner: block diagonal, block size ns,";
   printf " via difference quotients\n";
   printf "CalcIC called to correct initial predator concentrations \n\n";
@@ -888,14 +893,17 @@ let main () =
      the preconditioner routines supplied (Precondbd and PSolvebd).
      maxl (max. Krylov subspace dim.) is set to 16. *)
   let maxl = 16 in
+  let lsolver = Iterative.(spgmr ~maxl cc) in
   let mem =
     Ida.(init
-      Spils.(solver Iterative.(spgmr ~maxl cc)
+      Spils.(solver lsolver
                     (prec_left ~setup:(precondbd webdata) (psolvebd webdata)))
       (SStolerances (rtol, atol))
       (resweb webdata)
       t0 cc cp)
   in
+  (match Sundials.sundials_version with
+   | 2,_,_ -> () | _ -> Iterative.set_max_restarts lsolver 5);
   webdata.ida_mem <- Some mem;
 
   (* Call IDACalcIC (with default options) to correct the initial values. *)

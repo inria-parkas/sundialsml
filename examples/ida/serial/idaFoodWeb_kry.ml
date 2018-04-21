@@ -412,6 +412,11 @@ let set_initial_profiles webdata c c' id =
     done
   done
 
+let spgmr, idaspgmr =
+  match Sundials.sundials_version with
+  | 2,_,_ -> "Spgmr", "IDASPGMR"
+  | _ -> "SPGMR", "SPGMR"
+
 (* Print first lines of output (problem description) *)
 let print_header maxl rtol atol =
   printf "\nidaFoodWeb_kry: Predator-prey DAE serial example problem for IDA \n\n";
@@ -419,7 +424,7 @@ let print_header maxl rtol atol =
   printf "     Mesh dimensions: %d x %d" mx my;
   printf "     System size: %d\n" neq;
   printf "Tolerance parameters:  rtol = %g   atol = %g\n" rtol atol;
-  printf "Linear solver: IDASpgmr,  Spgmr parameters maxl = %d\n" maxl;
+  printf "Linear solver: %s,  %s parameters maxl = %d\n" idaspgmr spgmr maxl;
   printf "CalcIC called to correct initial predator concentrations.\n\n";
   printf "-----------------------------------------------------------\n";
   printf "  t        bottom-left  top-right";
@@ -487,12 +492,16 @@ let main () =
   (* Call IDACreate and IDABand to initialize IDA including the linear
      solver. *)
   let maxl = 16 in
+  let lsolver = Iterative.(spgmr ~maxl:maxl wcc) in
   let mem =
     Ida.(init
-      Spils.(solver Iterative.(spgmr ~maxl:maxl wcc)
+      Spils.(solver lsolver
                     (prec_left ~setup:(precond webdata) (psolve webdata)))
       (Ida.SStolerances (rtol, atol)))
       (resweb webdata) t0 wcc wcp in
+  (match Sundials.sundials_version with
+   | 2,_,_ -> ()
+   | _ -> Iterative.set_max_restarts lsolver 5);
   webdata.ida_mem <- Some mem;
   let tout1 = 0.001 in
   Ida.calc_ic_ya_yd' mem ~varid:(Nvector_serial.wrap id) tout1;

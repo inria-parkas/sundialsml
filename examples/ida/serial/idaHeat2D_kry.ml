@@ -164,6 +164,9 @@ let set_initial_profile data u u' res =
     done
   done
 
+let idaspgmr =
+  match Sundials.sundials_version with 2,_,_ -> "IDASPGMR" | _ -> "SPGMR"
+
 (*
  * Print first lines of output (problem description)
  *)
@@ -176,7 +179,7 @@ let print_header rtol atol =
   printf "        Total system size: %d\n\n" neq;
   printf "Tolerance parameters:  rtol = %g   atol = %g\n" rtol atol;
   printf "Constraints set to force all solution components >= 0. \n";
-  printf "Linear solver: IDASPGMR, preconditioner using diagonal elements. \n"
+  printf "Linear solver: %s, preconditioner using diagonal elements. \n" idaspgmr
 
 (*
  * print_output: print max norm of solution and current solver statistics

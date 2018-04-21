@@ -916,6 +916,9 @@ let set_initial_profiles_b uv uvp uvB uvpB residB data =
  * and table headerr
  *)
 
+let idaspgmr =
+  match Sundials.sundials_version with 2,_,_ -> "IDASPGMR" | _ -> "SUNSPGMR"
+
 let print_header system_size maxl mudq mldq mukeep mlkeep rtol atol =
   printf "\n BRUSSELATOR: chemically reacting system\n\n";
   printf "Number of species ns: %d" num_species;
@@ -924,7 +927,7 @@ let print_header system_size maxl mudq mldq mukeep mlkeep rtol atol =
   printf "Subgrid dimensions: %d x %d" mxsub mysub;
   printf "     Processor array: %d x %d\n" npex npey;
   printf "Tolerance parameters:  rtol = %g   atol = %g\n" rtol atol;
-  printf "Linear solver: IDASPGMR     Max. Krylov dimension maxl: %d\n" maxl;
+  printf "Linear solver: %s     Max. Krylov dimension maxl: %d\n" idaspgmr maxl;
   printf "Preconditioner: band-block-diagonal (IDABBDPRE), with parameters\n";
   printf "     mudq = %d,  mldq = %d,  mukeep = %d,  mlkeep = %d\n"
          mudq mldq mukeep mlkeep;
