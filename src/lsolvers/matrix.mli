@@ -27,7 +27,7 @@
     signalled by raising an exception.
 
     @nocvode <node> Description of the SUNMatrix module *)
-type ('m, 'd) matrix_ops = { (* {{{ *)
+type ('m, 'd, 'k) matrix_ops = { (* {{{ *)
   m_clone     : 'm -> 'm;
   (** Create a new, distinct matrix from an existing one without
       copying the contents of the original matrix. *)
@@ -147,7 +147,7 @@ module Dense : (* {{{ *)
     (** {3:ops Operations} *)
 
     (** Operations on dense matrices. *)
-    val ops : (t, Nvector_serial.data) matrix_ops
+    val ops : (t, Nvector_serial.data, [>Nvector_serial.kind] as 'k) matrix_ops
 
     (** [scale_add c A B] calculates $A = cA + B$.
 
@@ -314,7 +314,7 @@ module Band : (* {{{ *)
 
     (** Operations on dense matrices. *)
 
-    val ops : (t, Nvector_serial.data) matrix_ops
+    val ops : (t, Nvector_serial.data, [>Nvector_serial.kind]) matrix_ops
 
     (** [scale_add c A B] calculates $A = cA + B$.
 
@@ -521,7 +521,7 @@ module Sparse : (* {{{ *)
     (** {3:ops Operations} *)
 
     (** Operations on dense matrices. *)
-    val ops : ('s t, Nvector_serial.data) matrix_ops
+    val ops : ('s t, Nvector_serial.data, [>Nvector_serial.kind]) matrix_ops
 
     (** [scale_add c A B] calculates $A = cA + B$.
 
@@ -847,8 +847,8 @@ type custom
 
 (** A generic matrix with a payload of type ['m]. The ['k] type argument tracks
     whether the matrix is {!standard} or {!custom}. The ['nd] and ['nk] type
-    arguments track the compatiblity of the underlying matrix-vector operation
-    with nvectors.
+    arguments track the compatiblity of the {{!matrix_ops}m_matvec} vector
+    parameters.
 
     @nocvode <node> SUNMatrix *)
 type ('k, 'm, 'nd, 'nk) t
@@ -921,7 +921,7 @@ val wrap_sparse : 's Sparse.t -> ('s, 'nk) sparse
 (** Wrap a custom matrix value.
 
     @nocvode <node> Description of the SUNMatrix module *)
-val wrap_custom : ('m, 'nd) matrix_ops -> 'm -> (custom, 'm, 'nd, 'nk) t
+val wrap_custom : ('m, 'nd, 'nk) matrix_ops -> 'm -> (custom, 'm, 'nd, 'nk) t
 
 (** Matrix internal type identifiers.
 
@@ -933,7 +933,7 @@ type id =
   | Custom
 
 (** Return a record of matrix operations. *)
-val get_ops : ('k, 'm, 'nd, 'nk) t -> ('m, 'nd) matrix_ops
+val get_ops : ('k, 'm, 'nd, 'nk) t -> ('m, 'nd, 'nk) matrix_ops
 
 (** Return the internal type identifier of a matrix.
 
