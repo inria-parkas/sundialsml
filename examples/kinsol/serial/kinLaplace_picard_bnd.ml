@@ -180,7 +180,7 @@ let main () =
    * ----------------------------------------- *)
   let m = Matrix.band ~mu:ny ~ml:ny neq in
   let kmem = Kinsol.(init ~maa:3
-                          ~linsolv:Dls.(solver Direct.(band y m) ~jac:jac m)
+                          ~linsolv:Dls.(solver ~jac:jac Direct.(band y m))
                           func y)
   in
 

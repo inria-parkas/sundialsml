@@ -224,10 +224,9 @@ let main () =
   let mjac = Matrix.(band ~mu:my neq) in
   in
   let cvode_mem = Cvode.(init BDF
-                    (Newton Dls.(solver Direct.(lapack_band u mjac)
-                                        ~jac:(jac data) mjac))
-                    (SStolerances (reltol, abstol))
-                    (f data) t0 u)
+              (Newton Dls.(solver ~jac:(jac data) Direct.(lapack_band u mjac)))
+              (SStolerances (reltol, abstol))
+              (f data) t0 u)
   in
 
   (* In loop over output points: call CVode, print results, test for errors *)

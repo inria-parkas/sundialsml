@@ -163,7 +163,7 @@ let main () =
    * a 2-component root function and the dense direct linear solver.  *)
   let m = Matrix.dense neq in
   let ida_mem =
-    Ida.(init Dls.(solver Direct.(dense wy m) ~jac:jacrob m)
+    Ida.(init Dls.(solver ~jac:jacrob Direct.(dense wy m))
               (SVtolerances (rtol, Nvector_serial.wrap avtol))
               resrob ~roots:(nroots, grob) t0 wy wy')
   in

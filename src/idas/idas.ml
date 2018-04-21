@@ -856,31 +856,33 @@ module Adjoint = struct (* {{{ *)
           c_superlumt_set_ordering session ordering
       | _ -> ()
 
+    module LSD = Lsolver_impl.Direct
+
     (* Sundials < 3.0.0 *)
     let make_compat (type s) (type tag) hasjac usesens
-        (solver : (s, 'nd, 'nk, tag) Lsolver_impl.Direct.solver)
+        (solver : (s, 'nd, 'nk, tag) LSD.solver)
         (mat : ('k, s, 'nd, 'nk) Matrix.t) bs =
       let parent, which = parent_and_which bs in
       match solver with
-      | Lsolver_impl.Direct.Dense ->
+      | LSD.Dense ->
           let m, n = Matrix.(Dense.size (unwrap mat)) in
           if m <> n then raise Lsolver.MatrixNotSquare;
           c_dls_dense parent which m hasjac usesens
-      | Lsolver_impl.Direct.LapackDense ->
+      | LSD.LapackDense ->
           let m, n = Matrix.(Dense.size (unwrap mat)) in
           if m <> n then raise Lsolver.MatrixNotSquare;
           c_dls_lapack_dense parent which m hasjac usesens
 
-      | Lsolver_impl.Direct.Band ->
+      | LSD.Band ->
           let open Matrix.Band in
           let { n; mu; ml } = dims (Matrix.unwrap mat) in
           c_dls_band (parent, which) (n, mu, ml) hasjac usesens
-      | Lsolver_impl.Direct.LapackBand ->
+      | LSD.LapackBand ->
           let open Matrix.Band in
           let { n; mu; ml } = dims (Matrix.unwrap mat) in
           c_dls_lapack_band (parent, which) (n, mu, ml) hasjac usesens
 
-      | Lsolver_impl.Direct.Klu sinfo ->
+      | LSD.Klu sinfo ->
           if not Sundials_config.klu_enabled
             then raise Sundials.NotImplementedBySundialsVersion;
           let smat = Matrix.unwrap mat in
@@ -895,7 +897,7 @@ module Adjoint = struct (* {{{ *)
           (match sinfo.ordering with None -> ()
                                    | Some o -> c_klu_set_ordering session o)
 
-      | Lsolver_impl.Direct.Superlumt sinfo ->
+      | LSD.Superlumt sinfo ->
           if not Sundials_config.superlumt_enabled
             then raise Sundials.NotImplementedBySundialsVersion;
           let smat = Matrix.unwrap mat in
@@ -909,7 +911,7 @@ module Adjoint = struct (* {{{ *)
           (match sinfo.ordering with None -> ()
                                    | Some o -> c_superlumt_set_ordering session o)
 
-    | Lsolver_impl.Direct.Custom _ ->
+    | LSD.Custom _ ->
         assert false
 
     let check_dqjac jac mat = let open Matrix in
@@ -919,123 +921,118 @@ module Adjoint = struct (* {{{ *)
 
     let set_ls_callbacks (type m) (type tag)
           ?(jac : m jac_fn option)
-          (solver : (m, 'nd, 'nk, tag) Lsolver_impl.Direct.solver)
+          (solver : (m, 'nd, 'nk, tag) LSD.solver)
           (mat : ('mk, m, 'nd, 'nk) Matrix.t) session =
       let none = (None : m option) in
-      let uw = Matrix.unwrap in
-      let open Lsolver_impl.Direct in
       begin match solver with
-      | Dense ->
+      | LSD.Dense ->
           session.ls_callbacks <- (match jac with
             | None ->
-                BDlsDenseCallback ({ jacfn = no_callback; jmat = none }, uw mat)
+                BDlsDenseCallback { jacfn = no_callback; jmat = none }
             | Some (NoSens f) ->
-                BDlsDenseCallback ({ jacfn = f; jmat = none }, uw mat)
+                BDlsDenseCallback { jacfn = f; jmat = none }
             | Some (WithSens f) ->
-                BDlsDenseCallbackSens ({ jacfn_sens = f; jmat = none }, uw mat))
-      | LapackDense ->
+                BDlsDenseCallbackSens { jacfn_sens = f; jmat = none })
+      | LSD.LapackDense ->
           session.ls_callbacks <- (match jac with
             | None ->
-                BDlsDenseCallback ({ jacfn = no_callback; jmat = none }, uw mat)
+                BDlsDenseCallback { jacfn = no_callback; jmat = none }
             | Some (NoSens f) ->
-                BDlsDenseCallback ({ jacfn = f; jmat = none }, uw mat)
+                BDlsDenseCallback { jacfn = f; jmat = none }
             | Some (WithSens f) ->
-                BDlsDenseCallbackSens ({ jacfn_sens = f; jmat = none }, uw mat))
-      | Band ->
+                BDlsDenseCallbackSens { jacfn_sens = f; jmat = none })
+      | LSD.Band ->
           session.ls_callbacks <- (match jac with
             | None ->
-                BDlsBandCallback ({ jacfn = no_callback; jmat = none }, uw mat)
+                BDlsBandCallback { jacfn = no_callback; jmat = none }
             | Some (NoSens f) ->
-                BDlsBandCallback ({ jacfn = f; jmat = none }, uw mat)
+                BDlsBandCallback { jacfn = f; jmat = none }
             | Some (WithSens f) ->
-                BDlsBandCallbackSens ({ jacfn_sens = f; jmat = none }, uw mat))
-      | LapackBand ->
+                BDlsBandCallbackSens { jacfn_sens = f; jmat = none })
+      | LSD.LapackBand ->
           session.ls_callbacks <- (match jac with
             | None ->
-                BDlsBandCallback ({ jacfn = no_callback; jmat = none }, uw mat)
+                BDlsBandCallback { jacfn = no_callback; jmat = none }
             | Some (NoSens f) ->
-                BDlsBandCallback ({ jacfn = f; jmat = none }, uw mat)
+                BDlsBandCallback { jacfn = f; jmat = none }
             | Some (WithSens f) ->
-                BDlsBandCallbackSens ({ jacfn_sens = f; jmat = none }, uw mat))
-      | Klu _ ->
+                BDlsBandCallbackSens { jacfn_sens = f; jmat = none })
+      | LSD.Klu _ ->
           session.ls_callbacks <- (match jac with
             | None -> invalid_arg "Klu requires Jacobian function";
             | Some (NoSens f) ->
-                BSlsKluCallback ({ jacfn = f; jmat = none }, uw mat)
+                BSlsKluCallback { jacfn = f; jmat = none }
             | Some (WithSens f) ->
-                BSlsKluCallbackSens ({ jacfn_sens = f; jmat = none }, uw mat))
-      | Superlumt _ ->
+                BSlsKluCallbackSens { jacfn_sens = f; jmat = none })
+      | LSD.Superlumt _ ->
           session.ls_callbacks <- (match jac with
             | None -> invalid_arg "Superlumt requires Jacobian function";
             | Some (NoSens f) ->
-                BSlsSuperlumtCallback ({ jacfn = f; jmat = none }, uw mat)
+                BSlsSuperlumtCallback { jacfn = f; jmat = none }
             | Some (WithSens f) ->
-                BSlsSuperlumtCallbackSens
-                  ({ jacfn_sens = f; jmat = none }, uw mat))
-      | Custom _ ->
+                BSlsSuperlumtCallbackSens { jacfn_sens = f; jmat = none })
+      | LSD.Custom _ ->
           session.ls_callbacks <- (match jac with
             | None ->
                 (match Matrix.get_id mat with
                  | Matrix.Dense | Matrix.Band -> ()
                  | _ -> invalid_arg "A Jacobian function is required");
-                BDirectCustomCallback ({ jacfn = no_callback; jmat = none },
-                                       uw mat)
+                BDirectCustomCallback { jacfn = no_callback; jmat = none }
             | Some (NoSens f) ->
-                BDirectCustomCallback ({ jacfn = f; jmat = none }, uw mat)
+                BDirectCustomCallback { jacfn = f; jmat = none }
             | Some (WithSens f) ->
-                BDirectCustomCallbackSens
-                  ({ jacfn_sens = f; jmat = none }, uw mat))
+                BDirectCustomCallbackSens { jacfn_sens = f; jmat = none })
       end;
       session.ls_precfns <- NoPrecFns
 
     (* Sundials >= 3.0.0 *)
     external c_dls_set_linear_solver
       : 'k serial_session * int
-         -> ('m, Nvector_serial.data, 'k) Lsolver_impl.Direct.cptr
+         -> ('m, Nvector_serial.data, 'k) LSD.cptr
          -> ('mk, 'm, Nvector_serial.data, 'k) Matrix.t
          -> bool
          -> bool
          -> unit
       = "c_idas_adj_dls_set_linear_solver"
 
-    let solver ({ Lsolver_impl.Direct.rawptr; Lsolver_impl.Direct.solver } as ls)
-               ?jac mat bs nv =
+    let solver ?jac ((LSD.S { LSD.rawptr; LSD.solver; LSD.matrix }) as ls)
+               bs nv =
       let session = tosession bs in
       let parent, which = parent_and_which bs in
       let use_sens = match jac with Some (WithSens _) -> true | _ -> false in
-      set_ls_callbacks ?jac solver mat session;
-      if in_compat_mode then make_compat (jac <> None) use_sens solver mat bs
-      else c_dls_set_linear_solver (parent, which) rawptr mat
+      set_ls_callbacks ?jac solver matrix session;
+      if in_compat_mode then make_compat (jac <> None) use_sens solver matrix bs
+      else c_dls_set_linear_solver (parent, which) rawptr matrix
                                                       (jac <> None) use_sens;
-      Lsolver_impl.Direct.attach ls;
+      LSD.attach ls;
       session.ls_solver <- Lsolver_impl.DirectSolver ls
 
     (* Sundials < 3.0.0 *)
     let invalidate_callback s =
       if in_compat_mode then
         match s.ls_callbacks with
-        | BDlsDenseCallback ({ jmat = Some d } as cb, _) ->
+        | BDlsDenseCallback ({ jmat = Some d } as cb) ->
             Matrix.Dense.invalidate d;
             cb.jmat <- None
-        | BDlsDenseCallbackSens ({ jmat = Some d } as cb, _) ->
+        | BDlsDenseCallbackSens ({ jmat = Some d } as cb) ->
             Matrix.Dense.invalidate d;
             cb.jmat <- None
-        | BDlsBandCallback  ({ jmat = Some d } as cb, _) ->
+        | BDlsBandCallback  ({ jmat = Some d } as cb) ->
             Matrix.Band.invalidate d;
             cb.jmat <- None
-        | BDlsBandCallbackSens  ({ jmat = Some d } as cb, _) ->
+        | BDlsBandCallbackSens  ({ jmat = Some d } as cb) ->
             Matrix.Band.invalidate d;
             cb.jmat <- None
-        | BSlsKluCallback ({ jmat = Some d } as cb, _) ->
+        | BSlsKluCallback ({ jmat = Some d } as cb) ->
             Matrix.Sparse.invalidate d;
             cb.jmat <- None
-        | BSlsKluCallbackSens ({ jmat = Some d } as cb, _) ->
+        | BSlsKluCallbackSens ({ jmat = Some d } as cb) ->
             Matrix.Sparse.invalidate d;
             cb.jmat <- None
-        | BSlsSuperlumtCallback ({ jmat = Some d } as cb, _) ->
+        | BSlsSuperlumtCallback ({ jmat = Some d } as cb) ->
             Matrix.Sparse.invalidate d;
             cb.jmat <- None
-        | BSlsSuperlumtCallbackSens ({ jmat = Some d } as cb, _) ->
+        | BSlsSuperlumtCallbackSens ({ jmat = Some d } as cb) ->
             Matrix.Sparse.invalidate d;
             cb.jmat <- None
         | _ -> ()

@@ -79,8 +79,8 @@ let main () =
   let m = Matrix.dense neq in
   let arkode_mem = Arkode.(
     init
-      (Implicit (f lamda, Newton Dls.(solver Direct.(dense y m)
-                                             ~jac:(jac lamda) m),
+      (Implicit (f lamda, Newton Dls.(solver ~jac:(jac lamda)
+                                             Direct.(dense y m)),
                  Linear false))
       (SStolerances (reltol, abstol))
       t0

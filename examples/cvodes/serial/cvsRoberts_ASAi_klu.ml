@@ -300,7 +300,7 @@ let main () =
   let nnz = neq * neq in
   let m = Matrix.sparse_csc ~nnz neq in
   let cvode_mem =
-    Cvode.(init BDF (Newton Dls.(solver Direct.(klu y m) ~jac:(jac data) m))
+    Cvode.(init BDF (Newton Dls.(solver ~jac:(jac data) Direct.(klu y m)))
                 (WFtolerances (ewt data)) (f data) t0 y)
   in
 
@@ -347,11 +347,10 @@ let main () =
   let cvode_memB =
     Adj.(init_backward
           cvode_mem Cvode.BDF
-                    (Newton Dls.(solver Direct.(klu yB m)
-                                        ~jac:(NoSens (jacb data)) m))
-                    (SStolerances (reltolB, abstolB))
-                    (NoSens (fB data))
-                    tb1 yB)
+            (Newton Dls.(solver ~jac:(NoSens (jacb data)) Direct.(klu yB m)))
+            (SStolerances (reltolB, abstolB))
+            (NoSens (fB data))
+            tb1 yB)
   in
   QuadAdj.(init cvode_memB (NoSens (fQB data)) qB);
   QuadAdj.(set_tolerances cvode_memB (SStolerances (reltolB, abstolQB)));

@@ -186,7 +186,7 @@ let main () =
   let mu = mgrid and ml = mgrid in
   let m = Matrix.band ~mu ~ml neq in
   let mem =
-    Ida.(init Dls.(solver Direct.(band wu m) m)
+    Ida.(init Dls.(solver Direct.(band wu m))
               (SStolerances (rtol, atol))
               (fun t u u' r -> heatres t u u' r data)
               t0 wu wu')

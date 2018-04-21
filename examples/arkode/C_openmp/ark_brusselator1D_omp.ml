@@ -241,7 +241,7 @@ let main () =
   let arkode_mem = Arkode.(
     init
       (Implicit (f udata,
-                 Newton Dls.(solver Direct.(band y m) ~jac:(jac udata) m),
+                 Newton Dls.(solver Direct.(band y m) ~jac:(jac udata)),
                  Nonlinear))
       (SStolerances (reltol, abstol))
       t0

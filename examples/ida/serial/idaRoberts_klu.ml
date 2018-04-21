@@ -197,11 +197,11 @@ let main () =
   let ida_mem =
     if sundials_270_or_later
     then let m = Matrix.sparse_csr ~nnz neq in
-         Ida.(init Dls.(solver Direct.(klu wy m) ~jac:jacrob_csr m)
+         Ida.(init Dls.(solver ~jac:jacrob_csr Direct.(klu wy m))
                      (SVtolerances (rtol, Nvector_serial.wrap avtol))
                      resrob ~roots:(nroots, grob) t0 wy wy')
     else let m = Matrix.sparse_csc ~nnz neq in
-         Ida.(init Dls.(solver Direct.(klu wy m) ~jac:jacrob_csc m)
+         Ida.(init Dls.(solver ~jac:jacrob_csc Direct.(klu wy m))
                      (SVtolerances (rtol, Nvector_serial.wrap avtol))
                      resrob ~roots:(nroots, grob) t0 wy wy')
   in

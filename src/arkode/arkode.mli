@@ -120,19 +120,18 @@ module Dls : sig (* {{{ *)
   type 'm jac_fn = (RealArray.t triple, RealArray.t) jacobian_arg
                    -> 'm -> unit
 
-  (** Create an Arkode-specific linear solver from a generic dense linear
-      solver, a Jacobian approximation function, and a Jacobian matrix
-      for the solver's internal use. The Jacobian approximation function
-      is optional for dense and banded solvers (if not given an internal
-      difference quotient approximation is used), but must be provided for
-      other solvers (or {Invalid_argument} is raised).
+  (** Create an Arkode-specific linear solver from a Jacobian approximation
+      function and a generic direct linear solver.
+      The Jacobian approximation function is optional for dense and banded
+      solvers (if not given an internal difference quotient approximation is
+      used), but must be provided for other solvers (or {Invalid_argument} is
+      raised).
 
       @nocvode <node> ARKDlsSetLinearSolver
       @nocvode <node> ARKDlsSetJacFn *)
   val solver :
-    ('m, 'kind, 't) Direct.serial_t ->
     ?jac:'m jac_fn ->
-    ('k, 'm, Nvector_serial.data, 'kind) Matrix.t ->
+    ('m, 'kind, 't) Direct.serial_t ->
     'kind serial_linear_solver
 
   (** {3:stats Solver statistics} *)
@@ -626,11 +625,10 @@ module Mass : sig (* {{{ *)
         @noarkode <node> ARKDlsMassFn *)
     type 'm mass_fn = float -> RealArray.t triple -> 'm -> unit
 
-    (** Create an Arkode-specific mass linear solver from a generic dense
-        linear solver, a mass-matrix constructor function, and a mass matrix
-        for the solver's internal use. The boolean argument indicates whether
-        the mass matrix depends on the independent variable [t], if not it is
-        only computed and factored once.
+    (** Create an Arkode-specific mass linear solver from a mass-matrix
+        constructor function and a generic dense linear solver. The boolean
+        argument indicates whether the mass matrix depends on the independent
+        variable [t], if not it is only computed and factored once.
 
         NB: The boolean argument is ignored in
         {!Sundials.sundials_version} < 3.0.0.
@@ -638,10 +636,9 @@ module Mass : sig (* {{{ *)
         @nocvode <node> ARKDlsSetMassLinearSolver
         @nocvode <node> ARKDlsSetMassFn *)
     val solver :
-      ('m, 'kind, 't) Direct.serial_t
-      -> 'm mass_fn
+      'm mass_fn
       -> bool
-      -> ('k, 'm, Nvector_serial.data, 'kind) Matrix.t
+      -> ('m, 'kind, 't) Direct.serial_t
       -> 'kind serial_solver
 
     (** {3:stats Solver statistics} *)

@@ -254,7 +254,7 @@ let main() =
   (* Call IDACreate with dummy linear solver *)
 
   let m = Matrix.dense neq in
-  let mem = Ida.(init Dls.(solver Direct.(dense wu m) m)
+  let mem = Ida.(init Dls.(solver Direct.(dense wu m))
                       (SStolerances (rtol, atol))
                       (res_heat data) t0 wu wu') in
   Ida.set_constraints mem (Nvector_serial.wrap constraints);

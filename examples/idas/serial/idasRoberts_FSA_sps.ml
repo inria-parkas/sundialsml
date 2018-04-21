@@ -320,9 +320,8 @@ let main () =
   let nthreads = 1 in
   let nnz = neq * neq in
   let m = Matrix.sparse_csc ~nnz neq in
-  let ida_mem = Ida.(init Dls.(solver
-                                 Direct.(superlumt ~nthreads:nthreads wy m)
-                                 ~jac:(jac data) m)
+  let ida_mem = Ida.(init Dls.(solver ~jac:(jac data)
+                                 Direct.(superlumt ~nthreads:nthreads wy m))
                           tol (res data) t0 wy wyp) in
 
   printf "\n3-species chemical kinetics problem\n";

@@ -225,7 +225,7 @@ let main () =
   (* Initialize and allocate memory for KINSOL *)
   (* Attach dense linear solver *)
   let m = Matrix.dense neq in
-  let kmem = Kinsol.(init ~linsolv:Dls.(solver Direct.(dense y m) ~jac:jac m)
+  let kmem = Kinsol.(init ~linsolv:Dls.(solver ~jac:jac Direct.(dense y m))
                        func y) in
 
   (* Set optional inputs *)

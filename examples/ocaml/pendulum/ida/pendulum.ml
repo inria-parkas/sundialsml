@@ -428,8 +428,8 @@ let main () =
   let jacm = Matrix.dense 5 in
   let dense_solver = Direct.dense nv_vars jacm in
   let solver =
-    if !use_analytical_jac then Ida.Dls.solver dense_solver ~jac:jac jacm
-    else Ida.Dls.solver dense_solver jacm
+    if !use_analytical_jac then Ida.Dls.solver ~jac:jac dense_solver
+    else Ida.Dls.solver dense_solver
   in
   let ida = Ida.init solver (Ida.SStolerances (1e-9, 1e-9)) residual
                      ~roots:(1, roots) 0. nv_vars nv_vars'
