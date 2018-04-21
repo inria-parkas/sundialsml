@@ -329,7 +329,6 @@ module Band = struct (* {{{ *)
 
   external c_scale_add : float -> t -> cptr -> unit
     = "ml_matrix_band_scale_add"
-  let _ = Callback.register "ml_matrix_band_scale_add" c_scale_add
 
   let scale_add c ({ valid = valid1 } as m1)
                   { rawptr = ptr2; valid = valid2 } =
@@ -362,7 +361,6 @@ module Band = struct (* {{{ *)
 
   external c_copy : cptr -> t -> unit
     = "ml_matrix_band_copy"
-  let _ = Callback.register "ml_matrix_band_copy" c_copy
 
   let blit { rawptr = cptr1; valid = valid1 }
            ({ valid = valid2 } as m2) =
@@ -645,7 +643,6 @@ module Sparse = struct (* {{{ *)
 
   external c_scale_add : float -> 's t -> cptr -> unit
     = "ml_matrix_sparse_scale_add"
-  let _ = Callback.register "ml_matrix_sparse_scale_add" c_scale_add
 
   let scale_add c ({ rawptr = ptr1; valid = valid1 } as m1)
                   { rawptr = ptr2; valid = valid2 } =
@@ -656,7 +653,6 @@ module Sparse = struct (* {{{ *)
 
   external c_scale_addi : float -> 's t -> unit
     = "ml_matrix_sparse_scale_addi"
-  let _ = Callback.register "ml_matrix_sparse_scale_addi" c_scale_addi
 
   let scale_addi c ({ valid } as a) =
     if check_valid && not valid then raise Invalidated;
@@ -688,7 +684,6 @@ module Sparse = struct (* {{{ *)
 
   external c_copy : cptr -> 's t -> unit
       = "ml_matrix_sparse_copy"
-  let _ = Callback.register "ml_matrix_sparse_copy" c_copy
 
   let blit { rawptr = ptr1; valid = valid1 }
            ({ rawptr = ptr2; valid = valid2 } as m2) =
