@@ -246,7 +246,11 @@ let print_final_stats cvode_mem miter ero =
     in
     printf " Linear solver real workspace length      = %4d \n" lenrwLS;
     printf " Linear solver integer workspace length   = %4d \n" leniwLS;
-    printf " Number of Jacobian evaluations           = %4d  \n" nje;
+    printf " Number of Jacobian evaluations           = %4d" nje;
+    (match Sundials.sundials_version with
+     | 2,_,_ -> printf "  \n"
+     | _ -> printf " \n");
+
     printf " Number of f evals. in linear solver      = %4d \n\n" nfeLS
   end;
 

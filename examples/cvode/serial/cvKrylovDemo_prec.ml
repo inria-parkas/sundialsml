@@ -90,6 +90,9 @@
  * --------------------------------------------------------------------
  *)
 
+let new_version =
+  match Sundials.sundials_version with 2,_,_ -> false | _ -> true
+
 module RealArray = Sundials.RealArray
 module LintArray = Sundials.LintArray
 module Roots = Sundials.Roots
@@ -752,7 +755,10 @@ let cinit wdata (cdata : RealArray.t) =
   done
 
 let print_intro () =
-  printf "\n\nDemonstration program for CVODE - CVSPGMR linear solver\n\n";
+  if new_version then
+    printf "\n\nDemonstration program for CVODE - SPGMR linear solver\n\n"
+  else
+    printf "\n\nDemonstration program for CVODE - CVSPGMR linear solver\n\n";
   printf "Food web problem with ns species, ns = %d\n" ns;
   printf "Predator-prey interaction and diffusion on a 2-D square\n\n";
 
@@ -824,12 +830,13 @@ let print_final_stats s =
   and ncfl  = Spils.get_num_conv_fails s
   and nfeLS = Spils.get_num_rhs_evals s
   in
+  let name = if new_version then "CVSPILS" else "CVSPGMR" in
 
   printf "\n\n Final statistics for this run:\n\n";
   printf " CVode real workspace length           = %4d \n" lenrw;
   printf " CVode integer workspace length        = %4d \n" leniw;
-  printf " CVSPGMR real workspace length         = %4d \n" lenrwLS;
-  printf " CVSPGMR integer workspace length      = %4d \n" leniwLS;
+  printf " %s real workspace length         = %4d \n" name lenrwLS;
+  printf " %s integer workspace length      = %4d \n" name leniwLS;
   printf " Number of steps                       = %4d \n" nst;
   printf " Number of f-s                         = %4d \n" nfe;
   printf " Number of f-s (SPGMR)                 = %4d \n" nfeLS;

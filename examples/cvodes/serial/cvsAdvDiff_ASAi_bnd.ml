@@ -283,7 +283,7 @@ let main () =
   printf "\nCreate and allocate CVODES memory for forward runs\n";
 
   (* Call CVBand with  bandwidths ml = mu = MY, *)
-  let m = Matrix.band ~mu:my neq in
+  let m = Matrix.band ~smu:(2*my) ~mu:my neq in
   let cvode_mem = Cvode.(init BDF
                            (Newton Dls.(solver Direct.(band u_nvec m)
                                                ~jac:(jac data) m))
@@ -307,7 +307,7 @@ let main () =
   (* Create and allocate CVODES memory for backward run *)
   printf "\nCreate and allocate CVODES memory for backward run\n";
 
-  let m = Matrix.band ~mu:my neq in
+  let m = Matrix.band ~smu:(2*my) ~mu:my neq in
   let bcvode_mem =
     Adjoint.(init_backward cvode_mem
               Cvode.BDF

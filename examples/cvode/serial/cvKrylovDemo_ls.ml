@@ -509,9 +509,13 @@ let main () =
     (* (b) SPBCG *)
     | UseSpbcg -> begin
         (* Print header *)
-        printf " -------";
-        printf " \n| SPBCG |\n";
-        printf " -------\n";
+        (match Sundials.sundials_version with
+         | 2,_,_ -> printf " -------\n";
+                    printf " | SPBCG |\n";
+                    printf " -------\n"
+         | _     -> printf " ------- \n";
+                    printf "| SPBCGS |\n";
+                    printf " -------\n");
 
         (* Call CVSpbcg to specify the linear solver CVSPBCG
            with left preconditioning and the maximum Krylov dimension maxl *)

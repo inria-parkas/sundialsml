@@ -191,8 +191,9 @@ let print_final_stats s =
   printf "\nFinal Statistics:\n";
   printf "nst = %-6d nfe  = %-6d nsetups = %-6d nfeLS = %-6d nje = %d\n"
   nst nfe nsetups nfeLS nje;
-  printf "nni = %-6d ncfn = %-6d netf = %d\n \n"
-  nni ncfn netf
+  printf "nni = %-6d ncfn = %-6d netf = %d\n"
+  nni ncfn netf;
+  (match Sundials.sundials_version with 2,_,_ -> printf " \n" | _ -> ())
 
 let main () =
   (* Create a serial vector *)

@@ -406,7 +406,7 @@ let main () =
   let yQB2 = make np2 zero in
 
   (* Create and initialize backward problems (one for each column of the Hessian) *)
-  let m = Matrix.dense neq in
+  let m = Matrix.dense (2*neq) in
   let cvode_memB1 =
     Adj.(init_backward cvode_mem Cvode.BDF
                                  (Newton Dls.(solver Direct.(dense yB1 m) m))
@@ -417,7 +417,7 @@ let main () =
   QuadAdj.(init cvode_memB1 (WithSens (fQB1 data)) yQB1);
   QuadAdj.(set_tolerances cvode_memB1 (SStolerances (reltol, abstolQB)));
 
-  let m = Matrix.dense neq in
+  let m = Matrix.dense (2*neq) in
   let cvode_memB2 =
     Adj.(init_backward cvode_mem Cvode.BDF
                                  (Newton Dls.(solver Direct.(dense yB2 m) m))
