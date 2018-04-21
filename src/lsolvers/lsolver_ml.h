@@ -98,6 +98,7 @@ enum lsolver_preconditioning_type_tag {
 enum lsolver_exn_index {
     LSOLVER_EXN_UnrecoverableFailure = 0,
     LSOLVER_EXN_MatrixNotSquare,
+    LSOLVER_EXN_MatrixVectorMismatch,
     LSOLVER_EXN_InsufficientStorageUpperBandwidth,
     LSOLVER_EXN_InvalidArgument,
     LSOLVER_EXN_ATimesFailure,
