@@ -797,28 +797,28 @@ static bool matrix_sparse_create_vcptr(sundials_ml_index m, sundials_ml_index n,
     data = (realtype *) malloc(nnz * sizeof(realtype));
     if (data == NULL) CAMLreturnT(bool, false);
 
-    indexptrs = (sundials_ml_index *) malloc(nnz * sizeof(sundials_ml_index));
-    if (indexptrs == NULL) {
+    indexvals = (sundials_ml_index *) malloc(nnz * sizeof(sundials_ml_index));
+    if (indexvals == NULL) {
 	free(data);
 	CAMLreturnT(bool, false);
     }
 
-    indexvals = (sundials_ml_index *)
+    indexptrs = (sundials_ml_index *)
 	malloc((np + 1) * sizeof(sundials_ml_index));
-    if (indexvals == NULL) {
+    if (indexptrs == NULL) {
 	free(data);
-	free(indexptrs);
+	free(indexvals);
 	CAMLreturnT(bool, false);
     }
 
     // allocate the array memory manually (above) to minimize the chances of an
     // out of memory exception (a very slight chance remains...)
     *pvdata = caml_ba_alloc_dims(BIGARRAY_FLOAT | CAML_BA_MANAGED,
-				 1, NULL, nnz);
+				 1, data, nnz);
     *pvidxvals = caml_ba_alloc_dims(BIGARRAY_INDEX | CAML_BA_MANAGED,
-				 1, NULL, nnz);
+				 1, indexvals, nnz);
     *pvidxptrs = caml_ba_alloc_dims(BIGARRAY_INDEX | CAML_BA_MANAGED,
-				 1, NULL, np + 1);
+				 1, indexptrs, np + 1);
 
     // Setup the C-side content
     content = (SUNMatrixContent_Sparse) malloc(sizeof *content);
@@ -1116,7 +1116,7 @@ static bool matrix_sparse_resize(value va, sundials_ml_index nnz,
     CAMLparam1(va);
     CAMLlocal5(vcptr, vdata, vidxvals, vpayload, vnewpayload);
     CAMLlocal1(vidxptrs);
-    sundials_ml_index old_nnz, i;
+    sundials_ml_index old_nnz, i, np;
     sundials_ml_index *old_indexvals, *new_indexvals;
     sundials_ml_index *old_indexptrs, *new_indexptrs;
     realtype *old_data, *new_data;
@@ -1127,34 +1127,36 @@ static bool matrix_sparse_resize(value va, sundials_ml_index nnz,
     vpayload = Field(va, RECORD_MAT_MATRIXCONTENT_PAYLOAD);
     A = MAT_CONTENT_SPARSE(vcptr);
 
-    if (nnz <= 0)
-	nnz = A->NNZ;
-
 #if SUNDIALS_LIB_VERSION >= 270
     old_indexptrs = A->indexptrs;
     old_indexvals = A->indexvals;
+    np = A->NP;
 #else
     old_indexptrs = A->rowvals;
     old_indexvals = A->colptrs;
+    np = A->N;
 #endif
     old_data = A->data;
     old_nnz = A->NNZ;
 
+    if (nnz <= 0)
+	nnz = old_indexptrs[np];
+
     new_data = (realtype *) malloc(nnz * sizeof(realtype));
     if (new_data == NULL) CAMLreturnT(bool, false);
 
-    new_indexptrs = (sundials_ml_index *)
+    new_indexvals = (sundials_ml_index *)
 			malloc(nnz * sizeof(sundials_ml_index));
-    if (new_indexptrs == NULL) {
+    if (new_indexvals == NULL) {
 	free(new_data);
 	CAMLreturnT(bool, false);
     }
 
-    new_indexvals = (sundials_ml_index *)
-			malloc((A->NP + 1) * sizeof(sundials_ml_index));
-    if (new_indexvals == NULL) {
+    new_indexptrs = (sundials_ml_index *)
+			malloc((np + 1) * sizeof(sundials_ml_index));
+    if (new_indexptrs == NULL) {
 	free(new_data);
-	free(new_indexptrs);
+	free(new_indexvals);
 	CAMLreturnT(bool, false);
     }
 
@@ -1164,9 +1166,9 @@ static bool matrix_sparse_resize(value va, sundials_ml_index nnz,
     vdata = caml_ba_alloc_dims(BIGARRAY_FLOAT | CAML_BA_MANAGED, 1,
 		new_data, nnz);
     vidxvals = caml_ba_alloc_dims(BIGARRAY_INDEX | CAML_BA_MANAGED, 1,
-		new_indexptrs, nnz);
+		new_indexvals, nnz);
     vidxptrs = caml_ba_alloc_dims(BIGARRAY_INDEX | CAML_BA_MANAGED, 1,
-		new_indexvals, A->NP + 1);
+		new_indexptrs, np + 1);
 
     /* Strictly speaking, it is not necessary to reallocate and recopy the
        indexptrs. We do it for two reasons:
@@ -1254,6 +1256,7 @@ static bool matrix_sparse_scale_add(realtype c, value va, value vcptrb)
 
     /* Perform operation */
 
+#if SUNDIALS_LIB_VERSION >= 270
     /* if A is CSR matrix, transpose M and N */
     if (A->sparsetype == CSC_MAT) {
 	M = A->M;
@@ -1262,6 +1265,10 @@ static bool matrix_sparse_scale_add(realtype c, value va, value vcptrb)
 	M = A->N;
 	N = A->M;
     }
+#else
+    M = A->M;
+    N = A->N;
+#endif
 
     /* create work arrays for row indices and nonzero column values */
     w = (sundials_ml_index *) malloc(M * sizeof(sundials_ml_index));
@@ -1270,7 +1277,7 @@ static bool matrix_sparse_scale_add(realtype c, value va, value vcptrb)
     x = (realtype *) malloc(M * sizeof(realtype));
     if (x == NULL) {
 	free(w);
-	CAMLreturnT(int, 0);
+	CAMLreturnT(bool, false);
     }
 
 #if SUNDIALS_LIB_VERSION >= 270
@@ -1304,17 +1311,10 @@ static bool matrix_sparse_scale_add(realtype c, value va, value vcptrb)
 
 	/* scan column of B, decrementing w by one */
 	for (i=B_indexptrs[j]; i < B_indexptrs[j+1]; i++) {
-	    if (w[B_indexvals[i]] == 0) nz += 1;
-	    w[B_indexvals[i]] -= 1;
-	}
-
-	/* if any entry of w is negative, A doesn't contain B's sparsity */
-	if (!newmat) {
-	    for (i=0; i < M; i++)
-		if (w[i] < 0) {
-		    newmat = 1;
-		    break;
-		}
+	    if (w[B_indexvals[i]] == 0) {
+		newmat = 1;
+		nz += 1;
+	    }
 	}
     }
 
@@ -1351,16 +1351,21 @@ static bool matrix_sparse_scale_add(realtype c, value va, value vcptrb)
 	Bx = B->data;
 
 	/* reallocate memory within A */
-	if (! matrix_sparse_resize(va, nz, 0, 0)) { // no-copy, no-free
+	if (! matrix_sparse_resize(va, nz, 0, 0) ) { // no-copy, no-free
 	    free(w);
 	    free(x);
-	    CAMLreturnT(int, 0);
+	    CAMLreturnT(bool, false);
 	}
 	zero_sparse(A);
 
 	/* access data from (post resize) CSR structures (return if failure) */
-	Cp = A_indexptrs;
-	Ci = A_indexvals;
+#if SUNDIALS_LIB_VERSION >= 270
+	Cp = A->indexptrs;
+	Ci = A->indexvals;
+#else
+	Cp = A->colptrs;
+	Ci = A->rowvals;
+#endif
 	Cx = A->data;
 
 	/* initialize total nonzero count */
@@ -1414,8 +1419,46 @@ static bool matrix_sparse_scale_add(realtype c, value va, value vcptrb)
     free(w);
     free(x);
 
-    CAMLreturnT(int, 1);
+    CAMLreturnT(bool, true);
 }
+
+#if false
+CAMLprim void ml_debug_sparse(value va)
+{
+    CAMLparam1(va);
+    CAMLlocal5(vpayload, vidxvals, vidxptrs, vdata, vcptr);
+    MAT_CONTENT_SPARSE_TYPE A;
+    struct caml_ba_array *ba;
+
+    vpayload = Field(va, RECORD_MAT_MATRIXCONTENT_PAYLOAD);
+    vcptr = Field(va, RECORD_MAT_MATRIXCONTENT_RAWPTR);
+    A = MAT_CONTENT_SPARSE(vcptr);
+
+    vidxvals = Field(vpayload, RECORD_MAT_SPARSEDATA_IDXVALS);
+    vidxptrs = Field(vpayload, RECORD_MAT_SPARSEDATA_IDXPTRS);
+    vdata = Field(vpayload, RECORD_MAT_SPARSEDATA_DATA);
+
+    printf("**ml_debug_sparse\n");
+    printf("--vmat=%p vpayload=%p mat=%p mat->NP=%lld\n",
+	    (void *)va, (void *)vpayload, (void *)A, A->NP);
+    printf("--mat->indexptrs[mat->NP]=%lld\n", A->indexptrs[A->NP]);
+
+    ba = Caml_ba_array_val(vidxvals);
+    printf("--vidxvals=%p data=%p (len=%6ld) (A->indexvals=%p)\n",
+	    (void *)vidxvals, (void *)ba->data, ba->dim[0],
+	    (void *)A->indexvals); 
+    ba = Caml_ba_array_val(vidxptrs);
+    printf("--vidxptrs=%p data=%p (len=%6ld) (A->indexptrs=%p)\n",
+	    (void *)vidxptrs, (void *)ba->data, ba->dim[0],
+	    (void *)A->indexptrs); 
+    ba = Caml_ba_array_val(vdata);
+    printf("--   vdata=%p data=%p (len=%6ld)      (A->data=%p)\n",
+	    (void *)vdata, (void *)ba->data, ba->dim[0], (void *)A->data); 
+    fflush(stdout);
+
+    CAMLreturn0;
+}
+#endif
 
 CAMLprim void ml_matrix_sparse_scale_add(value vc, value va, value vcptrb)
 {
@@ -1460,6 +1503,7 @@ static bool matrix_sparse_scale_addi(realtype c, value va)
 
     /* Perform operation */
 
+#if SUNDIALS_LIB_VERSION >= 270
     if (A->sparsetype == CSC_MAT) {
 	M = A->M;
 	N = A->N;
@@ -1467,12 +1511,16 @@ static bool matrix_sparse_scale_addi(realtype c, value va)
 	M = A->N;
 	N = A->M;
     }
+#else
+    M = A->M;
+    N = A->N;
+#endif
 
     /* determine if A already contains values on the diagonal (hence
        no memory allocation necessary), and calculate the number of non-zeroes
        required if we create a new matrix (instead of reallocating). */
     newmat = 0;
-    nz = SUNMIN(A->N, A->M);
+    nz = SUNMIN(N, M);
     for (j=0; j < N; j++) {
 	/* scan column (row if CSR) of A, searching for diagonal value */
 	found = 0;
@@ -1492,7 +1540,7 @@ static bool matrix_sparse_scale_addi(realtype c, value va)
     /*   case 1: A already contains a diagonal */
     if (!newmat) {
 	/* iterate through columns, adding 1.0 to diagonal */
-	for (j=0; j < SUNMIN(A->N, A->M); j++)
+	for (j=0; j < SUNMIN(N, M); j++)
 	    for (i=A_indexptrs[j]; i < A_indexptrs[j+1]; i++)
 		if (A_indexvals[i] == j) {
 		    A->data[i] = 1.0 + c * A->data[i];
@@ -1503,7 +1551,7 @@ static bool matrix_sparse_scale_addi(realtype c, value va)
     /*   case 2: A does not already contain a diagonal */
     } else {
 	/* create work arrays for row indices and nonzero column values */
-	w = (sundials_ml_index *) malloc(A->M * sizeof(sundials_ml_index));
+	w = (sundials_ml_index *) malloc(M * sizeof(sundials_ml_index));
 	if (w == NULL) CAMLreturnT(bool, false);
 
 	x = (realtype *) malloc(A->M * sizeof(realtype));
@@ -1526,8 +1574,13 @@ static bool matrix_sparse_scale_addi(realtype c, value va)
 	zero_sparse(A);
 
 	/* access data from (post resize) CSR structures (return if failure) */
-	Cp = A_indexptrs;
-	Ci = A_indexvals;
+#if SUNDIALS_LIB_VERSION >= 270
+	Cp = A->indexptrs;
+	Ci = A->indexvals;
+#else
+	Cp = A->colptrs;
+	Ci = A->rowvals;
+#endif
 	Cx = A->data;
 
 	/* initialize total nonzero count */

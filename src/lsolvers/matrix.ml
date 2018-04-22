@@ -645,7 +645,7 @@ module Sparse = struct (* {{{ *)
     = "ml_matrix_sparse_scale_add"
 
   let scale_add c ({ rawptr = ptr1; valid = valid1 } as m1)
-                  { rawptr = ptr2; valid = valid2 } =
+                   { rawptr = ptr2; valid = valid2 } =
     if check_valid && not (valid1 && valid2) then raise Invalidated;
     if Sundials_config.safe && c_size ptr1 <> c_size ptr2
     then raise IncompatibleArguments;
