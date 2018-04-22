@@ -445,10 +445,10 @@ let main () =
   let constraints = Nvector_serial.make neq two in
 
   let go linsolver =
+    set_initial_profiles (unvec cc) (unvec sc);
     let lsolver =
       match linsolver with
       | Use_Spgmr ->
-          set_initial_profiles (unvec cc) (unvec sc);
           printf " -------";
           printf " \n| SPGMR |\n";
           printf " -------\n";
