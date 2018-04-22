@@ -446,6 +446,9 @@ let set_initial_profile data u u' id res =
     done
   done
 
+let idaklu =
+  match Sundials.sundials_version with 2,_,_ -> "IDAKLU" | _ -> "KLU"
+
 let print_header rtol atol =
   printf "\nidaHeat2D_klu: Heat equation, serial example problem for IDA\n";
   printf "          Discretized heat equation on 2D unit square.\n";
@@ -455,7 +458,7 @@ let print_header rtol atol =
   printf "        Total system size: %d\n\n" neq;
   printf "Tolerance parameters:  rtol = %g   atol = %g\n" rtol atol;
   printf "Constraints set to force all solution components >= 0. \n";
-  printf "Linear solver: IDAKLU, sparse direct solver \n";
+  printf "Linear solver: %s, sparse direct solver \n" idaklu;
   printf "       difference quotient Jacobian\n";
   printf "IDACalcIC called with input boundary values = %g \n" bval;
   (* Print output table heading and initial line of table.  *)

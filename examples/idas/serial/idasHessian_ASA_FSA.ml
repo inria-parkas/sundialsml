@@ -439,7 +439,7 @@ let main () =
   and wqB1  = wrap qB1
   in
 
-  let m = Matrix.dense neq in
+  let m = Matrix.dense (2*neq) in
   let indexB1 =
     Adjoint.(init_backward ida_mem Dls.(solver Direct.(dense wyyB1 m))
                            (SStolerances (rtola, atola))
@@ -476,7 +476,7 @@ let main () =
   and wqB2  = wrap qB2
   in
 
-  let m = Matrix.dense neq in
+  let m = Matrix.dense (2*neq) in
   let indexB2 =
     Adjoint.(init_backward ida_mem Dls.(solver Direct.(dense wyyB2 m))
                            (SStolerances (rtola, atola))

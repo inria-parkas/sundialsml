@@ -103,9 +103,12 @@ let res data t (y : RealArray.t) (yd : RealArray.t) (res : RealArray.t) =
 let rhsQ data t (yy : RealArray.t) yp (qdot : RealArray.t) =
   qdot.{0} <- yy.{0}
 
+let idadense =
+  match Sundials.sundials_version with 2,_,_ -> "IDADENSE" | _ -> "DENSE"
+
 let print_header rtol avtol y =
   print_string "\nidasAkzoNob_dns: Akzo Nobel chemical kinetics DAE serial example problem for IDAS\n";
-  print_string "Linear solver: IDADENSE, Jacobian is computed by IDAS.\n";
+  printf "Linear solver: %s, Jacobian is computed by IDAS.\n" idadense;
   printf "Tolerance parameters:  rtol = %g   atol = %g\n"
          rtol avtol;
   print_string "---------------------------------------------------------------------------------\n";

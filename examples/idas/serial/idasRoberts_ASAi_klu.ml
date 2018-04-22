@@ -398,7 +398,7 @@ let main () =
   let indexB =
     Adjoint.(init_backward ida_mem
                            Dls.(solver Direct.(klu wyB m)
-                                       ~jac:(NoSens (jacB data)) m)
+                                       ~jac:(NoSens (jacB data)))
                            (SStolerances (reltolB, abstolB))
                            (NoSens (resB data))
                            tb2 wyB wypB)

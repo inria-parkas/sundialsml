@@ -20,7 +20,7 @@ let in_compat_mode =
 (*
  * NB: The order of variant constructors and record fields is important!
  *     If these types are changed or augmented, the corresponding declarations
- *     in cvode_serial.h (and code in cvode_serial.c) must also be updated.
+ *     in arkode_serial.h (and code in arkode_serial.c) must also be updated.
  *)
 
 (* Solver exceptions *)
@@ -380,7 +380,7 @@ module Spils = struct (* {{{ *)
 
   external c_spils_set_linear_solver
     : ('a, 'k) session -> ('a, 'k) Lsolver_impl.Iterative.cptr -> unit
-    = "c_cvode_spils_set_linear_solver"
+    = "c_arkode_spils_set_linear_solver"
 
   let init_preconditioner solve setup session nv =
     c_set_preconditioner session (setup <> None);
