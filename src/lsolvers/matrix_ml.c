@@ -2157,14 +2157,8 @@ static SUNMatrix csmat_custom_clone(SUNMatrix A)
     mlop = GET_OP(A, RECORD_MAT_MATRIXOPS_CLONE);
 
     vcontentb = caml_callback_exn(mlop, MAT_BACKLINK(A));
-    if (Is_exception_result (vcontentb)) {
-	sundials_ml_warn_discarded_exn (Extract_exception (vcontentb),
-				    "user-defined matrix operation m_clone");
-	fputs ("Sundials/ML has no sensible value to return to Sundials, "
-	       "and incorrect values risk memory corruption.  Abort.", stderr);
-	fflush (stderr);
-	abort ();
-    }
+    if (Is_exception_result (vcontentb))
+	CAMLreturnT(SUNMatrix, NULL);
 
     B = alloc_smat(MAT_OP_TABLE(A), vcontentb, true);
     csmat_clone_ops(B, A);
@@ -2184,11 +2178,12 @@ static int csmat_custom_zero(SUNMatrix A)
     mlop = GET_OP(A, RECORD_MAT_MATRIXOPS_ZERO);
 
     r = caml_callback_exn(mlop, MAT_BACKLINK(A));
-    if (Is_exception_result (r))
-	sundials_ml_warn_discarded_exn (Extract_exception (r),
-				    "user-defined matrix operation m_zero");
+    if (Is_exception_result (r)) {
+	r = Extract_exception(r);
+	CAMLreturnT(int, 1);
+    }
 
-    CAMLreturnT(int, Is_exception_result (r));
+    CAMLreturnT(int, 0);
 }
 
 static int csmat_custom_copy(SUNMatrix A, SUNMatrix B)
@@ -2198,11 +2193,12 @@ static int csmat_custom_copy(SUNMatrix A, SUNMatrix B)
     mlop = GET_OP(A, RECORD_MAT_MATRIXOPS_COPY);
 
     r = caml_callback2_exn(mlop, MAT_BACKLINK(A), MAT_BACKLINK(B));
-    if (Is_exception_result (r))
-	sundials_ml_warn_discarded_exn (Extract_exception (r),
-				    "user-defined matrix operation m_copy");
+    if (Is_exception_result (r)) {
+	r = Extract_exception(r);
+	CAMLreturnT(int, 1);
+    }
 
-    CAMLreturnT(int, Is_exception_result (r));
+    CAMLreturnT(int, 0);
 }
 
 static int csmat_custom_scale_add(realtype c, SUNMatrix A, SUNMatrix B)
@@ -2213,11 +2209,12 @@ static int csmat_custom_scale_add(realtype c, SUNMatrix A, SUNMatrix B)
 
     r = caml_callback3_exn(mlop, caml_copy_double(c), MAT_BACKLINK(A),
 			   MAT_BACKLINK(B));
-    if (Is_exception_result (r))
-	sundials_ml_warn_discarded_exn (Extract_exception (r),
-				"user-defined matrix operation m_scale_add");
+    if (Is_exception_result (r)) {
+	r = Extract_exception(r);
+	CAMLreturnT(int, 1);
+    }
 
-    CAMLreturnT(int, Is_exception_result (r));
+    CAMLreturnT(int, 0);
 }
 
 static int csmat_custom_scale_addi(realtype c, SUNMatrix A)
@@ -2227,11 +2224,12 @@ static int csmat_custom_scale_addi(realtype c, SUNMatrix A)
     mlop = GET_OP(A, RECORD_MAT_MATRIXOPS_SCALE_ADDI);
 
     r = caml_callback2_exn(mlop, caml_copy_double(c), MAT_BACKLINK(A));
-    if (Is_exception_result (r))
-	sundials_ml_warn_discarded_exn (Extract_exception (r),
-				"user-defined matrix operation m_scale_addi");
+    if (Is_exception_result (r)) {
+	r = Extract_exception(r);
+	CAMLreturnT(int, 1);
+    }
 
-    CAMLreturnT(int, Is_exception_result (r));
+    CAMLreturnT(int, 0);
 }
 
 static int csmat_custom_matvec(SUNMatrix A, N_Vector x, N_Vector y)
@@ -2242,11 +2240,12 @@ static int csmat_custom_matvec(SUNMatrix A, N_Vector x, N_Vector y)
 
     r = caml_callback3_exn(mlop, MAT_BACKLINK(A), NVEC_BACKLINK(x),
 			   NVEC_BACKLINK(y));
-    if (Is_exception_result (r))
-	sundials_ml_warn_discarded_exn (Extract_exception (r),
-				"user-defined matrix operation m_matvec");
+    if (Is_exception_result (r)) {
+	r = Extract_exception(r);
+	CAMLreturnT(int, 1);
+    }
 
-    CAMLreturnT(int, Is_exception_result (r));
+    CAMLreturnT(int, 0);
 }
 
 static int csmat_custom_space(SUNMatrix A, long int *lenrw, long int *leniw)
@@ -2256,11 +2255,12 @@ static int csmat_custom_space(SUNMatrix A, long int *lenrw, long int *leniw)
     mlop = GET_OP(A, RECORD_MAT_MATRIXOPS_SPACE);
 
     r = caml_callback_exn(mlop, MAT_BACKLINK(A));
-    if (Is_exception_result (r))
-	sundials_ml_warn_discarded_exn (Extract_exception (r),
-				"user-defined matrix operation m_space");
+    if (Is_exception_result (r)) {
+	r = Extract_exception(r);
+	CAMLreturnT(int, 1);
+    }
 
-    CAMLreturnT(int, Is_exception_result (r));
+    CAMLreturnT(int, 0);
 }
 #endif
 
