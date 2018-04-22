@@ -774,14 +774,14 @@ static void zero_sparse(MAT_CONTENT_SPARSE_TYPE A)
     /* Perform operation */
     for (i=0; i < A->NNZ; i++) {
 	data[i] = 0.0;
-	indexvals[i] = 0;
+	indexvals[i] = 0L;
     }
     for (i=0; i < A->NP; i++)
-	indexptrs[i] = 0;
-    indexptrs[A->NP] = 0;
+	indexptrs[i] = 0L;
+    indexptrs[A->NP] = 0L;
 }
 
-static void matrix_sparse_create_vcptr(sundials_ml_index m, sundials_ml_index n,
+static bool matrix_sparse_create_vcptr(sundials_ml_index m, sundials_ml_index n,
 				       sundials_ml_index nnz, int sformat,
 				       value *pvdata, value *pvidxvals,
 				       value *pvidxptrs, value *pvcptr)
@@ -789,18 +789,40 @@ static void matrix_sparse_create_vcptr(sundials_ml_index m, sundials_ml_index n,
     CAMLparam0();
 
 #if SUNDIALS_LIB_VERSION >= 300
-    SUNMatrixContent_Sparse content = NULL;
+    sundials_ml_index *indexvals, *indexptrs;
+    realtype *data;
     sundials_ml_index np = (sformat == CSC_MAT) ? n : m;
+    SUNMatrixContent_Sparse content = NULL;
 
-    // columns first
-    *pvdata = caml_ba_alloc_dims(BIGARRAY_FLOAT, 1, NULL, nnz);
-    *pvidxvals = caml_ba_alloc_dims(BIGARRAY_INT, 1, NULL, nnz);
-    *pvidxptrs = caml_ba_alloc_dims(BIGARRAY_INT, 1, NULL, np + 1);
+    data = (realtype *) malloc(nnz * sizeof(realtype));
+    if (data == NULL) CAMLreturnT(bool, false);
+
+    indexptrs = (sundials_ml_index *) malloc(nnz * sizeof(sundials_ml_index));
+    if (indexptrs == NULL) {
+	free(data);
+	CAMLreturnT(bool, false);
+    }
+
+    indexvals = (sundials_ml_index *)
+	malloc((np + 1) * sizeof(sundials_ml_index));
+    if (indexvals == NULL) {
+	free(data);
+	free(indexptrs);
+	CAMLreturnT(bool, false);
+    }
+
+    // allocate the array memory manually (above) to minimize the chances of an
+    // out of memory exception (a very slight chance remains...)
+    *pvdata = caml_ba_alloc_dims(BIGARRAY_FLOAT | CAML_BA_MANAGED,
+				 1, NULL, nnz);
+    *pvidxvals = caml_ba_alloc_dims(BIGARRAY_INDEX | CAML_BA_MANAGED,
+				 1, NULL, nnz);
+    *pvidxptrs = caml_ba_alloc_dims(BIGARRAY_INDEX | CAML_BA_MANAGED,
+				 1, NULL, np + 1);
 
     // Setup the C-side content
-    content = (SUNMatrixContent_Sparse)
-		malloc(sizeof *content);
-    if (content == NULL) caml_raise_out_of_memory();
+    content = (SUNMatrixContent_Sparse) malloc(sizeof *content);
+    if (content == NULL) CAMLreturnT(bool, false);
 
     content->sparsetype = sformat;
     content->M = m;
@@ -839,14 +861,14 @@ static void matrix_sparse_create_vcptr(sundials_ml_index m, sundials_ml_index n,
 #else
     SlsMat a = NewSparseMat(m, n, nnz);
 #endif
-    if (a == NULL) caml_raise_out_of_memory();
+    if (a == NULL) CAMLreturnT(int, false);
 
 #if SUNDIALS_LIB_VERSION >= 270
-    *pvidxvals = caml_ba_alloc_dims(BIGARRAY_INT, 1, a->indexvals, a->NNZ);
-    *pvidxptrs = caml_ba_alloc_dims(BIGARRAY_INT, 1, a->indexptrs, a->NP + 1);
+    *pvidxvals = caml_ba_alloc_dims(BIGARRAY_INDEX, 1, a->indexvals, a->NNZ);
+    *pvidxptrs = caml_ba_alloc_dims(BIGARRAY_INDEX, 1, a->indexptrs, a->NP + 1);
 #else
-    *pvidxvals = caml_ba_alloc_dims(BIGARRAY_INT, 1, a->rowvals, a->NNZ);
-    *pvidxptrs = caml_ba_alloc_dims(BIGARRAY_INT, 1, a->colptrs, a->N + 1);
+    *pvidxvals = caml_ba_alloc_dims(BIGARRAY_INDEX, 1, a->rowvals, a->NNZ);
+    *pvidxptrs = caml_ba_alloc_dims(BIGARRAY_INDEX, 1, a->colptrs, a->N + 1);
 #endif
     *pvdata = caml_ba_alloc_dims(BIGARRAY_FLOAT, 1, a->data, a->NNZ);
 
@@ -855,18 +877,18 @@ static void matrix_sparse_create_vcptr(sundials_ml_index m, sundials_ml_index n,
 
 #endif
 
-    CAMLreturn0;
+    CAMLreturnT(bool, true);
 }
 
-static value matrix_sparse_create_mat(sundials_ml_index m, sundials_ml_index n,
-	sundials_ml_index nnz, int sformat)
+static bool matrix_sparse_create_mat(sundials_ml_index m, sundials_ml_index n,
+	sundials_ml_index nnz, int sformat, value *vr)
 {
     CAMLparam0();
     CAMLlocal5(vdata, vidxvals, vidxptrs, vcptr, vpayload);
-    CAMLlocal1(vr);
 
-    matrix_sparse_create_vcptr(m, n, nnz, sformat,
-			       &vdata, &vidxvals, &vidxptrs, &vcptr);
+    if (! matrix_sparse_create_vcptr(m, n, nnz, sformat,
+	       &vdata, &vidxvals, &vidxptrs, &vcptr) )
+	CAMLreturnT(bool, false);
 
     vpayload = caml_alloc_tuple(RECORD_MAT_SPARSEDATA_SIZE);
     Store_field(vpayload, RECORD_MAT_SPARSEDATA_IDXVALS, vidxvals);
@@ -875,29 +897,30 @@ static value matrix_sparse_create_mat(sundials_ml_index m, sundials_ml_index n,
     Store_field(vpayload, RECORD_MAT_SPARSEDATA_SFORMAT,
 	    MAT_TO_SFORMAT(sformat));
 
-    vr = caml_alloc_tuple(RECORD_MAT_MATRIXCONTENT_SIZE);
-    Store_field(vr, RECORD_MAT_MATRIXCONTENT_PAYLOAD, vpayload);
-    Store_field(vr, RECORD_MAT_MATRIXCONTENT_RAWPTR,  vcptr);
-    Store_field(vr, RECORD_MAT_MATRIXCONTENT_VALID,   Val_bool(1));
+    *vr = caml_alloc_tuple(RECORD_MAT_MATRIXCONTENT_SIZE);
+    Store_field(*vr, RECORD_MAT_MATRIXCONTENT_PAYLOAD, vpayload);
+    Store_field(*vr, RECORD_MAT_MATRIXCONTENT_RAWPTR,  vcptr);
+    Store_field(*vr, RECORD_MAT_MATRIXCONTENT_VALID,   Val_bool(1));
 
-    CAMLreturn(vr);
+    CAMLreturnT(bool, true);
 }
 
 CAMLprim value ml_matrix_sparse_create(value vm, value vn, value vnnz,
-				      value vsformat)
+				       value vsformat)
 {
     CAMLparam4(vm, vn, vnnz, vsformat);
     CAMLlocal1(vr);
 
-    vr = matrix_sparse_create_mat(Long_val(vm), Long_val(vn), Long_val(vnnz),
-				  MAT_FROM_SFORMAT(vsformat));
+    if (! matrix_sparse_create_mat(Long_val(vm), Long_val(vn), Long_val(vnnz),
+				   MAT_FROM_SFORMAT(vsformat), &vr) )
+	caml_raise_out_of_memory();
 
     CAMLreturn(vr);
 }
 
 // Adapted directly from SUNSparseFromDenseMatrix
 CAMLprim value ml_matrix_sparse_from_dense(value vsformat, value vcptrad,
-					  value vdroptol)
+					   value vdroptol)
 {
     CAMLparam3(vsformat, vcptrad, vdroptol);
     CAMLlocal2(vr, vcptr);
@@ -921,7 +944,8 @@ CAMLprim value ml_matrix_sparse_from_dense(value vsformat, value vcptrad,
 	    nnz += SUNRabs(Ad->cols[j][i]) > droptol;
 
     /* allocate sparse matrix */
-    vr = matrix_sparse_create_mat(M, N, nnz, sformat);
+    if (! matrix_sparse_create_mat(M, N, nnz, sformat, &vr) )
+	caml_raise_out_of_memory();
     vcptr = Field(vr, RECORD_MAT_MATRIXCONTENT_RAWPTR);
     As = MAT_CONTENT_SPARSE(vcptr);
 
@@ -965,7 +989,7 @@ CAMLprim value ml_matrix_sparse_from_dense(value vsformat, value vcptrad,
 
 // Adapted directly from SUNSparseFromBandMatrix
 CAMLprim value ml_matrix_sparse_from_band(value vsformat, value vcptrab,
-					 value vdroptol)
+					  value vdroptol)
 {
     CAMLparam3(vsformat, vcptrab, vdroptol);
     CAMLlocal2(vr, vcptr);
@@ -989,7 +1013,8 @@ CAMLprim value ml_matrix_sparse_from_band(value vsformat, value vcptrab,
 	    nnz += (SUNRabs(Ab->cols[j][i - j + Ab->s_mu]) > droptol);
 
     /* allocate sparse matrix */
-    vr = matrix_sparse_create_mat(M, N, nnz, sformat);
+    if (! matrix_sparse_create_mat(M, N, nnz, sformat, &vr) )
+	caml_raise_out_of_memory();
     vcptr = Field(vr, RECORD_MAT_MATRIXCONTENT_RAWPTR);
     As = MAT_CONTENT_SPARSE(vcptr);
 
@@ -1065,12 +1090,12 @@ static value sparse_wrap_payload(SlsMat a)
     int format;
 
 #if SUNDIALS_LIB_VERSION >= 270
-    vidxvals = caml_ba_alloc_dims(BIGARRAY_INT, 1, a->indexvals, a->NNZ);
-    vidxptrs = caml_ba_alloc_dims(BIGARRAY_INT, 1, a->indexptrs, a->NP + 1);
+    vidxvals = caml_ba_alloc_dims(BIGARRAY_INDEX, 1, a->indexvals, a->NNZ);
+    vidxptrs = caml_ba_alloc_dims(BIGARRAY_INDEX, 1, a->indexptrs, a->NP + 1);
     format = a->sparsetype;
 #else
-    vidxvals = caml_ba_alloc_dims(BIGARRAY_INT, 1, a->rowvals, a->NNZ);
-    vidxptrs = caml_ba_alloc_dims(BIGARRAY_INT, 1, a->colptrs, a->N + 1);
+    vidxvals = caml_ba_alloc_dims(BIGARRAY_INDEX, 1, a->rowvals, a->NNZ);
+    vidxptrs = caml_ba_alloc_dims(BIGARRAY_INDEX, 1, a->colptrs, a->N + 1);
     format = CSC_MAT;
 #endif
     vdata = caml_ba_alloc_dims(BIGARRAY_FLOAT, 1, content->data, content->NNZ);
@@ -1138,9 +1163,9 @@ static bool matrix_sparse_resize(value va, sundials_ml_index nnz,
     // out of memory exception (a very slight chance remains...)
     vdata = caml_ba_alloc_dims(BIGARRAY_FLOAT | CAML_BA_MANAGED, 1,
 		new_data, nnz);
-    vidxvals = caml_ba_alloc_dims(BIGARRAY_INT | CAML_BA_MANAGED, 1,
+    vidxvals = caml_ba_alloc_dims(BIGARRAY_INDEX | CAML_BA_MANAGED, 1,
 		new_indexptrs, nnz);
-    vidxptrs = caml_ba_alloc_dims(BIGARRAY_INT | CAML_BA_MANAGED, 1,
+    vidxptrs = caml_ba_alloc_dims(BIGARRAY_INDEX | CAML_BA_MANAGED, 1,
 		new_indexvals, A->NP + 1);
 
     /* Strictly speaking, it is not necessary to reallocate and recopy the
@@ -2004,8 +2029,10 @@ static SUNMatrix csmat_sparse_clone(SUNMatrix A)
     SUNMatrix B;
 
     vcontenta = MAT_BACKLINK(A);
-    vcontentb = matrix_sparse_create_mat(SM_ROWS_S(A), SM_COLUMNS_S(A),
-					 SM_NNZ_S(A), SM_SPARSETYPE_S(A));
+    if (! matrix_sparse_create_mat(SM_ROWS_S(A), SM_COLUMNS_S(A),
+				   SM_NNZ_S(A), SM_SPARSETYPE_S(A),
+				   &vcontentb) )
+	CAMLreturnT(SUNMatrix, NULL);
 
     vpayloada = Field(vcontenta, RECORD_MAT_MATRIXCONTENT_PAYLOAD);
     vpayloadb = Field(vcontentb, RECORD_MAT_MATRIXCONTENT_PAYLOAD);
