@@ -51,7 +51,7 @@ exception BadT
 let no_roots = (0, dummy_rootsfn)
 
 type ('d, 'kind) iter =
-  | Newton of ('d, 'kind) linear_solver
+  | Newton of ('d, 'kind) session_linear_solver
   | FixedPoint of int
 
 type linearity =

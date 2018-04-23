@@ -197,7 +197,7 @@ module Direct = struct (* {{{ *)
      the compatibility with matrix implementations is checked for the generic
      linear solver (which may directly manipulates the matrix data).
    *)
-  type ('m, 'mk, 'nd, 'nk, 't) t_data = {
+  type ('m, 'mk, 'nd, 'nk, 't) linear_solver_data = {
     rawptr : ('m, 'nd, 'nk) cptr;
     solver : ('m, 'nd, 'nk, 't) solver;
     matrix : ('mk, 'm, 'nd, 'nk) Matrix.t;
@@ -210,8 +210,9 @@ module Direct = struct (* {{{ *)
      underlying Sundials code access the matrix data directly and not just
      through the SUNMatrix interface -- but we prefer to hide this detail
      from users (Direct.t already has four type arguments!) *)
-  type ('m, 'nd, 'nk, 't) t =
-    S : ('m, 'mk, 'nd, 'nk, 't) t_data -> ('m, 'nd, 'nk, 't) t
+  type ('m, 'nd, 'nk, 't) linear_solver =
+    S : ('m, 'mk, 'nd, 'nk, 't) linear_solver_data
+        -> ('m, 'nd, 'nk, 't) linear_solver
 
   let attach (S ({ attached } as s)) =
     if attached then raise LinearSolverInUse;
@@ -267,7 +268,7 @@ module Iterative = struct (* {{{ *)
     : int -> (unit, 'nd, 'nk) Custom.ops -> Custom.has_ops -> ('nd, 'nk) cptr
     = "ml_lsolver_make_custom"
 
-  type ('nd, 'nk, 't) t = {
+  type ('nd, 'nk, 't) linear_solver = {
     rawptr : ('nd, 'nk) cptr;
     solver : ('nd, 'nk, 't) solver;
     compat : info;
@@ -293,6 +294,6 @@ end (* }}} *)
    still held in an underlying C data structure. *)
 type solver =
   | NoSolver
-  | DirectSolver : ('m, 'nd, 'nk, 't) Direct.t -> solver
-  | IterativeSolver : ('nd, 'nk, 't) Iterative.t -> solver
+  | DirectSolver : ('m, 'nd, 'nk, 't) Direct.linear_solver -> solver
+  | IterativeSolver : ('nd, 'nk, 't) Iterative.linear_solver -> solver
 

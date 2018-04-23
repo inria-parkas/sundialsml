@@ -199,7 +199,7 @@ let ls_check_spils_bbd session =
 type 'kind serial_session = (Nvector_serial.data, 'kind) session
                             constraint 'kind = [>Nvector_serial.kind]
 
-type ('data, 'kind) linear_solver =
+type ('data, 'kind) session_linear_solver =
   ('data, 'kind) session
   -> ('data, 'kind) nvector
   -> unit

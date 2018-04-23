@@ -14,9 +14,9 @@
 
 (* This module's purpose is just to define types shared between Cvode,
    Cvodes, Cvode_bbd, and Cvode_bbds.  However, the session and
-   linear_solver types must have their implementation exposed to all
-   four modules yet be abstract to code that lives outside of the
-   sundialsml library.
+   session_linear_solver types must have their implementation exposed
+   to all four modules yet be abstract to code that lives outside of
+   the sundialsml library.
 
    To satisfy this requirement, we define the type in a separate
    module - this module - that exports everything, then omit
@@ -570,13 +570,14 @@ let ls_check_spils_bbd session =
 type 'kind serial_session = (Nvector_serial.data, 'kind) session
                             constraint 'kind = [>Nvector_serial.kind]
 
-type ('data, 'kind) linear_solver =
+type ('data, 'kind) session_linear_solver =
   ('data, 'kind) session
   -> ('data, 'kind) Nvector.t
   -> unit
 
-type 'k serial_linear_solver = (Nvector_serial.data, 'k) linear_solver
-                               constraint 'k = [>Nvector_serial.kind]
+type 'k serial_session_linear_solver =
+  (Nvector_serial.data, 'k) session_linear_solver
+  constraint 'k = [>Nvector_serial.kind]
 
 module SpilsTypes = struct
   include SpilsTypes'
@@ -631,12 +632,13 @@ module AdjointTypes = struct
     | BwdSensExt se -> (se.parent, se.which)
     | _ -> failwith "Internal error: bsession invalid"
 
-  type ('data, 'kind) linear_solver =
+  type ('data, 'kind) session_linear_solver =
     ('data, 'kind) bsession
     -> ('data, 'kind) nvector
     -> unit
-  type 'kind serial_linear_solver = (Nvector_serial.data, 'kind) linear_solver
-                                    constraint 'kind = [>Nvector_serial.kind]
+  type 'kind serial_session_linear_solver =
+    (Nvector_serial.data, 'kind) session_linear_solver
+    constraint 'kind = [>Nvector_serial.kind]
 
   module SpilsTypes = struct
     include SpilsTypes'

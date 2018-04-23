@@ -932,12 +932,13 @@ module Adjoint : sig (* {{{ *)
   (** Linear solvers used in backward problems.
 
       @cvodes <node7#sss:lin_solv_b> Linear Solver Initialization Functions *)
-  type ('data, 'kind) linear_solver =
-          ('data, 'kind) Cvode_impl.AdjointTypes.linear_solver
+  type ('data, 'kind) session_linear_solver =
+          ('data, 'kind) Cvode_impl.AdjointTypes.session_linear_solver
 
   (** Alias for linear solvers that are restricted to serial nvectors. *)
-  type 'kind serial_linear_solver = (Nvector_serial.data, 'kind) linear_solver
-                                    constraint 'kind = [>Nvector_serial.kind]
+  type 'kind serial_session_linear_solver =
+    (Nvector_serial.data, 'kind) session_linear_solver
+    constraint 'kind = [>Nvector_serial.kind]
 
   (** Workspaces with three temporary vectors. *)
   type 'd triple = 'd * 'd * 'd
@@ -964,7 +965,7 @@ module Adjoint : sig (* {{{ *)
         quotients.
 
         @cvodes <node7#sss:lin_solv_b> CVDiagB *)
-    val solver : ('data, 'kind) linear_solver
+    val solver : ('data, 'kind) session_linear_solver
 
     (** Returns the sizes of the real and integer workspaces used by the
         Diagonal linear solver.
@@ -1054,8 +1055,8 @@ module Adjoint : sig (* {{{ *)
         @nocvode <node> CVDlsSetJacFnBS *)
     val solver :
       ?jac:'m jac_fn ->
-      ('m, 'kind, 't) Lsolver.Direct.serial_t ->
-      'kind serial_linear_solver
+      ('m, 'kind, 't) Lsolver.Direct.serial_linear_solver ->
+      'kind serial_session_linear_solver
 
     (** {3:stats Solver statistics} *)
 
@@ -1416,10 +1417,10 @@ module Adjoint : sig (* {{{ *)
         @nocvode <node> CVSpilsSetJacTimesB
         @nocvode <node> CVSpilsSetJacTimesBS *)
     val solver :
-      ('d, 'k, 'f) Lsolver.Iterative.t
+      ('d, 'k, 'f) Lsolver.Iterative.linear_solver
       -> ?jac_times_vec:'d jac_times_vec_fn
       -> ('d, 'k) preconditioner
-      -> ('d, 'k) linear_solver
+      -> ('d, 'k) session_linear_solver
 
     (** {3:set Solver parameters} *)
 
@@ -1611,7 +1612,7 @@ module Adjoint : sig (* {{{ *)
           (('data, 'kind) bsession
             -> ('data, 'kind) Nvector.t
             -> ('data, 'kind) callbacks)
-          -> ('data, 'kind) linear_solver
+          -> ('data, 'kind) session_linear_solver
 
     (** {3:internals Solver internals} *)
 
@@ -1689,7 +1690,7 @@ module Adjoint : sig (* {{{ *)
 
       @cvodes <node7#sss:cvinitb> CVodeCreateB *)
   type ('data, 'kind) iter =
-    | Newton of ('data, 'kind) linear_solver
+    | Newton of ('data, 'kind) session_linear_solver
       (** Newton iteration with a given linear solver *)
     | Functional
       (** Functional iteration (non-stiff systems only) *)

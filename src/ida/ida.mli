@@ -65,11 +65,13 @@ type 'k serial_session = (RealArray.t, 'k) session
 (** Linear solvers used by Ida.
 
     @ida <node5#sss:lin_solv_init> Linear Solver Specification Functions *)
-type ('data, 'kind) linear_solver = ('data, 'kind) Ida_impl.linear_solver
+type ('data, 'kind) session_linear_solver =
+  ('data, 'kind) Ida_impl.session_linear_solver
 
 (** Alias for linear solvers that are restricted to serial nvectors. *)
-type 'kind serial_linear_solver = (Nvector_serial.data, 'kind) linear_solver
-                                  constraint 'kind = [>Nvector_serial.kind]
+type 'kind serial_session_linear_solver =
+  (Nvector_serial.data, 'kind) session_linear_solver
+  constraint 'kind = [>Nvector_serial.kind]
 
 (** Workspaces with two temporary vectors. *)
 type 'd double = 'd * 'd
@@ -134,8 +136,8 @@ module Dls : sig (* {{{ *)
       @nocvode <node> IDADlsSetJacFn *)
   val solver :
     ?jac:'m jac_fn ->
-    ('m, 'kind, 't) Lsolver.Direct.serial_t ->
-    'kind serial_linear_solver
+    ('m, 'kind, 't) Lsolver.Direct.serial_linear_solver ->
+    'kind serial_session_linear_solver
 
   (** {3:stats Solver statistics} *)
 
@@ -279,10 +281,10 @@ module Spils : sig (* {{{ *)
       @nocvode <node> IDASpilsSetLinearSolver
       @nocvode <node> IDASpilsSetJacTimes *)
   val solver :
-    ('d, 'k, 'f) Lsolver.Iterative.t
+    ('d, 'k, 'f) Lsolver.Iterative.linear_solver
     -> ?jac_times_vec:'d jac_times_setup_fn option * 'd jac_times_vec_fn
     -> ('d, 'k) preconditioner
-    -> ('d, 'k) linear_solver
+    -> ('d, 'k) session_linear_solver
 
   (** {3:set Solver parameters} *)
 
@@ -492,7 +494,7 @@ module Alternate : sig (* {{{ *)
         (('data, 'kind) session
           -> ('data, 'kind) Nvector.t
           -> ('data, 'kind) callbacks)
-        -> ('data, 'kind) linear_solver
+        -> ('data, 'kind) session_linear_solver
 
   (** {3:internals Solver internals} *)
 
@@ -587,7 +589,7 @@ type 'd rootsfn = float -> 'd -> 'd -> RealArray.t -> unit
     @ida <node5#ss:ewtsetFn>       IDAEwtFn
     @ida <node5#sss:idasetid>      IDASetId *)
 val init :
-    ('d, 'kind) linear_solver
+    ('d, 'kind) session_linear_solver
     -> ('d, 'kind) tolerance
     -> 'd resfn
     -> ?varid:('d, 'kind) Nvector.t
@@ -820,7 +822,7 @@ val get_dky : ('d, 'k) session -> ('d, 'k) Nvector.t -> float -> int -> unit
     @ida <node5#sss:cvreinit> IDAReInit *)
 val reinit :
   ('d, 'k) session
-  -> ?linsolv:('d, 'k) linear_solver
+  -> ?linsolv:('d, 'k) session_linear_solver
   -> ?roots:(int * 'd rootsfn)
   -> float
   -> ('d, 'k) Nvector.t

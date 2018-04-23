@@ -49,8 +49,9 @@ type eta_choice =
   | EtaChoice2 of eta_params    (* KIN_ETACHOICE2 *)
   | EtaConstant of float option (* KIN_ETACONSTANT *)
 
-type 'k serial_linear_solver = (RealArray.t, 'k) linear_solver
-                               constraint 'k = [>Nvector_serial.kind]
+type 'k serial_session_linear_solver =
+  (RealArray.t, 'k) session_linear_solver
+  constraint 'k = [>Nvector_serial.kind]
 
 (* interface *)
 

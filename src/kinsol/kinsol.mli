@@ -59,11 +59,13 @@ type 'kind serial_session = (Nvector_serial.data, 'kind) session
 (** Linear solvers used by Kinsol.
 
     @kinsol <node5#sss:lin_solv_init> Linear Solver Specification Functions *)
-type ('data, 'kind) linear_solver = ('data, 'kind) Kinsol_impl.linear_solver
+type ('data, 'kind) session_linear_solver =
+  ('data, 'kind) Kinsol_impl.session_linear_solver
 
 (** Alias for linear solvers that are restricted to serial nvectors. *)
-type 'kind serial_linear_solver = (Nvector_serial.data, 'kind) linear_solver
-                                  constraint 'kind = [>Nvector_serial.kind]
+type 'kind serial_session_linear_solver =
+  (Nvector_serial.data, 'kind) session_linear_solver
+  constraint 'kind = [>Nvector_serial.kind]
 
 (** Workspaces with two temporary vectors. *)
 type 'd double = 'd * 'd
@@ -116,8 +118,8 @@ module Dls : sig (* {{{ *)
       @nocvode <node> CVDlsSetJacFn *)
   val solver :
     ?jac:'m jac_fn ->
-    ('m, 'kind, 't) Lsolver.Direct.serial_t ->
-    'kind serial_linear_solver
+    ('m, 'kind, 't) Lsolver.Direct.serial_linear_solver ->
+    'kind serial_session_linear_solver
 
   (** {3:stats Solver statistics} *)
 
@@ -254,10 +256,10 @@ module Spils : sig (* {{{ *)
       @nocvode <node> CVSpilsSetLinearSolver
       @nocvode <node> CVSpilsSetJacTimes *)
   val solver :
-    ('d, 'k, 'f) Lsolver.Iterative.t
+    ('d, 'k, 'f) Lsolver.Iterative.linear_solver
     -> ?jac_times_vec:'d jac_times_vec_fn
     -> ('d, 'k) preconditioner
-    -> ('d, 'k) linear_solver
+    -> ('d, 'k) session_linear_solver
 
   (** {3:stats Solver statistics} *)
 
@@ -391,7 +393,7 @@ module Alternate : sig (* {{{ *)
   val solver :
         (('data, 'kind) session -> ('data, 'kind) Nvector.t
                                                 -> ('data, 'kind) callbacks)
-        -> ('data, 'kind) linear_solver
+        -> ('data, 'kind) session_linear_solver
 
   (** {3:internals Solver internals} *)
 
@@ -441,7 +443,7 @@ type 'data sysfn = 'data -> 'data -> unit
 val init :
   ?max_iters:int
   -> ?maa:int
-  -> ?linsolv:('data, 'kind) linear_solver
+  -> ?linsolv:('data, 'kind) session_linear_solver
   -> 'data sysfn
   -> ('data, 'kind) Nvector.t
   -> ('data, 'kind) session

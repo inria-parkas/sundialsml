@@ -50,7 +50,7 @@ type lmm =
   | BDF
 
 type ('a, 'kind) iter =
-  | Newton of ('a, 'kind) linear_solver
+  | Newton of ('a, 'kind) session_linear_solver
   | Functional
 
 type integrator_stats = {

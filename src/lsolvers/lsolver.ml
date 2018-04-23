@@ -372,8 +372,9 @@ end
 module Direct = struct
   include Lsolver_impl.Direct
 
-  type ('m, 'nk, 'tag) serial_t
-    = ('m, Nvector_serial.data, [>Nvector_serial.kind] as 'nk, 'tag) t
+  type ('m, 'nk, 'tag) serial_linear_solver
+    = ('m, Nvector_serial.data, [>Nvector_serial.kind] as 'nk, 'tag)
+        linear_solver
 
   external c_dense
            : 'k Nvector_serial.any

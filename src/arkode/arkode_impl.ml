@@ -14,7 +14,7 @@
 
 (* This module's purpose is just to define types shared between Arkode,
    Arkode_bbd, Arkode_klu, and Arkode_superlumt. The session and
-   linear_solver types must have their implementation exposed to all
+   session_linear_solver types must have their implementation exposed to all
    modules yet be abstract to code that lives outside of the
    sundialsml library.
 
@@ -246,7 +246,7 @@ type ('a, 'kind) session = {
   mutable resizefn     : 'a resize_fn;
   mutable poststepfn   : 'a postprocess_step_fn;
 
-  mutable linsolver      : ('a, 'kind) linear_solver option;
+  mutable linsolver      : ('a, 'kind) session_linear_solver option;
   mutable ls_solver      : Lsolver_impl.solver;
   mutable ls_callbacks   : ('a, 'kind) linsolv_callbacks;
   mutable ls_precfns     : 'a linsolv_precfns;
@@ -261,7 +261,7 @@ and problem_type =
   | ExplicitOnly
   | ImplicitAndExplicit
 
-and ('data, 'kind) linear_solver =
+and ('data, 'kind) session_linear_solver =
   ('data, 'kind) session
   -> ('data, 'kind) nvector
   -> unit
@@ -454,8 +454,9 @@ let mass_check_spils session =
 type 'k serial_session = (Nvector_serial.data, 'k) session
                          constraint 'k = [>Nvector_serial.kind]
 
-type 'k serial_linear_solver = (Nvector_serial.data, 'k) linear_solver
-                               constraint 'k = [>Nvector_serial.kind]
+type 'k serial_session_linear_solver =
+  (Nvector_serial.data, 'k) session_linear_solver
+  constraint 'k = [>Nvector_serial.kind]
 
 module SpilsTypes = struct
   include SpilsTypes'

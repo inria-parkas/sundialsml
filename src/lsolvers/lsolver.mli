@@ -105,8 +105,8 @@ module Iterative : sig
 
     @nocvode <node> Description of the SUNLinearSolver module
     @nocvode <node> SUNLinearSolver *)
-  type ('data, 'kind, 'iter) t
-    = ('data, 'kind, 'iter) Lsolver_impl.Iterative.t
+  type ('data, 'kind, 'iter) linear_solver
+    = ('data, 'kind, 'iter) Lsolver_impl.Iterative.linear_solver
 
   (** The type of Gram-Schmidt orthogonalization in iterative linear solvers.
 
@@ -125,7 +125,8 @@ module Iterative : sig
     is used as a template.
 
     @nocvode <node> SUNSPBCGS *)
-  val spbcgs : ?maxl:int -> ('d, 'k) Nvector.t -> ('d, 'k, [`Spbcgs]) t
+  val spbcgs : ?maxl:int -> ('d, 'k) Nvector.t
+               -> ('d, 'k, [`Spbcgs]) linear_solver
 
   (** Krylov iterative solver using the scaled preconditioned flexible
     generalized minimum residual (GMRES) method. The [maxl] arguments gives
@@ -137,7 +138,8 @@ module Iterative : sig
     @nocvode <node> SUNSPFGMR *)
   val spfgmr : ?maxl:int -> ?max_restarts:int
                -> ?gs_type:gramschmidt_type
-               -> ('d, 'k) Nvector.t -> ('d, 'k, [`Spfgmr]) t
+               -> ('d, 'k) Nvector.t
+               -> ('d, 'k, [`Spfgmr]) linear_solver
 
   (** Krylov iterative solver using the scaled preconditioned generalized
     minimum residual (GMRES) method. The [maxl] arguments gives the maximum
@@ -149,7 +151,8 @@ module Iterative : sig
     @nocvode <node> SUNSPGMR *)
   val spgmr : ?maxl:int -> ?max_restarts:int
               -> ?gs_type:gramschmidt_type
-              -> ('d, 'k) Nvector.t -> ('d, 'k, [`Spgmr]) t
+              -> ('d, 'k) Nvector.t
+              -> ('d, 'k, [`Spgmr]) linear_solver
 
   (** Krylov iterative with the scaled preconditioned transpose-free
     quasi-minimal residual (SPTFQMR) method. The [maxl] arguments gives the
@@ -157,7 +160,8 @@ module Iterative : sig
     argument is used as a template.
 
     @nocvode <node> SUNSPTFQMR *)
-  val sptfqmr : ?maxl:int -> ('d, 'k) Nvector.t -> ('d, 'k, [`Sptfqmr]) t
+  val sptfqmr : ?maxl:int -> ('d, 'k) Nvector.t
+                -> ('d, 'k, [`Sptfqmr]) linear_solver
 
   (** Krylov iterative solver using the preconditioned conjugate gradient
     (PCG) method. The [maxl] arguments gives the maximum dimension of the
@@ -165,7 +169,8 @@ module Iterative : sig
     template.
 
     @nocvode <node> SUNPCG *)
-  val pcg : ?maxl:int -> ('d, 'k) Nvector.t -> ('d, 'k, [`Pcg]) t
+  val pcg : ?maxl:int -> ('d, 'k) Nvector.t
+            -> ('d, 'k, [`Pcg]) linear_solver
 
   (** Custom iterative linear solvers. *)
   module Custom : sig (* {{{ *)
@@ -275,10 +280,10 @@ module Iterative : sig
       NB: This feature is only available for Sundials >= 3.0.0. *)
     val make : ('data, 'kind, 'lsolver) ops
                -> 'lsolver
-               -> ('data, 'kind, 'lsolver tag) t
+               -> ('data, 'kind, 'lsolver tag) linear_solver
 
     (** Return the internal state from an custom iterative linear solver. *)
-    val unwrap : ('data, 'kind, 'lsolver tag) t -> 'lsolver
+    val unwrap : ('data, 'kind, 'lsolver tag) linear_solver -> 'lsolver
 
   end (* }}} *)
 
@@ -381,14 +386,15 @@ module Iterative : sig
     @nocvode <node> SUNSPBCGSSetMaxl
     @nocvode <node> SUNSPTFQMRSetMaxl
     @nocvode <node> SUNPCGSetMaxl *)
-  val set_maxl : ('d, 'k, [< `Spbcgs|`Sptfqmr|`Pcg]) t -> int -> unit
+  val set_maxl : ('d, 'k, [< `Spbcgs|`Sptfqmr|`Pcg]) linear_solver
+                 -> int -> unit
 
   (** Sets the Gram-Schmidt orthogonalization to use.
 
     @nocvode <node> SUNSPGMRSetGSType
     @nocvode <node> SUNSPFGMRSetGSType *)
   val set_gs_type :
-    ('d, 'k, [< `Spfgmr|`Spgmr]) t -> gramschmidt_type -> unit
+    ('d, 'k, [< `Spfgmr|`Spgmr]) linear_solver -> gramschmidt_type -> unit
 
   (** Sets the number of GMRES restarts to allow.
 
@@ -396,7 +402,8 @@ module Iterative : sig
 
     @nocvode <node> SUNSPGMRSetMaxRestarts
     @nocvode <node> SUNSPFGMRSetMaxRestarts *)
-  val set_max_restarts : ('d, 'k, [< `Spfgmr|`Spgmr]) t -> int -> unit
+  val set_max_restarts : ('d, 'k, [< `Spfgmr|`Spgmr]) linear_solver
+                         -> int -> unit
 
   (** The type of preconditioning in Krylov solvers.
 
@@ -421,7 +428,7 @@ module Iterative : sig
     @nocvode <node> SUNSPFGMRSetPrecType
     @nocvode <node> SUNSPGMRSetPrecType
     @nocvode <node> SUNSPTFQMRSetPrecType *)
-  val set_prec_type : ('d, 'k, 'f) t -> preconditioning_type -> unit
+  val set_prec_type : ('d, 'k, 'f) linear_solver -> preconditioning_type -> unit
 
 end
 
@@ -438,12 +445,13 @@ module Direct : sig
 
     @nocvode <node> Description of the SUNLinearSolver module
     @nocvode <node> SUNLinearSolver *)
-  type ('matrix, 'data, 'kind, 'tag) t
-    = ('matrix, 'data, 'kind, 'tag) Lsolver_impl.Direct.t
+  type ('matrix, 'data, 'kind, 'tag) linear_solver
+    = ('matrix, 'data, 'kind, 'tag) Lsolver_impl.Direct.linear_solver
 
   (** Alias for linear solvers that are restricted to serial nvectors. *)
-  type ('mat, 'kind, 'tag) serial_t
-    = ('mat, Nvector_serial.data, [>Nvector_serial.kind] as 'kind, 'tag) t
+  type ('mat, 'kind, 'tag) serial_linear_solver
+    = ('mat, Nvector_serial.data, [>Nvector_serial.kind] as 'kind, 'tag)
+        linear_solver
 
   (** Creates a direct linear solver on dense matrices. The nvector and matrix
     argument are used to determine the linear system size and to assess
@@ -455,7 +463,7 @@ module Direct : sig
   val dense :
     'k Nvector_serial.any
     -> 'k Matrix.dense
-    -> (Matrix.Dense.t, 'k, tag) serial_t
+    -> (Matrix.Dense.t, 'k, tag) serial_linear_solver
 
   (** Creates a direct linear solver on dense matrices using LAPACK.
     See {!dense}. Only available if {!Sundials.lapack_enabled}.
@@ -464,7 +472,7 @@ module Direct : sig
   val lapack_dense :
     'k Nvector_serial.any
     -> 'k Matrix.dense
-    -> (Matrix.Dense.t, 'k, tag) serial_t
+    -> (Matrix.Dense.t, 'k, tag) serial_linear_solver
 
   (** Creates a direct linear solver on banded matrices. The nvector and matrix
     argument are used to determine the linear system size and to assess
@@ -476,7 +484,7 @@ module Direct : sig
   val band :
     'k Nvector_serial.any
     -> 'k Matrix.band
-    -> (Matrix.Band.t, 'k, tag) serial_t
+    -> (Matrix.Band.t, 'k, tag) serial_linear_solver
 
   (** Creates a direct linear solver on banded matrices using LAPACK.
     See {!band}. Only available if {!Sundials.lapack_enabled}.
@@ -485,7 +493,7 @@ module Direct : sig
   val lapack_band :
     'k Nvector_serial.any
     -> 'k Matrix.band
-    -> (Matrix.Band.t, 'k, tag) serial_t
+    -> (Matrix.Band.t, 'k, tag) serial_linear_solver
 
   (** KLU direct linear solver operating on sparse matrices (requires KLU). *)
   module Klu : sig (* {{{ *)
@@ -511,7 +519,7 @@ module Direct : sig
       ?ordering:ordering
       -> 'k Nvector_serial.any
       -> ('s, 'k) Matrix.sparse
-      -> ('s Matrix.Sparse.t, 'k, tag) serial_t
+      -> ('s Matrix.Sparse.t, 'k, tag) serial_linear_solver
 
     (** Reinitializes memory and flags for a new factorization (symbolic and
       numeric) at the next solver setup call. In the call [reinit ls a nnz],
@@ -520,13 +528,13 @@ module Direct : sig
       factorizations will be completed at the next solver step.
 
       @nocvode <node> SUNKLUReInit *)
-    val reinit : ('s Matrix.Sparse.t, 'k, [>tag]) serial_t
+    val reinit : ('s Matrix.Sparse.t, 'k, [>tag]) serial_linear_solver
                  -> ('s, 'k) Matrix.sparse -> ?nnz:int -> unit -> unit
 
     (** Sets the ordering algorithm used to minimize fill-in.
 
       @nocvode <node> SUNKLUSetOrdering *)
-    val set_ordering : ('s Matrix.Sparse.t, 'k, [>tag]) serial_t
+    val set_ordering : ('s Matrix.Sparse.t, 'k, [>tag]) serial_linear_solver
                        -> ordering -> unit
 
   end (* }}} *)
@@ -540,7 +548,7 @@ module Direct : sig
     ?ordering:Klu.ordering
     -> 'k Nvector_serial.any
     -> ('s, 'k) Matrix.sparse
-    -> ('s Matrix.Sparse.t, 'k, Klu.tag) serial_t
+    -> ('s Matrix.Sparse.t, 'k, Klu.tag) serial_linear_solver
 
   (** SuperLUMT direct linear solver operating on sparse matrices (requires
     SuperLUMT). *)
@@ -569,12 +577,12 @@ module Direct : sig
       -> nthreads:int
       -> 'k Nvector_serial.any
       -> (Matrix.Sparse.csc, 'k) Matrix.sparse
-      -> (Matrix.Sparse.csc Matrix.Sparse.t, 'k, tag) serial_t
+      -> (Matrix.Sparse.csc Matrix.Sparse.t, 'k, tag) serial_linear_solver
 
     (** Sets the ordering algorithm used to minimize fill-in.
 
       @nocvode <node> SUNSuperLUMTSetOrdering *)
-    val set_ordering : ('s Matrix.Sparse.t, 'k, [>tag]) serial_t
+    val set_ordering : ('s Matrix.Sparse.t, 'k, [>tag]) serial_linear_solver
                        -> ordering -> unit
 
   end (* }}} *)
@@ -589,7 +597,8 @@ module Direct : sig
     -> nthreads:int
     -> 'k Nvector_serial.any
     -> (Matrix.Sparse.csc, 'k) Matrix.sparse
-    -> (Matrix.Sparse.csc Matrix.Sparse.t, 'k, Superlumt.tag) serial_t
+    -> (Matrix.Sparse.csc Matrix.Sparse.t, 'k, Superlumt.tag)
+         serial_linear_solver
 
   (** Custom direct linear solvers. *)
   module Custom : sig (* {{{ *)
@@ -631,10 +640,10 @@ module Direct : sig
     val make : ('matrix, 'data, 'kind, 'lsolver) ops
                -> 'lsolver
                -> ('matrixkind, 'matrix, 'data, 'kind) Matrix.t
-               -> ('matrix, 'data, 'kind, 'lsolver tag) t
+               -> ('matrix, 'data, 'kind, 'lsolver tag) linear_solver
 
     (** Return the internal state from an custom direct linear solver. *)
-    val unwrap : ('matrix, 'data, 'kind, 'lsolver tag) t -> 'lsolver
+    val unwrap : ('matrix, 'data, 'kind, 'lsolver tag) linear_solver -> 'lsolver
 
   end (* }}} *)
 end

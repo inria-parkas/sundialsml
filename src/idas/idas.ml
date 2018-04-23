@@ -694,7 +694,7 @@ module Adjoint = struct (* {{{ *)
   type 'a triple = 'a * 'a * 'a
 
   type ('data, 'kind) iter =
-    | Newton of ('data, 'kind) linear_solver
+    | Newton of ('data, 'kind) session_linear_solver
     | Functional
 
   type ('a, 'k) tolerance =

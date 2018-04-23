@@ -68,11 +68,13 @@ type 'k serial_session = (Nvector_serial.data, 'k) session
 (** Linear solvers used by Arkode.
 
     @noarkode <node> Linear Solver Specification Functions *)
-type ('data, 'kind) linear_solver = ('data, 'kind) Arkode_impl.linear_solver
+type ('data, 'kind) session_linear_solver =
+  ('data, 'kind) Arkode_impl.session_linear_solver
 
 (** Alias for linear solvers that are restricted to serial nvectors. *)
-type 'kind serial_linear_solver = (Nvector_serial.data, 'kind) linear_solver
-                                  constraint 'kind = [>Nvector_serial.kind]
+type 'kind serial_session_linear_solver =
+  (Nvector_serial.data, 'kind) session_linear_solver
+  constraint 'kind = [>Nvector_serial.kind]
 
 (** Workspaces with three temporary vectors. *)
 type 'd triple = 'd * 'd * 'd
@@ -131,8 +133,8 @@ module Dls : sig (* {{{ *)
       @nocvode <node> ARKDlsSetJacFn *)
   val solver :
     ?jac:'m jac_fn ->
-    ('m, 'kind, 't) Lsolver.Direct.serial_t ->
-    'kind serial_linear_solver
+    ('m, 'kind, 't) Lsolver.Direct.serial_linear_solver ->
+    'kind serial_session_linear_solver
 
   (** {3:stats Solver statistics} *)
 
@@ -354,10 +356,10 @@ module Spils : sig (* {{{ *)
         @nocvode <node> ARKSpilsSetLinearSolver
         @nocvode <node> ARKSpilsSetJacTimes *)
     val solver :
-      ('d, 'k, 'f) Lsolver.Iterative.t
+      ('d, 'k, 'f) Lsolver.Iterative.linear_solver
       -> ?jac_times_vec:'d jac_times_setup_fn option * 'd jac_times_vec_fn
       -> ('d, 'k) preconditioner
-      -> ('d, 'k) linear_solver
+      -> ('d, 'k) session_linear_solver
 
   (** {3:set Solver parameters} *)
 
@@ -575,7 +577,7 @@ module Alternate : sig (* {{{ *)
         (('data, 'kind) session
           -> ('data, 'kind) Nvector.t
           -> ('data, 'kind) callbacks)
-        -> ('data, 'kind) linear_solver
+        -> ('data, 'kind) session_linear_solver
 
   (** {3:internals Solver internals} *)
 
@@ -638,7 +640,7 @@ module Mass : sig (* {{{ *)
     val solver :
       'm mass_fn
       -> bool
-      -> ('m, 'kind, 't) Lsolver.Direct.serial_t
+      -> ('m, 'kind, 't) Lsolver.Direct.serial_linear_solver
       -> 'kind serial_solver
 
     (** {3:stats Solver statistics} *)
@@ -803,7 +805,7 @@ module Mass : sig (* {{{ *)
         @nocvode <node> ARKSpilsSetMassLinearSolver
         @nocvode <node> ARKSpilsSetMassTimes *)
     val solver :
-      ('d, 'k, 'f) Lsolver.Iterative.t
+      ('d, 'k, 'f) Lsolver.Iterative.linear_solver
       -> ?mass_times_setup:mass_times_setup_fn
       -> 'd mass_times_vec_fn
       -> bool
@@ -1008,7 +1010,7 @@ type ('data, 'kind) res_tolerance =
     @noarkode <node> Nonlinear solver methods
     @noarkode <node> ARKodeInit *)
 type ('d, 'kind) iter =
-  | Newton of ('d, 'kind) linear_solver
+  | Newton of ('d, 'kind) session_linear_solver
     (** Modified Newton iteration with a given linear solver. *)
   | FixedPoint of int
     (** Accelerated fixed-point solver. Specifies the number of vectors to
@@ -1240,7 +1242,7 @@ type 'd resize_fn = 'd -> 'd -> unit
 val resize :
   ('d, 'kind) session
   -> ?resize_nvec:('d resize_fn)
-  -> ?linsolv:(('d, 'kind) linear_solver)
+  -> ?linsolv:(('d, 'kind) session_linear_solver)
   -> ('d, 'kind) tolerance
   -> ?restol:(('d, 'kind) res_tolerance)
   -> float
