@@ -385,7 +385,7 @@ N_Vector callml_vclone(N_Vector w)
     CAMLreturnT(N_Vector, v);
 }
 
-void callml_vspace(N_Vector v, sundials_ml_index *lrw, sundials_ml_index *liw)
+void callml_vspace(N_Vector v, sundials_long_int *lrw, sundials_long_int *liw)
 {
     CAMLparam0();
     CAMLlocal1(mlop);
@@ -401,8 +401,8 @@ void callml_vspace(N_Vector v, sundials_ml_index *lrw, sundials_ml_index *liw)
 	fflush (stderr);
 	abort ();
     } else {
-	*lrw = Long_val(Field(r, 0));
-	*liw = Long_val(Field(r, 1)) + (nvec_rough_size / sizeof(int));
+	*lrw = Sunlong_val(Field(r, 0));
+	*liw = Sunlong_val(Field(r, 1)) + (nvec_rough_size / sizeof(int));
     }
 
     CAMLreturn0;

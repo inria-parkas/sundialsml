@@ -517,6 +517,23 @@ else
     sundials_at_least_2_5=
 fi
 
+sundials_indextype=
+if [ ${sundials} -ge 300 ]; then
+    include="\"sundials/sundials_config.h\""
+    query="SUNDIALS_INT64_T"
+    sundials_int64_t=`printf "#include %s\n%s" "${include}" "${query}" \
+			| ${CPP} ${cppflags} ${Isundials_inc_path} \
+			    -P 2>>${logfile} \
+			| tail -1 | sed -e 's/ //g' -e 's/"//g'`
+    if [ "${sundials_int64_t}" -eq 1 ]; then
+	sundials_indextype=64
+    else
+	sundials_indextype=32
+    fi
+else
+    sundials_indextype=32
+fi
+
 # Check for OCaml installation (and version)
 ocaml_path=`${OCAMLBIN}ocamlc -where`
 ocaml_version=`${OCAMLBIN}ocamlc -version`
@@ -1284,6 +1301,13 @@ if [ "x${nvecopenmp_enabled}" = x1 ]; then
 printf "#define SUNDIALS_ML_OPENMP\\n" >> src/config.h
 fi
 printf "#define SUNDIALS_LIB_VERSION %d\\n" "${sundials}" >> src/config.h
+if [ "${sundials_indextype}" -eq 64 ]; then
+printf "#define Index_val(x) Long_val(x)\\n" >> src/config.h
+printf "#define Val_index(x) Val_long(x)\\n" >> src/config.h
+else
+printf "#define Index_val(x) Int_val(x)\\n" >> src/config.h
+printf "#define Val_index(x) Val_int(x)\\n" >> src/config.h
+fi
 printf "#endif /* __SUNDIALS_CONFIG_H__ */\\n" >> src/config.h
 
 # Note: config.ml conflicts with a module in the standard library.
@@ -1327,6 +1351,13 @@ if [ "x${bounds_checking}" = x ]; then
     echo "let safe = false" >> src/sundials/sundials_config.ml
 else
     echo "let safe = true"  >> src/sundials/sundials_config.ml
+fi
+if [ "${sundials_indextype}" -eq 64 ]; then
+    echo "module Index = Int64" >> src/sundials/sundials_config.ml
+    echo "type index_elt = Bigarray.int64_elt" >> src/sundials/sundials_config.ml
+else
+    echo "module Index = Int32" >> src/sundials/sundials_config.ml
+    echo "type index_elt = Bigarray.int32_elt" >> src/sundials/sundials_config.ml
 fi
 
 ${debug_configure} && (echo "#----${logfile}:"; cat ${logfile})
