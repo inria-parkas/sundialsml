@@ -330,6 +330,7 @@ end (* }}} *)
 
 module Spils = struct (* {{{ *)
   include SpilsTypes
+  include Lsolver.Iterative
 
   (* Sundials < 3.0.0 *)
   external c_spgmr

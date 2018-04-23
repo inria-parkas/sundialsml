@@ -237,9 +237,9 @@ let main () =
   (* Call IDACreate to initialize solution with SPGMR linear solver.  *)
 
   let lsolver = Lsolver.Iterative.(spgmr ~maxl:5 wu) in
-  let mem = Ida.(init Spils.(solver
-                        lsolver (prec_left ~setup:(p_setup_heat data)
-                                                  (p_solve_heat data)))
+  let mem = Ida.(init Spils.(solver lsolver
+                                    (prec_left ~setup:(p_setup_heat data)
+                                                      (p_solve_heat data)))
               (SStolerances (rtol, atol))
               (res_heat data) t0 wu wu') in
   Ida.set_constraints mem (Nvector_serial.wrap constraints);

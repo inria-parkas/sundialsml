@@ -134,7 +134,7 @@ let main () =
   (* Set the Jacobian routine to Jac (user-supplied) *)
   let m = Matrix.dense neq in
   let cvode_mem =
-    Cvode.(init BDF (Newton Dls.(solver ~jac:jac Direct.(lapack_dense y m)))
+    Cvode.(init BDF (Newton Dls.(solver ~jac:jac (lapack_dense y m)))
                 (SVtolerances (rtol, (Nvector_serial.wrap abstol))) f
                 ~roots:(nroots, g) t0 y)
   in

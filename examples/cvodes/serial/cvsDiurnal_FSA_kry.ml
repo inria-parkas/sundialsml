@@ -531,7 +531,7 @@ let main () =
   (* Create CVODES object *)
   let cvode_mem =
     Cvode.(init BDF
-      (Newton Spils.(solver Lsolver.Iterative.(spgmr y)
+      (Newton Spils.(solver (spgmr y)
                             (prec_left ~setup:(precond data) (psolve data))))
       (SStolerances (reltol, abstol))
       (f data) t0 y)

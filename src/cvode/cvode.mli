@@ -184,6 +184,8 @@ end (* }}} *)
     @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
     @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
 module Spils : sig (* {{{ *)
+  include module type of Lsolver.Iterative
+
   (** {3:precond Preconditioners} *)
 
   (** Arguments passed to the preconditioner solver function.

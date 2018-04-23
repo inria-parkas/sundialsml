@@ -302,7 +302,7 @@ let main () =
   let m = Matrix.sparse_csc ~nnz neq in
   let cvode_mem =
     Cvode.(init BDF (Newton Dls.(solver ~jac:(jac data)
-                                   Direct.(superlumt ~nthreads:nthreads y m)))
+                                        (superlumt ~nthreads:nthreads y m)))
                 (WFtolerances (ewt data)) (f data) t0 y)
   in
 

@@ -675,7 +675,7 @@ let main () =
    * Backward Differentiation Formula and the use of a Newton iteration *)
   let cvode_mem =
     Cvode.(init BDF
-      (Newton Spils.(solver Iterative.(spgmr u)
+      (Newton Spils.(solver (spgmr u)
                             (prec_left ~setup:(precond data) (psolve data))))
       (SStolerances (reltol, abstol))
       (f data) t0 u)

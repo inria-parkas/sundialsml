@@ -224,7 +224,7 @@ let main () =
   let mjac = Matrix.(band ~mu:my neq) in
   in
   let cvode_mem = Cvode.(init BDF
-              (Newton Dls.(solver ~jac:(jac data) Direct.(lapack_band u mjac)))
+              (Newton Dls.(solver ~jac:(jac data) (lapack_band u mjac)))
               (SStolerances (reltol, abstol))
               (f data) t0 u)
   in

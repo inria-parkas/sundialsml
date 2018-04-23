@@ -288,7 +288,7 @@ let main () =
   (* Call IDADense and set up the linear solver. *)
   let m = Matrix.dense neq in
   let mem =
-    Ida.(init Dls.(solver Lsolver.Direct.(dense wyy m))
+    Ida.(init Dls.(solver (dense wyy m))
               (SStolerances (rtolf, atolf))
               (ressc data)
               ~varid:wid
@@ -348,7 +348,7 @@ let main () =
   (* Call IDADense and set up the linear solver. *)
   let m = Matrix.dense neq in
   let mem =
-    Ida.(init Dls.(solver Lsolver.Direct.(dense wyy m))
+    Ida.(init Dls.(solver (dense wyy m))
               (SStolerances (rtolfd, atolfd))
               (ressc data)
               ~varid:wid

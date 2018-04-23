@@ -569,7 +569,7 @@ let main () =
   let mldq   = mudq in
   let mukeep = nvars in
   let mlkeep = mukeep in
-  let lsolver = Iterative.spgmr u in
+  let lsolver = Lsolver.Iterative.spgmr u in
   let cvode_mem =
     Cvode.(init BDF
       (Newton

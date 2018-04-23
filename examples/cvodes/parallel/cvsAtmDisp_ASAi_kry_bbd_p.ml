@@ -1043,7 +1043,7 @@ let main () =
   let abstol, reltol = atol, rtol in
   let cvode_mem =
     Cvode.(init BDF
-      (Newton Spils.(solver Iterative.(spgmr y)
+      (Newton Spils.(solver (spgmr y)
                             Bbd.(prec_left { mudq = d.l_m.(0) + 1;
                                              mldq = d.l_m.(0) + 1;
                                              mukeep = 2;

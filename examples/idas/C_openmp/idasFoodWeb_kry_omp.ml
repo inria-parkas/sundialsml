@@ -519,7 +519,7 @@ let main () =
      solver. *)
   let maxl = 16 in
   let mem =
-    Ida.(init Spils.(solver Iterative.(spgmr ~maxl wcc)
+    Ida.(init Spils.(solver (spgmr ~maxl wcc)
                             (prec_left ~setup:(precond webdata)
                                        (psolve webdata)))
       (SStolerances (rtol, atol))

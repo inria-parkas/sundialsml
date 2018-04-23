@@ -19,7 +19,7 @@ let v' = Nvector_serial.make 5 0.0
       This will initialize a specific linear solver and the root-finding
       mechanism, if necessary. *)
 let m = Matrix.dense 5
-let s = Ida.(init (Dls.solver (Direct.dense v m) m)
+let s = Ida.(init Dls.(solver (dense v m) m)
                   (SStolerances (1e-9, 1e-9))
                   resf ~roots:(1, g) 0.0 v v');;
 

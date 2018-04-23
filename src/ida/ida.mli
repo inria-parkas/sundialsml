@@ -166,6 +166,8 @@ end (* }}} *)
     @ida <node5#sss:optin_spils> Iterative linear solvers optional input functions.
     @ida <node5#sss:optout_spils> Iterative linear solvers optional output functions. *)
 module Spils : sig (* {{{ *)
+  include module type of Lsolver.Iterative
+
   (** {3:precond Preconditioners} *)
 
   (** Callback functions that solve a linear system involving a

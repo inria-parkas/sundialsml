@@ -280,8 +280,7 @@ let main () =
   (* Create CVODES object *)
   let m = Matrix.dense neq in
   let cvode_mem =
-    Cvode.(init BDF (Newton Dls.(solver ~jac:(jac data)
-                                 Lsolver.Direct.(dense y m)))
+    Cvode.(init BDF (Newton Dls.(solver ~jac:(jac data) (dense y m)))
                 (WFtolerances (ewt data)) (f data) t0 y)
   in
 

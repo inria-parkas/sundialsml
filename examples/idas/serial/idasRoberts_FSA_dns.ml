@@ -292,7 +292,7 @@ let main () =
   let tol = Ida.SVtolerances (reltol, wrap abstol) in
 
   let m = Matrix.dense 3 in
-  let ida_mem = Ida.(init Dls.(solver Lsolver.Direct.(dense wy m))
+  let ida_mem = Ida.(init Dls.(solver (dense wy m))
                           tol (res data) t0 wy wyp) in
 
   printf "\n3-species chemical kinetics problem\n";

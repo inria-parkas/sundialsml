@@ -145,7 +145,7 @@ let main () =
   let m = Matrix.sparse_csc ~nnz neq in
   let cvode_mem =
     Cvode.(init BDF (Newton
-                       Dls.(solver ~jac Direct.(superlumt ~nthreads:1 y m)))
+                       Dls.(solver ~jac (superlumt ~nthreads:1 y m)))
                 (SVtolerances (rtol, (Nvector_serial.wrap abstol))) f
                 ~roots:(nroots, g) t0 y)
   in

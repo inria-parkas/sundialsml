@@ -319,7 +319,7 @@ let main () =
 
   let nnz = neq * neq in
   let m = Matrix.sparse_csc ~nnz neq in
-  let ida_mem = Ida.(init Dls.(solver ~jac:(jac data) Direct.(klu wy m))
+  let ida_mem = Ida.(init Dls.(solver ~jac:(jac data) (klu wy m))
                           tol (res data) t0 wy wyp) in
 
   printf "\n3-species chemical kinetics problem\n";

@@ -922,6 +922,7 @@ module Adjoint : sig (* {{{ *)
 
   (** Direct Linear Solvers operating on dense, banded, and sparse matrices. *)
   module Dls : sig (* {{{ *)
+    include module type of Lsolver.Direct
 
     (** Callback functions that compute dense approximations to a Jacobian
         matrix without forward sensitivities. In the call
@@ -1029,6 +1030,8 @@ module Adjoint : sig (* {{{ *)
       @idas <node7#ss:psolve_b> IDASpilsPrecSolveFnB
       @idas <node7#ss:psetup_b> IDASpilsPrecSetupFnB *)
   module Spils : sig (* {{{ *)
+    include module type of Lsolver.Iterative
+
     (** {3:precond Preconditioners} *)
 
     (** Callback functions that solve a linear system involving a

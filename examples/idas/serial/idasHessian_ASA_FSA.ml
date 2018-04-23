@@ -370,7 +370,7 @@ let main () =
   let ti = t0 in
   let m = Matrix.dense neq in
   let ida_mem =
-    Ida.(init Dls.(solver Lsolver.Direct.(dense wyy m))
+    Ida.(init Dls.(solver (dense wyy m))
               (SStolerances (rtol,atol))
               (res data)
               ti
@@ -543,7 +543,7 @@ let main () =
 
   let m = Matrix.dense neq in
   let ida_mem =
-    Ida.(init Dls.(solver Lsolver.Direct.(dense wyy m))
+    Ida.(init Dls.(solver (dense wyy m))
               (SStolerances (rtolFD, atolFD))
               (res data)
               ti wyy wyp)

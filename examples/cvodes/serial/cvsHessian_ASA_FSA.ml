@@ -344,7 +344,7 @@ let main () =
   let m = Matrix.dense neq in
   let cvode_mem =
     Cvode.(init BDF
-                (Newton Dls.(solver Lsolver.Direct.(dense y m)))
+                (Newton Dls.(solver (dense y m)))
                 (SStolerances (reltol, abstol))
                 (f data)
                 t0
@@ -479,7 +479,7 @@ let main () =
   let m = Matrix.dense neq in
   let cvode_mem =
     Cvode.(init BDF
-                (Newton Dls.(solver Lsolver.Direct.(dense y m)))
+                (Newton Dls.(solver (dense y m)))
                 (SStolerances (reltol, abstol))
                 (f data)
                 t0

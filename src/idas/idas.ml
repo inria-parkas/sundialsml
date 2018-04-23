@@ -788,6 +788,7 @@ module Adjoint = struct (* {{{ *)
 
   module Dls = struct (* {{{ *)
     include DirectTypes
+    include Lsolver.Direct
 
     (* Sundials < 3.0.0 *)
     external c_dls_dense
@@ -1044,6 +1045,7 @@ module Adjoint = struct (* {{{ *)
 
   module Spils = struct (* {{{ *)
     include SpilsTypes
+    include Lsolver.Iterative
 
     (* Sundials < 3.0.0 *)
     external c_spgmr

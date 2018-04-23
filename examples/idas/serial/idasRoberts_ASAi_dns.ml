@@ -294,7 +294,7 @@ let main () =
 
   let m = Matrix.dense neq in
   let ida_mem =
-    Ida.(init Dls.(solver Lsolver.Direct.(dense wyy m) ~jac:(jac data))
+    Ida.(init Dls.(solver ~jac:(jac data) (dense wyy m))
               (WFtolerances (ewt data))
               (res data)
               t0
