@@ -41,6 +41,8 @@ type ('mat, 'kind, 'tag) serial_t
 (** Creates a direct linear solver on dense matrices. The nvector and matrix
     argument are used to determine the linear system size and to assess
     compatibility with the linear solver implementation.
+    The matrix is used internally after the linear solver is attached to a
+    session.
 
   @nocvode <node> SUNDenseLinearSolver *)
 val dense :
@@ -60,6 +62,8 @@ val lapack_dense :
 (** Creates a direct linear solver on banded matrices. The nvector and matrix
     argument are used to determine the linear system size and to assess
     compatibility with the linear solver implementation.
+    The matrix is used internally after the linear solver is attached to a
+    session.
 
   @nocvode <node> SUNBandLinearSolver *)
 val band :
@@ -91,6 +95,8 @@ module Klu : sig (* {{{ *)
   (** Creates a direct linear solver on sparse matrices using KLU. The
       nvector and matrix argument are used to determine the linear system
       size and to assess compatibility with the linear solver implementation.
+      The matrix is used internally after the linear solver is attached to a
+      session.
 
       @raise Sundials.NotImplementedBySundialsVersion Solver not available.
       @nocvode <node> SUNKLU *)
@@ -146,6 +152,8 @@ module Superlumt : sig (* {{{ *)
   (** Creates a direct linear solver on sparse matrices using SuperLUMT. The
       nvector and matrix argument are used to determine the linear system
       size and to assess compatibility with the linear solver implementation.
+      The matrix is used internally after the linear solver is attached to a
+      session.
 
       @raise Sundials.NotImplementedBySundialsVersion Solver not available.
       @nocvode <node> SUNSuperLUMT *)
@@ -215,6 +223,7 @@ module Custom : sig (* {{{ *)
       NB: This feature is only available for Sundials >= 3.0.0. *)
   val make : ('matrix, 'data, 'kind, 'lsolver) ops
              -> 'lsolver
+             -> ('matrixkind, 'matrix, 'data, 'kind) Matrix.t
              -> ('matrix, 'data, 'kind, 'lsolver tag) t
 
   (** Return the internal state from an custom direct linear solver. *)

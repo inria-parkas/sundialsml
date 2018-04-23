@@ -825,12 +825,18 @@ let print_final_stats s =
   and ncfl  = Spils.get_num_conv_fails s
   and nfeLS = Spils.get_num_rhs_evals s
   in
-
   printf "\n\n Final statistics for this run:\n\n";
+  (match Sundials.sundials_version with
+  | 2,_,_ ->
   printf " ARKode real workspace length           = %4d \n" lenrw;
   printf " ARKode integer workspace length        = %4d \n" leniw;
   printf " ARKSPGMR real workspace length         = %4d \n" lenrwLS;
   printf " ARKSPGMR integer workspace length      = %4d \n" leniwLS;
+  | _ ->
+  printf " ARKode real workspace length          = %4d \n" lenrw;
+  printf " ARKode integer workspace length       = %4d \n" leniw;
+  printf " SUNSPGMR real workspace length        = %4d \n" lenrwLS;
+  printf " SUNSPGMR integer workspace length     = %4d \n" leniwLS);
   printf " Number of steps                       = %4d \n" nst;
   printf " Number of f-s (explicit)              = %4d \n" nfe;
   printf " Number of f-s (implicit)              = %4d \n" nfi;

@@ -390,7 +390,7 @@ module Sparse : (* {{{ *)
 
     (** Array of row or column indices *)
     type index_array =
-      (int, Bigarray.int_elt, Bigarray.c_layout) Bigarray.Array1.t
+      (int64, Bigarray.int64_elt, Bigarray.c_layout) Bigarray.Array1.t
 
     (** {3:basic Basic access} *)
 

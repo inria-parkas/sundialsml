@@ -275,27 +275,37 @@ and ('data, 'kind) linear_solver =
          The second argument holds a reference to the Jacobian matrix,
          whose underlying data is used within the solver (Sundials >= 3.0.0),
          to prevent its garbage collection.
+
+   Normally, for the matrix arguments of DlsDenseCallback, etc., we should
+   impose that 'kind satisfy [>Nvector_serial.kind], but this constraint
+   then propagates to the session type where it is unwanted (otherwise we
+   could not create sessions that don't care about the kind of nvector
+   expected in matvec operations, i.e., those without a linear solver or
+   that do not require and explicit jacobian matrix). Instead, the constraint
+   is imposed indirectly by the external interface (i.e., creating a linear
+   solver requires complete compatibility between nvectors, matrices, and
+   sessions.)
 *)
 and ('a, 'kind) linsolv_callbacks =
   | NoCallbacks
 
   (* Dls *)
   | DlsDenseCallback
-      of Matrix.Dense.t DirectTypes.jac_callback * Matrix.Dense.t
+      of Matrix.Dense.t DirectTypes.jac_callback
   | DlsBandCallback
-      of Matrix.Band.t  DirectTypes.jac_callback * Matrix.Band.t
+      of Matrix.Band.t  DirectTypes.jac_callback
 
   (* Sls *)
   | SlsKluCallback
-      : ('s Matrix.Sparse.t) DirectTypes.jac_callback * 's Matrix.Sparse.t
+      : ('s Matrix.Sparse.t) DirectTypes.jac_callback
         -> ('a, 'kind) linsolv_callbacks
   | SlsSuperlumtCallback
-      : ('s Matrix.Sparse.t) DirectTypes.jac_callback * 's Matrix.Sparse.t
+      : ('s Matrix.Sparse.t) DirectTypes.jac_callback
         -> ('a, 'kind) linsolv_callbacks
 
   (* Custom *)
   | DirectCustomCallback :
-      'm DirectTypes.jac_callback * 'm -> ('a, 'kind) linsolv_callbacks
+      'm DirectTypes.jac_callback -> ('a, 'kind) linsolv_callbacks
 
   (* Spils *)
   | SpilsCallback of 'a SpilsTypes'.jac_times_vec_fn option

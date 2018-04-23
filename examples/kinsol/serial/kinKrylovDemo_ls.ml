@@ -349,6 +349,9 @@ let set_initial_profiles cc sc =
     done
   done
 
+let spbcgs =
+  match Sundials.sundials_version with 2,_,_ -> "SPBCG" | _ -> "SPBCGS"
+
 (* Print first lines of output (problem description) *)
 let print_header globalstrategy maxl maxlrst fnormtol scsteptol linsolver =
   printf "\nPredator-prey test problem --  KINSol (serial version)\n\n";
@@ -361,7 +364,7 @@ let print_header globalstrategy maxl maxlrst fnormtol scsteptol linsolver =
    | Use_Spgmr ->
      printf "Linear solver is SPGMR with maxl = %d, maxlrst = %d\n"
             maxl maxlrst
-   | Use_Spbcgs -> printf "Linear solver is SPBCG with maxl = %d\n" maxl
+   | Use_Spbcgs -> printf "Linear solver is %s with maxl = %d\n" spbcgs maxl
    | Use_Sptfqmr -> printf "Linear solver is SPTFQMR with maxl = %d\n" maxl
    | Use_Spfgmr ->
      printf "Linear solver is SPFGMR with maxl = %d, maxlrst = %d\n"
@@ -406,7 +409,7 @@ let last_preconditioner =
   | _ -> Use_Spfgmr
 
 (* Print final statistics contained in iopt *)
-let print_final_stats (type m) kmem linsolver =
+let print_final_stats kmem linsolver =
   let open Kinsol in
   let nni   = get_num_nonlin_solv_iters kmem in
   let nfe   = get_num_func_evals kmem in
@@ -442,19 +445,23 @@ let main () =
   let constraints = Nvector_serial.make neq two in
 
   let go linsolver =
+    set_initial_profiles (unvec cc) (unvec sc);
     let lsolver =
       match linsolver with
       | Use_Spgmr ->
-          set_initial_profiles (unvec cc) (unvec sc);
           printf " -------";
           printf " \n| SPGMR |\n";
           printf " -------\n";
           Any Iterative.(spgmr ~maxl:!maxl ~max_restarts:!maxlrst cc)
 
       | Use_Spbcgs ->
-          printf " -------";
-          printf " \n| SPBCG |\n";
-          printf " -------\n";
+          (match Sundials.sundials_version with
+           | 2,_,_ -> printf " ------- \n";
+                      printf "| SPBCG |\n";
+                      printf " -------\n"
+           | _     -> printf " -------- \n";
+                      printf "| SPBCGS |\n";
+                      printf " --------\n");
 
           (* Call KINSpbcg to specify the linear solver KINSPBCG with preconditioner
             routines PrecSetupBD and PrecSolveBD, and the pointer to the user block

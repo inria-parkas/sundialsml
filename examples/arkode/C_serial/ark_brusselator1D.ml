@@ -225,11 +225,11 @@ let main () =
      hand-side side function in y'=f(t,y), the inital time t0, and
      the initial dependent variable vector y.  Note: since this
      problem is fully implicit, we set f_E to NULL and f_I to f. *)
-  let m = Matrix.band ~mu:4 ~ml:4 neq in
+  let m = Matrix.band ~smu:8 ~mu:4 ~ml:4 neq in
   let arkode_mem = Arkode.(
     init
       (Implicit (f udata,
-                 Newton Dls.(solver Direct.(band vmask m) ~jac:(jac udata) m),
+                 Newton Dls.(solver ~jac:(jac udata) Direct.(band vmask m)),
                  Nonlinear))
       (SStolerances (reltol, abstol))
       t0

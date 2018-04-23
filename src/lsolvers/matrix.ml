@@ -412,7 +412,7 @@ module Sparse = struct (* {{{ *)
     | _ -> false
 
   type index_array =
-    (int, Bigarray.int_elt, Bigarray.c_layout) Bigarray.Array1.t
+    (int64, Bigarray.int64_elt, Bigarray.c_layout) Bigarray.Array1.t
 
   (* Must correspond with matrix_ml.h:mat_sparse_data_index *)
   type 's data = {
@@ -514,12 +514,12 @@ module Sparse = struct (* {{{ *)
   let set_col { payload = { idxptrs }; rawptr; valid } j idx =
     if check_valid && not valid then raise Invalidated;
     if unsafe_content then c_set_idx rawptr j idx
-    else idxptrs.{j} <- idx
+    else idxptrs.{j} <- Int64.of_int idx
 
   let get_col { payload = { idxptrs }; rawptr; valid } j =
     if check_valid && not valid then raise Invalidated;
     if unsafe_content then c_get_idx rawptr j
-    else idxptrs.{j}
+    else Int64.to_int idxptrs.{j}
 
   let set_row = set_col
   let get_row = get_col
@@ -539,7 +539,7 @@ module Sparse = struct (* {{{ *)
   let set { payload = { idxvals; data }; rawptr; valid } idx i v =
     if check_valid && not valid then raise Invalidated;
     if unsafe_content then (c_set_val rawptr idx i; c_set_data rawptr idx v)
-    else (idxvals.{idx} <- i; data.{idx} <- v)
+    else (idxvals.{idx} <- Int64.of_int i; data.{idx} <- v)
 
   let set_data { payload = { data }; rawptr; valid } idx v =
     if check_valid && not valid then raise Invalidated;
@@ -549,19 +549,19 @@ module Sparse = struct (* {{{ *)
   let set_rowval { payload = { idxvals }; rawptr; valid } idx i =
     if check_valid && not valid then raise Invalidated;
     if unsafe_content then c_set_val rawptr idx i
-    else idxvals.{idx} <- i
+    else idxvals.{idx} <- Int64.of_int i
 
   let set_colval = set_rowval
 
   let get { payload = { idxvals; data }; rawptr; valid } idx =
     if check_valid && not valid then raise Invalidated;
     if unsafe_content then c_get_val rawptr idx, c_get_data rawptr idx
-    else idxvals.{idx}, data.{idx}
+    else Int64.to_int idxvals.{idx}, data.{idx}
 
   let get_rowval { payload = { idxvals }; rawptr; valid } idx =
     if check_valid && not valid then raise Invalidated;
     if unsafe_content then c_get_val rawptr idx
-    else idxvals.{idx}
+    else Int64.to_int idxvals.{idx}
 
   let get_colval = get_rowval
 
@@ -645,7 +645,7 @@ module Sparse = struct (* {{{ *)
     = "ml_matrix_sparse_scale_add"
 
   let scale_add c ({ rawptr = ptr1; valid = valid1 } as m1)
-                  { rawptr = ptr2; valid = valid2 } =
+                   { rawptr = ptr2; valid = valid2 } =
     if check_valid && not (valid1 && valid2) then raise Invalidated;
     if Sundials_config.safe && c_size ptr1 <> c_size ptr2
     then raise IncompatibleArguments;
@@ -678,8 +678,8 @@ module Sparse = struct (* {{{ *)
   let set_to_zero { payload = { idxvals; idxptrs; data }; rawptr; valid } =
     if check_valid && not valid then raise Invalidated;
     if unsafe_content then c_set_to_zero rawptr
-    else (Bigarray.Array1.fill idxvals 0;
-          Bigarray.Array1.fill idxptrs 0;
+    else (Bigarray.Array1.fill idxvals 0L;
+          Bigarray.Array1.fill idxptrs 0L;
           Bigarray.Array1.fill data 0.0)
 
   external c_copy : cptr -> 's t -> unit

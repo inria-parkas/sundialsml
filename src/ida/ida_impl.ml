@@ -398,66 +398,54 @@ and ('a, 'kind) bsensext = {
 
    Note: The first field must always hold the callback closure
          (it is accessed as Field(cb, 0) from cvode_ml.c.
-         The second argument holds a reference to the Jacobian matrix,
-         whose underlying data is used within the solver (Sundials >= 3.0.0),
-         to prevent its garbage collection.
 *)
 and ('a, 'kind) linsolv_callbacks =
   | NoCallbacks
 
   (* Dls *)
   | DlsDenseCallback
-      of Matrix.Dense.t DirectTypes.jac_callback * Matrix.Dense.t
+      of Matrix.Dense.t DirectTypes.jac_callback
   | DlsBandCallback
-      of Matrix.Band.t  DirectTypes.jac_callback * Matrix.Band.t
+      of Matrix.Band.t  DirectTypes.jac_callback
 
   | BDlsDenseCallback
       of Matrix.Dense.t AdjointTypes'.DirectTypes.jac_callback_no_sens
-         * Matrix.Dense.t
   | BDlsDenseCallbackSens
       of Matrix.Dense.t AdjointTypes'.DirectTypes.jac_callback_with_sens
-         * Matrix.Dense.t
   | BDlsBandCallback
       of Matrix.Band.t AdjointTypes'.DirectTypes.jac_callback_no_sens
-         * Matrix.Band.t
   | BDlsBandCallbackSens
       of Matrix.Band.t AdjointTypes'.DirectTypes.jac_callback_with_sens
-         * Matrix.Band.t
 
   (* Sls *)
   | SlsKluCallback
-      : ('s Matrix.Sparse.t) DirectTypes.jac_callback * 's Matrix.Sparse.t
+      : ('s Matrix.Sparse.t) DirectTypes.jac_callback
         -> ('a, 'kind) linsolv_callbacks
   | BSlsKluCallback
       : ('s Matrix.Sparse.t) AdjointTypes'.DirectTypes.jac_callback_no_sens
-        * 's Matrix.Sparse.t
         -> ('a, 'kind) linsolv_callbacks
   | BSlsKluCallbackSens
       : ('s Matrix.Sparse.t) AdjointTypes'.DirectTypes.jac_callback_with_sens
-        * 's Matrix.Sparse.t
         -> ('a, 'kind) linsolv_callbacks
 
   | SlsSuperlumtCallback
       : ('s Matrix.Sparse.t) DirectTypes.jac_callback
-        * 's Matrix.Sparse.t
         -> ('a, 'kind) linsolv_callbacks
   | BSlsSuperlumtCallback
       : ('s Matrix.Sparse.t) AdjointTypes'.DirectTypes.jac_callback_no_sens
-        * 's Matrix.Sparse.t
         -> ('a, 'kind) linsolv_callbacks
   | BSlsSuperlumtCallbackSens
       : ('s Matrix.Sparse.t) AdjointTypes'.DirectTypes.jac_callback_with_sens
-        * 's Matrix.Sparse.t
         -> ('a, 'kind) linsolv_callbacks
 
   (* Custom *)
   | DirectCustomCallback :
-      'm DirectTypes.jac_callback * 'm -> ('a, 'kind) linsolv_callbacks
+      'm DirectTypes.jac_callback -> ('a, 'kind) linsolv_callbacks
   | BDirectCustomCallback :
-      'm AdjointTypes'.DirectTypes.jac_callback_no_sens * 'm
+      'm AdjointTypes'.DirectTypes.jac_callback_no_sens
       -> ('a, 'kind) linsolv_callbacks
   | BDirectCustomCallbackSens :
-      'm AdjointTypes'.DirectTypes.jac_callback_with_sens * 'm
+      'm AdjointTypes'.DirectTypes.jac_callback_with_sens
       -> ('a, 'kind) linsolv_callbacks
 
   (* Spils *)

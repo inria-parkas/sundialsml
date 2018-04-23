@@ -115,6 +115,9 @@ let set_initial_profile data u u' id res =
     done
   done
 
+let idaband =
+  match Sundials.sundials_version with 2,_,_ -> "IDABAND" | _ -> "BAND"
+
 let print_header rtol atol =
   printf "\nidaHeat2D_bnd: Heat equation, serial example problem for IDA\n";
   printf "          Discretized heat equation on 2D unit square.\n";
@@ -124,7 +127,7 @@ let print_header rtol atol =
   printf "        Total system size: %d\n\n" neq;
   printf "Tolerance parameters:  rtol = %g   atol = %g\n" rtol atol;
   printf "Constraints set to force all solution components >= 0. \n";
-  printf "Linear solver: IDABAND, banded direct solver \n";
+  printf "Linear solver: %s, banded direct solver \n" idaband;
   printf "       difference quotient Jacobian, half-bandwidths = %d \n" mgrid;
   printf "IDACalcIC called with input boundary values = %g \n" bval;
   (* Print output table heading and initial line of table.  *)
@@ -184,9 +187,9 @@ let main () =
   (* Call IDACreate and IDAMalloc to initialize solution, and call IDABand to
      specify the linear solver.  *)
   let mu = mgrid and ml = mgrid in
-  let m = Matrix.band ~mu ~ml neq in
+  let m = Matrix.band ~smu:(mu+ml) ~mu ~ml neq in
   let mem =
-    Ida.(init Dls.(solver Direct.(band wu m) m)
+    Ida.(init Dls.(solver Direct.(band wu m))
               (SStolerances (rtol, atol))
               (fun t u u' r -> heatres t u u' r data)
               t0 wu wu')

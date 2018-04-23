@@ -174,13 +174,46 @@ module Direct = struct (* {{{ *)
     : int -> ('m, 'nd, 'nk) Custom.ops -> Custom.has_ops -> ('m, 'nd, 'nk) cptr
     = "ml_lsolver_make_custom"
 
-  type ('m, 'nd, 'nk, 't) t = {
+  (* The type t is defined in two parts, record and constructor, for
+     compatiblity with older versions of OCaml.
+
+     When using a Direct solver in Sundials, a Jacobian matrix is passed
+     twice: once to create the generic solver, where the matrix is only
+     used for compatibility checks, and once when creating the
+     session-specific solver, where the matrix is kept and used internally
+     for calculations and cloning.
+
+     We store the Jacobian matrix in direct solver (i.e., here) for
+     two reasons:
+     1. To save users the trouble of having to pass it twice.
+     2. As a convenient way to ensure that the underlying SUNMatrix is not
+        garbage collected while being used by a linear solver.
+
+     Garbage collection could also be avoided by holding a reference to the
+     Jacobian matrix in the session object. This requires, however, treating
+     the matrix kind type argument ('mk) in some way (since we must stop the
+     SUNMatrix and not just its content from being GCed). Normally, the
+     session interface is unconcerned by matrix kind type arguments since
+     the compatibility with matrix implementations is checked for the generic
+     linear solver (which may directly manipulates the matrix data).
+   *)
+  type ('m, 'mk, 'nd, 'nk, 't) t_data = {
     rawptr : ('m, 'nd, 'nk) cptr;
     solver : ('m, 'nd, 'nk, 't) solver;
+    matrix : ('mk, 'm, 'nd, 'nk) Matrix.t;
     mutable attached : bool;
   }
 
-  let attach ({ attached } as s) =
+  (* Slight complication to hide matrix kind type argument as existential.
+     This type argument is enforced by the module interface -- some
+     solver creation functions require it to be Matrix.standard since the
+     underlying Sundials code access the matrix data directly and not just
+     through the SUNMatrix interface -- but we prefer to hide this detail
+     from users (Direct.t already has four type arguments!) *)
+  type ('m, 'nd, 'nk, 't) t =
+    S : ('m, 'mk, 'nd, 'nk, 't) t_data -> ('m, 'nd, 'nk, 't) t
+
+  let attach (S ({ attached } as s)) =
     if attached then raise LinearSolverInUse;
     s.attached <- true
 

@@ -494,6 +494,11 @@ let set_initial_profile data uu up id res =
  * Print first lines of output and table heading
  *)
 
+let truetext, spgmr =
+  match Sundials.sundials_version with
+  | 2,_,_ -> "TRUE", "IDASPGMR"
+  | _ -> "SUNTRUE", "SUNSPGMR"
+
 let print_header neq rtol atol =
   printf "\nidaHeat2D_kry_p: Heat equation, parallel example problem for IDA\n";
   printf "            Discretized heat equation on 2D unit square.\n";
@@ -505,9 +510,9 @@ let print_header neq rtol atol =
   printf "        Processor array: %d x %d\n" npex npey;
   printf "Tolerance parameters:  rtol = %g   atol = %g\n" rtol atol;
   printf "Constraints set to force all solution components >= 0. \n";
-  printf "SUPPRESSALG = TRUE to suppress local error testing on ";
+  printf "SUPPRESSALG = %s to suppress local error testing on " truetext;
   printf "all boundary components. \n";
-  printf "Linear solver: IDASPGMR  ";
+  printf "Linear solver: %s  " spgmr;
   printf "Preconditioner: diagonal elements only.\n";
 
   (* Print output table heading and initial line of table. *)

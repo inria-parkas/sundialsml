@@ -118,7 +118,7 @@ let main () =
   let m = Matrix.dense 3 in
   let arkode_mem = Arkode.(
     init
-      (Implicit (f, Newton Dls.(solver Direct.(dense y_nv m) ~jac:jac m),
+      (Implicit (f, Newton Dls.(solver ~jac:jac Direct.(dense y_nv m)),
        Nonlinear))
       (SVtolerances (reltol, atols))
       ~roots:(2, g)

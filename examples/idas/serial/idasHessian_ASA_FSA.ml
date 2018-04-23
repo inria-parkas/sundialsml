@@ -370,7 +370,7 @@ let main () =
   let ti = t0 in
   let m = Matrix.dense neq in
   let ida_mem =
-    Ida.(init Dls.(solver Direct.(dense wyy m) m)
+    Ida.(init Dls.(solver Direct.(dense wyy m))
               (SStolerances (rtol,atol))
               (res data)
               ti
@@ -439,9 +439,9 @@ let main () =
   and wqB1  = wrap qB1
   in
 
-  let m = Matrix.dense neq in
+  let m = Matrix.dense (2*neq) in
   let indexB1 =
-    Adjoint.(init_backward ida_mem Dls.(solver Direct.(dense wyyB1 m) m)
+    Adjoint.(init_backward ida_mem Dls.(solver Direct.(dense wyyB1 m))
                            (SStolerances (rtola, atola))
                            (WithSens (resBS1 data))
                            tf wyyB1 wypB1)
@@ -476,9 +476,9 @@ let main () =
   and wqB2  = wrap qB2
   in
 
-  let m = Matrix.dense neq in
+  let m = Matrix.dense (2*neq) in
   let indexB2 =
-    Adjoint.(init_backward ida_mem Dls.(solver Direct.(dense wyyB2 m) m)
+    Adjoint.(init_backward ida_mem Dls.(solver Direct.(dense wyyB2 m))
                            (SStolerances (rtola, atola))
                            (WithSens (resBS2 data))
                            tf
@@ -543,7 +543,7 @@ let main () =
 
   let m = Matrix.dense neq in
   let ida_mem =
-    Ida.(init Dls.(solver Direct.(dense wyy m) m)
+    Ida.(init Dls.(solver Direct.(dense wyy m))
               (SStolerances (rtolFD, atolFD))
               (res data)
               ti wyy wyp)

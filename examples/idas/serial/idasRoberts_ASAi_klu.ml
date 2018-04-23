@@ -328,7 +328,7 @@ let main () =
   let nnz = neq * neq in
   let m = Matrix.sparse_csc ~nnz neq in
   let ida_mem =
-    Ida.(init Dls.(solver Direct.(klu wyy m) ~jac:(jac data) m)
+    Ida.(init Dls.(solver ~jac:(jac data) Direct.(klu wyy m))
               (WFtolerances (ewt data))
               (res data)
               t0
@@ -398,7 +398,7 @@ let main () =
   let indexB =
     Adjoint.(init_backward ida_mem
                            Dls.(solver Direct.(klu wyB m)
-                                       ~jac:(NoSens (jacB data)) m)
+                                       ~jac:(NoSens (jacB data)))
                            (SStolerances (reltolB, abstolB))
                            (NoSens (resB data))
                            tb2 wyB wypB)

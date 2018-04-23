@@ -135,21 +135,20 @@ and ('a, 'kind) linsolv_callbacks =
   | NoCallbacks
 
   | DlsDenseCallback
-      of Matrix.Dense.t DirectTypes.jac_callback * Matrix.Dense.t
+      of Matrix.Dense.t DirectTypes.jac_callback
   | DlsBandCallback
-      of Matrix.Band.t  DirectTypes.jac_callback * Matrix.Band.t
+      of Matrix.Band.t  DirectTypes.jac_callback
 
   | SlsKluCallback
-      : ('s Matrix.Sparse.t) DirectTypes.jac_callback * 's Matrix.Sparse.t
+      : ('s Matrix.Sparse.t) DirectTypes.jac_callback
         -> ('a, 'kind) linsolv_callbacks
   | SlsSuperlumtCallback
       : ('s Matrix.Sparse.t) DirectTypes.jac_callback
-        * 's Matrix.Sparse.t
         -> ('a, 'kind) linsolv_callbacks
 
   (* Custom *)
   | DirectCustomCallback :
-      'm DirectTypes.jac_callback * 'm -> ('a, 'kind) linsolv_callbacks
+      'm DirectTypes.jac_callback -> ('a, 'kind) linsolv_callbacks
 
   | SpilsCallback of 'a SpilsTypes'.jac_times_vec_fn option
 

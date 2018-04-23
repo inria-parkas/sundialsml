@@ -321,6 +321,9 @@ let set_initial_profiles webdata c c' id =
     done
   done
 
+let idaband =
+  match Sundials.sundials_version with 2,_,_ -> "IDABAND" | _ -> "BAND"
+
 (* Print first lines of output (problem description) *)
 let print_header mu ml rtol atol =
   printf "\nidaFoodWeb_bnd: Predator-prey DAE serial example problem for IDA \n\n";
@@ -328,7 +331,7 @@ let print_header mu ml rtol atol =
   printf "     Mesh dimensions: %d x %d" mx my;
   printf "     System size: %d\n" neq;
   printf "Tolerance parameters:  rtol = %g   atol = %g\n" rtol atol;
-  printf "Linear solver: IDABAND,  Band parameters mu = %d, ml = %d\n" mu ml;
+  printf "Linear solver: %s,  Band parameters mu = %d, ml = %d\n" idaband mu ml;
   printf "CalcIC called to correct initial predator concentrations.\n\n";
   printf "-----------------------------------------------------------\n";
   printf "  t        bottom-left  top-right";
@@ -401,7 +404,7 @@ let main () =
      solver. *)
   let mu = nsmx and ml = nsmx in
   let m = Matrix.band ~smu:(mu+ml) ~mu ~ml neq in
-  let mem = Ida.(init Dls.(solver Direct.(band wc m) m)
+  let mem = Ida.(init Dls.(solver Direct.(band wc m))
                       (SStolerances (rtol, atol))
                       (resweb webdata) t0 wc wc') in
   let tout1 = 0.001 in

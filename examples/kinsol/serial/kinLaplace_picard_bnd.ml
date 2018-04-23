@@ -178,9 +178,9 @@ let main () =
    * Attach band linear solver
    * Use acceleration with up to 3 prior residuals
    * ----------------------------------------- *)
-  let m = Matrix.band ~mu:ny ~ml:ny neq in
+  let m = Matrix.band ~smu:(2*nx) ~mu:nx ~ml:nx neq in
   let kmem = Kinsol.(init ~maa:3
-                          ~linsolv:Dls.(solver Direct.(band y m) ~jac:jac m)
+                          ~linsolv:Dls.(solver ~jac:jac Direct.(band y m))
                           func y)
   in
 

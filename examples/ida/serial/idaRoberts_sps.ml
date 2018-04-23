@@ -167,7 +167,7 @@ let main () =
    * a 2-component root function and the dense direct linear solver.  *)
   let m = Matrix.sparse_csc ~nnz:(neq*neq) neq in
   let ida_mem =
-    Ida.(init Dls.(solver Direct.(superlumt ~nthreads:1 wy m) ~jac:jacrob m)
+    Ida.(init Dls.(solver ~jac:jacrob Direct.(superlumt ~nthreads:1 wy m))
               (SVtolerances (rtol, Nvector_serial.wrap avtol))
               resrob ~roots:(nroots, grob) t0 wy wy')
   in

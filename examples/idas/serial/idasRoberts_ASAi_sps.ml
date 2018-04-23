@@ -329,12 +329,12 @@ let main () =
   let nnz = neq * neq in
   let m = Matrix.sparse_csc ~nnz neq in
   let ida_mem =
-    Ida.(init Dls.(solver Direct.(superlumt ~nthreads:nthreads wyy m)
-                          ~jac:(jac data) m)
-              (WFtolerances (ewt data))
-              (res data)
-              t0
-              wyy wyp)
+    Ida.(init
+      Dls.(solver ~jac:(jac data) Direct.(superlumt ~nthreads:nthreads wyy m))
+      (WFtolerances (ewt data))
+      (res data)
+      t0
+      wyy wyp)
   in
 
   Quad.init ida_mem (rhsQ data) wq;
@@ -399,11 +399,11 @@ let main () =
   let m = Matrix.sparse_csc ~nnz neq in
   let indexB =
     Adjoint.(init_backward ida_mem
-               Dls.(solver Direct.(superlumt ~nthreads:nthreads wyB m)
-                           ~jac:(NoSens (jacB data)) m)
-                           (SStolerances (reltolB, abstolB))
-                           (NoSens (resB data))
-                           tb2 wyB wypB)
+                      Dls.(solver ~jac:(NoSens (jacB data))
+                                  Direct.(superlumt ~nthreads:nthreads wyB m))
+                      (SStolerances (reltolB, abstolB))
+                      (NoSens (resB data))
+                      tb2 wyB wypB)
   in
   Adjoint.set_max_num_steps indexB 1000;
 

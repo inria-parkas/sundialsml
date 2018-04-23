@@ -427,14 +427,23 @@ let set_initial_profiles webdata c c' id =
     done
   done
 
+let idaspgmr =
+  match Sundials.sundials_version with
+  | 2,_,_ -> "IDASpgmr, Spgmr parameters"
+  | _ -> "SUNSPGMR,"
+
 (* Print first lines of output (problem description) *)
 let print_header maxl rtol atol =
-  printf "\nidasFoodWeb_kry_omp: Predator-prey DAE OpenMP example problem for IDAS \n\n";
+  (match Sundials.sundials_version with
+   | 2,_,_ ->
+  printf "\nidasFoodWeb_kry_omp: Predator-prey DAE OpenMP example problem for IDAS \n\n"
+   | _ ->
+  printf "\nidasFoodWeb_kry_omp: Predator-prey DAE OpenMP example problem using Krylov solver for IDAS \n\n");
   printf "Number of species ns: %d" num_species;
   printf "     Mesh dimensions: %d x %d" mx my;
   printf "     System size: %d\n" neq;
   printf "Tolerance parameters:  rtol = %g   atol = %g\n" rtol atol;
-  printf "Linear solver: IDASpgmr,  Spgmr parameters maxl = %d\n" maxl;
+  printf "Linear solver: %s maxl = %d\n" idaspgmr maxl;
   printf "CalcIC called to correct initial predator concentrations.\n\n";
   printf "-----------------------------------------------------------\n";
   printf "  t        bottom-left  top-right";

@@ -1041,20 +1041,19 @@ module Adjoint : sig (* {{{ *)
       | WithSens of 'm jac_fn_with_sens
         (** Depends on forward sensitivities. *)
 
-    (** Create a Cvodes-specific linear solver from a generic dense linear
-        solver, a Jacobian approximation function, and a Jacobian matrix
-        for the solver's internal use. The Jacobian approximation function
-        is optional for dense and banded solvers (if not given an internal
-        difference quotient approximation is used), but must be provided for
-        other solvers (or {Invalid_argument} is raised).
+    (** Create a Cvodes-specific linear solver from a a Jacobian approximation
+        function and a generic direct linear solver.
+        The Jacobian approximation function is optional for dense and banded
+        solvers (if not given an internal difference quotient approximation is
+        used), but must be provided for other solvers (or {Invalid_argument}
+        is raised).
 
         @nocvode <node> CVDlsSetLinearSolverB
         @nocvode <node> CVDlsSetJacFnB
         @nocvode <node> CVDlsSetJacFnBS *)
     val solver :
-      ('m, 'kind, 't) Direct.serial_t ->
       ?jac:'m jac_fn ->
-      ('k, 'm, Nvector_serial.data, 'kind) Matrix.t ->
+      ('m, 'kind, 't) Direct.serial_t ->
       'kind serial_linear_solver
 
     (** {3:stats Solver statistics} *)

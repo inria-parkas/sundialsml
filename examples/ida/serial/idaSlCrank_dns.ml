@@ -29,9 +29,14 @@ and nout = 41
 (* Output functions *)
 let printf = Printf.printf
 
+let ida, idadense =
+  match Sundials.sundials_version with
+  | 2,_,_ -> "IDAS", "IDADENSE"
+  | _ -> "IDA", "DENSE"
+
 let print_header rtol atol y =
-  print_string "\nidaSlCrank_dns: Slider-Crank DAE serial example problem for IDAS\n";
-  print_string "Linear solver: IDADENSE, Jacobian is computed by IDAS.\n";
+  printf "\nidaSlCrank_dns: Slider-Crank DAE serial example problem for %s\n" ida;
+  printf "Linear solver: %s, Jacobian is computed by %s.\n" idadense ida;
   printf "Tolerance parameters:  rtol = %g   atol = %g\n" rtol atol;
   print_string "-----------------------------------------------------------------------\n";
   print_string "  t            y1          y2           y3";
@@ -215,7 +220,7 @@ let main () =
 
   (* IDA initialization *)
   let m = Matrix.dense neq in
-  let mem = Ida.(init Dls.(solver Direct.(dense wy m) m)
+  let mem = Ida.(init Dls.(solver Direct.(dense wy m))
                       (SStolerances (rtol, atol))
                       (ressc data) ~varid:(Nvector_serial.wrap id) t0 wy wy') in
   Ida.set_suppress_alg mem true;

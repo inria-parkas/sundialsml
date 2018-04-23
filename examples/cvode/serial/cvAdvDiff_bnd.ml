@@ -223,7 +223,7 @@ let main () =
   (* Call CVBand to specify the CVBAND band linear solver *)
   (* Set the user-supplied Jacobian routine Jac *)
   let mjac = Matrix.(band ~mu:my ~smu:(2*my) neq) in
-  let solver = Cvode.Dls.(solver Direct.(band u mjac) ~jac:(jac data) mjac) in
+  let solver = Cvode.Dls.(solver ~jac:(jac data) Direct.(band u mjac)) in
   let cvode_mem = Cvode.(init BDF (Newton solver)
                              (SStolerances (reltol, abstol))
                              (f data) t0 u)

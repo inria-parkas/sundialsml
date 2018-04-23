@@ -27,9 +27,10 @@ external c_dense
     -> (Matrix.Dense.t, Nvector_serial.data, 'k) cptr
   = "ml_lsolver_dense"
 
-let dense nvec mat = {
+let dense nvec mat = S {
     rawptr = c_dense nvec mat;
     solver = Dense;
+    matrix = mat;
     attached = false;
   }
 
@@ -42,9 +43,10 @@ external c_lapack_dense
 let lapack_dense nvec mat =
   if not Sundials_config.lapack_enabled
     then raise Sundials.NotImplementedBySundialsVersion;
-  {
+  S {
     rawptr = c_lapack_dense nvec mat;
     solver = LapackDense;
+    matrix = mat;
     attached = false;
   }
 
@@ -54,9 +56,10 @@ external c_band
     -> (Matrix.Band.t, Nvector_serial.data, 'k) cptr
   = "ml_lsolver_band"
 
-let band nvec mat = {
+let band nvec mat = S {
     rawptr = c_band nvec mat;
     solver = Band;
+    matrix = mat;
     attached = false;
   }
 
@@ -69,9 +72,10 @@ external c_lapack_band
 let lapack_band nvec mat =
   if not Sundials_config.lapack_enabled
     then raise Sundials.NotImplementedBySundialsVersion;
-  {
+  S {
     rawptr = c_lapack_band nvec mat;
     solver = LapackBand;
+    matrix = mat;
     attached = false;
   }
 
@@ -94,9 +98,10 @@ module Klu = struct (* {{{ *)
            r.set_ordering <- (fun o -> r.ordering <- Some o); r
       else info
     in
-    { rawptr = cptr;
-      solver = Klu info;
-      attached = false; }
+    S { rawptr = cptr;
+        solver = Klu info;
+        matrix = mat;
+        attached = false; }
 
   external c_reinit
     : ('s Matrix.Sparse.t, Nvector_serial.data, 'k) cptr
@@ -104,7 +109,7 @@ module Klu = struct (* {{{ *)
       -> unit
     = "ml_lsolver_klu_reinit"
 
-  let reinit { rawptr = cptr; solver } mat ?nnz () =
+  let reinit (S { rawptr = cptr; solver }) mat ?nnz () =
     if in_compat_mode then
       match solver with
       | Klu { reinit = f } ->
@@ -124,7 +129,7 @@ module Klu = struct (* {{{ *)
       -> unit
     = "ml_lsolver_klu_set_ordering"
 
-  let set_ordering { rawptr = cptr; solver } ordering =
+  let set_ordering (S { rawptr = cptr; solver }) ordering =
     if in_compat_mode then
       match solver with
       | Klu { set_ordering = f } -> f ordering
@@ -155,9 +160,10 @@ module Superlumt = struct (* {{{ *)
            r.set_ordering <- (fun o -> r.ordering <- Some o); r
       else info nthreads
     in
-    { rawptr = cptr;
-      solver = Superlumt info;
-      attached = false; }
+    S { rawptr = cptr;
+        solver = Superlumt info;
+        matrix = mat;
+        attached = false; }
 
   external c_set_ordering
     : ('s Matrix.Sparse.t, Nvector_serial.data, 'k) cptr
@@ -165,7 +171,7 @@ module Superlumt = struct (* {{{ *)
       -> unit
     = "ml_lsolver_superlumt_set_ordering"
 
-  let set_ordering { rawptr = cptr; solver } ordering =
+  let set_ordering (S { rawptr = cptr; solver }) ordering =
     if in_compat_mode then
       match solver with
       | Superlumt { set_ordering = f } -> f ordering
@@ -194,8 +200,8 @@ module Custom = struct (* {{{ *)
     get_work_space : ('lsolver -> int * int) option;
   }
 
-  let make { init = fi; setup = fs0; solve = fs; get_work_space = fgws} ldata
-    =
+  let make { init = fi; setup = fs0; solve = fs; get_work_space = fgws}
+           ldata mat =
     match Sundials.sundials_version with
     | 2,_,_ -> raise Sundials.NotImplementedBySundialsVersion;
     | _ -> ();
@@ -218,13 +224,15 @@ module Custom = struct (* {{{ *)
             get_work_space = (fun _ ->
                 failwith "internal error: Direct.Custom.get_work_space");
           })
-    in Lsolver_impl.Direct.({
+    in
+    S {
         rawptr = Lsolver_impl.Direct.(c_make_custom 0 ops only_ops);
         solver = Custom (ldata, ops);
+        matrix = mat;
         attached = false;
-      })
+      }
 
-  let unwrap { Lsolver_impl.Direct.solver = Custom (ldata, _) } = ldata
+  let unwrap (S { Lsolver_impl.Direct.solver = Custom (ldata, _) }) = ldata
 
 end (* }}} *)
 

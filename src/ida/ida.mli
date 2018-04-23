@@ -123,19 +123,18 @@ module Dls : sig (* {{{ *)
       @ida <node5#ss:djacFn> IDADlsDenseJacFn *)
   type 'm jac_fn = (RealArray.t triple, RealArray.t) jacobian_arg -> 'm -> unit
 
-  (** Create an Ida-specific linear solver from a generic dense linear
-      solver, a Jacobian approximation function, and a Jacobian matrix
-      for the solver's internal use. The Jacobian approximation function
-      is optional for dense and banded solvers (if not given an internal
-      difference quotient approximation is used), but must be provided for
-      other solvers (or {Invalid_argument} is raised).
+  (** Create an Ida-specific linear solver from a Jacobian approximation
+      function and a generic direct linear solver.
+      The Jacobian approximation function is optional for dense and banded
+      solvers (if not given an internal difference quotient approximation is
+      used), but must be provided for other solvers (or {Invalid_argument} is
+      raised).
 
       @nocvode <node> IDADlsSetLinearSolver
       @nocvode <node> IDADlsSetJacFn *)
   val solver :
-    ('m, 'kind, 't) Direct.serial_t ->
     ?jac:'m jac_fn ->
-    ('k, 'm, Nvector_serial.data, 'kind) Matrix.t ->
+    ('m, 'kind, 't) Direct.serial_t ->
     'kind serial_linear_solver
 
   (** {3:stats Solver statistics} *)
