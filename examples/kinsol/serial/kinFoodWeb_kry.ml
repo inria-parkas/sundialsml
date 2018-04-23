@@ -400,7 +400,7 @@ let main () =
      and prec_solve_bd. *)
   let kmem = Kinsol.(init
               ~linsolv:Spils.(solver
-                 Iterative.(spgmr ~maxl:maxl ~max_restarts:maxlrst cc)
+                 Lsolver.Iterative.(spgmr ~maxl:maxl ~max_restarts:maxlrst cc)
                  (prec_right ~setup:prec_setup_bd prec_solve_bd))
               func cc) in
   Kinsol.set_constraints kmem (Nvector_serial.make neq 2.0);

@@ -131,7 +131,7 @@ module Dls : sig (* {{{ *)
       @nocvode <node> ARKDlsSetJacFn *)
   val solver :
     ?jac:'m jac_fn ->
-    ('m, 'kind, 't) Direct.serial_t ->
+    ('m, 'kind, 't) Lsolver.Direct.serial_t ->
     'kind serial_linear_solver
 
   (** {3:stats Solver statistics} *)
@@ -354,7 +354,7 @@ module Spils : sig (* {{{ *)
         @nocvode <node> ARKSpilsSetLinearSolver
         @nocvode <node> ARKSpilsSetJacTimes *)
     val solver :
-      ('d, 'k, 'f) Iterative.t
+      ('d, 'k, 'f) Lsolver.Iterative.t
       -> ?jac_times_vec:'d jac_times_setup_fn option * 'd jac_times_vec_fn
       -> ('d, 'k) preconditioner
       -> ('d, 'k) linear_solver
@@ -638,7 +638,7 @@ module Mass : sig (* {{{ *)
     val solver :
       'm mass_fn
       -> bool
-      -> ('m, 'kind, 't) Direct.serial_t
+      -> ('m, 'kind, 't) Lsolver.Direct.serial_t
       -> 'kind serial_solver
 
     (** {3:stats Solver statistics} *)
@@ -803,7 +803,7 @@ module Mass : sig (* {{{ *)
         @nocvode <node> ARKSpilsSetMassLinearSolver
         @nocvode <node> ARKSpilsSetMassTimes *)
     val solver :
-      ('d, 'k, 'f) Iterative.t
+      ('d, 'k, 'f) Lsolver.Iterative.t
       -> ?mass_times_setup:mass_times_setup_fn
       -> 'd mass_times_vec_fn
       -> bool

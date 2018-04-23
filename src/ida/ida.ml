@@ -90,7 +90,7 @@ let root_init session (nroots, rootsfn) =
 
 module Dls = struct (* {{{ *)
   include DirectTypes
-  include Direct
+  include Lsolver.Direct
 
   (* Sundials < 3.0.0 *)
   external c_dls_dense : 'k serial_session -> int -> bool -> unit
@@ -116,7 +116,7 @@ module Dls = struct (* {{{ *)
 
   (* Sundials < 3.0.0 *)
   external c_klu_set_ordering
-    : 'k serial_session -> Direct.Klu.ordering -> unit
+    : 'k serial_session -> Lsolver.Direct.Klu.ordering -> unit
     = "c_ida_klu_set_ordering"
 
   (* Sundials < 3.0.0 *)
@@ -129,7 +129,7 @@ module Dls = struct (* {{{ *)
 
   (* Sundials < 3.0.0 *)
   external c_superlumt_set_ordering
-    : 'k serial_session -> Direct.Superlumt.ordering -> unit
+    : 'k serial_session -> Lsolver.Direct.Superlumt.ordering -> unit
     = "c_ida_superlumt_set_ordering"
 
   (* Sundials < 3.0.0 *)

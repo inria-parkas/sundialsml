@@ -122,7 +122,7 @@ let main () =
     init
       (Implicit
         (f udata,
-         Newton Spils.(solver Iterative.(pcg ~maxl:mesh_n y)
+         Newton Spils.(solver Lsolver.Iterative.(pcg ~maxl:mesh_n y)
                               ~jac_times_vec:(None, jac udata)
                               prec_none),
          Linear true))

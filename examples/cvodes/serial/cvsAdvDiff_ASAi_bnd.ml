@@ -285,7 +285,8 @@ let main () =
   (* Call CVBand with  bandwidths ml = mu = MY, *)
   let m = Matrix.band ~smu:(2*my) ~mu:my neq in
   let cvode_mem = Cvode.(init BDF
-                   (Newton Dls.(solver ~jac:(jac data) Direct.(band u_nvec m)))
+                   (Newton Dls.(solver ~jac:(jac data)
+                                Lsolver.Direct.(band u_nvec m)))
                    (SStolerances (reltol, abstol))
                    (f data) t0 u_nvec)
   in
@@ -310,7 +311,8 @@ let main () =
   let bcvode_mem =
     Adjoint.(init_backward cvode_mem
               Cvode.BDF
-              (Newton Dls.(solver ~jac:(NoSens (jacb data)) Direct.(band uB m)))
+              (Newton Dls.(solver ~jac:(NoSens (jacb data))
+                           Lsolver.Direct.(band uB m)))
               (SStolerances (rtolb, atol))
               (NoSens (fB data)) tout uB) in
 

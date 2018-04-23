@@ -199,7 +199,7 @@ let main () =
 
   (* Call IDACreate and IDAInit to initialize IDA memory *)
   let m = Matrix.dense neq in
-  let mem = Ida.(init Dls.(solver Direct.(dense wyy m))
+  let mem = Ida.(init Dls.(solver Lsolver.Direct.(dense wyy m))
                       (SStolerances (rtol,atol))
                       (res data) t0 wyy wyp)
   in

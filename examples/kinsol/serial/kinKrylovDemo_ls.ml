@@ -426,7 +426,7 @@ let print_final_stats kmem linsolver =
     printf "\n=========================================================\n\n"
 
 type ('data, 'kind) any =
-  Any : ('data, 'kind, 'iter) Iterative.t -> ('data, 'kind) any
+  Any : ('data, 'kind, 'iter) Lsolver.Iterative.t -> ('data, 'kind) any
 
 (* MAIN PROGRAM *)
 let main () =
@@ -452,7 +452,7 @@ let main () =
           printf " -------";
           printf " \n| SPGMR |\n";
           printf " -------\n";
-          Any Iterative.(spgmr ~maxl:!maxl ~max_restarts:!maxlrst cc)
+          Any Lsolver.Iterative.(spgmr ~maxl:!maxl ~max_restarts:!maxlrst cc)
 
       | Use_Spbcgs ->
           (match Sundials.sundials_version with
@@ -467,7 +467,7 @@ let main () =
             routines PrecSetupBD and PrecSolveBD, and the pointer to the user block
             data. *)
           maxl := 15;
-          Any Iterative.(spbcgs ~maxl:(!maxl) cc)
+          Any Lsolver.Iterative.(spbcgs ~maxl:(!maxl) cc)
 
       | Use_Sptfqmr ->
           printf " ---------";
@@ -478,7 +478,7 @@ let main () =
              preconditioner routines PrecSetupBD and PrecSolveBD, and the pointer to
              the user block data. *)
           maxl := 25;
-          Any Iterative.(sptfqmr ~maxl:(!maxl) cc)
+          Any Lsolver.Iterative.(sptfqmr ~maxl:(!maxl) cc)
 
       | Use_Spfgmr ->
           printf " -------";
@@ -490,7 +490,8 @@ let main () =
              the user block data. *)
           maxl := 15;
           maxlrst := 2;
-          Any Iterative.(spfgmr ~maxl:(!maxl) ~max_restarts:(!maxlrst) cc)
+          Any Lsolver.Iterative.(spfgmr ~maxl:(!maxl) ~max_restarts:(!maxlrst)
+                                 cc)
     in
     (* Call KINCreate/KINInit to initialize KINSOL using the linear solver
        KINSPGMR with preconditioner routines prec_setup_bd

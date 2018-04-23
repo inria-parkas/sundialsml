@@ -781,9 +781,10 @@ let print_intro () =
 
 let print_header jpre gstype =
   printf "\n\nPreconditioner type is           jpre = %s\n"
-    (if jpre = Iterative.PrecLeft then "PREC_LEFT" else "PREC_RIGHT");
+    (if jpre = Lsolver.Iterative.PrecLeft then "PREC_LEFT" else "PREC_RIGHT");
   printf"\nGram-Schmidt method type is    gstype = %s\n\n\n"
-    (if gstype = Iterative.ModifiedGS then "MODIFIED_GS" else "CLASSICAL_GS")
+    (if gstype = Lsolver.Iterative.ModifiedGS
+     then "MODIFIED_GS" else "CLASSICAL_GS")
 
 let print_all_species (cdata : RealArray.t) ns mxns t =
   printf "c values at t = %g:\n\n" t;
@@ -868,7 +869,7 @@ let main () =
   cinit wdata (unwrap c);
 
   (* Call ARKodeInit or ARKodeReInit, then ARKSpgmr to set up problem *)
-  let lsolver= Iterative.(spgmr ~maxl:maxl c) in
+  let lsolver= Lsolver.Iterative.(spgmr ~maxl:maxl c) in
   let arkode_mem = Arkode.(
     init
       (Implicit
@@ -883,7 +884,7 @@ let main () =
   wdata.arkode_mem <- Some arkode_mem;
   Arkode.set_max_num_steps arkode_mem 1000;
   Arkode.set_nonlin_conv_coef arkode_mem 1.0e-3;
-  Iterative.(set_gs_type lsolver ModifiedGS);
+  Lsolver.Iterative.(set_gs_type lsolver ModifiedGS);
   Arkode.Spils.set_eps_lin arkode_mem delt;
 
   let ns   = wdata.ns
@@ -904,8 +905,8 @@ let main () =
       print_all_species (unwrap c) ns mxns t0
     else begin
       Arkode.reinit arkode_mem t0 c;
-      Iterative.(set_prec_type lsolver jpre);
-      Iterative.(set_gs_type lsolver gstype)
+      Lsolver.Iterative.(set_prec_type lsolver jpre);
+      Lsolver.Iterative.(set_gs_type lsolver gstype)
     end;
 
     (* Loop over output points, call ARKode, print sample solution values. *)
@@ -925,7 +926,7 @@ let main () =
   in
 
   (* Loop over jpre and gstype (four cases) *)
-  let open Iterative in
+  let open Lsolver.Iterative in
   run PrecLeft  ModifiedGS;
   run PrecLeft  ClassicalGS;
   run PrecRight ModifiedGS;

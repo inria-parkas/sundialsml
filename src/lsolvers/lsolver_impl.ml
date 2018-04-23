@@ -37,7 +37,7 @@ module Klu = struct (* {{{ *)
     mutable set_ordering : ordering -> unit;
   }
 
-  let info = {
+  let info () = {
     ordering     = None;
     reinit       = (fun _ _ -> ());
     set_ordering = (fun _ -> ());

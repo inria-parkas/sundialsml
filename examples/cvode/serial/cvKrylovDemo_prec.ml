@@ -784,9 +784,10 @@ let print_intro () =
 
 let print_header jpre gstype =
   printf "\n\nPreconditioner type is           jpre = %s\n"
-    (if jpre = Iterative.PrecLeft then "PREC_LEFT" else "PREC_RIGHT");
+    (if jpre = Lsolver.Iterative.PrecLeft then "PREC_LEFT" else "PREC_RIGHT");
   printf"\nGram-Schmidt method type is    gstype = %s\n\n\n"
-    (if gstype = Iterative.ModifiedGS then "MODIFIED_GS" else "CLASSICAL_GS")
+    (if gstype = Lsolver.Iterative.ModifiedGS
+     then "MODIFIED_GS" else "CLASSICAL_GS")
 
 let print_all_species (cdata : RealArray.t) ns mxns t =
   printf "c values at t = %g:\n\n" t;
@@ -867,7 +868,7 @@ let main () =
   cinit wdata (unwrap c);
 
   (* Call CVodeInit or CVodeReInit, then CVSpgmr to set up problem *)
-  let spgmr_ls = Iterative.(spgmr ~maxl:maxl ~gs_type:ModifiedGS c) in
+  let spgmr_ls = Lsolver.Iterative.(spgmr ~maxl:maxl ~gs_type:ModifiedGS c) in
   let cvode_mem =
     Cvode.(init
         BDF
@@ -897,8 +898,8 @@ let main () =
       print_all_species (unwrap c) ns mxns t0
     else begin
       Cvode.reinit cvode_mem t0 c;
-      Iterative.set_prec_type spgmr_ls jpre;
-      Iterative.set_gs_type spgmr_ls gstype
+      Lsolver.Iterative.set_prec_type spgmr_ls jpre;
+      Lsolver.Iterative.set_gs_type spgmr_ls gstype
     end;
 
     (* Loop over output points, call CVode, print sample solution values. *)
@@ -918,7 +919,7 @@ let main () =
   in
 
   (* Loop over jpre and gstype (four cases) *)
-  let open Iterative in
+  let open Lsolver.Iterative in
   run PrecLeft  ModifiedGS;
   run PrecLeft  ClassicalGS;
   run PrecRight ModifiedGS;

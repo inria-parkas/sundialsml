@@ -502,7 +502,7 @@ let main () =
            to the user-defined block data *)
         Cvode.(reinit cvode_mem t0 u
           ~iter:(Newton
-               Spils.(solver Iterative.(spgmr ~gs_type:ModifiedGS u)
+               Spils.(solver Lsolver.Iterative.(spgmr ~gs_type:ModifiedGS u)
                              (prec_left ~setup:(precond data) (psolve data)))));
       end
 
@@ -521,7 +521,7 @@ let main () =
            with left preconditioning and the maximum Krylov dimension maxl *)
         Cvode.(reinit cvode_mem t0 u
           ~iter:(Newton
-               Spils.(solver Iterative.(spbcgs u)
+               Spils.(solver Lsolver.Iterative.(spbcgs u)
                              (prec_left ~setup:(precond data) (psolve data)))));
       end
 
@@ -536,7 +536,7 @@ let main () =
            with left preconditioning and the maximum Krylov dimension maxl *)
         Cvode.(reinit cvode_mem t0 u
           ~iter:(Newton
-               Spils.(solver Iterative.(sptfqmr u)
+               Spils.(solver Lsolver.Iterative.(sptfqmr u)
                              (prec_left ~setup:(precond data) (psolve data)))))
       end);
 

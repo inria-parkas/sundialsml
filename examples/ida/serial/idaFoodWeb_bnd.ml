@@ -404,7 +404,7 @@ let main () =
      solver. *)
   let mu = nsmx and ml = nsmx in
   let m = Matrix.band ~smu:(mu+ml) ~mu ~ml neq in
-  let mem = Ida.(init Dls.(solver Direct.(band wc m))
+  let mem = Ida.(init Dls.(solver Lsolver.Direct.(band wc m))
                       (SStolerances (rtol, atol))
                       (resweb webdata) t0 wc wc') in
   let tout1 = 0.001 in

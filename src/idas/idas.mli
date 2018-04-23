@@ -994,7 +994,7 @@ module Adjoint : sig (* {{{ *)
         @nocvode <node> IDADlsSetJacFnBS *)
     val solver :
       ?jac:'m jac_fn ->
-      ('m, 'kind, 't) Direct.serial_t ->
+      ('m, 'kind, 't) Lsolver.Direct.serial_t ->
       'kind serial_linear_solver
 
     (** {3:stats Solver statistics} *)
@@ -1270,7 +1270,7 @@ module Adjoint : sig (* {{{ *)
         @nocvode <node> IDASpilsSetJacTimesB
         @nocvode <node> IDASpilsSetJacTimesBS *)
     val solver :
-      ('d, 'k, 'f) Iterative.t
+      ('d, 'k, 'f) Lsolver.Iterative.t
       -> ?jac_times_vec:'d jac_times_vec_fn
       -> ('d, 'k) preconditioner
       -> ('d, 'k) linear_solver

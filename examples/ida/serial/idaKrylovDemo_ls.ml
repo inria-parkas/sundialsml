@@ -260,7 +260,7 @@ let main() =
   (* Call IDACreate with dummy linear solver *)
 
   let m = Matrix.dense neq in
-  let mem = Ida.(init Dls.(solver Direct.(dense wu m))
+  let mem = Ida.(init Dls.(solver Lsolver.Direct.(dense wu m))
                       (SStolerances (rtol, atol))
                       (res_heat data) t0 wu wu') in
   Ida.set_constraints mem (Nvector_serial.wrap constraints);
@@ -290,7 +290,8 @@ let main() =
                       printf " -------\n";
                       flush stdout;
                       Ida.(reinit mem
-                        ~linsolv:Spils.(solver Iterative.(spgmr wu) prec)
+                        ~linsolv:Spils.(solver Lsolver.Iterative.(spgmr wu)
+                                        prec)
                         t0 wu wu'))
       | USE_SPBCG -> ((match Sundials.sundials_version with
                        | 2,_,_ -> printf " -------";
@@ -301,14 +302,16 @@ let main() =
                                   printf " -------\n");
                       flush stdout;
                       Ida.(reinit mem
-                        ~linsolv:Spils.(solver Iterative.(spbcgs wu) prec)
+                        ~linsolv:Spils.(solver Lsolver.Iterative.(spbcgs wu)
+                                               prec)
                         t0 wu wu'))
       | USE_SPTFQMR -> (printf " ---------";
                         printf " \n| SPTFQMR |\n";
                         printf " ---------\n";
                       flush stdout;
                         Ida.(reinit mem
-                          ~linsolv:Spils.(solver Iterative.(sptfqmr wu) prec)
+                          ~linsolv:Spils.(solver Lsolver.Iterative.(sptfqmr wu)
+                                                 prec)
                           t0 wu wu'))
     end;
 
