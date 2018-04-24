@@ -545,9 +545,6 @@ let main () =
       (f data) t0 u
   ) in
 
-  (* Set modified Gram-Schmidt orthogonalization *)
-  Cvode.Spils.(set_gs_type lsolver ModifiedGS);
-
   (* In loop over output points, call CVode, print results, test for error *)
 
   printf " \n2-species diurnal advection-diffusion problem\n\n";
