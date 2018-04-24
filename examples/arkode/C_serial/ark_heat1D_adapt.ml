@@ -303,8 +303,12 @@ let main () =
       udata.n <- nnew;   (* store size of new mesh *)
 
       (* call ARKodeResize to notify integrator of change in mesh *)
+      let maxl = match Sundials.sundials_version with
+                 | 2,_,_ -> nnew
+                 | _ -> n_mesh
+      in
       Arkode.(resize arkode_mem
-        ~linsolv:Spils.(solver (pcg ~maxl:n_mesh y2) ~jac_times_vec:(None, jac)
+        ~linsolv:Spils.(solver (pcg ~maxl y2) ~jac_times_vec:(None, jac)
                                prec_none)
         (SStolerances (rtol, atol))
         hscale y2 t);
