@@ -333,7 +333,7 @@ type ('a,'kind) session = {
   (* Tracks whether IDASetId has been called. *)
   mutable id_set     : bool;
 
-  mutable resfn      : 'a resfn;
+  resfn              : 'a resfn;
   mutable rootsfn    : 'a rootsfn;
   mutable errh       : error_handler;
   mutable errw       : 'a error_weight_fun;

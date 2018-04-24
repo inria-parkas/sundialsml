@@ -362,7 +362,7 @@ type ('a, 'kind) session = {
 
   mutable exn_temp     : exn option;
 
-  mutable rhsfn        : 'a rhsfn;
+  rhsfn                : 'a rhsfn;
   mutable rootsfn      : 'a rootsfn;
   mutable errh         : error_handler;
   mutable errw         : 'a error_weight_fun;
