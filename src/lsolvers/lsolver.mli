@@ -99,9 +99,22 @@ exception InternalFailure of (string * int)
 (** {2:iterative Iterative Linear Solvers} *)
 
 module Iterative : sig
+  (** Definitions in this module are more conveniently accessed
+      through session-specific iterative linear solver modules like
+      {!Cvode.Spils} and {!Ida.Spils}.  For example,
+      {!Cvode.Spils.spbcgs} is an alias for
+      {!Lsolver.Iterative.spbcgs}.  *)
+
+  (** {3:solvers Types} *)
+
   (** An iterative linear solver.
     The type variables specify the {!Nvector.nvector} data (['data]) and
     kind (['kind]), and the iterative method (['iter]).
+
+    A linear solver of this type must be converted to session-specific
+    form by {!Cvode.Spils.solver}, {!Ida.Spils.solver}, etc. before
+    being attached to a session.
+
 
     @nocvode <node> Description of the SUNLinearSolver module
     @nocvode <node> SUNLinearSolver *)
@@ -435,13 +448,24 @@ end
 (** {2:direct Direct Linear Solvers} *)
 
 module Direct : sig
+  (** Definitions in this module are more conveniently accessed
+      through session-specific direct linear solver modules like
+      {!Cvode.Dls} and {!Ida.Dls}.  For example, {!Cvode.Dls.dense} is
+      an alias for {!Lsolver.Direct.dense}.  *)
+
+  (** {3:solvers Types} *)
+
   (** Used to identify generic direct solvers. *)
   type tag = [`Basic]
 
-  (** A direct linear solver.
+  (** A generic direct linear solver.
     The type variables specify the Jacobian matrix (['matrix]), the
     {!Nvector.nvector} data (['data]) and kind (['kind]), and a
     ['tag] used to identify specific solver features.
+
+    A linear solver of this type must be converted to session-specific
+    form by {!Cvode.Dls.solver}, {!Ida.Dls.solver}, etc., before being
+    attached to a session via [init] or [reinit].
 
     @nocvode <node> Description of the SUNLinearSolver module
     @nocvode <node> SUNLinearSolver *)
