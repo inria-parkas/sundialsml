@@ -893,7 +893,7 @@ let main () =
      the preconditioner routines supplied (Precondbd and PSolvebd).
      maxl (max. Krylov subspace dim.) is set to 16. *)
   let maxl = 16 in
-  let lsolver = Iterative.(spgmr ~maxl cc) in
+  let lsolver = Lsolver.Iterative.(spgmr ~maxl cc) in
   let mem =
     Ida.(init
       Spils.(solver lsolver
@@ -903,7 +903,7 @@ let main () =
       t0 cc cp)
   in
   (match Sundials.sundials_version with
-   | 2,_,_ -> () | _ -> Iterative.set_max_restarts lsolver 5);
+   | 2,_,_ -> () | _ -> Lsolver.Iterative.set_max_restarts lsolver 5);
   webdata.ida_mem <- Some mem;
 
   (* Call IDACalcIC (with default options) to correct the initial values. *)

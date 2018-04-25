@@ -1095,7 +1095,7 @@ let main () =
     Adj.(init_backward cvode_mem
                        Cvode.BDF
                        (Newton Spils.(solver
-                          Iterative.(spgmr yB)
+                          (spgmr yB)
                           Adjbbd.(prec_left { mudq = d.l_m.(0) + 1;
                                               mldq = d.l_m.(0) + 1;
                                               mukeep = 2;

@@ -583,7 +583,7 @@ let main () =
 
   let mem =
     Ida.(init
-      Spils.(solver Iterative.(spgmr ~max_restarts:5 uu)
+      Spils.(solver (spgmr ~max_restarts:5 uu)
                     Ida_bbd.(prec_left ~dqrely:zero
                                        { mudq; mldq; mukeep; mlkeep }
                                        (reslocal data))

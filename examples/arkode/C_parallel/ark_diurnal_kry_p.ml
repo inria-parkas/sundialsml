@@ -678,7 +678,7 @@ let main () =
   let arkode_mem = Arkode.(
     init
       (Implicit (f data,
-           Newton Spils.(solver Iterative.(spgmr u)
+           Newton Spils.(solver (spgmr u)
                                 (prec_left ~setup:(precond data)
                                            (psolve data))),
        Nonlinear))

@@ -145,8 +145,7 @@ let main () =
    * Attach band linear solver
    * ----------------------------------------- *)
   let m = Matrix.band ~smu:(2*nx) ~mu:nx ~ml:nx neq in
-  let kmem = Kinsol.(init ~linsolv:Dls.(solver Lsolver.Direct.(band y m))
-                     func y) in
+  let kmem = Kinsol.(init ~linsolv:Dls.(solver (band y m)) func y) in
   (* -------------------
    * Set optional inputs
    * ------------------- *)

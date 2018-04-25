@@ -655,7 +655,7 @@ let main () =
 
   let mem =
     Ida.(init
-      Spils.(solver Iterative.(spgmr ~maxl:12 uu)
+      Spils.(solver (spgmr ~maxl:12 uu)
                     Ida_bbd.(prec_left ~dqrely:zero
                                        { mudq; mldq; mukeep; mlkeep }
                                        (reslocal data)))

@@ -680,7 +680,7 @@ let main () =
   let kmem =
     Kinsol.(init ~max_iters:250
                  ~linsolv:Spils.(solver
-                    Iterative.(spgmr ~maxl:maxl ~max_restarts:maxlrst cc)
+                    (spgmr ~maxl:maxl ~max_restarts:maxlrst cc)
                     (prec_right ~setup:(precondbd data) (psolvebd data)))
                  (funcprpr data) cc) in
   Kinsol.set_constraints kmem (Nvector.make local_N neq comm 0.0);

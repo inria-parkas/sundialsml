@@ -350,7 +350,7 @@ let main () =
     Adj.(init_backward
           cvode_mem Cvode.BDF
                     (Newton Dls.(solver ~jac:(NoSens (jacb data))
-                                   Direct.(superlumt ~nthreads:nthreads yB m)))
+                                   (superlumt ~nthreads:nthreads yB m)))
                     (SStolerances (reltolB, abstolB))
                     (NoSens (fB data))
                     tb1 yB)

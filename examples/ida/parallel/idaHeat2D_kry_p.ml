@@ -617,7 +617,7 @@ let main () =
 
   let mem =
     Ida.(init
-      Spils.(solver Iterative.(spgmr uu)
+      Spils.(solver (spgmr uu)
                     (prec_left ~setup:(psetup_heat data) (psolve_heat data)))
       (SStolerances (rtol, atol))
       (res_heat data)

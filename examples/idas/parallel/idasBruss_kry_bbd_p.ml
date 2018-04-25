@@ -832,7 +832,7 @@ let main () =
   let maxl = 16 in
   let mem =
     Ida.(init
-      Spils.(solver Iterative.(spgmr ~maxl uv)
+      Spils.(solver (spgmr ~maxl uv)
                     Ida_bbd.(prec_left ~dqrely:zero
                                        { mudq; mldq; mukeep; mlkeep }
                                        (reslocal data)))

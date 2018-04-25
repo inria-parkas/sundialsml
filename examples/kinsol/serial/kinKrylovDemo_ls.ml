@@ -426,7 +426,8 @@ let print_final_stats kmem linsolver =
     printf "\n=========================================================\n\n"
 
 type ('data, 'kind) any =
-  Any : ('data, 'kind, 'iter) Lsolver.Iterative.t -> ('data, 'kind) any
+  Any : ('data, 'kind, 'iter) Lsolver.Iterative.linear_solver
+        -> ('data, 'kind) any
 
 (* MAIN PROGRAM *)
 let main () =

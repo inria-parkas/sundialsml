@@ -92,6 +92,7 @@ let root_init session (nroots, rootsfn) =
 
 module Dls = struct (* {{{ *)
   include DirectTypes
+  include Lsolver.Direct
 
   (* Sundials < 3.0.0 *)
   external c_dls_dense : 'k serial_session -> int -> bool -> unit
@@ -313,6 +314,7 @@ end (* }}} *)
 
 module Spils = struct (* {{{ *)
   include SpilsTypes
+  include Lsolver.Iterative
 
   (* Sundials < 3.0.0 *)
   external c_spgmr
@@ -350,7 +352,7 @@ module Spils = struct (* {{{ *)
     = "c_arkode_spils_set_gs_type"
 
   (* Sundials < 3.0.0 *)
-  external set_maxl
+  external c_set_maxl
     : ('a, 'k) session -> int -> unit
     = "c_arkode_spils_set_maxl"
 
@@ -361,7 +363,7 @@ module Spils = struct (* {{{ *)
 
   let old_set_maxl s maxl =
     ls_check_spils s;
-    set_maxl s maxl
+    c_set_maxl s maxl
 
   let old_set_prec_type s t =
     ls_check_spils s;
@@ -638,6 +640,7 @@ module Mass = struct (* {{{ *)
 
   module Dls = struct (* {{{ *)
     include MassTypes.Direct'
+    include Lsolver.Direct
 
     (* Sundials < 3.0.0 *)
     external c_dls_mass_dense : 'k serial_session -> int -> unit
@@ -865,6 +868,7 @@ module Mass = struct (* {{{ *)
 
   module Spils = struct (* {{{ *)
     include MassTypes.Iterative'
+    include Lsolver.Iterative
 
     (* Sundials < 3.0.0 *)
     external c_spgmr

@@ -289,10 +289,8 @@ let main() =
                       printf " \n| SPGMR |\n";
                       printf " -------\n";
                       flush stdout;
-                      Ida.(reinit mem
-                        ~linsolv:Spils.(solver Lsolver.Iterative.(spgmr wu)
-                                        prec)
-                        t0 wu wu'))
+                      Ida.(reinit mem ~linsolv:Spils.(solver (spgmr wu) prec)
+                                  t0 wu wu'))
       | USE_SPBCG -> ((match Sundials.sundials_version with
                        | 2,_,_ -> printf " -------";
                                   printf " \n| SPBCG |\n";
@@ -301,18 +299,14 @@ let main() =
                                   printf " \n| SPBCGS |\n";
                                   printf " -------\n");
                       flush stdout;
-                      Ida.(reinit mem
-                        ~linsolv:Spils.(solver Lsolver.Iterative.(spbcgs wu)
-                                               prec)
-                        t0 wu wu'))
+                      Ida.(reinit mem ~linsolv:Spils.(solver (spbcgs wu) prec)
+                                  t0 wu wu'))
       | USE_SPTFQMR -> (printf " ---------";
                         printf " \n| SPTFQMR |\n";
                         printf " ---------\n";
                       flush stdout;
-                        Ida.(reinit mem
-                          ~linsolv:Spils.(solver Lsolver.Iterative.(sptfqmr wu)
-                                                 prec)
-                          t0 wu wu'))
+                      Ida.(reinit mem ~linsolv:Spils.(solver (sptfqmr wu) prec)
+                                  t0 wu wu'))
     end;
 
     (* Print output heading. *)

@@ -59,6 +59,7 @@ let int_default = function None -> 0 | Some v -> v
 
 module Dls = struct (* {{{ *)
   include DirectTypes
+  include Lsolver.Direct
 
   (* Sundials < 3.0.0 *)
   external c_dls_dense : 'k serial_session -> bool -> unit
@@ -287,6 +288,7 @@ end (* }}} *)
 
 module Spils = struct (* {{{ *)
   include SpilsTypes
+  include Lsolver.Iterative
 
   (* Sundials < 3.0.0 *)
   external c_spgmr : ('a, 'k) session -> int -> unit

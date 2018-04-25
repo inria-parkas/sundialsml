@@ -240,7 +240,7 @@ let main () =
   let arkode_mem = Arkode.(
     init
       (Implicit (f udata,
-                 Newton Spils.(solver Lsolver.Iterative.(pcg ~maxl:n_mesh y)
+                 Newton Spils.(solver (pcg ~maxl:n_mesh y)
                                       ~jac_times_vec:(None, jac)
                                       prec_none),
                  Linear true))

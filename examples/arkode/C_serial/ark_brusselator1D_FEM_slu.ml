@@ -920,12 +920,12 @@ let main () =
       (Arkode.Implicit
         (f udata,
          Newton Dls.(solver ~jac:(jac udata)
-                            Direct.(superlumt ~nthreads:num_threads y m1)),
+                            (superlumt ~nthreads:num_threads y m1)),
          Nonlinear))
       (SStolerances (reltol, abstol))
       ~restol:(ResStolerance abstol)
       ~mass:Mass.Dls.(solver (mass_matrix udata) false
-                             Direct.(superlumt ~nthreads:num_threads y m2))
+                             (superlumt ~nthreads:num_threads y m2))
       t0
       y
   ) in

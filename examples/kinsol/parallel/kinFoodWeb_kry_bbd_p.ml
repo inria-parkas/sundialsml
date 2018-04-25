@@ -618,7 +618,7 @@ let main () =
   let kmem =
     Kinsol.(init
         ~linsolv:Spils.(solver
-          Iterative.(spgmr ~maxl:maxl ~max_restarts:maxlrst cc)
+          (spgmr ~maxl:maxl ~max_restarts:maxlrst cc)
           (Kinsol_bbd.prec_right Bbd.({ mudq; mldq; mukeep; mlkeep })
                                  (func_local data)))
         (func data) cc) in

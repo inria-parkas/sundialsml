@@ -586,11 +586,11 @@ let main () =
 
   let solve_problem jpre =
     (* On second run, re-initialize u, the integrator, CVBBDPRE, and CVSPGMR *)
-    if jpre = Iterative.PrecRight then begin
+    if jpre = Lsolver.Iterative.PrecRight then begin
       set_initial_profiles data u;
       Cvode.reinit cvode_mem t0 u;
       BBD.reinit cvode_mem mudq mldq;
-      Iterative.(set_prec_type lsolver PrecRight);
+      Lsolver.Iterative.(set_prec_type lsolver PrecRight);
 
       if my_pe = 0 then begin
         printf "\n\n-------------------------------------------------------";
@@ -600,7 +600,8 @@ let main () =
 
     if my_pe = 0 then
       printf "\n\nPreconditioner type is:  jpre = %s\n\n"
-             (if jpre = Iterative.PrecLeft then "PREC_LEFT" else "PREC_RIGHT");
+             (if jpre = Lsolver.Iterative.PrecLeft
+              then "PREC_LEFT" else "PREC_RIGHT");
 
     (* In loop over output points, call CVode, print results, test for error *)
     let tout = ref twohr in
@@ -613,7 +614,7 @@ let main () =
     (* Print final statistics *)
     if my_pe = 0 then print_final_stats cvode_mem
   in
-  List.iter solve_problem Iterative.([PrecLeft; PrecRight])
+  List.iter solve_problem Lsolver.Iterative.([PrecLeft; PrecRight])
 
 (* Check environment variables for extra arguments.  *)
 let reps =

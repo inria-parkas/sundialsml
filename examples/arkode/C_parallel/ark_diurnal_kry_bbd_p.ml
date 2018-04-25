@@ -571,7 +571,7 @@ let main () =
   let mldq   = mudq in
   let mukeep = nvars in
   let mlkeep = mukeep in
-  let lsolver = Iterative.(spgmr u) in
+  let lsolver = Lsolver.Iterative.(spgmr u) in
   let arkode_mem = Arkode.(
     init
       (Implicit (f data,
@@ -592,11 +592,11 @@ let main () =
   let solve_problem jpre =
     (* On second run, re-initialize u, the integrator, ARKBBDPRE,
        and ARKSPGMR *)
-    if jpre = Iterative.PrecRight then begin
+    if jpre = Lsolver.Iterative.PrecRight then begin
       set_initial_profiles data u;
       Arkode.reinit arkode_mem t0 u;
       BBD.reinit arkode_mem mudq mldq;
-      Iterative.(set_prec_type lsolver PrecRight);
+      Lsolver.Iterative.(set_prec_type lsolver PrecRight);
 
       if my_pe = 0 then begin
         printf "\n\n-------------------------------------------------------";
@@ -606,7 +606,8 @@ let main () =
 
     if my_pe = 0 then
       printf "\n\nPreconditioner type is:  jpre = %s\n\n"
-             (if jpre = Iterative.PrecLeft then "PREC_LEFT" else "PREC_RIGHT");
+             (if jpre = Lsolver.Iterative.PrecLeft
+              then "PREC_LEFT" else "PREC_RIGHT");
 
     (* In loop over output points, call ARKode, print results, test for error *)
     let tout = ref twohr in
@@ -619,7 +620,7 @@ let main () =
     (* Print final statistics *)
     if my_pe = 0 then print_final_stats arkode_mem
   in
-  List.iter solve_problem Iterative.([PrecLeft; PrecRight])
+  List.iter solve_problem Lsolver.Iterative.([PrecLeft; PrecRight])
 
 (* Check environment variables for extra arguments.  *)
 let reps =

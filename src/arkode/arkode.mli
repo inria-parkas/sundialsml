@@ -101,6 +101,7 @@ type ('t, 'd) jacobian_arg = ('t, 'd) Arkode_impl.jacobian_arg =
     @noarkode <node> Dense/band direct linear solvers optional output functions
 *)
 module Dls : sig (* {{{ *)
+  include module type of Lsolver.Direct
 
   (** Callback functions that compute dense approximations to a Jacobian
       matrix. In the call [jac arg jm], [arg] is a {!jacobian_arg}
@@ -165,6 +166,8 @@ end (* }}} *)
     @noarkode <node> Iterative linear solvers optional input functions.
     @noarkode <node> Iterative linear solvers optional output functions. *)
 module Spils : sig (* {{{ *)
+  include module type of Lsolver.Iterative
+
   (** {3:precond Preconditioners} *)
 
   (** Arguments passed to the preconditioner solver function.
@@ -607,6 +610,7 @@ module Mass : sig (* {{{ *)
 
   (** {3:dlsmass Direct mass matrix solvers} *)
   module Dls : sig (* {{{ *)
+    include module type of Lsolver.Direct
 
     (** Functions that compute a mass matrix (or an approximation of one).
         In the call [mass t work m],
@@ -680,6 +684,8 @@ module Mass : sig (* {{{ *)
 
   (** {3:spilsmass Iterative mass matrix solvers} *)
   module Spils : sig (* {{{ *)
+    include module type of Lsolver.Iterative
+
     (** {3:precond Preconditioners} *)
 
     (** Arguments passed to the mass matrix preconditioner solver function.

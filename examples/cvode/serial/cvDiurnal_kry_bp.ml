@@ -382,7 +382,7 @@ let main () =
    | _ ->
       Cvode.reinit cvode_mem t0 u
         ~iter:Cvode.(Newton Spils.(solver
-                             Lsolver.Iterative.(spgmr u)
+                             (spgmr u)
                              (Banded.(prec_right { mupper = mu; mlower = ml}))))
   );
 

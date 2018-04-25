@@ -330,7 +330,7 @@ let main () =
   let m = Matrix.sparse_csc ~nnz neq in
   let ida_mem =
     Ida.(init
-      Dls.(solver ~jac:(jac data) Direct.(superlumt ~nthreads:nthreads wyy m))
+      Dls.(solver ~jac:(jac data) (superlumt ~nthreads:nthreads wyy m))
       (WFtolerances (ewt data))
       (res data)
       t0
@@ -400,7 +400,7 @@ let main () =
   let indexB =
     Adjoint.(init_backward ida_mem
                       Dls.(solver ~jac:(NoSens (jacB data))
-                                  Direct.(superlumt ~nthreads:nthreads wyB m))
+                                  (superlumt ~nthreads:nthreads wyB m))
                       (SStolerances (reltolB, abstolB))
                       (NoSens (resB data))
                       tb2 wyB wypB)

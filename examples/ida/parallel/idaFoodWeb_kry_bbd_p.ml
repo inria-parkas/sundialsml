@@ -822,7 +822,7 @@ let main () =
   and mukeep = 2 and mlkeep = 2 in
   let mem =
     Ida.(init
-      Spils.(solver Iterative.(spgmr ~maxl cc)
+      Spils.(solver (spgmr ~maxl cc)
                     Ida_bbd.(prec_left ~dqrely:zero
                                        { mudq; mldq; mukeep; mlkeep }
                                        (reslocal webdata)))

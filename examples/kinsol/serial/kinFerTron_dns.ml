@@ -175,8 +175,7 @@ let main () =
 
   (* Call KINDense to specify the linear solver *)
   let m = Matrix.dense neq in
-  let kmem = Kinsol.(init ~linsolv:Dls.(solver Lsolver.Direct.(dense u_nvec m))
-                          func u_nvec) in
+  let kmem = Kinsol.(init ~linsolv:Dls.(solver (dense u_nvec m)) func u_nvec) in
   Kinsol.set_constraints kmem c_nvec;
   Kinsol.set_func_norm_tol kmem fnormtol;
   Kinsol.set_scaled_step_tol kmem scsteptol;

@@ -1170,7 +1170,7 @@ let main () =
   let maxl = 16 in
   let mem =
     Ida.(init
-      Spils.(solver Iterative.(spgmr ~maxl uv)
+      Spils.(solver (spgmr ~maxl uv)
                     Ida_bbd.(prec_left ~dqrely:zero
                                        { mudq; mldq; mukeep; mlkeep }
                                        (reslocal data)))
@@ -1229,7 +1229,7 @@ let main () =
   let indexB =
     Adjoint.(init_backward
        mem
-       Spils.(solver Iterative.(spgmr ~maxl uvB)
+       Spils.(solver (spgmr ~maxl uvB)
                      Idas_bbd.(prec_left ~dqrely:zero
                                          { mudq; mldq; mukeep; mlkeep }
                                          (resBlocal data)))
