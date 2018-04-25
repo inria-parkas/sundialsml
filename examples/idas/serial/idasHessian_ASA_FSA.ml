@@ -441,7 +441,7 @@ let main () =
 
   let m = Matrix.dense (2*neq) in
   let indexB1 =
-    Adjoint.(init_backward ida_mem Dls.(solver Lsolver.Direct.(dense wyyB1 m))
+    Adjoint.(init_backward ida_mem Dls.(solver (dense wyyB1 m))
                            (SStolerances (rtola, atola))
                            (WithSens (resBS1 data))
                            tf wyyB1 wypB1)
@@ -478,7 +478,7 @@ let main () =
 
   let m = Matrix.dense (2*neq) in
   let indexB2 =
-    Adjoint.(init_backward ida_mem Dls.(solver Lsolver.Direct.(dense wyyB2 m))
+    Adjoint.(init_backward ida_mem Dls.(solver (dense wyyB2 m))
                            (SStolerances (rtola, atola))
                            (WithSens (resBS2 data))
                            tf

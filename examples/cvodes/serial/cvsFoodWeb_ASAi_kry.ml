@@ -1069,7 +1069,7 @@ let main () =
   let cvode_mem =
     Cvode.(init
         BDF
-        (Newton Spils.(solver Lsolver.Iterative.(spgmr c)
+        (Newton Spils.(solver (spgmr c)
                               (prec_left ~setup:(precond wdata) (psolve wdata))))
         (SStolerances (reltol, abstol))
         (f wdata) t0 c)
@@ -1105,8 +1105,7 @@ let main () =
     Adj.(init_backward
       cvode_mem
       Cvode.BDF
-      (Newton Spils.(solver
-                       Lsolver.Iterative.(spgmr cB)
+      (Newton Spils.(solver (spgmr cB)
                        (prec_left ~setup:(precondb wdata) (psolveb wdata))))
       (SStolerances (reltolb, abstolb))
       (NoSens (fB wdata))

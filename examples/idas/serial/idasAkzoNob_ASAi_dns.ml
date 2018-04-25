@@ -288,8 +288,7 @@ let main () =
   in
 
   let m = Matrix.dense neq in
-  let indexB = Adjoint.(init_backward mem Dls.(solver
-                                               Lsolver.Direct.(dense wyB m))
+  let indexB = Adjoint.(init_backward mem Dls.(solver (dense wyB m))
                                       (SStolerances (rtolb, atolb))
                                       (NoSens (resB data))
                                       tf wyB wypB)

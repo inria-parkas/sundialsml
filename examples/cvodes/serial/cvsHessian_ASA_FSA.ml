@@ -409,8 +409,7 @@ let main () =
   let m = Matrix.dense (2*neq) in
   let cvode_memB1 =
     Adj.(init_backward cvode_mem Cvode.BDF
-                                 (Newton Dls.(solver
-                                              Lsolver.Direct.(dense yB1 m)))
+                                 (Newton Dls.(solver (dense yB1 m)))
                                  (SStolerances (reltol, abstolB))
                                  (WithSens (fB1 data))
                                  tf yB1)
@@ -421,8 +420,7 @@ let main () =
   let m = Matrix.dense (2*neq) in
   let cvode_memB2 =
     Adj.(init_backward cvode_mem Cvode.BDF
-                                 (Newton Dls.(solver
-                                              Lsolver.Direct.(dense yB2 m)))
+                                 (Newton Dls.(solver (dense yB2 m)))
                                  (SStolerances (reltol, abstolB))
                                  (WithSens (fB2 data))
                                  tf yB2)

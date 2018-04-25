@@ -304,8 +304,7 @@ let main () =
 
       (* call ARKodeResize to notify integrator of change in mesh *)
       Arkode.(resize arkode_mem
-        ~linsolv:Spils.(solver Lsolver.Iterative.(pcg ~maxl:n_mesh y2)
-                               ~jac_times_vec:(None, jac)
+        ~linsolv:Spils.(solver (pcg ~maxl:n_mesh y2) ~jac_times_vec:(None, jac)
                                prec_none)
         (SStolerances (rtol, atol))
         hscale y2 t);

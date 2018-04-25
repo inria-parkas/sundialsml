@@ -170,7 +170,7 @@ let prepare_next_run cvode_mem lmm miter neq mu ml t y =
     | Dense_User -> begin
           printf "Dense, User-Supplied Jacobian\n";
           let dmat = Matrix.dense neq in
-          let solver = Cvode.Dls.(solver ~jac:jac1 Lsolver.Direct.(dense y dmat))
+          let solver = Cvode.Dls.(solver ~jac:jac1 (dense y dmat))
           in
           Cvode.(reinit cvode_mem t y ~iter:(Newton solver))
         end
@@ -178,7 +178,7 @@ let prepare_next_run cvode_mem lmm miter neq mu ml t y =
     | Dense_DQ -> begin
           printf("Dense, Difference Quotient Jacobian\n");
           let dmat = Matrix.dense neq in
-          let solver = Cvode.Dls.(solver Lsolver.Direct.(dense y dmat)) in
+          let solver = Cvode.Dls.(solver (dense y dmat)) in
           Cvode.(reinit cvode_mem t y ~iter:(Newton solver))
         end
 
@@ -190,7 +190,7 @@ let prepare_next_run cvode_mem lmm miter neq mu ml t y =
     | Band_User -> begin
           printf("Band, User-Supplied Jacobian\n");
           let bmat = Matrix.band ~smu:(mu+ml) ~mu:mu ~ml:ml neq in
-          let solver = Cvode.Dls.(solver ~jac:jac2 Lsolver.Direct.(band y bmat))
+          let solver = Cvode.Dls.(solver ~jac:jac2 (band y bmat))
           in
           Cvode.(reinit cvode_mem t y ~iter:(Newton solver))
         end
@@ -198,7 +198,7 @@ let prepare_next_run cvode_mem lmm miter neq mu ml t y =
     | Band_DQ -> begin
           printf("Band, Difference Quotient Jacobian\n");
           let bmat = Matrix.band ~smu:(mu+ml) ~mu:mu ~ml:ml neq in
-          let solver = Cvode.Dls.(solver Lsolver.Direct.(band y bmat)) in
+          let solver = Cvode.Dls.(solver (band y bmat)) in
           Cvode.(reinit cvode_mem t y ~iter:(Newton solver))
         end
 

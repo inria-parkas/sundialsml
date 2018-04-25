@@ -310,8 +310,7 @@ let main () =
   let bcvode_mem =
     Adjoint.(init_backward cvode_mem
               Cvode.BDF
-              (Newton Dls.(solver ~jac:(NoSens (jacb data))
-                           Lsolver.Direct.(band uB m)))
+              (Newton Dls.(solver ~jac:(NoSens (jacb data)) (band uB m)))
               (SStolerances (rtolb, atol))
               (NoSens (fB data)) tout uB) in
 
