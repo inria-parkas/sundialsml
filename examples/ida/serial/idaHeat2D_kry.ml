@@ -236,7 +236,7 @@ let main () =
 
   (* Call IDACreate to initialize solution with SPGMR linear solver.  *)
 
-  let lsolver = Lsolver.Iterative.(spgmr ~maxl:5 wu) in
+  let lsolver = Ida.Spils.(spgmr ~maxl:5 wu) in
   let mem = Ida.(init Spils.(solver lsolver
                                     (prec_left ~setup:(p_setup_heat data)
                                                       (p_solve_heat data)))
@@ -291,7 +291,7 @@ let main () =
   (* Re-initialize IDA and IDASPGMR *)
 
   Ida.reinit mem t0 wu wu';
-  Lsolver.Iterative.(set_gs_type lsolver ClassicalGS);
+  Ida.Spils.(set_gs_type lsolver ClassicalGS);
 
   (* Print case number, output table heading, and initial line of table. *)
   printf "\n\nCase 2: gstype = CLASSICAL_GS\n";

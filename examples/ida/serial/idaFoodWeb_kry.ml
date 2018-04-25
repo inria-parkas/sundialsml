@@ -492,7 +492,7 @@ let main () =
   (* Call IDACreate and IDABand to initialize IDA including the linear
      solver. *)
   let maxl = 16 in
-  let lsolver = Lsolver.Iterative.(spgmr ~maxl:maxl wcc) in
+  let lsolver = Ida.Spils.(spgmr ~maxl:maxl wcc) in
   let mem =
     Ida.(init
       Spils.(solver lsolver
@@ -501,7 +501,7 @@ let main () =
       (resweb webdata) t0 wcc wcp in
   (match Sundials.sundials_version with
    | 2,_,_ -> ()
-   | _ -> Lsolver.Iterative.set_max_restarts lsolver 5);
+   | _ -> Ida.Spils.set_max_restarts lsolver 5);
   webdata.ida_mem <- Some mem;
   let tout1 = 0.001 in
   Ida.calc_ic_ya_yd' mem ~varid:(Nvector_serial.wrap id) tout1;

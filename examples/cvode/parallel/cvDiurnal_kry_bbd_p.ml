@@ -569,7 +569,7 @@ let main () =
   let mldq   = mudq in
   let mukeep = nvars in
   let mlkeep = mukeep in
-  let lsolver = Lsolver.Iterative.spgmr u in
+  let lsolver = Cvode.Spils.spgmr u in
   let cvode_mem =
     Cvode.(init BDF
       (Newton
@@ -586,11 +586,11 @@ let main () =
 
   let solve_problem jpre =
     (* On second run, re-initialize u, the integrator, CVBBDPRE, and CVSPGMR *)
-    if jpre = Lsolver.Iterative.PrecRight then begin
+    if jpre = Cvode.Spils.PrecRight then begin
       set_initial_profiles data u;
       Cvode.reinit cvode_mem t0 u;
       BBD.reinit cvode_mem mudq mldq;
-      Lsolver.Iterative.(set_prec_type lsolver PrecRight);
+      Cvode.Spils.(set_prec_type lsolver PrecRight);
 
       if my_pe = 0 then begin
         printf "\n\n-------------------------------------------------------";
@@ -600,7 +600,7 @@ let main () =
 
     if my_pe = 0 then
       printf "\n\nPreconditioner type is:  jpre = %s\n\n"
-             (if jpre = Lsolver.Iterative.PrecLeft
+             (if jpre = Cvode.Spils.PrecLeft
               then "PREC_LEFT" else "PREC_RIGHT");
 
     (* In loop over output points, call CVode, print results, test for error *)
@@ -614,7 +614,7 @@ let main () =
     (* Print final statistics *)
     if my_pe = 0 then print_final_stats cvode_mem
   in
-  List.iter solve_problem Lsolver.Iterative.([PrecLeft; PrecRight])
+  List.iter solve_problem Cvode.Spils.([PrecLeft; PrecRight])
 
 (* Check environment variables for extra arguments.  *)
 let reps =
