@@ -243,7 +243,7 @@ let main () =
                  Newton Spils.(solver Lsolver.Iterative.(pcg ~maxl:n_mesh y)
                                       ~jac_times_vec:(None, jac)
                                       prec_none),
-                 Nonlinear))
+                 Linear true))
       (SStolerances (rtol, atol))
       t0
       y
