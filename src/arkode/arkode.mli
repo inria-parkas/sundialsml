@@ -101,7 +101,7 @@ type ('t, 'd) jacobian_arg = ('t, 'd) Arkode_impl.jacobian_arg =
     @noarkode <node> Dense/band direct linear solvers optional output functions
 *)
 module Dls : sig (* {{{ *)
-  include module type of Lsolver.Direct
+  include module type of LinearSolver.Direct
 
   (** Callback functions that compute dense approximations to a Jacobian
       matrix. In the call [jac arg jm], [arg] is a {!jacobian_arg}
@@ -134,7 +134,7 @@ module Dls : sig (* {{{ *)
       @nocvode <node> ARKDlsSetJacFn *)
   val solver :
     ?jac:'m jac_fn ->
-    ('m, 'kind, 't) Lsolver.Direct.serial_linear_solver ->
+    ('m, 'kind, 't) LinearSolver.Direct.serial_linear_solver ->
     'kind serial_session_linear_solver
 
   (** {3:stats Solver statistics} *)
@@ -166,7 +166,7 @@ end (* }}} *)
     @noarkode <node> Iterative linear solvers optional input functions.
     @noarkode <node> Iterative linear solvers optional output functions. *)
 module Spils : sig (* {{{ *)
-  include module type of Lsolver.Iterative
+  include module type of LinearSolver.Iterative
 
   (** {3:precond Preconditioners} *)
 
@@ -359,7 +359,7 @@ module Spils : sig (* {{{ *)
         @nocvode <node> ARKSpilsSetLinearSolver
         @nocvode <node> ARKSpilsSetJacTimes *)
     val solver :
-      ('d, 'k, 'f) Lsolver.Iterative.linear_solver
+      ('d, 'k, 'f) LinearSolver.Iterative.linear_solver
       -> ?jac_times_vec:'d jac_times_setup_fn option * 'd jac_times_vec_fn
       -> ('d, 'k) preconditioner
       -> ('d, 'k) session_linear_solver
@@ -610,7 +610,7 @@ module Mass : sig (* {{{ *)
 
   (** {3:dlsmass Direct mass matrix solvers} *)
   module Dls : sig (* {{{ *)
-    include module type of Lsolver.Direct
+    include module type of LinearSolver.Direct
 
     (** Functions that compute a mass matrix (or an approximation of one).
         In the call [mass t work m],
@@ -644,7 +644,7 @@ module Mass : sig (* {{{ *)
     val solver :
       'm mass_fn
       -> bool
-      -> ('m, 'kind, 't) Lsolver.Direct.serial_linear_solver
+      -> ('m, 'kind, 't) LinearSolver.Direct.serial_linear_solver
       -> 'kind serial_solver
 
     (** {3:stats Solver statistics} *)
@@ -684,7 +684,7 @@ module Mass : sig (* {{{ *)
 
   (** {3:spilsmass Iterative mass matrix solvers} *)
   module Spils : sig (* {{{ *)
-    include module type of Lsolver.Iterative
+    include module type of LinearSolver.Iterative
 
     (** {3:precond Preconditioners} *)
 
@@ -811,7 +811,7 @@ module Mass : sig (* {{{ *)
         @nocvode <node> ARKSpilsSetMassLinearSolver
         @nocvode <node> ARKSpilsSetMassTimes *)
     val solver :
-      ('d, 'k, 'f) Lsolver.Iterative.linear_solver
+      ('d, 'k, 'f) LinearSolver.Iterative.linear_solver
       -> ?mass_times_setup:mass_times_setup_fn
       -> 'd mass_times_vec_fn
       -> bool

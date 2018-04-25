@@ -54,7 +54,7 @@ let init_preconditioner dqrely bandwidths precfns bs parent which nv =
   (tosession bs).ls_precfns <- BBBDPrecFns (bbd_precfns precfns)
 
 let prec_left ?(dqrely=0.0) bandwidths ?comm local_fn =
-  Lsolver_impl.Iterative.(PrecLeft,
+  LinearSolver_impl.Iterative.(PrecLeft,
     init_preconditioner dqrely bandwidths { local_fn; comm_fn = comm })
 
 external c_bbd_prec_reinitb

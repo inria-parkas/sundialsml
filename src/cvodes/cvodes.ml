@@ -705,7 +705,7 @@ module Adjoint = struct (* {{{ *)
 
   module Dls = struct (* {{{ *)
     include DirectTypes
-    include Lsolver.Direct
+    include LinearSolver.Direct
 
     (* Sundials < 3.0.0 *)
     external c_dls_dense
@@ -735,7 +735,7 @@ module Adjoint = struct (* {{{ *)
 
     (* Sundials < 3.0.0 *)
     external c_klu_set_ordering
-      : 'k serial_session -> Lsolver.Direct.Klu.ordering -> unit
+      : 'k serial_session -> LinearSolver.Direct.Klu.ordering -> unit
       = "c_cvode_klu_set_ordering"
 
     (* Sundials < 3.0.0 *)
@@ -763,7 +763,7 @@ module Adjoint = struct (* {{{ *)
 
     (* Sundials < 3.0.0 *)
     external c_superlumt_set_ordering
-      : 'k serial_session -> Lsolver.Direct.Superlumt.ordering -> unit
+      : 'k serial_session -> LinearSolver.Direct.Superlumt.ordering -> unit
       = "c_cvode_superlumt_set_ordering"
 
     (* Sundials < 3.0.0 *)
@@ -774,7 +774,7 @@ module Adjoint = struct (* {{{ *)
           c_superlumt_set_ordering session ordering
       | _ -> ()
 
-    module LSD = Lsolver_impl.Direct
+    module LSD = LinearSolver_impl.Direct
 
     (* Sundials < 3.0.0 *)
     let make_compat (type s) (type tag) hasjac usesens
@@ -784,11 +784,11 @@ module Adjoint = struct (* {{{ *)
       match solver with
       | LSD.Dense ->
           let m, n = Matrix.(Dense.size (unwrap mat)) in
-          if m <> n then raise Lsolver.MatrixNotSquare;
+          if m <> n then raise LinearSolver.MatrixNotSquare;
           c_dls_dense parent which m hasjac usesens
       | LSD.LapackDense ->
           let m, n = Matrix.(Dense.size (unwrap mat)) in
-          if m <> n then raise Lsolver.MatrixNotSquare;
+          if m <> n then raise LinearSolver.MatrixNotSquare;
           c_dls_lapack_dense parent which m hasjac usesens
 
       | LSD.Band ->
@@ -806,8 +806,8 @@ module Adjoint = struct (* {{{ *)
           let smat = Matrix.unwrap mat in
           let m, n = Matrix.Sparse.size smat in
           let nnz, _ = Matrix.Sparse.dims smat in
-          if m <> n then raise Lsolver.MatrixNotSquare;
-          let open Lsolver_impl.Klu in
+          if m <> n then raise LinearSolver.MatrixNotSquare;
+          let open LinearSolver_impl.Klu in
           let session = tosession bs in
           sinfo.set_ordering <- klu_set_ordering session;
           sinfo.reinit <- klu_reinit session;
@@ -821,8 +821,8 @@ module Adjoint = struct (* {{{ *)
           let smat = Matrix.unwrap mat in
           let m, n = Matrix.Sparse.size smat in
           let nnz, _ = Matrix.Sparse.dims smat in
-          if m <> n then raise Lsolver.MatrixNotSquare;
-          let open Lsolver_impl.Superlumt in
+          if m <> n then raise LinearSolver.MatrixNotSquare;
+          let open LinearSolver_impl.Superlumt in
           let session = tosession bs in
           sinfo.set_ordering <- superlumt_set_ordering session;
           c_superlumtb (parent, which) m nnz sinfo.num_threads usesens;
@@ -918,7 +918,7 @@ module Adjoint = struct (* {{{ *)
       else c_dls_set_linear_solver (parent, which) rawptr matrix
                                                     (jac <> None) use_sens;
       LSD.attach ls;
-      session.ls_solver <- Lsolver_impl.DirectSolver ls
+      session.ls_solver <- LinearSolver_impl.DirectSolver ls
 
     (* Sundials < 3.0.0 *)
     let invalidate_callback s =
@@ -957,30 +957,30 @@ module Adjoint = struct (* {{{ *)
 
   module Spils = struct (* {{{ *)
     include SpilsTypes
-    include Lsolver.Iterative
+    include LinearSolver.Iterative
 
     (* Sundials < 3.0.0 *)
     external c_spgmr
       : ('a, 'k) session -> int -> int
-        -> Lsolver.Iterative.preconditioning_type -> unit
+        -> LinearSolver.Iterative.preconditioning_type -> unit
       = "c_cvodes_adj_spils_spgmr"
 
     (* Sundials < 3.0.0 *)
     external c_spbcgs
       : ('a, 'k) session -> int -> int
-        -> Lsolver.Iterative.preconditioning_type -> unit
+        -> LinearSolver.Iterative.preconditioning_type -> unit
       = "c_cvodes_adj_spils_spbcgs"
 
     (* Sundials < 3.0.0 *)
     external c_sptfqmr
       : ('a, 'k) session -> int -> int
-        -> Lsolver.Iterative.preconditioning_type -> unit
+        -> LinearSolver.Iterative.preconditioning_type -> unit
       = "c_cvodes_adj_spils_sptfqmr"
 
     (* Sundials < 3.0.0 *)
     external c_set_gs_type
         : ('a, 'k) session -> int
-          -> Lsolver.Iterative.gramschmidt_type -> unit
+          -> LinearSolver.Iterative.gramschmidt_type -> unit
         = "c_cvodes_adj_spils_set_gs_type"
 
     (* Sundials < 3.0.0 *)
@@ -990,7 +990,7 @@ module Adjoint = struct (* {{{ *)
     (* Sundials < 3.0.0 *)
     external c_set_prec_type
         : ('a, 'k) session -> int
-          -> Lsolver.Iterative.preconditioning_type -> unit
+          -> LinearSolver.Iterative.preconditioning_type -> unit
         = "c_cvodes_adj_spils_set_prec_type"
 
     let old_set_maxl bs maxl =
@@ -1021,13 +1021,13 @@ module Adjoint = struct (* {{{ *)
       (tosession bs).ls_precfns <- BPrecFns { prec_solve_fn = solve;
                                               prec_setup_fn = setup }
 
-    let prec_none = Lsolver_impl.Iterative.(PrecNone,
+    let prec_none = LinearSolver_impl.Iterative.(PrecNone,
                       fun bs _ _ _ -> (tosession bs).ls_precfns <- NoPrecFns)
-    let prec_left ?setup solve  = Lsolver_impl.Iterative.(PrecLeft,
+    let prec_left ?setup solve  = LinearSolver_impl.Iterative.(PrecLeft,
                                     init_preconditioner solve setup)
-    let prec_right ?setup solve = Lsolver_impl.Iterative.(PrecRight,
+    let prec_right ?setup solve = LinearSolver_impl.Iterative.(PrecRight,
                                     init_preconditioner solve setup)
-    let prec_both ?setup solve  = Lsolver_impl.Iterative.(PrecBoth,
+    let prec_both ?setup solve  = LinearSolver_impl.Iterative.(PrecBoth,
                                     init_preconditioner solve setup)
 
     let init_preconditioner_with_sens solve setup bs parent which nv =
@@ -1036,11 +1036,11 @@ module Adjoint = struct (* {{{ *)
         BPrecFnsSens { prec_solve_fn_sens = solve;
                        prec_setup_fn_sens = setup }
 
-    let prec_left_with_sens ?setup solve  = Lsolver_impl.Iterative.(PrecLeft,
+    let prec_left_with_sens ?setup solve  = LinearSolver_impl.Iterative.(PrecLeft,
                                       init_preconditioner_with_sens solve setup)
-    let prec_right_with_sens ?setup solve = Lsolver_impl.Iterative.(PrecRight,
+    let prec_right_with_sens ?setup solve = LinearSolver_impl.Iterative.(PrecRight,
                                       init_preconditioner_with_sens solve setup)
-    let prec_both_with_sens ?setup solve  = Lsolver_impl.Iterative.(PrecBoth,
+    let prec_both_with_sens ?setup solve  = LinearSolver_impl.Iterative.(PrecBoth,
                                       init_preconditioner_with_sens solve setup)
 
     type 'd jac_times_vec_fn =
@@ -1050,15 +1050,15 @@ module Adjoint = struct (* {{{ *)
                     * 'd jac_times_vec_fn_with_sens
 
     external c_spils_set_linear_solver
-    : ('a, 'k) session -> int -> ('a, 'k) Lsolver_impl.Iterative.cptr -> unit
+    : ('a, 'k) session -> int -> ('a, 'k) LinearSolver_impl.Iterative.cptr -> unit
       = "c_cvodes_adj_spils_set_linear_solver"
 
     let solver (type s)
-          ({ Lsolver_impl.Iterative.rawptr;
-             Lsolver_impl.Iterative.solver;
-             Lsolver_impl.Iterative.compat =
-               ({ Lsolver_impl.Iterative.maxl;
-                  Lsolver_impl.Iterative.gs_type } as compat) } as ls)
+          ({ LinearSolver_impl.Iterative.rawptr;
+             LinearSolver_impl.Iterative.solver;
+             LinearSolver_impl.Iterative.compat =
+               ({ LinearSolver_impl.Iterative.maxl;
+                  LinearSolver_impl.Iterative.gs_type } as compat) } as ls)
           ?jac_times_vec (prec_type, set_prec) bs nv =
       let session = tosession bs in
       let parent, which = parent_and_which bs in
@@ -1067,7 +1067,7 @@ module Adjoint = struct (* {{{ *)
         | Some (NoSens (Some _, _)) | Some (WithSens (Some _, _)) ->
             raise Sundials.NotImplementedBySundialsVersion;
         | _ -> ();
-        let open Lsolver_impl.Iterative in
+        let open LinearSolver_impl.Iterative in
         (match (solver : ('nd, 'nk, s) solver) with
          | Spgmr ->
              c_spgmr parent which maxl prec_type;
@@ -1084,7 +1084,7 @@ module Adjoint = struct (* {{{ *)
              compat.set_maxl <- old_set_maxl bs;
              compat.set_prec_type <- old_set_prec_type bs
          | _ -> raise Sundials.NotImplementedBySundialsVersion);
-        session.ls_solver <- Lsolver_impl.IterativeSolver ls;
+        session.ls_solver <- LinearSolver_impl.IterativeSolver ls;
         set_prec bs parent which nv;
         (match jac_times_vec with
          | Some (NoSens (ojs, jt)) ->
@@ -1097,9 +1097,9 @@ module Adjoint = struct (* {{{ *)
              session.ls_callbacks <- BSpilsCallbackSens (None, None))
       end else
         c_spils_set_linear_solver parent which rawptr;
-        Lsolver_impl.Iterative.attach ls;
-        session.ls_solver <- Lsolver_impl.IterativeSolver ls;
-        Lsolver_impl.Iterative.(c_set_prec_type rawptr solver prec_type false);
+        LinearSolver_impl.Iterative.attach ls;
+        session.ls_solver <- LinearSolver_impl.IterativeSolver ls;
+        LinearSolver_impl.Iterative.(c_set_prec_type rawptr solver prec_type false);
         set_prec bs parent which nv;
         let has_setup, has_times, use_sens =
           match jac_times_vec with
@@ -1208,13 +1208,13 @@ module Adjoint = struct (* {{{ *)
           bandrange.mupper bandrange.mlower;
         (tosession bs).ls_precfns <- BandedPrecFns
 
-      let prec_none = Lsolver_impl.Iterative.(PrecNone, fun bs _ _ _ ->
+      let prec_none = LinearSolver_impl.Iterative.(PrecNone, fun bs _ _ _ ->
                                     (tosession bs).ls_precfns <- BandedPrecFns)
-      let prec_left bandrange  = Lsolver_impl.Iterative.(PrecLeft,
+      let prec_left bandrange  = LinearSolver_impl.Iterative.(PrecLeft,
                                                 init_preconditioner bandrange)
-      let prec_right bandrange = Lsolver_impl.Iterative.(PrecRight,
+      let prec_right bandrange = LinearSolver_impl.Iterative.(PrecRight,
                                                 init_preconditioner bandrange)
-      let prec_both bandrange  = Lsolver_impl.Iterative.(PrecBoth,
+      let prec_both bandrange  = LinearSolver_impl.Iterative.(PrecBoth,
                                                 init_preconditioner bandrange)
 
       let get_work_space bs =
@@ -1313,7 +1313,7 @@ module Adjoint = struct (* {{{ *)
             rootsfn      = dummy_rootsfn;
             errh         = dummy_errh;
             errw         = dummy_errw;
-            ls_solver    = Lsolver_impl.NoSolver;
+            ls_solver    = LinearSolver_impl.NoSolver;
             ls_callbacks = NoCallbacks;
             ls_precfns   = NoPrecFns;
 

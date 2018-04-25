@@ -10,7 +10,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-exception LinearSolverInUse = Lsolver_impl.LinearSolverInUse
+exception LinearSolverInUse = LinearSolver_impl.LinearSolverInUse
 exception UnrecoverableFailure of bool
 exception MatrixNotSquare
 exception MatrixVectorMismatch
@@ -35,7 +35,7 @@ let in_compat_mode =
   | _ -> false
 
 module Iterative = struct
-  include Lsolver_impl.Iterative
+  include LinearSolver_impl.Iterative
 
   external c_set_maxl
            : ('nd, 'nk) cptr
@@ -261,7 +261,7 @@ module Iterative = struct
          fun _  -> failwith ("internal error: Iterative.Custom.set_atimes")
       | Some fset ->
          let fset' = fset ldata in
-         fun fd -> fset' (Lsolver_impl.Custom.call_atimes fd)
+         fun fd -> fset' (LinearSolver_impl.Custom.call_atimes fd)
 
     let wrap_set_preconditioner fseto ldata =
       match fseto with
@@ -272,9 +272,9 @@ module Iterative = struct
          fun fd has_setup has_solve ->
          fset'
            (if has_setup
-            then Some (fun () -> Lsolver_impl.Custom.call_psetup fd) else None)
+            then Some (fun () -> LinearSolver_impl.Custom.call_psetup fd) else None)
            (if has_solve
-            then Some (Lsolver_impl.Custom.call_psolve fd) else None)
+            then Some (LinearSolver_impl.Custom.call_psolve fd) else None)
 
     let mapo s fo x =
       match fo with
@@ -299,7 +299,7 @@ module Iterative = struct
       (match Sundials.sundials_version with
        | 2,_,_ -> raise Sundials.NotImplementedBySundialsVersion;
        | _ -> ());
-      let ops = Lsolver_impl.Custom.({
+      let ops = LinearSolver_impl.Custom.({
                   init = (fun () -> finit ldata);
                   setup = (fun () -> fsetup ldata);
                   solve = (fun () -> fsolve ldata);
@@ -313,7 +313,7 @@ module Iterative = struct
                   get_res_id = mapu "get_res_id" fget_res_id ldata;
                   get_work_space = mapu "get_work_space" fget_work_space ldata;
                 }) in
-      let only_ops = Lsolver_impl.Custom.({
+      let only_ops = LinearSolver_impl.Custom.({
                         has_set_atimes          = fset_atimes <> None;
                         has_set_preconditioner  = fset_preconditioner <> None;
                         has_set_scaling_vectors = fset_scaling_vectors <> None;
@@ -322,7 +322,7 @@ module Iterative = struct
                         has_get_res_id          = fget_res_id <> None;
                         has_get_work_space      = fget_work_space <> None;
                      })
-      in Lsolver_impl.Iterative.({
+      in LinearSolver_impl.Iterative.({
            rawptr = c_make_custom 1 ops only_ops;
            solver = Custom (ldata, ops);
            compat = info;
@@ -330,7 +330,7 @@ module Iterative = struct
            attached = false;
          })
 
-    let unwrap { Lsolver_impl.Iterative.solver = Custom (ldata, _) } = ldata
+    let unwrap { LinearSolver_impl.Iterative.solver = Custom (ldata, _) } = ldata
 
   end (* }}} *)
 
@@ -370,7 +370,7 @@ module Iterative = struct
 end
 
 module Direct = struct
-  include Lsolver_impl.Direct
+  include LinearSolver_impl.Direct
 
   type ('m, 'nk, 'tag) serial_linear_solver
     = ('m, Nvector_serial.data, [>Nvector_serial.kind] as 'nk, 'tag)
@@ -435,7 +435,7 @@ module Direct = struct
       }
 
   module Klu = struct (* {{{ *)
-    include Lsolver_impl.Klu
+    include LinearSolver_impl.Klu
 
     external c_klu
              : 'k Nvector_serial.any
@@ -496,7 +496,7 @@ module Direct = struct
   let klu = Klu.make
 
   module Superlumt = struct (* {{{ *)
-    include Lsolver_impl.Superlumt
+    include LinearSolver_impl.Superlumt
 
     external c_superlumt
              : 'k Nvector_serial.any
@@ -539,7 +539,7 @@ module Direct = struct
 
   module Custom = struct (* {{{ *)
 
-    type 'lsolver tag = 'lsolver Lsolver_impl.Custom.tag
+    type 'lsolver tag = 'lsolver LinearSolver_impl.Custom.tag
 
     type ('matrix, 'data, 'kind, 'lsolver) ops = {
         init : 'lsolver -> unit;
@@ -560,7 +560,7 @@ module Direct = struct
       (match Sundials.sundials_version with
        | 2,_,_ -> raise Sundials.NotImplementedBySundialsVersion;
        | _ -> ());
-      let ops = Lsolver_impl.Custom.({
+      let ops = LinearSolver_impl.Custom.({
                   init = (fun () -> fi ldata);
                   setup = fs0 ldata;
                   solve = (fun a x b tol -> fs ldata a x b);
@@ -581,13 +581,13 @@ module Direct = struct
                 })
              in
              S {
-                 rawptr = Lsolver_impl.Direct.(c_make_custom 0 ops only_ops);
+                 rawptr = LinearSolver_impl.Direct.(c_make_custom 0 ops only_ops);
                  solver = Custom (ldata, ops);
                  matrix = mat;
                  attached = false;
                }
 
-    let unwrap (S { Lsolver_impl.Direct.solver = Custom (ldata, _) }) = ldata
+    let unwrap (S { LinearSolver_impl.Direct.solver = Custom (ldata, _) }) = ldata
 
   end (* }}} *)
 end

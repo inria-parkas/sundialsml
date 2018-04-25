@@ -338,7 +338,7 @@ type ('a,'kind) session = {
   mutable errh       : error_handler;
   mutable errw       : 'a error_weight_fun;
 
-  mutable ls_solver    : Lsolver_impl.solver;
+  mutable ls_solver    : LinearSolver_impl.solver;
   mutable ls_callbacks : ('a, 'kind) linsolv_callbacks;
   mutable ls_precfns   : 'a linsolv_precfns;
 
@@ -551,7 +551,7 @@ module SpilsTypes = struct
 
   (* IDA(S) supports only left preconditioning.  *)
   type ('a, 'k) preconditioner =
-    Lsolver_impl.Iterative.preconditioning_type * ('a, 'k) set_preconditioner
+    LinearSolver_impl.Iterative.preconditioning_type * ('a, 'k) set_preconditioner
 
   type 'k serial_preconditioner = (Nvector_serial.data, 'k) preconditioner
                                   constraint 'k = [>Nvector_serial.kind]
@@ -616,7 +616,7 @@ module AdjointTypes = struct
 
     (* IDA(S) supports only left preconditioning.  *)
     type ('a, 'k) preconditioner =
-      Lsolver_impl.Iterative.preconditioning_type * ('a, 'k) set_preconditioner
+      LinearSolver_impl.Iterative.preconditioning_type * ('a, 'k) set_preconditioner
 
     type 'k serial_preconditioner = (Nvector_serial.data, 'k) preconditioner
                                     constraint 'k = [>Nvector_serial.kind]

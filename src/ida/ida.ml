@@ -90,7 +90,7 @@ let root_init session (nroots, rootsfn) =
 
 module Dls = struct (* {{{ *)
   include DirectTypes
-  include Lsolver.Direct
+  include LinearSolver.Direct
 
   (* Sundials < 3.0.0 *)
   external c_dls_dense : 'k serial_session -> int -> bool -> unit
@@ -116,7 +116,7 @@ module Dls = struct (* {{{ *)
 
   (* Sundials < 3.0.0 *)
   external c_klu_set_ordering
-    : 'k serial_session -> Lsolver.Direct.Klu.ordering -> unit
+    : 'k serial_session -> LinearSolver.Direct.Klu.ordering -> unit
     = "c_ida_klu_set_ordering"
 
   (* Sundials < 3.0.0 *)
@@ -129,7 +129,7 @@ module Dls = struct (* {{{ *)
 
   (* Sundials < 3.0.0 *)
   external c_superlumt_set_ordering
-    : 'k serial_session -> Lsolver.Direct.Superlumt.ordering -> unit
+    : 'k serial_session -> LinearSolver.Direct.Superlumt.ordering -> unit
     = "c_ida_superlumt_set_ordering"
 
   (* Sundials < 3.0.0 *)
@@ -154,7 +154,7 @@ module Dls = struct (* {{{ *)
         c_superlumt_set_ordering session ordering
     | _ -> ()
 
-  module LSD = Lsolver_impl.Direct
+  module LSD = LinearSolver_impl.Direct
 
   (* Sundials < 3.0.0 *)
   let make_compat (type s) (type tag) hasjac
@@ -163,11 +163,11 @@ module Dls = struct (* {{{ *)
     match solver with
     | LSD.Dense ->
         let m, n = Matrix.(Dense.size (unwrap mat)) in
-        if m <> n then raise Lsolver.MatrixNotSquare;
+        if m <> n then raise LinearSolver.MatrixNotSquare;
         c_dls_dense session m hasjac
     | LSD.LapackDense ->
         let m, n = Matrix.(Dense.size (unwrap mat)) in
-        if m <> n then raise Lsolver.MatrixNotSquare;
+        if m <> n then raise LinearSolver.MatrixNotSquare;
         c_dls_lapack_dense session m hasjac
 
     | LSD.Band ->
@@ -185,8 +185,8 @@ module Dls = struct (* {{{ *)
         let smat = Matrix.unwrap mat in
         let m, n = Matrix.Sparse.size smat in
         let nnz, _ = Matrix.Sparse.dims smat in
-        if m <> n then raise Lsolver.MatrixNotSquare;
-        let open Lsolver_impl.Klu in
+        if m <> n then raise LinearSolver.MatrixNotSquare;
+        let open LinearSolver_impl.Klu in
         sinfo.set_ordering <- klu_set_ordering session;
         sinfo.reinit <- klu_reinit session;
         c_klu session (Matrix.Sparse.sformat smat) m nnz;
@@ -199,8 +199,8 @@ module Dls = struct (* {{{ *)
         let smat = Matrix.unwrap mat in
         let m, n = Matrix.Sparse.size smat in
         let nnz, _ = Matrix.Sparse.dims smat in
-        if m <> n then raise Lsolver.MatrixNotSquare;
-        let open Lsolver_impl.Superlumt in
+        if m <> n then raise LinearSolver.MatrixNotSquare;
+        let open LinearSolver_impl.Superlumt in
         sinfo.set_ordering <- superlumt_set_ordering session;
         c_superlumt session m nnz sinfo.num_threads;
         (match sinfo.ordering with None -> ()
@@ -255,7 +255,7 @@ module Dls = struct (* {{{ *)
     if in_compat_mode then make_compat (jac <> None) solver matrix session
     else c_dls_set_linear_solver session rawptr matrix (jac <> None);
     LSD.attach ls;
-    session.ls_solver <- Lsolver_impl.DirectSolver ls
+    session.ls_solver <- LinearSolver_impl.DirectSolver ls
 
   (* Sundials < 3.0.0 *)
   let invalidate_callback session =
@@ -314,7 +314,7 @@ end (* }}} *)
 
 module Spils = struct (* {{{ *)
   include SpilsTypes
-  include Lsolver.Iterative
+  include LinearSolver.Iterative
 
   (* Sundials < 3.0.0 *)
   external c_spgmr
@@ -333,7 +333,7 @@ module Spils = struct (* {{{ *)
 
   (* Sundials < 3.0.0 *)
   external c_set_gs_type
-    : ('a, 'k) session -> Lsolver_impl.Iterative.gramschmidt_type -> unit
+    : ('a, 'k) session -> LinearSolver_impl.Iterative.gramschmidt_type -> unit
     = "c_ida_spils_set_gs_type"
 
   (* Sundials < 3.0.0 *)
@@ -356,7 +356,7 @@ module Spils = struct (* {{{ *)
     = "c_ida_spils_set_preconditioner"
 
   external c_spils_set_linear_solver
-    : ('a, 'k) session -> ('a, 'k) Lsolver_impl.Iterative.cptr -> unit
+    : ('a, 'k) session -> ('a, 'k) LinearSolver_impl.Iterative.cptr -> unit
     = "c_ida_spils_set_linear_solver"
 
   let init_preconditioner solve setup session nv =
@@ -364,24 +364,24 @@ module Spils = struct (* {{{ *)
     session.ls_precfns <- PrecFns { prec_solve_fn = solve;
                                     prec_setup_fn = setup }
 
-  let prec_none = Lsolver_impl.Iterative.(PrecNone,
+  let prec_none = LinearSolver_impl.Iterative.(PrecNone,
                     fun session nv -> session.ls_precfns <- NoPrecFns)
 
-  let prec_left ?setup solve  = Lsolver_impl.Iterative.(PrecLeft,
+  let prec_left ?setup solve  = LinearSolver_impl.Iterative.(PrecLeft,
                                             init_preconditioner solve setup)
 
   let check_prec_type prec_type =
-    let open Lsolver_impl.Iterative in
+    let open LinearSolver_impl.Iterative in
     match prec_type with
     | PrecNone | PrecLeft -> true
     | PrecRight | PrecBoth -> false
 
   let solver (type s)
-        ({ Lsolver_impl.Iterative.rawptr;
-           Lsolver_impl.Iterative.solver;
-           Lsolver_impl.Iterative.compat =
-             ({ Lsolver_impl.Iterative.maxl;
-                Lsolver_impl.Iterative.gs_type } as compat) } as lsolver)
+        ({ LinearSolver_impl.Iterative.rawptr;
+           LinearSolver_impl.Iterative.solver;
+           LinearSolver_impl.Iterative.compat =
+             ({ LinearSolver_impl.Iterative.maxl;
+                LinearSolver_impl.Iterative.gs_type } as compat) } as lsolver)
         ?jac_times_vec (prec_type, set_prec) session nv =
     let jac_times_setup, jac_times_vec =
       match jac_times_vec with None -> None, None
@@ -389,7 +389,7 @@ module Spils = struct (* {{{ *)
     if in_compat_mode then begin
       if jac_times_setup <> None then
         raise Sundials.NotImplementedBySundialsVersion;
-      let open Lsolver_impl.Iterative in
+      let open LinearSolver_impl.Iterative in
       lsolver.check_prec_type <- check_prec_type;
       (match (solver : ('nd, 'nk, s) solver) with
        | Spgmr ->
@@ -403,15 +403,15 @@ module Spils = struct (* {{{ *)
            c_sptfqmr session maxl;
            compat.set_maxl <- old_set_maxl session
        | _ -> raise Sundials.NotImplementedBySundialsVersion);
-      session.ls_solver <- Lsolver_impl.IterativeSolver lsolver;
+      session.ls_solver <- LinearSolver_impl.IterativeSolver lsolver;
       set_prec session nv;
       session.ls_callbacks <- SpilsCallback (jac_times_vec, None);
       if jac_times_vec <> None then c_set_jac_times session true false
     end else
       c_spils_set_linear_solver session rawptr;
-      Lsolver_impl.Iterative.attach lsolver;
-      session.ls_solver <- Lsolver_impl.IterativeSolver lsolver;
-      Lsolver_impl.Iterative.(c_set_prec_type rawptr solver prec_type false);
+      LinearSolver_impl.Iterative.attach lsolver;
+      session.ls_solver <- LinearSolver_impl.IterativeSolver lsolver;
+      LinearSolver_impl.Iterative.(c_set_prec_type rawptr solver prec_type false);
       set_prec session nv;
       session.ls_callbacks <- SpilsCallback (jac_times_vec, jac_times_setup);
       if jac_times_setup <> None || jac_times_vec <> None then
@@ -595,7 +595,7 @@ let init linsolv tol resfn ?varid ?(roots=no_roots) t0 y y' =
                   rootsfn    = rootsfn;
                   errh       = dummy_errh;
                   errw       = dummy_errw;
-                  ls_solver  = Lsolver_impl.NoSolver;
+                  ls_solver  = LinearSolver_impl.NoSolver;
                   ls_callbacks = NoCallbacks;
                   ls_precfns = NoPrecFns;
                   sensext    = NoSensExt;

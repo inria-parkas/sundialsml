@@ -126,7 +126,7 @@ type ('a, 'k) session = {
   mutable errh       : errh;
   mutable infoh      : infoh;
 
-  mutable ls_solver    : Lsolver_impl.solver;
+  mutable ls_solver    : LinearSolver_impl.solver;
   mutable ls_callbacks : ('a, 'k) linsolv_callbacks;
   mutable ls_precfns : 'a linsolv_precfns;
 }
@@ -213,7 +213,7 @@ module SpilsTypes = struct
     -> unit
 
   type ('a, 'k) preconditioner =
-    Lsolver_impl.Iterative.preconditioning_type * ('a, 'k) set_preconditioner
+    LinearSolver_impl.Iterative.preconditioning_type * ('a, 'k) set_preconditioner
 
 end
 

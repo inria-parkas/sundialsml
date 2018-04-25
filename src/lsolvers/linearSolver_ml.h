@@ -61,7 +61,7 @@ enum lsolver_gramschmidt_type_tag {
     VARIANT_LSOLVER_GRAMSCHMIDT_TYPE_CLASSICALGS,
 };
 
-// values must match Lsolver_impl.Custom.ops type
+// values must match LinearSolver_impl.Custom.ops type
 enum lsolver_ops_index {
     RECORD_LSOLVER_OPS_INIT = 0,
     RECORD_LSOLVER_OPS_SETUP,
@@ -75,7 +75,7 @@ enum lsolver_ops_index {
     RECORD_LSOLVER_OPS_GET_WORK_SPACE,
 };
 
-// values must match Lsolver_impl.Custom.has_ops type
+// values must match LinearSolver_impl.Custom.has_ops type
 enum lsolver_hasops_index {
     RECORD_LSOLVER_HASOPS_SET_ATIMES = 0,
     RECORD_LSOLVER_HASOPS_SET_PRECONDITIONER,

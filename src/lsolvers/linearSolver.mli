@@ -119,12 +119,12 @@ module Iterative : sig
     @nocvode <node> Description of the SUNLinearSolver module
     @nocvode <node> SUNLinearSolver *)
   type ('data, 'kind, 'iter) linear_solver
-    = ('data, 'kind, 'iter) Lsolver_impl.Iterative.linear_solver
+    = ('data, 'kind, 'iter) LinearSolver_impl.Iterative.linear_solver
 
   (** The type of Gram-Schmidt orthogonalization in iterative linear solvers.
 
     @nocvode <node> ModifiedGS/ClassicalGS *)
-  type gramschmidt_type = Lsolver_impl.Iterative.gramschmidt_type =
+  type gramschmidt_type = LinearSolver_impl.Iterative.gramschmidt_type =
                         | ModifiedGS   (** Modified Gram-Schmidt orthogonalization
                      {cconst MODIFIED_GS} *)
                           | ClassicalGS  (** Classical Gram Schmidt orthogonalization
@@ -216,7 +216,7 @@ module Iterative : sig
 
     (** The operations required to implement an iterative linear solver.
       Failure should be indicated by raising an exception (preferably
-      one of the exceptions in the {!module:Lsolver} package). Raising
+      one of the exceptions in the {!module:LinearSolver} package). Raising
       {!exception:Sundials.RecoverableFailure} indicates a generic
       recoverable failure. *)
     type ('data, 'kind, 'lsolver) ops = {
@@ -421,7 +421,7 @@ module Iterative : sig
   (** The type of preconditioning in Krylov solvers.
 
     @nocvode <node> Preconditioning *)
-  type preconditioning_type = Lsolver_impl.Iterative.preconditioning_type =
+  type preconditioning_type = LinearSolver_impl.Iterative.preconditioning_type =
     | PrecNone    (** No preconditioning *)
     | PrecLeft    (** {% $(P^{-1}A)x = P^{-1}b$ %} *)
     | PrecRight   (** {% $(AP^{-1})Px = b$ %} *)
@@ -430,10 +430,10 @@ module Iterative : sig
   (** Change the preconditioning direction without modifying callback
     functions.
 
-    Raises {!Lsolver.IllegalPrecType} if the current preconditioner
+    Raises {!LinearSolver.IllegalPrecType} if the current preconditioner
     is {{!preconditioning_type}PrecNone} and the given argument is not
     (since no callback functions are specified in this case. May raise
-    {!Lsolver.IllegalPrecType} if the given type is not allowed by the
+    {!LinearSolver.IllegalPrecType} if the given type is not allowed by the
     underlying solver.
 
     @nocvode <node> SUNPCGSetPrecType
@@ -470,7 +470,7 @@ module Direct : sig
     @nocvode <node> Description of the SUNLinearSolver module
     @nocvode <node> SUNLinearSolver *)
   type ('matrix, 'data, 'kind, 'tag) linear_solver
-    = ('matrix, 'data, 'kind, 'tag) Lsolver_impl.Direct.linear_solver
+    = ('matrix, 'data, 'kind, 'tag) LinearSolver_impl.Direct.linear_solver
 
   (** Alias for linear solvers that are restricted to serial nvectors. *)
   type ('mat, 'kind, 'tag) serial_linear_solver
@@ -526,7 +526,7 @@ module Direct : sig
     type tag = [`Klu]
 
     (** The ordering algorithm used for reducing fill. *)
-    type ordering = Lsolver_impl.Klu.ordering =
+    type ordering = LinearSolver_impl.Klu.ordering =
       | Amd      (** Approximate minimum degree permutation. *)
       | ColAmd   (** Column approximate minimum degree permutation. *)
       | Natural  (** Natural ordering. *)
@@ -582,7 +582,7 @@ module Direct : sig
     type tag = [`Superlumt]
 
     (** The ordering algorithm used for reducing fill. *)
-    type ordering = Lsolver_impl.Superlumt.ordering =
+    type ordering = LinearSolver_impl.Superlumt.ordering =
       | Natural       (** Natural ordering. *)
       | MinDegreeProd (** Minimal degree ordering on $J^T J$. *)
       | MinDegreeSum  (** Minimal degree ordering on $J^T + J$. *)
@@ -632,7 +632,7 @@ module Direct : sig
 
     (** The operations required to implement a direct linear solver.
       Failure should be indicated by raising an exception (preferably
-      one of the exceptions in the {!module:Lsolver} package). Raising
+      one of the exceptions in the {!module:LinearSolver} package). Raising
       {!exception:Sundials.RecoverableFailure} indicates a generic
       recoverable failure. *)
     type ('matrix, 'data, 'kind, 'lsolver) ops = {

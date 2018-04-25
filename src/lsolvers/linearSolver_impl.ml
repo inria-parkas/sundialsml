@@ -10,10 +10,10 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(* Types underlying Lsolver.  *)
+(* Types underlying LinearSolver.  *)
 
 (* This module defines the lsolver types which are manipulated (abstractly)
-   via the Lsolver module. They are declared here so that they can also be
+   via the LinearSolver module. They are declared here so that they can also be
    used (concretely) from the <solver> modules. To ensure that this type will
    be opaque outside of Sundials/ML, we simply do not install the
    lsolver_impl.cmi file. *)
@@ -24,7 +24,7 @@ module Klu = struct (* {{{ *)
 
   type tag = [`Klu]
 
-  (* Must correspond with lsolver_ml.h:lsolver_klu_ordering_tag *)
+  (* Must correspond with linearSolver_ml.h:lsolver_klu_ordering_tag *)
   type ordering =
     Amd
   | ColAmd
@@ -49,7 +49,7 @@ module Superlumt = struct (* {{{ *)
 
   type tag = [`Superlumt]
 
-  (* Must correspond with lsolver_ml.h:lsolver_superlumt_ordering_tag *)
+  (* Must correspond with linearSolver_ml.h:lsolver_superlumt_ordering_tag *)
   type ordering =
     Natural
   | MinDegreeProd
@@ -97,7 +97,7 @@ module Custom = struct (* {{{ *)
       -> unit
     = "ml_lsolver_call_psolve"
 
-  (* The fields and their order must match lsolver_ml.h:lsolver_ops_index *)
+  (* The fields and their order must match linearSolver_ml.h:lsolver_ops_index *)
   type ('matrix, 'data, 'kind) ops = {
     init : unit -> unit;
 
@@ -129,7 +129,7 @@ module Custom = struct (* {{{ *)
     get_work_space : unit -> int * int
   }
 
-  (* The fields and their order must match lsolver_ml.h:lsolver_hasops_index *)
+  (* The fields and their order must match linearSolver_ml.h:lsolver_hasops_index *)
   type has_ops = {
     has_set_atimes          : bool;
     has_set_preconditioner  : bool;
@@ -222,12 +222,12 @@ end (* }}} *)
 
 module Iterative = struct (* {{{ *)
 
-  (* Must correspond with lsolver_ml.h:lsolver_gramschmidt_type_tag *)
+  (* Must correspond with linearSolver_ml.h:lsolver_gramschmidt_type_tag *)
   type gramschmidt_type =
     | ModifiedGS
     | ClassicalGS
 
-  (* Must correspond with lsolver_ml.h:lsolver_preconditioning_type_tag *)
+  (* Must correspond with linearSolver_ml.h:lsolver_preconditioning_type_tag *)
   type preconditioning_type =
     | PrecNone
     | PrecLeft
@@ -252,7 +252,7 @@ module Iterative = struct (* {{{ *)
     set_prec_type    = (fun _ -> ());
   }
 
-  (* Must correspond with lsolver_ml.h:lsolver_iterative_solver_tag *)
+  (* Must correspond with linearSolver_ml.h:lsolver_iterative_solver_tag *)
   type ('nd, 'nk, 'lsolver) solver =
     | Spbcgs  : ('nd, 'nk, [`Spbcgs]) solver
     | Spfgmr  : ('nd, 'nk, [`Spfgmr]) solver

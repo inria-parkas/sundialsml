@@ -44,7 +44,7 @@
 #include "idas_ml.h"
 #include "../sundials/sundials_ml.h"
 #include "../nvectors/nvector_ml.h"
-#include "../lsolvers/lsolver_ml.h"
+#include "../lsolvers/linearSolver_ml.h"
 #include "../lsolvers/matrix_ml.h"
 
 #define MAX_ERRMSG_LEN 256

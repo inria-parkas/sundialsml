@@ -113,7 +113,7 @@ nvectors/nvector_pthreads_ml.o: nvectors/nvector_pthreads_ml.c \
 # KINSOL-specific C files.
 kinsol/kinsol_ml.o: kinsol/kinsol_ml.c \
 		sundials/sundials_ml.h lsolvers/matrix_ml.h \
-		lsolvers/lsolver_ml.h kinsol/kinsol_ml.h
+		lsolvers/linearSolver_ml.h kinsol/kinsol_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(KINSOL_CFLAGS) -o $@ -c $<
 
 kinsol/kinsol_bbd_ml.o: kinsol/kinsol_bbd_ml.c kinsol/kinsol_ml.h
@@ -129,7 +129,7 @@ kinsol/kinsol_superlumt_ml.o: kinsol/kinsol_superlumt_ml.c \
 
 # ARKODE-specific C files.
 arkode/arkode_ml.o: arkode/arkode_ml.c \
-		lsolvers/matrix_ml.h lsolvers/lsolver_ml.h \
+		lsolvers/matrix_ml.h lsolvers/linearSolver_ml.h \
 		sundials/sundials_ml.h arkode/arkode_ml.h nvectors/nvector_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(ARKODE_CFLAGS) -o $@ -c $<
 
@@ -147,18 +147,18 @@ arkode/arkode_superlumt_ml.o: arkode/arkode_superlumt_ml.c \
 
 # CVODE[S]-specific C files.
 cvode/cvode_ml.o: cvode/cvode_ml.c \
-		lsolvers/matrix_ml.h lsolvers/lsolver_ml.h \
+		lsolvers/matrix_ml.h lsolvers/linearSolver_ml.h \
 		sundials/sundials_ml.h cvode/cvode_ml.h nvectors/nvector_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
 
 cvodes/cvode_ml_s.o: cvode/cvode_ml.c \
-		lsolvers/matrix_ml.h lsolvers/lsolver_ml.h \
+		lsolvers/matrix_ml.h lsolvers/linearSolver_ml.h \
 		sundials/sundials_ml.h cvode/cvode_ml.h nvectors/nvector_ml.h
 	$(CC) -DSUNDIALSML_WITHSENS -I $(OCAML_INCLUDE) \
 	    $(CVODE_CFLAGS) -o $@ -c $<
 
 cvodes/cvodes_ml.o: cvodes/cvodes_ml.c \
-		lsolvers/matrix_ml.h lsolvers/lsolver_ml.h \
+		lsolvers/matrix_ml.h lsolvers/linearSolver_ml.h \
 		sundials/sundials_ml.h cvode/cvode_ml.h nvectors/nvector_ml.h \
 		cvodes/cvodes_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(CVODES_CFLAGS) -Icvode -o $@ -c $<
@@ -204,18 +204,18 @@ cvodes/cvodes_superlumt_ml.o: cvodes/cvodes_superlumt_ml.c \
 
 # IDA[S]-specific C files.
 ida/ida_ml.o: ida/ida_ml.c \
-		sundials/sundials_ml.h lsolvers/lsolver_ml.h ida/ida_ml.h \
+		sundials/sundials_ml.h lsolvers/linearSolver_ml.h ida/ida_ml.h \
 		nvectors/nvector_ml.h lsolvers/matrix_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(IDA_CFLAGS) -o $@ -c $<
 
 idas/ida_ml_s.o: ida/ida_ml.c \
-		sundials/sundials_ml.h lsolvers/lsolver_ml.h ida/ida_ml.h \
+		sundials/sundials_ml.h lsolvers/linearSolver_ml.h ida/ida_ml.h \
 		nvectors/nvector_ml.h lsolvers/matrix_ml.h
 	$(CC) -DSUNDIALSML_WITHSENS -I $(OCAML_INCLUDE) \
 	    $(IDA_CFLAGS) -o $@ -c $<
 
 idas/idas_ml.o: idas/idas_ml.c \
-		lsolvers/lsolver_ml.h ida/ida_ml.h idas/idas_ml.h \
+		lsolvers/linearSolver_ml.h ida/ida_ml.h idas/idas_ml.h \
 		sundials/sundials_ml.h nvectors/nvector_ml.h \
 		lsolvers/matrix_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(IDAS_CFLAGS) -Iida -o $@ -c $<
@@ -225,7 +225,7 @@ ida/ida_bbd_ml.o: ida/ida_bbd_ml.c \
 	$(CC) -I $(OCAML_INCLUDE) $(IDA_CFLAGS) -o $@ -c $<
 
 idas/idas_bbd_ml.o: idas/idas_bbd_ml.c \
-		lsolvers/matrix_ml.h lsolvers/lsolver_ml.h \
+		lsolvers/matrix_ml.h lsolvers/linearSolver_ml.h \
 		sundials/sundials_ml.h ida/ida_ml.h idas/idas_ml.h \
 		nvectors/nvector_ml.h
 	$(CC) -I $(OCAML_INCLUDE) $(IDAS_CFLAGS) -Iida -o $@ -c $<

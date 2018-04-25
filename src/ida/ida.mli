@@ -103,7 +103,7 @@ type ('t, 'd) jacobian_arg = ('t, 'd) Ida_impl.jacobian_arg =
     @ida <node5#sss:optin_dls> Direct linear solvers optional input functions
     @ida <node5#sss:optout_dls> Direct linear solvers optional output functions *)
 module Dls : sig (* {{{ *)
-  include module type of Lsolver.Direct
+  include module type of LinearSolver.Direct
 
   (** Callback functions that compute dense approximations to a Jacobian
       matrix. In the call [jac arg jm], [arg] is a {!jacobian_arg}
@@ -136,7 +136,7 @@ module Dls : sig (* {{{ *)
       @nocvode <node> IDADlsSetJacFn *)
   val solver :
     ?jac:'m jac_fn ->
-    ('m, 'kind, 't) Lsolver.Direct.serial_linear_solver ->
+    ('m, 'kind, 't) LinearSolver.Direct.serial_linear_solver ->
     'kind serial_session_linear_solver
 
   (** {3:stats Solver statistics} *)
@@ -168,7 +168,7 @@ end (* }}} *)
     @ida <node5#sss:optin_spils> Iterative linear solvers optional input functions.
     @ida <node5#sss:optout_spils> Iterative linear solvers optional output functions. *)
 module Spils : sig (* {{{ *)
-  include module type of Lsolver.Iterative
+  include module type of LinearSolver.Iterative
 
   (** {3:precond Preconditioners} *)
 
@@ -281,7 +281,7 @@ module Spils : sig (* {{{ *)
       @nocvode <node> IDASpilsSetLinearSolver
       @nocvode <node> IDASpilsSetJacTimes *)
   val solver :
-    ('d, 'k, 'f) Lsolver.Iterative.linear_solver
+    ('d, 'k, 'f) LinearSolver.Iterative.linear_solver
     -> ?jac_times_vec:'d jac_times_setup_fn option * 'd jac_times_vec_fn
     -> ('d, 'k) preconditioner
     -> ('d, 'k) session_linear_solver

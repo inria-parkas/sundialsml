@@ -247,11 +247,11 @@ type ('a, 'kind) session = {
   mutable poststepfn   : 'a postprocess_step_fn;
 
   mutable linsolver      : ('a, 'kind) session_linear_solver option;
-  mutable ls_solver      : Lsolver_impl.solver;
+  mutable ls_solver      : LinearSolver_impl.solver;
   mutable ls_callbacks   : ('a, 'kind) linsolv_callbacks;
   mutable ls_precfns     : 'a linsolv_precfns;
 
-  mutable mass_solver    : Lsolver_impl.solver;
+  mutable mass_solver    : LinearSolver_impl.solver;
   mutable mass_callbacks : ('a, 'kind) mass_callbacks;
   mutable mass_precfns   : 'a mass_precfns;
 }
@@ -465,7 +465,7 @@ module SpilsTypes = struct
     ('a, 'k) session -> ('a, 'k) nvector -> unit
 
   type ('a, 'k) preconditioner =
-    Lsolver_impl.Iterative.preconditioning_type * ('a, 'k) set_preconditioner
+    LinearSolver_impl.Iterative.preconditioning_type * ('a, 'k) set_preconditioner
 
   type 'k serial_preconditioner = (Nvector_serial.data, 'k) preconditioner
                                   constraint 'k = [>Nvector_serial.kind]
@@ -515,7 +515,7 @@ module MassTypes = struct
       ('a, 'k) session -> ('a, 'k) nvector -> unit
 
     type ('a, 'k) preconditioner =
-      Lsolver_impl.Iterative.preconditioning_type * ('a, 'k) set_preconditioner
+      LinearSolver_impl.Iterative.preconditioning_type * ('a, 'k) set_preconditioner
 
     type 'k serial_preconditioner = (Nvector_serial.data, 'k) preconditioner
                                     constraint 'k = [>Nvector_serial.kind]

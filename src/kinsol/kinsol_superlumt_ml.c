@@ -33,7 +33,7 @@ CAMLprim value c_kinsol_superlumt_get_num_jac_evals(value vkin_mem)
 #else
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #include "kinsol_ml.h"
-#include "../lsolvers/lsolver_ml.h"
+#include "../lsolvers/linearSolver_ml.h"
 
 #include <kinsol/kinsol.h>
 

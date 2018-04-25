@@ -984,7 +984,7 @@ module Adjoint : sig (* {{{ *)
 
   (** Direct Linear Solvers operating on dense, banded, and sparse matrices. *)
   module Dls : sig (* {{{ *)
-    include module type of Lsolver.Direct
+    include module type of LinearSolver.Direct
 
     (** Callback functions that compute dense approximations to a Jacobian
         matrix without forward sensitivities. In the call [jac arg jm],
@@ -1055,7 +1055,7 @@ module Adjoint : sig (* {{{ *)
         @nocvode <node> CVDlsSetJacFnBS *)
     val solver :
       ?jac:'m jac_fn ->
-      ('m, 'kind, 't) Lsolver.Direct.serial_linear_solver ->
+      ('m, 'kind, 't) LinearSolver.Direct.serial_linear_solver ->
       'kind serial_session_linear_solver
 
     (** {3:stats Solver statistics} *)
@@ -1090,7 +1090,7 @@ module Adjoint : sig (* {{{ *)
       @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB
       @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB *)
   module Spils : sig (* {{{ *)
-    include module type of Lsolver.Iterative
+    include module type of LinearSolver.Iterative
 
     (** {3:precond Preconditioners} *)
 
@@ -1417,7 +1417,7 @@ module Adjoint : sig (* {{{ *)
         @nocvode <node> CVSpilsSetJacTimesB
         @nocvode <node> CVSpilsSetJacTimesBS *)
     val solver :
-      ('d, 'k, 'f) Lsolver.Iterative.linear_solver
+      ('d, 'k, 'f) LinearSolver.Iterative.linear_solver
       -> ?jac_times_vec:'d jac_times_vec_fn
       -> ('d, 'k) preconditioner
       -> ('d, 'k) session_linear_solver

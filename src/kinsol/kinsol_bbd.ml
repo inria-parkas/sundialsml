@@ -42,7 +42,7 @@ let init_preconditioner dqrely bandwidths precfns session nv =
   session.ls_precfns <- BBDPrecFns (bbd_precfns precfns)
 
 let prec_right ?(dqrely=0.0) bandwidths ?comm local_fn =
-  Lsolver_impl.Iterative.(PrecRight,
+  LinearSolver_impl.Iterative.(PrecRight,
     init_preconditioner dqrely bandwidths { local_fn; comm_fn = comm })
 
 external get_work_space : parallel_session -> int * int

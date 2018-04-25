@@ -120,7 +120,7 @@ end (* }}} *)
     @cvode <node5#sss:optin_dls> Direct linear solvers optional input functions
     @cvode <node5#sss:optout_dls> Direct linear solvers optional output functions *)
 module Dls : sig (* {{{ *)
-  include module type of Lsolver.Direct
+  include module type of LinearSolver.Direct
 
   (** Callback functions that compute approximations to a Jacobian
       matrix. In the call [jac arg jm], [arg] is a {!jacobian_arg} with
@@ -153,7 +153,7 @@ module Dls : sig (* {{{ *)
       @nocvode <node> CVDlsSetJacFn *)
   val solver :
     ?jac:'m jac_fn ->
-    ('m, 'kind, 'tag) Lsolver.Direct.serial_linear_solver ->
+    ('m, 'kind, 'tag) LinearSolver.Direct.serial_linear_solver ->
     'kind serial_session_linear_solver
 
   (** {3:stats Solver statistics} *)
@@ -186,7 +186,7 @@ end (* }}} *)
     @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
     @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
 module Spils : sig (* {{{ *)
-  include module type of Lsolver.Iterative
+  include module type of LinearSolver.Iterative
 
   (** {3:precond Preconditioners} *)
 
@@ -373,7 +373,7 @@ module Spils : sig (* {{{ *)
       @nocvode <node> CVSpilsSetLinearSolver
       @nocvode <node> CVSpilsSetJacTimes *)
   val solver :
-    ('d, 'k, 'f) Lsolver.Iterative.linear_solver
+    ('d, 'k, 'f) LinearSolver.Iterative.linear_solver
     -> ?jac_times_vec:'d jac_times_setup_fn option * 'd jac_times_vec_fn
     -> ('d, 'k) preconditioner
     -> ('d, 'k) session_linear_solver

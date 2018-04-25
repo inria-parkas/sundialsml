@@ -44,7 +44,7 @@
 #include <kinsol/kinsol_lapack.h>
 #endif
 
-#include "../lsolvers/lsolver_ml.h"
+#include "../lsolvers/linearSolver_ml.h"
 #include "../lsolvers/matrix_ml.h"
 #include "kinsol_ml.h"
 

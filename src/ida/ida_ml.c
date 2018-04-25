@@ -73,7 +73,7 @@
 #include "ida_ml.h"
 #include "../nvectors/nvector_ml.h"
 #include "../lsolvers/matrix_ml.h"
-#include "../lsolvers/lsolver_ml.h"
+#include "../lsolvers/linearSolver_ml.h"
 
 
 CAMLprim value c_ida_init_module (value exns)

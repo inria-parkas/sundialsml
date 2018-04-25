@@ -45,7 +45,7 @@
 #endif
 
 #include "../lsolvers/matrix_ml.h"
-#include "../lsolvers/lsolver_ml.h"
+#include "../lsolvers/linearSolver_ml.h"
 #include "../sundials/sundials_ml.h"
 #include "arkode_ml.h"
 #include "../nvectors/nvector_ml.h"
