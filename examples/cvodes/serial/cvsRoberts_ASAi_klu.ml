@@ -347,7 +347,7 @@ let main () =
   let cvode_memB =
     Adj.(init_backward
           cvode_mem Cvode.BDF
-            (Newton Dls.(solver ~jac:(NoSens (jacb data)) Direct.(klu yB m)))
+            (Newton Dls.(solver ~jac:(NoSens (jacb data)) (klu yB m)))
             (SStolerances (reltolB, abstolB))
             (NoSens (fB data))
             tb1 yB)

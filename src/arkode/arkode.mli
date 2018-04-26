@@ -644,7 +644,7 @@ module Mass : sig (* {{{ *)
     val solver :
       'm mass_fn
       -> bool
-      -> ('m, 'kind, 't) LinearSolver.Direct.serial_linear_solver
+      -> ('m, 'kind, 't) serial_linear_solver
       -> 'kind serial_solver
 
     (** {3:stats Solver statistics} *)
@@ -811,7 +811,7 @@ module Mass : sig (* {{{ *)
         @nocvode <node> ARKSpilsSetMassLinearSolver
         @nocvode <node> ARKSpilsSetMassTimes *)
     val solver :
-      ('d, 'k, 'f) LinearSolver.Iterative.linear_solver
+      ('d, 'k, 'f) linear_solver
       -> ?mass_times_setup:mass_times_setup_fn
       -> 'd mass_times_vec_fn
       -> bool

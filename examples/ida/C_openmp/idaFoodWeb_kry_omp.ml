@@ -516,7 +516,7 @@ let main () =
   let maxl = 16 in
   let mem =
     Ida.(init
-      Spils.(solver Iterative.(spgmr ~maxl wcc)
+      Spils.(solver (spgmr ~maxl wcc)
                     (prec_left ~setup:(precond webdata) (psolve webdata)))
       (SStolerances (rtol, atol))
       (resweb webdata) t0 wcc wcp)

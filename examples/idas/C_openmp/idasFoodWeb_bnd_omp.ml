@@ -431,7 +431,7 @@ let main () =
   let m = Matrix.band ~smu:(mu+ml) ~mu:mu ~ml:ml neq in
   let mem =
     Ida.(init
-      Dls.(solver Direct.(band wc m))
+      Dls.(solver (band wc m))
       (SStolerances (rtol, atol))
       (resweb webdata) t0 wc wc')
   in
