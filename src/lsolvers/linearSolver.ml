@@ -330,7 +330,8 @@ module Iterative = struct
            attached = false;
          })
 
-    let unwrap { LinearSolver_impl.Iterative.solver = Custom (ldata, _) } = ldata
+    let unwrap { LinearSolver_impl.Iterative.solver = Custom (ldata, _) } =
+      ldata
 
   end (* }}} *)
 
@@ -341,7 +342,7 @@ module Iterative = struct
                        -> bool
                        -> unit
       = "c_spils_qr_fact"
-      
+
     external qr_sol : Sundials.RealArray2.t
                       -> Sundials.RealArray.t
                       -> Sundials.RealArray.t
@@ -587,7 +588,8 @@ module Direct = struct
                  attached = false;
                }
 
-    let unwrap (S { LinearSolver_impl.Direct.solver = Custom (ldata, _) }) = ldata
+    let unwrap (S { LinearSolver_impl.Direct.solver = Custom (ldata, _) }) =
+      ldata
 
   end (* }}} *)
 end

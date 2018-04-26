@@ -125,10 +125,10 @@ module Iterative : sig
 
     @nocvode <node> ModifiedGS/ClassicalGS *)
   type gramschmidt_type = LinearSolver_impl.Iterative.gramschmidt_type =
-                        | ModifiedGS   (** Modified Gram-Schmidt orthogonalization
-                     {cconst MODIFIED_GS} *)
-                          | ClassicalGS  (** Classical Gram Schmidt orthogonalization
-                     {cconst CLASSICAL_GS} *)
+    | ModifiedGS   (** Modified Gram-Schmidt orthogonalization
+                       {cconst MODIFIED_GS} *)
+    | ClassicalGS  (** Classical Gram Schmidt orthogonalization
+                       {cconst CLASSICAL_GS} *)
 
   (** {3:solvers Solvers} *)
 
