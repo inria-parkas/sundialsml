@@ -97,7 +97,7 @@
     The payload is the value being wrapped. The content field is set to point
     to a Value containing the OCaml callback table, it is also registered as a
     global root. The user must ensure the callbacks do not hold references to
-    any particular nvector, for otherwise that nvector is never reclaimed.
+    any particular matrix, for otherwise that matrix is never reclaimed.
 
     Sundials creation/cloning of SUNMatrix's
     ----------------------------------------
