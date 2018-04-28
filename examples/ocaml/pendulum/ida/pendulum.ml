@@ -163,11 +163,11 @@ let print_nvector a = Printf.printf "%s" (show_nvector a)
 let print_with_time t v =
   Printf.printf "%.15e" t;
   Sundials.RealArray.iter (Printf.printf "\t% .15e") v;
-  print_newline ()
+  Printf.printf "\n%!"
 
 (* Problem constants *)
 let r = 1.0                            (* length of rod [m] *)
-let g = 9.8                            (* gravitational acceleration [m/s^2] *)
+let g = -9.8                           (* gravitational acceleration [m/s^2] *)
 let k = 0.5                            (* elasticity of collision with wall *)
 (* direction of the wall relative to the pivot *)
 let wall_angle = degree_to_radian (30.)
@@ -215,7 +215,7 @@ let residual t vars vars' res =
   res.{vx_x}   <- vx -. x';
   res.{vy_y}   <- vy -. y';
   res.{acc_x}  <- vx' -. p *. x;
-  res.{acc_y}  <- vy' -. p *. y +. g;
+  res.{acc_y}  <- vy' -. p *. y -. g;
   res.{constr} <-
     match !constraint_form with
     | C_xx_yy_rr -> x*.x +. y*.y -. r*.r
@@ -456,7 +456,7 @@ let main () =
 
       if flag = Ida.RootsFound then
         (Printf.printf "Bang!  Hit against the wall.\n";
-         Printf.printf "vars  = %s\nvars' = %s\n"
+         Printf.printf "vars  = %s\nvars' = %s\n%!"
            (show_nvector vars) (show_nvector vars');
          vars.{vx_i} <- -. k *. vars.{vx_i};
          vars.{vy_i} <- -. k *. vars.{vy_i};
