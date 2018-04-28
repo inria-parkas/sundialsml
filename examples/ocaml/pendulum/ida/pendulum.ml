@@ -167,7 +167,7 @@ let print_with_time t v =
 
 (* Problem constants *)
 let r = 1.0                            (* length of rod [m] *)
-let g = -9.8                           (* gravitational acceleration [m/s^2] *)
+let g = 9.8                            (* gravitational acceleration [m/s^2] *)
 let k = 0.5                            (* elasticity of collision with wall *)
 (* direction of the wall relative to the pivot *)
 let wall_angle = degree_to_radian (30.)
@@ -215,7 +215,7 @@ let residual t vars vars' res =
   res.{vx_x}   <- vx -. x';
   res.{vy_y}   <- vy -. y';
   res.{acc_x}  <- vx' -. p *. x;
-  res.{acc_y}  <- vy' -. p *. y -. g;
+  res.{acc_y}  <- vy' -. p *. y +. g;
   res.{constr} <-
     match !constraint_form with
     | C_xx_yy_rr -> x*.x +. y*.y -. r*.r
