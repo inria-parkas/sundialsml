@@ -25,7 +25,7 @@ let pi = 4. * atan (1.)
 let deg_to_rad x = x * pi / 180.
 
 let r = 1.0     (* length of rod [m] *)
-let g = 9.8     (* gravitational acceleration [m/s^2] *)
+let g = -9.8    (* gravitational acceleration [m/s^2] *)
 let k = 0.5     (* elasticity of collision with wall *)
 
 (* direction of the wall relative to the pivot *)
@@ -43,7 +43,7 @@ let theta, theta' = 0, 1
 
 let rhs t y yd =
   yd.{theta}  <- y.{theta'};
-  yd.{theta'} <- -9.81 * sin y.{theta}
+  yd.{theta'} <- g * sin y.{theta}
 
 let roots t y r =
   r.{0} <- wall_angle - y.{theta}

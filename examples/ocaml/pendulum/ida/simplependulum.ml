@@ -92,7 +92,7 @@ let pi = 4. * atan (1.)
 let deg_to_rad x = x * pi / 180.
 
 let r = 1.0     (* length of rod [m] *)
-let g = 9.8     (* gravitational acceleration [m/s^2] *)
+let g = -9.8    (* gravitational acceleration [m/s^2] *)
 let k = 0.5     (* elasticity of collision with wall *)
 
 (* direction of the wall relative to the pivot *)
@@ -126,7 +126,7 @@ let residual t vars vars' res =
   res.{vx_x}   <-  vars.{vx}  -  vars'.{x};
   res.{vy_y}   <-  vars.{vy}  -  vars'.{y};
   res.{acc_x}  <- vars'.{vx}  -  vars.{p} * vars.{x};
-  res.{acc_y}  <- vars'.{vy}  -  vars.{p} * vars.{y}  +  g;
+  res.{acc_y}  <- vars'.{vy}  -  vars.{p} * vars.{y}  -  g;
   res.{constr} <-  vars.{vx} * vars'.{x}  +  vars'.{vx} * vars.{x}
                  + vars.{vy} * vars'.{y}  +  vars'.{vy} * vars.{y}
 
