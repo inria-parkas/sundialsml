@@ -90,9 +90,9 @@ let t_end = 10.0    (* simulation end time [s] *)
 
 let pi = 4. * atan (1.)
 
-let r = 1.0     (* length of rod [m] *)
+let r = 1.0    (* length of rod [m] *)
 let g = 9.8    (* gravitational acceleration [m/s^2] *)
-let k = 0.5     (* elasticity of collision with wall *)
+let k = -0.5   (* elasticity of collision with wall *)
 
 (* direction of the wall relative to the pivot *)
 let wall_angle = -. pi / 6.
@@ -173,8 +173,8 @@ let main () =
     Showpendulum.show (vars.{x}, vars.{y});
 
     if flag = Ida.RootsFound then begin
-      vars.{vx} <- -. k * vars.{vx};
-      vars.{vy} <- -. k * vars.{vy};
+      vars.{vx} <- k * vars.{vx};
+      vars.{vy} <- k * vars.{vy};
       Ida.reinit ida tret nv_vars nv_vars';
       Ida.calc_ic_ya_yd' ~y:nv_vars ~y':nv_vars' ida ~varid:var_types (t + dt)
     end;
