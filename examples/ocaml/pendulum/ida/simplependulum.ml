@@ -106,9 +106,8 @@ let pivot = (0.5, 0.8)
    computed from the rest of the initial values using calc_ic_ya_yd'; however,
    see the problem with higher-index formulation noted below, after the
    residual function.  *)
-let theta0 = 1.4       (* angle with vertical axis *)
+let theta0 = pi / 2.       (* angle with vertical axis *)
 let (x0, y0) = (r * sin theta0, -. r * cos theta0)
-let (x'0, y'0) = (0., 0.)
 
 (* There are 5 variables.  *)
 let x, y, vx, vy, p = 0, 1, 2, 3, 4
@@ -155,7 +154,7 @@ let d = Ida.VarId.differential
 let a = Ida.VarId.algebraic
 
 let main () =
-  let vars  = RealArray.of_list [x0; y0; x'0; y'0; 0.] in
+  let vars  = RealArray.of_list [x0; y0; 0.; 0.; 0.] in
   let vars' = RealArray.make neqs 0. in
   let var_types = Nvector.wrap (RealArray.of_list [ d; d; d; d; a ]) in
   let nv_vars, nv_vars' = Nvector.(wrap vars, wrap vars') in

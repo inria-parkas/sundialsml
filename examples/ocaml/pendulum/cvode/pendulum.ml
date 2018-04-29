@@ -48,7 +48,7 @@ let roots t y r =
   r.{0} <- wall_angle - y.{theta}
 
 let main () =
-  let y = RealArray.of_list [ 1.4 ; 0. ] in
+  let y = RealArray.of_list [ pi/2. ; 0. ] in
   let nv_y = Nvector.(wrap y) in
 
   let s = Cvode.(init Adams Functional default_tolerances
