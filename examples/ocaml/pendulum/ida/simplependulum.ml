@@ -89,14 +89,13 @@ let t_end = 10.0    (* simulation end time [s] *)
 (* Setup & auxiliary functions *)
 
 let pi = 4. * atan (1.)
-let deg_to_rad x = x * pi / 180.
 
 let r = 1.0     (* length of rod [m] *)
 let g = 9.8    (* gravitational acceleration [m/s^2] *)
 let k = 0.5     (* elasticity of collision with wall *)
 
 (* direction of the wall relative to the pivot *)
-let wall_angle = deg_to_rad (-. 30.)
+let wall_angle = -. pi / 6.
 let wall = (sin wall_angle, -. cos wall_angle)
 
 (* Position of pivot on the screen, scaled so that the screen is 1.0x1.0.  The
@@ -107,7 +106,7 @@ let pivot = (0.5, 0.8)
    computed from the rest of the initial values using calc_ic_ya_yd'; however,
    see the problem with higher-index formulation noted below, after the
    residual function.  *)
-let theta0 = deg_to_rad 80.       (* angle with vertical axis *)
+let theta0 = 1.4       (* angle with vertical axis *)
 let (x0, y0) = (r * sin theta0, -. r * cos theta0)
 let (x'0, y'0) = (0., 0.)
 

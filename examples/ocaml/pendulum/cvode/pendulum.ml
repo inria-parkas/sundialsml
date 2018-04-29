@@ -22,14 +22,13 @@ let dt = (1. / 60.)
 let t_end = 10.0
 
 let pi = 4. * atan (1.)
-let deg_to_rad x = x * pi / 180.
 
 let r = 1.0     (* length of rod [m] *)
 let g = 9.8    (* gravitational acceleration [m/s^2] *)
 let k = 0.5     (* elasticity of collision with wall *)
 
 (* direction of the wall relative to the pivot *)
-let wall_angle = deg_to_rad (-. 30.)
+let wall_angle = -. pi / 6.
 let wall = (sin wall_angle, -. cos wall_angle)
 
 (* Position of pivot on the screen, scaled so that the screen is 1.0x1.0.  The
@@ -49,7 +48,7 @@ let roots t y r =
   r.{0} <- wall_angle - y.{theta}
 
 let main () =
-  let y = RealArray.of_list [ deg_to_rad 80.; 0. ] in
+  let y = RealArray.of_list [ 1.4 ; 0. ] in
   let nv_y = Nvector.(wrap y) in
 
   let s = Cvode.(init Adams Functional default_tolerances
