@@ -35,8 +35,6 @@ let wall = (sin wall_angle, -. cos wall_angle)
    solver will take the pivot as the origin. *)
 let pivot = (0.5, 0.8)
 
-let from_polar theta = (r * sin theta, -. r * cos theta)
-
 (* There are 2 variables.  *)
 let theta, theta' = 0, 1
 
@@ -57,19 +55,20 @@ let main () =
   Cvode.set_stop_time s 10.0;
   Cvode.set_all_root_directions s Sundials.RootDirs.Increasing;
 
-  let rec minor tnext t =
+  let rec stepto tnext t =
     if t >= tnext then t else
-    let (tret, flag) = Cvode.solve_normal s tnext nv_y in
-    Showpendulum.show (from_polar y.{theta});
-
-    if flag = Cvode.RootsFound then begin
-      y.{theta'} <- k * y.{theta'};
-      Cvode.reinit s tret nv_y
-    end;
-    minor tnext tret
+    match Cvode.solve_normal s tnext nv_y with
+    | (tret, Cvode.RootsFound) ->
+        y.{theta'} <- k * y.{theta'};
+        Cvode.reinit s tret nv_y;
+        stepto tnext tret
+    | (tret, _) -> tret
   in
-  let rec major t = if t < t_end then major (minor (t + dt) t) in
-  major 0.0
+  let rec showloop t = if t < t_end then begin
+    Showpendulum.show (r * sin y.{theta}, -. r * cos y.{theta});
+    showloop (stepto (t + dt) t)
+  end in
+  showloop 0.0
 
 let _ =
   try

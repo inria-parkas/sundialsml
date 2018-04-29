@@ -125,11 +125,10 @@ let residual t vars vars' res =
   res.{vy_y}   <-  vars.{vy}  -  vars'.{y};
   res.{acc_x}  <- vars'.{vx}  -  vars.{p} * vars.{x};
   res.{acc_y}  <- vars'.{vy}  -  vars.{p} * vars.{y}  +  g;
-  res.{constr} <-  vars.{vx} * vars'.{x}  +  vars'.{vx} * vars.{x}
-                 + vars.{vy} * vars'.{y}  +  vars'.{vy} * vars.{y}
+  res.{constr} <- vars.{x} * vars'.{vx} + vars.{y} * vars'.{vy}
+                  + vars.{vx} * vars'.{x} + vars.{vy} * vars'.{y}
 
 let jac Ida.({ jac_y = vars ; jac_y' = vars'; jac_coef = c }) out =
-  Matrix.Dense.set_to_zero out;
   let out = Matrix.Dense.unwrap out in
   out.{x,  vx_x}   <- -.c;
   out.{vx, vx_x}   <- 1.;
@@ -159,29 +158,30 @@ let main () =
   let var_types = Nvector.wrap (RealArray.of_list [ d; d; d; d; a ]) in
   let nv_vars, nv_vars' = Nvector.(wrap vars, wrap vars') in
 
-  let ida = Ida.(init Dls.(solver ~jac (dense nv_vars (Matrix.dense 5)))
-                      (SStolerances (1e-9, 1e-9))
-                      residual ~roots:(1, roots) 0. nv_vars nv_vars')
+  let s = Ida.(init Dls.(solver ~jac (dense nv_vars (Matrix.dense 5)))
+                    (SStolerances (1e-9, 1e-9))
+                    residual ~roots:(1, roots) 0. nv_vars nv_vars')
   in
-  Ida.set_id ida var_types;
-  Ida.set_suppress_alg ida true;
-  Ida.calc_ic_ya_yd' ~y:nv_vars ~y':nv_vars' ida ~varid:var_types dt;
+  Ida.set_id s var_types;
+  Ida.set_suppress_alg s true;
+  Ida.calc_ic_ya_yd' s ~y:nv_vars ~y':nv_vars' ~varid:var_types dt;
 
-  let rec minor tnext t =
+  let rec stepto tnext t =
     if t >= tnext then t else
-    let (tret, flag) = Ida.solve_normal ida tnext nv_vars nv_vars' in
-    Showpendulum.show (vars.{x}, vars.{y});
-
-    if flag = Ida.RootsFound then begin
-      vars.{vx} <- k * vars.{vx};
-      vars.{vy} <- k * vars.{vy};
-      Ida.reinit ida tret nv_vars nv_vars';
-      Ida.calc_ic_ya_yd' ~y:nv_vars ~y':nv_vars' ida ~varid:var_types (t + dt)
-    end;
-    minor tnext tret
+    match Ida.solve_normal s tnext nv_vars nv_vars' with
+    | (tret, Ida.RootsFound) ->
+        vars.{vx} <- k * vars.{vx};
+        vars.{vy} <- k * vars.{vy};
+        Ida.reinit s tret nv_vars nv_vars';
+        Ida.calc_ic_ya_yd' s ~y:nv_vars ~y':nv_vars' ~varid:var_types (t + dt);
+        stepto tnext tret
+    | (tret, _) -> tret
   in
-  let rec major t = if t < t_end then major (minor (t + dt) t) in
-  major 0.0
+  let rec showloop t = if t < t_end then begin
+    Showpendulum.show (vars.{x}, vars.{y});
+    showloop (stepto (t + dt) t)
+  end in
+  showloop 0.0
 
 let _ =
   try
