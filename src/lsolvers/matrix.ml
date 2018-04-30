@@ -848,12 +848,12 @@ type id =
   | Sparse
   | Custom
 
-type cptr
+type cmat
 
 (* Must correspond with matrix_ml.h:mat_matrix_index *)
 type ('k, 'm, 'nd, 'nk) t = {
   payload : 'm;
-  rawptr  : cptr;
+  rawptr  : cmat;
   id      : id;
   mat_ops : ('m, 'nd, 'nk) matrix_ops;
 }
@@ -867,7 +867,7 @@ type 'nk band =
 type ('s, 'nk) sparse =
   (standard, 's Sparse.t, Nvector_serial.data, [>Nvector_serial.kind] as 'nk) t
 
-external c_wrap : id -> 'content_cptr -> 'm -> cptr
+external c_wrap : id -> 'content_cptr -> 'm -> cmat
   = "ml_matrix_wrap"
 
 let wrap_dense (data : Dense.t) = {
