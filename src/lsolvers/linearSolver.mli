@@ -25,80 +25,237 @@
     @nocvode <node> Description of the SUNLinearSolver module
     @since 3.0.0 *)
 
-(** {2:exceptions Exceptions} *)
+(** {2:lsolvers Linear Solver Families} *)
 
-(** Raised on an unrecoverable failure in a linear solver. The argument is
-    [true] for a recoverable failure and [false] for an unrecoverable one.
-    {cconst SUNLS_PACKAGE_FAIL_REC/_UNREC} *)
-exception UnrecoverableFailure of bool
+(** Direct Linear Solvers *)
+module Direct : sig (* {{{ *)
+  (** Definitions in this module are more conveniently accessed
+      through session-specific direct linear solver modules like
+      {!Cvode.Dls} and {!Ida.Dls}.  For example, {!Cvode.Dls.dense} is
+      an alias for {!Lsolver.Direct.dense}.  *)
 
-(** Raised when creating a linear solver if the given matrix is not square. *)
-exception MatrixNotSquare
+  (** {3:solvers Types} *)
 
-(** Raised when creating a linear solver if the number of matrix rows and the
-    vector length are not equal. *)
-exception MatrixVectorMismatch
+  (** Used to identify generic direct solvers. *)
+  type tag = [`Basic]
 
-(** Raised when the storage upper bandwidth ([smu]) of a {!Band.t} is
-    insufficient for use in a particular linear solver. *)
-exception InsufficientStorageUpperBandwidth
+  (** A generic direct linear solver.
+    The type variables specify the Jacobian matrix (['matrix]), the
+    {!Nvector.nvector} data (['data]) and kind (['kind]), and a
+    ['tag] used to identify specific solver features.
 
-(** Raised on an attempt to associate a linear solver instance with more than
-    one session. *)
-exception LinearSolverInUse
+    A linear solver of this type must be converted to session-specific
+    form by {!Cvode.Dls.solver}, {!Ida.Dls.solver}, etc., before being
+    attached to a session via [init] or [reinit].
 
-(** Indicates failure of an atimes function. The argument is [true] for a
-    recoverable failure and [false] for an unrecoverable one.
-    {cconst SUNLS_ATIMES_FAIL_REC/_UNREC} *)
-exception ATimesFailure of bool
+    @nocvode <node> Description of the SUNLinearSolver module
+    @nocvode <node> SUNLinearSolver *)
+  type ('matrix, 'data, 'kind, 'tag) linear_solver
+    = ('matrix, 'data, 'kind, 'tag) LinearSolver_impl.Direct.linear_solver
 
-(** Indicates failure of a preconditioner setup routine. The argument is
-    [true] for a recoverable failure and [false] for an unrecoverable one.
-    {cconst SUNLS_PSET_FAIL_REC/_UNREC} *)
-exception PSetFailure of bool
+  (** Alias for linear solvers that are restricted to serial nvectors. *)
+  type ('mat, 'kind, 'tag) serial_linear_solver
+    = ('mat, Nvector_serial.data, [>Nvector_serial.kind] as 'kind, 'tag)
+        linear_solver
 
-(** Indicates failure of a preconditioner solver. The argument is [true] for a
-    recoverable failure and [false] for an unrecoverable one.
-    {cconst SUNLS_PSOLVE_FAIL_REC/_UNREC} *)
-exception PSolveFailure of bool
+  (** Creates a direct linear solver on dense matrices. The nvector and matrix
+    argument are used to determine the linear system size and to assess
+    compatibility with the linear solver implementation.
+    The matrix is used internally after the linear solver is attached to a
+    session.
 
-(** Indicates failure of a Gram-Schmidt routine. {cconst SUNLS_GS_FAIL} *)
-exception GSFailure
+  @nocvode <node> SUNDenseLinearSolver *)
+  val dense :
+    'k Nvector_serial.any
+    -> 'k Matrix.dense
+    -> (Matrix.Dense.t, 'k, tag) serial_linear_solver
 
-(** Indicates that the QR solution found a singular result.
-    {cconst SUNLS_QRSOL_FAIL} *)
-exception QRSolFailure
+  (** Creates a direct linear solver on dense matrices using LAPACK.
+    See {!dense}. Only available if {!Sundials.lapack_enabled}.
 
-(** Indicates that the residual is reduced but without convergence to the
-    desired tolerance. {cconst SUNLS_RES_REDUCED} *)
-exception ResReduced
+  @nocvode <node> SUNLapackDense *)
+  val lapack_dense :
+    'k Nvector_serial.any
+    -> 'k Matrix.dense
+    -> (Matrix.Dense.t, 'k, tag) serial_linear_solver
 
-(** Indicates that a solver failed to converge. {cconst SUNLS_CONV_FAIL} *)
-exception ConvFailure
+  (** Creates a direct linear solver on banded matrices. The nvector and matrix
+    argument are used to determine the linear system size and to assess
+    compatibility with the linear solver implementation.
+    The matrix is used internally after the linear solver is attached to a
+    session.
 
-(** Indicates that QR factorization encountered a singular matrix.
-    {cconst SUNLS_QRFACT_FAIL} *)
-exception QRfactFailure
+  @nocvode <node> SUNBandLinearSolver *)
+  val band :
+    'k Nvector_serial.any
+    -> 'k Matrix.band
+    -> (Matrix.Band.t, 'k, tag) serial_linear_solver
 
-(** Indicates that LU factorization encountered a singular matrix.
-    {cconst SUNLS_LUFACT_FAIL} *)
-exception LUfactFailure
+  (** Creates a direct linear solver on banded matrices using LAPACK.
+    See {!band}. Only available if {!Sundials.lapack_enabled}.
 
-(** Indicates failure in an external linear solver package. The argument
-    is [true] for a recoverable failure and [false] for an unrecoverable one.
-    {cconst SUNLS_PACKAGE_FAIL_REC/_UNREC} *)
-exception PackageFailure of bool
+  @nocvode <node> SUNLapackBand *)
+  val lapack_band :
+    'k Nvector_serial.any
+    -> 'k Matrix.band
+    -> (Matrix.Band.t, 'k, tag) serial_linear_solver
 
-(** Raised by {!Iterative.set_prec_type} if the given type is not allowed. *)
-exception IllegalPrecType
+  (** KLU direct linear solver operating on sparse matrices (requires KLU). *)
+  module Klu : sig (* {{{ *)
 
-(** Indicates that an internal callback, identified by the first argument,
-    returned the given unknown error code. *)
-exception InternalFailure of (string * int)
+    (** Used to distinguish KLU direct solvers. *)
+    type tag = [`Klu]
 
-(** {2:iterative Iterative Linear Solvers} *)
+    (** The ordering algorithm used for reducing fill. *)
+    type ordering = LinearSolver_impl.Klu.ordering =
+      | Amd      (** Approximate minimum degree permutation. *)
+      | ColAmd   (** Column approximate minimum degree permutation. *)
+      | Natural  (** Natural ordering. *)
 
-module Iterative : sig
+    (** Creates a direct linear solver on sparse matrices using KLU. The
+      nvector and matrix argument are used to determine the linear system
+      size and to assess compatibility with the linear solver implementation.
+      The matrix is used internally after the linear solver is attached to a
+      session.
+
+      @raise Sundials.NotImplementedBySundialsVersion Solver not available.
+      @nocvode <node> SUNKLU *)
+    val make :
+      ?ordering:ordering
+      -> 'k Nvector_serial.any
+      -> ('s, 'k) Matrix.sparse
+      -> ('s Matrix.Sparse.t, 'k, tag) serial_linear_solver
+
+    (** Reinitializes memory and flags for a new factorization (symbolic and
+      numeric) at the next solver setup call. In the call [reinit ls a nnz],
+      [a] is the Jacobian matrix, which is reinitialized with the given
+      number of non-zeros if [nnz] if given. New symbolic and numeric
+      factorizations will be completed at the next solver step.
+
+      @nocvode <node> SUNKLUReInit *)
+    val reinit : ('s Matrix.Sparse.t, 'k, [>tag]) serial_linear_solver
+                 -> ('s, 'k) Matrix.sparse -> ?nnz:int -> unit -> unit
+
+    (** Sets the ordering algorithm used to minimize fill-in.
+
+      @nocvode <node> SUNKLUSetOrdering *)
+    val set_ordering : ('s Matrix.Sparse.t, 'k, [>tag]) serial_linear_solver
+                       -> ordering -> unit
+
+  end (* }}} *)
+
+  (** Creates a direct linear solver on sparse matrices using KLU.
+    See {!Klu.make}.
+
+    @raise Sundials.NotImplementedBySundialsVersion Solver not available.
+    @nocvode <node> SUNKLU *)
+  val klu :
+    ?ordering:Klu.ordering
+    -> 'k Nvector_serial.any
+    -> ('s, 'k) Matrix.sparse
+    -> ('s Matrix.Sparse.t, 'k, Klu.tag) serial_linear_solver
+
+  (** SuperLUMT direct linear solver operating on sparse matrices (requires
+    SuperLUMT). *)
+  module Superlumt : sig (* {{{ *)
+
+    (** Used to distinguish SuperLUMT direct solvers. *)
+    type tag = [`Superlumt]
+
+    (** The ordering algorithm used for reducing fill. *)
+    type ordering = LinearSolver_impl.Superlumt.ordering =
+      | Natural       (** Natural ordering. *)
+      | MinDegreeProd (** Minimal degree ordering on $J^T J$. *)
+      | MinDegreeSum  (** Minimal degree ordering on $J^T + J$. *)
+      | ColAmd        (** Column approximate minimum degree permutation. *)
+
+    (** Creates a direct linear solver on sparse matrices using SuperLUMT. The
+      nvector and matrix argument are used to determine the linear system
+      size and to assess compatibility with the linear solver implementation.
+      The matrix is used internally after the linear solver is attached to a
+      session.
+
+      @raise Sundials.NotImplementedBySundialsVersion Solver not available.
+      @nocvode <node> SUNSuperLUMT *)
+    val make :
+      ?ordering:ordering
+      -> nthreads:int
+      -> 'k Nvector_serial.any
+      -> (Matrix.Sparse.csc, 'k) Matrix.sparse
+      -> (Matrix.Sparse.csc Matrix.Sparse.t, 'k, tag) serial_linear_solver
+
+    (** Sets the ordering algorithm used to minimize fill-in.
+
+      @nocvode <node> SUNSuperLUMTSetOrdering *)
+    val set_ordering : ('s Matrix.Sparse.t, 'k, [>tag]) serial_linear_solver
+                       -> ordering -> unit
+
+  end (* }}} *)
+
+  (** Creates a direct linear solver on sparse matrices using SuperLUMT.
+    See {!Superlumt.make}.
+
+    @raise Sundials.NotImplementedBySundialsVersion Solver not available.
+    @nocvode <node> SUNSuperLUMT *)
+  val superlumt :
+    ?ordering:Superlumt.ordering
+    -> nthreads:int
+    -> 'k Nvector_serial.any
+    -> (Matrix.Sparse.csc, 'k) Matrix.sparse
+    -> (Matrix.Sparse.csc Matrix.Sparse.t, 'k, Superlumt.tag)
+         serial_linear_solver
+
+  (** Custom direct linear solvers. *)
+  module Custom : sig (* {{{ *)
+
+    (** Used to distinguish custom linear solvers *)
+    type 'lsolver tag = [`Custom of 'lsolver]
+
+    (** The operations required to implement a direct linear solver.
+      Failure should be indicated by raising an exception (preferably
+      one of the exceptions in the {!module:LinearSolver} package). Raising
+      {!exception:Sundials.RecoverableFailure} indicates a generic
+      recoverable failure. *)
+    type ('matrix, 'data, 'kind, 'lsolver) ops = {
+        init : 'lsolver -> unit;
+        (** Performs linear solver initalization. *)
+
+        setup : 'lsolver -> 'matrix -> unit;
+        (** Performs linear solver setup based on an updated matrix. *)
+
+        solve : 'lsolver
+                -> 'matrix
+                -> ('data, 'kind) Nvector.t
+                -> ('data, 'kind) Nvector.t
+                -> unit;
+        (** The call [solve ls A x b] should solve the linear system
+        {% $Ax = b$ %}. *)
+
+        get_work_space : ('lsolver -> int * int) option;
+        (** Return the storage requirements for the linear solver.
+        The result [(lrw, liw)] gives the number of words used for
+        storing real values ([lrw]) and the number of words used
+        for storing integer values ([liw]). *)
+      }
+
+    (** Create a direct linear solver given a set of operations and an
+      internal state.
+
+      NB: This feature is only available for Sundials >= 3.0.0. *)
+    val make : ('matrix, 'data, 'kind, 'lsolver) ops
+               -> 'lsolver
+               -> ('matrixkind, 'matrix, 'data, 'kind) Matrix.t
+               -> ('matrix, 'data, 'kind, 'lsolver tag) linear_solver
+
+    (** Return the internal state from an custom direct linear solver. *)
+    val unwrap : ('matrix, 'data, 'kind, 'lsolver tag) linear_solver -> 'lsolver
+
+  end (* }}} *)
+end (* }}} *)
+
+(** Iterative Linear Solvers *)
+module Iterative : sig (* {{{ *)
+
   (** Definitions in this module are more conveniently accessed
       through session-specific iterative linear solver modules like
       {!Cvode.Spils} and {!Ida.Spils}.  For example,
@@ -443,231 +600,76 @@ module Iterative : sig
     @nocvode <node> SUNSPTFQMRSetPrecType *)
   val set_prec_type : ('d, 'k, 'f) linear_solver -> preconditioning_type -> unit
 
-end
+end (* }}} *)
 
-(** {2:direct Direct Linear Solvers} *)
+(** {2:exceptions Exceptions} *)
 
-module Direct : sig
-  (** Definitions in this module are more conveniently accessed
-      through session-specific direct linear solver modules like
-      {!Cvode.Dls} and {!Ida.Dls}.  For example, {!Cvode.Dls.dense} is
-      an alias for {!Lsolver.Direct.dense}.  *)
+(** Raised on an unrecoverable failure in a linear solver. The argument is
+    [true] for a recoverable failure and [false] for an unrecoverable one.
+    {cconst SUNLS_PACKAGE_FAIL_REC/_UNREC} *)
+exception UnrecoverableFailure of bool
 
-  (** {3:solvers Types} *)
+(** Raised when creating a linear solver if the given matrix is not square. *)
+exception MatrixNotSquare
 
-  (** Used to identify generic direct solvers. *)
-  type tag = [`Basic]
+(** Raised when creating a linear solver if the number of matrix rows and the
+    vector length are not equal. *)
+exception MatrixVectorMismatch
 
-  (** A generic direct linear solver.
-    The type variables specify the Jacobian matrix (['matrix]), the
-    {!Nvector.nvector} data (['data]) and kind (['kind]), and a
-    ['tag] used to identify specific solver features.
+(** Raised when the storage upper bandwidth ([smu]) of a {!Band.t} is
+    insufficient for use in a particular linear solver. *)
+exception InsufficientStorageUpperBandwidth
 
-    A linear solver of this type must be converted to session-specific
-    form by {!Cvode.Dls.solver}, {!Ida.Dls.solver}, etc., before being
-    attached to a session via [init] or [reinit].
+(** Raised on an attempt to associate a linear solver instance with more than
+    one session. *)
+exception LinearSolverInUse
 
-    @nocvode <node> Description of the SUNLinearSolver module
-    @nocvode <node> SUNLinearSolver *)
-  type ('matrix, 'data, 'kind, 'tag) linear_solver
-    = ('matrix, 'data, 'kind, 'tag) LinearSolver_impl.Direct.linear_solver
+(** Indicates failure of an atimes function. The argument is [true] for a
+    recoverable failure and [false] for an unrecoverable one.
+    {cconst SUNLS_ATIMES_FAIL_REC/_UNREC} *)
+exception ATimesFailure of bool
 
-  (** Alias for linear solvers that are restricted to serial nvectors. *)
-  type ('mat, 'kind, 'tag) serial_linear_solver
-    = ('mat, Nvector_serial.data, [>Nvector_serial.kind] as 'kind, 'tag)
-        linear_solver
+(** Indicates failure of a preconditioner setup routine. The argument is
+    [true] for a recoverable failure and [false] for an unrecoverable one.
+    {cconst SUNLS_PSET_FAIL_REC/_UNREC} *)
+exception PSetFailure of bool
 
-  (** Creates a direct linear solver on dense matrices. The nvector and matrix
-    argument are used to determine the linear system size and to assess
-    compatibility with the linear solver implementation.
-    The matrix is used internally after the linear solver is attached to a
-    session.
+(** Indicates failure of a preconditioner solver. The argument is [true] for a
+    recoverable failure and [false] for an unrecoverable one.
+    {cconst SUNLS_PSOLVE_FAIL_REC/_UNREC} *)
+exception PSolveFailure of bool
 
-  @nocvode <node> SUNDenseLinearSolver *)
-  val dense :
-    'k Nvector_serial.any
-    -> 'k Matrix.dense
-    -> (Matrix.Dense.t, 'k, tag) serial_linear_solver
+(** Indicates failure of a Gram-Schmidt routine. {cconst SUNLS_GS_FAIL} *)
+exception GSFailure
 
-  (** Creates a direct linear solver on dense matrices using LAPACK.
-    See {!dense}. Only available if {!Sundials.lapack_enabled}.
+(** Indicates that the QR solution found a singular result.
+    {cconst SUNLS_QRSOL_FAIL} *)
+exception QRSolFailure
 
-  @nocvode <node> SUNLapackDense *)
-  val lapack_dense :
-    'k Nvector_serial.any
-    -> 'k Matrix.dense
-    -> (Matrix.Dense.t, 'k, tag) serial_linear_solver
+(** Indicates that the residual is reduced but without convergence to the
+    desired tolerance. {cconst SUNLS_RES_REDUCED} *)
+exception ResReduced
 
-  (** Creates a direct linear solver on banded matrices. The nvector and matrix
-    argument are used to determine the linear system size and to assess
-    compatibility with the linear solver implementation.
-    The matrix is used internally after the linear solver is attached to a
-    session.
+(** Indicates that a solver failed to converge. {cconst SUNLS_CONV_FAIL} *)
+exception ConvFailure
 
-  @nocvode <node> SUNBandLinearSolver *)
-  val band :
-    'k Nvector_serial.any
-    -> 'k Matrix.band
-    -> (Matrix.Band.t, 'k, tag) serial_linear_solver
+(** Indicates that QR factorization encountered a singular matrix.
+    {cconst SUNLS_QRFACT_FAIL} *)
+exception QRfactFailure
 
-  (** Creates a direct linear solver on banded matrices using LAPACK.
-    See {!band}. Only available if {!Sundials.lapack_enabled}.
+(** Indicates that LU factorization encountered a singular matrix.
+    {cconst SUNLS_LUFACT_FAIL} *)
+exception LUfactFailure
 
-  @nocvode <node> SUNLapackBand *)
-  val lapack_band :
-    'k Nvector_serial.any
-    -> 'k Matrix.band
-    -> (Matrix.Band.t, 'k, tag) serial_linear_solver
+(** Indicates failure in an external linear solver package. The argument
+    is [true] for a recoverable failure and [false] for an unrecoverable one.
+    {cconst SUNLS_PACKAGE_FAIL_REC/_UNREC} *)
+exception PackageFailure of bool
 
-  (** KLU direct linear solver operating on sparse matrices (requires KLU). *)
-  module Klu : sig (* {{{ *)
+(** Raised by {!Iterative.set_prec_type} if the given type is not allowed. *)
+exception IllegalPrecType
 
-    (** Used to distinguish KLU direct solvers. *)
-    type tag = [`Klu]
+(** Indicates that an internal callback, identified by the first argument,
+    returned the given unknown error code. *)
+exception InternalFailure of (string * int)
 
-    (** The ordering algorithm used for reducing fill. *)
-    type ordering = LinearSolver_impl.Klu.ordering =
-      | Amd      (** Approximate minimum degree permutation. *)
-      | ColAmd   (** Column approximate minimum degree permutation. *)
-      | Natural  (** Natural ordering. *)
-
-    (** Creates a direct linear solver on sparse matrices using KLU. The
-      nvector and matrix argument are used to determine the linear system
-      size and to assess compatibility with the linear solver implementation.
-      The matrix is used internally after the linear solver is attached to a
-      session.
-
-      @raise Sundials.NotImplementedBySundialsVersion Solver not available.
-      @nocvode <node> SUNKLU *)
-    val make :
-      ?ordering:ordering
-      -> 'k Nvector_serial.any
-      -> ('s, 'k) Matrix.sparse
-      -> ('s Matrix.Sparse.t, 'k, tag) serial_linear_solver
-
-    (** Reinitializes memory and flags for a new factorization (symbolic and
-      numeric) at the next solver setup call. In the call [reinit ls a nnz],
-      [a] is the Jacobian matrix, which is reinitialized with the given
-      number of non-zeros if [nnz] if given. New symbolic and numeric
-      factorizations will be completed at the next solver step.
-
-      @nocvode <node> SUNKLUReInit *)
-    val reinit : ('s Matrix.Sparse.t, 'k, [>tag]) serial_linear_solver
-                 -> ('s, 'k) Matrix.sparse -> ?nnz:int -> unit -> unit
-
-    (** Sets the ordering algorithm used to minimize fill-in.
-
-      @nocvode <node> SUNKLUSetOrdering *)
-    val set_ordering : ('s Matrix.Sparse.t, 'k, [>tag]) serial_linear_solver
-                       -> ordering -> unit
-
-  end (* }}} *)
-
-  (** Creates a direct linear solver on sparse matrices using KLU.
-    See {!Klu.make}.
-
-    @raise Sundials.NotImplementedBySundialsVersion Solver not available.
-    @nocvode <node> SUNKLU *)
-  val klu :
-    ?ordering:Klu.ordering
-    -> 'k Nvector_serial.any
-    -> ('s, 'k) Matrix.sparse
-    -> ('s Matrix.Sparse.t, 'k, Klu.tag) serial_linear_solver
-
-  (** SuperLUMT direct linear solver operating on sparse matrices (requires
-    SuperLUMT). *)
-  module Superlumt : sig (* {{{ *)
-
-    (** Used to distinguish SuperLUMT direct solvers. *)
-    type tag = [`Superlumt]
-
-    (** The ordering algorithm used for reducing fill. *)
-    type ordering = LinearSolver_impl.Superlumt.ordering =
-      | Natural       (** Natural ordering. *)
-      | MinDegreeProd (** Minimal degree ordering on $J^T J$. *)
-      | MinDegreeSum  (** Minimal degree ordering on $J^T + J$. *)
-      | ColAmd        (** Column approximate minimum degree permutation. *)
-
-    (** Creates a direct linear solver on sparse matrices using SuperLUMT. The
-      nvector and matrix argument are used to determine the linear system
-      size and to assess compatibility with the linear solver implementation.
-      The matrix is used internally after the linear solver is attached to a
-      session.
-
-      @raise Sundials.NotImplementedBySundialsVersion Solver not available.
-      @nocvode <node> SUNSuperLUMT *)
-    val make :
-      ?ordering:ordering
-      -> nthreads:int
-      -> 'k Nvector_serial.any
-      -> (Matrix.Sparse.csc, 'k) Matrix.sparse
-      -> (Matrix.Sparse.csc Matrix.Sparse.t, 'k, tag) serial_linear_solver
-
-    (** Sets the ordering algorithm used to minimize fill-in.
-
-      @nocvode <node> SUNSuperLUMTSetOrdering *)
-    val set_ordering : ('s Matrix.Sparse.t, 'k, [>tag]) serial_linear_solver
-                       -> ordering -> unit
-
-  end (* }}} *)
-
-  (** Creates a direct linear solver on sparse matrices using SuperLUMT.
-    See {!Superlumt.make}.
-
-    @raise Sundials.NotImplementedBySundialsVersion Solver not available.
-    @nocvode <node> SUNSuperLUMT *)
-  val superlumt :
-    ?ordering:Superlumt.ordering
-    -> nthreads:int
-    -> 'k Nvector_serial.any
-    -> (Matrix.Sparse.csc, 'k) Matrix.sparse
-    -> (Matrix.Sparse.csc Matrix.Sparse.t, 'k, Superlumt.tag)
-         serial_linear_solver
-
-  (** Custom direct linear solvers. *)
-  module Custom : sig (* {{{ *)
-
-    (** Used to distinguish custom linear solvers *)
-    type 'lsolver tag = [`Custom of 'lsolver]
-
-    (** The operations required to implement a direct linear solver.
-      Failure should be indicated by raising an exception (preferably
-      one of the exceptions in the {!module:LinearSolver} package). Raising
-      {!exception:Sundials.RecoverableFailure} indicates a generic
-      recoverable failure. *)
-    type ('matrix, 'data, 'kind, 'lsolver) ops = {
-        init : 'lsolver -> unit;
-        (** Performs linear solver initalization. *)
-
-        setup : 'lsolver -> 'matrix -> unit;
-        (** Performs linear solver setup based on an updated matrix. *)
-
-        solve : 'lsolver
-                -> 'matrix
-                -> ('data, 'kind) Nvector.t
-                -> ('data, 'kind) Nvector.t
-                -> unit;
-        (** The call [solve ls A x b] should solve the linear system
-        {% $Ax = b$ %}. *)
-
-        get_work_space : ('lsolver -> int * int) option;
-        (** Return the storage requirements for the linear solver.
-        The result [(lrw, liw)] gives the number of words used for
-        storing real values ([lrw]) and the number of words used
-        for storing integer values ([liw]). *)
-      }
-
-    (** Create a direct linear solver given a set of operations and an
-      internal state.
-
-      NB: This feature is only available for Sundials >= 3.0.0. *)
-    val make : ('matrix, 'data, 'kind, 'lsolver) ops
-               -> 'lsolver
-               -> ('matrixkind, 'matrix, 'data, 'kind) Matrix.t
-               -> ('matrix, 'data, 'kind, 'lsolver tag) linear_solver
-
-    (** Return the internal state from an custom direct linear solver. *)
-    val unwrap : ('matrix, 'data, 'kind, 'lsolver tag) linear_solver -> 'lsolver
-
-  end (* }}} *)
-end
