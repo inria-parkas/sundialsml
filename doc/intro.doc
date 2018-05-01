@@ -213,7 +213,7 @@ either {!Direct.Custom.make} or {!Iterative.Custom.make}.
 {2:api API Reference}
 
 {!modules: Sundials}
-{!modules: Matrix Lsolver Direct Iterative}
+{!modules: Matrix LinearSolver}
 {!modules: Nvector Nvector_serial Nvector_parallel
 	   Nvector_pthreads Nvector_openmp
 	   Nvector_custom Nvector_array}
