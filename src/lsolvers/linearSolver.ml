@@ -241,8 +241,9 @@ module Direct = struct (* {{{ *)
                     failwith "internal error: Direct.Custom.get_res_norm");
                   get_res_id = (fun _ ->
                     failwith "internal error: Direct.Custom.get_res_id");
-                  get_work_space = (fun _ ->
-                    failwith "internal error: Direct.Custom.get_work_space");
+                  get_work_space = match fgws with
+                    | Some f -> (fun _ -> f ldata)
+                    | None -> (fun () -> (0, 0))
                 })
              in
              S {
