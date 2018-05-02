@@ -152,7 +152,8 @@ let project nold (xold : RealArray.t) (yold : RealArray.t)
   done
 
 (* f routine to compute the ODE RHS function f(t,y). *)
-let f { n; k; x } t (y : RealArray.t) (ydot : RealArray.t) =
+let f userdata t (y : RealArray.t) (ydot : RealArray.t) =
+  let { n; k; x } = userdata in
   (* iterate over domain, computing all equations *)
   ydot.{0} <- 0.0;           (* left boundary condition *)
   for i=1 to n-1-1 do        (* interior *)
@@ -179,7 +180,8 @@ let f { n; k; x } t (y : RealArray.t) (ydot : RealArray.t) =
   done
 
 (* Jacobian routine to compute J(t,y) = df/dy. *)
-let jac { n; k; x } _ (v : RealArray.t) (jv : RealArray.t) =
+let jac userdata _ (v : RealArray.t) (jv : RealArray.t) =
+  let { n; k; x } = userdata in
   (* iterate over domain, computing all Jacobian-vector products *)
   jv.{0} <- 0.0;
   for i=1 to n-1-1 do
