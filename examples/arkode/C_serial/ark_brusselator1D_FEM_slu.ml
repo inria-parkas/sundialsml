@@ -1001,13 +1001,22 @@ let main () =
   let netf     = get_num_err_test_fails arkode_mem in
   let nni      = get_num_nonlin_solv_iters arkode_mem in
   let ncfn     = get_num_nonlin_solv_conv_fails arkode_mem in
-  let nms      = get_num_mass_solves arkode_mem in
   let nje      = Dls.get_num_jac_evals arkode_mem in
 
   printf "\nFinal Solver Statistics:\n";
   printf "   Internal solver steps = %d (attempted = %d)\n" nst nst_a;
   printf "   Total RHS evals:  Fe = %d,  Fi = %d\n" nfe nfi;
-  printf "   Total mass matrix solves = %d\n" nms;
+  (match Sundials.sundials_version with
+   | 2, _, _ ->
+      let nms = get_num_mass_solves arkode_mem in
+      printf "   Total mass matrix solves = %d\n" nms;
+   | _, _, _ ->
+      let nmset = Mass.Dls.get_num_setups arkode_mem in
+      let nms = Mass.Dls.get_num_solves arkode_mem in
+      let nmv = Mass.Dls.get_num_mult arkode_mem in
+      printf "   Total mass matrix setups = %d\n" nmset;
+      printf "   Total mass matrix solves = %d\n" nms;
+      printf "   Total mass times evals = %d\n" nmv);
   printf "   Total linear solver setups = %d\n" nsetups;
   printf "   Total number of Jacobian evaluations = %d\n" nje;
   printf "   Total number of Newton iterations = %d\n" nni;
