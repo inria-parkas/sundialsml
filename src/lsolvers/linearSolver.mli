@@ -348,8 +348,9 @@ module Iterative : sig (* {{{ *)
     (** Used to distinguish custom linear solvers *)
     type 'lsolver tag = [`Custom of 'lsolver]
 
-    (** A function [atimesfn v z] computes the action of a matrix on the
-      vector [v], storing the result in [z]. *)
+    (** A function [atimesfn v z] computes the action of the system
+        matrix on the vector [v], storing the result in [z]. The matrix is
+        represented implicitly by the effect of the function. *)
     type ('data, 'kind) atimesfn =
       ('data, 'kind) Nvector.t
       -> ('data, 'kind) Nvector.t
