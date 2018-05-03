@@ -266,7 +266,7 @@ module Iterative : sig (* {{{ *)
 
   (** An iterative linear solver.
     The type variables specify the {!Nvector.nvector} data (['data]) and
-    kind (['kind]), and the iterative method (['iter]).
+    kind (['kind]), and the iterative method (['tag]).
 
     A linear solver of this type must be converted to session-specific
     form by {!Cvode.Spils.solver}, {!Ida.Spils.solver}, etc. before
@@ -275,8 +275,8 @@ module Iterative : sig (* {{{ *)
 
     @nocvode <node> Description of the SUNLinearSolver module
     @nocvode <node> SUNLinearSolver *)
-  type ('data, 'kind, 'iter) linear_solver
-    = ('data, 'kind, 'iter) LinearSolver_impl.Iterative.linear_solver
+  type ('data, 'kind, 'tag) linear_solver
+    = ('data, 'kind, 'tag) LinearSolver_impl.Iterative.linear_solver
 
   (** The type of Gram-Schmidt orthogonalization in iterative linear solvers.
 
