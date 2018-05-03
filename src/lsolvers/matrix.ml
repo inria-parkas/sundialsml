@@ -913,8 +913,7 @@ type 'nk band =
 type ('s, 'nk) sparse =
   (standard, 's Sparse.t, Nvector_serial.data, [>Nvector_serial.kind] as 'nk) t
 
-type 'nk arraydense =
-  (custom, ArrayDense.t, Nvector_serial.data, [>Nvector_serial.kind] as 'nk) t
+type 'nk arraydense = (custom, ArrayDense.t, Sundials.RealArray.t, 'nk) t
 
 external c_wrap : id -> 'content_cptr -> 'm -> cmat
   = "ml_matrix_wrap"

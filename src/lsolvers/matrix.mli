@@ -645,7 +645,7 @@ module ArrayDense : sig (* {{{ *)
   (** {3:ops Operations} *)
 
   (** Operations on array-based dense matrices. *)
-  val ops : (t, Nvector_serial.data, [>Nvector_serial.kind] as 'k) matrix_ops
+  val ops : (t, Sundials.RealArray.t, 'k) matrix_ops
 
   (** [scale_add c A B] calculates $A = cA + B$. *)
   val scale_add : float -> t -> t -> unit
@@ -934,8 +934,7 @@ val sparse_csr : ?m:int -> ?nnz:int -> int -> (Sparse.csr, 'nk) sparse
 val wrap_sparse : 's Sparse.t -> ('s, 'nk) sparse
 
 (** Generic matrix with array-based dense content. *)
-type 'nk arraydense =
-  (custom, ArrayDense.t, Nvector_serial.data, [>Nvector_serial.kind] as 'nk) t
+type 'nk arraydense = (custom, ArrayDense.t, Sundials.RealArray.t, 'nk) t
 
 (** By default, [arraydense n] returns an [n] by [n] dense matrix with all
     elements initialized to [0.0]. Optional arguments allow specifying the
