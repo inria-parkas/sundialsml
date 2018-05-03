@@ -872,18 +872,6 @@ type ('k, 'm, 'nd, 'nk) t
 type 'nk dense =
   (standard, Dense.t, Nvector_serial.data, [>Nvector_serial.kind] as 'nk) t
 
-(** Generic matrix with Band content. *)
-type 'nk band =
-  (standard, Band.t, Nvector_serial.data, [>Nvector_serial.kind] as 'nk) t
-
-(** Generic matrix with Sparse content. *)
-type ('s, 'nk) sparse =
-  (standard, 's Sparse.t, Nvector_serial.data, [>Nvector_serial.kind] as 'nk) t
-
-(** Generic matrix with array-based dense content. *)
-type 'nk arraydense =
-  (custom, ArrayDense.t, Nvector_serial.data, [>Nvector_serial.kind] as 'nk) t
-
 (* By default, [dense n] returns an [n] by [n] dense matrix with all elements
    initialized to [0.0]. Optional arguments allow specifying the number of rows
    ([m]) and the initial value ([i]).
@@ -896,6 +884,10 @@ val dense : ?m:int -> ?i:float -> int -> 'nk dense
 
     @nocvode <node> SUNDenseMatrix *)
 val wrap_dense : Dense.t -> 'nk dense
+
+(** Generic matrix with Band content. *)
+type 'nk band =
+  (standard, Band.t, Nvector_serial.data, [>Nvector_serial.kind] as 'nk) t
 
 (** By default, [band n] returns an [n] by [n] band matrix with all bandwidths
     equal to 2 and all values initialized to [0.0].
@@ -912,6 +904,10 @@ val band : ?mu:int -> ?smu:int -> ?ml:int -> ?i:float -> int -> 'nk band
 
     @nocvode <node> SUNBandMatrix *)
 val wrap_band : Band.t -> 'nk band
+
+(** Generic matrix with Sparse content. *)
+type ('s, 'nk) sparse =
+  (standard, 's Sparse.t, Nvector_serial.data, [>Nvector_serial.kind] as 'nk) t
 
 (** By default, [sparse_csc n] returns an [n] by [n] sparse matrix in
     {{!Sparse.sformat}CSC} format with the capacity for [n / 10] non-zero
@@ -937,9 +933,13 @@ val sparse_csr : ?m:int -> ?nnz:int -> int -> (Sparse.csr, 'nk) sparse
     @nocvode <node> SUNSparseMatrix *)
 val wrap_sparse : 's Sparse.t -> ('s, 'nk) sparse
 
-(* By default, [arraydense n] returns an [n] by [n] dense matrix with all
-   elements initialized to [0.0]. Optional arguments allow specifying the
-   number of rows ([m]) and the initial value ([i]). *)
+(** Generic matrix with array-based dense content. *)
+type 'nk arraydense =
+  (custom, ArrayDense.t, Nvector_serial.data, [>Nvector_serial.kind] as 'nk) t
+
+(** By default, [arraydense n] returns an [n] by [n] dense matrix with all
+    elements initialized to [0.0]. Optional arguments allow specifying the
+    number of rows ([m]) and the initial value ([i]). *)
 val arraydense : ?m:int -> ?i:float -> int -> 'nk arraydense
 
 (** Creates an (array-based dense) matrix by wrapping an existing array-based
