@@ -781,6 +781,52 @@ module ArrayDense = struct (* {{{ *)
       = "c_arraydensematrix_ormqr"
 
   let ormqr ~a ~beta ~v ~w ~work = ormqr' a (beta, v, w, work)
+
+  let clone a =
+    let open Sundials.RealArray2 in
+    let m, n = size a in
+    create m n
+
+  let scale_addi c a =
+    let ad = Sundials.RealArray2.unwrap a in
+    let an, am = Bigarray.Array2.(dim1 ad, dim2 ad) in
+    for i = 0 to an - 1 do
+      for j =0 to am - 1 do
+        ad.{i, j} <- c *. ad.{i, j}
+      done
+    done
+
+  let scale_add c a b =
+    let ad, bd = Sundials.RealArray2.(unwrap a, unwrap b) in
+    let an, am = Bigarray.Array2.(dim1 ad, dim2 ad) in
+    let bn, bm = Bigarray.Array2.(dim1 bd, dim2 bd) in
+    if Sundials_config.safe then
+      if (am <> bm) || (an <> bn) then raise IncompatibleArguments;
+    for i = 0 to an - 1 do
+      for j =0 to am - 1 do
+        ad.{i, j} <- c *. ad.{i, j} +. bd.{i, j}
+      done
+    done
+
+  let space a =
+    let m, n = Sundials.RealArray2.size a in
+    (m * n, 3)
+
+  let ops = {
+    m_clone      = clone;
+
+    m_zero       = set_to_zero;
+
+    m_copy       = blit;
+
+    m_scale_add  = scale_add;
+
+    m_scale_addi = scale_addi;
+
+    m_matvec     = matvec;
+
+    m_space      = space;
+  }
 end (* }}} *)
 
 module ArrayBand = struct (* {{{ *)
@@ -867,6 +913,9 @@ type 'nk band =
 type ('s, 'nk) sparse =
   (standard, 's Sparse.t, Nvector_serial.data, [>Nvector_serial.kind] as 'nk) t
 
+type 'nk arraydense =
+  (custom, ArrayDense.t, Nvector_serial.data, [>Nvector_serial.kind] as 'nk) t
+
 external c_wrap : id -> 'content_cptr -> 'm -> cmat
   = "ml_matrix_wrap"
 
@@ -916,6 +965,12 @@ let wrap_custom ops data = {
     id      = Custom;
     mat_ops = ops;
   }
+
+let wrap_arraydense = wrap_custom ArrayDense.ops
+
+let arraydense ?m ?(i=0.0) n =
+  let m = match m with Some m -> m | None -> n in
+  wrap_arraydense (ArrayDense.make m n i)
 
 let get_ops { mat_ops } = mat_ops
 

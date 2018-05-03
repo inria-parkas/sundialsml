@@ -619,7 +619,7 @@ module ArrayDense : sig (* {{{ *)
       @cvode <node9#ss:dense> newDenseMat *)
   type t = Sundials.RealArray2.t
 
-  (** {4 Basic access} *)
+  (** {3:basic Basic access} *)
 
   (** [make m n x] returns an [m] by [n] dense matrix with elements set
       to [x].
@@ -642,17 +642,16 @@ module ArrayDense : sig (* {{{ *)
       to [f v]. *)
   val update : t -> int -> int -> (float -> float) -> unit
 
-  (** Fills the matrix with zeros.
+  (** {3:ops Operations} *)
 
-      @cvode <node9#ss:dense> setToZero *)
-  val set_to_zero    : t -> unit
+  (** Operations on array-based dense matrices. *)
+  val ops : (t, Nvector_serial.data, [>Nvector_serial.kind] as 'k) matrix_ops
 
-  (** {4 Calculations} *)
+  (** [scale_add c A B] calculates $A = cA + B$. *)
+  val scale_add : float -> t -> t -> unit
 
-  (** Increments a square matrix by the identity matrix.
-
-      @cvode <node9#ss:dense> denseAddIdentity *)
-  val add_identity : t -> unit
+  (** [scale_addi c A] calculates $A = cA + I$. *)
+  val scale_addi : float -> t -> unit
 
   (** The call [matvec a x y] computes the matrix-vector product $y = Ax$.
 
@@ -660,11 +659,27 @@ module ArrayDense : sig (* {{{ *)
       @since 2.6.0 *)
   val matvec : t -> Sundials.RealArray.t -> Sundials.RealArray.t -> unit
 
+  (** Fills the matrix with zeros.
+
+      @cvode <node9#ss:dense> setToZero *)
+  val set_to_zero    : t -> unit
+
   (** [blit src dst] copies the contents of [src] into [dst]. Both
       must have the same size.
 
       @cvode <node9#ss:dense> denseCopy *)
   val blit  : t -> t -> unit
+
+  (** [lrw, liw = space a] returns the storage requirements of [a] as
+      [lrw] realtype words and [liw] integer words. *)
+  val space : t -> int * int
+
+  (** {3:calcs Calculations} *)
+
+  (** Increments a square matrix by the identity matrix.
+
+      @cvode <node9#ss:dense> denseAddIdentity *)
+  val add_identity : t -> unit
 
   (** Multiplies each element by a constant.
 
@@ -865,6 +880,10 @@ type 'nk band =
 type ('s, 'nk) sparse =
   (standard, 's Sparse.t, Nvector_serial.data, [>Nvector_serial.kind] as 'nk) t
 
+(** Generic matrix with array-based dense content. *)
+type 'nk arraydense =
+  (custom, ArrayDense.t, Nvector_serial.data, [>Nvector_serial.kind] as 'nk) t
+
 (* By default, [dense n] returns an [n] by [n] dense matrix with all elements
    initialized to [0.0]. Optional arguments allow specifying the number of rows
    ([m]) and the initial value ([i]).
@@ -917,6 +936,15 @@ val sparse_csr : ?m:int -> ?nnz:int -> int -> (Sparse.csr, 'nk) sparse
 
     @nocvode <node> SUNSparseMatrix *)
 val wrap_sparse : 's Sparse.t -> ('s, 'nk) sparse
+
+(* By default, [arraydense n] returns an [n] by [n] dense matrix with all
+   elements initialized to [0.0]. Optional arguments allow specifying the
+   number of rows ([m]) and the initial value ([i]). *)
+val arraydense : ?m:int -> ?i:float -> int -> 'nk arraydense
+
+(** Creates an (array-based dense) matrix by wrapping an existing array-based
+    dense matrix. The two values share the same underlying storage. *)
+val wrap_arraydense : ArrayDense.t -> 'nk arraydense
 
 (** Wrap a custom matrix value.
 
