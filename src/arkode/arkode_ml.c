@@ -889,9 +889,9 @@ CAMLprim value c_arkode_spils_set_banded_preconditioner (value vsession,
 							 value vmlower)
 {
     CAMLparam4 (vsession, vneqs, vmupper, vmlower);
-    long neqs = Long_val (vneqs);
+    long neqs = Index_val (vneqs);
     int flag = ARKBandPrecInit (ARKODE_MEM_FROM_ML (vsession), neqs,
-			       Long_val (vmupper), Long_val (vmlower));
+			        Index_val (vmupper), Index_val (vmlower));
     CHECK_FLAG ("ARKBandPrecInit", flag);
     CAMLreturn (Val_unit);
 }

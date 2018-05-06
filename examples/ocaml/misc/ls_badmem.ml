@@ -14,7 +14,7 @@ let y_nv = Nvector_serial.wrap y
 
 let s1 = Cvode.(init Adams
                     (Newton
-                      Spils.(make (spgmr y_nv) prec_none))
+                      Spils.(solver (spgmr y_nv) prec_none))
                     default_tolerances
                     f 0.0 y_nv);;
 

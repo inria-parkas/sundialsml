@@ -4,6 +4,7 @@
 #include <sundials/sundials_direct.h>
 #include <sundials/sundials_dense.h>
 #include "../../../src/config.h"
+#include "../../../src/sundials/sundials_ml.h"
 
 #define NROWS 3
 #define NCOLS 3
@@ -14,7 +15,7 @@ realtype a_init[NROWS][NCOLS] = {
     {  3.0, -9.0, -3.0}
 };
 
-void print_mat(DlsMat m, long int nr, long int nc) {
+void print_mat(DlsMat m, sundials_ml_index nr, sundials_ml_index nc) {
     int i, j;
 
     for (i=0; i < nr; ++i) {
@@ -25,7 +26,7 @@ void print_mat(DlsMat m, long int nr, long int nc) {
     }
 }
 
-void print_vec(realtype* m, long int nr) {
+void print_vec(realtype* m, sundials_ml_index nr) {
     int i;
 
     for (i=0; i < nr; ++i) {
@@ -34,11 +35,11 @@ void print_vec(realtype* m, long int nr) {
     printf("\n");
 }
 
-void print_pivots(long int* m, long int nr) {
+void print_pivots(sundials_ml_index* m, sundials_ml_index nr) {
     int i;
 
     for (i=0; i < nr; ++i) {
-	printf(" % ld", m[i]);
+	printf(" % lld", (long long)m[i]);
     }
     printf("\n");
 }
@@ -47,7 +48,7 @@ int main(int argc, char** argv)
 {
     DlsMat a = NewDenseMat(NROWS, NCOLS);
     DlsMat b = NewDenseMat(NROWS, NCOLS);
-    long int p[NROWS] = { 0.0 };
+    sundials_ml_index p[NROWS] = { 0.0 };
     realtype s[NROWS] = { 5.0, 18.0, 6.0 };
     int i, j;
 

@@ -29,11 +29,30 @@
 
 void sundials_ml_warn_discarded_exn (value exn, const char *context);
 
-
+/* Sundials and integers
+ *
+ * Sundials < 3.0.0
+ *     nvector vspace op:         long int
+ *     *_bbd callbacks:           long int
+ *     sparse matrix indices:     int
+ *     dense/band matrix indices: long int
+ *
+ * Sundials >= 3.0.0
+ *    nvector vspace op:          sunindextype
+ *    *_bbd callbacks:            sunindextype
+ *    sparse matrix indices:      sunindextype
+ *    dense/band matrix indices:  sunindextype
+ */
 #if SUNDIALS_LIB_VERSION >= 300
 typedef sunindextype sundials_ml_index;
+typedef sundials_ml_index sundials_ml_smat_index;
+#define SmatIndex_val(x) Index_val(x)
+#define Val_SmatIndex(x) Val_index(x)
 #else
 typedef long int sundials_ml_index;
+typedef int sundials_ml_smat_index;
+#define SmatIndex_val(x) Int_val(x)
+#define Val_SmatIndex(x) Val_int(x)
 #endif
 #define INDEX_ARRAY(v) ((sundials_ml_index *)Caml_ba_data_val(v))
 
@@ -42,7 +61,6 @@ typedef long int sundials_ml_index;
 #define BIGARRAY_INDEX (CAML_BA_INT64 | CAML_BA_C_LAYOUT)
 
 #define INT_ARRAY(v) ((int *)Caml_ba_data_val(v))
-#define INDEX_ARRAY(v) ((sundials_ml_index *)Caml_ba_data_val(v))
 #define LONG_ARRAY(v) ((long int *)Caml_ba_data_val(v))
 #define REAL_ARRAY(v) ((realtype *)Caml_ba_data_val(v))
 #define REAL_ARRAY2(v) ((realtype **)Caml_ba_data_val(v))

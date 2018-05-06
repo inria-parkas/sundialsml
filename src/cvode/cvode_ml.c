@@ -813,9 +813,9 @@ CAMLprim value c_cvode_spils_set_banded_preconditioner (value vsession,
 							value vmlower)
 {
     CAMLparam3 (vsession, vmupper, vmlower);
-    long neqs = Long_val (vneqs);
+    long neqs = Index_val (vneqs);
     int flag = CVBandPrecInit (CVODE_MEM_FROM_ML (vsession), neqs,
-			       Long_val (vmupper), Long_val (vmlower));
+			       Index_val (vmupper), Index_val (vmlower));
     CHECK_FLAG ("CVBandPrecInit", flag);
     CAMLreturn (Val_unit);
 }

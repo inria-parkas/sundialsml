@@ -401,8 +401,8 @@ void callml_vspace(N_Vector v, sundials_ml_index *lrw, sundials_ml_index *liw)
 	fflush (stderr);
 	abort ();
     } else {
-	*lrw = Long_val(Field(r, 0));
-	*liw = Long_val(Field(r, 1)) + (nvec_rough_size / sizeof(int));
+	*lrw = Index_val(Field(r, 0));
+	*liw = Index_val(Field(r, 1)) + (nvec_rough_size / sizeof(int));
     }
 
     CAMLreturn0;

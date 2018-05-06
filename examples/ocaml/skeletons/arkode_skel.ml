@@ -19,7 +19,7 @@ let m = Matrix.dense 2
 let s = Arkode.(
   init
     (ImEx { explicit = f_e;
-            implicit = (f_i, Newton Arkode.Dls.(solver (dense y m) m),
+            implicit = (f_i, Newton Arkode.Dls.(solver (dense y m)),
                         Linear true); })
     (SStolerances (1e-4, 1e-9))
     ~roots:(1, g)

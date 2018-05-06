@@ -4,6 +4,7 @@
 #include <sundials/sundials_direct.h>
 #include <sundials/sundials_band.h>
 #include "../../../src/config.h"
+#include "../../../src/sundials/sundials_ml.h"
 
 #define SIZE 5
 
@@ -13,7 +14,7 @@
 
 #define BANDELEM(A,smu,i,j) (A[j][(i)-(j)+(smu)])
 
-void print_mat_data(realtype** m, long int nr, long int nc) {
+void print_mat_data(realtype** m, sundials_ml_index nr, sundials_ml_index nc) {
     int i, j;
 
     for (j=0; j < nr; ++j) {
@@ -24,7 +25,7 @@ void print_mat_data(realtype** m, long int nr, long int nc) {
     }
 }
 
-void zero_mat_data(realtype** m, long int nr, long int nc) {
+void zero_mat_data(realtype** m, sundials_ml_index nr, sundials_ml_index nc) {
     int i, j;
 
     for (j=0; j < nr; ++j) {
@@ -34,8 +35,12 @@ void zero_mat_data(realtype** m, long int nr, long int nc) {
     }
 }
 
-void print_mat(realtype** m, long int n,
-	       long int mu, long int ml, long int smu) {
+void print_mat(realtype** m,
+	       sundials_ml_index n,
+	       sundials_ml_index mu,
+	       sundials_ml_index ml,
+	       sundials_ml_index smu)
+{
     int i, j;
 
     for (i=0; i < n; ++i) {
@@ -50,8 +55,12 @@ void print_mat(realtype** m, long int n,
     }
 }
 
-void print_factored_mat(realtype** m, long int n,
-	long int mu, long int ml, long int smu) {
+void print_factored_mat(realtype** m,
+			sundials_ml_index n,
+			sundials_ml_index mu,
+			sundials_ml_index ml,
+			sundials_ml_index smu)
+{
     int i, j;
 
     for (i=0; i < n; ++i) {
@@ -68,7 +77,7 @@ void print_factored_mat(realtype** m, long int n,
     }
 }
 
-void print_vec(realtype* m, long int nr) {
+void print_vec(realtype* m, sundials_ml_index nr) {
     int i;
 
     for (i=0; i < nr; ++i) {
@@ -77,11 +86,11 @@ void print_vec(realtype* m, long int nr) {
     printf("\n");
 }
 
-void print_pivots(long int* m, long int nr) {
+void print_pivots(sundials_ml_index* m, sundials_ml_index nr) {
     int i;
 
     for (i=0; i < nr; ++i) {
-	printf(" % ld", m[i]);
+	printf(" % lld", (long long)m[i]);
     }
     printf("\n");
 }
@@ -90,7 +99,7 @@ int main(int argc, char** argv)
 {
     realtype **a = newBandMat(SIZE, SMU, ML);
     realtype **b = newBandMat(SIZE, SMU, ML);
-    long int p[SIZE] = { 0.0 };
+    sundials_ml_index p[SIZE] = { 0.0 };
     realtype s[SIZE] = { 5.0, 15.0, 31.0, 53.0, 45.0 };
 
     zero_mat_data(a, SIZE, SMU + ML + 1);
