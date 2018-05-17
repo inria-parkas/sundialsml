@@ -245,13 +245,17 @@ endef
 
 # How many times to measure each example.  Each measurement repeats
 # the example several times to make it run long enough.
+# This default is usually not enough for hypothesis testing: try >= 10.
 PERF_DATA_POINTS ?= 3
+
+# Confidence level for hypothesis testing.
+PERF_CONFIDENCE ?= 0.005
 
 # At least how long each measurement should take.  If this value is
 # too low, the measurement will be unreliable.
 MIN_TIME ?= 1
 
-PERF=perf.opt.log perf.byte.log
+PERF=perf.opt.log perf.byte.log perf-intv.byte.log perf-intv.opt.log
 
 .PHONY: $(PERF)
 
@@ -269,6 +273,17 @@ perf.byte.log perf.opt.log: perf.%.log: $(ENABLED_EXAMPLES:.ml=.%.perf)       \
 					$(UTILS)/crunchperf
 	$(UTILS)/crunchperf -m $(filter-out $(UTILS)/crunchperf,$^) > $@
 	$(UTILS)/crunchperf -s $@
+
+perf-intv.byte.cache perf-intv.opt.cache: perf-intv.%.cache:	\
+		$(ENABLED_EXAMPLES:.ml=.%.perf)			\
+		$(UTILS)/crunchperf
+	$(UTILS)/crunchperf -i $(PERF_CONFIDENCE) \
+		$(filter-out $(UTILS)/crunchperf,$^) > $@
+
+perf-intv.byte.log perf-intv.opt.log: perf-intv.%.log: perf-intv.%.cache      \
+						       $(UTILS)/crunchperf
+	$(UTILS)/crunchperf -s $< > $@
+	@cat $@
 
 C_TITLE=C ($(CC) $(filter-out -I% -DNDEBUG=1,$(CFLAGS)))
 NATIVE_TITLE='OCaml ($(OCAML_VERSION)) native code performance over $(C_TITLE)'
@@ -437,5 +452,7 @@ clean:
 	-@rm -f tests.byte.log lapack-tests.byte.log
 	-@rm -f tests.opt.log lapack-tests.opt.log
 	-@rm -f perf.byte.log perf.opt.log
+	-@rm -f perf-intv.byte.cache perf-intv.opt.cache
+	-@rm -f perf-intv.byte.log perf-intv.opt.log
 	-@rm -f $(foreach t,$(PLOTTYPES),perf.opt.$t)
 	-@rm -f $(foreach t,$(PLOTTYPES),perf.byte.$t) $(FILES_TO_CLEAN)

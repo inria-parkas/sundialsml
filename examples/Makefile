@@ -53,11 +53,14 @@ PERF_SUBDIRS=$(if $(PERF_FORCE_NVECTORS),$(SUBDIRS),\
 		  $(filter-out nvector/%,$(SUBDIRS)))
 
 
-TOP_TARGETS = tests.byte.log tests.opt.log perf.byte.log perf.opt.log reps
+TOP_TARGETS = tests.byte.log tests.opt.log perf.byte.log perf.opt.log reps \
+	      perf-intv.byte.cache perf-intv.opt.cache			   \
+	      perf-intv.byte.log perf-intv.opt.log
 SUBDIR_TARGETS = $(foreach d,$(SUBDIRS),$(foreach t,$(TOP_TARGETS),$d/$t))
 
-.PHONY: default tests.byte.log tests.opt.log tests.byte tests.opt ocaml \
-	perf.byte.log perf.opt.log $(SUBDIR_TARGETS)
+.PHONY: default tests.byte.log tests.opt.log tests.byte tests.opt ocaml	\
+	perf.byte.log perf.opt.log perf-intv.byte.log perf-intv.opt.log	\
+	$(SUBDIR_TARGETS)
 
 all: ocaml tests.byte tests.opt
 
@@ -102,6 +105,15 @@ perf.opt.log perf.byte.log: perf.%.log: $(C_EXAMPLES)			   \
 				$(foreach s,$(PERF_SUBDIRS),$s/perf.%.log)
 	@echo ======================================================================
 	@$(UTILS)/crunchperf -m $(foreach s,$(PERF_SUBDIRS),$s/$@) > $@
+	$(UTILS)/crunchperf -s $@
+	@$(if $(findstring $@,$(MAKECMDGOALS)), \
+	   echo "Note: \"make $(@:.log=.plot)\" can plot this for you.")
+
+perf-intv.opt.log perf-intv.byte.log: perf-intv.%.log: $(C_EXAMPLES)	  \
+			$(UTILS)/perf $(UTILS)/crunchperf		  \
+			$(foreach s,$(PERF_SUBDIRS),$s/perf-intv.%.cache)
+	@echo ======================================================================
+	@$(UTILS)/crunchperf -m $(filter %.cache,$^) > $@
 	$(UTILS)/crunchperf -s $@
 	@$(if $(findstring $@,$(MAKECMDGOALS)), \
 	   echo "Note: \"make $(@:.log=.plot)\" can plot this for you.")
@@ -152,6 +164,6 @@ clean: clean-utils
 	@${MAKE} -C ocaml clean
 
 clean-utils:
-	-@rm -f perf.byte.* perf.opt.*
+	-@rm -f perf.byte.* perf.opt.* perf-intv.byte.* perf-intv.opt.*
 	-@rm -f $(foreach f,utils/perf utils/crunchperf,\
 		    $f $f.cmi $f.cmx $f.cmo $f.cmt $f.cmti $f.o)

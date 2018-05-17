@@ -10,17 +10,30 @@ let synopsis =
 crunchperf -m <file1> <file2> ...
 
      Merge multiple log files into one.  Each <file*> should be the
-     output of a previous run of crunchperf -c.
+     output of a previous run of crunchperf -c or crunchperf -m.
 
-crunchperf -s [-u [<confidence>]] <file>
+crunchperf -i <confidence> <file1> <file2> ...
 
-     Summarize the output of a previous run of crunchperf -m for humans.
-     If given -u, compute a range of OCaml/C ratios that are statistically
-     significant (requires GNU Octave; <confidence> defaults to 0.005).
+     Like crunchperf -m, but condense performance numbers to confidence
+     intervals of performance ratios.  The computed interval gives the
+     set of all g such that
+
+        P(observed data | P(g*C > O) = P(g*C < O)) >= c
+
+     where O is the running time for OCaml code, C is the running time
+     for C code, c is the <confidence>, and P(X | Y) denotes conditional
+     probability.  The usual caveats about hypothesis testing apply, such
+     as the prosecutor's fallacy.
+
+crunchperf -s <file>
+
+     Summarize the output of a previous run of crunchperf -m or
+     crunchperf -i for humans.
 
 crunchperf -S <file>
 
-     Summarize the output of a previous run of crunchperf -m for gnuplot.
+     Summarize the output of a previous run of crunchperf -m or\
+     crunchperf -i for gnuplot.
 
 crunchperf -r <file> | /bin/sh
 
@@ -85,11 +98,6 @@ let iteri f xs =
     | x::xs -> f i x; go (i+1) xs
   in go 0 xs
 
-let array_iteri f xs =
-  for i = 0 to Array.length xs - 1 do
-    f i xs.(i)
-  done
-
 type line = { file : string;
               line : int;
               str : string;             (* Includes trailing '\n'. *)
@@ -150,6 +158,15 @@ let scan_fmt_with_id =
   ("%d\t%d\t%f\t%f\t%f\t%f\t%s\t%d\n"
    : ('a, 'use, 'b, 'c, 'd, 'e) format6)
 
+let header_with_id_and_intv =
+  "# ID\treps\tOCaml med.\tC med.\tC\tOCaml/C lower\tOCaml/C upper\tname\tcategory\n"
+let print_fmt_with_id_and_intv =
+  ("%d\t%d\t%.2f\t%.2f\t%.2f\t%.2f\t%s\t%d\n"
+   : ('a, 'use, 'b, 'c, 'd, 'e) format6)
+let scan_fmt_with_id_and_intv =
+  ("%d\t%d\t%f\t%f\t%f\t%f\t%s\t%d\n"
+   : ('a, 'use, 'b, 'c, 'd, 'e) format6)
+
 let header_no_id = "# reps\tC med.\tOCaml\tC\tOCaml/C\tname\tcategory\n"
 let print_fmt_no_id =
   ("%d\t%.2f\t%.2f\t%.2f\t%.2f\t%s\t%d\n"
@@ -168,39 +185,97 @@ let print_fmt_for_humans =
   ("%d\t%.2f\t%.2f\t%.2f\t%s\n"
    : ('a, 'use, 'b, 'c, 'd, 'e) format6)
 
-let header_for_humans_with_range = "# reps\tOCaml med.\tC med.\tOCaml/C lower\tOCaml/C upper\tname\n"
-let print_fmt_for_humans_with_range =
+let header_for_gnuplot_with_intv =
+  "# ID\treps\tOCaml med.\tC med.\tOCaml/C\tname\tcategory\n"
+let print_fmt_for_gnuplot_with_intv =
+  ("%d\t%d\t%.2f\t%.2f\t%.2f\t%.2f\t%s\t%d\n"
+   : ('a, 'use, 'b, 'c, 'd, 'e) format6)
+
+let header_for_humans_with_intv =
+  "# reps\tOCaml med.\tC med.\tOCaml/C lower\tOCaml/C upper\tname\n"
+let print_fmt_for_humans_with_intv =
   ("%d\t%.2f\t%.2f\t%.2f\t%.2f\t%s\n"
    : ('a, 'use, 'b, 'c, 'd, 'e) format6)
 
+let headers =
+  [header_with_id; header_with_id_and_intv;
+   header_no_id; header_for_gnuplot; header_for_humans;
+   header_for_gnuplot_with_intv; header_for_humans_with_intv]
+
+let remove_comment_lines lines =
+  List.filter (fun l ->
+    String.length l.str = 0
+    || l.str.[0] <> '#'
+    || List.mem l.str headers
+    )
+    lines
+
 (* Statistical Analysis *)
-type record = { reps : int;
-                mutable ml_times : float list;
-                mutable c_times : float list;
-              }
-let load ?(records=Hashtbl.create 10) path =
-  let insert _ reps cmed ml c _ name _ =
+type raw_record = { reps : int;
+                    mutable ml_times : float list;
+                    mutable c_times : float list;
+                  }
+type intv_record = { intv_reps : int;
+                     ml_median : float;
+                     c_median : float;
+                     intv_low : float;
+                     intv_high : float }
+type data = RawData of (string, raw_record) Hashtbl.t
+          | IntvData of float * (string, intv_record) Hashtbl.t
+
+let parse_error l msg =
+  failwith (l.file ^ ":" ^ string_of_int l.line ^ ": " ^ msg)
+
+let load_raw_lines ~expect_ids records lines =
+  let insert l _ reps cmed ml c _ name _ =
     try let r = Hashtbl.find records name in
-      if reps <> r.reps then failwith (path ^ ": inconsistent reps field");
+      if reps <> r.reps then parse_error l "inconsistent reps field";
       r.ml_times <- ml::r.ml_times;
       r.c_times  <- c::r.c_times;
     with Not_found -> Hashtbl.add records name { ml_times = [ml];
                                                  c_times = [c];
                                                  reps = reps; }
   in
-  let lines = get_lines path in
-  let expect_ids =
-    match lines with
-    | l::_ -> header_with_id = l.str
-    | _ -> false
-  in
   List.iter (fun line ->
       if expect_ids
-      then scan_line scan_fmt_with_id insert line
-      else scan_line scan_fmt_no_id (insert (-1)) line
+      then scan_line scan_fmt_with_id (insert line) line
+      else scan_line scan_fmt_no_id (insert line (-1)) line
     )
-    (List.filter (not % comment_line) lines);
-  records
+    (List.filter (not % comment_line) lines)
+
+let load_intv_lines records lines =
+  let insert l _ reps cmed mlmed rlo rhi name _ =
+    if Hashtbl.mem records name
+    then parse_error l (name ^ " appears more than once")
+    else Hashtbl.add records name { intv_reps = reps;
+                                    ml_median = mlmed;
+                                    c_median = cmed;
+                                    intv_low = rlo;
+                                    intv_high = rhi }
+  in
+  List.iter (fun line ->
+      scan_line scan_fmt_with_id_and_intv (insert line) line)
+      (List.filter (not % comment_line) lines)
+
+let load paths =
+  let raw_records = Hashtbl.create 10
+  and intv_records = Hashtbl.create 10
+  and confidence = ref nan
+  in
+  List.iter (fun path ->
+      match remove_comment_lines @@ get_lines path with
+      | l::lines when l.str = header_with_id_and_intv ->
+          load_intv_lines intv_records lines
+      | l::lines when l.str = header_with_id ->
+         load_raw_lines ~expect_ids:true raw_records lines
+      | l::lines -> load_raw_lines ~expect_ids:false raw_records lines
+      | [] -> Printf.fprintf stderr "Warning: %s is empty\n" path)
+     paths;
+  if Hashtbl.length intv_records = 0
+  then RawData raw_records
+  else if Hashtbl.length raw_records = 0
+  then IntvData (!confidence, intv_records)
+  else failwith "inconsistent input file formats: some are from crunchperf -i while others are from crunchperf -m."
 
 let sorted_assocs records =
   let ls = ref [] in
@@ -257,9 +332,34 @@ let u_test ?(side="<>") xs ys =
     ret
   with e -> (close_in pipe; raise e)
 
-let u_interval ?(confidence=0.005) xs ys =
+(* FIXME: This is really slow because it re-launches octave over and
+   over.  *)
+let u_test ?(side="<>") xs ys =
+  (* Returns p-value of Mann-Whitney U-test with the null hypothesis
+     P(X > Y) = P(Y < X).  *)
+  let octave_path =
+    try Unix.getenv "OCTAVE_CLI"
+    with Not_found -> "octave-cli"
+  and script =
+    Printf.sprintf
+      "[p,_] = u_test(%s, %s, \"%s\"); disp(p)"
+      (string_of_float_array ~sep:"," xs)
+      (string_of_float_array ~sep:"," ys)
+      side
+  in
+  let command = Printf.sprintf "%s --eval '%s'" octave_path script in
+  let pipe = Unix.open_process_in command
+  in
+  try
+    let ret = Scanf.bscanf (Scanf.Scanning.from_channel pipe)
+                           " %f\n" (fun f -> f) in
+    close_in pipe;
+    ret
+  with e -> (close_in pipe; raise e)
+
+let u_intv ?(confidence=0.005) xs ys =
   (* Returns the range of gamma such that, when xs is scaled by gamma,
-     the U-test does NOT detect a difference between P(X > Y) and P(Y < X)
+     the U-test does NOT detect a deviation from P(X > Y) = P(Y < X)
      at the given confidence level.  *)
   assert(Array.length xs > 0);
   assert(Array.length ys > 0);
@@ -282,39 +382,45 @@ let u_interval ?(confidence=0.005) xs ys =
   in
   (* P-value is minimal when one sample dominates the other.  Make
      sure that minimum goes below the desired confidence level.  *)
-  let ones  = Array.make (Array.length xs) 1.0
-  and zeros = Array.make (Array.length xs) 0.0
+  let to_ones  a = Array.make (Array.length a) 1.0
+  and to_zeros a = Array.make (Array.length a) 0.0
   in
-  (if u_test ones zeros > confidence
-   then raise (Invalid_argument
-                 (Printf.sprintf
-                    "not enough data points (%d, %d) for confidence level %f"
-                    (Array.length xs) (Array.length ys) confidence))
-  );
-  (if u_test zeros ones > confidence
-   then raise (Invalid_argument
-                 (Printf.sprintf
-                    "not enough data points (%d, %d) for confidence level %f"
-                    (Array.length xs) (Array.length ys) confidence))
+  (if u_test (to_ones xs) (to_zeros ys) > confidence
+      || u_test (to_zeros xs) (to_ones ys) > confidence
+   then failwith
+          (Printf.sprintf
+             "not enough data points (%d, %d) for confidence level %f"
+             (Array.length xs) (Array.length ys) confidence)
   );
   let eps = 1.0 +. 1e-10 in
   let gmin = (ymin /. xmax) /. eps
   and gmax = (ymax /. xmin) *. eps in
   (* We need at least one point where statistical significance fails.
-     The most likely candidate is where the data crosses over from ys
-     being dominant to scaled xs being dominant.  *)
+     We find this in two steps: first estimate the argmax of p_value,
+     then lower (tighten) the confidence level if the estimated max
+     p-value still doesn't go over the prescribed threshold.  *)
   let rank_sum_gt g =
     let (xr, yr) = rank_sums (scale g xs) ys in
     xr > yr
   in
   assert (not (rank_sum_gt gmin));
   assert (rank_sum_gt gmax);
-  let mid = bsearch 1e-3 rank_sum_gt gmin gmax in
-  (if p_value mid <= confidence
-   then raise (Invalid_argument
-                 (Printf.sprintf
-                    "p-value always below threshold; not enough data points?"))
-  );
+  let rec find_high reps eps gmin gmax =
+    let mid_r = bsearch eps rank_sum_gt gmin gmax in
+    let mid_l = mid_r -. eps in
+    (* mid is placed right after the cross-over point.  If the P-value
+       there is too low, check the other side.  *)
+    let p_r = p_value mid_r in
+    if p_r > confidence then (mid_r, confidence)
+    else
+      let p_l = p_value mid_l in
+      if p_l > confidence then (mid_l, p_l)
+      else if reps > 0 then
+        find_high (reps - 1) (eps *. eps) mid_l mid_r
+      else failwith "Can't find a ratio where P-value > confidence; too many data points?"
+  in
+  (* argmax p_value, max p_value *)
+  let mid, confidence = find_high 2 1e-3 gmin gmax in
   let tol = (gmin +. gmax) *. 1e-3 in
   (bsearch tol (fun g -> p_value g > confidence) gmin mid,
    bsearch tol (fun g -> p_value g <= confidence) mid gmax)
@@ -351,9 +457,7 @@ let combine ocaml sundials name =
       (abbreviate name) (colorof name)
   done
 
-let merge paths =
-  let records = Hashtbl.create 100 in
-  List.iter (fun p -> ignore (load ~records:records p)) paths;
+let merge_raw records =
   print_string header_with_id;
   let records = Array.of_list (sorted_assocs records) in
   let n = Array.length records in
@@ -370,45 +474,90 @@ let merge paths =
     if id < n-1 then print_string "\n\n"
   done
 
-let merge_u paths =
-  let records = Hashtbl.create 100 in
-  List.iter (fun p -> ignore (load ~records:records p)) paths;
-  print_string 
+let merge_intv confidence records =
+  print_string header_with_id_and_intv;
+  let records = Array.of_list (sorted_assocs records) in
+  let n = Array.length records in
+  for id = 0 to n - 1 do
+    let name, record = records.(id) in
+    Printf.printf print_fmt_with_id_and_intv
+      id record.intv_reps record.ml_median record.c_median
+      record.intv_low record.intv_high name (colorof name)
+  done
 
-let summarize gnuplot ?confidence path =
-  let assocs = sorted_assocs (load path) in
-  (match confidence with
-   | Some conf ->
-      (print_string "# OCaml and C fields show median values.\n";
-       Printf.printf "# confidence level = %f\n" conf;
-       print_string (if gnuplot then raise (Invalid_argument "not implemented") (* header_with_id_and_range *)
-                     else header_for_humans_with_range))
-   | None ->
-      (print_string "# OCaml, C, and OCaml/C fields show median values.\n";
-       print_string (if gnuplot then header_with_id
-                     else header_for_humans)));
-  let summarize_record id (name, record) =
-    let median ls = (analyze ls).median in
-    let c = Array.of_list record.c_times in
-    let ml = Array.of_list record.ml_times in
-    let c_med  = median c in
-    let ml_med = median ml in
-    let ratio = median (Array.map2 (/.) ml c) in
-    match confidence with
-    | Some conf ->
-       let (low, high) = u_interval ~confidence:conf c ml in
-       if gnuplot
-       then raise (Invalid_argument "not implemented")
-       else Printf.printf print_fmt_for_humans_with_range
-                          record.reps ml_med c_med low high name
-    | None ->
-       if gnuplot
-       then Printf.printf print_fmt_for_gnuplot
-                          id record.reps ml_med c_med ratio name (colorof name)
-       else Printf.printf print_fmt_for_humans
-                          record.reps ml_med c_med ratio name
+let merge paths =
+  match load paths with
+  | RawData records -> merge_raw records
+  | IntvData (confidence, records) -> merge_intv confidence records
+
+let compute_intv confidence paths =
+  let records =
+    match load paths with
+    | RawData records -> records
+    | IntvData _ -> failwith "bad input: the files already contain intervals"
   in
-  ignore (iteri summarize_record assocs)
+  print_string header_with_id_and_intv;
+  let records = Array.of_list (sorted_assocs records) in
+  let n = Array.length records in
+  for id = 0 to n - 1 do
+    let name, record = records.(id) in
+    let ml = Array.of_list record.ml_times
+    and c = Array.of_list record.c_times in
+    let c_med = (analyze c).median
+    and ml_med = (analyze ml).median
+    and rlo, rhi = u_intv c ml
+    in
+    Printf.printf print_fmt_with_id_and_intv
+                  id record.reps c_med ml_med rlo rhi name (colorof name)
+  done
+
+let summarize_raw gnuplot records =
+  let assocs = sorted_assocs records in
+  Printf.printf "# The OCaml, C, and OCaml/C fields show median values.\n";
+  if gnuplot
+  then print_string header_with_id
+  else print_string header_for_humans;
+  let _ =
+    iteri (fun id (name, record) ->
+        let median ls = (analyze (Array.of_list ls)).median in
+        let c  = median record.c_times in
+        let ml = median record.ml_times in
+        let ratio = median (List.map2 (/.) record.ml_times record.c_times) in
+        if gnuplot
+        then Printf.printf print_fmt_for_gnuplot
+               id record.reps ml c ratio name (colorof name)
+        else Printf.printf print_fmt_for_humans
+               record.reps ml c ratio name)
+      assocs
+  in
+  ()
+
+let summarize_intv gnuplot confidence records =
+  let assocs = sorted_assocs records in
+  Printf.printf "# The fields marked med. show median values.\n";
+  if gnuplot
+  then print_string header_for_gnuplot_with_intv
+  else print_string header_for_humans_with_intv;
+  let _ =
+    iteri (fun id (name, record) ->
+        let c  = record.c_median in
+        let ml = record.ml_median in
+        let rlo = record.intv_low in
+        let rhi = record.intv_high in
+        if gnuplot
+        then Printf.printf print_fmt_for_gnuplot_with_intv
+               id record.intv_reps ml c rlo rhi name (colorof name)
+        else Printf.printf print_fmt_for_humans_with_intv
+               record.intv_reps ml c rlo rhi name)
+      assocs
+  in
+  ()
+
+let summarize gnuplot path =
+  match load [path] with
+  | RawData records -> summarize_raw gnuplot records
+  | IntvData (confidence, records) ->
+     summarize_intv gnuplot confidence records
 
 let recover_reps file =
   let isdir s =
@@ -424,13 +573,18 @@ let recover_reps file =
     )
     ["cvode"; "cvodes"; "ida"; "idas"; "kinsol"]
   ;
-  List.iter
-    (fun (name, record) ->
-       Printf.printf "echo \"NUM_REPS=%d\" > %s.reps;\n"
-         record.reps
-         (expand name)
-    )
-  @@ sorted_assocs @@ load file
+  let output name reps =
+      Printf.printf "echo \"NUM_REPS=%d\" > %s.reps;\n"
+                    reps
+                    (expand name)
+  in
+  match load [file] with
+  | RawData records ->
+     List.iter (fun (name, record) -> output name record.reps)
+     @@ sorted_assocs records
+  | IntvData (_, records) ->
+     List.iter (fun (name, record) -> output name record.intv_reps)
+     @@ sorted_assocs records
 
 let _ =
   if not !Sys.interactive
@@ -438,17 +592,12 @@ let _ =
     match Array.to_list Sys.argv with
     | [_;"-c";ocaml;sundials;name] ->
        combine ocaml sundials name
-    | _::"-s"::rest ->
-       (match rest with
-        | ["-u";conf;file] ->
-           summarize ~confidence:(float_of_string conf) false file
-        | ["-u";file] ->
-           summarize ~confidence:0.005 false file
-        | [file] ->
-           summarize false file
-        | _ -> print_string synopsis; exit 0)
+    | [_;"-s";file] ->
+       summarize false file
     | [_;"-S";file] ->
        summarize true file
+    | _::"-i"::conf::files ->
+       compute_intv conf files
     | _::"-m"::files -> merge files
     | [_;"-r";file] ->
        recover_reps file
