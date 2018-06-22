@@ -168,13 +168,14 @@ done
 crunch=`echo $0 | sed -e 's#plot\.sh#crunchperf#'`
 
 
+# ======================================================================
 if [ "x$STYLE" = xboxplot ]; then
 
 LABELCMD="('< $crunch -S $1') u (1):xticlabels(6) lt -3 notitle"
 
 if [ "$#" -eq 1 ]; then
     
-    BOXCMD="'$1' using (0):(\$6):(0.5):7 w boxplot \
+    BOXCMD="'$1' using (0):(\$6):(0.5):7 w boxplot fill solid border -1 \
                pointtype 2 lc rgb word(BOXCOLORS,1) \
               title 'OCaml time / C time (left axis)'"
     DOTCMD="'$1' using 1:(\$3/\$2) \
@@ -210,6 +211,7 @@ ${PAUSE}
 EOF
 
 else                            # if STYLE != boxplot, do a bar chart
+# ======================================================================
 
 LABELCMD="('< $crunch -S $1') u (1):xticlabels(6) linetype -3 notitle"
 if [ "$#" -eq 1 ]; then
