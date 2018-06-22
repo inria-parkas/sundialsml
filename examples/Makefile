@@ -1,11 +1,13 @@
 info:
 	@echo "Main targets (cvode, cvodes, ida, idas, kinsol):"
-	@echo "  all               compiles all tests without running them"
-	@echo "  tests.byte.log    run standard tests (byte code)"
-	@echo "  tests.opt.log     run standard tests (native code)"
-	@echo "  perf.byte.log     time standard tests (byte code)"
-	@echo "  perf.opt.log      time standard tests (native code)"
-	@echo "  ocaml             compile the other ocaml examples without running them"
+	@echo "  all                compiles all tests without running them"
+	@echo "  tests.byte.log     run standard tests (byte code)"
+	@echo "  tests.opt.log      run standard tests (native code)"
+	@echo "  perf.byte.log      time standard tests (byte code)"
+	@echo "  perf.opt.log       time standard tests (native code)"
+	@echo "  perf-intv.byte.log time standard tests (byte code, confidence interval)"
+	@echo "  perf-intv.opt.log  time standard tests (native code, confidence interval)"
+	@echo "  ocaml              compile the other ocaml examples without running them"
 
 include ../config
 
@@ -134,6 +136,14 @@ perf.byte.plot: perf.byte.log
 	TITLE=$(BYTE_TITLE) utils/plot.sh $<
 	@$(UTILS)/plot.sh --explain-vars
 
+perf-intv.opt.plot: perf-intv.opt.log
+	STYLE=interval TITLE=$(NATIVE_TITLE) $(UTILS)/plot.sh $<
+	@$(UTILS)/plot.sh --explain-vars
+
+perf-intv.byte.plot: perf-intv.byte.log
+	STYLE=interval TITLE=$(BYTE_TITLE) $(UTILS)/plot.sh $<
+	@$(UTILS)/plot.sh --explain-vars
+
 $(foreach t,$(PLOTTYPES),perf.opt.$t): perf.opt.log
 	TITLE=$(NATIVE_TITLE)				 \
 	    TERMINAL="$(subst perf.opt.,,$@) noenhanced" \
@@ -144,6 +154,22 @@ $(foreach t,$(PLOTTYPES),perf.opt.$t): perf.opt.log
 $(foreach t,$(PLOTTYPES),perf.byte.$t): perf.byte.log
 	TITLE=$(BYTE_TITLE) \
 	    TERMINAL="$(subst perf.byte.,,$@) noenhanced"	  \
+	    OUTPUT=$@ $(UTILS)/plot.sh $<
+	@printf "\nPlot saved in %s.\n" "$@"
+	@$(UTILS)/plot.sh --explain-vars
+
+$(foreach t,$(PLOTTYPES),perf-intv.opt.$t): perf-intv.opt.log
+	TITLE=$(NATIVE_TITLE)				 \
+	    STYLE=interval \
+	    TERMINAL="$(subst perf-intv.opt.,,$@) noenhanced" \
+	    OUTPUT=$@ $(UTILS)/plot.sh $<
+	@printf "\nPlot saved in %s.\n" "$@"
+	@$(UTILS)/plot.sh --explain-vars
+
+$(foreach t,$(PLOTTYPES),perf-intv.byte.$t): perf-intv.byte.log
+	TITLE=$(BYTE_TITLE) \
+	    STYLE=interval \
+	    TERMINAL="$(subst perf-intv.byte.,,$@) noenhanced"	  \
 	    OUTPUT=$@ $(UTILS)/plot.sh $<
 	@printf "\nPlot saved in %s.\n" "$@"
 	@$(UTILS)/plot.sh --explain-vars

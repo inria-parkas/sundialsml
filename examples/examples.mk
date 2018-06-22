@@ -298,6 +298,10 @@ perf.byte.plot: perf.byte.log
 	TITLE=$(BYTE_TITLE) $(UTILS)/plot.sh $<
 	@$(UTILS)/plot.sh --explain-vars
 
+perf-intv.opt.plot: perf-intv.opt.log
+	STYLE=interval TITLE=$(NATIVE_TITLE) $(UTILS)/plot.sh $<
+	@$(UTILS)/plot.sh --explain-vars
+
 $(foreach t,$(PLOTTYPES),perf.opt.$t): perf.opt.log
 	TITLE=$(NATIVE_TITLE)					\
 	    TERMINAL="$(subst perf.opt.,,$@) noenhanced"	\

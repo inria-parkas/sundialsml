@@ -20,6 +20,7 @@ if [ "x$1" = x ]; then
     envs
     echo "Other options:"
     echo "STYLE    - Set this to \"boxplot\" to get a box plot."
+    echo "           Set to \"interval\" to get error bars representing confidence intervals."
     echo "TITLE    - The title."
     echo "TERMINAL - x11, png, jpg, pdf, etc."
     echo "OUTPUT   - Output file, if applicable."
@@ -210,8 +211,39 @@ plot ${LABELCMD}, ${BOXCMD}, ${DOTCMD}, ${HORIZ_LINES}
 ${PAUSE}
 EOF
 
-else                            # if STYLE != boxplot, do a bar chart
 # ======================================================================
+elif [ "x$STYLE" = xinterval ]; then
+
+LABELCMD="('< $crunch -S $1') u (1):xticlabels(7) lt -3 notitle"
+
+BOXCMD="'$1' using 1:5:(0.4):(\$6-\$5):(pickcolor(\$8)) w boxxyerror \
+          fill solid lc rgb variable \
+          title 'OCaml time / C time (left axis)'"
+DOTCMD="'$1' using 1:(\$4/\$2) \
+           with points pointsize DOTSIZE pointtype DOTTYPE lc rgb 'black' \
+           title 'C time / rep (right axis)' axes x1y2"
+
+tee tmp.plt <<EOF | gnuplot
+$SET_COMMON
+
+# draw vertical lines
+set grid xtics lt 0 lw 1 lc rgb "#bbbbbb"
+stats '$1' noout
+set bars $w
+rgb(r,g,b) = int(r)*65536 + int(g)*256 + int(b)
+pickcolor(x) = ((x == 4) ? rgb(0xDE,0xEB,0xF7) : \
+		(x == 3) ? rgb(0x9E,0xCA,0xE1) : \
+		(x == 2) ? rgb(0xFC,0x92,0x72) : \
+			   rgb(0xDE,0x2D,0x26))
+
+# plot intervals as boxes, plot each data set's median c time / reps
+# with points
+plot ${LABELCMD}, ${BOXCMD}, ${DOTCMD}, ${HORIZ_LINES}
+${PAUSE}
+EOF
+
+# ======================================================================
+else                 # Default style: bar chart
 
 LABELCMD="('< $crunch -S $1') u (1):xticlabels(6) linetype -3 notitle"
 if [ "$#" -eq 1 ]; then
