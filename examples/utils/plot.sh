@@ -75,11 +75,11 @@ case x$FONT in
 esac
 
 case x$TERMINAL in
-    x)    SET_TERMINAL="set terminal x11"
+    x)    SET_TERMINAL="set terminal x11 noenhanced"
           PAUSE=${PAUSE:-"pause mouse"};;
     xwxt) SET_TERMINAL="set terminal wxt"
           PAUSE=${PAUSE:-"pause mouse"};;
-    xx11) SET_TERMINAL="set terminal x11"
+    xx11) SET_TERMINAL="set terminal x11 noenhanced"
           PAUSE=${PAUSE:-"pause mouse"};;
     *)    SET_TERMINAL="set terminal $TERMINAL";;
 esac
