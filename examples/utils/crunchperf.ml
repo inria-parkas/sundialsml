@@ -159,7 +159,7 @@ let scan_fmt_with_id =
    : ('a, 'use, 'b, 'c, 'd, 'e) format6)
 
 let header_with_id_and_intv =
-  "# ID\treps\tOCaml med.\tC med.\tC\tOCaml/C lower\tOCaml/C upper\tname\tcategory\n"
+  "# ID\treps\tOCaml med.\tC med.\tOCaml/C lower\tOCaml/C upper\tname\tcategory\n"
 let print_fmt_with_id_and_intv =
   ("%d\t%d\t%.2f\t%.2f\t%.2f\t%.2f\t%s\t%d\n"
    : ('a, 'use, 'b, 'c, 'd, 'e) format6)
@@ -186,7 +186,7 @@ let print_fmt_for_humans =
    : ('a, 'use, 'b, 'c, 'd, 'e) format6)
 
 let header_for_gnuplot_with_intv =
-  "# ID\treps\tOCaml med.\tC med.\tOCaml/C\tname\tcategory\n"
+  "# ID\treps\tOCaml med.\tC med.\tOCaml/C lower\tOCaml/C upper\tname\tcategory\n"
 let print_fmt_for_gnuplot_with_intv =
   ("%d\t%d\t%.2f\t%.2f\t%.2f\t%.2f\t%s\t%d\n"
    : ('a, 'use, 'b, 'c, 'd, 'e) format6)
