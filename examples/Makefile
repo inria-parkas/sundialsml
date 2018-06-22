@@ -125,6 +125,7 @@ reps: $(foreach s,$(SUBDIRS),$s/reps)
 C_TITLE=C ($(CC) $(filter-out -I% -DNDEBUG=1,$(CFLAGS)))
 NATIVE_TITLE='OCaml ($(OCAML_VERSION)) native code performance over $(C_TITLE)'
 BYTE_TITLE  ='OCaml ($(OCAML_VERSION)) byte code performance over $(C_TITLE)'
+CONF_TITLE=", `$(UTILS)/crunchperf --conf $(1)`% confidence"
 
 PLOTTYPES=jpg png pdf eps
 
@@ -137,11 +138,15 @@ perf.byte.plot: perf.byte.log
 	@$(UTILS)/plot.sh --explain-vars
 
 perf-intv.opt.plot: perf-intv.opt.log
-	STYLE=interval TITLE=$(NATIVE_TITLE) $(UTILS)/plot.sh $<
+	STYLE=interval					\
+	    TITLE=$(NATIVE_TITLE)$(call CONF_TITLE,$<)	\
+	    $(UTILS)/plot.sh $<
 	@$(UTILS)/plot.sh --explain-vars
 
 perf-intv.byte.plot: perf-intv.byte.log
-	STYLE=interval TITLE=$(BYTE_TITLE) $(UTILS)/plot.sh $<
+	STYLE=interval					\
+	    TITLE=$(BYTE_TITLE)$(call CONF_TITLE,$<)	\
+	    $(UTILS)/plot.sh $<
 	@$(UTILS)/plot.sh --explain-vars
 
 $(foreach t,$(PLOTTYPES),perf.opt.$t): perf.opt.log
@@ -159,17 +164,17 @@ $(foreach t,$(PLOTTYPES),perf.byte.$t): perf.byte.log
 	@$(UTILS)/plot.sh --explain-vars
 
 $(foreach t,$(PLOTTYPES),perf-intv.opt.$t): perf-intv.opt.log
-	TITLE=$(NATIVE_TITLE)				 \
-	    STYLE=interval \
-	    TERMINAL="$(subst perf-intv.opt.,,$@) noenhanced" \
+	TITLE=$(NATIVE_TITLE)$(call CONF_TITLE,$<)		\
+	    STYLE=interval					\
+	    TERMINAL="$(subst perf-intv.opt.,,$@) noenhanced"	\
 	    OUTPUT=$@ $(UTILS)/plot.sh $<
 	@printf "\nPlot saved in %s.\n" "$@"
 	@$(UTILS)/plot.sh --explain-vars
 
 $(foreach t,$(PLOTTYPES),perf-intv.byte.$t): perf-intv.byte.log
-	TITLE=$(BYTE_TITLE) \
-	    STYLE=interval \
-	    TERMINAL="$(subst perf-intv.byte.,,$@) noenhanced"	  \
+	TITLE=$(BYTE_TITLE)$(call CONF_TITLE,$<)		\
+	    STYLE=interval					\
+	    TERMINAL="$(subst perf-intv.byte.,,$@) noenhanced"	\
 	    OUTPUT=$@ $(UTILS)/plot.sh $<
 	@printf "\nPlot saved in %s.\n" "$@"
 	@$(UTILS)/plot.sh --explain-vars

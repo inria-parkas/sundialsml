@@ -42,6 +42,12 @@ crunchperf -r <file> | /bin/sh
      Recover the *.reps files from the output of a previous run of
      crunchperf -m.  Useful when you accidentally made the *.reps files
      out of date but still have the perf.*.log file around.
+
+crunchperf --conf <file>
+
+     Print the recorded confidence level: note this is the
+     complement of the P-value, so if <file> came from
+     crunchperf -i 0.05, then the reported confidence level is 95%.
 "
 
 (* Helpers *)
@@ -605,6 +611,12 @@ let recover_reps file =
      List.iter (fun (name, record) -> output name record.intv_reps)
      @@ sorted_assocs records
 
+let print_confidence file =
+  match load [file] with
+  | RawData _ -> failwith "bad input: no P-value recorded"
+  | IntvData (pvalue, records) ->
+     Printf.printf "%g" ((1. -. pvalue) *. 100.)
+
 let _ =
   if not !Sys.interactive
   then
@@ -620,6 +632,8 @@ let _ =
     | _::"-m"::files -> merge files
     | [_;"-r";file] ->
        recover_reps file
+    | [_;"--conf";file] ->
+       print_confidence file
     | _ ->
        print_string synopsis;
        exit 0
