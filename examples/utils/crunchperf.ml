@@ -396,9 +396,7 @@ let u_intv ?(confidence=0.005) xs ys =
   let gmin = (ymin /. xmax) /. eps
   and gmax = (ymax /. xmin) *. eps in
   (* We need at least one point where statistical significance fails.
-     We find this in two steps: first estimate the argmax of p_value,
-     then lower (tighten) the confidence level if the estimated max
-     p-value still doesn't go over the prescribed threshold.  *)
+     We estimate the argmax of p_value and check the P-value there.  *)
   let rank_sum_gt g =
     let (xr, yr) = rank_sums (scale g xs) ys in
     xr > yr
@@ -417,7 +415,9 @@ let u_intv ?(confidence=0.005) xs ys =
       if p_l > confidence then (mid_l, p_l)
       else if reps > 0 then
         find_high (reps - 1) (eps *. eps) mid_l mid_r
-      else failwith "Can't find a ratio where P-value > confidence; too many data points?"
+      else failwith
+             (Printf.sprintf "Can't find a ratio where P-value > confidence; too many data points?  Data = %s, %s"
+                (string_of_float_array xs) (string_of_float_array ys))
   in
   (* argmax p_value, max p_value *)
   let mid, confidence = find_high 2 1e-3 gmin gmax in
