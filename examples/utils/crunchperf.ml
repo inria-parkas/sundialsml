@@ -12,18 +12,20 @@ crunchperf -m <file1> <file2> ...
      Merge multiple log files into one.  Each <file*> should be the
      output of a previous run of crunchperf -c or crunchperf -m.
 
-crunchperf -i <confidence> <file1> <file2> ...
+crunchperf -i <P-value> <file1> <file2> ...
 
      Like crunchperf -m, but condense performance numbers to confidence
      intervals of performance ratios.  The computed interval gives the
      set of all g such that
 
-        P(observed data | P(g*C > O) = P(g*C < O)) >= c
+        P(observed data | P(g*C > O) = P(g*C < O)) >= p
 
      where O is the running time for OCaml code, C is the running time
-     for C code, c is the <confidence>, and P(X | Y) denotes conditional
+     for C code, p is the <P-value>, and P(X | Y) denotes conditional
      probability.  The usual caveats about hypothesis testing apply, such
      as the prosecutor's fallacy.
+
+     Note that p should be small, e.g. 0.05 for 95% confidence.
 
 crunchperf -s <file>
 
@@ -115,10 +117,6 @@ let get_lines path =
   mapi (fun i str -> { file = path; line = i+1; str = str })
   @@ List.rev !ret
 
-let comment_line =
-  let pat = Str.regexp "[ \t]*\\(#[^\n]*\\)?\n" in
-  fun line -> Str.string_match pat line.str 0
-
 let scan_line fmt cont line =
   try Scanf.sscanf line.str fmt cont
   with Scanf.Scan_failure msg ->
@@ -197,18 +195,24 @@ let print_fmt_for_humans_with_intv =
   ("%d\t%.2f\t%.2f\t%.2f\t%.2f\t%s\n"
    : ('a, 'use, 'b, 'c, 'd, 'e) format6)
 
-let headers =
+let fixed_headers =
   [header_with_id; header_with_id_and_intv;
    header_no_id; header_for_gnuplot; header_for_humans;
    header_for_gnuplot_with_intv; header_for_humans_with_intv]
 
-let remove_comment_lines lines =
-  List.filter (fun l ->
-    String.length l.str = 0
-    || l.str.[0] <> '#'
-    || List.mem l.str headers
-    )
-    lines
+let comment_line =
+  let pat = Str.regexp "[ \t]*\\(#[^\n]*\\)?\n" in
+  fun line -> Str.string_match pat line.str 0
+
+let freeform_comment_line =
+  let varset_pat = "[ \t]*\\(#[ \t]*[A-Z][a-zA-Z_0-9]* *=[^\n]*\\)?\n"
+  and fixed_headers = List.map Str.quote fixed_headers in
+  let pat = Str.regexp ("\\("
+                        ^ String.concat "\\|" (varset_pat::fixed_headers)
+                        ^ "\\)")
+  in
+  fun line -> comment_line line &&
+                not (Str.string_match pat line.str 0)
 
 (* Statistical Analysis *)
 type raw_record = { reps : int;
@@ -243,7 +247,7 @@ let load_raw_lines ~expect_ids records lines =
     )
     (List.filter (not % comment_line) lines)
 
-let load_intv_lines records lines =
+let load_intv_lines confidence records lines =
   let insert l _ reps cmed mlmed rlo rhi name _ =
     if Hashtbl.mem records name
     then parse_error l (name ^ " appears more than once")
@@ -252,10 +256,22 @@ let load_intv_lines records lines =
                                     c_median = cmed;
                                     intv_low = rlo;
                                     intv_high = rhi }
+  and record_confidence l c =
+    if c <> c then
+      failwith (Printf.sprintf "%s:%d: Recorded P-value parses as NaN"
+                  l.file l.line);
+    if !confidence = !confidence && !confidence <> c then
+      failwith (Printf.sprintf "%s:%d: Recorded P-value %g differs from previously loaded value %g"
+                  l.file l.line c !confidence);
+    confidence := c
   in
-  List.iter (fun line ->
-      scan_line scan_fmt_with_id_and_intv (insert line) line)
-      (List.filter (not % comment_line) lines)
+  match lines with
+  | [] -> ()
+  | l::lines ->
+     scan_line "# P = %f\n" (record_confidence l) l;
+     List.iter (fun line ->
+         scan_line scan_fmt_with_id_and_intv (insert line) line)
+       lines
 
 let load paths =
   let raw_records = Hashtbl.create 10
@@ -263,9 +279,9 @@ let load paths =
   and confidence = ref nan
   in
   List.iter (fun path ->
-      match remove_comment_lines @@ get_lines path with
+      match List.filter (not % freeform_comment_line) @@ get_lines path with
       | l::lines when l.str = header_with_id_and_intv ->
-          load_intv_lines intv_records lines
+          load_intv_lines confidence intv_records lines
       | l::lines when l.str = header_with_id ->
          load_raw_lines ~expect_ids:true raw_records lines
       | l::lines -> load_raw_lines ~expect_ids:false raw_records lines
@@ -476,6 +492,7 @@ let merge_raw records =
 
 let merge_intv confidence records =
   print_string header_with_id_and_intv;
+  Printf.printf "# P = %f\n" confidence;
   let records = Array.of_list (sorted_assocs records) in
   let n = Array.length records in
   for id = 0 to n - 1 do
@@ -497,6 +514,7 @@ let compute_intv confidence paths =
     | IntvData _ -> failwith "bad input: the files already contain intervals"
   in
   print_string header_with_id_and_intv;
+  Printf.printf "# P = %f\n" confidence;
   let records = Array.of_list (sorted_assocs records) in
   let n = Array.length records in
   for id = 0 to n - 1 do
@@ -535,6 +553,7 @@ let summarize_raw gnuplot records =
 let summarize_intv gnuplot confidence records =
   let assocs = sorted_assocs records in
   Printf.printf "# The fields marked med. show median values.\n";
+  Printf.printf "# Confidence level: %g%%\n" ((1. -. confidence) *. 100.);
   if gnuplot
   then print_string header_for_gnuplot_with_intv
   else print_string header_for_humans_with_intv;
@@ -597,7 +616,7 @@ let _ =
     | [_;"-S";file] ->
        summarize true file
     | _::"-i"::conf::files ->
-       compute_intv conf files
+       compute_intv (float_of_string conf) files
     | _::"-m"::files -> merge files
     | [_;"-r";file] ->
        recover_reps file
