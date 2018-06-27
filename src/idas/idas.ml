@@ -1071,6 +1071,10 @@ module Adjoint = struct (* {{{ *)
     external c_set_maxl : ('a, 'k) session -> int -> int -> unit
         = "c_idas_adj_spils_set_maxl"
 
+    (* Sundials < 3.0.0 *)
+    external c_set_max_restarts : ('a, 'k) session -> int -> int -> unit
+      = "c_idas_adj_spils_set_max_restarts"
+
     let old_set_maxl bs maxl =
       ls_check_spils (tosession bs);
       let parent, which = parent_and_which bs in
@@ -1080,6 +1084,11 @@ module Adjoint = struct (* {{{ *)
       ls_check_spils (tosession bs);
       let parent, which = parent_and_which bs in
       c_set_gs_type parent which t
+
+    let old_set_max_restarts bs t =
+      ls_check_spils (tosession bs);
+      let parent, which = parent_and_which bs in
+      c_set_max_restarts parent which t
 
     external c_set_jac_times
       : ('a, 'k) session -> int -> bool -> bool -> bool -> unit
@@ -1126,9 +1135,7 @@ module Adjoint = struct (* {{{ *)
     let solver (type s)
           ({ LinearSolver_impl.Iterative.rawptr;
              LinearSolver_impl.Iterative.solver;
-             LinearSolver_impl.Iterative.compat =
-               ({ LinearSolver_impl.Iterative.maxl;
-                  LinearSolver_impl.Iterative.gs_type } as compat) } as lsolver)
+             LinearSolver_impl.Iterative.compat; } as lsolver)
           ?jac_times_vec (prec_type, set_prec) bs nv =
       let session = tosession bs in
       let parent, which = parent_and_which bs in
@@ -1141,15 +1148,18 @@ module Adjoint = struct (* {{{ *)
         lsolver.check_prec_type <- check_prec_type;
         (match (solver : ('nd, 'nk, s) solver) with
          | Spgmr ->
-             c_spgmr parent which maxl;
-             (match gs_type with None -> () | Some t ->
+             c_spgmr parent which compat.maxl;
+             (match compat.gs_type with None -> () | Some t ->
                  c_set_gs_type parent which t);
-             compat.set_gs_type <- old_set_gs_type bs
+             (match compat.max_restarts with None -> () | Some t ->
+                 c_set_max_restarts parent which t);
+             compat.set_gs_type <- old_set_gs_type bs;
+             compat.set_max_restarts <- old_set_max_restarts bs
          | Spbcgs ->
-             c_spbcgs parent which maxl;
+             c_spbcgs parent which compat.maxl;
              compat.set_maxl <- old_set_maxl bs
          | Sptfqmr ->
-             c_sptfqmr parent which maxl;
+             c_sptfqmr parent which compat.maxl;
              compat.set_maxl <- old_set_maxl bs
          | _ -> raise Sundials.NotImplementedBySundialsVersion);
         session.ls_solver <- LinearSolver_impl.IterativeSolver lsolver;

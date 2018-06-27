@@ -510,8 +510,8 @@ let main () =
     | UseSpbcg -> begin
         (* Print header *)
         (match Sundials.sundials_version with
-         | 2,_,_ -> printf " -------\n";
-                    printf " | SPBCG |\n";
+         | 2,_,_ -> printf " -------";
+                    printf " \n| SPBCG |\n";
                     printf " -------\n"
          | _     -> printf " ------- \n";
                     printf "| SPBCGS |\n";

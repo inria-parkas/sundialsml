@@ -340,7 +340,7 @@ static int bandjacfn(
 	N_Vector tmp3)
 {
     CAMLparam0();
-    CAMLlocalN(args, 3);
+    CAMLlocalN(args, 2);
     CAMLlocal3(session, cb, bmat);
 
     WEAK_DEREF (session, *(value*)user_data);
@@ -353,15 +353,12 @@ static int bandjacfn(
 	Store_field(cb, 1, bmat);
     }
 
-    args[0] = caml_alloc_tuple(RECORD_CVODE_BANDRANGE_SIZE);
-    Store_field(args[0], RECORD_CVODE_BANDRANGE_MUPPER, Val_long(mupper));
-    Store_field(args[0], RECORD_CVODE_BANDRANGE_MLOWER, Val_long(mlower));
-    args[1] = cvode_make_jac_arg(t, y, fy,
+    args[0] = cvode_make_jac_arg(t, y, fy,
 				 cvode_make_triple_tmp(tmp1, tmp2, tmp3));
-    args[2] = Some_val(bmat);
+    args[1] = Some_val(bmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (Field(cb, 0), 3, args);
+    value r = caml_callbackN_exn (Field(cb, 0), 2, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }

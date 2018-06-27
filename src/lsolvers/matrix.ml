@@ -436,7 +436,7 @@ module Sparse = struct (* {{{ *)
     if Sundials_config.safe then begin
       if m <= 0 then invalid_arg "m";
       if n <= 0 then invalid_arg "n";
-      if nnz <= 0 then invalid_arg "nnz"
+      if nnz < 0 then invalid_arg "nnz"
     end;
     if Sundials_config.safe then
       (match Sundials.sundials_version, sformat with
@@ -588,10 +588,10 @@ module Sparse = struct (* {{{ *)
       if p < np then begin
         if !end_row then begin
           Format.pp_print_string fmt ";";
-          Format.pp_print_cut fmt ();
-          Format.pp_close_box fmt ()
+          Format.pp_close_box fmt ();
+          Format.pp_print_cut fmt ()
         end;
-        Format.pp_open_hovbox fmt 4;
+        Format.pp_open_hovbox fmt 0;
         Format.fprintf fmt "%s %2d: " idxrole j;
         Format.pp_print_space fmt ();
 

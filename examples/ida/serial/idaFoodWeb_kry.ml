@@ -414,7 +414,7 @@ let set_initial_profiles webdata c c' id =
 
 let spgmr, idaspgmr =
   match Sundials.sundials_version with
-  | 2,_,_ -> "Spgmr", "IDASPGMR"
+  | 2,_,_ -> "Spgmr", "IDASpgmr"
   | _ -> "SPGMR", "SPGMR"
 
 (* Print first lines of output (problem description) *)

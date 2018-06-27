@@ -237,18 +237,22 @@ module Iterative = struct (* {{{ *)
   type info = {
     mutable maxl             : int;
     mutable gs_type          : gramschmidt_type option;
+    mutable max_restarts     : int option;
 
     mutable set_maxl         : int -> unit;
     mutable set_gs_type      : gramschmidt_type -> unit;
+    mutable set_max_restarts : int -> unit;
     mutable set_prec_type    : preconditioning_type -> unit;
   }
 
   let info = {
     maxl             = 0;
     gs_type          = None;
+    max_restarts     = None;
 
     set_maxl         = (fun _ -> ());
     set_gs_type      = (fun _ -> ());
+    set_max_restarts = (fun _ -> ());
     set_prec_type    = (fun _ -> ());
   }
 

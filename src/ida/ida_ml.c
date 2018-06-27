@@ -274,7 +274,7 @@ static int jacfn (long int neq,
 
     dmat = Field(cb, 1);
     if (dmat == Val_none) {
-	Store_some(dmat, c_matrix_dense_wrap(jac, 0));
+	Store_some(dmat, c_matrix_dense_wrap(jac));
 	Store_field(cb, 1, dmat);
     }
 
@@ -303,7 +303,7 @@ static int bandjacfn (long int neq,
 		      N_Vector tmp3)
 {
     CAMLparam0 ();
-    CAMLlocalN (args, 3);
+    CAMLlocalN (args, 2);
     CAMLlocal3(session, cb, bmat);
 
     WEAK_DEREF (session, *(value*)user_data);
@@ -312,19 +312,16 @@ static int bandjacfn (long int neq,
 
     bmat = Field(cb, 1);
     if (bmat == Val_none) {
-	Store_some(bmat, c_matrix_band_wrap(jac, 0));
+	Store_some(bmat, c_matrix_band_wrap(jac));
 	Store_field(cb, 1, bmat);
     }
 
-    args[0] = caml_alloc_tuple(RECORD_IDA_BANDRANGE_SIZE);
-    Store_field(args[0], RECORD_IDA_BANDRANGE_MUPPER, Val_long(mupper));
-    Store_field(args[0], RECORD_IDA_BANDRANGE_MLOWER, Val_long(mlower));
-    args[1] = ida_make_jac_arg (t, coef, y, yp, res,
+    args[0] = ida_make_jac_arg (t, coef, y, yp, res,
 				ida_make_triple_tmp (tmp1, tmp2, tmp3));
-    args[2] = Some_val(bmat);
+    args[1] = Some_val(bmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (Field(cb, 0), 3, args);
+    value r = caml_callbackN_exn (Field(cb, 0), 2, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -1663,6 +1660,19 @@ CAMLprim value c_ida_spils_set_gs_type(value vida_mem, value vgstype)
     int flag = IDASpilsSetGSType(IDA_MEM_FROM_ML(vida_mem),
 				 lsolver_gs_type(vgstype));
     CHECK_FLAG("IDASpilsSetGSType", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value c_ida_spils_set_max_restarts(value vida_mem, value vmaxr)
+{
+    CAMLparam2(vida_mem, vmaxr);
+#if SUNDIALS_LIB_VERSION < 300
+    int flag = IDASpilsSetMaxRestarts(IDA_MEM_FROM_ML(vida_mem),
+				      Int_val(vmaxr));
+    CHECK_FLAG("IDASpilsSetMaxRestarts", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif

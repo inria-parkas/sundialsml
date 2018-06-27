@@ -765,7 +765,7 @@ static int bjacfn_nosens(
 
     dmat = Field(cb, 1);
     if (dmat == Val_none) {
-	Store_some(dmat, c_matrix_dense_wrap(jacb, 0));
+	Store_some(dmat, c_matrix_dense_wrap(jacb));
 	Store_field(cb, 1, dmat);
     }
 
@@ -806,7 +806,7 @@ static int bjacfn_withsens(
 
     dmat = Field(cb, 1);
     if (dmat == Val_none) {
-	Store_some(dmat, c_matrix_dense_wrap(jacb, 0));
+	Store_some(dmat, c_matrix_dense_wrap(jacb));
 	Store_field(cb, 1, dmat);
     }
 
@@ -851,7 +851,7 @@ static int bbandjacfn_nosens(
 
     bmat = Field(cb, 1);
     if (bmat == Val_none) {
-	Store_some(bmat, c_matrix_band_wrap(jacb, 0));
+	Store_some(bmat, c_matrix_band_wrap(jacb));
 	Store_field(cb, 1, bmat);
     }
 
@@ -895,7 +895,7 @@ static int bbandjacfn_withsens(
 
     bmat = Field(cb, 1);
     if (bmat == Val_none) {
-	Store_some(bmat, c_matrix_band_wrap(jacb, 0));
+	Store_some(bmat, c_matrix_band_wrap(jacb));
 	Store_field(cb, 1, bmat);
     }
 

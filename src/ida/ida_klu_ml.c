@@ -79,17 +79,13 @@ static int jacfn (realtype t, realtype coef,
     smat = Field(cb, 1);
 
     if (smat == Val_none) {
-#if SUNDIALS_LIB_VERSION >= 270
-	Store_some(smat, c_matrix_sparse_wrap(jac, 0, Val_int(jac->sparsetype)));
-#else
-	Store_some(smat, c_matrix_sparse_wrap(jac, 0, Val_int(0)));
-#endif
+	Store_some(smat, c_matrix_sparse_wrap(jac));
 	Store_field(cb, 1, smat);
 
 	args[1] = Some_val(smat);
     } else {
 	args[1] = Some_val(smat);
-	c_sparsematrix_realloc(args[1], 0);
+	ml_matrix_sparse_rewrap(args[1]);
     }
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -141,9 +137,9 @@ CAMLprim value c_ida_klu_reinit (value vida_mem, value vn, value vnnz)
     CAMLparam3(vida_mem, vn, vnnz);
 #if SUNDIALS_LIB_VERSION < 300
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
+    int nnz = Int_val(vnnz);
 
-    int flag = IDAKLUReInit (ida_mem, Int_val(vn), Int_val(vnnz),
-			     (nnz > 0) ? 1 : 2);
+    int flag = IDAKLUReInit (ida_mem, Int_val(vn), nnz, (nnz > 0) ? 1 : 2);
     CHECK_FLAG ("IDAKLUReInit", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));

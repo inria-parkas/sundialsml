@@ -417,7 +417,7 @@ static int jacfn(long int n,
     cb = Field (cb, 0);
     dmat = Field(cb, 1);
     if (dmat == Val_none) {
-	Store_some(dmat, c_matrix_dense_wrap(Jac, 0));
+	Store_some(dmat, c_matrix_dense_wrap(Jac));
 	Store_field(cb, 1, dmat);
     }
 
@@ -444,7 +444,7 @@ static int bandjacfn(long int N,
 		     N_Vector tmp3)
 {
     CAMLparam0();
-    CAMLlocalN(args, 3);
+    CAMLlocalN(args, 2);
     CAMLlocal3(session, cb, bmat);
 
     WEAK_DEREF (session, *(value*)user_data);
@@ -453,19 +453,16 @@ static int bandjacfn(long int N,
 
     bmat = Field(cb, 1);
     if (bmat == Val_none) {
-	Store_some(bmat, c_matrix_band_wrap(Jac, 0));
+	Store_some(bmat, c_matrix_band_wrap(Jac));
 	Store_field(cb, 1, bmat);
     }
 
-    args[0] = caml_alloc_tuple(RECORD_ARKODE_BANDRANGE_SIZE);
-    Store_field(args[0], RECORD_ARKODE_BANDRANGE_MUPPER, Val_long(mupper));
-    Store_field(args[0], RECORD_ARKODE_BANDRANGE_MLOWER, Val_long(mlower));
-    args[1] = arkode_make_jac_arg(t, y, fy,
+    args[0] = arkode_make_jac_arg(t, y, fy,
 				 arkode_make_triple_tmp(tmp1, tmp2, tmp3));
-    args[2] = Some_val(bmat);
+    args[1] = Some_val(bmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (Field(cb, 0), 3, args);
+    value r = caml_callbackN_exn (Field(cb, 0), 2, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -794,7 +791,7 @@ CAMLprim value c_arkode_dls_band (value varkode_mem, value vneqs,
 {
     CAMLparam5(varkode_mem, vneqs, vmupper, vmlower, vset_jac);
 #if SUNDIALS_LIB_VERSION < 300
-    void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem_neqs);
+    void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
     long neqs = Long_val (vneqs);
     int flag;
 
@@ -974,7 +971,7 @@ static int massfn(long int n,
     cb = Field (cb, 0);
     dmat = Field(cb, 1);
     if (dmat == Val_none) {
-	Store_some(dmat, c_matrix_dense_wrap(M, 0));
+	Store_some(dmat, c_matrix_dense_wrap(M));
 	Store_field(cb, 1, dmat);
     }
 
@@ -1008,7 +1005,7 @@ static int bandmassfn(long int N,
 
     bmat = Field(cb, 1);
     if (bmat == Val_none) {
-	Store_some(bmat, c_matrix_band_wrap(M, 0));
+	Store_some(bmat, c_matrix_band_wrap(M));
 	Store_field(cb, 1, bmat);
     }
 

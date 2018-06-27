@@ -303,7 +303,8 @@ module Iterative : sig (* {{{ *)
     the maximum dimension of the Krylov subspace (defaults to 5). The
     nvector argument is used as a template.
 
-    NB: [max_restarts] is ignored in Sundials < 3.0.0.
+    NB: [max_restarts] is ignored by CVODE, CVODES, and ARKODE
+        in Sundials < 3.0.0.
 
     @nocvode <node> SUNSPFGMR *)
   val spfgmr : ?maxl:int -> ?max_restarts:int
@@ -316,7 +317,8 @@ module Iterative : sig (* {{{ *)
     dimension of the Krylov subspace (defaults to 5). The nvector argument
     is used as a template.
 
-    NB: [max_restarts] is ignored in Sundials < 3.0.0.
+    NB: [max_restarts] is ignored by CVODE, CVODES, and ARKODE
+        in Sundials < 3.0.0.
 
     @nocvode <node> SUNSPGMR *)
   val spgmr : ?maxl:int -> ?max_restarts:int
@@ -569,7 +571,8 @@ module Iterative : sig (* {{{ *)
 
   (** Sets the number of GMRES restarts to allow.
 
-    NB: This feature is not supported by Sundials < 3.0.0.
+    NB: This feature is not supported by CVODE, CVODES, and ARKODE
+        in Sundials < 3.0.0.
 
     @nocvode <node> SUNSPGMRSetMaxRestarts
     @nocvode <node> SUNSPFGMRSetMaxRestarts *)

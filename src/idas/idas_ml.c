@@ -830,7 +830,7 @@ static int bjacfn_nosens(long int NeqB,
 
     dmat = Field(cb, 1);
     if (dmat == Val_none) {
-	Store_some(dmat, c_matrix_dense_wrap(JacB, 0));
+	Store_some(dmat, c_matrix_dense_wrap(JacB));
 	Store_field(cb, 1, dmat);
     }
 
@@ -874,7 +874,7 @@ static int bjacfn_withsens(long int NeqB,
 
     dmat = Field(cb, 1);
     if (dmat == Val_none) {
-	Store_some(dmat, c_matrix_dense_wrap(JacB, 0));
+	Store_some(dmat, c_matrix_dense_wrap(JacB));
 	Store_field(cb, 1, dmat);
     }
 
@@ -913,7 +913,7 @@ static int bbandjacfn_nosens(long int NeqB,
 			     N_Vector tmp3B)
 {
     CAMLparam0();
-    CAMLlocalN(args, 3);
+    CAMLlocalN(args, 2);
     CAMLlocal3(session, cb, bmat);
 
     WEAK_DEREF (session, *(value*)user_data);
@@ -922,19 +922,16 @@ static int bbandjacfn_nosens(long int NeqB,
 
     bmat = Field(cb, 1);
     if (bmat == Val_none) {
-	Store_some(bmat, c_matrix_band_wrap(JacB, 0));
+	Store_some(bmat, c_matrix_band_wrap(JacB));
 	Store_field(cb, 1, bmat);
     }
 
-    args[0] = caml_alloc_tuple(RECORD_IDAS_ADJ_BANDRANGE_SIZE);
-    Store_field(args[0], RECORD_IDAS_ADJ_BANDRANGE_MUPPER, Val_long(mupperb));
-    Store_field(args[0], RECORD_IDAS_ADJ_BANDRANGE_MLOWER, Val_long(mlowerb));
-    args[1] = idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
+    args[0] = idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
 			        ida_make_triple_tmp(tmp1B, tmp2B, tmp3B));
-    args[2] = Some_val(bmat);
+    args[1] = Some_val(bmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (Field(cb, 0), 3, args);
+    value r = caml_callbackN_exn (Field(cb, 0), 2, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -959,7 +956,7 @@ static int bbandjacfn_withsens(long int NeqB,
 			       N_Vector tmp3B)
 {
     CAMLparam0();
-    CAMLlocalN(args, 5);
+    CAMLlocalN(args, 4);
     CAMLlocal4(session, bsensext, cb, bmat);
     int ns;
 
@@ -971,27 +968,23 @@ static int bbandjacfn_withsens(long int NeqB,
 
     bmat = Field(cb, 1);
     if (bmat == Val_none) {
-	Store_some(bmat, c_matrix_band_wrap(JacB, 0));
+	Store_some(bmat, c_matrix_band_wrap(JacB));
 	Store_field(cb, 1, bmat);
     }
 
-    args[0] = caml_alloc_tuple(RECORD_IDAS_ADJ_BANDRANGE_SIZE);
-    Store_field(args[0], RECORD_IDAS_ADJ_BANDRANGE_MUPPER, Val_long(mupperb));
-    Store_field(args[0], RECORD_IDAS_ADJ_BANDRANGE_MLOWER, Val_long(mlowerb));
-
-    args[1] = idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
+    args[0] = idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
 			        ida_make_triple_tmp(tmp1B, tmp2B, tmp3B));
 
     ns = Int_val(Field(bsensext, RECORD_IDAS_BWD_SESSION_NUMSENSITIVITIES));
-    args[2] = IDAS_BSENSARRAY1_FROM_EXT (bsensext);
-    args[3] = IDAS_BSENSARRAY2_FROM_EXT (bsensext);
+    args[1] = IDAS_BSENSARRAY1_FROM_EXT (bsensext);
+    args[2] = IDAS_BSENSARRAY2_FROM_EXT (bsensext);
     idas_wrap_to_nvector_table (ns, args[2], yS);
     idas_wrap_to_nvector_table (ns, args[3], ypS);
 
-    args[4] = Some_val(bmat);
+    args[3] = Some_val(bmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (Field(cb, 0), 5, args);
+    value r = caml_callbackN_exn (Field(cb, 0), 4, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
@@ -2017,6 +2010,19 @@ CAMLprim value c_idas_adj_spils_set_gs_type(value vparent, value vwhich,
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value c_idas_adj_spils_set_max_restarts(value vparent, value vwhich,
+					         value vmaxr)
+{
+    CAMLparam3(vparent, vwhich, vmaxr);
+#if SUNDIALS_LIB_VERSION < 300
+    int flag = IDASpilsSetMaxRestartsB(IDA_MEM_FROM_ML(vparent),
+				       Int_val(vwhich), Int_val(vmaxr));
+    SCHECK_FLAG("IDASpilsSetMaxRestartsB", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
 
 CAMLprim value c_idas_adj_spils_set_eps_lin(value vparent, value vwhich,
 					    value eplifac)
@@ -2274,7 +2280,7 @@ CAMLprim value c_idas_adj_dls_band (value vparent_which, value vsizes,
 
     flag = IDABandB (ida_mem, which, nbeqs,
 		     Long_val (Field(vsizes, 1)),
-		     Long_val (Field(vsizes, 2));
+		     Long_val (Field(vsizes, 2)));
     SCHECK_FLAG ("IDABandB", flag);
     if (Bool_val (vset_jac)) {
 	if (Bool_val(vusesens)) {

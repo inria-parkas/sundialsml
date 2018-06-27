@@ -340,6 +340,10 @@ module Spils = struct (* {{{ *)
   external c_set_maxl : ('a, 'k) session -> int -> unit
     = "c_ida_spils_set_maxl"
 
+  (* Sundials < 3.0.0 *)
+  external c_set_max_restarts : ('a, 'k) session -> int -> unit
+    = "c_ida_spils_set_max_restarts"
+
   let old_set_maxl s maxl =
     ls_check_spils s;
     c_set_maxl s maxl
@@ -347,6 +351,10 @@ module Spils = struct (* {{{ *)
   let old_set_gs_type s t =
     ls_check_spils s;
     c_set_gs_type s t
+
+  let old_set_max_restarts s t =
+    ls_check_spils s;
+    c_set_max_restarts s t
 
   external c_set_jac_times : ('a, 'k) session -> bool -> bool -> unit
     = "c_ida_spils_set_jac_times"
@@ -379,9 +387,7 @@ module Spils = struct (* {{{ *)
   let solver (type s)
         ({ LinearSolver_impl.Iterative.rawptr;
            LinearSolver_impl.Iterative.solver;
-           LinearSolver_impl.Iterative.compat =
-             ({ LinearSolver_impl.Iterative.maxl;
-                LinearSolver_impl.Iterative.gs_type } as compat) } as lsolver)
+           LinearSolver_impl.Iterative.compat; } as lsolver)
         ?jac_times_vec (prec_type, set_prec) session nv =
     let jac_times_setup, jac_times_vec =
       match jac_times_vec with None -> None, None
@@ -393,14 +399,18 @@ module Spils = struct (* {{{ *)
       lsolver.check_prec_type <- check_prec_type;
       (match (solver : ('nd, 'nk, s) solver) with
        | Spgmr ->
-           c_spgmr session maxl;
-           (match gs_type with None -> () | Some t -> c_set_gs_type session t);
-           compat.set_gs_type <- old_set_gs_type session
+           c_spgmr session compat.maxl;
+           (match compat.gs_type with None -> ()
+                                    | Some t -> c_set_gs_type session t);
+           (match compat.max_restarts with None -> ()
+                                      | Some t -> c_set_max_restarts session t);
+           compat.set_gs_type <- old_set_gs_type session;
+           compat.set_max_restarts <- old_set_max_restarts session
        | Spbcgs ->
-           c_spbcgs session maxl;
+           c_spbcgs session compat.maxl;
            compat.set_maxl <- old_set_maxl session
        | Sptfqmr ->
-           c_sptfqmr session maxl;
+           c_sptfqmr session compat.maxl;
            compat.set_maxl <- old_set_maxl session
        | _ -> raise Sundials.NotImplementedBySundialsVersion);
       session.ls_solver <- LinearSolver_impl.IterativeSolver lsolver;

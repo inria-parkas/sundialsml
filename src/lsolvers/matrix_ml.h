@@ -209,7 +209,7 @@ CAMLprim value c_matrix_dense_wrap(DlsMat a);
 CAMLprim value c_matrix_band_wrap(DlsMat a);
 
 CAMLprim value c_matrix_sparse_wrap(SlsMat a);
-// see also: ml_matrix_sparse_rewrap
+CAMLprim value ml_matrix_sparse_rewrap(value vm);
 
 #endif
 

@@ -364,6 +364,7 @@ static bool matrix_band_realloc(sundials_ml_index n, sundials_ml_index mu,
     CAMLreturnT(bool, true);
 }
 
+#if SUNDIALS_LIB_VERSION >= 300
 static value ml_matrix_band_create_mat(sundials_ml_index n,
 	sundials_ml_index mu, sundials_ml_index ml, sundials_ml_index smu)
 {
@@ -390,6 +391,7 @@ static value ml_matrix_band_create_mat(sundials_ml_index n,
 
     CAMLreturn(vr);
 }
+#endif
 
 CAMLprim value ml_matrix_band_create(value vdims)
 {
@@ -695,6 +697,7 @@ CAMLprim value c_matrix_band_wrap(DlsMat a)
 {
     CAMLparam0();
     CAMLlocal3(vcptr, vcontent, vr);
+    CAMLlocal2(vdims, vpayload);
 
     vcontent = caml_ba_alloc_dims(BIGARRAY_FLOAT, 2, a->data, a->N, a->ldim);
 
@@ -712,9 +715,8 @@ CAMLprim value c_matrix_band_wrap(DlsMat a)
     Store_field(vpayload, RECORD_MAT_BANDDATA_DATA, vcontent);
     Store_field(vpayload, RECORD_MAT_BANDDATA_DIMS, vdims);
 
-
     vr = caml_alloc_tuple(RECORD_MAT_MATRIXCONTENT_SIZE);
-    Store_Field(va, RECORD_MAT_MATRIXCONTENT_PAYLOAD, vpayload);
+    Store_field(vr, RECORD_MAT_MATRIXCONTENT_PAYLOAD, vpayload);
     Store_field(vr, RECORD_MAT_MATRIXCONTENT_RAWPTR,  vcptr);
     Store_field(vr, RECORD_MAT_MATRIXCONTENT_VALID,   Val_bool(1));
 
@@ -749,10 +751,10 @@ static void finalize_mat_content_sparse(value vcptra)
     free(content);
 
 #elif SUNDIALS_LIB_VERSION >= 270
-    SparseDestroyMat(SLSMAT(va));
+    SparseDestroyMat(content);
 
 #else // SUNDIALS_LIB_VERSION < 270
-    DestroySparseMat(SLSMAT(va));
+    DestroySparseMat(content);
 
 #endif
 }
@@ -876,7 +878,7 @@ static bool matrix_sparse_create_vcptr(sundials_ml_smat_index m,
     *pvdata = caml_ba_alloc_dims(BIGARRAY_FLOAT, 1, a->data, a->NNZ);
 
     *pvcptr = caml_alloc_final(1, finalize_mat_content_sparse, 1, 20);
-    DLSMAT(*pvcptr) = a;
+    SLSMAT(*pvcptr) = a;
 
 #endif
 
@@ -1090,7 +1092,7 @@ CAMLprim value ml_matrix_sparse_dims(value vcptr)
 #if SUNDIALS_LIB_VERSION < 300
 static value sparse_wrap_payload(SlsMat a)
 {
-    CAMLparam0;
+    CAMLparam0();
     CAMLlocal4(vpayload, vidxvals, vidxptrs, vdata);
     int format;
 
@@ -1103,7 +1105,7 @@ static value sparse_wrap_payload(SlsMat a)
     vidxptrs = caml_ba_alloc_dims(BIGARRAY_INDEX, 1, a->colptrs, a->N + 1);
     format = CSC_MAT;
 #endif
-    vdata = caml_ba_alloc_dims(BIGARRAY_FLOAT, 1, content->data, content->NNZ);
+    vdata = caml_ba_alloc_dims(BIGARRAY_FLOAT, 1, a->data, a->NNZ);
 
     vpayload = caml_alloc_tuple(RECORD_MAT_SPARSEDATA_SIZE);
     Store_field(vpayload, RECORD_MAT_SPARSEDATA_IDXVALS, vidxvals);
@@ -1727,13 +1729,9 @@ static bool matrix_sparse_copy(value vcptra, value vb)
 #if SUNDIALS_LIB_VERSION >= 270
     A_indexptrs = A->indexptrs;
     A_indexvals = A->indexvals;
-    B_indexptrs = B->indexptrs;
-    B_indexvals = B->indexvals;
 #else
     A_indexptrs = A->rowvals;
     A_indexvals = A->colptrs;
-    B_indexptrs = B->rowvals;
-    B_indexvals = B->colptrs;
 #endif
 
     /* Perform operation */
@@ -1744,6 +1742,14 @@ static bool matrix_sparse_copy(value vcptra, value vb)
     if (B->NNZ < A_nz)
 	if (! matrix_sparse_resize(vb, A_nz, 0, 1)) // no-copy, free
 	    CAMLreturnT(bool, false);
+
+#if SUNDIALS_LIB_VERSION >= 270
+    B_indexptrs = B->indexptrs;
+    B_indexvals = B->indexvals;
+#else
+    B_indexptrs = B->rowvals;
+    B_indexvals = B->colptrs;
+#endif
 
     /* zero out B so that copy works correctly */
     zero_sparse(B);
@@ -1908,17 +1914,15 @@ CAMLprim value ml_matrix_sparse_rewrap(value vm)
 #else
     MAT_CONTENT_SPARSE_TYPE content;
     void *ba_data;
-    sundials_ml_smat_index *idxptrs, *idxvals;
-    int format;
 
-    vcptr = Field(va, RECORD_MAT_MATRIXCONTENT_RAWPTR);
+    vcptr = Field(vm, RECORD_MAT_MATRIXCONTENT_RAWPTR);
     content = MAT_CONTENT_SPARSE(vcptr);
 
-    vpayload = Field(va, RECORD_MAT_MATRIXCONTENT_PAYLOAD);
+    vpayload = Field(vm, RECORD_MAT_MATRIXCONTENT_PAYLOAD);
     ba_data = Caml_ba_data_val(Field(vpayload, RECORD_MAT_SPARSEDATA_DATA));
 
     // Has the underlying data array changed?
-    if (A->data <> ba_data)
+    if (content->data != ba_data)
 	vpayload = sparse_wrap_payload(content);
 #endif
 
@@ -2325,40 +2329,60 @@ static int csmat_custom_space(SUNMatrix A, long int *lenrw, long int *leniw)
 CAMLprim void ml_matrix_scale_add(value vc, value va, value vb)
 {
     CAMLparam3(vc, va, vb);
+#if SUNDIALS_LIB_VERSION >= 300
     if (SUNMatScaleAdd(Double_val(vc), MAT_VAL(va), MAT_VAL(vb)))
 	caml_failwith("SUNMatScaleAdd");
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn0;
 }
 
 CAMLprim void ml_matrix_scale_addi(value vc, value va)
 {
     CAMLparam2(vc, va);
+#if SUNDIALS_LIB_VERSION >= 300
     if (SUNMatScaleAddI(Double_val(vc), MAT_VAL(va)))
 	caml_failwith("SUNMatScaleAddI");
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn0;
 }
 
 CAMLprim void ml_matrix_matvec(value va, value vx, value vy)
 {
     CAMLparam3(va, vx, vy);
+#if SUNDIALS_LIB_VERSION >= 300
     if (SUNMatMatvec(MAT_VAL(va), NVEC_VAL(vx), NVEC_VAL(vy)))
 	caml_failwith("SUNMatMatvec");
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn0;
 }
 
 CAMLprim void ml_matrix_zero(value va)
 {
     CAMLparam1(va);
+#if SUNDIALS_LIB_VERSION >= 300
     if (SUNMatZero(MAT_VAL(va)))
 	caml_failwith("SUNMatZero");
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn0;
 }
 
 CAMLprim void ml_matrix_copy(value va, value vb)
 {
     CAMLparam2(va, vb);
+#if SUNDIALS_LIB_VERSION >= 300
     if (SUNMatCopy(MAT_VAL(va), MAT_VAL(vb)))
 	caml_failwith("SUNMatCopy");
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn0;
 }
 
@@ -2366,6 +2390,7 @@ CAMLprim value ml_matrix_space(value va)
 {
     CAMLparam1(va);
     CAMLlocal1(vr);
+#if SUNDIALS_LIB_VERSION >= 300
     long int lenrw, leniw;
 
     if (SUNMatSpace(MAT_VAL(va), &lenrw, &leniw))
@@ -2374,7 +2399,9 @@ CAMLprim value ml_matrix_space(value va)
     vr = caml_alloc_tuple(2);
     Store_field(vr, 0, Val_long(lenrw));
     Store_field(vr, 1, Val_long(leniw));
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn(vr);
 }
 

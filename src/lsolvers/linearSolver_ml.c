@@ -47,6 +47,8 @@
 #include <nvector/nvector_serial.h>
 #endif
 
+#include <sundials/sundials_iterative.h>
+
 #include <caml/mlvalues.h>
 #include <caml/alloc.h>
 #include <caml/memory.h>

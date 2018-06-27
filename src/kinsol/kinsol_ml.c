@@ -290,7 +290,7 @@ static int jacfn(
 
     dmat = Field(cb, 1);
     if (dmat == Val_none) {
-	Store_some(dmat, c_matrix_dense_wrap(Jac, 0));
+	Store_some(dmat, c_matrix_dense_wrap(Jac));
 	Store_field(cb, 1, dmat);
     }
 
@@ -315,7 +315,7 @@ static int bandjacfn(
 	N_Vector tmp2)
 {
     CAMLparam0();
-    CAMLlocalN(args, 3);
+    CAMLlocalN(args, 2);
     CAMLlocal3(session, cb, bmat);
 
     WEAK_DEREF (session, *(value*)user_data);
@@ -324,18 +324,15 @@ static int bandjacfn(
 
     bmat = Field(cb, 1);
     if (bmat == Val_none) {
-	Store_some(bmat, c_matrix_band_wrap(Jac, 0));
+	Store_some(bmat, c_matrix_band_wrap(Jac));
 	Store_field(cb, 1, bmat);
     }
 
-    args[0] = caml_alloc_tuple(RECORD_KINSOL_BANDRANGE_SIZE);
-    Store_field(args[0], RECORD_KINSOL_BANDRANGE_MUPPER, Val_long(mupper));
-    Store_field(args[0], RECORD_KINSOL_BANDRANGE_MLOWER, Val_long(mlower));
-    args[1] = kinsol_make_jac_arg(u, fu, kinsol_make_double_tmp(tmp1, tmp2));
-    args[2] = Some_val(bmat);
+    args[0] = kinsol_make_jac_arg(u, fu, kinsol_make_double_tmp(tmp1, tmp2));
+    args[1] = Some_val(bmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (Field(cb, 0), 3, args);
+    value r = caml_callbackN_exn (Field(cb, 0), 2, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, UNRECOVERABLE));
 }
@@ -962,6 +959,19 @@ CAMLprim value c_kinsol_session_finalize(value vdata)
 }
 
 /* boiler plate */
+
+CAMLprim value c_kinsol_spils_set_max_restarts(value vkin_mem, value vmaxr)
+{
+    CAMLparam2(vkin_mem, vmaxr);
+#if SUNDIALS_LIB_VERSION < 300
+    int flag = KINSpilsSetMaxRestarts(KINSOL_MEM_FROM_ML(vkin_mem),
+				      Int_val(vmaxr));
+    CHECK_FLAG("KINSpilsSetMaxRestarts", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
 
 CAMLprim value c_kinsol_spils_spgmr(value vkin_mem, value vmaxl)
 {

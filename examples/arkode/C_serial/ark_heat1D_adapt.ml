@@ -239,13 +239,17 @@ let main () =
 
   (* Initialize the integrator memory *)
   let jac = jac udata in
+  let linearity = match Sundials.sundials_version with
+                  | 2,_,_ -> Arkode.Nonlinear
+                  | _ -> Arkode.Linear true
+  in
   let arkode_mem = Arkode.(
     init
       (Implicit (f udata,
                  Newton Spils.(solver (pcg ~maxl:n_mesh y)
                                       ~jac_times_vec:(None, jac)
                                       prec_none),
-                 Linear true))
+                 linearity))
       (SStolerances (rtol, atol))
       t0
       y

@@ -32,8 +32,10 @@ CAMLprim value c_kinsol_superlumt_get_num_jac_evals(value vkin_mem)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 #else
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-#include "kinsol_ml.h"
+#include "../lsolvers/matrix_ml.h"
 #include "../lsolvers/linearSolver_ml.h"
+#include "kinsol_ml.h"
+#include "../nvectors/nvector_ml.h"
 
 #include <kinsol/kinsol.h>
 
@@ -62,17 +64,13 @@ static int jacfn(
     cb = Field (cb, 0);
     smat = Field(cb, 1);
     if (smat == Val_none) {
-#if SUNDIALS_LIB_VERSION >= 270
-	Store_some(smat, c_matrix_sparse_wrap(Jac, 0, Val_int(Jac->sparsetype)));
-#else
-	Store_some(smat, c_matrix_sparse_wrap(Jac, 0, Val_int(0)));
-#endif
+	Store_some(smat, c_matrix_sparse_wrap(Jac));
 	Store_field(cb, 1, smat);
 
 	args[1] = Some_val(smat);
     } else {
 	args[1] = Some_val(smat);
-	c_sparsematrix_realloc(args[1], 0);
+	ml_matrix_sparse_rewrap(args[1]);
     }
 
     /* NB: Don't trigger GC while processing this return value!  */

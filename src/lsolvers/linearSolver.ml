@@ -292,7 +292,7 @@ module Iterative = struct (* {{{ *)
     else c_set_gs_type rawptr solver gs_type
 
   let set_max_restarts { rawptr; solver; compat } max_restarts =
-    if in_compat_mode then raise Sundials.NotImplementedBySundialsVersion
+    if in_compat_mode then compat.set_max_restarts max_restarts
     else c_set_max_restarts rawptr solver max_restarts
 
   let set_prec_type { rawptr; solver; compat; check_prec_type } prec_type =
@@ -333,10 +333,13 @@ module Iterative = struct (* {{{ *)
     let compat =
       if in_compat_mode
       then begin
-          if max_restarts <> None
-          then raise Sundials.NotImplementedBySundialsVersion;
-          let r = { info with maxl = maxl; gs_type = gs_type } in
-          r.set_gs_type <- (fun t -> r.gs_type <- Some t); r
+          let r = { info with maxl = maxl;
+                              gs_type = gs_type;
+                              max_restarts = max_restarts;
+          } in
+          r.set_gs_type <- (fun t -> r.gs_type <- Some t);
+          r.set_max_restarts <- (fun t -> r.max_restarts <- Some t);
+          r
         end
       else begin
           (match max_restarts with
@@ -364,10 +367,12 @@ module Iterative = struct (* {{{ *)
     let compat =
       if in_compat_mode
       then begin
-          if max_restarts <> None
-          then raise Sundials.NotImplementedBySundialsVersion;
-          let r = { info with maxl = maxl; gs_type = gs_type } in
+          let r = { info with maxl = maxl;
+                              gs_type = gs_type;
+                              max_restarts = max_restarts;
+          } in
           r.set_gs_type <- (fun t -> r.gs_type <- Some t);
+          r.set_max_restarts <- (fun t -> r.max_restarts <- Some t);
           r
         end
       else begin

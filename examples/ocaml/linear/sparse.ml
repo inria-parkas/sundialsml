@@ -57,7 +57,7 @@ let main () =
   let a = S.(from_dense CSC 0.0 da) in
   printf "initially a=@\n%!";
   S.pp Format.std_formatter a;
-  printf "%a@\n" print_mat a;
+  printf "@\n%a@\n" print_mat a;
 
   S.scale_addi 1.0 a;
   printf "a + 1=@\n%a@\n" print_mat a;

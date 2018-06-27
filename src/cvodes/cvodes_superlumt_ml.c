@@ -63,17 +63,13 @@ static int jacfn_nosens( /* CVSlsSparseJacFnB */
 
     smat = Field(cb, 1);
     if (smat == Val_none) {
-#if SUNDIALS_LIB_VERSION >= 270
-	Store_some(smat, c_matrix_sparse_wrap(jacb, 0, Val_int(jacb->sparsetype)));
-#else
-	Store_some(smat, c_matrix_sparse_wrap(jacb, 0, Val_int(0)));
-#endif
+	Store_some(smat, c_matrix_sparse_wrap(jacb));
 	Store_field(cb, 1, smat);
 
 	args[1] = Some_val(smat);
     } else {
 	args[1] = Some_val(smat);
-	c_sparsematrix_realloc(args[1], 0);
+	ml_matrix_sparse_rewrap(args[1]);
     }
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -114,17 +110,13 @@ static int jacfn_withsens( /* CVSlsSparseJacFnBS */
 
     smat = Field(cb, 1);
     if (smat == Val_none) {
-#if SUNDIALS_LIB_VERSION >= 270
-	Store_some(smat, c_matrix_sparse_wrap(jacb, 0, Val_int(jacb->sparsetype)));
-#else
-	Store_some(smat, c_matrix_sparse_wrap(jacb, 0, Val_int(0)));
-#endif
+	Store_some(smat, c_matrix_sparse_wrap(jacb));
 	Store_field(cb, 1, smat);
 
 	args[2] = Some_val(smat);
     } else {
 	args[2] = Some_val(smat);
-	c_sparsematrix_realloc(args[2], 0);
+	ml_matrix_sparse_rewrap(args[2]);
     }
 
     /* NB: Don't trigger GC while processing this return value!  */

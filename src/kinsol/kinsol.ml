@@ -306,6 +306,10 @@ module Spils = struct (* {{{ *)
   external c_sptfqmr : ('a, 'k) session -> int -> unit
     = "c_kinsol_spils_sptfqmr"
 
+  (* Sundials < 3.0.0 *)
+  external c_set_max_restarts : ('a, 'k) session -> int -> unit
+    = "c_kinsol_spils_set_max_restarts"
+
   external c_set_jac_times_vec_fn : ('a, 'k) session -> bool -> unit
     = "c_kinsol_spils_set_jac_times_vec_fn"
 
@@ -316,6 +320,10 @@ module Spils = struct (* {{{ *)
   external c_spils_set_linear_solver
     : ('a, 'k) session -> ('a, 'k) LinearSolver_impl.Iterative.cptr -> unit
     = "c_kinsol_spils_set_linear_solver"
+
+  let old_set_max_restarts s t =
+    ls_check_spils s;
+    c_set_max_restarts s t
 
   let init_preconditioner solve setup session nv =
     c_set_preconditioner session (setup <> None);
@@ -333,27 +341,31 @@ module Spils = struct (* {{{ *)
   let solver (type s)
         ({ LinearSolver_impl.Iterative.rawptr;
            LinearSolver_impl.Iterative.solver;
-           LinearSolver_impl.Iterative.compat =
-             ({ LinearSolver_impl.Iterative.maxl;
-                LinearSolver_impl.Iterative.gs_type } as compat) } as ls)
+           LinearSolver_impl.Iterative.compat; } as ls)
         ?jac_times_vec (prec_type, set_prec) session nv =
     if in_compat_mode then begin
       let open LinearSolver_impl.Iterative in
       (match (solver : ('nd, 'nk, s) solver) with
        | Spgmr ->
-           c_spgmr session maxl;
+           c_spgmr session compat.maxl;
+           (match compat.max_restarts with
+            | None -> () | Some t -> c_set_max_restarts session t);
            compat.set_gs_type <- not_implemented;
-           compat.set_prec_type <- not_implemented
+           compat.set_prec_type <- not_implemented;
+           compat.set_max_restarts <- old_set_max_restarts session
        | Spfgmr ->
-           c_spfgmr session maxl;
+           c_spfgmr session compat.maxl;
+           (match compat.max_restarts with
+            | None -> () | Some t -> c_set_max_restarts session t);
            compat.set_gs_type <- not_implemented;
-           compat.set_prec_type <- not_implemented
+           compat.set_prec_type <- not_implemented;
+           compat.set_max_restarts <- old_set_max_restarts session
        | Spbcgs ->
-           c_spbcgs session maxl;
+           c_spbcgs session compat.maxl;
            compat.set_maxl <- not_implemented;
            compat.set_prec_type <- not_implemented
        | Sptfqmr ->
-           c_sptfqmr session maxl;
+           c_sptfqmr session compat.maxl;
            compat.set_maxl <- not_implemented;
            compat.set_prec_type <- not_implemented
        | _ -> raise Sundials.NotImplementedBySundialsVersion);

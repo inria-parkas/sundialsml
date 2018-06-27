@@ -76,17 +76,13 @@ static int jacfn (realtype t, realtype coef,
     smat = Field(cb, 1);
 
     if (smat == Val_none) {
-#if SUNDIALS_LIB_VERSION >= 270
-	Store_some(smat, c_matrix_sparse_wrap(jac, 0, Val_int(jac->sparsetype)));
-#else
-	Store_some(smat, c_matrix_sparse_wrap(jac, 0, Val_int(0)));
-#endif
+	Store_some(smat, c_matrix_sparse_wrap(jac));
 	Store_field(cb, 1, smat);
 
 	args[1] = Some_val(smat);
     } else {
 	args[1] = Some_val(smat);
-	c_sparsematrix_realloc(args[1], 0);
+	ml_matrix_sparse_rewrap(args[1]);
     }
 
     /* NB: Don't trigger GC while processing this return value!  */
