@@ -2930,7 +2930,7 @@ CAMLprim value c_arkode_dls_get_num_mass_setups(value varkode_mem)
     long int r;
 #if SUNDIALS_LIB_VERSION >= 300
     int flag = ARKDlsGetNumMassSetups(ARKODE_MEM_FROM_ML(varkode_mem), &r);
-    CHECK_FLAG("ARKDlsGetNumMassSolves", flag);
+    CHECK_FLAG("ARKDlsGetNumMassSetups", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
@@ -2947,8 +2947,8 @@ CAMLprim value c_arkode_dls_get_num_mass_solves(value varkode_mem)
     int flag = ARKDlsGetNumMassSolves(ARKODE_MEM_FROM_ML(varkode_mem), &r);
     CHECK_FLAG("ARKDlsGetNumMassSolves", flag);
 #else
-    int flag = ARKDlsGetNumMassEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
-    CHECK_FLAG("ARKDlsGetNumMassEvals", flag);
+    int flag = ARKodeGetNumMassSolves(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    CHECK_FLAG("ARKodeGetNumMassSolves", flag);
 #endif
 
     CAMLreturn(Val_long(r));
