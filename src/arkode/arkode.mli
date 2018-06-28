@@ -1962,11 +1962,6 @@ val print_integrator_stats  : ('d, 'k) session -> out_channel -> unit
     @noarkode <node> ARKodeGetNumLinSolvSetups *)
 val get_num_lin_solv_setups : ('d, 'k) session -> int
 
-(** Returns the number of calls made to the mass matrix solver.
-
-    @noarkode <node> ARKodeGetNumMassSolves *)
-val get_num_mass_solves     : ('d, 'k) session -> int
-
 (** Returns the number of nonlinear (functional or Newton) iterations performed.
 
     @noarkode <node> ARKodeGetNumNonlinSolvIters *)

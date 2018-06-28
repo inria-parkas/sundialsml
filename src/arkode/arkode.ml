@@ -844,16 +844,8 @@ module Mass = struct (* {{{ *)
     external c_get_num_mass_solves : 'k serial_session -> int
       = "c_arkode_dls_get_num_mass_solves"
 
-    let compat_get_num_mass_evals s =
-      match s.mass_callbacks with
-      | SlsKluMassCallback _ ->
-          c_klu_get_num_mass_evals s
-      | SlsSuperlumtMassCallback _ -> c_superlumt_get_num_mass_evals s
-      | _ -> c_get_num_mass_solves s
-
     let get_num_solves s =
       mass_check_direct s;
-      if in_compat_mode then compat_get_num_mass_evals s else
       c_get_num_mass_solves s
 
     external c_get_num_mass_mult : 'k serial_session -> int
@@ -1343,9 +1335,6 @@ external get_num_rhs_evals      : ('a, 'k) session -> int * int
 
 external get_num_lin_solv_setups : ('a, 'k) session -> int
     = "c_arkode_get_num_lin_solv_setups"
-
-external get_num_mass_solves     : ('d, 'k) session -> int
-    = "c_arkode_get_num_mass_solves"
 
 external get_num_err_test_fails : ('a, 'k) session -> int
     = "c_arkode_get_num_err_test_fails"

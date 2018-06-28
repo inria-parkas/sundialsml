@@ -1008,7 +1008,7 @@ let main () =
   printf "   Total RHS evals:  Fe = %d,  Fi = %d\n" nfe nfi;
   (match Sundials.sundials_version with
    | 2, _, _ ->
-      let nms = get_num_mass_solves arkode_mem in
+      let nms = Mass.Dls.get_num_solves arkode_mem in
       printf "   Total mass matrix solves = %d\n" nms;
    | _, _, _ ->
       let nmset = Mass.Dls.get_num_setups arkode_mem in
