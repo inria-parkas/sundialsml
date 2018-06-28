@@ -172,6 +172,7 @@ module Direct = struct (* {{{ *)
 
     let make ?ordering ~nthreads nvec mat =
       if not Sundials_config.superlumt_enabled
+         || (in_compat_mode && not Matrix.(Sparse.is_csc (unwrap mat)))
       then raise Sundials.NotImplementedBySundialsVersion;
       let cptr = c_superlumt nvec mat nthreads in
       let info =

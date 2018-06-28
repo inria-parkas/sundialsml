@@ -428,6 +428,10 @@ module Sparse : (* {{{ *)
     (** Return the matrix format. *)
     val sformat : 's t -> 's sformat
 
+    (** Returns true iff the matrix format is {!CSC}. It is essentially a
+        version of {!sformat} with less typing complications. *)
+    val is_csc : 's t -> bool
+
     (** [m, n = size a] returns the numbers of columns [m] and rows [n]
         of [a].
 

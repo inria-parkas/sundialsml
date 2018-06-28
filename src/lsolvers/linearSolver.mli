@@ -175,14 +175,17 @@ module Direct : sig (* {{{ *)
       The matrix is used internally after the linear solver is attached to a
       session.
 
+      NB: The {!Matrix.sparse.csr} format is only supported for
+          Sundials >= 3.0.0.
+
       @raise Sundials.NotImplementedBySundialsVersion Solver not available.
       @nocvode <node> SUNSuperLUMT *)
     val make :
       ?ordering:ordering
       -> nthreads:int
       -> 'k Nvector_serial.any
-      -> (Matrix.Sparse.csc, 'k) Matrix.sparse
-      -> (Matrix.Sparse.csc Matrix.Sparse.t, 'k, tag) serial_linear_solver
+      -> ('s, 'k) Matrix.sparse
+      -> ('s Matrix.Sparse.t, 'k, tag) serial_linear_solver
 
     (** Sets the ordering algorithm used to minimize fill-in.
 
@@ -195,15 +198,17 @@ module Direct : sig (* {{{ *)
   (** Creates a direct linear solver on sparse matrices using SuperLUMT.
     See {!Superlumt.make}.
 
+    NB: The {!Matrix.sparse.csr} format is only supported for
+        Sundials >= 3.0.0.
+
     @raise Sundials.NotImplementedBySundialsVersion Solver not available.
     @nocvode <node> SUNSuperLUMT *)
   val superlumt :
     ?ordering:Superlumt.ordering
     -> nthreads:int
     -> 'k Nvector_serial.any
-    -> (Matrix.Sparse.csc, 'k) Matrix.sparse
-    -> (Matrix.Sparse.csc Matrix.Sparse.t, 'k, Superlumt.tag)
-         serial_linear_solver
+    -> ('s, 'k) Matrix.sparse
+    -> ('s Matrix.Sparse.t, 'k, Superlumt.tag) serial_linear_solver
 
   (** Custom direct linear solvers. *)
   module Custom : sig (* {{{ *)

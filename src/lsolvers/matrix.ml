@@ -475,6 +475,11 @@ module Sparse = struct (* {{{ *)
 
   let sformat { payload = { sformat } } = sformat
 
+  let is_csc (type s) (mat : s t) =
+    match sformat mat with
+    | CSC -> true
+    | CSR -> false
+
   external c_rewrap : 's t -> 's data
     = "ml_matrix_sparse_rewrap"
 
