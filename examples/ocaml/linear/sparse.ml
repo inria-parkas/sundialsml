@@ -50,14 +50,10 @@ let main () =
   D.set da 2 1 (-9.0);
   D.set da 2 2 (-3.0);
 
-  printf "initially da=@\n%!";
-  D.pp Format.std_formatter da;
-  printf "@\n";
+  printf "initially da=@\n%a@\n%!" D.pp da;
 
   let a = S.(from_dense CSC 0.0 da) in
-  printf "initially a=@\n%!";
-  S.pp Format.std_formatter a;
-  printf "@\n%a@\n" print_mat a;
+  printf "initially a=@\n%a@\n%a@\n%!" S.pp a print_mat a;
 
   S.scale_addi 1.0 a;
   printf "a + 1=@\n%a@\n" print_mat a;

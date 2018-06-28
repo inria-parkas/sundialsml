@@ -93,7 +93,7 @@ module Dense = struct (* {{{ *)
     Format.pp_print_string fmt "]"
 
   let ppi ?(start="[") ?(stop="]") ?(sep=";") ?(indent=4) ?(itemsep=" ")
-          ?(item=fun f->Format.fprintf f "(%2d,%2d)=% -15e")
+          ?(item=fun f->Format.fprintf f "(%2d,%2d)=% -15e") ()
           fmt { payload = d; valid } =
     if check_valid && not valid then raise Invalidated;
     let ni, nj = Bigarray.Array2.dim2 d - 1, Bigarray.Array2.dim1 d - 1 in
@@ -287,7 +287,7 @@ module Band = struct (* {{{ *)
     Format.pp_print_string fmt "]"
 
   let ppi ?(start="[") ?(stop="]") ?(sep=";") ?(indent=4) ?(itemsep=" ")
-          ?(item=fun f->Format.fprintf f "(%2d,%2d)=% -15e")
+          ?(item=fun f->Format.fprintf f "(%2d,%2d)=% -15e") ()
           fmt { payload={data = d}; rawptr; valid } =
     if check_valid && not valid then raise Invalidated;
     let ni, nj = Bigarray.Array2.dim2 d - 1, Bigarray.Array2.dim1 d - 1 in
@@ -609,7 +609,7 @@ module Sparse = struct (* {{{ *)
 
   let ppi ?(start="[") ?(stop="]") ?(sep=";") ?(indent=4) ?(itemsep=" ")
           ?(rowcol=fun f->Format.fprintf f "%2d: ")
-          ?(item=fun f->Format.fprintf f "%2d=% -15e")
+          ?(item=fun f->Format.fprintf f "%2d=% -15e") ()
           fmt mat =
     if check_valid && not mat.valid then raise Invalidated;
     let m, n = size mat in
@@ -622,10 +622,10 @@ module Sparse = struct (* {{{ *)
       if p < np then begin
         if !end_row then begin
           Format.pp_print_string fmt sep;
-          Format.pp_print_cut fmt ();
-          Format.pp_close_box fmt ()
+          Format.pp_close_box fmt ();
+          Format.pp_print_cut fmt ()
         end;
-        Format.pp_open_hovbox fmt 4;
+        Format.pp_open_hovbox fmt 0;
         rowcol fmt j;
         Format.pp_print_space fmt ();
 

@@ -116,6 +116,7 @@ module Dense : (* {{{ *)
     val ppi : ?start:string -> ?stop:string -> ?sep:string
               -> ?indent:int -> ?itemsep:string
               -> ?item:(Format.formatter -> int -> int -> float -> unit)
+              -> unit
               -> Format.formatter -> t -> unit
 
     (** [get a i j] returns the value at row [i] and column [j] of [a].
@@ -265,6 +266,7 @@ module Band : (* {{{ *)
     val ppi : ?start:string -> ?stop:string -> ?sep:string
               -> ?indent:int -> ?itemsep:string
               -> ?item:(Format.formatter -> int -> int -> float -> unit)
+              -> unit
               -> Format.formatter -> t -> unit
 
     (** [get a i j] returns the value at row [i] and column [j] of [a].
@@ -462,6 +464,7 @@ module Sparse : (* {{{ *)
               -> ?indent:int -> ?itemsep:string
               -> ?rowcol:(Format.formatter -> int -> unit)
               -> ?item:(Format.formatter -> int -> float -> unit)
+              -> unit
               -> Format.formatter -> 's t -> unit
 
     (** [set_col a j idx] sets the data index of column [j] to [idx]. *)

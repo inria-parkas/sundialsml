@@ -116,6 +116,7 @@ module RealArray : sig (* {{{ *)
     {{:OCAML_DOC_ROOT(Format.html#VALfprintf)} fprintf}). *)
   val ppi : ?start:string -> ?stop:string -> ?sep:string
             -> ?item:(Format.formatter -> int -> float -> unit)
+            -> unit
             -> Format.formatter -> t -> unit
 
   (** Creates an array by copying the contents of a
@@ -231,6 +232,7 @@ module RealArray2 : sig (* {{{ *)
             -> ?stop:string -> ?rowstop:string
             -> ?sep:string -> ?rowsep:string
             -> ?item:(Format.formatter -> int -> int -> float -> unit)
+            -> unit
             -> Format.formatter -> t -> unit
 
   (** Creates a new array with the same contents as an existing one. *)
@@ -277,6 +279,7 @@ module LintArray : sig (* {{{ *)
     {{:OCAML_DOC_ROOT(Format.html#VALfprintf)} fprintf}). *)
   val ppi : ?start:string -> ?stop:string -> ?sep:string
             -> ?item:(Format.formatter -> int -> int -> unit)
+            -> unit
             -> Format.formatter -> t -> unit
 end (* }}} *)
 
@@ -322,6 +325,7 @@ module Roots : sig (* {{{ *)
       {{!r}Falling}. *)
   val ppi : ?start:string -> ?stop:string -> ?sep:string
             -> ?item:(Format.formatter -> int -> r -> unit)
+            -> unit
             -> Format.formatter -> t -> unit
 
   (** Returns [true] only if the specified element is either {{!r}Rising} or
@@ -424,6 +428,7 @@ module RootDirs : sig (* {{{ *)
       'E' (either) for {{!d}IncreasingOrDecreasing}. *)
   val ppi : ?start:string -> ?stop:string -> ?sep:string
             -> ?item:(Format.formatter -> int -> d -> unit)
+            -> unit
             -> Format.formatter -> t -> unit
 
   (** [copy n a] returns an array with [n] elements, initialized from

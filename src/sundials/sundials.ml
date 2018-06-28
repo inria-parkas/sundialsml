@@ -58,7 +58,7 @@ module RealArray = struct (* {{{ *)
   let length : t -> int = Array1.dim
 
   let ppi ?(start="[") ?(stop="]") ?(sep=";")
-          ?(item=fun f->Format.fprintf f "%2d=% -14e")
+          ?(item=fun f->Format.fprintf f "%2d=% -14e") ()
           fmt a =
     Format.pp_print_string fmt start;
     Format.pp_open_hovbox fmt 0;
@@ -72,8 +72,8 @@ module RealArray = struct (* {{{ *)
     Format.pp_close_box fmt ();
     Format.pp_print_string fmt stop
 
-  let pp fmt a = ppi fmt a
-    ~item:(fun fmt _ x -> Format.fprintf fmt "% -14e" x)
+  let pp fmt a = ppi ~item:(fun fmt _ x -> Format.fprintf fmt "% -14e" x)
+    () fmt a
 
   let blit_some src isrc dst idst len =
     if Sundials_config.safe &&
@@ -182,7 +182,7 @@ module RealArray2 = struct (* {{{ *)
 
   let ppi ?(start="[") ?(rowstart="[") ?(stop="]") ?(rowstop="]")
           ?(sep=";") ?(rowsep=";")
-          ?(item=fun f -> Format.fprintf f "(%2d,%2d)=% -14e")
+          ?(item=fun f -> Format.fprintf f "(%2d,%2d)=% -14e") ()
           fmt a =
     let d = unwrap a in
     let ni, nj = Array2.dim2 d - 1, Array2.dim1 d - 1 in
@@ -210,8 +210,8 @@ module RealArray2 = struct (* {{{ *)
     Format.pp_close_box fmt ();
     Format.pp_print_string fmt stop
 
-  let pp fmt a = ppi fmt a
-    ~item:(fun fmt _ _ x -> Format.fprintf fmt "% -14e" x)
+  let pp fmt a = ppi ~item:(fun fmt _ _ x -> Format.fprintf fmt "% -14e" x) ()
+      fmt a
 
   let get x i j = Array2.get (unwrap x) j i
   let set x i j = Array2.set (unwrap x) j i
@@ -380,7 +380,7 @@ module LintArray = struct (* {{{ *)
     Format.pp_print_string fmt "]"
 
   let ppi ?(start="[") ?(stop="]") ?(sep=";")
-          ?(item=fun fmt ->Format.fprintf fmt "%2d=% 6d")
+          ?(item=fun fmt ->Format.fprintf fmt "%2d=% 6d") ()
           fmt a =
     Format.pp_print_string fmt start;
     Format.pp_open_hovbox fmt 0;
@@ -470,7 +470,7 @@ module Roots = struct (* {{{ *)
           ?(item=fun fmt i e ->
                     Format.pp_print_int fmt i;
                     Format.pp_print_string fmt "=";
-                    Format.pp_print_string fmt (string_of_root e))
+                    Format.pp_print_string fmt (string_of_root e)) ()
           fmt a =
     Format.pp_print_string fmt start;
     Format.pp_open_hovbox fmt 0;
@@ -582,7 +582,7 @@ module RootDirs = struct (* {{{ *)
           ?(item=fun fmt i e ->
                     Format.pp_print_int fmt i;
                     Format.pp_print_string fmt "=";
-                    Format.pp_print_string fmt (string_of_rootdir e))
+                    Format.pp_print_string fmt (string_of_rootdir e)) ()
           fmt a =
     Format.pp_print_string fmt start;
     Format.pp_open_hovbox fmt 0;
