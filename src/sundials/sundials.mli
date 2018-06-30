@@ -67,6 +67,10 @@ val small_real : float
     @cvode <node5#s:types> Data Types *)
 val unit_roundoff : float
 
+(** Index values *)
+module Index = Sundials_config.Index
+type index_elt = Sundials_config.index_elt
+
 (** {2:exceptions Exceptions} *)
 
 (** Indicates a recoverable failure within a callback function.

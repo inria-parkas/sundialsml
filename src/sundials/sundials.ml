@@ -704,6 +704,8 @@ let klu_enabled = Sundials_config.klu_enabled
 let superlumt_enabled = Sundials_config.superlumt_enabled
 let nvecpthreads_enabled = Sundials_config.nvecpthreads_enabled
 let nvecopenmp_enabled = Sundials_config.nvecopenmp_enabled
+module Index = Sundials_config.Index
+type index_elt = Sundials_config.index_elt
 
 (* Let C code know about some of the values in this module, and obtain
    a few parameters from the C side.  *)

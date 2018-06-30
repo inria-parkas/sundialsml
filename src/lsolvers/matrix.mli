@@ -392,7 +392,7 @@ module Sparse : (* {{{ *)
 
     (** Array of row or column indices *)
     type index_array =
-      (Sundials_config.Index.t, Sundials_config.index_elt, Bigarray.c_layout)
+      (Sundials.Index.t, Sundials.index_elt, Bigarray.c_layout)
       Bigarray.Array1.t
 
     (** {3:basic Basic access} *)

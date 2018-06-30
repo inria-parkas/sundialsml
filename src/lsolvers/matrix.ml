@@ -412,10 +412,9 @@ module Sparse = struct (* {{{ *)
     | _ -> false
 
   type index_array =
-    (Sundials_config.Index.t, Sundials_config.index_elt, Bigarray.c_layout)
-    Bigarray.Array1.t
+    (Sundials.Index.t, Sundials.index_elt, Bigarray.c_layout) Bigarray.Array1.t
 
-  module Index = Sundials_config.Index
+  module Index = Sundials.Index
 
   (* Must correspond with matrix_ml.h:mat_sparse_data_index *)
   type 's data = {
