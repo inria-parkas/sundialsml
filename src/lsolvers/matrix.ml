@@ -189,9 +189,7 @@ module Dense = struct (* {{{ *)
   let clone { payload = dataa; valid } =
     if check_valid && not valid then raise Invalidated;
     let m, n = Bigarray.Array2.(dim2 dataa, dim1 dataa) in
-    let { payload = datab; rawptr = cptrb } as r = create m n in
-    Bigarray.Array2.blit dataa datab;
-    r
+    create m n
 
   let ops = {
     m_clone      = clone;
@@ -260,24 +258,26 @@ module Band = struct (* {{{ *)
     if check_valid && not valid then raise Invalidated;
     dims
 
-  let pp fmt { payload={data = d}; rawptr; valid } =
+  let pp fmt { payload = { data; dims = { n; mu; ml; smu } }; valid } =
     if check_valid && not valid then raise Invalidated;
-    let ni, nj = Bigarray.Array2.dim2 d - 1, Bigarray.Array2.dim1 d - 1 in
+
     Format.pp_print_string fmt "[";
     Format.pp_open_vbox fmt 0;
-    for i = 0 to ni do
+    for i = 0 to n - 1 do
 
       Format.pp_open_hovbox fmt 4;
-      for j = 0 to nj do
+      for j = 0 to n - 1 do
         if j > 0 then (
           Format.pp_print_string fmt " ";
           Format.pp_print_cut fmt ();
         );
-        Format.fprintf fmt "% -15e" d.{j, i}
+        if (i > j + ml) || (j > i + mu)
+        then Format.pp_print_string fmt "       ~       "
+        else Format.fprintf fmt "% -15e" data.{j, i - j + smu}
       done;
       Format.pp_close_box fmt ();
 
-      if i < ni then (
+      if i < n - 1 then (
         Format.pp_print_string fmt ";";
         Format.pp_print_cut fmt ();
       );
@@ -287,25 +287,28 @@ module Band = struct (* {{{ *)
     Format.pp_print_string fmt "]"
 
   let ppi ?(start="[") ?(stop="]") ?(sep=";") ?(indent=4) ?(itemsep=" ")
+          ?(empty="           ~           ")
           ?(item=fun f->Format.fprintf f "(%2d,%2d)=% -15e") ()
-          fmt { payload={data = d}; rawptr; valid } =
+          fmt { payload = { data; dims = { n; mu; ml; smu } }; valid } =
     if check_valid && not valid then raise Invalidated;
-    let ni, nj = Bigarray.Array2.dim2 d - 1, Bigarray.Array2.dim1 d - 1 in
+
     Format.pp_print_string fmt start;
     Format.pp_open_vbox fmt 0;
-    for i = 0 to ni do
+    for i = 0 to n - 1 do
 
       Format.pp_open_hovbox fmt indent;
-      for j = 0 to nj do
+      for j = 0 to n - 1 do
         if j > 0 then (
           Format.pp_print_string fmt itemsep;
           Format.pp_print_cut fmt ();
         );
-        item fmt i j d.{j, i}
+        if (i > j + ml) || (j > i + mu)
+        then Format.pp_print_string fmt empty
+        else item fmt i j data.{j, i - j + smu}
       done;
       Format.pp_close_box fmt ();
 
-      if i < ni then (
+      if i < n - 1 then (
         Format.pp_print_string fmt sep;
         Format.pp_print_cut fmt ();
       );
@@ -373,9 +376,7 @@ module Band = struct (* {{{ *)
 
   let clone { payload = { data = dataa; dims }; valid } =
     if check_valid && not valid then raise Invalidated;
-    let { payload = { data = datab } } as r = create dims in
-    Bigarray.Array2.blit dataa datab;
-    r
+    create dims
 
   let ops = {
     m_clone      = clone;
@@ -711,12 +712,7 @@ module Sparse = struct (* {{{ *)
     if check_valid && not valid then raise Invalidated;
     let m, n = c_size rawptr in
     let nnz, _ = c_dims rawptr in
-    let { payload = { idxvals = valsb; idxptrs = ptrsb; data = datab } } as r =
-      c_create m n nnz fmta in
-    Bigarray.Array1.blit valsa valsb;
-    Bigarray.Array1.blit ptrsa ptrsb;
-    Sundials.RealArray.blit dataa datab;
-    r
+    c_create m n nnz fmta
 
   let ops = {
     m_clone      = clone;
@@ -745,6 +741,9 @@ module ArrayDense = struct (* {{{ *)
 
   let make = Sundials.RealArray2.make
   let create = Sundials.RealArray2.create
+  let size = Sundials.RealArray2.size
+  let pp = Sundials.RealArray2.pp
+  let unwrap = Sundials.RealArray2.unwrap
   let get = Sundials.RealArray2.get
   let set = Sundials.RealArray2.set
 
@@ -797,9 +796,9 @@ module ArrayDense = struct (* {{{ *)
   let scale_addi c a =
     let ad = Sundials.RealArray2.unwrap a in
     let an, am = Bigarray.Array2.(dim1 ad, dim2 ad) in
-    for i = 0 to an - 1 do
-      for j =0 to am - 1 do
-        ad.{i, j} <- c *. ad.{i, j}
+    for j = 0 to am - 1 do
+      for i = 0 to an - 1 do
+        ad.{i, j} <- c *. ad.{i, j} +. (if i = j then 1. else 0.)
       done
     done
 
@@ -807,8 +806,8 @@ module ArrayDense = struct (* {{{ *)
     let ad, bd = Sundials.RealArray2.(unwrap a, unwrap b) in
     let an, am = Bigarray.Array2.(dim1 ad, dim2 ad) in
     let bn, bm = Bigarray.Array2.(dim1 bd, dim2 bd) in
-    if Sundials_config.safe then
-      if (am <> bm) || (an <> bn) then raise IncompatibleArguments;
+    if Sundials_config.safe && (am <> bm || an <> bn)
+    then raise IncompatibleArguments;
     for i = 0 to an - 1 do
       for j =0 to am - 1 do
         ad.{i, j} <- c *. ad.{i, j} +. bd.{i, j}
@@ -837,57 +836,178 @@ module ArrayDense = struct (* {{{ *)
 end (* }}} *)
 
 module ArrayBand = struct (* {{{ *)
-  type t = Sundials.RealArray2.t
 
   type smu = int
   type mu = int
   type ml = int
 
-  let make n smu ml v =
-    Sundials.RealArray2.make (smu + ml + 1) n v
+  type t = Sundials.RealArray2.t * (smu * mu * ml)
 
-  let create n smu ml =
-    Sundials.RealArray2.create (smu + ml + 1) n
+  let make ((smu, mu, ml) as dims) n v =
+    (Sundials.RealArray2.make (smu + ml + 1) n v, dims)
 
-  let get a smu i j =
+  let create ((smu, mu, ml) as dims) n =
+    (Sundials.RealArray2.create (smu + ml + 1) n, dims)
+
+  let size (a, _) = let (_, m) = Sundials.RealArray2.size a in m, m
+  let dims (_, dims) = dims
+
+  let get (a, (smu, _, _)) i j =
     Sundials.RealArray2.get a (i - j + smu) j
 
-  let set a smu i j v =
+  let set (a, (smu, _, _)) i j v =
     Sundials.RealArray2.set a (i - j + smu) j v
 
-  let update a smu i j f =
+  let update (a, (smu, _, _)) i j f =
     let k = i - j + smu in
     Sundials.RealArray2.set a k j (f (Sundials.RealArray2.get a k j))
 
-  external copy' : t -> t -> int * int * int * int -> unit
-      = "c_arraybandmatrix_copy"
+  let pp fmt (a, (smu, mu, ml)) =
+    let data = Sundials.RealArray2.unwrap a in
+    let _, n = Sundials.RealArray2.size a in
+    Format.pp_print_string fmt "[";
+    Format.pp_open_vbox fmt 0;
+    for i = 0 to n - 1 do
 
-  let blit a b a_smu b_smu copymu copyml
-      = copy' a b (a_smu, b_smu, copymu, copyml)
+      Format.pp_open_hovbox fmt 4;
+      for j = 0 to n - 1 do
+        if j > 0 then (
+          Format.pp_print_string fmt " ";
+          Format.pp_print_cut fmt ();
+        );
+        if (i > j + ml) || (j > i + mu)
+        then Format.pp_print_string fmt "       ~       "
+        else Format.fprintf fmt "% -15e" data.{j, i - j + smu}
+      done;
+      Format.pp_close_box fmt ();
 
-  external scale' : float -> t -> int * int * int -> unit
+      if i < n - 1 then (
+        Format.pp_print_string fmt ";";
+        Format.pp_print_cut fmt ();
+      );
+
+    done;
+    Format.pp_close_box fmt ();
+    Format.pp_print_string fmt "]"
+
+  let ppi ?(start="[") ?(stop="]") ?(sep=";") ?(indent=4) ?(itemsep=" ")
+          ?(empty="           ~           ")
+          ?(item=fun f->Format.fprintf f "(%2d,%2d)=% -15e") ()
+          fmt (a, (smu, mu, ml)) =
+    let data = Sundials.RealArray2.unwrap a in
+    let _, n = Sundials.RealArray2.size a in
+
+    Format.pp_print_string fmt start;
+    Format.pp_open_vbox fmt 0;
+    for i = 0 to n - 1 do
+
+      Format.pp_open_hovbox fmt indent;
+      for j = 0 to n - 1 do
+        if j > 0 then (
+          Format.pp_print_string fmt itemsep;
+          Format.pp_print_cut fmt ();
+        );
+        if (i > j + ml) || (j > i + mu)
+        then Format.pp_print_string fmt empty
+        else item fmt i j data.{j, i - j + smu}
+      done;
+      Format.pp_close_box fmt ();
+
+      if i < n - 1 then (
+        Format.pp_print_string fmt sep;
+        Format.pp_print_cut fmt ();
+      );
+
+    done;
+    Format.pp_close_box fmt ();
+    Format.pp_print_string fmt stop
+
+  let unwrap (a, dims) = Sundials.RealArray2.unwrap a
+
+  external copy'
+    : Sundials.RealArray2.t -> Sundials.RealArray2.t
+      -> int * int * int * int -> unit
+    = "c_arraybandmatrix_copy"
+
+  let set_to_zero (x, dims) =
+    Bigarray.Array2.fill (Sundials.RealArray2.unwrap x) 0.0
+
+  let blit (a, (a_smu, a_mu, a_ml)) (b, (b_smu, b_mu, b_ml))
+      = copy' a b (a_smu, b_smu, a_mu, a_ml)
+
+  external scale' : float -> Sundials.RealArray2.t -> int * int * int -> unit
       = "c_arraybandmatrix_scale"
 
-  let scale c a smu mu ml = scale' c a (mu, ml, smu)
+  let scale c (a, dims) = scale' c a dims
 
-  external add_identity : t -> int -> unit
+  external c_add_identity : smu -> Sundials.RealArray2.t -> unit
       = "c_arraybandmatrix_add_identity"
 
-  external matvec' : t -> int * int * int -> real_array -> real_array -> unit
-      = "c_arraybandmatrix_matvec"
+  let add_identity (x, (smu, _, _)) = c_add_identity smu x
 
-  let matvec a smu mu ml x y = matvec' a (mu, ml, smu) x y
+  external c_matvec
+    : Sundials.RealArray2.t -> int * int * int
+      -> real_array -> real_array -> unit
+    = "c_arraybandmatrix_matvec"
 
-  external gbtrf' : t -> int * int * int -> lint_array -> unit
-      = "c_arraybandmatrix_gbtrf"
+  let matvec (a, dims) x y = c_matvec a dims x y
 
-  let gbtrf a smu mu ml p = gbtrf' a (mu, ml, smu) p
+  external gbtrf'
+    : Sundials.RealArray2.t -> int * int * int -> lint_array -> unit
+    = "c_arraybandmatrix_gbtrf"
+
+  let gbtrf (a, dims) p = gbtrf' a dims p
 
   external gbtrs'
-      : t -> int * int -> lint_array -> real_array -> unit
-      = "c_arraybandmatrix_gbtrs"
+    : Sundials.RealArray2.t -> int * int * int -> lint_array -> real_array -> unit
+    = "c_arraybandmatrix_gbtrs"
 
-  let gbtrs a smu ml p b = gbtrs' a (smu, ml) p b
+  let gbtrs (a, dims) p b = gbtrs' a dims p b
+
+  let clone (a, dims) =
+    let m, n = Sundials.RealArray2.size a in
+    (Sundials.RealArray2.create m n, dims)
+
+  let scale_addi c (a, (smu, mu, ml)) =
+    let ad = Sundials.RealArray2.unwrap a in
+    let _, am = Sundials.RealArray2.size a in
+    for j = 0 to am - 1 do
+      for i = smu - mu to smu + ml do
+        ad.{j, i} <- c *. ad.{j, i}
+      done;
+      ad.{j, smu} <- ad.{j, smu} +. 1.
+    done
+
+  let scale_add c (a, (smu_a, mu_a, ml_a)) (b, (smu_b, mu_b, ml_b)) =
+    let ad, bd = Sundials.RealArray2.(unwrap a, unwrap b) in
+    let (an, am), (bn, bm) = Sundials.RealArray2.(size a, size b) in
+    if Sundials_config.safe && (am <> bm || mu_b > mu_a || ml_b > ml_a)
+    then raise IncompatibleArguments;
+    for j = 0 to bm - 1 do
+      for i = - mu_b to ml_b do
+        ad.{j, i + smu_a} <- c *. ad.{j, i + smu_a} +. bd.{j, i + smu_b}
+      done;
+    done
+
+  let space (a, _) =
+    let m, n = Sundials.RealArray2.size a in
+    (m * n, 3)
+
+  let ops = {
+    m_clone      = clone;
+
+    m_zero       = set_to_zero;
+
+    m_copy       = blit;
+
+    m_scale_add  = scale_add;
+
+    m_scale_addi = scale_addi;
+
+    m_matvec     = matvec;
+
+    m_space      = space;
+  }
 
 end (* }}} *)
 
@@ -921,6 +1041,8 @@ type ('s, 'nk) sparse =
   (standard, 's Sparse.t, Nvector_serial.data, [>Nvector_serial.kind] as 'nk) t
 
 type 'nk arraydense = (custom, ArrayDense.t, Sundials.RealArray.t, 'nk) t
+
+type 'nk arrayband = (custom, ArrayBand.t, Sundials.RealArray.t, 'nk) t
 
 external c_wrap : id -> 'content_cptr -> 'm -> cmat
   = "ml_matrix_wrap"
@@ -977,6 +1099,18 @@ let wrap_arraydense = wrap_custom ArrayDense.ops
 let arraydense ?m ?(i=0.0) n =
   let m = match m with Some m -> m | None -> n in
   wrap_arraydense (ArrayDense.make m n i)
+
+let wrap_arrayband = wrap_custom ArrayBand.ops
+
+let arrayband ?mu ?smu ?ml ?(i=0.0) n =
+  let mu = match mu, smu with
+           | None, None  -> 2
+           | Some mu, _  -> mu
+           | _, Some smu -> smu
+  in
+  let smu = match smu with Some smu -> smu | None -> mu in
+  let ml  = match ml  with Some ml  -> ml  | None -> mu in
+  wrap_custom ArrayBand.ops (ArrayBand.make (smu, mu, ml) n i)
 
 let get_ops { mat_ops } = mat_ops
 
@@ -1035,6 +1169,15 @@ let space ({ payload = a; mat_ops = { m_space } } as m) =
   match Sundials.sundials_version with
   | 2,_,_ -> m_space a
   | _ -> c_space m
+
+external print_dense : 'nk dense -> Sundials.Logfile.t -> unit
+    = "ml_matrix_print_dense"
+
+external print_band : 'nk band -> Sundials.Logfile.t -> unit
+    = "ml_matrix_print_band"
+
+external print_sparse : ('s, 'nk) sparse -> Sundials.Logfile.t -> unit
+    = "ml_matrix_print_sparse"
 
 (* Let C code know about some of the values in this module.  *)
 external c_init_module : exn array -> unit =

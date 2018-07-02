@@ -26,6 +26,10 @@
 (** Generic operations that all matrix types must implement. Failure is
     signalled by raising an exception.
 
+    There are two type variables:
+    - ['m] represents the matrix data manipulated by the operations;
+    - ['d] is the type of the vector arguments to [m_matvec].
+
     @nocvode <node> Description of the SUNMatrix module *)
 type ('m, 'd, 'k) matrix_ops = { (* {{{ *)
   m_clone     : 'm -> 'm;
@@ -79,7 +83,7 @@ module Dense : (* {{{ *)
         @nocvode <node> The SUNMatrix_Dense implementation *)
     type t
 
-    (** {3:basic Basic access} *)
+    (** {3:dense-basic Basic access} *)
 
     (** [make m n x] returns an [m] by [n] dense matrix with elements set
         to [x].
@@ -145,7 +149,7 @@ module Dense : (* {{{ *)
         @nocvode <node> SM_CONTENT_D *)
     val unwrap : t -> Sundials.real_array2
 
-    (** {3:ops Operations} *)
+    (** {3:dense-ops Operations} *)
 
     (** Operations on dense matrices. *)
     val ops : (t, Nvector_serial.data, [>Nvector_serial.kind] as 'k) matrix_ops
@@ -188,7 +192,7 @@ module Dense : (* {{{ *)
         @nocvode <node> SUNMatSpace_Dense *)
     val space : t -> int * int
 
-    (** {3:lowlevel Low-level details} *)
+    (** {3:dense-lowlevel Low-level details} *)
 
     (** Called internally when the corresponding value in the underlying
         library ceases to exist. Has no effect when
@@ -217,7 +221,7 @@ module Band : (* {{{ *)
         ml  : int;  (** Lower bandwidth. *)
       }
 
-    (** {3:basic Basic access} *)
+    (** {3:band-basic Basic access} *)
 
     (** Returns a band matrix with the given {!dimensions} and all elements
         initialized to the given value.
@@ -230,8 +234,9 @@ module Band : (* {{{ *)
         @nocvode <node> SUNBandMatrix *)
     val create : dimensions -> t
 
-    (** [m, n = size a] returns the numbers of columns [m] and rows [n]
-        of [a].
+    (** [m, n = size a] returns the numbers of rows [m] and columns [n] of [a].
+        
+        NB: [m] and [n] are always equal for band matrices.
 
         @nocvode <node> SM_ROWS_B
         @nocvode <node> SM_COLUMNS_B
@@ -259,12 +264,12 @@ module Band : (* {{{ *)
     (** Pretty-print a band matrix using the
         {{:OCAML_DOC_ROOT(Format.html)} Format} module.
         The defaults are: [start="\["], [stop="\]"], [sep=";"],
-        [indent=4], [itemsep=" "], and
+        [indent=4], [itemsep=" "], [empty="           ~           "] and
         [item=fun f r c->Format.fprintf f "(%2d,%2d)=% -15e" r c] (see
         {{:OCAML_DOC_ROOT(Format.html#VALfprintf)} fprintf}).
         The [indent] argument specifies the indent for wrapped rows. *)
     val ppi : ?start:string -> ?stop:string -> ?sep:string
-              -> ?indent:int -> ?itemsep:string
+              -> ?indent:int -> ?itemsep:string -> ?empty:string
               -> ?item:(Format.formatter -> int -> int -> float -> unit)
               -> unit
               -> Format.formatter -> t -> unit
@@ -312,9 +317,9 @@ module Band : (* {{{ *)
         @nocvode <node> SM_CONTENT_B *)
     val unwrap : t -> Sundials.real_array2
 
-    (** {3:ops Operations} *)
+    (** {3:band-ops Operations} *)
 
-    (** Operations on dense matrices. *)
+    (** Operations on band matrices. *)
 
     val ops : (t, Nvector_serial.data, [>Nvector_serial.kind]) matrix_ops
 
@@ -364,7 +369,7 @@ module Band : (* {{{ *)
         @nocvode <node> SUNMatSpace_Band *)
     val space : t -> int * int
 
-    (** {3:lowlevel Low-level details} *)
+    (** {3:band-lowlevel Low-level details} *)
 
     (** Called internally when the corresponding value in the underlying
         library ceases to exist. Has no effect when
@@ -395,7 +400,7 @@ module Sparse : (* {{{ *)
       (Sundials.Index.t, Sundials.index_elt, Bigarray.c_layout)
       Bigarray.Array1.t
 
-    (** {3:basic Basic access} *)
+    (** {3:sparse-basic Basic access} *)
 
     (** [make fmt m n nnz] returns an [m] by [n] sparse matrix in the
         specified format with a potential for [nnz] non-zero elements.
@@ -526,9 +531,9 @@ module Sparse : (* {{{ *)
         @nocvode <node> SUNSparseMatrix_Reallocate *)
     val resize : ?nnz:int -> 's t -> unit
 
-    (** {3:ops Operations} *)
+    (** {3:sparse-ops Operations} *)
 
-    (** Operations on dense matrices. *)
+    (** Operations on sparse matrices. *)
     val ops : ('s t, Nvector_serial.data, [>Nvector_serial.kind]) matrix_ops
 
     (** [scale_add c A B] calculates $A = cA + B$.
@@ -587,7 +592,7 @@ module Sparse : (* {{{ *)
         @nocvode <node> SUNMatSpace_Sparse *)
     val space : 's t -> int * int
 
-    (** {3:lowlevel Low-level details} *)
+    (** {3:sparse-lowlevel Low-level details} *)
 
     (** [set_rowval a idx i] sets the [idx]th row to [i]. *)
     val set_rowval : csc t -> int -> int -> unit
@@ -627,18 +632,26 @@ module ArrayDense : sig (* {{{ *)
       @cvode <node9#ss:dense> newDenseMat *)
   type t = Sundials.RealArray2.t
 
-  (** {3:basic Basic access} *)
+  (** {3:arraydense-basic Basic access} *)
 
-  (** [make m n x] returns an [m] by [n] dense matrix with elements set
+  (** [make m n x] returns an [m] by [n] array dense matrix with elements set
       to [x].
 
       @cvode <node9#ss:dense> newDenseMat *)
   val make : int -> int -> float -> t
 
-  (** [create m n] returns an uninitialized [m] by [n] dense matrix.
+  (** [create m n] returns an uninitialized [m] by [n] array dense matrix.
 
        @cvode <node9#ss:dense> newDenseMat *)
   val create : int -> int -> t
+
+  (** [m, n = size a] returns the numbers of columns [m] and rows [n]
+      of [a]. *)
+  val size : t -> int * int
+
+  (** Pretty-print an array dense matrix using the
+      {{:OCAML_DOC_ROOT(Format.html)} Format} module. *)
+  val pp : Format.formatter -> t -> unit
 
   (** [get a i j] returns the value at row [i] and column [j] of [a]. *)
   val get : t -> int -> int -> float
@@ -650,7 +663,11 @@ module ArrayDense : sig (* {{{ *)
       to [f v]. *)
   val update : t -> int -> int -> (float -> float) -> unit
 
-  (** {3:ops Operations} *)
+  (** Direct access to the underlying storage array, which is accessed
+      column first (unlike in {!get}). *)
+  val unwrap : t -> Sundials.real_array2
+
+  (** {3:arraydense-ops Operations} *)
 
   (** Operations on array-based dense matrices. *)
   val ops : (t, Sundials.RealArray.t, 'k) matrix_ops
@@ -669,7 +686,7 @@ module ArrayDense : sig (* {{{ *)
 
   (** Fills the matrix with zeros.
 
-      @cvode <node9#ss:dense> setToZero *)
+      @cvode <node9#ss:dense> SetToZero *)
   val set_to_zero    : t -> unit
 
   (** [blit src dst] copies the contents of [src] into [dst]. Both
@@ -682,7 +699,7 @@ module ArrayDense : sig (* {{{ *)
       [lrw] realtype words and [liw] integer words. *)
   val space : t -> int * int
 
-  (** {3:calcs Calculations} *)
+  (** {3:arraydense-calcs Calculations} *)
 
   (** Increments a square matrix by the identity matrix.
 
@@ -757,6 +774,10 @@ end (* }}} *)
     @cvode <node9#ss:band> The BAND Module *)
 module ArrayBand : sig (* {{{ *)
 
+  type smu = int (** Storage upper-bandwidth. *)
+  type mu  = int (** Upper-bandwidth. *)
+  type ml  = int (** Lower-bandwidth. *)
+
   (** A band matrix accessible directly through a
       {{:OCAML_DOC_ROOT(Bigarray.Array2.html)} Bigarray}.
 
@@ -769,94 +790,135 @@ module ArrayBand : sig (* {{{ *)
       [a.{i - j + smu, j}].
 
       @cvode <node9#ss:band> newBandMat *)
-  type t = Sundials.RealArray2.t
+  type t = Sundials.RealArray2.t * (smu * mu * ml)
 
-  type smu = int (** Storage upper-bandwidth. *)
+  (** {3:arrayband-basic Basic access} *)
 
-  type mu = int  (** Upper-bandwidth. *)
-  type ml = int  (** Lower-bandwidth. *)
+  (** [make (smu, mu, ml) n v] returns an [n] by [n] band matrix with
+      storage upper bandwidth [smu], upper bandwidth [sm],
+      lower half-bandwidth [ml], and all elements initialized to [v].
 
-  (** {4 Basic access} *)
-
-  (** [create n smu ml] returns an [n] by [n] band matrix with
-      storage upper bandwidth [smu] and lower half-bandwidth [ml].
       If the result will not be LU factored then
       {% $\mathtt{smu} = \mathtt{mu}$ %}, otherwise
       {% $\mathtt{smu} = \min(\mathtt{n}-1, \mathtt{mu} + \mathtt{ml})$ %}.
       The extra space is used to store U after a call to {!gbtrf}.
 
       @cvode <node9#ss:band> newBandMat *)
-  val create : int -> smu -> ml -> t
+  val make : smu * mu * ml -> int -> float -> t
 
-  (** [get a smu i j] returns the value at row [i] and column [j] of [a].
-      [smu] is the storage upper bandwidth. Only rows and columns
-      satisfying {% $\mathtt{i} \leq \mathtt{j} + \mathtt{ml}$ %} and
+  (** [create smu ml n] returns an uninitialized [n] by [n] band matrix with
+      storage upper bandwidth [smu] and lower half-bandwidth [ml].
+
+      @cvode <node9#ss:band> newBandMat *)
+  val create : smu * mu * ml -> int -> t
+
+  (** [m, n = size a] returns the numbers of rows [m] and columns [n] of [a].
+
+      NB: [m] and [n] are always equal for band matrices. *)
+  val size : t -> int * int
+
+  (** Returns the dimensions of an array band matrix. *)
+  val dims : t -> smu * mu * ml
+
+  (** Pretty-print a band matrix using the
+      {{:OCAML_DOC_ROOT(Format.html)} Format} module. *)
+  val pp : Format.formatter -> t -> unit
+
+  (** Pretty-print an array band matrix using the
+      {{:OCAML_DOC_ROOT(Format.html)} Format} module.
+      The defaults are: [start="\["], [stop="\]"], [sep=";"],
+      [indent=4], [itemsep=" "], [empty="           ~           "] and
+      [item=fun f r c->Format.fprintf f "(%2d,%2d)=% -15e" r c] (see
+      {{:OCAML_DOC_ROOT(Format.html#VALfprintf)} fprintf}).
+      The [indent] argument specifies the indent for wrapped rows. *)
+  val ppi : ?start:string -> ?stop:string -> ?sep:string
+            -> ?indent:int -> ?itemsep:string -> ?empty:string
+            -> ?item:(Format.formatter -> int -> int -> float -> unit)
+            -> unit
+            -> Format.formatter -> t -> unit
+
+  (** [get a i j] returns the value at row [i] and column [j] of [a].
+      Only rows and columns satisfying
+      {% $\mathtt{i} \leq \mathtt{j} + \mathtt{ml}$ %} and
       {% $\mathtt{j} \leq \mathtt{i} + \mathtt{smu}$ %} are valid. *)
-  val get : t -> smu -> int -> int -> float
+  val get : t -> int -> int -> float
 
-  (** [set a smu i j v] sets the value at row [i] and column [j] of [a]
-      to [v]. [smu] is the storage upper bandwidth. Only rows and columns
-      satisfying {% $\mathtt{i} \leq \mathtt{j} + \mathtt{ml}$ %} and
+  (** [set a i j v] sets the value at row [i] and column [j] of [a]
+      to [v]. Only rows and columns satisfying
+      {% $\mathtt{i} \leq \mathtt{j} + \mathtt{ml}$ %} and
       {% $\mathtt{j} \leq \mathtt{i} + \mathtt{smu}$ %} are valid. *)
-  val set : t -> smu -> int -> int -> float -> unit
+  val set : t -> int -> int -> float -> unit
 
-  (** [update a smu i j f] sets the value at row [i] and column [j] of [a]
-      to [f v]. [smu] is the storage upper bandwidth. Only rows and columns
-      satisfying {% $\mathtt{i} \leq \mathtt{j} + \mathtt{ml}$ %} and
+  (** [update a i j f] sets the value at row [i] and column [j] of [a]
+      to [f v]. Only rows and columns satisfying
+      {% $\mathtt{i} \leq \mathtt{j} + \mathtt{ml}$ %} and
       {% $\mathtt{j} \leq \mathtt{i} + \mathtt{smu}$ %} are valid. *)
-  val update : t -> smu -> int -> int -> (float -> float) -> unit
+  val update : t -> int -> int -> (float -> float) -> unit
 
-  (** {4 Calculations} *)
+  (** Direct access to the underlying storage array, which is accessed
+      column first (unlike in {!get}). *)
+  val unwrap : t -> Sundials.real_array2
+
+  (** {3:arrayband-ops Operations} *)
+
+  (** Operations on array-based band matrices. *)
+  val ops : (t, Sundials.RealArray.t, 'k) matrix_ops
+
+  (** [scale_add c a b] calculates $A = cA + B$.
+
+      NB: Unlike the {!Band.scale_add} operation, this operation raises an
+      exception if [b] has a greater bandwidth than [a], i.e., it never
+      resizes [a]. *)
+  val scale_add : float -> t -> t -> unit
+
+  (** [scale_addi ml c A] calculates $A = cA + I$. *)
+  val scale_addi : float -> t -> unit
+
+  (** The call [matvec a x y] computes the matrix-vector product $y = Ax$.
+
+      @nocvode <node9#ss:band> bandMatvec *)
+  val matvec : t -> Sundials.RealArray.t -> Sundials.RealArray.t -> unit
+
+  (** Fills the matrix with zeros.
+
+      @nocvode <node9> SetToZero *)
+  val set_to_zero : t -> unit
+
+  (** [blit src dst] copies the contents of [src] into [dst].
+
+      @cvode <node9#ss:band> bandCopy *)
+  val blit : t -> t -> unit
+
+  (** [lrw, liw = space a] returns the storage requirements of [a] as
+      [lrw] realtype words and [liw] integer words. *)
+  val space : t -> int * int
+
+  (** {3:arrayband-calcs Calculations} *)
 
   (** Increment a square matrix by the identity matrix.
 
       @cvode <node9#ss:band> bandAddIdentity *)
-  val add_identity : t -> smu -> unit
+  val add_identity : t -> unit
 
-  (** The call [matvec a smu mu ml x y] computes the matrix-vector product
-      $y = Ax$.
-
-      @nocvode <node9#ss:band> bandMatvec
-      @since 2.6.0 *)
-  val matvec : t -> smu -> mu -> ml
-                -> Sundials.RealArray.t -> Sundials.RealArray.t -> unit
-
-  (** [blit src dst src_smu dst_smu copy_mu copy_ml] copies the contents
-      of [src] into [dst]. The storage upper bandwidths of [src] and [dst]
-      are, respectively, [src_smu] and [dst_smu]. The bandwidth to copy is
-      given by [copy_mu] and [copy_ml]. Both matrices must have the
-      same size.
-
-      @cvode <node9#ss:band> bandCopy *)
-  val blit : t -> t -> smu -> smu -> int -> int -> unit
-
-  (** [scale c a smu mu ml] multiplies each element of the band matrix
-      [a] by [c].
-      The parameters [smu], [mu], and [ml] give, respectively,
-      the storage upper, upper, and lower bandwidths.
+  (** [scale c a] multiplies each element of the band matrix [a] by [c].
 
       @cvode <node9#ss:band> bandScale *)
-  val scale : float -> t -> smu -> mu -> ml -> unit
+  val scale : float -> t -> unit
 
-  (** [gbtrf a smu mu ml p] performs the LU factorization of [a] with
-      partial pivoting according to [p]. The parameters [smu], [mu], and
-      [ml] give, respectively, the storage upper, upper, and lower
-      bandwidths. The values in [a] are overwritten with those of the
+  (** [gbtrf a p] performs the LU factorization of [a] with partial pivoting
+      according to [p]. The values in [a] are overwritten with those of the
       calculated L and U matrices. The diagonal belongs to U. The diagonal
       of L is all 1s. U may occupy elements up to bandwidth [smu]
       (rather than to [mu]).
 
       @cvode <node9#ss:band> bandGBTRF *)
-  val gbtrf : t -> smu -> mu -> ml -> Sundials.LintArray.t -> unit
+  val gbtrf : t -> Sundials.LintArray.t -> unit
 
-  (** [gbtrs a smu ml p b] finds the solution of [ax = b] using LU
-      factorization. The parameters [smu] and [ml] give, respectively, the
-      storage upper and lower bandwidths. Both [p] and [b] must have the same
-      number of rows as [a].
+  (** [gbtrs a p b] finds the solution of [ax = b] using LU factorization.
+      Both [p] and [b] must have the same number of rows as [a].
 
       @cvode <node9#ss:band> bandGBTRS *)
-  val gbtrs : t -> smu -> ml -> Sundials.LintArray.t ->
-    Sundials.RealArray.t -> unit
+  val gbtrs : t -> Sundials.LintArray.t -> Sundials.RealArray.t -> unit
 
 end (* }}} *)
 
@@ -953,6 +1015,25 @@ val arraydense : ?m:int -> ?i:float -> int -> 'nk arraydense
     dense matrix. The two values share the same underlying storage. *)
 val wrap_arraydense : ArrayDense.t -> 'nk arraydense
 
+(** Generic matrix with array-based band content. *)
+type 'nk arrayband = (custom, ArrayBand.t, Sundials.RealArray.t, 'nk) t
+
+(** By default, [band n] returns an [n] by [n] band matrix with all bandwidths
+    equal to 2 and all values initialized to [0.0].
+    Optional arguments allow specifying the upper bandwidth [mu], the lower
+    bandwidth [ml], the storage upper bandwidth [smu] and the initial
+    values [i]. If [mu] is given but not [smu], then [smu] is set to [mu],
+    otherwise if [smu] is given but not [mu], then [mu] is set to [smu].
+    If [ml] is not given, then it is set to [mu].
+
+    @nocvode <node> newBandMat *)
+val arrayband
+  : ?mu:int -> ?smu:int -> ?ml:int -> ?i:float -> int -> 'nk arrayband
+
+(** Creates an (array-based band) matrix by wrapping an existing array-based
+    band matrix. The two values share the same underlying storage. *)
+val wrap_arrayband : ArrayBand.t -> 'nk arrayband
+
 (** Wrap a custom matrix value.
 
     @nocvode <node> Description of the SUNMatrix module *)
@@ -981,7 +1062,7 @@ val get_id : ('k, 'm, 'nd, 'nk) t -> id
     @nocvode <node> SM_CONTENT_B *)
 val unwrap : ('k, 'm, 'nd, 'nk) t -> 'm
 
-(** {3 Operations} *)
+(** {3:generic-ops Operations} *)
 
 (** [scale_add c A B] calculates $A = cA + B$.
 
@@ -1016,4 +1097,25 @@ val blit : ('k, 'm, 'nd, 'nk) t -> ('k, 'm, 'nd, 'nk) t -> unit
 
     @nocvode <node> SUNMatSpace *)
 val space : ('k, 'm, 'nd, 'nk) t -> int * int
+
+(** Prints a dense matrix to the given log file.
+
+    NB: Not supported in {!Sundials.sundials_version} < 3.0.0.
+
+    @nocvode <node> SUNDenseMatrix_Print *)
+val print_dense : 'nk dense -> Sundials.Logfile.t -> unit
+
+(** Prints a band matrix to the given log file.
+
+    NB: Not supported in {!Sundials.sundials_version} < 3.0.0.
+
+    @nocvode <node> SUNBandMatrix_Print *)
+val print_band : 'nk band -> Sundials.Logfile.t -> unit
+
+(** Prints a sparse matrix to the given log file.
+
+    NB: Not supported in {!Sundials.sundials_version} < 3.0.0.
+
+    @nocvode <node> SUNSparseMatrix_Print *)
+val print_sparse : ('s, 'nk) sparse -> Sundials.Logfile.t -> unit
 

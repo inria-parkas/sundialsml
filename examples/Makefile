@@ -43,17 +43,21 @@ GEN_SUBDIRS=$(foreach m,cvode cvodes ida idas kinsol,			\
 	             $(if $(or $(1),$(OPENMP_ENABLED)),C_openmp)	\
 	             $(if $(or $(1),$(PTHREADS_ENABLED)),pthreads),	\
 	           nvector/$v))						\
+	   $(foreach v,							\
+	   	 dense band sparse arraydense arrayband,		\
+		 matrix/$v)						\
 	    $(if $(or $(1),$(AT_LEAST_2_7)),				\
 	       $(if $(or $(1),$(OPENMP_ENABLED)),idas/C_openmp))
 
 ALL_SUBDIRS=$(call GEN_SUBDIRS,all)  # All subdirectories
 SUBDIRS=$(call GEN_SUBDIRS)          # Just the enabled ones.
 
-# Nvector examples are unsuitable for performance comparisons, so
-# filter them out unless PERF_FORCE_NVECTORS is nonempty.
-PERF_SUBDIRS=$(if $(PERF_FORCE_NVECTORS),$(SUBDIRS),\
-		  $(filter-out nvector/%,$(SUBDIRS)))
-
+# Nvector and Matrix examples are unsuitable for performance comparisons, so
+# filter them out unless PERF_FORCE_NVECTORS/PERF_FORCE_MATRICES are nonempty.
+SUBDIRS_MAT=$(if $(PERF_FORCE_MATRICES),$(SUBDIRS),\
+		 $(filter-out matrix/%,$(SUBDIRS)))
+PERF_SUBDIRS=$(if $(PERF_FORCE_NVECTORS),$(SUBDIRS_MAT),\
+		  $(filter-out nvector/%,$(SUBDIRS_MAT)))
 
 TOP_TARGETS = tests.byte.log tests.opt.log perf.byte.log perf.opt.log reps \
 	      perf-intv.byte.cache perf-intv.opt.cache			   \

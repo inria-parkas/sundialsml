@@ -2049,9 +2049,6 @@ static SUNMatrix csmat_dense_clone(SUNMatrix A)
     vcontentb = ml_matrix_dense_create(Val_index(SM_ROWS_D(A)),
 				       Val_index(SM_COLUMNS_D(A)));
 
-    caml_ba_blit(Field(vcontenta, RECORD_MAT_MATRIXCONTENT_PAYLOAD),
-		 Field(vcontentb, RECORD_MAT_MATRIXCONTENT_PAYLOAD));
-
     B = alloc_smat(
 	    MAT_CONTENT(Field(vcontentb, RECORD_MAT_MATRIXCONTENT_RAWPTR)),
 	    vcontentb, false);
@@ -2069,12 +2066,6 @@ static SUNMatrix csmat_band_clone(SUNMatrix A)
     vcontenta = MAT_BACKLINK(A);
     vcontentb = ml_matrix_band_create_mat(SM_COLUMNS_B(A), SM_UBAND_B(A),
 				          SM_LBAND_B(A), SM_SUBAND_B(A));
-
-    vpayloada = Field(vcontenta, RECORD_MAT_MATRIXCONTENT_PAYLOAD);
-    vpayloadb = Field(vcontentb, RECORD_MAT_MATRIXCONTENT_PAYLOAD);
-
-    caml_ba_blit(Field(vpayloada, RECORD_MAT_BANDDATA_DATA),
-		 Field(vpayloadb, RECORD_MAT_BANDDATA_DATA));
 
     B = alloc_smat(
 	    MAT_CONTENT(Field(vcontentb, RECORD_MAT_MATRIXCONTENT_RAWPTR)),
@@ -2095,16 +2086,6 @@ static SUNMatrix csmat_sparse_clone(SUNMatrix A)
 				   SM_NNZ_S(A), SM_SPARSETYPE_S(A),
 				   &vcontentb) )
 	CAMLreturnT(SUNMatrix, NULL);
-
-    vpayloada = Field(vcontenta, RECORD_MAT_MATRIXCONTENT_PAYLOAD);
-    vpayloadb = Field(vcontentb, RECORD_MAT_MATRIXCONTENT_PAYLOAD);
-
-    caml_ba_blit(Field(vpayloada, RECORD_MAT_SPARSEDATA_IDXVALS),
-		 Field(vpayloadb, RECORD_MAT_SPARSEDATA_IDXVALS));
-    caml_ba_blit(Field(vpayloada, RECORD_MAT_SPARSEDATA_IDXPTRS),
-		 Field(vpayloadb, RECORD_MAT_SPARSEDATA_IDXPTRS));
-    caml_ba_blit(Field(vpayloada, RECORD_MAT_SPARSEDATA_DATA),
-		 Field(vpayloadb, RECORD_MAT_SPARSEDATA_DATA));
 
     B = alloc_smat(
 	    MAT_CONTENT(Field(vcontentb, RECORD_MAT_MATRIXCONTENT_RAWPTR)),
@@ -2405,6 +2386,39 @@ CAMLprim value ml_matrix_space(value va)
     CAMLreturn(vr);
 }
 
+CAMLprim void ml_matrix_print_dense(value vm, value vfile)
+{
+    CAMLparam2(vm, vfile);
+#if SUNDIALS_LIB_VERSION >= 300
+    SUNDenseMatrix_Print(MAT_VAL(vm), ML_CFILE(vfile));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn0;
+}
+
+CAMLprim void ml_matrix_print_band(value vm, value vfile)
+{
+    CAMLparam2(vm, vfile);
+#if SUNDIALS_LIB_VERSION >= 300
+    SUNBandMatrix_Print(MAT_VAL(vm), ML_CFILE(vfile));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn0;
+}
+
+CAMLprim void ml_matrix_print_sparse(value vm, value vfile)
+{
+    CAMLparam2(vm, vfile);
+#if SUNDIALS_LIB_VERSION >= 300
+    SUNSparseMatrix_Print(MAT_VAL(vm), ML_CFILE(vfile));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn0;
+}
+
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * Array matrices
  */
@@ -2641,7 +2655,7 @@ CAMLprim value c_arraybandmatrix_copy(value va, value vb, value vsizes)
 	caml_invalid_argument("source matrix too small.");
     if (bn < copymu + copyml + 1)
 	caml_invalid_argument("destination matrix too small.");
-    if ((am != bm) || (bm != bn))
+    if (am != bm)
 	caml_invalid_argument("matrix sizes differ.");
 #endif
 
@@ -2657,9 +2671,9 @@ CAMLprim value c_arraybandmatrix_scale(value vc, value va, value vsizes)
     struct caml_ba_array *ba = ARRAY2_DATA(va);
     intnat m = ba->dim[0];
 
-    sundials_ml_index mu  = Index_val(Field(vsizes, 0));
-    sundials_ml_index ml  = Index_val(Field(vsizes, 1));
-    sundials_ml_index smu = Index_val(Field(vsizes, 2));
+    sundials_ml_index smu = Index_val(Field(vsizes, 0));
+    sundials_ml_index mu  = Index_val(Field(vsizes, 1));
+    sundials_ml_index ml  = Index_val(Field(vsizes, 2));
 
 #if SUNDIALS_ML_SAFE == 1
     intnat n = ba->dim[1];
@@ -2672,9 +2686,9 @@ CAMLprim value c_arraybandmatrix_scale(value vc, value va, value vsizes)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arraybandmatrix_add_identity(value va, value vsmu)
+CAMLprim value c_arraybandmatrix_add_identity(value vsmu, value va)
 {
-    CAMLparam2(va, vsmu);
+    CAMLparam2(vsmu, va);
 
     struct caml_ba_array *ba = ARRAY2_DATA(va);
     intnat m = ba->dim[0];
@@ -2700,9 +2714,9 @@ CAMLprim value c_arraybandmatrix_matvec(value va, value vsizes,
     struct caml_ba_array *ba = ARRAY2_DATA(va);
     intnat m = ba->dim[0];
 
-    sundials_ml_index mu  = Index_val(Field(vsizes, 0));
-    sundials_ml_index ml  = Index_val(Field(vsizes, 1));
-    sundials_ml_index smu = Index_val(Field(vsizes, 2));
+    sundials_ml_index smu = Index_val(Field(vsizes, 0));
+    sundials_ml_index mu  = Index_val(Field(vsizes, 1));
+    sundials_ml_index ml  = Index_val(Field(vsizes, 2));
 
 #if SUNDIALS_ML_SAFE == 1
     intnat n = ba->dim[1];
@@ -2734,9 +2748,9 @@ CAMLprim value c_arraybandmatrix_gbtrf(value va, value vsizes, value vp)
     struct caml_ba_array *ba = ARRAY2_DATA(va);
     intnat m = ba->dim[0];
 
-    sundials_ml_index mu  = Index_val(Field(vsizes, 0));
-    sundials_ml_index ml  = Index_val(Field(vsizes, 1));
-    sundials_ml_index smu = Index_val(Field(vsizes, 2));
+    sundials_ml_index smu = Index_val(Field(vsizes, 0));
+    sundials_ml_index mu  = Index_val(Field(vsizes, 1));
+    sundials_ml_index ml  = Index_val(Field(vsizes, 2));
 
 #if SUNDIALS_ML_SAFE == 1
     intnat n = ba->dim[1];
@@ -2759,7 +2773,7 @@ CAMLprim value c_arraybandmatrix_gbtrs(value va, value vsizes, value vp, value v
     intnat m = ba->dim[0];
 
     sundials_ml_index smu = Index_val(Field(vsizes, 0));
-    sundials_ml_index ml  = Index_val(Field(vsizes, 1));
+    sundials_ml_index ml  = Index_val(Field(vsizes, 2));
 
 #if SUNDIALS_ML_SAFE == 1
     intnat n = ba->dim[1];

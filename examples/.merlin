@@ -9,5 +9,8 @@ B ../src/lsolvers
 B ../src/nvectors
 B ../src/sundials
 
+B nvector
+B matrix
+
 PKG mpi
 

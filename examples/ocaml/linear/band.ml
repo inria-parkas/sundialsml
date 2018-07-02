@@ -101,7 +101,7 @@ let main () =
 
   let p = LintArray.create 5 in
   Array1.fill p 0;
-  Matrix.ArrayBand.gbtrf a_ra2 smu mu ml p;
+  Matrix.ArrayBand.gbtrf (a_ra2, (smu, mu, ml)) p;
   printf "getrf: a=@\n%a@\n" print_factored_mat a;
   printf "       p=@\n%a@\n@\n" print_p p;
 
@@ -111,7 +111,7 @@ let main () =
   s.{2} <- 31.0;
   s.{3} <- 53.0;
   s.{4} <- 45.0;
-  Matrix.ArrayBand.gbtrs a_ra2 smu ml p s;
+  Matrix.ArrayBand.gbtrs (a_ra2, (smu, mu, ml)) p s;
   printf "getrs: s=@\n%a@\n" print_vec s;;
 
 main ();;
