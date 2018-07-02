@@ -5,13 +5,14 @@
 USELIB ?= sundials_no_sens
 SRCROOT=../../..
 SUBDIR=matrix/sparse
+C_SUBDIR=sunmatrix/sparse
 
-EXAMPLES = test_matrix_sparse.ml
+EXAMPLES = test_sunmatrix_sparse.ml
 
 include ../matrix.mk
 
 MATRIX_ROWS ?= 10000
 MATRIX_COLS ?= 10000
 MATRIX_TYPE ?= 0
-$(eval $(call EXECUTION_RULE,test_matrix_sparse,$$< $(MATRIX_ROWS) $(MATRIX_COLS) $(MATRIX_TYPE) 0))
+$(eval $(call EXECUTION_RULE,test_sunmatrix_sparse,$$< $(MATRIX_ROWS) $(MATRIX_COLS) $(MATRIX_TYPE) 0))
 

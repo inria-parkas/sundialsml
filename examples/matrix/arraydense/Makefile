@@ -5,11 +5,12 @@
 USELIB ?= sundials_no_sens
 SRCROOT=../../..
 SUBDIR=matrix/arraydense
+C_SUBDIR=sunmatrix/arraydense
 
-EXAMPLES = test_matrix_arraydense.ml
+EXAMPLES = test_sunmatrix_arraydense.ml
 
 include ../matrix.mk
 
 MATRIX_ROWS ?= 1000
 MATRIX_COLS ?= 500
-$(eval $(call EXECUTION_RULE,test_matrix_arraydense,$$< $(MATRIX_ROWS) $(MATRIX_COLS) 0))
+$(eval $(call EXECUTION_RULE,test_sunmatrix_arraydense,$$< $(MATRIX_ROWS) $(MATRIX_COLS) 0))
