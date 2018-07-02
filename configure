@@ -358,7 +358,7 @@ fi
 
 if [ "x${cflags}" = x ]; then    # Don't touch CFLAGS if explicitly given.
     if [ $using_gcc = true ]; then
-	optflags="-O2"
+	optflags="-O3"
 
 	# Compiling with -O2 and clang-602.0.49 (Apple LLVM version 6.1.0)
 	# Results in a segfault in examples like
