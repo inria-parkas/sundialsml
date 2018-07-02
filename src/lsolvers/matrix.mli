@@ -31,7 +31,7 @@
     - ['d] is the type of the vector arguments to [m_matvec].
 
     @nocvode <node> Description of the SUNMatrix module *)
-type ('m, 'd, 'k) matrix_ops = { (* {{{ *)
+type ('m, 'd) matrix_ops = { (* {{{ *)
   m_clone     : 'm -> 'm;
   (** Create a new, distinct matrix from an existing one without
       copying the contents of the original matrix. *)
@@ -152,7 +152,7 @@ module Dense : (* {{{ *)
     (** {3:dense-ops Operations} *)
 
     (** Operations on dense matrices. *)
-    val ops : (t, Nvector_serial.data, [>Nvector_serial.kind] as 'k) matrix_ops
+    val ops : (t, Nvector_serial.data) matrix_ops
 
     (** [scale_add c A B] calculates $A = cA + B$.
 
@@ -321,7 +321,7 @@ module Band : (* {{{ *)
 
     (** Operations on band matrices. *)
 
-    val ops : (t, Nvector_serial.data, [>Nvector_serial.kind]) matrix_ops
+    val ops : (t, Nvector_serial.data) matrix_ops
 
     (** [scale_add c A B] calculates $A = cA + B$.
 
@@ -534,7 +534,7 @@ module Sparse : (* {{{ *)
     (** {3:sparse-ops Operations} *)
 
     (** Operations on sparse matrices. *)
-    val ops : ('s t, Nvector_serial.data, [>Nvector_serial.kind]) matrix_ops
+    val ops : ('s t, Nvector_serial.data) matrix_ops
 
     (** [scale_add c A B] calculates $A = cA + B$.
 
@@ -670,7 +670,7 @@ module ArrayDense : sig (* {{{ *)
   (** {3:arraydense-ops Operations} *)
 
   (** Operations on array-based dense matrices. *)
-  val ops : (t, Sundials.RealArray.t, 'k) matrix_ops
+  val ops : (t, Sundials.RealArray.t) matrix_ops
 
   (** [scale_add c A B] calculates $A = cA + B$. *)
   val scale_add : float -> t -> t -> unit
@@ -862,7 +862,7 @@ module ArrayBand : sig (* {{{ *)
   (** {3:arrayband-ops Operations} *)
 
   (** Operations on array-based band matrices. *)
-  val ops : (t, Sundials.RealArray.t, 'k) matrix_ops
+  val ops : (t, Sundials.RealArray.t) matrix_ops
 
   (** [scale_add c a b] calculates $A = cA + B$.
 
@@ -1037,7 +1037,7 @@ val wrap_arrayband : ArrayBand.t -> 'nk arrayband
 (** Wrap a custom matrix value.
 
     @nocvode <node> Description of the SUNMatrix module *)
-val wrap_custom : ('m, 'nd, 'nk) matrix_ops -> 'm -> (custom, 'm, 'nd, 'nk) t
+val wrap_custom : ('m, 'nd) matrix_ops -> 'm -> (custom, 'm, 'nd, 'nk) t
 
 (** Matrix internal type identifiers.
 
@@ -1049,7 +1049,7 @@ type id =
   | Custom
 
 (** Return a record of matrix operations. *)
-val get_ops : ('k, 'm, 'nd, 'nk) t -> ('m, 'nd, 'nk) matrix_ops
+val get_ops : ('k, 'm, 'nd, 'nk) t -> ('m, 'nd) matrix_ops
 
 (** Return the internal type identifier of a matrix.
 
