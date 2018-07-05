@@ -74,7 +74,7 @@
 
  *)
 
-module RealArray = Sundials.RealArray
+open Sundials
 module Nvector = Nvector_serial
 
 (* Commandline Options *)
@@ -162,7 +162,7 @@ let print_nvector a = Printf.printf "%s" (show_nvector a)
 
 let print_with_time t v =
   Printf.printf "%.15e" t;
-  Sundials.RealArray.iter (Printf.printf "\t% .15e") v;
+  RealArray.iter (Printf.printf "\t% .15e") v;
   Printf.printf "\n%!"
 
 (* Problem constants *)
@@ -405,7 +405,7 @@ let check_satisfaction =
 
 let print_with_time t v =
   Printf.printf "%e" t;
-  Sundials.RealArray.iter (Printf.printf "\t% e") v;
+  RealArray.iter (Printf.printf "\t% e") v;
   print_newline ()
 
 let main () =
@@ -434,7 +434,7 @@ let main () =
   let ida = Ida.init solver (Ida.SStolerances (1e-9, 1e-9)) residual
                      ~roots:(1, roots) 0. nv_vars nv_vars'
   in
-  Ida.set_all_root_directions ida Sundials.RootDirs.Decreasing;
+  Ida.set_all_root_directions ida RootDirs.Decreasing;
 
   Ida.set_id ida var_types;
   Ida.set_suppress_alg ida true;

@@ -13,6 +13,7 @@
 
 include Ida_impl
 include IdaBbdTypes
+module LSI = Sundials_LinearSolver_impl
 
 type parallel_session =
   (Nvector_parallel.data, Nvector_parallel.kind) Ida.session
@@ -37,12 +38,12 @@ external c_bbd_prec_init
 
 let init_preconditioner dqrely bandwidths precfns session nv =
   let ba, _, _ = Nvector.unwrap nv in
-  let localn   = Sundials.RealArray.length ba in
+  let localn   = RealArray.length ba in
   c_bbd_prec_init session localn bandwidths dqrely (precfns.comm_fn <> None);
   session.ls_precfns <- BBDPrecFns (bbd_precfns precfns)
 
 let prec_left ?(dqrely=0.0) bandwidths ?comm local_fn =
-  LinearSolver_impl.Iterative.(PrecLeft,
+  LSI.Iterative.(PrecLeft,
     init_preconditioner dqrely bandwidths { local_fn; comm_fn = comm })
 
 external c_bbd_prec_reinit

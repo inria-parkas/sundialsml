@@ -39,7 +39,9 @@
  *
  * Error handling was suppressed for code readibility reasons.
 *)
-module RealArray = Sundials.RealArray
+
+open Sundials
+
 module Quad = Idas.Quadrature
 module Sens = Idas.Sensitivity
 module QuadSens = Sens.Quadrature

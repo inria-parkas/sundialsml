@@ -19,21 +19,21 @@ DOCHTML_PLUGIN_PP=$(DOCHTML_PP)						\
                   -DMATHJAX_URL=\"$(MATHJAX_URL_DEFAULT)\"
 dochtml.cmo: INCLUDES += -I +ocamldoc -I ../src/sundials
 dochtml.cmo: OCAMLFLAGS += -pp '$(DOCHTML_PLUGIN_PP)'
-dochtml.cmo: ../config ../src/sundials/sundials_config.cmo
+dochtml.cmo: ../config ../src/sundials/sundials_configuration.cmo
 
 dochtml.cmx: INCLUDES += -I +ocamldoc -I ../src/sundials
 dochtml.cmx: OCAMLOPTFLAGS += -pp '$(DOCHTML_PLUGIN_PP)'
-dochtml.cmx: ../config ../src/sundials/sundials_config.cmx
+dochtml.cmx: ../config ../src/sundials/sundials_configuration.cmx
 
 SUNDIALS_DOCS=sundials_docs$(OCAMLDOC_PLUGIN)
 
-sundials_docs.cma: ../src/sundials/sundials_config.cmo dochtml.cmo
+sundials_docs.cma: ../src/sundials/sundials_configuration.cmo dochtml.cmo
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ -a $^
 
-sundials_docs.cmxs: ../src/sundials/sundials_config.cmx dochtml.cmx
+sundials_docs.cmxs: ../src/sundials/sundials_configuration.cmx dochtml.cmx
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -shared -o $@ $^
 
-../src/sundials/sundials_config.cmo ../src/sundials/sundials_config.cmx:
+../src/sundials/sundials_configuration.cmo ../src/sundials/sundials_configuration.cmx:
 	@echo 1>&2 "Error: the binding doesn't seem to be built.  Build the binding"
 	@echo 1>&2 "first by typing 'make' at the root of the source tree."
 	@false

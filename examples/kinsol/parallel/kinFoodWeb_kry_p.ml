@@ -79,10 +79,9 @@
  * ----------------------------------------------------------------------
  *)
 
+open Sundials
+
 module Nvector = Nvector_parallel
-module RealArray = Sundials.RealArray
-module RealArray2 = Sundials.RealArray2
-module LintArray = Sundials.LintArray
 module Dense = Matrix.ArrayDense
 open Bigarray
 let local_array = Nvector.local_array
@@ -145,7 +144,7 @@ let ij_vptr vv i j = subarray vv (ij_vptr_idx i j) num_species
 type user_data = {
   p     : RealArray2.t array array;
   pivot : LintArray.t array array;
-  acoef : Sundials.real_array2;
+  acoef : RealArray2.data;
   bcoef : RealArray.t;
   cox   : RealArray.t;
   coy   : RealArray.t;
@@ -162,7 +161,7 @@ type user_data = {
 
 let dx = ax /. float(mx-1)
 let dy = ay /. float(my-1)
-let uround = Sundials.unit_roundoff
+let uround = Config.unit_roundoff
 let sqruround = sqrt uround
 
 let init_user_data my_pe comm =

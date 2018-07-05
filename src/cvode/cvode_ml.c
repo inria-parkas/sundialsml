@@ -80,8 +80,8 @@
 
 #endif
 
-#include "../lsolvers/matrix_ml.h"
-#include "../lsolvers/linearSolver_ml.h"
+#include "../lsolvers/sundials_matrix_ml.h"
+#include "../lsolvers/sundials_linearsolver_ml.h"
 #include "cvode_ml.h"
 #include "../nvectors/nvector_ml.h"
 

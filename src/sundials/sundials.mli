@@ -19,57 +19,11 @@
  @author Marc Pouzet (UPMC/ENS/Inria)
  *)
 
-(** {2:consts Constants} *)
-
-(** The [major], [minor], [patch], and [binding] version numbers of
-    Sundials/ML.
-    The first three elements correspond to the maximum supported version
-    of the underlying Sundials/C library.
-    The [binding] number distinguishes updates to the binding (restarting
-    from 0 for each increment of the other elements). *)
-val version : int * int * int * int
-
-(** The [major], [minor], and [patch] version numbers of the underlying
-    Sundials/C library. The OCaml interface may have been built against
-    an older version of Sundials. *)
-val sundials_version : int * int * int
-
-(** Indicates whether the interface was compiled with BLAS/LAPACK support. *)
-val lapack_enabled : bool
-
-(** Indicates whether the parallel nvectors and linear solvers are available. *)
-val mpi_enabled : bool
-
-(** Indicates whether the KLU sparse linear solver is available. *)
-val klu_enabled : bool
-
-(** Indicates whether the SuperLU_MT sparse linear solver is available. *)
-val superlumt_enabled : bool
-
-(** Indicates whether pthreads-based nvectors are available. *)
-val nvecpthreads_enabled : bool
-
-(** Indicates whether openmp-based nvectors are available. *)
-val nvecopenmp_enabled : bool
-
-(** The largest value representable as a real.
-
-    @cvode <node5#s:types> Data Types *)
-val big_real : float
-
-(** The smallest value representable as a real.
-
-    @cvode <node5#s:types> Data Types *)
-val small_real : float
-
-(** The difference bewteen 1.0 and the minimum real greater than 1.0.
-
-    @cvode <node5#s:types> Data Types *)
-val unit_roundoff : float
+module Config = Sundials_Config
 
 (** Index values *)
-module Index = Sundials_config.Index
-type index_elt = Sundials_config.index_elt
+module Index = Sundials_configuration.Index
+type index_elt = Sundials_configuration.index_elt
 
 (** {2:exceptions Exceptions} *)
 
@@ -82,210 +36,17 @@ exception RecoverableFailure
     {{!Ida.tolerance}[Ida.WFtolerances]}. *)
 exception NonPositiveEwt
 
-(** Raised on invalid use of linear solver functions. For instance,
-    initializing a session with {!Cvode.Diag} and then calling
-    {!Cvode.Spils.get_num_lin_iters}, which rather requires a
-    linear solver from {!Iterative}. *)
-exception InvalidLinearSolver
-
-(** Raised for features that are not available in the installed version of
-    the underlying sundials library. See {!sundials_version}. *)
-exception NotImplementedBySundialsVersion
-
 (** {2:arrays Arrays} *)
 
 (** Vectors of floats (one-dimensional bigarrays). *)
-module RealArray : sig (* {{{ *)
-  (** A {{:OCAML_DOC_ROOT(Bigarray.Array1.html)} Bigarray} of floats. *)
-  type t = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
-
-  (** [make n x] returns an array with [n] elements each set to [x]. *)
-  val make : int -> float -> t
-
-  (** [create n] returns an uninitialized array with [n] elements. *)
-  val create : int -> t
-
-  (** [init n f] returns an array with [n] elements, with element [i]
-      set to [f i]. *)
-  val init : int -> (int -> float) -> t
-
-  (** Pretty-print an array using the
-      {{:OCAML_DOC_ROOT(Format.html)} Format} module. *)
-  val pp : Format.formatter -> t -> unit
-
-  (** Pretty-print an array using the
-      {{:OCAML_DOC_ROOT(Format.html)} Format} module.
-      The defaults are: [start="\["], [stop="\]"], [sep=" "], and
-      [item=fun f->Format.fprintf f "%2d=% -15e"] (see
-    {{:OCAML_DOC_ROOT(Format.html#VALfprintf)} fprintf}). *)
-  val ppi : ?start:string -> ?stop:string -> ?sep:string
-            -> ?item:(Format.formatter -> int -> float -> unit)
-            -> unit
-            -> Format.formatter -> t -> unit
-
-  (** Creates an array by copying the contents of a
-      {{:OCAML_DOC_ROOT(Array.html)} [float array]}. *)
-  val of_array : float array -> t
-
-  (** Creates an array by copying the contents of a
-      {{:OCAML_DOC_ROOT(List.html)} [float list]}. *)
-  val of_list : float list -> t
-
-  (** Copies into a new {{:OCAML_DOC_ROOT(Array.html)} [float array]}. *)
-  val to_array : t -> float array
-
-  (** Copies into an existing
-      {{:OCAML_DOC_ROOT(Array.html)} [float array]}. *)
-  val into_array : t -> float array -> unit
-
-  (** Copies into a {{:OCAML_DOC_ROOT(List.html)} [float list]}. *)
-  val to_list : t -> float list
-
-  (** Creates a new array with the same contents as an existing one. *)
-  val copy : t -> t
-
-  (** Access a sub-array of the given array without copying. *)
-  val sub : t -> int -> int -> t
-
-  (** [blit_some src isrc dst idst len] copies [len] elements of [src] at
-      offset [isrc] to [dst] at offset [idst].
-
-      @raise Invalid_argument "RealArray.blit_some" if [isrc], [idst], and
-      [len] do not specify valid subarrays of [src] and [dst]. *)
-  val blit_some : t -> int -> t -> int -> int -> unit
-
-  (** Copy the first array into the second one.
-      See {{:OCAML_DOC_ROOT(Bigarray.Genarray.html#VALblit)}
-      [Bigarray.Genarray.blit]} for more details. *)
-  val blit : t -> t -> unit
-
-  (** [fill a c] sets all elements of [a] to the constant [c]. *)
-  val fill : t -> float -> unit
-
-  (** Returns the length of an array. *)
-  val length : t -> int
-
-  (** [fold_left f b a] returns [f (f (f b a.{0}) a.{1}) ...)]. *)
-  val fold_left : ('a -> float -> 'a) -> 'a -> t -> 'a
-
-  (** [fold_right f b a] returns [(f ... (f a.{n-2} (f a.{n-1} b)))]. *)
-  val fold_right : (float -> 'a -> 'a) -> t -> 'a -> 'a
-
-  (** [iter f a] successively applies [f] to the elements of [a]. *)
-  val iter : (float -> unit) -> t -> unit
-
-  (** [iteri f a] successively applies [f] to the indexes and values
-      of [a]. *)
-  val iteri : (int -> float -> unit) -> t -> unit
-
-  (** [map f a] replaces each element [a.{i}] with [f a.{i}]. *)
-  val map : (float -> float) -> t -> unit
-
-  (** [map f a] replaces each element [a.{i}] with [f i a.{i}]. *)
-  val mapi : (int -> float -> float) -> t -> unit
-end (* }}} *)
-
-(** An alias for two-dimensional
-    {{:OCAML_DOC_ROOT(Bigarray.Array2.html)}Bigarray}s of floating-point
-    numbers. *)
-type real_array2 =
-  (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
+module RealArray = Sundials_RealArray
 
 (** Matrices of floats (wrappers around two-dimensional bigarrays with
     extra internal information required by Sundials). *)
-module RealArray2 : sig (* {{{ *)
-  (** A two-dimensional matrix. The underlying data can be accessed as
-      a {{:OCAML_DOC_ROOT(Bigarray.Array2.html)}Bigarray} via {!unwrap},
-      but note that the first index specifies the column. *)
-  type t
-
-  (** [make nr nc v] returns an array with [nr] rows and [nc] columns, and
-      with elements set to [v]. *)
-  val make : int -> int -> float -> t
-
-  (** [create nr nc] returns an uninitialized array with [nr] rows and [nc]
-      columns. *)
-  val create : int -> int -> t
-
-  (** [get a i j] returns the value at row [i] and column [j] of [a]. *)
-  val get : t -> int -> int -> float
-
-  (** [col a j] returns the [j]th column of [a]. The slice shares storage
-      with [a]. *)
-  val col : t -> int -> RealArray.t
-
-  (** [set a i j v] sets the value at row [i] and column [j] of [a] to [v]. *)
-  val set : t -> int -> int -> float -> unit
-
-  (** [nr, nc = size a] returns the numbers of rows [nr] and columns [nc]
-      of [a] *)
-  val size : t -> int * int
-
-  (** Pretty-print an array using the
-      {{:OCAML_DOC_ROOT(Format.html)} Format} module. *)
-  val pp : Format.formatter -> t -> unit
-
-  (** Pretty-print an array using the
-      {{:OCAML_DOC_ROOT(Format.html)} Format} module.
-      The defaults are: [start="\["], [stop="\]"], [rowsep=";"],
-      [indent=4], [sep=" "], and
-      [item=fun f r c->Format.fprintf f "(%2d,%2d)=% -15e" r c] (see
-      {{:OCAML_DOC_ROOT(Format.html#VALfprintf)} fprintf}).
-      The [indent] argument specifies the indent for wrapped rows. *)
-  val ppi : ?start:string -> ?rowstart:string
-            -> ?stop:string -> ?rowstop:string
-            -> ?sep:string -> ?rowsep:string
-            -> ?item:(Format.formatter -> int -> int -> float -> unit)
-            -> unit
-            -> Format.formatter -> t -> unit
-
-  (** Creates a new array with the same contents as an existing one. *)
-  val copy : t -> t
-
-  (** Copy the first array into the second one.
-      See {{:OCAML_DOC_ROOT(Bigarray.Genarray.html#VALblit)}
-      [Bigarray.Genarray.blit]} for more details. *)
-  val blit : t -> t -> unit
-
-  (** [make m n] returns an uninitialized [m] by [n] array. *)
-  val make_data : int -> int -> real_array2
-
-  (** Creates a new matrix from an existing {!real_array2} array. Changes to
-      one affect the other since they share the same underlying storage. *)
-  val wrap : real_array2 -> t
-
-  (** Returns the {!real_array2} array behind a matrix. Changes to one affect
-      the other since they share the same underlying storage. Note that the
-      array is accessed column-first, that is,
-      [get a i j = (unwrap a).{j, i}]. *)
-  val unwrap : t -> real_array2
-end (* }}} *)
+module RealArray2 = Sundials_RealArray2
 
 (** Vectors of integers (one-dimensional bigarrays). *)
-module LintArray : sig (* {{{ *)
-  (** A {{:OCAML_DOC_ROOT(Bigarray.Array1.html)} Bigarray} of integers. *)
-  type t = (int, Bigarray.int_elt, Bigarray.c_layout) Bigarray.Array1.t
-
-  (** [make n x] returns an array with [n] elements each set to [v]. *)
-  val make  : int -> int -> t
-
-  (** [create n] returns an uninitialized array with [n] elements. *)
-  val create  : int -> t
-
-  (** Pretty-print an array using the
-      {{:OCAML_DOC_ROOT(Format.html)} Format} module. *)
-  val pp : Format.formatter -> t -> unit
-
-  (** Pretty-print an array using the
-      {{:OCAML_DOC_ROOT(Format.html)} Format} module.
-      The defaults are: [start="\["], [stop="\]"], [sep="; "], and
-      [item=fun f->Format.fprintf f "%2d=% 6d"] (see
-    {{:OCAML_DOC_ROOT(Format.html#VALfprintf)} fprintf}). *)
-  val ppi : ?start:string -> ?stop:string -> ?sep:string
-            -> ?item:(Format.formatter -> int -> int -> unit)
-            -> unit
-            -> Format.formatter -> t -> unit
-end (* }}} *)
+module LintArray = Sundials_LintArray
 
 (** {2:roots Arrays of roots (zero-crossings)} *)
 
@@ -519,51 +280,44 @@ module Constraint : sig (* {{{ *)
   val of_float : float -> t
 end (* }}} *)
 
+(** {2:matlin Matrices and Linear Solvers} *)
+
+module Matrix = Sundials_Matrix
+
+module LinearSolver = Sundials_LinearSolver
+
 (** {2:results Solver results and error reporting} *)
 
 (** Files for error and diagnostic information. File values are passed
     to functions like {!Cvode.set_error_file} and {!Kinsol.set_info_file} to
     log solver errors and diagnostics. *)
-module Logfile : sig (* {{{ *)
-  (** An open log file. *)
-  type t
+module Logfile = Sundials_Logfile
 
-  (** The stderr file. *)
-  val stderr : t
+module Util : sig (* {{{ *)
 
-  (** The stdout file. *)
-  val stdout : t
+  (** Information passed to registered error handler functions.
+      See {!Cvode.set_err_handler_fn}, {!Ida.set_err_handler_fn}, and
+      {!Kinsol.set_err_handler_fn}.
 
-  (** Opens the named file. When [trunc] is false, the default, writes are
-      appended to the file. When [trunc] is true, the opened file is
-      truncated to zero length. Files are closed on garbage collection. *)
-  val openfile : ?trunc:bool -> string -> t
+      @cvode <node5#ss:ehFn> CVodeErrHandlerFn
+      @ida <node5#ss:ehFn> IDAErrHandlerFn
+      @kinsol <node5#ss:ehFn> KINErrHandlerFn *)
+  type error_details = {
+      error_code : int;
+      module_name : string;        (** IDA, CVODE, CVSPGMR, etc. *)
+      function_name : string;
+      error_message : string;
+    }
 
-  (** Flushes the given file. *)
-  val flush : t -> unit
+  (** {2:misc Miscellaneous utility functions} *)
+
+  (** [format_float fmt f] formats [f] according to the format string [fmt].
+      It uses the low-level [caml_format_float] function. *)
+  val format_float : string -> float -> string
+
+  (** Returns the bit-level representation of a float in hexadecimal as a string.
+      Equivalent to [format_float "%a"]. *)
+  val floata : float -> string
+
 end (* }}} *)
-
-(** Information passed to registered error handler functions.
-    See {!Cvode.set_err_handler_fn}, {!Ida.set_err_handler_fn}, and
-    {!Kinsol.set_err_handler_fn}.
-
-    @cvode <node5#ss:ehFn> CVodeErrHandlerFn
-    @ida <node5#ss:ehFn> IDAErrHandlerFn
-    @kinsol <node5#ss:ehFn> KINErrHandlerFn *)
-type error_details = {
-    error_code : int;
-    module_name : string;        (** IDA, CVODE, CVSPGMR, etc. *)
-    function_name : string;
-    error_message : string;
-  }
-
-(** {2:misc Miscellaneous utility functions} *)
-
-(** [format_float fmt f] formats [f] according to the format string [fmt].
-    It uses the low-level [caml_format_float] function. *)
-val format_float : string -> float -> string
-
-(** Returns the bit-level representation of a float in hexadecimal as a string.
-    Equivalent to [format_float "%a"]. *)
-val floata : float -> string
 

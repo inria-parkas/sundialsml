@@ -51,7 +51,7 @@ module Direct : sig (* {{{ *)
     @nocvode <node> Description of the SUNLinearSolver module
     @nocvode <node> SUNLinearSolver *)
   type ('matrix, 'data, 'kind, 'tag) linear_solver
-    = ('matrix, 'data, 'kind, 'tag) LinearSolver_impl.Direct.linear_solver
+    = ('matrix, 'data, 'kind, 'tag) Sundials_LinearSolver_impl.Direct.linear_solver
 
   (** Alias for linear solvers that are restricted to serial nvectors. *)
   type ('mat, 'kind, 'tag) serial_linear_solver
@@ -71,7 +71,7 @@ module Direct : sig (* {{{ *)
     -> (Matrix.Dense.t, 'k, tag) serial_linear_solver
 
   (** Creates a direct linear solver on dense matrices using LAPACK.
-    See {!dense}. Only available if {!Sundials.lapack_enabled}.
+    See {!dense}. Only available if {!Config.lapack_enabled}.
 
   @nocvode <node> SUNLapackDense *)
   val lapack_dense :
@@ -92,7 +92,7 @@ module Direct : sig (* {{{ *)
     -> (Matrix.Band.t, 'k, tag) serial_linear_solver
 
   (** Creates a direct linear solver on banded matrices using LAPACK.
-    See {!band}. Only available if {!Sundials.lapack_enabled}.
+    See {!band}. Only available if {!Config.lapack_enabled}.
 
   @nocvode <node> SUNLapackBand *)
   val lapack_band :
@@ -107,7 +107,8 @@ module Direct : sig (* {{{ *)
     type tag = [`Klu]
 
     (** The ordering algorithm used for reducing fill. *)
-    type ordering = LinearSolver_impl.Klu.ordering =
+    type ordering =
+      Sundials_LinearSolver_impl.Klu.ordering =
       | Amd      (** Approximate minimum degree permutation. *)
       | ColAmd   (** Column approximate minimum degree permutation. *)
       | Natural  (** Natural ordering. *)
@@ -118,7 +119,7 @@ module Direct : sig (* {{{ *)
       The matrix is used internally after the linear solver is attached to a
       session.
 
-      @raise Sundials.NotImplementedBySundialsVersion Solver not available.
+      @raise Config.NotImplementedBySundialsVersion Solver not available.
       @nocvode <node> SUNKLU *)
     val make :
       ?ordering:ordering
@@ -147,7 +148,7 @@ module Direct : sig (* {{{ *)
   (** Creates a direct linear solver on sparse matrices using KLU.
     See {!Klu.make}.
 
-    @raise Sundials.NotImplementedBySundialsVersion Solver not available.
+    @raise Config.NotImplementedBySundialsVersion Solver not available.
     @nocvode <node> SUNKLU *)
   val klu :
     ?ordering:Klu.ordering
@@ -163,7 +164,8 @@ module Direct : sig (* {{{ *)
     type tag = [`Superlumt]
 
     (** The ordering algorithm used for reducing fill. *)
-    type ordering = LinearSolver_impl.Superlumt.ordering =
+    type ordering =
+      Sundials_LinearSolver_impl.Superlumt.ordering =
       | Natural       (** Natural ordering. *)
       | MinDegreeProd (** Minimal degree ordering on $J^T J$. *)
       | MinDegreeSum  (** Minimal degree ordering on $J^T + J$. *)
@@ -178,7 +180,7 @@ module Direct : sig (* {{{ *)
       NB: The {!Matrix.sparse.csr} format is only supported for
           Sundials >= 3.0.0.
 
-      @raise Sundials.NotImplementedBySundialsVersion Solver not available.
+      @raise Config.NotImplementedBySundialsVersion Solver not available.
       @nocvode <node> SUNSuperLUMT *)
     val make :
       ?ordering:ordering
@@ -201,7 +203,7 @@ module Direct : sig (* {{{ *)
     NB: The {!Matrix.sparse.csr} format is only supported for
         Sundials >= 3.0.0.
 
-    @raise Sundials.NotImplementedBySundialsVersion Solver not available.
+    @raise Config.NotImplementedBySundialsVersion Solver not available.
     @nocvode <node> SUNSuperLUMT *)
   val superlumt :
     ?ordering:Superlumt.ordering
@@ -219,7 +221,7 @@ module Direct : sig (* {{{ *)
     (** The operations required to implement a direct linear solver.
       Failure should be indicated by raising an exception (preferably
       one of the exceptions in the {!module:LinearSolver} package). Raising
-      {!exception:Sundials.RecoverableFailure} indicates a generic
+      {!exception:RecoverableFailure} indicates a generic
       recoverable failure. *)
     type ('matrix, 'data, 'kind, 'lsolver) ops = {
         init : 'lsolver -> unit;
@@ -281,12 +283,13 @@ module Iterative : sig (* {{{ *)
     @nocvode <node> Description of the SUNLinearSolver module
     @nocvode <node> SUNLinearSolver *)
   type ('data, 'kind, 'tag) linear_solver
-    = ('data, 'kind, 'tag) LinearSolver_impl.Iterative.linear_solver
+    = ('data, 'kind, 'tag) Sundials_LinearSolver_impl.Iterative.linear_solver
 
   (** The type of Gram-Schmidt orthogonalization in iterative linear solvers.
 
     @nocvode <node> ModifiedGS/ClassicalGS *)
-  type gramschmidt_type = LinearSolver_impl.Iterative.gramschmidt_type =
+  type gramschmidt_type =
+    Sundials_LinearSolver_impl.Iterative.gramschmidt_type =
     | ModifiedGS   (** Modified Gram-Schmidt orthogonalization
                        {cconst MODIFIED_GS} *)
     | ClassicalGS  (** Classical Gram Schmidt orthogonalization
@@ -382,7 +385,7 @@ module Iterative : sig (* {{{ *)
     (** The operations required to implement an iterative linear solver.
       Failure should be indicated by raising an exception (preferably
       one of the exceptions in the {!module:LinearSolver} package). Raising
-      {!exception:Sundials.RecoverableFailure} indicates a generic
+      {!exception:RecoverableFailure} indicates a generic
       recoverable failure. *)
     type ('data, 'kind, 'lsolver) ops = {
 
@@ -487,8 +490,8 @@ module Iterative : sig (* {{{ *)
       stored in the [2n] elements of [q] as [[|c; s; c; s; ...; c; s|]].
 
       @raise Matrix.ZeroDiagonalElement Zero found in matrix diagonal *)
-    val qr_fact : Sundials.RealArray2.t
-                  -> Sundials.RealArray.t
+    val qr_fact : RealArray2.t
+                  -> RealArray.t
                   -> bool
                   -> unit
 
@@ -499,9 +502,9 @@ module Iterative : sig (* {{{ *)
       computes the [n+1] elements of [b] to solve $Rx = Qb$.
 
       @raise Matrix.ZeroDiagonalElement Zero found in matrix diagonal *)
-    val qr_sol : Sundials.RealArray2.t
-                 -> Sundials.RealArray.t
-                 -> Sundials.RealArray.t
+    val qr_sol : RealArray2.t
+                 -> RealArray.t
+                 -> RealArray.t
                  -> unit
 
     (** Performs a modified Gram-Schmidt orthogonalization. In
@@ -523,7 +526,7 @@ module Iterative : sig (* {{{ *)
     old [v.{k}]. The function returns the Euclidean norm of the orthogonalized
     vector. *)
     val modified_gs : (('d, 'k) Nvector.t) array
-                      -> Sundials.RealArray2.t
+                      -> RealArray2.t
                       -> int
                       -> int
                       -> float
@@ -548,11 +551,11 @@ module Iterative : sig (* {{{ *)
     old [v.{k}]. The function returns the Euclidean norm of the orthogonalized
     vector. *)
     val classical_gs : (('d, 'k) Nvector.t) array
-                       -> Sundials.RealArray2.t
+                       -> RealArray2.t
                        -> int
                        -> int
                        -> ('d, 'k) Nvector.t
-                       -> Sundials.RealArray.t
+                       -> RealArray.t
                        -> float
 
   end (* }}} *)
@@ -587,7 +590,8 @@ module Iterative : sig (* {{{ *)
   (** The type of preconditioning in Krylov solvers.
 
     @nocvode <node> Preconditioning *)
-  type preconditioning_type = LinearSolver_impl.Iterative.preconditioning_type =
+  type preconditioning_type =
+    Sundials_LinearSolver_impl.Iterative.preconditioning_type =
     | PrecNone    (** No preconditioning *)
     | PrecLeft    (** {% $(P^{-1}A)x = P^{-1}b$ %} *)
     | PrecRight   (** {% $(AP^{-1})Px = b$ %} *)
@@ -612,6 +616,12 @@ module Iterative : sig (* {{{ *)
 end (* }}} *)
 
 (** {2:exceptions Exceptions} *)
+
+(** Raised on invalid use of linear solver functions. For instance,
+    initializing a session with {!Cvode.Diag} and then calling
+    {!Cvode.Spils.get_num_lin_iters}, which rather requires a
+    linear solver from {!Iterative}. *)
+exception InvalidLinearSolver
 
 (** Raised on an unrecoverable failure in a linear solver. The argument is
     [true] for a recoverable failure and [false] for an unrecoverable one.

@@ -28,13 +28,13 @@
  * t = .4, 4, 40, ..., 4e10.
  * -----------------------------------------------------------------
  *)
-module RealArray = Sundials.RealArray
-module Roots = Sundials.Roots
+
+open Sundials
 
 let printf = Printf.printf
 
 let sundials_270_or_later =
-  match Sundials.sundials_version with
+  match Config.sundials_version with
   | 2,5,_ | 2,6,_ -> false
   | _ -> true
 
@@ -53,7 +53,7 @@ let nout   = 12       (* number of output times *)
 let nroots = 2        (* number of root functions *)
 
 let idaklu =
-  match Sundials.sundials_version with 2,_,_ -> "IDAKLU" | _ -> "KLU"
+  match Config.sundials_version with 2,_,_ -> "IDAKLU" | _ -> "KLU"
 
 let print_header rtol avtol yy =
   let open Printf in

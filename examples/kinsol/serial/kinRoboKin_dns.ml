@@ -22,7 +22,7 @@
  * -----------------------------------------------------------------
  *)
 
-module RealArray = Sundials.RealArray
+open Sundials
 
 let printf = Printf.printf
 

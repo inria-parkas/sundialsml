@@ -33,8 +33,8 @@
  * -----------------------------------------------------------------
  *)
 
-module RealArray = Sundials.RealArray
-module Roots  = Sundials.Roots
+open Sundials
+
 open Bigarray
 let unwrap = Nvector.unwrap
 
@@ -375,7 +375,7 @@ let main () =
      in this case is negligible, though if this loop were run
      thousands of times the difference may become notable.
   *)
-  (match Sundials.sundials_version with
+  (match Config.sundials_version with
    | 2,5,_ ->
       Cvode.reinit cvode_mem t0 u;
       Cvode.Spils.(set_prec_type lsolver PrecRight);

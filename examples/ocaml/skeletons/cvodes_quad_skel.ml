@@ -1,3 +1,5 @@
+open Sundials
+
 (* TODO: write a proper and working example... *)
 
 (* Initialize a session [s] per the skeleton at {!Cvode.session}}
@@ -8,7 +10,7 @@ module Quad = Cvodes.Quadrature
 
 (* Set vector of quadrature variables
    The length of this vector determines the number of quadrature variables. *)
-let yQ = Sundials.RealArray.of_array [| 0.0; 0.0 |]
+let yQ = RealArray.of_array [| 0.0; 0.0 |]
 
 (* Initialize quadrature integration *)
 Quad.init s fQ yQ

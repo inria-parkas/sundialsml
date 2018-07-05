@@ -28,8 +28,8 @@
  * t = .4, 4, 40, ..., 4e10.
  * -----------------------------------------------------------------
  *)
-module RealArray = Sundials.RealArray
-module Roots = Sundials.Roots
+
+open Sundials
 
 let printf = Printf.printf
 
@@ -47,7 +47,7 @@ let tmult  = 10.0     (* output time factor     *)
 let nout   = 12       (* number of output times *)
 let nroots = 2        (* number of root functions *)
 
-let idasuperlumt = match Sundials.sundials_version with
+let idasuperlumt = match Config.sundials_version with
                    | 2,_,_ -> "IDASUPERLUMT" | _ -> "SUPERLUMT"
 
 let print_header rtol avtol yy =

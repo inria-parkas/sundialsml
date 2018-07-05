@@ -45,7 +45,7 @@ CAMLprim value c_arkode_superlumt_get_num_mass_evals(value varkode_mem)
 #else
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #include "arkode_ml.h"
-#include "../lsolvers/matrix_ml.h"
+#include "../lsolvers/sundials_matrix_ml.h"
 
 #include <arkode/arkode.h>
 

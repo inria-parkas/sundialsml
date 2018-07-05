@@ -11,7 +11,8 @@
  * -----------------------------------------------------------------
  *)
 
-module RealArray = Sundials.RealArray
+open Sundials
+
 module Quad = Cvodes.Quadrature
 module Adj = Cvodes.Adjoint
 module QuadAdj = Cvodes.Adjoint.Quadrature
@@ -38,7 +39,7 @@ let n_vscale = Nvector.DataOps.n_vscale
 let dim = 2 (* = 3 (* USE3D *) *)
 
 let sundials_270_or_later =
-  match Sundials.sundials_version with
+  match Config.sundials_version with
   | 2,5,_ | 2,6,_ -> false
   | _ -> true
 
@@ -98,7 +99,7 @@ let g_min =     1.0e-5
 let diff_coef = 1.0
 let v_max =     1.0
 let l =         (ymax-.ymin)/.2.0
-let v_coeff =   match Sundials.sundials_version with
+let v_coeff =   match Config.sundials_version with
                 | 2,5,_ -> v_max/.(ymax-.ymin)/.2.0/.(ymax-.ymin)/.2.0
                 | _ -> v_max/.l/.l
 

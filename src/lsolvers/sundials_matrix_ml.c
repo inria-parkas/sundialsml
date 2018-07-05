@@ -36,7 +36,7 @@
 
 #include "../sundials/sundials_ml.h"
 #include "../nvectors/nvector_ml.h"
-#include "../lsolvers/matrix_ml.h"
+#include "../lsolvers/sundials_matrix_ml.h"
 
 #include <caml/mlvalues.h>
 #include <caml/alloc.h>

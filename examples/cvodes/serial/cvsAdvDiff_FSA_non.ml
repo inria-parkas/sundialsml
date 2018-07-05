@@ -45,8 +45,9 @@
  * -----------------------------------------------------------------
  *)
 
+open Sundials
+
 module Sens = Cvodes.Sensitivity
-module RealArray = Sundials.RealArray
 let unwrap = Nvector.unwrap
 
 let printf = Printf.printf

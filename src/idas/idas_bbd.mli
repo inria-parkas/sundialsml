@@ -52,7 +52,7 @@ type bandwidths = Ida_bbd.bandwidths =
     The approximation is allowed to coincide with the actual backward
     residual function.
 
-    Raising {!Sundials.RecoverableFailure} signals a recoverable error.
+    Raising {!RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.
 
     @idas <node7#SECTION00742200000000000000> IDABBDLocalFnB *)
@@ -66,7 +66,7 @@ type local_fn = Nvector_parallel.data Idas.Adjoint.bresfn_args
     - [resb], a vector for storing a local approximation to the backward
               function {% $F_B(t, y, \dot{y}, y_B, \dot{y}_B)$ %}.
 
-    Raising {!Sundials.RecoverableFailure} signals a recoverable error.
+    Raising {!RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.
 
     @idas <node7#SECTION00742200000000000000> IDABBDCommFnB *)

@@ -20,6 +20,8 @@
 
 exception LinearSolverInUse
 
+module Matrix = Matrix
+
 module Klu = struct (* {{{ *)
 
   type tag = [`Klu]

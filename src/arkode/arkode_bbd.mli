@@ -45,7 +45,7 @@ type bandwidths = Arkode_impl.ArkodeBbdTypes.bandwidths =
     In the call [gloc t y g], [t] is the independent variable (time), [y] is
     the input vector, and [g] stores the computed derivatives.
 
-    Raising {!Sundials.RecoverableFailure} signals a recoverable error.
+    Raising {!RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.
 
     @noarkode <node5#sss:arkbbdpre> ARKLocalFn *)
@@ -56,7 +56,7 @@ type local_fn = float -> Nvector_parallel.data -> Nvector_parallel.data -> unit
     In the call [cfn t y], [t] is the independent variable (time) and [y] is
     the input vector.
 
-    Raising {!Sundials.RecoverableFailure} signals a recoverable error.
+    Raising {!RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.
 
     @noarkode <node5#sss:arkbbdpre> ARKCommFn *)

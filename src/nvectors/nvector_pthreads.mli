@@ -21,7 +21,7 @@
 
 (** Pthreads nvectors are based on
     {{:OCAML_DOC_ROOT(Bigarray.Array1.html)} bigarrays} of floats. *)
-type data = Sundials.RealArray.t
+type data = RealArray.t
 
 (** Represents the internal layout of a Pthreads nvector.
     Pthreads nvectors can usually be used wherever serial nvectors can. *)
@@ -36,10 +36,10 @@ val make : int -> int -> float -> t
 
 (** [wrap nthreads a] creates a new Pthreads nvector with [nthreads] threads
     over the elements of [a]. *)
-val wrap : int -> Sundials.RealArray.t -> t
+val wrap : int -> RealArray.t -> t
 
 (** Aliases {!Nvector.unwrap}. *)
-val unwrap : t -> Sundials.RealArray.t
+val unwrap : t -> RealArray.t
 
 (* TOPLEVEL-PRINTER: Nvector_pthreads.pp *)
 (** Pretty-print a Pthreads nvector using the

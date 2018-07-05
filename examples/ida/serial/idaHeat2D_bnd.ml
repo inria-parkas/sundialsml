@@ -32,10 +32,10 @@
  * IDACalcIC cost statistics only.)
  * -----------------------------------------------------------------
  *)
-module RealArray = Sundials.RealArray
-module Roots = Sundials.Roots
+
+open Sundials
+
 module Dls = Ida.Dls
-module Constraint = Sundials.Constraint
 
 let printf = Printf.printf
 let vmax_norm = Nvector_serial.DataOps.n_vmaxnorm
@@ -116,7 +116,7 @@ let set_initial_profile data u u' id res =
   done
 
 let idaband =
-  match Sundials.sundials_version with 2,_,_ -> "IDABAND" | _ -> "BAND"
+  match Config.sundials_version with 2,_,_ -> "IDABAND" | _ -> "BAND"
 
 let print_header rtol atol =
   printf "\nidaHeat2D_bnd: Heat equation, serial example problem for IDA\n";

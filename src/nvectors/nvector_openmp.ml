@@ -1,31 +1,31 @@
 
-type data = Sundials.RealArray.t
+type data = RealArray.t
 type kind = [`OpenMP|Nvector_serial.kind]
 type t = (data, kind) Nvector.t
 
-external c_wrap : int -> Sundials.RealArray.t
-                    -> (Sundials.RealArray.t -> bool) -> t
+external c_wrap : int -> RealArray.t
+                    -> (RealArray.t -> bool) -> t
   = "ml_nvec_wrap_openmp"
 
 let wrap nthreads v =
-  let len = Sundials.RealArray.length v in
-  c_wrap nthreads v (fun v' -> len = Sundials.RealArray.length v')
+  let len = RealArray.length v in
+  c_wrap nthreads v (fun v' -> len = RealArray.length v')
 
 let unwrap = Nvector.unwrap
 
-let pp fmt v = Sundials.RealArray.pp fmt (unwrap v)
+let pp fmt v = RealArray.pp fmt (unwrap v)
 
-let make nthreads n iv = wrap nthreads (Sundials.RealArray.make n iv)
+let make nthreads n iv = wrap nthreads (RealArray.make n iv)
 
 external num_threads : t -> int
   = "ml_nvec_openmp_num_threads"
 
 module Ops = struct
-  type t = (Sundials.RealArray.t, kind) Nvector.t
+  type t = (RealArray.t, kind) Nvector.t
 
   let n_vclone nv =
     let data = Nvector.unwrap nv in
-    wrap (num_threads nv) (Sundials.RealArray.copy data)
+    wrap (num_threads nv) (RealArray.copy data)
 
   external n_vlinearsum    : float -> t -> float -> t -> t -> unit
     = "ml_nvec_openmp_n_vlinearsum"

@@ -14,7 +14,7 @@ include Cvode_impl
 
 (* "Simulate" Linear Solvers in Sundials < 3.0.0 *)
 let in_compat_mode =
-  match Sundials.sundials_version with
+  match Config.sundials_version with
   | 2,_,_ -> true
   | _ -> false
 
@@ -76,7 +76,7 @@ module Quadrature = struct (* {{{ *)
 
   let reinit s v0 =
     let se = fwdsensext s in
-    if Sundials_config.safe then se.checkquadvec v0;
+    if Sundials_configuration.safe then se.checkquadvec v0;
     c_reinit s v0
 
   external set_err_con    : ('a, 'k) session -> bool -> unit
@@ -100,7 +100,7 @@ module Quadrature = struct (* {{{ *)
     | NoStepSizeControl -> set_err_con s false
     | SStolerances (rel, abs) -> (ss_tolerances s rel abs;
                                   set_err_con s true)
-    | SVtolerances (rel, abs) -> (if Sundials_config.safe then
+    | SVtolerances (rel, abs) -> (if Sundials_configuration.safe then
                                     se.checkquadvec abs;
                                   sv_tolerances s rel abs;
                                   set_err_con s true)
@@ -110,7 +110,7 @@ module Quadrature = struct (* {{{ *)
 
   let get s v =
     let se = fwdsensext s in
-    if Sundials_config.safe then se.checkquadvec v;
+    if Sundials_configuration.safe then se.checkquadvec v;
     c_get s v
 
   external c_get_dky
@@ -119,7 +119,7 @@ module Quadrature = struct (* {{{ *)
 
   let get_dky s dky =
     let se = fwdsensext s in
-    if Sundials_config.safe then se.checkquadvec dky;
+    if Sundials_configuration.safe then se.checkquadvec dky;
     fun t k -> c_get_dky s t k dky
 
   external get_num_rhs_evals       : ('a, 'k) session -> int
@@ -133,7 +133,7 @@ module Quadrature = struct (* {{{ *)
 
   let get_err_weights s v =
     let se = fwdsensext s in
-    if Sundials_config.safe then se.checkquadvec v;
+    if Sundials_configuration.safe then se.checkquadvec v;
     c_get_err_weights s v
 
   external get_stats : ('a, 'k) session -> int * int
@@ -156,7 +156,7 @@ module Sensitivity = struct (* {{{ *)
     | _ -> raise SensNotInitialized
 
   type ('a, 'k) tolerance =
-      SStolerances of float * Sundials.RealArray.t
+      SStolerances of float * RealArray.t
     | SVtolerances of float * ('a, 'k) nvector array
     | EEtolerances
 
@@ -164,7 +164,7 @@ module Sensitivity = struct (* {{{ *)
       = "c_cvodes_sens_set_err_con"
 
   external ss_tolerances
-      : ('a, 'k) session -> float -> Sundials.RealArray.t -> unit
+      : ('a, 'k) session -> float -> RealArray.t -> unit
       = "c_cvodes_sens_ss_tolerances"
 
   external ee_tolerances  : ('a, 'k) session -> unit
@@ -178,12 +178,12 @@ module Sensitivity = struct (* {{{ *)
     let ns = num_sensitivities s in
     match tol with
     | SStolerances (rel, abs) -> begin
-          if Sundials_config.safe && Bigarray.Array1.dim abs <> ns
+          if Sundials_configuration.safe && Bigarray.Array1.dim abs <> ns
           then invalid_arg "set_tolerances: abstol has the wrong length";
           ss_tolerances s rel abs
         end
     | SVtolerances (rel, abs) -> begin
-          if Sundials_config.safe then
+          if Sundials_configuration.safe then
             (if Array.length abs <> ns
              then invalid_arg "set_tolerances: abstol has the wrong length";
              Array.iter s.checkvec abs);
@@ -197,8 +197,8 @@ module Sensitivity = struct (* {{{ *)
     | Staggered1
 
   type sens_params = {
-      pvals  : Sundials.RealArray.t option;
-      pbar   : Sundials.RealArray.t option;
+      pvals  : RealArray.t option;
+      pbar   : RealArray.t option;
       plist  : int array option;
     }
 
@@ -216,7 +216,7 @@ module Sensitivity = struct (* {{{ *)
       = "c_cvodes_sens_set_params"
 
   let check_sens_params ns {pvals; pbar; plist} =
-      if Sundials_config.safe then
+      if Sundials_configuration.safe then
         begin
           let np = match pvals with None -> 0
                                   | Some p -> Bigarray.Array1.dim p in
@@ -240,11 +240,11 @@ module Sensitivity = struct (* {{{ *)
         end
 
   let init s tol fmethod ?(sens_params=no_sens_params) fm v0 =
-    if Sundials_config.safe then Array.iter s.checkvec v0;
+    if Sundials_configuration.safe then Array.iter s.checkvec v0;
     add_fwdsensext s;
     let se = fwdsensext s in
     let ns = Array.length v0 in
-    if Sundials_config.safe && ns = 0 then
+    if Sundials_configuration.safe && ns = 0 then
       invalid_arg "init: require at least one sensitivity parameter";
     check_sens_params ns sens_params;
     (match fm with
@@ -270,7 +270,7 @@ module Sensitivity = struct (* {{{ *)
       = "c_cvodes_sens_reinit"
 
   let reinit s sm s0 =
-    if Sundials_config.safe then
+    if Sundials_configuration.safe then
       (if Array.length s0 <> num_sensitivities s
        then invalid_arg "reinit: wrong number of sensitivity vectors";
        Array.iter s.checkvec s0);
@@ -283,7 +283,7 @@ module Sensitivity = struct (* {{{ *)
       = "c_cvodes_sens_get"
 
   let get s ys =
-    if Sundials_config.safe then
+    if Sundials_configuration.safe then
       (if Array.length ys <> num_sensitivities s
        then invalid_arg "get: wrong number of sensitivity vectors";
        Array.iter s.checkvec ys);
@@ -294,7 +294,7 @@ module Sensitivity = struct (* {{{ *)
       = "c_cvodes_sens_get_dky"
 
   let get_dky s dkys =
-    if Sundials_config.safe then
+    if Sundials_configuration.safe then
       (if Array.length dkys <> num_sensitivities s
        then invalid_arg "get_dky: wrong number of sensitivity vectors";
        Array.iter s.checkvec dkys);
@@ -304,7 +304,7 @@ module Sensitivity = struct (* {{{ *)
       = "c_cvodes_sens_get1"
 
   let get1 s ys =
-    if Sundials_config.safe then s.checkvec ys;
+    if Sundials_configuration.safe then s.checkvec ys;
     fun i -> c_get1 s i ys
 
   external c_get_dky1
@@ -312,7 +312,7 @@ module Sensitivity = struct (* {{{ *)
       = "c_cvodes_sens_get_dky1"
 
   let get_dky1 s dkys =
-    if Sundials_config.safe then s.checkvec dkys;
+    if Sundials_configuration.safe then s.checkvec dkys;
     fun t k i -> c_get_dky1 s t k i dkys
 
   type dq_method = DQCentered | DQForward
@@ -350,7 +350,7 @@ module Sensitivity = struct (* {{{ *)
       = "c_cvodes_sens_get_err_weights"
 
   let get_err_weights s esweight =
-    if Sundials_config.safe then
+    if Sundials_configuration.safe then
       (if Array.length esweight <> num_sensitivities s
        then invalid_arg "get_err_weights: wrong number of vectors";
        Array.iter s.checkvec esweight);
@@ -366,21 +366,21 @@ module Sensitivity = struct (* {{{ *)
       = "c_cvodes_sens_get_nonlin_solv_stats"
 
   external c_get_num_stgr_nonlin_solv_iters
-      : ('a, 'k) session -> Sundials.LintArray.t -> unit
+      : ('a, 'k) session -> LintArray.t -> unit
       = "c_cvodes_sens_get_num_stgr_nonlin_solv_iters"
 
   let get_num_stgr_nonlin_solv_iters s r =
-    if Sundials_config.safe && Bigarray.Array1.dim r <> num_sensitivities s
+    if Sundials_configuration.safe && Bigarray.Array1.dim r <> num_sensitivities s
     then invalid_arg ("get_num_stgr_nonlin_solv_iters: wrong number of "^
                       "sensitivity vectors");
     c_get_num_stgr_nonlin_solv_iters s r
 
   external c_get_num_stgr_nonlin_solv_conv_fails
-      : ('a, 'k) session -> Sundials.LintArray.t -> unit
+      : ('a, 'k) session -> LintArray.t -> unit
       = "c_cvodes_sens_get_num_stgr_nonlin_solv_conv_fails"
 
   let get_num_stgr_nonlin_solv_conv_fails s r =
-    if Sundials_config.safe && Bigarray.Array1.dim r <> num_sensitivities s
+    if Sundials_configuration.safe && Bigarray.Array1.dim r <> num_sensitivities s
     then invalid_arg
          ("get_num_stgr_nonlin_solv_conv_fails: wrong number of "^
           "sensitivity vectors");
@@ -403,9 +403,9 @@ module Sensitivity = struct (* {{{ *)
       let init s ?fqs v0 =
         let se = fwdsensext s in
         if not se.has_quad then raise Quadrature.QuadNotInitialized;
-        if Sundials_config.safe && Array.length v0 <> se.num_sensitivities
+        if Sundials_configuration.safe && Array.length v0 <> se.num_sensitivities
         then invalid_arg "init: wrong number of vectors";
-        if Sundials_config.safe then Array.iter se.checkquadvec v0;
+        if Sundials_configuration.safe then Array.iter se.checkquadvec v0;
         match fqs with
         | Some f -> se.quadsensrhsfn <- f;
                     c_quadsens_init s true v0
@@ -416,7 +416,7 @@ module Sensitivity = struct (* {{{ *)
 
       let reinit s v =
         let se = fwdsensext s in
-        if Sundials_config.safe then
+        if Sundials_configuration.safe then
           (if Array.length v <> se.num_sensitivities
            then invalid_arg "reinit: wrong number of vectors";
            Array.iter se.checkquadvec v);
@@ -424,7 +424,7 @@ module Sensitivity = struct (* {{{ *)
 
       type ('a, 'k) tolerance =
           NoStepSizeControl
-        | SStolerances of float * Sundials.RealArray.t
+        | SStolerances of float * RealArray.t
         | SVtolerances of float * ('a, 'k) nvector array
         | EEtolerances
 
@@ -432,7 +432,7 @@ module Sensitivity = struct (* {{{ *)
           = "c_cvodes_quadsens_set_err_con"
 
       external ss_tolerances
-          : ('a, 'k) session -> float -> Sundials.RealArray.t -> unit
+          : ('a, 'k) session -> float -> RealArray.t -> unit
           = "c_cvodes_quadsens_ss_tolerances"
 
       external sv_tolerances
@@ -447,14 +447,14 @@ module Sensitivity = struct (* {{{ *)
         match tol with
         | NoStepSizeControl -> set_err_con s false
         | SStolerances (rel, abs) -> begin
-              if Sundials_config.safe &&
+              if Sundials_configuration.safe &&
                  Bigarray.Array1.dim abs <> se.num_sensitivities
               then invalid_arg "set_tolerances: abstol has the wrong length";
               ss_tolerances s rel abs;
               set_err_con s true
             end
         | SVtolerances (rel, abs) -> begin
-              if Sundials_config.safe then
+              if Sundials_configuration.safe then
                 (if Array.length abs <> se.num_sensitivities
                  then invalid_arg
                       "set_tolerances: abstol has the wrong length";
@@ -470,7 +470,7 @@ module Sensitivity = struct (* {{{ *)
 
       let get s ys =
         let se = fwdsensext s in
-        if Sundials_config.safe then
+        if Sundials_configuration.safe then
           (if Array.length ys <> se.num_sensitivities
            then invalid_arg "get: wrong number of vectors";
            Array.iter se.checkquadvec ys);
@@ -481,7 +481,7 @@ module Sensitivity = struct (* {{{ *)
 
       let get1 s yqs =
         let se = fwdsensext s in
-        if Sundials_config.safe then se.checkquadvec yqs;
+        if Sundials_configuration.safe then se.checkquadvec yqs;
         fun i -> c_get1 s i yqs
 
       external c_get_dky
@@ -490,7 +490,7 @@ module Sensitivity = struct (* {{{ *)
 
       let get_dky s ys =
         let se = fwdsensext s in
-        if Sundials_config.safe then
+        if Sundials_configuration.safe then
           (if Array.length ys <> se.num_sensitivities
            then invalid_arg "get_dky: wrong number of vectors";
            Array.iter se.checkquadvec ys);
@@ -502,7 +502,7 @@ module Sensitivity = struct (* {{{ *)
 
       let get_dky1 s dkyqs =
         let se = fwdsensext s in
-        if Sundials_config.safe then se.checkquadvec dkyqs;
+        if Sundials_configuration.safe then se.checkquadvec dkyqs;
         fun t k i -> c_get_dky1 s t k i dkyqs
 
       external get_num_rhs_evals       : ('a, 'k) session -> int
@@ -517,7 +517,7 @@ module Sensitivity = struct (* {{{ *)
 
       let get_err_weights s esweight =
         let se = fwdsensext s in
-        if Sundials_config.safe then
+        if Sundials_configuration.safe then
           (if Array.length esweight <> se.num_sensitivities
            then invalid_arg "get_err_weights: wrong number of vectors";
            Array.iter se.checkquadvec esweight);
@@ -562,7 +562,7 @@ module Adjoint = struct (* {{{ *)
       = "c_cvodes_adj_forward_normal"
 
   let forward_normal s tout yret =
-    if Sundials_config.safe then s.checkvec yret;
+    if Sundials_configuration.safe then s.checkvec yret;
     c_forward_normal s tout yret
 
   external c_forward_one_step : ('a, 'k) session -> float -> ('a, 'k) nvector
@@ -570,7 +570,7 @@ module Adjoint = struct (* {{{ *)
       = "c_cvodes_adj_forward_one_step"
 
   let forward_one_step s tout yret =
-    if Sundials_config.safe then s.checkvec yret;
+    if Sundials_configuration.safe then s.checkvec yret;
     c_forward_one_step s tout yret
 
   type 'a triple = 'a * 'a * 'a
@@ -595,7 +595,7 @@ module Adjoint = struct (* {{{ *)
     let parent, which = parent_and_which bs in
     match tol with
     | SStolerances (rel, abs) -> ss_tolerances parent which rel abs
-    | SVtolerances (rel, abs) -> (if Sundials_config.safe then
+    | SVtolerances (rel, abs) -> (if Sundials_configuration.safe then
                                     (tosession bs).checkvec abs;
                                   sv_tolerances parent which rel abs)
 
@@ -626,7 +626,7 @@ module Adjoint = struct (* {{{ *)
       = "c_cvodes_adj_get"
 
   let get bs yb =
-    if Sundials_config.safe then (tosession bs).checkvec yb;
+    if Sundials_configuration.safe then (tosession bs).checkvec yb;
     let parent, which = parent_and_which bs in
     c_get parent which yb
 
@@ -636,7 +636,7 @@ module Adjoint = struct (* {{{ *)
       = "c_cvodes_adj_get_y"
 
   let get_y s y =
-    if Sundials_config.safe then s.checkvec y;
+    if Sundials_configuration.safe then s.checkvec y;
     fun t -> c_get_y s t y
 
   external set_no_sensitivity : ('a, 'k) session -> unit
@@ -774,7 +774,7 @@ module Adjoint = struct (* {{{ *)
           c_superlumt_set_ordering session ordering
       | _ -> ()
 
-    module LSD = LinearSolver_impl.Direct
+    module LSD = LSI.Direct
 
     (* Sundials < 3.0.0 *)
     let make_compat (type s) (type tag) hasjac usesens
@@ -801,13 +801,13 @@ module Adjoint = struct (* {{{ *)
           c_dls_lapack_band (parent, which) (n, mu, ml) hasjac usesens
 
       | LSD.Klu sinfo ->
-          if not Sundials_config.klu_enabled
-            then raise Sundials.NotImplementedBySundialsVersion;
+          if not Config.klu_enabled
+            then raise Config.NotImplementedBySundialsVersion;
           let smat = Matrix.unwrap mat in
           let m, n = Matrix.Sparse.size smat in
           let nnz, _ = Matrix.Sparse.dims smat in
           if m <> n then raise LinearSolver.MatrixNotSquare;
-          let open LinearSolver_impl.Klu in
+          let open LSI.Klu in
           let session = tosession bs in
           sinfo.set_ordering <- klu_set_ordering session;
           sinfo.reinit <- klu_reinit session;
@@ -816,13 +816,13 @@ module Adjoint = struct (* {{{ *)
                                    | Some o -> c_klu_set_ordering session o)
 
       | LSD.Superlumt sinfo ->
-          if not Sundials_config.superlumt_enabled
-            then raise Sundials.NotImplementedBySundialsVersion;
+          if not Config.superlumt_enabled
+            then raise Config.NotImplementedBySundialsVersion;
           let smat = Matrix.unwrap mat in
           let m, n = Matrix.Sparse.size smat in
           let nnz, _ = Matrix.Sparse.dims smat in
           if m <> n then raise LinearSolver.MatrixNotSquare;
-          let open LinearSolver_impl.Superlumt in
+          let open LSI.Superlumt in
           let session = tosession bs in
           sinfo.set_ordering <- superlumt_set_ordering session;
           c_superlumtb (parent, which) m nnz sinfo.num_threads usesens;
@@ -918,7 +918,7 @@ module Adjoint = struct (* {{{ *)
       else c_dls_set_linear_solver (parent, which) rawptr matrix
                                                     (jac <> None) use_sens;
       LSD.attach ls;
-      session.ls_solver <- LinearSolver_impl.DirectSolver ls
+      session.ls_solver <- LSI.DirectSolver ls
 
     (* Sundials < 3.0.0 *)
     let invalidate_callback s =
@@ -1021,13 +1021,13 @@ module Adjoint = struct (* {{{ *)
       (tosession bs).ls_precfns <- BPrecFns { prec_solve_fn = solve;
                                               prec_setup_fn = setup }
 
-    let prec_none = LinearSolver_impl.Iterative.(PrecNone,
+    let prec_none = LSI.Iterative.(PrecNone,
                       fun bs _ _ _ -> (tosession bs).ls_precfns <- NoPrecFns)
-    let prec_left ?setup solve  = LinearSolver_impl.Iterative.(PrecLeft,
+    let prec_left ?setup solve  = LSI.Iterative.(PrecLeft,
                                     init_preconditioner solve setup)
-    let prec_right ?setup solve = LinearSolver_impl.Iterative.(PrecRight,
+    let prec_right ?setup solve = LSI.Iterative.(PrecRight,
                                     init_preconditioner solve setup)
-    let prec_both ?setup solve  = LinearSolver_impl.Iterative.(PrecBoth,
+    let prec_both ?setup solve  = LSI.Iterative.(PrecBoth,
                                     init_preconditioner solve setup)
 
     let init_preconditioner_with_sens solve setup bs parent which nv =
@@ -1036,11 +1036,11 @@ module Adjoint = struct (* {{{ *)
         BPrecFnsSens { prec_solve_fn_sens = solve;
                        prec_setup_fn_sens = setup }
 
-    let prec_left_with_sens ?setup solve  = LinearSolver_impl.Iterative.(PrecLeft,
+    let prec_left_with_sens ?setup solve  = LSI.Iterative.(PrecLeft,
                                       init_preconditioner_with_sens solve setup)
-    let prec_right_with_sens ?setup solve = LinearSolver_impl.Iterative.(PrecRight,
+    let prec_right_with_sens ?setup solve = LSI.Iterative.(PrecRight,
                                       init_preconditioner_with_sens solve setup)
-    let prec_both_with_sens ?setup solve  = LinearSolver_impl.Iterative.(PrecBoth,
+    let prec_both_with_sens ?setup solve  = LSI.Iterative.(PrecBoth,
                                       init_preconditioner_with_sens solve setup)
 
     type 'd jac_times_vec_fn =
@@ -1050,24 +1050,24 @@ module Adjoint = struct (* {{{ *)
                     * 'd jac_times_vec_fn_with_sens
 
     external c_spils_set_linear_solver
-    : ('a, 'k) session -> int -> ('a, 'k) LinearSolver_impl.Iterative.cptr -> unit
+    : ('a, 'k) session -> int -> ('a, 'k) LSI.Iterative.cptr -> unit
       = "c_cvodes_adj_spils_set_linear_solver"
 
     let solver (type s)
-          ({ LinearSolver_impl.Iterative.rawptr;
-             LinearSolver_impl.Iterative.solver;
-             LinearSolver_impl.Iterative.compat =
-               ({ LinearSolver_impl.Iterative.maxl;
-                  LinearSolver_impl.Iterative.gs_type } as compat) } as ls)
+          ({ LSI.Iterative.rawptr;
+             LSI.Iterative.solver;
+             LSI.Iterative.compat =
+               ({ LSI.Iterative.maxl;
+                  LSI.Iterative.gs_type } as compat) } as ls)
           ?jac_times_vec (prec_type, set_prec) bs nv =
       let session = tosession bs in
       let parent, which = parent_and_which bs in
       if in_compat_mode then begin
         match jac_times_vec with
         | Some (NoSens (Some _, _)) | Some (WithSens (Some _, _)) ->
-            raise Sundials.NotImplementedBySundialsVersion;
+            raise Config.NotImplementedBySundialsVersion;
         | _ -> ();
-        let open LinearSolver_impl.Iterative in
+        let open LSI.Iterative in
         (match (solver : ('nd, 'nk, s) solver) with
          | Spgmr ->
              c_spgmr parent which maxl prec_type;
@@ -1083,8 +1083,8 @@ module Adjoint = struct (* {{{ *)
              c_sptfqmr parent which maxl prec_type;
              compat.set_maxl <- old_set_maxl bs;
              compat.set_prec_type <- old_set_prec_type bs
-         | _ -> raise Sundials.NotImplementedBySundialsVersion);
-        session.ls_solver <- LinearSolver_impl.IterativeSolver ls;
+         | _ -> raise Config.NotImplementedBySundialsVersion);
+        session.ls_solver <- LSI.IterativeSolver ls;
         set_prec bs parent which nv;
         (match jac_times_vec with
          | Some (NoSens (ojs, jt)) ->
@@ -1097,9 +1097,9 @@ module Adjoint = struct (* {{{ *)
              session.ls_callbacks <- BSpilsCallbackSens (None, None))
       end else
         c_spils_set_linear_solver parent which rawptr;
-        LinearSolver_impl.Iterative.attach ls;
-        session.ls_solver <- LinearSolver_impl.IterativeSolver ls;
-        LinearSolver_impl.Iterative.(c_set_prec_type rawptr solver prec_type false);
+        LSI.Iterative.attach ls;
+        session.ls_solver <- LSI.IterativeSolver ls;
+        LSI.Iterative.(c_set_prec_type rawptr solver prec_type false);
         set_prec bs parent which nv;
         let has_setup, has_times, use_sens =
           match jac_times_vec with
@@ -1122,7 +1122,7 @@ module Adjoint = struct (* {{{ *)
           c_set_preconditioner parent which (setup <> None) false;
           (tosession bs).ls_precfns
             <- BPrecFns { prec_setup_fn = setup; prec_solve_fn = solve }
-      | _ -> raise Sundials.InvalidLinearSolver
+      | _ -> raise LinearSolver.InvalidLinearSolver
 
     let set_preconditioner_with_sens bs ?setup solve =
       match (tosession bs).ls_callbacks with
@@ -1132,7 +1132,7 @@ module Adjoint = struct (* {{{ *)
           (tosession bs).ls_precfns
             <- BPrecFnsSens { prec_setup_fn_sens = setup;
                               prec_solve_fn_sens = solve }
-      | _ -> raise Sundials.InvalidLinearSolver
+      | _ -> raise LinearSolver.InvalidLinearSolver
 
     let set_jac_times bs jtv =
       match (tosession bs).ls_callbacks with
@@ -1141,15 +1141,15 @@ module Adjoint = struct (* {{{ *)
           (match jtv with
            | NoSens (ojs, jt) ->
              if in_compat_mode && ojs <> None then
-               raise Sundials.NotImplementedBySundialsVersion;
+               raise Config.NotImplementedBySundialsVersion;
              c_set_jac_times parent which (ojs <> None) true false;
              (tosession bs).ls_callbacks <- BSpilsCallback (Some jt, ojs)
            | WithSens (ojs, jt) ->
              if in_compat_mode && ojs <> None then
-               raise Sundials.NotImplementedBySundialsVersion;
+               raise Config.NotImplementedBySundialsVersion;
              c_set_jac_times parent which (ojs <> None) true true;
              (tosession bs).ls_callbacks <- BSpilsCallbackSens (Some jt, ojs))
-      | _ -> raise Sundials.InvalidLinearSolver
+      | _ -> raise LinearSolver.InvalidLinearSolver
 
     let clear_jac_times bs =
       let parent, which = parent_and_which bs in
@@ -1160,7 +1160,7 @@ module Adjoint = struct (* {{{ *)
       | BSpilsCallbackSens _ ->
           c_set_jac_times parent which false false true;
           (tosession bs).ls_callbacks <- BSpilsCallbackSens (None, None)
-      | _ -> raise Sundials.InvalidLinearSolver
+      | _ -> raise LinearSolver.InvalidLinearSolver
 
     external set_eps_lin : ('a, 'k) bsession -> float -> unit
         = "c_cvodes_adj_spils_set_eps_lin"
@@ -1208,13 +1208,13 @@ module Adjoint = struct (* {{{ *)
           bandrange.mupper bandrange.mlower;
         (tosession bs).ls_precfns <- BandedPrecFns
 
-      let prec_none = LinearSolver_impl.Iterative.(PrecNone, fun bs _ _ _ ->
+      let prec_none = LSI.Iterative.(PrecNone, fun bs _ _ _ ->
                                     (tosession bs).ls_precfns <- BandedPrecFns)
-      let prec_left bandrange  = LinearSolver_impl.Iterative.(PrecLeft,
+      let prec_left bandrange  = LSI.Iterative.(PrecLeft,
                                                 init_preconditioner bandrange)
-      let prec_right bandrange = LinearSolver_impl.Iterative.(PrecRight,
+      let prec_right bandrange = LSI.Iterative.(PrecRight,
                                                 init_preconditioner bandrange)
-      let prec_both bandrange  = LinearSolver_impl.Iterative.(PrecBoth,
+      let prec_both bandrange  = LSI.Iterative.(PrecBoth,
                                                 init_preconditioner bandrange)
 
       let get_work_space bs =
@@ -1313,7 +1313,7 @@ module Adjoint = struct (* {{{ *)
             rootsfn      = dummy_rootsfn;
             errh         = dummy_errh;
             errw         = dummy_errw;
-            ls_solver    = LinearSolver_impl.NoSolver;
+            ls_solver    = LSI.NoSolver;
             ls_callbacks = NoCallbacks;
             ls_precfns   = NoPrecFns;
 
@@ -1352,7 +1352,7 @@ module Adjoint = struct (* {{{ *)
       = "c_cvodes_adj_reinit"
 
   let reinit bs ?iter tb0 yb0 =
-    if Sundials_config.safe then (tosession bs).checkvec yb0;
+    if Sundials_configuration.safe then (tosession bs).checkvec yb0;
     let parent, which = parent_and_which bs in
     c_reinit parent which tb0 yb0;
     (match iter with
@@ -1438,7 +1438,7 @@ module Adjoint = struct (* {{{ *)
       let reinit bs yqb0 =
         let parent, which = parent_and_which bs in
         let se = bwdsensext bs in
-        if Sundials_config.safe then se.checkbquadvec yqb0;
+        if Sundials_configuration.safe then se.checkbquadvec yqb0;
         c_reinit parent which yqb0
 
       external c_get : ('a, 'k) session -> int -> ('a, 'k) nvector -> float
@@ -1473,7 +1473,7 @@ module Adjoint = struct (* {{{ *)
         | SStolerances (rel, abs) -> (ss_tolerances parent which rel abs;
                                       set_err_con parent which true)
         | SVtolerances (rel, abs) -> (let se = bwdsensext bs in
-                                      if Sundials_config.safe then
+                                      if Sundials_configuration.safe then
                                         se.checkbquadvec abs;
                                       sv_tolerances parent which rel abs;
                                       set_err_con parent which true)

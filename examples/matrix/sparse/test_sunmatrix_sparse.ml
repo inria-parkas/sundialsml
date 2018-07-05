@@ -24,6 +24,8 @@
  * -----------------------------------------------------------------
  *)
 
+module Matrix = Sundials.Matrix
+
 let printf = Format.printf
 let (+=) r x = r := !r + x
 let rand_max = 1 lsl 30 - 1

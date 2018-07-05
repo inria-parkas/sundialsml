@@ -204,7 +204,7 @@ module MakeOps =
         !test
 
       let n_vminquotient n d =
-        let m = ref Sundials.big_real in
+        let m = ref Config.big_real in
         for i = 0 to A.length n - 1 do
           if (A.get d i) <> 0.0 then
             m := min !m (A.get n i /. A.get d i)
@@ -484,7 +484,7 @@ module Array =
         !test
 
       let n_vminquotient n d =
-        let m = ref Sundials.big_real in
+        let m = ref Config.big_real in
         for i = 0 to A.length n - 1 do
           if (A.get d i) <> 0.0 then
             m := min !m (A.get n i /. A.get d i)

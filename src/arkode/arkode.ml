@@ -13,7 +13,7 @@ include Arkode_impl
 
 (* "Simulate" Linear Solvers in Sundials < 3.0.0 *)
 let in_compat_mode =
-  match Sundials.sundials_version with
+  match Config.sundials_version with
   | 2,_,_ -> true
   | _ -> false
 
@@ -153,7 +153,7 @@ module Dls = struct (* {{{ *)
     | SlsSuperlumtCallback _ -> c_superlumt_set_ordering session ordering
     | _ -> ()
 
-  module LSD = LinearSolver_impl.Direct
+  module LSD = LSI.Direct
 
   (* Sundials < 3.0.0 *)
   let make_compat (type s) (type tag) hasjac
@@ -179,13 +179,13 @@ module Dls = struct (* {{{ *)
         c_dls_lapack_band session n mu ml hasjac
 
     | LSD.Klu sinfo ->
-        if not Sundials_config.klu_enabled
-          then raise Sundials.NotImplementedBySundialsVersion;
+        if not Config.klu_enabled
+          then raise Config.NotImplementedBySundialsVersion;
         let smat = Matrix.unwrap mat in
         let m, n = Matrix.Sparse.size smat in
         let nnz, _ = Matrix.Sparse.dims smat in
         if m <> n then raise LinearSolver.MatrixNotSquare;
-        let open LinearSolver_impl.Klu in
+        let open LSI.Klu in
         sinfo.set_ordering <- klu_set_ordering session;
         sinfo.reinit <- klu_reinit session;
         c_klu session (Matrix.Sparse.sformat smat) m nnz;
@@ -193,13 +193,13 @@ module Dls = struct (* {{{ *)
                                  | Some o -> c_klu_set_ordering session o)
 
     | LSD.Superlumt sinfo ->
-        if not Sundials_config.superlumt_enabled
-          then raise Sundials.NotImplementedBySundialsVersion;
+        if not Config.superlumt_enabled
+          then raise Config.NotImplementedBySundialsVersion;
         let smat = Matrix.unwrap mat in
         let m, n = Matrix.Sparse.size smat in
         let nnz, _ = Matrix.Sparse.dims smat in
         if m <> n then raise LinearSolver.MatrixNotSquare;
-        let open LinearSolver_impl.Superlumt in
+        let open LSI.Superlumt in
         sinfo.set_ordering <- superlumt_set_ordering session;
         c_superlumt session m nnz sinfo.num_threads;
         (match sinfo.ordering with None -> ()
@@ -254,7 +254,7 @@ module Dls = struct (* {{{ *)
     if in_compat_mode then make_compat (jac <> None) solver matrix session
     else c_dls_set_linear_solver session rawptr matrix (jac <> None);
     LSD.attach ls;
-    session.ls_solver <- LinearSolver_impl.DirectSolver ls
+    session.ls_solver <- LSI.DirectSolver ls
 
   (* Sundials < 3.0.0 *)
   let invalidate_callback session =
@@ -319,36 +319,36 @@ module Spils = struct (* {{{ *)
   (* Sundials < 3.0.0 *)
   external c_spgmr
     : ('a, 'k) session
-      -> int -> LinearSolver_impl.Iterative.preconditioning_type -> unit
+      -> int -> LSI.Iterative.preconditioning_type -> unit
     = "c_arkode_spils_spgmr"
 
   (* Sundials < 3.0.0 *)
   external c_spbcgs
     : ('a, 'k) session
-      -> int -> LinearSolver_impl.Iterative.preconditioning_type -> unit
+      -> int -> LSI.Iterative.preconditioning_type -> unit
     = "c_arkode_spils_spbcgs"
 
   (* Sundials < 3.0.0 *)
   external c_sptfqmr
     : ('a, 'k) session
-      -> int -> LinearSolver_impl.Iterative.preconditioning_type -> unit
+      -> int -> LSI.Iterative.preconditioning_type -> unit
     = "c_arkode_spils_sptfqmr"
 
   (* Sundials < 3.0.0 *)
   external c_spfgmr
     : ('a, 'k) session
-      -> int -> LinearSolver_impl.Iterative.preconditioning_type -> unit
+      -> int -> LSI.Iterative.preconditioning_type -> unit
     = "c_arkode_spils_spfgmr"
 
   (* Sundials < 3.0.0 *)
   external c_pcg
     : ('a, 'k) session
-      -> int -> LinearSolver_impl.Iterative.preconditioning_type -> unit
+      -> int -> LSI.Iterative.preconditioning_type -> unit
     = "c_arkode_spils_pcg"
 
   (* Sundials < 3.0.0 *)
   external c_set_gs_type
-    : ('a, 'k) session -> LinearSolver_impl.Iterative.gramschmidt_type -> unit
+    : ('a, 'k) session -> LSI.Iterative.gramschmidt_type -> unit
     = "c_arkode_spils_set_gs_type"
 
   (* Sundials < 3.0.0 *)
@@ -358,7 +358,7 @@ module Spils = struct (* {{{ *)
 
   (* Sundials < 3.0.0 *)
   external c_set_prec_type
-    : ('a, 'k) session -> LinearSolver_impl.Iterative.preconditioning_type -> unit
+    : ('a, 'k) session -> LSI.Iterative.preconditioning_type -> unit
     = "c_arkode_spils_set_prec_type"
 
   let old_set_maxl s maxl =
@@ -381,7 +381,7 @@ module Spils = struct (* {{{ *)
     = "c_arkode_spils_set_preconditioner"
 
   external c_spils_set_linear_solver
-    : ('a, 'k) session -> ('a, 'k) LinearSolver_impl.Iterative.cptr -> unit
+    : ('a, 'k) session -> ('a, 'k) LSI.Iterative.cptr -> unit
     = "c_arkode_spils_set_linear_solver"
 
   let init_preconditioner solve setup session nv =
@@ -389,32 +389,32 @@ module Spils = struct (* {{{ *)
     session.ls_precfns <- PrecFns { prec_solve_fn = solve;
                                     prec_setup_fn = setup }
 
-  let prec_none = LinearSolver_impl.Iterative.(PrecNone,
+  let prec_none = LSI.Iterative.(PrecNone,
                     fun session nv -> session.ls_precfns <- NoPrecFns)
 
-  let prec_left ?setup solve  = LinearSolver_impl.Iterative.(PrecLeft,
+  let prec_left ?setup solve  = LSI.Iterative.(PrecLeft,
                                             init_preconditioner solve setup)
 
-  let prec_right ?setup solve = LinearSolver_impl.Iterative.(PrecRight,
+  let prec_right ?setup solve = LSI.Iterative.(PrecRight,
                                             init_preconditioner solve setup)
 
-  let prec_both ?setup solve  = LinearSolver_impl.Iterative.(PrecBoth,
+  let prec_both ?setup solve  = LSI.Iterative.(PrecBoth,
                                             init_preconditioner solve setup)
 
   let solver (type s)
-        ({ LinearSolver_impl.Iterative.rawptr;
-           LinearSolver_impl.Iterative.solver;
-           LinearSolver_impl.Iterative.compat =
-             ({ LinearSolver_impl.Iterative.maxl;
-                LinearSolver_impl.Iterative.gs_type } as compat) } as ls)
+        ({ LSI.Iterative.rawptr;
+           LSI.Iterative.solver;
+           LSI.Iterative.compat =
+             ({ LSI.Iterative.maxl;
+                LSI.Iterative.gs_type } as compat) } as ls)
         ?jac_times_vec (prec_type, set_prec) session nv =
     let jac_times_setup, jac_times_vec =
       match jac_times_vec with None -> None, None
                              | Some (ojts, jtv) -> ojts, Some jtv in
     if in_compat_mode then begin
       if jac_times_setup <> None then
-        raise Sundials.NotImplementedBySundialsVersion;
-      let open LinearSolver_impl.Iterative in
+        raise Config.NotImplementedBySundialsVersion;
+      let open LSI.Iterative in
       (match (solver : ('nd, 'nk, s) solver) with
        | Spgmr ->
            c_spgmr session maxl prec_type;
@@ -439,15 +439,15 @@ module Spils = struct (* {{{ *)
            compat.set_maxl <- old_set_maxl session;
            compat.set_prec_type <- old_set_prec_type session
        | Custom _ -> assert false);
-      session.ls_solver <- LinearSolver_impl.IterativeSolver ls;
+      session.ls_solver <- LSI.IterativeSolver ls;
       set_prec session nv;
       session.ls_callbacks <- SpilsCallback (jac_times_vec, None);
       if jac_times_vec <> None then c_set_jac_times session true false
     end else
       c_spils_set_linear_solver session rawptr;
-      LinearSolver_impl.Iterative.attach ls;
-      session.ls_solver <- LinearSolver_impl.IterativeSolver ls;
-      LinearSolver_impl.Iterative.(c_set_prec_type rawptr solver prec_type false);
+      LSI.Iterative.attach ls;
+      session.ls_solver <- LSI.IterativeSolver ls;
+      LSI.Iterative.(c_set_prec_type rawptr solver prec_type false);
       set_prec session nv;
       session.ls_callbacks <- SpilsCallback (jac_times_vec, jac_times_setup);
       if jac_times_setup <> None || jac_times_vec <> None then
@@ -456,19 +456,19 @@ module Spils = struct (* {{{ *)
 
   let set_jac_times s ?jac_times_setup f =
     if in_compat_mode && jac_times_setup <> None then
-        raise Sundials.NotImplementedBySundialsVersion;
+        raise Config.NotImplementedBySundialsVersion;
     match s.ls_callbacks with
     | SpilsCallback _ ->
         c_set_jac_times s (jac_times_setup <> None) true;
         s.ls_callbacks <- SpilsCallback (Some f, jac_times_setup)
-    | _ -> raise Sundials.InvalidLinearSolver
+    | _ -> raise LinearSolver.InvalidLinearSolver
 
   let clear_jac_times s =
     match s.ls_callbacks with
     | SpilsCallback _ ->
         c_set_jac_times s false false;
         s.ls_callbacks <- SpilsCallback (None, None)
-    | _ -> raise Sundials.InvalidLinearSolver
+    | _ -> raise LinearSolver.InvalidLinearSolver
 
   let set_preconditioner s ?setup solve =
     match s.ls_callbacks with
@@ -476,7 +476,7 @@ module Spils = struct (* {{{ *)
         c_set_preconditioner s (setup <> None);
         s.ls_precfns <- PrecFns { prec_setup_fn = setup;
                                   prec_solve_fn = solve }
-    | _ -> raise Sundials.InvalidLinearSolver
+    | _ -> raise LinearSolver.InvalidLinearSolver
 
   external set_eps_lin            : ('a, 'k) session -> float -> unit
     = "c_arkode_spils_set_eps_lin"
@@ -586,14 +586,14 @@ module Spils = struct (* {{{ *)
       session.ls_precfns <- BandedPrecFns
 
     let prec_none =
-      LinearSolver_impl.Iterative.(PrecNone, fun session nv ->
+      LSI.Iterative.(PrecNone, fun session nv ->
                                           session.ls_precfns <- BandedPrecFns)
     let prec_left bandrange =
-      LinearSolver_impl.Iterative.(PrecLeft,  init_preconditioner bandrange)
+      LSI.Iterative.(PrecLeft,  init_preconditioner bandrange)
     let prec_right bandrange =
-      LinearSolver_impl.Iterative.(PrecRight, init_preconditioner bandrange)
+      LSI.Iterative.(PrecRight, init_preconditioner bandrange)
     let prec_both bandrange =
-      LinearSolver_impl.Iterative.(PrecBoth,  init_preconditioner bandrange)
+      LSI.Iterative.(PrecBoth,  init_preconditioner bandrange)
 
     external get_work_space : 'k serial_session -> int * int
       = "c_arkode_bandprec_get_work_space"
@@ -666,7 +666,7 @@ module Mass = struct (* {{{ *)
 
     (* Sundials < 3.0.0 *)
     external c_klu_set_ordering
-      : 'k serial_session -> LinearSolver_impl.Klu.ordering -> unit
+      : 'k serial_session -> LSI.Klu.ordering -> unit
       = "c_arkode_mass_klu_set_ordering"
 
     (* Sundials < 3.0.0 *)
@@ -679,7 +679,7 @@ module Mass = struct (* {{{ *)
 
     (* Sundials < 3.0.0 *)
     external c_superlumt_set_ordering
-      : 'k serial_session -> LinearSolver_impl.Superlumt.ordering -> unit
+      : 'k serial_session -> LSI.Superlumt.ordering -> unit
       = "c_arkode_mass_superlumt_set_ordering"
 
     (* Sundials < 3.0.0 *)
@@ -701,7 +701,7 @@ module Mass = struct (* {{{ *)
       | SlsSuperlumtMassCallback _ -> c_superlumt_set_ordering session ordering
       | _ -> ()
 
-    module LSD = LinearSolver_impl.Direct
+    module LSD = LSI.Direct
 
     (* Sundials < 3.0.0 *)
     let make_compat (type s) (type tag)
@@ -727,13 +727,13 @@ module Mass = struct (* {{{ *)
           c_dls_mass_lapack_band session n mu ml
 
       | LSD.Klu sinfo ->
-          if not Sundials_config.klu_enabled
-            then raise Sundials.NotImplementedBySundialsVersion;
+          if not Config.klu_enabled
+            then raise Config.NotImplementedBySundialsVersion;
           let smat = Matrix.unwrap mat in
           let m, n = Matrix.Sparse.size smat in
           let nnz, _ = Matrix.Sparse.dims smat in
           if m <> n then raise LinearSolver.MatrixNotSquare;
-          let open LinearSolver_impl.Klu in
+          let open LSI.Klu in
           sinfo.set_ordering <- klu_set_ordering session;
           sinfo.reinit <- klu_reinit session;
           c_mass_klu session (Matrix.Sparse.sformat smat) m nnz;
@@ -741,13 +741,13 @@ module Mass = struct (* {{{ *)
                                    | Some o -> c_klu_set_ordering session o)
 
       | LSD.Superlumt sinfo ->
-          if not Sundials_config.superlumt_enabled
-            then raise Sundials.NotImplementedBySundialsVersion;
+          if not Config.superlumt_enabled
+            then raise Config.NotImplementedBySundialsVersion;
           let smat = Matrix.unwrap mat in
           let m, n = Matrix.Sparse.size smat in
           let nnz, _ = Matrix.Sparse.dims smat in
           if m <> n then raise LinearSolver.MatrixNotSquare;
-          let open LinearSolver_impl.Superlumt in
+          let open LSI.Superlumt in
           sinfo.set_ordering <- superlumt_set_ordering session;
           c_mass_superlumt session m nnz sinfo.num_threads;
           (match sinfo.ordering with None -> ()
@@ -761,7 +761,7 @@ module Mass = struct (* {{{ *)
           (solver : (m, 'nd, 'nk, tag) LSD.solver)
           (mat : ('mk, m, 'nd, 'nk) Matrix.t) session =
       let cb = { massfn = massfn; mmat  = (None : m option) } in
-      let open LinearSolver_impl.Direct in
+      let open LSI.Direct in
       begin match solver with
       | Dense ->
           session.mass_callbacks <- DlsDenseMassCallback (cb, Matrix.unwrap mat)
@@ -798,7 +798,7 @@ module Mass = struct (* {{{ *)
       if in_compat_mode then make_compat solver matrix session
       else c_dls_set_mass_linear_solver session rawptr matrix time_dep;
       LSD.attach ls;
-      session.mass_solver <- LinearSolver_impl.DirectSolver ls
+      session.mass_solver <- LSI.DirectSolver ls
 
     (* Sundials < 3.0.0 *)
     let invalidate_callback session =
@@ -830,7 +830,7 @@ module Mass = struct (* {{{ *)
 
     let get_num_setups s =
       mass_check_direct s;
-      if in_compat_mode then raise Sundials.NotImplementedBySundialsVersion else
+      if in_compat_mode then raise Config.NotImplementedBySundialsVersion else
       c_get_num_mass_setups s
 
     (* Sundials < 3.0.0 *)
@@ -853,7 +853,7 @@ module Mass = struct (* {{{ *)
 
     let get_num_mult s =
       mass_check_direct s;
-      if in_compat_mode then raise Sundials.NotImplementedBySundialsVersion else
+      if in_compat_mode then raise Config.NotImplementedBySundialsVersion else
       c_get_num_mass_mult s
 
   end (* }}} *)
@@ -865,37 +865,37 @@ module Mass = struct (* {{{ *)
     (* Sundials < 3.0.0 *)
     external c_spgmr
       : ('a, 'k) session
-        -> int -> LinearSolver_impl.Iterative.preconditioning_type -> unit
+        -> int -> LSI.Iterative.preconditioning_type -> unit
       = "c_arkode_spils_mass_spgmr"
 
     (* Sundials < 3.0.0 *)
     external c_spbcgs
       : ('a, 'k) session
-        -> int -> LinearSolver_impl.Iterative.preconditioning_type -> unit
+        -> int -> LSI.Iterative.preconditioning_type -> unit
       = "c_arkode_spils_mass_spbcgs"
 
     (* Sundials < 3.0.0 *)
     external c_sptfqmr
       : ('a, 'k) session
-        -> int -> LinearSolver_impl.Iterative.preconditioning_type -> unit
+        -> int -> LSI.Iterative.preconditioning_type -> unit
       = "c_arkode_spils_mass_sptfqmr"
 
     (* Sundials < 3.0.0 *)
     external c_spfgmr
       : ('a, 'k) session
-        -> int -> LinearSolver_impl.Iterative.preconditioning_type -> unit
+        -> int -> LSI.Iterative.preconditioning_type -> unit
       = "c_arkode_spils_mass_spfgmr"
 
     (* Sundials < 3.0.0 *)
     external c_pcg
       : ('a, 'k) session
-        -> int -> LinearSolver_impl.Iterative.preconditioning_type -> unit
+        -> int -> LSI.Iterative.preconditioning_type -> unit
       = "c_arkode_spils_mass_pcg"
 
     (* Sundials < 3.0.0 *)
     external c_set_gs_type
       : ('a, 'k) session
-        -> LinearSolver_impl.Iterative.gramschmidt_type -> unit
+        -> LSI.Iterative.gramschmidt_type -> unit
       = "c_arkode_spils_set_mass_gs_type"
 
     (* Sundials < 3.0.0 *)
@@ -904,7 +904,7 @@ module Mass = struct (* {{{ *)
 
     (* Sundials < 3.0.0 *)
     external c_set_prec_type
-      : ('a, 'k) session -> LinearSolver_impl.Iterative.preconditioning_type -> unit
+      : ('a, 'k) session -> LSI.Iterative.preconditioning_type -> unit
       = "c_arkode_spils_set_mass_prec_type"
 
     let old_set_gs_type s t =
@@ -928,7 +928,7 @@ module Mass = struct (* {{{ *)
 
     external c_spils_set_mass_linear_solver
       : ('a, 'k) session
-        -> ('a, 'k) LinearSolver_impl.Iterative.cptr
+        -> ('a, 'k) LSI.Iterative.cptr
         -> bool
         -> bool
         -> unit
@@ -939,30 +939,30 @@ module Mass = struct (* {{{ *)
       session.mass_precfns <- MassPrecFns { prec_solve_fn = solve;
                                             prec_setup_fn = setup }
 
-    let prec_none = LinearSolver_impl.Iterative.(PrecNone,
+    let prec_none = LSI.Iterative.(PrecNone,
                       fun session nv -> session.mass_precfns <- NoMassPrecFns)
 
-    let prec_left ?setup solve  = LinearSolver_impl.Iterative.(PrecLeft,
+    let prec_left ?setup solve  = LSI.Iterative.(PrecLeft,
                                               init_preconditioner solve setup)
 
-    let prec_right ?setup solve = LinearSolver_impl.Iterative.(PrecRight,
+    let prec_right ?setup solve = LSI.Iterative.(PrecRight,
                                               init_preconditioner solve setup)
 
-    let prec_both ?setup solve  = LinearSolver_impl.Iterative.(PrecBoth,
+    let prec_both ?setup solve  = LSI.Iterative.(PrecBoth,
                                               init_preconditioner solve setup)
 
     let solver (type s)
-          ({ LinearSolver_impl.Iterative.rawptr;
-             LinearSolver_impl.Iterative.solver;
-             LinearSolver_impl.Iterative.compat =
-               ({ LinearSolver_impl.Iterative.maxl;
-                  LinearSolver_impl.Iterative.gs_type } as compat) })
+          ({ LSI.Iterative.rawptr;
+             LSI.Iterative.solver;
+             LSI.Iterative.compat =
+               ({ LSI.Iterative.maxl;
+                  LSI.Iterative.gs_type } as compat) })
           ?mass_times_setup mass_times_vec time_dep (prec_type, set_prec)
           session nv =
       if in_compat_mode then begin
         if mass_times_setup <> None then
-          raise Sundials.NotImplementedBySundialsVersion;
-        let open LinearSolver_impl.Iterative in
+          raise Config.NotImplementedBySundialsVersion;
+        let open LSI.Iterative in
         (match (solver : ('nd, 'nk, s) solver) with
          | Spgmr ->
              c_spgmr session maxl prec_type;
@@ -992,20 +992,20 @@ module Mass = struct (* {{{ *)
       end else
         c_spils_set_mass_linear_solver session rawptr
           (mass_times_setup <> None) time_dep;
-        LinearSolver_impl.Iterative.(c_set_prec_type rawptr solver prec_type false);
+        LSI.Iterative.(c_set_prec_type rawptr solver prec_type false);
         set_prec session nv;
         session.mass_callbacks <- SpilsMassCallback
                                     (mass_times_vec, mass_times_setup)
 
     let set_times s ?mass_times_setup mass_times_vec =
       if in_compat_mode && mass_times_setup <> None then
-          raise Sundials.NotImplementedBySundialsVersion;
+          raise Config.NotImplementedBySundialsVersion;
       match s.mass_callbacks with
       | SpilsMassCallback _ ->
           c_set_mass_times s (mass_times_setup <> None);
           s.mass_callbacks <- SpilsMassCallback
                                 (mass_times_vec, mass_times_setup)
-      | _ -> raise Sundials.InvalidLinearSolver
+      | _ -> raise LinearSolver.InvalidLinearSolver
 
     let set_preconditioner s ?setup solve =
       match s.mass_callbacks with
@@ -1013,7 +1013,7 @@ module Mass = struct (* {{{ *)
           c_set_preconditioner s (setup <> None);
           s.mass_precfns <- MassPrecFns { prec_setup_fn = setup;
                                           prec_solve_fn = solve }
-      | _ -> raise Sundials.InvalidLinearSolver
+      | _ -> raise LinearSolver.InvalidLinearSolver
 
     external set_eps_lin            : ('a, 'k) session -> float -> unit
         = "c_arkode_spils_set_mass_eps_lin"
@@ -1105,7 +1105,7 @@ let default_tolerances = SStolerances (1.0e-4, 1.0e-9)
 let set_tolerances s tol =
   match tol with
   | SStolerances (rel, abs) -> (s.errw <- dummy_errw; ss_tolerances s rel abs)
-  | SVtolerances (rel, abs) -> (if Sundials_config.safe then s.checkvec abs;
+  | SVtolerances (rel, abs) -> (if Sundials_configuration.safe then s.checkvec abs;
                                 s.errw <- dummy_errw; sv_tolerances s rel abs)
   | WFtolerances ferrw -> (s.errw <- ferrw; wf_tolerances s)
 
@@ -1126,7 +1126,7 @@ let set_res_tolerance s tol =
   | ResStolerance abs -> (s.resw <- dummy_resw;
                           s.uses_resv <- false;
                           ress_tolerance s abs)
-  | ResVtolerance abs -> (if Sundials_config.safe then s.checkvec abs;
+  | ResVtolerance abs -> (if Sundials_configuration.safe then s.checkvec abs;
                           s.uses_resv <- true;
                           s.resw <- dummy_resw;
                           resv_tolerance s abs)
@@ -1168,7 +1168,7 @@ external c_init :
 let init prob tol ?restol ?order ?mass ?(roots=no_roots) t0 y0 =
   let (nroots, roots) = roots in
   let checkvec = Nvector.check y0 in
-  if Sundials_config.safe && nroots < 0 then
+  if Sundials_configuration.safe && nroots < 0 then
     raise (Invalid_argument "number of root functions is negative");
   let weakref = Weak.create 1 in
   let problem, fi, fe, iter, lin =
@@ -1205,10 +1205,10 @@ let init prob tol ?restol ?order ?mass ?(roots=no_roots) t0 y0 =
           poststepfn   = dummy_poststepfn;
 
           linsolver      = None;
-          ls_solver      = LinearSolver_impl.NoSolver;
+          ls_solver      = LSI.NoSolver;
           ls_callbacks   = NoCallbacks;
           ls_precfns     = NoPrecFns;
-          mass_solver    = LinearSolver_impl.NoSolver;
+          mass_solver    = LSI.NoSolver;
           mass_callbacks = NoMassCallbacks;
           mass_precfns   = NoMassPrecFns;
         } in
@@ -1239,7 +1239,7 @@ external c_reinit
     = "c_arkode_reinit"
 
 let reinit session ?problem ?order ?roots t0 y0 =
-  if Sundials_config.safe then session.checkvec y0;
+  if Sundials_configuration.safe then session.checkvec y0;
   Dls.invalidate_callback session;
   (match problem with
    | None -> ()
@@ -1271,7 +1271,7 @@ let resize session ?resize_nvec ?linsolv tol ?restol hscale ynew t0 =
   (match resize_nvec with None -> () | Some f -> session.resizefn <- f);
   c_resize session (resize_nvec <> None) hscale t0 ynew;
   session.resizefn <- dummy_resizefn;
-  (match Sundials.sundials_version with
+  (match Config.sundials_version with
    | 2,6,1 | 2,6,2 -> () (* avoid a segmentation fault in earlier versions *)
    | _ -> set_tolerances session tol);
   (match restol with
@@ -1280,7 +1280,7 @@ let resize session ?resize_nvec ?linsolv tol ?restol hscale ynew t0 =
    | _ -> ());
   (match session.linsolver with Some ls -> ls session ynew | None -> ())
 
-external get_root_info  : ('a, 'k) session -> Sundials.Roots.t -> unit
+external get_root_info  : ('a, 'k) session -> Roots.t -> unit
     = "c_arkode_get_root_info"
 
 type solver_result =
@@ -1293,7 +1293,7 @@ external c_solve_normal : ('a, 'k) session -> float -> ('a, 'k) nvector
     = "c_arkode_solve_normal"
 
 let solve_normal s t y =
-  if Sundials_config.safe then s.checkvec y;
+  if Sundials_configuration.safe then s.checkvec y;
   c_solve_normal s t y
 
 external c_solve_one_step : ('a, 'k) session -> float -> ('a, 'k) nvector
@@ -1301,7 +1301,7 @@ external c_solve_one_step : ('a, 'k) session -> float -> ('a, 'k) nvector
     = "c_arkode_solve_one_step"
 
 let solve_one_step s t y =
-  if Sundials_config.safe then s.checkvec y;
+  if Sundials_configuration.safe then s.checkvec y;
   c_solve_one_step s t y
 
 external c_get_dky
@@ -1309,7 +1309,7 @@ external c_get_dky
     = "c_arkode_get_dky"
 
 let get_dky s y =
-  if Sundials_config.safe then s.checkvec y;
+  if Sundials_configuration.safe then s.checkvec y;
   fun t k -> c_get_dky s t k y
 
 external get_integrator_stats : ('a, 'k) session -> integrator_stats
@@ -1367,13 +1367,13 @@ let print_integrator_stats s oc =
     Printf.fprintf oc "current_step = %e\n"        stats.current_step;
     Printf.fprintf oc "current_time = %e\n"        stats.current_time
 
-external set_diagnostics : ('a, 'k) session -> Sundials.Logfile.t -> unit
+external set_diagnostics : ('a, 'k) session -> Logfile.t -> unit
     = "c_arkode_set_diagnostics"
 
 external clear_diagnostics : ('a, 'k) session -> unit
     = "c_arkode_clear_diagnostics"
 
-external set_error_file : ('a, 'k) session -> Sundials.Logfile.t -> unit
+external set_error_file : ('a, 'k) session -> Logfile.t -> unit
     = "c_arkode_set_error_file"
 
 external c_set_err_handler_fn  : ('a, 'k) session -> unit
@@ -1443,25 +1443,25 @@ external c_set_irk_table
 
 let set_ark_tables s rkm ai ae tci tce =
   (if s.irhsfn == dummy_irhsfn || s.erhsfn == dummy_erhsfn then raise IllInput);
-  (match Sundials.sundials_version with
+  (match Config.sundials_version with
    | 2,5,_ | 2,6,_ -> if tci.bembed = None || tce.bembed = None
-                      then raise Sundials.NotImplementedBySundialsVersion
+                      then raise Config.NotImplementedBySundialsVersion
    | _ -> ());
   c_set_ark_tables s rkm ai ae (tci, tce)
 
 let set_erk_table s rkm ae tc =
   (if s.erhsfn == dummy_erhsfn then raise IllInput);
-  (match Sundials.sundials_version with
+  (match Config.sundials_version with
    | 2,5,_ | 2,6,_ -> if tc.bembed = None
-                      then raise Sundials.NotImplementedBySundialsVersion
+                      then raise Config.NotImplementedBySundialsVersion
    | _ -> ());
   c_set_erk_table s rkm ae tc
 
 let set_irk_table s rkm ai tc =
   (if s.irhsfn == dummy_irhsfn then raise IllInput);
-  (match Sundials.sundials_version with
+  (match Config.sundials_version with
    | 2,5,_ | 2,6,_ -> if tc.bembed = None
-                      then raise Sundials.NotImplementedBySundialsVersion
+                      then raise Config.NotImplementedBySundialsVersion
    | _ -> ());
   c_set_irk_table s rkm ai tc
 
@@ -1499,7 +1499,7 @@ type ark_table =
   | ARK_8_4_5
 
 let int_of_erk_table v =
-  match Sundials.sundials_version with
+  match Config.sundials_version with
   | 2,5,_ | 2,6,_ ->
     (match v with
      | HeunEuler_2_1_2       -> 0
@@ -1513,7 +1513,7 @@ let int_of_erk_table v =
      | DormandPrince_7_4_5   -> 8
      | ARK_8_4_5_Explicit    -> 9
      | Verner_8_5_6          -> 10
-     | Fehlberg_13_7_8       -> raise Sundials.NotImplementedBySundialsVersion)
+     | Fehlberg_13_7_8       -> raise Config.NotImplementedBySundialsVersion)
   | _ ->
     (match v with
      | HeunEuler_2_1_2       -> 0
@@ -1530,7 +1530,7 @@ let int_of_erk_table v =
      | Fehlberg_13_7_8       -> 11)
 
 let int_of_irk_table v =
-  match Sundials.sundials_version with
+  match Config.sundials_version with
   | 2,5,_ | 2,6,_ ->
     (match v with
      | SDIRK_2_1_2        -> 11
@@ -1691,14 +1691,14 @@ let clear_postprocess_step_fn s =
   s.poststepfn <- dummy_poststepfn;
   c_set_postprocess_step_fn s false
 
-external c_set_root_direction   : ('a, 'k) session -> Sundials.RootDirs.t -> unit
+external c_set_root_direction   : ('a, 'k) session -> RootDirs.t -> unit
     = "c_arkode_set_root_direction"
 
 let set_root_direction s rda =
-  c_set_root_direction s (Sundials.RootDirs.copy (get_num_roots s) rda)
+  c_set_root_direction s (RootDirs.copy (get_num_roots s) rda)
 
 let set_all_root_directions s rd =
-  c_set_root_direction s (Sundials.RootDirs.make (get_num_roots s) rd)
+  c_set_root_direction s (RootDirs.make (get_num_roots s) rd)
 
 external set_no_inactive_root_warn      : ('a, 'k) session -> unit
     = "c_arkode_set_no_inactive_root_warn"
@@ -1715,14 +1715,14 @@ external c_get_err_weights : ('a, 'k) session -> ('a, 'k) nvector -> unit
     = "c_arkode_get_err_weights"
 
 let get_err_weights s ew =
-  if Sundials_config.safe then s.checkvec ew;
+  if Sundials_configuration.safe then s.checkvec ew;
   c_get_err_weights s ew
 
 external c_get_est_local_errors : ('a, 'k) session -> ('a, 'k) nvector -> unit
     = "c_arkode_get_est_local_errors"
 
 let get_est_local_errors s ew =
-  if Sundials_config.safe then s.checkvec ew;
+  if Sundials_configuration.safe then s.checkvec ew;
   c_get_est_local_errors s ew
 
 external get_num_nonlin_solv_iters      : ('a, 'k) session -> int

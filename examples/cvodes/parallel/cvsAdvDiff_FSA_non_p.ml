@@ -50,8 +50,9 @@
  * -----------------------------------------------------------------
  *)
 
+open Sundials
+
 module Sens = Cvodes.Sensitivity
-module RealArray = Sundials.RealArray
 open Bigarray
 
 let local_array = Nvector_parallel.local_array

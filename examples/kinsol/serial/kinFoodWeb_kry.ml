@@ -78,15 +78,14 @@
  * -----------------------------------------------------------------
  *)
 
-module RealArray = Sundials.RealArray
-module RealArray2 = Sundials.RealArray2
-module LintArray = Sundials.LintArray
+open Sundials
+
 module Dense = Matrix.ArrayDense
 let unvec = Nvector.unwrap
 open Bigarray
 
 let printf = Printf.printf
-let unwrap = Sundials.RealArray2.unwrap
+let unwrap = RealArray2.unwrap
 let nvwl2norm = Nvector_serial.DataOps.n_vwl2norm
 
 (* Problem Constants *)
@@ -140,7 +139,7 @@ let pivot =
       v
     ))
 
-let acoef = Sundials.RealArray2.make_data num_species num_species
+let acoef = RealArray2.make_data num_species num_species
 let bcoef = RealArray.make num_species 0.0
 let cox = RealArray.make num_species 0.0
 let coy = RealArray.make num_species 0.0
@@ -151,7 +150,7 @@ let rates = RealArray.make neq 0.0
 
 let dx = ax /. float(mx-1)
 let dy = ay /. float(my-1)
-let uround = Sundials.unit_roundoff
+let uround = Config.unit_roundoff
 let sqruround = sqrt(uround)
 
 let init_user_data =
@@ -183,7 +182,7 @@ let init_user_data =
   done
 
 (* Dot product routine for realtype arrays *)
-let dot_prod size (x1 : RealArray.t) x1off (x2 : Sundials.real_array2) x2r =
+let dot_prod size (x1 : RealArray.t) x1off (x2 : RealArray2.data) x2r =
   let temp =ref 0.0 in
   for i = 0 to size - 1 do
     temp := !temp +. x1.{x1off + i} *. x2.{x2r, i}
@@ -251,7 +250,7 @@ let prec_setup_bd { Kinsol.jac_u=cc;
                     Kinsol.jac_fu=fval }
                   { Kinsol.Spils.uscale=cscale;
                     Kinsol.Spils.fscale=fscale } =
-  let perturb_rates = Sundials.RealArray.make num_species 0.0 in
+  let perturb_rates = RealArray.make num_species 0.0 in
 
   let delx = dx in
   let dely = dy in

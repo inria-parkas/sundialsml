@@ -1,28 +1,28 @@
 
-type data = Sundials.RealArray.t
+type data = RealArray.t
 type kind = [`Serial]
 type t = (data, kind) Nvector.t
 type 'k any = (data, [>kind] as 'k) Nvector.t
 
-external c_wrap : Sundials.RealArray.t -> (Sundials.RealArray.t -> bool) -> t
+external c_wrap : RealArray.t -> (RealArray.t -> bool) -> t
   = "ml_nvec_wrap_serial"
 
 let wrap v =
-  let len = Sundials.RealArray.length v in
-  c_wrap v (fun v' -> len = Sundials.RealArray.length v')
+  let len = RealArray.length v in
+  c_wrap v (fun v' -> len = RealArray.length v')
 
-let make n iv = wrap (Sundials.RealArray.make n iv)
+let make n iv = wrap (RealArray.make n iv)
 
 let unwrap = Nvector.unwrap
 
-let pp fmt v = Sundials.RealArray.pp fmt (unwrap v)
+let pp fmt v = RealArray.pp fmt (unwrap v)
 
 module Ops = struct
-  type t = (Sundials.RealArray.t, kind) Nvector.t
+  type t = (RealArray.t, kind) Nvector.t
 
   let n_vclone nv =
     let data = Nvector.unwrap nv in
-    wrap (Sundials.RealArray.copy data)
+    wrap (RealArray.copy data)
 
   external n_vlinearsum    : float -> t -> float -> t -> t -> unit
     = "ml_nvec_ser_n_vlinearsum"
@@ -85,15 +85,15 @@ end
 
 (* (* Too slow! *)
 module ArrayOps = Nvector_array.MakeOps (struct
-    type data = Sundials.RealArray.t
+    type data = RealArray.t
 
     let get       = Bigarray.Array1.get
     let set       = Bigarray.Array1.set
     let fill      = Bigarray.Array1.fill
 
-    let make      = Sundials.RealArray.make
-    let length    = Sundials.RealArray.length
-    let clone     = Sundials.RealArray.clone
+    let make      = RealArray.make
+    let length    = RealArray.length
+    let clone     = RealArray.clone
   end)
 module DataOps = ArrayOps.DataOps
 *)
@@ -102,9 +102,9 @@ module DataOps =
   struct
 
     module A = Bigarray.Array1
-    type t = Sundials.RealArray.t
+    type t = RealArray.t
 
-    let n_vclone     = Sundials.RealArray.copy
+    let n_vclone     = RealArray.copy
 
     let arr_vaxpy a (x : t) (y : t) =
       if a = 1.0 then
@@ -263,7 +263,7 @@ module DataOps =
       !test
 
     let n_vminquotient (n : t) (d : t) =
-      let m = ref Sundials.big_real in
+      let m = ref Config.big_real in
       for i = 0 to A.dim n - 1 do
         if (A.get d i) <> 0.0 then
           m := min !m (A.get n i /. A.get d i)

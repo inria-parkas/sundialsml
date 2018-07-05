@@ -48,7 +48,8 @@
  * are printed at the end.
  *---------------------------------------------------------------*)
 
-module RealArray = Sundials.RealArray
+open Sundials
+
 let printf = Printf.printf
 let fprintf = Printf.fprintf
 let unwrap = Nvector.unwrap

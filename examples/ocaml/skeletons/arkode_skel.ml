@@ -1,3 +1,5 @@
+open Sundials
+
 (* 1. Define right-hand-side functions. *)
 let f_e t y yd = yd.{0} <- y.{1}
 let f_i t y yd = yd.{1} <- -9.81
@@ -7,7 +9,7 @@ let g t y gout = gout.{0} <- 1.0 -. y.{0}
 
 (* 3. Set vector of initial values.
       The length of this vector determines the problem size. *)
-let yd = Sundials.RealArray.of_list [ 10.0; 0.0 ]
+let yd = RealArray.of_list [ 10.0; 0.0 ]
 let y = Nvector_serial.wrap yd
 
 (* 4. Create and initialize a solver session.
@@ -29,7 +31,7 @@ let s = Arkode.(
 (* 5. Set optional inputs, e.g.,
       call [set_*] functions to change solver parameters. *)
 Arkode.set_stop_time s 10.0;;
-Arkode.set_all_root_directions s Sundials.RootDirs.Increasing;;
+Arkode.set_all_root_directions s RootDirs.Increasing;;
 
 (* 6. Advance the solution in time,
       by repeatedly calling [solve_normal] or [solve_one_step]. *)

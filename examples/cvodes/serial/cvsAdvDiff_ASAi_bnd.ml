@@ -41,8 +41,9 @@
  * -----------------------------------------------------------------
  *)
 
+open Sundials
+
 module Adjoint = Cvodes.Adjoint
-module RealArray = Sundials.RealArray
 let unwrap = Nvector.unwrap
 
 let printf = Printf.printf

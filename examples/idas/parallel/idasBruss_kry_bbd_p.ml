@@ -39,9 +39,8 @@
  * processors.
  *)
 
-module RealArray = Sundials.RealArray
-module RealArray2 = Sundials.RealArray2
-module LintArray = Sundials.LintArray
+open Sundials
+
 let unvec = Nvector.unwrap
 module Sens = Idas.Sensitivity
 open Nvector_parallel.DataOps
@@ -649,7 +648,7 @@ let set_initial_profiles data uv uvp id resid =
  *)
 
 let idaspgmr =
-  match Sundials.sundials_version with 2,_,_ -> "IDASPGMR" | _ -> "SUNSPGMR"
+  match Config.sundials_version with 2,_,_ -> "IDASPGMR" | _ -> "SUNSPGMR"
 
 let print_header system_size maxl mudq mldq mukeep mlkeep rtol atol =
   printf "\nidasBruss_kry_bbd_p: Brusselator DAE parallel example problem for IDAS \n\n";

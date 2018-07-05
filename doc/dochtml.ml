@@ -45,7 +45,7 @@ struct
     val rex = Str.regexp "<\\([^#>]*\\)\\(#[^)]*\\)?> \\(.*\\)"
 
     val variables = [
-      ("version", let major, minor, patch, binding = Sundials_config.version in
+      ("version", let major, minor, patch, binding = Sundials_configuration.version in
                   Printf.sprintf "%d.%d.%d" major minor patch)
     ]
 

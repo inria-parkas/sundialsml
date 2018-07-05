@@ -35,7 +35,8 @@
  * is taken at t = 0, .01, .02, .04,..., 10.24.
  * -----------------------------------------------------------------
  *)
-module RealArray = Sundials.RealArray
+
+open Sundials
 
 let nvscale = Nvector_serial.DataOps.n_vscale
 and nvprod = Nvector_serial.DataOps.n_vprod
@@ -67,11 +68,11 @@ let printf = Printf.printf
  *)
 
 let idaspgmr =
-  match Sundials.sundials_version with 2,_,_ -> "IDASPGMR" | _ -> "SPGMR"
+  match Config.sundials_version with 2,_,_ -> "IDASPGMR" | _ -> "SPGMR"
 let idaspbcg =
-  match Sundials.sundials_version with 2,_,_ -> "IDASPBCG" | _ -> "SPBCG"
+  match Config.sundials_version with 2,_,_ -> "IDASPBCG" | _ -> "SPBCG"
 let idasptfqmr =
-  match Sundials.sundials_version with 2,_,_ -> "IDASPTFQMR" | _ -> "SPTFQMR"
+  match Config.sundials_version with 2,_,_ -> "IDASPTFQMR" | _ -> "SPTFQMR"
 
 let print_header rtol atol linsolver =
   printf "\nidaKrylovDemo_ls: Heat equation, serial example problem for IDA\n";
@@ -242,7 +243,7 @@ let main() =
   set_initial_profile data u u' res;
 
   (* Set constraints to all nonnegative solution values. *)
-  RealArray.fill constraints Sundials.Constraint.geq_zero;
+  RealArray.fill constraints Constraint.geq_zero;
 
   (* Assign various parameters. *)
 
@@ -291,7 +292,7 @@ let main() =
                       flush stdout;
                       Ida.(reinit mem ~linsolv:Spils.(solver (spgmr wu) prec)
                                   t0 wu wu'))
-      | USE_SPBCG -> ((match Sundials.sundials_version with
+      | USE_SPBCG -> ((match Config.sundials_version with
                        | 2,_,_ -> printf " -------";
                                   printf " \n| SPBCG |\n";
                                   printf " -------\n"

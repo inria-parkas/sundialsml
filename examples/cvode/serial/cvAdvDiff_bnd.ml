@@ -31,8 +31,8 @@
  * -----------------------------------------------------------------
  *)
 
-module RealArray = Sundials.RealArray
-module Roots = Sundials.Roots
+open Sundials
+
 let unwrap = Nvector.unwrap
 
 let printf = Printf.printf
@@ -193,7 +193,7 @@ let print_final_stats s =
   nst nfe nsetups nfeLS nje;
   printf "nni = %-6d ncfn = %-6d netf = %d\n"
   nni ncfn netf;
-  (match Sundials.sundials_version with 2,_,_ -> printf " \n" | _ -> ())
+  (match Config.sundials_version with 2,_,_ -> printf " \n" | _ -> ())
 
 let main () =
   (* Create a serial vector *)

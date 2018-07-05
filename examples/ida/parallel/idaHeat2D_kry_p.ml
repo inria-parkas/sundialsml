@@ -36,9 +36,7 @@
  * -----------------------------------------------------------------
  *)
 
-module RealArray = Sundials.RealArray
-module RealArray2 = Sundials.RealArray2
-module LintArray = Sundials.LintArray
+open Sundials
 
 let fprintf = Printf.fprintf
 let printf = Printf.printf
@@ -495,7 +493,7 @@ let set_initial_profile data uu up id res =
  *)
 
 let truetext, spgmr =
-  match Sundials.sundials_version with
+  match Config.sundials_version with
   | 2,_,_ -> "TRUE", "IDASPGMR"
   | _ -> "SUNTRUE", "SUNSPGMR"
 

@@ -86,7 +86,7 @@ let main () =
     let y = RealArray.create n in
     M.matvec a x y;
     printf "matvec: y=@\n%a@\n\n" print_vec y
-  with NotImplementedBySundialsVersion -> ());
+  with Config.NotImplementedBySundialsVersion -> ());
 
   let b = M.create {M.n; M.mu; M.ml; M.smu} in
   M.blit a b;

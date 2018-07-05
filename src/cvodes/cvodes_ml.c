@@ -40,8 +40,8 @@
 #include <cvodes/cvodes_lapack.h>
 #endif
 
-#include "../lsolvers/matrix_ml.h"
-#include "../lsolvers/linearSolver_ml.h"
+#include "../lsolvers/sundials_matrix_ml.h"
+#include "../lsolvers/sundials_linearsolver_ml.h"
 #include "../sundials/sundials_ml.h"
 #include "../cvode/cvode_ml.h"
 #include "cvodes_ml.h"

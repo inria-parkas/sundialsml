@@ -60,7 +60,8 @@
  * statistics are printed at the end.
  *---------------------------------------------------------------*)
 
-module RealArray = Sundials.RealArray
+open Sundials
+
 let printf = Printf.printf
 let fprintf = Printf.fprintf
 let unwrap = Nvector_serial.unwrap
@@ -675,7 +676,7 @@ let jac ud { Arkode.jac_y = (y : RealArray.t) } j =
   (* ensure that Jac is the correct size *)
   if (m <> ud.n*3) || (n <> ud.n*3) then
     (printf "Jacobian calculation error: matrix is the wrong size!\n";
-     raise Sundials.RecoverableFailure);
+     raise RecoverableFailure);
 
   (* Fill in the Laplace matrix *)
   laplace_matrix ud j;
@@ -687,18 +688,18 @@ let jac ud { Arkode.jac_y = (y : RealArray.t) } j =
       try ud.r <- Some Matrix.Sparse.(make CSC m n nnz)
       with _ ->
         (printf "Jac: error in allocating R matrix!\n";
-         raise Sundials.RecoverableFailure));
+         raise RecoverableFailure));
 
   (* Add in the Jacobian of the reaction terms matrix *)
   (match ud.r with
-   | None -> raise Sundials.RecoverableFailure
+   | None -> raise RecoverableFailure
    | Some r -> begin
        reaction_jac ud y r;
        (* Add R to J *)
        try Matrix.Sparse.scale_add 1.0 j r
        with _ ->
          (printf "Jac: error in adding sparse matrices!\n";
-          raise Sundials.RecoverableFailure)
+          raise RecoverableFailure)
      end)
 
 (* Routine to compute the mass matrix multiplying y_t. *)
@@ -1006,7 +1007,7 @@ let main () =
   printf "\nFinal Solver Statistics:\n";
   printf "   Internal solver steps = %d (attempted = %d)\n" nst nst_a;
   printf "   Total RHS evals:  Fe = %d,  Fi = %d\n" nfe nfi;
-  (match Sundials.sundials_version with
+  (match Config.sundials_version with
    | 2, _, _ ->
       let nms = Mass.Dls.get_num_solves arkode_mem in
       printf "   Total mass matrix solves = %d\n" nms;

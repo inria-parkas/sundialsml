@@ -35,8 +35,8 @@ CAMLprim value c_kinsol_klu_get_num_jac_evals(value vkin_mem)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 #else
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-#include "../lsolvers/matrix_ml.h"
-#include "../lsolvers/linearSolver_ml.h"
+#include "../lsolvers/sundials_matrix_ml.h"
+#include "../lsolvers/sundials_linearsolver_ml.h"
 #include "kinsol_ml.h"
 #include "../nvectors/nvector_ml.h"
 

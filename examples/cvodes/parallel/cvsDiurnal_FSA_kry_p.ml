@@ -66,8 +66,8 @@
  * -----------------------------------------------------------------
  *)
 
-module RealArray = Sundials.RealArray
-module LintArray = Sundials.LintArray
+open Sundials
+
 module Direct = Matrix.ArrayDense
 module Sens = Cvodes.Sensitivity
 open Bigarray

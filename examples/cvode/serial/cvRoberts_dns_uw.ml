@@ -31,8 +31,8 @@
  * -----------------------------------------------------------------
  *)
 
-module RealArray = Sundials.RealArray
-module Roots = Sundials.Roots
+open Sundials
+
 open Bigarray
 let unwrap = Nvector.unwrap
 
@@ -81,7 +81,7 @@ let ewt (y : RealArray.t) (w :RealArray.t) =
   for i = 0 to 2 do
     let yy = y.{i} in
     let ww = rtol *. abs_float(yy) +. atol.(i) in
-    if (ww <= 0.0) then raise Sundials.NonPositiveEwt;
+    if (ww <= 0.0) then raise NonPositiveEwt;
     w.{i} <- (1.0 /. ww)
   done
 

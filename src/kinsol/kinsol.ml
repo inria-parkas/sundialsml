@@ -11,11 +11,11 @@
 (***********************************************************************)
 
 include Kinsol_impl
-module RealArray = Sundials.RealArray
+module RealArray = RealArray
 
 (* "Simulate" Linear Solvers in Sundials < 3.0.0 *)
 let in_compat_mode =
-  match Sundials.sundials_version with
+  match Config.sundials_version with
   | 2,_,_ -> true
   | _ -> false
 
@@ -84,7 +84,7 @@ module Dls = struct (* {{{ *)
 
   (* Sundials < 3.0.0 *)
   external c_klu_set_ordering
-    : 'k serial_session -> LinearSolver_impl.Klu.ordering -> unit
+    : 'k serial_session -> LSI.Klu.ordering -> unit
     = "c_kinsol_klu_set_ordering"
 
   (* Sundials < 3.0.0 *)
@@ -98,7 +98,7 @@ module Dls = struct (* {{{ *)
 
   (* Sundials < 3.0.0 *)
   external c_superlumt_set_ordering
-    : 'k serial_session -> LinearSolver_impl.Superlumt.ordering -> unit
+    : 'k serial_session -> LSI.Superlumt.ordering -> unit
     = "c_kinsol_superlumt_set_ordering"
 
   (* Sundials < 3.0.0 *)
@@ -121,7 +121,7 @@ module Dls = struct (* {{{ *)
         c_superlumt_set_ordering session ordering
     | _ -> ()
 
-  module LSD = LinearSolver_impl.Direct
+  module LSD = LSI.Direct
 
   (* Sundials < 3.0.0 *)
   let make_compat (type s) (type tag)
@@ -152,13 +152,13 @@ module Dls = struct (* {{{ *)
         c_dls_lapack_band session mu ml hasjac
 
     | LSD.Klu sinfo ->
-        if not Sundials_config.klu_enabled
-          then raise Sundials.NotImplementedBySundialsVersion;
+        if not Config.klu_enabled
+          then raise Config.NotImplementedBySundialsVersion;
         let smat = Matrix.unwrap mat in
         let m, n = Matrix.Sparse.size smat in
         let nnz, _ = Matrix.Sparse.dims smat in
         if m <> n then raise LinearSolver.MatrixNotSquare;
-        let open LinearSolver_impl.Klu in
+        let open LSI.Klu in
         sinfo.set_ordering <- klu_set_ordering session;
         sinfo.reinit <- klu_reinit session;
         session.neqs <- n;
@@ -167,13 +167,13 @@ module Dls = struct (* {{{ *)
                                  | Some o -> c_klu_set_ordering session o)
 
     | LSD.Superlumt sinfo ->
-        if not Sundials_config.superlumt_enabled
-          then raise Sundials.NotImplementedBySundialsVersion;
+        if not Config.superlumt_enabled
+          then raise Config.NotImplementedBySundialsVersion;
         let smat = Matrix.unwrap mat in
         let m, n = Matrix.Sparse.size smat in
         let nnz, _ = Matrix.Sparse.dims smat in
         if m <> n then raise LinearSolver.MatrixNotSquare;
-        let open LinearSolver_impl.Superlumt in
+        let open LSI.Superlumt in
         sinfo.set_ordering <- superlumt_set_ordering session;
         session.neqs <- n;
         c_superlumt session m nnz sinfo.num_threads;
@@ -229,7 +229,7 @@ module Dls = struct (* {{{ *)
     if in_compat_mode then make_compat (jac <> None) solver matrix session
     else c_dls_set_linear_solver session rawptr matrix (jac <> None);
     LSD.attach ls;
-    session.ls_solver <- LinearSolver_impl.DirectSolver ls
+    session.ls_solver <- LSI.DirectSolver ls
 
   (* Sundials < 3.0.0 *)
   let invalidate_callback session =
@@ -318,7 +318,7 @@ module Spils = struct (* {{{ *)
     = "c_kinsol_spils_set_preconditioner"
 
   external c_spils_set_linear_solver
-    : ('a, 'k) session -> ('a, 'k) LinearSolver_impl.Iterative.cptr -> unit
+    : ('a, 'k) session -> ('a, 'k) LSI.Iterative.cptr -> unit
     = "c_kinsol_spils_set_linear_solver"
 
   let old_set_max_restarts s t =
@@ -330,21 +330,21 @@ module Spils = struct (* {{{ *)
     session.ls_precfns <- PrecFns { prec_solve_fn = solve;
                                     prec_setup_fn = setup }
 
-  let prec_none = LinearSolver_impl.Iterative.(PrecNone,
+  let prec_none = LSI.Iterative.(PrecNone,
                     fun session nv -> session.ls_precfns <- NoPrecFns)
 
-  let prec_right ?setup solve = LinearSolver_impl.Iterative.(PrecRight,
+  let prec_right ?setup solve = LSI.Iterative.(PrecRight,
                                               init_preconditioner solve setup)
 
-  let not_implemented _ = raise Sundials.NotImplementedBySundialsVersion
+  let not_implemented _ = raise Config.NotImplementedBySundialsVersion
 
   let solver (type s)
-        ({ LinearSolver_impl.Iterative.rawptr;
-           LinearSolver_impl.Iterative.solver;
-           LinearSolver_impl.Iterative.compat; } as ls)
+        ({ LSI.Iterative.rawptr;
+           LSI.Iterative.solver;
+           LSI.Iterative.compat; } as ls)
         ?jac_times_vec (prec_type, set_prec) session nv =
     if in_compat_mode then begin
-      let open LinearSolver_impl.Iterative in
+      let open LSI.Iterative in
       (match (solver : ('nd, 'nk, s) solver) with
        | Spgmr ->
            c_spgmr session compat.maxl;
@@ -368,16 +368,16 @@ module Spils = struct (* {{{ *)
            c_sptfqmr session compat.maxl;
            compat.set_maxl <- not_implemented;
            compat.set_prec_type <- not_implemented
-       | _ -> raise Sundials.NotImplementedBySundialsVersion);
-      session.ls_solver <- LinearSolver_impl.IterativeSolver ls;
+       | _ -> raise Config.NotImplementedBySundialsVersion);
+      session.ls_solver <- LSI.IterativeSolver ls;
       set_prec session nv;
       session.ls_callbacks <- SpilsCallback jac_times_vec;
       if jac_times_vec <> None then c_set_jac_times_vec_fn session true
     end else
       c_spils_set_linear_solver session rawptr;
-      LinearSolver_impl.Iterative.attach ls;
-      session.ls_solver <- LinearSolver_impl.IterativeSolver ls;
-      LinearSolver_impl.Iterative.(c_set_prec_type rawptr solver prec_type false);
+      LSI.Iterative.attach ls;
+      session.ls_solver <- LSI.IterativeSolver ls;
+      LSI.Iterative.(c_set_prec_type rawptr solver prec_type false);
       set_prec session nv;
       session.ls_callbacks <- SpilsCallback jac_times_vec;
       if jac_times_vec <> None then c_set_jac_times_vec_fn session true
@@ -387,14 +387,14 @@ module Spils = struct (* {{{ *)
     | SpilsCallback _ ->
         c_set_jac_times_vec_fn s true;
         s.ls_callbacks <- SpilsCallback (Some f)
-    | _ -> raise Sundials.InvalidLinearSolver
+    | _ -> raise LinearSolver.InvalidLinearSolver
 
   let clear_jac_times s =
     match s.ls_callbacks with
     | SpilsCallback _ ->
         c_set_jac_times_vec_fn s false;
         s.ls_callbacks <- SpilsCallback None
-    | _ -> raise Sundials.InvalidLinearSolver
+    | _ -> raise LinearSolver.InvalidLinearSolver
 
   let set_preconditioner s ?setup solve =
     match s.ls_callbacks with
@@ -402,7 +402,7 @@ module Spils = struct (* {{{ *)
         c_set_preconditioner s (setup <> None);
         s.ls_precfns <- PrecFns { prec_setup_fn = setup;
                                   prec_solve_fn = solve }
-    | _ -> raise Sundials.InvalidLinearSolver
+    | _ -> raise LinearSolver.InvalidLinearSolver
 
   external get_work_space       : ('a, 'k) session -> int * int
       = "c_kinsol_spils_get_work_space"
@@ -481,7 +481,7 @@ module Alternate = struct (* {{{ *)
 
 end (* }}} *)
 
-external set_error_file : ('a, 'k) session -> Sundials.Logfile.t -> unit
+external set_error_file : ('a, 'k) session -> Logfile.t -> unit
     = "c_kinsol_set_error_file"
 
 external c_set_err_handler_fn : ('a, 'k) session -> unit
@@ -498,7 +498,7 @@ let clear_err_handler_fn s =
   s.errh <- dummy_errh;
   c_clear_err_handler_fn s
 
-external set_info_file : ('a, 'k) session -> Sundials.Logfile.t -> unit
+external set_info_file : ('a, 'k) session -> Logfile.t -> unit
     = "c_kinsol_set_info_file"
 
 external c_set_info_handler_fn : ('a, 'k) session -> unit
@@ -596,7 +596,7 @@ external c_set_constraints : ('a, 'k) session -> ('a, 'k) nvector -> unit
     = "c_kinsol_set_constraints"
 
 let set_constraints s cc =
-  if Sundials_config.safe then s.checkvec cc;
+  if Sundials_configuration.safe then s.checkvec cc;
   c_set_constraints s cc
 
 let set_sys_func s fsys =
@@ -654,7 +654,7 @@ let init ?max_iters ?maa ?linsolv f u0 =
           errh         = dummy_errh;
           infoh        = dummy_infoh;
 
-          ls_solver    = LinearSolver_impl.NoSolver;
+          ls_solver    = LSI.NoSolver;
           ls_callbacks = NoCallbacks;
           ls_precfns   = NoPrecFns;
         } in
@@ -679,7 +679,7 @@ external c_solve : ('a, 'k) session -> ('a, 'k) nvector -> strategy
     = "c_kinsol_solve"
 
 let solve s u strategy u_scale f_scale =
-  if Sundials_config.safe then
+  if Sundials_configuration.safe then
     (s.checkvec u;
      s.checkvec u_scale;
      s.checkvec f_scale);

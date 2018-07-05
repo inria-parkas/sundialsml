@@ -25,6 +25,8 @@
    Those tests are omitted in this port. However, the output should
    still exactly agree with C if print_time is disabled. *)
 
+module Matrix = Sundials.Matrix
+
 module type MATRIX_TESTS = sig
   type k
   type m

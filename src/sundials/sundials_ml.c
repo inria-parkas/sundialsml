@@ -68,11 +68,10 @@ void sundials_ml_warn_discarded_exn (value exn, const char *context)
 static value weak_get = 0;
 #endif
 
-CAMLprim value c_sundials_init_module (value vwarn_discarded_exn,
-				       value vweak_get, value exns)
+CAMLprim void c_sundials_init_module (value vwarn_discarded_exn,
+				      value vweak_get, value exns)
 {
     CAMLparam2 (vweak_get, exns);
-    CAMLlocal1 (r);
     REGISTER_EXNS (SUNDIALS, exns);
 #if !HAVE_WEAK
     weak_get = vweak_get;
@@ -81,10 +80,19 @@ CAMLprim value c_sundials_init_module (value vwarn_discarded_exn,
     warn_discarded_exn = vwarn_discarded_exn;
     caml_register_generational_global_root (&warn_discarded_exn);
 
+    CAMLreturn0;
+}
+
+CAMLprim value c_sundials_get_constants (void)
+{
+    CAMLparam0 ();
+    CAMLlocal1 (r);
+
     r = caml_alloc_tuple (3);
     Store_field (r, 0, caml_copy_double(BIG_REAL));
     Store_field (r, 1, caml_copy_double(SMALL_REAL));
     Store_field (r, 2, caml_copy_double(UNIT_ROUNDOFF));
+
     CAMLreturn (r);
 }
 

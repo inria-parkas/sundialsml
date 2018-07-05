@@ -55,8 +55,8 @@
  * -----------------------------------------------------------------
  *)
 
-module RealArray = Sundials.RealArray
-module Roots  = Sundials.Roots
+open Sundials
+
 module BBD = Cvode_bbd
 open Bigarray
 

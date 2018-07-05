@@ -50,7 +50,7 @@ type bandwidths = Cvode_bbd.bandwidths =
     The approximation is allowed to coincide with the actual backward
     right-hand side function.
 
-    Raising {!Sundials.RecoverableFailure} signals a recoverable error.
+    Raising {!RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.
 
     @cvodes <node7#SECTION00742200000000000000> CVBBDLocalFnB *)
@@ -62,7 +62,7 @@ type local_fn = Nvector_parallel.data Cvodes.Adjoint.brhsfn_args
     for the execution of {!local_fn}.  They are passed the current
     values of forward and backward variables.
 
-    Raising {!Sundials.RecoverableFailure} signals a recoverable error.
+    Raising {!RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.
 
     @cvodes <node7#SECTION00742200000000000000> CVBBDCommFnB *)

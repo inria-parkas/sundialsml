@@ -44,8 +44,6 @@
     @author Jun Inoue (Inria/ENS)
     @author Marc Pouzet (UPMC/ENS/Inria) *)
 
-open Sundials
-
 (** A session with the IDA solver.
 
     An example session with Ida ({openfile ida_skel.ml}): {[
@@ -116,7 +114,7 @@ module Dls : sig (* {{{ *)
       the [j]th variable, evaluated at the values of [t], [y], and [y']
       obtained from [arg]. Only nonzero elements need be loaded into [jm].
 
-      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Raising {!RecoverableFailure} indicates a recoverable error.
       Any other exception is treated as an unrecoverable error.
 
       {warning Neither the elements of [arg] nor the matrix [jm] should
@@ -188,7 +186,7 @@ module Spils : sig (* {{{ *)
       where {% $\mathit{Res} = r - Pz$%} and {% $\mathit{ewt}$%} comes from
       {!get_err_weights}.
 
-      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Raising {!RecoverableFailure} indicates a recoverable error.
       Any other exception is treated as an unrecoverable error.
 
       {warning The elements of [jac], [r], and [z] should not
@@ -206,7 +204,7 @@ module Spils : sig (* {{{ *)
       need by {!prec_solve_fn}. The sole argument is a {!jacobian_arg} with
       no work vectors.
 
-      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Raising {!RecoverableFailure} indicates a recoverable error.
       Any other exception is treated as an unrecoverable error.
 
       {warning The elements of the argument should not be accessed after the
@@ -244,7 +242,7 @@ module Spils : sig (* {{{ *)
       needed by the jac_times_vec_fn. In the call [jac_times_setup_fn arg],
       [arg] is a {!jacobian_arg} with no work vectors.
 
-      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Raising {!RecoverableFailure} indicates a recoverable error.
       Any other exception is treated as an unrecoverable error.
 
       {warning The elements of [arg] should not be accessed after the
@@ -259,7 +257,7 @@ module Spils : sig (* {{{ *)
       the vector in which to store the
       result—{% $\mathtt{jv} = J\mathtt{v}$%}.
 
-      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Raising {!RecoverableFailure} indicates a recoverable error.
       Any other exception is treated as an unrecoverable error.
 
       {warning Neither the elements of [arg] nor [v] or [jv] should be
@@ -276,7 +274,7 @@ module Spils : sig (* {{{ *)
       linear solver.
 
       NB: a [jac_times_setup_fn] is not supported in
-          {!Sundials.sundials_version} < 3.0.0.
+          {!Config.sundials_version} < 3.0.0.
 
       @nocvode <node> IDASpilsSetLinearSolver
       @nocvode <node> IDASpilsSetJacTimes *)
@@ -366,7 +364,7 @@ module Spils : sig (* {{{ *)
   (** Change the Jacobian-times-vector function.
 
       NB: the [jac_times_setup] argument is not supported in
-          {!Sundials.sundials_version} < 3.0.0.
+          {!Config.sundials_version} < 3.0.0.
 
       @ida <node5#sss:optin_spils> IDASpilsSetJacTimes
       @ida <node5#ss:jtimesFn> IDASpilsJacTimesVecFn *)
@@ -393,7 +391,7 @@ module Alternate : sig (* {{{ *)
       statistics.
 
       Raising any exception in this function (including
-      {!Sundials.RecoverableFailure}) is treated as an unrecoverable error.
+      {!RecoverableFailure}) is treated as an unrecoverable error.
 
       @ida <node8#SECTION00810000000000000000> linit *)
   type ('data, 'kind) linit = ('data, 'kind) session -> unit
@@ -410,7 +408,7 @@ module Alternate : sig (* {{{ *)
                {% $F(t_n, y_{\text{pred}}, \dot{y}_{\text{pred}})$%}, and,
       - [tmp], temporary variables for use by the routine.
 
-      This function may raise a {!Sundials.RecoverableFailure} exception to
+      This function may raise a {!RecoverableFailure} exception to
       indicate that a recoverable error has occurred. Any other exception is
       treated as an unrecoverable error.
 
@@ -451,7 +449,7 @@ module Alternate : sig (* {{{ *)
       - [args], the current approximation to the solution, and,
       - [b], for returning the calculated solution,
 
-      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Raising {!RecoverableFailure} indicates a recoverable error.
       Any other exception is treated as an unrecoverable error.
 
       @ida <node8#SECTION00830000000000000000> lsolve
@@ -510,7 +508,7 @@ end (* }}} *)
 (** Functions that set the multiplicative error weights for use in the weighted
     RMS norm. The call [efun y ewt] takes the dependent variable vector [y] and
     fills the error-weight vector [ewt] with positive values or raises
-    {!Sundials.NonPositiveEwt}. Other exceptions are eventually propagated, but
+    {!NonPositiveEwt}. Other exceptions are eventually propagated, but
     should be avoided ([efun] is not allowed to abort the solver). *)
 type 'data error_weight_fun = 'data -> 'data -> unit
 
@@ -536,7 +534,7 @@ val default_tolerances : ('data, 'kind) tolerance
             {% $\dot{y} = \frac{\mathrm{d}y}{\mathrm{d}t}$%}, and,
     - [r] a vector for storing the residual value, {% $F(t, y, \dot{y})$%}.
 
-    Within the function, raising a {!Sundials.RecoverableFailure} exception
+    Within the function, raising a {!RecoverableFailure} exception
     indicates a recoverable error. Any other exception is treated as an
     unrecoverable error.
 
@@ -723,7 +721,7 @@ val set_max_num_iters_ic : ('d, 'k) session -> int -> unit
     problem.
 
     @since 2.7.0
-    @raise Sundials.NotImplementedBySundialsVersion Feature not available.
+    @raise Config.NotImplementedBySundialsVersion Feature not available.
     @noida <node5#sss:initoptin> IDASetMaxBacksIC
     @ida <node5#ss:idacalcic> IDACalcIC *)
 val set_max_backs_ic : ('d, 'k) session -> int -> unit
@@ -840,17 +838,18 @@ val reinit :
 val set_tolerances : ('d, 'k) session -> ('d, 'k) tolerance -> unit
 
 (** Configure the default error handler to write messages to a file.
-    By default it writes to Sundials.Logfile.stderr.
+    By default it writes to Logfile.stderr.
 
     @ida <node5#sss:optin_main> IDASetErrFile *)
-val set_error_file : ('d, 'k) session -> Sundials.Logfile.t -> unit
+val set_error_file : ('d, 'k) session -> Logfile.t -> unit
 
 (** Specifies a custom function for handling error messages.
     The handler must not fail: any exceptions are trapped and discarded.
 
     @ida <node5#sss:optin_main> IDASetErrHandlerFn
     @ida <node5#ss:ehFn> IDAErrHandlerFn *)
-val set_err_handler_fn : ('d, 'k) session -> (error_details -> unit) -> unit
+val set_err_handler_fn
+  : ('d, 'k) session -> (Util.error_details -> unit) -> unit
 
 (** Restores the default error handling function.
 
@@ -909,7 +908,7 @@ val set_max_conv_fails : ('d, 'k) session -> int -> unit
 val set_nonlin_conv_coef : ('d, 'k) session -> float -> unit
 
 (** Specifies a vector defining inequality constraints for each
-    component of the solution vector [u].  See {!Sundials.Constraint}.
+    component of the solution vector [u].  See {!Constraint}.
 
     @ida <node5#sss:optin_main> IDASetConstraints *)
 val set_constraints : ('d, 'k) session -> ('d, 'k) Nvector.t -> unit

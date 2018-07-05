@@ -10,7 +10,10 @@
 (*                                                                     *)
 (***********************************************************************)
 
-exception LinearSolverInUse = LinearSolver_impl.LinearSolverInUse
+module LSI = Sundials_LinearSolver_impl
+
+exception InvalidLinearSolver
+exception LinearSolverInUse = LSI.LinearSolverInUse
 exception UnrecoverableFailure of bool
 exception MatrixNotSquare
 exception MatrixVectorMismatch
@@ -30,12 +33,12 @@ exception InternalFailure of (string * int)
 
 (* "Simulate" Linear Solvers in Sundials < 3.0.0 *)
 let in_compat_mode =
-  match Sundials.sundials_version with
+  match Config.sundials_version with
   | 2,_,_ -> true
   | _ -> false
 
 module Direct = struct (* {{{ *)
-  include LinearSolver_impl.Direct
+  include LSI.Direct
 
   type ('m, 'nk, 'tag) serial_linear_solver
     = ('m, Nvector_serial.data, [>Nvector_serial.kind] as 'nk, 'tag)
@@ -61,8 +64,8 @@ module Direct = struct (* {{{ *)
     = "ml_lsolver_lapack_dense"
 
   let lapack_dense nvec mat =
-    if not Sundials_config.lapack_enabled
-    then raise Sundials.NotImplementedBySundialsVersion;
+    if not Config.lapack_enabled
+    then raise Config.NotImplementedBySundialsVersion;
     S {
         rawptr = c_lapack_dense nvec mat;
         solver = LapackDense;
@@ -90,8 +93,8 @@ module Direct = struct (* {{{ *)
     = "ml_lsolver_lapack_band"
 
   let lapack_band nvec mat =
-    if not Sundials_config.lapack_enabled
-    then raise Sundials.NotImplementedBySundialsVersion;
+    if not Config.lapack_enabled
+    then raise Config.NotImplementedBySundialsVersion;
     S {
         rawptr = c_lapack_band nvec mat;
         solver = LapackBand;
@@ -100,7 +103,7 @@ module Direct = struct (* {{{ *)
       }
 
   module Klu = struct (* {{{ *)
-    include LinearSolver_impl.Klu
+    include LSI.Klu
 
     external c_klu
              : 'k Nvector_serial.any
@@ -109,8 +112,8 @@ module Direct = struct (* {{{ *)
       = "ml_lsolver_klu"
 
     let make ?ordering nvec mat =
-      if not Sundials_config.klu_enabled
-      then raise Sundials.NotImplementedBySundialsVersion;
+      if not Config.klu_enabled
+      then raise Config.NotImplementedBySundialsVersion;
       let cptr = c_klu nvec mat in
       let info =
         if in_compat_mode
@@ -161,7 +164,7 @@ module Direct = struct (* {{{ *)
   let klu = Klu.make
 
   module Superlumt = struct (* {{{ *)
-    include LinearSolver_impl.Superlumt
+    include LSI.Superlumt
 
     external c_superlumt
              : 'k Nvector_serial.any
@@ -171,9 +174,9 @@ module Direct = struct (* {{{ *)
       = "ml_lsolver_superlumt"
 
     let make ?ordering ~nthreads nvec mat =
-      if not Sundials_config.superlumt_enabled
+      if not Config.superlumt_enabled
          || (in_compat_mode && not Matrix.(Sparse.is_csc (unwrap mat)))
-      then raise Sundials.NotImplementedBySundialsVersion;
+      then raise Config.NotImplementedBySundialsVersion;
       let cptr = c_superlumt nvec mat nthreads in
       let info =
         if in_compat_mode
@@ -205,7 +208,7 @@ module Direct = struct (* {{{ *)
 
   module Custom = struct (* {{{ *)
 
-    type 'lsolver tag = 'lsolver LinearSolver_impl.Custom.tag
+    type 'lsolver tag = 'lsolver LSI.Custom.tag
 
     type ('matrix, 'data, 'kind, 'lsolver) ops = {
         init : 'lsolver -> unit;
@@ -223,10 +226,10 @@ module Direct = struct (* {{{ *)
 
     let make { init = fi; setup = fs0; solve = fs; get_work_space = fgws}
              ldata mat =
-      (match Sundials.sundials_version with
-       | 2,_,_ -> raise Sundials.NotImplementedBySundialsVersion;
+      (match Config.sundials_version with
+       | 2,_,_ -> raise Config.NotImplementedBySundialsVersion;
        | _ -> ());
-      let ops = LinearSolver_impl.Custom.({
+      let ops = LSI.Custom.({
                   init = (fun () -> fi ldata);
                   setup = fs0 ldata;
                   solve = (fun a x b tol -> fs ldata a x b);
@@ -248,20 +251,20 @@ module Direct = struct (* {{{ *)
                 })
              in
              S {
-                 rawptr = LinearSolver_impl.Direct.(c_make_custom 0 ops only_ops);
+                 rawptr = LSI.Direct.(c_make_custom 0 ops only_ops);
                  solver = Custom (ldata, ops);
                  matrix = mat;
                  attached = false;
                }
 
-    let unwrap (S { LinearSolver_impl.Direct.solver = Custom (ldata, _) }) =
+    let unwrap (S { LSI.Direct.solver = Custom (ldata, _) }) =
       ldata
 
   end (* }}} *)
 end (* }}} *)
 
 module Iterative = struct (* {{{ *)
-  include LinearSolver_impl.Iterative
+  include LSI.Iterative
 
   external c_set_maxl
            : ('nd, 'nk) cptr
@@ -492,7 +495,7 @@ module Iterative = struct (* {{{ *)
          fun _  -> failwith ("internal error: Iterative.Custom.set_atimes")
       | Some fset ->
          let fset' = fset ldata in
-         fun fd -> fset' (LinearSolver_impl.Custom.call_atimes fd)
+         fun fd -> fset' (LSI.Custom.call_atimes fd)
 
     let wrap_set_preconditioner fseto ldata =
       match fseto with
@@ -503,9 +506,9 @@ module Iterative = struct (* {{{ *)
          fun fd has_setup has_solve ->
          fset'
            (if has_setup
-            then Some (fun () -> LinearSolver_impl.Custom.call_psetup fd) else None)
+            then Some (fun () -> LSI.Custom.call_psetup fd) else None)
            (if has_solve
-            then Some (LinearSolver_impl.Custom.call_psolve fd) else None)
+            then Some (LSI.Custom.call_psolve fd) else None)
 
     let mapo s fo x =
       match fo with
@@ -527,10 +530,10 @@ module Iterative = struct (* {{{ *)
                get_res_norm = fget_res_norm;
                get_res_id = fget_res_id;
                get_work_space = fget_work_space } ldata =
-      (match Sundials.sundials_version with
-       | 2,_,_ -> raise Sundials.NotImplementedBySundialsVersion;
+      (match Config.sundials_version with
+       | 2,_,_ -> raise Config.NotImplementedBySundialsVersion;
        | _ -> ());
-      let ops = LinearSolver_impl.Custom.({
+      let ops = LSI.Custom.({
                   init = (fun () -> finit ldata);
                   setup = (fun () -> fsetup ldata);
                   solve = (fun () -> fsolve ldata);
@@ -544,7 +547,7 @@ module Iterative = struct (* {{{ *)
                   get_res_id = mapu "get_res_id" fget_res_id ldata;
                   get_work_space = mapu "get_work_space" fget_work_space ldata;
                 }) in
-      let only_ops = LinearSolver_impl.Custom.({
+      let only_ops = LSI.Custom.({
                         has_set_atimes          = fset_atimes <> None;
                         has_set_preconditioner  = fset_preconditioner <> None;
                         has_set_scaling_vectors = fset_scaling_vectors <> None;
@@ -553,7 +556,7 @@ module Iterative = struct (* {{{ *)
                         has_get_res_id          = fget_res_id <> None;
                         has_get_work_space      = fget_work_space <> None;
                      })
-      in LinearSolver_impl.Iterative.({
+      in LSI.Iterative.({
            rawptr = c_make_custom 1 ops only_ops;
            solver = Custom (ldata, ops);
            compat = info;
@@ -561,38 +564,38 @@ module Iterative = struct (* {{{ *)
            attached = false;
          })
 
-    let unwrap { LinearSolver_impl.Iterative.solver = Custom (ldata, _) } =
+    let unwrap { LSI.Iterative.solver = Custom (ldata, _) } =
       ldata
 
   end (* }}} *)
 
   module Algorithms = struct (* {{{ *)
 
-    external qr_fact : Sundials.RealArray2.t
-                       -> Sundials.RealArray.t
+    external qr_fact : RealArray2.t
+                       -> RealArray.t
                        -> bool
                        -> unit
       = "c_spils_qr_fact"
 
-    external qr_sol : Sundials.RealArray2.t
-                      -> Sundials.RealArray.t
-                      -> Sundials.RealArray.t
+    external qr_sol : RealArray2.t
+                      -> RealArray.t
+                      -> RealArray.t
                       -> unit
       = "c_spils_qr_sol"
 
     external modified_gs : (('a, 'k) Nvector.t) array
-                           -> Sundials.RealArray2.t
+                           -> RealArray2.t
                            -> int
                            -> int
                            -> float
       = "c_spils_modified_gs"
 
     external classical_gs' : (('a, 'k) Nvector.t) array
-                             * Sundials.RealArray2.t
+                             * RealArray2.t
                              * int
                              * int
                              * ('a, 'k) Nvector.t
-                             * Sundials.RealArray.t
+                             * RealArray.t
                              -> float
       = "c_spils_classical_gs"
 
@@ -609,7 +612,8 @@ let _ =
   c_init_module
     (* Exceptions must be listed in the same order as
        lsolver_exn_index.  *)
-    [|UnrecoverableFailure false;
+    [|InvalidLinearSolver;
+      UnrecoverableFailure false;
       MatrixNotSquare;
       MatrixVectorMismatch;
       InsufficientStorageUpperBandwidth;

@@ -25,7 +25,9 @@
  *
  * -----------------------------------------------------------------
  *)
-module RealArray = Sundials.RealArray
+
+open Sundials
+
 module Quad = Idas.Quadrature
 module Sens = Idas.Sensitivity
 module QuadSens = Sens.Quadrature

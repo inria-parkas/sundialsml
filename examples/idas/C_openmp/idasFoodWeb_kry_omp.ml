@@ -99,10 +99,8 @@
  *     pp. 1495-1512.
  * -----------------------------------------------------------------
  *)
-module RealArray = Sundials.RealArray
-module RealArray2 = Sundials.RealArray2
-module Roots = Sundials.Roots
-module LintArray = Sundials.LintArray
+
+open Sundials
 
 let printf = Printf.printf
 
@@ -327,7 +325,7 @@ let precond webdata jac =
 
   let perturb_rates = RealArray.create num_species in
 
-  let uround = Sundials.unit_roundoff in
+  let uround = Config.unit_roundoff in
   let sqru = sqrt uround in
   let mem =
     match webdata.ida_mem with
@@ -371,7 +369,7 @@ let precond webdata jac =
 
       (* Do LU decomposition of matrix block for grid point (jx,jy). *)
       (try Matrix.ArrayDense.getrf pxy webdata.pivot.(jx).(jy)
-       with Matrix.ZeroDiagonalElement _ -> raise Sundials.RecoverableFailure)
+       with Matrix.ZeroDiagonalElement _ -> raise RecoverableFailure)
 
     done (* End of jx loop. *)
   done (* End of jy loop. *)
@@ -428,13 +426,13 @@ let set_initial_profiles webdata c c' id =
   done
 
 let idaspgmr =
-  match Sundials.sundials_version with
+  match Config.sundials_version with
   | 2,_,_ -> "IDASpgmr,  Spgmr parameters"
   | _ -> "SUNSPGMR,"
 
 (* Print first lines of output (problem description) *)
 let print_header maxl rtol atol =
-  (match Sundials.sundials_version with
+  (match Config.sundials_version with
    | 2,_,_ ->
   printf "\nidasFoodWeb_kry_omp: Predator-prey DAE OpenMP example problem for IDAS \n\n"
    | _ ->

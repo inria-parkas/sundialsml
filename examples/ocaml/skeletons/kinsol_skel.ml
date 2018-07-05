@@ -1,3 +1,5 @@
+open Sundials
+
 (* 1. Define a system function. *)
 let pi, e = 4. *. atan 1., exp 1.
 let sysf u r =
@@ -10,7 +12,7 @@ let sysf u r =
 
 (* 2. Set vector with initial guess.
       The length of this vector determines the problem size. *)
-let ud = Sundials.RealArray.of_list [ 0.25; 1.5; 0.; -0.75; 0.; 1.5 -. 2. *.pi ]
+let ud = RealArray.of_list [ 0.25; 1.5; 0.; -0.75; 0.; 1.5 -. 2. *.pi ]
 let u = Nvector_serial.wrap ud
 
 (* 3. Create and initialize a solver session.
@@ -20,20 +22,20 @@ let s = Kinsol.(init ~linsolv:(Dls.(solver (dense u m))) sysf u);;
 
 (* 4. Set optional inputs, e.g.,
       call [set_*] functions to change solver parameters. *)
-let c = Sundials.(RealArray.of_list [
+let c = RealArray.of_list [
    Constraint.unconstrained;
    Constraint.unconstrained;
    Constraint.geq_zero;
    Constraint.leq_zero;
    Constraint.geq_zero;
-   Constraint.leq_zero ]) in
+   Constraint.leq_zero ] in
 Kinsol.set_constraints s (Nvector_serial.wrap c);
 Kinsol.set_func_norm_tol s 1.0e-5;
 Kinsol.set_scaled_step_tol s 1.0e-5;
 Kinsol.set_max_setup_calls s 1;;
 
 (* 5. Solve the problem. *)
-let snv = Nvector_serial.make (Sundials.RealArray.length ud) 1.0 in
+let snv = Nvector_serial.make (RealArray.length ud) 1.0 in
 ignore (Kinsol.(solve s u Newton snv snv));
 
 Printf.printf "%8.5g %8.6g\n" ud.{0} ud.{1};;

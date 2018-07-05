@@ -98,9 +98,7 @@
  * -----------------------------------------------------------------
  *)
 
-module RealArray = Sundials.RealArray
-module RealArray2 = Sundials.RealArray2
-module LintArray = Sundials.LintArray
+open Sundials
 
 let fprintf = Printf.fprintf
 let printf = Printf.printf
@@ -663,7 +661,7 @@ let set_initial_profiles webdata (((ccdata : RealArray.t), _, _) as cc)
  *)
 
 let idaspgmr =
-  match Sundials.sundials_version with 2,_,_ -> "IDASPGMR" | _ -> "SUNSPGMR"
+  match Config.sundials_version with 2,_,_ -> "IDASPGMR" | _ -> "SUNSPGMR"
 
 let print_header system_size maxl mudq mldq mukeep mlkeep rtol atol =
   printf "\nidaFoodWeb_kry_bbd_p: Predator-prey DAE parallel example problem for IDA \n\n";

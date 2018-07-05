@@ -22,7 +22,7 @@
 (** Parallel nvectors carry triples of a local
     {{:OCAML_DOC_ROOT(Bigarray.Array1.html)} bigarray} of floats,
     a global length, and an MPI communicator. *)
-type data = Sundials.RealArray.t * int * Mpi.communicator
+type data = RealArray.t * int * Mpi.communicator
 
 (** Represents the internal layout of a parallel nvector. *)
 type kind
@@ -53,7 +53,7 @@ val pp : Format.formatter -> t -> unit
 
 (** [local_array nv] returns the local array [a] underlying the parallel
     nvector [nv]. *)
-val local_array : t -> Sundials.RealArray.t
+val local_array : t -> RealArray.t
 
 (** Returns the number of local elements for a parallel nvector. *)
 val local_length : t -> int

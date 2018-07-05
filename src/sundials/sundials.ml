@@ -10,226 +10,19 @@
 (*                                                                     *)
 (***********************************************************************)
 
-external format_float : string -> float -> string
-    = "caml_format_float"
+module Config = Sundials_Config
 
-let floata = format_float "%a"
-
-(* Used when user code throws an exception in a context where the
-   underlying C library does not allow for clean handling.  *)
-let warn_discarded_exn exn context =
-  Printf.fprintf stderr
-    ("WARNING: discarding exception %s raised in %s.\n%s")
-    (Printexc.to_string exn) context
-    (Printexc.get_backtrace ());
-  flush stderr
+module Index = Sundials_configuration.Index
+type index_elt = Sundials_configuration.index_elt
 
 exception RecoverableFailure
 exception NonPositiveEwt
-exception InvalidLinearSolver
-exception NotImplementedBySundialsVersion
 
 (* Note the type annotations are redundant because there's already a .mli, but
    explicit annotations improve performance for bigarrays.  *)
-module RealArray = struct (* {{{ *)
-  open Bigarray
+module RealArray = Sundials_RealArray
 
-  let kind = float64
-  let layout = c_layout
-  type t = (float, float64_elt, c_layout) Array1.t
-
-  let create : int -> t = Array1.create kind layout
-  let of_array : float array -> t = Array1.of_array kind layout
-
-  let fill : t -> float -> unit = Array1.fill
-
-  let make size x =
-    let a = create size in
-    fill a x;
-    a
-
-  let init size f =
-    let a = create size in
-    for i = 0 to size - 1 do
-      a.{i} <- f i
-    done;
-    a
-
-  let length : t -> int = Array1.dim
-
-  let ppi ?(start="[") ?(stop="]") ?(sep=";")
-          ?(item=fun f->Format.fprintf f "%2d=% -14e") ()
-          fmt a =
-    Format.pp_print_string fmt start;
-    Format.pp_open_hovbox fmt 0;
-    for i = 0 to length a - 1 do
-      if i > 0 then (
-        Format.pp_print_string fmt sep;
-        Format.pp_print_space fmt ();
-      );
-      item fmt i a.{i}
-    done;
-    Format.pp_close_box fmt ();
-    Format.pp_print_string fmt stop
-
-  let pp fmt a = ppi ~item:(fun fmt _ x -> Format.fprintf fmt "% -14e" x)
-    () fmt a
-
-  let blit_some src isrc dst idst len =
-    if Sundials_config.safe &&
-       (len < 0 || isrc < 0 || isrc + len >= length src
-        || idst < 0 || idst + len >= length dst)
-    then invalid_arg "RealArray.blit_some";
-    for k = 0 to len - 1 do
-      Array1.unsafe_set dst (idst + k) (Array1.unsafe_get src (isrc + k))
-    done
-
-  let blit = Array1.blit
-
-  let copy src =
-    let dst = create (length src) in
-    Array1.blit src dst;
-    dst
-
-  let sub = Array1.sub
-
-  let of_list src = of_array (Array.of_list src)
-
-  let to_list v =
-    let rec go ls i =
-      if i < 0 then ls
-      else go (v.{i}::ls) (i-1)
-    in go [] (length v - 1)
-
-  let into_array (src : t) dst =
-    let n = length src in
-    if Sundials_config.safe && n <> Array.length dst
-    then invalid_arg "into_array: array sizes do not match";
-    for i = 1 to n-1 do
-      dst.(i) <- src.{i}
-    done
-
-  let to_array (v : t) =
-    let n = length v in
-    let a = Array.make n v.{0} in
-    for i = 1 to n-1 do
-      a.(i) <- v.{i}
-    done;
-    a
-
-  let fold_left f b (v : t) =
-    let n = length v in
-    let rec go acc i =
-      if i < n then go (f acc v.{i}) (i+1)
-      else acc
-    in go b 0
-
-  let fold_right f (v : t) b =
-    let rec go acc i =
-      if i >= 0 then go (f v.{i} acc) (i-1)
-      else acc
-    in go b (length v - 1)
-
-  let iter f (v : t) =
-    for i = 0 to (length v - 1) do
-      f v.{i}
-    done
-
-  let map f (v : t) =
-    for i = 0 to (length v - 1) do
-      v.{i} <- f v.{i}
-    done
-
-  let iteri f (v : t) =
-    for i = 0 to (length v - 1) do
-      f i v.{i}
-    done
-
-  let mapi f (v : t) =
-    for i = 0 to (length v - 1) do
-      v.{i} <- f i v.{i}
-    done
-end (* }}} *)
-
-type real_array2 =
-  (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array2.t
-
-module RealArray2 = struct (* {{{ *)
-  open Bigarray
-
-  let make_data = Array2.create float64 c_layout
-
-  type t = real_array2 * Obj.t
-
-  external wrap : real_array2 -> t
-    = "c_sundials_realarray2_wrap"
-
-  let unwrap = fst
-
-  let create nr nc =
-    let d = Array2.create float64 c_layout nc nr
-    in wrap d
-
-  let make nr nc v =
-    let d = Array2.create float64 c_layout nc nr
-    in
-    Array2.fill d v;
-    wrap d
-
-  let size a =
-    let d = unwrap a in
-    (Array2.dim2 d, Array2.dim1 d)
-
-  let ppi ?(start="[") ?(rowstart="[") ?(stop="]") ?(rowstop="]")
-          ?(sep=";") ?(rowsep=";")
-          ?(item=fun f -> Format.fprintf f "(%2d,%2d)=% -14e") ()
-          fmt a =
-    let d = unwrap a in
-    let ni, nj = Array2.dim2 d - 1, Array2.dim1 d - 1 in
-    Format.pp_print_string fmt start;
-    Format.pp_open_vbox fmt 0;
-    for i = 0 to ni do
-      if i > 0 then (
-        Format.pp_print_string fmt rowsep;
-        Format.pp_print_cut fmt ()
-      );
-
-      Format.pp_print_string fmt rowstart;
-      Format.pp_open_hovbox fmt 0;
-      for j = 0 to nj do
-        if j > 0 then (
-          Format.pp_print_string fmt sep;
-          Format.pp_print_space fmt ();
-        );
-        item fmt i j d.{j, i}
-      done;
-      Format.pp_close_box fmt ();
-      Format.pp_print_string fmt rowstop
-
-    done;
-    Format.pp_close_box fmt ();
-    Format.pp_print_string fmt stop
-
-  let pp fmt a = ppi ~item:(fun fmt _ _ x -> Format.fprintf fmt "% -14e" x) ()
-      fmt a
-
-  let get x i j = Array2.get (unwrap x) j i
-  let set x i j = Array2.set (unwrap x) j i
-
-  let col x j = Array2.slice_left (unwrap x) j
-
-  let copy a =
-    let d = unwrap a in
-    let c = Array2.dim1 d in
-    let r = Array2.dim2 d in
-    let d' = Array2.create float64 c_layout c r in
-    Array2.blit d d';
-    wrap d'
-
-  let blit a1 a2 =
-    Array2.blit (unwrap a1) (unwrap a2)
-end (* }}} *)
-
+module RealArray2 = Sundials_RealArray2
 
 (* Opaque arrays *)
 
@@ -331,7 +124,7 @@ module ArrayLike (A : ArrayBaseOps) = struct (* {{{ *)
   let blit_some a oa b ob len =
     let na = length a
     and nb = length b in
-    if Sundials_config.safe &&
+    if Sundials_configuration.safe &&
        (len < 0 || oa < 0 || na < oa+len || ob < 0 || nb < ob+len)
     then invalid_arg (Printf.sprintf "%s.blit" error_name)
     else
@@ -354,47 +147,7 @@ end (* }}} *)
 
 (* root arrays *)
 
-module LintArray = struct (* {{{ *)
-  open Bigarray
-
-  type t = (int, int_elt, c_layout) Array1.t
-
-  let create = Array1.create int RealArray.layout
-
-  let make n x =
-    let v = create n in
-    Array1.fill v x;
-    v
-
-  let pp fmt a =
-    Format.pp_print_string fmt "[";
-    Format.pp_open_hovbox fmt 0;
-    for i = 0 to Array1.dim a - 1 do
-      if i > 0 then (
-        Format.pp_print_string fmt ";";
-        Format.pp_print_space fmt ();
-      );
-      Format.fprintf fmt "% 6d" a.{i}
-    done;
-    Format.pp_close_box fmt ();
-    Format.pp_print_string fmt "]"
-
-  let ppi ?(start="[") ?(stop="]") ?(sep=";")
-          ?(item=fun fmt ->Format.fprintf fmt "%2d=% 6d") ()
-          fmt a =
-    Format.pp_print_string fmt start;
-    Format.pp_open_hovbox fmt 0;
-    for i = 0 to Array1.dim a - 1 do
-      if i > 0 then (
-        Format.pp_print_string fmt sep;
-        Format.pp_print_space fmt ();
-      );
-      item fmt i a.{i}
-    done;
-    Format.pp_close_box fmt ();
-    Format.pp_print_string fmt stop
-
-end (* }}} *)
+module LintArray = Sundials_LintArray
 
 module Roots = struct (* {{{ *)
   open Bigarray
@@ -412,7 +165,7 @@ module Roots = struct (* {{{ *)
     | n ->
       failwith
         (Printf.sprintf
-           "Sundials.Roots.root_of_int32: invalid root event %ld" n)
+           "Roots.root_of_int32: invalid root event %ld" n)
 
   let root_of_int = function
     |  1 -> Rising
@@ -420,7 +173,7 @@ module Roots = struct (* {{{ *)
     |  0 -> NoRoot
     | n ->
       failwith
-        ("Sundials.Roots.root_of_int: invalid root event " ^ string_of_int n)
+        ("Roots.root_of_int: invalid root event " ^ string_of_int n)
 
   let int32_of_root x =
     match x with
@@ -548,7 +301,7 @@ module RootDirs = struct (* {{{ *)
     | n ->
       failwith
         (Printf.sprintf
-           "Sundials.Roots.rootdir_of_int32: invalid root direction %ld" n)
+           "Roots.rootdir_of_int32: invalid root direction %ld" n)
 
   let make n x =
     let a = Array1.create int32 c_layout n in
@@ -662,64 +415,49 @@ module Constraint = struct (* {{{ *)
     | LtZero        -> -2.0
 end (* }}} *)
 
-module Logfile = struct (* {{{ *)
-  type t
+module Logfile = Sundials_Logfile
 
-  external c_stderr : unit -> t
-    = "c_sundials_stderr"
+module Matrix = Sundials_Matrix
 
-  external c_stdout : unit -> t
-    = "c_sundials_stdout"
+module LinearSolver = Sundials_LinearSolver
 
-  external fopen : string -> bool -> t
-    = "c_sundials_fopen"
+module Util = struct (* {{{ *)
 
-  let stderr = c_stderr ()
-  let stdout = c_stdout ()
+  type error_details = {
+      error_code : int;
+      module_name : string;
+      function_name : string;
+      error_message : string;
+    }
 
-  let openfile ?(trunc=false) fpath = fopen fpath trunc
+  external format_float : string -> float -> string
+      = "caml_format_float"
 
-  external flush : t -> unit
-    = "c_sundials_fflush"
+  let floata = format_float "%a"
+
 end (* }}} *)
-
-type solver_result =
-  | Continue
-  | RootsFound
-  | StopTimeReached
-
-type error_details = {
-    error_code : int;
-    module_name : string;
-    function_name : string;
-    error_message : string;
-  }
-
-(* Re-export constants generated by configure.  *)
-let version = Sundials_config.version
-let sundials_version = Sundials_config.sundials_version
-let lapack_enabled = Sundials_config.lapack_enabled
-let mpi_enabled = Sundials_config.mpi_enabled
-let klu_enabled = Sundials_config.klu_enabled
-let superlumt_enabled = Sundials_config.superlumt_enabled
-let nvecpthreads_enabled = Sundials_config.nvecpthreads_enabled
-let nvecopenmp_enabled = Sundials_config.nvecopenmp_enabled
-module Index = Sundials_config.Index
-type index_elt = Sundials_config.index_elt
-
-(* Let C code know about some of the values in this module, and obtain
-   a few parameters from the C side.  *)
 
 external c_init_module :
   (exn -> string -> unit)
   -> ('a Weak.t -> int -> 'a option)
   -> exn array
-  -> (float * float * float)
+  -> unit
   = "c_sundials_init_module"
 
-let big_real, small_real, unit_roundoff =
+(* Used when user code throws an exception in a context where the
+   underlying C library does not allow for clean handling.  *)
+let warn_discarded_exn exn context =
+  Printf.fprintf stderr
+    ("WARNING: discarding exception %s raised in %s.\n%s")
+    (Printexc.to_string exn) context
+    (Printexc.get_backtrace ());
+  flush stderr
+
+let () =
   c_init_module warn_discarded_exn Weak.get
     (* Exceptions must be listed in the same order as
        sundials_exn_index.  *)
-    [|RecoverableFailure; NonPositiveEwt; NotImplementedBySundialsVersion|]
+    [|RecoverableFailure;
+      NonPositiveEwt;
+      Config.NotImplementedBySundialsVersion|]
 

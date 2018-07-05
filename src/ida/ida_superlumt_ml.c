@@ -33,7 +33,7 @@ CAMLprim value c_ida_superlumt_get_num_jac_evals(value vida_mem)
 #else
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #include "ida_ml.h"
-#include "../lsolvers/matrix_ml.h"
+#include "../lsolvers/sundials_matrix_ml.h"
 
 #ifdef SUNDIALSML_WITHSENS
 /* IDAS (with sensitivity) */

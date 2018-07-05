@@ -84,8 +84,8 @@
  * -----------------------------------------------------------------
  *)
 
-module RealArray = Sundials.RealArray
-module LintArray = Sundials.LintArray
+open Sundials
+
 module Adj = Cvodes.Adjoint
 module Densemat = Matrix.ArrayDense
 open Bigarray
@@ -294,7 +294,7 @@ let alloc_user_data () =
 
       dx         = dx;
       dy         = dy;
-      srur       = sqrt Sundials.unit_roundoff;
+      srur       = sqrt Config.unit_roundoff;
 
       fsave      = RealArray.create neq;
       fbsave     = RealArray.create neq;
@@ -776,7 +776,7 @@ let precond wdata jacarg jok gamma =
   in
   Cvode.get_err_weights cvode_mem wdata.rewt;
 
-  let uround = Sundials.unit_roundoff
+  let uround = Config.unit_roundoff
   and p      = wdata.p
   and pivot  = wdata.pivot
   and jxr    = wdata.jxr
@@ -804,7 +804,7 @@ let precond wdata jacarg jok gamma =
       let if0 = if00 + jx * mp in
       let ig  = igx + igy * ngx in
       (* Generate ig-th diagonal block *)
-      let pdata = Sundials.RealArray2.unwrap p.(ig) in
+      let pdata = RealArray2.unwrap p.(ig) in
       for j = 0 to mp - 1 do
         (* Generate the jth column as a difference quotient *)
         let jj = if0 + j in
@@ -943,7 +943,7 @@ let precondb wdata jacarg jok gamma =
   in
   Adj.get_err_weights cvode_mem wdata.rewtb;
 
-  let uround = Sundials.unit_roundoff
+  let uround = Config.unit_roundoff
   and p      = wdata.p
   and pivot  = wdata.pivot
   and jxr    = wdata.jxr
@@ -971,7 +971,7 @@ let precondb wdata jacarg jok gamma =
       let if0 = if00 + jx * mp in
       let ig  = igx + igy * ngx in
       (* Generate ig-th diagonal block *)
-      let pdata = Sundials.RealArray2.unwrap p.(ig) in
+      let pdata = RealArray2.unwrap p.(ig) in
       for j = 0 to mp - 1 do
         (* Generate the jth column as a difference quotient *)
         let jj = if0 + j in
@@ -1061,7 +1061,7 @@ let main () =
 
   (* Call CVodeCreate/CVodeInit for forward run *)
   (* Call CVSpgmr for forward run *)
-  (match Sundials.sundials_version with
+  (match Config.sundials_version with
    | 2,5,_ -> printf "\nCreate and allocate CVODE memory for forward run\n"
    | _     -> printf "\nCreate and allocate CVODES memory for forward run\n");
   flush stdout;

@@ -35,7 +35,8 @@
  * -----------------------------------------------------------------
  *)
 
-module RealArray = Sundials.RealArray
+open Sundials
+
 module Quad = Cvodes.Quadrature
 module Sens = Cvodes.Sensitivity
 module QuadSens = Cvodes.Sensitivity.Quadrature
@@ -198,7 +199,7 @@ let fB2 : user_data -> RealArray.t Adj.brhsfn_with_sens =
                                      l1 *. 2.0*.p1*.s1                    -. s1;
   yBdot.{4} <- m2 +. p2*.p2*.y.{2} *. m3 +.
                                      l3 *. (2.0*.p2*.y.{2} +. p2*.p2*.s3) -. s2;
-  match Sundials.sundials_version with
+  match Config.sundials_version with
   | 2,5,_ -> yBdot.{5} <- m1 +. p2*.p2*.y.{1} *. m3 +.
                                      l3 *. (2.0*.p2*.y.{2} +. p2*.p2*.s2) -. s3
   | _     -> yBdot.{5} <- m1 +. p2*.p2*.y.{1} *. m3 +.

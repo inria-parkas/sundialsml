@@ -29,7 +29,7 @@ CAMLprim value c_cvodes_superlumtb_init (value vparent_which,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #include "../cvode/cvode_ml.h"
 #include "cvodes_ml.h"
-#include "../lsolvers/matrix_ml.h"
+#include "../lsolvers/sundials_matrix_ml.h"
 
 #include <cvodes/cvodes.h>
 

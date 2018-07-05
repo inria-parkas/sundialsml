@@ -97,9 +97,8 @@
  * -------------------------------------------------------------------
  *)
 
-module RealArray = Sundials.RealArray
-module LintArray = Sundials.LintArray
-module Roots = Sundials.Roots
+open Sundials
+
 module Densemat = Matrix.ArrayDense
 open Bigarray
 let unwrap = Nvector.unwrap
@@ -168,7 +167,7 @@ let nout       = 18
 
 type web_data = {
     p         : Densemat.t array;
-    pivot     : Sundials.LintArray.t array;
+    pivot     : LintArray.t array;
 
     ns        : int;
     mxns      : int;
@@ -285,7 +284,7 @@ let precond wdata jacarg jok gamma =
   in
   Arkode.get_err_weights arkode_mem wdata.rewt;
 
-  let uround = Sundials.unit_roundoff
+  let uround = Config.unit_roundoff
   and p      = wdata.p
   and pivot  = wdata.pivot
   and jxr    = wdata.jxr
@@ -313,7 +312,7 @@ let precond wdata jacarg jok gamma =
       let if0 = if00 + jx * mp in
       let ig  = igx + igy * ngx in
       (* Generate ig-th diagonal block *)
-      let pdata = Sundials.RealArray2.unwrap p.(ig) in
+      let pdata = RealArray2.unwrap p.(ig) in
       for j = 0 to mp - 1 do
         (* Generate the jth column as a difference quotient *)
         let jj = if0 + j in
@@ -688,7 +687,7 @@ let alloc_user_data () =
 
       dx        = dx;
       dy        = dy;
-      srur      = sqrt Sundials.unit_roundoff;
+      srur      = sqrt Config.unit_roundoff;
 
       fsave     = RealArray.create neq;
 
@@ -827,7 +826,7 @@ let print_final_stats s =
   and nfeLS = Spils.get_num_rhs_evals s
   in
   printf "\n\n Final statistics for this run:\n\n";
-  (match Sundials.sundials_version with
+  (match Config.sundials_version with
   | 2,_,_ ->
   printf " ARKode real workspace length           = %4d \n" lenrw;
   printf " ARKode integer workspace length        = %4d \n" leniw;

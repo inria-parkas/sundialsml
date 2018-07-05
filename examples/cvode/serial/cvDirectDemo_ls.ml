@@ -56,8 +56,8 @@
  * -----------------------------------------------------------------
  *)
 
-module RealArray = Sundials.RealArray
-module Roots = Sundials.Roots
+open Sundials
+
 let unwrap = Nvector.unwrap
 
 let printf = Printf.printf
@@ -248,7 +248,7 @@ let print_final_stats cvode_mem miter ero =
     printf " Linear solver real workspace length      = %4d \n" lenrwLS;
     printf " Linear solver integer workspace length   = %4d \n" leniwLS;
     printf " Number of Jacobian evaluations           = %4d" nje;
-    (match Sundials.sundials_version with
+    (match Config.sundials_version with
      | 2,_,_ -> printf "  \n"
      | _ -> printf " \n");
 
@@ -355,7 +355,7 @@ let print_intro2 () =
   printf "triangular matrix derived from 2-D advection PDE\n\n";
   printf " neq = %d, ml = %d, mu = %d\n" p2_neq p2_ml p2_mu;
   printf " itol = %s, reltol = %.2g, abstol = %.2g" "CV_SS" rtol atol;
-  match Sundials.sundials_version with
+  match Config.sundials_version with
   | 2,5,_ -> printf "\n      t        max.err      qu     hu \n"
   | _ -> ()
 

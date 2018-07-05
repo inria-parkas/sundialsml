@@ -25,16 +25,15 @@
 
 (* Test the Cvode.Alternate module *)
 
+open Sundials
+
 module DM = Matrix.ArrayDense
-module LintArray = Sundials.LintArray
-module RealArray = Sundials.RealArray
-module RealArray2 = Sundials.RealArray2
 
 let printf = Printf.printf
 let nvwl2norm = Nvector_serial.DataOps.n_vwl2norm
 let nvdotprod = Nvector_serial.DataOps.n_vdotprod
 
-let unwrap = Sundials.RealArray2.unwrap
+let unwrap = RealArray2.unwrap
 
 type cvdls_mem = {
   dj     : DM.t;
@@ -53,7 +52,7 @@ let alternate_dense jacfn =
     let fval, _ = Kinsol.Alternate.get_f_fscale s in
     (try
       jacfn uu fval mem.dj
-     with Sundials.RecoverableFailure -> failwith "Cannot recover!");
+     with RecoverableFailure -> failwith "Cannot recover!");
     DM.getrf mem.dj mem.pivots
   in
 
@@ -99,7 +98,7 @@ let two   = 2.0
 let ith v i = v.{i - 1}
 let set_ith v i e = v.{i - 1} <- e
 
-let set_ijth (m : Sundials.real_array2) i j e = m.{j - 1, i - 1} <- e
+let set_ijth (m : RealArray2.data) i j e = m.{j - 1, i - 1} <- e
 
 (* System function *)
 let func (yd : RealArray.t) (fd : RealArray.t) =

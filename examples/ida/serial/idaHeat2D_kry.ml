@@ -32,7 +32,8 @@
  * The second run uses IDAReInit and IDAReInitSpgmr.
  * -----------------------------------------------------------------
  *)
-module RealArray = Sundials.RealArray
+
+open Sundials
 
 (* Problem Constants *)
 let nout  = 11
@@ -165,7 +166,7 @@ let set_initial_profile data u u' res =
   done
 
 let idaspgmr =
-  match Sundials.sundials_version with 2,_,_ -> "IDASPGMR" | _ -> "SPGMR"
+  match Config.sundials_version with 2,_,_ -> "IDASPGMR" | _ -> "SPGMR"
 
 (*
  * Print first lines of output (problem description)
@@ -219,7 +220,7 @@ let main () =
   set_initial_profile data u u' res;
 
   (* Set constraints to all non-negative. *)
-  RealArray.fill constraints Sundials.Constraint.geq_zero;
+  RealArray.fill constraints Constraint.geq_zero;
 
   (* Assign various parameters. *)
 

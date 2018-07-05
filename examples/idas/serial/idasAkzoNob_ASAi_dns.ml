@@ -26,7 +26,9 @@
  * The sensitivity of G is the solution of the adjoint system at t0.
  * -----------------------------------------------------------------
  *)
-module RealArray = Sundials.RealArray
+
+open Sundials
+
 module Quad = Idas.Quadrature
 module Sens = Idas.Sensitivity
 module Adjoint = Idas.Adjoint

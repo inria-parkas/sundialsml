@@ -34,6 +34,8 @@
 
  *)
 
+module LSI = Sundials_LinearSolver_impl
+
 (*
  * NB: The order of variant constructors and record fields is important!
  *     If these types are changed or augmented, the corresponding declarations
@@ -42,7 +44,8 @@
 external crash : string -> unit = "sundials_crash"
 
 type ('data, 'kind) nvector = ('data, 'kind) Nvector.t
-module RealArray = Sundials.RealArray
+module RealArray = RealArray
+module Matrix = Matrix
 
 type 'a double = 'a * 'a
 type 'a triple = 'a * 'a * 'a
@@ -341,8 +344,8 @@ type cvode_mem
 type c_weak_ref
 
 type 'a rhsfn = float -> 'a -> 'a -> unit
-type 'a rootsfn = float -> 'a -> Sundials.RealArray.t -> unit
-type error_handler = Sundials.error_details -> unit
+type 'a rootsfn = float -> 'a -> RealArray.t -> unit
+type error_handler = Util.error_details -> unit
 type 'a error_weight_fun = 'a -> 'a -> unit
 
 (* Session: here comes the big blob.  These mutually recursive types
@@ -367,7 +370,7 @@ type ('a, 'kind) session = {
   mutable errh         : error_handler;
   mutable errw         : 'a error_weight_fun;
 
-  mutable ls_solver    : LinearSolver_impl.solver;
+  mutable ls_solver    : LSI.solver;
   mutable ls_callbacks : ('a, 'kind) linsolv_callbacks;
   mutable ls_precfns   : 'a linsolv_precfns;
 
@@ -533,11 +536,11 @@ and ('data, 'kind) lsolve' =
 (* Linear solver check functions *)
 
 let ls_check_diag session =
-  if Sundials_config.safe && session.ls_callbacks <> DiagNoCallbacks then
-    raise Sundials.InvalidLinearSolver
+  if Sundials_configuration.safe && session.ls_callbacks <> DiagNoCallbacks then
+    raise LinearSolver.InvalidLinearSolver
 
 let ls_check_direct session =
-  if Sundials_config.safe then
+  if Sundials_configuration.safe then
     match session.ls_callbacks with
     | DlsDenseCallback _ | DlsBandCallback _
     | BDlsDenseCallback _ | BDlsDenseCallbackSens _
@@ -545,25 +548,25 @@ let ls_check_direct session =
     | SlsKluCallback _ | BSlsKluCallback _ | BSlsKluCallbackSens _
     | SlsSuperlumtCallback _ | BSlsSuperlumtCallback _
     | BSlsSuperlumtCallbackSens _ -> ()
-    | _ -> raise Sundials.InvalidLinearSolver
+    | _ -> raise LinearSolver.InvalidLinearSolver
 
 let ls_check_spils session =
-  if Sundials_config.safe then
+  if Sundials_configuration.safe then
     match session.ls_callbacks with
     | SpilsCallback _ | BSpilsCallback _ | BSpilsCallbackSens _ -> ()
-    | _ -> raise Sundials.InvalidLinearSolver
+    | _ -> raise LinearSolver.InvalidLinearSolver
 
 let ls_check_spils_band session =
-  if Sundials_config.safe then
+  if Sundials_configuration.safe then
     match session.ls_precfns with
     | BandedPrecFns -> ()
-    | _ -> raise Sundials.InvalidLinearSolver
+    | _ -> raise LinearSolver.InvalidLinearSolver
 
 let ls_check_spils_bbd session =
-  if Sundials_config.safe then
+  if Sundials_configuration.safe then
     match session.ls_precfns with
     | BBDPrecFns _ | BBBDPrecFns _ -> ()
-    | _ -> raise Sundials.InvalidLinearSolver
+    | _ -> raise LinearSolver.InvalidLinearSolver
 
 (* Types that depend on session *)
 
@@ -588,7 +591,7 @@ module SpilsTypes = struct
     -> unit
 
   type ('a, 'k) preconditioner =
-    LinearSolver_impl.Iterative.preconditioning_type * ('a, 'k) set_preconditioner
+    LSI.Iterative.preconditioning_type * ('a, 'k) set_preconditioner
 
   type 'k serial_preconditioner = (Nvector_serial.data, 'k) preconditioner
                                   constraint 'k = [>Nvector_serial.kind]
@@ -647,7 +650,7 @@ module AdjointTypes = struct
       ('a, 'k) bsession -> ('a, 'k) session -> int -> ('a, 'k) nvector -> unit
 
     type ('a, 'k) preconditioner =
-      LinearSolver_impl.Iterative.preconditioning_type * ('a, 'k) set_preconditioner
+      LSI.Iterative.preconditioning_type * ('a, 'k) set_preconditioner
 
     type 'k serial_preconditioner = (Nvector_serial.data, 'k) preconditioner
                                     constraint 'k = [>Nvector_serial.kind]

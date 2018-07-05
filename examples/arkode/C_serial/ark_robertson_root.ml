@@ -39,13 +39,13 @@
  * are printed at the end.
  *---------------------------------------------------------------*)
 
-module RealArray = Sundials.RealArray
-module Roots = Sundials.Roots
+open Sundials
+
 let printf = Printf.printf
 let fprintf = Printf.fprintf
 
 let sundials_270_or_later =
-  match Sundials.sundials_version with
+  match Config.sundials_version with
   | 2,5,_ | 2,6,_ -> false
   | _ -> true
 

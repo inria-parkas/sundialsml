@@ -44,8 +44,9 @@
  * -----------------------------------------------------------------
  *)
 
+open Sundials
+
 module Adjoint = Cvodes.Adjoint
-module RealArray = Sundials.RealArray
 open Bigarray
 
 let local_array = Nvector_parallel.local_array

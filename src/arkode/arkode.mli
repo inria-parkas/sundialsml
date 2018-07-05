@@ -48,8 +48,6 @@
     @author Jun Inoue (Inria/ENS)
     @author Marc Pouzet (UPMC/ENS/Inria) *)
 
-open Sundials
-
 (** A session with the ARKODE solver.
 
     An example session with Arkode ({openfile arkode_skel.ml}): {[
@@ -113,7 +111,7 @@ module Dls : sig (* {{{ *)
       evaluated at the values of [t] and [y] obtained from [arg]. Only
       nonzero elements need be loaded into [jm].
 
-      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Raising {!RecoverableFailure} indicates a recoverable error.
       Any other exception is treated as an unrecoverable error.
 
       {warning Neither the elements of [arg] nor the matrix [jm] should
@@ -192,7 +190,7 @@ module Spils : sig (* {{{ *)
       the Newton matrix {% $A = M - \gamma J$%} where
       {% $J = \frac{\partial f_I}{\partial y}$%}.
 
-      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Raising {!RecoverableFailure} indicates a recoverable error.
       Any other exception is treated as an unrecoverable error.
 
       {warning The elements of [jac], [arg], and [z] should not
@@ -214,7 +212,7 @@ module Spils : sig (* {{{ *)
       A function should return [true] if Jacobian-related data was updated
       and [false] if saved data was reused.
 
-      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Raising {!RecoverableFailure} indicates a recoverable error.
       Any other exception is treated as an unrecoverable error.
 
       {warning The elements of [jac] should not be accessed after the
@@ -320,7 +318,7 @@ module Spils : sig (* {{{ *)
       needed by the jac_times_vec_fn. In the call [jac_times_setup_fn arg],
       [arg] is a {!jacobian_arg} with no work vectors.
 
-      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Raising {!RecoverableFailure} indicates a recoverable error.
       Any other exception is treated as an unrecoverable error.
 
       {warning The elements of [arg] should not be accessed after the
@@ -337,7 +335,7 @@ module Spils : sig (* {{{ *)
       the vector in which to store the
       result—{% $\mathtt{jv} = J\mathtt{v}$%}.
 
-      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Raising {!RecoverableFailure} indicates a recoverable error.
       Any other exception is treated as an unrecoverable error.
 
       {warning Neither the elements of [arg] nor [v] or [jv] should be
@@ -354,7 +352,7 @@ module Spils : sig (* {{{ *)
         linear solver.
 
         NB: a [jac_times_setup_fn] is not supported in
-            {!Sundials.sundials_version} < 3.0.0.
+            {!Config.sundials_version} < 3.0.0.
 
         @nocvode <node> ARKSpilsSetLinearSolver
         @nocvode <node> ARKSpilsSetJacTimes *)
@@ -491,7 +489,7 @@ module Alternate : sig (* {{{ *)
       statistics.
 
       Raising any exception in this function (including
-      {!Sundials.RecoverableFailure}) is treated as an unrecoverable error.
+      {!RecoverableFailure}) is treated as an unrecoverable error.
 
       @noarkode <node> linit *)
   type ('data, 'kind) linit = ('data, 'kind) session -> unit
@@ -500,7 +498,7 @@ module Alternate : sig (* {{{ *)
       to {{!callbacks}lsolve}.  This function must return [true]
       only if the Jacobian-related data is current after the call.
 
-      This function may raise a {!Sundials.RecoverableFailure} exception to
+      This function may raise a {!RecoverableFailure} exception to
       indicate that a recoverable error has occurred. Any other exception is
       treated as an unrecoverable error.
 
@@ -541,7 +539,7 @@ module Alternate : sig (* {{{ *)
       - [args], summarizing current approximations to the solution, and
       - [b], the right-hand side vector, also used for returning the result.
 
-      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Raising {!RecoverableFailure} indicates a recoverable error.
       Any other exception is treated as an unrecoverable error.
 
       {warning The vectors in {!lsolve_args} should not be accessed
@@ -622,7 +620,7 @@ module Mass : sig (* {{{ *)
         approximation to the mass matrix {% $M(t)$%}. Only nonzero elements
         need be loaded into [m].
 
-        Raising {!Sundials.RecoverableFailure} indicates a recoverable
+        Raising {!RecoverableFailure} indicates a recoverable
         error. Any other exception is treated as an unrecoverable error.
 
         {warning Neither the elements of [work] nor the matrix [m]
@@ -637,7 +635,7 @@ module Mass : sig (* {{{ *)
         variable [t], if not it is only computed and factored once.
 
         NB: The boolean argument is ignored in
-        {!Sundials.sundials_version} < 3.0.0.
+        {!Config.sundials_version} < 3.0.0.
 
         @nocvode <node> ARKDlsSetMassLinearSolver
         @nocvode <node> ARKDlsSetMassFn *)
@@ -660,7 +658,7 @@ module Mass : sig (* {{{ *)
         routine.
 
         NB: This function is not supported by
-        {!Sundials.sundials_version} < 3.0.0.
+        {!Config.sundials_version} < 3.0.0.
 
         @noarkode <node> ARKDlsGetNumMassSetups *)
     val get_num_setups : 'k serial_session -> int
@@ -675,7 +673,7 @@ module Mass : sig (* {{{ *)
         routine.
 
         NB: This function is not supported by
-        {!Sundials.sundials_version} < 3.0.0.
+        {!Config.sundials_version} < 3.0.0.
 
         @noarkode <node> ARKDlsGetNumMassMult *)
     val get_num_mult : 'k serial_session -> int
@@ -708,7 +706,7 @@ module Mass : sig (* {{{ *)
         the product of the two preconditioner matrices should approximate
         {% $M$%}.
 
-        Raising {!Sundials.RecoverableFailure} indicates a recoverable
+        Raising {!RecoverableFailure} indicates a recoverable
         error. Any other exception is treated as an unrecoverable error.
 
         {warning The elements of [arg] and [z] should not
@@ -725,7 +723,7 @@ module Mass : sig (* {{{ *)
         data needed by {!prec_solve_fn}. The argument gives the independent
         variable [t].
 
-        Raising {!Sundials.RecoverableFailure} indicates a recoverable
+        Raising {!RecoverableFailure} indicates a recoverable
         error. Any other exception is treated as an unrecoverable error.
 
         @noarkode <node> ARKSpilsMassPrecSetupFn *)
@@ -771,7 +769,7 @@ module Mass : sig (* {{{ *)
         needed by the mass_times_vec_fn. The argument gives the independent
         variable [t].
 
-        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+        Raising {!RecoverableFailure} indicates a recoverable error.
         Any other exception is treated as an unrecoverable error.
 
         @nocvode <node> ARKSpilsMassTimesSetupFn *)
@@ -784,7 +782,7 @@ module Mass : sig (* {{{ *)
         - [mv] is the computed output
                vector—{% $\mathtt{mv} = M\mathtt{v}$%}.
 
-        Raising {!Sundials.RecoverableFailure} indicates a recoverable
+        Raising {!RecoverableFailure} indicates a recoverable
         error. Any other exception is treated as an unrecoverable error.
 
         {warning Neither the elements of [v] nor [mv] should be
@@ -803,10 +801,10 @@ module Mass : sig (* {{{ *)
         and factored once.
 
         NB: a [mass_times_setup_fn] is not supported in
-        {!Sundials.sundials_version} < 3.0.0.
+        {!Config.sundials_version} < 3.0.0.
 
         NB: The boolean argument is ignored in
-        {!Sundials.sundials_version} < 3.0.0.
+        {!Config.sundials_version} < 3.0.0.
 
         @nocvode <node> ARKSpilsSetMassLinearSolver
         @nocvode <node> ARKSpilsSetMassTimes *)
@@ -909,7 +907,7 @@ module Mass : sig (* {{{ *)
         statistics.
 
         Raising any exception in this function (including
-        {!Sundials.RecoverableFailure}) is treated as an unrecoverable
+        {!RecoverableFailure}) is treated as an unrecoverable
         error.
 
         @noarkode <node> minit *)
@@ -918,7 +916,7 @@ module Mass : sig (* {{{ *)
     (** Functions that prepare the mass matrix solver for subsequent calls
         to {{!callbacks}lsolve}.
 
-        This function may raise a {!Sundials.RecoverableFailure} exception
+        This function may raise a {!RecoverableFailure} exception
         to indicate that a recoverable error has occurred. Any other
         exception is treated as an unrecoverable error.
 
@@ -938,7 +936,7 @@ module Mass : sig (* {{{ *)
                result, and
         - [weight], a vector containing the error weights.
 
-        Raising {!Sundials.RecoverableFailure} indicates a recoverable
+        Raising {!RecoverableFailure} indicates a recoverable
         error. Any other exception is treated as an unrecoverable error.
 
         {warning The vectors [b] and [weight] should not be accessed after
@@ -977,7 +975,7 @@ end (* }}} *)
 (** Functions that set the multiplicative error weights for use in the weighted
     RMS norm. The call [efun y ewt] takes the dependent variable vector [y] and
     fills the error-weight vector [ewt] with positive values or raises
-    {!Sundials.NonPositiveEwt}. Other exceptions are eventually propagated, but
+    {!NonPositiveEwt}. Other exceptions are eventually propagated, but
     should be avoided ([efun] is not allowed to abort the solver). *)
 type 'data error_weight_fun = 'data -> 'data -> unit
 
@@ -996,7 +994,7 @@ val default_tolerances : ('data, 'kind) tolerance
 (** Functions that compute the weighted RMS residual weights. The call
     [rfun y rwt] takes the dependent variable vector [y] and fills the
     residual-weight vector [rwt] with positive values or raises
-    {!Sundials.NonPositiveEwt}. Other exceptions are eventually propagated, but
+    {!NonPositiveEwt}. Other exceptions are eventually propagated, but
     should be avoided ([ffun] is not allowed to abort the solver). *)
 type 'data res_weight_fun = 'data -> 'data -> unit
 
@@ -1034,7 +1032,7 @@ type linearity =
     - [y], the vector of dependent-variable values, i.e., $y(t)$, and,
     - [y'], a vector for storing the value of $f(t, y)$.
 
-    Within the function, raising a {!Sundials.RecoverableFailure} exception
+    Within the function, raising a {!RecoverableFailure} exception
     indicates a recoverable error. Any other exception is treated as an
     unrecoverable error.
 
@@ -1290,7 +1288,7 @@ val set_dense_order : ('d, 'k) session -> int -> unit
 (** Write step adaptivity and solver diagnostics to the given file.
 
     @noarkode <node> ARKodeSetDiagnostics *)
-val set_diagnostics : ('d, 'k) session -> Sundials.Logfile.t -> unit
+val set_diagnostics : ('d, 'k) session -> Logfile.t -> unit
 
 (** Do not write step adaptivity or solver diagnostics of a file.
 
@@ -1298,17 +1296,18 @@ val set_diagnostics : ('d, 'k) session -> Sundials.Logfile.t -> unit
 val clear_diagnostics : ('d, 'k) session -> unit
 
 (** Configure the default error handler to write messages to a file.
-    By default it writes to Sundials.Logfile.stderr.
+    By default it writes to Logfile.stderr.
 
     @noarkode <node> ARKodeSetErrFile *)
-val set_error_file : ('d, 'k) session -> Sundials.Logfile.t -> unit
+val set_error_file : ('d, 'k) session -> Logfile.t -> unit
 
 (** Specifies a custom function for handling error messages.
     The handler must not fail: any exceptions are trapped and discarded.
 
     @noarkode <node> ARKodeSetErrHandlerFn
     @noarkode <node> ARKErrHandlerFn *)
-val set_err_handler_fn : ('d, 'k) session -> (error_details -> unit) -> unit
+val set_err_handler_fn
+  : ('d, 'k) session -> (Util.error_details -> unit) -> unit
 
 (** Restores the default error handling function.
 
@@ -1427,7 +1426,7 @@ type rk_timescoefs = {
     run in fixed step mode and the step size must be set, or have been set,
     using either {!set_fixed_step} or {!set_init_step}. This feature is not
     available for Sundials versions prior to 2.7.0
-    (the {!Sundials.NotImplementedBySundialsVersion} exception is raised).
+    (the {!Config.NotImplementedBySundialsVersion} exception is raised).
 
     @raise IllInput If $f_I$ and $f_E$ are not already specified.
     @noarkode <node> ARKodeSetARKTables
@@ -1451,7 +1450,7 @@ val set_ark_tables
     run in fixed step mode and the step size must be set, or have been set,
     using either {!set_fixed_step} or {!set_init_step}. This feature is not
     available for Sundials versions prior to 2.7.0
-    (the {!Sundials.NotImplementedBySundialsVersion} exception is raised).
+    (the {!Config.NotImplementedBySundialsVersion} exception is raised).
 
     @raise IllInput If $f_E$ is not already specified.
     @noarkode <node> ARKodeSetERKTable
@@ -1471,7 +1470,7 @@ val set_erk_table
     run in fixed step mode and the step size must be set, or have been set,
     using either {!set_fixed_step} or {!set_init_step}. This feature is not
     available for Sundials versions prior to 2.7.0
-    (the {!Sundials.NotImplementedBySundialsVersion} exception is raised).
+    (the {!Config.NotImplementedBySundialsVersion} exception is raised).
 
     @raise IllInput If $f_I$ is not already specified.
     @noarkode <node> ARKodeSetIRKTable
@@ -1808,14 +1807,14 @@ type 'd postprocess_step_fn = float -> 'd -> unit
 (** Set a post processing step function.
 
     @since 2.7.0
-    @raise Sundials.NotImplementedBySundialsVersion Post processing not available
+    @raise Config.NotImplementedBySundialsVersion Post processing not available
     @noarkode <node> ARKSetPostprocessStepFn *)
 val set_postprocess_step_fn : ('d, 'k) session -> 'd postprocess_step_fn -> unit
 
 (** Clear the post processing step function.
 
     @since 2.7.0
-    @raise Sundials.NotImplementedBySundialsVersion Post processing not available
+    @raise Config.NotImplementedBySundialsVersion Post processing not available
     @noarkode <node> ARKSetPostprocessStepFn *)
 val clear_postprocess_step_fn : ('d, 'k) session -> unit
 

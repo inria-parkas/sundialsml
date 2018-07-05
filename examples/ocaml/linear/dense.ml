@@ -59,7 +59,7 @@ let main () =
     let y = RealArray.create nrows in
     M.matvec a x y;
     printf "matvec: y=@\n%a@\n\n" print_vec y
-  with NotImplementedBySundialsVersion -> ());
+  with Config.NotImplementedBySundialsVersion -> ());
 
   let b = M.create nrows ncols in
   M.blit a b;

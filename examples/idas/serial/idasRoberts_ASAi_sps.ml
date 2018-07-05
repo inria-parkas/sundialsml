@@ -52,7 +52,9 @@
  *   phi(t1) = 0
  * -----------------------------------------------------------------
  *)
-module RealArray = Sundials.RealArray
+
+open Sundials
+
 module Quad = Idas.Quadrature
 module Sens = Idas.Sensitivity
 module Adjoint = Idas.Adjoint
@@ -170,7 +172,7 @@ let ewt data (y : RealArray.t) (w : RealArray.t) =
   for i = 1 to 3 do
     let yy = y.{i-1} in
     let ww = rtol *. abs_float yy +. atol.(i-1) in
-    if ww <= 0.0 then raise Sundials.NonPositiveEwt;
+    if ww <= 0.0 then raise NonPositiveEwt;
     w.{i-1} <- 1.0/.ww
   done
 

@@ -96,7 +96,8 @@ enum lsolver_preconditioning_type_tag {
 /* This enum must list exceptions in the same order as the call to
  * c_init_module in lsolver.ml.  */
 enum lsolver_exn_index {
-    LSOLVER_EXN_UnrecoverableFailure = 0,
+    LSOLVER_EXN_InvalidLinearSolver = 0,
+    LSOLVER_EXN_UnrecoverableFailure,
     LSOLVER_EXN_MatrixNotSquare,
     LSOLVER_EXN_MatrixVectorMismatch,
     LSOLVER_EXN_InsufficientStorageUpperBandwidth,

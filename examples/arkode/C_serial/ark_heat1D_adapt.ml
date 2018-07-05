@@ -39,8 +39,8 @@
  * Jacobian-vector product routine.
  *---------------------------------------------------------------*)
 
-module RealArray = Sundials.RealArray
-module LintArray = Sundials.LintArray
+open Sundials
+
 let printf = Printf.printf
 let fprintf = Printf.fprintf
 let n_vdotprod = Nvector_serial.Ops.n_vdotprod
@@ -239,7 +239,7 @@ let main () =
 
   (* Initialize the integrator memory *)
   let jac = jac udata in
-  let linearity = match Sundials.sundials_version with
+  let linearity = match Config.sundials_version with
                   | 2,_,_ -> Arkode.Nonlinear
                   | _ -> Arkode.Linear true
   in
@@ -309,7 +309,7 @@ let main () =
       udata.n <- nnew;   (* store size of new mesh *)
 
       (* call ARKodeResize to notify integrator of change in mesh *)
-      let maxl = match Sundials.sundials_version with
+      let maxl = match Config.sundials_version with
                  | 2,_,_ -> nnew
                  | _ -> n_mesh
       in

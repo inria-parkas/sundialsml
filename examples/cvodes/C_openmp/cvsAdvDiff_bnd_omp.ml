@@ -47,8 +47,8 @@
  * -----------------------------------------------------------------
  *)
 
-module RealArray = Sundials.RealArray
-module Roots = Sundials.Roots
+open Sundials
+
 let unwrap = Nvector.unwrap
 
 let printf = Printf.printf

@@ -50,8 +50,8 @@
  * -----------------------------------------------------------------
  *)
 
-module RealArray = Sundials.RealArray
-module Roots  = Sundials.Roots
+open Sundials
+
 module Direct = Matrix.ArrayDense
 open Bigarray
 
@@ -157,7 +157,7 @@ type user_data = {
         (* For preconditioner *)
         p          : Direct.t array array;
         jbd        : Direct.t array array;
-        pivot      : Sundials.LintArray.t array array;
+        pivot      : LintArray.t array array;
 
     }
 
@@ -169,7 +169,7 @@ let sqr x = x ** 2.0
 
 let init_user_data my_pe comm =
   let new_dmat _ = Direct.create nvars nvars in
-  let new_int1 _  = Sundials.LintArray.create nvars in
+  let new_int1 _  = LintArray.create nvars in
   let new_y_arr elinit _ = Array.init mysub elinit in
   let new_xy_arr elinit  = Array.init mxsub (new_y_arr elinit) in
 

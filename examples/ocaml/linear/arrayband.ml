@@ -102,7 +102,7 @@ let main () =
     let y = RealArray.create n in
     M.matvec a x y;
     printf "matvec: y=@\n%a@\n\n" print_vec y
-  with NotImplementedBySundialsVersion -> ());
+  with Config.NotImplementedBySundialsVersion -> ());
 
   let b = (RealArray2.copy (fst a), snd a) in
 

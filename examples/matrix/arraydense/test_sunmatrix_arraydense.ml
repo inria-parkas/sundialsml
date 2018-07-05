@@ -24,6 +24,8 @@
  * -----------------------------------------------------------------
  *)
 
+module Matrix = Sundials.Matrix
+
 let printf = Format.printf
 let (+=) r x = r := !r + x
 

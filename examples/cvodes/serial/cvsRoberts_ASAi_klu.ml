@@ -56,10 +56,11 @@
  * -----------------------------------------------------------------
  *)
 
+open Sundials
+
 module Quad = Cvodes.Quadrature
 module Adj = Cvodes.Adjoint
 module QuadAdj = Cvodes.Adjoint.Quadrature
-module RealArray = Sundials.RealArray
 module Densemat = Matrix.Dense
 let unwrap = Nvector.unwrap
 
@@ -153,7 +154,7 @@ let ewt data (y : RealArray.t) (w : RealArray.t) =
   in
   for i = 0 to 2 do
     let ww = rtol *. (abs_float y.{i}) +. atol.(i) in
-    if ww <= 0.0 then raise Sundials.NonPositiveEwt;
+    if ww <= 0.0 then raise NonPositiveEwt;
     w.{i} <- (1.0/.ww)
   done
 
@@ -242,7 +243,7 @@ let print_output1 time t y yB =
 
 let print_output tfinal y yB qB =
   printf "--------------------------------------------------------\n";
-  (match Sundials.sundials_version with
+  (match Config.sundials_version with
    | 2,5,_ ->
        printf "tB0:        %12.4e\n" tfinal;
        printf "dG/dp:      %12.4e %12.4e %12.4e\n"
@@ -358,7 +359,7 @@ let main () =
   (* Backward Integration *)
 
   (* First get results at t = tBout1 *)
-  (match Sundials.sundials_version with
+  (match Config.sundials_version with
    | 2,5,_ -> printf "Backward integration ... "
    | _ ->
       print_head tb1;
@@ -372,7 +373,7 @@ let main () =
   Adj.backward_normal cvode_mem t0;
   let nstB = Adj.get_num_steps cvode_memB in
 
-  (match Sundials.sundials_version with
+  (match Config.sundials_version with
    | 2,5,_ -> printf "done ( nst = %d )\n"  nstB
    | _     -> printf "Done ( nst = %d )\n"  nstB);
 
@@ -380,7 +381,7 @@ let main () =
   let time = QuadAdj.get cvode_memB qB in
   Adj.get_y cvode_mem y t0;
 
-  (match Sundials.sundials_version with
+  (match Config.sundials_version with
    | 2,5,_ -> print_output tb1 ydata yBdata qBdata
    | _     -> print_output time ydata yBdata qBdata);
 
@@ -400,7 +401,7 @@ let main () =
   QuadAdj.reinit cvode_memB qB;
 
   (* First get results at t = tBout1 *)
-  (match Sundials.sundials_version with
+  (match Config.sundials_version with
    | 2,5,_ -> printf "Backward integration ... "
    | _     ->
       print_head tb2;
@@ -414,7 +415,7 @@ let main () =
   Adj.backward_normal cvode_mem t0;
   let nstB = Adj.get_num_steps cvode_memB in
 
-  (match Sundials.sundials_version with
+  (match Config.sundials_version with
    | 2,5,_ -> printf "done ( nst = %d )\n"  nstB
    | _     -> printf "Done ( nst = %d )\n"  nstB);
 
@@ -422,7 +423,7 @@ let main () =
   let time = QuadAdj.get cvode_memB qB in
   Adj.get_y cvode_mem y t0;
 
-  (match Sundials.sundials_version with
+  (match Config.sundials_version with
    | 2,5,_ -> print_output tb2 ydata yBdata qBdata
    | _     -> print_output time ydata yBdata qBdata);
 

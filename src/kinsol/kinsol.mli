@@ -39,8 +39,6 @@
      @author Jun Inoue (Inria/ENS)
      @author Marc Pouzet (UPMC/ENS/Inria) *)
 
-open Sundials
-
 (** A session with the KINSOL solver.
 
     An example session with Kinsol ({openfile kinsol_skel.ml}): {[
@@ -174,7 +172,7 @@ module Spils : sig (* {{{ *)
       $P$ is a preconditioner matrix that approximates the system
       Jacobian {% $J = \frac{\partial F}{\partial u}$%}.
 
-      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Raising {!RecoverableFailure} indicates a recoverable error.
       Any other exception is treated as an unrecoverable error.
 
       {warning Neither the elements of [jarg] or [sarg], nor [z] should be
@@ -254,7 +252,7 @@ module Spils : sig (* {{{ *)
       linear solver.
 
       NB: a [jac_times_setup_fn] is not supported in
-          {!Sundials.sundials_version} < 3.0.0.
+          {!Config.sundials_version} < 3.0.0.
 
       @nocvode <node> CVSpilsSetLinearSolver
       @nocvode <node> CVSpilsSetJacTimes *)
@@ -345,7 +343,7 @@ module Alternate : sig (* {{{ *)
       statistics.
 
       Raising any exception in this function (including
-      {!Sundials.RecoverableFailure}) is treated as an unrecoverable error.
+      {!RecoverableFailure}) is treated as an unrecoverable error.
 
       @cvode <node8#SECTION00810000000000000000> linit *)
   type ('data, 'kind) linit = ('data, 'kind) session -> unit
@@ -354,7 +352,7 @@ module Alternate : sig (* {{{ *)
       {!lsolve}. They may recompute Jacobian-related data.
 
       Raising any exception in this function (including
-      {!Sundials.RecoverableFailure}) is treated as an unrecoverable error.
+      {!RecoverableFailure}) is treated as an unrecoverable error.
 
       @kinsol <node8#SECTION00820000000000000000> lsetup *)
   type ('data, 'kind) lsetup = ('data, 'kind) session -> unit
@@ -367,7 +365,7 @@ module Alternate : sig (* {{{ *)
       ($\lVert D_F J p \rVert_2$) and the dot product of the scaled $F$
       vector and the scaled vector $Jp$ ($(D_F F)\cdot(D_F J p)$).
 
-      Raising {!Sundials.RecoverableFailure} indicates an error where
+      Raising {!RecoverableFailure} indicates an error where
       recovery may be possible by calling the {!lsetup} function again.
       Other exceptions are treated as unrecoverable errors.
 
@@ -419,7 +417,7 @@ end (* }}} *)
     [sysfun u fval] must calculate $F(u)$ into [fval] using the current value
     vector [u].
 
-     Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+     Raising {!RecoverableFailure} indicates a recoverable error.
      Any other exception is treated as an unrecoverable error.
 
     {warning [u] and [fval] should not be accessed after the function
@@ -497,13 +495,13 @@ type result =
     @raise MaxIterationsReached The maximum number of nonlinear iterations was reached.
     @raise MaxNewtonStepExceeded Five consecutive steps satisfied a scaled step length test.
     @raise LineSearchBetaConditionFailure  Line search could not satisfy the beta-condition.
-    @raise LinearSolverNoRecovery The {!Spils.prec_solve_fn} callback raised {!Sundials.RecoverableFailure} but the preconditioner is already current.
+    @raise LinearSolverNoRecovery The {!Spils.prec_solve_fn} callback raised {!RecoverableFailure} but the preconditioner is already current.
     @raise LinearSolverInitFailure Linear solver initialization failed.
     @raise LinearSetupFailure Linear solver setup failed unrecoverably.
     @raise LinearSolveFailure Linear solver solution failed unrecoverably.
     @raise SystemFunctionFailure The {!sysfn} callback failed unrecoverably.
-    @raise FirstSystemFunctionFailure The {!sysfn} callback raised {!Sundials.RecoverableFailure} when first called.
-    @raise RepeatedSystemFunctionFailure  The {!sysfn} callback raised {!Sundials.RecoverableFailure} repeatedly. *)
+    @raise FirstSystemFunctionFailure The {!sysfn} callback raised {!RecoverableFailure} when first called.
+    @raise RepeatedSystemFunctionFailure  The {!sysfn} callback raised {!RecoverableFailure} repeatedly. *)
 val solve :
     ('d, 'k) session
     -> ('d, 'k) Nvector.t
@@ -650,7 +648,7 @@ val set_func_norm_tol : ('d, 'k) session -> float -> unit
 val set_scaled_step_tol : ('d, 'k) session -> float -> unit
 
 (** Specifies a vector defining inequality constraints for each
-    component of the solution vector [u].  See {!Sundials.Constraint}.
+    component of the solution vector [u].  See {!Constraint}.
 
     @kinsol <node5#ss:optin_main> KINSetConstraints *)
 val set_constraints : ('d, 'k) session -> ('d, 'k) Nvector.t -> unit
@@ -665,17 +663,18 @@ val set_sys_func : ('d, 'k) session -> ('d -> 'd -> unit) -> unit
 (** {3:info Logging and error handling} *)
 
 (** Configure the default error handler to write messages to a file.
-    By default it writes to Sundials.Logfile.stderr.
+    By default it writes to Logfile.stderr.
 
     @kinsol <node5#ss:optin_main> KINSetErrFile *)
-val set_error_file : ('d, 'k) session -> Sundials.Logfile.t -> unit
+val set_error_file : ('d, 'k) session -> Logfile.t -> unit
 
 (** Specifies a custom function for handling error messages.
     The handler must not fail: any exceptions are trapped and discarded.
 
     @kinsol <node5#ss:optin_main> KINSetErrHandlerFn
     @kinsol <node5#ss:ehFn> KINErrHandlerFn *)
-val set_err_handler_fn : ('d, 'k) session -> (error_details -> unit) -> unit
+val set_err_handler_fn
+  : ('d, 'k) session -> (Util.error_details -> unit) -> unit
 
 (** Restores the default error handling function.
 
@@ -683,19 +682,20 @@ val set_err_handler_fn : ('d, 'k) session -> (error_details -> unit) -> unit
 val clear_err_handler_fn : ('d, 'k) session -> unit
 
 (** Write informational (non-error) messages to the given file.
-    By default they are written to Sundials.Logfile.stdout.
+    By default they are written to Logfile.stdout.
 
     @kinsol <node5#ss:optin_main> KINSetInfoFile *)
-val set_info_file : ('d, 'k) session -> Sundials.Logfile.t -> unit
+val set_info_file : ('d, 'k) session -> Logfile.t -> unit
 
 (** Specifies a custom function for handling informational (non-error) messages.
-    The [error_code] field of {!Sundials.error_details} is [0] for
+    The [error_code] field of {!Util.error_details} is [0] for
     such messages.
     The handler must not fail: any exceptions are trapped and discarded.
 
     @kinsol <node5#ss:optin_main> KINSetInfoHandlerFn
     @kinsol <node5#ss:ihFn> KINInfoHandlerFn *)
-val set_info_handler_fn : ('d, 'k) session -> (error_details -> unit) -> unit
+val set_info_handler_fn
+  : ('d, 'k) session -> (Util.error_details -> unit) -> unit
 
 (** Restores the default information handling function.
 
@@ -806,7 +806,7 @@ exception MaxNewtonStepExceeded
     @kinsol <node5#sss:kinsol> KIN_LINESEARCH_BCFAIL *)
 exception LineSearchBetaConditionFailure
 
-(** The {!Spils.prec_solve_fn} callback raised {!Sundials.RecoverableFailure}
+(** The {!Spils.prec_solve_fn} callback raised {!RecoverableFailure}
     but the preconditioner is already current.
 
     @kinsol <node5#sss:kinsol> KIN_LINSOLV_NO_RECOVERY *)
@@ -833,13 +833,12 @@ exception LinearSolverFailure
     @kinsol <node5#sss:kinsol> KIN_SYSFUNC_FAIL *)
 exception SystemFunctionFailure
 
-(** The {!sysfn} callback raised {!Sundials.RecoverableFailure} when
-    first called.
+(** The {!sysfn} callback raised {!RecoverableFailure} when first called.
 
     @kinsol <node5#sss:kinsol> KIN_FIRST_SYSFUNC_FAIL *)
 exception FirstSystemFunctionFailure
 
-(** The {!sysfn} callback raised {!Sundials.RecoverableFailure} repeatedly.
+(** The {!sysfn} callback raised {!RecoverableFailure} repeatedly.
     No recovery is possible.
 
     @kinsol <node5#sss:kinsol> KIN_REPTD_SYSFUNC_ERR *)

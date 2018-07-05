@@ -50,8 +50,9 @@
  * -----------------------------------------------------------------
  *)
 
+open Sundials
+
 module Sens = Cvodes.Sensitivity
-module RealArray = Sundials.RealArray
 let unwrap = Nvector.unwrap
 
 let printf = Printf.printf
@@ -157,7 +158,7 @@ let ewt data (y : RealArray.t) (w : RealArray.t) =
   in
   for i = 0 to 2 do
     let ww = rtol *. (abs_float y.{i}) +. atol.(i) in
-    if ww <= 0.0 then raise Sundials.NonPositiveEwt;
+    if ww <= 0.0 then raise NonPositiveEwt;
     w.{i} <- (1.0/.ww)
   done
 

@@ -80,16 +80,15 @@
 
 (* NB: compile with -unsafe ... *)
 
+open Sundials
+
 module Dense = Matrix.ArrayDense
-module RealArray = Sundials.RealArray
-module RealArray2 = Sundials.RealArray2
-module LintArray = Sundials.LintArray
 open Bigarray
 
 let printf = Printf.printf
-let matrix_unwrap = Sundials.RealArray2.unwrap
+let matrix_unwrap = RealArray2.unwrap
 let wrap = Nvector_array.wrap
-let unwrap = Sundials.RealArray2.unwrap
+let unwrap = RealArray2.unwrap
 let nvwl2norm = Nvector_array.DataOps.n_vwl2norm
 
 (* Problem Constants *)
@@ -154,7 +153,7 @@ let rates = Array.make neq 0.0
 
 let dx = ax /. float(mx-1)
 let dy = ay /. float(my-1)
-let uround = Sundials.unit_roundoff
+let uround = Config.unit_roundoff
 let sqruround = sqrt(uround)
 
 let init_user_data =

@@ -4,8 +4,8 @@ exception IncompatibleArguments
 exception ZeroDiagonalElement of int
 
 let check_valid =
-  match Sundials.sundials_version with
-  | 2,_,_ -> Sundials_config.safe
+  match Config.sundials_version with
+  | 2,_,_ -> Sundials_configuration.safe
   | _ -> false
 
 (* Must correspond with matrix_ml.h:mat_matrix_content_index *)
@@ -37,7 +37,7 @@ type ('m, 'd) matrix_ops = {
 
 module Dense = struct (* {{{ *)
 
-  type data = Sundials.real_array2
+  type data = RealArray2.data
   type cptr
 
   type t = (data, cptr) matrix_content
@@ -46,7 +46,7 @@ module Dense = struct (* {{{ *)
     = "ml_matrix_dense_create"
 
   let create i j =
-    if Sundials_config.safe then begin
+    if Sundials_configuration.safe then begin
       if i <= 0 then invalid_arg "i";
       if j <= 0 then invalid_arg "j"
     end;
@@ -157,14 +157,14 @@ module Dense = struct (* {{{ *)
     c_scale_addi c rawptr
 
   external c_matvec
-    : cptr -> Sundials.RealArray.t -> Sundials.RealArray.t -> unit
+    : cptr -> RealArray.t -> RealArray.t -> unit
     = "ml_matrix_dense_matvec"
 
   let matvec { rawptr; payload; valid } x y =
     if check_valid && not valid then raise Invalidated;
-    if Sundials_config.safe then begin
-      let xl = Sundials.RealArray.length x in
-      let yl = Sundials.RealArray.length y in
+    if Sundials_configuration.safe then begin
+      let xl = RealArray.length x in
+      let yl = RealArray.length y in
       let m, n = Bigarray.Array2.(dim2 payload, dim1 payload) in
       if n <> xl || m <> yl then raise IncompatibleArguments
     end;
@@ -212,7 +212,7 @@ end (* }}} *)
 
 module Band = struct (* {{{ *)
 
-  (* Must correspond with matrix_ml.h:mat_band_dimensions_index *)
+  (* Must correspond with sundials_matrix_ml.h:mat_band_dimensions_index *)
   type dimensions = {
       n   : int;
       mu  : int;
@@ -220,9 +220,9 @@ module Band = struct (* {{{ *)
       ml  : int;
     }
 
-  (* Must correspond with matrix_ml.h:mat_band_data_index *)
+  (* Must correspond with sundials_matrix_ml.h:mat_band_data_index *)
   type data = {
-    data : Sundials.real_array2;
+    data : RealArray2.data;
     dims : dimensions;
   }
   type cptr
@@ -233,7 +233,7 @@ module Band = struct (* {{{ *)
     = "ml_matrix_band_create"
 
   let create ({n; mu; smu; ml} as dimensions) =
-    if Sundials_config.safe then begin
+    if Sundials_configuration.safe then begin
       if n <= 0 then invalid_arg "n";
       if smu < 0 then invalid_arg "smu";
       if ml < 0 then invalid_arg "ml"
@@ -346,14 +346,14 @@ module Band = struct (* {{{ *)
     c_scale_addi c rawptr
 
   external c_matvec
-    : cptr -> Sundials.RealArray.t -> Sundials.RealArray.t -> unit
+    : cptr -> RealArray.t -> RealArray.t -> unit
     = "ml_matrix_band_matvec"
 
   let matvec { rawptr; payload = { data; dims = { n } }; valid } x y =
     if check_valid && not valid then raise Invalidated;
-    if Sundials_config.safe then begin
-      let xl = Sundials.RealArray.length x in
-      let yl = Sundials.RealArray.length y in
+    if Sundials_configuration.safe then begin
+      let xl = RealArray.length x in
+      let yl = RealArray.length y in
       if n <> yl || n <> xl then raise IncompatibleArguments
     end;
     c_matvec rawptr x y
@@ -401,27 +401,27 @@ module Sparse = struct (* {{{ *)
   type csc
   type csr
 
-  (* See MAT_TO/FROM_SFORMAT(x) in matrix_ml.h *)
+  (* See MAT_TO/FROM_SFORMAT(x) in sundials_matrix_ml.h *)
   type _ sformat =
     | CSC : csc sformat (* Must correpond with Sundials CSC_MAT = 0 constant. *)
     | CSR : csr sformat (* Must correpond with Sundials CSR_MAT = 1 constant. *)
 
   (* The payload field cannot be relied upon for Sundials < 3.0.0 *)
   let unsafe_content =
-    match Sundials.sundials_version with
+    match Config.sundials_version with
     | 2,_,_ -> true
     | _ -> false
 
   type index_array =
-    (Sundials.Index.t, Sundials.index_elt, Bigarray.c_layout) Bigarray.Array1.t
+    (Index.t, index_elt, Bigarray.c_layout) Bigarray.Array1.t
 
-  module Index = Sundials.Index
+  module Index = Index
 
-  (* Must correspond with matrix_ml.h:mat_sparse_data_index *)
+  (* Must correspond with sundials_matrix_ml.h:mat_sparse_data_index *)
   type 's data = {
     idxvals : index_array;
     idxptrs : index_array;
-    data    : Sundials.RealArray.t;
+    data    : RealArray.t;
     sformat : 's sformat;
   }
 
@@ -433,15 +433,15 @@ module Sparse = struct (* {{{ *)
     = "ml_matrix_sparse_create"
 
   let make (type s) (sformat : s sformat) m n nnz =
-    if Sundials_config.safe then begin
+    if Sundials_configuration.safe then begin
       if m <= 0 then invalid_arg "m";
       if n <= 0 then invalid_arg "n";
       if nnz < 0 then invalid_arg "nnz"
     end;
-    if Sundials_config.safe then
-      (match Sundials.sundials_version, sformat with
+    if Sundials_configuration.safe then
+      (match Config.sundials_version, sformat with
        | (2,v,_), CSR when v < 7 ->
-           raise Sundials.NotImplementedBySundialsVersion
+           raise Config.NotImplementedBySundialsVersion
        | _ -> ());
     c_create m n nnz sformat
 
@@ -451,11 +451,11 @@ module Sparse = struct (* {{{ *)
   let from_dense (type s) (sformat : s sformat)
         droptol { rawptr; valid } =
     if check_valid && not valid then raise Invalidated;
-    if Sundials_config.safe && droptol < 0.0 then invalid_arg "droptol";
-    if Sundials_config.safe then
-      (match Sundials.sundials_version, sformat with
+    if Sundials_configuration.safe && droptol < 0.0 then invalid_arg "droptol";
+    if Sundials_configuration.safe then
+      (match Config.sundials_version, sformat with
        | (2,v,_), CSR when v < 7 ->
-           raise Sundials.NotImplementedBySundialsVersion
+           raise Config.NotImplementedBySundialsVersion
        | _ -> ());
     c_from_dense sformat rawptr droptol
 
@@ -465,11 +465,11 @@ module Sparse = struct (* {{{ *)
   let from_band (type s) (sformat : s sformat)
         droptol { rawptr; valid } =
     if check_valid && not valid then raise Invalidated;
-    if Sundials_config.safe && droptol < 0.0 then invalid_arg "droptol";
-    if Sundials_config.safe then
-      (match Sundials.sundials_version, sformat with
+    if Sundials_configuration.safe && droptol < 0.0 then invalid_arg "droptol";
+    if Sundials_configuration.safe then
+      (match Config.sundials_version, sformat with
        | (2,v,_), CSR when v < 7 ->
-           raise Sundials.NotImplementedBySundialsVersion
+           raise Config.NotImplementedBySundialsVersion
        | _ -> ());
     c_from_band sformat rawptr droptol
 
@@ -655,7 +655,7 @@ module Sparse = struct (* {{{ *)
   let scale_add c ({ rawptr = ptr1; valid = valid1 } as m1)
                    { rawptr = ptr2; valid = valid2 } =
     if check_valid && not (valid1 && valid2) then raise Invalidated;
-    if Sundials_config.safe && c_size ptr1 <> c_size ptr2
+    if Sundials_configuration.safe && c_size ptr1 <> c_size ptr2
     then raise IncompatibleArguments;
     c_scale_add c m1 ptr2
 
@@ -667,14 +667,14 @@ module Sparse = struct (* {{{ *)
     c_scale_addi c a
 
   external c_matvec
-    : cptr -> Sundials.RealArray.t -> Sundials.RealArray.t -> unit
+    : cptr -> RealArray.t -> RealArray.t -> unit
     = "ml_matrix_sparse_matvec"
 
   let matvec { rawptr; valid } x y =
     if check_valid && not valid then raise Invalidated;
-    if Sundials_config.safe then begin
-      let xl = Sundials.RealArray.length x in
-      let yl = Sundials.RealArray.length y in
+    if Sundials_configuration.safe then begin
+      let xl = RealArray.length x in
+      let yl = RealArray.length y in
       let m, n = c_size rawptr in
       if n <> xl || m <> yl then raise IncompatibleArguments
     end;
@@ -696,7 +696,7 @@ module Sparse = struct (* {{{ *)
   let blit { rawptr = ptr1; valid = valid1 }
            ({ rawptr = ptr2; valid = valid2 } as m2) =
     if check_valid && not (valid1 && valid2) then raise Invalidated;
-    if Sundials_config.safe && c_size ptr1 <> c_size ptr2
+    if Sundials_configuration.safe && c_size ptr1 <> c_size ptr2
     then raise IncompatibleArguments;
     c_copy ptr1 m2
 
@@ -733,25 +733,25 @@ module Sparse = struct (* {{{ *)
   }
 end (* }}} *)
 
-type lint_array = Sundials.LintArray.t
-type real_array = Sundials.RealArray.t
+type lint_array = LintArray.t
+type real_array = RealArray.t
 
 module ArrayDense = struct (* {{{ *)
-  type t = Sundials.RealArray2.t
+  type t = RealArray2.t
 
-  let make = Sundials.RealArray2.make
-  let create = Sundials.RealArray2.create
-  let size = Sundials.RealArray2.size
-  let pp = Sundials.RealArray2.pp
-  let unwrap = Sundials.RealArray2.unwrap
-  let get = Sundials.RealArray2.get
-  let set = Sundials.RealArray2.set
+  let make = RealArray2.make
+  let create = RealArray2.create
+  let size = RealArray2.size
+  let pp = RealArray2.pp
+  let unwrap = RealArray2.unwrap
+  let get = RealArray2.get
+  let set = RealArray2.set
 
   let update a i j f = set a i j (f (get a i j))
 
-  let set_to_zero x = Bigarray.Array2.fill (Sundials.RealArray2.unwrap x) 0.0
+  let set_to_zero x = Bigarray.Array2.fill (RealArray2.unwrap x) 0.0
 
-  let blit = Sundials.RealArray2.blit
+  let blit = RealArray2.blit
 
   external scale : float -> t -> unit
       = "c_arraydensematrix_scale"
@@ -789,12 +789,12 @@ module ArrayDense = struct (* {{{ *)
   let ormqr ~a ~beta ~v ~w ~work = ormqr' a (beta, v, w, work)
 
   let clone a =
-    let open Sundials.RealArray2 in
+    let open RealArray2 in
     let m, n = size a in
     create m n
 
   let scale_addi c a =
-    let ad = Sundials.RealArray2.unwrap a in
+    let ad = RealArray2.unwrap a in
     let an, am = Bigarray.Array2.(dim1 ad, dim2 ad) in
     for j = 0 to am - 1 do
       for i = 0 to an - 1 do
@@ -803,10 +803,10 @@ module ArrayDense = struct (* {{{ *)
     done
 
   let scale_add c a b =
-    let ad, bd = Sundials.RealArray2.(unwrap a, unwrap b) in
+    let ad, bd = RealArray2.(unwrap a, unwrap b) in
     let an, am = Bigarray.Array2.(dim1 ad, dim2 ad) in
     let bn, bm = Bigarray.Array2.(dim1 bd, dim2 bd) in
-    if Sundials_config.safe && (am <> bm || an <> bn)
+    if Sundials_configuration.safe && (am <> bm || an <> bn)
     then raise IncompatibleArguments;
     for i = 0 to an - 1 do
       for j =0 to am - 1 do
@@ -815,7 +815,7 @@ module ArrayDense = struct (* {{{ *)
     done
 
   let space a =
-    let m, n = Sundials.RealArray2.size a in
+    let m, n = RealArray2.size a in
     (m * n, 3)
 
   let ops = {
@@ -841,30 +841,30 @@ module ArrayBand = struct (* {{{ *)
   type mu = int
   type ml = int
 
-  type t = Sundials.RealArray2.t * (smu * mu * ml)
+  type t = RealArray2.t * (smu * mu * ml)
 
   let make ((smu, mu, ml) as dims) n v =
-    (Sundials.RealArray2.make (smu + ml + 1) n v, dims)
+    (RealArray2.make (smu + ml + 1) n v, dims)
 
   let create ((smu, mu, ml) as dims) n =
-    (Sundials.RealArray2.create (smu + ml + 1) n, dims)
+    (RealArray2.create (smu + ml + 1) n, dims)
 
-  let size (a, _) = let (_, m) = Sundials.RealArray2.size a in m, m
+  let size (a, _) = let (_, m) = RealArray2.size a in m, m
   let dims (_, dims) = dims
 
   let get (a, (smu, _, _)) i j =
-    Sundials.RealArray2.get a (i - j + smu) j
+    RealArray2.get a (i - j + smu) j
 
   let set (a, (smu, _, _)) i j v =
-    Sundials.RealArray2.set a (i - j + smu) j v
+    RealArray2.set a (i - j + smu) j v
 
   let update (a, (smu, _, _)) i j f =
     let k = i - j + smu in
-    Sundials.RealArray2.set a k j (f (Sundials.RealArray2.get a k j))
+    RealArray2.set a k j (f (RealArray2.get a k j))
 
   let pp fmt (a, (smu, mu, ml)) =
-    let data = Sundials.RealArray2.unwrap a in
-    let _, n = Sundials.RealArray2.size a in
+    let data = RealArray2.unwrap a in
+    let _, n = RealArray2.size a in
     Format.pp_print_string fmt "[";
     Format.pp_open_vbox fmt 0;
     for i = 0 to n - 1 do
@@ -894,8 +894,8 @@ module ArrayBand = struct (* {{{ *)
           ?(empty="           ~           ")
           ?(item=fun f->Format.fprintf f "(%2d,%2d)=% -15e") ()
           fmt (a, (smu, mu, ml)) =
-    let data = Sundials.RealArray2.unwrap a in
-    let _, n = Sundials.RealArray2.size a in
+    let data = RealArray2.unwrap a in
+    let _, n = RealArray2.size a in
 
     Format.pp_print_string fmt start;
     Format.pp_open_vbox fmt 0;
@@ -922,55 +922,55 @@ module ArrayBand = struct (* {{{ *)
     Format.pp_close_box fmt ();
     Format.pp_print_string fmt stop
 
-  let unwrap (a, dims) = Sundials.RealArray2.unwrap a
+  let unwrap (a, dims) = RealArray2.unwrap a
 
   external copy'
-    : Sundials.RealArray2.t -> Sundials.RealArray2.t
+    : RealArray2.t -> RealArray2.t
       -> int * int * int * int -> unit
     = "c_arraybandmatrix_copy"
 
   let set_to_zero (x, dims) =
-    Bigarray.Array2.fill (Sundials.RealArray2.unwrap x) 0.0
+    Bigarray.Array2.fill (RealArray2.unwrap x) 0.0
 
   let blit (a, (a_smu, a_mu, a_ml)) (b, (b_smu, b_mu, b_ml))
       = copy' a b (a_smu, b_smu, a_mu, a_ml)
 
-  external scale' : float -> Sundials.RealArray2.t -> int * int * int -> unit
+  external scale' : float -> RealArray2.t -> int * int * int -> unit
       = "c_arraybandmatrix_scale"
 
   let scale c (a, dims) = scale' c a dims
 
-  external c_add_identity : smu -> Sundials.RealArray2.t -> unit
+  external c_add_identity : smu -> RealArray2.t -> unit
       = "c_arraybandmatrix_add_identity"
 
   let add_identity (x, (smu, _, _)) = c_add_identity smu x
 
   external c_matvec
-    : Sundials.RealArray2.t -> int * int * int
+    : RealArray2.t -> int * int * int
       -> real_array -> real_array -> unit
     = "c_arraybandmatrix_matvec"
 
   let matvec (a, dims) x y = c_matvec a dims x y
 
   external gbtrf'
-    : Sundials.RealArray2.t -> int * int * int -> lint_array -> unit
+    : RealArray2.t -> int * int * int -> lint_array -> unit
     = "c_arraybandmatrix_gbtrf"
 
   let gbtrf (a, dims) p = gbtrf' a dims p
 
   external gbtrs'
-    : Sundials.RealArray2.t -> int * int * int -> lint_array -> real_array -> unit
+    : RealArray2.t -> int * int * int -> lint_array -> real_array -> unit
     = "c_arraybandmatrix_gbtrs"
 
   let gbtrs (a, dims) p b = gbtrs' a dims p b
 
   let clone (a, dims) =
-    let m, n = Sundials.RealArray2.size a in
-    (Sundials.RealArray2.create m n, dims)
+    let m, n = RealArray2.size a in
+    (RealArray2.create m n, dims)
 
   let scale_addi c (a, (smu, mu, ml)) =
-    let ad = Sundials.RealArray2.unwrap a in
-    let _, am = Sundials.RealArray2.size a in
+    let ad = RealArray2.unwrap a in
+    let _, am = RealArray2.size a in
     for j = 0 to am - 1 do
       for i = smu - mu to smu + ml do
         ad.{j, i} <- c *. ad.{j, i}
@@ -979,9 +979,9 @@ module ArrayBand = struct (* {{{ *)
     done
 
   let scale_add c (a, (smu_a, mu_a, ml_a)) (b, (smu_b, mu_b, ml_b)) =
-    let ad, bd = Sundials.RealArray2.(unwrap a, unwrap b) in
-    let (an, am), (bn, bm) = Sundials.RealArray2.(size a, size b) in
-    if Sundials_config.safe && (am <> bm || mu_b > mu_a || ml_b > ml_a)
+    let ad, bd = RealArray2.(unwrap a, unwrap b) in
+    let (an, am), (bn, bm) = RealArray2.(size a, size b) in
+    if Sundials_configuration.safe && (am <> bm || mu_b > mu_a || ml_b > ml_a)
     then raise IncompatibleArguments;
     for j = 0 to bm - 1 do
       for i = - mu_b to ml_b do
@@ -990,7 +990,7 @@ module ArrayBand = struct (* {{{ *)
     done
 
   let space (a, _) =
-    let m, n = Sundials.RealArray2.size a in
+    let m, n = RealArray2.size a in
     (m * n, 3)
 
   let ops = {
@@ -1014,7 +1014,7 @@ end (* }}} *)
 type standard
 type custom
 
-(* Must correspond with matrix_ml.h:mat_matrix_id_tag *)
+(* Must correspond with sundials_matrix_ml.h:mat_matrix_id_tag *)
 type id =
   | Dense
   | Band
@@ -1023,7 +1023,7 @@ type id =
 
 type cmat
 
-(* Must correspond with matrix_ml.h:mat_matrix_index *)
+(* Must correspond with sundials_matrix_ml.h:mat_matrix_index *)
 type ('k, 'm, 'nd, 'nk) t = {
   payload : 'm;
   rawptr  : cmat;
@@ -1040,9 +1040,9 @@ type 'nk band =
 type ('s, 'nk) sparse =
   (standard, 's Sparse.t, Nvector_serial.data, [>Nvector_serial.kind] as 'nk) t
 
-type 'nk arraydense = (custom, ArrayDense.t, Sundials.RealArray.t, 'nk) t
+type 'nk arraydense = (custom, ArrayDense.t, RealArray.t, 'nk) t
 
-type 'nk arrayband = (custom, ArrayBand.t, Sundials.RealArray.t, 'nk) t
+type 'nk arrayband = (custom, ArrayBand.t, RealArray.t, 'nk) t
 
 external c_wrap : id -> 'content_cptr -> 'm -> cmat
   = "ml_matrix_wrap"
@@ -1124,7 +1124,7 @@ external c_scale_add
 
 let scale_add c ({ payload = a; mat_ops = { m_scale_add } } as m1)
                 ({ payload = b } as m2) =
-  match Sundials.sundials_version with
+  match Config.sundials_version with
   | 2,_,_ -> m_scale_add c a b
   | _ -> c_scale_add c m1 m2
 
@@ -1132,7 +1132,7 @@ external c_scale_addi : float -> ('k, 'm, 'nd, 'nk) t -> unit
   = "ml_matrix_scale_addi"
 
 let scale_addi c ({ payload = a; mat_ops = { m_scale_addi } } as m) =
-  match Sundials.sundials_version with
+  match Config.sundials_version with
   | 2,_,_ -> m_scale_addi c a
   | _ -> c_scale_addi c m
 
@@ -1141,7 +1141,7 @@ external c_matvec
   = "ml_matrix_matvec"
 
 let matvec ({ payload = a; mat_ops = { m_matvec } } as m) x y =
-  match Sundials.sundials_version with
+  match Config.sundials_version with
   | 2,_,_ -> m_matvec a (Nvector.unwrap x) (Nvector.unwrap y)
   | _ -> c_matvec m x y
 
@@ -1149,7 +1149,7 @@ external c_zero : ('k, 'm, 'nd, 'nk) t -> unit
   = "ml_matrix_zero"
 
 let set_to_zero ({ payload = a; mat_ops = { m_zero } } as m) =
-  match Sundials.sundials_version with
+  match Config.sundials_version with
   | 2,_,_ -> m_zero a
   | _ -> c_zero m
 
@@ -1158,7 +1158,7 @@ external c_copy : ('k, 'm, 'nd, 'nk) t -> ('k, 'm, 'nd, 'nk) t -> unit
 
 let blit ({ payload = a; mat_ops = { m_copy } } as m1)
          ({ payload = b } as m2) =
-  match Sundials.sundials_version with
+  match Config.sundials_version with
   | 2,_,_ -> m_copy a b
   | _ -> c_copy m1 m2
 
@@ -1166,17 +1166,17 @@ external c_space : ('k, 'm, 'nd, 'nk) t -> int * int
     = "ml_matrix_space"
 
 let space ({ payload = a; mat_ops = { m_space } } as m) =
-  match Sundials.sundials_version with
+  match Config.sundials_version with
   | 2,_,_ -> m_space a
   | _ -> c_space m
 
-external print_dense : 'nk dense -> Sundials.Logfile.t -> unit
+external print_dense : 'nk dense -> Logfile.t -> unit
     = "ml_matrix_print_dense"
 
-external print_band : 'nk band -> Sundials.Logfile.t -> unit
+external print_band : 'nk band -> Logfile.t -> unit
     = "ml_matrix_print_band"
 
-external print_sparse : ('s, 'nk) sparse -> Sundials.Logfile.t -> unit
+external print_sparse : ('s, 'nk) sparse -> Logfile.t -> unit
     = "ml_matrix_print_sparse"
 
 (* Let C code know about some of the values in this module.  *)

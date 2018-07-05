@@ -82,10 +82,9 @@
  * ----------------------------------------------------------------------
  *)
 
+open Sundials
+
 module Nvector = Nvector_parallel
-module RealArray = Sundials.RealArray
-module RealArray2 = Sundials.RealArray2
-module LintArray = Sundials.LintArray
 module Dense = Matrix.ArrayDense
 module Bbd = Kinsol_bbd
 open Bigarray
@@ -148,7 +147,7 @@ let ij_vptr vv i j = subarray vv (ij_vptr_idx i j) num_species
    contains problem constants and extended array *)
 
 type user_data = {
-  acoef : Sundials.real_array2;
+  acoef : RealArray2.data;
   bcoef : RealArray.t;
   cox   : RealArray.t;
   coy   : RealArray.t;

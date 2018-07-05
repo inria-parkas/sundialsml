@@ -18,7 +18,8 @@
  *
  * -----------------------------------------------------------------
  *)
-module RealArray = Sundials.RealArray
+
+open Sundials
 
 (* Problem Constants *)
 
@@ -30,7 +31,7 @@ and nout = 41
 let printf = Printf.printf
 
 let ida, idadense =
-  match Sundials.sundials_version with
+  match Config.sundials_version with
   | 2,_,_ -> "IDAS", "IDADENSE"
   | _ -> "IDA", "DENSE"
 

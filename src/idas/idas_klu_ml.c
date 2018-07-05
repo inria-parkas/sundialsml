@@ -28,7 +28,7 @@ CAMLprim value c_idas_klub_init (value vparent_which, value vformat,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #include "../ida/ida_ml.h"
 #include "idas_ml.h"
-#include "../lsolvers/matrix_ml.h"
+#include "../lsolvers/sundials_matrix_ml.h"
 
 #include <idas/idas.h>
 

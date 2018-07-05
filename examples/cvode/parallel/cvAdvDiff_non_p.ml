@@ -32,8 +32,8 @@
  * -----------------------------------------------------------------
  *)
 
-module RealArray = Sundials.RealArray
-module Roots = Sundials.Roots
+open Sundials
+
 open Bigarray
 let local_array = Nvector_parallel.local_array
 

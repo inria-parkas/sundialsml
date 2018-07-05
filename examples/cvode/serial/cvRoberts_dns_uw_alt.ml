@@ -31,11 +31,11 @@
  * -----------------------------------------------------------------
  *)
 
-module RealArray = Sundials.RealArray
-module Roots = Sundials.Roots
+open Sundials
+
 module Alt = Cvode.Alternate
 let unvec = Nvector.unwrap
-let unwrap = Sundials.RealArray2.unwrap
+let unwrap = RealArray2.unwrap
 
 let printf = Printf.printf
 
@@ -45,7 +45,6 @@ let set_ith (v : RealArray.t) i e = v.{i - 1} <- e
 (* Test the Alt module *)
 
 module DM = Matrix.ArrayDense
-module LintArray = Sundials.LintArray
 
 type cvdls_mem = {
   mutable nstlj : int;
@@ -170,7 +169,7 @@ let ewt y w =
   for i = 1 to 3 do
     let yy = ith y i in
     let ww = rtol *. abs_float(yy) +. atol.(i - 1) in
-    if (ww <= 0.0) then raise Sundials.NonPositiveEwt;
+    if (ww <= 0.0) then raise NonPositiveEwt;
     set_ith w i (1.0 /. ww)
   done
 

@@ -42,8 +42,6 @@
     @author Jun Inoue (Inria/ENS)
     @author Marc Pouzet (UPMC/ENS/Inria) *)
 
-open Sundials
-
 (** A session with the CVODE solver.
 
     An example session with Cvode ({openfile cvode_skel.ml}): {[
@@ -132,7 +130,7 @@ module Dls : sig (* {{{ *)
       values of [t] and [y] obtained from [arg]. Only nonzero elements need
       be loaded into [jm].
 
-      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Raising {!RecoverableFailure} indicates a recoverable error.
       Any other exception is treated as an unrecoverable error.
 
       {warning Neither the elements of [arg] nor the matrix [jm] should
@@ -212,7 +210,7 @@ module Spils : sig (* {{{ *)
       the Newton matrix {% $M = I - \gamma J$%} where
       {% $J = \frac{\partial f}{\partial y}$%}.
 
-      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Raising {!RecoverableFailure} indicates a recoverable error.
       Any other exception is treated as an unrecoverable error.
 
       {warning The elements of [jac], [arg], and [z] should not
@@ -234,7 +232,7 @@ module Spils : sig (* {{{ *)
       A function should return [true] if Jacobian-related data was updated
       and [false] if saved data was reused.
 
-      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Raising {!RecoverableFailure} indicates a recoverable error.
       Any other exception is treated as an unrecoverable error.
 
       {warning The elements of [jac] should not be accessed after the
@@ -335,7 +333,7 @@ module Spils : sig (* {{{ *)
       needed by the jac_times_vec_fn. In the call [jac_times_setup_fn arg],
       [arg] is a {!jacobian_arg} with no work vectors.
 
-      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Raising {!RecoverableFailure} indicates a recoverable error.
       Any other exception is treated as an unrecoverable error.
 
       {warning The elements of [arg] should not be accessed after the
@@ -350,7 +348,7 @@ module Spils : sig (* {{{ *)
       the vector in which to store the
       result—{% $\mathtt{jv} = J\mathtt{v}$%}.
 
-      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Raising {!RecoverableFailure} indicates a recoverable error.
       Any other exception is treated as an unrecoverable error.
 
       {warning Neither the elements of [arg] nor [v] or [jv] should be
@@ -368,7 +366,7 @@ module Spils : sig (* {{{ *)
       linear solver.
 
       NB: a [jac_times_setup_fn] is not supported in
-          {!Sundials.sundials_version} < 3.0.0.
+          {!Config.sundials_version} < 3.0.0.
 
       @nocvode <node> CVSpilsSetLinearSolver
       @nocvode <node> CVSpilsSetJacTimes *)
@@ -459,7 +457,7 @@ module Spils : sig (* {{{ *)
   (** Change the Jacobian-times-vector function.
 
       NB: the [jac_times_setup] argument is not supported in
-          {!Sundials.sundials_version} < 3.0.0.
+          {!Config.sundials_version} < 3.0.0.
 
       @nocvode <node> CVSpilsSetJacTimes
       @nocvode <node> CVSpilsJacTimesSetupFn
@@ -509,7 +507,7 @@ module Alternate : sig (* {{{ *)
       statistics.
 
       Raising any exception in this function (including
-      {!Sundials.RecoverableFailure}) is treated as an unrecoverable error.
+      {!RecoverableFailure}) is treated as an unrecoverable error.
 
       @cvode <node8#SECTION00810000000000000000> linit *)
   type ('data, 'kind) linit = ('data, 'kind) session -> unit
@@ -518,7 +516,7 @@ module Alternate : sig (* {{{ *)
       to {{!callbacks}lsolve}.  This function must return [true]
       only if the Jacobian-related data is current after the call.
 
-      This function may raise a {!Sundials.RecoverableFailure} exception to
+      This function may raise a {!RecoverableFailure} exception to
       indicate that a recoverable error has occurred. Any other exception is
       treated as an unrecoverable error.
 
@@ -560,7 +558,7 @@ module Alternate : sig (* {{{ *)
       - [args], summarizing current approximations to the solution, and
       - [b], for returning the calculated solution.
 
-      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Raising {!RecoverableFailure} indicates a recoverable error.
       Any other exception is treated as an unrecoverable error.
 
       {warning The vectors in {!lsolve_args} should not be accessed
@@ -624,7 +622,7 @@ end (* }}} *)
 (** Functions that set the multiplicative error weights for use in the weighted
     RMS norm. The call [efun y ewt] takes the dependent variable vector [y] and
     fills the error-weight vector [ewt] with positive values or raises
-    {!Sundials.NonPositiveEwt}. Other exceptions are eventually propagated, but
+    {!NonPositiveEwt}. Other exceptions are eventually propagated, but
     should be avoided ([efun] is not allowed to abort the solver). *)
 type 'data error_weight_fun = 'data -> 'data -> unit
 
@@ -667,7 +665,7 @@ type lmm =
     - [y], the vector of dependent-variable values, i.e., $y(t)$, and,
     - [y'], a vector for storing the value of $f(t, y)$.
 
-    Within the function, raising a {!Sundials.RecoverableFailure} exception
+    Within the function, raising a {!RecoverableFailure} exception
     indicates a recoverable error. Any other exception is treated as an
     unrecoverable error.
 
@@ -815,17 +813,17 @@ val reinit :
 val set_tolerances : ('d, 'k) session -> ('d, 'k) tolerance -> unit
 
 (** Configure the default error handler to write messages to a file.
-    By default it writes to Sundials.Logfile.stderr.
+    By default it writes to Logfile.stderr.
 
     @cvode <node5#sss:optin_main> CVodeSetErrFile *)
-val set_error_file : ('d, 'k) session -> Sundials.Logfile.t -> unit
+val set_error_file : ('d, 'k) session -> Logfile.t -> unit
 
 (** Specifies a custom function for handling error messages.
     The handler must not fail: any exceptions are trapped and discarded.
 
     @cvode <node5#sss:optin_main> CVodeSetErrHandlerFn
     @cvode <node5#ss:ehFn> CVErrHandlerFn *)
-val set_err_handler_fn : ('d, 'k) session -> (error_details -> unit) -> unit
+val set_err_handler_fn : ('d, 'k) session -> (Util.error_details -> unit) -> unit
 
 (** Restores the default error handling function.
 

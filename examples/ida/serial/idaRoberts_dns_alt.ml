@@ -28,11 +28,11 @@
  * t = .4, 4, 40, ..., 4e10.
  * -----------------------------------------------------------------
  *)
-module RealArray = Sundials.RealArray
-module Roots = Sundials.Roots
+
+open Sundials
+
 module Alt = Ida.Alternate
 module DM = Matrix.ArrayDense
-module LintArray = Sundials.LintArray
 
 let printf = Printf.printf
 
@@ -78,7 +78,7 @@ module AltDense = struct
       jacfn tn cj yp y'p rrp mem.jj tmps;
       (* Do LU factorization of jj; return success or fail flag. *)
       try DM.getrf mem.jj mem.pivots
-      with _ -> raise Sundials.RecoverableFailure
+      with _ -> raise RecoverableFailure
     in
 
     let lsolve mem s args b =
@@ -128,7 +128,7 @@ let nout   = 12       (* number of output times *)
 let nroots = 2        (* number of root functions *)
 
 let idadense =
-  match Sundials.sundials_version with 2,_,_ -> "IDADENSE" | _ -> "DENSE"
+  match Config.sundials_version with 2,_,_ -> "IDADENSE" | _ -> "DENSE"
 
 let print_header rtol avtol yy =
   let open Printf in

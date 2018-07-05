@@ -156,7 +156,7 @@ let main () =
     let y = RealArray.create nrows in
     Matrix.matvec a (Nvector_serial.wrap x) (Nvector_serial.wrap y);
     printf "matvec: y=@\n%a@\n\n" print_vec y
-  with NotImplementedBySundialsVersion -> ());
+  with Config.NotImplementedBySundialsVersion -> ());
 
   let b = M.create nrows ncols in
   Matrix.blit a b;

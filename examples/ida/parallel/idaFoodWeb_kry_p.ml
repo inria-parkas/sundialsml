@@ -99,9 +99,7 @@
  * -----------------------------------------------------------------
  *)
 
-module RealArray = Sundials.RealArray
-module RealArray2 = Sundials.RealArray2
-module LintArray = Sundials.LintArray
+open Sundials
 
 let fprintf = Printf.fprintf
 let printf = Printf.printf
@@ -280,7 +278,7 @@ let alloc_init_user_data comm local_N system_size thispe npes =
  * Print first lines of output (problem description)
  *)
 
-let spgmr = match Sundials.sundials_version with
+let spgmr = match Config.sundials_version with
   | 2,_,_ -> "IDASPGMR"
   | _ -> "SUNSPGMR"
 
@@ -767,7 +765,7 @@ let precondbd webdata jac =
 
   let perturb_rates = RealArray.create num_species in
 
-  let uround = Sundials.unit_roundoff in
+  let uround = Config.unit_roundoff in
   let sqru = sqrt uround in
   let mem =
     match webdata.ida_mem with
@@ -811,7 +809,7 @@ let precondbd webdata jac =
 
       (* Do LU decomposition of matrix block for grid point (ix,jy). *)
       (try Matrix.ArrayDense.getrf pxy webdata.pivot.(ix).(jy)
-       with Matrix.ZeroDiagonalElement _ -> raise Sundials.RecoverableFailure)
+       with Matrix.ZeroDiagonalElement _ -> raise RecoverableFailure)
 
     done (* End of ix loop. *)
   done (* End of jy loop. *)
@@ -902,7 +900,7 @@ let main () =
       (resweb webdata)
       t0 cc cp)
   in
-  (match Sundials.sundials_version with
+  (match Config.sundials_version with
    | 2,_,_ -> () | _ -> Ida.Spils.set_max_restarts lsolver 5);
   webdata.ida_mem <- Some mem;
 

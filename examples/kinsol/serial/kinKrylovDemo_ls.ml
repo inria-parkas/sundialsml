@@ -82,16 +82,15 @@
  * -----------------------------------------------------------------
  *)
 
-module RealArray = Sundials.RealArray
-module RealArray2 = Sundials.RealArray2
-module LintArray = Sundials.LintArray
+open Sundials
+
 module Dense = Matrix.ArrayDense
 let unvec = Nvector.unwrap
 open Bigarray
 
 let printf = Printf.printf
 let subarray = Array1.sub
-let unwrap = Sundials.RealArray2.unwrap
+let unwrap = RealArray2.unwrap
 let nvwl2norm = Nvector_serial.DataOps.n_vwl2norm
 
 let ith v i = v.{i - 1}
@@ -160,7 +159,7 @@ let pivot =
       v
     ))
 
-let acoef = Sundials.RealArray2.make_data num_species num_species
+let acoef = RealArray2.make_data num_species num_species
 let bcoef = RealArray.create num_species
 let cox   = RealArray.create num_species
 let coy   = RealArray.create num_species
@@ -171,7 +170,7 @@ let rates = RealArray.create neq
 
 let dx = ax /. float(mx-1)
 let dy = ay /. float(my-1)
-let uround = Sundials.unit_roundoff
+let uround = Config.unit_roundoff
 let sqruround = sqrt(uround)
 
 let init_user_data =
@@ -203,7 +202,7 @@ let init_user_data =
   done
 
 (* Dot product routine for realtype arrays *)
-let dot_prod size (x1 : RealArray.t) x1off (x2 : Sundials.real_array2) x2r =
+let dot_prod size (x1 : RealArray.t) x1off (x2 : RealArray2.data) x2r =
   let temp =ref zero in
   for i = 0 to size - 1 do
     temp := !temp +. x1.{x1off + i} *. x2.{x2r, i}
@@ -266,7 +265,7 @@ let func (cc : RealArray.t) (fval : RealArray.t) =
 
   done (* end of jy loop *)
 
-let perturb_rates = Sundials.RealArray.create num_species
+let perturb_rates = RealArray.create num_species
 
 (* Preconditioner setup routine. Generate and preprocess P. *)
 let prec_setup_bd { Kinsol.jac_u=cc;
@@ -350,7 +349,7 @@ let set_initial_profiles cc sc =
   done
 
 let spbcgs =
-  match Sundials.sundials_version with 2,_,_ -> "SPBCG" | _ -> "SPBCGS"
+  match Config.sundials_version with 2,_,_ -> "SPBCG" | _ -> "SPBCGS"
 
 (* Print first lines of output (problem description) *)
 let print_header globalstrategy maxl maxlrst fnormtol scsteptol linsolver =
@@ -404,7 +403,7 @@ let print_output cc =
   printf("\n\n")
 
 let last_preconditioner =
-  match Sundials.sundials_version with
+  match Config.sundials_version with
   | 2,5,_ -> Use_Sptfqmr
   | _ -> Use_Spfgmr
 
@@ -456,7 +455,7 @@ let main () =
           Any Kinsol.Spils.(spgmr ~maxl:!maxl ~max_restarts:!maxlrst cc)
 
       | Use_Spbcgs ->
-          (match Sundials.sundials_version with
+          (match Config.sundials_version with
            | 2,_,_ -> printf " ------- \n";
                       printf "| SPBCG |\n";
                       printf " -------\n"
@@ -520,7 +519,7 @@ let main () =
     (* Print final statistics and free memory *)
     print_final_stats kmem linsolver
   in
-  match Sundials.sundials_version with
+  match Config.sundials_version with
   | 2,5,_ -> List.iter go [ Use_Spgmr; Use_Spbcgs; Use_Sptfqmr ]
   | _     -> List.iter go [ Use_Spgmr; Use_Spbcgs; Use_Sptfqmr; Use_Spfgmr ]
 

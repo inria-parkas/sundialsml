@@ -20,7 +20,8 @@
  * -----------------------------------------------------------------
  *)
 
-module RealArray = Sundials.RealArray
+open Sundials
+
 let unwrap = Nvector.unwrap
 let printf = Printf.printf
 

@@ -1,39 +1,39 @@
 
 type kind
-type data = Sundials.RealArray.t * int * Mpi.communicator
+type data = RealArray.t * int * Mpi.communicator
 type t = (data, kind) Nvector.t
 
 exception IncorrectGlobalSize
 
-external c_wrap : (Sundials.RealArray.t * int * Mpi.communicator)
-                  -> (Sundials.RealArray.t * int * Mpi.communicator -> bool)
+external c_wrap : (RealArray.t * int * Mpi.communicator)
+                  -> (RealArray.t * int * Mpi.communicator -> bool)
                   -> t
   = "ml_nvec_wrap_parallel"
 
 let wrap ((nl, ng, comm) as v) =
-  let nl_len = Sundials.RealArray.length nl in
+  let nl_len = RealArray.length nl in
   let check (nl', ng', comm') =
-    (nl_len = Sundials.RealArray.length nl') && (ng <= ng') && (comm == comm')
+    (nl_len = RealArray.length nl') && (ng <= ng') && (comm == comm')
   in
   c_wrap v check
 
-let make nl ng comm iv = wrap (Sundials.RealArray.make nl iv, ng, comm)
+let make nl ng comm iv = wrap (RealArray.make nl iv, ng, comm)
 
 let clone nv =
   let loc, glen, comm = Nvector.unwrap nv in
-  wrap (Sundials.RealArray.copy loc, glen, comm)
+  wrap (RealArray.copy loc, glen, comm)
 
 let unwrap = Nvector.unwrap
 
 let pp fmt nv =
   let data, _, _ = Nvector.unwrap nv in
-  Sundials.RealArray.pp fmt data
+  RealArray.pp fmt data
 
 let local_array nv =
   let data, _, _ = Nvector.unwrap nv in
   data
 
-let local_length nv = Sundials.RealArray.length (local_array nv)
+let local_length nv = RealArray.length (local_array nv)
 
 let global_length nv =
   let _, gl, _ = Nvector.unwrap nv in
@@ -282,7 +282,7 @@ module MakeOps =
       (Mpi.allreduce_float !test Mpi.Float_min comm = 1.0)
 
     let n_vminquotient (num, _, comm) (denom, _, _) =
-      let lmin = ref Sundials.big_real in
+      let lmin = ref big_real in
       for i = 0 to A.length num - 1 do
         if (A.get denom i) <> 0.0 then
           lmin := min !lmin (A.get num i /. A.get denom i)
@@ -312,15 +312,15 @@ module MakeOps =
 
 (* (* Too slow *)
 module SlowerDataOps = MakeOps (struct
-    type local_data = Sundials.RealArray.t
+    type local_data = RealArray.t
 
     let get       = Bigarray.Array1.get
     let set       = Bigarray.Array1.set
     let fill      = Bigarray.Array1.fill
 
-    let make      = Sundials.RealArray.make
-    let length    = Sundials.RealArray.length
-    let clone     = Sundials.RealArray.clone
+    let make      = RealArray.make
+    let length    = RealArray.length
+    let clone     = RealArray.clone
   end)
 *)
 
@@ -328,11 +328,11 @@ module DataOps =
   struct
     module A = Bigarray.Array1
 
-    let make      = Sundials.RealArray.make
-    let clone     = Sundials.RealArray.copy
+    let make      = RealArray.make
+    let clone     = RealArray.copy
 
-    type t = Sundials.RealArray.t * int * Mpi.communicator
-    type d = Sundials.RealArray.t
+    type t = RealArray.t * int * Mpi.communicator
+    type d = RealArray.t
 
     (* let n_vclone (d, gl, comm) = (A.clone d, gl, comm) *)
     let n_vclone (d, gl, comm) = (d, gl, comm)
@@ -496,7 +496,7 @@ module DataOps =
       (Mpi.allreduce_float !test Mpi.Float_min comm = 1.0)
 
     let n_vminquotient ((num : d), _, comm) ((denom : d), _, _) =
-      let lmin = ref Sundials.big_real in
+      let lmin = ref big_real in
       for i = 0 to A.dim num - 1 do
         if (A.get denom i) <> 0.0 then
           lmin := min !lmin (A.get num i /. A.get denom i)

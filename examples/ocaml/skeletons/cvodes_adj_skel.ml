@@ -1,3 +1,5 @@
+open Sundials
+
 (* TODO: write a proper and working example... *)
 (* TODO: include the quadrature module in this skeleton. *)
 

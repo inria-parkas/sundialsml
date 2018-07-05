@@ -13,6 +13,7 @@
 
 include Kinsol_impl
 include KinsolBbdTypes
+module LSI = Sundials_LinearSolver_impl
 
 type parallel_session =
       (Nvector_parallel.data, Nvector_parallel.kind) Kinsol.session
@@ -37,12 +38,12 @@ external c_bbd_prec_init
 
 let init_preconditioner dqrely bandwidths precfns session nv =
   let localn = let ba, _, _ = Nvector.unwrap nv in
-               Sundials.RealArray.length ba in
+               RealArray.length ba in
   c_bbd_prec_init session localn bandwidths dqrely (precfns.comm_fn <> None);
   session.ls_precfns <- BBDPrecFns (bbd_precfns precfns)
 
 let prec_right ?(dqrely=0.0) bandwidths ?comm local_fn =
-  LinearSolver_impl.Iterative.(PrecRight,
+  LSI.Iterative.(PrecRight,
     init_preconditioner dqrely bandwidths { local_fn; comm_fn = comm })
 
 external get_work_space : parallel_session -> int * int

@@ -74,7 +74,7 @@
 
  *)
 
-module RealArray = Sundials.RealArray
+open Sundials
 module Nvector = Nvector_serial
 
 let (+) = (+.)

@@ -84,14 +84,13 @@
  *     pp. 1495-1512.
  * -----------------------------------------------------------------
  *)
-module RealArray = Sundials.RealArray
-module RealArray2 = Sundials.RealArray2
-module Roots = Sundials.Roots
+
+open Sundials
 
 let printf = Printf.printf
 
 let sundials_270_or_later =
-  match Sundials.sundials_version with
+  match Config.sundials_version with
   | 2,5,_ | 2,6,_ -> false
   | _ -> true
 
@@ -322,7 +321,7 @@ let set_initial_profiles webdata c c' id =
   done
 
 let idaband =
-  match Sundials.sundials_version with 2,_,_ -> "IDABAND" | _ -> "BAND"
+  match Config.sundials_version with 2,_,_ -> "IDABAND" | _ -> "BAND"
 
 (* Print first lines of output (problem description) *)
 let print_header mu ml rtol atol =

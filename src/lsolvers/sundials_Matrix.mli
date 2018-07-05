@@ -56,10 +56,10 @@ type ('m, 'd) matrix_ops = { (* {{{ *)
       integer words [liw] required to store the matrix [a]. *)
 } (* }}} *)
 
-(** Raised in {!Sundials.sundials_version} < 3.0.0 on an attempt to
+(** Raised in {!Config.sundials_version} < 3.0.0 on an attempt to
     access a value that has become invalid. Such values refer to matrices
     that no longer exist in the underlying library. Values never
-    become invalid in {!Sundials.sundials_version} >= 3.0.0. *)
+    become invalid in {!Config.sundials_version} >= 3.0.0. *)
 exception Invalidated
 
 (** Raised if matrix operation arguments are mutually incompatible. *)
@@ -142,12 +142,12 @@ module Dense : sig (* {{{ *)
   (** Direct access to the underlying storage array, which is accessed
       column first (unlike in {!get}).
 
-      NB: For {!Sundials.sundials_version} < 3.0.0, this access is
+      NB: For {!Config.sundials_version} < 3.0.0, this access is
       potentially unsafe and {b must} only be used when the underlying
       storage is valid, which will be the case in callbacks.
 
       @nocvode <node> SM_CONTENT_D *)
-  val unwrap : t -> Sundials.real_array2
+  val unwrap : t -> RealArray2.data
 
   (** {3:dense-ops Operations} *)
 
@@ -170,7 +170,7 @@ module Dense : sig (* {{{ *)
 
       @nocvode <node> SUNMatMatvec
       @nocvode <node> SUNMatMatvec_Dense *)
-  val matvec : t -> Sundials.RealArray.t -> Sundials.RealArray.t -> unit
+  val matvec : t -> RealArray.t -> RealArray.t -> unit
 
   (** Fills a matrix with zeros.
 
@@ -196,7 +196,7 @@ module Dense : sig (* {{{ *)
 
   (** Called internally when the corresponding value in the underlying
       library ceases to exist. Has no effect when
-      {!Sundials.sundials_version} >= 3.0.0. *)
+      {!Config.sundials_version} >= 3.0.0. *)
   val invalidate : t -> unit
 
 end (* }}} *)
@@ -311,12 +311,12 @@ module Band : sig (* {{{ *)
       In both cases, any previously 'unwrapped' array is no longer
       associated with the matrix storage.
 
-      NB: For {!Sundials.sundials_version} < 3.0.0, this access is
+      NB: For {!Config.sundials_version} < 3.0.0, this access is
       potentially unsafe and {b must} only be used when the underlying
       storage is valid, which will be the case in callbacks.
 
       @nocvode <node> SM_CONTENT_B *)
-  val unwrap : t -> Sundials.real_array2
+  val unwrap : t -> RealArray2.data
 
   (** {3:band-ops Operations} *)
 
@@ -344,7 +344,7 @@ module Band : sig (* {{{ *)
 
       @nocvode <node> SUNMatMatvec
       @nocvode <node> SUNMatMatvec_Band *)
-  val matvec : t -> Sundials.RealArray.t -> Sundials.RealArray.t -> unit
+  val matvec : t -> RealArray.t -> RealArray.t -> unit
 
   (** Fills a matrix with zeros.
 
@@ -374,7 +374,7 @@ module Band : sig (* {{{ *)
 
   (** Called internally when the corresponding value in the underlying
       library ceases to exist. Has no effect when
-      {!Sundials.sundials_version} >= 3.0.0. *)
+      {!Config.sundials_version} >= 3.0.0. *)
   val invalidate : t -> unit
 
 end (* }}} *)
@@ -399,7 +399,7 @@ module Sparse : sig (* {{{ *)
 
   (** Array of row or column indices *)
   type index_array =
-    (Sundials.Index.t, Sundials.index_elt, Bigarray.c_layout)
+    (Index.t, index_elt, Bigarray.c_layout)
     Bigarray.Array1.t
 
   (** {3:sparse-basic Basic access} *)
@@ -511,7 +511,7 @@ module Sparse : sig (* {{{ *)
       underlying storage. In these cases, any previously 'unwrapped' arrays
       are no longer associated with the matrix storage.
 
-      NB: For {!Sundials.sundials_version} < 3.0.0, this access is
+      NB: For {!Config.sundials_version} < 3.0.0, this access is
       potentially unsafe and {b must} only be used when the underlying
       storage is valid, which will be the case in callbacks unless the
       {!scale_add}, {!scale_addi}, {!blit}, and {!resize} functions are
@@ -521,7 +521,7 @@ module Sparse : sig (* {{{ *)
       @nocvode <node> SM_INDEXPTRS_S
       @nocvode <node> SM_DATA_S
   *)
-  val unwrap : 's t -> index_array * index_array * Sundials.RealArray.t
+  val unwrap : 's t -> index_array * index_array * RealArray.t
 
   (** Reallocates the underlying arrays to the given number of non-zero
       elements, or otherwise to the current number of non-zero elements .
@@ -566,7 +566,7 @@ module Sparse : sig (* {{{ *)
 
       @nocvode <node> SUNMatMatvec
       @nocvode <node> SUNMatMatvec_Sparse *)
-  val matvec : 's t -> Sundials.RealArray.t -> Sundials.RealArray.t -> unit
+  val matvec : 's t -> RealArray.t -> RealArray.t -> unit
 
   (** Fills a matrix with zeros.
 
@@ -617,7 +617,7 @@ module Sparse : sig (* {{{ *)
 
   (** Called internally when the corresponding value in the underlying
       library ceases to exist. Has no effect when
-      {!Sundials.sundials_version} >= 3.0.0. *)
+      {!Config.sundials_version} >= 3.0.0. *)
   val invalidate : 's t -> unit
 
 end (* }}} *)
@@ -633,7 +633,7 @@ module ArrayDense : sig (* {{{ *)
 
       @cvode <node9#ss:dense> Small dense matrices
       @cvode <node9#ss:dense> newDenseMat *)
-  type t = Sundials.RealArray2.t
+  type t = RealArray2.t
 
   (** {3:arraydense-basic Basic access} *)
 
@@ -668,12 +668,12 @@ module ArrayDense : sig (* {{{ *)
 
   (** Direct access to the underlying storage array, which is accessed
       column first (unlike in {!get}). *)
-  val unwrap : t -> Sundials.real_array2
+  val unwrap : t -> RealArray2.data
 
   (** {3:arraydense-ops Operations} *)
 
   (** Operations on array-based dense matrices. *)
-  val ops : (t, Sundials.RealArray.t) matrix_ops
+  val ops : (t, RealArray.t) matrix_ops
 
   (** [scale_add c A B] calculates $A = cA + B$. *)
   val scale_add : float -> t -> t -> unit
@@ -685,7 +685,7 @@ module ArrayDense : sig (* {{{ *)
 
       @nocvode <node9#ss:dense> denseMatvec
       @since 2.6.0 *)
-  val matvec : t -> Sundials.RealArray.t -> Sundials.RealArray.t -> unit
+  val matvec : t -> RealArray.t -> RealArray.t -> unit
 
   (** Fills the matrix with zeros.
 
@@ -724,18 +724,18 @@ module ArrayDense : sig (* {{{ *)
 
       @cvode <node9#ss:dense> denseGETRF
       @raise ZeroDiagonalElement Zero found in matrix diagonal *)
-  val getrf : t -> Sundials.LintArray.t -> unit
+  val getrf : t -> LintArray.t -> unit
 
   (** [getrs a p b] finds the solution of [ax = b] using an LU factorization
       found by {!getrf}. Both [p] and [b] must have the same number of rows
       as [a].
 
       @cvode <node9#ss:dense> denseGETRS *)
-  val getrs : t -> Sundials.LintArray.t -> Sundials.RealArray.t -> unit
+  val getrs : t -> LintArray.t -> RealArray.t -> unit
 
   (** Like {!getrs} but stores [b] starting at a given offset. *)
   val getrs'
-        : t -> Sundials.LintArray.t -> Sundials.RealArray.t -> int -> unit
+        : t -> LintArray.t -> RealArray.t -> int -> unit
 
   (** Performs Cholesky factorization of a real symmetric positive matrix.
 
@@ -747,14 +747,14 @@ module ArrayDense : sig (* {{{ *)
       must be of length n.
 
       @cvode <node9#ss:dense> densePOTRS *)
-  val potrs : t -> Sundials.RealArray.t -> unit
+  val potrs : t -> RealArray.t -> unit
 
   (** [geqrf a beta work] performs the QR factorization of [a]. [a] must be
       an [m] by [n] matrix, where [m >= n]. The [beta] vector must have
       length [n]. The [work] vector must have length [m].
 
       @cvode <node9#ss:dense> denseGEQRF *)
-  val geqrf : t -> Sundials.RealArray.t -> Sundials.RealArray.t -> unit
+  val geqrf : t -> RealArray.t -> RealArray.t -> unit
 
   (** [ormqr q beta v w work] computes the product {% w = qv %}. [Q] is
       an [m] by [n] matrix calculated using {!geqrf} with [m >= n],
@@ -768,8 +768,8 @@ module ArrayDense : sig (* {{{ *)
       @param work    temporary vector used in the calculation
       @cvode <node9#ss:dense> denseORMQR *)
   val ormqr :
-    a:t -> beta:Sundials.RealArray.t -> v:Sundials.RealArray.t
-      -> w:Sundials.RealArray.t -> work:Sundials.RealArray.t -> unit
+    a:t -> beta:RealArray.t -> v:RealArray.t
+      -> w:RealArray.t -> work:RealArray.t -> unit
 
 end (* }}} *)
 
@@ -793,7 +793,7 @@ module ArrayBand : sig (* {{{ *)
       [a.{i - j + smu, j}].
 
       @cvode <node9#ss:band> newBandMat *)
-  type t = Sundials.RealArray2.t * (smu * mu * ml)
+  type t = RealArray2.t * (smu * mu * ml)
 
   (** {3:arrayband-basic Basic access} *)
 
@@ -860,12 +860,12 @@ module ArrayBand : sig (* {{{ *)
 
   (** Direct access to the underlying storage array, which is accessed
       column first (unlike in {!get}). *)
-  val unwrap : t -> Sundials.real_array2
+  val unwrap : t -> RealArray2.data
 
   (** {3:arrayband-ops Operations} *)
 
   (** Operations on array-based band matrices. *)
-  val ops : (t, Sundials.RealArray.t) matrix_ops
+  val ops : (t, RealArray.t) matrix_ops
 
   (** [scale_add c a b] calculates $A = cA + B$.
 
@@ -880,7 +880,7 @@ module ArrayBand : sig (* {{{ *)
   (** The call [matvec a x y] computes the matrix-vector product $y = Ax$.
 
       @nocvode <node9#ss:band> bandMatvec *)
-  val matvec : t -> Sundials.RealArray.t -> Sundials.RealArray.t -> unit
+  val matvec : t -> RealArray.t -> RealArray.t -> unit
 
   (** Fills the matrix with zeros.
 
@@ -915,13 +915,13 @@ module ArrayBand : sig (* {{{ *)
       (rather than to [mu]).
 
       @cvode <node9#ss:band> bandGBTRF *)
-  val gbtrf : t -> Sundials.LintArray.t -> unit
+  val gbtrf : t -> LintArray.t -> unit
 
   (** [gbtrs a p b] finds the solution of [ax = b] using LU factorization.
       Both [p] and [b] must have the same number of rows as [a].
 
       @cvode <node9#ss:band> bandGBTRS *)
-  val gbtrs : t -> Sundials.LintArray.t -> Sundials.RealArray.t -> unit
+  val gbtrs : t -> LintArray.t -> RealArray.t -> unit
 
 end (* }}} *)
 
@@ -1007,7 +1007,7 @@ val sparse_csr : ?m:int -> ?nnz:int -> int -> (Sparse.csr, 'nk) sparse
 val wrap_sparse : 's Sparse.t -> ('s, 'nk) sparse
 
 (** Generic matrix with array-based dense content. *)
-type 'nk arraydense = (custom, ArrayDense.t, Sundials.RealArray.t, 'nk) t
+type 'nk arraydense = (custom, ArrayDense.t, RealArray.t, 'nk) t
 
 (** By default, [arraydense n] returns an [n] by [n] dense matrix with all
     elements initialized to [0.0]. Optional arguments allow specifying the
@@ -1019,7 +1019,7 @@ val arraydense : ?m:int -> ?i:float -> int -> 'nk arraydense
 val wrap_arraydense : ArrayDense.t -> 'nk arraydense
 
 (** Generic matrix with array-based band content. *)
-type 'nk arrayband = (custom, ArrayBand.t, Sundials.RealArray.t, 'nk) t
+type 'nk arrayband = (custom, ArrayBand.t, RealArray.t, 'nk) t
 
 (** By default, [band n] returns an [n] by [n] band matrix with all bandwidths
     equal to 2 and all values initialized to [0.0].
@@ -1103,22 +1103,22 @@ val space : ('k, 'm, 'nd, 'nk) t -> int * int
 
 (** Prints a dense matrix to the given log file.
 
-    NB: Not supported in {!Sundials.sundials_version} < 3.0.0.
+    NB: Not supported in {!Config.sundials_version} < 3.0.0.
 
     @nocvode <node> SUNDenseMatrix_Print *)
-val print_dense : 'nk dense -> Sundials.Logfile.t -> unit
+val print_dense : 'nk dense -> Logfile.t -> unit
 
 (** Prints a band matrix to the given log file.
 
-    NB: Not supported in {!Sundials.sundials_version} < 3.0.0.
+    NB: Not supported in {!Config.sundials_version} < 3.0.0.
 
     @nocvode <node> SUNBandMatrix_Print *)
-val print_band : 'nk band -> Sundials.Logfile.t -> unit
+val print_band : 'nk band -> Logfile.t -> unit
 
 (** Prints a sparse matrix to the given log file.
 
-    NB: Not supported in {!Sundials.sundials_version} < 3.0.0.
+    NB: Not supported in {!Config.sundials_version} < 3.0.0.
 
     @nocvode <node> SUNSparseMatrix_Print *)
-val print_sparse : ('s, 'nk) sparse -> Sundials.Logfile.t -> unit
+val print_sparse : ('s, 'nk) sparse -> Logfile.t -> unit
 

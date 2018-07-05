@@ -28,8 +28,8 @@
  * t = .4, 4, 40, ..., 4e10.
  * -----------------------------------------------------------------
  *)
-module RealArray = Sundials.RealArray
-module Roots = Sundials.Roots
+
+open Sundials
 
 let printf = Printf.printf
 
@@ -48,7 +48,7 @@ let nout   = 12       (* number of output times *)
 let nroots = 2        (* number of root functions *)
 
 let idadense =
-  match Sundials.sundials_version with 2,_,_ -> "IDADENSE" | _ -> "DENSE"
+  match Config.sundials_version with 2,_,_ -> "IDADENSE" | _ -> "DENSE"
 
 let print_header rtol avtol yy =
   let open Printf in

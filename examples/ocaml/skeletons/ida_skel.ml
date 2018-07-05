@@ -1,3 +1,5 @@
+open Sundials
+
 (* 1. Define a residual function. *)
 let resf t v v' r =
   r.{0} <- v.{2}  -. v'.{0};
@@ -11,7 +13,7 @@ let g t v v' gout = gout.{0} <- v.{0} -. v.{1} *. 0.5774
 
 (* 3. Set vector of initial values.
       The length of this vector determines the problem size. *)
-let vd = Sundials.RealArray.of_list [ 0.9848; 0.1736; 0.0; 0.0; 0.0 ]
+let vd = RealArray.of_list [ 0.9848; 0.1736; 0.0; 0.0; 0.0 ]
 let v  = Nvector_serial.wrap vd
 let v' = Nvector_serial.make 5 0.0
 
@@ -26,7 +28,7 @@ let s = Ida.(init Dls.(solver (dense v m))
 (* 5. Set optional inputs, e.g.,
       call [set_*] functions to change solver parameters. *)
 Ida.set_stop_time s 10.0;
-Ida.set_all_root_directions s Sundials.RootDirs.Decreasing;;
+Ida.set_all_root_directions s RootDirs.Decreasing;;
 
 (* 6. Correct initial values *)
 let vids = Nvector_serial.make 5 Ida.VarId.differential;;

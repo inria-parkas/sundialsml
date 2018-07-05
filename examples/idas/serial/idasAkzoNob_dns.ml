@@ -22,7 +22,9 @@
  *
  * -----------------------------------------------------------------
  *)
-module RealArray = Sundials.RealArray
+
+open Sundials
+
 module Quad = Idas.Quadrature
 module Sens = Idas.Sensitivity
 module QuadSens = Idas.Sensitivity.Quadrature
@@ -104,7 +106,7 @@ let rhsQ data t (yy : RealArray.t) yp (qdot : RealArray.t) =
   qdot.{0} <- yy.{0}
 
 let idadense =
-  match Sundials.sundials_version with 2,_,_ -> "IDADENSE" | _ -> "DENSE"
+  match Config.sundials_version with 2,_,_ -> "IDADENSE" | _ -> "DENSE"
 
 let print_header rtol avtol y =
   print_string "\nidasAkzoNob_dns: Akzo Nobel chemical kinetics DAE serial example problem for IDAS\n";

@@ -39,10 +39,8 @@
  * -----------------------------------------------------------------
  *)
 
-module RealArray = Sundials.RealArray
-module RealArray2 = Sundials.RealArray2
-module LintArray = Sundials.LintArray
-module Roots  = Sundials.Roots
+open Sundials
+
 module Densemat = Matrix.ArrayDense
 open Bigarray
 let unvec = Nvector.unwrap
@@ -121,7 +119,7 @@ type linear_solver =  UseSpgmr | UseSpbcg | UseSptfqmr
 let ijkth (v : RealArray.t) i j k       = v.{i - 1 + j * num_species + k * nsmx}
 let set_ijkth (v : RealArray.t) i j k e = v.{i - 1 + j * num_species + k * nsmx} <- e
 
-let set_ijth (v : Sundials.real_array2) i j e = v.{j - 1, i - 1} <- e
+let set_ijth (v : RealArray2.data) i j e = v.{j - 1, i - 1} <- e
 
 (* Type : UserData
    contains preconditioner blocks, pivot arrays, and problem constants *)
@@ -129,7 +127,7 @@ let set_ijth (v : Sundials.real_array2) i j e = v.{j - 1, i - 1} <- e
 type user_data = {
         p               : Densemat.t array array;
         jbd             : Densemat.t array array;
-        pivot           : Sundials.LintArray.t array array;
+        pivot           : LintArray.t array array;
         mutable q4      : float;
         mutable om      : float;
         mutable dx      : float;
@@ -509,7 +507,7 @@ let main () =
     (* (b) SPBCG *)
     | UseSpbcg -> begin
         (* Print header *)
-        (match Sundials.sundials_version with
+        (match Config.sundials_version with
          | 2,_,_ -> printf " -------";
                     printf " \n| SPBCG |\n";
                     printf " -------\n"

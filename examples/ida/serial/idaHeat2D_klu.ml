@@ -35,10 +35,10 @@
  * IDACalcIC cost statistics only.)
  * -----------------------------------------------------------------
  *)
-module RealArray = Sundials.RealArray
-module Roots = Sundials.Roots
+
+open Sundials
+
 module Dls = Ida.Dls
-module Constraint = Sundials.Constraint
 
 let printf = Printf.printf
 let vmax_norm = Nvector_serial.DataOps.n_vmaxnorm
@@ -447,7 +447,7 @@ let set_initial_profile data u u' id res =
   done
 
 let idaklu =
-  match Sundials.sundials_version with 2,_,_ -> "IDAKLU" | _ -> "KLU"
+  match Config.sundials_version with 2,_,_ -> "IDAKLU" | _ -> "KLU"
 
 let print_header rtol atol =
   printf "\nidaHeat2D_klu: Heat equation, serial example problem for IDA\n";

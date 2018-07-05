@@ -60,8 +60,8 @@
  *-----------------------------------------------------------------
  *)
 
-module RealArray = Sundials.RealArray
-module Roots  = Sundials.Roots
+open Sundials
+
 module BBD = Arkode_bbd
 open Bigarray
 

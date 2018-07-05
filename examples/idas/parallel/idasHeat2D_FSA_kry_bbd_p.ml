@@ -38,9 +38,8 @@
  * -----------------------------------------------------------------
  *)
 
-module RealArray = Sundials.RealArray
-module RealArray2 = Sundials.RealArray2
-module LintArray = Sundials.LintArray
+open Sundials
+
 let unvec = Nvector.unwrap
 module Sens = Idas.Sensitivity
 let n_vclone = Nvector_parallel.Ops.n_vclone
@@ -496,7 +495,7 @@ let set_initial_profile data uu up id res =
  *)
 
 let truetext, idaspgmr =
-  match Sundials.sundials_version with
+  match Config.sundials_version with
   | 2,_,_ -> "TRUE", "IDASPGMR"
   | _ -> "SUNTRUE", "SUNSPGMR"
 

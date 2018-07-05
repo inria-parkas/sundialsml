@@ -34,9 +34,8 @@
  * -----------------------------------------------------------------
  *)
 
-module RealArray = Sundials.RealArray
-module LintArray = Sundials.LintArray
-module Roots  = Sundials.Roots
+open Sundials
+
 module Direct = Matrix.ArrayDense
 let unwrap = Nvector.unwrap
 
@@ -120,7 +119,7 @@ let set_ijth v i j e = Direct.set v (i - 1) (j - 1) e
 type user_data = {
         p          : Direct.t array array;
         jbd        : Direct.t array array;
-        pivot      : Sundials.LintArray.t array array;
+        pivot      : LintArray.t array array;
         mutable q4 : float;
         om         : float;
         dx         : float;
