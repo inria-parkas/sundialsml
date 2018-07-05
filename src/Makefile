@@ -105,7 +105,8 @@ sundials/sundials.cmo: sundials/sundials.ml
 sundials/sundials.cmx: sundials/sundials.ml
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -no-alias-deps -w -49 $(SUBDIRS:%=-I %) -c $(INCLUDES) $<
 
-$(MLOBJ_AFTER_SUNDIALS:.cmo=.cmi) : sundials/sundials.cmi
+$(filter-out sundials/sundials.cmi,$(MLOBJ_AFTER_SUNDIALS:.cmo=.cmi)) : \
+    sundials/sundials.cmi
 
 # The CFLAGS settings for CVODE works for modules common to CVODE and IDA.
 $(COBJ_COMMON): %.o: %.c
