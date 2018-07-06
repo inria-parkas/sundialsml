@@ -887,6 +887,30 @@ if [ $sundials -ge 260 ]; then
 		if [ ${sundials} -ge 300 ]; then
 		    lsolver_libs="${lsolver_libs} -lsundials_sunlinsolklu"
 		fi
+
+                test_stem=__configure_test_c_file__klu
+                test_cmd="$CC $test_stem.c ${Iklu_inc_path} ${Lklu_lib_path} ${sparse_libs} -o ${test_stem}${XX}"
+                cat > $test_stem.c <<EOF
+/* ${test_cmd} */
+#include "klu.h"
+#include <stddef.h>
+
+int
+main()
+{
+  klu_l_defaults (NULL);
+  return 0;
+}
+EOF
+                if ! eval "${test_cmd}" >>${logfile} 2>&1
+                then
+                    error="${error}\n\tCan't compile with KLU.  You may have to specify KLU_INCLUDE_DIR"
+                    error="${error}\n\tand/or KLU_LIBRARY_DIR."
+                    error="${error}\n\tSaved test code as ${test_stem}.c"
+                    error="${error}\n\tCompilation command was: ${test_cmd}"
+                else
+		    ${debug_configure} || rm -f ${test_stem} ${test_stem}.*
+                fi
 	    else
 		klu_info='disabled'
 	    fi;;
