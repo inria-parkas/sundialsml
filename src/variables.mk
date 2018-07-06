@@ -13,7 +13,7 @@ include ../config
 	$(OCAMLC) $(OCAMLFLAGS) $(SUBDIRS:%=-I %) $(INCLUDES) $(if $(filter $(@:.cmi=.cmo),$(MLOBJ_BEFORE_SUNDIALS)),,-open Sundials) -c $<
 
 .ml.cmx:
-	$(OCAMLOPT) $(OCAMLOPTFLAGS) $(SUBDIRS:%=-I %) $(INCLUDES) -c $(if $(filter $(@:.cmi=.cmo),$(MLOBJ_BEFORE_SUNDIALS)),,-open Sundials) $<
+	$(OCAMLOPT) $(OCAMLOPTFLAGS) $(SUBDIRS:%=-I %) $(INCLUDES) -c $(if $(filter $(@:.cmx=.cmo),$(MLOBJ_BEFORE_SUNDIALS)),,-open Sundials) $<
 
 %.o: %.c
 	$(CC) -I $(OCAML_INCLUDE) $(CFLAGS) $(CSUBDIRS) -o $@ -c $<
