@@ -10,10 +10,9 @@
 (*  under a New BSD License, refer to the file LICENSE.                *)
 (*                                                                     *)
 (***********************************************************************)
-
+open Sundials
 include Cvode_impl
 include CvodesBbdTypes
-module LSI = Sundials_LinearSolver_impl
 
 type parallel_session = Cvode_bbd.parallel_session
 type parallel_bsession =

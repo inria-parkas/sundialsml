@@ -19,6 +19,8 @@
     @author Marc Pouzet (UPMC/ENS/Inria)
     @cvode <node7#ss:nvec_par> NVECTOR_PARALLEL *)
 
+open Sundials
+
 (** Parallel nvectors carry triples of a local
     {{:OCAML_DOC_ROOT(Bigarray.Array1.html)} bigarray} of floats,
     a global length, and an MPI communicator. *)

@@ -10,10 +10,9 @@
 (*  under a New BSD License, refer to the file LICENSE.                *)
 (*                                                                     *)
 (***********************************************************************)
-
+open Sundials
 include Ida_impl
 include IdasBbdTypes
-module LSI = Sundials_LinearSolver_impl
 
 type parallel_session =
         (Nvector_parallel.data, Nvector_parallel.kind) Idas.session

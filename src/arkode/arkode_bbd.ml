@@ -10,11 +10,9 @@
 (*  under a New BSD License, refer to the file LICENSE.                *)
 (*                                                                     *)
 (***********************************************************************)
-
+open Sundials
 include Arkode_impl
 include ArkodeBbdTypes
-
-module LSI = Sundials_LinearSolver_impl
 
 (* These types can't be defined in Arkode_impl because they introduce
    dependence on Mpi.  Some duplication is unavoidable.  *)

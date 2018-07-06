@@ -1,4 +1,4 @@
-
+open Sundials
 type data = RealArray.t
 type kind = [`Pthreads|Nvector_serial.kind]
 type t = (data, kind) Nvector.t

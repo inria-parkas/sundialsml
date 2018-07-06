@@ -1,3 +1,4 @@
+open Sundials
 
 type kind
 type data = RealArray.t * int * Mpi.communicator
@@ -282,7 +283,7 @@ module MakeOps =
       (Mpi.allreduce_float !test Mpi.Float_min comm = 1.0)
 
     let n_vminquotient (num, _, comm) (denom, _, _) =
-      let lmin = ref big_real in
+      let lmin = ref Config.big_real in
       for i = 0 to A.length num - 1 do
         if (A.get denom i) <> 0.0 then
           lmin := min !lmin (A.get num i /. A.get denom i)
@@ -496,7 +497,7 @@ module DataOps =
       (Mpi.allreduce_float !test Mpi.Float_min comm = 1.0)
 
     let n_vminquotient ((num : d), _, comm) ((denom : d), _, _) =
-      let lmin = ref big_real in
+      let lmin = ref Config.big_real in
       for i = 0 to A.dim num - 1 do
         if (A.get denom i) <> 0.0 then
           lmin := min !lmin (A.get num i /. A.get denom i)

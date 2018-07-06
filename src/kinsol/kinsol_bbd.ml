@@ -10,10 +10,9 @@
 (*  under a New BSD License, refer to the file LICENSE.                *)
 (*                                                                     *)
 (***********************************************************************)
-
+open Sundials
 include Kinsol_impl
 include KinsolBbdTypes
-module LSI = Sundials_LinearSolver_impl
 
 type parallel_session =
       (Nvector_parallel.data, Nvector_parallel.kind) Kinsol.session

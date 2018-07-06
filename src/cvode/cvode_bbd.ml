@@ -10,10 +10,9 @@
 (*  under a New BSD License, refer to the file LICENSE.                *)
 (*                                                                     *)
 (***********************************************************************)
-
+open Sundials
 include Cvode_impl
 include CvodeBbdTypes
-module LSI = Sundials_LinearSolver_impl
 
 (* These types can't be defined in Cvode_impl because they introduce
    dependence on Mpi.  Some duplication is unavoidable.  *)

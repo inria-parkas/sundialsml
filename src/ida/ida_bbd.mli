@@ -19,6 +19,8 @@
     @author Marc Pouzet (UPMC/ENS/Inria)
     @ida <node5#sss:idabbdpre> Parallel band-block-diagonal preconditioner module *)
 
+open Sundials
+
 (** Alias for sessions based on parallel nvectors. *)
 type parallel_session =
   (Nvector_parallel.data, Nvector_parallel.kind) Ida.session

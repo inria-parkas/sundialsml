@@ -19,6 +19,8 @@
     @author Marc Pouzet (UPMC/ENS/Inria)
     @kinsol <node5#sss:kinbbdpre> Parallel band-block-diagonal preconditioner module *)
 
+open Sundials
+
 (** Alias for sessions based on parallel nvectors. *)
 type parallel_session =
       (Nvector_parallel.data, Nvector_parallel.kind) Kinsol.session
