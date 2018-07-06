@@ -60,8 +60,9 @@ SUBDIRS_MAT=$(if $(PERF_FORCE_MATRICES),$(SUBDIRS),\
 PERF_SUBDIRS=$(if $(PERF_FORCE_NVECTORS),$(SUBDIRS_MAT),\
 		  $(filter-out nvector/%,$(SUBDIRS_MAT)))
 
-TOP_TARGETS = tests.byte.log tests.opt.log perf.byte.log perf.opt.log reps \
-	      perf-intv.byte.cache perf-intv.opt.cache			   \
+TOP_TARGETS = tests.byte tests.opt tests.byte.log tests.opt.log	\
+	      perf.byte.log perf.opt.log reps			\
+	      perf-intv.byte.cache perf-intv.opt.cache		\
 	      perf-intv.byte.log perf-intv.opt.log
 SUBDIR_TARGETS = $(foreach d,$(SUBDIRS),$(foreach t,$(TOP_TARGETS),$d/$t))
 
