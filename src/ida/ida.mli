@@ -129,7 +129,7 @@ module Dls : sig (* {{{ *)
       function and a generic direct linear solver.
       The Jacobian approximation function is optional for dense and banded
       solvers (if not given an internal difference quotient approximation is
-      used), but must be provided for other solvers (or {Invalid_argument} is
+      used), but must be provided for other solvers (or [Invalid_argument] is
       raised).
 
       @nocvode <node> IDADlsSetLinearSolver
