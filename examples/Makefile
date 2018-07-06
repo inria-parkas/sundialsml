@@ -43,9 +43,10 @@ GEN_SUBDIRS=$(foreach m,cvode cvodes ida idas kinsol,			\
 	             $(if $(or $(1),$(OPENMP_ENABLED)),C_openmp)	\
 	             $(if $(or $(1),$(PTHREADS_ENABLED)),pthreads),	\
 	           nvector/$v))						\
-	   $(foreach v,							\
+	   $(if $(or $(1),$(AT_LEAST_3_0)),				\
+	      $(foreach v,						\
 	   	 dense band sparse arraydense arrayband,		\
-		 matrix/$v)						\
+		 matrix/$v))						\
 	    $(if $(or $(1),$(AT_LEAST_2_7)),				\
 	       $(if $(or $(1),$(OPENMP_ENABLED)),idas/C_openmp))
 

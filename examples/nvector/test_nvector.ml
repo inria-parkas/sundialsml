@@ -38,9 +38,11 @@
    output should still exactly agree with C if print_time is
    disabled.  *)
 
+open Sundials
+
 module type NVECTOR_OPS_EXT = sig
   include Nvector.NVECTOR_OPS
-  val n_vgetarray : t -> Sundials.RealArray.t
+  val n_vgetarray : t -> RealArray.t
 end
 
 module Test (Nvector_ops : NVECTOR_OPS_EXT) =
@@ -1777,7 +1779,7 @@ let test_n_vminquotient num denom local_length myid =
   let stop_time = get_time () in
 
   (* ans should equal big_real *)
-  failure := fneq ans Sundials.big_real;
+  failure := fneq ans Config.big_real;
 
   if !failure <> 0 then (
     printf ">>> FAILED test -- N_VMinQuotient Case 2 Proc %d \n" myid;
