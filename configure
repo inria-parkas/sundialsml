@@ -933,19 +933,21 @@ EOF
 		fi
 
 		test_stem=__configure_test_c_file__superlumt
-		test_cmd="$CC $test_stem.c ${superlumt_libs} ${blas_libs} ${Lsuperlumt_lib_path} -o ${test_stem}${XX}"
+		test_cmd="$CC $test_stem.c ${Isuperlumt_inc_path} ${Lsuperlumt_lib_path} ${superlumt_libs} ${blas_libs} ${Lsuperlumt_lib_path} -o ${test_stem}${XX}"
 		cat > $test_stem.c <<EOF
 /* ${test_cmd} */
+#include "slu_mt_ddefs.h"
+
 int main ()
 {
-  void dCreate_Dense_Matrix ();
-  dCreate_Dense_Matrix ();
+  SuperLU_timer_ ();
   return 0;
 }
 EOF
 		if ! eval "${test_cmd}" >>${logfile} 2>&1
                 then
-                    error="${error}\n\tCan't link to SuperLU_MT.  You may have to specify SUPERLUMT_LIBRARY_DIR."
+                    error="${error}\n\tCan't link to SuperLU_MT.  You may have to specify SUPERLUMT_INCLUDE_DIR"
+                    error="${error}\n\tand/or SUPERLUMT_LIBRARY_DIR."
                     error="${error}\n\tSaved test code as ${test_stem}.c"
                     error="${error}\n\tCompilation command was: ${test_cmd}"
                 else
