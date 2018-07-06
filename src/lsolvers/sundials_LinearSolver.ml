@@ -10,6 +10,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
+open Sundials
 module LSI = Sundials_LinearSolver_impl
 
 exception InvalidLinearSolver

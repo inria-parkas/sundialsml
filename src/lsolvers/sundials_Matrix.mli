@@ -21,6 +21,8 @@
     @nocvode <node> Description of the SUNMatrix module
     @since 3.0.0 *)
 
+open Sundials
+
 (** {2:shared Shared definitions} *)
 
 (** Generic operations that all matrix types must implement. Failure is

@@ -39,6 +39,8 @@
      @author Jun Inoue (Inria/ENS)
      @author Marc Pouzet (UPMC/ENS/Inria) *)
 
+open Sundials
+
 (** A session with the KINSOL solver.
 
     An example session with Kinsol ({openfile kinsol_skel.ml}): {[

@@ -9,6 +9,7 @@
 (*  under a New BSD License, refer to the file LICENSE.                *)
 (*                                                                     *)
 (***********************************************************************)
+open Sundials
 include Cvode_impl
 
 (* "Simulate" Linear Solvers in Sundials < 3.0.0 *)

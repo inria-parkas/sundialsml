@@ -10,6 +10,8 @@
 (*                                                                     *)
 (***********************************************************************)
 
+open Sundials
+
 (* Types shared between Arkode, Arkode_bbd, Arkode_klu, and Arkode_superlumt. *)
 
 (* This module's purpose is just to define types shared between Arkode,
@@ -35,7 +37,6 @@
 external crash : string -> unit = "sundials_crash"
 
 type ('data, 'kind) nvector = ('data, 'kind) Nvector.t
-module RealArray = RealArray
 module LSI = Sundials_LinearSolver_impl
 
 type 'a triple = 'a * 'a * 'a

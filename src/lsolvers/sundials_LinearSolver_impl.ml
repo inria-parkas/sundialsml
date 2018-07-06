@@ -10,6 +10,8 @@
 (*                                                                     *)
 (***********************************************************************)
 
+open Sundials
+
 (* Types underlying LinearSolver.  *)
 
 (* This module defines the lsolver types which are manipulated (abstractly)
@@ -19,8 +21,6 @@
    lsolver_impl.cmi file. *)
 
 exception LinearSolverInUse
-
-module Matrix = Matrix
 
 module Klu = struct (* {{{ *)
 

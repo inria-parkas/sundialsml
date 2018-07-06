@@ -48,6 +48,8 @@
     @author Jun Inoue (Inria/ENS)
     @author Marc Pouzet (UPMC/ENS/Inria) *)
 
+open Sundials
+
 (** A session with the ARKODE solver.
 
     An example session with Arkode ({openfile arkode_skel.ml}): {[

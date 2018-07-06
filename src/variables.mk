@@ -7,13 +7,13 @@ include ../config
 .SUFFIXES : .mli .ml .cmi .cmo .cmx
 
 .ml.cmo:
-	$(OCAMLC) $(OCAMLFLAGS) $(SUBDIRS:%=-I %) $(INCLUDES) $(if $(filter $@,$(MLOBJ_BEFORE_SUNDIALS)),,-open Sundials) -c $<
+	$(OCAMLC) $(OCAMLFLAGS) $(SUBDIRS:%=-I %) $(INCLUDES) -c $<
 
 .mli.cmi:
-	$(OCAMLC) $(OCAMLFLAGS) $(SUBDIRS:%=-I %) $(INCLUDES) $(if $(filter $(@:.cmi=.cmo),$(MLOBJ_BEFORE_SUNDIALS)),,-open Sundials) -c $<
+	$(OCAMLC) $(OCAMLFLAGS) $(SUBDIRS:%=-I %) $(INCLUDES) -c $<
 
 .ml.cmx:
-	$(OCAMLOPT) $(OCAMLOPTFLAGS) $(SUBDIRS:%=-I %) $(INCLUDES) -c $(if $(filter $(@:.cmx=.cmo),$(MLOBJ_BEFORE_SUNDIALS)),,-open Sundials) $<
+	$(OCAMLOPT) $(OCAMLOPTFLAGS) $(SUBDIRS:%=-I %) $(INCLUDES) -c $<
 
 %.o: %.c
 	$(CC) -I $(OCAML_INCLUDE) $(CFLAGS) $(CSUBDIRS) -o $@ -c $<
@@ -28,30 +28,27 @@ COBJ_COMMON = sundials/sundials_ml$(XO)	\
 
 COBJ_MAIN = $(COBJ_COMMON) kinsol/kinsol_ml$(XO) $(ARKODE_COBJ_MAIN)
 
-MLOBJ_BEFORE_SUNDIALS = sundials/sundials_configuration.cmo
-
-MLOBJ_AFTER_SUNDIALS =	sundials/sundials_Config.cmo		\
-			sundials/sundials_RealArray.cmo		\
-			sundials/sundials_RealArray2.cmo	\
-			sundials/sundials_LintArray.cmo		\
-			sundials/sundials_Logfile.cmo		\
-	     		sundials/sundials.cmo			\
-			nvectors/nvector.cmo			\
-			nvectors/nvector_serial.cmo		\
-			lsolvers/sundials_Matrix.cmo		\
-			lsolvers/sundials_LinearSolver_impl.cmo	\
-			lsolvers/sundials_LinearSolver.cmo	\
-			nvectors/nvector_custom.cmo		\
-			nvectors/nvector_array.cmo		\
-			cvode/cvode_impl.cmo			\
-			ida/ida_impl.cmo			\
-			kinsol/kinsol_impl.cmo			\
-			cvode/cvode.cmo				\
-			kinsol/kinsol.cmo			\
-			ida/ida.cmo				\
-			$(ARKODE_MLOBJ_MAIN)
-
-MLOBJ_MAIN = $(MLOBJ_BEFORE_SUNDIALS) $(MLOBJ_AFTER_SUNDIALS)
+MLOBJ_MAIN =	sundials/sundials_configuration.cmo	\
+		sundials/sundials_Config.cmo		\
+		sundials/sundials_RealArray.cmo		\
+		sundials/sundials_RealArray2.cmo	\
+		sundials/sundials_LintArray.cmo		\
+		sundials/sundials_Logfile.cmo		\
+	     	sundials/sundials.cmo			\
+		nvectors/nvector.cmo			\
+		nvectors/nvector_serial.cmo		\
+		lsolvers/sundials_Matrix.cmo		\
+		lsolvers/sundials_LinearSolver_impl.cmo	\
+		lsolvers/sundials_LinearSolver.cmo	\
+		nvectors/nvector_custom.cmo		\
+		nvectors/nvector_array.cmo		\
+		cvode/cvode_impl.cmo			\
+		ida/ida_impl.cmo			\
+		kinsol/kinsol_impl.cmo			\
+		cvode/cvode.cmo				\
+		kinsol/kinsol.cmo			\
+		ida/ida.cmo				\
+		$(ARKODE_MLOBJ_MAIN)
 
 CMI_MAIN = $(filter-out sundials/sundials_configuration.cmi,$(filter-out %_impl.cmi,\
 	    $(MLOBJ_MAIN:.cmo=.cmi)))

@@ -44,6 +44,8 @@
     @author Jun Inoue (Inria/ENS)
     @author Marc Pouzet (UPMC/ENS/Inria) *)
 
+open Sundials
+
 (** A session with the IDA solver.
 
     An example session with Ida ({openfile ida_skel.ml}): {[

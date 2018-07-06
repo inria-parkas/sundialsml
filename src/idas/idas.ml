@@ -10,6 +10,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
+open Sundials
 include Ida_impl
 
 (* "Simulate" Linear Solvers in Sundials < 3.0.0 *)

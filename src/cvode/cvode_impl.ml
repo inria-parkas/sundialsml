@@ -10,6 +10,8 @@
 (*                                                                     *)
 (***********************************************************************)
 
+open Sundials
+
 (* Types shared between Cvode, Cvodes, Cvode_bbd, and Cvodes_bbd.  *)
 
 (* This module's purpose is just to define types shared between Cvode,
@@ -44,8 +46,6 @@ module LSI = Sundials_LinearSolver_impl
 external crash : string -> unit = "sundials_crash"
 
 type ('data, 'kind) nvector = ('data, 'kind) Nvector.t
-module RealArray = RealArray
-module Matrix = Matrix
 
 type 'a double = 'a * 'a
 type 'a triple = 'a * 'a * 'a

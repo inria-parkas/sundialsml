@@ -19,6 +19,8 @@
     @author Marc Pouzet (UPMC/ENS/Inria)
     @cvode <node7#ss:nvec_ser> NVECTOR_SERIAL *)
 
+open Sundials
+
 (** Serial nvectors are based on
     {{:OCAML_DOC_ROOT(Bigarray.Array1.html)} bigarrays} of floats. *)
 type data = RealArray.t

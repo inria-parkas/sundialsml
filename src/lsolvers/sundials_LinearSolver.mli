@@ -25,6 +25,8 @@
     @nocvode <node> Description of the SUNLinearSolver module
     @since 3.0.0 *)
 
+open Sundials
+
 (** {2:lsolvers Linear Solver Families} *)
 
 (** Direct Linear Solvers *)

@@ -10,8 +10,8 @@
 (*                                                                     *)
 (***********************************************************************)
 
+open Sundials
 include Kinsol_impl
-module RealArray = RealArray
 
 (* "Simulate" Linear Solvers in Sundials < 3.0.0 *)
 let in_compat_mode =

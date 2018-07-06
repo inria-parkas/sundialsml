@@ -10,6 +10,8 @@
 (*                                                                     *)
 (***********************************************************************)
 
+open Sundials
+
 (* Types shared between Ida, Idas, Ida_bbd, and Idas_bbd.  See the
    notes on Cvode_impl about the rationale behind this module.  *)
 
@@ -29,8 +31,6 @@ type 'a double = 'a * 'a
 type 'a triple = 'a * 'a * 'a
 
 type ('data, 'kind) nvector = ('data, 'kind) Nvector.t
-module RealArray = RealArray
-module Matrix = Matrix
 module LSI = Sundials_LinearSolver_impl
 
 type ('t, 'a) jacobian_arg =

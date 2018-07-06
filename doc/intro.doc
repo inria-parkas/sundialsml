@@ -213,7 +213,7 @@ either {!Direct.Custom.make} or {!Iterative.Custom.make}.
 {2:api API Reference}
 
 {!modules: Sundials}
-{!modules: Matrix LinearSolver}
+{!modules: Sundials.Matrix Sundials.LinearSolver}
 {!modules: Nvector Nvector_serial Nvector_parallel
 	   Nvector_pthreads Nvector_openmp
 	   Nvector_custom Nvector_array}
@@ -294,7 +294,8 @@ For {b OS X}, we found the following worked:
 
 The [configure] script detects and automatically enables optional
 features.  Lapack solvers, like {!Direct.lapack_dense}, are enabled
-if Sundials was built with lapack support (see also {!Sundials.lapack_enabled}).
+if Sundials was built with lapack support
+(see also {!Sundials_Config.lapack_enabled}).
 The KLU and SuperLU_MT solvers, and the Pthreads and OpenMP nvectors are
 only enabled if Sundials was built with them.
 Parallel nvectors and Band-Block-Diagonal (BBD) solvers

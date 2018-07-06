@@ -42,6 +42,8 @@
     @author Jun Inoue (Inria/ENS)
     @author Marc Pouzet (UPMC/ENS/Inria) *)
 
+open Sundials
+
 (** A session with the CVODE solver.
 
     An example session with Cvode ({openfile cvode_skel.ml}): {[

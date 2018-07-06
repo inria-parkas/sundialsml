@@ -10,6 +10,8 @@
 (*                                                                     *)
 (***********************************************************************)
 
+open Sundials
+
 (* Types shared between Kinsol and Kinsol_bbd.  See the notes on
    Cvode_impl about the rationale behind this module.  *)
 
@@ -39,7 +41,6 @@ type ('t, 'a) jacobian_arg =
   }
 
 type real_array = RealArray.t
-module Matrix = Matrix
 
 type bandrange = { mupper : int; mlower : int; }
 

@@ -1,4 +1,6 @@
 
+open Sundials
+
 type data = RealArray.t
 type kind = [`Serial]
 type t = (data, kind) Nvector.t

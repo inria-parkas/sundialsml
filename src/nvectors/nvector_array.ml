@@ -10,6 +10,8 @@
 (*                                                                     *)
 (***********************************************************************)
 
+open Sundials
+
 module type ARRAY_NVECTOR =
   sig
     type data

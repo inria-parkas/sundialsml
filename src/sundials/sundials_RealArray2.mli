@@ -11,6 +11,8 @@
 (*                                                                     *)
 (***********************************************************************)
 
+open Sundials
+
 (** A two-dimensional matrix. The underlying data can be accessed as
     a {{:OCAML_DOC_ROOT(Bigarray.Array2.html)}Bigarray} via {!unwrap},
     but note that the first index specifies the column. *)

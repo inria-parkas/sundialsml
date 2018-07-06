@@ -21,5 +21,4 @@ S nvectors
 S sundials
 
 PKG mpi
-FLG -open Sundials
 
