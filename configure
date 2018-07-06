@@ -221,7 +221,7 @@ if [ x"${SUNDIALS_INCLUDE_DIR}" != x ]; then
     Isundials_inc_path="-I${sundials_inc_path}"
 fi
 if [ x"${SUNDIALS_EXAMPLES_DIR}" != x ]; then
-    if [ ! -d "${SUNDIALS_EXAMPLES_DIR%/}/templates" ]; then
+    if [ ! -d "${SUNDIALS_EXAMPLES_DIR%/}/cvode/serial" ]; then
 	msg="ignoring invalid examples directory (${SUNDIALS_EXAMPLES_DIR%})"
 	warning="${warning}\n\t${msg}"
     else
