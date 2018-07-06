@@ -128,7 +128,10 @@ let residual t vars vars' res =
   res.{constr} <- vars.{x} * vars'.{vx} + vars.{y} * vars'.{vy}
                   + vars.{vx} * vars'.{x} + vars.{vy} * vars'.{y}
 
-let jac Ida.({ jac_y = vars ; jac_y' = vars'; jac_coef = c }) out =
+let jac jac out =
+  let vars = jac.Ida.jac_y
+  and vars' = jac.Ida.jac_y'
+  and c = jac.Ida.jac_coef in
   let out = Matrix.Dense.unwrap out in
   out.{x,  vx_x}   <- -.c;
   out.{vx, vx_x}   <- 1.;
