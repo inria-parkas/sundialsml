@@ -85,7 +85,7 @@ module Dense : sig (* {{{ *)
       @nocvode <node> The SUNMatrix_Dense implementation *)
   type t
 
-  (** {3:dense-basic Basic access} *)
+  (** {3:dense_basic Basic access} *)
 
   (** [make m n x] returns an [m] by [n] dense matrix with elements set
       to [x].
@@ -151,7 +151,7 @@ module Dense : sig (* {{{ *)
       @nocvode <node> SM_CONTENT_D *)
   val unwrap : t -> RealArray2.data
 
-  (** {3:dense-ops Operations} *)
+  (** {3:dense_ops Operations} *)
 
   (** Operations on dense matrices. *)
   val ops : (t, Nvector_serial.data) matrix_ops
@@ -194,7 +194,7 @@ module Dense : sig (* {{{ *)
       @nocvode <node> SUNMatSpace_Dense *)
   val space : t -> int * int
 
-  (** {3:dense-lowlevel Low-level details} *)
+  (** {3:dense_lowlevel Low-level details} *)
 
   (** Called internally when the corresponding value in the underlying
       library ceases to exist. Has no effect when
@@ -224,7 +224,7 @@ module Band : sig (* {{{ *)
       ml  : int;  (** Lower bandwidth. *)
     }
 
-  (** {3:band-basic Basic access} *)
+  (** {3:band_basic Basic access} *)
 
   (** Returns a band matrix with the given {!dimensions} and all elements
       initialized to the given value.
@@ -320,7 +320,7 @@ module Band : sig (* {{{ *)
       @nocvode <node> SM_CONTENT_B *)
   val unwrap : t -> RealArray2.data
 
-  (** {3:band-ops Operations} *)
+  (** {3:band_ops Operations} *)
 
   (** Operations on band matrices. *)
 
@@ -372,7 +372,7 @@ module Band : sig (* {{{ *)
       @nocvode <node> SUNMatSpace_Band *)
   val space : t -> int * int
 
-  (** {3:band-lowlevel Low-level details} *)
+  (** {3:band_lowlevel Low-level details} *)
 
   (** Called internally when the corresponding value in the underlying
       library ceases to exist. Has no effect when
@@ -404,7 +404,7 @@ module Sparse : sig (* {{{ *)
     (Index.t, index_elt, Bigarray.c_layout)
     Bigarray.Array1.t
 
-  (** {3:sparse-basic Basic access} *)
+  (** {3:sparse_basic Basic access} *)
 
   (** [make fmt m n nnz] returns an [m] by [n] sparse matrix in the
       specified format with a potential for [nnz] non-zero elements.
@@ -535,7 +535,7 @@ module Sparse : sig (* {{{ *)
       @nocvode <node> SUNSparseMatrix_Reallocate *)
   val resize : ?nnz:int -> 's t -> unit
 
-  (** {3:sparse-ops Operations} *)
+  (** {3:sparse_ops Operations} *)
 
   (** Operations on sparse matrices. *)
   val ops : ('s t, Nvector_serial.data) matrix_ops
@@ -596,7 +596,7 @@ module Sparse : sig (* {{{ *)
       @nocvode <node> SUNMatSpace_Sparse *)
   val space : 's t -> int * int
 
-  (** {3:sparse-lowlevel Low-level details} *)
+  (** {3:sparse_lowlevel Low-level details} *)
 
   (** [set_rowval a idx i] sets the [idx]th row to [i]. *)
   val set_rowval : csc t -> int -> int -> unit
@@ -637,7 +637,7 @@ module ArrayDense : sig (* {{{ *)
       @cvode <node9#ss:dense> newDenseMat *)
   type t = RealArray2.t
 
-  (** {3:arraydense-basic Basic access} *)
+  (** {3:arraydense_basic Basic access} *)
 
   (** [make m n x] returns an [m] by [n] array dense matrix with elements set
       to [x].
@@ -672,7 +672,7 @@ module ArrayDense : sig (* {{{ *)
       column first (unlike in {!get}). *)
   val unwrap : t -> RealArray2.data
 
-  (** {3:arraydense-ops Operations} *)
+  (** {3:arraydense_ops Operations} *)
 
   (** Operations on array-based dense matrices. *)
   val ops : (t, RealArray.t) matrix_ops
@@ -704,7 +704,7 @@ module ArrayDense : sig (* {{{ *)
       [lrw] realtype words and [liw] integer words. *)
   val space : t -> int * int
 
-  (** {3:arraydense-calcs Calculations} *)
+  (** {3:arraydense_calcs Calculations} *)
 
   (** Increments a square matrix by the identity matrix.
 
@@ -797,7 +797,7 @@ module ArrayBand : sig (* {{{ *)
       @cvode <node9#ss:band> newBandMat *)
   type t = RealArray2.t * (smu * mu * ml)
 
-  (** {3:arrayband-basic Basic access} *)
+  (** {3:arrayband_basic Basic access} *)
 
   (** [make (smu, mu, ml) n v] returns an [n] by [n] band matrix with
       storage upper bandwidth [smu], upper bandwidth [sm],
@@ -864,7 +864,7 @@ module ArrayBand : sig (* {{{ *)
       column first (unlike in {!get}). *)
   val unwrap : t -> RealArray2.data
 
-  (** {3:arrayband-ops Operations} *)
+  (** {3:arrayband_ops Operations} *)
 
   (** Operations on array-based band matrices. *)
   val ops : (t, RealArray.t) matrix_ops
@@ -898,7 +898,7 @@ module ArrayBand : sig (* {{{ *)
       [lrw] realtype words and [liw] integer words. *)
   val space : t -> int * int
 
-  (** {3:arrayband-calcs Calculations} *)
+  (** {3:arrayband_calcs Calculations} *)
 
   (** Increment a square matrix by the identity matrix.
 
@@ -1067,7 +1067,7 @@ val get_id : ('k, 'm, 'nd, 'nk) t -> id
     @nocvode <node> SM_CONTENT_B *)
 val unwrap : ('k, 'm, 'nd, 'nk) t -> 'm
 
-(** {3:generic-ops Operations} *)
+(** {3:generic_ops Operations} *)
 
 (** [scale_add c A B] calculates $A = cA + B$.
 
