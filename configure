@@ -1342,7 +1342,7 @@ printf "#define Val_index(x) Val_int(x)\\n" >> src/config.h
 fi
 printf "#endif /* __SUNDIALS_CONFIG_H__ */\\n" >> src/config.h
 
-# Note: config.ml conflicts with a module in the standard library.
+# Generate sundials/sundials_configuration.ml
 echo "(* Automatically generated file - don't edit!  See configure.  *)"\
     > src/sundials/sundials_configuration.ml
 versiondigits=`echo ${version} | sed -e 's/\\./,/g'`
@@ -1384,12 +1384,29 @@ if [ "x${bounds_checking}" = x ]; then
 else
     echo "let safe = true"  >> src/sundials/sundials_configuration.ml
 fi
+
+# Generate sundials/sundials_Index.ml
+echo "(* Automatically generated file - don't edit!  See configure.  *)"\
+    > src/sundials/sundials_Index.ml
 if [ "${sundials_indextype}" -eq 64 ]; then
-    echo "module Index = Int64" >> src/sundials/sundials_configuration.ml
-    echo "type index_elt = Bigarray.int64_elt" >> src/sundials/sundials_configuration.ml
+    echo "include Int64" >> src/sundials/sundials_Index.ml
+    echo "type index_elt = Bigarray.int64_elt" >> src/sundials/sundials_Index.ml
 else
-    echo "module Index = Int32" >> src/sundials/sundials_configuration.ml
-    echo "type index_elt = Bigarray.int32_elt" >> src/sundials/sundials_configuration.ml
+    echo "include Int32" >> src/sundials/sundials_Index.ml
+    echo "type index_elt = Bigarray.int32_elt" >> src/sundials/sundials_Index.ml
+fi
+
+# Generate sundials/sundials_Index.mli
+echo "(* Automatically generated file - don't edit!  See configure.  *)"\
+    > src/sundials/sundials_Index.mli
+echo "(** Index values for sparse matrices. *)"\
+    > src/sundials/sundials_Index.mli
+if [ "${sundials_indextype}" -eq 64 ]; then
+    echo "include module type of Int64" >> src/sundials/sundials_Index.mli
+    echo "type index_elt = Bigarray.int64_elt" >> src/sundials/sundials_Index.mli
+else
+    echo "include module type of Int32" >> src/sundials/sundials_Index.mli
+    echo "type index_elt = Bigarray.int32_elt" >> src/sundials/sundials_Index.mli
 fi
 
 ${debug_configure} && (echo "#----${logfile}:"; cat ${logfile})

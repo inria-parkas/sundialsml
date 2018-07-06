@@ -427,7 +427,7 @@ module Sparse = struct (* {{{ *)
     | _ -> false
 
   type index_array =
-    (Index.t, index_elt, Bigarray.c_layout) Bigarray.Array1.t
+    (Index.t, Index.index_elt, Bigarray.c_layout) Bigarray.Array1.t
 
   module Index = Index
 

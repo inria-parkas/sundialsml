@@ -19,11 +19,11 @@
  @author Marc Pouzet (UPMC/ENS/Inria)
  *)
 
+(** Installation specific constants. *)
 module Config = Sundials_Config
 
-(** Index values *)
-module Index = Sundials_configuration.Index
-type index_elt = Sundials_configuration.index_elt
+(** Index values for sparse matrices. *)
+module Index = Sundials_Index
 
 (** {2:exceptions Exceptions} *)
 

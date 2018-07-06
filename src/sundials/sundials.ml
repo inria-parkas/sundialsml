@@ -12,8 +12,7 @@
 
 module Config = Sundials_Config
 
-module Index = Sundials_configuration.Index
-type index_elt = Sundials_configuration.index_elt
+module Index = Sundials_Index
 
 exception RecoverableFailure
 exception NonPositiveEwt

@@ -403,7 +403,7 @@ module Sparse : sig (* {{{ *)
 
   (** Array of row or column indices *)
   type index_array =
-    (Index.t, index_elt, Bigarray.c_layout)
+    (Index.t, Index.index_elt, Bigarray.c_layout)
     Bigarray.Array1.t
 
   (** {3:sparse_basic Basic access} *)

@@ -14,14 +14,16 @@ arkode/arkode.cmi : sundials/sundials_RealArray.cmi \
     sundials/sundials_Logfile.cmi lsolvers/sundials_LinearSolver.cmi \
     sundials/sundials.cmi nvectors/nvector_serial.cmi nvectors/nvector.cmi \
     arkode/arkode_impl.cmo
-arkode/arkode_bbd.cmo : lsolvers/sundials_LinearSolver_impl.cmo \
+arkode/arkode_bbd.cmo : sundials/sundials_RealArray.cmi \
+    lsolvers/sundials_LinearSolver.cmi sundials/sundials.cmi \
     nvectors/nvector_parallel.cmi nvectors/nvector.cmi arkode/arkode_impl.cmo \
     arkode/arkode.cmi arkode/arkode_bbd.cmi
-arkode/arkode_bbd.cmx : lsolvers/sundials_LinearSolver_impl.cmx \
+arkode/arkode_bbd.cmx : sundials/sundials_RealArray.cmx \
+    lsolvers/sundials_LinearSolver.cmx sundials/sundials.cmx \
     nvectors/nvector_parallel.cmx nvectors/nvector.cmx arkode/arkode_impl.cmx \
     arkode/arkode.cmx arkode/arkode_bbd.cmi
-arkode/arkode_bbd.cmi : nvectors/nvector_parallel.cmi arkode/arkode_impl.cmo \
-    arkode/arkode.cmi
+arkode/arkode_bbd.cmi : sundials/sundials.cmi nvectors/nvector_parallel.cmi \
+    arkode/arkode_impl.cmo arkode/arkode.cmi
 arkode/arkode_impl.cmo : sundials/sundials_configuration.cmo \
     sundials/sundials_RealArray.cmi lsolvers/sundials_Matrix.cmi \
     lsolvers/sundials_LinearSolver_impl.cmo \
@@ -48,14 +50,16 @@ cvode/cvode.cmi : sundials/sundials_RealArray.cmi \
     sundials/sundials_Logfile.cmi lsolvers/sundials_LinearSolver.cmi \
     sundials/sundials.cmi nvectors/nvector_serial.cmi nvectors/nvector.cmi \
     cvode/cvode_impl.cmo
-cvode/cvode_bbd.cmo : lsolvers/sundials_LinearSolver_impl.cmo \
+cvode/cvode_bbd.cmo : sundials/sundials_RealArray.cmi \
+    lsolvers/sundials_LinearSolver.cmi sundials/sundials.cmi \
     nvectors/nvector_parallel.cmi nvectors/nvector.cmi cvode/cvode_impl.cmo \
     cvode/cvode.cmi cvode/cvode_bbd.cmi
-cvode/cvode_bbd.cmx : lsolvers/sundials_LinearSolver_impl.cmx \
+cvode/cvode_bbd.cmx : sundials/sundials_RealArray.cmx \
+    lsolvers/sundials_LinearSolver.cmx sundials/sundials.cmx \
     nvectors/nvector_parallel.cmx nvectors/nvector.cmx cvode/cvode_impl.cmx \
     cvode/cvode.cmx cvode/cvode_bbd.cmi
-cvode/cvode_bbd.cmi : nvectors/nvector_parallel.cmi cvode/cvode_impl.cmo \
-    cvode/cvode.cmi
+cvode/cvode_bbd.cmi : sundials/sundials.cmi nvectors/nvector_parallel.cmi \
+    cvode/cvode_impl.cmo cvode/cvode.cmi
 cvode/cvode_impl.cmo : sundials/sundials_configuration.cmo \
     sundials/sundials_RealArray.cmi lsolvers/sundials_Matrix.cmi \
     lsolvers/sundials_LinearSolver_impl.cmo \
@@ -82,14 +86,16 @@ cvodes/cvodes.cmi : sundials/sundials_RealArray.cmi \
     sundials/sundials_LintArray.cmi lsolvers/sundials_LinearSolver.cmi \
     sundials/sundials.cmi nvectors/nvector_serial.cmi nvectors/nvector.cmi \
     cvode/cvode_impl.cmo cvode/cvode.cmi
-cvodes/cvodes_bbd.cmo : lsolvers/sundials_LinearSolver_impl.cmo \
+cvodes/cvodes_bbd.cmo : sundials/sundials_RealArray.cmi \
+    lsolvers/sundials_LinearSolver.cmi sundials/sundials.cmi \
     nvectors/nvector_parallel.cmi nvectors/nvector.cmi cvode/cvode_impl.cmo \
     cvode/cvode_bbd.cmi cvodes/cvodes_bbd.cmi
-cvodes/cvodes_bbd.cmx : lsolvers/sundials_LinearSolver_impl.cmx \
+cvodes/cvodes_bbd.cmx : sundials/sundials_RealArray.cmx \
+    lsolvers/sundials_LinearSolver.cmx sundials/sundials.cmx \
     nvectors/nvector_parallel.cmx nvectors/nvector.cmx cvode/cvode_impl.cmx \
     cvode/cvode_bbd.cmx cvodes/cvodes_bbd.cmi
-cvodes/cvodes_bbd.cmi : nvectors/nvector_parallel.cmi cvodes/cvodes.cmi \
-    cvode/cvode_bbd.cmi
+cvodes/cvodes_bbd.cmi : sundials/sundials.cmi nvectors/nvector_parallel.cmi \
+    cvodes/cvodes.cmi cvode/cvode_bbd.cmi
 ida/ida.cmo : sundials/sundials_configuration.cmo \
     lsolvers/sundials_Matrix.cmi sundials/sundials_Logfile.cmi \
     lsolvers/sundials_LinearSolver.cmi sundials/sundials_Config.cmi \
@@ -103,13 +109,14 @@ ida/ida.cmx : sundials/sundials_configuration.cmx \
 ida/ida.cmi : sundials/sundials_RealArray.cmi sundials/sundials_Logfile.cmi \
     lsolvers/sundials_LinearSolver.cmi sundials/sundials.cmi \
     nvectors/nvector_serial.cmi nvectors/nvector.cmi ida/ida_impl.cmo
-ida/ida_bbd.cmo : lsolvers/sundials_LinearSolver_impl.cmo \
+ida/ida_bbd.cmo : sundials/sundials_RealArray.cmi sundials/sundials.cmi \
     nvectors/nvector_parallel.cmi nvectors/nvector.cmi ida/ida_impl.cmo \
     ida/ida.cmi ida/ida_bbd.cmi
-ida/ida_bbd.cmx : lsolvers/sundials_LinearSolver_impl.cmx \
+ida/ida_bbd.cmx : sundials/sundials_RealArray.cmx sundials/sundials.cmx \
     nvectors/nvector_parallel.cmx nvectors/nvector.cmx ida/ida_impl.cmx \
     ida/ida.cmx ida/ida_bbd.cmi
-ida/ida_bbd.cmi : nvectors/nvector_parallel.cmi ida/ida_impl.cmo ida/ida.cmi
+ida/ida_bbd.cmi : sundials/sundials.cmi nvectors/nvector_parallel.cmi \
+    ida/ida_impl.cmo ida/ida.cmi
 ida/ida_impl.cmo : sundials/sundials_configuration.cmo \
     sundials/sundials_RealArray.cmi lsolvers/sundials_Matrix.cmi \
     lsolvers/sundials_LinearSolver_impl.cmo \
@@ -134,14 +141,14 @@ idas/idas.cmi : sundials/sundials_RealArray.cmi \
     lsolvers/sundials_LinearSolver.cmi sundials/sundials.cmi \
     nvectors/nvector_serial.cmi nvectors/nvector.cmi ida/ida_impl.cmo \
     ida/ida.cmi
-idas/idas_bbd.cmo : lsolvers/sundials_LinearSolver_impl.cmo \
+idas/idas_bbd.cmo : sundials/sundials_RealArray.cmi sundials/sundials.cmi \
     nvectors/nvector_parallel.cmi nvectors/nvector.cmi idas/idas.cmi \
     ida/ida_impl.cmo ida/ida_bbd.cmi idas/idas_bbd.cmi
-idas/idas_bbd.cmx : lsolvers/sundials_LinearSolver_impl.cmx \
+idas/idas_bbd.cmx : sundials/sundials_RealArray.cmx sundials/sundials.cmx \
     nvectors/nvector_parallel.cmx nvectors/nvector.cmx idas/idas.cmx \
     ida/ida_impl.cmx ida/ida_bbd.cmx idas/idas_bbd.cmi
-idas/idas_bbd.cmi : nvectors/nvector_parallel.cmi idas/idas.cmi \
-    ida/ida_bbd.cmi
+idas/idas_bbd.cmi : sundials/sundials.cmi nvectors/nvector_parallel.cmi \
+    idas/idas.cmi ida/ida_bbd.cmi
 kinsol/kinsol.cmo : sundials/sundials_configuration.cmo \
     sundials/sundials_RealArray.cmi lsolvers/sundials_Matrix.cmi \
     sundials/sundials_Logfile.cmi lsolvers/sundials_LinearSolver.cmi \
@@ -158,13 +165,14 @@ kinsol/kinsol.cmi : sundials/sundials_RealArray.cmi \
     sundials/sundials_Logfile.cmi lsolvers/sundials_LinearSolver.cmi \
     sundials/sundials.cmi nvectors/nvector_serial.cmi nvectors/nvector.cmi \
     kinsol/kinsol_impl.cmo
-kinsol/kinsol_bbd.cmo : lsolvers/sundials_LinearSolver_impl.cmo \
-    nvectors/nvector_parallel.cmi nvectors/nvector.cmi kinsol/kinsol_impl.cmo \
-    kinsol/kinsol.cmi kinsol/kinsol_bbd.cmi
-kinsol/kinsol_bbd.cmx : lsolvers/sundials_LinearSolver_impl.cmx \
-    nvectors/nvector_parallel.cmx nvectors/nvector.cmx kinsol/kinsol_impl.cmx \
-    kinsol/kinsol.cmx kinsol/kinsol_bbd.cmi
-kinsol/kinsol_bbd.cmi : nvectors/nvector_parallel.cmi kinsol/kinsol.cmi
+kinsol/kinsol_bbd.cmo : sundials/sundials_RealArray.cmi \
+    sundials/sundials.cmi nvectors/nvector_parallel.cmi nvectors/nvector.cmi \
+    kinsol/kinsol_impl.cmo kinsol/kinsol.cmi kinsol/kinsol_bbd.cmi
+kinsol/kinsol_bbd.cmx : sundials/sundials_RealArray.cmx \
+    sundials/sundials.cmx nvectors/nvector_parallel.cmx nvectors/nvector.cmx \
+    kinsol/kinsol_impl.cmx kinsol/kinsol.cmx kinsol/kinsol_bbd.cmi
+kinsol/kinsol_bbd.cmi : sundials/sundials.cmi nvectors/nvector_parallel.cmi \
+    kinsol/kinsol.cmi
 kinsol/kinsol_impl.cmo : sundials/sundials_configuration.cmo \
     sundials/sundials_RealArray.cmi lsolvers/sundials_Matrix.cmi \
     lsolvers/sundials_LinearSolver_impl.cmo \
@@ -198,19 +206,19 @@ lsolvers/sundials_LinearSolver_impl.cmx : lsolvers/sundials_Matrix.cmx \
 lsolvers/sundials_Matrix.cmo : sundials/sundials_configuration.cmo \
     sundials/sundials_RealArray2.cmi sundials/sundials_RealArray.cmi \
     sundials/sundials_Logfile.cmi sundials/sundials_LintArray.cmi \
-    sundials/sundials_Config.cmi sundials/sundials.cmi \
-    nvectors/nvector_serial.cmi nvectors/nvector.cmi \
+    sundials/sundials_Index.cmi sundials/sundials_Config.cmi \
+    sundials/sundials.cmi nvectors/nvector_serial.cmi nvectors/nvector.cmi \
     lsolvers/sundials_Matrix.cmi
 lsolvers/sundials_Matrix.cmx : sundials/sundials_configuration.cmx \
     sundials/sundials_RealArray2.cmx sundials/sundials_RealArray.cmx \
     sundials/sundials_Logfile.cmx sundials/sundials_LintArray.cmx \
-    sundials/sundials_Config.cmx sundials/sundials.cmx \
-    nvectors/nvector_serial.cmx nvectors/nvector.cmx \
+    sundials/sundials_Index.cmx sundials/sundials_Config.cmx \
+    sundials/sundials.cmx nvectors/nvector_serial.cmx nvectors/nvector.cmx \
     lsolvers/sundials_Matrix.cmi
 lsolvers/sundials_Matrix.cmi : sundials/sundials_RealArray2.cmi \
     sundials/sundials_RealArray.cmi sundials/sundials_Logfile.cmi \
-    sundials/sundials_LintArray.cmi sundials/sundials.cmi \
-    nvectors/nvector_serial.cmi nvectors/nvector.cmi
+    sundials/sundials_LintArray.cmi sundials/sundials_Index.cmi \
+    sundials/sundials.cmi nvectors/nvector_serial.cmi nvectors/nvector.cmi
 nvectors/nvector.cmo : nvectors/nvector.cmi
 nvectors/nvector.cmx : nvectors/nvector.cmi
 nvectors/nvector.cmi :
@@ -227,27 +235,34 @@ nvectors/nvector_custom.cmo : nvectors/nvector.cmi \
 nvectors/nvector_custom.cmx : nvectors/nvector.cmx \
     nvectors/nvector_custom.cmi
 nvectors/nvector_custom.cmi : nvectors/nvector.cmi
-nvectors/nvector_openmp.cmo : nvectors/nvector_serial.cmi \
-    nvectors/nvector.cmi nvectors/nvector_openmp.cmi
-nvectors/nvector_openmp.cmx : nvectors/nvector_serial.cmx \
-    nvectors/nvector.cmx nvectors/nvector_openmp.cmi
-nvectors/nvector_openmp.cmi : nvectors/nvector_serial.cmi \
-    nvectors/nvector.cmi
+nvectors/nvector_openmp.cmo : sundials/sundials_RealArray.cmi \
+    sundials/sundials.cmi nvectors/nvector_serial.cmi nvectors/nvector.cmi \
+    nvectors/nvector_openmp.cmi
+nvectors/nvector_openmp.cmx : sundials/sundials_RealArray.cmx \
+    sundials/sundials.cmx nvectors/nvector_serial.cmx nvectors/nvector.cmx \
+    nvectors/nvector_openmp.cmi
+nvectors/nvector_openmp.cmi : sundials/sundials_RealArray.cmi \
+    sundials/sundials.cmi nvectors/nvector_serial.cmi nvectors/nvector.cmi
 nvectors/nvector_openmp_top.cmo : sundials/sundials_top.cmi
 nvectors/nvector_openmp_top.cmx : sundials/sundials_top.cmx
-nvectors/nvector_parallel.cmo : nvectors/nvector.cmi \
+nvectors/nvector_parallel.cmo : sundials/sundials_RealArray.cmi \
+    sundials/sundials_Config.cmi sundials/sundials.cmi nvectors/nvector.cmi \
     nvectors/nvector_parallel.cmi
-nvectors/nvector_parallel.cmx : nvectors/nvector.cmx \
+nvectors/nvector_parallel.cmx : sundials/sundials_RealArray.cmx \
+    sundials/sundials_Config.cmx sundials/sundials.cmx nvectors/nvector.cmx \
     nvectors/nvector_parallel.cmi
-nvectors/nvector_parallel.cmi : nvectors/nvector.cmi
+nvectors/nvector_parallel.cmi : sundials/sundials_RealArray.cmi \
+    sundials/sundials.cmi nvectors/nvector.cmi
 nvectors/nvector_parallel_top.cmo : sundials/sundials_top.cmi
 nvectors/nvector_parallel_top.cmx : sundials/sundials_top.cmx
-nvectors/nvector_pthreads.cmo : nvectors/nvector_serial.cmi \
-    nvectors/nvector.cmi nvectors/nvector_pthreads.cmi
-nvectors/nvector_pthreads.cmx : nvectors/nvector_serial.cmx \
-    nvectors/nvector.cmx nvectors/nvector_pthreads.cmi
-nvectors/nvector_pthreads.cmi : nvectors/nvector_serial.cmi \
-    nvectors/nvector.cmi
+nvectors/nvector_pthreads.cmo : sundials/sundials_RealArray.cmi \
+    sundials/sundials.cmi nvectors/nvector_serial.cmi nvectors/nvector.cmi \
+    nvectors/nvector_pthreads.cmi
+nvectors/nvector_pthreads.cmx : sundials/sundials_RealArray.cmx \
+    sundials/sundials.cmx nvectors/nvector_serial.cmx nvectors/nvector.cmx \
+    nvectors/nvector_pthreads.cmi
+nvectors/nvector_pthreads.cmi : sundials/sundials_RealArray.cmi \
+    sundials/sundials.cmi nvectors/nvector_serial.cmi nvectors/nvector.cmi
 nvectors/nvector_pthreads_top.cmo : sundials/sundials_top.cmi
 nvectors/nvector_pthreads_top.cmx : sundials/sundials_top.cmx
 nvectors/nvector_serial.cmo : sundials/sundials_RealArray.cmi \
@@ -265,6 +280,9 @@ sundials/sundials_Config.cmo : sundials/sundials_configuration.cmo \
 sundials/sundials_Config.cmx : sundials/sundials_configuration.cmx \
     sundials/sundials_Config.cmi
 sundials/sundials_Config.cmi :
+sundials/sundials_Index.cmo : sundials/sundials_Index.cmi
+sundials/sundials_Index.cmx : sundials/sundials_Index.cmi
+sundials/sundials_Index.cmi :
 sundials/sundials_LintArray.cmo : sundials/sundials_LintArray.cmi
 sundials/sundials_LintArray.cmx : sundials/sundials_LintArray.cmi
 sundials/sundials_LintArray.cmi :
@@ -289,4 +307,4 @@ sundials/sundials.cmo : sundials/sundials_configuration.cmo \
     sundials/sundials_Config.cmi sundials/sundials.cmi
 sundials/sundials.cmx : sundials/sundials_configuration.cmx \
     sundials/sundials_Config.cmx sundials/sundials.cmi
-sundials/sundials.cmi : sundials/sundials_configuration.cmo
+sundials/sundials.cmi :
