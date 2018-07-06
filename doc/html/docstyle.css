@@ -51,7 +51,7 @@ a:active {
 }
 
 .info {
-  margin-left: 3em; margin-right: 3em 
+  margin-left: 1em; margin-right: 3em 
 }
 
 .param_info {
@@ -97,6 +97,10 @@ div.h9 {
 
 .typetable, .indextable, .paramstable {
   border-style: hidden;
+}
+
+.indextable {
+  margin-bottom: 1em;
 }
 
 .paramstable {
@@ -207,23 +211,18 @@ pre, code {
   display: none;
 }
 
-.info {
-  margin-left: 1em;
-}
-
 /* Customisations for SundialsML */
 
 body {
-  font-size: 11pt;
 }
 
-h1 { font-size: 1.8em; }
-h2 { font-size: 1.5em; }
+h1 {  }
+h2 {  }
 h3 {
     padding-top: 5px;
-    font-size: 1.3em;
+    
 }
-h4 { font-size: 0.9em; }
+h4 {  }
 h5, h6, div.h7, div.h8, div.h9 { font-size: 1.8em; }
 
 table { font-size: 100%; }
@@ -257,9 +256,23 @@ div#intro p {
 }
 
 div.info {
-  font-size: 1em;
   max-width: 40em;
-  padding-bottom: .7em;
+  padding-bottom: 0em;
+}
+
+ul.info-attributes {
+  list-style-type: none;
+  margin-top: 0em;
+  margin-bottom: 0em;
+}
+
+ul.info-attributes li {
+  line-height: 1em;
+}
+
+table.module-list div.info {
+  max-width: none;
+  padding-bottom: .0em;
 }
 
 div.info code {
@@ -272,6 +285,9 @@ div.info span.keyword {
 
 div.raisedexceptions {
     margin-top: 1em;
+}
+div.raisedexceptions ul {
+  margin-top: .5em;
 }
 div.raisedexceptions span.raises {
     font-style: italic;
@@ -307,7 +323,7 @@ li ul {
     padding-top: 1.5ex;
 }
 
-td.module { min-width: 8em;
+td.module { min-width: 10em;
             vertical-align: text-top; }
 h2#modules + p br:nth-child(1) { display: none; }
 
@@ -321,9 +337,12 @@ table.typetable td:nth-child(4) {
                                   padding-left: 0em; }
 table.typetable td:nth-child(5) code { font-size: 0.82em; color: lightgray; }
 
-div.sundials { padding-top: 1.2ex;
-               font-size: 0.82em; }
-div.sundials + div.sundials { padding-top: 0ex; }
+div.sundials {
+  padding-top: 0ex;
+  font-size: 0.82em;
+  color: gray;
+}
+div.raisedexceptions + div.sundials { padding-top: 2ex; }
 div.sundials + div.sundials > span.seesundials { visibility: hidden; }
 
 img { max-width: 100%;

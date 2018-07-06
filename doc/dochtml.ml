@@ -36,6 +36,16 @@ type custom_type =
     Simple of (string -> string)
   | Full of (Buffer.t -> Odoc_info.text -> unit)
 
+let broken_sundials_link div_class doc_root page anchor title =
+  Printf.sprintf
+    "<div class=\"sundials %s\"><span class=\"seesundials\">See sundials: </span><a href=\"%s%s.html%s\">%s</a></div>"
+    div_class doc_root page anchor title
+
+let sundials_link div_class doc_root page anchor title =
+  Printf.sprintf
+    "<div class=\"sundials %s\"><span class=\"seesundials\">See sundials: </span>%s</div>"
+    div_class title
+
 module Generator (G : Odoc_html.Html_generator) =
 struct
   class html =
@@ -70,39 +80,27 @@ struct
 
     method private html_of_cvode t =
       let (page, anchor, title) = self#split_text t in
-      Printf.sprintf
-        "<div class=\"sundials cvode\"><span class=\"seesundials\">See sundials: </span><a href=\"%s%s.html%s\">%s</a></div>"
-        !cvode_doc_root page anchor title
+      sundials_link "cvode" !cvode_doc_root page anchor title
 
     method private html_of_cvodes t =
       let (page, anchor, title) = self#split_text t in
-      Printf.sprintf
-        "<div class=\"sundials cvodes\"><span class=\"seesundials\">See sundials: </span><a href=\"%s%s.html%s\">%s</a></div>"
-        !cvodes_doc_root page anchor title
+      sundials_link "cvodes" !cvodes_doc_root page anchor title
 
     method private html_of_arkode t =
       let (page, anchor, title) = self#split_text t in
-      Printf.sprintf
-        "<div class=\"sundials arkode\"><span class=\"seesundials\">See sundials: </span><a href=\"%s%s.html%s\">%s</a></div>"
-        !arkode_doc_root page anchor title
+      sundials_link "arkode" !arkode_doc_root page anchor title
 
     method private html_of_ida t =
       let (page, anchor, title) = self#split_text t in
-      Printf.sprintf
-        "<div class=\"sundials ida\"><span class=\"seesundials\">See sundials: </span><a href=\"%s%s.html%s\">%s</a></div>"
-        !ida_doc_root page anchor title
+      sundials_link "ida" !ida_doc_root page anchor title
 
     method private html_of_idas t =
       let (page, anchor, title) = self#split_text t in
-      Printf.sprintf
-        "<div class=\"sundials idas\"><span class=\"seesundials\">See sundials: </span><a href=\"%s%s.html%s\">%s</a></div>"
-        !idas_doc_root page anchor title
+      sundials_link "idas" !idas_doc_root page anchor title
 
     method private html_of_kinsol t =
       let (page, anchor, title) = self#split_text t in
-      Printf.sprintf
-        "<div class=\"sundials kinsol\"><span class=\"seesundials\">See sundials: </span><a href=\"%s%s.html%s\">%s</a></div>"
-        !kinsol_doc_root page anchor title
+      sundials_link "kinsol" !kinsol_doc_root page anchor title
 
     val divrex = Str.regexp " *\\(open\\|close\\) *\\(.*\\)"
 
