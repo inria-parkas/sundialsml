@@ -54,6 +54,6 @@ val pp : Format.formatter -> t -> unit
 (** Underlying nvector operations on serial nvectors. *)
 module Ops : Nvector.NVECTOR_OPS with type t = t
 
-(** Nvector operations on {!RealArray}s implemented in OCaml. *)
+(** Nvector operations on {{!Sundials.RealArray}RealArray}s implemented in OCaml. *)
 module DataOps : Nvector.NVECTOR_OPS with type t = RealArray.t
 

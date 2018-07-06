@@ -119,7 +119,7 @@ type 'd nvector_ops = {
   n_vminquotient     : ('d -> 'd -> float) option;
   (** [n_vminquotient num denom] returns the minimum of [num(i) / denom(i)].
       Zero [denom] elements are skipped. If no such quotients are found,
-      then {!big_real} is returned. *)
+      then {{!Sundials_Config.big_real}Config.big_real} is returned. *)
 }
 
 (** [make_wrap ops] takes a set of operations on the data

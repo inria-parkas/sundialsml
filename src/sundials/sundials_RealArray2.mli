@@ -74,11 +74,11 @@ val blit : t -> t -> unit
 (** [make m n] returns an uninitialized [m] by [n] array. *)
 val make_data : int -> int -> data
 
-(** Creates a new matrix from an existing {!real_array2} array. Changes to
+(** Creates a new matrix from an existing {!data} array. Changes to
     one affect the other since they share the same underlying storage. *)
 val wrap : data -> t
 
-(** Returns the {!real_array2} array behind a matrix. Changes to one affect
+(** Returns the {!data} array behind a matrix. Changes to one affect
     the other since they share the same underlying storage. Note that the
     array is accessed column-first, that is,
     [get a i j = (unwrap a).{j, i}]. *)

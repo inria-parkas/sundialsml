@@ -61,7 +61,7 @@ module Quadrature : sig (* {{{ *)
       - [yQ'], a vector for storing the computed value of
                {% $\dot{y}_Q = f_Q(t, y)$%}.
 
-      Within the function, raising a {!RecoverableFailure} exception
+      Within the function, raising a {!Sundials.RecoverableFailure} exception
       indicates a recoverable error. Any other exception is treated as an
       unrecoverable error.
 
@@ -243,7 +243,7 @@ module Sensitivity : sig (* {{{ *)
       - [s'], an array of vectors to be filled with the derivatives
               of the sensitivity variables.
 
-      Within the function, raising a {!RecoverableFailure} exception
+      Within the function, raising a {!Sundials.RecoverableFailure} exception
       indicates a recoverable error. Any other exception is treated as an
       unrecoverable error.
 
@@ -267,7 +267,7 @@ module Sensitivity : sig (* {{{ *)
       - [s'], a vector to be filled with the current value of the {i i}th
               sensitivity variable's derivative.
 
-      Within the function, raising a {!RecoverableFailure} exception
+      Within the function, raising a {!Sundials.RecoverableFailure} exception
       indicates a recoverable error. Any other exception is treated as an
       unrecoverable error.
 
@@ -445,7 +445,7 @@ module Sensitivity : sig (* {{{ *)
         - [sq'], an array of vectors for storing the computed values of
                 {% $\dot{s}_\mathit{Q} = f_\mathit{QS}(t, y, s, \dot{y}_Q)$%}.
 
-        Within the function, raising a {!RecoverableFailure}
+        Within the function, raising a {!Sundials.RecoverableFailure}
         exception indicates a recoverable error. Any other exception is
         treated as an unrecoverable error.
 
@@ -984,7 +984,7 @@ module Adjoint : sig (* {{{ *)
 
   (** Direct Linear Solvers operating on dense, banded, and sparse matrices. *)
   module Dls : sig (* {{{ *)
-    include module type of LinearSolver.Direct
+    include module type of Sundials_LinearSolver.Direct
 
     (** Callback functions that compute dense approximations to a Jacobian
         matrix without forward sensitivities. In the call [jac arg jm],
@@ -997,7 +997,7 @@ module Adjoint : sig (* {{{ *)
         at the values of [t] and [y] obtained from [arg]. Only nonzero
         elements need be loaded into [jm].
 
-        Raising {!RecoverableFailure} indicates a recoverable
+        Raising {!Sundials.RecoverableFailure} indicates a recoverable
         error. Any other exception is treated as an unrecoverable error.
 
         {warning Neither the elements of [arg] nor the matrix [jm] should
@@ -1019,7 +1019,7 @@ module Adjoint : sig (* {{{ *)
         at the values of [t] and [y] obtained from [arg]. Only nonzero
         elements need be loaded into [jm].
 
-        Raising {!RecoverableFailure} indicates a recoverable
+        Raising {!Sundials.RecoverableFailure} indicates a recoverable
         error. Any other exception is treated as an unrecoverable error.
 
         {warning Neither the elements of [arg], [s] nor the matrix [jm]
@@ -1090,7 +1090,7 @@ module Adjoint : sig (* {{{ *)
       @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB
       @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB *)
   module Spils : sig (* {{{ *)
-    include module type of LinearSolver.Iterative
+    include module type of Sundials_LinearSolver.Iterative
 
     (** {3:precond Preconditioners} *)
 
@@ -1117,7 +1117,7 @@ module Adjoint : sig (* {{{ *)
         the Newton matrix {% $M = I - \gamma J$%} where
         {% $J = \frac{\partial f}{\partial y}$%}.
 
-        Raising {!RecoverableFailure} indicates a recoverable
+        Raising {!Sundials.RecoverableFailure} indicates a recoverable
         error. Any other exception is treated as an unrecoverable error.
 
         {warning The elements of [jac], [arg], and [z] should not be
@@ -1141,7 +1141,7 @@ module Adjoint : sig (* {{{ *)
         the Newton matrix {% $M = I - \gamma J$%} where
         {% $J = \frac{\partial f}{\partial y}$%}.
 
-        Raising {!RecoverableFailure} indicates a recoverable
+        Raising {!Sundials.RecoverableFailure} indicates a recoverable
         error. Any other exception is treated as an unrecoverable error.
 
         {warning The elements of [jac], [arg], [s], and [z] should not be
@@ -1167,7 +1167,7 @@ module Adjoint : sig (* {{{ *)
         A function should return [true] if Jacobian-related data was
         updated and [false] if saved data was reused.
 
-        Raising {!RecoverableFailure} indicates a recoverable
+        Raising {!Sundials.RecoverableFailure} indicates a recoverable
         error. Any other exception is treated as an unrecoverable error.
 
         {warning The elements of [jac] should not be accessed after the
@@ -1193,7 +1193,7 @@ module Adjoint : sig (* {{{ *)
         A function should return [true] if Jacobian-related data was
         updated and [false] if saved data was reused.
 
-        Raising {!RecoverableFailure} indicates a recoverable
+        Raising {!Sundials.RecoverableFailure} indicates a recoverable
         error. Any other exception is treated as an unrecoverable error.
 
         {warning The elements of [jac] should not be accessed after the
@@ -1323,7 +1323,7 @@ module Adjoint : sig (* {{{ *)
         [jac_times_setup_fn arg], [arg] is a {!jacobian_arg} with no
         work vectors.
 
-        Raising {!RecoverableFailure} indicates a recoverable
+        Raising {!Sundials.RecoverableFailure} indicates a recoverable
         error. Any other exception is treated as an unrecoverable error.
 
         {warning The elements of [arg] should not be accessed after the
@@ -1338,7 +1338,7 @@ module Adjoint : sig (* {{{ *)
         [jac_times_setup_fn arg s], [arg] is a {!jacobian_arg} with no
         work vectors and [s] is an array of forward sensitivity vectors.
 
-        Raising {!RecoverableFailure} indicates a recoverable
+        Raising {!Sundials.RecoverableFailure} indicates a recoverable
         error. Any other exception is treated as an unrecoverable error.
 
         {warning The elements of [arg] should not be accessed after the
@@ -1357,7 +1357,7 @@ module Adjoint : sig (* {{{ *)
         - [jv] is the vector in which to store the
                result—{% $\mathtt{jv} = J\mathtt{v}$%}.
 
-        Raising {!RecoverableFailure} indicates a recoverable error.
+        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
         Any other exception is treated as an unrecoverable error.
 
         {warning Neither the elements of [arg] nor [v] or [jv] should be
@@ -1379,7 +1379,7 @@ module Adjoint : sig (* {{{ *)
         - [jv] is the vector in which to store the
                result—{% $\mathtt{jv} = J\mathtt{v}$%}.
 
-        Raising {!RecoverableFailure} indicates a recoverable error.
+        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
         Any other exception is treated as an unrecoverable error.
 
         {warning Neither the elements of [arg], [s], [v], nor [jv] should be
@@ -1411,7 +1411,7 @@ module Adjoint : sig (* {{{ *)
         linear solver.
 
         NB: the [jac_times_setup] argument is not supported in
-            {!Config.sundials_version} < 3.0.0.
+            {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
 
         @nocvode <node> CVSpilsSetLinearSolverB
         @nocvode <node> CVSpilsSetJacTimesB
@@ -1548,7 +1548,7 @@ module Adjoint : sig (* {{{ *)
         statistics.
 
         Raising any exception in this function (including
-        {!RecoverableFailure}) is treated as an unrecoverable error.
+        {!Sundials.RecoverableFailure}) is treated as an unrecoverable error.
 
         @cvodes <node8#SECTION00810000000000000000> linit *)
     type ('data, 'kind) linit = ('data, 'kind) bsession -> unit
@@ -1557,7 +1557,7 @@ module Adjoint : sig (* {{{ *)
         to {{!callbacks}lsolve}.  This function must return [true]
         only if the Jacobian-related data is current after the call.
 
-        This function may raise a {!RecoverableFailure} exception to
+        This function may raise a {!Sundials.RecoverableFailure} exception to
         indicate that a recoverable error has occurred. Any other exception is
         treated as an unrecoverable error.
 
@@ -1582,7 +1582,7 @@ module Adjoint : sig (* {{{ *)
         - [args], summarizing current approximations to the solution, and
         - [b], for returning the calculated solution.
 
-        Raising {!RecoverableFailure} indicates a recoverable error.
+        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
         Any other exception is treated as an unrecoverable error.
 
         {warning The vectors in {!Cvode.Alternate.lsolve_args} should not
@@ -1641,7 +1641,7 @@ module Adjoint : sig (* {{{ *)
       - [yb'], a vector for storing the values
                {% $\dot{y}_B = f_B(t, y, y_B)$%}.
 
-      Within the function, raising a {!RecoverableFailure} exception
+      Within the function, raising a {!Sundials.RecoverableFailure} exception
       indicates a recoverable error. Any other exception is treated as an
       unrecoverable error.
 
@@ -1659,7 +1659,7 @@ module Adjoint : sig (* {{{ *)
       - [yb'], a vector for storing the values
                {% $\dot{y}_B = f_B(t, y, y_S, y_B)$%}.
 
-      Within the function, raising a {!RecoverableFailure} exception
+      Within the function, raising a {!Sundials.RecoverableFailure} exception
       indicates a recoverable error. Any other exception is treated as an
       unrecoverable error.
 
@@ -1758,7 +1758,7 @@ module Adjoint : sig (* {{{ *)
         - [qb'], a vector for storing the computed value of
                  {% $\dot{y}_\mathit{QB} = f_\mathit{QB}(t, y, y_B)$%}.
 
-        Within the function, raising a {!RecoverableFailure}
+        Within the function, raising a {!Sundials.RecoverableFailure}
         exception indicates a recoverable error. Any other exception is
         treated as an unrecoverable error.
 
@@ -1776,7 +1776,7 @@ module Adjoint : sig (* {{{ *)
         - [qb'], a vector for storing the computed value of
                {% $\dot{y}_\mathit{QB} = f_\mathit{QB}(t, y, y_S, y_B)$%}.
 
-        Within the function, raising a {!RecoverableFailure}
+        Within the function, raising a {!Sundials.RecoverableFailure}
         exception indicates a recoverable error. Any other exception is
         treated as an unrecoverable error.
 

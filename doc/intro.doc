@@ -76,7 +76,7 @@ into lowercase. For instance, [IdaSetErrHandlerFn], becomes
 Constants are replaced by variant types in most cases. They are renamed by
 conversion to {e CamlCase} and the removal of underscores. For instance,
 [PREC_NONE] becomes
-{{!Iterative.preconditioning_type}Iterative.PrecNone}.
+{{!Sundials_LinearSolver.Iterative.preconditioning_type}LinearSolver.Iterative.PrecNone}.
 Exception names are sometimes renamed for consistency and to make them more
 self explanatory.
 For instance, the return codes [CV_FIRST_RHSFUNC_ERR] and
@@ -136,16 +136,21 @@ custom solvers can be implemented via {!Cvode.Alternate},
 Sundials defines an abstract interface for matrices and provides default
 dense, banded, and sparse (either in compressed-sparse-column or
 compressed-sparse-row format) implementations.
-The OCaml interface defines likewise a generic {!Matrix.t} type whose type
+The OCaml interface defines likewise a generic
+{{!Sundials_Matrix.t}Matrix.t} type whose type
 arguments indicate the underlying {e matrix content} and the {e data} and
-{e kind} of nvectors used in the {!Matrix.matvec} multiplication operation.
-There are specific submodules for {!Matrix.Dense},
-{!Matrix.Band}, and {!Matrix.Sparse} content.
+{e kind} of nvectors used in the
+{{!Sundials_Matrix.matvec}Matrix.matvec} multiplication operation.
+There are specific submodules for {{!Sundials_Matrix.Dense}Matrix.Dense},
+{{!Sundials_Matrix.Band}Matrix.Band}, and
+{{!Sundials_Matrix.Sparse}Matrix.Sparse} content.
 It is also possible to define custom matrix types by providing a set of
-standard {{!Matrix.matrix_ops}matrix operations} to the {!Matrix.wrap_custom}
+standard {{!Sundials_Matrix.matrix_ops}matrix operations} to the
+{{!Sundials_Matrix.wrap_custom}Matrix.wrap_custom}
 function.
 Some low-level matrix routines on arrays are provided by
-{!Matrix.ArrayDense} and {!Matrix.ArrayBand}.
+{{!Sundials_Matrix.ArrayDense}Matrix.ArrayDense} and
+{{!Sundials_Matrix.ArrayBand}Matrix.ArrayBand}.
 
 {3:linsolv Linear Solvers}
 
@@ -176,7 +181,9 @@ Sundials provides six options for the solution of linear equations:
 The DLS routines are only available to sessions that use serial, Pthreads,
 or OpenMP nvectors.
 Callback functions manipulate Jacobian matrices through the operations in
-{!Matrix.Dense}, {!Matrix.Band}, and {!Matrix.Sparse}.
+{{!Sundials_Matrix.Dense}Matrix.Dense},
+{{!Sundials_Matrix.Band}Matrix.Band}, and
+{{!Sundials_Matrix.Sparse}Matrix.Sparse}.
 
 The SPILS routines include the {e Scaled Preconditioned GMRES (SPGMR)}, {e
 Scaled Preconditioned Bi-CGStab (SPBCG)}, {e Scaled Preconditioned TFQMR
@@ -186,7 +193,7 @@ Additionally, {!Cvode} provides banded preconditioners
 for sessions that use serial, Pthreads, or OpenMP nvectors.
 Access to the underlying solver
 routines on bigarrays is provided via the submodules of
-{!Iterative.Algorithms}.
+{{!Sundials_LinearSolver.Iterative.Algorithms}LinearSolver.Iterative.Algorithms}.
 Parallel Band-Block-Diagonal (BBD) preconditioners are available to sessions
 that use parallel nvectors—see {!Cvode_bbd}, {!Cvodes_bbd}, {!Ida_bbd},
 {!Idas_bbd}, and {!Kinsol_bbd}.
@@ -196,9 +203,12 @@ serial, Pthreads, or OpenMP nvectors.
 
 Using a linear solver requires three steps:
 {ol
-    {- Create a generic instance of type {!Direct.t} or {!Iterative.t}}
+    {- Create a generic instance of type
+    {{!Sundials_LinearSolver.Direct.linear_solver}LinearSolver.Direct.linear_solver} or
+    {{!Sundials_LinearSolver.Iterative.linear_solver}LinearSolver.Iterative.linear_solver}}
     {- Use it to instantiate a solver-specific instance, e.g., of type
-	{!Cvode.linear_solver} or {!Cvodes.Adjoint.linear_solver}.}
+	{!Cvode.session_linear_solver} or
+	{!Cvodes.Adjoint.session_linear_solver}.}
     {- Pass the solver-specific instance to appropriate [init] or [reinit]
 	functions, e.g., {!Cvode.init} or {!Ida.reinit},
 	to create or configure a session.}
@@ -208,12 +218,13 @@ Any given generic instance, and hence a solver-specific instance, of a
 linear solver can only be associated with one solver session.
 
 Custom linear solvers can be created by providing a set of operations to
-either {!Direct.Custom.make} or {!Iterative.Custom.make}.
+either {{!Sundials_LinearSolver.Direct.Custom.make}Direct.Custom.make}
+or {{!Sundials_LinearSolver.Iterative.Custom.make}Iterative.Custom.make}.
 
 {2:api API Reference}
 
 {!modules: Sundials}
-{!modules: Sundials.Matrix Sundials.LinearSolver}
+{!modules: Sundials_Matrix Sundials_LinearSolver}
 {!modules: Nvector Nvector_serial Nvector_parallel
 	   Nvector_pthreads Nvector_openmp
 	   Nvector_custom Nvector_array}
@@ -293,9 +304,10 @@ For {b OS X}, we found the following worked:
 }
 
 The [configure] script detects and automatically enables optional
-features.  Lapack solvers, like {!Direct.lapack_dense}, are enabled
+features.  Lapack solvers, like
+{{!Sundials_LinearSolver.Direct.lapack_dense}LinearSolver.Direct.lapack_dense}, are enabled
 if Sundials was built with lapack support
-(see also {!Sundials_Config.lapack_enabled}).
+(see also {{!Sundials_Config.lapack_enabled}Sundials.Config.lapack_enabled}).
 The KLU and SuperLU_MT solvers, and the Pthreads and OpenMP nvectors are
 only enabled if Sundials was built with them.
 Parallel nvectors and Band-Block-Diagonal (BBD) solvers
@@ -548,9 +560,10 @@ We were able to make our OCaml versions much faster (up to 4 times) by:
        When part of an array must be passed to another function, it
        can be faster, depending on the size, to copy into and out of a
        statically-allocated temporary array.}
-    {- Sequences of {!Sundials.RealArray2.get} and
-       {!Sundials.RealArray2.set} operations are usually better replaced by
-       {!Sundials.RealArray2.unwrap} (projection from a tuple) and direct
+    {- Sequences of {{!Sundials_RealArray2.get}RealArray2.get} and
+       {{!Sundials_RealArray2.set}RealArray2.set} operations are usually better replaced by
+       {{!Sundials_RealArray2.unwrap}RealArray2.unwrap}
+       (projection from a tuple) and direct
        accesses to the underlying array.}
     {- Write numeric expressions and loops according to the advice in
 	{{:#refs}\[2\]}

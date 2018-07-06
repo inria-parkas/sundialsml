@@ -33,8 +33,8 @@ open Sundials
 module Direct : sig (* {{{ *)
   (** Definitions in this module are more conveniently accessed
       through session-specific direct linear solver modules like
-      {!Cvode.Dls} and {!Ida.Dls}.  For example, {!Cvode.Dls.dense} is
-      an alias for {!Lsolver.Direct.dense}.  *)
+      {!Cvode.Dls} and {!Ida.Dls}.  For example, [Cvode.Dls.dense] is
+      an alias for {!dense}.  *)
 
   (** {3:solvers Types} *)
 
@@ -73,7 +73,8 @@ module Direct : sig (* {{{ *)
     -> (Matrix.Dense.t, 'k, tag) serial_linear_solver
 
   (** Creates a direct linear solver on dense matrices using LAPACK.
-    See {!dense}. Only available if {!Config.lapack_enabled}.
+      See {!dense}. Only available if
+      {{!Sundials_Config.lapack_enabled}Config.lapack_enabled}.
 
   @nocvode <node> SUNLapackDense *)
   val lapack_dense :
@@ -94,7 +95,8 @@ module Direct : sig (* {{{ *)
     -> (Matrix.Band.t, 'k, tag) serial_linear_solver
 
   (** Creates a direct linear solver on banded matrices using LAPACK.
-    See {!band}. Only available if {!Config.lapack_enabled}.
+      See {!band}.
+      Only available if {{!Sundials_Config.lapack_enabled}Config.lapack_enabled}.
 
   @nocvode <node> SUNLapackBand *)
   val lapack_band :
@@ -179,8 +181,9 @@ module Direct : sig (* {{{ *)
       The matrix is used internally after the linear solver is attached to a
       session.
 
-      NB: The {!Matrix.sparse.csr} format is only supported for
-          Sundials >= 3.0.0.
+      NB: The {{!Sundials_Matrix.Sparse.csr}Matrix.Sparse.csr} format is only
+          supported for
+          {{!Sundials_Config.sundials_version}Config.sundials_version} >= 3.0.0.
 
       @raise Config.NotImplementedBySundialsVersion Solver not available.
       @nocvode <node> SUNSuperLUMT *)
@@ -202,8 +205,9 @@ module Direct : sig (* {{{ *)
   (** Creates a direct linear solver on sparse matrices using SuperLUMT.
     See {!Superlumt.make}.
 
-    NB: The {!Matrix.sparse.csr} format is only supported for
-        Sundials >= 3.0.0.
+    NB: The {{!Sundials_Matrix.Sparse.csr}Matrix.Sparse.csr} format is only
+        supported for
+        {{!Sundials_Config.sundials_version}Config.sundials_version} >= 3.0.0.
 
     @raise Config.NotImplementedBySundialsVersion Solver not available.
     @nocvode <node> SUNSuperLUMT *)
@@ -222,8 +226,8 @@ module Direct : sig (* {{{ *)
 
     (** The operations required to implement a direct linear solver.
       Failure should be indicated by raising an exception (preferably
-      one of the exceptions in the {!module:LinearSolver} package). Raising
-      {!exception:RecoverableFailure} indicates a generic
+      one of the exceptions in this package). Raising
+      {!exception:Sundials.RecoverableFailure} indicates a generic
       recoverable failure. *)
     type ('matrix, 'data, 'kind, 'lsolver) ops = {
         init : 'lsolver -> unit;
@@ -250,7 +254,8 @@ module Direct : sig (* {{{ *)
     (** Create a direct linear solver given a set of operations and an
       internal state.
 
-      NB: This feature is only available for Sundials >= 3.0.0. *)
+      NB: This feature is only available for
+          {{!Sundials_Config.sundials_version}Config.sundials_version} >= 3.0.0. *)
     val make : ('matrix, 'data, 'kind, 'lsolver) ops
                -> 'lsolver
                -> ('matrixkind, 'matrix, 'data, 'kind) Matrix.t
@@ -268,8 +273,7 @@ module Iterative : sig (* {{{ *)
   (** Definitions in this module are more conveniently accessed
       through session-specific iterative linear solver modules like
       {!Cvode.Spils} and {!Ida.Spils}.  For example,
-      {!Cvode.Spils.spbcgs} is an alias for
-      {!Lsolver.Iterative.spbcgs}.  *)
+      [Cvode.Spils.spbcgs] is an alias for {!spbcgs}.  *)
 
   (** {3:solvers Types} *)
 
@@ -314,7 +318,7 @@ module Iterative : sig (* {{{ *)
     nvector argument is used as a template.
 
     NB: [max_restarts] is ignored by CVODE, CVODES, and ARKODE
-        in Sundials < 3.0.0.
+        for {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
 
     @nocvode <node> SUNSPFGMR *)
   val spfgmr : ?maxl:int -> ?max_restarts:int
@@ -328,7 +332,7 @@ module Iterative : sig (* {{{ *)
     is used as a template.
 
     NB: [max_restarts] is ignored by CVODE, CVODES, and ARKODE
-        in Sundials < 3.0.0.
+        for {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
 
     @nocvode <node> SUNSPGMR *)
   val spgmr : ?maxl:int -> ?max_restarts:int
@@ -386,8 +390,8 @@ module Iterative : sig (* {{{ *)
 
     (** The operations required to implement an iterative linear solver.
       Failure should be indicated by raising an exception (preferably
-      one of the exceptions in the {!module:LinearSolver} package). Raising
-      {!exception:RecoverableFailure} indicates a generic
+      one of the exceptions in this package). Raising
+      {!exception:Sundials.RecoverableFailure} indicates a generic
       recoverable failure. *)
     type ('data, 'kind, 'lsolver) ops = {
 
@@ -460,7 +464,8 @@ module Iterative : sig (* {{{ *)
     (** Create an iterative linear solver given a set of operations and an
       internal state.
 
-      NB: This feature is only available for Sundials >= 3.0.0. *)
+      NB: This feature is only available for
+          {{!Sundials_Config.sundials_version}Config.sundials_version} >= 3.0.0. *)
     val make : ('data, 'kind, 'lsolver) ops
                -> 'lsolver
                -> ('data, 'kind, 'lsolver tag) linear_solver
@@ -582,7 +587,7 @@ module Iterative : sig (* {{{ *)
   (** Sets the number of GMRES restarts to allow.
 
     NB: This feature is not supported by CVODE, CVODES, and ARKODE
-        in Sundials < 3.0.0.
+        for {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
 
     @nocvode <node> SUNSPGMRSetMaxRestarts
     @nocvode <node> SUNSPFGMRSetMaxRestarts *)
@@ -602,10 +607,10 @@ module Iterative : sig (* {{{ *)
   (** Change the preconditioning direction without modifying callback
     functions.
 
-    Raises {!LinearSolver.IllegalPrecType} if the current preconditioner
+    Raises {!IllegalPrecType} if the current preconditioner
     is {{!preconditioning_type}PrecNone} and the given argument is not
     (since no callback functions are specified in this case. May raise
-    {!LinearSolver.IllegalPrecType} if the given type is not allowed by the
+    {!IllegalPrecType} if the given type is not allowed by the
     underlying solver.
 
     @nocvode <node> SUNPCGSetPrecType
@@ -637,7 +642,8 @@ exception MatrixNotSquare
     vector length are not equal. *)
 exception MatrixVectorMismatch
 
-(** Raised when the storage upper bandwidth ([smu]) of a {!Band.t} is
+(** Raised when the storage upper bandwidth ([smu]) of a
+    {{!Sundials_Matrix.Band.t}Matrix.Band.t} is
     insufficient for use in a particular linear solver. *)
 exception InsufficientStorageUpperBandwidth
 

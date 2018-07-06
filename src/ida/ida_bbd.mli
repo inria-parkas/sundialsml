@@ -45,7 +45,7 @@ type bandwidths = Ida_impl.IdaBbdTypes.bandwidths =
     [y] is the dependent variable vector, [y'] is the derivative vector,
     and [r] is the output vector to fill with the computed residual.
 
-    Raising {!RecoverableFailure} signals a recoverable error.
+    Raising {!Sundials.RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.
 
     @idas <node5#sss:idabbdpre> IDABBDLocalFn *)
@@ -60,7 +60,7 @@ type local_fn = float
     In the call [cfn t y y'], [t] is the independent variable (time), [y] is
     the dependent variable vector, and [y'] is the derivative vector.
 
-    Raising {!RecoverableFailure} signals a recoverable error.
+    Raising {!Sundials.RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.
 
     @idas <node5#sss:idabbdpre> IDABBDCommFn *)

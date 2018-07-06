@@ -58,18 +58,20 @@ type ('m, 'd) matrix_ops = { (* {{{ *)
       integer words [liw] required to store the matrix [a]. *)
 } (* }}} *)
 
-(** Raised in {!Config.sundials_version} < 3.0.0 on an attempt to
+(** Raised in {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0 on an attempt to
     access a value that has become invalid. Such values refer to matrices
     that no longer exist in the underlying library. Values never
-    become invalid in {!Config.sundials_version} >= 3.0.0. *)
+    become invalid in {{!Sundials_Config.sundials_version}Config.sundials_version} >= 3.0.0. *)
 exception Invalidated
 
 (** Raised if matrix operation arguments are mutually incompatible. *)
 exception IncompatibleArguments
 
 (** Raised if a zero diagonal element is found during factorization using a
-    low-level routine like {!Iterative.Algorithms.qr_fact},
-    {!Iterative.Algorithms.qr_sol}, or {!Matrix.ArrayDense.getrf}.
+    low-level routine like
+    {{!Sundials_LinearSolver.Iterative.Algorithms.qr_fact}LinearSolver.Iterative.Algorithms.qr_fact},
+    {{!Sundials_LinearSolver.Iterative.Algorithms.qr_sol}LinearSolver.Iterative.Algorithms.qr_sol},
+    or {!ArrayDense.getrf}.
     The argument gives the equation number (from 1). *)
 exception ZeroDiagonalElement of int
 
@@ -144,7 +146,7 @@ module Dense : sig (* {{{ *)
   (** Direct access to the underlying storage array, which is accessed
       column first (unlike in {!get}).
 
-      NB: For {!Config.sundials_version} < 3.0.0, this access is
+      NB: For {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0, this access is
       potentially unsafe and {b must} only be used when the underlying
       storage is valid, which will be the case in callbacks.
 
@@ -198,7 +200,7 @@ module Dense : sig (* {{{ *)
 
   (** Called internally when the corresponding value in the underlying
       library ceases to exist. Has no effect when
-      {!Config.sundials_version} >= 3.0.0. *)
+      {{!Sundials_Config.sundials_version}Config.sundials_version} >= 3.0.0. *)
   val invalidate : t -> unit
 
 end (* }}} *)
@@ -313,7 +315,7 @@ module Band : sig (* {{{ *)
       In both cases, any previously 'unwrapped' array is no longer
       associated with the matrix storage.
 
-      NB: For {!Config.sundials_version} < 3.0.0, this access is
+      NB: For {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0, this access is
       potentially unsafe and {b must} only be used when the underlying
       storage is valid, which will be the case in callbacks.
 
@@ -376,7 +378,7 @@ module Band : sig (* {{{ *)
 
   (** Called internally when the corresponding value in the underlying
       library ceases to exist. Has no effect when
-      {!Config.sundials_version} >= 3.0.0. *)
+      {{!Sundials_Config.sundials_version}Config.sundials_version} >= 3.0.0. *)
   val invalidate : t -> unit
 
 end (* }}} *)
@@ -437,8 +439,9 @@ module Sparse : sig (* {{{ *)
   (** Return the matrix format. *)
   val sformat : 's t -> 's sformat
 
-  (** Returns true iff the matrix format is {!CSC}. It is essentially a
-      version of {!sformat} with less typing complications. *)
+  (** Returns true iff the matrix format is {{!Sparse.sformat}CSC}.
+      It is essentially a version of {!sformat} with less typing
+      complications. *)
   val is_csc : 's t -> bool
 
   (** [m, n = size a] returns the numbers of columns [m] and rows [n]
@@ -513,7 +516,7 @@ module Sparse : sig (* {{{ *)
       underlying storage. In these cases, any previously 'unwrapped' arrays
       are no longer associated with the matrix storage.
 
-      NB: For {!Config.sundials_version} < 3.0.0, this access is
+      NB: For {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0, this access is
       potentially unsafe and {b must} only be used when the underlying
       storage is valid, which will be the case in callbacks unless the
       {!scale_add}, {!scale_addi}, {!blit}, and {!resize} functions are
@@ -619,7 +622,7 @@ module Sparse : sig (* {{{ *)
 
   (** Called internally when the corresponding value in the underlying
       library ceases to exist. Has no effect when
-      {!Config.sundials_version} >= 3.0.0. *)
+      {{!Sundials_Config.sundials_version}Config.sundials_version} >= 3.0.0. *)
   val invalidate : 's t -> unit
 
 end (* }}} *)
@@ -1105,21 +1108,21 @@ val space : ('k, 'm, 'nd, 'nk) t -> int * int
 
 (** Prints a dense matrix to the given log file.
 
-    NB: Not supported in {!Config.sundials_version} < 3.0.0.
+    NB: Not supported in {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
 
     @nocvode <node> SUNDenseMatrix_Print *)
 val print_dense : 'nk dense -> Logfile.t -> unit
 
 (** Prints a band matrix to the given log file.
 
-    NB: Not supported in {!Config.sundials_version} < 3.0.0.
+    NB: Not supported in {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
 
     @nocvode <node> SUNBandMatrix_Print *)
 val print_band : 'nk band -> Logfile.t -> unit
 
 (** Prints a sparse matrix to the given log file.
 
-    NB: Not supported in {!Config.sundials_version} < 3.0.0.
+    NB: Not supported in {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
 
     @nocvode <node> SUNSparseMatrix_Print *)
 val print_sparse : ('s, 'nk) sparse -> Logfile.t -> unit

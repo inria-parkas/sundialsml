@@ -65,7 +65,7 @@ module Quadrature : sig (* {{{ *)
       - [yq'], a vector for storing the computed value of
                {% $\dot{y}_Q = f_Q(t, y, \dot{y}, p)$%}.
 
-      Within the function, raising a {!RecoverableFailure} exception
+      Within the function, raising a {!Sundials.RecoverableFailure} exception
       indicates a recoverable error. Any other exception is treated as an
       unrecoverable error.
 
@@ -248,7 +248,7 @@ module Sensitivity : sig (* {{{ *)
              residual values,
              {% $\mathit{rs}_i = \frac{\partial F}{\partial y}s_i(t) + \frac{\partial F}{\partial \dot{y}}\dot{s}_i(t) + \frac{\partial F}{\partial p_i}$ %}
 
-      Within the function, raising a {!RecoverableFailure} exception
+      Within the function, raising a {!Sundials.RecoverableFailure} exception
       indicates a recoverable error. Any other exception is treated as an
       unrecoverable error.
 
@@ -403,7 +403,7 @@ module Sensitivity : sig (* {{{ *)
           {% $\dot{s}_\mathit{Q} =
               f_\mathit{QS}(t, y, \dot{y}, s, \dot{s}, \dot{y}_Q)$%}.
 
-        Within the function, raising a {!RecoverableFailure}
+        Within the function, raising a {!Sundials.RecoverableFailure}
         exception indicates a recoverable error. Any other exception is
         treated as an unrecoverable error.
 
@@ -923,7 +923,7 @@ module Adjoint : sig (* {{{ *)
 
   (** Direct Linear Solvers operating on dense, banded, and sparse matrices. *)
   module Dls : sig (* {{{ *)
-    include module type of LinearSolver.Direct
+    include module type of Sundials_LinearSolver.Direct
 
     (** Callback functions that compute dense approximations to a Jacobian
         matrix without forward sensitivities. In the call
@@ -936,7 +936,7 @@ module Adjoint : sig (* {{{ *)
         the [j]th variable, evaluated at the values of [t], [y], and [y']
         obtained from [arg]. Only nonzero elements need be loaded into [jm].
 
-        Raising {!RecoverableFailure} indicates a recoverable error.
+        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
         Any other exception is treated as an unrecoverable error.
 
         {warning Neither the elements of [arg] nor the matrix [jm] should
@@ -959,7 +959,7 @@ module Adjoint : sig (* {{{ *)
         the [j]th variable, evaluated at the values of [t], [y], and [y']
         obtained from [arg]. Only nonzero elements need be loaded into [jm].
 
-        Raising {!RecoverableFailure} indicates a recoverable error.
+        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
         Any other exception is treated as an unrecoverable error.
 
         {warning Neither the elements of [arg] nor the matrix [jm] should
@@ -991,9 +991,9 @@ module Adjoint : sig (* {{{ *)
         used), but must be provided for other solvers (or {Invalid_argument}
         is raised).
 
-        @nocvode <node> IDADlsSetLinearSolverB
-        @nocvode <node> IDADlsSetJacFnB
-        @nocvode <node> IDADlsSetJacFnBS *)
+        @noidas <node> IDADlsSetLinearSolverB
+        @noidas <node> IDADlsSetJacFnB
+        @noidas <node> IDADlsSetJacFnBS *)
     val solver :
       ?jac:'m jac_fn ->
       ('m, 'kind, 't) LinearSolver.Direct.serial_linear_solver ->
@@ -1031,7 +1031,7 @@ module Adjoint : sig (* {{{ *)
       @idas <node7#ss:psolve_b> IDASpilsPrecSolveFnB
       @idas <node7#ss:psetup_b> IDASpilsPrecSetupFnB *)
   module Spils : sig (* {{{ *)
-    include module type of LinearSolver.Iterative
+    include module type of Sundials_LinearSolver.Iterative
 
     (** {3:precond Preconditioners} *)
 
@@ -1051,7 +1051,7 @@ module Adjoint : sig (* {{{ *)
         where {% $\mathit{Res} = r - Pz$%} and {% $\mathit{ewt}$%} comes from
         {!get_err_weights}.
 
-        Raising {!RecoverableFailure} indicates a recoverable
+        Raising {!Sundials.RecoverableFailure} indicates a recoverable
         error. Any other exception is treated as an unrecoverable error.
 
         {warning The elements of [jac], [r], and [z] should not
@@ -1084,7 +1084,7 @@ module Adjoint : sig (* {{{ *)
         where {% $\mathit{Res} = r - Pz$%} and {% $\mathit{ewt}$%} comes from
         {!get_err_weights}.
 
-        Raising {!RecoverableFailure} indicates a recoverable
+        Raising {!Sundials.RecoverableFailure} indicates a recoverable
         error. Any other exception is treated as an unrecoverable error.
 
         {warning The elements of [jac], [ys], [yps], [r], and [z] should not
@@ -1104,7 +1104,7 @@ module Adjoint : sig (* {{{ *)
         need by {!prec_solve_fn} without forward sensitivities.
         The only argument is a {!jacobian_arg} with no work vectors.
 
-        Raising {!RecoverableFailure} indicates a recoverable
+        Raising {!Sundials.RecoverableFailure} indicates a recoverable
         error. Any other exception is treated as an unrecoverable error.
 
         {warning The elements of the argument should not be accessed after
@@ -1123,7 +1123,7 @@ module Adjoint : sig (* {{{ *)
         - [yps] contains the derivatives of the forward solution
                 sensitivities.
 
-        Raising {!RecoverableFailure} indicates a recoverable
+        Raising {!Sundials.RecoverableFailure} indicates a recoverable
         error. Any other exception is treated as an unrecoverable error.
 
         {warning The elements of the arguments should not be accessed after
@@ -1178,14 +1178,14 @@ module Adjoint : sig (* {{{ *)
         [jac_times_setup_fn arg], [arg] is a {!jacobian_arg} with no
         work vectors.
 
-        Raising {!RecoverableFailure} indicates a recoverable
+        Raising {!Sundials.RecoverableFailure} indicates a recoverable
         error. Any other exception is treated as an unrecoverable error.
 
         {warning The elements of [arg] should not be accessed after the
                  function has returned.}
 
-        @nocvode <node> IDASpilsSetJacTimesB
-        @nocvode <node> IDASpilsJacTimesSetupFnB *)
+        @noidas <node> IDASpilsSetJacTimesB
+        @noidas <node> IDASpilsJacTimesSetupFnB *)
     type 'd jac_times_setup_fn_no_sens = (unit, 'd) jacobian_arg -> unit
 
     (** Callback functions that preprocess or evaluate Jacobian-related
@@ -1193,14 +1193,14 @@ module Adjoint : sig (* {{{ *)
         [jac_times_setup_fn arg s], [arg] is a {!jacobian_arg} with no
         work vectors and [s] is an array of forward sensitivity vectors.
 
-        Raising {!RecoverableFailure} indicates a recoverable
+        Raising {!Sundials.RecoverableFailure} indicates a recoverable
         error. Any other exception is treated as an unrecoverable error.
 
         {warning The elements of [arg] should not be accessed after the
                  function has returned.}
 
-        @nocvode <node> IDASpilsSetJacTimesBS
-        @nocvode <node> IDASpilsJacTimesSetupFnBS *)
+        @noidas <node> IDASpilsSetJacTimesBS
+        @noidas <node> IDASpilsJacTimesSetupFnBS *)
     type 'd jac_times_setup_fn_with_sens =
       (unit, 'd) jacobian_arg -> 'd array -> unit
 
@@ -1212,7 +1212,7 @@ module Adjoint : sig (* {{{ *)
         - [jv] is the vector in which to store the
                result—{% $\mathtt{jv} = J\mathtt{v}$%}.
 
-        Raising {!RecoverableFailure} indicates a recoverable error.
+        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
         Any other exception is treated as an unrecoverable error.
 
         {warning Neither the elements of [arg] nor [v] or [jv] should be
@@ -1236,7 +1236,7 @@ module Adjoint : sig (* {{{ *)
         - [jv] is the vector in which to store the
                result—{% $\mathtt{jv} = J\mathtt{v}$%}.
 
-        Raising {!RecoverableFailure} indicates a recoverable error.
+        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
         Any other exception is treated as an unrecoverable error.
 
         {warning Neither the elements of [arg], [ys], [yps], [v] nor [jv]
@@ -1268,11 +1268,11 @@ module Adjoint : sig (* {{{ *)
         linear solver.
 
         NB: the [jac_times_setup] argument is not supported in
-            {!Config.sundials_version} < 3.0.0.
+            {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
 
-        @nocvode <node> IDASpilsSetLinearSolverB
-        @nocvode <node> IDASpilsSetJacTimesB
-        @nocvode <node> IDASpilsSetJacTimesBS *)
+        @noidas <node> IDASpilsSetLinearSolverB
+        @noidas <node> IDASpilsSetJacTimesB
+        @noidas <node> IDASpilsSetJacTimesBS *)
     val solver :
       ('d, 'k, 'f) LinearSolver.Iterative.linear_solver
       -> ?jac_times_vec:'d jac_times_vec_fn
@@ -1327,8 +1327,8 @@ module Adjoint : sig (* {{{ *)
         setup function.
 
         @since 3.0.0
-        @nocvode <node> IDASpilsGetNumJTSetupEvals
-        @cvodes <node7#ss:optional_output_b> IDAGetAdjIDABmem *)
+        @noidas <node> IDASpilsGetNumJTSetupEvals
+        @idas <node7#ss:optional_output_b> IDAGetAdjIDABmem *)
     val get_num_jtsetup_evals : ('d, 'k) bsession -> int
 
     (** Returns the cumulative number of calls to the Jacobian-vector
@@ -1403,7 +1403,7 @@ module Adjoint : sig (* {{{ *)
         statistics.
 
         Raising any exception in this function (including
-        {!RecoverableFailure}) is treated as an unrecoverable error.
+        {!Sundials.RecoverableFailure}) is treated as an unrecoverable error.
 
         @idas <node8#SECTION00810000000000000000> linit *)
     type ('data, 'kind) linit = ('data, 'kind) bsession -> unit
@@ -1420,7 +1420,7 @@ module Adjoint : sig (* {{{ *)
                {% $F(t_n, y_{\text{pred}}, \dot{y}_{\text{pred}})$%}, and,
       - [tmp], temporary variables for use by the routine.
 
-      This function may raise a {!RecoverableFailure} exception to
+      This function may raise a {!Sundials.RecoverableFailure} exception to
       indicate that a recoverable error has occurred. Any other exception is
       treated as an unrecoverable error.
 
@@ -1444,7 +1444,7 @@ module Adjoint : sig (* {{{ *)
         - [args], the current approximation to the solution, and,
         - [b], for returning the calculated solution,
 
-        Raising {!RecoverableFailure} indicates a recoverable error.
+        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
         Any other exception is treated as an unrecoverable error.
 
         @idas <node8#SECTION00830000000000000000> lsolve
@@ -1510,7 +1510,7 @@ module Adjoint : sig (* {{{ *)
       - [rb], a vector for storing the residual value
               {% $F_B(t, y, \dot{y}, y_B, \dot{y}_B)$%}.
 
-      Within the function, raising a {!RecoverableFailure} exception
+      Within the function, raising a {!Sundials.RecoverableFailure} exception
       indicates a recoverable error. Any other exception is treated as an
       unrecoverable error.
 
@@ -1529,7 +1529,7 @@ module Adjoint : sig (* {{{ *)
       - [resb], a vector for storing the residual value
               {% $F_B(t, y, \dot{y}, s, \dot{s}, y_B, \dot{y}_B)$%}.
 
-      Within the function, raising a {!RecoverableFailure} exception
+      Within the function, raising a {!Sundials.RecoverableFailure} exception
       indicates a recoverable error. Any other exception is treated as an
       unrecoverable error.
 
@@ -1631,7 +1631,7 @@ module Adjoint : sig (* {{{ *)
                  {% $\dot{y}_\mathit{BQ} =
                      f_\mathit{BQ}(t, y, \dot{y}, y_B, \dot{y}_B)$%}.
 
-        Within the function, raising a {!RecoverableFailure}
+        Within the function, raising a {!Sundials.RecoverableFailure}
         exception indicates a recoverable error. Any other exception is
         treated as an unrecoverable error.
 
@@ -1651,7 +1651,7 @@ module Adjoint : sig (* {{{ *)
              {% $\dot{y}_\mathit{BQ} =
                f_\mathit{BQ}(t, y, \dot{y}, s, \dot{s}, y_B, \dot{y}_B)$%}.
 
-        Within the function, raising a {!RecoverableFailure}
+        Within the function, raising a {!Sundials.RecoverableFailure}
         exception indicates a recoverable error. Any other exception is
         treated as an unrecoverable error.
 

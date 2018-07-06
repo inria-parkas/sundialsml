@@ -44,7 +44,7 @@ type bandwidths = Cvode_impl.CvodeBbdTypes.bandwidths =
     In the call [gloc t y y'], [t] is the independent variable (time), [y] is
     the input vector, and [y'] stores the computed derivatives.
 
-    Raising {!RecoverableFailure} signals a recoverable error.
+    Raising {!Sundials.RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.
 
     @cvodes <node5#sss:cvbbdpre> CVBBDLocalFn *)
@@ -55,7 +55,7 @@ type local_fn = float -> Nvector_parallel.data -> Nvector_parallel.data -> unit
     In the call [cfn t y], [t] is the independent variable (time) and [y] is
     the input vector.
 
-    Raising {!RecoverableFailure} signals a recoverable error.
+    Raising {!Sundials.RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.
 
     @cvodes <node5#sss:cvbbdpre> CVBBDCommFn *)
