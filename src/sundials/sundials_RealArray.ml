@@ -34,6 +34,8 @@ let init size f =
   done;
   a
 
+let empty = create 0
+
 let length : t -> int = Array1.dim
 
 let ppi ?(start="[") ?(stop="]") ?(sep=";")

@@ -22,6 +22,8 @@ let make n x =
   Array1.fill v x;
   v
 
+let empty = create 0
+
 let pp fmt a =
   Format.pp_print_string fmt "[";
   Format.pp_open_hovbox fmt 0;

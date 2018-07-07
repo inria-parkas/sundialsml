@@ -20,6 +20,9 @@ val make  : int -> int -> t
 (** [create n] returns an uninitialized array with [n] elements. *)
 val create  : int -> t
 
+(** An array with no elements. *)
+val empty : t
+
 (** Pretty-print an array using the
     {{:OCAML_DOC_ROOT(Format.html)} Format} module. *)
 val pp : Format.formatter -> t -> unit

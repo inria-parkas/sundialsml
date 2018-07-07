@@ -35,6 +35,8 @@ let make nr nc v =
   Array2.fill d v;
   wrap d
 
+let empty = create 0 0
+
 let size a =
   let d = unwrap a in
   (Array2.dim2 d, Array2.dim1 d)

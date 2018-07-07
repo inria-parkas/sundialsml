@@ -20,6 +20,9 @@ val make : int -> float -> t
 (** [create n] returns an uninitialized array with [n] elements. *)
 val create : int -> t
 
+(** An array with no elements. *)
+val empty : t
+
 (** [init n f] returns an array with [n] elements, with element [i]
     set to [f i]. *)
 val init : int -> (int -> float) -> t

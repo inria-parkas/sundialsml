@@ -31,6 +31,9 @@ val make : int -> int -> float -> t
     columns. *)
 val create : int -> int -> t
 
+(** An array with no elements. *)
+val empty : t
+
 (** [get a i j] returns the value at row [i] and column [j] of [a]. *)
 val get : t -> int -> int -> float
 
