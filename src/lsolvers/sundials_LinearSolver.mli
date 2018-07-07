@@ -489,9 +489,9 @@ module Iterative : sig (* {{{ *)
       @cvode <node9#s:spils>  The SPILS Modules *)
 
     (** Performs a QR factorization of a Hessenberg matrix.
-      The call [qr_fact h q newjob], where [h] is the [n+1] by [n]
+      The call [qr_fact h q factored], where [h] is the [n+1] by [n]
       Hessenberg matrix (stored row-wise), [q] stores the computed Givens
-      rotation, and [newjob=false] indicates that the first [n-1] columns of
+      rotation, and [factored=true] indicates that the first [n-1] columns of
       [h] have already been factored. The computed Givens rotation has the
       form {% $\begin{bmatrix} c & -s \\ s & c \end{bmatrix}$ %}. It is
       stored in the [2n] elements of [q] as [[|c; s; c; s; ...; c; s|]].
