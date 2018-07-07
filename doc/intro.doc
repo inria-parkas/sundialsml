@@ -231,7 +231,7 @@ The dependencies of Sundials/ML are
 - {{:http://computation.llnl.gov/casc/sundials/}Sundials} {b {var version}}
   (compiles with 2.5.0 onwards with less features),
 - {e Optionally}:
-  {{:https://forge.ocamlcore.org/projects/ocamlmpi/}OCamlMPI} {b 1.01}.
+  {{:https://forge.ocamlcore.org/projects/ocamlmpi/}OCamlMPI} {b 1.02}.
 
 Normally, to install Sundials/ML, you need only type
 [opam install sundialsml], otherwise the following sections provide more
