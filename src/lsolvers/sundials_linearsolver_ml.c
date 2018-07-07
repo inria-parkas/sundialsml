@@ -590,6 +590,7 @@ static int lsolver_translate_exception(value vexn)
     CAMLreturnT(int, r);
 }
 
+/*
 static void lsolver_raise_error(int r, const char *msg)
 {
     CAMLparam0();
@@ -650,6 +651,7 @@ static void lsolver_raise_error(int r, const char *msg)
 
     CAMLreturn0;
 }
+*/
 
 SUNLinearSolver_Type callml_custom_gettype_direct(SUNLinearSolver ls)
 {
@@ -674,7 +676,8 @@ CAMLprim value ml_lsolver_call_atimes(value vcptr, value vv, value vz)
 
     r = ATIMES_WITH_DATA(vcptr)->atimes_func(
 	    ATIMES_WITH_DATA(vcptr)->atimes_data, NVEC_VAL(vv), NVEC_VAL(vz));
-    if (r != 0) lsolver_raise_error(r, "atimes");
+    if (r != 0)
+	caml_raise_with_arg(LSOLVER_EXN(ATimesFailure), Val_bool(r > 0));
 
     CAMLreturn(Val_unit);
 }
@@ -711,7 +714,8 @@ CAMLprim value ml_lsolver_call_psetup(value vcptr)
 
     if (psetup != NULL) {
 	r = psetup(PRECOND_WITH_DATA(vcptr)->precond_data);
-	if (r != 0) lsolver_raise_error(r, "psetup");
+	if (r != 0)
+	    caml_raise_with_arg(LSOLVER_EXN(PSetFailure), Val_bool(r > 0));
     }
 
     CAMLreturn(Val_unit);
@@ -730,7 +734,8 @@ CAMLprim value ml_lsolver_call_psolve(value vcptr, value vr, value vz,
 		   NVEC_VAL(vz),
 		   Double_val(vtol),
 		   Bool_val(vlr) ? 1 : 2);
-	if (r != 0) lsolver_raise_error(r, "psolve");
+	if (r != 0)
+	    caml_raise_with_arg(LSOLVER_EXN(PSolveFailure), Val_bool(r > 0));
     }
 
     CAMLreturn(Val_unit);

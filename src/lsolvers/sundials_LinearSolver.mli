@@ -366,21 +366,27 @@ module Iterative : sig (* {{{ *)
 
     (** A function [atimesfn v z] computes the action of the system
         matrix on the vector [v], storing the result in [z]. The matrix is
-        represented implicitly by the effect of the function. *)
+        represented implicitly by the effect of the function.
+
+        If a problem occurs the function raises {!ATimesFailure}. *)
     type ('data, 'kind) atimesfn =
       ('data, 'kind) Nvector.t
       -> ('data, 'kind) Nvector.t
       -> unit
 
     (** Functions that set up any problem data in preparation for calls to
-      [psolvefn]. *)
+      [psolvefn].
+
+      If a problem occurs the function raises {!PSetupFailure}. *)
     type psetupfn = unit -> unit
 
     (** A function [psolvefn r z tol lr] that solves the preconditioner
       equation {% $Pz = r$ %} for the vector [z] such that
       {% $\left\lVert Pz - r \right\rVert_\mathrm{wrms} < \mathit{tol}$ %}.
       If [lr] is [true] then {% $P$ %} should be treated as a left
-      preconditioner and otherwise as a right preconditioner. *)
+      preconditioner and otherwise as a right preconditioner.
+
+      If a problem occurs the function raises {!PSolveFailure}. *)
     type ('data, 'kind) psolvefn =
       ('data, 'kind) Nvector.t
       -> ('data, 'kind) Nvector.t
