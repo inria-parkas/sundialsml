@@ -11,7 +11,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(** The standard serial nvectors of 
+(** Standard serial nvectors of Sundials.
 
     @version VERSION()
     @author Timothy Bourke (Inria/ENS)
