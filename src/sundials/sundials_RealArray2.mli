@@ -74,6 +74,9 @@ val copy : t -> t
     [Bigarray.Genarray.blit]} for more details. *)
 val blit : t -> t -> unit
 
+(** [fill a c] sets all elements of [a] to the constant [c]. *)
+val fill : t -> float -> unit
+
 (** [make m n] returns an uninitialized [m] by [n] array. *)
 val make_data : int -> int -> data
 

@@ -41,6 +41,8 @@ let size a =
   let d = unwrap a in
   (Array2.dim2 d, Array2.dim1 d)
 
+let fill (a, _) v = Array2.fill a v
+
 let ppi ?(start="[") ?(rowstart="[") ?(stop="]") ?(rowstop="]")
         ?(sep=";") ?(rowsep=";")
         ?(item=fun f -> Format.fprintf f "(%2d,%2d)=% -14e") ()
