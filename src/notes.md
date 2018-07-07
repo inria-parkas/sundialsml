@@ -58,11 +58,3 @@ to the vector payload in the OCaml heap. This extra field is registered as a
 global root. It is not referenced from OCaml and it contains a valid
 reference into the OCaml heap.
 
-Matrices
---------
-
-There are two types of matrix pointer: `dlsmat` (`DenseMatrix.t` and
-`BandMatrix.t`) and `slsmat` (`SparseMatrix.t`). Both are created as custom
-blocks using `caml_alloc_final` (by `c_dls_dense_wrap` and
-`c_sls_sparse_wrap`).
-
