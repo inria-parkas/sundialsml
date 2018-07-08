@@ -31,3 +31,5 @@ LAPACK_EXAMPLES = cvAdvDiff_bndL.ml \
 include ../../examples.mk
 
 $(eval $(call EXECUTION_RULE,cvRoberts_dns_uw_alt,$$<,cvRoberts_dns_uw))
+$(eval $(call EXECUTION_RULE,cvDiurnal_kry_custom,$$<,cvDiurnal_kry))
+
