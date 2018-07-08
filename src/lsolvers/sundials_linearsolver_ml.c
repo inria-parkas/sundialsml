@@ -29,7 +29,6 @@
 #include <sunlinsol/sunlinsol_spfgmr.h>
 #include <sunlinsol/sunlinsol_spgmr.h>
 #include <sunlinsol/sunlinsol_sptfqmr.h>
-#include <sundials/sundials_math.h>
 
 #ifdef SUNDIALS_ML_KLU
 #include <sunlinsol/sunlinsol_klu.h>
@@ -47,6 +46,7 @@
 #include <nvector/nvector_serial.h>
 #endif
 
+#include <sundials/sundials_math.h>
 #include <sundials/sundials_iterative.h>
 
 #include <caml/mlvalues.h>
