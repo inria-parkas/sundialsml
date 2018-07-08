@@ -236,11 +236,7 @@ module Direct : sig (* {{{ *)
         setup : 'lsolver -> 'matrix -> unit;
         (** Performs linear solver setup based on an updated matrix. *)
 
-        solve : 'lsolver
-                -> 'matrix
-                -> ('data, 'kind) Nvector.t
-                -> ('data, 'kind) Nvector.t
-                -> unit;
+        solve : 'lsolver -> 'matrix -> 'data -> 'data -> unit;
         (** The call [solve ls A x b] should solve the linear system
         {% $Ax = b$ %}. *)
 
@@ -407,17 +403,13 @@ module Iterative : sig (* {{{ *)
         setup : 'lsolver -> unit;
         (** Performs linear solver setup. *)
 
-        solve : 'lsolver
-                -> ('data, 'kind) Nvector.t
-                -> ('data, 'kind) Nvector.t
-                -> float
-                -> unit;
+        solve : 'lsolver -> 'data -> 'data -> float -> unit;
         (** The call [solve ls x b tol] should solve the linear system
         {% $Ax = b$ %} to within the weight 2-norm tolerance [tol].
         {% $A$ %} is only available indirectly via the [atimes] function. *)
 
         set_atimes
-        : ('lsolver -> ('data, 'kind) atimesfn -> unit) option;
+          : ('lsolver -> ('data, 'kind) atimesfn -> unit) option;
         (** Provides the linear solver with a problem-specific {!atimesfn}.
           The given function may only be used within [init], [setup],
           and [solve]. *)
@@ -432,10 +424,7 @@ module Iterative : sig (* {{{ *)
           and [solve]. *)
 
         set_scaling_vectors
-        : ('lsolver
-           -> ('data, 'kind) Nvector.t option
-           -> ('data, 'kind) Nvector.t option
-           -> unit) option;
+          : ('lsolver -> 'data option -> 'data option -> unit) option;
         (** Passes the left/right scaling vectors for use in [solve].
         The call [set_scaling_vectors ls s1 s2] provides diagonal matrices
         of scale factors for solving the system

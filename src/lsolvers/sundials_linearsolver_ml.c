@@ -764,11 +764,13 @@ int callml_custom_setpreconditioner(SUNLinearSolver ls, void* P_data,
 int callml_custom_setscalingvectors(SUNLinearSolver ls, N_Vector s1, N_Vector s2)
 {
     CAMLparam0();
-    CAMLlocal1(r);
+    CAMLlocal3(r, ss1, ss2);
 
-    r = caml_callback2_exn(GET_OP(ls, SET_SCALING_VECTORS),
-	    (s1 == NULL) ? Val_none : Some_val(NVEC_VAL(s1)),
-	    (s2 == NULL) ? Val_none : Some_val(NVEC_VAL(s2)));
+    ss1 = Val_none;
+    if (s1 != NULL) Store_some(ss1, NVEC_BACKLINK(s1));
+    ss2 = Val_none;
+    if (s2 != NULL) Store_some(ss2, NVEC_BACKLINK(s2));
+    r = caml_callback2_exn(GET_OP(ls, SET_SCALING_VECTORS), ss1, ss2);
 
     CAMLreturnT(int, CHECK_EXCEPTION_SUCCESS(r));
 }
@@ -978,6 +980,7 @@ CAMLprim value c_spils_modified_gs(value vv, value vh, value vk, value vp)
     int p = Int_val(vp);
     int k = Int_val(vk);
     int i;
+    int i0 = SUNMAX(k-p, 0);
     realtype new_vk_norm;
     N_Vector* v;
 
@@ -986,21 +989,22 @@ CAMLprim value c_spils_modified_gs(value vv, value vh, value vk, value vp)
     intnat hm = bh->dim[1];
     intnat hn = bh->dim[0];
 
-    if ((hm < k) || (hn < k))
-	caml_invalid_argument("Spils.modified_gs: h is too small.");
-    if (Wosize_val (vv) < k)
-	caml_invalid_argument("Spils.modified_gs: v is too small.");
+    if (hm < k + 1)
+	caml_invalid_argument("modified_gs: h is too small (dim1 < k + 1).");
+    if (hn < k)
+	caml_invalid_argument("modified_gs: h is too small (dim2 < k).");
+    if (Wosize_val (vv) < k + 1)
+	caml_invalid_argument("modified_gs: v is too small (< k + 1).");
 #endif
 
-    v = calloc(p + 1, sizeof(N_Vector));
+    v = calloc(k + 1, sizeof(N_Vector));
 
-    if (v == NULL)
-	caml_raise_out_of_memory();
-    for (i = 0; i <= p; ++i) {
-	v[i] = NVEC_VAL(Field(vv, k - p + i));
-    }
+    if (v == NULL) caml_raise_out_of_memory();
 
-    ModifiedGS(v, ARRAY2_ACOLS(vh), p + 1, p, &new_vk_norm);
+    for (i = i0; i <= k; ++i)
+	v[i] = NVEC_VAL(Field(vv, i));
+
+    ModifiedGS(v, ARRAY2_ACOLS(vh), k, p, &new_vk_norm);
 
     free(v);
 
@@ -1014,39 +1018,40 @@ CAMLprim value c_spils_classical_gs(value vargs)
 
     int k = Int_val(Field(vargs, 2));
     int p = Int_val(Field(vargs, 3));
-    N_Vector temp;
+    N_Vector temp = NVEC_VAL(Field(vargs, 4));
+    int i;
+    int i0 = SUNMAX(k-p, 0);
+    realtype new_vk_norm;
+    N_Vector* v;
 
     vv = Field(vargs, 0);
     vh = Field(vargs, 1);
     vs = Field(vargs, 5);
-
-    int i;
-    realtype new_vk_norm;
-    N_Vector* v;
 
 #if SUNDIALS_ML_SAFE == 1
     struct caml_ba_array *bh = ARRAY2_DATA(vh);
     intnat hm = bh->dim[1];
     intnat hn = bh->dim[0];
 
-    if ((hm < k) || (hn < k))
-	caml_invalid_argument("Spils.classical_gs: h is too small.");
-    if (Wosize_val (vv) < k)
-	caml_invalid_argument("Spils.classical_gs: v is too small.");
+    if (hm < k + 1)
+	caml_invalid_argument("classical_gs: h is too small (dim1 < k + 1).");
+    if (hn < k)
+	caml_invalid_argument("classical_gs: h is too small (dim2 < k).");
+
+    if (Wosize_val (vv) < k + 1)
+	caml_invalid_argument("classical_gs: v is too small (< k + 1).");
     if (ARRAY1_LEN(vs) < k)
-	caml_invalid_argument("Spils.classical_gs: s is too small.");
+	caml_invalid_argument("classical_gs: s is too small (< k).");
 #endif
 
     v = calloc(p + 1, sizeof(N_Vector));
 
-    if (v == NULL)
-	caml_raise_out_of_memory();
-    for (i = 0; i <= p; ++i) {
-	v[i] = NVEC_VAL(Field(vv, k - p + i));
-    }
+    if (v == NULL) caml_raise_out_of_memory();
 
-    temp = NVEC_VAL(Field(vargs, 4));
-    ClassicalGS(v, ARRAY2_ACOLS(vh), p + 1, p, &new_vk_norm,
+    for (i = i0; i <= k; ++i)
+	v[i] = NVEC_VAL(Field(vv, i));
+
+    ClassicalGS(v, ARRAY2_ACOLS(vh), k, p, &new_vk_norm,
 	        temp, REAL_ARRAY(vs));
 
     free(v);
@@ -1060,17 +1065,16 @@ CAMLprim value c_spils_qr_fact(value vh, value vq, value vnewjob)
     int r;
     struct caml_ba_array *bh = ARRAY2_DATA(vh);
     intnat hn = bh->dim[0];
-
-#if SUNDIALS_ML_SAFE == 1
     intnat hm = bh->dim[1];
 
-    if ((hm < hn + 1))
-	caml_invalid_argument("Spils.qr_fact: h is too small.");
-    if (ARRAY1_LEN(vq) < 2 * hn)
-	caml_invalid_argument("Spils.qr_fact: q is too small.");
+#if SUNDIALS_ML_SAFE == 1
+    if (hm < hn - 1)
+	caml_invalid_argument("qr_fact: h is too small.");
+    if (ARRAY1_LEN(vq) < 2 * hm)
+	caml_invalid_argument("qr_fact: q is too small.");
 #endif
 
-    r = QRfact(hn, ARRAY2_ACOLS(vh), REAL_ARRAY(vq), Bool_val(vnewjob));
+    r = QRfact(hm, ARRAY2_ACOLS(vh), REAL_ARRAY(vq), Bool_val(vnewjob));
 
     if (r != 0) {
 	caml_raise_with_arg(MATRIX_EXN_TAG(ZeroDiagonalElement),

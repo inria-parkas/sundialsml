@@ -105,22 +105,14 @@ module Custom = struct (* {{{ *)
 
     setup : 'matrix -> unit;
 
-    solve :
-      'matrix
-      -> ('data, 'kind) Nvector.t
-      -> ('data, 'kind) Nvector.t
-      -> float
-      -> unit;
+    solve : 'matrix -> 'data -> 'data -> float -> unit;
 
     set_atimes : ('data, 'kind) atimes_with_data -> unit;
 
     set_preconditioner :
       ('data, 'kind) precond_with_data -> bool -> bool -> unit;
 
-    set_scaling_vectors :
-      ('data, 'kind) Nvector.t option
-      -> ('data, 'kind) Nvector.t option
-      -> unit;
+    set_scaling_vectors : 'data option -> 'data option -> unit;
 
     get_num_iters : unit -> int;
 

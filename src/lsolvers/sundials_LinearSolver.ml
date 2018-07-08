@@ -216,11 +216,7 @@ module Direct = struct (* {{{ *)
 
         setup : 'lsolver -> 'matrix -> unit;
 
-        solve : 'lsolver
-                -> 'matrix
-                -> ('data, 'kind) Nvector.t
-                -> ('data, 'kind) Nvector.t
-                -> unit;
+        solve : 'lsolver -> 'matrix -> 'data -> 'data -> unit;
 
         get_work_space : ('lsolver -> int * int) option;
       }
@@ -460,11 +456,7 @@ module Iterative = struct (* {{{ *)
 
         setup : 'lsolver -> unit;
 
-        solve : 'lsolver
-                -> ('data, 'kind) Nvector.t
-                -> ('data, 'kind) Nvector.t
-                -> float
-                -> unit;
+        solve : 'lsolver -> 'data -> 'data -> float -> unit;
 
         set_atimes
         : ('lsolver -> ('data, 'kind) atimesfn -> unit) option;
@@ -476,10 +468,7 @@ module Iterative = struct (* {{{ *)
            -> unit) option;
 
         set_scaling_vectors
-        : ('lsolver
-           -> ('data, 'kind) Nvector.t option
-           -> ('data, 'kind) Nvector.t option
-           -> unit) option;
+        : ('lsolver -> 'data option -> 'data option -> unit) option;
 
         get_num_iters : ('lsolver -> int) option;
 

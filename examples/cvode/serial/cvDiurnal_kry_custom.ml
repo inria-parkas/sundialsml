@@ -81,8 +81,10 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
 
   (* Adapted directly from sunlinsol_spgmr/sunlinsol_spgmr.c *)
   let solve ({ maxl = l_max; max_restarts; gstype; v; hes; givens; xcor; yg;
-               vtemp; s1; s2; atimes; psolve } as lsolver) x b delta =
+               vtemp; s1; s2; atimes; psolve } as lsolver) xdata bdata delta =
   (* {{{ *)
+    let x = NV.wrap xdata in
+    let b = NV.wrap bdata in
     let open NV.Ops in
 
     (* Initialize some variables *)
@@ -172,7 +174,8 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
                     (Algorithms.classical_gs v hes l_plus_1 l_max vtemp yg);
               | ModifiedGS  ->
                   RealArray2.set hes l_plus_1 l
-                    (Algorithms.modified_gs v hes l_plus_1 l_max));
+                    (Algorithms.modified_gs v hes l_plus_1 l_max)
+              );
 
               (*  Update the QR factorization of Hes *)
               Algorithms.qr_fact hes givens (l > 0);
@@ -276,9 +279,11 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
                       | Some f -> f
                       | None -> no_psolve
 
+  let mapo f = function None -> None | Some x -> Some (f x)
+
   let set_scaling_vectors lsolver s1 s2 =
-    lsolver.s1 <- s1;
-    lsolver.s2 <- s2
+    lsolver.s1 <- mapo NV.wrap s1;
+    lsolver.s2 <- mapo NV.wrap s2
 
   let ops =
     let open Custom in
@@ -315,7 +320,7 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
         xcor         = NV.Ops.n_vclone nv_y;
         vtemp        = NV.Ops.n_vclone nv_y;
         v            = Array.init (maxl + 1) (fun _ -> NV.Ops.n_vclone nv_y);
-        hes          = RealArray2.create (maxl + 1) maxl;
+        hes          = RealArray2.create maxl (maxl + 1);
         givens       = RealArray.create (2 * maxl);
         yg           = RealArray.create (maxl + 1);
       }
