@@ -129,9 +129,11 @@ CAMLprim value c_sundials_realarray2_wrap(value vba)
 
     int j;
 
-    table[0] = (realtype *)(ba->data);
-    for (j = 1; j < nc; ++j) {
-	table[j] = table[j - 1] + nr;
+    if (nc > 0) {
+	table[0] = (realtype *)(ba->data);
+	for (j = 1; j < nc; ++j) {
+	    table[j] = table[j - 1] + nr;
+	}
     }
 
     r = caml_alloc_tuple(2);
