@@ -561,13 +561,15 @@ module Iterative = struct (* {{{ *)
 
   module Algorithms = struct (* {{{ *)
 
-    external qr_fact : RealArray2.t
+    external qr_fact : int
+                       -> RealArray2.t
                        -> RealArray.t
                        -> bool
                        -> unit
       = "c_spils_qr_fact"
 
-    external qr_sol : RealArray2.t
+    external qr_sol : int
+                      -> RealArray2.t
                       -> RealArray.t
                       -> RealArray.t
                       -> unit

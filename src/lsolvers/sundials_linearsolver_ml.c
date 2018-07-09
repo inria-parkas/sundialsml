@@ -986,12 +986,12 @@ CAMLprim value c_spils_modified_gs(value vv, value vh, value vk, value vp)
 
 #if SUNDIALS_ML_SAFE == 1
     struct caml_ba_array *bh = ARRAY2_DATA(vh);
-    intnat hm = bh->dim[1];
     intnat hn = bh->dim[0];
+    intnat hm = bh->dim[1];
 
-    if (hm < k + 1)
+    if (hn < k + 1)
 	caml_invalid_argument("modified_gs: h is too small (dim1 < k + 1).");
-    if (hn < k)
+    if (hm < k)
 	caml_invalid_argument("modified_gs: h is too small (dim2 < k).");
     if (Wosize_val (vv) < k + 1)
 	caml_invalid_argument("modified_gs: v is too small (< k + 1).");
@@ -1030,13 +1030,13 @@ CAMLprim value c_spils_classical_gs(value vargs)
 
 #if SUNDIALS_ML_SAFE == 1
     struct caml_ba_array *bh = ARRAY2_DATA(vh);
-    intnat hm = bh->dim[1];
     intnat hn = bh->dim[0];
+    intnat hm = bh->dim[1];
 
-    if (hm < k + 1)
-	caml_invalid_argument("classical_gs: h is too small (dim1 < k + 1).");
-    if (hn < k)
-	caml_invalid_argument("classical_gs: h is too small (dim2 < k).");
+    if (hn < k + 1)
+	caml_invalid_argument("classical_gs: h is too small (< k + 1).");
+    if (hm < k)
+	caml_invalid_argument("classical_gs: h is too small (< k).");
 
     if (Wosize_val (vv) < k + 1)
 	caml_invalid_argument("classical_gs: v is too small (< k + 1).");
@@ -1059,22 +1059,26 @@ CAMLprim value c_spils_classical_gs(value vargs)
     CAMLreturn(caml_copy_double(new_vk_norm));
 }
 
-CAMLprim value c_spils_qr_fact(value vh, value vq, value vnewjob)
+CAMLprim value c_spils_qr_fact(value vn, value vh, value vq, value vnewjob)
 {
-    CAMLparam3(vh, vq, vnewjob);
+    CAMLparam4(vn, vh, vq, vnewjob);
     int r;
+    int n = Int_val(vn);
+
+#if SUNDIALS_ML_SAFE == 1
     struct caml_ba_array *bh = ARRAY2_DATA(vh);
     intnat hn = bh->dim[0];
     intnat hm = bh->dim[1];
 
-#if SUNDIALS_ML_SAFE == 1
-    if (hm < hn - 1)
-	caml_invalid_argument("qr_fact: h is too small.");
-    if (ARRAY1_LEN(vq) < 2 * hm)
-	caml_invalid_argument("qr_fact: q is too small.");
+    if (hn < n + 1)
+	caml_invalid_argument("qr_fact: h is too small (< n + 1).");
+    if (hm < n)
+	caml_invalid_argument("qr_fact: h is too small (< n).");
+    if (ARRAY1_LEN(vq) < 2 * n)
+	caml_invalid_argument("qr_fact: q is too small (< 2n).");
 #endif
 
-    r = QRfact(hm, ARRAY2_ACOLS(vh), REAL_ARRAY(vq), Bool_val(vnewjob));
+    r = QRfact(n, ARRAY2_ACOLS(vh), REAL_ARRAY(vq), Bool_val(vnewjob));
 
     if (r != 0) {
 	caml_raise_with_arg(MATRIX_EXN_TAG(ZeroDiagonalElement),
@@ -1084,25 +1088,28 @@ CAMLprim value c_spils_qr_fact(value vh, value vq, value vnewjob)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_spils_qr_sol(value vh, value vq, value vb)
+CAMLprim value c_spils_qr_sol(value vn, value vh, value vq, value vb)
 {
-    CAMLparam3(vh, vq, vb);
+    CAMLparam4(vn, vh, vq, vb);
     int r;
-    struct caml_ba_array *bh = ARRAY2_DATA(vh);
-    intnat hn = bh->dim[0];
+    int n = Int_val(vn);
 
 #if SUNDIALS_ML_SAFE == 1
+    struct caml_ba_array *bh = ARRAY2_DATA(vh);
     intnat hm = bh->dim[1];
+    intnat hn = bh->dim[0];
 
-    if (hm < hn + 1)
-	caml_invalid_argument("Spils.qr_sol: h is too small.");
-    if (ARRAY1_LEN(vq) < 2 * hn)
-	caml_invalid_argument("Spils.qr_sol: q is too small.");
-    if (ARRAY1_LEN(vb) < hn + 1)
-	caml_invalid_argument("Spils.qr_sol: b is too small.");
+    if (hn < n + 1)
+	caml_invalid_argument("qr_sol: h is too small (< n + 1).");
+    if (hm < n)
+	caml_invalid_argument("qr_sol: h is too small (< n).");
+    if (ARRAY1_LEN(vq) < 2 * n)
+	caml_invalid_argument("qr_sol: q is too small (< 2n).");
+    if (ARRAY1_LEN(vb) < n + 1)
+	caml_invalid_argument("qr_sol: b is too small (< n + 1).");
 #endif
 
-    r = QRsol(hn, ARRAY2_ACOLS(vh), REAL_ARRAY(vq), REAL_ARRAY(vb));
+    r = QRsol(n, ARRAY2_ACOLS(vh), REAL_ARRAY(vq), REAL_ARRAY(vb));
 
     if (r != 0) {
 	caml_raise_with_arg(MATRIX_EXN_TAG(ZeroDiagonalElement),

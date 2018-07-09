@@ -484,7 +484,7 @@ module Iterative : sig (* {{{ *)
       @cvode <node9#s:spils>  The SPILS Modules *)
 
     (** Performs a QR factorization of a Hessenberg matrix.
-      The call [qr_fact h q factored], where [h] is the [n+1] by [n]
+      The call [qr_fact n h q factored], where [h] is the [n+1] by [n]
       Hessenberg matrix (stored row-wise), [q] stores the computed Givens
       rotation, and [factored=true] indicates that the first [n-1] columns of
       [h] have already been factored. The computed Givens rotation has the
@@ -492,19 +492,21 @@ module Iterative : sig (* {{{ *)
       stored in the [2n] elements of [q] as [[|c; s; c; s; ...; c; s|]].
 
       @raise Matrix.ZeroDiagonalElement Zero found in matrix diagonal *)
-    val qr_fact : RealArray2.t
+    val qr_fact : int
+                  -> RealArray2.t
                   -> RealArray.t
                   -> bool
                   -> unit
 
     (** Solve the linear least squares problem. In
-      [qr_sol h q b], [h] and [q] are, respectively, the upper triangular
+      [qr_sol n h q b], [h] and [q] are, respectively, the upper triangular
       factor $R$ of the original Hessenberg matrix and [Q] the Givens
       rotations used to factor it—both computed by {!qr_fact}. The function
       computes the [n+1] elements of [b] to solve $Rx = Qb$.
 
       @raise Matrix.ZeroDiagonalElement Zero found in matrix diagonal *)
-    val qr_sol : RealArray2.t
+    val qr_sol : int
+                 -> RealArray2.t
                  -> RealArray.t
                  -> RealArray.t
                  -> unit

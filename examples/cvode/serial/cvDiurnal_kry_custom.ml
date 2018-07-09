@@ -170,15 +170,15 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
               (*  Orthogonalize v.(l+1) against previous v.(i): v.(l+1) = w_tilde *)
               (match gstype with
               | ClassicalGS ->
-                  RealArray2.set hes l_plus_1 l
+                  RealArray2.set hes l l_plus_1
                     (Algorithms.classical_gs v hes l_plus_1 l_max vtemp yg);
               | ModifiedGS  ->
-                  RealArray2.set hes l_plus_1 l
+                  RealArray2.set hes l l_plus_1
                     (Algorithms.modified_gs v hes l_plus_1 l_max)
               );
 
               (*  Update the QR factorization of Hes *)
-              Algorithms.qr_fact hes givens (l > 0);
+              Algorithms.qr_fact l_plus_1 hes givens (l > 0);
 
               (*  Update residual norm estimate; break if convergence test passes *)
               rotation_product := !rotation_product *. givens.{2*l+1};
@@ -187,7 +187,7 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
 
               if !rho > delta then begin
                 (* Normalize v.(l+1) with norm value from the Gram-Schmidt routine *)
-                n_vscale (1. /. RealArray2.get hes l_plus_1 l)
+                n_vscale (1. /. RealArray2.get hes l l_plus_1)
                          v.(l_plus_1) v.(l_plus_1);
 
                 inner_loop (l + 1)
@@ -205,7 +205,7 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
           for i = 1 to krydim do
             yg.{i} <- 0.
           done;
-          Algorithms.qr_sol hes givens yg;
+          Algorithms.qr_sol krydim hes givens yg;
 
           (*   Add correction vector V_l y to xcor *)
           for k = 0 to krydim - 1 do
