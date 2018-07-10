@@ -101,14 +101,15 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
     in
 
     (* Set vtemp and V[0] to initial (unscaled) residual r_0 = b - A*x_0 *)
-    if n_vdotprod x x = 0. then n_vscale 1. b vtemp
+    if n_vdotprod x x = 0.
+    then (n_vscale 1. b vtemp)
     else (atimes x vtemp; n_vlinearsum 1. b (-1.) vtemp vtemp);
     n_vscale 1. vtemp v.(0);
 
     (* Apply left preconditioner and left scaling to V[0] = r_0 *)
     if preOnLeft
-    then psolve v.(0) vtemp delta true
-    else n_vscale 1. v.(0) vtemp;
+    then (psolve v.(0) vtemp delta true)
+    else (n_vscale 1. v.(0) vtemp);
 
     (match s1 with
     | Some s1 -> n_vprod s1 vtemp v.(0)
@@ -841,7 +842,7 @@ let main () =
    * with left preconditioning and the maximum Krylov dimension maxl *)
   (* set the Jacobian-times-vector function *)
   (* Set the preconditioner solve and setup functions *)
-  let lsolver = CustomSpgmr.solver u in
+  let lsolver = CustomSpgmr.solver ~prec_type:PrecLeft u in
   let cvode_mem = Cvode.(
     init BDF
       (Newton
