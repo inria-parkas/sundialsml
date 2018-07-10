@@ -49,7 +49,7 @@ module Direct = struct (* {{{ *)
            : 'k Nvector_serial.any
              -> 'k Matrix.dense
              -> (Matrix.Dense.t, Nvector_serial.data, 'k) cptr
-    = "ml_lsolver_dense"
+    = "sunml_lsolver_dense"
 
   let dense nvec mat = S {
                            rawptr = c_dense nvec mat;
@@ -62,7 +62,7 @@ module Direct = struct (* {{{ *)
            : 'k Nvector_serial.any
              -> 'k Matrix.dense
              -> (Matrix.Dense.t, Nvector_serial.data, 'k) cptr
-    = "ml_lsolver_lapack_dense"
+    = "sunml_lsolver_lapack_dense"
 
   let lapack_dense nvec mat =
     if not Config.lapack_enabled
@@ -78,7 +78,7 @@ module Direct = struct (* {{{ *)
            : 'k Nvector_serial.any
              -> 'k Matrix.band
              -> (Matrix.Band.t, Nvector_serial.data, 'k) cptr
-    = "ml_lsolver_band"
+    = "sunml_lsolver_band"
 
   let band nvec mat = S {
                           rawptr = c_band nvec mat;
@@ -91,7 +91,7 @@ module Direct = struct (* {{{ *)
            : 'k Nvector_serial.any
              -> 'k Matrix.band
              -> (Matrix.Band.t, Nvector_serial.data, 'k) cptr
-    = "ml_lsolver_lapack_band"
+    = "sunml_lsolver_lapack_band"
 
   let lapack_band nvec mat =
     if not Config.lapack_enabled
@@ -110,7 +110,7 @@ module Direct = struct (* {{{ *)
              : 'k Nvector_serial.any
                -> ('s, 'k) Matrix.sparse
                -> ('s Matrix.Sparse.t, Nvector_serial.data, 'k) cptr
-      = "ml_lsolver_klu"
+      = "sunml_lsolver_klu"
 
     let make ?ordering nvec mat =
       if not Config.klu_enabled
@@ -131,7 +131,7 @@ module Direct = struct (* {{{ *)
              : ('s Matrix.Sparse.t, Nvector_serial.data, 'k) cptr
                -> ('s, 'k) Matrix.sparse
                -> unit
-      = "ml_lsolver_klu_reinit"
+      = "sunml_lsolver_klu_reinit"
 
     let reinit (S { rawptr = cptr; solver }) mat ?nnz () =
       if in_compat_mode then
@@ -151,7 +151,7 @@ module Direct = struct (* {{{ *)
              : ('s Matrix.Sparse.t, Nvector_serial.data, 'k) cptr
                -> ordering
                -> unit
-      = "ml_lsolver_klu_set_ordering"
+      = "sunml_lsolver_klu_set_ordering"
 
     let set_ordering (S { rawptr = cptr; solver }) ordering =
       if in_compat_mode then
@@ -172,7 +172,7 @@ module Direct = struct (* {{{ *)
                -> ('s, 'k) Matrix.sparse
                -> int
                -> ('s Matrix.Sparse.t, Nvector_serial.data, 'k) cptr
-      = "ml_lsolver_superlumt"
+      = "sunml_lsolver_superlumt"
 
     let make ?ordering ~nthreads nvec mat =
       if not Config.superlumt_enabled
@@ -194,7 +194,7 @@ module Direct = struct (* {{{ *)
              : ('s Matrix.Sparse.t, Nvector_serial.data, 'k) cptr
                -> ordering
                -> unit
-      = "ml_lsolver_superlumt_set_ordering"
+      = "sunml_lsolver_superlumt_set_ordering"
 
     let set_ordering (S { rawptr = cptr; solver }) ordering =
       if in_compat_mode then
@@ -268,21 +268,21 @@ module Iterative = struct (* {{{ *)
              -> ('nd, 'nk, [< `Spbcgs|`Sptfqmr|`Pcg]) solver
              -> int
              -> unit
-    = "ml_lsolver_set_maxl"
+    = "sunml_lsolver_set_maxl"
 
   external c_set_gs_type
            : ('nd, 'nk) cptr
              -> ('nd, 'nk, [< `Spfgmr|`Spgmr]) solver
              -> gramschmidt_type
              -> unit
-    = "ml_lsolver_set_gs_type"
+    = "sunml_lsolver_set_gs_type"
 
   external c_set_max_restarts
            : ('nd, 'nk) cptr
              -> ('nd, 'nk, [< `Spfgmr|`Spgmr]) solver
              -> int
              -> unit
-    = "ml_lsolver_set_max_restarts"
+    = "sunml_lsolver_set_max_restarts"
 
   let set_maxl { rawptr; solver; compat } maxl =
     if in_compat_mode then compat.set_maxl maxl
@@ -306,7 +306,7 @@ module Iterative = struct (* {{{ *)
     | None -> 0
 
   external c_spbcgs : int -> ('d, 'k) Nvector.t -> ('nd, 'nk) cptr
-    = "ml_lsolver_spbcgs"
+    = "sunml_lsolver_spbcgs"
 
   let spbcgs ?maxl nvec =
     let maxl = default maxl in
@@ -326,7 +326,7 @@ module Iterative = struct (* {{{ *)
     }
 
   external c_spfgmr : int -> ('d, 'k) Nvector.t -> ('nd, 'nk) cptr
-    = "ml_lsolver_spfgmr"
+    = "sunml_lsolver_spfgmr"
 
   let spfgmr ?maxl ?max_restarts ?gs_type nvec =
     let maxl = default maxl in
@@ -360,7 +360,7 @@ module Iterative = struct (* {{{ *)
     }
 
   external c_spgmr : int -> ('d, 'k) Nvector.t -> ('nd, 'nk) cptr
-    = "ml_lsolver_spgmr"
+    = "sunml_lsolver_spgmr"
 
   let spgmr ?maxl ?max_restarts ?gs_type nvec =
     let maxl = default maxl in
@@ -394,7 +394,7 @@ module Iterative = struct (* {{{ *)
     }
 
   external c_sptfqmr : int -> ('d, 'k) Nvector.t -> ('nd, 'nk) cptr
-    = "ml_lsolver_sptfqmr"
+    = "sunml_lsolver_sptfqmr"
 
   let sptfqmr ?maxl nvec =
     let maxl = default maxl in
@@ -414,7 +414,7 @@ module Iterative = struct (* {{{ *)
     }
 
   external c_pcg : int -> ('d, 'k) Nvector.t -> ('nd, 'nk) cptr
-    = "ml_lsolver_pcg"
+    = "sunml_lsolver_pcg"
 
   let pcg ?maxl nvec =
     let maxl = default maxl in
@@ -566,21 +566,21 @@ module Iterative = struct (* {{{ *)
                        -> RealArray.t
                        -> bool
                        -> unit
-      = "c_spils_qr_fact"
+      = "sunml_spils_qr_fact"
 
     external qr_sol : int
                       -> RealArray2.t
                       -> RealArray.t
                       -> RealArray.t
                       -> unit
-      = "c_spils_qr_sol"
+      = "sunml_spils_qr_sol"
 
     external modified_gs : (('a, 'k) Nvector.t) array
                            -> RealArray2.t
                            -> int
                            -> int
                            -> float
-      = "c_spils_modified_gs"
+      = "sunml_spils_modified_gs"
 
     external classical_gs' : (('a, 'k) Nvector.t) array
                              * RealArray2.t
@@ -589,7 +589,7 @@ module Iterative = struct (* {{{ *)
                              * ('a, 'k) Nvector.t
                              * RealArray.t
                              -> float
-      = "c_spils_classical_gs"
+      = "sunml_spils_classical_gs"
 
     let classical_gs v h k p temp s = classical_gs' (v, h, k, p, temp, s)
 
@@ -598,7 +598,7 @@ end (* }}} *)
 
 (* Let C code know about some of the values in this module.  *)
 external c_init_module : exn array -> unit =
-  "ml_lsolver_init_module"
+  "sunml_lsolver_init_module"
 
 let _ =
   c_init_module

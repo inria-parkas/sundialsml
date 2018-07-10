@@ -76,7 +76,7 @@
 #include "../lsolvers/sundials_linearsolver_ml.h"
 
 
-CAMLprim value c_ida_init_module (value exns)
+CAMLprim value sunml_ida_init_module (value exns)
 {
     CAMLparam1 (exns);
     REGISTER_EXNS (IDA, exns);
@@ -135,7 +135,7 @@ static void errh(
     CAMLreturn0;
 }
 
-CAMLprim value c_ida_set_err_handler_fn(value vdata)
+CAMLprim value sunml_ida_set_err_handler_fn(value vdata)
 {
     CAMLparam1(vdata);
 
@@ -146,7 +146,7 @@ CAMLprim value c_ida_set_err_handler_fn(value vdata)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_clear_err_handler_fn(value vdata)
+CAMLprim value sunml_ida_clear_err_handler_fn(value vdata)
 {
     CAMLparam1(vdata);
 
@@ -568,7 +568,7 @@ static int lsolve(IDAMem ida_mem, N_Vector b, N_Vector weight, N_Vector ycur,
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
-CAMLprim value c_ida_set_alternate (value vida_mem, value vhas_init,
+CAMLprim value sunml_ida_set_alternate (value vida_mem, value vhas_init,
 				    value vhas_setup)
 {
     CAMLparam3(vida_mem, vhas_init, vhas_setup);
@@ -586,7 +586,7 @@ CAMLprim value c_ida_set_alternate (value vida_mem, value vhas_init,
 }
 
 #ifdef SUNDIALSML_WITHSENS
-CAMLprim value c_ida_adj_set_alternate (value vparent, value vwhich,
+CAMLprim value sunml_ida_adj_set_alternate (value vparent, value vwhich,
 					value vhas_init, value vhas_setup)
 {
     CAMLparam4(vparent, vwhich, vhas_init, vhas_setup);
@@ -605,14 +605,14 @@ CAMLprim value c_ida_adj_set_alternate (value vparent, value vwhich,
 }
 #endif
 
-CAMLprim value c_ida_get_cj (value vida_mem)
+CAMLprim value sunml_ida_get_cj (value vida_mem)
 {
     CAMLparam1 (vida_mem);
     IDAMem ida_mem = IDA_MEM_FROM_ML (vida_mem);
     CAMLreturn (caml_copy_double (ida_mem->ida_cj));
 }
 
-CAMLprim value c_ida_get_cjratio (value vida_mem)
+CAMLprim value sunml_ida_get_cjratio (value vida_mem)
 {
     CAMLparam1 (vida_mem);
     IDAMem ida_mem = IDA_MEM_FROM_ML (vida_mem);
@@ -620,7 +620,7 @@ CAMLprim value c_ida_get_cjratio (value vida_mem)
 }
 
 /* Dense and Band can only be used with serial NVectors.  */
-CAMLprim value c_ida_dls_dense (value vida_mem, value vneqs, value vset_jac)
+CAMLprim value sunml_ida_dls_dense (value vida_mem, value vneqs, value vset_jac)
 {
     CAMLparam3(vida_mem, vneqs, vset_jac);
 #if SUNDIALS_LIB_VERSION < 300
@@ -640,7 +640,7 @@ CAMLprim value c_ida_dls_dense (value vida_mem, value vneqs, value vset_jac)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_dls_lapack_dense (value vida_mem, value vneqs,
+CAMLprim value sunml_ida_dls_lapack_dense (value vida_mem, value vneqs,
 				       value vset_jac)
 {
     CAMLparam3 (vida_mem, vneqs, vset_jac);
@@ -661,7 +661,7 @@ CAMLprim value c_ida_dls_lapack_dense (value vida_mem, value vneqs,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_dls_band (value vida_mem, value vneqs,
+CAMLprim value sunml_ida_dls_band (value vida_mem, value vneqs,
 			       value mupper, value mlower, value vset_jac)
 {
     CAMLparam5(vida_mem, vneqs, mupper, mlower, vset_jac);
@@ -682,7 +682,7 @@ CAMLprim value c_ida_dls_band (value vida_mem, value vneqs,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_dls_lapack_band (value vida_mem, value vneqs,
+CAMLprim value sunml_ida_dls_lapack_band (value vida_mem, value vneqs,
 				      value mupper, value mlower,
 				      value vset_jac)
 {
@@ -704,7 +704,7 @@ CAMLprim value c_ida_dls_lapack_band (value vida_mem, value vneqs,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_dls_set_linear_solver (value vida_mem, value vlsolv,
+CAMLprim value sunml_ida_dls_set_linear_solver (value vida_mem, value vlsolv,
 					    value vjmat, value vhasjac)
 {
     CAMLparam4(vida_mem, vlsolv, vjmat, vhasjac);
@@ -726,7 +726,7 @@ CAMLprim value c_ida_dls_set_linear_solver (value vida_mem, value vlsolv,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_spils_set_linear_solver (value vida_mem, value vlsolv)
+CAMLprim value sunml_ida_spils_set_linear_solver (value vida_mem, value vlsolv)
 {
     CAMLparam2(vida_mem, vlsolv);
 #if SUNDIALS_LIB_VERSION >= 300
@@ -742,7 +742,7 @@ CAMLprim value c_ida_spils_set_linear_solver (value vida_mem, value vlsolv)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_spils_set_preconditioner (value vsession,
+CAMLprim value sunml_ida_spils_set_preconditioner (value vsession,
 					       value vset_presetup)
 {
     CAMLparam2 (vsession, vset_presetup);
@@ -753,7 +753,7 @@ CAMLprim value c_ida_spils_set_preconditioner (value vsession,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_spils_set_jac_times(value vdata, value vhas_setup,
+CAMLprim value sunml_ida_spils_set_jac_times(value vdata, value vhas_setup,
 						      value vhas_times)
 {
     CAMLparam3(vdata, vhas_setup, vhas_times);
@@ -771,7 +771,7 @@ CAMLprim value c_ida_spils_set_jac_times(value vdata, value vhas_setup,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_spils_spgmr (value vida_mem, value vmaxl)
+CAMLprim value sunml_ida_spils_spgmr (value vida_mem, value vmaxl)
 {
     CAMLparam2 (vida_mem, vmaxl);
 #if SUNDIALS_LIB_VERSION < 300
@@ -786,7 +786,7 @@ CAMLprim value c_ida_spils_spgmr (value vida_mem, value vmaxl)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_spils_spbcgs (value vida_mem, value vmaxl)
+CAMLprim value sunml_ida_spils_spbcgs (value vida_mem, value vmaxl)
 {
     CAMLparam2 (vida_mem, vmaxl);
 #if SUNDIALS_LIB_VERSION < 300
@@ -801,7 +801,7 @@ CAMLprim value c_ida_spils_spbcgs (value vida_mem, value vmaxl)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_spils_sptfqmr (value vida_mem, value vmaxl)
+CAMLprim value sunml_ida_spils_sptfqmr (value vida_mem, value vmaxl)
 {
     CAMLparam2 (vida_mem, vmaxl);
 #if SUNDIALS_LIB_VERSION < 300
@@ -816,7 +816,7 @@ CAMLprim value c_ida_spils_sptfqmr (value vida_mem, value vmaxl)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_wf_tolerances(value vdata)
+CAMLprim value sunml_ida_wf_tolerances(value vdata)
 {
     CAMLparam1(vdata);
 
@@ -828,7 +828,7 @@ CAMLprim value c_ida_wf_tolerances(value vdata)
 
 /* Sets the root function to a generic trampoline and set the number of
  * roots.  */
-CAMLprim value c_ida_root_init (value vida_mem, value vnroots)
+CAMLprim value sunml_ida_root_init (value vida_mem, value vnroots)
 {
     CAMLparam2 (vida_mem, vnroots);
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
@@ -848,7 +848,7 @@ CAMLprim value c_ida_root_init (value vida_mem, value vnroots)
  * that cleanup in C would be ugly, e.g. we wouldn't be able to reuse
  * c_ida_set_linear_solver() so we have to duplicate it or hack some ad-hoc
  * extensions to that function.  */
-CAMLprim value c_ida_init (value weakref, value vt0, value vy, value vyp)
+CAMLprim value sunml_ida_init (value weakref, value vt0, value vy, value vyp)
 {
     CAMLparam4 (weakref, vy, vyp, vt0);
     CAMLlocal2 (r, vida_mem);
@@ -886,7 +886,7 @@ CAMLprim value c_ida_init (value weakref, value vt0, value vy, value vyp)
     CAMLreturn (r);
 }
 
-CAMLprim value c_ida_sv_tolerances (value ida_mem, value vrtol, value vavtol)
+CAMLprim value sunml_ida_sv_tolerances (value ida_mem, value vrtol, value vavtol)
 {
     CAMLparam3 (ida_mem, vrtol, vavtol);
     N_Vector avtol;
@@ -900,7 +900,7 @@ CAMLprim value c_ida_sv_tolerances (value ida_mem, value vrtol, value vavtol)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_reinit(value vdata, value t0, value y0, value yp0)
+CAMLprim value sunml_ida_reinit(value vdata, value t0, value y0, value yp0)
 {
     CAMLparam4(vdata, t0, y0, yp0);
 
@@ -966,21 +966,21 @@ static value solve (value vdata, value nextt, value vy, value vyp, int onestep)
 }
 
 
-CAMLprim value c_ida_solve_normal (value vdata, value nextt,
+CAMLprim value sunml_ida_solve_normal (value vdata, value nextt,
 				   value y, value yp)
 {
     CAMLparam4(vdata, nextt, y, yp);
     CAMLreturn(solve(vdata, nextt, y, yp, 0));
 }
 
-CAMLprim value c_ida_solve_one_step (value vdata, value nextt,
+CAMLprim value sunml_ida_solve_one_step (value vdata, value nextt,
 				     value y, value yp)
 {
     CAMLparam4(vdata, nextt, y, yp);
     CAMLreturn(solve(vdata, nextt, y, yp, 1));
 }
 
-CAMLprim value c_ida_get_dky(value vdata, value vt, value vk, value vy)
+CAMLprim value sunml_ida_get_dky(value vdata, value vt, value vk, value vy)
 {
     CAMLparam4(vdata, vt, vk, vy);
 
@@ -993,7 +993,7 @@ CAMLprim value c_ida_get_dky(value vdata, value vt, value vk, value vy)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_get_err_weights(value vida_mem, value verrws)
+CAMLprim value sunml_ida_get_err_weights(value vida_mem, value verrws)
 {
     CAMLparam2(vida_mem, verrws);
 
@@ -1005,7 +1005,7 @@ CAMLprim value c_ida_get_err_weights(value vida_mem, value verrws)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_get_est_local_errors(value vida_mem, value vele)
+CAMLprim value sunml_ida_get_est_local_errors(value vida_mem, value vele)
 {
     CAMLparam2(vida_mem, vele);
 
@@ -1018,7 +1018,7 @@ CAMLprim value c_ida_get_est_local_errors(value vida_mem, value vele)
 }
 
 
-CAMLprim value c_ida_set_id (value vida_mem, value vid)
+CAMLprim value sunml_ida_set_id (value vida_mem, value vid)
 {
     CAMLparam2(vida_mem, vid);
     N_Vector id;
@@ -1065,7 +1065,7 @@ static void calc_ic (void *ida_mem, value session, int icopt, realtype tout1,
     CAMLreturn0;
 }
 
-CAMLprim value c_ida_calc_ic_y(value vida_mem, value vy, value tout1)
+CAMLprim value sunml_ida_calc_ic_y(value vida_mem, value vy, value tout1)
 {
     CAMLparam3 (vida_mem, vy, tout1);
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
@@ -1075,7 +1075,7 @@ CAMLprim value c_ida_calc_ic_y(value vida_mem, value vy, value tout1)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_calc_ic_ya_ydp(value vida_mem, value y, value yp,
+CAMLprim value sunml_ida_calc_ic_ya_ydp(value vida_mem, value y, value yp,
 				    value tout1)
 {
     CAMLparam4 (vida_mem, y, yp, tout1);
@@ -1086,7 +1086,7 @@ CAMLprim value c_ida_calc_ic_ya_ydp(value vida_mem, value y, value yp,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_set_constraints (value vida_mem, value vconstraints)
+CAMLprim value sunml_ida_set_constraints (value vida_mem, value vconstraints)
 {
     CAMLparam2(vida_mem, vconstraints);
     int flag;
@@ -1163,7 +1163,7 @@ void ida_ml_check_flag(const char *call, int flag)
     }
 }
 
-CAMLprim value c_ida_session_finalize(value vdata)
+CAMLprim value sunml_ida_session_finalize(value vdata)
 {
     if (IDA_MEM_FROM_ML(vdata) != NULL) {
 	void *ida_mem = IDA_MEM_FROM_ML(vdata);
@@ -1175,7 +1175,7 @@ CAMLprim value c_ida_session_finalize(value vdata)
     return Val_unit;
 }
  
-CAMLprim value c_ida_ss_tolerances(value vdata, value reltol, value abstol)
+CAMLprim value sunml_ida_ss_tolerances(value vdata, value reltol, value abstol)
 {
     CAMLparam3(vdata, reltol, abstol);
 
@@ -1186,7 +1186,7 @@ CAMLprim value c_ida_ss_tolerances(value vdata, value reltol, value abstol)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_get_root_info(value vdata, value roots)
+CAMLprim value sunml_ida_get_root_info(value vdata, value roots)
 {
     CAMLparam2(vdata, roots);
 
@@ -1203,7 +1203,7 @@ CAMLprim value c_ida_get_root_info(value vdata, value roots)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_get_integrator_stats(value vdata)
+CAMLprim value sunml_ida_get_integrator_stats(value vdata)
 {
     CAMLparam1(vdata);
     CAMLlocal1(r);
@@ -1254,7 +1254,7 @@ CAMLprim value c_ida_get_integrator_stats(value vdata)
     CAMLreturn(r);
 }
 
-CAMLprim value c_ida_set_error_file(value vdata, value vfile)
+CAMLprim value sunml_ida_set_error_file(value vdata, value vfile)
 {
     CAMLparam2(vdata, vfile);
 
@@ -1264,7 +1264,7 @@ CAMLprim value c_ida_set_error_file(value vdata, value vfile)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_set_root_direction(value vdata, value rootdirs)
+CAMLprim value sunml_ida_set_root_direction(value vdata, value rootdirs)
 {
     CAMLparam2(vdata, rootdirs);
 
@@ -1288,7 +1288,7 @@ CAMLprim value c_ida_set_root_direction(value vdata, value rootdirs)
  *
  */
 
-CAMLprim value c_ida_get_work_space(value vida_mem)
+CAMLprim value sunml_ida_get_work_space(value vida_mem)
 {
     CAMLparam1(vida_mem);
     CAMLlocal1(r);
@@ -1309,7 +1309,7 @@ CAMLprim value c_ida_get_work_space(value vida_mem)
 }
 
 
-CAMLprim value c_ida_get_num_steps(value vida_mem)
+CAMLprim value sunml_ida_get_num_steps(value vida_mem)
 {
     CAMLparam1(vida_mem);
 
@@ -1322,7 +1322,7 @@ CAMLprim value c_ida_get_num_steps(value vida_mem)
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim value c_ida_get_num_res_evals(value vida_mem)
+CAMLprim value sunml_ida_get_num_res_evals(value vida_mem)
 {
     CAMLparam1(vida_mem);
 
@@ -1335,7 +1335,7 @@ CAMLprim value c_ida_get_num_res_evals(value vida_mem)
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim value c_ida_get_num_lin_solv_setups(value vida_mem)
+CAMLprim value sunml_ida_get_num_lin_solv_setups(value vida_mem)
 {
     CAMLparam1(vida_mem);
 
@@ -1348,7 +1348,7 @@ CAMLprim value c_ida_get_num_lin_solv_setups(value vida_mem)
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim value c_ida_get_num_err_test_fails(value vida_mem)
+CAMLprim value sunml_ida_get_num_err_test_fails(value vida_mem)
 {
     CAMLparam1(vida_mem);
 
@@ -1361,7 +1361,7 @@ CAMLprim value c_ida_get_num_err_test_fails(value vida_mem)
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim value c_ida_get_last_order(value vida_mem)
+CAMLprim value sunml_ida_get_last_order(value vida_mem)
 {
     CAMLparam1(vida_mem);
 
@@ -1374,7 +1374,7 @@ CAMLprim value c_ida_get_last_order(value vida_mem)
     CAMLreturn(Val_int(v));
 }
 
-CAMLprim value c_ida_get_current_order(value vida_mem)
+CAMLprim value sunml_ida_get_current_order(value vida_mem)
 {
     CAMLparam1(vida_mem);
 
@@ -1387,7 +1387,7 @@ CAMLprim value c_ida_get_current_order(value vida_mem)
     CAMLreturn(Val_int(v));
 }
 
-CAMLprim value c_ida_get_actual_init_step(value vida_mem)
+CAMLprim value sunml_ida_get_actual_init_step(value vida_mem)
 {
     CAMLparam1(vida_mem);
 
@@ -1400,7 +1400,7 @@ CAMLprim value c_ida_get_actual_init_step(value vida_mem)
     CAMLreturn(caml_copy_double(v));
 }
 
-CAMLprim value c_ida_get_last_step(value vida_mem)
+CAMLprim value sunml_ida_get_last_step(value vida_mem)
 {
     CAMLparam1(vida_mem);
     CAMLlocal1 (tmp);
@@ -1415,7 +1415,7 @@ CAMLprim value c_ida_get_last_step(value vida_mem)
     CAMLreturn(tmp);
 }
 
-CAMLprim value c_ida_get_current_step(value vida_mem)
+CAMLprim value sunml_ida_get_current_step(value vida_mem)
 {
     CAMLparam1(vida_mem);
 
@@ -1428,7 +1428,7 @@ CAMLprim value c_ida_get_current_step(value vida_mem)
     CAMLreturn(caml_copy_double(v));
 }
 
-CAMLprim value c_ida_get_current_time(value vida_mem)
+CAMLprim value sunml_ida_get_current_time(value vida_mem)
 {
     CAMLparam1(vida_mem);
 
@@ -1441,7 +1441,7 @@ CAMLprim value c_ida_get_current_time(value vida_mem)
     CAMLreturn(caml_copy_double(v));
 }
 
-CAMLprim value c_ida_set_nonlin_conv_coef_ic(value vida_mem, value vcoef)
+CAMLprim value sunml_ida_set_nonlin_conv_coef_ic(value vida_mem, value vcoef)
 {
     CAMLparam2(vida_mem, vcoef);
 
@@ -1452,7 +1452,7 @@ CAMLprim value c_ida_set_nonlin_conv_coef_ic(value vida_mem, value vcoef)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_set_max_num_steps_ic(value vida_mem, value vmaxnh)
+CAMLprim value sunml_ida_set_max_num_steps_ic(value vida_mem, value vmaxnh)
 {
     CAMLparam2(vida_mem, vmaxnh);
 
@@ -1462,7 +1462,7 @@ CAMLprim value c_ida_set_max_num_steps_ic(value vida_mem, value vmaxnh)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_set_max_num_jacs_ic(value vida_mem, value vmaxnj)
+CAMLprim value sunml_ida_set_max_num_jacs_ic(value vida_mem, value vmaxnj)
 {
     CAMLparam2(vida_mem, vmaxnj);
 
@@ -1472,7 +1472,7 @@ CAMLprim value c_ida_set_max_num_jacs_ic(value vida_mem, value vmaxnj)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_set_max_num_iters_ic(value vida_mem, value vmaxnit)
+CAMLprim value sunml_ida_set_max_num_iters_ic(value vida_mem, value vmaxnit)
 {
     CAMLparam2(vida_mem, vmaxnit);
 
@@ -1487,7 +1487,7 @@ CAMLprim value c_ida_set_max_num_iters_ic(value vida_mem, value vmaxnit)
 int IDASetMaxBacksIC(void *, int);
 #endif
 
-CAMLprim value c_ida_set_max_backs_ic(value vida_mem, value vmaxbacks)
+CAMLprim value sunml_ida_set_max_backs_ic(value vida_mem, value vmaxbacks)
 {
     CAMLparam2(vida_mem, vmaxbacks);
 
@@ -1501,7 +1501,7 @@ CAMLprim value c_ida_set_max_backs_ic(value vida_mem, value vmaxbacks)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_set_line_search_ic(value vida_mem, value vls)
+CAMLprim value sunml_ida_set_line_search_ic(value vida_mem, value vls)
 {
     CAMLparam2(vida_mem, vls);
 
@@ -1511,7 +1511,7 @@ CAMLprim value c_ida_set_line_search_ic(value vida_mem, value vls)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_set_step_tolerance_ic(value vida_mem, value vsteptol)
+CAMLprim value sunml_ida_set_step_tolerance_ic(value vida_mem, value vsteptol)
 {
     CAMLparam2(vida_mem, vsteptol);
 
@@ -1522,7 +1522,7 @@ CAMLprim value c_ida_set_step_tolerance_ic(value vida_mem, value vsteptol)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_get_num_backtrack_ops (value vida_mem)
+CAMLprim value sunml_ida_get_num_backtrack_ops (value vida_mem)
 {
     CAMLparam1 (vida_mem);
     int flag;
@@ -1532,7 +1532,7 @@ CAMLprim value c_ida_get_num_backtrack_ops (value vida_mem)
     CAMLreturn (Val_int (nbo));
 }
 
-CAMLprim value c_ida_set_max_ord(value vida_mem, value maxord)
+CAMLprim value sunml_ida_set_max_ord(value vida_mem, value maxord)
 {
     CAMLparam2(vida_mem, maxord);
 
@@ -1543,7 +1543,7 @@ CAMLprim value c_ida_set_max_ord(value vida_mem, value maxord)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_set_max_num_steps(value vida_mem, value mxsteps)
+CAMLprim value sunml_ida_set_max_num_steps(value vida_mem, value mxsteps)
 {
     CAMLparam2(vida_mem, mxsteps);
 
@@ -1554,7 +1554,7 @@ CAMLprim value c_ida_set_max_num_steps(value vida_mem, value mxsteps)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_set_init_step(value vida_mem, value hin)
+CAMLprim value sunml_ida_set_init_step(value vida_mem, value hin)
 {
     CAMLparam2(vida_mem, hin);
 
@@ -1565,7 +1565,7 @@ CAMLprim value c_ida_set_init_step(value vida_mem, value hin)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_set_max_step(value vida_mem, value hmax)
+CAMLprim value sunml_ida_set_max_step(value vida_mem, value hmax)
 {
     CAMLparam2(vida_mem, hmax);
 
@@ -1576,7 +1576,7 @@ CAMLprim value c_ida_set_max_step(value vida_mem, value hmax)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_set_stop_time(value vida_mem, value tstop)
+CAMLprim value sunml_ida_set_stop_time(value vida_mem, value tstop)
 {
     CAMLparam2(vida_mem, tstop);
 
@@ -1587,7 +1587,7 @@ CAMLprim value c_ida_set_stop_time(value vida_mem, value tstop)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_set_max_err_test_fails(value vida_mem, value maxnef)
+CAMLprim value sunml_ida_set_max_err_test_fails(value vida_mem, value maxnef)
 {
     CAMLparam2(vida_mem, maxnef);
 
@@ -1598,7 +1598,7 @@ CAMLprim value c_ida_set_max_err_test_fails(value vida_mem, value maxnef)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_set_max_nonlin_iters(value vida_mem, value maxcor)
+CAMLprim value sunml_ida_set_max_nonlin_iters(value vida_mem, value maxcor)
 {
     CAMLparam2(vida_mem, maxcor);
 
@@ -1609,7 +1609,7 @@ CAMLprim value c_ida_set_max_nonlin_iters(value vida_mem, value maxcor)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_set_max_conv_fails(value vida_mem, value maxncf)
+CAMLprim value sunml_ida_set_max_conv_fails(value vida_mem, value maxncf)
 {
     CAMLparam2(vida_mem, maxncf);
 
@@ -1620,7 +1620,7 @@ CAMLprim value c_ida_set_max_conv_fails(value vida_mem, value maxncf)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_set_nonlin_conv_coef(value vida_mem, value nlscoef)
+CAMLprim value sunml_ida_set_nonlin_conv_coef(value vida_mem, value nlscoef)
 {
     CAMLparam2(vida_mem, nlscoef);
 
@@ -1632,7 +1632,7 @@ CAMLprim value c_ida_set_nonlin_conv_coef(value vida_mem, value nlscoef)
 }
 
 
-CAMLprim value c_ida_set_no_inactive_root_warn(value vida_mem)
+CAMLprim value sunml_ida_set_no_inactive_root_warn(value vida_mem)
 {
     CAMLparam1(vida_mem);
 
@@ -1642,7 +1642,7 @@ CAMLprim value c_ida_set_no_inactive_root_warn(value vida_mem)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_set_suppress_alg (value vida_mem, value vb)
+CAMLprim value sunml_ida_set_suppress_alg (value vida_mem, value vb)
 {
     CAMLparam2(vida_mem, vb);
 
@@ -1653,7 +1653,7 @@ CAMLprim value c_ida_set_suppress_alg (value vida_mem, value vb)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_spils_set_gs_type(value vida_mem, value vgstype)
+CAMLprim value sunml_ida_spils_set_gs_type(value vida_mem, value vgstype)
 {
     CAMLparam2(vida_mem, vgstype);
 #if SUNDIALS_LIB_VERSION < 300
@@ -1666,7 +1666,7 @@ CAMLprim value c_ida_spils_set_gs_type(value vida_mem, value vgstype)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_spils_set_max_restarts(value vida_mem, value vmaxr)
+CAMLprim value sunml_ida_spils_set_max_restarts(value vida_mem, value vmaxr)
 {
     CAMLparam2(vida_mem, vmaxr);
 #if SUNDIALS_LIB_VERSION < 300
@@ -1679,7 +1679,7 @@ CAMLprim value c_ida_spils_set_max_restarts(value vida_mem, value vmaxr)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_spils_set_eps_lin(value vida_mem, value eplifac)
+CAMLprim value sunml_ida_spils_set_eps_lin(value vida_mem, value eplifac)
 {
     CAMLparam2(vida_mem, eplifac);
 
@@ -1690,7 +1690,7 @@ CAMLprim value c_ida_spils_set_eps_lin(value vida_mem, value eplifac)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_ida_spils_set_maxl(value vida_mem, value maxl)
+CAMLprim value sunml_ida_spils_set_maxl(value vida_mem, value maxl)
 {
     CAMLparam2(vida_mem, maxl);
 #if SUNDIALS_LIB_VERSION < 300
@@ -1705,7 +1705,7 @@ CAMLprim value c_ida_spils_set_maxl(value vida_mem, value maxl)
 
 /* statistic accessor functions */
 
-CAMLprim value c_ida_get_tol_scale_factor(value vida_mem)
+CAMLprim value sunml_ida_get_tol_scale_factor(value vida_mem)
 {
     CAMLparam1(vida_mem);
 
@@ -1716,7 +1716,7 @@ CAMLprim value c_ida_get_tol_scale_factor(value vida_mem)
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value c_ida_get_num_nonlin_solv_iters(value vida_mem)
+CAMLprim value sunml_ida_get_num_nonlin_solv_iters(value vida_mem)
 {
     CAMLparam1(vida_mem);
 
@@ -1727,7 +1727,7 @@ CAMLprim value c_ida_get_num_nonlin_solv_iters(value vida_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_ida_get_num_nonlin_solv_conv_fails(value vida_mem)
+CAMLprim value sunml_ida_get_num_nonlin_solv_conv_fails(value vida_mem)
 {
     CAMLparam1(vida_mem);
 
@@ -1738,7 +1738,7 @@ CAMLprim value c_ida_get_num_nonlin_solv_conv_fails(value vida_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_ida_get_nonlin_solv_stats(value vida_mem)
+CAMLprim value sunml_ida_get_nonlin_solv_stats(value vida_mem)
 {
     CAMLparam1(vida_mem);
     CAMLlocal1(ret);
@@ -1755,7 +1755,7 @@ CAMLprim value c_ida_get_nonlin_solv_stats(value vida_mem)
     CAMLreturn(ret);
 }
 
-CAMLprim value c_ida_get_num_g_evals(value vida_mem)
+CAMLprim value sunml_ida_get_num_g_evals(value vida_mem)
 {
     CAMLparam1(vida_mem);
 
@@ -1767,7 +1767,7 @@ CAMLprim value c_ida_get_num_g_evals(value vida_mem)
 }
 
 
-CAMLprim value c_ida_dls_get_work_space(value vida_mem)
+CAMLprim value sunml_ida_dls_get_work_space(value vida_mem)
 {
     CAMLparam1(vida_mem);
     CAMLlocal1(r);
@@ -1787,7 +1787,7 @@ CAMLprim value c_ida_dls_get_work_space(value vida_mem)
 }
 
 
-CAMLprim value c_ida_dls_get_num_jac_evals(value vida_mem)
+CAMLprim value sunml_ida_dls_get_num_jac_evals(value vida_mem)
 {
     CAMLparam1(vida_mem);
 
@@ -1798,7 +1798,7 @@ CAMLprim value c_ida_dls_get_num_jac_evals(value vida_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_ida_dls_get_num_res_evals(value vida_mem)
+CAMLprim value sunml_ida_dls_get_num_res_evals(value vida_mem)
 {
     CAMLparam1(vida_mem);
 
@@ -1811,7 +1811,7 @@ CAMLprim value c_ida_dls_get_num_res_evals(value vida_mem)
 
 /* spils functions */
 
-CAMLprim value c_ida_spils_get_num_lin_iters(value vida_mem)
+CAMLprim value sunml_ida_spils_get_num_lin_iters(value vida_mem)
 {
     CAMLparam1(vida_mem);
 
@@ -1822,7 +1822,7 @@ CAMLprim value c_ida_spils_get_num_lin_iters(value vida_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_ida_spils_get_num_conv_fails(value vida_mem)
+CAMLprim value sunml_ida_spils_get_num_conv_fails(value vida_mem)
 {
     CAMLparam1(vida_mem);
 
@@ -1833,7 +1833,7 @@ CAMLprim value c_ida_spils_get_num_conv_fails(value vida_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_ida_spils_get_work_space(value vida_mem)
+CAMLprim value sunml_ida_spils_get_work_space(value vida_mem)
 {
     CAMLparam1(vida_mem);
     CAMLlocal1(r);
@@ -1853,7 +1853,7 @@ CAMLprim value c_ida_spils_get_work_space(value vida_mem)
     CAMLreturn(r);
 }
 
-CAMLprim value c_ida_spils_get_num_prec_evals(value vida_mem)
+CAMLprim value sunml_ida_spils_get_num_prec_evals(value vida_mem)
 {
     CAMLparam1(vida_mem);
 
@@ -1864,7 +1864,7 @@ CAMLprim value c_ida_spils_get_num_prec_evals(value vida_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_ida_spils_get_num_prec_solves(value vida_mem)
+CAMLprim value sunml_ida_spils_get_num_prec_solves(value vida_mem)
 {
     CAMLparam1(vida_mem);
 
@@ -1880,7 +1880,7 @@ SUNDIALS_EXPORT int IDASpilsGetNumJTSetupEvals(void *ida_mem,
 					       long int *njtsetups);
 #endif
 
-CAMLprim value c_ida_spils_get_num_jtsetup_evals(value vida_mem)
+CAMLprim value sunml_ida_spils_get_num_jtsetup_evals(value vida_mem)
 {
     CAMLparam1(vida_mem);
     long int r;
@@ -1893,7 +1893,7 @@ CAMLprim value c_ida_spils_get_num_jtsetup_evals(value vida_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_ida_spils_get_num_jtimes_evals(value vida_mem)
+CAMLprim value sunml_ida_spils_get_num_jtimes_evals(value vida_mem)
 {
     CAMLparam1(vida_mem);
 
@@ -1904,7 +1904,7 @@ CAMLprim value c_ida_spils_get_num_jtimes_evals(value vida_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_ida_spils_get_num_res_evals (value vida_mem)
+CAMLprim value sunml_ida_spils_get_num_res_evals (value vida_mem)
 {
     CAMLparam1(vida_mem);
 

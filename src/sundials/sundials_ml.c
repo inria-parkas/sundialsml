@@ -68,7 +68,7 @@ void sundials_ml_warn_discarded_exn (value exn, const char *context)
 static value weak_get = 0;
 #endif
 
-CAMLprim void c_sundials_init_module (value vwarn_discarded_exn,
+CAMLprim void sunml_sundials_init_module (value vwarn_discarded_exn,
 				      value vweak_get, value exns)
 {
     CAMLparam2 (vweak_get, exns);
@@ -83,7 +83,7 @@ CAMLprim void c_sundials_init_module (value vwarn_discarded_exn,
     CAMLreturn0;
 }
 
-CAMLprim value c_sundials_get_constants (void)
+CAMLprim value sunml_sundials_get_constants (void)
 {
     CAMLparam0 ();
     CAMLlocal1 (r);
@@ -115,7 +115,7 @@ CAMLprim value sundials_ml_weak_get (value ar, value n)
  *		       the columns of the big array (for passing to Sundials)
  */
 
-CAMLprim value c_sundials_realarray2_wrap(value vba)
+CAMLprim value sunml_sundials_realarray2_wrap(value vba)
 {
     CAMLparam1(vba);
     CAMLlocal2(r, vtable);
@@ -182,7 +182,7 @@ static void finalize_cfile(value vf)
     }
 }
 
-CAMLprim value c_sundials_fopen(value vpath, value vtrunc)
+CAMLprim value sunml_sundials_fopen(value vpath, value vtrunc)
 {
     CAMLparam2(vpath, vtrunc);
     CAMLlocal1(vr);
@@ -201,7 +201,7 @@ CAMLprim value c_sundials_fopen(value vpath, value vtrunc)
     CAMLreturn (vr);
 }
 
-CAMLprim value c_sundials_fflush(value vfile)
+CAMLprim value sunml_sundials_fflush(value vfile)
 {
     CAMLparam1(vfile);
     FILE *file = ML_CFILE(vfile);
@@ -209,7 +209,7 @@ CAMLprim value c_sundials_fflush(value vfile)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_sundials_stderr(value vunit)
+CAMLprim value sunml_sundials_stderr(value vunit)
 {
     CAMLparam1(vunit);
     CAMLlocal1(vr);
@@ -220,7 +220,7 @@ CAMLprim value c_sundials_stderr(value vunit)
     CAMLreturn (vr);
 }
 
-CAMLprim value c_sundials_stdout(value vunit)
+CAMLprim value sunml_sundials_stdout(value vunit)
 {
     CAMLparam1(vunit);
     CAMLlocal1(vr);

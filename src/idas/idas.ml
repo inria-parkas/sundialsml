@@ -20,7 +20,7 @@ let in_compat_mode =
   | _ -> false
 
 external c_alloc_nvector_array : int -> 'a array
-    = "c_idas_alloc_nvector_array"
+    = "sunml_idas_alloc_nvector_array"
 
 let add_fwdsensext s =
   match s.sensext with
@@ -66,7 +66,7 @@ module Quadrature = struct (* {{{ *)
     | _ -> raise QuadNotInitialized
 
   external c_quad_init : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
-      = "c_idas_quad_init"
+      = "sunml_idas_quad_init"
 
   let init session f yQ0 =
     add_fwdsensext session;
@@ -77,7 +77,7 @@ module Quadrature = struct (* {{{ *)
     s.has_quad <- true
 
   external c_reinit : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
-    = "c_idas_quad_reinit"
+    = "sunml_idas_quad_reinit"
 
   let reinit s v0 =
     let se = fwdsensext s in
@@ -85,14 +85,14 @@ module Quadrature = struct (* {{{ *)
     c_reinit s v0
 
   external set_err_con    : ('a, 'k) session -> bool -> unit
-      = "c_idas_quad_set_err_con"
+      = "sunml_idas_quad_set_err_con"
 
   external sv_tolerances
       : ('a, 'k) session -> float -> ('a, 'k) Nvector.t -> unit
-      = "c_idas_quad_sv_tolerances"
+      = "sunml_idas_quad_sv_tolerances"
 
   external ss_tolerances  : ('a, 'k) session -> float -> float -> unit
-      = "c_idas_quad_ss_tolerances"
+      = "sunml_idas_quad_ss_tolerances"
 
   type ('a, 'k) tolerance =
       NoStepSizeControl
@@ -111,7 +111,7 @@ module Quadrature = struct (* {{{ *)
                                   set_err_con s true)
 
   external c_get : ('a, 'k) session -> ('a, 'k) Nvector.t -> float
-      = "c_idas_quad_get"
+      = "sunml_idas_quad_get"
 
   let get s v =
     let se = fwdsensext s in
@@ -120,7 +120,7 @@ module Quadrature = struct (* {{{ *)
 
   external c_get_dky
       : ('a, 'k) session -> float -> int -> ('a, 'k) Nvector.t -> unit
-      = "c_idas_quad_get_dky"
+      = "sunml_idas_quad_get_dky"
 
   let get_dky s dky =
     let se = fwdsensext s in
@@ -128,13 +128,13 @@ module Quadrature = struct (* {{{ *)
     fun t k -> c_get_dky s t k dky
 
   external get_num_rhs_evals       : ('a, 'k) session -> int
-      = "c_idas_quad_get_num_rhs_evals"
+      = "sunml_idas_quad_get_num_rhs_evals"
 
   external get_num_err_test_fails  : ('a, 'k) session -> int
-      = "c_idas_quad_get_num_err_test_fails"
+      = "sunml_idas_quad_get_num_err_test_fails"
 
   external c_get_err_weights : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
-      = "c_idas_quad_get_err_weights"
+      = "sunml_idas_quad_get_err_weights"
 
   let get_err_weights s v =
     let se = fwdsensext s in
@@ -142,7 +142,7 @@ module Quadrature = struct (* {{{ *)
     c_get_err_weights s v
 
   external get_stats : ('a, 'k) session -> int * int
-      = "c_idas_quad_get_stats"
+      = "sunml_idas_quad_get_stats"
 
 end (* }}} *)
 
@@ -166,18 +166,18 @@ module Sensitivity = struct (* {{{ *)
     | EEtolerances
 
   external set_err_con : ('a, 'k) session -> bool -> unit
-      = "c_idas_sens_set_err_con"
+      = "sunml_idas_sens_set_err_con"
 
   external ss_tolerances
       : ('a, 'k) session -> float -> RealArray.t -> unit
-      = "c_idas_sens_ss_tolerances"
+      = "sunml_idas_sens_ss_tolerances"
 
   external ee_tolerances  : ('a, 'k) session -> unit
-      = "c_idas_sens_ee_tolerances"
+      = "sunml_idas_sens_ee_tolerances"
 
   external sv_tolerances
       : ('a, 'k) session -> float -> ('a, 'k) Nvector.t array -> unit
-      = "c_idas_sens_sv_tolerances"
+      = "sunml_idas_sens_sv_tolerances"
 
   let set_tolerances s tol =
     let ns = num_sensitivities s in
@@ -211,10 +211,10 @@ module Sensitivity = struct (* {{{ *)
   external c_sens_init : ('a, 'k) session -> sens_method -> bool
                          -> ('a, 'k) Nvector.t array
                          -> ('a, 'k) Nvector.t array -> unit
-    = "c_idas_sens_init"
+    = "sunml_idas_sens_init"
 
   external c_set_params : ('a, 'k) session -> sens_params -> unit
-      = "c_idas_sens_set_params"
+      = "sunml_idas_sens_set_params"
 
   let check_sens_params ns {pvals; pbar; plist} =
     if Sundials_configuration.safe then
@@ -268,7 +268,7 @@ module Sensitivity = struct (* {{{ *)
   external c_reinit
     : ('a, 'k) session -> sens_method
       -> ('a, 'k) Nvector.t array -> ('a, 'k) Nvector.t array -> unit
-    = "c_idas_sens_reinit"
+    = "sunml_idas_sens_reinit"
 
   let reinit s sm s0 s'0 =
     let ns = num_sensitivities s in
@@ -280,10 +280,10 @@ module Sensitivity = struct (* {{{ *)
     c_reinit s sm s0 s'0
 
   external toggle_off : ('a, 'k) session -> unit
-    = "c_idas_sens_toggle_off"
+    = "sunml_idas_sens_toggle_off"
 
   external c_get : ('a, 'k) session -> ('a, 'k) Nvector.t array -> float
-    = "c_idas_sens_get"
+    = "sunml_idas_sens_get"
 
   let get s ys =
     if Sundials_configuration.safe then
@@ -294,7 +294,7 @@ module Sensitivity = struct (* {{{ *)
 
   external c_get_dky
     : ('a, 'k) session -> float -> int -> ('a, 'k) Nvector.t array -> unit
-    = "c_idas_sens_get_dky"
+    = "sunml_idas_sens_get_dky"
 
   let get_dky s dkys =
     if Sundials_configuration.safe then
@@ -304,7 +304,7 @@ module Sensitivity = struct (* {{{ *)
     fun t k -> c_get_dky s t k dkys
 
   external c_get1 : ('a, 'k) session -> int -> ('a, 'k) Nvector.t -> float
-    = "c_idas_sens_get1"
+    = "sunml_idas_sens_get1"
 
   let get1 s ys =
     if Sundials_configuration.safe then s.checkvec ys;
@@ -312,7 +312,7 @@ module Sensitivity = struct (* {{{ *)
 
   external c_get_dky1
     : ('a, 'k) session -> float -> int -> int -> ('a, 'k) Nvector.t -> unit
-    = "c_idas_sens_get_dky1"
+    = "sunml_idas_sens_get_dky1"
 
   let get_dky1 s dkys =
     if Sundials_configuration.safe then s.checkvec dkys;
@@ -321,22 +321,22 @@ module Sensitivity = struct (* {{{ *)
   type dq_method = DQCentered | DQForward
 
   external set_dq_method : ('a, 'k) session -> dq_method -> float -> unit
-    = "c_idas_sens_set_dq_method"
+    = "sunml_idas_sens_set_dq_method"
 
   external set_max_nonlin_iters : ('a, 'k) session -> int -> unit
-    = "c_idas_sens_set_max_nonlin_iters"
+    = "sunml_idas_sens_set_max_nonlin_iters"
 
   external get_num_res_evals : ('a, 'k) session -> int
-    = "c_idas_sens_get_num_res_evals"
+    = "sunml_idas_sens_get_num_res_evals"
 
   external get_num_res_evals_sens : ('a, 'k) session -> int
-    = "c_idas_sens_get_num_res_evals_sens"
+    = "sunml_idas_sens_get_num_res_evals_sens"
 
   external get_num_err_test_fails : ('a, 'k) session -> int
-    = "c_idas_sens_get_num_err_test_fails"
+    = "sunml_idas_sens_get_num_err_test_fails"
 
   external get_num_lin_solv_setups : ('a, 'k) session -> int
-    = "c_idas_sens_get_num_lin_solv_setups"
+    = "sunml_idas_sens_get_num_lin_solv_setups"
 
   type sensitivity_stats = {
     num_sens_evals :int;
@@ -346,11 +346,11 @@ module Sensitivity = struct (* {{{ *)
   }
 
   external get_stats : ('a, 'k) session -> sensitivity_stats
-    = "c_idas_sens_get_stats"
+    = "sunml_idas_sens_get_stats"
 
   external c_get_err_weights
     : ('a, 'k) session -> ('a, 'k) Nvector.t array -> unit
-    = "c_idas_sens_get_err_weights"
+    = "sunml_idas_sens_get_err_weights"
 
   let get_err_weights s esweight =
     if Sundials_configuration.safe then
@@ -367,15 +367,15 @@ module Sensitivity = struct (* {{{ *)
     -> ('a,'k) Nvector.t array option
     -> float
     -> unit
-    = "c_ida_sens_calc_ic_ya_ydp_byte"
-      "c_ida_sens_calc_ic_ya_ydp"
+    = "sunml_ida_sens_calc_ic_ya_ydp_byte"
+      "sunml_ida_sens_calc_ic_ya_ydp"
 
   external c_sens_calc_ic_y :
     ('a,'k) session
     -> ('a,'k) Nvector.t option
     -> ('a,'k) Nvector.t array option
     -> float -> unit
-    = "c_ida_sens_calc_ic_y"
+    = "sunml_ida_sens_calc_ic_y"
 
   let calc_ic_ya_yd' session ?y ?y' ?s ?s' ?varid tout1 =
     let num_sens = num_sensitivities session in
@@ -417,13 +417,13 @@ module Sensitivity = struct (* {{{ *)
     c_sens_calc_ic_y session y s tout1
 
   external get_num_nonlin_solv_iters : ('a, 'k) session -> int
-    = "c_idas_sens_get_num_nonlin_solv_iters"
+    = "sunml_idas_sens_get_num_nonlin_solv_iters"
 
   external get_num_nonlin_solv_conv_fails : ('a, 'k) session -> int
-    = "c_idas_sens_get_num_nonlin_solv_conv_fails"
+    = "sunml_idas_sens_get_num_nonlin_solv_conv_fails"
 
   external get_nonlin_solv_stats : ('a, 'k) session -> int * int
-    = "c_idas_sens_get_nonlin_solv_stats"
+    = "sunml_idas_sens_get_nonlin_solv_stats"
 
   module Quadrature = struct (* {{{ *)
     include QuadratureTypes
@@ -435,7 +435,7 @@ module Sensitivity = struct (* {{{ *)
 
     external c_quadsens_init
       : ('a, 'k) session -> bool -> ('a, 'k) Nvector.t array -> unit
-      = "c_idas_quadsens_init"
+      = "sunml_idas_quadsens_init"
 
     let init s ?fqs v0 =
       let se = fwdsensext s in
@@ -449,7 +449,7 @@ module Sensitivity = struct (* {{{ *)
       | None -> c_quadsens_init s false v0
 
     external c_reinit : ('a, 'k) session -> ('a, 'k) Nvector.t array -> unit
-      = "c_idas_quadsens_reinit"
+      = "sunml_idas_quadsens_reinit"
 
     let reinit s v =
       let se = fwdsensext s in
@@ -466,18 +466,18 @@ module Sensitivity = struct (* {{{ *)
       | EEtolerances
 
     external set_err_con : ('a, 'k) session -> bool -> unit
-      = "c_idas_quadsens_set_err_con"
+      = "sunml_idas_quadsens_set_err_con"
 
     external ss_tolerances
       : ('a, 'k) session -> float -> RealArray.t -> unit
-      = "c_idas_quadsens_ss_tolerances"
+      = "sunml_idas_quadsens_ss_tolerances"
 
     external sv_tolerances
       : ('a, 'k) session -> float -> ('a, 'k) Nvector.t array -> unit
-      = "c_idas_quadsens_sv_tolerances"
+      = "sunml_idas_quadsens_sv_tolerances"
 
     external ee_tolerances  : ('a, 'k) session -> unit
-      = "c_idas_quadsens_ee_tolerances"
+      = "sunml_idas_quadsens_ee_tolerances"
 
     let set_tolerances s tol =
       let se = fwdsensext s in
@@ -502,7 +502,7 @@ module Sensitivity = struct (* {{{ *)
                          set_err_con s true)
 
     external c_get : ('a, 'k) session -> ('a, 'k) Nvector.t array -> float
-      = "c_idas_quadsens_get"
+      = "sunml_idas_quadsens_get"
 
     let get s ys =
       let se = fwdsensext s in
@@ -513,7 +513,7 @@ module Sensitivity = struct (* {{{ *)
       c_get s ys
 
     external c_get1 : ('a, 'k) session -> int -> ('a, 'k) Nvector.t -> float
-      = "c_idas_quadsens_get1"
+      = "sunml_idas_quadsens_get1"
 
     let get1 s yqs =
       let se = fwdsensext s in
@@ -522,7 +522,7 @@ module Sensitivity = struct (* {{{ *)
 
     external c_get_dky
       : ('a, 'k) session -> float -> int -> ('a, 'k) Nvector.t array -> unit
-      = "c_idas_quadsens_get_dky"
+      = "sunml_idas_quadsens_get_dky"
 
     let get_dky s ys =
       let se = fwdsensext s in
@@ -534,7 +534,7 @@ module Sensitivity = struct (* {{{ *)
 
     external c_get_dky1 : ('a, 'k) session -> float -> int -> int
       -> ('a, 'k) Nvector.t -> unit
-      = "c_idas_quadsens_get_dky1"
+      = "sunml_idas_quadsens_get_dky1"
 
     let get_dky1 s dkyqs =
       let se = fwdsensext s in
@@ -542,14 +542,14 @@ module Sensitivity = struct (* {{{ *)
       fun t k i -> c_get_dky1 s t k i dkyqs
 
     external get_num_rhs_evals       : ('a, 'k) session -> int
-      = "c_idas_quadsens_get_num_rhs_evals"
+      = "sunml_idas_quadsens_get_num_rhs_evals"
 
     external get_num_err_test_fails  : ('a, 'k) session -> int
-      = "c_idas_quadsens_get_num_err_test_fails"
+      = "sunml_idas_quadsens_get_num_err_test_fails"
 
     external c_get_err_weights
       : ('a, 'k) session -> ('a, 'k) Nvector.t array -> unit
-      = "c_idas_quadsens_get_err_weights"
+      = "sunml_idas_quadsens_get_err_weights"
 
     let get_err_weights s esweight =
       let se = fwdsensext s in
@@ -560,7 +560,7 @@ module Sensitivity = struct (* {{{ *)
       c_get_err_weights s esweight
 
     external get_stats : ('a, 'k) session -> int * int
-      = "c_idas_quadsens_get_stats"
+      = "sunml_idas_quadsens_get_stats"
   end (* }}} *)
 end (* }}} *)
 
@@ -578,7 +578,7 @@ module Adjoint = struct (* {{{ *)
   type interpolation = IPolynomial | IHermite
 
   external c_init : ('a, 'k) session -> int -> interpolation -> unit
-      = "c_idas_adj_init"
+      = "sunml_idas_adj_init"
 
   let init s nd interptype =
     add_fwdsensext s;
@@ -591,7 +591,7 @@ module Adjoint = struct (* {{{ *)
 
   external c_set_id
     : ('a,'k) session -> int -> ('a,'k) Nvector.t -> unit
-    = "c_idas_adj_set_id"
+    = "sunml_idas_adj_set_id"
 
   let set_id b ids =
     let bs = tosession b in
@@ -601,7 +601,7 @@ module Adjoint = struct (* {{{ *)
     bs.id_set <- true
 
   external c_set_suppress_alg : ('a,'k) session -> int -> bool -> unit
-    = "c_idas_adj_set_suppress_alg"
+    = "sunml_idas_adj_set_suppress_alg"
 
   let set_suppress_alg b ?varid v =
     (match varid with
@@ -617,7 +617,7 @@ module Adjoint = struct (* {{{ *)
     -> ('a,'k) Nvector.t
     -> ('a,'k) Nvector.t
     -> unit
-    = "c_idas_adj_calc_ic"
+    = "sunml_idas_adj_calc_ic"
 
   external c_adj_calc_ic_sens :
     ('a,'k) session
@@ -628,15 +628,15 @@ module Adjoint = struct (* {{{ *)
     -> ('a,'k) Nvector.t array
     -> ('a,'k) Nvector.t array
     -> unit
-    = "c_idas_adj_calc_ic_sens_byte"
-      "c_idas_adj_calc_ic_sens"
+    = "sunml_idas_adj_calc_ic_sens_byte"
+      "sunml_idas_adj_calc_ic_sens"
 
   external c_adj_get_consistent_ic :
     ('a,'k) session -> int
     -> ('a,'k) Nvector.t option
     -> ('a,'k) Nvector.t option
     -> unit
-    = "c_idas_adj_get_consistent_ic"
+    = "sunml_idas_adj_get_consistent_ic"
 
   let calc_ic bsession ?yb ?yb' tout1 y0 y0' =
     let checkvec = (tosession bsession).checkvec in
@@ -673,7 +673,7 @@ module Adjoint = struct (* {{{ *)
   external c_forward_normal : ('a, 'k) session -> float
                             -> ('a, 'k) Nvector.t -> ('a, 'k) Nvector.t
                             -> float * int * Ida.solver_result
-      = "c_idas_adj_forward_normal"
+      = "sunml_idas_adj_forward_normal"
 
   let forward_normal s t y y' =
     if Sundials_configuration.safe then
@@ -684,7 +684,7 @@ module Adjoint = struct (* {{{ *)
   external c_forward_one_step : ('a, 'k) session -> float
                               -> ('a, 'k) Nvector.t -> ('a, 'k) Nvector.t
                               -> float * int * Ida.solver_result
-      = "c_idas_adj_forward_one_step"
+      = "sunml_idas_adj_forward_one_step"
 
   let forward_one_step s t y y' =
     if Sundials_configuration.safe then
@@ -704,11 +704,11 @@ module Adjoint = struct (* {{{ *)
 
   external ss_tolerances
       : ('a, 'k) session -> int -> float -> float -> unit
-      = "c_idas_adj_ss_tolerances"
+      = "sunml_idas_adj_ss_tolerances"
 
   external sv_tolerances
       : ('a, 'k) session -> int -> float -> ('a, 'k) Nvector.t -> unit
-      = "c_idas_adj_sv_tolerances"
+      = "sunml_idas_adj_sv_tolerances"
 
   let set_tolerances bs tol =
     let parent, which = parent_and_which bs in
@@ -729,14 +729,14 @@ module Adjoint = struct (* {{{ *)
     solver bs nv
 
   external backward_normal : ('a, 'k) session -> float -> unit
-      = "c_idas_adj_backward_normal"
+      = "sunml_idas_adj_backward_normal"
 
   external backward_one_step : ('a, 'k) session -> float -> unit
-      = "c_idas_adj_backward_one_step"
+      = "sunml_idas_adj_backward_one_step"
 
   external c_get : ('a, 'k) session -> int
                    -> ('a, 'k) Nvector.t -> ('a, 'k) Nvector.t -> float
-      = "c_idas_adj_get"
+      = "sunml_idas_adj_get"
 
   let get bs yb ypb =
     if Sundials_configuration.safe then
@@ -750,38 +750,38 @@ module Adjoint = struct (* {{{ *)
 
   external c_get_y : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
                       -> ('d, 'k) Nvector.t -> unit
-      = "c_idas_adj_get_y"
+      = "sunml_idas_adj_get_y"
 
   let get_y s y yp =
     if Sundials_configuration.safe then (s.checkvec y; s.checkvec yp);
     fun t -> c_get_y s t y yp
 
   external set_no_sensitivity : ('a, 'k) session -> unit
-      = "c_idas_adj_set_no_sensi"
+      = "sunml_idas_adj_set_no_sensi"
 
   external c_set_max_ord : ('a, 'k) session -> int -> int -> unit
-      = "c_idas_adj_set_max_ord"
+      = "sunml_idas_adj_set_max_ord"
 
   let set_max_ord bs maxordb =
     let parent, which = parent_and_which bs in
     c_set_max_ord parent which maxordb
 
   external c_set_max_num_steps : ('a, 'k) session -> int -> int -> unit
-      = "c_idas_adj_set_max_num_steps"
+      = "sunml_idas_adj_set_max_num_steps"
 
   let set_max_num_steps bs mxstepsb =
     let parent, which = parent_and_which bs in
     c_set_max_num_steps parent which mxstepsb
 
   external c_set_init_step : ('a, 'k) session -> int -> float -> unit
-      = "c_idas_adj_set_init_step"
+      = "sunml_idas_adj_set_init_step"
 
   let set_init_step bs hinb =
     let parent, which = parent_and_which bs in
     c_set_init_step parent which hinb
 
   external c_set_max_step : ('a, 'k) session -> int -> float -> unit
-      = "c_idas_adj_set_max_step"
+      = "sunml_idas_adj_set_max_step"
 
   let set_max_step bs hmaxb =
     let parent, which = parent_and_which bs in
@@ -794,37 +794,37 @@ module Adjoint = struct (* {{{ *)
     (* Sundials < 3.0.0 *)
     external c_dls_dense
       : 'k serial_session -> int -> int -> bool -> bool -> unit
-      = "c_idas_adj_dls_dense"
+      = "sunml_idas_adj_dls_dense"
 
     (* Sundials < 3.0.0 *)
     external c_dls_lapack_dense
       : 'k serial_session -> int -> int -> bool -> bool -> unit
-      = "c_idas_adj_dls_lapack_dense"
+      = "sunml_idas_adj_dls_lapack_dense"
 
     (* Sundials < 3.0.0 *)
     external c_dls_band : ('k serial_session * int) -> (int * int * int)
                             -> bool -> bool -> unit
-      = "c_idas_adj_dls_band"
+      = "sunml_idas_adj_dls_band"
 
     (* Sundials < 3.0.0 *)
     external c_dls_lapack_band : ('k serial_session * int) -> (int * int * int)
                                   -> bool -> bool -> unit
-      = "c_idas_adj_dls_lapack_band"
+      = "sunml_idas_adj_dls_lapack_band"
 
     (* Sundials < 3.0.0 *)
     external c_klub
       : 'k serial_session * int -> 's Matrix.Sparse.sformat
         -> int -> int -> bool -> unit
-      = "c_idas_klub_init"
+      = "sunml_idas_klub_init"
 
     (* Sundials < 3.0.0 *)
     external c_klu_set_ordering
       : 'k serial_session -> LinearSolver.Direct.Klu.ordering -> unit
-      = "c_ida_klu_set_ordering"
+      = "sunml_ida_klu_set_ordering"
 
     (* Sundials < 3.0.0 *)
     external c_klu_reinit : 'k serial_session -> int -> int -> unit
-      = "c_ida_klu_reinit"
+      = "sunml_ida_klu_reinit"
 
     (* Sundials < 3.0.0 *)
     let klu_set_ordering session ordering =
@@ -843,12 +843,12 @@ module Adjoint = struct (* {{{ *)
     (* Sundials < 3.0.0 *)
     external c_superlumtb : ('k serial_session * int)
                             -> int -> int -> int -> bool -> unit
-      = "c_idas_superlumtb_init"
+      = "sunml_idas_superlumtb_init"
 
     (* Sundials < 3.0.0 *)
     external c_superlumt_set_ordering
       : 'k serial_session -> LinearSolver.Direct.Superlumt.ordering -> unit
-      = "c_ida_superlumt_set_ordering"
+      = "sunml_ida_superlumt_set_ordering"
 
     (* Sundials < 3.0.0 *)
     let superlumt_set_ordering session ordering =
@@ -995,7 +995,7 @@ module Adjoint = struct (* {{{ *)
          -> bool
          -> bool
          -> unit
-      = "c_idas_adj_dls_set_linear_solver"
+      = "sunml_idas_adj_dls_set_linear_solver"
 
     let solver ?jac ((LSD.S { LSD.rawptr; LSD.solver; LSD.matrix }) as ls)
                bs nv =
@@ -1051,30 +1051,30 @@ module Adjoint = struct (* {{{ *)
     (* Sundials < 3.0.0 *)
     external c_spgmr
       : ('a, 'k) session -> int -> int -> unit
-      = "c_idas_adj_spils_spgmr"
+      = "sunml_idas_adj_spils_spgmr"
 
     (* Sundials < 3.0.0 *)
     external c_spbcgs
       : ('a, 'k) session -> int -> int -> unit
-      = "c_idas_adj_spils_spbcgs"
+      = "sunml_idas_adj_spils_spbcgs"
 
     (* Sundials < 3.0.0 *)
     external c_sptfqmr
       : ('a, 'k) session -> int -> int -> unit
-      = "c_idas_adj_spils_sptfqmr"
+      = "sunml_idas_adj_spils_sptfqmr"
 
     (* Sundials < 3.0.0 *)
     external c_set_gs_type
         : ('a, 'k) session -> int -> LinearSolver.Iterative.gramschmidt_type -> unit
-        = "c_idas_adj_spils_set_gs_type"
+        = "sunml_idas_adj_spils_set_gs_type"
 
     (* Sundials < 3.0.0 *)
     external c_set_maxl : ('a, 'k) session -> int -> int -> unit
-        = "c_idas_adj_spils_set_maxl"
+        = "sunml_idas_adj_spils_set_maxl"
 
     (* Sundials < 3.0.0 *)
     external c_set_max_restarts : ('a, 'k) session -> int -> int -> unit
-      = "c_idas_adj_spils_set_max_restarts"
+      = "sunml_idas_adj_spils_set_max_restarts"
 
     let old_set_maxl bs maxl =
       ls_check_spils (tosession bs);
@@ -1093,11 +1093,11 @@ module Adjoint = struct (* {{{ *)
 
     external c_set_jac_times
       : ('a, 'k) session -> int -> bool -> bool -> bool -> unit
-      = "c_idas_adj_spils_set_jac_times"
+      = "sunml_idas_adj_spils_set_jac_times"
 
     external c_set_preconditioner
       : ('a, 'k) session -> int -> bool -> bool -> unit
-      = "c_idas_adj_spils_set_preconditioner"
+      = "sunml_idas_adj_spils_set_preconditioner"
 
     let init_preconditioner solve setup bs parent which nv =
       c_set_preconditioner parent which (setup <> None) false;
@@ -1131,7 +1131,7 @@ module Adjoint = struct (* {{{ *)
 
     external c_spils_set_linear_solver
       : ('a, 'k) session -> int -> ('a, 'k) LSI.Iterative.cptr -> unit
-      = "c_idas_adj_spils_set_linear_solver"
+      = "sunml_idas_adj_spils_set_linear_solver"
 
     let solver (type s)
           ({ LSI.Iterative.rawptr;
@@ -1242,7 +1242,7 @@ module Adjoint = struct (* {{{ *)
       | _ -> raise LinearSolver.InvalidLinearSolver
 
     external set_eps_lin : ('a, 'k) bsession -> float -> unit
-        = "c_idas_adj_spils_set_eps_lin"
+        = "sunml_idas_adj_spils_set_eps_lin"
 
     let set_eps_lin bs epsl =
       ls_check_spils (tosession bs);
@@ -1309,7 +1309,7 @@ module Adjoint = struct (* {{{ *)
 
     external c_set_alternate
       : ('data, 'kind) session -> int -> bool -> bool -> unit
-      = "c_ida_adj_set_alternate"
+      = "sunml_ida_adj_set_alternate"
 
     let get_cj bs = Ida.Alternate.get_cj (tosession bs)
     let get_cjratio bs = Ida.Alternate.get_cjratio (tosession bs)
@@ -1324,7 +1324,7 @@ module Adjoint = struct (* {{{ *)
 
   end (* }}} *)
   external c_bsession_finalize : ('a, 'k) session -> unit
-      = "c_idas_adj_bsession_finalize"
+      = "sunml_idas_adj_bsession_finalize"
 
   let bsession_finalize s =
     Dls.invalidate_callback s;
@@ -1337,8 +1337,8 @@ module Adjoint = struct (* {{{ *)
         -> ('a, 'k) Nvector.t
         -> bool
         -> (ida_mem * int * c_weak_ref)
-      = "c_idas_adj_init_backward_byte"
-        "c_idas_adj_init_backward"
+      = "sunml_idas_adj_init_backward_byte"
+        "sunml_idas_adj_init_backward"
 
   let init_backward s linsolv tol mf ?varid t0 y0 y'0 =
     let { bsessions } as se = fwdsensext s in
@@ -1409,7 +1409,7 @@ module Adjoint = struct (* {{{ *)
         -> ('a, 'k) Nvector.t
         -> ('a, 'k) Nvector.t
         -> unit
-      = "c_idas_adj_reinit"
+      = "sunml_idas_adj_reinit"
 
   let reinit bs ?linsolv tb0 yb0 y'b0 =
     if Sundials_configuration.safe then
@@ -1475,10 +1475,10 @@ module Adjoint = struct (* {{{ *)
 
     external c_quad_initb
         : ('a, 'k) session -> int -> ('a, 'k) Nvector.t -> unit
-        = "c_idas_adjquad_initb"
+        = "sunml_idas_adjquad_initb"
     external c_quad_initbs
         : ('a, 'k) session -> int -> ('a, 'k) Nvector.t -> unit
-        = "c_idas_adjquad_initbs"
+        = "sunml_idas_adjquad_initbs"
 
     let init bs mf y0 =
       let parent, which = parent_and_which bs in
@@ -1492,7 +1492,7 @@ module Adjoint = struct (* {{{ *)
 
     external c_reinit
         : ('a, 'k) session -> int -> ('a, 'k) Nvector.t -> unit
-        = "c_idas_adjquad_reinit"
+        = "sunml_idas_adjquad_reinit"
 
     let reinit bs yqb0 =
       let parent, which = parent_and_which bs in
@@ -1501,7 +1501,7 @@ module Adjoint = struct (* {{{ *)
       c_reinit parent which yqb0
 
     external c_get : ('a, 'k) session -> int -> ('a, 'k) Nvector.t -> float
-        = "c_idas_adjquad_get"
+        = "sunml_idas_adjquad_get"
 
     let get bs yqb =
       let parent, which = parent_and_which bs in
@@ -1515,15 +1515,15 @@ module Adjoint = struct (* {{{ *)
       | SVtolerances of float * ('a, 'k) Nvector.t
 
     external set_err_con : ('a, 'k) session -> int -> bool -> unit
-        = "c_idas_adjquad_set_err_con"
+        = "sunml_idas_adjquad_set_err_con"
 
     external sv_tolerances
         : ('a, 'k) session -> int -> float -> ('a, 'k) Nvector.t -> unit
-        = "c_idas_adjquad_sv_tolerances"
+        = "sunml_idas_adjquad_sv_tolerances"
 
     external ss_tolerances
         : ('a, 'k) session -> int -> float -> float -> unit
-        = "c_idas_adjquad_ss_tolerances"
+        = "sunml_idas_adjquad_ss_tolerances"
 
     let set_tolerances bs tol =
       let parent, which = parent_and_which bs in
@@ -1552,7 +1552,7 @@ end (* }}} *)
 
 (* Let C code know about some of the values in this module.  *)
 external c_init_module : exn array -> unit =
-  "c_idas_init_module"
+  "sunml_idas_init_module"
 
 let _ =
   c_init_module

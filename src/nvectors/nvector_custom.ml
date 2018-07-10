@@ -41,7 +41,7 @@ type 'a nvector_ops = {
 }
 
 external c_make_wrap : 'a nvector_ops -> 'a -> ('a -> bool) -> 'a t
-    = "ml_nvec_wrap_custom"
+    = "sunml_nvec_wrap_custom"
 
 let make_wrap ops v =
   c_make_wrap ops v (ops.n_vcheck v)

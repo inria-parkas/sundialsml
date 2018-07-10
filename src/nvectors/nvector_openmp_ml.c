@@ -62,7 +62,7 @@ static N_Vector clone_openmp(N_Vector w)
 /* Creation from OCaml.  */
 /* Adapted from sundials-2.6.1/src/nvec_openmp/nvector_openmp.c:
    N_VNewEmpty_OpenMP */
-CAMLprim value ml_nvec_wrap_openmp(value nthreads,
+CAMLprim value sunml_nvec_wrap_openmp(value nthreads,
 				   value payload, value checkfn)
 {
     CAMLparam3(nthreads, payload, checkfn);
@@ -125,7 +125,7 @@ CAMLprim value ml_nvec_wrap_openmp(value nthreads,
     CAMLreturn(vnvec);
 }
 
-CAMLprim value ml_nvec_openmp_num_threads(value va)
+CAMLprim value sunml_nvec_openmp_num_threads(value va)
 {
     CAMLparam1(va);
     int num_threads = NV_NUM_THREADS_OMP(NVEC_VAL(va));
@@ -135,7 +135,7 @@ CAMLprim value ml_nvec_openmp_num_threads(value va)
 
 /** Interface to underlying openmp nvector functions */
 
-CAMLprim value ml_nvec_openmp_n_vlinearsum(value va, value vx, value vb, value vy,
+CAMLprim value sunml_nvec_openmp_n_vlinearsum(value va, value vx, value vb, value vy,
 				       value vz)
 {
     CAMLparam5(va, vx, vb, vy, vz);
@@ -144,77 +144,77 @@ CAMLprim value ml_nvec_openmp_n_vlinearsum(value va, value vx, value vb, value v
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value ml_nvec_openmp_n_vconst(value vc, value vz)
+CAMLprim value sunml_nvec_openmp_n_vconst(value vc, value vz)
 {
     CAMLparam2(vc, vz);
     N_VConst_OpenMP(Double_val(vc), NVEC_VAL(vz));
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value ml_nvec_openmp_n_vprod(value vx, value vy, value vz)
+CAMLprim value sunml_nvec_openmp_n_vprod(value vx, value vy, value vz)
 {
     CAMLparam3(vx, vy, vz);
     N_VProd_OpenMP(NVEC_VAL(vx), NVEC_VAL(vy), NVEC_VAL(vz));
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value ml_nvec_openmp_n_vdiv(value vx, value vy, value vz)
+CAMLprim value sunml_nvec_openmp_n_vdiv(value vx, value vy, value vz)
 {
     CAMLparam3(vx, vy, vz);
     N_VDiv_OpenMP(NVEC_VAL(vx), NVEC_VAL(vy), NVEC_VAL(vz));
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value ml_nvec_openmp_n_vscale(value vc, value vx, value vz)
+CAMLprim value sunml_nvec_openmp_n_vscale(value vc, value vx, value vz)
 {
     CAMLparam3(vc, vx, vz);
     N_VScale_OpenMP(Double_val(vc), NVEC_VAL(vx), NVEC_VAL(vz));
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value ml_nvec_openmp_n_vabs(value vx, value vz)
+CAMLprim value sunml_nvec_openmp_n_vabs(value vx, value vz)
 {
     CAMLparam2(vx, vz);
     N_VAbs_OpenMP(NVEC_VAL(vx), NVEC_VAL(vz));
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value ml_nvec_openmp_n_vinv(value vx, value vz)
+CAMLprim value sunml_nvec_openmp_n_vinv(value vx, value vz)
 {
     CAMLparam2(vx, vz);
     N_VInv_OpenMP(NVEC_VAL(vx), NVEC_VAL(vz));
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value ml_nvec_openmp_n_vaddconst(value vx, value vb, value vz)
+CAMLprim value sunml_nvec_openmp_n_vaddconst(value vx, value vb, value vz)
 {
     CAMLparam3(vx, vb, vz);
     N_VAddConst_OpenMP(NVEC_VAL(vx), Double_val(vb), NVEC_VAL(vz));
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value ml_nvec_openmp_n_vdotprod(value vx, value vy)
+CAMLprim value sunml_nvec_openmp_n_vdotprod(value vx, value vy)
 {
     CAMLparam2(vx, vy);
     realtype r = N_VDotProd_OpenMP(NVEC_VAL(vx), NVEC_VAL(vy));
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value ml_nvec_openmp_n_vmaxnorm(value vx)
+CAMLprim value sunml_nvec_openmp_n_vmaxnorm(value vx)
 {
     CAMLparam1(vx);
     realtype r = N_VMaxNorm_OpenMP(NVEC_VAL(vx));
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value ml_nvec_openmp_n_vwrmsnorm(value vx, value vw)
+CAMLprim value sunml_nvec_openmp_n_vwrmsnorm(value vx, value vw)
 {
     CAMLparam2(vx, vw);
     realtype r = N_VWrmsNorm_OpenMP(NVEC_VAL(vx), NVEC_VAL(vw));
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value ml_nvec_openmp_n_vwrmsnormmask(value vx, value vw, value vid)
+CAMLprim value sunml_nvec_openmp_n_vwrmsnormmask(value vx, value vw, value vid)
 {
     CAMLparam3(vx, vw, vid);
     realtype r = N_VWrmsNormMask_OpenMP(NVEC_VAL(vx), NVEC_VAL(vw),
@@ -222,42 +222,42 @@ CAMLprim value ml_nvec_openmp_n_vwrmsnormmask(value vx, value vw, value vid)
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value ml_nvec_openmp_n_vmin(value vx)
+CAMLprim value sunml_nvec_openmp_n_vmin(value vx)
 {
     CAMLparam1(vx);
     realtype r = N_VMin_OpenMP(NVEC_VAL(vx));
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value ml_nvec_openmp_n_vwl2norm(value vx, value vw)
+CAMLprim value sunml_nvec_openmp_n_vwl2norm(value vx, value vw)
 {
     CAMLparam2(vx, vw);
     realtype r = N_VWL2Norm_OpenMP(NVEC_VAL(vx), NVEC_VAL(vw));
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value ml_nvec_openmp_n_vl1norm(value vx)
+CAMLprim value sunml_nvec_openmp_n_vl1norm(value vx)
 {
     CAMLparam1(vx);
     realtype r = N_VL1Norm_OpenMP(NVEC_VAL(vx));
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value ml_nvec_openmp_n_vcompare(value vc, value vx, value vz)
+CAMLprim value sunml_nvec_openmp_n_vcompare(value vc, value vx, value vz)
 {
     CAMLparam3(vc, vx, vz);
     N_VCompare_OpenMP(Double_val(vc), NVEC_VAL(vx), NVEC_VAL(vz));
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value ml_nvec_openmp_n_vinvtest(value vx, value vz)
+CAMLprim value sunml_nvec_openmp_n_vinvtest(value vx, value vz)
 {
     CAMLparam2(vx, vz);
     booleantype r = N_VInvTest_OpenMP(NVEC_VAL(vx), NVEC_VAL(vz));
     CAMLreturn(Val_bool(r));
 }
 
-CAMLprim value ml_nvec_openmp_n_vconstrmask(value vc, value vx, value vm)
+CAMLprim value sunml_nvec_openmp_n_vconstrmask(value vc, value vx, value vm)
 {
     CAMLparam3(vc, vx, vm);
     booleantype r = N_VConstrMask_OpenMP(NVEC_VAL(vc), NVEC_VAL(vx),
@@ -265,7 +265,7 @@ CAMLprim value ml_nvec_openmp_n_vconstrmask(value vc, value vx, value vm)
     CAMLreturn(Val_bool(r));
 }
 
-CAMLprim value ml_nvec_openmp_n_vminquotient(value vnum, value vdenom)
+CAMLprim value sunml_nvec_openmp_n_vminquotient(value vnum, value vdenom)
 {
     CAMLparam2(vnum, vdenom);
     realtype r = N_VMinQuotient_OpenMP(NVEC_VAL(vnum), NVEC_VAL(vdenom));

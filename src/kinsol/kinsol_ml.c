@@ -51,7 +51,7 @@
 #include <stdio.h>
 #define MAX_ERRMSG_LEN 256
 
-CAMLprim value c_kinsol_init_module (value cbs, value exns)
+CAMLprim value sunml_kinsol_init_module (value cbs, value exns)
 {
     CAMLparam2 (cbs, exns);
     REGISTER_EXNS (KINSOL, exns);
@@ -111,7 +111,7 @@ static void errh(
     CAMLreturn0;
 }
 
-CAMLprim value c_kinsol_set_err_handler_fn(value vdata)
+CAMLprim value sunml_kinsol_set_err_handler_fn(value vdata)
 {
     CAMLparam1(vdata);
  
@@ -122,7 +122,7 @@ CAMLprim value c_kinsol_set_err_handler_fn(value vdata)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_clear_err_handler_fn(value vdata)
+CAMLprim value sunml_kinsol_clear_err_handler_fn(value vdata)
 {
     CAMLparam1(vdata);
 
@@ -163,7 +163,7 @@ static void infoh(
     CAMLreturn0;
 }
 
-CAMLprim value c_kinsol_set_info_handler_fn(value vdata)
+CAMLprim value sunml_kinsol_set_info_handler_fn(value vdata)
 {
     CAMLparam1(vdata);
  
@@ -174,7 +174,7 @@ CAMLprim value c_kinsol_set_info_handler_fn(value vdata)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_clear_info_handler_fn(value vdata)
+CAMLprim value sunml_kinsol_clear_info_handler_fn(value vdata)
 {
     CAMLparam1(vdata);
 
@@ -507,7 +507,7 @@ static int lsolve(KINMem kin_mem, N_Vector x, N_Vector b, realtype *res_norm)
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
-CAMLprim value c_kinsol_set_alternate (value vkin_mem, value vhas_init,
+CAMLprim value sunml_kinsol_set_alternate (value vkin_mem, value vhas_init,
 				       value vhas_setup)
 {
     CAMLparam3(vkin_mem, vhas_init, vhas_setup);
@@ -524,7 +524,7 @@ CAMLprim value c_kinsol_set_alternate (value vkin_mem, value vhas_init,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_get_u_uscale (value vkin_mem)
+CAMLprim value sunml_kinsol_get_u_uscale (value vkin_mem)
 {
     CAMLparam1(vkin_mem);
     CAMLlocal1(r);
@@ -537,7 +537,7 @@ CAMLprim value c_kinsol_get_u_uscale (value vkin_mem)
     CAMLreturn(r);
 }
 
-CAMLprim value c_kinsol_get_f_fscale (value vkin_mem)
+CAMLprim value sunml_kinsol_get_f_fscale (value vkin_mem)
 {
     CAMLparam1(vkin_mem);
     CAMLlocal1(r);
@@ -550,7 +550,7 @@ CAMLprim value c_kinsol_get_f_fscale (value vkin_mem)
     CAMLreturn(r);
 }
 
-CAMLprim value c_kinsol_set_sjpnorm (value vkin_mem, value vsjpnorm)
+CAMLprim value sunml_kinsol_set_sjpnorm (value vkin_mem, value vsjpnorm)
 {
     CAMLparam2(vkin_mem, vsjpnorm);
     KINMem kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
@@ -560,7 +560,7 @@ CAMLprim value c_kinsol_set_sjpnorm (value vkin_mem, value vsjpnorm)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_set_sfdotjp (value vkin_mem, value vsfdotjp)
+CAMLprim value sunml_kinsol_set_sfdotjp (value vkin_mem, value vsfdotjp)
 {
     CAMLparam2(vkin_mem, vsfdotjp);
     KINMem kin_mem = KINSOL_MEM_FROM_ML (vkin_mem);
@@ -575,7 +575,7 @@ CAMLprim value c_kinsol_set_sfdotjp (value vkin_mem, value vsfdotjp)
 }
 
 /* Dense and Band can only be used with serial NVectors.  */
-CAMLprim value c_kinsol_dls_dense (value vkin_mem, value vset_jac)
+CAMLprim value sunml_kinsol_dls_dense (value vkin_mem, value vset_jac)
 {
     CAMLparam2(vkin_mem, vset_jac);
 #if SUNDIALS_LIB_VERSION < 300
@@ -595,7 +595,7 @@ CAMLprim value c_kinsol_dls_dense (value vkin_mem, value vset_jac)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_dls_lapack_dense (value vkin_mem, value vset_jac)
+CAMLprim value sunml_kinsol_dls_lapack_dense (value vkin_mem, value vset_jac)
 {
     CAMLparam2 (vkin_mem, vset_jac);
 #if SUNDIALS_LIB_VERSION < 300 && defined SUNDIALS_ML_LAPACK
@@ -615,7 +615,7 @@ CAMLprim value c_kinsol_dls_lapack_dense (value vkin_mem, value vset_jac)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_dls_band (value vkin_mem,
+CAMLprim value sunml_kinsol_dls_band (value vkin_mem,
 				  value vmupper,
 				  value vmlower,
 				  value vset_jac)
@@ -638,7 +638,7 @@ CAMLprim value c_kinsol_dls_band (value vkin_mem,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_dls_lapack_band (value vkin_mem, value vmupper,
+CAMLprim value sunml_kinsol_dls_lapack_band (value vkin_mem, value vmupper,
 					 value vmlower, value vset_jac)
 {
     CAMLparam4(vkin_mem, vmupper, vmlower, vset_jac);
@@ -660,7 +660,7 @@ CAMLprim value c_kinsol_dls_lapack_band (value vkin_mem, value vmupper,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_dls_set_linear_solver (value vkin_mem, value vlsolv,
+CAMLprim value sunml_kinsol_dls_set_linear_solver (value vkin_mem, value vlsolv,
 					       value vjmat, value vhasjac)
 {
     CAMLparam4(vkin_mem, vlsolv, vjmat, vhasjac);
@@ -682,7 +682,7 @@ CAMLprim value c_kinsol_dls_set_linear_solver (value vkin_mem, value vlsolv,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_spils_set_linear_solver (value vkin_mem, value vlsolv)
+CAMLprim value sunml_kinsol_spils_set_linear_solver (value vkin_mem, value vlsolv)
 {
     CAMLparam2(vkin_mem, vlsolv);
 #if SUNDIALS_LIB_VERSION >= 300
@@ -698,7 +698,7 @@ CAMLprim value c_kinsol_spils_set_linear_solver (value vkin_mem, value vlsolv)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_spils_set_preconditioner (value vsession,
+CAMLprim value sunml_kinsol_spils_set_preconditioner (value vsession,
 						  value vset_precsetup)
 {
     CAMLparam2 (vsession, vset_precsetup);
@@ -712,7 +712,7 @@ CAMLprim value c_kinsol_spils_set_preconditioner (value vsession,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_spils_set_jac_times_vec_fn(value vdata, value vset_jac)
+CAMLprim value sunml_kinsol_spils_set_jac_times_vec_fn(value vdata, value vset_jac)
 {
     CAMLparam2(vdata, vset_jac);
     KINSpilsJacTimesVecFn jac = Bool_val (vset_jac) ? jactimesfn : NULL;
@@ -721,7 +721,7 @@ CAMLprim value c_kinsol_spils_set_jac_times_vec_fn(value vdata, value vset_jac)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_set_no_res_mon(value vkin_mem, value vnonniresmon)
+CAMLprim value sunml_kinsol_set_no_res_mon(value vkin_mem, value vnonniresmon)
 {
     CAMLparam2(vkin_mem, vnonniresmon);
 
@@ -732,7 +732,7 @@ CAMLprim value c_kinsol_set_no_res_mon(value vkin_mem, value vnonniresmon)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_set_max_sub_setup_calls(value vkin_mem, value vmsbsetsub)
+CAMLprim value sunml_kinsol_set_max_sub_setup_calls(value vkin_mem, value vmsbsetsub)
 {
     CAMLparam2(vkin_mem, vmsbsetsub);
 
@@ -743,7 +743,7 @@ CAMLprim value c_kinsol_set_max_sub_setup_calls(value vkin_mem, value vmsbsetsub
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_set_constraints(value vkin_mem, value vconstraints)
+CAMLprim value sunml_kinsol_set_constraints(value vkin_mem, value vconstraints)
 {
     CAMLparam2(vkin_mem, vconstraints);
     int flag;
@@ -758,7 +758,7 @@ CAMLprim value c_kinsol_set_constraints(value vkin_mem, value vconstraints)
 /* basic interface */
 
 /* KINCreate() + KINInit().  */
-CAMLprim value c_kinsol_init(value weakref, value vtemp,
+CAMLprim value sunml_kinsol_init(value weakref, value vtemp,
 			     value vomaxiters, value vomaa)
 {
     CAMLparam4(weakref, vtemp, vomaxiters, vomaa);
@@ -812,7 +812,7 @@ CAMLprim value c_kinsol_init(value weakref, value vtemp,
     CAMLreturn(r);
 }
 
-CAMLprim value c_kinsol_solve(value vdata, value vu, value vstrategy,
+CAMLprim value sunml_kinsol_solve(value vdata, value vu, value vstrategy,
 	 		      value vuscale, value vfscale)
 {
     CAMLparam5(vdata, vu, vstrategy, vuscale, vfscale);
@@ -946,7 +946,7 @@ void kinsol_ml_check_flag(const char *call, int flag)
 
 /* basic interface */
 
-CAMLprim value c_kinsol_session_finalize(value vdata)
+CAMLprim value sunml_kinsol_session_finalize(value vdata)
 {
     if (KINSOL_MEM_FROM_ML(vdata) != NULL) {
 	void *kin_mem = KINSOL_MEM_FROM_ML(vdata);
@@ -960,7 +960,7 @@ CAMLprim value c_kinsol_session_finalize(value vdata)
 
 /* boiler plate */
 
-CAMLprim value c_kinsol_spils_set_max_restarts(value vkin_mem, value vmaxr)
+CAMLprim value sunml_kinsol_spils_set_max_restarts(value vkin_mem, value vmaxr)
 {
     CAMLparam2(vkin_mem, vmaxr);
 #if SUNDIALS_LIB_VERSION < 300
@@ -973,7 +973,7 @@ CAMLprim value c_kinsol_spils_set_max_restarts(value vkin_mem, value vmaxr)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_spils_spgmr(value vkin_mem, value vmaxl)
+CAMLprim value sunml_kinsol_spils_spgmr(value vkin_mem, value vmaxl)
 {
     CAMLparam2(vkin_mem, vmaxl);
 #if SUNDIALS_LIB_VERSION < 300
@@ -988,7 +988,7 @@ CAMLprim value c_kinsol_spils_spgmr(value vkin_mem, value vmaxl)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_spils_spfgmr(value vkin_mem, value vmaxl)
+CAMLprim value sunml_kinsol_spils_spfgmr(value vkin_mem, value vmaxl)
 {
     CAMLparam2(vkin_mem, vmaxl);
 #if 260 <= SUNDIALS_LIB_VERSION && SUNDIALS_LIB_VERSION < 300
@@ -1003,7 +1003,7 @@ CAMLprim value c_kinsol_spils_spfgmr(value vkin_mem, value vmaxl)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_spils_spbcgs(value vkin_mem, value vmaxl)
+CAMLprim value sunml_kinsol_spils_spbcgs(value vkin_mem, value vmaxl)
 {
     CAMLparam2(vkin_mem, vmaxl);
 #if SUNDIALS_LIB_VERSION < 300
@@ -1018,7 +1018,7 @@ CAMLprim value c_kinsol_spils_spbcgs(value vkin_mem, value vmaxl)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_spils_sptfqmr(value vkin_mem, value vmaxl)
+CAMLprim value sunml_kinsol_spils_sptfqmr(value vkin_mem, value vmaxl)
 {
     CAMLparam2(vkin_mem, vmaxl);
 #if SUNDIALS_LIB_VERSION < 300
@@ -1033,7 +1033,7 @@ CAMLprim value c_kinsol_spils_sptfqmr(value vkin_mem, value vmaxl)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_dls_get_work_space(value vkin_mem)
+CAMLprim value sunml_kinsol_dls_get_work_space(value vkin_mem)
 {
     CAMLparam1(vkin_mem);
     CAMLlocal1(r);
@@ -1052,7 +1052,7 @@ CAMLprim value c_kinsol_dls_get_work_space(value vkin_mem)
     CAMLreturn(r);
 }
 
-CAMLprim value c_kinsol_dls_get_num_jac_evals(value vkin_mem)
+CAMLprim value sunml_kinsol_dls_get_num_jac_evals(value vkin_mem)
 {
     CAMLparam1(vkin_mem);
 
@@ -1063,7 +1063,7 @@ CAMLprim value c_kinsol_dls_get_num_jac_evals(value vkin_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_kinsol_dls_get_num_func_evals(value vkin_mem)
+CAMLprim value sunml_kinsol_dls_get_num_func_evals(value vkin_mem)
 {
     CAMLparam1(vkin_mem);
 
@@ -1075,7 +1075,7 @@ CAMLprim value c_kinsol_dls_get_num_func_evals(value vkin_mem)
 }
 
 
-CAMLprim value c_kinsol_spils_get_work_space(value vkin_mem)
+CAMLprim value sunml_kinsol_spils_get_work_space(value vkin_mem)
 {
     CAMLparam1(vkin_mem);
     CAMLlocal1(r);
@@ -1095,7 +1095,7 @@ CAMLprim value c_kinsol_spils_get_work_space(value vkin_mem)
     CAMLreturn(r);
 }
 
-CAMLprim value c_kinsol_spils_get_num_lin_iters(value vkin_mem)
+CAMLprim value sunml_kinsol_spils_get_num_lin_iters(value vkin_mem)
 {
     CAMLparam1(vkin_mem);
 
@@ -1106,7 +1106,7 @@ CAMLprim value c_kinsol_spils_get_num_lin_iters(value vkin_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_kinsol_spils_get_num_conv_fails(value vkin_mem)
+CAMLprim value sunml_kinsol_spils_get_num_conv_fails(value vkin_mem)
 {
     CAMLparam1(vkin_mem);
 
@@ -1117,7 +1117,7 @@ CAMLprim value c_kinsol_spils_get_num_conv_fails(value vkin_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_kinsol_spils_get_num_prec_evals(value vkin_mem)
+CAMLprim value sunml_kinsol_spils_get_num_prec_evals(value vkin_mem)
 {
     CAMLparam1(vkin_mem);
 
@@ -1128,7 +1128,7 @@ CAMLprim value c_kinsol_spils_get_num_prec_evals(value vkin_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_kinsol_spils_get_num_prec_solves(value vkin_mem)
+CAMLprim value sunml_kinsol_spils_get_num_prec_solves(value vkin_mem)
 {
     CAMLparam1(vkin_mem);
 
@@ -1139,7 +1139,7 @@ CAMLprim value c_kinsol_spils_get_num_prec_solves(value vkin_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_kinsol_spils_get_num_jtimes_evals(value vkin_mem)
+CAMLprim value sunml_kinsol_spils_get_num_jtimes_evals(value vkin_mem)
 {
     CAMLparam1(vkin_mem);
 
@@ -1150,7 +1150,7 @@ CAMLprim value c_kinsol_spils_get_num_jtimes_evals(value vkin_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_kinsol_spils_get_num_func_evals (value vkin_mem)
+CAMLprim value sunml_kinsol_spils_get_num_func_evals (value vkin_mem)
 {
     CAMLparam1(vkin_mem);
 
@@ -1161,7 +1161,7 @@ CAMLprim value c_kinsol_spils_get_num_func_evals (value vkin_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_kinsol_set_error_file(value vdata, value vfile)
+CAMLprim value sunml_kinsol_set_error_file(value vdata, value vfile)
 {
     CAMLparam2(vdata, vfile);
 
@@ -1171,7 +1171,7 @@ CAMLprim value c_kinsol_set_error_file(value vdata, value vfile)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_set_info_file(value vdata, value vfile)
+CAMLprim value sunml_kinsol_set_info_file(value vdata, value vfile)
 {
     CAMLparam2(vdata, vfile);
 
@@ -1181,7 +1181,7 @@ CAMLprim value c_kinsol_set_info_file(value vdata, value vfile)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_set_print_level(value vkin_mem, value vplvl)
+CAMLprim value sunml_kinsol_set_print_level(value vkin_mem, value vplvl)
 {
     CAMLparam2(vkin_mem, vplvl);
 
@@ -1191,7 +1191,7 @@ CAMLprim value c_kinsol_set_print_level(value vkin_mem, value vplvl)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_set_num_max_iters(value vkin_mem, value vmxiter)
+CAMLprim value sunml_kinsol_set_num_max_iters(value vkin_mem, value vmxiter)
 {
     CAMLparam2(vkin_mem, vmxiter);
 
@@ -1201,7 +1201,7 @@ CAMLprim value c_kinsol_set_num_max_iters(value vkin_mem, value vmxiter)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_set_maa(value vkin_mem, value vmaa)
+CAMLprim value sunml_kinsol_set_maa(value vkin_mem, value vmaa)
 {
     CAMLparam2(vkin_mem, vmaa);
 #if SUNDIALS_LIB_VERSION >= 260
@@ -1214,7 +1214,7 @@ CAMLprim value c_kinsol_set_maa(value vkin_mem, value vmaa)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_set_no_init_setup(value vkin_mem, value vnoinitsetup)
+CAMLprim value sunml_kinsol_set_no_init_setup(value vkin_mem, value vnoinitsetup)
 {
     CAMLparam2(vkin_mem, vnoinitsetup);
 
@@ -1224,7 +1224,7 @@ CAMLprim value c_kinsol_set_no_init_setup(value vkin_mem, value vnoinitsetup)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_set_max_setup_calls(value vkin_mem, value vmsbset)
+CAMLprim value sunml_kinsol_set_max_setup_calls(value vkin_mem, value vmsbset)
 {
     CAMLparam2(vkin_mem, vmsbset);
 
@@ -1234,7 +1234,7 @@ CAMLprim value c_kinsol_set_max_setup_calls(value vkin_mem, value vmsbset)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_set_eta_form(value vkin_mem, value vetachoice)
+CAMLprim value sunml_kinsol_set_eta_form(value vkin_mem, value vetachoice)
 {
     CAMLparam2(vkin_mem, vetachoice);
 
@@ -1285,7 +1285,7 @@ CAMLprim value c_kinsol_set_eta_params(value vkin_mem, value vegamma, value veal
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_set_res_mon_const_value(value vkin_mem, value vomegaconst)
+CAMLprim value sunml_kinsol_set_res_mon_const_value(value vkin_mem, value vomegaconst)
 {
     CAMLparam2(vkin_mem, vomegaconst);
 
@@ -1296,7 +1296,7 @@ CAMLprim value c_kinsol_set_res_mon_const_value(value vkin_mem, value vomegacons
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_set_res_mon_params(value vkin_mem, value vomegamin, value vomegamax)
+CAMLprim value sunml_kinsol_set_res_mon_params(value vkin_mem, value vomegamin, value vomegamax)
 {
     CAMLparam3(vkin_mem, vomegamin, vomegamax);
 
@@ -1307,7 +1307,7 @@ CAMLprim value c_kinsol_set_res_mon_params(value vkin_mem, value vomegamin, valu
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_set_no_min_eps(value vkin_mem, value vnomineps)
+CAMLprim value sunml_kinsol_set_no_min_eps(value vkin_mem, value vnomineps)
 {
     CAMLparam2(vkin_mem, vnomineps);
 
@@ -1317,7 +1317,7 @@ CAMLprim value c_kinsol_set_no_min_eps(value vkin_mem, value vnomineps)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_set_max_newton_step(value vkin_mem, value vmxnewtstep)
+CAMLprim value sunml_kinsol_set_max_newton_step(value vkin_mem, value vmxnewtstep)
 {
     CAMLparam2(vkin_mem, vmxnewtstep);
 
@@ -1328,7 +1328,7 @@ CAMLprim value c_kinsol_set_max_newton_step(value vkin_mem, value vmxnewtstep)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_set_max_beta_fails(value vkin_mem, value vmxnbcf)
+CAMLprim value sunml_kinsol_set_max_beta_fails(value vkin_mem, value vmxnbcf)
 {
     CAMLparam2(vkin_mem, vmxnbcf);
 
@@ -1339,7 +1339,7 @@ CAMLprim value c_kinsol_set_max_beta_fails(value vkin_mem, value vmxnbcf)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_set_rel_err_func(value vkin_mem, value vrelfunc)
+CAMLprim value sunml_kinsol_set_rel_err_func(value vkin_mem, value vrelfunc)
 {
     CAMLparam2(vkin_mem, vrelfunc);
 
@@ -1350,7 +1350,7 @@ CAMLprim value c_kinsol_set_rel_err_func(value vkin_mem, value vrelfunc)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_set_func_norm_tol(value vkin_mem, value vfnormtol)
+CAMLprim value sunml_kinsol_set_func_norm_tol(value vkin_mem, value vfnormtol)
 {
     CAMLparam2(vkin_mem, vfnormtol);
 
@@ -1361,7 +1361,7 @@ CAMLprim value c_kinsol_set_func_norm_tol(value vkin_mem, value vfnormtol)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_set_scaled_step_tol(value vkin_mem, value vscsteptol)
+CAMLprim value sunml_kinsol_set_scaled_step_tol(value vkin_mem, value vscsteptol)
 {
     CAMLparam2(vkin_mem, vscsteptol);
 
@@ -1372,7 +1372,7 @@ CAMLprim value c_kinsol_set_scaled_step_tol(value vkin_mem, value vscsteptol)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_get_work_space(value vkin_mem)
+CAMLprim value sunml_kinsol_get_work_space(value vkin_mem)
 {
     CAMLparam1(vkin_mem);
     CAMLlocal1(r);
@@ -1392,7 +1392,7 @@ CAMLprim value c_kinsol_get_work_space(value vkin_mem)
     CAMLreturn(r);
 }
 
-CAMLprim value c_kinsol_get_num_func_evals(value vkin_mem)
+CAMLprim value sunml_kinsol_get_num_func_evals(value vkin_mem)
 {
     CAMLparam1(vkin_mem);
 
@@ -1405,7 +1405,7 @@ CAMLprim value c_kinsol_get_num_func_evals(value vkin_mem)
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim value c_kinsol_get_num_nonlin_solv_iters(value vkin_mem)
+CAMLprim value sunml_kinsol_get_num_nonlin_solv_iters(value vkin_mem)
 {
     CAMLparam1(vkin_mem);
 
@@ -1418,7 +1418,7 @@ CAMLprim value c_kinsol_get_num_nonlin_solv_iters(value vkin_mem)
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim value c_kinsol_get_num_beta_cond_fails(value vkin_mem)
+CAMLprim value sunml_kinsol_get_num_beta_cond_fails(value vkin_mem)
 {
     CAMLparam1(vkin_mem);
 
@@ -1431,7 +1431,7 @@ CAMLprim value c_kinsol_get_num_beta_cond_fails(value vkin_mem)
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim value c_kinsol_get_num_backtrack_ops(value vkin_mem)
+CAMLprim value sunml_kinsol_get_num_backtrack_ops(value vkin_mem)
 {
     CAMLparam1(vkin_mem);
 
@@ -1444,7 +1444,7 @@ CAMLprim value c_kinsol_get_num_backtrack_ops(value vkin_mem)
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim value c_kinsol_get_func_norm(value vkin_mem)
+CAMLprim value sunml_kinsol_get_func_norm(value vkin_mem)
 {
     CAMLparam1(vkin_mem);
 
@@ -1457,7 +1457,7 @@ CAMLprim value c_kinsol_get_func_norm(value vkin_mem)
     CAMLreturn(caml_copy_double(v));
 }
 
-CAMLprim value c_kinsol_get_step_length(value vkin_mem)
+CAMLprim value sunml_kinsol_get_step_length(value vkin_mem)
 {
     CAMLparam1(vkin_mem);
 

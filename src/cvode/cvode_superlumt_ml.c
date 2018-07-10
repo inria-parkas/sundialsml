@@ -21,14 +21,14 @@
 #include "../sundials/sundials_ml.h"
 
 #ifndef SUNDIALS_ML_SUPERLUMT
-CAMLprim value c_cvode_superlumt_init (value vcvode_mem, value vneqs,
+CAMLprim value sunml_cvode_superlumt_init (value vcvode_mem, value vneqs,
 				       value vnnz, value vnthreads)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 
-CAMLprim value c_cvode_superlumt_set_ordering (value vcvode_mem, value vorder)
+CAMLprim value sunml_cvode_superlumt_set_ordering (value vcvode_mem, value vorder)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 
-CAMLprim value c_cvode_superlumt_get_num_jac_evals(value vcvode_mem)
+CAMLprim value sunml_cvode_superlumt_get_num_jac_evals(value vcvode_mem)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 #else
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -89,7 +89,7 @@ static int jacfn(
 }
 #endif
 
-CAMLprim value c_cvode_superlumt_init (value vcvode_mem, value vneqs,
+CAMLprim value sunml_cvode_superlumt_init (value vcvode_mem, value vneqs,
 				       value vnnz, value vnthreads)
 {
     CAMLparam4(vcvode_mem, vneqs, vnnz, vnthreads);
@@ -109,7 +109,7 @@ CAMLprim value c_cvode_superlumt_init (value vcvode_mem, value vneqs,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_superlumt_set_ordering (value vcvode_mem, value vorder)
+CAMLprim value sunml_cvode_superlumt_set_ordering (value vcvode_mem, value vorder)
 {
     CAMLparam2(vcvode_mem, vorder);
 #if SUNDIALS_LIB_VERSION < 300
@@ -124,7 +124,7 @@ CAMLprim value c_cvode_superlumt_set_ordering (value vcvode_mem, value vorder)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_superlumt_get_num_jac_evals(value vcvode_mem)
+CAMLprim value sunml_cvode_superlumt_get_num_jac_evals(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
     long int r = 0;

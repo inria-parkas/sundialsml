@@ -57,7 +57,7 @@ module Dense = struct (* {{{ *)
   type t = (data, cptr) matrix_content
 
   external c_create : int -> int -> t
-    = "ml_matrix_dense_create"
+    = "sunml_matrix_dense_create"
 
   let create i j =
     if Sundials_configuration.safe then begin
@@ -155,7 +155,7 @@ module Dense = struct (* {{{ *)
     payload.{j, i} <- f payload.{j, i}
 
   external c_scale_add : float -> cptr -> cptr -> unit
-    = "ml_matrix_dense_scale_add"
+    = "sunml_matrix_dense_scale_add"
 
   let scale_add c { rawptr = ptr1; valid = valid1 }
                   { rawptr = ptr2; valid = valid2 } =
@@ -164,7 +164,7 @@ module Dense = struct (* {{{ *)
     c_scale_add c ptr1 ptr2
 
   external c_scale_addi : float -> cptr -> unit
-    = "ml_matrix_dense_scale_addi"
+    = "sunml_matrix_dense_scale_addi"
 
   let scale_addi c { rawptr; valid } =
     if check_valid && not valid then raise Invalidated;
@@ -172,7 +172,7 @@ module Dense = struct (* {{{ *)
 
   external c_matvec
     : cptr -> RealArray.t -> RealArray.t -> unit
-    = "ml_matrix_dense_matvec"
+    = "sunml_matrix_dense_matvec"
 
   let matvec { rawptr; payload; valid } x y =
     if check_valid && not valid then raise Invalidated;
@@ -194,7 +194,7 @@ module Dense = struct (* {{{ *)
     Bigarray.Array2.blit data1 data2
 
   external c_space : cptr -> int * int
-      = "ml_matrix_dense_space"
+      = "sunml_matrix_dense_space"
 
   let space { rawptr; valid } =
     if check_valid && not valid then raise Invalidated;
@@ -244,7 +244,7 @@ module Band = struct (* {{{ *)
   type t = (data, cptr) matrix_content
 
   external c_create : dimensions -> t
-    = "ml_matrix_band_create"
+    = "sunml_matrix_band_create"
 
   let create ({n; mu; smu; ml} as dimensions) =
     if Sundials_configuration.safe then begin
@@ -345,7 +345,7 @@ module Band = struct (* {{{ *)
     data.{j, k} <- f data.{j, k}
 
   external c_scale_add : float -> t -> cptr -> unit
-    = "ml_matrix_band_scale_add"
+    = "sunml_matrix_band_scale_add"
 
   let scale_add c ({ valid = valid1 } as m1)
                   { rawptr = ptr2; valid = valid2 } =
@@ -353,7 +353,7 @@ module Band = struct (* {{{ *)
     c_scale_add c m1 ptr2
 
   external c_scale_addi : float -> cptr -> unit
-    = "ml_matrix_band_scale_addi"
+    = "sunml_matrix_band_scale_addi"
 
   let scale_addi c { rawptr; valid } =
     if check_valid && not valid then raise Invalidated;
@@ -361,7 +361,7 @@ module Band = struct (* {{{ *)
 
   external c_matvec
     : cptr -> RealArray.t -> RealArray.t -> unit
-    = "ml_matrix_band_matvec"
+    = "sunml_matrix_band_matvec"
 
   let matvec { rawptr; payload = { data; dims = { n } }; valid } x y =
     if check_valid && not valid then raise Invalidated;
@@ -377,7 +377,7 @@ module Band = struct (* {{{ *)
     Bigarray.Array2.fill data 0.0
 
   external c_copy : cptr -> t -> unit
-    = "ml_matrix_band_copy"
+    = "sunml_matrix_band_copy"
 
   let blit { rawptr = cptr1; valid = valid1 }
            ({ valid = valid2 } as m2) =
@@ -444,7 +444,7 @@ module Sparse = struct (* {{{ *)
   type 's t = ('s data, cptr) matrix_content
 
   external c_create : int -> int -> int -> 's sformat -> 's t
-    = "ml_matrix_sparse_create"
+    = "sunml_matrix_sparse_create"
 
   let make (type s) (sformat : s sformat) m n nnz =
     if Sundials_configuration.safe then begin
@@ -460,7 +460,7 @@ module Sparse = struct (* {{{ *)
     c_create m n nnz sformat
 
   external c_from_dense : 's sformat -> Dense.cptr -> float -> 's t
-    = "ml_matrix_sparse_from_dense"
+    = "sunml_matrix_sparse_from_dense"
 
   let from_dense (type s) (sformat : s sformat)
         droptol { rawptr; valid } =
@@ -474,7 +474,7 @@ module Sparse = struct (* {{{ *)
     c_from_dense sformat rawptr droptol
 
   external c_from_band : 's sformat -> Band.cptr -> float -> 's t
-    = "ml_matrix_sparse_from_band"
+    = "sunml_matrix_sparse_from_band"
 
   let from_band (type s) (sformat : s sformat)
         droptol { rawptr; valid } =
@@ -495,7 +495,7 @@ module Sparse = struct (* {{{ *)
     | CSR -> false
 
   external c_rewrap : 's t -> 's data
-    = "ml_matrix_sparse_rewrap"
+    = "sunml_matrix_sparse_rewrap"
 
   let unwrap ({ payload; rawptr } as m) =
     let { idxvals; idxptrs; data } =
@@ -504,7 +504,7 @@ module Sparse = struct (* {{{ *)
     idxvals, idxptrs, data
 
   external c_resize : 's t -> int -> bool -> unit
-    = "ml_matrix_sparse_resize"
+    = "sunml_matrix_sparse_resize"
 
   let resize ?nnz a =
     let nnz = match nnz with Some x -> x | None -> 0 in
@@ -514,24 +514,24 @@ module Sparse = struct (* {{{ *)
     if check_valid then v.valid <- false
 
   external c_size : cptr -> int * int
-    = "ml_matrix_sparse_size"
+    = "sunml_matrix_sparse_size"
 
   let size { rawptr; valid } =
     if check_valid && not valid then raise Invalidated;
     c_size rawptr
 
   external c_dims : cptr -> int * int
-    = "ml_matrix_sparse_dims"
+    = "sunml_matrix_sparse_dims"
 
   let dims { rawptr; valid } =
     if check_valid && not valid then raise Invalidated;
     c_dims rawptr
 
   external c_set_idx : cptr -> int -> int -> unit
-    = "ml_matrix_sparse_set_idx"
+    = "sunml_matrix_sparse_set_idx"
 
   external c_get_idx : cptr -> int -> int
-    = "ml_matrix_sparse_get_idx"
+    = "sunml_matrix_sparse_get_idx"
 
   let set_col { payload = { idxptrs }; rawptr; valid } j idx =
     if check_valid && not valid then raise Invalidated;
@@ -547,16 +547,16 @@ module Sparse = struct (* {{{ *)
   let get_row = get_col
 
   external c_set_data : cptr -> int -> float -> unit
-    = "ml_matrix_sparse_set_data"
+    = "sunml_matrix_sparse_set_data"
 
   external c_get_data : cptr -> int -> float
-    = "ml_matrix_sparse_get_data"
+    = "sunml_matrix_sparse_get_data"
 
   external c_set_val : cptr -> int -> int -> unit
-    = "ml_matrix_sparse_set_val"
+    = "sunml_matrix_sparse_set_val"
 
   external c_get_val : cptr -> int -> int
-    = "ml_matrix_sparse_get_val"
+    = "sunml_matrix_sparse_get_val"
 
   let set { payload = { idxvals; data }; rawptr; valid } idx i v =
     if check_valid && not valid then raise Invalidated;
@@ -664,7 +664,7 @@ module Sparse = struct (* {{{ *)
     Format.pp_print_string fmt stop
 
   external c_scale_add : float -> 's t -> cptr -> unit
-    = "ml_matrix_sparse_scale_add"
+    = "sunml_matrix_sparse_scale_add"
 
   let scale_add c ({ rawptr = ptr1; valid = valid1 } as m1)
                    { rawptr = ptr2; valid = valid2 } =
@@ -674,7 +674,7 @@ module Sparse = struct (* {{{ *)
     c_scale_add c m1 ptr2
 
   external c_scale_addi : float -> 's t -> unit
-    = "ml_matrix_sparse_scale_addi"
+    = "sunml_matrix_sparse_scale_addi"
 
   let scale_addi c ({ valid } as a) =
     if check_valid && not valid then raise Invalidated;
@@ -682,7 +682,7 @@ module Sparse = struct (* {{{ *)
 
   external c_matvec
     : cptr -> RealArray.t -> RealArray.t -> unit
-    = "ml_matrix_sparse_matvec"
+    = "sunml_matrix_sparse_matvec"
 
   let matvec { rawptr; valid } x y =
     if check_valid && not valid then raise Invalidated;
@@ -695,7 +695,7 @@ module Sparse = struct (* {{{ *)
     c_matvec rawptr x y
 
   external c_set_to_zero : cptr -> unit
-    = "ml_matrix_sparse_set_to_zero"
+    = "sunml_matrix_sparse_set_to_zero"
 
   let set_to_zero { payload = { idxvals; idxptrs; data }; rawptr; valid } =
     if check_valid && not valid then raise Invalidated;
@@ -705,7 +705,7 @@ module Sparse = struct (* {{{ *)
           Bigarray.Array1.fill data 0.0)
 
   external c_copy : cptr -> 's t -> unit
-      = "ml_matrix_sparse_copy"
+      = "sunml_matrix_sparse_copy"
 
   let blit { rawptr = ptr1; valid = valid1 }
            ({ rawptr = ptr2; valid = valid2 } as m2) =
@@ -715,7 +715,7 @@ module Sparse = struct (* {{{ *)
     c_copy ptr1 m2
 
   external c_space : cptr -> int * int
-      = "ml_matrix_sparse_space"
+      = "sunml_matrix_sparse_space"
 
   let space { rawptr; valid } =
     if check_valid && not valid then raise Invalidated;
@@ -768,37 +768,37 @@ module ArrayDense = struct (* {{{ *)
   let blit = RealArray2.blit
 
   external scale : float -> t -> unit
-      = "c_arraydensematrix_scale"
+      = "sunml_arraydensematrix_scale"
 
   external add_identity : t -> unit
-      = "c_arraydensematrix_add_identity"
+      = "sunml_arraydensematrix_add_identity"
 
   external matvec' : t -> real_array -> real_array -> unit
-      = "c_arraydensematrix_matvec"
+      = "sunml_arraydensematrix_matvec"
 
   let matvec a x y = matvec' a x y
 
   external getrf : t -> lint_array -> unit
-      = "c_arraydensematrix_getrf"
+      = "sunml_arraydensematrix_getrf"
 
   external getrs : t -> lint_array -> real_array -> unit
-      = "c_arraydensematrix_getrs"
+      = "sunml_arraydensematrix_getrs"
 
   external getrs' : t -> lint_array -> real_array -> int -> unit
-      = "c_arraydensematrix_getrs_off"
+      = "sunml_arraydensematrix_getrs_off"
 
   external potrf : t -> unit
-      = "c_arraydensematrix_potrf"
+      = "sunml_arraydensematrix_potrf"
 
   external potrs : t -> real_array -> unit
-      = "c_arraydensematrix_potrs"
+      = "sunml_arraydensematrix_potrs"
 
   external geqrf : t -> real_array -> real_array -> unit
-      = "c_arraydensematrix_geqrf"
+      = "sunml_arraydensematrix_geqrf"
 
   external ormqr'
       : t -> (real_array * real_array * real_array * real_array) -> unit
-      = "c_arraydensematrix_ormqr"
+      = "sunml_arraydensematrix_ormqr"
 
   let ormqr ~a ~beta ~v ~w ~work = ormqr' a (beta, v, w, work)
 
@@ -941,7 +941,7 @@ module ArrayBand = struct (* {{{ *)
   external copy'
     : RealArray2.t -> RealArray2.t
       -> int * int * int * int -> unit
-    = "c_arraybandmatrix_copy"
+    = "sunml_arraybandmatrix_copy"
 
   let set_to_zero (x, dims) =
     Bigarray.Array2.fill (RealArray2.unwrap x) 0.0
@@ -950,31 +950,31 @@ module ArrayBand = struct (* {{{ *)
       = copy' a b (a_smu, b_smu, a_mu, a_ml)
 
   external scale' : float -> RealArray2.t -> int * int * int -> unit
-      = "c_arraybandmatrix_scale"
+      = "sunml_arraybandmatrix_scale"
 
   let scale c (a, dims) = scale' c a dims
 
   external c_add_identity : smu -> RealArray2.t -> unit
-      = "c_arraybandmatrix_add_identity"
+      = "sunml_arraybandmatrix_add_identity"
 
   let add_identity (x, (smu, _, _)) = c_add_identity smu x
 
   external c_matvec
     : RealArray2.t -> int * int * int
       -> real_array -> real_array -> unit
-    = "c_arraybandmatrix_matvec"
+    = "sunml_arraybandmatrix_matvec"
 
   let matvec (a, dims) x y = c_matvec a dims x y
 
   external gbtrf'
     : RealArray2.t -> int * int * int -> lint_array -> unit
-    = "c_arraybandmatrix_gbtrf"
+    = "sunml_arraybandmatrix_gbtrf"
 
   let gbtrf (a, dims) p = gbtrf' a dims p
 
   external gbtrs'
     : RealArray2.t -> int * int * int -> lint_array -> real_array -> unit
-    = "c_arraybandmatrix_gbtrs"
+    = "sunml_arraybandmatrix_gbtrs"
 
   let gbtrs (a, dims) p b = gbtrs' a dims p b
 
@@ -1059,7 +1059,7 @@ type 'nk arraydense = (custom, ArrayDense.t, RealArray.t, 'nk) t
 type 'nk arrayband = (custom, ArrayBand.t, RealArray.t, 'nk) t
 
 external c_wrap : id -> 'content_cptr -> 'm -> cmat
-  = "ml_matrix_wrap"
+  = "sunml_matrix_wrap"
 
 let wrap_dense (data : Dense.t) = {
     payload = data;
@@ -1134,7 +1134,7 @@ let unwrap { payload } = payload
 
 external c_scale_add
   : float -> ('k, 'm, 'nd, 'nk) t -> ('k, 'm, 'nd, 'nk) t -> unit
-  = "ml_matrix_scale_add"
+  = "sunml_matrix_scale_add"
 
 let scale_add c ({ payload = a; mat_ops = { m_scale_add } } as m1)
                 ({ payload = b } as m2) =
@@ -1143,7 +1143,7 @@ let scale_add c ({ payload = a; mat_ops = { m_scale_add } } as m1)
   | _ -> c_scale_add c m1 m2
 
 external c_scale_addi : float -> ('k, 'm, 'nd, 'nk) t -> unit
-  = "ml_matrix_scale_addi"
+  = "sunml_matrix_scale_addi"
 
 let scale_addi c ({ payload = a; mat_ops = { m_scale_addi } } as m) =
   match Config.sundials_version with
@@ -1152,7 +1152,7 @@ let scale_addi c ({ payload = a; mat_ops = { m_scale_addi } } as m) =
 
 external c_matvec
   : ('k, 'm, 'nd, 'nk) t -> ('d, 'k) Nvector.t -> ('d, 'k) Nvector.t -> unit
-  = "ml_matrix_matvec"
+  = "sunml_matrix_matvec"
 
 let matvec ({ payload = a; mat_ops = { m_matvec } } as m) x y =
   match Config.sundials_version with
@@ -1160,7 +1160,7 @@ let matvec ({ payload = a; mat_ops = { m_matvec } } as m) x y =
   | _ -> c_matvec m x y
 
 external c_zero : ('k, 'm, 'nd, 'nk) t -> unit
-  = "ml_matrix_zero"
+  = "sunml_matrix_zero"
 
 let set_to_zero ({ payload = a; mat_ops = { m_zero } } as m) =
   match Config.sundials_version with
@@ -1168,7 +1168,7 @@ let set_to_zero ({ payload = a; mat_ops = { m_zero } } as m) =
   | _ -> c_zero m
 
 external c_copy : ('k, 'm, 'nd, 'nk) t -> ('k, 'm, 'nd, 'nk) t -> unit
-  = "ml_matrix_copy"
+  = "sunml_matrix_copy"
 
 let blit ({ payload = a; mat_ops = { m_copy } } as m1)
          ({ payload = b } as m2) =
@@ -1177,7 +1177,7 @@ let blit ({ payload = a; mat_ops = { m_copy } } as m1)
   | _ -> c_copy m1 m2
 
 external c_space : ('k, 'm, 'nd, 'nk) t -> int * int
-    = "ml_matrix_space"
+    = "sunml_matrix_space"
 
 let space ({ payload = a; mat_ops = { m_space } } as m) =
   match Config.sundials_version with
@@ -1185,17 +1185,17 @@ let space ({ payload = a; mat_ops = { m_space } } as m) =
   | _ -> c_space m
 
 external print_dense : 'nk dense -> Logfile.t -> unit
-    = "ml_matrix_print_dense"
+    = "sunml_matrix_print_dense"
 
 external print_band : 'nk band -> Logfile.t -> unit
-    = "ml_matrix_print_band"
+    = "sunml_matrix_print_band"
 
 external print_sparse : ('s, 'nk) sparse -> Logfile.t -> unit
-    = "ml_matrix_print_sparse"
+    = "sunml_matrix_print_sparse"
 
 (* Let C code know about some of the values in this module.  *)
 external c_init_module : exn array -> unit =
-  "ml_mat_init_module"
+  "sunml_mat_init_module"
 
 let _ =
   c_init_module

@@ -19,7 +19,7 @@ let in_compat_mode =
   | _ -> false
 
 external c_alloc_nvector_array : int -> 'a array
-    = "c_cvodes_alloc_nvector_array"
+    = "sunml_cvodes_alloc_nvector_array"
 
 let add_fwdsensext s =
   match s.sensext with
@@ -61,7 +61,7 @@ module Quadrature = struct (* {{{ *)
     | _ -> raise QuadNotInitialized
 
   external c_quad_init : ('a, 'k) session -> ('a, 'k) nvector -> unit
-      = "c_cvodes_quad_init"
+      = "sunml_cvodes_quad_init"
 
   let init s f v0 =
     add_fwdsensext s;
@@ -72,7 +72,7 @@ module Quadrature = struct (* {{{ *)
     se.has_quad <- true
 
   external c_reinit : ('a, 'k) session -> ('a, 'k) nvector -> unit
-    = "c_cvodes_quad_reinit"
+    = "sunml_cvodes_quad_reinit"
 
   let reinit s v0 =
     let se = fwdsensext s in
@@ -80,14 +80,14 @@ module Quadrature = struct (* {{{ *)
     c_reinit s v0
 
   external set_err_con    : ('a, 'k) session -> bool -> unit
-      = "c_cvodes_quad_set_err_con"
+      = "sunml_cvodes_quad_set_err_con"
 
   external sv_tolerances
       : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
-      = "c_cvodes_quad_sv_tolerances"
+      = "sunml_cvodes_quad_sv_tolerances"
 
   external ss_tolerances  : ('a, 'k) session -> float -> float -> unit
-      = "c_cvodes_quad_ss_tolerances"
+      = "sunml_cvodes_quad_ss_tolerances"
 
   type ('a, 'k) tolerance =
       NoStepSizeControl
@@ -106,7 +106,7 @@ module Quadrature = struct (* {{{ *)
                                   set_err_con s true)
 
   external c_get : ('a, 'k) session -> ('a, 'k) nvector -> float
-      = "c_cvodes_quad_get"
+      = "sunml_cvodes_quad_get"
 
   let get s v =
     let se = fwdsensext s in
@@ -115,7 +115,7 @@ module Quadrature = struct (* {{{ *)
 
   external c_get_dky
       : ('a, 'k) session -> float -> int -> ('a, 'k) nvector -> unit
-      = "c_cvodes_quad_get_dky"
+      = "sunml_cvodes_quad_get_dky"
 
   let get_dky s dky =
     let se = fwdsensext s in
@@ -123,13 +123,13 @@ module Quadrature = struct (* {{{ *)
     fun t k -> c_get_dky s t k dky
 
   external get_num_rhs_evals       : ('a, 'k) session -> int
-      = "c_cvodes_quad_get_num_rhs_evals"
+      = "sunml_cvodes_quad_get_num_rhs_evals"
 
   external get_num_err_test_fails  : ('a, 'k) session -> int
-      = "c_cvodes_quad_get_num_err_test_fails"
+      = "sunml_cvodes_quad_get_num_err_test_fails"
 
   external c_get_err_weights : ('a, 'k) session -> ('a, 'k) nvector -> unit
-      = "c_cvodes_quad_get_err_weights"
+      = "sunml_cvodes_quad_get_err_weights"
 
   let get_err_weights s v =
     let se = fwdsensext s in
@@ -137,7 +137,7 @@ module Quadrature = struct (* {{{ *)
     c_get_err_weights s v
 
   external get_stats : ('a, 'k) session -> int * int
-      = "c_cvodes_quad_get_stats"
+      = "sunml_cvodes_quad_get_stats"
 end (* }}} *)
 
 module Sensitivity = struct (* {{{ *)
@@ -161,18 +161,18 @@ module Sensitivity = struct (* {{{ *)
     | EEtolerances
 
   external set_err_con : ('a, 'k) session -> bool -> unit
-      = "c_cvodes_sens_set_err_con"
+      = "sunml_cvodes_sens_set_err_con"
 
   external ss_tolerances
       : ('a, 'k) session -> float -> RealArray.t -> unit
-      = "c_cvodes_sens_ss_tolerances"
+      = "sunml_cvodes_sens_ss_tolerances"
 
   external ee_tolerances  : ('a, 'k) session -> unit
-      = "c_cvodes_sens_ee_tolerances"
+      = "sunml_cvodes_sens_ee_tolerances"
 
   external sv_tolerances
       : ('a, 'k) session -> float -> ('a, 'k) nvector array -> unit
-      = "c_cvodes_sens_sv_tolerances"
+      = "sunml_cvodes_sens_sv_tolerances"
 
   let set_tolerances s tol =
     let ns = num_sensitivities s in
@@ -206,14 +206,14 @@ module Sensitivity = struct (* {{{ *)
 
   external c_sens_init : ('a, 'k) session -> sens_method -> bool
                               -> ('a, 'k) nvector array -> unit
-      = "c_cvodes_sens_init"
+      = "sunml_cvodes_sens_init"
 
   external c_sens_init_1 : ('a, 'k) session -> sens_method -> bool
                               -> ('a, 'k) nvector array -> unit
-      = "c_cvodes_sens_init_1"
+      = "sunml_cvodes_sens_init_1"
 
   external c_set_params : ('a, 'k) session -> sens_params -> unit
-      = "c_cvodes_sens_set_params"
+      = "sunml_cvodes_sens_set_params"
 
   let check_sens_params ns {pvals; pbar; plist} =
       if Sundials_configuration.safe then
@@ -267,7 +267,7 @@ module Sensitivity = struct (* {{{ *)
 
   external c_reinit
       : ('a, 'k) session -> sens_method -> ('a, 'k) nvector array -> unit
-      = "c_cvodes_sens_reinit"
+      = "sunml_cvodes_sens_reinit"
 
   let reinit s sm s0 =
     if Sundials_configuration.safe then
@@ -277,10 +277,10 @@ module Sensitivity = struct (* {{{ *)
     c_reinit s sm s0
 
   external toggle_off : ('a, 'k) session -> unit
-      = "c_cvodes_sens_toggle_off"
+      = "sunml_cvodes_sens_toggle_off"
 
   external c_get : ('a, 'k) session -> ('a, 'k) nvector array -> float
-      = "c_cvodes_sens_get"
+      = "sunml_cvodes_sens_get"
 
   let get s ys =
     if Sundials_configuration.safe then
@@ -291,7 +291,7 @@ module Sensitivity = struct (* {{{ *)
 
   external c_get_dky
       : ('a, 'k) session -> float -> int -> ('a, 'k) nvector array -> unit
-      = "c_cvodes_sens_get_dky"
+      = "sunml_cvodes_sens_get_dky"
 
   let get_dky s dkys =
     if Sundials_configuration.safe then
@@ -301,7 +301,7 @@ module Sensitivity = struct (* {{{ *)
     fun t k -> c_get_dky s t k dkys
 
   external c_get1 : ('a, 'k) session -> int -> ('a, 'k) nvector -> float
-      = "c_cvodes_sens_get1"
+      = "sunml_cvodes_sens_get1"
 
   let get1 s ys =
     if Sundials_configuration.safe then s.checkvec ys;
@@ -309,7 +309,7 @@ module Sensitivity = struct (* {{{ *)
 
   external c_get_dky1
       : ('a, 'k) session -> float -> int -> int -> ('a, 'k) nvector -> unit
-      = "c_cvodes_sens_get_dky1"
+      = "sunml_cvodes_sens_get_dky1"
 
   let get_dky1 s dkys =
     if Sundials_configuration.safe then s.checkvec dkys;
@@ -318,22 +318,22 @@ module Sensitivity = struct (* {{{ *)
   type dq_method = DQCentered | DQForward
 
   external set_dq_method : ('a, 'k) session -> dq_method -> float -> unit
-      = "c_cvodes_sens_set_dq_method"
+      = "sunml_cvodes_sens_set_dq_method"
 
   external set_max_nonlin_iters : ('a, 'k) session -> int -> unit
-      = "c_cvodes_sens_set_max_nonlin_iters"
+      = "sunml_cvodes_sens_set_max_nonlin_iters"
 
   external get_num_rhs_evals : ('a, 'k) session -> int
-      = "c_cvodes_sens_get_num_rhs_evals"
+      = "sunml_cvodes_sens_get_num_rhs_evals"
 
   external get_num_rhs_evals_sens : ('a, 'k) session -> int
-      = "c_cvodes_sens_get_num_rhs_evals_sens"
+      = "sunml_cvodes_sens_get_num_rhs_evals_sens"
 
   external get_num_err_test_fails : ('a, 'k) session -> int
-      = "c_cvodes_sens_get_num_err_test_fails"
+      = "sunml_cvodes_sens_get_num_err_test_fails"
 
   external get_num_lin_solv_setups : ('a, 'k) session -> int
-      = "c_cvodes_sens_get_num_lin_solv_setups"
+      = "sunml_cvodes_sens_get_num_lin_solv_setups"
 
   type sensitivity_stats = {
       num_sens_evals :int;
@@ -343,11 +343,11 @@ module Sensitivity = struct (* {{{ *)
     }
 
   external get_stats : ('a, 'k) session -> sensitivity_stats
-      = "c_cvodes_sens_get_stats"
+      = "sunml_cvodes_sens_get_stats"
 
   external c_get_err_weights
       : ('a, 'k) session -> ('a, 'k) nvector array -> unit
-      = "c_cvodes_sens_get_err_weights"
+      = "sunml_cvodes_sens_get_err_weights"
 
   let get_err_weights s esweight =
     if Sundials_configuration.safe then
@@ -357,17 +357,17 @@ module Sensitivity = struct (* {{{ *)
     c_get_err_weights s esweight
 
   external get_num_nonlin_solv_iters : ('a, 'k) session -> int
-      = "c_cvodes_sens_get_num_nonlin_solv_iters"
+      = "sunml_cvodes_sens_get_num_nonlin_solv_iters"
 
   external get_num_nonlin_solv_conv_fails : ('a, 'k) session -> int
-      = "c_cvodes_sens_get_num_nonlin_solv_conv_fails"
+      = "sunml_cvodes_sens_get_num_nonlin_solv_conv_fails"
 
   external get_nonlin_solv_stats : ('a, 'k) session -> int * int
-      = "c_cvodes_sens_get_nonlin_solv_stats"
+      = "sunml_cvodes_sens_get_nonlin_solv_stats"
 
   external c_get_num_stgr_nonlin_solv_iters
       : ('a, 'k) session -> LintArray.t -> unit
-      = "c_cvodes_sens_get_num_stgr_nonlin_solv_iters"
+      = "sunml_cvodes_sens_get_num_stgr_nonlin_solv_iters"
 
   let get_num_stgr_nonlin_solv_iters s r =
     if Sundials_configuration.safe && Bigarray.Array1.dim r <> num_sensitivities s
@@ -377,7 +377,7 @@ module Sensitivity = struct (* {{{ *)
 
   external c_get_num_stgr_nonlin_solv_conv_fails
       : ('a, 'k) session -> LintArray.t -> unit
-      = "c_cvodes_sens_get_num_stgr_nonlin_solv_conv_fails"
+      = "sunml_cvodes_sens_get_num_stgr_nonlin_solv_conv_fails"
 
   let get_num_stgr_nonlin_solv_conv_fails s r =
     if Sundials_configuration.safe && Bigarray.Array1.dim r <> num_sensitivities s
@@ -398,7 +398,7 @@ module Sensitivity = struct (* {{{ *)
 
       external c_quadsens_init
           : ('a, 'k) session -> bool -> ('a, 'k) nvector array -> unit
-          = "c_cvodes_quadsens_init"
+          = "sunml_cvodes_quadsens_init"
 
       let init s ?fqs v0 =
         let se = fwdsensext s in
@@ -412,7 +412,7 @@ module Sensitivity = struct (* {{{ *)
         | None -> c_quadsens_init s false v0
 
       external c_reinit : ('a, 'k) session -> ('a, 'k) nvector array -> unit
-          = "c_cvodes_quadsens_reinit"
+          = "sunml_cvodes_quadsens_reinit"
 
       let reinit s v =
         let se = fwdsensext s in
@@ -429,18 +429,18 @@ module Sensitivity = struct (* {{{ *)
         | EEtolerances
 
       external set_err_con : ('a, 'k) session -> bool -> unit
-          = "c_cvodes_quadsens_set_err_con"
+          = "sunml_cvodes_quadsens_set_err_con"
 
       external ss_tolerances
           : ('a, 'k) session -> float -> RealArray.t -> unit
-          = "c_cvodes_quadsens_ss_tolerances"
+          = "sunml_cvodes_quadsens_ss_tolerances"
 
       external sv_tolerances
           : ('a, 'k) session -> float -> ('a, 'k) nvector array -> unit
-          = "c_cvodes_quadsens_sv_tolerances"
+          = "sunml_cvodes_quadsens_sv_tolerances"
 
       external ee_tolerances  : ('a, 'k) session -> unit
-          = "c_cvodes_quadsens_ee_tolerances"
+          = "sunml_cvodes_quadsens_ee_tolerances"
 
       let set_tolerances s tol =
         let se = fwdsensext s in
@@ -466,7 +466,7 @@ module Sensitivity = struct (* {{{ *)
                            set_err_con s true)
 
       external c_get : ('a, 'k) session -> ('a, 'k) nvector array -> float
-          = "c_cvodes_quadsens_get"
+          = "sunml_cvodes_quadsens_get"
 
       let get s ys =
         let se = fwdsensext s in
@@ -477,7 +477,7 @@ module Sensitivity = struct (* {{{ *)
         c_get s ys
 
       external c_get1 : ('a, 'k) session -> int -> ('a, 'k) nvector -> float
-          = "c_cvodes_quadsens_get1"
+          = "sunml_cvodes_quadsens_get1"
 
       let get1 s yqs =
         let se = fwdsensext s in
@@ -486,7 +486,7 @@ module Sensitivity = struct (* {{{ *)
 
       external c_get_dky
           : ('a, 'k) session -> float -> int -> ('a, 'k) nvector array -> unit
-          = "c_cvodes_quadsens_get_dky"
+          = "sunml_cvodes_quadsens_get_dky"
 
       let get_dky s ys =
         let se = fwdsensext s in
@@ -498,7 +498,7 @@ module Sensitivity = struct (* {{{ *)
 
       external c_get_dky1 : ('a, 'k) session -> float -> int -> int
                                     -> ('a, 'k) nvector -> unit
-          = "c_cvodes_quadsens_get_dky1"
+          = "sunml_cvodes_quadsens_get_dky1"
 
       let get_dky1 s dkyqs =
         let se = fwdsensext s in
@@ -506,14 +506,14 @@ module Sensitivity = struct (* {{{ *)
         fun t k i -> c_get_dky1 s t k i dkyqs
 
       external get_num_rhs_evals       : ('a, 'k) session -> int
-          = "c_cvodes_quadsens_get_num_rhs_evals"
+          = "sunml_cvodes_quadsens_get_num_rhs_evals"
 
       external get_num_err_test_fails  : ('a, 'k) session -> int
-          = "c_cvodes_quadsens_get_num_err_test_fails"
+          = "sunml_cvodes_quadsens_get_num_err_test_fails"
 
       external c_get_err_weights
           : ('a, 'k) session -> ('a, 'k) nvector array -> unit
-          = "c_cvodes_quadsens_get_err_weights"
+          = "sunml_cvodes_quadsens_get_err_weights"
 
       let get_err_weights s esweight =
         let se = fwdsensext s in
@@ -524,7 +524,7 @@ module Sensitivity = struct (* {{{ *)
         c_get_err_weights s esweight
 
       external get_stats : ('a, 'k) session -> int * int
-          = "c_cvodes_quadsens_get_stats"
+          = "sunml_cvodes_quadsens_get_stats"
     end
   end (* }}} *)
 
@@ -546,7 +546,7 @@ module Adjoint = struct (* {{{ *)
   type interpolation = IPolynomial | IHermite
 
   external c_init : ('a, 'k) session -> int -> interpolation -> unit
-      = "c_cvodes_adj_init"
+      = "sunml_cvodes_adj_init"
 
   let init s nd interptype =
     add_fwdsensext s;
@@ -559,7 +559,7 @@ module Adjoint = struct (* {{{ *)
 
   external c_forward_normal : ('a, 'k) session -> float -> ('a, 'k) nvector
                                        -> float * int * Cvode.solver_result
-      = "c_cvodes_adj_forward_normal"
+      = "sunml_cvodes_adj_forward_normal"
 
   let forward_normal s tout yret =
     if Sundials_configuration.safe then s.checkvec yret;
@@ -567,7 +567,7 @@ module Adjoint = struct (* {{{ *)
 
   external c_forward_one_step : ('a, 'k) session -> float -> ('a, 'k) nvector
                                        -> float * int * Cvode.solver_result
-      = "c_cvodes_adj_forward_one_step"
+      = "sunml_cvodes_adj_forward_one_step"
 
   let forward_one_step s tout yret =
     if Sundials_configuration.safe then s.checkvec yret;
@@ -585,11 +585,11 @@ module Adjoint = struct (* {{{ *)
 
   external ss_tolerances
       : ('a, 'k) session -> int -> float -> float -> unit
-      = "c_cvodes_adj_ss_tolerances"
+      = "sunml_cvodes_adj_ss_tolerances"
 
   external sv_tolerances
       : ('a, 'k) session -> int -> float -> ('a, 'k) nvector -> unit
-      = "c_cvodes_adj_sv_tolerances"
+      = "sunml_cvodes_adj_sv_tolerances"
 
   let set_tolerances bs tol =
     let parent, which = parent_and_which bs in
@@ -600,7 +600,7 @@ module Adjoint = struct (* {{{ *)
                                   sv_tolerances parent which rel abs)
 
   external c_set_functional : ('a, 'k) session -> int -> unit
-    = "c_cvodes_adj_set_functional"
+    = "sunml_cvodes_adj_set_functional"
 
   let bwdsensext = function (Bsession bs) ->
     match bs.sensext with
@@ -617,13 +617,13 @@ module Adjoint = struct (* {{{ *)
          set the linear solver.  *)
 
   external backward_normal : ('a, 'k) session -> float -> unit
-      = "c_cvodes_adj_backward_normal"
+      = "sunml_cvodes_adj_backward_normal"
 
   external backward_one_step : ('a, 'k) session -> float -> unit
-      = "c_cvodes_adj_backward_one_step"
+      = "sunml_cvodes_adj_backward_one_step"
 
   external c_get : ('a, 'k) session -> int -> ('a, 'k) nvector -> float
-      = "c_cvodes_adj_get"
+      = "sunml_cvodes_adj_get"
 
   let get bs yb =
     if Sundials_configuration.safe then (tosession bs).checkvec yb;
@@ -633,52 +633,52 @@ module Adjoint = struct (* {{{ *)
   let get_dky bs = Cvode.get_dky (tosession bs)
 
   external c_get_y : ('d, 'k) session -> float -> ('d, 'k) Nvector.t -> unit
-      = "c_cvodes_adj_get_y"
+      = "sunml_cvodes_adj_get_y"
 
   let get_y s y =
     if Sundials_configuration.safe then s.checkvec y;
     fun t -> c_get_y s t y
 
   external set_no_sensitivity : ('a, 'k) session -> unit
-      = "c_cvodes_adj_set_no_sensitivity"
+      = "sunml_cvodes_adj_set_no_sensitivity"
 
   external c_set_max_ord : ('a, 'k) session -> int -> int -> unit
-      = "c_cvodes_adj_set_max_ord"
+      = "sunml_cvodes_adj_set_max_ord"
 
   let set_max_ord bs maxordb =
     let parent, which = parent_and_which bs in
     c_set_max_ord parent which maxordb
 
   external c_set_max_num_steps : ('a, 'k) session -> int -> int -> unit
-      = "c_cvodes_adj_set_max_num_steps"
+      = "sunml_cvodes_adj_set_max_num_steps"
 
   let set_max_num_steps bs mxstepsb =
     let parent, which = parent_and_which bs in
     c_set_max_num_steps parent which mxstepsb
 
   external c_set_init_step : ('a, 'k) session -> int -> float -> unit
-      = "c_cvodes_adj_set_init_step"
+      = "sunml_cvodes_adj_set_init_step"
 
   let set_init_step bs hinb =
     let parent, which = parent_and_which bs in
     c_set_init_step parent which hinb
 
   external c_set_min_step : ('a, 'k) session -> int -> float -> unit
-      = "c_cvodes_adj_set_min_step"
+      = "sunml_cvodes_adj_set_min_step"
 
   let set_min_step bs hminb =
     let parent, which = parent_and_which bs in
     c_set_min_step parent which hminb
 
   external c_set_max_step : ('a, 'k) session -> int -> float -> unit
-      = "c_cvodes_adj_set_max_step"
+      = "sunml_cvodes_adj_set_max_step"
 
   let set_max_step bs hmaxb =
     let parent, which = parent_and_which bs in
     c_set_max_step parent which hmaxb
 
   external c_set_stab_lim_det : ('a, 'k) session -> int -> bool -> unit
-      = "c_cvodes_adj_set_stab_lim_det"
+      = "sunml_cvodes_adj_set_stab_lim_det"
 
   let set_stab_lim_det bs stldetb =
     let parent, which = parent_and_which bs in
@@ -687,7 +687,7 @@ module Adjoint = struct (* {{{ *)
   module Diag = struct (* {{{ *)
 
     external c_diag : ('a, 'k) session -> int -> unit
-      = "c_cvodes_adj_diag"
+      = "sunml_cvodes_adj_diag"
 
     let solver bs _ =
       let parent, which = parent_and_which bs in
@@ -710,37 +710,37 @@ module Adjoint = struct (* {{{ *)
     (* Sundials < 3.0.0 *)
     external c_dls_dense
       : 'k serial_session -> int -> int -> bool -> bool -> unit
-      = "c_cvodes_adj_dls_dense"
+      = "sunml_cvodes_adj_dls_dense"
 
     (* Sundials < 3.0.0 *)
     external c_dls_lapack_dense
       : 'k serial_session -> int -> int -> bool -> bool -> unit
-      = "c_cvodes_adj_dls_lapack_dense"
+      = "sunml_cvodes_adj_dls_lapack_dense"
 
     (* Sundials < 3.0.0 *)
     external c_dls_band : ('k serial_session * int) -> (int * int * int)
                             -> bool -> bool -> unit
-      = "c_cvodes_adj_dls_band"
+      = "sunml_cvodes_adj_dls_band"
 
     (* Sundials < 3.0.0 *)
     external c_dls_lapack_band : ('k serial_session * int) -> (int * int * int)
                                   -> bool -> bool -> unit
-      = "c_cvodes_adj_dls_lapack_band"
+      = "sunml_cvodes_adj_dls_lapack_band"
 
     (* Sundials < 3.0.0 *)
     external c_klub
       : 'k serial_session * int -> 's Matrix.Sparse.sformat
         -> int -> int -> bool -> unit
-      = "c_cvodes_klub_init"
+      = "sunml_cvodes_klub_init"
 
     (* Sundials < 3.0.0 *)
     external c_klu_set_ordering
       : 'k serial_session -> LinearSolver.Direct.Klu.ordering -> unit
-      = "c_cvode_klu_set_ordering"
+      = "sunml_cvode_klu_set_ordering"
 
     (* Sundials < 3.0.0 *)
     external c_klu_reinit : 'k serial_session -> int -> int -> unit
-      = "c_cvode_klu_reinit"
+      = "sunml_cvode_klu_reinit"
 
     (* Sundials < 3.0.0 *)
     let klu_set_ordering session ordering =
@@ -759,12 +759,12 @@ module Adjoint = struct (* {{{ *)
     (* Sundials < 3.0.0 *)
     external c_superlumtb : ('k serial_session * int)
                             -> int -> int -> int -> bool -> unit
-      = "c_cvodes_superlumtb_init"
+      = "sunml_cvodes_superlumtb_init"
 
     (* Sundials < 3.0.0 *)
     external c_superlumt_set_ordering
       : 'k serial_session -> LinearSolver.Direct.Superlumt.ordering -> unit
-      = "c_cvode_superlumt_set_ordering"
+      = "sunml_cvode_superlumt_set_ordering"
 
     (* Sundials < 3.0.0 *)
     let superlumt_set_ordering session ordering =
@@ -906,7 +906,7 @@ module Adjoint = struct (* {{{ *)
         -> bool
         -> bool
         -> unit
-      = "c_cvodes_adj_dls_set_linear_solver"
+      = "sunml_cvodes_adj_dls_set_linear_solver"
 
     let solver ?jac (LSD.S ({ LSD.rawptr; LSD.solver; LSD.matrix }) as ls)
                bs nv =
@@ -963,35 +963,35 @@ module Adjoint = struct (* {{{ *)
     external c_spgmr
       : ('a, 'k) session -> int -> int
         -> LinearSolver.Iterative.preconditioning_type -> unit
-      = "c_cvodes_adj_spils_spgmr"
+      = "sunml_cvodes_adj_spils_spgmr"
 
     (* Sundials < 3.0.0 *)
     external c_spbcgs
       : ('a, 'k) session -> int -> int
         -> LinearSolver.Iterative.preconditioning_type -> unit
-      = "c_cvodes_adj_spils_spbcgs"
+      = "sunml_cvodes_adj_spils_spbcgs"
 
     (* Sundials < 3.0.0 *)
     external c_sptfqmr
       : ('a, 'k) session -> int -> int
         -> LinearSolver.Iterative.preconditioning_type -> unit
-      = "c_cvodes_adj_spils_sptfqmr"
+      = "sunml_cvodes_adj_spils_sptfqmr"
 
     (* Sundials < 3.0.0 *)
     external c_set_gs_type
         : ('a, 'k) session -> int
           -> LinearSolver.Iterative.gramschmidt_type -> unit
-        = "c_cvodes_adj_spils_set_gs_type"
+        = "sunml_cvodes_adj_spils_set_gs_type"
 
     (* Sundials < 3.0.0 *)
     external c_set_maxl : ('a, 'k) session -> int -> int -> unit
-        = "c_cvodes_adj_spils_set_maxl"
+        = "sunml_cvodes_adj_spils_set_maxl"
 
     (* Sundials < 3.0.0 *)
     external c_set_prec_type
         : ('a, 'k) session -> int
           -> LinearSolver.Iterative.preconditioning_type -> unit
-        = "c_cvodes_adj_spils_set_prec_type"
+        = "sunml_cvodes_adj_spils_set_prec_type"
 
     let old_set_maxl bs maxl =
       ls_check_spils (tosession bs);
@@ -1010,11 +1010,11 @@ module Adjoint = struct (* {{{ *)
 
     external c_set_jac_times
       : ('a, 'k) session -> int -> bool -> bool -> bool -> unit
-      = "c_cvodes_adj_spils_set_jac_times"
+      = "sunml_cvodes_adj_spils_set_jac_times"
 
     external c_set_preconditioner
       : ('a, 'k) session -> int -> bool -> bool -> unit
-      = "c_cvodes_adj_spils_set_preconditioner"
+      = "sunml_cvodes_adj_spils_set_preconditioner"
 
     let init_preconditioner solve setup bs parent which nv =
       c_set_preconditioner parent which (setup <> None) false;
@@ -1051,7 +1051,7 @@ module Adjoint = struct (* {{{ *)
 
     external c_spils_set_linear_solver
     : ('a, 'k) session -> int -> ('a, 'k) LSI.Iterative.cptr -> unit
-      = "c_cvodes_adj_spils_set_linear_solver"
+      = "sunml_cvodes_adj_spils_set_linear_solver"
 
     let solver (type s)
           ({ LSI.Iterative.rawptr;
@@ -1163,7 +1163,7 @@ module Adjoint = struct (* {{{ *)
       | _ -> raise LinearSolver.InvalidLinearSolver
 
     external set_eps_lin : ('a, 'k) bsession -> float -> unit
-        = "c_cvodes_adj_spils_set_eps_lin"
+        = "sunml_cvodes_adj_spils_set_eps_lin"
 
     let set_eps_lin bs epsl =
       ls_check_spils (tosession bs);
@@ -1200,7 +1200,7 @@ module Adjoint = struct (* {{{ *)
 
       external c_set_preconditioner
         : ('a, 'k) session -> int -> int -> int -> int -> unit
-        = "c_cvodes_adj_spils_set_banded_preconditioner"
+        = "sunml_cvodes_adj_spils_set_banded_preconditioner"
 
       let init_preconditioner bandrange bs parent which nv =
         c_set_preconditioner parent which
@@ -1261,7 +1261,7 @@ module Adjoint = struct (* {{{ *)
 
     external c_set_alternate
       : ('data, 'kind) session -> int -> bool -> bool -> unit
-      = "c_cvode_adj_set_alternate"
+      = "sunml_cvode_adj_set_alternate"
 
     let get_gammas bs = Cvode.Alternate.get_gammas (tosession bs)
 
@@ -1276,7 +1276,7 @@ module Adjoint = struct (* {{{ *)
   end (* }}} *)
 
   external c_bsession_finalize : ('a, 'k) session -> unit
-      = "c_cvodes_adj_bsession_finalize"
+      = "sunml_cvodes_adj_bsession_finalize"
 
   let bsession_finalize s =
     Dls.invalidate_callback s;
@@ -1287,7 +1287,7 @@ module Adjoint = struct (* {{{ *)
         -> (Cvode.lmm * ('a, 'k) iter * float * ('a, 'k) nvector)
         -> bool
         -> (cvode_mem * int * c_weak_ref)
-      = "c_cvodes_adj_init_backward"
+      = "sunml_cvodes_adj_init_backward"
 
   let init_backward s lmm iter tol mf t0 y0 =
     let { bsessions } as se = fwdsensext s in
@@ -1349,7 +1349,7 @@ module Adjoint = struct (* {{{ *)
 
   external c_reinit
       : ('a, 'k) session -> int -> float -> ('a, 'k) nvector -> unit
-      = "c_cvodes_adj_reinit"
+      = "sunml_cvodes_adj_reinit"
 
   let reinit bs ?iter tb0 yb0 =
     if Sundials_configuration.safe then (tosession bs).checkvec yb0;
@@ -1416,11 +1416,11 @@ module Adjoint = struct (* {{{ *)
 
       external c_quad_initb
           : ('a, 'k) session -> int -> ('a, 'k) nvector -> unit
-          = "c_cvodes_adjquad_initb"
+          = "sunml_cvodes_adjquad_initb"
 
       external c_quad_initbs
           : ('a, 'k) session -> int -> ('a, 'k) nvector -> unit
-          = "c_cvodes_adjquad_initbs"
+          = "sunml_cvodes_adjquad_initbs"
 
       let init bs mf y0 =
         let parent, which = parent_and_which bs in
@@ -1433,7 +1433,7 @@ module Adjoint = struct (* {{{ *)
                           c_quad_initbs parent which y0)
 
       external c_reinit : ('a, 'k) session -> int -> ('a, 'k) nvector -> unit
-          = "c_cvodes_adjquad_reinit"
+          = "sunml_cvodes_adjquad_reinit"
 
       let reinit bs yqb0 =
         let parent, which = parent_and_which bs in
@@ -1442,7 +1442,7 @@ module Adjoint = struct (* {{{ *)
         c_reinit parent which yqb0
 
       external c_get : ('a, 'k) session -> int -> ('a, 'k) nvector -> float
-          = "c_cvodes_adjquad_get"
+          = "sunml_cvodes_adjquad_get"
 
       let get bs yqb =
         let parent, which = parent_and_which bs in
@@ -1456,15 +1456,15 @@ module Adjoint = struct (* {{{ *)
         | SVtolerances of float * ('a, 'k) nvector
 
       external set_err_con : ('a, 'k) session -> int -> bool -> unit
-          = "c_cvodes_adjquad_set_err_con"
+          = "sunml_cvodes_adjquad_set_err_con"
 
       external sv_tolerances
           : ('a, 'k) session -> int -> float -> ('a, 'k) nvector -> unit
-          = "c_cvodes_adjquad_sv_tolerances"
+          = "sunml_cvodes_adjquad_sv_tolerances"
 
       external ss_tolerances
           : ('a, 'k) session -> int -> float -> float -> unit
-          = "c_cvodes_adjquad_ss_tolerances"
+          = "sunml_cvodes_adjquad_ss_tolerances"
 
       let set_tolerances bs tol =
         let parent, which = parent_and_which bs in
@@ -1493,7 +1493,7 @@ end (* }}} *)
 
 (* Let C code know about some of the values in this module.  *)
 external c_init_module : exn array -> unit =
-  "c_cvodes_init_module"
+  "sunml_cvodes_init_module"
 
 let _ =
   c_init_module

@@ -83,12 +83,12 @@ module Custom = struct (* {{{ *)
       -> ('data, 'kind) Nvector.t
       -> ('data, 'kind) Nvector.t
       -> unit
-    = "ml_lsolver_call_atimes"
+    = "sunml_lsolver_call_atimes"
 
   type ('data, 'kind) precond_with_data
 
   external call_psetup : ('data, 'kind) precond_with_data -> unit
-    = "ml_lsolver_call_psetup"
+    = "sunml_lsolver_call_psetup"
 
   external call_psolve
     : ('data, 'kind) precond_with_data
@@ -97,7 +97,7 @@ module Custom = struct (* {{{ *)
       -> float
       -> bool
       -> unit
-    = "ml_lsolver_call_psolve"
+    = "sunml_lsolver_call_psolve"
 
   (* The fields and their order must match linearSolver_ml.h:lsolver_ops_index *)
   type ('matrix, 'data, 'kind) ops = {
@@ -166,7 +166,7 @@ module Direct = struct (* {{{ *)
 
   external c_make_custom
     : int -> ('m, 'nd, 'nk) Custom.ops -> Custom.has_ops -> ('m, 'nd, 'nk) cptr
-    = "ml_lsolver_make_custom"
+    = "sunml_lsolver_make_custom"
 
   (* The type t is defined in two parts, record and constructor, for
      compatiblity with older versions of OCaml.
@@ -264,7 +264,7 @@ module Iterative = struct (* {{{ *)
 
   external c_make_custom
     : int -> (unit, 'nd, 'nk) Custom.ops -> Custom.has_ops -> ('nd, 'nk) cptr
-    = "ml_lsolver_make_custom"
+    = "sunml_lsolver_make_custom"
 
   type ('nd, 'nk, 't) linear_solver = {
     rawptr : ('nd, 'nk) cptr;
@@ -283,7 +283,7 @@ module Iterative = struct (* {{{ *)
       -> preconditioning_type
       -> bool
       -> unit
-    = "ml_lsolver_set_prec_type"
+    = "sunml_lsolver_set_prec_type"
 
 end (* }}} *)
 

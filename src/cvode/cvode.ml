@@ -68,7 +68,7 @@ type integrator_stats = {
   }
 
 external c_root_init : ('a, 'k) session -> int -> unit
-    = "c_cvode_root_init"
+    = "sunml_cvode_root_init"
 
 let root_init session (nroots, rootsfn) =
   c_root_init session nroots;
@@ -76,23 +76,23 @@ let root_init session (nroots, rootsfn) =
 
 module Diag = struct (* {{{ *)
 
-  external c_cvode_diag : ('a, 'k) session -> unit
-    = "c_cvode_diag"
+  external sunml_cvode_diag : ('a, 'k) session -> unit
+    = "sunml_cvode_diag"
 
   let solver session nv =
-    c_cvode_diag session;
+    sunml_cvode_diag session;
     session.ls_precfns <- NoPrecFns;
     session.ls_callbacks <- DiagNoCallbacks
 
   external get_work_space       : ('a, 'k) session -> int * int
-      = "c_cvode_diag_get_work_space"
+      = "sunml_cvode_diag_get_work_space"
 
   let get_work_space s =
     ls_check_diag s;
     get_work_space s
 
   external get_num_rhs_evals    : ('a, 'k) session -> int
-      = "c_cvode_diag_get_num_rhs_evals"
+      = "sunml_cvode_diag_get_num_rhs_evals"
 
   let get_num_rhs_evals s =
     ls_check_diag s;
@@ -106,44 +106,44 @@ module Dls = struct (* {{{ *)
 
   (* Sundials < 3.0.0 *)
   external c_dls_dense : 'k serial_session -> int -> bool -> unit
-    = "c_cvode_dls_dense"
+    = "sunml_cvode_dls_dense"
 
   (* Sundials < 3.0.0 *)
   external c_dls_lapack_dense : 'k serial_session -> int -> bool -> unit
-    = "c_cvode_dls_lapack_dense"
+    = "sunml_cvode_dls_lapack_dense"
 
   (* Sundials < 3.0.0 *)
   external c_dls_band : 'k serial_session -> int -> int -> int -> bool -> unit
-    = "c_cvode_dls_band"
+    = "sunml_cvode_dls_band"
 
   (* Sundials < 3.0.0 *)
   external c_dls_lapack_band
     : 'k serial_session -> int -> int -> int -> bool -> unit
-    = "c_cvode_dls_lapack_band"
+    = "sunml_cvode_dls_lapack_band"
 
   (* Sundials < 3.0.0 *)
   external c_klu
     : 'k serial_session -> 's Matrix.Sparse.sformat -> int -> int -> unit
-    = "c_cvode_klu_init"
+    = "sunml_cvode_klu_init"
 
   (* Sundials < 3.0.0 *)
   external c_klu_set_ordering
     : 'k serial_session -> LinearSolver.Direct.Klu.ordering -> unit
-    = "c_cvode_klu_set_ordering"
+    = "sunml_cvode_klu_set_ordering"
 
   (* Sundials < 3.0.0 *)
   external c_klu_reinit : 'k serial_session -> int -> int -> unit
-    = "c_cvode_klu_reinit"
+    = "sunml_cvode_klu_reinit"
 
   (* Sundials < 3.0.0 *)
   external c_superlumt
     : 'k serial_session -> int -> int -> int -> unit
-    = "c_cvode_superlumt_init"
+    = "sunml_cvode_superlumt_init"
 
   (* Sundials < 3.0.0 *)
   external c_superlumt_set_ordering
     : 'k serial_session -> LinearSolver.Direct.Superlumt.ordering -> unit
-    = "c_cvode_superlumt_set_ordering"
+    = "sunml_cvode_superlumt_set_ordering"
 
   (* Sundials < 3.0.0 *)
   let klu_set_ordering session ordering =
@@ -261,7 +261,7 @@ module Dls = struct (* {{{ *)
       -> ('mk, 'm, Nvector_serial.data, 'k) Matrix.t
       -> bool
       -> unit
-    = "c_cvode_dls_set_linear_solver"
+    = "sunml_cvode_dls_set_linear_solver"
 
   let solver ?jac ((LSD.S { LSD.rawptr; LSD.solver; LSD.matrix }) as ls)
              session nv =
@@ -290,22 +290,22 @@ module Dls = struct (* {{{ *)
       | _ -> ()
 
   external get_work_space : 'k serial_session -> int * int
-      = "c_cvode_dls_get_work_space"
+      = "sunml_cvode_dls_get_work_space"
 
   let get_work_space s =
     ls_check_direct s;
     get_work_space s
 
   external c_get_num_jac_evals : 'k serial_session -> int
-      = "c_cvode_dls_get_num_jac_evals"
+      = "sunml_cvode_dls_get_num_jac_evals"
 
   (* Sundials < 3.0.0 *)
   external c_klu_get_num_jac_evals : 'k serial_session -> int
-    = "c_cvode_klu_get_num_jac_evals"
+    = "sunml_cvode_klu_get_num_jac_evals"
 
   (* Sundials < 3.0.0 *)
   external c_superlumt_get_num_jac_evals : 'k serial_session -> int
-    = "c_cvode_superlumt_get_num_jac_evals"
+    = "sunml_cvode_superlumt_get_num_jac_evals"
 
   let compat_get_num_jac_evals s =
     match s.ls_callbacks with
@@ -321,7 +321,7 @@ module Dls = struct (* {{{ *)
     c_get_num_jac_evals s
 
   external c_get_num_rhs_evals : 'k serial_session -> int
-      = "c_cvode_dls_get_num_rhs_evals"
+      = "sunml_cvode_dls_get_num_rhs_evals"
 
   let get_num_rhs_evals s =
     ls_check_direct s;
@@ -337,33 +337,33 @@ module Spils = struct (* {{{ *)
   external c_spgmr
     : ('a, 'k) session
       -> int -> LinearSolver.Iterative.preconditioning_type -> unit
-    = "c_cvode_spils_spgmr"
+    = "sunml_cvode_spils_spgmr"
 
   (* Sundials < 3.0.0 *)
   external c_spbcgs
     : ('a, 'k) session
       -> int -> LinearSolver.Iterative.preconditioning_type -> unit
-    = "c_cvode_spils_spbcgs"
+    = "sunml_cvode_spils_spbcgs"
 
   (* Sundials < 3.0.0 *)
   external c_sptfqmr
     : ('a, 'k) session
       -> int -> LinearSolver.Iterative.preconditioning_type -> unit
-    = "c_cvode_spils_sptfqmr"
+    = "sunml_cvode_spils_sptfqmr"
 
   (* Sundials < 3.0.0 *)
   external c_set_gs_type
     : ('a, 'k) session -> LinearSolver.Iterative.gramschmidt_type -> unit
-    = "c_cvode_spils_set_gs_type"
+    = "sunml_cvode_spils_set_gs_type"
 
   (* Sundials < 3.0.0 *)
   external c_set_maxl : ('a, 'k) session -> int -> unit
-    = "c_cvode_spils_set_maxl"
+    = "sunml_cvode_spils_set_maxl"
 
   (* Sundials < 3.0.0 *)
   external c_set_prec_type
       : ('a, 'k) session -> LinearSolver.Iterative.preconditioning_type -> unit
-      = "c_cvode_spils_set_prec_type"
+      = "sunml_cvode_spils_set_prec_type"
 
   let old_set_maxl s maxl =
     ls_check_spils s;
@@ -378,15 +378,15 @@ module Spils = struct (* {{{ *)
     c_set_gs_type s t
 
   external c_set_jac_times : ('a, 'k) session -> bool -> bool -> unit
-    = "c_cvode_spils_set_jac_times"
+    = "sunml_cvode_spils_set_jac_times"
 
   external c_set_preconditioner
     : ('a, 'k) session -> bool -> unit
-    = "c_cvode_spils_set_preconditioner"
+    = "sunml_cvode_spils_set_preconditioner"
 
   external c_spils_set_linear_solver
     : ('a, 'k) session -> ('a, 'k) LSI.Iterative.cptr -> unit
-    = "c_cvode_spils_set_linear_solver"
+    = "sunml_cvode_spils_set_linear_solver"
 
   let init_preconditioner solve setup session nv =
     c_set_preconditioner session (setup <> None);
@@ -474,63 +474,63 @@ module Spils = struct (* {{{ *)
     | _ -> raise LinearSolver.InvalidLinearSolver
 
   external set_eps_lin            : ('a, 'k) session -> float -> unit
-      = "c_cvode_spils_set_eps_lin"
+      = "sunml_cvode_spils_set_eps_lin"
 
   let set_eps_lin s epsl =
     ls_check_spils s;
     set_eps_lin s epsl
 
   external get_num_lin_iters      : ('a, 'k) session -> int
-      = "c_cvode_spils_get_num_lin_iters"
+      = "sunml_cvode_spils_get_num_lin_iters"
 
   let get_num_lin_iters s =
     ls_check_spils s;
     get_num_lin_iters s
 
   external get_num_conv_fails     : ('a, 'k) session -> int
-      = "c_cvode_spils_get_num_conv_fails"
+      = "sunml_cvode_spils_get_num_conv_fails"
 
   let get_num_conv_fails s =
     ls_check_spils s;
     get_num_conv_fails s
 
   external get_work_space         : ('a, 'k) session -> int * int
-      = "c_cvode_spils_get_work_space"
+      = "sunml_cvode_spils_get_work_space"
 
   let get_work_space s =
     ls_check_spils s;
     get_work_space s
 
   external get_num_prec_evals     : ('a, 'k) session -> int
-      = "c_cvode_spils_get_num_prec_evals"
+      = "sunml_cvode_spils_get_num_prec_evals"
 
   let get_num_prec_evals s =
     ls_check_spils s;
     get_num_prec_evals s
 
   external get_num_prec_solves    : ('a, 'k) session -> int
-      = "c_cvode_spils_get_num_prec_solves"
+      = "sunml_cvode_spils_get_num_prec_solves"
 
   let get_num_prec_solves s =
     ls_check_spils s;
     get_num_prec_solves s
 
   external get_num_jtsetup_evals   : ('a, 'k) session -> int
-      = "c_cvode_spils_get_num_jtsetup_evals"
+      = "sunml_cvode_spils_get_num_jtsetup_evals"
 
   let get_num_jtsetup_evals s =
     ls_check_spils s;
     get_num_jtsetup_evals s
 
   external get_num_jtimes_evals   : ('a, 'k) session -> int
-      = "c_cvode_spils_get_num_jtimes_evals"
+      = "sunml_cvode_spils_get_num_jtimes_evals"
 
   let get_num_jtimes_evals s =
     ls_check_spils s;
     get_num_jtimes_evals s
 
   external get_num_rhs_evals      : ('a, 'k) session -> int
-      = "c_cvode_spils_get_num_rhs_evals"
+      = "sunml_cvode_spils_get_num_rhs_evals"
 
   let get_num_rhs_evals s =
     ls_check_spils s;
@@ -543,7 +543,7 @@ module Spils = struct (* {{{ *)
 
     external c_set_preconditioner
       : ('a, 'k) session -> int -> int -> int -> unit
-      = "c_cvode_spils_set_banded_preconditioner"
+      = "sunml_cvode_spils_set_banded_preconditioner"
     (* Note: CVBandPrecInit seems to be designed only to be called on
        a fresh spils solver (i.e. right after CVSpgmr, CVSpbcg, or
        CVSptfqmr).
@@ -592,14 +592,14 @@ module Spils = struct (* {{{ *)
       LSI.Iterative.(PrecBoth,  init_preconditioner bandrange)
 
     external get_work_space : 'k serial_session -> int * int
-      = "c_cvode_bandprec_get_work_space"
+      = "sunml_cvode_bandprec_get_work_space"
 
     let get_work_space s =
       ls_check_spils_band s;
       get_work_space s
 
     external get_num_rhs_evals : 'k serial_session -> int
-      = "c_cvode_bandprec_get_num_rhs_evals"
+      = "sunml_cvode_bandprec_get_num_rhs_evals"
 
     let get_num_rhs_evals s =
       ls_check_spils_band s;
@@ -612,7 +612,7 @@ module Alternate = struct (* {{{ *)
 
   external c_set_alternate
     : ('data, 'kind) session -> bool -> bool -> unit
-    = "c_cvode_set_alternate"
+    = "sunml_cvode_set_alternate"
 
   type gammas = {
     gamma : float;
@@ -620,7 +620,7 @@ module Alternate = struct (* {{{ *)
   }
 
   external get_gammas : ('data, 'kind) session -> gammas
-    = "c_cvode_get_gamma"
+    = "sunml_cvode_get_gamma"
 
   let solver f s nv =
     let { linit; lsetup; lsolve } as cb = f s nv in
@@ -631,7 +631,7 @@ module Alternate = struct (* {{{ *)
 end (* }}} *)
 
 external c_set_functional : ('a, 'k) session -> unit
-  = "c_cvode_set_functional"
+  = "sunml_cvode_set_functional"
 
 let set_iter_type session nv iter =
   session.ls_callbacks <- NoCallbacks;
@@ -643,11 +643,11 @@ let set_iter_type session nv iter =
        solver.  *)
 
 external sv_tolerances  : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
-    = "c_cvode_sv_tolerances"
+    = "sunml_cvode_sv_tolerances"
 external ss_tolerances  : ('a, 'k) session -> float -> float -> unit
-    = "c_cvode_ss_tolerances"
+    = "sunml_cvode_ss_tolerances"
 external wf_tolerances  : ('a, 'k) session -> unit
-    = "c_cvode_wf_tolerances"
+    = "sunml_cvode_wf_tolerances"
 
 type ('a, 'k) tolerance =
   | SStolerances of float * float
@@ -664,7 +664,7 @@ let set_tolerances s tol =
   | WFtolerances ferrw -> (s.errw <- ferrw; wf_tolerances s)
 
 external c_session_finalize : ('a, 'kind) session -> unit
-    = "c_cvode_session_finalize"
+    = "sunml_cvode_session_finalize"
 
 let session_finalize s =
   Dls.invalidate_callback s;
@@ -673,7 +673,7 @@ let session_finalize s =
 external c_init
     : ('a, 'k) session Weak.t -> lmm -> ('a, 'k) iter -> ('a, 'k) nvector
       -> float -> (cvode_mem * c_weak_ref)
-    = "c_cvode_init"
+    = "sunml_cvode_init"
 
 let init lmm iter tol f ?(roots=no_roots) t0 y0 =
   let (nroots, roots) = roots in
@@ -717,7 +717,7 @@ let get_num_roots { nroots } = nroots
 
 external c_reinit
     : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
-    = "c_cvode_reinit"
+    = "sunml_cvode_reinit"
 
 let reinit session ?iter ?roots t0 y0 =
   if Sundials_configuration.safe then session.checkvec y0;
@@ -731,7 +731,7 @@ let reinit session ?iter ?roots t0 y0 =
    | Some roots -> root_init session roots)
 
 external get_root_info  : ('a, 'k) session -> Roots.t -> unit
-    = "c_cvode_get_root_info"
+    = "sunml_cvode_get_root_info"
 
 type solver_result =
   | Success             (** CV_SUCCESS *)
@@ -740,7 +740,7 @@ type solver_result =
 
 external c_solve_normal : ('a, 'k) session -> float -> ('a, 'k) nvector
                               -> float * solver_result
-    = "c_cvode_solve_normal"
+    = "sunml_cvode_solve_normal"
 
 let solve_normal s t y =
   if Sundials_configuration.safe then s.checkvec y;
@@ -748,7 +748,7 @@ let solve_normal s t y =
 
 external c_solve_one_step : ('a, 'k) session -> float -> ('a, 'k) nvector
                               -> float * solver_result
-    = "c_cvode_solve_one_step"
+    = "sunml_cvode_solve_one_step"
 
 let solve_one_step s t y =
   if Sundials_configuration.safe then s.checkvec y;
@@ -756,47 +756,47 @@ let solve_one_step s t y =
 
 external c_get_dky
     : ('a, 'k) session -> float -> int -> ('a, 'k) nvector -> unit
-    = "c_cvode_get_dky"
+    = "sunml_cvode_get_dky"
 
 let get_dky s y =
   if Sundials_configuration.safe then s.checkvec y;
   fun t k -> c_get_dky s t k y
 
 external get_integrator_stats : ('a, 'k) session -> integrator_stats
-    = "c_cvode_get_integrator_stats"
+    = "sunml_cvode_get_integrator_stats"
 
 external get_work_space         : ('a, 'k) session -> int * int
-    = "c_cvode_get_work_space"
+    = "sunml_cvode_get_work_space"
 
 external get_num_steps          : ('a, 'k) session -> int
-    = "c_cvode_get_num_steps"
+    = "sunml_cvode_get_num_steps"
 
 external get_num_rhs_evals      : ('a, 'k) session -> int
-    = "c_cvode_get_num_rhs_evals"
+    = "sunml_cvode_get_num_rhs_evals"
 
 external get_num_lin_solv_setups : ('a, 'k) session -> int
-    = "c_cvode_get_num_lin_solv_setups"
+    = "sunml_cvode_get_num_lin_solv_setups"
 
 external get_num_err_test_fails : ('a, 'k) session -> int
-    = "c_cvode_get_num_err_test_fails"
+    = "sunml_cvode_get_num_err_test_fails"
 
 external get_last_order         : ('a, 'k) session -> int
-    = "c_cvode_get_last_order"
+    = "sunml_cvode_get_last_order"
 
 external get_current_order      : ('a, 'k) session -> int
-    = "c_cvode_get_current_order"
+    = "sunml_cvode_get_current_order"
 
 external get_actual_init_step   : ('a, 'k) session -> float
-    = "c_cvode_get_actual_init_step"
+    = "sunml_cvode_get_actual_init_step"
 
 external get_last_step          : ('a, 'k) session -> float
-    = "c_cvode_get_last_step"
+    = "sunml_cvode_get_last_step"
 
 external get_current_step       : ('a, 'k) session -> float
-    = "c_cvode_get_current_step"
+    = "sunml_cvode_get_current_step"
 
 external get_current_time       : ('a, 'k) session -> float
-    = "c_cvode_get_current_time"
+    = "sunml_cvode_get_current_time"
 
 let print_integrator_stats s oc =
   let stats = get_integrator_stats s
@@ -813,49 +813,49 @@ let print_integrator_stats s oc =
     Printf.fprintf oc "current_time = %e\n"        stats.current_time;
 
 external set_error_file : ('a, 'k) session -> Logfile.t -> unit
-    = "c_cvode_set_error_file"
+    = "sunml_cvode_set_error_file"
 
 external set_err_handler_fn  : ('a, 'k) session -> unit
-    = "c_cvode_set_err_handler_fn"
+    = "sunml_cvode_set_err_handler_fn"
 
 let set_err_handler_fn s ferrh =
   s.errh <- ferrh;
   set_err_handler_fn s
 
 external clear_err_handler_fn  : ('a, 'k) session -> unit
-    = "c_cvode_clear_err_handler_fn"
+    = "sunml_cvode_clear_err_handler_fn"
 
 let clear_err_handler_fn s =
   s.errh <- dummy_errh;
   clear_err_handler_fn s
 
 external set_max_ord            : ('a, 'k) session -> int -> unit
-    = "c_cvode_set_max_ord"
+    = "sunml_cvode_set_max_ord"
 external set_max_num_steps      : ('a, 'k) session -> int -> unit
-    = "c_cvode_set_max_num_steps"
+    = "sunml_cvode_set_max_num_steps"
 external set_max_hnil_warns     : ('a, 'k) session -> int -> unit
-    = "c_cvode_set_max_hnil_warns"
+    = "sunml_cvode_set_max_hnil_warns"
 external set_stab_lim_det       : ('a, 'k) session -> bool -> unit
-    = "c_cvode_set_stab_lim_det"
+    = "sunml_cvode_set_stab_lim_det"
 external set_init_step          : ('a, 'k) session -> float -> unit
-    = "c_cvode_set_init_step"
+    = "sunml_cvode_set_init_step"
 external set_min_step           : ('a, 'k) session -> float -> unit
-    = "c_cvode_set_min_step"
+    = "sunml_cvode_set_min_step"
 external set_max_step           : ('a, 'k) session -> float -> unit
-    = "c_cvode_set_max_step"
+    = "sunml_cvode_set_max_step"
 external set_stop_time          : ('a, 'k) session -> float -> unit
-    = "c_cvode_set_stop_time"
+    = "sunml_cvode_set_stop_time"
 external set_max_err_test_fails : ('a, 'k) session -> int -> unit
-    = "c_cvode_set_max_err_test_fails"
+    = "sunml_cvode_set_max_err_test_fails"
 external set_max_nonlin_iters   : ('a, 'k) session -> int -> unit
-    = "c_cvode_set_max_nonlin_iters"
+    = "sunml_cvode_set_max_nonlin_iters"
 external set_max_conv_fails     : ('a, 'k) session -> int -> unit
-    = "c_cvode_set_max_conv_fails"
+    = "sunml_cvode_set_max_conv_fails"
 external set_nonlin_conv_coef   : ('a, 'k) session -> float -> unit
-    = "c_cvode_set_nonlin_conv_coef"
+    = "sunml_cvode_set_nonlin_conv_coef"
 
 external set_root_direction'   : ('a, 'k) session -> RootDirs.t -> unit
-    = "c_cvode_set_root_direction"
+    = "sunml_cvode_set_root_direction"
 
 let set_root_direction s rda =
   set_root_direction' s (RootDirs.copy (get_num_roots s) rda)
@@ -864,44 +864,44 @@ let set_all_root_directions s rd =
   set_root_direction' s (RootDirs.make (get_num_roots s) rd)
 
 external set_no_inactive_root_warn      : ('a, 'k) session -> unit
-    = "c_cvode_set_no_inactive_root_warn"
+    = "sunml_cvode_set_no_inactive_root_warn"
 
 external get_num_stab_lim_order_reds    : ('a, 'k) session -> int
-    = "c_cvode_get_num_stab_lim_order_reds"
+    = "sunml_cvode_get_num_stab_lim_order_reds"
 
 external get_tol_scale_factor           : ('a, 'k) session -> float
-    = "c_cvode_get_tol_scale_factor"
+    = "sunml_cvode_get_tol_scale_factor"
 
 external c_get_err_weights : ('a, 'k) session -> ('a, 'k) nvector -> unit
-    = "c_cvode_get_err_weights"
+    = "sunml_cvode_get_err_weights"
 
 let get_err_weights s ew =
   if Sundials_configuration.safe then s.checkvec ew;
   c_get_err_weights s ew
 
 external c_get_est_local_errors : ('a, 'k) session -> ('a, 'k) nvector -> unit
-    = "c_cvode_get_est_local_errors"
+    = "sunml_cvode_get_est_local_errors"
 
 let get_est_local_errors s ew =
   if Sundials_configuration.safe then s.checkvec ew;
   c_get_est_local_errors s ew
 
 external get_num_nonlin_solv_iters      : ('a, 'k) session -> int
-    = "c_cvode_get_num_nonlin_solv_iters"
+    = "sunml_cvode_get_num_nonlin_solv_iters"
 
 external get_num_nonlin_solv_conv_fails : ('a, 'k) session -> int
-    = "c_cvode_get_num_nonlin_solv_conv_fails"
+    = "sunml_cvode_get_num_nonlin_solv_conv_fails"
 
 external get_nonlin_solv_stats          : ('a, 'k) session -> int * int
-    = "c_cvode_get_nonlin_solv_stats"
+    = "sunml_cvode_get_nonlin_solv_stats"
 
 external get_num_g_evals                : ('a, 'k) session -> int
-    = "c_cvode_get_num_g_evals"
+    = "sunml_cvode_get_num_g_evals"
 
 
 (* Let C code know about some of the values in this module.  *)
 external c_init_module : exn array -> unit =
-  "c_cvode_init_module"
+  "sunml_cvode_init_module"
 
 let _ =
   c_init_module

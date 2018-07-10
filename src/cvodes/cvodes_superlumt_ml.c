@@ -21,7 +21,7 @@
 #include "../sundials/sundials_ml.h"
 
 #ifndef SUNDIALS_ML_SUPERLUMT
-CAMLprim value c_cvodes_superlumtb_init (value vparent_which,
+CAMLprim value sunml_cvodes_superlumtb_init (value vparent_which,
 		 			 value vneqs, value vnnz,
 					 value vnthreads, value vusesens)
 { CAMLparam0(); CAMLreturn (Val_unit); }
@@ -69,7 +69,7 @@ static int jacfn_nosens( /* CVSlsSparseJacFnB */
 	args[1] = Some_val(smat);
     } else {
 	args[1] = Some_val(smat);
-	ml_matrix_sparse_rewrap(args[1]);
+	sunml_matrix_sparse_rewrap(args[1]);
     }
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -116,7 +116,7 @@ static int jacfn_withsens( /* CVSlsSparseJacFnBS */
 	args[2] = Some_val(smat);
     } else {
 	args[2] = Some_val(smat);
-	ml_matrix_sparse_rewrap(args[2]);
+	sunml_matrix_sparse_rewrap(args[2]);
     }
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -126,7 +126,7 @@ static int jacfn_withsens( /* CVSlsSparseJacFnBS */
 }
 #endif
 
-CAMLprim value c_cvodes_superlumtb_init (value vparent_which,
+CAMLprim value sunml_cvodes_superlumtb_init (value vparent_which,
 					 value vneqs, value vnnz,
 					 value vnthreads, value vusesens)
 {

@@ -86,7 +86,7 @@ static int bbdcomm(sundials_ml_index nlocal, N_Vector u, void *user_data)
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }
 
-CAMLprim value c_kinsol_bbd_prec_init (value vkin_mem, value vlocaln,
+CAMLprim value sunml_kinsol_bbd_prec_init (value vkin_mem, value vlocaln,
 				       value vbandwidths, value vdqrely,
 				       value vhascomm)
 {
@@ -108,7 +108,7 @@ CAMLprim value c_kinsol_bbd_prec_init (value vkin_mem, value vlocaln,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_bbd_get_work_space(value vkin_mem)
+CAMLprim value sunml_kinsol_bbd_get_work_space(value vkin_mem)
 {
     CAMLparam1(vkin_mem);
     CAMLlocal1(r);
@@ -128,7 +128,7 @@ CAMLprim value c_kinsol_bbd_get_work_space(value vkin_mem)
     CAMLreturn(r);
 }
 
-CAMLprim value c_kinsol_bbd_get_num_gfn_evals(value vkin_mem)
+CAMLprim value sunml_kinsol_bbd_get_num_gfn_evals(value vkin_mem)
 {
     CAMLparam1(vkin_mem);
 

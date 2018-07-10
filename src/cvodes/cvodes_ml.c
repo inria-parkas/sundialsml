@@ -47,7 +47,7 @@
 #include "cvodes_ml.h"
 #include "../nvectors/nvector_ml.h"
 
-CAMLprim value c_cvodes_init_module (value exns)
+CAMLprim value sunml_cvodes_init_module (value exns)
 {
     CAMLparam1 (exns);
     REGISTER_EXNS (CVODES, exns);
@@ -56,7 +56,7 @@ CAMLprim value c_cvodes_init_module (value exns)
 
 /* Interface with nvectors */
 
-CAMLprim value c_cvodes_alloc_nvector_array(value vn)
+CAMLprim value sunml_cvodes_alloc_nvector_array(value vn)
 {
     CAMLparam1(vn);
     value r;
@@ -919,7 +919,7 @@ static int bbandjacfn_withsens(
 
 /* quadrature interface */
 
-CAMLprim value c_cvodes_quad_init(value vdata, value vq0)
+CAMLprim value sunml_cvodes_quad_init(value vdata, value vq0)
 {
     CAMLparam2(vdata, vq0);
     CAMLlocal1(r);
@@ -932,7 +932,7 @@ CAMLprim value c_cvodes_quad_init(value vdata, value vq0)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_quad_reinit(value vdata, value vq0)
+CAMLprim value sunml_cvodes_quad_reinit(value vdata, value vq0)
 {
     CAMLparam2(vdata, vq0);
     CAMLlocal1(r);
@@ -945,7 +945,7 @@ CAMLprim value c_cvodes_quad_reinit(value vdata, value vq0)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_quad_sv_tolerances(value vdata, value reltol,
+CAMLprim value sunml_cvodes_quad_sv_tolerances(value vdata, value reltol,
 					   value abstol)
 {
     CAMLparam3(vdata, reltol, abstol);
@@ -959,7 +959,7 @@ CAMLprim value c_cvodes_quad_sv_tolerances(value vdata, value reltol,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_quad_get(value vdata, value vyq)
+CAMLprim value sunml_cvodes_quad_get(value vdata, value vyq)
 {
     CAMLparam2(vdata, vyq);
     N_Vector yq = NVEC_VAL(vyq);
@@ -971,7 +971,7 @@ CAMLprim value c_cvodes_quad_get(value vdata, value vyq)
     CAMLreturn(caml_copy_double(tret));
 }
 
-CAMLprim value c_cvodes_quad_get_dky(value vdata, value vt, value vk,
+CAMLprim value sunml_cvodes_quad_get_dky(value vdata, value vt, value vk,
 				     value vdkyq)
 {
     CAMLparam4(vdata, vt, vk, vdkyq);
@@ -985,7 +985,7 @@ CAMLprim value c_cvodes_quad_get_dky(value vdata, value vt, value vk,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_quad_get_err_weights(value vdata, value veqweight)
+CAMLprim value sunml_cvodes_quad_get_err_weights(value vdata, value veqweight)
 {
     CAMLparam2(vdata, veqweight);
     N_Vector eqweight = NVEC_VAL(veqweight);
@@ -998,7 +998,7 @@ CAMLprim value c_cvodes_quad_get_err_weights(value vdata, value veqweight)
 
 /* sensitivity interface */
 
-CAMLprim value c_cvodes_sens_sv_tolerances(value vdata, value reltol,
+CAMLprim value sunml_cvodes_sens_sv_tolerances(value vdata, value reltol,
 					   value abstol)
 {
     CAMLparam3(vdata, reltol, abstol);
@@ -1029,7 +1029,7 @@ static int decode_sens_method(value vmethod)
     }
 }
 
-CAMLprim value c_cvodes_sens_init(value vdata, value vmethod, value vrhsfn,
+CAMLprim value sunml_cvodes_sens_init(value vdata, value vmethod, value vrhsfn,
 				  value vys0)
 {
     CAMLparam4(vdata, vmethod, vrhsfn, vys0);
@@ -1046,7 +1046,7 @@ CAMLprim value c_cvodes_sens_init(value vdata, value vmethod, value vrhsfn,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_sens_init_1(value vdata, value vmethod, value vrhsfn,
+CAMLprim value sunml_cvodes_sens_init_1(value vdata, value vmethod, value vrhsfn,
 				    value vys0)
 {
     CAMLparam4(vdata, vmethod, vrhsfn, vys0);
@@ -1063,7 +1063,7 @@ CAMLprim value c_cvodes_sens_init_1(value vdata, value vmethod, value vrhsfn,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_sens_reinit(value vdata, value vmethod, value vs0)
+CAMLprim value sunml_cvodes_sens_reinit(value vdata, value vmethod, value vs0)
 {
     CAMLparam3(vdata, vmethod, vs0);
     CAMLlocal1(r);
@@ -1079,7 +1079,7 @@ CAMLprim value c_cvodes_sens_reinit(value vdata, value vmethod, value vs0)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_sens_get(value vdata, value vys)
+CAMLprim value sunml_cvodes_sens_get(value vdata, value vys)
 {
     CAMLparam2(vdata, vys);
     N_Vector *ys = nvector_table_to_array(vys);
@@ -1092,7 +1092,7 @@ CAMLprim value c_cvodes_sens_get(value vdata, value vys)
     CAMLreturn(caml_copy_double(tret));
 }
 
-CAMLprim value c_cvodes_sens_get_dky(value vdata, value vt, value vk, value vdkys)
+CAMLprim value sunml_cvodes_sens_get_dky(value vdata, value vt, value vk, value vdkys)
 {
     CAMLparam4(vdata, vt, vk, vdkys);
     N_Vector *dkys = nvector_table_to_array(vdkys);
@@ -1105,7 +1105,7 @@ CAMLprim value c_cvodes_sens_get_dky(value vdata, value vt, value vk, value vdky
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_sens_get1(value vdata, value vis, value vys)
+CAMLprim value sunml_cvodes_sens_get1(value vdata, value vis, value vys)
 {
     CAMLparam3(vdata, vis, vys);
     N_Vector ys = NVEC_VAL(vys);
@@ -1117,7 +1117,7 @@ CAMLprim value c_cvodes_sens_get1(value vdata, value vis, value vys)
     CAMLreturn(caml_copy_double(tret));
 }
 
-CAMLprim value c_cvodes_sens_get_dky1(value vdata, value vt, value vk,
+CAMLprim value sunml_cvodes_sens_get_dky1(value vdata, value vt, value vk,
 				      value vis, value vdkys)
 {
     CAMLparam5(vdata, vt, vk, vis, vdkys);
@@ -1131,7 +1131,7 @@ CAMLprim value c_cvodes_sens_get_dky1(value vdata, value vt, value vk,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_sens_get_err_weights(value vdata, value vesweight)
+CAMLprim value sunml_cvodes_sens_get_err_weights(value vdata, value vesweight)
 {
     CAMLparam2(vdata, vesweight);
     N_Vector *esweight = nvector_table_to_array(vesweight);
@@ -1145,7 +1145,7 @@ CAMLprim value c_cvodes_sens_get_err_weights(value vdata, value vesweight)
 
 /* sensitivity/quadrature interface */
 
-CAMLprim value c_cvodes_quadsens_init(value vdata, value vrhsfn, value vyqs0)
+CAMLprim value sunml_cvodes_quadsens_init(value vdata, value vrhsfn, value vyqs0)
 {
     CAMLparam3(vdata, vrhsfn, vyqs0);
     N_Vector *yqs0 = nvector_table_to_array(vyqs0);
@@ -1159,7 +1159,7 @@ CAMLprim value c_cvodes_quadsens_init(value vdata, value vrhsfn, value vyqs0)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_quadsens_reinit(value vdata, value vyqs0)
+CAMLprim value sunml_cvodes_quadsens_reinit(value vdata, value vyqs0)
 {
     CAMLparam2(vdata, vyqs0);
     N_Vector *yqs0 = nvector_table_to_array(vyqs0);
@@ -1171,7 +1171,7 @@ CAMLprim value c_cvodes_quadsens_reinit(value vdata, value vyqs0)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_quadsens_sv_tolerances(value vdata, value reltol,
+CAMLprim value sunml_cvodes_quadsens_sv_tolerances(value vdata, value reltol,
 					       value abstol)
 {
     CAMLparam3(vdata, reltol, abstol);
@@ -1185,7 +1185,7 @@ CAMLprim value c_cvodes_quadsens_sv_tolerances(value vdata, value reltol,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_quadsens_get(value vdata, value vyqs)
+CAMLprim value sunml_cvodes_quadsens_get(value vdata, value vyqs)
 {
     CAMLparam2(vdata, vyqs);
     N_Vector *yqs = nvector_table_to_array(vyqs);
@@ -1198,7 +1198,7 @@ CAMLprim value c_cvodes_quadsens_get(value vdata, value vyqs)
     CAMLreturn(caml_copy_double(tret));
 }
 
-CAMLprim value c_cvodes_quadsens_get1(value vdata, value vis, value vyqs)
+CAMLprim value sunml_cvodes_quadsens_get1(value vdata, value vis, value vyqs)
 {
     CAMLparam3(vdata, vis, vyqs);
     N_Vector yqs = NVEC_VAL(vyqs);
@@ -1211,7 +1211,7 @@ CAMLprim value c_cvodes_quadsens_get1(value vdata, value vis, value vyqs)
     CAMLreturn(caml_copy_double(tret));
 }
 
-CAMLprim value c_cvodes_quadsens_get_dky(value vdata, value vt, value vk,
+CAMLprim value sunml_cvodes_quadsens_get_dky(value vdata, value vt, value vk,
 					 value vdkyqs)
 {
     CAMLparam4(vdata, vt, vk, vdkyqs);
@@ -1225,7 +1225,7 @@ CAMLprim value c_cvodes_quadsens_get_dky(value vdata, value vt, value vk,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_quadsens_get_dky1(value vdata, value vt, value vk,
+CAMLprim value sunml_cvodes_quadsens_get_dky1(value vdata, value vt, value vk,
 					  value vis, value vdkyqs)
 {
     CAMLparam5(vdata, vt, vk, vis, vdkyqs);
@@ -1238,7 +1238,7 @@ CAMLprim value c_cvodes_quadsens_get_dky1(value vdata, value vt, value vk,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_quadsens_get_err_weights(value vdata, value veqweights)
+CAMLprim value sunml_cvodes_quadsens_get_err_weights(value vdata, value veqweights)
 {
     CAMLparam2(vdata, veqweights);
     N_Vector *eqweights = nvector_table_to_array(veqweights);
@@ -1297,20 +1297,20 @@ static value forward_solver(value vdata, value vtout, value vyret, int onestep)
     CAMLreturn(ret);
 }
 
-CAMLprim value c_cvodes_adj_forward_normal(value vdata, value vtout, value vyret)
+CAMLprim value sunml_cvodes_adj_forward_normal(value vdata, value vtout, value vyret)
 {
     CAMLparam3(vdata, vtout, vyret);
     CAMLreturn(forward_solver(vdata, vtout, vyret, 0));
 }
 
-CAMLprim value c_cvodes_adj_forward_one_step(value vdata, value vtout,
+CAMLprim value sunml_cvodes_adj_forward_one_step(value vdata, value vtout,
 					    value vyret)
 {
     CAMLparam3(vdata, vtout, vyret);
     CAMLreturn(forward_solver(vdata, vtout, vyret, 1));
 }
 
-CAMLprim value c_cvodes_adj_sv_tolerances(value vparent, value vwhich,
+CAMLprim value sunml_cvodes_adj_sv_tolerances(value vparent, value vwhich,
 					  value vreltol, value vabstol)
 {
     CAMLparam4(vparent, vwhich, vreltol, vabstol);
@@ -1323,7 +1323,7 @@ CAMLprim value c_cvodes_adj_sv_tolerances(value vparent, value vwhich,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_adj_spils_set_preconditioner(value vparent,
+CAMLprim value sunml_cvodes_adj_spils_set_preconditioner(value vparent,
 						     value vwhich,
 						     value vset_precsetup,
 						     value vusesens)
@@ -1356,7 +1356,7 @@ CAMLprim value c_cvodes_adj_spils_set_preconditioner(value vparent,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_adj_spils_set_banded_preconditioner(value vparent,
+CAMLprim value sunml_cvodes_adj_spils_set_banded_preconditioner(value vparent,
 							    value vwhich,
 							    value vneqs,
 							    value vmupper,
@@ -1378,7 +1378,7 @@ int CVSpilsSetJacTimesSetupFnBS(void *cvode_mem, int which,
                                 CVSpilsJacTimesVecFnBS jtimesBS);
 #endif
 
-CAMLprim value c_cvodes_adj_spils_set_jac_times(value vparent,
+CAMLprim value sunml_cvodes_adj_spils_set_jac_times(value vparent,
 						value vwhich,
 						value vhas_setup,
 						value vhas_times,
@@ -1429,7 +1429,7 @@ CAMLprim value c_cvodes_adj_spils_set_jac_times(value vparent,
 }
 
 /* Dense and Band can only be used with serial NVectors.  */
-CAMLprim value c_cvodes_adj_dls_dense(value vparent, value vwhich,
+CAMLprim value sunml_cvodes_adj_dls_dense(value vparent, value vwhich,
 				      value vnb, value vset_jac, value vusesens)
 {
     CAMLparam4(vparent, vwhich, vset_jac, vusesens);
@@ -1463,7 +1463,7 @@ CAMLprim value c_cvodes_adj_dls_dense(value vparent, value vwhich,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_adj_dls_lapack_dense(value vparent, value vwhich,
+CAMLprim value sunml_cvodes_adj_dls_lapack_dense(value vparent, value vwhich,
 					     value vnb, value vset_jac,
 					     value vusesens)
 {
@@ -1498,7 +1498,7 @@ CAMLprim value c_cvodes_adj_dls_lapack_dense(value vparent, value vwhich,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_adj_dls_band (value vparent_which, value vsizes,
+CAMLprim value sunml_cvodes_adj_dls_band (value vparent_which, value vsizes,
 				      value vset_jac, value vusesens)
 {
     CAMLparam4(vparent_which, vsizes, vset_jac, vusesens);
@@ -1533,7 +1533,7 @@ CAMLprim value c_cvodes_adj_dls_band (value vparent_which, value vsizes,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_adj_dls_lapack_band (value vparent_which, value vsizes,
+CAMLprim value sunml_cvodes_adj_dls_lapack_band (value vparent_which, value vsizes,
 					     value vset_jac, value vusesens)
 {
     CAMLparam4(vparent_which, vsizes, vset_jac, vusesens);
@@ -1569,7 +1569,7 @@ CAMLprim value c_cvodes_adj_dls_lapack_band (value vparent_which, value vsizes,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_adj_dls_set_linear_solver (value vparent_which,
+CAMLprim value sunml_cvodes_adj_dls_set_linear_solver (value vparent_which,
 						   value vlsolv, value vjmat,
 						   value vhasjac, value vusesens)
 {
@@ -1601,7 +1601,7 @@ CAMLprim value c_cvodes_adj_dls_set_linear_solver (value vparent_which,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_adj_spils_set_linear_solver (value vparent, value vwhich,
+CAMLprim value sunml_cvodes_adj_spils_set_linear_solver (value vparent, value vwhich,
 						     value vlsolv)
 {
     CAMLparam3(vparent, vwhich, vlsolv);
@@ -1621,7 +1621,7 @@ CAMLprim value c_cvodes_adj_spils_set_linear_solver (value vparent, value vwhich
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_adj_init_backward(value vparent, value weakref,
+CAMLprim value sunml_cvodes_adj_init_backward(value vparent, value weakref,
 					 value vargs, value vwithsens)
 {
     CAMLparam4(vparent, weakref, vargs, vwithsens);
@@ -1688,7 +1688,7 @@ CAMLprim value c_cvodes_adj_init_backward(value vparent, value weakref,
     CAMLreturn(r);
 }
 
-CAMLprim value c_cvodes_adj_reinit(value vparent, value vwhich,
+CAMLprim value sunml_cvodes_adj_reinit(value vparent, value vwhich,
 				   value vtb0, value vyb0)
 {
     CAMLparam4(vparent, vwhich, vtb0, vyb0);
@@ -1703,7 +1703,7 @@ CAMLprim value c_cvodes_adj_reinit(value vparent, value vwhich,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_adj_get(value vparent, value vwhich, value vyb)
+CAMLprim value sunml_cvodes_adj_get(value vparent, value vwhich, value vyb)
 {
     CAMLparam3(vparent, vwhich, vyb);
     N_Vector yq = NVEC_VAL(vyb);
@@ -1716,7 +1716,7 @@ CAMLprim value c_cvodes_adj_get(value vparent, value vwhich, value vyb)
     CAMLreturn(caml_copy_double(tret));
 }
 
-CAMLprim value c_cvodes_adj_get_y(value vdata, value vt, value vy)
+CAMLprim value sunml_cvodes_adj_get_y(value vdata, value vt, value vy)
 {
     CAMLparam3(vdata, vt, vy);
 
@@ -1730,7 +1730,7 @@ CAMLprim value c_cvodes_adj_get_y(value vdata, value vt, value vy)
 
 /* adjoint/quadrature interface */
 
-CAMLprim value c_cvodes_adjquad_initb(value vparent, value vwhich, value vyqb0)
+CAMLprim value sunml_cvodes_adjquad_initb(value vparent, value vwhich, value vyqb0)
 {
     CAMLparam3(vparent, vwhich, vyqb0);
     CAMLlocal1(r);
@@ -1744,7 +1744,7 @@ CAMLprim value c_cvodes_adjquad_initb(value vparent, value vwhich, value vyqb0)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_adjquad_initbs(value vparent, value vwhich, value vyqb0)
+CAMLprim value sunml_cvodes_adjquad_initbs(value vparent, value vwhich, value vyqb0)
 {
     CAMLparam3(vparent, vwhich, vyqb0);
     CAMLlocal1(r);
@@ -1758,7 +1758,7 @@ CAMLprim value c_cvodes_adjquad_initbs(value vparent, value vwhich, value vyqb0)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_adjquad_reinit(value vparent, value vwhich, value vyqb0)
+CAMLprim value sunml_cvodes_adjquad_reinit(value vparent, value vwhich, value vyqb0)
 {
     CAMLparam3(vparent, vwhich, vyqb0);
     CAMLlocal1(r);
@@ -1771,7 +1771,7 @@ CAMLprim value c_cvodes_adjquad_reinit(value vparent, value vwhich, value vyqb0)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_adjquad_get(value vparent, value vwhich, value vyqb)
+CAMLprim value sunml_cvodes_adjquad_get(value vparent, value vwhich, value vyqb)
 {
     CAMLparam3(vparent, vwhich, vyqb);
     CAMLlocal1(r);
@@ -1785,7 +1785,7 @@ CAMLprim value c_cvodes_adjquad_get(value vparent, value vwhich, value vyqb)
     CAMLreturn(caml_copy_double(tret));
 }
 
-CAMLprim value c_cvodes_adjquad_sv_tolerances(value vparent, value vwhich,
+CAMLprim value sunml_cvodes_adjquad_sv_tolerances(value vparent, value vwhich,
 					      value vreltol, value vabstol)
 {
     CAMLparam4(vparent, vwhich, vreltol, vabstol);
@@ -1948,7 +1948,7 @@ void cvodes_ml_check_flag(const char *call, int flag)
 
 /* basic quadrature interface */
 
-CAMLprim value c_cvodes_quad_set_err_con(value vdata, value verrconq)
+CAMLprim value sunml_cvodes_quad_set_err_con(value vdata, value verrconq)
 {
     CAMLparam2(vdata, verrconq);
     int flag;
@@ -1959,7 +1959,7 @@ CAMLprim value c_cvodes_quad_set_err_con(value vdata, value verrconq)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_quad_ss_tolerances(value vdata,
+CAMLprim value sunml_cvodes_quad_ss_tolerances(value vdata,
 					   value reltol,
 					   value abstol)
 {
@@ -1972,7 +1972,7 @@ CAMLprim value c_cvodes_quad_ss_tolerances(value vdata,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_quad_get_num_rhs_evals(value vdata)
+CAMLprim value sunml_cvodes_quad_get_num_rhs_evals(value vdata)
 {
     CAMLparam1(vdata);
 
@@ -1985,7 +1985,7 @@ CAMLprim value c_cvodes_quad_get_num_rhs_evals(value vdata)
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim value c_cvodes_quad_get_num_err_test_fails(value vdata)
+CAMLprim value sunml_cvodes_quad_get_num_err_test_fails(value vdata)
 {
     CAMLparam1(vdata);
 
@@ -1998,7 +1998,7 @@ CAMLprim value c_cvodes_quad_get_num_err_test_fails(value vdata)
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim value c_cvodes_quad_get_stats(value vdata)
+CAMLprim value sunml_cvodes_quad_get_stats(value vdata)
 {
     CAMLparam1(vdata);
     CAMLlocal1(r);
@@ -2021,7 +2021,7 @@ CAMLprim value c_cvodes_quad_get_stats(value vdata)
 
 /* sensitivity interface */
 
-CAMLprim value c_cvodes_sens_set_err_con(value vdata, value verrcons)
+CAMLprim value sunml_cvodes_sens_set_err_con(value vdata, value verrcons)
 {
     CAMLparam2(vdata, verrcons);
     int flag;
@@ -2032,7 +2032,7 @@ CAMLprim value c_cvodes_sens_set_err_con(value vdata, value verrcons)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_sens_ss_tolerances(value vdata,
+CAMLprim value sunml_cvodes_sens_ss_tolerances(value vdata,
 					   value reltol,
 					   value abstol)
 {
@@ -2045,7 +2045,7 @@ CAMLprim value c_cvodes_sens_ss_tolerances(value vdata,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_sens_ee_tolerances(value vdata)
+CAMLprim value sunml_cvodes_sens_ee_tolerances(value vdata)
 {
     CAMLparam1(vdata);
 
@@ -2055,7 +2055,7 @@ CAMLprim value c_cvodes_sens_ee_tolerances(value vdata)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_sens_set_params(value vdata, value vparams)
+CAMLprim value sunml_cvodes_sens_set_params(value vdata, value vparams)
 {
     CAMLparam2(vdata, vparams);
     CAMLlocal3(vp, vpbar, vplist);
@@ -2089,7 +2089,7 @@ CAMLprim value c_cvodes_sens_set_params(value vdata, value vparams)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_sens_toggle_off(value vdata)
+CAMLprim value sunml_cvodes_sens_toggle_off(value vdata)
 {
     CAMLparam1(vdata);
 
@@ -2099,7 +2099,7 @@ CAMLprim value c_cvodes_sens_toggle_off(value vdata)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_sens_set_dq_method(value vdata, value vdqtype,
+CAMLprim value sunml_cvodes_sens_set_dq_method(value vdata, value vdqtype,
 					   value vdqrhomax)
 {
     CAMLparam3(vdata, vdqtype, vdqrhomax);
@@ -2125,7 +2125,7 @@ CAMLprim value c_cvodes_sens_set_dq_method(value vdata, value vdqtype,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_sens_set_max_nonlin_iters(value vdata, value vmaxcors)
+CAMLprim value sunml_cvodes_sens_set_max_nonlin_iters(value vdata, value vmaxcors)
 {
     CAMLparam2(vdata, vmaxcors);
 
@@ -2136,7 +2136,7 @@ CAMLprim value c_cvodes_sens_set_max_nonlin_iters(value vdata, value vmaxcors)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_sens_get_num_rhs_evals(value vdata)
+CAMLprim value sunml_cvodes_sens_get_num_rhs_evals(value vdata)
 {
     CAMLparam1(vdata);
 
@@ -2149,7 +2149,7 @@ CAMLprim value c_cvodes_sens_get_num_rhs_evals(value vdata)
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim value c_cvodes_sens_get_num_rhs_evals_sens(value vdata)
+CAMLprim value sunml_cvodes_sens_get_num_rhs_evals_sens(value vdata)
 {
     CAMLparam1(vdata);
 
@@ -2162,7 +2162,7 @@ CAMLprim value c_cvodes_sens_get_num_rhs_evals_sens(value vdata)
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim value c_cvodes_sens_get_num_err_test_fails(value vdata)
+CAMLprim value sunml_cvodes_sens_get_num_err_test_fails(value vdata)
 {
     CAMLparam1(vdata);
 
@@ -2175,7 +2175,7 @@ CAMLprim value c_cvodes_sens_get_num_err_test_fails(value vdata)
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim value c_cvodes_sens_get_num_lin_solv_setups(value vdata)
+CAMLprim value sunml_cvodes_sens_get_num_lin_solv_setups(value vdata)
 {
     CAMLparam1(vdata);
 
@@ -2188,7 +2188,7 @@ CAMLprim value c_cvodes_sens_get_num_lin_solv_setups(value vdata)
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim value c_cvodes_sens_get_stats(value vdata)
+CAMLprim value sunml_cvodes_sens_get_stats(value vdata)
 {
     CAMLparam1(vdata);
     CAMLlocal1(r);
@@ -2214,7 +2214,7 @@ CAMLprim value c_cvodes_sens_get_stats(value vdata)
     CAMLreturn(r);
 }
 
-CAMLprim value c_cvodes_sens_get_num_nonlin_solv_iters(value vdata)
+CAMLprim value sunml_cvodes_sens_get_num_nonlin_solv_iters(value vdata)
 {
     CAMLparam1(vdata);
 
@@ -2227,7 +2227,7 @@ CAMLprim value c_cvodes_sens_get_num_nonlin_solv_iters(value vdata)
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim value c_cvodes_sens_get_num_nonlin_solv_conv_fails(value vdata)
+CAMLprim value sunml_cvodes_sens_get_num_nonlin_solv_conv_fails(value vdata)
 {
     CAMLparam1(vdata);
 
@@ -2240,7 +2240,7 @@ CAMLprim value c_cvodes_sens_get_num_nonlin_solv_conv_fails(value vdata)
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim value c_cvodes_sens_get_nonlin_solv_stats(value vdata)
+CAMLprim value sunml_cvodes_sens_get_nonlin_solv_stats(value vdata)
 {
     CAMLparam1(vdata);
     CAMLlocal1(r);
@@ -2260,7 +2260,7 @@ CAMLprim value c_cvodes_sens_get_nonlin_solv_stats(value vdata)
     CAMLreturn(r);
 }
 
-CAMLprim value c_cvodes_sens_get_num_stgr_nonlin_solv_iters(value vdata,
+CAMLprim value sunml_cvodes_sens_get_num_stgr_nonlin_solv_iters(value vdata,
 							    value vr)
 {
     CAMLparam2(vdata, vr);
@@ -2274,7 +2274,7 @@ CAMLprim value c_cvodes_sens_get_num_stgr_nonlin_solv_iters(value vdata,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_sens_get_num_stgr_nonlin_solv_conv_fails(value vdata,
+CAMLprim value sunml_cvodes_sens_get_num_stgr_nonlin_solv_conv_fails(value vdata,
 								 value vr)
 {
     CAMLparam2(vdata, vr);
@@ -2288,7 +2288,7 @@ CAMLprim value c_cvodes_sens_get_num_stgr_nonlin_solv_conv_fails(value vdata,
 
 /* sensitivity/quadrature interface */
 
-CAMLprim value c_cvodes_quadsens_set_err_con(value vdata, value verrconq)
+CAMLprim value sunml_cvodes_quadsens_set_err_con(value vdata, value verrconq)
 {
     CAMLparam2(vdata, verrconq);
     int flag;
@@ -2299,7 +2299,7 @@ CAMLprim value c_cvodes_quadsens_set_err_con(value vdata, value verrconq)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_quadsens_ss_tolerances(value vdata,
+CAMLprim value sunml_cvodes_quadsens_ss_tolerances(value vdata,
 					       value reltol,
 					       value abstol)
 {
@@ -2313,7 +2313,7 @@ CAMLprim value c_cvodes_quadsens_ss_tolerances(value vdata,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_quadsens_ee_tolerances(value vdata)
+CAMLprim value sunml_cvodes_quadsens_ee_tolerances(value vdata)
 {
     CAMLparam1(vdata);
 
@@ -2323,7 +2323,7 @@ CAMLprim value c_cvodes_quadsens_ee_tolerances(value vdata)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_quadsens_get_num_rhs_evals(value vdata)
+CAMLprim value sunml_cvodes_quadsens_get_num_rhs_evals(value vdata)
 {
     CAMLparam1(vdata);
 
@@ -2336,7 +2336,7 @@ CAMLprim value c_cvodes_quadsens_get_num_rhs_evals(value vdata)
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim value c_cvodes_quadsens_get_num_err_test_fails(value vdata)
+CAMLprim value sunml_cvodes_quadsens_get_num_err_test_fails(value vdata)
 {
     CAMLparam1(vdata);
 
@@ -2349,7 +2349,7 @@ CAMLprim value c_cvodes_quadsens_get_num_err_test_fails(value vdata)
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim value c_cvodes_quadsens_get_stats(value vdata)
+CAMLprim value sunml_cvodes_quadsens_get_stats(value vdata)
 {
     CAMLparam1(vdata);
     CAMLlocal1(r);
@@ -2371,7 +2371,7 @@ CAMLprim value c_cvodes_quadsens_get_stats(value vdata)
 
 /* adjoint interface */
 
-CAMLprim value c_cvodes_adj_init(value vdata, value vnd, value vinterptype)
+CAMLprim value sunml_cvodes_adj_init(value vdata, value vnd, value vinterptype)
 {
     CAMLparam3(vdata, vnd, vinterptype);
     int interptype;
@@ -2396,7 +2396,7 @@ CAMLprim value c_cvodes_adj_init(value vdata, value vnd, value vinterptype)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_adj_ss_tolerances(value vparent, value vwhich,
+CAMLprim value sunml_cvodes_adj_ss_tolerances(value vparent, value vwhich,
 					  value vreltol, value vabstol)
 {
     CAMLparam4(vparent, vwhich, vreltol, vabstol);
@@ -2408,7 +2408,7 @@ CAMLprim value c_cvodes_adj_ss_tolerances(value vparent, value vwhich,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_adj_diag(value vparent, value vwhich)
+CAMLprim value sunml_cvodes_adj_diag(value vparent, value vwhich)
 {
     CAMLparam2(vparent, vwhich);
 
@@ -2418,7 +2418,7 @@ CAMLprim value c_cvodes_adj_diag(value vparent, value vwhich)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_adj_spils_spgmr (value vparent, value vwhich,
+CAMLprim value sunml_cvodes_adj_spils_spgmr (value vparent, value vwhich,
 					 value vmaxl, value vtype)
 {
     CAMLparam4 (vparent, vwhich, vmaxl, vtype);
@@ -2438,7 +2438,7 @@ CAMLprim value c_cvodes_adj_spils_spgmr (value vparent, value vwhich,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_adj_spils_spbcgs (value vparent, value vwhich,
+CAMLprim value sunml_cvodes_adj_spils_spbcgs (value vparent, value vwhich,
 					  value vmaxl, value vtype)
 {
     CAMLparam4 (vparent, vwhich, vmaxl, vtype);
@@ -2458,7 +2458,7 @@ CAMLprim value c_cvodes_adj_spils_spbcgs (value vparent, value vwhich,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_adj_spils_sptfqmr (value vparent, value vwhich,
+CAMLprim value sunml_cvodes_adj_spils_sptfqmr (value vparent, value vwhich,
 					   value vmaxl, value vtype)
 {
     CAMLparam4 (vparent, vwhich, vmaxl, vtype);
@@ -2478,7 +2478,7 @@ CAMLprim value c_cvodes_adj_spils_sptfqmr (value vparent, value vwhich,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_adj_set_functional (value vparent, value vwhich)
+CAMLprim value sunml_cvodes_adj_set_functional (value vparent, value vwhich)
 {
     CAMLparam2 (vparent, vwhich);
     int flag = CVodeSetIterTypeB (CVODE_MEM_FROM_ML (vparent), Int_val(vwhich),
@@ -2487,7 +2487,7 @@ CAMLprim value c_cvodes_adj_set_functional (value vparent, value vwhich)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_adj_bsession_finalize(value vdata)
+CAMLprim value sunml_cvodes_adj_bsession_finalize(value vdata)
 {
     if (CVODE_MEM_FROM_ML(vdata) != NULL) {
 	value *backref = CVODE_BACKREF_FROM_ML(vdata);
@@ -2497,7 +2497,7 @@ CAMLprim value c_cvodes_adj_bsession_finalize(value vdata)
     return Val_unit;
 }
 
-CAMLprim value c_cvodes_adj_backward_normal(value vdata, value vtbout)
+CAMLprim value sunml_cvodes_adj_backward_normal(value vdata, value vtbout)
 {
     CAMLparam2(vdata, vtbout);
 
@@ -2507,7 +2507,7 @@ CAMLprim value c_cvodes_adj_backward_normal(value vdata, value vtbout)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_adj_backward_one_step(value vdata, value vtbout)
+CAMLprim value sunml_cvodes_adj_backward_one_step(value vdata, value vtbout)
 {
     CAMLparam2(vdata, vtbout);
 
@@ -2518,7 +2518,7 @@ CAMLprim value c_cvodes_adj_backward_one_step(value vdata, value vtbout)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_adj_set_no_sensitivity(value vdata)
+CAMLprim value sunml_cvodes_adj_set_no_sensitivity(value vdata)
 {
     CAMLparam1(vdata);
 
@@ -2528,7 +2528,7 @@ CAMLprim value c_cvodes_adj_set_no_sensitivity(value vdata)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_adj_set_max_ord(value vparent, value vwhich,
+CAMLprim value sunml_cvodes_adj_set_max_ord(value vparent, value vwhich,
 					value vmaxord)
 {
     CAMLparam3(vparent, vwhich, vmaxord);
@@ -2540,7 +2540,7 @@ CAMLprim value c_cvodes_adj_set_max_ord(value vparent, value vwhich,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_adj_set_max_num_steps(value vparent, value vwhich,
+CAMLprim value sunml_cvodes_adj_set_max_num_steps(value vparent, value vwhich,
 					      value vmxsteps)
 {
     CAMLparam3(vparent, vwhich, vmxsteps);
@@ -2552,7 +2552,7 @@ CAMLprim value c_cvodes_adj_set_max_num_steps(value vparent, value vwhich,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_adj_set_init_step(value vparent, value vwhich, value vhin)
+CAMLprim value sunml_cvodes_adj_set_init_step(value vparent, value vwhich, value vhin)
 {
     CAMLparam3(vparent, vwhich, vhin);
 
@@ -2563,7 +2563,7 @@ CAMLprim value c_cvodes_adj_set_init_step(value vparent, value vwhich, value vhi
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_adj_set_min_step(value vparent, value vwhich, value vhmin)
+CAMLprim value sunml_cvodes_adj_set_min_step(value vparent, value vwhich, value vhmin)
 {
     CAMLparam3(vparent, vwhich, vhmin);
 
@@ -2574,7 +2574,7 @@ CAMLprim value c_cvodes_adj_set_min_step(value vparent, value vwhich, value vhmi
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_adj_set_max_step(value vparent, value vwhich, value vhmax)
+CAMLprim value sunml_cvodes_adj_set_max_step(value vparent, value vwhich, value vhmax)
 {
     CAMLparam3(vparent, vwhich, vhmax);
 
@@ -2585,7 +2585,7 @@ CAMLprim value c_cvodes_adj_set_max_step(value vparent, value vwhich, value vhma
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_adj_set_stab_lim_det(value vparent, value vwhich,
+CAMLprim value sunml_cvodes_adj_set_stab_lim_det(value vparent, value vwhich,
 					     value vstldet)
 {
     CAMLparam3(vparent, vwhich, vstldet);
@@ -2597,7 +2597,7 @@ CAMLprim value c_cvodes_adj_set_stab_lim_det(value vparent, value vwhich,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_adj_spils_set_prec_type(value vparent, value vwhich,
+CAMLprim value sunml_cvodes_adj_spils_set_prec_type(value vparent, value vwhich,
 						value vptype)
 {
     CAMLparam3(vparent, vwhich, vptype);
@@ -2611,7 +2611,7 @@ CAMLprim value c_cvodes_adj_spils_set_prec_type(value vparent, value vwhich,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_adj_spils_set_gs_type(value vparent, value vwhich,
+CAMLprim value sunml_cvodes_adj_spils_set_gs_type(value vparent, value vwhich,
 					      value vgstype)
 {
     CAMLparam3(vparent, vwhich, vgstype);
@@ -2630,7 +2630,7 @@ SUNDIALS_EXPORT int CVSpilsSetEpsLinB(void *cvode_mem, int which,
 				      realtype eplifacB);
 #endif
 
-CAMLprim value c_cvodes_adj_spils_set_eps_lin(value vparent, value vwhich,
+CAMLprim value sunml_cvodes_adj_spils_set_eps_lin(value vparent, value vwhich,
 					      value eplifac)
 {
     CAMLparam3(vparent, vwhich, eplifac);
@@ -2642,7 +2642,7 @@ CAMLprim value c_cvodes_adj_spils_set_eps_lin(value vparent, value vwhich,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_adj_spils_set_maxl(value vparent, value vwhich,
+CAMLprim value sunml_cvodes_adj_spils_set_maxl(value vparent, value vwhich,
 					   value maxl)
 {
     CAMLparam3(vparent, vwhich, maxl);
@@ -2658,7 +2658,7 @@ CAMLprim value c_cvodes_adj_spils_set_maxl(value vparent, value vwhich,
 
 /* adjoint/quadrature interface */
 
-CAMLprim value c_cvodes_adjquad_set_err_con(value vparent, value vwhich,
+CAMLprim value sunml_cvodes_adjquad_set_err_con(value vparent, value vwhich,
 					    value verrconq)
 {
     CAMLparam3(vparent, vwhich, verrconq);
@@ -2671,7 +2671,7 @@ CAMLprim value c_cvodes_adjquad_set_err_con(value vparent, value vwhich,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvodes_adjquad_ss_tolerances(value vparent, value vwhich,
+CAMLprim value sunml_cvodes_adjquad_ss_tolerances(value vparent, value vwhich,
 					      value reltol, value abstol)
 {
     CAMLparam4(vparent, vwhich, reltol, abstol);

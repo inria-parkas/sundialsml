@@ -83,7 +83,7 @@ module VarId = struct (* {{{ *)
 end (* }}} *)
 
 external c_root_init : ('a, 'k) session -> int -> unit
-    = "c_ida_root_init"
+    = "sunml_ida_root_init"
 
 let root_init session (nroots, rootsfn) =
   c_root_init session nroots;
@@ -95,43 +95,43 @@ module Dls = struct (* {{{ *)
 
   (* Sundials < 3.0.0 *)
   external c_dls_dense : 'k serial_session -> int -> bool -> unit
-    = "c_ida_dls_dense"
+    = "sunml_ida_dls_dense"
 
   (* Sundials < 3.0.0 *)
   external c_dls_lapack_dense : 'k serial_session -> int -> bool -> unit
-    = "c_ida_dls_lapack_dense"
+    = "sunml_ida_dls_lapack_dense"
 
   (* Sundials < 3.0.0 *)
   external c_dls_band : 'k serial_session -> int -> int -> int -> bool -> unit
-    = "c_ida_dls_band"
+    = "sunml_ida_dls_band"
 
   (* Sundials < 3.0.0 *)
   external c_dls_lapack_band : 'k serial_session -> int -> int -> int -> bool
                              -> unit
-    = "c_ida_dls_lapack_band"
+    = "sunml_ida_dls_lapack_band"
 
   (* Sundials < 3.0.0 *)
   external c_klu
     : 'k serial_session -> 's Matrix.Sparse.sformat -> int -> int -> unit
-    = "c_ida_klu_init"
+    = "sunml_ida_klu_init"
 
   (* Sundials < 3.0.0 *)
   external c_klu_set_ordering
     : 'k serial_session -> LinearSolver.Direct.Klu.ordering -> unit
-    = "c_ida_klu_set_ordering"
+    = "sunml_ida_klu_set_ordering"
 
   (* Sundials < 3.0.0 *)
   external c_klu_reinit : 'k serial_session -> int -> int -> unit
-    = "c_ida_klu_reinit"
+    = "sunml_ida_klu_reinit"
 
   (* Sundials < 3.0.0 *)
   external c_superlumt : 'k serial_session -> int -> int -> int -> unit
-    = "c_ida_superlumt_init"
+    = "sunml_ida_superlumt_init"
 
   (* Sundials < 3.0.0 *)
   external c_superlumt_set_ordering
     : 'k serial_session -> LinearSolver.Direct.Superlumt.ordering -> unit
-    = "c_ida_superlumt_set_ordering"
+    = "sunml_ida_superlumt_set_ordering"
 
   (* Sundials < 3.0.0 *)
   let klu_set_ordering session ordering =
@@ -248,7 +248,7 @@ module Dls = struct (* {{{ *)
       -> ('mk, 'm, Nvector_serial.data, 'k) Matrix.t
       -> bool
       -> unit
-    = "c_ida_dls_set_linear_solver"
+    = "sunml_ida_dls_set_linear_solver"
 
   let solver ?jac ((LSD.S { LSD.rawptr; LSD.solver; LSD.matrix }) as ls)
              session nv =
@@ -277,20 +277,20 @@ module Dls = struct (* {{{ *)
       | _ -> ()
 
   external get_work_space : 'k serial_session -> int * int
-      = "c_ida_dls_get_work_space"
+      = "sunml_ida_dls_get_work_space"
 
   let get_work_space s =
     ls_check_direct s;
     get_work_space s
 
   external c_get_num_jac_evals : 'k serial_session -> int
-      = "c_ida_dls_get_num_jac_evals"
+      = "sunml_ida_dls_get_num_jac_evals"
 
   external c_klu_get_num_jac_evals : 'k serial_session -> int
-    = "c_ida_klu_get_num_jac_evals"
+    = "sunml_ida_klu_get_num_jac_evals"
 
   external c_superlumt_get_num_jac_evals : 'k serial_session -> int
-    = "c_ida_superlumt_get_num_jac_evals"
+    = "sunml_ida_superlumt_get_num_jac_evals"
 
   let compat_get_num_jac_evals s =
     match s.ls_callbacks with
@@ -306,7 +306,7 @@ module Dls = struct (* {{{ *)
     c_get_num_jac_evals s
 
   external get_num_res_evals : 'k serial_session -> int
-      = "c_ida_dls_get_num_res_evals"
+      = "sunml_ida_dls_get_num_res_evals"
 
   let get_num_res_evals s =
     ls_check_direct s;
@@ -320,30 +320,30 @@ module Spils = struct (* {{{ *)
   (* Sundials < 3.0.0 *)
   external c_spgmr
     : ('a, 'k) session -> int -> unit
-    = "c_ida_spils_spgmr"
+    = "sunml_ida_spils_spgmr"
 
   (* Sundials < 3.0.0 *)
   external c_spbcgs
     : ('a, 'k) session -> int -> unit
-    = "c_ida_spils_spbcgs"
+    = "sunml_ida_spils_spbcgs"
 
   (* Sundials < 3.0.0 *)
   external c_sptfqmr
     : ('a, 'k) session -> int -> unit
-    = "c_ida_spils_sptfqmr"
+    = "sunml_ida_spils_sptfqmr"
 
   (* Sundials < 3.0.0 *)
   external c_set_gs_type
     : ('a, 'k) session -> LSI.Iterative.gramschmidt_type -> unit
-    = "c_ida_spils_set_gs_type"
+    = "sunml_ida_spils_set_gs_type"
 
   (* Sundials < 3.0.0 *)
   external c_set_maxl : ('a, 'k) session -> int -> unit
-    = "c_ida_spils_set_maxl"
+    = "sunml_ida_spils_set_maxl"
 
   (* Sundials < 3.0.0 *)
   external c_set_max_restarts : ('a, 'k) session -> int -> unit
-    = "c_ida_spils_set_max_restarts"
+    = "sunml_ida_spils_set_max_restarts"
 
   let old_set_maxl s maxl =
     ls_check_spils s;
@@ -358,15 +358,15 @@ module Spils = struct (* {{{ *)
     c_set_max_restarts s t
 
   external c_set_jac_times : ('a, 'k) session -> bool -> bool -> unit
-    = "c_ida_spils_set_jac_times"
+    = "sunml_ida_spils_set_jac_times"
 
   external c_set_preconditioner
     : ('a, 'k) session -> bool -> unit
-    = "c_ida_spils_set_preconditioner"
+    = "sunml_ida_spils_set_preconditioner"
 
   external c_spils_set_linear_solver
     : ('a, 'k) session -> ('a, 'k) LSI.Iterative.cptr -> unit
-    = "c_ida_spils_set_linear_solver"
+    = "sunml_ida_spils_set_linear_solver"
 
   let init_preconditioner solve setup session nv =
     c_set_preconditioner session (setup <> None);
@@ -454,63 +454,63 @@ module Spils = struct (* {{{ *)
     | _ -> raise LinearSolver.InvalidLinearSolver
 
   external set_eps_lin            : ('a, 'k) session -> float -> unit
-      = "c_ida_spils_set_eps_lin"
+      = "sunml_ida_spils_set_eps_lin"
 
   let set_eps_lin s epsl =
     ls_check_spils s;
     set_eps_lin s epsl
 
   external get_num_lin_iters      : ('a, 'k) session -> int
-      = "c_ida_spils_get_num_lin_iters"
+      = "sunml_ida_spils_get_num_lin_iters"
 
   let get_num_lin_iters s =
     ls_check_spils s;
     get_num_lin_iters s
 
   external get_num_conv_fails     : ('a, 'k) session -> int
-      = "c_ida_spils_get_num_conv_fails"
+      = "sunml_ida_spils_get_num_conv_fails"
 
   let get_num_conv_fails s =
     ls_check_spils s;
     get_num_conv_fails s
 
   external get_work_space         : ('a, 'k) session -> int * int
-      = "c_ida_spils_get_work_space"
+      = "sunml_ida_spils_get_work_space"
 
   let get_work_space s =
     ls_check_spils s;
     get_work_space s
 
   external get_num_prec_evals     : ('a, 'k) session -> int
-      = "c_ida_spils_get_num_prec_evals"
+      = "sunml_ida_spils_get_num_prec_evals"
 
   let get_num_prec_evals s =
     ls_check_spils s;
     get_num_prec_evals s
 
   external get_num_prec_solves    : ('a, 'k) session -> int
-      = "c_ida_spils_get_num_prec_solves"
+      = "sunml_ida_spils_get_num_prec_solves"
 
   let get_num_prec_solves s =
     ls_check_spils s;
     get_num_prec_solves s
 
   external get_num_jtsetup_evals   : ('a, 'k) session -> int
-      = "c_ida_spils_get_num_jtsetup_evals"
+      = "sunml_ida_spils_get_num_jtsetup_evals"
 
   let get_num_jtsetup_evals s =
     ls_check_spils s;
     get_num_jtsetup_evals s
 
   external get_num_jtimes_evals   : ('a, 'k) session -> int
-      = "c_ida_spils_get_num_jtimes_evals"
+      = "sunml_ida_spils_get_num_jtimes_evals"
 
   let get_num_jtimes_evals s =
     ls_check_spils s;
     get_num_jtimes_evals s
 
   external get_num_res_evals      : ('a, 'k) session -> int
-      = "c_ida_spils_get_num_res_evals"
+      = "sunml_ida_spils_get_num_res_evals"
 
   let get_num_res_evals s =
     ls_check_spils s;
@@ -523,7 +523,7 @@ module Alternate = struct (* {{{ *)
 
   external c_set_alternate
     : ('data, 'kind) session -> bool -> bool -> unit
-    = "c_ida_set_alternate"
+    = "sunml_ida_set_alternate"
 
   let solver f s nv =
     let { linit; lsetup; lsolve } as cb = f s nv in
@@ -531,8 +531,8 @@ module Alternate = struct (* {{{ *)
     s.ls_precfns <- NoPrecFns;
     s.ls_callbacks <- AlternateCallback cb
 
-  external get_cj : ('data, 'kind) session -> float = "c_ida_get_cj"
-  external get_cjratio : ('data, 'kind) session -> float = "c_ida_get_cjratio"
+  external get_cj : ('data, 'kind) session -> float = "sunml_ida_get_cj"
+  external get_cjratio : ('data, 'kind) session -> float = "sunml_ida_get_cjratio"
 end (* }}} *)
 
 let set_linear_solver session solver nv =
@@ -542,11 +542,11 @@ let set_linear_solver session solver nv =
 
 external sv_tolerances
     : ('a, 'k) session -> float -> ('a, 'k) Nvector.t -> unit
-    = "c_ida_sv_tolerances"
+    = "sunml_ida_sv_tolerances"
 external ss_tolerances  : ('a, 'k) session -> float -> float -> unit
-    = "c_ida_ss_tolerances"
+    = "sunml_ida_ss_tolerances"
 external wf_tolerances  : ('a, 'k) session -> unit
-    = "c_ida_wf_tolerances"
+    = "sunml_ida_wf_tolerances"
 
 type 'a error_fun = 'a -> 'a -> unit
 
@@ -565,7 +565,7 @@ let set_tolerances s tol =
   | WFtolerances ferrw -> (s.errw <- ferrw; wf_tolerances s)
 
 external c_set_id : ('a,'k) session -> ('a,'k) Nvector.t -> unit
-  = "c_ida_set_id"
+  = "sunml_ida_set_id"
 
 let set_id s id =
   if Sundials_configuration.safe then s.checkvec id;
@@ -573,7 +573,7 @@ let set_id s id =
   s.id_set <- true
 
 external c_session_finalize : ('a, 'kind) session -> unit
-    = "c_ida_session_finalize"
+    = "sunml_ida_session_finalize"
 
 let session_finalize s =
   Dls.invalidate_callback s;
@@ -582,7 +582,7 @@ let session_finalize s =
 external c_init : ('a, 'k) session Weak.t -> float
                   -> ('a, 'k) Nvector.t -> ('a, 'k) Nvector.t
                   -> (ida_mem * c_weak_ref)
-    = "c_ida_init"
+    = "sunml_ida_init"
 
 let init linsolv tol resfn ?varid ?(roots=no_roots) t0 y y' =
   let (nroots, rootsfn) = roots in
@@ -630,7 +630,7 @@ let get_num_roots { nroots } = nroots
 external c_reinit
     : ('a, 'k) session -> float -> ('a, 'k) Nvector.t
       -> ('a, 'k) Nvector.t -> unit
-    = "c_ida_reinit"
+    = "sunml_ida_reinit"
 
 let reinit session ?linsolv ?roots t0 y0 y'0 =
   if Sundials_configuration.safe then
@@ -646,7 +646,7 @@ let reinit session ?linsolv ?roots t0 y0 y'0 =
    | Some roots -> root_init session roots)
 
 external get_root_info  : ('a, 'k) session -> Roots.t -> unit
-    = "c_ida_get_root_info"
+    = "sunml_ida_get_root_info"
 
 type solver_result =
   | Success             (** IDA_SUCCESS *)
@@ -656,7 +656,7 @@ type solver_result =
 external c_solve_normal : ('a, 'k) session -> float
                           -> ('a, 'k) Nvector.t -> ('a,'k) Nvector.t
                           -> float * solver_result
-    = "c_ida_solve_normal"
+    = "sunml_ida_solve_normal"
 
 let solve_normal s t y yp =
   if Sundials_configuration.safe then
@@ -667,7 +667,7 @@ let solve_normal s t y yp =
 external c_solve_one_step : ('a, 'k) session -> float
                             -> ('a, 'k) Nvector.t-> ('a, 'k) Nvector.t
                             -> float * solver_result
-    = "c_ida_solve_one_step"
+    = "sunml_ida_solve_one_step"
 
 let solve_one_step s t y yp =
   if Sundials_configuration.safe then
@@ -677,47 +677,47 @@ let solve_one_step s t y yp =
 
 external c_get_dky
     : ('a, 'k) session -> float -> int -> ('a, 'k) Nvector.t -> unit
-    = "c_ida_get_dky"
+    = "sunml_ida_get_dky"
 
 let get_dky s y =
   if Sundials_configuration.safe then s.checkvec y;
   fun t k -> c_get_dky s t k y
 
 external get_integrator_stats : ('a, 'k) session -> integrator_stats
-    = "c_ida_get_integrator_stats"
+    = "sunml_ida_get_integrator_stats"
 
 external get_work_space         : ('a, 'k) session -> int * int
-    = "c_ida_get_work_space"
+    = "sunml_ida_get_work_space"
 
 external get_num_steps          : ('a, 'k) session -> int
-    = "c_ida_get_num_steps"
+    = "sunml_ida_get_num_steps"
 
 external get_num_res_evals      : ('a, 'k) session -> int
-    = "c_ida_get_num_res_evals"
+    = "sunml_ida_get_num_res_evals"
 
 external get_num_lin_solv_setups : ('a, 'k) session -> int
-    = "c_ida_get_num_lin_solv_setups"
+    = "sunml_ida_get_num_lin_solv_setups"
 
 external get_num_err_test_fails : ('a, 'k) session -> int
-    = "c_ida_get_num_err_test_fails"
+    = "sunml_ida_get_num_err_test_fails"
 
 external get_last_order         : ('a, 'k) session -> int
-    = "c_ida_get_last_order"
+    = "sunml_ida_get_last_order"
 
 external get_current_order      : ('a, 'k) session -> int
-    = "c_ida_get_current_order"
+    = "sunml_ida_get_current_order"
 
 external get_actual_init_step   : ('a, 'k) session -> float
-    = "c_ida_get_actual_init_step"
+    = "sunml_ida_get_actual_init_step"
 
 external get_last_step          : ('a, 'k) session -> float
-    = "c_ida_get_last_step"
+    = "sunml_ida_get_last_step"
 
 external get_current_step       : ('a, 'k) session -> float
-    = "c_ida_get_current_step"
+    = "sunml_ida_get_current_step"
 
 external get_current_time       : ('a, 'k) session -> float
-    = "c_ida_get_current_time"
+    = "sunml_ida_get_current_time"
 
 let print_integrator_stats s oc =
   let stats = get_integrator_stats s
@@ -734,43 +734,43 @@ let print_integrator_stats s oc =
     Printf.fprintf oc "current_time = %e\n"        stats.current_time;
 
 external set_error_file : ('a, 'k) session -> Logfile.t -> unit
-    = "c_ida_set_error_file"
+    = "sunml_ida_set_error_file"
 
 external set_err_handler_fn  : ('a, 'k) session -> unit
-    = "c_ida_set_err_handler_fn"
+    = "sunml_ida_set_err_handler_fn"
 
 let set_err_handler_fn s ferrh =
   s.errh <- ferrh;
   set_err_handler_fn s
 
 external clear_err_handler_fn  : ('a, 'k) session -> unit
-    = "c_ida_clear_err_handler_fn"
+    = "sunml_ida_clear_err_handler_fn"
 
 let clear_err_handler_fn s =
   s.errh <- dummy_errh;
   clear_err_handler_fn s
 
 external set_max_ord            : ('a, 'k) session -> int -> unit
-    = "c_ida_set_max_ord"
+    = "sunml_ida_set_max_ord"
 external set_max_num_steps      : ('a, 'k) session -> int -> unit
-    = "c_ida_set_max_num_steps"
+    = "sunml_ida_set_max_num_steps"
 external set_init_step          : ('a, 'k) session -> float -> unit
-    = "c_ida_set_init_step"
+    = "sunml_ida_set_init_step"
 external set_max_step           : ('a, 'k) session -> float -> unit
-    = "c_ida_set_max_step"
+    = "sunml_ida_set_max_step"
 external set_stop_time          : ('a, 'k) session -> float -> unit
-    = "c_ida_set_stop_time"
+    = "sunml_ida_set_stop_time"
 external set_max_err_test_fails : ('a, 'k) session -> int -> unit
-    = "c_ida_set_max_err_test_fails"
+    = "sunml_ida_set_max_err_test_fails"
 external set_max_nonlin_iters   : ('a, 'k) session -> int -> unit
-    = "c_ida_set_max_nonlin_iters"
+    = "sunml_ida_set_max_nonlin_iters"
 external set_max_conv_fails     : ('a, 'k) session -> int -> unit
-    = "c_ida_set_max_conv_fails"
+    = "sunml_ida_set_max_conv_fails"
 external set_nonlin_conv_coef   : ('a, 'k) session -> float -> unit
-    = "c_ida_set_nonlin_conv_coef"
+    = "sunml_ida_set_nonlin_conv_coef"
 
 external set_root_direction'   : ('a, 'k) session -> RootDirs.t -> unit
-    = "c_ida_set_root_direction"
+    = "sunml_ida_set_root_direction"
 
 let set_root_direction s rda =
   set_root_direction' s (RootDirs.copy (get_num_roots s) rda)
@@ -779,7 +779,7 @@ let set_all_root_directions s rd =
   set_root_direction' s (RootDirs.make (get_num_roots s) rd)
 
 external set_no_inactive_root_warn      : ('a, 'k) session -> unit
-    = "c_ida_set_no_inactive_root_warn"
+    = "sunml_ida_set_no_inactive_root_warn"
 (*
    IDAGetNumStabLimOrderReds appears in the sundials 2.5.0 manual on
    p.52 but there's no such function in the implementation.  It's
@@ -789,43 +789,43 @@ external get_num_stab_lim_order_reds    : ('a, 'k) session -> int
     = "c_ida_get_num_stab_lim_order_reds"
 *)
 external get_tol_scale_factor           : ('a, 'k) session -> float
-    = "c_ida_get_tol_scale_factor"
+    = "sunml_ida_get_tol_scale_factor"
 
 external c_get_err_weights : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
-    = "c_ida_get_err_weights"
+    = "sunml_ida_get_err_weights"
 
 let get_err_weights s ew =
   if Sundials_configuration.safe then s.checkvec ew;
   c_get_err_weights s ew
 
 external c_get_est_local_errors : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
-    = "c_ida_get_est_local_errors"
+    = "sunml_ida_get_est_local_errors"
 
 let get_est_local_errors s ew =
   if Sundials_configuration.safe then s.checkvec ew;
   c_get_est_local_errors s ew
 
 external get_num_nonlin_solv_iters      : ('a, 'k) session -> int
-    = "c_ida_get_num_nonlin_solv_iters"
+    = "sunml_ida_get_num_nonlin_solv_iters"
 
 external get_num_nonlin_solv_conv_fails : ('a, 'k) session -> int
-    = "c_ida_get_num_nonlin_solv_conv_fails"
+    = "sunml_ida_get_num_nonlin_solv_conv_fails"
 
 external get_nonlin_solv_stats          : ('a, 'k) session -> int * int
-    = "c_ida_get_nonlin_solv_stats"
+    = "sunml_ida_get_nonlin_solv_stats"
 
 external get_num_g_evals                : ('a, 'k) session -> int
-    = "c_ida_get_num_g_evals"
+    = "sunml_ida_get_num_g_evals"
 
 external c_set_constraints : ('a,'k) session -> ('a,'k) Nvector.t -> unit
-  = "c_ida_set_constraints"
+  = "sunml_ida_set_constraints"
 
 let set_constraints s nv =
   if Sundials_configuration.safe then s.checkvec nv;
   c_set_constraints s nv
 
 external c_set_suppress_alg : ('a,'k) session -> bool -> unit
-  = "c_ida_set_suppress_alg"
+  = "sunml_ida_set_suppress_alg"
 
 let set_suppress_alg s ?varid v =
   (match varid with
@@ -834,32 +834,32 @@ let set_suppress_alg s ?varid v =
   c_set_suppress_alg s v
 
 external set_nonlin_conv_coef_ic : ('d, 'k) session -> float -> unit
-  = "c_ida_set_nonlin_conv_coef_ic"
+  = "sunml_ida_set_nonlin_conv_coef_ic"
 
 external set_max_num_steps_ic : ('d, 'k) session -> int -> unit
-  = "c_ida_set_max_num_steps_ic"
+  = "sunml_ida_set_max_num_steps_ic"
 
 external set_max_num_jacs_ic : ('d, 'k) session -> int -> unit
-  = "c_ida_set_max_num_jacs_ic"
+  = "sunml_ida_set_max_num_jacs_ic"
 
 external set_max_num_iters_ic : ('d, 'k) session -> int -> unit
-  = "c_ida_set_max_num_iters_ic"
+  = "sunml_ida_set_max_num_iters_ic"
 
 external set_max_backs_ic : ('d, 'k) session -> int -> unit
-  = "c_ida_set_max_backs_ic"
+  = "sunml_ida_set_max_backs_ic"
 
 external set_line_search_ic : ('d, 'k) session -> bool -> unit
-  = "c_ida_set_line_search_ic"
+  = "sunml_ida_set_line_search_ic"
 
 external set_step_tolerance_ic : ('d, 'k) session -> float -> unit
-  = "c_ida_set_step_tolerance_ic"
+  = "sunml_ida_set_step_tolerance_ic"
 
 external get_num_backtrack_ops : ('a,'k) session -> int
-  = "c_ida_get_num_backtrack_ops"
+  = "sunml_ida_get_num_backtrack_ops"
 
 external c_calc_ic_y : ('a,'k) session -> ('a,'k) Nvector.t option
                        -> float -> unit
-  = "c_ida_calc_ic_y"
+  = "sunml_ida_calc_ic_y"
 
 let calc_ic_y session ?y tout1 =
   if Sundials_configuration.safe then
@@ -869,7 +869,7 @@ let calc_ic_y session ?y tout1 =
 external c_calc_ic_ya_yd' :
   ('a,'k) session -> ('a,'k) Nvector.t option -> ('a,'k) Nvector.t option
   -> float -> unit
-  = "c_ida_calc_ic_ya_ydp"
+  = "sunml_ida_calc_ic_ya_ydp"
 
 let calc_ic_ya_yd' session ?y ?y' ?varid tout1 =
   if Sundials_configuration.safe then
@@ -882,7 +882,7 @@ let calc_ic_ya_yd' session ?y ?y' ?varid tout1 =
 
 (* Let C code know about some of the values in this module.  *)
 external c_init_module : exn array -> unit =
-  "c_ida_init_module"
+  "sunml_ida_init_module"
 
 let _ =
   c_init_module

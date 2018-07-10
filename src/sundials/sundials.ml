@@ -441,7 +441,7 @@ external c_init_module :
   -> ('a Weak.t -> int -> 'a option)
   -> exn array
   -> unit
-  = "c_sundials_init_module"
+  = "sunml_sundials_init_module"
 
 (* Used when user code throws an exception in a context where the
    underlying C library does not allow for clean handling.  *)

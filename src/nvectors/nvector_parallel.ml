@@ -9,7 +9,7 @@ exception IncorrectGlobalSize
 external c_wrap : (RealArray.t * int * Mpi.communicator)
                   -> (RealArray.t * int * Mpi.communicator -> bool)
                   -> t
-  = "ml_nvec_wrap_parallel"
+  = "sunml_nvec_wrap_parallel"
 
 let wrap ((nl, ng, comm) as v) =
   let nl_len = RealArray.length nl in
@@ -50,61 +50,61 @@ module Ops = struct
   let n_vclone = clone
 
   external n_vlinearsum    : float -> t -> float -> t -> t -> unit
-    = "ml_nvec_par_n_vlinearsum"
+    = "sunml_nvec_par_n_vlinearsum"
 
   external n_vconst        : float -> t -> unit
-    = "ml_nvec_par_n_vconst"
+    = "sunml_nvec_par_n_vconst"
 
   external n_vprod         : t -> t -> t -> unit
-    = "ml_nvec_par_n_vprod"
+    = "sunml_nvec_par_n_vprod"
 
   external n_vdiv          : t -> t -> t -> unit
-    = "ml_nvec_par_n_vdiv"
+    = "sunml_nvec_par_n_vdiv"
 
   external n_vscale        : float -> t -> t -> unit
-    = "ml_nvec_par_n_vscale"
+    = "sunml_nvec_par_n_vscale"
 
   external n_vabs          : t -> t -> unit
-    = "ml_nvec_par_n_vabs"
+    = "sunml_nvec_par_n_vabs"
 
   external n_vinv          : t -> t -> unit
-    = "ml_nvec_par_n_vinv"
+    = "sunml_nvec_par_n_vinv"
 
   external n_vaddconst     : t -> float -> t -> unit
-    = "ml_nvec_par_n_vaddconst"
+    = "sunml_nvec_par_n_vaddconst"
 
   external n_vdotprod      : t -> t -> float
-    = "ml_nvec_par_n_vdotprod"
+    = "sunml_nvec_par_n_vdotprod"
 
   external n_vmaxnorm      : t -> float
-    = "ml_nvec_par_n_vmaxnorm"
+    = "sunml_nvec_par_n_vmaxnorm"
 
   external n_vwrmsnorm     : t -> t -> float
-    = "ml_nvec_par_n_vwrmsnorm"
+    = "sunml_nvec_par_n_vwrmsnorm"
 
   external n_vwrmsnormmask : t -> t -> t -> float
-    = "ml_nvec_par_n_vwrmsnormmask"
+    = "sunml_nvec_par_n_vwrmsnormmask"
 
   external n_vmin          : t -> float
-    = "ml_nvec_par_n_vmin"
+    = "sunml_nvec_par_n_vmin"
 
   external n_vwl2norm      : t -> t -> float
-    = "ml_nvec_par_n_vwl2norm"
+    = "sunml_nvec_par_n_vwl2norm"
 
   external n_vl1norm       : t -> float
-    = "ml_nvec_par_n_vl1norm"
+    = "sunml_nvec_par_n_vl1norm"
 
   external n_vcompare      : float -> t -> t -> unit
-    = "ml_nvec_par_n_vcompare"
+    = "sunml_nvec_par_n_vcompare"
 
   external n_vinvtest      : t -> t -> bool
-    = "ml_nvec_par_n_vinvtest"
+    = "sunml_nvec_par_n_vinvtest"
 
   external n_vconstrmask   : t -> t -> t -> bool
-    = "ml_nvec_par_n_vconstrmask"
+    = "sunml_nvec_par_n_vconstrmask"
 
   external n_vminquotient  : t -> t -> float
-    = "ml_nvec_par_n_vminquotient"
+    = "sunml_nvec_par_n_vminquotient"
 
 end
 
@@ -528,7 +528,7 @@ module DataOps =
 
 (* Let C code know about some of the values in this module.  *)
 external c_init_module : exn array -> unit =
-  "c_nvector_parallel_init_module"
+  "sunml_nvector_parallel_init_module"
 
 let _ =
   c_init_module

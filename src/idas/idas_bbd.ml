@@ -39,7 +39,7 @@ let bbd_precfns { local_fn; comm_fn } =
 external c_bbd_prec_initb
     : (parallel_session * int) -> int
       -> Ida_bbd.bandwidths -> float -> bool -> unit
-    = "c_idas_bbd_prec_initb"
+    = "sunml_idas_bbd_prec_initb"
 
 let parent_and_which s =
   match (tosession s).sensext with
@@ -59,7 +59,7 @@ let prec_left ?(dqrely=0.0) bandwidths ?comm local_fn =
 
 external c_bbd_prec_reinitb
     : parallel_session -> int -> int -> int -> float -> unit
-    = "c_idas_bbd_prec_reinitb"
+    = "sunml_idas_bbd_prec_reinitb"
 
 let reinit bs ?(dqrely=0.0) mudq mldq =
   ls_check_spils_bbd (tosession bs);

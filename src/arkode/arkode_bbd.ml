@@ -36,7 +36,7 @@ let bbd_precfns { local_fn; comm_fn } =
 
 external c_bbd_prec_init
     : parallel_session -> int -> bandwidths -> float -> bool -> unit
-    = "c_arkode_bbd_prec_init"
+    = "sunml_arkode_bbd_prec_init"
 
 let init_preconditioner dqrely bandwidths precfns session nv =
   let ba, _, _ = Nvector.unwrap nv in
@@ -58,7 +58,7 @@ let prec_both ?(dqrely=0.0) bandwidths ?comm local_fn =
 
 external c_bbd_prec_reinit
     : parallel_session -> int -> int -> float -> unit
-    = "c_arkode_bbd_prec_reinit"
+    = "sunml_arkode_bbd_prec_reinit"
 
 let reinit s ?(dqrely=0.0) mudq mldq =
   ls_check_spils_bbd s;
@@ -67,14 +67,14 @@ let reinit s ?(dqrely=0.0) mudq mldq =
   | _ -> raise LinearSolver.InvalidLinearSolver
 
 external get_work_space : parallel_session -> int * int
-    = "c_arkode_bbd_get_work_space"
+    = "sunml_arkode_bbd_get_work_space"
 
 let get_work_space s =
   ls_check_spils_bbd s;
   get_work_space s
 
 external get_num_gfn_evals : parallel_session -> int
-    = "c_arkode_bbd_get_num_gfn_evals"
+    = "sunml_arkode_bbd_get_num_gfn_evals"
 
 let get_num_gfn_evals s =
   ls_check_spils_bbd s;

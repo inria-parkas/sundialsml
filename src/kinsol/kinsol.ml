@@ -63,43 +63,43 @@ module Dls = struct (* {{{ *)
 
   (* Sundials < 3.0.0 *)
   external c_dls_dense : 'k serial_session -> bool -> unit
-    = "c_kinsol_dls_dense"
+    = "sunml_kinsol_dls_dense"
 
   (* Sundials < 3.0.0 *)
   external c_dls_lapack_dense : 'k serial_session -> bool -> unit
-    = "c_kinsol_dls_lapack_dense"
+    = "sunml_kinsol_dls_lapack_dense"
 
   (* Sundials < 3.0.0 *)
   external c_dls_band : 'k serial_session -> int -> int -> bool -> unit
-    = "c_kinsol_dls_band"
+    = "sunml_kinsol_dls_band"
 
   (* Sundials < 3.0.0 *)
   external c_dls_lapack_band : 'k serial_session -> int -> int -> bool -> unit
-    = "c_kinsol_dls_lapack_band"
+    = "sunml_kinsol_dls_lapack_band"
 
   (* Sundials < 3.0.0 *)
   external c_klu
     : 'k serial_session -> 's Matrix.Sparse.sformat -> int -> int -> unit
-    = "c_kinsol_klu_init"
+    = "sunml_kinsol_klu_init"
 
   (* Sundials < 3.0.0 *)
   external c_klu_set_ordering
     : 'k serial_session -> LSI.Klu.ordering -> unit
-    = "c_kinsol_klu_set_ordering"
+    = "sunml_kinsol_klu_set_ordering"
 
   (* Sundials < 3.0.0 *)
   external c_klu_reinit
     : 'k serial_session -> int -> int -> unit
-    = "c_kinsol_klu_reinit"
+    = "sunml_kinsol_klu_reinit"
 
   (* Sundials < 3.0.0 *)
   external c_superlumt : 'k serial_session -> int -> int -> int -> unit
-    = "c_kinsol_superlumt_init"
+    = "sunml_kinsol_superlumt_init"
 
   (* Sundials < 3.0.0 *)
   external c_superlumt_set_ordering
     : 'k serial_session -> LSI.Superlumt.ordering -> unit
-    = "c_kinsol_superlumt_set_ordering"
+    = "sunml_kinsol_superlumt_set_ordering"
 
   (* Sundials < 3.0.0 *)
   let klu_set_ordering session ordering =
@@ -221,7 +221,7 @@ module Dls = struct (* {{{ *)
       -> ('mk, 'm, Nvector_serial.data, 'k) Matrix.t
       -> bool
       -> unit
-    = "c_kinsol_dls_set_linear_solver"
+    = "sunml_kinsol_dls_set_linear_solver"
 
   let solver ?jac ((LSD.S { LSD.rawptr; LSD.solver; LSD.matrix }) as ls)
              session nv =
@@ -250,22 +250,22 @@ module Dls = struct (* {{{ *)
       | _ -> ()
 
   external get_work_space : 'k serial_session -> int * int
-      = "c_kinsol_dls_get_work_space"
+      = "sunml_kinsol_dls_get_work_space"
 
   let get_work_space s =
     ls_check_direct s;
     get_work_space s
 
   external c_get_num_jac_evals : 'k serial_session -> int
-      = "c_kinsol_dls_get_num_jac_evals"
+      = "sunml_kinsol_dls_get_num_jac_evals"
 
   (* Sundials < 3.0.0 *)
   external c_klu_get_num_jac_evals : 'k serial_session -> int
-    = "c_kinsol_klu_get_num_jac_evals"
+    = "sunml_kinsol_klu_get_num_jac_evals"
 
   (* Sundials < 3.0.0 *)
   external c_superlumt_get_num_jac_evals : 'k serial_session -> int
-    = "c_kinsol_superlumt_get_num_jac_evals"
+    = "sunml_kinsol_superlumt_get_num_jac_evals"
 
   let compat_get_num_jac_evals s =
     match s.ls_callbacks with
@@ -279,7 +279,7 @@ module Dls = struct (* {{{ *)
     c_get_num_jac_evals s
 
   external get_num_func_evals : 'k serial_session -> int
-      = "c_kinsol_dls_get_num_func_evals"
+      = "sunml_kinsol_dls_get_num_func_evals"
 
   let get_num_func_evals s =
     ls_check_direct s;
@@ -292,34 +292,34 @@ module Spils = struct (* {{{ *)
 
   (* Sundials < 3.0.0 *)
   external c_spgmr : ('a, 'k) session -> int -> unit
-    = "c_kinsol_spils_spgmr"
+    = "sunml_kinsol_spils_spgmr"
 
   (* Sundials < 3.0.0 *)
   external c_spfgmr : ('a, 'k) session -> int -> unit
-    = "c_kinsol_spils_spfgmr"
+    = "sunml_kinsol_spils_spfgmr"
 
   (* Sundials < 3.0.0 *)
   external c_spbcgs : ('a, 'k) session -> int -> unit
-    = "c_kinsol_spils_spbcgs"
+    = "sunml_kinsol_spils_spbcgs"
 
   (* Sundials < 3.0.0 *)
   external c_sptfqmr : ('a, 'k) session -> int -> unit
-    = "c_kinsol_spils_sptfqmr"
+    = "sunml_kinsol_spils_sptfqmr"
 
   (* Sundials < 3.0.0 *)
   external c_set_max_restarts : ('a, 'k) session -> int -> unit
-    = "c_kinsol_spils_set_max_restarts"
+    = "sunml_kinsol_spils_set_max_restarts"
 
   external c_set_jac_times_vec_fn : ('a, 'k) session -> bool -> unit
-    = "c_kinsol_spils_set_jac_times_vec_fn"
+    = "sunml_kinsol_spils_set_jac_times_vec_fn"
 
   external c_set_preconditioner
     : ('a, 'k) session -> bool -> unit
-    = "c_kinsol_spils_set_preconditioner"
+    = "sunml_kinsol_spils_set_preconditioner"
 
   external c_spils_set_linear_solver
     : ('a, 'k) session -> ('a, 'k) LSI.Iterative.cptr -> unit
-    = "c_kinsol_spils_set_linear_solver"
+    = "sunml_kinsol_spils_set_linear_solver"
 
   let old_set_max_restarts s t =
     ls_check_spils s;
@@ -405,49 +405,49 @@ module Spils = struct (* {{{ *)
     | _ -> raise LinearSolver.InvalidLinearSolver
 
   external get_work_space       : ('a, 'k) session -> int * int
-      = "c_kinsol_spils_get_work_space"
+      = "sunml_kinsol_spils_get_work_space"
 
   let get_work_space s =
     ls_check_spils s;
     get_work_space s
 
   external get_num_lin_iters    : ('a, 'k) session -> int
-      = "c_kinsol_spils_get_num_lin_iters"
+      = "sunml_kinsol_spils_get_num_lin_iters"
 
   let get_num_lin_iters s =
     ls_check_spils s;
     get_num_lin_iters s
 
   external get_num_conv_fails   : ('a, 'k) session -> int
-      = "c_kinsol_spils_get_num_conv_fails"
+      = "sunml_kinsol_spils_get_num_conv_fails"
 
   let get_num_conv_fails s =
     ls_check_spils s;
     get_num_conv_fails s
 
   external get_num_prec_evals   : ('a, 'k) session -> int
-      = "c_kinsol_spils_get_num_prec_evals"
+      = "sunml_kinsol_spils_get_num_prec_evals"
 
   let get_num_prec_evals s =
     ls_check_spils s;
     get_num_prec_evals s
 
   external get_num_prec_solves  : ('a, 'k) session -> int
-      = "c_kinsol_spils_get_num_prec_solves"
+      = "sunml_kinsol_spils_get_num_prec_solves"
 
   let get_num_prec_solves s =
     ls_check_spils s;
     get_num_prec_solves s
 
   external get_num_jtimes_evals : ('a, 'k) session -> int
-      = "c_kinsol_spils_get_num_jtimes_evals"
+      = "sunml_kinsol_spils_get_num_jtimes_evals"
 
   let get_num_jtimes_evals s =
     ls_check_spils s;
     get_num_jtimes_evals s
 
   external get_num_func_evals    : ('a, 'k) session -> int
-      = "c_kinsol_spils_get_num_func_evals"
+      = "sunml_kinsol_spils_get_num_func_evals"
 
   let get_num_func_evals s =
     ls_check_spils s;
@@ -459,19 +459,19 @@ module Alternate = struct (* {{{ *)
 
   external c_set_alternate
     : ('data, 'kind) session -> bool -> bool -> unit
-    = "c_kinsol_set_alternate"
+    = "sunml_kinsol_set_alternate"
 
   external get_u_uscale : ('data, 'kind) session -> 'data * 'data
-    = "c_kinsol_get_u_uscale"
+    = "sunml_kinsol_get_u_uscale"
 
   external get_f_fscale  : ('data, 'kind) session -> 'data * 'data
-    = "c_kinsol_get_f_fscale"
+    = "sunml_kinsol_get_f_fscale"
 
   external set_sjpnorm   : ('data, 'kind) session -> float -> unit
-    = "c_kinsol_set_sjpnorm"
+    = "sunml_kinsol_set_sjpnorm"
 
   external set_sfdotjp   : ('data, 'kind) session -> float -> unit
-    = "c_kinsol_set_sfdotjp"
+    = "sunml_kinsol_set_sfdotjp"
 
   let solver f s nv =
     let { linit; lsetup; lsolve } as cb = f s nv in
@@ -482,74 +482,74 @@ module Alternate = struct (* {{{ *)
 end (* }}} *)
 
 external set_error_file : ('a, 'k) session -> Logfile.t -> unit
-    = "c_kinsol_set_error_file"
+    = "sunml_kinsol_set_error_file"
 
 external c_set_err_handler_fn : ('a, 'k) session -> unit
-    = "c_kinsol_set_err_handler_fn"
+    = "sunml_kinsol_set_err_handler_fn"
 
 let set_err_handler_fn s ferrh =
   s.errh <- ferrh;
   c_set_err_handler_fn s
 
 external c_clear_err_handler_fn : ('a, 'k) session -> unit
-    = "c_kinsol_clear_err_handler_fn"
+    = "sunml_kinsol_clear_err_handler_fn"
 
 let clear_err_handler_fn s =
   s.errh <- dummy_errh;
   c_clear_err_handler_fn s
 
 external set_info_file : ('a, 'k) session -> Logfile.t -> unit
-    = "c_kinsol_set_info_file"
+    = "sunml_kinsol_set_info_file"
 
 external c_set_info_handler_fn : ('a, 'k) session -> unit
-    = "c_kinsol_set_info_handler_fn"
+    = "sunml_kinsol_set_info_handler_fn"
 
 let set_info_handler_fn s finfoh =
   s.infoh <- finfoh;
   c_set_info_handler_fn s
 
 external c_clear_info_handler_fn : ('a, 'k) session -> unit
-    = "c_kinsol_clear_info_handler_fn"
+    = "sunml_kinsol_clear_info_handler_fn"
 
 let clear_info_handler_fn s =
   s.infoh <- dummy_infoh;
   c_clear_info_handler_fn s
 
 external set_print_level : ('a, 'k) session -> print_level -> unit
-    = "c_kinsol_set_print_level"
+    = "sunml_kinsol_set_print_level"
 
 external set_num_max_iters : ('a, 'k) session -> int -> unit
-    = "c_kinsol_set_num_max_iters"
+    = "sunml_kinsol_set_num_max_iters"
 
 external set_maa : ('a, 'k) session -> int -> unit
-    = "c_kinsol_set_maa"
+    = "sunml_kinsol_set_maa"
 
 external c_set_no_init_setup : ('a, 'k) session -> bool -> unit
-    = "c_kinsol_set_no_init_setup"
+    = "sunml_kinsol_set_no_init_setup"
 
 let set_no_init_setup s = c_set_no_init_setup s true
 let set_init_setup s = c_set_no_init_setup s false
 
 external c_set_no_res_mon : ('a, 'k) session -> bool -> unit
-    = "c_kinsol_set_no_res_mon"
+    = "sunml_kinsol_set_no_res_mon"
 
 let set_no_res_mon s = c_set_no_res_mon s true
 let set_res_mon s = c_set_no_res_mon s false
 
 external set_max_sub_setup_calls : ('a, 'k) session -> int -> unit
-    = "c_kinsol_set_max_sub_setup_calls"
+    = "sunml_kinsol_set_max_sub_setup_calls"
 
 external set_max_setup_calls : ('a, 'k) session -> int -> unit
-    = "c_kinsol_set_max_setup_calls"
+    = "sunml_kinsol_set_max_setup_calls"
 
 external c_set_eta_form : ('a, 'k) session -> eta_choice -> unit
-    = "c_kinsol_set_eta_form"
+    = "sunml_kinsol_set_eta_form"
 
 external c_set_eta_const_value : ('a, 'k) session -> float -> unit
-    = "c_kinsol_set_eta_form"
+    = "sunml_kinsol_set_eta_form"
 
 external c_set_eta_params : ('a, 'k) session -> float -> float -> unit
-    = "c_kinsol_set_eta_form"
+    = "sunml_kinsol_set_eta_form"
 
 let float_default = function None -> 0.0 | Some v -> v
 
@@ -563,37 +563,37 @@ let set_eta_choice s etachoice =
   c_set_eta_form s etachoice
 
 external set_res_mon_const_value : ('a, 'k) session -> float -> unit
-    = "c_kinsol_set_res_mon_const_value"
+    = "sunml_kinsol_set_res_mon_const_value"
 
 external c_set_res_mon_params : ('a, 'k) session -> float -> float -> unit
-    = "c_kinsol_set_res_mon_params"
+    = "sunml_kinsol_set_res_mon_params"
 
 let set_res_mon_params s ?omegamin ?omegamax () =
   c_set_res_mon_params s (float_default omegamin) (float_default omegamax)
 
 external c_set_no_min_eps : ('a, 'k) session -> bool -> unit
-    = "c_kinsol_set_no_min_eps"
+    = "sunml_kinsol_set_no_min_eps"
 
 let set_no_min_eps s = c_set_no_min_eps s true
 let set_min_eps s = c_set_no_min_eps s false
 
 external set_max_newton_step : ('a, 'k) session -> float -> unit
-    = "c_kinsol_set_max_newton_step"
+    = "sunml_kinsol_set_max_newton_step"
 
 external set_max_beta_fails : ('a, 'k) session -> float -> unit
-    = "c_kinsol_set_max_beta_fails"
+    = "sunml_kinsol_set_max_beta_fails"
 
 external set_rel_err_func : ('a, 'k) session -> float -> unit
-    = "c_kinsol_set_rel_err_func"
+    = "sunml_kinsol_set_rel_err_func"
 
 external set_func_norm_tol : ('a, 'k) session -> float -> unit
-    = "c_kinsol_set_func_norm_tol"
+    = "sunml_kinsol_set_func_norm_tol"
 
 external set_scaled_step_tol : ('a, 'k) session -> float -> unit
-    = "c_kinsol_set_scaled_step_tol"
+    = "sunml_kinsol_set_scaled_step_tol"
 
 external c_set_constraints : ('a, 'k) session -> ('a, 'k) nvector -> unit
-    = "c_kinsol_set_constraints"
+    = "sunml_kinsol_set_constraints"
 
 let set_constraints s cc =
   if Sundials_configuration.safe then s.checkvec cc;
@@ -603,33 +603,33 @@ let set_sys_func s fsys =
   s.sysfn <- fsys
 
 external get_work_space : ('a, 'k) session -> int * int
-    = "c_kinsol_get_work_space"
+    = "sunml_kinsol_get_work_space"
 
 external get_num_func_evals : ('a, 'k) session -> int
-    = "c_kinsol_get_num_func_evals"
+    = "sunml_kinsol_get_num_func_evals"
 
 external get_num_nonlin_solv_iters : ('a, 'k) session -> int
-    = "c_kinsol_get_num_nonlin_solv_iters"
+    = "sunml_kinsol_get_num_nonlin_solv_iters"
 
 external get_num_beta_cond_fails : ('a, 'k) session -> int
-    = "c_kinsol_get_num_beta_cond_fails"
+    = "sunml_kinsol_get_num_beta_cond_fails"
 
 external get_num_backtrack_ops : ('a, 'k) session -> int
-    = "c_kinsol_get_num_backtrack_ops"
+    = "sunml_kinsol_get_num_backtrack_ops"
 
 external get_func_norm : ('a, 'k) session -> float
-    = "c_kinsol_get_func_norm"
+    = "sunml_kinsol_get_func_norm"
 
 external get_step_length : ('a, 'k) session -> float
-    = "c_kinsol_get_step_length"
+    = "sunml_kinsol_get_step_length"
 
 external c_init
     : ('a, 'k) session Weak.t -> ('a, 'k) nvector -> int option -> int option
       -> (kin_mem * c_weak_ref)
-    = "c_kinsol_init"
+    = "sunml_kinsol_init"
 
 external c_session_finalize : ('a, 'k) session -> unit
-    = "c_kinsol_session_finalize"
+    = "sunml_kinsol_session_finalize"
 
 let session_finalize s =
   Dls.invalidate_callback s;
@@ -676,7 +676,7 @@ type result =
 
 external c_solve : ('a, 'k) session -> ('a, 'k) nvector -> strategy
                   -> ('a, 'k) nvector -> ('a, 'k) nvector -> result
-    = "c_kinsol_solve"
+    = "sunml_kinsol_solve"
 
 let solve s u strategy u_scale f_scale =
   if Sundials_configuration.safe then
@@ -689,7 +689,7 @@ let solve s u strategy u_scale f_scale =
 
 (* Let C code know about some of the values in this module.  *)
 external c_init_module : 'fcns -> exn array -> unit =
-  "c_kinsol_init_module"
+  "sunml_kinsol_init_module"
 
 let _ =
   c_init_module

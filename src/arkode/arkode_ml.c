@@ -53,7 +53,7 @@
 #include <stdio.h>
 #define MAX_ERRMSG_LEN 256
 
-CAMLprim value c_arkode_init_module (value exns)
+CAMLprim value sunml_arkode_init_module (value exns)
 {
     CAMLparam1 (exns);
     REGISTER_EXNS (ARKODE, exns);
@@ -94,7 +94,7 @@ static void errh(int error_code,
     CAMLreturn0;
 }
 
-CAMLprim value c_arkode_set_err_handler_fn(value vdata)
+CAMLprim value sunml_arkode_set_err_handler_fn(value vdata)
 {
     CAMLparam1(vdata);
  
@@ -105,7 +105,7 @@ CAMLprim value c_arkode_set_err_handler_fn(value vdata)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_clear_err_handler_fn(value vdata)
+CAMLprim value sunml_arkode_clear_err_handler_fn(value vdata)
 {
     CAMLparam1(vdata);
 
@@ -712,7 +712,7 @@ static int lsolve(ARKodeMem ark_mem, N_Vector b, N_Vector weight, N_Vector ycur,
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
-CAMLprim value c_arkode_get_gamma(value varkode_mem)
+CAMLprim value sunml_arkode_get_gamma(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
     CAMLlocal1(r);
@@ -724,7 +724,7 @@ CAMLprim value c_arkode_get_gamma(value varkode_mem)
     CAMLreturn(r);
 }
 
-CAMLprim value c_arkode_set_alternate (value varkode_mem, value vhas_init,
+CAMLprim value sunml_arkode_set_alternate (value varkode_mem, value vhas_init,
 				       value vhas_setup)
 {
     CAMLparam3(varkode_mem, vhas_init, vhas_setup);
@@ -743,7 +743,7 @@ CAMLprim value c_arkode_set_alternate (value varkode_mem, value vhas_init,
 }
 
 /* Dense and Band can only be used with serial NVectors.  */
-CAMLprim value c_arkode_dls_dense (value varkode_mem,
+CAMLprim value sunml_arkode_dls_dense (value varkode_mem,
 				   value vneqs, value vset_jac)
 {
     CAMLparam3(varkode_mem, vneqs, vset_jac);
@@ -764,7 +764,7 @@ CAMLprim value c_arkode_dls_dense (value varkode_mem,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_dls_lapack_dense (value varkode_mem, value vneqs,
+CAMLprim value sunml_arkode_dls_lapack_dense (value varkode_mem, value vneqs,
 					  value vset_jac)
 {
     CAMLparam3 (varkode_mem, vneqs, vset_jac);
@@ -785,7 +785,7 @@ CAMLprim value c_arkode_dls_lapack_dense (value varkode_mem, value vneqs,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_dls_band (value varkode_mem, value vneqs,
+CAMLprim value sunml_arkode_dls_band (value varkode_mem, value vneqs,
 				  value vmupper, value vmlower,
 				  value vset_jac)
 {
@@ -807,7 +807,7 @@ CAMLprim value c_arkode_dls_band (value varkode_mem, value vneqs,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_dls_lapack_band (value varkode_mem, value vneqs,
+CAMLprim value sunml_arkode_dls_lapack_band (value varkode_mem, value vneqs,
 					 value vmupper, value vmlower,
 					 value vset_jac)
 {
@@ -830,7 +830,7 @@ CAMLprim value c_arkode_dls_lapack_band (value varkode_mem, value vneqs,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_dls_set_linear_solver (value varkode_mem, value vlsolv,
+CAMLprim value sunml_arkode_dls_set_linear_solver (value varkode_mem, value vlsolv,
 					       value vjmat, value vhasjac)
 {
     CAMLparam4(varkode_mem, vlsolv, vjmat, vhasjac);
@@ -852,7 +852,7 @@ CAMLprim value c_arkode_dls_set_linear_solver (value varkode_mem, value vlsolv,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_spils_set_linear_solver (value varkode_mem,
+CAMLprim value sunml_arkode_spils_set_linear_solver (value varkode_mem,
 						 value vlsolv)
 {
     CAMLparam2(varkode_mem, vlsolv);
@@ -869,7 +869,7 @@ CAMLprim value c_arkode_spils_set_linear_solver (value varkode_mem,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_spils_set_preconditioner (value vsession,
+CAMLprim value sunml_arkode_spils_set_preconditioner (value vsession,
 						  value vset_precsetup)
 {
     CAMLparam2 (vsession, vset_precsetup);
@@ -880,7 +880,7 @@ CAMLprim value c_arkode_spils_set_preconditioner (value vsession,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_spils_set_banded_preconditioner (value vsession,
+CAMLprim value sunml_arkode_spils_set_banded_preconditioner (value vsession,
 							 value vneqs,
 							 value vmupper,
 							 value vmlower)
@@ -893,7 +893,7 @@ CAMLprim value c_arkode_spils_set_banded_preconditioner (value vsession,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_spils_set_jac_times(value vdata, value vhas_setup,
+CAMLprim value sunml_arkode_spils_set_jac_times(value vdata, value vhas_setup,
 							 value vhas_times)
 {
     CAMLparam3(vdata, vhas_setup, vhas_times);
@@ -911,7 +911,7 @@ CAMLprim value c_arkode_spils_set_jac_times(value vdata, value vhas_setup,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_wf_tolerances (value vdata)
+CAMLprim value sunml_arkode_wf_tolerances (value vdata)
 {
     CAMLparam1(vdata);
  
@@ -1204,7 +1204,7 @@ static int msolve(ARKodeMem ark_mem, N_Vector b, N_Vector weight)
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }
 
-CAMLprim value c_arkode_set_mass_alternate (value varkode_mem, value vhas_init,
+CAMLprim value sunml_arkode_set_mass_alternate (value varkode_mem, value vhas_init,
 					    value vhas_setup)
 {
     CAMLparam3(varkode_mem, vhas_init, vhas_setup);
@@ -1223,7 +1223,7 @@ CAMLprim value c_arkode_set_mass_alternate (value varkode_mem, value vhas_init,
 }
 
 /* Dense and Band can only be used with serial NVectors.  */
-CAMLprim value c_arkode_dls_mass_dense (value varkode_mem, value vneqs)
+CAMLprim value sunml_arkode_dls_mass_dense (value varkode_mem, value vneqs)
 {
     CAMLparam2(varkode_mem, vneqs);
 #if SUNDIALS_LIB_VERSION < 300
@@ -1239,7 +1239,7 @@ CAMLprim value c_arkode_dls_mass_dense (value varkode_mem, value vneqs)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_dls_mass_lapack_dense (value varkode_mem, value vneqs)
+CAMLprim value sunml_arkode_dls_mass_lapack_dense (value varkode_mem, value vneqs)
 {
     CAMLparam2 (varkode_mem, vneqs);
 #if SUNDIALS_LIB_VERSION < 300 && defined SUNDIALS_ML_LAPACK
@@ -1255,7 +1255,7 @@ CAMLprim value c_arkode_dls_mass_lapack_dense (value varkode_mem, value vneqs)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_dls_mass_band (value varkode_mem, value vneqs,
+CAMLprim value sunml_arkode_dls_mass_band (value varkode_mem, value vneqs,
 				       value vmupper, value vmlower)
 {
     CAMLparam4(varkode_mem, vneqs, vmupper, vmlower);
@@ -1275,7 +1275,7 @@ CAMLprim value c_arkode_dls_mass_band (value varkode_mem, value vneqs,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_dls_mass_lapack_band (value varkode_mem, value vneqs,
+CAMLprim value sunml_arkode_dls_mass_lapack_band (value varkode_mem, value vneqs,
 					      value vmupper, value vmlower)
 {
     CAMLparam4(varkode_mem, vneqs, vmupper, vmlower);
@@ -1295,7 +1295,7 @@ CAMLprim value c_arkode_dls_mass_lapack_band (value varkode_mem, value vneqs,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_dls_set_mass_linear_solver (value varkode_mem,
+CAMLprim value sunml_arkode_dls_set_mass_linear_solver (value varkode_mem,
 				    value vlsolv, value vjmat, value vtime_dep)
 {
     CAMLparam4(varkode_mem, vlsolv, vjmat, vtime_dep);
@@ -1316,7 +1316,7 @@ CAMLprim value c_arkode_dls_set_mass_linear_solver (value varkode_mem,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_spils_set_mass_linear_solver (value varkode_mem,
+CAMLprim value sunml_arkode_spils_set_mass_linear_solver (value varkode_mem,
 						      value vlsolv,
 						      value vhassetup,
 						      value vtime_dep)
@@ -1341,7 +1341,7 @@ CAMLprim value c_arkode_spils_set_mass_linear_solver (value varkode_mem,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_spils_set_mass_preconditioner (value vsession,
+CAMLprim value sunml_arkode_spils_set_mass_preconditioner (value vsession,
 						       value vset_precsetup)
 {
     CAMLparam2 (vsession, vset_precsetup);
@@ -1353,7 +1353,7 @@ CAMLprim value c_arkode_spils_set_mass_preconditioner (value vsession,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_spils_set_mass_times(value varkode_mem,
+CAMLprim value sunml_arkode_spils_set_mass_times(value varkode_mem,
 					     value vhassetup)
 {
     CAMLparam2(varkode_mem, vhassetup);
@@ -1375,7 +1375,7 @@ CAMLprim value c_arkode_spils_set_mass_times(value varkode_mem,
 /* basic interface */
 
 /* ARKodeCreate() + ARKodeInit().  */
-CAMLprim value c_arkode_init(value weakref, value hasfi, value hasfe,
+CAMLprim value sunml_arkode_init(value weakref, value hasfi, value hasfe,
 			     value y0, value t0)
 {
     CAMLparam5(weakref, hasfi, hasfe, y0, t0);
@@ -1417,7 +1417,7 @@ CAMLprim value c_arkode_init(value weakref, value hasfi, value hasfe,
 
 /* Set the root function to a generic trampoline and set the number of
  * roots.  */
-CAMLprim value c_arkode_root_init (value vdata, value vnroots)
+CAMLprim value sunml_arkode_root_init (value vdata, value vnroots)
 {
     CAMLparam2 (vdata, vnroots);
     void *arkode_mem = ARKODE_MEM_FROM_ML (vdata);
@@ -1428,7 +1428,7 @@ CAMLprim value c_arkode_root_init (value vdata, value vnroots)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_sv_tolerances(value vdata, value reltol, value abstol)
+CAMLprim value sunml_arkode_sv_tolerances(value vdata, value reltol, value abstol)
 {
     CAMLparam3(vdata, reltol, abstol);
 
@@ -1441,7 +1441,7 @@ CAMLprim value c_arkode_sv_tolerances(value vdata, value reltol, value abstol)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_reinit(value vdata, value t0, value y0)
+CAMLprim value sunml_arkode_reinit(value vdata, value t0, value y0)
 {
     CAMLparam3(vdata, t0, y0);
 
@@ -1525,19 +1525,19 @@ static value solver(value vdata, value nextt, value vy, int onestep)
     CAMLreturn (ret);
 }
 
-CAMLprim value c_arkode_solve_normal(value vdata, value nextt, value y)
+CAMLprim value sunml_arkode_solve_normal(value vdata, value nextt, value y)
 {
     CAMLparam3(vdata, nextt, y);
     CAMLreturn(solver(vdata, nextt, y, 0));
 }
 
-CAMLprim value c_arkode_solve_one_step(value vdata, value nextt, value y)
+CAMLprim value sunml_arkode_solve_one_step(value vdata, value nextt, value y)
 {
     CAMLparam3(vdata, nextt, y);
     CAMLreturn(solver(vdata, nextt, y, 1));
 }
 
-CAMLprim value c_arkode_get_dky(value vdata, value vt, value vk, value vy)
+CAMLprim value sunml_arkode_get_dky(value vdata, value vt, value vk, value vy)
 {
     CAMLparam4(vdata, vt, vk, vy);
 
@@ -1550,7 +1550,7 @@ CAMLprim value c_arkode_get_dky(value vdata, value vt, value vk, value vy)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_get_err_weights(value varkode_mem, value verrws)
+CAMLprim value sunml_arkode_get_err_weights(value varkode_mem, value verrws)
 {
     CAMLparam2(varkode_mem, verrws);
 
@@ -1562,7 +1562,7 @@ CAMLprim value c_arkode_get_err_weights(value varkode_mem, value verrws)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_get_est_local_errors(value varkode_mem, value vele)
+CAMLprim value sunml_arkode_get_est_local_errors(value varkode_mem, value vele)
 {
     CAMLparam2(varkode_mem, vele);
 
@@ -1656,7 +1656,7 @@ void arkode_ml_check_flag(const char *call, int flag)
     }
 }
 
-CAMLprim value c_arkode_session_finalize(value vdata)
+CAMLprim value sunml_arkode_session_finalize(value vdata)
 {
     if (ARKODE_MEM_FROM_ML(vdata) != NULL) {
 	void *arkode_mem = ARKODE_MEM_FROM_ML(vdata);
@@ -1668,7 +1668,7 @@ CAMLprim value c_arkode_session_finalize(value vdata)
     return Val_unit;
 }
 
-CAMLprim value c_arkode_ss_tolerances(value vdata, value reltol, value abstol)
+CAMLprim value sunml_arkode_ss_tolerances(value vdata, value reltol, value abstol)
 {
     CAMLparam3(vdata, reltol, abstol);
 
@@ -1680,7 +1680,7 @@ CAMLprim value c_arkode_ss_tolerances(value vdata, value reltol, value abstol)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_get_root_info(value vdata, value roots)
+CAMLprim value sunml_arkode_get_root_info(value vdata, value roots)
 {
     CAMLparam2(vdata, roots);
 
@@ -1697,7 +1697,7 @@ CAMLprim value c_arkode_get_root_info(value vdata, value roots)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_get_integrator_stats(value vdata)
+CAMLprim value sunml_arkode_get_integrator_stats(value vdata)
 {
     CAMLparam1(vdata);
     CAMLlocal1(r);
@@ -1761,7 +1761,7 @@ CAMLprim value c_arkode_get_integrator_stats(value vdata)
     CAMLreturn(r);
 }
 
-CAMLprim value c_arkode_set_error_file(value vdata, value vfile)
+CAMLprim value sunml_arkode_set_error_file(value vdata, value vfile)
 {
     CAMLparam2(vdata, vfile);
 
@@ -1771,7 +1771,7 @@ CAMLprim value c_arkode_set_error_file(value vdata, value vfile)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_diagnostics(value vdata, value vfile)
+CAMLprim value sunml_arkode_set_diagnostics(value vdata, value vfile)
 {
     CAMLparam2(vdata, vfile);
 
@@ -1781,7 +1781,7 @@ CAMLprim value c_arkode_set_diagnostics(value vdata, value vfile)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_clear_diagnostics(value vdata)
+CAMLprim value sunml_arkode_clear_diagnostics(value vdata)
 {
     CAMLparam1(vdata);
 
@@ -1791,7 +1791,7 @@ CAMLprim value c_arkode_clear_diagnostics(value vdata)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_root_direction(value vdata, value rootdirs)
+CAMLprim value sunml_arkode_set_root_direction(value vdata, value rootdirs)
 {
     CAMLparam2(vdata, rootdirs);
 
@@ -1808,7 +1808,7 @@ CAMLprim value c_arkode_set_root_direction(value vdata, value rootdirs)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_spils_set_prec_type(value varkode_mem, value vptype)
+CAMLprim value sunml_arkode_spils_set_prec_type(value varkode_mem, value vptype)
 {
     CAMLparam2(varkode_mem, vptype);
 #if SUNDIALS_LIB_VERSION < 300
@@ -1821,7 +1821,7 @@ CAMLprim value c_arkode_spils_set_prec_type(value varkode_mem, value vptype)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_spils_set_mass_prec_type(value varkode_mem,
+CAMLprim value sunml_arkode_spils_set_mass_prec_type(value varkode_mem,
 						 value vptype)
 {
     CAMLparam2(varkode_mem, vptype);
@@ -1835,7 +1835,7 @@ CAMLprim value c_arkode_spils_set_mass_prec_type(value varkode_mem,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_resize(value varkode_mem,
+CAMLprim value sunml_arkode_resize(value varkode_mem,
 			       value vhasfn, value vhscale,
 			       value vt0, value vynew)
 {
@@ -1854,7 +1854,7 @@ CAMLprim value c_arkode_resize(value varkode_mem,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_get_current_butcher_tables(value varkode_mem)
+CAMLprim value sunml_arkode_get_current_butcher_tables(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
     CAMLlocal4(ai, ae, ci, ce);
@@ -1930,7 +1930,7 @@ CAMLprim value c_arkode_get_current_butcher_tables(value varkode_mem)
     CAMLreturn(r);
 }
 
-CAMLprim value c_arkode_set_erk_table(value varkode_mem,
+CAMLprim value sunml_arkode_set_erk_table(value varkode_mem,
 				      value vrkm, value vae, value vtc)
 {
     CAMLparam4(varkode_mem, vrkm, vae, vtc);
@@ -1952,7 +1952,7 @@ CAMLprim value c_arkode_set_erk_table(value varkode_mem,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_irk_table(value varkode_mem,
+CAMLprim value sunml_arkode_set_irk_table(value varkode_mem,
 				      value vrkm, value vai, value vtc)
 {
     CAMLparam4(varkode_mem, vrkm, vai, vtc);
@@ -1974,7 +1974,7 @@ CAMLprim value c_arkode_set_irk_table(value varkode_mem,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_ark_tables(value varkode_mem,
+CAMLprim value sunml_arkode_set_ark_tables(value varkode_mem,
 				       value vrkm, value vai, value vae,
 				       value vtcs)
 {
@@ -2016,7 +2016,7 @@ CAMLprim value c_arkode_set_ark_tables(value varkode_mem,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_erk_table_num(value varkode_mem, value vnum)
+CAMLprim value sunml_arkode_set_erk_table_num(value varkode_mem, value vnum)
 {
     CAMLparam2(varkode_mem, vnum);
 
@@ -2027,7 +2027,7 @@ CAMLprim value c_arkode_set_erk_table_num(value varkode_mem, value vnum)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_irk_table_num(value varkode_mem, value vnum)
+CAMLprim value sunml_arkode_set_irk_table_num(value varkode_mem, value vnum)
 {
     CAMLparam2(varkode_mem, vnum);
 
@@ -2038,7 +2038,7 @@ CAMLprim value c_arkode_set_irk_table_num(value varkode_mem, value vnum)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_ark_table_num(value varkode_mem, value vnums)
+CAMLprim value sunml_arkode_set_ark_table_num(value varkode_mem, value vnums)
 {
     CAMLparam2(varkode_mem, vnums);
 
@@ -2050,7 +2050,7 @@ CAMLprim value c_arkode_set_ark_table_num(value varkode_mem, value vnums)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_adaptivity_method(value varkode_mem, value vmeth)
+CAMLprim value sunml_arkode_set_adaptivity_method(value varkode_mem, value vmeth)
 {
     CAMLparam2(varkode_mem, vmeth);
     CAMLlocal2(vks, vorder);
@@ -2088,7 +2088,7 @@ CAMLprim value c_arkode_set_adaptivity_method(value varkode_mem, value vmeth)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_stability_fn(value varkode_mem, value vhasf)
+CAMLprim value sunml_arkode_set_stability_fn(value varkode_mem, value vhasf)
 {
     CAMLparam2(varkode_mem, vhasf);
     ARKodeMem arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
@@ -2101,7 +2101,7 @@ CAMLprim value c_arkode_set_stability_fn(value varkode_mem, value vhasf)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_imex(value varkode_mem)
+CAMLprim value sunml_arkode_set_imex(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -2111,7 +2111,7 @@ CAMLprim value c_arkode_set_imex(value varkode_mem)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_implicit(value varkode_mem)
+CAMLprim value sunml_arkode_set_implicit(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -2121,7 +2121,7 @@ CAMLprim value c_arkode_set_implicit(value varkode_mem)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_explicit(value varkode_mem)
+CAMLprim value sunml_arkode_set_explicit(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -2131,7 +2131,7 @@ CAMLprim value c_arkode_set_explicit(value varkode_mem)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_fixed_point(value varkode_mem, value vfpm)
+CAMLprim value sunml_arkode_set_fixed_point(value varkode_mem, value vfpm)
 {
     CAMLparam2(varkode_mem, vfpm);
 
@@ -2142,7 +2142,7 @@ CAMLprim value c_arkode_set_fixed_point(value varkode_mem, value vfpm)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_newton(value varkode_mem)
+CAMLprim value sunml_arkode_set_newton(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -2152,7 +2152,7 @@ CAMLprim value c_arkode_set_newton(value varkode_mem)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_linear(value varkode_mem, value vtimedepend)
+CAMLprim value sunml_arkode_set_linear(value varkode_mem, value vtimedepend)
 {
     CAMLparam2(varkode_mem, vtimedepend);
 
@@ -2163,7 +2163,7 @@ CAMLprim value c_arkode_set_linear(value varkode_mem, value vtimedepend)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_nonlinear(value varkode_mem)
+CAMLprim value sunml_arkode_set_nonlinear(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -2173,7 +2173,7 @@ CAMLprim value c_arkode_set_nonlinear(value varkode_mem)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_predictor_method(value varkode_mem, value vmethod)
+CAMLprim value sunml_arkode_set_predictor_method(value varkode_mem, value vmethod)
 {
     CAMLparam2(varkode_mem, vmethod);
 
@@ -2184,7 +2184,7 @@ CAMLprim value c_arkode_set_predictor_method(value varkode_mem, value vmethod)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_postprocess_step_fn(value varkode_mem, value vhasf)
+CAMLprim value sunml_arkode_set_postprocess_step_fn(value varkode_mem, value vhasf)
 {
     CAMLparam2(varkode_mem, vhasf);
 #if SUNDIALS_LIB_VERSION >= 270
@@ -2204,7 +2204,7 @@ CAMLprim value c_arkode_set_postprocess_step_fn(value varkode_mem, value vhasf)
  * Boiler plate definitions for Arkode interface.
  */
 
-CAMLprim value c_arkode_resv_tolerance(value vdata, value abstol)
+CAMLprim value sunml_arkode_resv_tolerance(value vdata, value abstol)
 {
     CAMLparam2(vdata, abstol);
 
@@ -2214,7 +2214,7 @@ CAMLprim value c_arkode_resv_tolerance(value vdata, value abstol)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_ress_tolerance(value vdata, value abstol)
+CAMLprim value sunml_arkode_ress_tolerance(value vdata, value abstol)
 {
     CAMLparam2(vdata, abstol);
 
@@ -2225,7 +2225,7 @@ CAMLprim value c_arkode_ress_tolerance(value vdata, value abstol)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_resf_tolerance(value vdata)
+CAMLprim value sunml_arkode_resf_tolerance(value vdata)
 {
     CAMLparam1(vdata);
  
@@ -2235,7 +2235,7 @@ CAMLprim value c_arkode_resf_tolerance(value vdata)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_get_work_space(value varkode_mem)
+CAMLprim value sunml_arkode_get_work_space(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
     CAMLlocal1(r);
@@ -2255,7 +2255,7 @@ CAMLprim value c_arkode_get_work_space(value varkode_mem)
     CAMLreturn(r);
 }
 
-CAMLprim value c_arkode_get_num_steps(value varkode_mem)
+CAMLprim value sunml_arkode_get_num_steps(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -2268,7 +2268,7 @@ CAMLprim value c_arkode_get_num_steps(value varkode_mem)
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim value c_arkode_get_num_acc_steps(value varkode_mem)
+CAMLprim value sunml_arkode_get_num_acc_steps(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -2281,7 +2281,7 @@ CAMLprim value c_arkode_get_num_acc_steps(value varkode_mem)
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim value c_arkode_get_num_exp_steps(value varkode_mem)
+CAMLprim value sunml_arkode_get_num_exp_steps(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -2294,7 +2294,7 @@ CAMLprim value c_arkode_get_num_exp_steps(value varkode_mem)
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim value c_arkode_get_num_step_attempts(value varkode_mem)
+CAMLprim value sunml_arkode_get_num_step_attempts(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -2307,7 +2307,7 @@ CAMLprim value c_arkode_get_num_step_attempts(value varkode_mem)
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim value c_arkode_get_num_rhs_evals(value varkode_mem)
+CAMLprim value sunml_arkode_get_num_rhs_evals(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
     CAMLlocal1(r);
@@ -2326,7 +2326,7 @@ CAMLprim value c_arkode_get_num_rhs_evals(value varkode_mem)
     CAMLreturn(r);
 }
 
-CAMLprim value c_arkode_get_num_lin_solv_setups(value varkode_mem)
+CAMLprim value sunml_arkode_get_num_lin_solv_setups(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -2339,7 +2339,7 @@ CAMLprim value c_arkode_get_num_lin_solv_setups(value varkode_mem)
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim value c_arkode_get_num_err_test_fails(value varkode_mem)
+CAMLprim value sunml_arkode_get_num_err_test_fails(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -2352,7 +2352,7 @@ CAMLprim value c_arkode_get_num_err_test_fails(value varkode_mem)
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim value c_arkode_get_actual_init_step(value varkode_mem)
+CAMLprim value sunml_arkode_get_actual_init_step(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -2365,7 +2365,7 @@ CAMLprim value c_arkode_get_actual_init_step(value varkode_mem)
     CAMLreturn(caml_copy_double(v));
 }
 
-CAMLprim value c_arkode_get_last_step(value varkode_mem)
+CAMLprim value sunml_arkode_get_last_step(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -2378,7 +2378,7 @@ CAMLprim value c_arkode_get_last_step(value varkode_mem)
     CAMLreturn(caml_copy_double(v));
 }
 
-CAMLprim value c_arkode_get_current_step(value varkode_mem)
+CAMLprim value sunml_arkode_get_current_step(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -2391,7 +2391,7 @@ CAMLprim value c_arkode_get_current_step(value varkode_mem)
     CAMLreturn(caml_copy_double(v));
 }
 
-CAMLprim value c_arkode_get_current_time(value varkode_mem)
+CAMLprim value sunml_arkode_get_current_time(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -2404,7 +2404,7 @@ CAMLprim value c_arkode_get_current_time(value varkode_mem)
     CAMLreturn(caml_copy_double(v));
 }
 
-CAMLprim value c_arkode_set_max_num_steps(value varkode_mem, value mxsteps)
+CAMLprim value sunml_arkode_set_max_num_steps(value varkode_mem, value mxsteps)
 {
     CAMLparam2(varkode_mem, mxsteps);
 
@@ -2415,7 +2415,7 @@ CAMLprim value c_arkode_set_max_num_steps(value varkode_mem, value mxsteps)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_max_hnil_warns(value varkode_mem, value mxhnil)
+CAMLprim value sunml_arkode_set_max_hnil_warns(value varkode_mem, value mxhnil)
 {
     CAMLparam2(varkode_mem, mxhnil);
 
@@ -2426,7 +2426,7 @@ CAMLprim value c_arkode_set_max_hnil_warns(value varkode_mem, value mxhnil)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_init_step(value varkode_mem, value hin)
+CAMLprim value sunml_arkode_set_init_step(value varkode_mem, value hin)
 {
     CAMLparam2(varkode_mem, hin);
 
@@ -2437,7 +2437,7 @@ CAMLprim value c_arkode_set_init_step(value varkode_mem, value hin)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_min_step(value varkode_mem, value hmin)
+CAMLprim value sunml_arkode_set_min_step(value varkode_mem, value hmin)
 {
     CAMLparam2(varkode_mem, hmin);
 
@@ -2448,7 +2448,7 @@ CAMLprim value c_arkode_set_min_step(value varkode_mem, value hmin)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_max_step(value varkode_mem, value hmax)
+CAMLprim value sunml_arkode_set_max_step(value varkode_mem, value hmax)
 {
     CAMLparam2(varkode_mem, hmax);
 
@@ -2459,7 +2459,7 @@ CAMLprim value c_arkode_set_max_step(value varkode_mem, value hmax)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_stop_time(value varkode_mem, value tstop)
+CAMLprim value sunml_arkode_set_stop_time(value varkode_mem, value tstop)
 {
     CAMLparam2(varkode_mem, tstop);
 
@@ -2470,7 +2470,7 @@ CAMLprim value c_arkode_set_stop_time(value varkode_mem, value tstop)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_max_err_test_fails(value varkode_mem, value maxnef)
+CAMLprim value sunml_arkode_set_max_err_test_fails(value varkode_mem, value maxnef)
 {
     CAMLparam2(varkode_mem, maxnef);
 
@@ -2481,7 +2481,7 @@ CAMLprim value c_arkode_set_max_err_test_fails(value varkode_mem, value maxnef)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_max_nonlin_iters(value varkode_mem, value maxcor)
+CAMLprim value sunml_arkode_set_max_nonlin_iters(value varkode_mem, value maxcor)
 {
     CAMLparam2(varkode_mem, maxcor);
 
@@ -2492,7 +2492,7 @@ CAMLprim value c_arkode_set_max_nonlin_iters(value varkode_mem, value maxcor)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_max_conv_fails(value varkode_mem, value maxncf)
+CAMLprim value sunml_arkode_set_max_conv_fails(value varkode_mem, value maxncf)
 {
     CAMLparam2(varkode_mem, maxncf);
 
@@ -2503,7 +2503,7 @@ CAMLprim value c_arkode_set_max_conv_fails(value varkode_mem, value maxncf)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_nonlin_conv_coef(value varkode_mem, value nlscoef)
+CAMLprim value sunml_arkode_set_nonlin_conv_coef(value varkode_mem, value nlscoef)
 {
     CAMLparam2(varkode_mem, nlscoef);
 
@@ -2514,7 +2514,7 @@ CAMLprim value c_arkode_set_nonlin_conv_coef(value varkode_mem, value nlscoef)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_no_inactive_root_warn(value varkode_mem)
+CAMLprim value sunml_arkode_set_no_inactive_root_warn(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -2524,7 +2524,7 @@ CAMLprim value c_arkode_set_no_inactive_root_warn(value varkode_mem)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_cfl_fraction(value varkode_mem, value varg)
+CAMLprim value sunml_arkode_set_cfl_fraction(value varkode_mem, value varg)
 {
     CAMLparam2(varkode_mem, varg);
 
@@ -2535,7 +2535,7 @@ CAMLprim value c_arkode_set_cfl_fraction(value varkode_mem, value varg)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_defaults(value varkode_mem)
+CAMLprim value sunml_arkode_set_defaults(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -2545,7 +2545,7 @@ CAMLprim value c_arkode_set_defaults(value varkode_mem)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_delta_gamma_max(value varkode_mem, value varg)
+CAMLprim value sunml_arkode_set_delta_gamma_max(value varkode_mem, value varg)
 {
     CAMLparam2(varkode_mem, varg);
 
@@ -2556,7 +2556,7 @@ CAMLprim value c_arkode_set_delta_gamma_max(value varkode_mem, value varg)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_dense_order(value varkode_mem, value varg)
+CAMLprim value sunml_arkode_set_dense_order(value varkode_mem, value varg)
 {
     CAMLparam2(varkode_mem, varg);
 
@@ -2567,7 +2567,7 @@ CAMLprim value c_arkode_set_dense_order(value varkode_mem, value varg)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_error_bias(value varkode_mem, value varg)
+CAMLprim value sunml_arkode_set_error_bias(value varkode_mem, value varg)
 {
     CAMLparam2(varkode_mem, varg);
 
@@ -2578,7 +2578,7 @@ CAMLprim value c_arkode_set_error_bias(value varkode_mem, value varg)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_fixed_step(value varkode_mem, value varg)
+CAMLprim value sunml_arkode_set_fixed_step(value varkode_mem, value varg)
 {
     CAMLparam2(varkode_mem, varg);
 
@@ -2589,7 +2589,7 @@ CAMLprim value c_arkode_set_fixed_step(value varkode_mem, value varg)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_fixed_step_bounds(value varkode_mem,
+CAMLprim value sunml_arkode_set_fixed_step_bounds(value varkode_mem,
 					      value vlb, value vub)
 {
     CAMLparam3(varkode_mem, vlb, vub);
@@ -2601,7 +2601,7 @@ CAMLprim value c_arkode_set_fixed_step_bounds(value varkode_mem,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_max_cfail_growth(value varkode_mem, value varg)
+CAMLprim value sunml_arkode_set_max_cfail_growth(value varkode_mem, value varg)
 {
     CAMLparam2(varkode_mem, varg);
 
@@ -2612,7 +2612,7 @@ CAMLprim value c_arkode_set_max_cfail_growth(value varkode_mem, value varg)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_max_efail_growth(value varkode_mem, value varg)
+CAMLprim value sunml_arkode_set_max_efail_growth(value varkode_mem, value varg)
 {
     CAMLparam2(varkode_mem, varg);
 
@@ -2623,7 +2623,7 @@ CAMLprim value c_arkode_set_max_efail_growth(value varkode_mem, value varg)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_max_first_growth(value varkode_mem, value varg)
+CAMLprim value sunml_arkode_set_max_first_growth(value varkode_mem, value varg)
 {
     CAMLparam2(varkode_mem, varg);
 
@@ -2634,7 +2634,7 @@ CAMLprim value c_arkode_set_max_first_growth(value varkode_mem, value varg)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_max_growth(value varkode_mem, value varg)
+CAMLprim value sunml_arkode_set_max_growth(value varkode_mem, value varg)
 {
     CAMLparam2(varkode_mem, varg);
 
@@ -2645,7 +2645,7 @@ CAMLprim value c_arkode_set_max_growth(value varkode_mem, value varg)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_max_steps_between_lset(value varkode_mem,
+CAMLprim value sunml_arkode_set_max_steps_between_lset(value varkode_mem,
 						   value varg)
 {
     CAMLparam2(varkode_mem, varg);
@@ -2657,7 +2657,7 @@ CAMLprim value c_arkode_set_max_steps_between_lset(value varkode_mem,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_nonlin_crdown(value varkode_mem, value varg)
+CAMLprim value sunml_arkode_set_nonlin_crdown(value varkode_mem, value varg)
 {
     CAMLparam2(varkode_mem, varg);
 
@@ -2668,7 +2668,7 @@ CAMLprim value c_arkode_set_nonlin_crdown(value varkode_mem, value varg)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_nonlin_rdiv(value varkode_mem, value varg)
+CAMLprim value sunml_arkode_set_nonlin_rdiv(value varkode_mem, value varg)
 {
     CAMLparam2(varkode_mem, varg);
 
@@ -2679,7 +2679,7 @@ CAMLprim value c_arkode_set_nonlin_rdiv(value varkode_mem, value varg)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_optimal_params(value varkode_mem)
+CAMLprim value sunml_arkode_set_optimal_params(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -2689,7 +2689,7 @@ CAMLprim value c_arkode_set_optimal_params(value varkode_mem)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_order(value varkode_mem, value varg)
+CAMLprim value sunml_arkode_set_order(value varkode_mem, value varg)
 {
     CAMLparam2(varkode_mem, varg);
 
@@ -2699,7 +2699,7 @@ CAMLprim value c_arkode_set_order(value varkode_mem, value varg)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_safety_factor(value varkode_mem, value varg)
+CAMLprim value sunml_arkode_set_safety_factor(value varkode_mem, value varg)
 {
     CAMLparam2(varkode_mem, varg);
 
@@ -2710,7 +2710,7 @@ CAMLprim value c_arkode_set_safety_factor(value varkode_mem, value varg)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_set_small_num_efails(value varkode_mem, value varg)
+CAMLprim value sunml_arkode_set_small_num_efails(value varkode_mem, value varg)
 {
     CAMLparam2(varkode_mem, varg);
 
@@ -2721,7 +2721,7 @@ CAMLprim value c_arkode_set_small_num_efails(value varkode_mem, value varg)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_spils_set_gs_type(value varkode_mem, value vgstype)
+CAMLprim value sunml_arkode_spils_set_gs_type(value varkode_mem, value vgstype)
 {
     CAMLparam2(varkode_mem, vgstype);
 #if SUNDIALS_LIB_VERSION < 300
@@ -2734,7 +2734,7 @@ CAMLprim value c_arkode_spils_set_gs_type(value varkode_mem, value vgstype)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_spils_set_mass_gs_type(value varkode_mem, value vgstype)
+CAMLprim value sunml_arkode_spils_set_mass_gs_type(value varkode_mem, value vgstype)
 {
     CAMLparam2(varkode_mem, vgstype);
 #if SUNDIALS_LIB_VERSION < 300
@@ -2747,7 +2747,7 @@ CAMLprim value c_arkode_spils_set_mass_gs_type(value varkode_mem, value vgstype)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_spils_set_eps_lin(value varkode_mem, value eplifac)
+CAMLprim value sunml_arkode_spils_set_eps_lin(value varkode_mem, value eplifac)
 {
     CAMLparam2(varkode_mem, eplifac);
 
@@ -2758,7 +2758,7 @@ CAMLprim value c_arkode_spils_set_eps_lin(value varkode_mem, value eplifac)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_spils_set_mass_eps_lin(value varkode_mem, value eplifac)
+CAMLprim value sunml_arkode_spils_set_mass_eps_lin(value varkode_mem, value eplifac)
 {
     CAMLparam2(varkode_mem, eplifac);
 
@@ -2769,7 +2769,7 @@ CAMLprim value c_arkode_spils_set_mass_eps_lin(value varkode_mem, value eplifac)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_spils_set_maxl(value varkode_mem, value maxl)
+CAMLprim value sunml_arkode_spils_set_maxl(value varkode_mem, value maxl)
 {
     CAMLparam2(varkode_mem, maxl);
 #if SUNDIALS_LIB_VERSION < 300
@@ -2781,7 +2781,7 @@ CAMLprim value c_arkode_spils_set_maxl(value varkode_mem, value maxl)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_spils_set_mass_maxl(value varkode_mem, value maxl)
+CAMLprim value sunml_arkode_spils_set_mass_maxl(value varkode_mem, value maxl)
 {
     CAMLparam2(varkode_mem, maxl);
 #if SUNDIALS_LIB_VERSION < 300
@@ -2796,7 +2796,7 @@ CAMLprim value c_arkode_spils_set_mass_maxl(value varkode_mem, value maxl)
 
 /* statistic accessor functions */
 
-CAMLprim value c_arkode_get_tol_scale_factor(value varkode_mem)
+CAMLprim value sunml_arkode_get_tol_scale_factor(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -2807,7 +2807,7 @@ CAMLprim value c_arkode_get_tol_scale_factor(value varkode_mem)
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value c_arkode_get_num_nonlin_solv_iters(value varkode_mem)
+CAMLprim value sunml_arkode_get_num_nonlin_solv_iters(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -2818,7 +2818,7 @@ CAMLprim value c_arkode_get_num_nonlin_solv_iters(value varkode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_arkode_get_num_nonlin_solv_conv_fails(value varkode_mem)
+CAMLprim value sunml_arkode_get_num_nonlin_solv_conv_fails(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -2830,7 +2830,7 @@ CAMLprim value c_arkode_get_num_nonlin_solv_conv_fails(value varkode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_arkode_get_nonlin_solv_stats(value varkode_mem)
+CAMLprim value sunml_arkode_get_nonlin_solv_stats(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
     CAMLlocal1(r);
@@ -2847,7 +2847,7 @@ CAMLprim value c_arkode_get_nonlin_solv_stats(value varkode_mem)
     CAMLreturn(r);
 }
 
-CAMLprim value c_arkode_get_num_g_evals(value varkode_mem)
+CAMLprim value sunml_arkode_get_num_g_evals(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -2858,7 +2858,7 @@ CAMLprim value c_arkode_get_num_g_evals(value varkode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_arkode_dls_get_work_space(value varkode_mem)
+CAMLprim value sunml_arkode_dls_get_work_space(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
     CAMLlocal1(r);
@@ -2877,7 +2877,7 @@ CAMLprim value c_arkode_dls_get_work_space(value varkode_mem)
     CAMLreturn(r);
 }
 
-CAMLprim value c_arkode_dls_get_mass_work_space(value varkode_mem)
+CAMLprim value sunml_arkode_dls_get_mass_work_space(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
     CAMLlocal1(r);
@@ -2896,7 +2896,7 @@ CAMLprim value c_arkode_dls_get_mass_work_space(value varkode_mem)
     CAMLreturn(r);
 }
 
-CAMLprim value c_arkode_dls_get_num_jac_evals(value varkode_mem)
+CAMLprim value sunml_arkode_dls_get_num_jac_evals(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -2907,7 +2907,7 @@ CAMLprim value c_arkode_dls_get_num_jac_evals(value varkode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_arkode_dls_get_num_mass_setups(value varkode_mem)
+CAMLprim value sunml_arkode_dls_get_num_mass_setups(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -2922,7 +2922,7 @@ CAMLprim value c_arkode_dls_get_num_mass_setups(value varkode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_arkode_dls_get_num_mass_solves(value varkode_mem)
+CAMLprim value sunml_arkode_dls_get_num_mass_solves(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -2938,7 +2938,7 @@ CAMLprim value c_arkode_dls_get_num_mass_solves(value varkode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_arkode_dls_get_num_mass_mult(value varkode_mem)
+CAMLprim value sunml_arkode_dls_get_num_mass_mult(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -2953,7 +2953,7 @@ CAMLprim value c_arkode_dls_get_num_mass_mult(value varkode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_arkode_dls_get_num_rhs_evals(value varkode_mem)
+CAMLprim value sunml_arkode_dls_get_num_rhs_evals(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -2964,7 +2964,7 @@ CAMLprim value c_arkode_dls_get_num_rhs_evals(value varkode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_arkode_bandprec_get_work_space(value varkode_mem)
+CAMLprim value sunml_arkode_bandprec_get_work_space(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
     CAMLlocal1(r);
@@ -2984,7 +2984,7 @@ CAMLprim value c_arkode_bandprec_get_work_space(value varkode_mem)
     CAMLreturn(r);
 }
 
-CAMLprim value c_arkode_bandprec_get_num_rhs_evals(value varkode_mem)
+CAMLprim value sunml_arkode_bandprec_get_num_rhs_evals(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -2997,7 +2997,7 @@ CAMLprim value c_arkode_bandprec_get_num_rhs_evals(value varkode_mem)
 
 /* spils functions */
 
-CAMLprim value c_arkode_spils_spgmr (value varkode_mem,
+CAMLprim value sunml_arkode_spils_spgmr (value varkode_mem,
 				     value vmaxl, value vtype)
 {
     CAMLparam3 (varkode_mem, vmaxl, vtype);
@@ -3013,7 +3013,7 @@ CAMLprim value c_arkode_spils_spgmr (value varkode_mem,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_spils_spbcgs (value varkode_mem,
+CAMLprim value sunml_arkode_spils_spbcgs (value varkode_mem,
 				      value vmaxl, value vtype)
 {
     CAMLparam3 (varkode_mem, vmaxl, vtype);
@@ -3029,7 +3029,7 @@ CAMLprim value c_arkode_spils_spbcgs (value varkode_mem,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_spils_sptfqmr (value varkode_mem, value vmaxl,
+CAMLprim value sunml_arkode_spils_sptfqmr (value varkode_mem, value vmaxl,
 				      value vtype)
 {
     CAMLparam3 (varkode_mem, vmaxl, vtype);
@@ -3045,7 +3045,7 @@ CAMLprim value c_arkode_spils_sptfqmr (value varkode_mem, value vmaxl,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_spils_spfgmr (value varkode_mem, value vmaxl,
+CAMLprim value sunml_arkode_spils_spfgmr (value varkode_mem, value vmaxl,
 				      value vtype)
 {
     CAMLparam3 (varkode_mem, vmaxl, vtype);
@@ -3061,7 +3061,7 @@ CAMLprim value c_arkode_spils_spfgmr (value varkode_mem, value vmaxl,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_spils_pcg (value varkode_mem, value vmaxl, value vtype)
+CAMLprim value sunml_arkode_spils_pcg (value varkode_mem, value vmaxl, value vtype)
 {
     CAMLparam3 (varkode_mem, vmaxl, vtype);
 #if SUNDIALS_LIB_VERSION < 300
@@ -3076,7 +3076,7 @@ CAMLprim value c_arkode_spils_pcg (value varkode_mem, value vmaxl, value vtype)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_spils_get_num_lin_iters(value varkode_mem)
+CAMLprim value sunml_arkode_spils_get_num_lin_iters(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -3087,7 +3087,7 @@ CAMLprim value c_arkode_spils_get_num_lin_iters(value varkode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_arkode_spils_get_num_conv_fails(value varkode_mem)
+CAMLprim value sunml_arkode_spils_get_num_conv_fails(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -3102,7 +3102,7 @@ CAMLprim value c_arkode_spils_get_num_conv_fails(value varkode_mem)
 int ARKSpilsGetNumMTSetups(void *arkode_mem, long int *nmtsetups);
 #endif
 
-CAMLprim value c_arkode_spils_get_num_mtsetup_evals(value varkode_mem)
+CAMLprim value sunml_arkode_spils_get_num_mtsetup_evals(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
     long int r;
@@ -3115,7 +3115,7 @@ CAMLprim value c_arkode_spils_get_num_mtsetup_evals(value varkode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_arkode_spils_get_num_mtimes_evals(value varkode_mem)
+CAMLprim value sunml_arkode_spils_get_num_mtimes_evals(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
     long int r;
@@ -3130,7 +3130,7 @@ CAMLprim value c_arkode_spils_get_num_mtimes_evals(value varkode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_arkode_spils_get_work_space(value varkode_mem)
+CAMLprim value sunml_arkode_spils_get_work_space(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
     CAMLlocal1(r);
@@ -3151,7 +3151,7 @@ CAMLprim value c_arkode_spils_get_work_space(value varkode_mem)
     CAMLreturn(r);
 }
 
-CAMLprim value c_arkode_spils_get_num_prec_evals(value varkode_mem)
+CAMLprim value sunml_arkode_spils_get_num_prec_evals(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -3162,7 +3162,7 @@ CAMLprim value c_arkode_spils_get_num_prec_evals(value varkode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_arkode_spils_get_num_prec_solves(value varkode_mem)
+CAMLprim value sunml_arkode_spils_get_num_prec_solves(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -3173,7 +3173,7 @@ CAMLprim value c_arkode_spils_get_num_prec_solves(value varkode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_arkode_spils_get_num_jtsetup_evals(value varkode_mem)
+CAMLprim value sunml_arkode_spils_get_num_jtsetup_evals(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
     long int r;
@@ -3186,7 +3186,7 @@ CAMLprim value c_arkode_spils_get_num_jtsetup_evals(value varkode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_arkode_spils_get_num_jtimes_evals(value varkode_mem)
+CAMLprim value sunml_arkode_spils_get_num_jtimes_evals(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -3197,7 +3197,7 @@ CAMLprim value c_arkode_spils_get_num_jtimes_evals(value varkode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_arkode_spils_get_num_rhs_evals (value varkode_mem)
+CAMLprim value sunml_arkode_spils_get_num_rhs_evals (value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -3210,7 +3210,7 @@ CAMLprim value c_arkode_spils_get_num_rhs_evals (value varkode_mem)
 
 /* spils mass functions */
 
-CAMLprim value c_arkode_spils_mass_spgmr (value varkode_mem,
+CAMLprim value sunml_arkode_spils_mass_spgmr (value varkode_mem,
 					  value vmaxl, value vtype)
 {
     CAMLparam3 (varkode_mem, vmaxl, vtype);
@@ -3229,7 +3229,7 @@ CAMLprim value c_arkode_spils_mass_spgmr (value varkode_mem,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_spils_mass_spbcgs (value varkode_mem,
+CAMLprim value sunml_arkode_spils_mass_spbcgs (value varkode_mem,
 					   value vmaxl, value vtype)
 {
     CAMLparam3 (varkode_mem, vmaxl, vtype);
@@ -3248,7 +3248,7 @@ CAMLprim value c_arkode_spils_mass_spbcgs (value varkode_mem,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_spils_mass_sptfqmr (value varkode_mem,
+CAMLprim value sunml_arkode_spils_mass_sptfqmr (value varkode_mem,
 					    value vmaxl, value vtype)
 {
     CAMLparam3 (varkode_mem, vmaxl, vtype);
@@ -3267,7 +3267,7 @@ CAMLprim value c_arkode_spils_mass_sptfqmr (value varkode_mem,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_spils_mass_spfgmr (value varkode_mem,
+CAMLprim value sunml_arkode_spils_mass_spfgmr (value varkode_mem,
 					   value vmaxl, value vtype)
 {
     CAMLparam3 (varkode_mem, vmaxl, vtype);
@@ -3286,7 +3286,7 @@ CAMLprim value c_arkode_spils_mass_spfgmr (value varkode_mem,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_spils_mass_pcg (value varkode_mem,
+CAMLprim value sunml_arkode_spils_mass_pcg (value varkode_mem,
 					value vmaxl, value vtype)
 {
     CAMLparam3 (varkode_mem, vmaxl, vtype);
@@ -3305,7 +3305,7 @@ CAMLprim value c_arkode_spils_mass_pcg (value varkode_mem,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_spils_get_num_mass_iters(value varkode_mem)
+CAMLprim value sunml_arkode_spils_get_num_mass_iters(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -3316,7 +3316,7 @@ CAMLprim value c_arkode_spils_get_num_mass_iters(value varkode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_arkode_spils_get_num_mass_conv_fails(value varkode_mem)
+CAMLprim value sunml_arkode_spils_get_num_mass_conv_fails(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -3327,7 +3327,7 @@ CAMLprim value c_arkode_spils_get_num_mass_conv_fails(value varkode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_arkode_spils_get_mass_work_space(value varkode_mem)
+CAMLprim value sunml_arkode_spils_get_mass_work_space(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
     CAMLlocal1(r);
@@ -3348,7 +3348,7 @@ CAMLprim value c_arkode_spils_get_mass_work_space(value varkode_mem)
     CAMLreturn(r);
 }
 
-CAMLprim value c_arkode_spils_get_num_mass_prec_evals(value varkode_mem)
+CAMLprim value sunml_arkode_spils_get_num_mass_prec_evals(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
@@ -3359,7 +3359,7 @@ CAMLprim value c_arkode_spils_get_num_mass_prec_evals(value varkode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_arkode_spils_get_num_mass_prec_solves(value varkode_mem)
+CAMLprim value sunml_arkode_spils_get_num_mass_prec_solves(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 

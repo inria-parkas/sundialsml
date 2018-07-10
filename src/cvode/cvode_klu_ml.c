@@ -21,17 +21,17 @@
 #include "../sundials/sundials_ml.h"
 
 #ifndef SUNDIALS_ML_KLU
-CAMLprim value c_cvode_klu_init (value vcvode_mem, value vformat,
+CAMLprim value sunml_cvode_klu_init (value vcvode_mem, value vformat,
 			 	 value vneqs, value vnnz)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 
-CAMLprim value c_cvode_klu_set_ordering (value vcvode_mem, value vordering)
+CAMLprim value sunml_cvode_klu_set_ordering (value vcvode_mem, value vordering)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 
-CAMLprim value c_cvode_klu_reinit (value vcvode_mem, value vn, value vnnz)
+CAMLprim value sunml_cvode_klu_reinit (value vcvode_mem, value vn, value vnnz)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 
-CAMLprim value c_cvode_klu_get_num_jac_evals(value vcvode_mem)
+CAMLprim value sunml_cvode_klu_get_num_jac_evals(value vcvode_mem)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 #else
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -92,7 +92,7 @@ static int jacfn(
 }
 #endif
 
-CAMLprim value c_cvode_klu_init (value vcvode_mem, value vformat,
+CAMLprim value sunml_cvode_klu_init (value vcvode_mem, value vformat,
 				 value vneqs, value vnnz)
 {
     CAMLparam4(vcvode_mem, vformat, vneqs, vnnz);
@@ -116,7 +116,7 @@ CAMLprim value c_cvode_klu_init (value vcvode_mem, value vformat,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_klu_set_ordering (value vcvode_mem, value vordering)
+CAMLprim value sunml_cvode_klu_set_ordering (value vcvode_mem, value vordering)
 {
     CAMLparam2(vcvode_mem, vordering);
 #if SUNDIALS_LIB_VERSION < 300
@@ -131,7 +131,7 @@ CAMLprim value c_cvode_klu_set_ordering (value vcvode_mem, value vordering)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_klu_reinit (value vcvode_mem, value vn, value vnnz)
+CAMLprim value sunml_cvode_klu_reinit (value vcvode_mem, value vn, value vnnz)
 {
     CAMLparam3(vcvode_mem, vn, vnnz);
 #if SUNDIALS_LIB_VERSION < 300
@@ -147,7 +147,7 @@ CAMLprim value c_cvode_klu_reinit (value vcvode_mem, value vn, value vnnz)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_klu_get_num_jac_evals(value vcvode_mem)
+CAMLprim value sunml_cvode_klu_get_num_jac_evals(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
     long int r = 0;

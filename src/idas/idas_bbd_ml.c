@@ -85,7 +85,7 @@ static int bbbdcomm(sundials_ml_index nlocal, realtype t,
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
-CAMLprim value c_idas_bbd_prec_initb (value vparentwhich, value vlocaln,
+CAMLprim value sunml_idas_bbd_prec_initb (value vparentwhich, value vlocaln,
 				      value vbandwidths, value vdqrely,
 				      value vhascomm)
 {
@@ -107,7 +107,7 @@ CAMLprim value c_idas_bbd_prec_initb (value vparentwhich, value vlocaln,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_idas_bbd_prec_reinitb (value vparent, value vwhich,
+CAMLprim value sunml_idas_bbd_prec_reinitb (value vparent, value vwhich,
 					value vmudq, value vmldq,
 					value vdqrely)
 {

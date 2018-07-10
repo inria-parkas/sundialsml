@@ -21,7 +21,7 @@
 #include "../sundials/sundials_ml.h"
 
 #ifndef SUNDIALS_ML_KLU
-CAMLprim value c_idas_klub_init (value vparent_which, value vformat,
+CAMLprim value sunml_idas_klub_init (value vparent_which, value vformat,
 				 value vneqs, value vnnz, value vusesens)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 #else
@@ -71,7 +71,7 @@ static int jacfn_nosens( /* IDASlsSparseJacFnB */
 	args[1] = Some_val(smat);
     } else {
 	args[1] = Some_val(smat);
-	ml_matrix_sparse_rewrap(args[1]);
+	sunml_matrix_sparse_rewrap(args[1]);
     }
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -123,7 +123,7 @@ static int jacfn_withsens( /* IDASlsSparseJacFnB */
 	args[3] = Some_val(smat);
     } else {
 	args[3] = Some_val(smat);
-	ml_matrix_sparse_rewrap(args[3]);
+	sunml_matrix_sparse_rewrap(args[3]);
     }
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -133,7 +133,7 @@ static int jacfn_withsens( /* IDASlsSparseJacFnB */
 }
 #endif
 
-CAMLprim value c_idas_klub_init (value vparent_which, value vformat,
+CAMLprim value sunml_idas_klub_init (value vparent_which, value vformat,
 				 value vneqs, value vnnz, value vusesens)
 {
     CAMLparam5(vparent_which, vformat, vneqs, vnnz, vusesens);

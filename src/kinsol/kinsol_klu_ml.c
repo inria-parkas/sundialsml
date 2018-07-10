@@ -21,17 +21,17 @@
 #include "../sundials/sundials_ml.h"
 
 #ifndef SUNDIALS_ML_KLU
-CAMLprim value c_kinsol_klu_init (value vkin_mem, value vformat,
+CAMLprim value sunml_kinsol_klu_init (value vkin_mem, value vformat,
 				  value vneqs, value vnnz)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 
-CAMLprim value c_kinsol_klu_set_ordering (value vkin_mem, value vordering)
+CAMLprim value sunml_kinsol_klu_set_ordering (value vkin_mem, value vordering)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 
-CAMLprim value c_kinsol_klu_reinit (value vkin_mem, value vn, value vnnz)
+CAMLprim value sunml_kinsol_klu_reinit (value vkin_mem, value vn, value vnnz)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 
-CAMLprim value c_kinsol_klu_get_num_jac_evals(value vkin_mem)
+CAMLprim value sunml_kinsol_klu_get_num_jac_evals(value vkin_mem)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 #else
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -79,7 +79,7 @@ static int jacfn(
 	args[1] = Some_val(smat);
     } else {
 	args[1] = Some_val(smat);
-	ml_matrix_sparse_rewrap(args[1]);
+	sunml_matrix_sparse_rewrap(args[1]);
     }
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -89,7 +89,7 @@ static int jacfn(
 }
 #endif
 
-CAMLprim value c_kinsol_klu_init (value vkin_mem, value vformat,
+CAMLprim value sunml_kinsol_klu_init (value vkin_mem, value vformat,
 				  value vneqs, value vnnz)
 {
     CAMLparam4(vkin_mem, vformat, vneqs, vnnz);
@@ -112,7 +112,7 @@ CAMLprim value c_kinsol_klu_init (value vkin_mem, value vformat,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_klu_set_ordering (value vkin_mem, value vordering)
+CAMLprim value sunml_kinsol_klu_set_ordering (value vkin_mem, value vordering)
 {
     CAMLparam2(vkin_mem, vordering);
 #if SUNDIALS_LIB_VERSION < 300
@@ -126,7 +126,7 @@ CAMLprim value c_kinsol_klu_set_ordering (value vkin_mem, value vordering)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_klu_reinit (value vkin_mem, value vn, value vnnz)
+CAMLprim value sunml_kinsol_klu_reinit (value vkin_mem, value vn, value vnnz)
 {
     CAMLparam3(vkin_mem, vn, vnnz);
 #if SUNDIALS_LIB_VERSION < 300
@@ -141,7 +141,7 @@ CAMLprim value c_kinsol_klu_reinit (value vkin_mem, value vn, value vnnz)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_klu_get_num_jac_evals(value vkin_mem)
+CAMLprim value sunml_kinsol_klu_get_num_jac_evals(value vkin_mem)
 {
     CAMLparam1(vkin_mem);
     long int r = 0;

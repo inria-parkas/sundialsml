@@ -27,7 +27,7 @@
 // cvodes/cvodes_* header files. In fact, nearly everything functions
 // correctly if the cvode/cvode_* header files are used instead (the
 // function prototypes are identical), except for the function
-// c_cvode_set_alternate which relies on the internal representation of
+// sunml_cvode_set_alternate which relies on the internal representation of
 // CVodeMem (for cv_lsolve, etc.). In any case, it seems a better idea to
 // use the appropriate header files even if this introduces a minor
 // complication in the build system.
@@ -97,7 +97,7 @@ static int bbdcomm(sundials_ml_index nlocal, realtype t, N_Vector y,
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
-CAMLprim value c_cvode_bbd_prec_init (value vcvode_mem, value vlocaln,
+CAMLprim value sunml_cvode_bbd_prec_init (value vcvode_mem, value vlocaln,
 				      value vbandwidths, value vdqrely,
 				      value vhascomm)
 {
@@ -119,7 +119,7 @@ CAMLprim value c_cvode_bbd_prec_init (value vcvode_mem, value vlocaln,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_bbd_prec_reinit (value vcvode_mem, value vmudq,
+CAMLprim value sunml_cvode_bbd_prec_reinit (value vcvode_mem, value vmudq,
 					value vmldq, value vdqrely)
 {
     CAMLparam4(vcvode_mem, vmudq, vmldq, vdqrely);
@@ -133,7 +133,7 @@ CAMLprim value c_cvode_bbd_prec_reinit (value vcvode_mem, value vmudq,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_bbd_get_work_space(value vcvode_mem)
+CAMLprim value sunml_cvode_bbd_get_work_space(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
     CAMLlocal1(r);
@@ -153,7 +153,7 @@ CAMLprim value c_cvode_bbd_get_work_space(value vcvode_mem)
     CAMLreturn(r);
 }
 
-CAMLprim value c_cvode_bbd_get_num_gfn_evals(value vcvode_mem)
+CAMLprim value sunml_cvode_bbd_get_num_gfn_evals(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 

@@ -21,32 +21,32 @@
 #include "../sundials/sundials_ml.h"
 
 #ifndef SUNDIALS_ML_KLU
-CAMLprim value c_arkode_klu_init (value varkode_mem, value vformat,
+CAMLprim value sunml_arkode_klu_init (value varkode_mem, value vformat,
 				  value vneqs, value vnnz)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 
-CAMLprim value c_arkode_klu_set_ordering (value varkode_mem, value vordering)
+CAMLprim value sunml_arkode_klu_set_ordering (value varkode_mem, value vordering)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 
-CAMLprim value c_arkode_klu_reinit (value varkode_mem, value vn, value vnnz)
+CAMLprim value sunml_arkode_klu_reinit (value varkode_mem, value vn, value vnnz)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 
-CAMLprim value c_arkode_klu_get_num_jac_evals(value varkode_mem)
+CAMLprim value sunml_arkode_klu_get_num_jac_evals(value varkode_mem)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 
-CAMLprim value c_arkode_mass_klu_init (value varkode_mem, value vformat,
+CAMLprim value sunml_arkode_mass_klu_init (value varkode_mem, value vformat,
 				       value vneqs, value vnnz)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 
-CAMLprim value c_arkode_mass_klu_set_ordering (value varkode_mem,
+CAMLprim value sunml_arkode_mass_klu_set_ordering (value varkode_mem,
 					       value vordering)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 
-CAMLprim value c_arkode_mass_klu_reinit (value varkode_mem,
+CAMLprim value sunml_arkode_mass_klu_reinit (value varkode_mem,
 					 value vn, value vnnz)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 
-CAMLprim value c_arkode_klu_get_num_mass_evals(value varkode_mem)
+CAMLprim value sunml_arkode_klu_get_num_mass_evals(value varkode_mem)
 { CAMLparam0(); CAMLreturn (Val_unit); }
 #else
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -87,7 +87,7 @@ static int jacfn(realtype t,
 	args[1] = Some_val(smat);
     } else {
 	args[1] = Some_val(smat);
-	ml_matrix_sparse_rewrap(args[1]);
+	sunml_matrix_sparse_rewrap(args[1]);
     }
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -97,7 +97,7 @@ static int jacfn(realtype t,
 }
 #endif
 
-CAMLprim value c_arkode_klu_init (value varkode_mem, value vformat,
+CAMLprim value sunml_arkode_klu_init (value varkode_mem, value vformat,
 				  value vneqs, value vnnz)
 {
     CAMLparam4(varkode_mem, vformat, vneqs, vnnz);
@@ -119,7 +119,7 @@ CAMLprim value c_arkode_klu_init (value varkode_mem, value vformat,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_klu_set_ordering (value varkode_mem, value vordering)
+CAMLprim value sunml_arkode_klu_set_ordering (value varkode_mem, value vordering)
 {
     CAMLparam2(varkode_mem, vordering);
 #if SUNDIALS_LIB_VERSION < 300
@@ -133,7 +133,7 @@ CAMLprim value c_arkode_klu_set_ordering (value varkode_mem, value vordering)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_klu_reinit (value varkode_mem, value vn, value vnnz)
+CAMLprim value sunml_arkode_klu_reinit (value varkode_mem, value vn, value vnnz)
 {
     CAMLparam3(varkode_mem, vn, vnnz);
 #if SUNDIALS_LIB_VERSION < 300
@@ -148,7 +148,7 @@ CAMLprim value c_arkode_klu_reinit (value varkode_mem, value vn, value vnnz)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_klu_get_num_jac_evals(value varkode_mem)
+CAMLprim value sunml_arkode_klu_get_num_jac_evals(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
     long int r = 0;
@@ -191,7 +191,7 @@ static int massfn(realtype t,
 	args[2] = Some_val(smat);
     } else {
 	args[2] = Some_val(smat);
-	ml_matrix_sparse_rewrap(args[2]);
+	sunml_matrix_sparse_rewrap(args[2]);
     }
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -201,7 +201,7 @@ static int massfn(realtype t,
 }
 #endif
 
-CAMLprim value c_arkode_mass_klu_init (value varkode_mem, value vformat,
+CAMLprim value sunml_arkode_mass_klu_init (value varkode_mem, value vformat,
 				       value vneqs, value vnnz)
 {
     CAMLparam4(varkode_mem, vformat, vneqs, vnnz);
@@ -222,7 +222,7 @@ CAMLprim value c_arkode_mass_klu_init (value varkode_mem, value vformat,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_mass_klu_set_ordering (value varkode_mem,
+CAMLprim value sunml_arkode_mass_klu_set_ordering (value varkode_mem,
 					       value vordering)
 {
     CAMLparam2(varkode_mem, vordering);
@@ -237,7 +237,7 @@ CAMLprim value c_arkode_mass_klu_set_ordering (value varkode_mem,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_mass_klu_reinit (value varkode_mem, value vn,
+CAMLprim value sunml_arkode_mass_klu_reinit (value varkode_mem, value vn,
 					 value vnnz)
 {
     CAMLparam3(varkode_mem, vn, vnnz);
@@ -254,7 +254,7 @@ CAMLprim value c_arkode_mass_klu_reinit (value varkode_mem, value vn,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_arkode_klu_get_num_mass_evals(value varkode_mem)
+CAMLprim value sunml_arkode_klu_get_num_mass_evals(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
     long int r = 0;

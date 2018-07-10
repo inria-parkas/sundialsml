@@ -85,7 +85,7 @@ type integrator_stats = {
   }
 
 external c_root_init : ('a, 'k) session -> int -> unit
-    = "c_arkode_root_init"
+    = "sunml_arkode_root_init"
 
 let root_init session (nroots, rootsfn) =
   c_root_init session nroots;
@@ -97,43 +97,43 @@ module Dls = struct (* {{{ *)
 
   (* Sundials < 3.0.0 *)
   external c_dls_dense : 'k serial_session -> int -> bool -> unit
-    = "c_arkode_dls_dense"
+    = "sunml_arkode_dls_dense"
 
   (* Sundials < 3.0.0 *)
   external c_dls_lapack_dense : 'k serial_session -> int -> bool -> unit
-    = "c_arkode_dls_lapack_dense"
+    = "sunml_arkode_dls_lapack_dense"
 
   (* Sundials < 3.0.0 *)
   external c_dls_band : 'k serial_session -> int -> int -> int -> bool -> unit
-    = "c_arkode_dls_band"
+    = "sunml_arkode_dls_band"
 
   (* Sundials < 3.0.0 *)
   external c_dls_lapack_band
     : 'k serial_session -> int -> int -> int -> bool -> unit
-    = "c_arkode_dls_lapack_band"
+    = "sunml_arkode_dls_lapack_band"
 
   (* Sundials < 3.0.0 *)
   external c_klu
     : 'k serial_session -> 's Matrix.Sparse.sformat -> int -> int -> unit
-    = "c_arkode_klu_init"
+    = "sunml_arkode_klu_init"
 
   (* Sundials < 3.0.0 *)
   external c_klu_set_ordering
     : 'k serial_session -> LinearSolver.Direct.Klu.ordering -> unit
-    = "c_arkode_klu_set_ordering"
+    = "sunml_arkode_klu_set_ordering"
 
   (* Sundials < 3.0.0 *)
   external c_klu_reinit : 'k serial_session -> int -> int -> unit
-    = "c_arkode_klu_reinit"
+    = "sunml_arkode_klu_reinit"
 
   (* Sundials < 3.0.0 *)
   external c_superlumt : 'k serial_session -> int -> int -> int -> unit
-    = "c_arkode_superlumt_init"
+    = "sunml_arkode_superlumt_init"
 
   (* Sundials < 3.0.0 *)
   external c_superlumt_set_ordering
     : 'k serial_session -> LinearSolver.Direct.Superlumt.ordering -> unit
-    = "c_arkode_superlumt_set_ordering"
+    = "sunml_arkode_superlumt_set_ordering"
 
   (* Sundials < 3.0.0 *)
   let klu_set_ordering session ordering =
@@ -247,7 +247,7 @@ module Dls = struct (* {{{ *)
       -> ('mk, 'm, Nvector_serial.data, 'k) Matrix.t
       -> bool
       -> unit
-    = "c_arkode_dls_set_linear_solver"
+    = "sunml_arkode_dls_set_linear_solver"
 
   let solver ?jac ((LSD.S { LSD.rawptr; LSD.solver; LSD.matrix }) as ls)
              session nv =
@@ -276,22 +276,22 @@ module Dls = struct (* {{{ *)
       | _ -> ()
 
   external get_work_space : 'k serial_session -> int * int
-      = "c_arkode_dls_get_work_space"
+      = "sunml_arkode_dls_get_work_space"
 
   let get_work_space s =
     ls_check_direct s;
     get_work_space s
 
   external c_get_num_jac_evals : 'k serial_session -> int
-    = "c_arkode_dls_get_num_jac_evals"
+    = "sunml_arkode_dls_get_num_jac_evals"
 
   (* Sundials < 3.0.0 *)
   external c_klu_get_num_jac_evals : 'k serial_session -> int
-    = "c_arkode_klu_get_num_jac_evals"
+    = "sunml_arkode_klu_get_num_jac_evals"
 
   (* Sundials < 3.0.0 *)
   external c_superlumt_get_num_jac_evals : 'k serial_session -> int
-    = "c_arkode_superlumt_get_num_jac_evals"
+    = "sunml_arkode_superlumt_get_num_jac_evals"
 
   let compat_get_num_jac_evals s =
     match s.ls_callbacks with
@@ -305,7 +305,7 @@ module Dls = struct (* {{{ *)
     c_get_num_jac_evals s
 
   external get_num_rhs_evals : 'k serial_session -> int
-      = "c_arkode_dls_get_num_rhs_evals"
+      = "sunml_arkode_dls_get_num_rhs_evals"
 
   let get_num_rhs_evals s =
     ls_check_direct s;
@@ -321,46 +321,46 @@ module Spils = struct (* {{{ *)
   external c_spgmr
     : ('a, 'k) session
       -> int -> LSI.Iterative.preconditioning_type -> unit
-    = "c_arkode_spils_spgmr"
+    = "sunml_arkode_spils_spgmr"
 
   (* Sundials < 3.0.0 *)
   external c_spbcgs
     : ('a, 'k) session
       -> int -> LSI.Iterative.preconditioning_type -> unit
-    = "c_arkode_spils_spbcgs"
+    = "sunml_arkode_spils_spbcgs"
 
   (* Sundials < 3.0.0 *)
   external c_sptfqmr
     : ('a, 'k) session
       -> int -> LSI.Iterative.preconditioning_type -> unit
-    = "c_arkode_spils_sptfqmr"
+    = "sunml_arkode_spils_sptfqmr"
 
   (* Sundials < 3.0.0 *)
   external c_spfgmr
     : ('a, 'k) session
       -> int -> LSI.Iterative.preconditioning_type -> unit
-    = "c_arkode_spils_spfgmr"
+    = "sunml_arkode_spils_spfgmr"
 
   (* Sundials < 3.0.0 *)
   external c_pcg
     : ('a, 'k) session
       -> int -> LSI.Iterative.preconditioning_type -> unit
-    = "c_arkode_spils_pcg"
+    = "sunml_arkode_spils_pcg"
 
   (* Sundials < 3.0.0 *)
   external c_set_gs_type
     : ('a, 'k) session -> LSI.Iterative.gramschmidt_type -> unit
-    = "c_arkode_spils_set_gs_type"
+    = "sunml_arkode_spils_set_gs_type"
 
   (* Sundials < 3.0.0 *)
   external c_set_maxl
     : ('a, 'k) session -> int -> unit
-    = "c_arkode_spils_set_maxl"
+    = "sunml_arkode_spils_set_maxl"
 
   (* Sundials < 3.0.0 *)
   external c_set_prec_type
     : ('a, 'k) session -> LSI.Iterative.preconditioning_type -> unit
-    = "c_arkode_spils_set_prec_type"
+    = "sunml_arkode_spils_set_prec_type"
 
   let old_set_maxl s maxl =
     ls_check_spils s;
@@ -375,15 +375,15 @@ module Spils = struct (* {{{ *)
     c_set_gs_type s t
 
   external c_set_jac_times : ('a, 'k) session -> bool -> bool -> unit
-    = "c_arkode_spils_set_jac_times"
+    = "sunml_arkode_spils_set_jac_times"
 
   external c_set_preconditioner
     : ('a, 'k) session -> bool -> unit
-    = "c_arkode_spils_set_preconditioner"
+    = "sunml_arkode_spils_set_preconditioner"
 
   external c_spils_set_linear_solver
     : ('a, 'k) session -> ('a, 'k) LSI.Iterative.cptr -> unit
-    = "c_arkode_spils_set_linear_solver"
+    = "sunml_arkode_spils_set_linear_solver"
 
   let init_preconditioner solve setup session nv =
     c_set_preconditioner session (setup <> None);
@@ -480,63 +480,63 @@ module Spils = struct (* {{{ *)
     | _ -> raise LinearSolver.InvalidLinearSolver
 
   external set_eps_lin            : ('a, 'k) session -> float -> unit
-    = "c_arkode_spils_set_eps_lin"
+    = "sunml_arkode_spils_set_eps_lin"
 
   let set_eps_lin s epsl =
     ls_check_spils s;
     set_eps_lin s epsl
 
   external get_num_lin_iters      : ('a, 'k) session -> int
-    = "c_arkode_spils_get_num_lin_iters"
+    = "sunml_arkode_spils_get_num_lin_iters"
 
   let get_num_lin_iters s =
     ls_check_spils s;
     get_num_lin_iters s
 
   external get_num_conv_fails     : ('a, 'k) session -> int
-    = "c_arkode_spils_get_num_conv_fails"
+    = "sunml_arkode_spils_get_num_conv_fails"
 
   let get_num_conv_fails s =
     ls_check_spils s;
     get_num_conv_fails s
 
   external get_work_space         : ('a, 'k) session -> int * int
-    = "c_arkode_spils_get_work_space"
+    = "sunml_arkode_spils_get_work_space"
 
   let get_work_space s =
     ls_check_spils s;
     get_work_space s
 
   external get_num_prec_evals     : ('a, 'k) session -> int
-    = "c_arkode_spils_get_num_prec_evals"
+    = "sunml_arkode_spils_get_num_prec_evals"
 
   let get_num_prec_evals s =
     ls_check_spils s;
     get_num_prec_evals s
 
   external get_num_prec_solves    : ('a, 'k) session -> int
-    = "c_arkode_spils_get_num_prec_solves"
+    = "sunml_arkode_spils_get_num_prec_solves"
 
   let get_num_prec_solves s =
     ls_check_spils s;
     get_num_prec_solves s
 
   external get_num_jtsetup_evals   : ('a, 'k) session -> int
-    = "c_arkode_spils_get_num_jtsetup_evals"
+    = "sunml_arkode_spils_get_num_jtsetup_evals"
 
   let get_num_jtsetup_evals s =
     ls_check_spils s;
     get_num_jtsetup_evals s
 
   external get_num_jtimes_evals   : ('a, 'k) session -> int
-    = "c_arkode_spils_get_num_jtimes_evals"
+    = "sunml_arkode_spils_get_num_jtimes_evals"
 
   let get_num_jtimes_evals s =
     ls_check_spils s;
     get_num_jtimes_evals s
 
   external get_num_rhs_evals      : ('a, 'k) session -> int
-    = "c_arkode_spils_get_num_rhs_evals"
+    = "sunml_arkode_spils_get_num_rhs_evals"
 
   let get_num_rhs_evals s =
     ls_check_spils s;
@@ -548,7 +548,7 @@ module Spils = struct (* {{{ *)
 
     external c_set_preconditioner
       : ('a, 'k) session -> int -> int -> int -> unit
-      = "c_arkode_spils_set_banded_preconditioner"
+      = "sunml_arkode_spils_set_banded_preconditioner"
     (* Note: ARKBandPrecInit seems to be designed only to be called on
        a fresh spils solver (i.e. right after ARKSpgmr, ARKSpbcg,
        ARKSptfqmr, ARKSpfgmr, or ARKPcg).
@@ -597,14 +597,14 @@ module Spils = struct (* {{{ *)
       LSI.Iterative.(PrecBoth,  init_preconditioner bandrange)
 
     external get_work_space : 'k serial_session -> int * int
-      = "c_arkode_bandprec_get_work_space"
+      = "sunml_arkode_bandprec_get_work_space"
 
     let get_work_space s =
       ls_check_spils_band s;
       get_work_space s
 
     external get_num_rhs_evals : 'k serial_session -> int
-      = "c_arkode_bandprec_get_num_rhs_evals"
+      = "sunml_arkode_bandprec_get_num_rhs_evals"
 
     let get_num_rhs_evals s =
       ls_check_spils_band s;
@@ -618,7 +618,7 @@ module Alternate = struct (* {{{ *)
 
   external c_set_alternate
     : ('data, 'kind) session -> bool -> bool -> unit
-    = "c_arkode_set_alternate"
+    = "sunml_arkode_set_alternate"
 
   type gammas = {
     gamma : float;
@@ -626,7 +626,7 @@ module Alternate = struct (* {{{ *)
   }
 
   external get_gammas : ('data, 'kind) session -> gammas
-    = "c_arkode_get_gamma"
+    = "sunml_arkode_get_gamma"
 
   let solver f s nv =
     let { linit; lsetup; lsolve } as cb = f s nv in
@@ -645,43 +645,43 @@ module Mass = struct (* {{{ *)
 
     (* Sundials < 3.0.0 *)
     external c_dls_mass_dense : 'k serial_session -> int -> unit
-      = "c_arkode_dls_mass_dense"
+      = "sunml_arkode_dls_mass_dense"
 
     (* Sundials < 3.0.0 *)
     external c_dls_mass_lapack_dense : 'k serial_session -> int -> unit
-      = "c_arkode_dls_mass_lapack_dense"
+      = "sunml_arkode_dls_mass_lapack_dense"
 
     (* Sundials < 3.0.0 *)
     external c_dls_mass_band : 'k serial_session -> int -> int -> int -> unit
-      = "c_arkode_dls_mass_band"
+      = "sunml_arkode_dls_mass_band"
 
     (* Sundials < 3.0.0 *)
     external c_dls_mass_lapack_band
       : 'k serial_session -> int -> int -> int -> unit
-      = "c_arkode_dls_mass_lapack_band"
+      = "sunml_arkode_dls_mass_lapack_band"
 
     (* Sundials < 3.0.0 *)
     external c_mass_klu
       : 'k serial_session -> 's Matrix.Sparse.sformat -> int -> int -> unit
-      = "c_arkode_mass_klu_init"
+      = "sunml_arkode_mass_klu_init"
 
     (* Sundials < 3.0.0 *)
     external c_klu_set_ordering
       : 'k serial_session -> LSI.Klu.ordering -> unit
-      = "c_arkode_mass_klu_set_ordering"
+      = "sunml_arkode_mass_klu_set_ordering"
 
     (* Sundials < 3.0.0 *)
     external c_klu_reinit : 'k serial_session -> int -> int -> unit
-      = "c_arkode_mass_klu_reinit"
+      = "sunml_arkode_mass_klu_reinit"
 
     (* Sundials < 3.0.0 *)
     external c_mass_superlumt : 'k serial_session -> int -> int -> int -> unit
-      = "c_arkode_mass_superlumt_init"
+      = "sunml_arkode_mass_superlumt_init"
 
     (* Sundials < 3.0.0 *)
     external c_superlumt_set_ordering
       : 'k serial_session -> LSI.Superlumt.ordering -> unit
-      = "c_arkode_mass_superlumt_set_ordering"
+      = "sunml_arkode_mass_superlumt_set_ordering"
 
     (* Sundials < 3.0.0 *)
     let klu_set_ordering session ordering =
@@ -790,7 +790,7 @@ module Mass = struct (* {{{ *)
         -> ('mk, 'm, Nvector_serial.data, 'k) Matrix.t
         -> bool
         -> unit
-      = "c_arkode_dls_set_mass_linear_solver"
+      = "sunml_arkode_dls_set_mass_linear_solver"
 
     let solver massfn time_dep
                ((LSD.S { LSD.rawptr; LSD.solver; LSD.matrix } ) as ls)
@@ -820,14 +820,14 @@ module Mass = struct (* {{{ *)
         | _ -> ()
 
     external get_work_space : 'k serial_session -> int * int
-        = "c_arkode_dls_get_mass_work_space"
+        = "sunml_arkode_dls_get_mass_work_space"
 
     let get_work_space s =
       mass_check_direct s;
       get_work_space s
 
     external c_get_num_mass_setups : 'k serial_session -> int
-      = "c_arkode_dls_get_num_mass_setups"
+      = "sunml_arkode_dls_get_num_mass_setups"
 
     let get_num_setups s =
       mass_check_direct s;
@@ -836,21 +836,21 @@ module Mass = struct (* {{{ *)
 
     (* Sundials < 3.0.0 *)
     external c_klu_get_num_mass_evals : 'k serial_session -> int
-      = "c_arkode_klu_get_num_mass_evals"
+      = "sunml_arkode_klu_get_num_mass_evals"
 
     (* Sundials < 3.0.0 *)
     external c_superlumt_get_num_mass_evals : 'k serial_session -> int
-      = "c_arkode_superlumt_get_num_mass_evals"
+      = "sunml_arkode_superlumt_get_num_mass_evals"
 
     external c_get_num_mass_solves : 'k serial_session -> int
-      = "c_arkode_dls_get_num_mass_solves"
+      = "sunml_arkode_dls_get_num_mass_solves"
 
     let get_num_solves s =
       mass_check_direct s;
       c_get_num_mass_solves s
 
     external c_get_num_mass_mult : 'k serial_session -> int
-      = "c_arkode_dls_get_num_mass_mult"
+      = "sunml_arkode_dls_get_num_mass_mult"
 
     let get_num_mult s =
       mass_check_direct s;
@@ -867,46 +867,46 @@ module Mass = struct (* {{{ *)
     external c_spgmr
       : ('a, 'k) session
         -> int -> LSI.Iterative.preconditioning_type -> unit
-      = "c_arkode_spils_mass_spgmr"
+      = "sunml_arkode_spils_mass_spgmr"
 
     (* Sundials < 3.0.0 *)
     external c_spbcgs
       : ('a, 'k) session
         -> int -> LSI.Iterative.preconditioning_type -> unit
-      = "c_arkode_spils_mass_spbcgs"
+      = "sunml_arkode_spils_mass_spbcgs"
 
     (* Sundials < 3.0.0 *)
     external c_sptfqmr
       : ('a, 'k) session
         -> int -> LSI.Iterative.preconditioning_type -> unit
-      = "c_arkode_spils_mass_sptfqmr"
+      = "sunml_arkode_spils_mass_sptfqmr"
 
     (* Sundials < 3.0.0 *)
     external c_spfgmr
       : ('a, 'k) session
         -> int -> LSI.Iterative.preconditioning_type -> unit
-      = "c_arkode_spils_mass_spfgmr"
+      = "sunml_arkode_spils_mass_spfgmr"
 
     (* Sundials < 3.0.0 *)
     external c_pcg
       : ('a, 'k) session
         -> int -> LSI.Iterative.preconditioning_type -> unit
-      = "c_arkode_spils_mass_pcg"
+      = "sunml_arkode_spils_mass_pcg"
 
     (* Sundials < 3.0.0 *)
     external c_set_gs_type
       : ('a, 'k) session
         -> LSI.Iterative.gramschmidt_type -> unit
-      = "c_arkode_spils_set_mass_gs_type"
+      = "sunml_arkode_spils_set_mass_gs_type"
 
     (* Sundials < 3.0.0 *)
     external c_set_maxl : ('a, 'k) session -> int -> unit
-      = "c_arkode_spils_set_mass_maxl"
+      = "sunml_arkode_spils_set_mass_maxl"
 
     (* Sundials < 3.0.0 *)
     external c_set_prec_type
       : ('a, 'k) session -> LSI.Iterative.preconditioning_type -> unit
-      = "c_arkode_spils_set_mass_prec_type"
+      = "sunml_arkode_spils_set_mass_prec_type"
 
     let old_set_gs_type s t =
       mass_check_spils s;
@@ -921,11 +921,11 @@ module Mass = struct (* {{{ *)
       c_set_prec_type s t
 
   external c_set_mass_times : ('a, 'k) session -> bool -> unit
-    = "c_arkode_spils_set_mass_times"
+    = "sunml_arkode_spils_set_mass_times"
 
     external c_set_preconditioner
       : ('a, 'k) session -> bool -> unit
-      = "c_arkode_spils_set_mass_preconditioner"
+      = "sunml_arkode_spils_set_mass_preconditioner"
 
     external c_spils_set_mass_linear_solver
       : ('a, 'k) session
@@ -933,7 +933,7 @@ module Mass = struct (* {{{ *)
         -> bool
         -> bool
         -> unit
-      = "c_arkode_spils_set_mass_linear_solver"
+      = "sunml_arkode_spils_set_mass_linear_solver"
 
     let init_preconditioner solve setup session nv =
       c_set_preconditioner session (setup <> None);
@@ -1017,56 +1017,56 @@ module Mass = struct (* {{{ *)
       | _ -> raise LinearSolver.InvalidLinearSolver
 
     external set_eps_lin            : ('a, 'k) session -> float -> unit
-        = "c_arkode_spils_set_mass_eps_lin"
+        = "sunml_arkode_spils_set_mass_eps_lin"
 
     let set_eps_lin s epsl =
       mass_check_spils s;
       set_eps_lin s epsl
 
     external get_num_lin_iters      : ('a, 'k) session -> int
-        = "c_arkode_spils_get_num_mass_iters"
+        = "sunml_arkode_spils_get_num_mass_iters"
 
     let get_num_lin_iters s =
       mass_check_spils s;
       get_num_lin_iters s
 
     external get_num_conv_fails     : ('a, 'k) session -> int
-        = "c_arkode_spils_get_num_mass_conv_fails"
+        = "sunml_arkode_spils_get_num_mass_conv_fails"
 
     let get_num_conv_fails s =
       mass_check_spils s;
       get_num_conv_fails s
 
     external get_num_mtsetup_evals   : ('a, 'k) session -> int
-      = "c_arkode_spils_get_num_mtsetup_evals"
+      = "sunml_arkode_spils_get_num_mtsetup_evals"
 
     let get_num_mtsetup_evals s =
       mass_check_spils s;
       get_num_mtsetup_evals s
 
     external get_num_mtimes_evals   : ('a, 'k) session -> int
-        = "c_arkode_spils_get_num_mtimes_evals"
+        = "sunml_arkode_spils_get_num_mtimes_evals"
 
     let get_num_mtimes_evals s =
       mass_check_spils s;
       get_num_mtimes_evals s
 
     external get_work_space         : ('a, 'k) session -> int * int
-        = "c_arkode_spils_get_mass_work_space"
+        = "sunml_arkode_spils_get_mass_work_space"
 
     let get_work_space s =
       mass_check_spils s;
       get_work_space s
 
     external get_num_prec_evals     : ('a, 'k) session -> int
-        = "c_arkode_spils_get_num_mass_prec_evals"
+        = "sunml_arkode_spils_get_num_mass_prec_evals"
 
     let get_num_prec_evals s =
       mass_check_spils s;
       get_num_prec_evals s
 
     external get_num_prec_solves    : ('a, 'k) session -> int
-        = "c_arkode_spils_get_num_mass_prec_solves"
+        = "sunml_arkode_spils_get_num_mass_prec_solves"
 
     let get_num_prec_solves s =
       mass_check_spils s;
@@ -1078,7 +1078,7 @@ module Mass = struct (* {{{ *)
 
     external c_set_alternate
       : ('data, 'kind) session -> bool -> bool -> unit
-      = "c_arkode_set_mass_alternate"
+      = "sunml_arkode_set_mass_alternate"
 
     let solver f s nv =
       let { minit; msetup; msolve } as cb = f s nv in
@@ -1090,11 +1090,11 @@ end (* }}} *)
 
 
 external sv_tolerances  : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
-    = "c_arkode_sv_tolerances"
+    = "sunml_arkode_sv_tolerances"
 external ss_tolerances  : ('a, 'k) session -> float -> float -> unit
-    = "c_arkode_ss_tolerances"
+    = "sunml_arkode_ss_tolerances"
 external wf_tolerances  : ('a, 'k) session -> unit
-    = "c_arkode_wf_tolerances"
+    = "sunml_arkode_wf_tolerances"
 
 type ('a, 'k) tolerance =
   | SStolerances of float * float
@@ -1111,11 +1111,11 @@ let set_tolerances s tol =
   | WFtolerances ferrw -> (s.errw <- ferrw; wf_tolerances s)
 
 external ress_tolerance  : ('a, 'k) session -> float -> unit
-    = "c_arkode_ress_tolerance"
+    = "sunml_arkode_ress_tolerance"
 external resv_tolerance  : ('a, 'k) session -> ('a, 'k) nvector -> unit
-    = "c_arkode_resv_tolerance"
+    = "sunml_arkode_resv_tolerance"
 external resf_tolerance  : ('a, 'k) session -> unit
-    = "c_arkode_resf_tolerance"
+    = "sunml_arkode_resf_tolerance"
 
 type ('data, 'kind) res_tolerance =
   | ResStolerance of float
@@ -1136,22 +1136,22 @@ let set_res_tolerance s tol =
                             resf_tolerance s)
 
 external set_fixed_point : ('a, 'k) session -> int -> unit
-  = "c_arkode_set_fixed_point"
+  = "sunml_arkode_set_fixed_point"
 
 external set_newton : ('a, 'k) session -> unit
-  = "c_arkode_set_newton"
+  = "sunml_arkode_set_newton"
 
 external set_linear : ('a, 'k) session -> bool -> unit
-  = "c_arkode_set_linear"
+  = "sunml_arkode_set_linear"
 
 external set_nonlinear : ('a, 'k) session -> unit
-  = "c_arkode_set_nonlinear"
+  = "sunml_arkode_set_nonlinear"
 
 external c_set_order : ('a, 'k) session -> int -> unit
-  = "c_arkode_set_order"
+  = "sunml_arkode_set_order"
 
 external c_session_finalize : ('a, 'kind) session -> unit
-    = "c_arkode_session_finalize"
+    = "sunml_arkode_session_finalize"
 
 let session_finalize s =
   Dls.invalidate_callback s;
@@ -1164,7 +1164,7 @@ external c_init :
   -> ('a, 'k) nvector (* y_0 *)
   -> float            (* t_0 *)
   -> (arkode_mem * c_weak_ref)
-  = "c_arkode_init"
+  = "sunml_arkode_init"
 
 let init prob tol ?restol ?order ?mass ?(roots=no_roots) t0 y0 =
   let (nroots, roots) = roots in
@@ -1237,7 +1237,7 @@ let get_num_roots { nroots } = nroots
 
 external c_reinit
     : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
-    = "c_arkode_reinit"
+    = "sunml_arkode_reinit"
 
 let reinit session ?problem ?order ?roots t0 y0 =
   if Sundials_configuration.safe then session.checkvec y0;
@@ -1264,7 +1264,7 @@ let reinit session ?problem ?order ?roots t0 y0 =
 
 external c_resize
     : ('a, 'k) session -> bool -> float -> float -> ('a, 'k) nvector -> unit
-    = "c_arkode_resize"
+    = "sunml_arkode_resize"
 
 let resize session ?resize_nvec ?linsolv tol ?restol hscale ynew t0 =
   session.checkvec <- Nvector.check ynew;
@@ -1282,7 +1282,7 @@ let resize session ?resize_nvec ?linsolv tol ?restol hscale ynew t0 =
   (match session.linsolver with Some ls -> ls session ynew | None -> ())
 
 external get_root_info  : ('a, 'k) session -> Roots.t -> unit
-    = "c_arkode_get_root_info"
+    = "sunml_arkode_get_root_info"
 
 type solver_result =
   | Success             (** ARK_SUCCESS *)
@@ -1291,7 +1291,7 @@ type solver_result =
 
 external c_solve_normal : ('a, 'k) session -> float -> ('a, 'k) nvector
                               -> float * solver_result
-    = "c_arkode_solve_normal"
+    = "sunml_arkode_solve_normal"
 
 let solve_normal s t y =
   if Sundials_configuration.safe then s.checkvec y;
@@ -1299,7 +1299,7 @@ let solve_normal s t y =
 
 external c_solve_one_step : ('a, 'k) session -> float -> ('a, 'k) nvector
                               -> float * solver_result
-    = "c_arkode_solve_one_step"
+    = "sunml_arkode_solve_one_step"
 
 let solve_one_step s t y =
   if Sundials_configuration.safe then s.checkvec y;
@@ -1307,50 +1307,50 @@ let solve_one_step s t y =
 
 external c_get_dky
     : ('a, 'k) session -> float -> int -> ('a, 'k) nvector -> unit
-    = "c_arkode_get_dky"
+    = "sunml_arkode_get_dky"
 
 let get_dky s y =
   if Sundials_configuration.safe then s.checkvec y;
   fun t k -> c_get_dky s t k y
 
 external get_integrator_stats : ('a, 'k) session -> integrator_stats
-    = "c_arkode_get_integrator_stats"
+    = "sunml_arkode_get_integrator_stats"
 
 external get_work_space         : ('a, 'k) session -> int * int
-    = "c_arkode_get_work_space"
+    = "sunml_arkode_get_work_space"
 
 external get_num_steps          : ('a, 'k) session -> int
-    = "c_arkode_get_num_steps"
+    = "sunml_arkode_get_num_steps"
 
 external get_num_exp_steps      : ('d, 'k) session -> int
-    = "c_arkode_get_num_exp_steps"
+    = "sunml_arkode_get_num_exp_steps"
 
 external get_num_acc_steps      : ('d, 'k) session -> int
-    = "c_arkode_get_num_acc_steps"
+    = "sunml_arkode_get_num_acc_steps"
 
 external get_num_step_attempts  : ('d, 'k) session -> int
-    = "c_arkode_get_num_step_attempts"
+    = "sunml_arkode_get_num_step_attempts"
 
 external get_num_rhs_evals      : ('a, 'k) session -> int * int
-    = "c_arkode_get_num_rhs_evals"
+    = "sunml_arkode_get_num_rhs_evals"
 
 external get_num_lin_solv_setups : ('a, 'k) session -> int
-    = "c_arkode_get_num_lin_solv_setups"
+    = "sunml_arkode_get_num_lin_solv_setups"
 
 external get_num_err_test_fails : ('a, 'k) session -> int
-    = "c_arkode_get_num_err_test_fails"
+    = "sunml_arkode_get_num_err_test_fails"
 
 external get_actual_init_step   : ('a, 'k) session -> float
-    = "c_arkode_get_actual_init_step"
+    = "sunml_arkode_get_actual_init_step"
 
 external get_last_step          : ('a, 'k) session -> float
-    = "c_arkode_get_last_step"
+    = "sunml_arkode_get_last_step"
 
 external get_current_step       : ('a, 'k) session -> float
-    = "c_arkode_get_current_step"
+    = "sunml_arkode_get_current_step"
 
 external get_current_time       : ('a, 'k) session -> float
-    = "c_arkode_get_current_time"
+    = "sunml_arkode_get_current_time"
 
 let print_integrator_stats s oc =
   let stats = get_integrator_stats s
@@ -1369,36 +1369,36 @@ let print_integrator_stats s oc =
     Printf.fprintf oc "current_time = %e\n"        stats.current_time
 
 external set_diagnostics : ('a, 'k) session -> Logfile.t -> unit
-    = "c_arkode_set_diagnostics"
+    = "sunml_arkode_set_diagnostics"
 
 external clear_diagnostics : ('a, 'k) session -> unit
-    = "c_arkode_clear_diagnostics"
+    = "sunml_arkode_clear_diagnostics"
 
 external set_error_file : ('a, 'k) session -> Logfile.t -> unit
-    = "c_arkode_set_error_file"
+    = "sunml_arkode_set_error_file"
 
 external c_set_err_handler_fn  : ('a, 'k) session -> unit
-    = "c_arkode_set_err_handler_fn"
+    = "sunml_arkode_set_err_handler_fn"
 
 let set_err_handler_fn s ferrh =
   s.errh <- ferrh;
   c_set_err_handler_fn s
 
 external clear_err_handler_fn  : ('a, 'k) session -> unit
-    = "c_arkode_clear_err_handler_fn"
+    = "sunml_arkode_clear_err_handler_fn"
 
 let clear_err_handler_fn s =
   s.errh <- dummy_errh;
   clear_err_handler_fn s
 
 external c_set_imex             : ('a, 'k) session -> unit
-    = "c_arkode_set_imex"
+    = "sunml_arkode_set_imex"
 
 external c_set_explicit         : ('a, 'k) session -> unit
-    = "c_arkode_set_explicit"
+    = "sunml_arkode_set_explicit"
 
 external c_set_implicit         : ('a, 'k) session -> unit
-    = "c_arkode_set_implicit"
+    = "sunml_arkode_set_implicit"
 
 let set_imex s =
   (if s.irhsfn == dummy_irhsfn || s.erhsfn == dummy_erhsfn then raise IllInput);
@@ -1432,15 +1432,15 @@ external c_set_ark_tables
     -> RealArray.t -> RealArray.t
     -> rk_timescoefs * rk_timescoefs
     -> unit
-    = "c_arkode_set_ark_tables"
+    = "sunml_arkode_set_ark_tables"
 
 external c_set_erk_table
   : ('d, 'k) session -> rk_method -> RealArray.t -> rk_timescoefs -> unit
-    = "c_arkode_set_erk_table"
+    = "sunml_arkode_set_erk_table"
 
 external c_set_irk_table
   : ('d, 'k) session -> rk_method -> RealArray.t -> rk_timescoefs -> unit
-    = "c_arkode_set_irk_table"
+    = "sunml_arkode_set_irk_table"
 
 let set_ark_tables s rkm ai ae tci tce =
   (if s.irhsfn == dummy_irhsfn || s.erhsfn == dummy_erhsfn then raise IllInput);
@@ -1571,11 +1571,11 @@ let ints_of_ark_table v =
                   int_of_erk_table ARK_8_4_5_Explicit)
 
 external c_set_erk_table_num      : ('d, 'k) session -> int -> unit
-    = "c_arkode_set_erk_table_num"
+    = "sunml_arkode_set_erk_table_num"
 external c_set_irk_table_num      : ('d, 'k) session -> int -> unit
-    = "c_arkode_set_irk_table_num"
+    = "sunml_arkode_set_irk_table_num"
 external c_set_ark_table_num      : ('d, 'k) session -> int * int -> unit
-    = "c_arkode_set_ark_table_num"
+    = "sunml_arkode_set_ark_table_num"
 
 let set_erk_table_num s v = c_set_erk_table_num s (int_of_erk_table v)
 let set_irk_table_num s v = c_set_irk_table_num s (int_of_irk_table v)
@@ -1597,7 +1597,7 @@ type 'd adaptivity_method =
 
 external c_set_adaptivity_method
     : ('d, 'k) session -> 'd adaptivity_method -> unit
-    = "c_arkode_set_adaptivity_method"
+    = "sunml_arkode_set_adaptivity_method"
 
 let set_adaptivity_method s am =
   (match am with
@@ -1606,7 +1606,7 @@ let set_adaptivity_method s am =
   c_set_adaptivity_method s am
 
 external c_set_stability_fn : ('d, 'k) session -> bool -> unit
-    = "c_arkode_set_stability_fn"
+    = "sunml_arkode_set_stability_fn"
 
 let set_stability_fn s f =
   s.stabfn <- f;
@@ -1624,65 +1624,65 @@ type predictor_method =
   | BootstrapPredictor
 
 external set_predictor_method : ('d, 'k) session -> predictor_method -> unit
-    = "c_arkode_set_predictor_method"
+    = "sunml_arkode_set_predictor_method"
 
 external set_defaults           : ('a, 'k) session -> unit
-    = "c_arkode_set_defaults"
+    = "sunml_arkode_set_defaults"
 external set_dense_order        : ('a, 'k) session -> int -> unit
-    = "c_arkode_set_dense_order"
+    = "sunml_arkode_set_dense_order"
 external set_max_num_steps      : ('a, 'k) session -> int -> unit
-    = "c_arkode_set_max_num_steps"
+    = "sunml_arkode_set_max_num_steps"
 external set_max_hnil_warns     : ('a, 'k) session -> int -> unit
-    = "c_arkode_set_max_hnil_warns"
+    = "sunml_arkode_set_max_hnil_warns"
 external set_init_step          : ('a, 'k) session -> float -> unit
-    = "c_arkode_set_init_step"
+    = "sunml_arkode_set_init_step"
 external set_fixed_step         : ('a, 'k) session -> float option -> unit
-    = "c_arkode_set_fixed_step"
+    = "sunml_arkode_set_fixed_step"
 external set_min_step           : ('a, 'k) session -> float -> unit
-    = "c_arkode_set_min_step"
+    = "sunml_arkode_set_min_step"
 external set_max_step           : ('a, 'k) session -> float -> unit
-    = "c_arkode_set_max_step"
+    = "sunml_arkode_set_max_step"
 external set_stop_time          : ('a, 'k) session -> float -> unit
-    = "c_arkode_set_stop_time"
+    = "sunml_arkode_set_stop_time"
 external set_optimal_params     : ('a, 'k) session -> unit
-    = "c_arkode_set_optimal_params"
+    = "sunml_arkode_set_optimal_params"
 external set_max_err_test_fails : ('a, 'k) session -> int -> unit
-    = "c_arkode_set_max_err_test_fails"
+    = "sunml_arkode_set_max_err_test_fails"
 external set_max_nonlin_iters   : ('a, 'k) session -> int -> unit
-    = "c_arkode_set_max_nonlin_iters"
+    = "sunml_arkode_set_max_nonlin_iters"
 external set_max_conv_fails     : ('a, 'k) session -> int -> unit
-    = "c_arkode_set_max_conv_fails"
+    = "sunml_arkode_set_max_conv_fails"
 external set_nonlin_conv_coef   : ('a, 'k) session -> float -> unit
-    = "c_arkode_set_nonlin_conv_coef"
+    = "sunml_arkode_set_nonlin_conv_coef"
 external set_nonlin_crdown      : ('a, 'k) session -> float -> unit
-    = "c_arkode_set_nonlin_crdown"
+    = "sunml_arkode_set_nonlin_crdown"
 external set_nonlin_rdiv        : ('a, 'k) session -> float -> unit
-    = "c_arkode_set_nonlin_rdiv"
+    = "sunml_arkode_set_nonlin_rdiv"
 external set_delta_gamma_max    : ('a, 'k) session -> float -> unit
-    = "c_arkode_set_delta_gamma_max"
+    = "sunml_arkode_set_delta_gamma_max"
 external set_max_steps_between_lset : ('a, 'k) session -> int -> unit
-    = "c_arkode_set_max_steps_between_lset"
+    = "sunml_arkode_set_max_steps_between_lset"
 external set_cfl_fraction       : ('a, 'k) session -> float -> unit
-    = "c_arkode_set_cfl_fraction"
+    = "sunml_arkode_set_cfl_fraction"
 external set_error_bias         : ('a, 'k) session -> float -> unit
-    = "c_arkode_set_error_bias"
+    = "sunml_arkode_set_error_bias"
 external set_fixed_step_bounds  : ('a, 'k) session -> float -> float -> unit
-    = "c_arkode_set_fixed_step_bounds"
+    = "sunml_arkode_set_fixed_step_bounds"
 external set_max_cfail_growth   : ('a, 'k) session -> float -> unit
-    = "c_arkode_set_max_cfail_growth"
+    = "sunml_arkode_set_max_cfail_growth"
 external set_max_efail_growth   : ('a, 'k) session -> float -> unit
-    = "c_arkode_set_max_efail_growth"
+    = "sunml_arkode_set_max_efail_growth"
 external set_max_first_growth   : ('a, 'k) session -> float -> unit
-    = "c_arkode_set_max_first_growth"
+    = "sunml_arkode_set_max_first_growth"
 external set_max_growth         : ('a, 'k) session -> float -> unit
-    = "c_arkode_set_max_growth"
+    = "sunml_arkode_set_max_growth"
 external set_safety_factor      : ('a, 'k) session -> float -> unit
-    = "c_arkode_set_safety_factor"
+    = "sunml_arkode_set_safety_factor"
 external set_small_num_efails   : ('a, 'k) session -> float -> unit
-    = "c_arkode_set_small_num_efails"
+    = "sunml_arkode_set_small_num_efails"
 
 external c_set_postprocess_step_fn : ('a, 'k) session -> bool -> unit
-    = "c_arkode_set_postprocess_step_fn"
+    = "sunml_arkode_set_postprocess_step_fn"
 
 let set_postprocess_step_fn s fn =
   s.poststepfn <- fn;
@@ -1693,7 +1693,7 @@ let clear_postprocess_step_fn s =
   c_set_postprocess_step_fn s false
 
 external c_set_root_direction   : ('a, 'k) session -> RootDirs.t -> unit
-    = "c_arkode_set_root_direction"
+    = "sunml_arkode_set_root_direction"
 
 let set_root_direction s rda =
   c_set_root_direction s (RootDirs.copy (get_num_roots s) rda)
@@ -1702,46 +1702,46 @@ let set_all_root_directions s rd =
   c_set_root_direction s (RootDirs.make (get_num_roots s) rd)
 
 external set_no_inactive_root_warn      : ('a, 'k) session -> unit
-    = "c_arkode_set_no_inactive_root_warn"
+    = "sunml_arkode_set_no_inactive_root_warn"
 
 external get_current_butcher_tables
   : ('d, 'k) session
     -> rk_method * RealArray.t * RealArray.t * rk_timescoefs * rk_timescoefs
-    = "c_arkode_get_current_butcher_tables"
+    = "sunml_arkode_get_current_butcher_tables"
 
 external get_tol_scale_factor           : ('a, 'k) session -> float
-    = "c_arkode_get_tol_scale_factor"
+    = "sunml_arkode_get_tol_scale_factor"
 
 external c_get_err_weights : ('a, 'k) session -> ('a, 'k) nvector -> unit
-    = "c_arkode_get_err_weights"
+    = "sunml_arkode_get_err_weights"
 
 let get_err_weights s ew =
   if Sundials_configuration.safe then s.checkvec ew;
   c_get_err_weights s ew
 
 external c_get_est_local_errors : ('a, 'k) session -> ('a, 'k) nvector -> unit
-    = "c_arkode_get_est_local_errors"
+    = "sunml_arkode_get_est_local_errors"
 
 let get_est_local_errors s ew =
   if Sundials_configuration.safe then s.checkvec ew;
   c_get_est_local_errors s ew
 
 external get_num_nonlin_solv_iters      : ('a, 'k) session -> int
-    = "c_arkode_get_num_nonlin_solv_iters"
+    = "sunml_arkode_get_num_nonlin_solv_iters"
 
 external get_num_nonlin_solv_conv_fails : ('a, 'k) session -> int
-    = "c_arkode_get_num_nonlin_solv_conv_fails"
+    = "sunml_arkode_get_num_nonlin_solv_conv_fails"
 
 external get_nonlin_solv_stats          : ('a, 'k) session -> int * int
-    = "c_arkode_get_nonlin_solv_stats"
+    = "sunml_arkode_get_nonlin_solv_stats"
 
 external get_num_g_evals                : ('a, 'k) session -> int
-    = "c_arkode_get_num_g_evals"
+    = "sunml_arkode_get_num_g_evals"
 
 
 (* Let C code know about some of the values in this module.  *)
 external c_init_module : exn array -> unit =
-  "c_arkode_init_module"
+  "sunml_arkode_init_module"
 
 let _ =
   c_init_module

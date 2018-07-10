@@ -57,7 +57,7 @@
 #include <caml/fail.h>
 #include <caml/bigarray.h>
 
-CAMLprim void ml_lsolver_init_module (value exns)
+CAMLprim void sunml_lsolver_init_module (value exns)
 {
     CAMLparam1 (exns);
     REGISTER_EXNS (LSOLVER, exns);
@@ -90,7 +90,7 @@ static value alloc_lsolver(SUNLinearSolver ls)
  * Direct
  */
 
-CAMLprim value ml_lsolver_dense(value vnvec, value vdmat)
+CAMLprim value sunml_lsolver_dense(value vnvec, value vdmat)
 {
     CAMLparam2(vnvec, vdmat);
 #if SUNDIALS_LIB_VERSION >= 300
@@ -113,7 +113,7 @@ CAMLprim value ml_lsolver_dense(value vnvec, value vdmat)
 #endif
 }
 
-CAMLprim value ml_lsolver_lapack_dense(value vnvec, value vdmat)
+CAMLprim value sunml_lsolver_lapack_dense(value vnvec, value vdmat)
 {
     CAMLparam2(vnvec, vdmat);
 #if SUNDIALS_LIB_VERSION >= 300 && defined SUNDIALS_ML_LAPACK
@@ -136,7 +136,7 @@ CAMLprim value ml_lsolver_lapack_dense(value vnvec, value vdmat)
 #endif
 }
 
-CAMLprim value ml_lsolver_band(value vnvec, value vbmat)
+CAMLprim value sunml_lsolver_band(value vnvec, value vbmat)
 {
     CAMLparam2(vnvec, vbmat);
 #if SUNDIALS_LIB_VERSION >= 300
@@ -165,7 +165,7 @@ CAMLprim value ml_lsolver_band(value vnvec, value vbmat)
 #endif
 }
 
-CAMLprim value ml_lsolver_lapack_band(value vnvec, value vbmat)
+CAMLprim value sunml_lsolver_lapack_band(value vnvec, value vbmat)
 {
     CAMLparam2(vnvec, vbmat);
 #if SUNDIALS_LIB_VERSION >= 300 && defined SUNDIALS_ML_LAPACK
@@ -194,7 +194,7 @@ CAMLprim value ml_lsolver_lapack_band(value vnvec, value vbmat)
 #endif
 }
 
-CAMLprim value ml_lsolver_klu(value vnvec, value vsmat)
+CAMLprim value sunml_lsolver_klu(value vnvec, value vsmat)
 {
     CAMLparam2(vnvec, vsmat);
 #if SUNDIALS_LIB_VERSION >= 300 && defined SUNDIALS_ML_KLU
@@ -217,7 +217,7 @@ CAMLprim value ml_lsolver_klu(value vnvec, value vsmat)
 #endif
 }
 
-CAMLprim void ml_lsolver_klu_reinit(value vcptr, value vsmat)
+CAMLprim void sunml_lsolver_klu_reinit(value vcptr, value vsmat)
 {
     CAMLparam2(vcptr, vsmat);
 #if SUNDIALS_LIB_VERSION >= 300 && defined SUNDIALS_ML_KLU
@@ -227,7 +227,7 @@ CAMLprim void ml_lsolver_klu_reinit(value vcptr, value vsmat)
     CAMLreturn0;
 }
 
-CAMLprim void ml_lsolver_klu_set_ordering(value vcptr, value vordering)
+CAMLprim void sunml_lsolver_klu_set_ordering(value vcptr, value vordering)
 {
     CAMLparam2(vcptr, vordering);
 #if SUNDIALS_LIB_VERSION >= 300 && defined SUNDIALS_ML_KLU
@@ -237,7 +237,7 @@ CAMLprim void ml_lsolver_klu_set_ordering(value vcptr, value vordering)
     CAMLreturn0;
 }
 
-CAMLprim value ml_lsolver_superlumt(value vnvec, value vsmat, value vnthreads)
+CAMLprim value sunml_lsolver_superlumt(value vnvec, value vsmat, value vnthreads)
 {
     CAMLparam2(vnvec, vsmat);
 #if SUNDIALS_LIB_VERSION >= 300 && defined SUNDIALS_ML_SUPERLUMT
@@ -261,7 +261,7 @@ CAMLprim value ml_lsolver_superlumt(value vnvec, value vsmat, value vnthreads)
 #endif
 }
 
-CAMLprim void ml_lsolver_superlumt_set_ordering(value vcptr, value vordering)
+CAMLprim void sunml_lsolver_superlumt_set_ordering(value vcptr, value vordering)
 {
     CAMLparam2(vcptr, vordering);
 #if SUNDIALS_LIB_VERSION >= 300 && defined SUNDIALS_ML_SUPERLUMT
@@ -306,7 +306,7 @@ int lsolver_gs_type(value vgstype)
     return -1;
 }
 
-CAMLprim void ml_lsolver_set_prec_type(value vcptr, value vsolver,
+CAMLprim void sunml_lsolver_set_prec_type(value vcptr, value vsolver,
 	value vpretype, value vdocheck)
 {
     CAMLparam4(vcptr, vsolver, vpretype, vdocheck);
@@ -375,7 +375,7 @@ CAMLprim void ml_lsolver_set_prec_type(value vcptr, value vsolver,
     CAMLreturn0;
 }
 
-CAMLprim void ml_lsolver_set_maxl(value vcptr, value vsolver, value vmaxl)
+CAMLprim void sunml_lsolver_set_maxl(value vcptr, value vsolver, value vmaxl)
 {
     CAMLparam3(vcptr, vsolver, vmaxl);
 
@@ -402,7 +402,7 @@ CAMLprim void ml_lsolver_set_maxl(value vcptr, value vsolver, value vmaxl)
     CAMLreturn0;
 }
 
-CAMLprim void ml_lsolver_set_gs_type(value vcptr, value vsolver, value vgst)
+CAMLprim void sunml_lsolver_set_gs_type(value vcptr, value vsolver, value vgst)
 {
     CAMLparam3(vcptr, vsolver, vgst);
 
@@ -426,7 +426,7 @@ CAMLprim void ml_lsolver_set_gs_type(value vcptr, value vsolver, value vgst)
     CAMLreturn0;
 }
 
-CAMLprim void ml_lsolver_set_max_restarts(value vcptr, value vsolver,
+CAMLprim void sunml_lsolver_set_max_restarts(value vcptr, value vsolver,
 	value vmaxr)
 {
     CAMLparam3(vcptr, vsolver, vmaxr);
@@ -451,7 +451,7 @@ CAMLprim void ml_lsolver_set_max_restarts(value vcptr, value vsolver,
     CAMLreturn0;
 }
 
-CAMLprim value ml_lsolver_spbcgs(value vmaxl, value vnvec)
+CAMLprim value sunml_lsolver_spbcgs(value vmaxl, value vnvec)
 {
     CAMLparam2(vmaxl, vnvec);
 #if SUNDIALS_LIB_VERSION >= 300
@@ -464,7 +464,7 @@ CAMLprim value ml_lsolver_spbcgs(value vmaxl, value vnvec)
 #endif
 }
 
-CAMLprim value ml_lsolver_spfgmr(value vmaxl, value vnvec)
+CAMLprim value sunml_lsolver_spfgmr(value vmaxl, value vnvec)
 {
     CAMLparam2(vmaxl, vnvec);
 #if SUNDIALS_LIB_VERSION >= 300
@@ -477,7 +477,7 @@ CAMLprim value ml_lsolver_spfgmr(value vmaxl, value vnvec)
 #endif
 }
 
-CAMLprim value ml_lsolver_spgmr(value vmaxl, value vnvec)
+CAMLprim value sunml_lsolver_spgmr(value vmaxl, value vnvec)
 {
     CAMLparam2(vmaxl, vnvec);
 #if SUNDIALS_LIB_VERSION >= 300
@@ -490,7 +490,7 @@ CAMLprim value ml_lsolver_spgmr(value vmaxl, value vnvec)
 #endif
 }
 
-CAMLprim value ml_lsolver_sptfqmr(value vmaxl, value vnvec)
+CAMLprim value sunml_lsolver_sptfqmr(value vmaxl, value vnvec)
 {
     CAMLparam2(vmaxl, vnvec);
 #if SUNDIALS_LIB_VERSION >= 300
@@ -503,7 +503,7 @@ CAMLprim value ml_lsolver_sptfqmr(value vmaxl, value vnvec)
 #endif
 }
 
-CAMLprim value ml_lsolver_pcg(value vmaxl, value vnvec)
+CAMLprim value sunml_lsolver_pcg(value vmaxl, value vnvec)
 {
     CAMLparam2(vmaxl, vnvec);
 #if SUNDIALS_LIB_VERSION >= 300
@@ -669,7 +669,7 @@ struct atimes_with_data {
 };
 #define ATIMES_WITH_DATA(v) ((struct atimes_with_data *)Data_custom_val(v))
 
-CAMLprim value ml_lsolver_call_atimes(value vcptr, value vv, value vz)
+CAMLprim value sunml_lsolver_call_atimes(value vcptr, value vv, value vz)
 {
     CAMLparam3(vcptr, vv, vz);
     int r;
@@ -706,7 +706,7 @@ struct precond_with_data {
 };
 #define PRECOND_WITH_DATA(v) ((struct precond_with_data *)Data_custom_val(v))
 
-CAMLprim value ml_lsolver_call_psetup(value vcptr)
+CAMLprim value sunml_lsolver_call_psetup(value vcptr)
 {
     CAMLparam1(vcptr);
     int r;
@@ -721,7 +721,7 @@ CAMLprim value ml_lsolver_call_psetup(value vcptr)
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value ml_lsolver_call_psolve(value vcptr, value vr, value vz,
+CAMLprim value sunml_lsolver_call_psolve(value vcptr, value vr, value vz,
 				      value vtol, value vlr)
 {
     CAMLparam5(vcptr, vr, vz, vtol, vlr);
@@ -888,21 +888,21 @@ int callml_custom_free(SUNLinearSolver ls)
 
 #else // SUNDIALS_LIB_VERSION < 300
 
-CAMLprim value ml_lsolver_call_atimes(value vcptr, value vv, value vz)
+CAMLprim value sunml_lsolver_call_atimes(value vcptr, value vv, value vz)
 {
     CAMLparam3(vcptr, vv, vz);
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value ml_lsolver_call_psetup(value vcptr)
+CAMLprim value sunml_lsolver_call_psetup(value vcptr)
 {
     CAMLparam1(vcptr);
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value ml_lsolver_call_psolve(value vcptr, value vr, value vz,
+CAMLprim value sunml_lsolver_call_psolve(value vcptr, value vr, value vz,
 	value vtol, value vlr)
 {
     CAMLparam5(vcptr, vr, vz, vtol, vlr);
@@ -911,7 +911,7 @@ CAMLprim value ml_lsolver_call_psolve(value vcptr, value vr, value vz,
 }
 #endif
 
-CAMLprim value ml_lsolver_make_custom(value vid, value vops, value vhasops)
+CAMLprim value sunml_lsolver_make_custom(value vid, value vops, value vhasops)
 {
     CAMLparam3(vid, vops, vhasops);
 #if SUNDIALS_LIB_VERSION >= 300
@@ -973,7 +973,7 @@ CAMLprim value ml_lsolver_make_custom(value vid, value vops, value vhasops)
  * Low-level iterative algorithms on arrays
  */
 
-CAMLprim value c_spils_modified_gs(value vv, value vh, value vk, value vp)
+CAMLprim value sunml_spils_modified_gs(value vv, value vh, value vk, value vp)
 {
     CAMLparam4(vv, vh, vk, vp);
 
@@ -1011,7 +1011,7 @@ CAMLprim value c_spils_modified_gs(value vv, value vh, value vk, value vp)
     CAMLreturn(caml_copy_double(new_vk_norm));
 }
 
-CAMLprim value c_spils_classical_gs(value vargs)
+CAMLprim value sunml_spils_classical_gs(value vargs)
 {
     CAMLparam1(vargs);
     CAMLlocal3(vv, vh, vs);
@@ -1059,7 +1059,7 @@ CAMLprim value c_spils_classical_gs(value vargs)
     CAMLreturn(caml_copy_double(new_vk_norm));
 }
 
-CAMLprim value c_spils_qr_fact(value vn, value vh, value vq, value vnewjob)
+CAMLprim value sunml_spils_qr_fact(value vn, value vh, value vq, value vnewjob)
 {
     CAMLparam4(vn, vh, vq, vnewjob);
     int r;
@@ -1088,7 +1088,7 @@ CAMLprim value c_spils_qr_fact(value vn, value vh, value vq, value vnewjob)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_spils_qr_sol(value vn, value vh, value vq, value vb)
+CAMLprim value sunml_spils_qr_sol(value vn, value vh, value vq, value vb)
 {
     CAMLparam4(vn, vh, vq, vb);
     int r;

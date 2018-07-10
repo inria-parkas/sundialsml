@@ -24,7 +24,7 @@
 // cvodes/cvodes_* header files. In fact, nearly everything functions
 // correctly if the cvode/cvode_* header files are used instead (the
 // function prototypes are identical), except for the function
-// c_cvode_set_alternate which relies on the internal representation of
+// sunml_cvode_set_alternate which relies on the internal representation of
 // CVodeMem (for cv_lsolve, etc.). In any case, it seems a better idea to
 // use the appropriate header files even if this introduces a minor
 // complication in the build system.
@@ -89,7 +89,7 @@
 #define MAX_ERRMSG_LEN 256
 
 
-CAMLprim value c_cvode_init_module (value exns)
+CAMLprim value sunml_cvode_init_module (value exns)
 {
     CAMLparam1 (exns);
     REGISTER_EXNS (CVODE, exns);
@@ -131,7 +131,7 @@ static void errh(int error_code,
     CAMLreturn0;
 }
 
-CAMLprim value c_cvode_set_err_handler_fn(value vdata)
+CAMLprim value sunml_cvode_set_err_handler_fn(value vdata)
 {
     CAMLparam1(vdata);
  
@@ -142,7 +142,7 @@ CAMLprim value c_cvode_set_err_handler_fn(value vdata)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_clear_err_handler_fn(value vdata)
+CAMLprim value sunml_cvode_clear_err_handler_fn(value vdata)
 {
     CAMLparam1(vdata);
 
@@ -607,7 +607,7 @@ static int lsolve(CVodeMem cv_mem, N_Vector b, N_Vector weight, N_Vector ycur,
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
-CAMLprim value c_cvode_get_gamma(value vcvode_mem)
+CAMLprim value sunml_cvode_get_gamma(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
     CAMLlocal1(r);
@@ -619,7 +619,7 @@ CAMLprim value c_cvode_get_gamma(value vcvode_mem)
     CAMLreturn(r);
 }
 
-CAMLprim value c_cvode_set_alternate (value vcvode_mem, value vhas_init,
+CAMLprim value sunml_cvode_set_alternate (value vcvode_mem, value vhas_init,
 				      value vhas_setup)
 {
     CAMLparam3(vcvode_mem, vhas_init, vhas_setup);
@@ -637,7 +637,7 @@ CAMLprim value c_cvode_set_alternate (value vcvode_mem, value vhas_init,
 }
 
 #ifdef SUNDIALSML_WITHSENS
-CAMLprim value c_cvode_adj_set_alternate (value vparent, value vwhich,
+CAMLprim value sunml_cvode_adj_set_alternate (value vparent, value vwhich,
 					  value vhas_init, value vhas_setup)
 {
     CAMLparam4(vparent, vwhich, vhas_init, vhas_setup);
@@ -657,7 +657,7 @@ CAMLprim value c_cvode_adj_set_alternate (value vparent, value vwhich,
 #endif
 
 /* Dense and Band can only be used with serial NVectors.  */
-CAMLprim value c_cvode_dls_dense (value vcvode_mem, value vneqs, value vset_jac)
+CAMLprim value sunml_cvode_dls_dense (value vcvode_mem, value vneqs, value vset_jac)
 {
     CAMLparam3(vcvode_mem, vneqs, vset_jac);
 #if SUNDIALS_LIB_VERSION < 300
@@ -679,7 +679,7 @@ CAMLprim value c_cvode_dls_dense (value vcvode_mem, value vneqs, value vset_jac)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_dls_lapack_dense (value vcvode_mem, value vneqs,
+CAMLprim value sunml_cvode_dls_lapack_dense (value vcvode_mem, value vneqs,
 					 value vset_jac)
 {
     CAMLparam3 (vcvode_mem, vneqs, vset_jac);
@@ -702,7 +702,7 @@ CAMLprim value c_cvode_dls_lapack_dense (value vcvode_mem, value vneqs,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_dls_band (value vcvode_mem, value vneqs,
+CAMLprim value sunml_cvode_dls_band (value vcvode_mem, value vneqs,
 				 value vmupper, value vmlower,
 				 value vset_jac)
 {
@@ -726,7 +726,7 @@ CAMLprim value c_cvode_dls_band (value vcvode_mem, value vneqs,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_dls_lapack_band (value vcvode_mem, value vneqs,
+CAMLprim value sunml_cvode_dls_lapack_band (value vcvode_mem, value vneqs,
 					value vmupper, value vmlower,
 					value vset_jac)
 {
@@ -751,7 +751,7 @@ CAMLprim value c_cvode_dls_lapack_band (value vcvode_mem, value vneqs,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_dls_set_linear_solver (value vcvode_mem, value vlsolv,
+CAMLprim value sunml_cvode_dls_set_linear_solver (value vcvode_mem, value vlsolv,
 					      value vjmat, value vhasjac)
 {
     CAMLparam4(vcvode_mem, vlsolv, vjmat, vhasjac);
@@ -775,7 +775,7 @@ CAMLprim value c_cvode_dls_set_linear_solver (value vcvode_mem, value vlsolv,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_spils_set_linear_solver (value vcvode_mem, value vlsolv)
+CAMLprim value sunml_cvode_spils_set_linear_solver (value vcvode_mem, value vlsolv)
 {
     CAMLparam2(vcvode_mem, vlsolv);
 #if SUNDIALS_LIB_VERSION >= 300
@@ -793,7 +793,7 @@ CAMLprim value c_cvode_spils_set_linear_solver (value vcvode_mem, value vlsolv)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_spils_set_preconditioner (value vsession,
+CAMLprim value sunml_cvode_spils_set_preconditioner (value vsession,
 						 value vset_precsetup)
 {
     CAMLparam2 (vsession, vset_precsetup);
@@ -804,7 +804,7 @@ CAMLprim value c_cvode_spils_set_preconditioner (value vsession,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_spils_set_banded_preconditioner (value vsession,
+CAMLprim value sunml_cvode_spils_set_banded_preconditioner (value vsession,
 							value vneqs,
 							value vmupper,
 							value vmlower)
@@ -817,7 +817,7 @@ CAMLprim value c_cvode_spils_set_banded_preconditioner (value vsession,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_spils_set_jac_times(value vdata, value vhas_setup,
+CAMLprim value sunml_cvode_spils_set_jac_times(value vdata, value vhas_setup,
 							value vhas_times)
 {
     CAMLparam3(vdata, vhas_setup, vhas_times);
@@ -835,7 +835,7 @@ CAMLprim value c_cvode_spils_set_jac_times(value vdata, value vhas_setup,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_wf_tolerances (value vdata)
+CAMLprim value sunml_cvode_wf_tolerances (value vdata)
 {
     CAMLparam1(vdata);
  
@@ -848,7 +848,7 @@ CAMLprim value c_cvode_wf_tolerances (value vdata)
 /* basic interface */
 
 /* CVodeCreate() + CVodeInit().  */
-CAMLprim value c_cvode_init(value weakref, value lmm, value iter, value initial,
+CAMLprim value sunml_cvode_init(value weakref, value lmm, value iter, value initial,
 			    value t0)
 {
     CAMLparam5(weakref, lmm, iter, initial, t0);
@@ -908,7 +908,7 @@ CAMLprim value c_cvode_init(value weakref, value lmm, value iter, value initial,
 
 /* Set the root function to a generic trampoline and set the number of
  * roots.  */
-CAMLprim value c_cvode_root_init (value vdata, value vnroots)
+CAMLprim value sunml_cvode_root_init (value vdata, value vnroots)
 {
     CAMLparam2 (vdata, vnroots);
     void *cvode_mem = CVODE_MEM_FROM_ML (vdata);
@@ -919,7 +919,7 @@ CAMLprim value c_cvode_root_init (value vdata, value vnroots)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_sv_tolerances(value vdata, value reltol, value abstol)
+CAMLprim value sunml_cvode_sv_tolerances(value vdata, value reltol, value abstol)
 {
     CAMLparam3(vdata, reltol, abstol);
 
@@ -932,7 +932,7 @@ CAMLprim value c_cvode_sv_tolerances(value vdata, value reltol, value abstol)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_reinit(value vdata, value t0, value y0)
+CAMLprim value sunml_cvode_reinit(value vdata, value t0, value y0)
 {
     CAMLparam3(vdata, t0, y0);
 
@@ -996,19 +996,19 @@ static value solver(value vdata, value nextt, value vy, int onestep)
     CAMLreturn (ret);
 }
 
-CAMLprim value c_cvode_solve_normal(value vdata, value nextt, value y)
+CAMLprim value sunml_cvode_solve_normal(value vdata, value nextt, value y)
 {
     CAMLparam3(vdata, nextt, y);
     CAMLreturn(solver(vdata, nextt, y, 0));
 }
 
-CAMLprim value c_cvode_solve_one_step(value vdata, value nextt, value y)
+CAMLprim value sunml_cvode_solve_one_step(value vdata, value nextt, value y)
 {
     CAMLparam3(vdata, nextt, y);
     CAMLreturn(solver(vdata, nextt, y, 1));
 }
 
-CAMLprim value c_cvode_get_dky(value vdata, value vt, value vk, value vy)
+CAMLprim value sunml_cvode_get_dky(value vdata, value vt, value vk, value vy)
 {
     CAMLparam4(vdata, vt, vk, vy);
 
@@ -1021,7 +1021,7 @@ CAMLprim value c_cvode_get_dky(value vdata, value vt, value vk, value vy)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_get_err_weights(value vcvode_mem, value verrws)
+CAMLprim value sunml_cvode_get_err_weights(value vcvode_mem, value verrws)
 {
     CAMLparam2(vcvode_mem, verrws);
 
@@ -1033,7 +1033,7 @@ CAMLprim value c_cvode_get_err_weights(value vcvode_mem, value verrws)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_get_est_local_errors(value vcvode_mem, value vele)
+CAMLprim value sunml_cvode_get_est_local_errors(value vcvode_mem, value vele)
 {
     CAMLparam2(vcvode_mem, vele);
 
@@ -1113,7 +1113,7 @@ void cvode_ml_check_flag(const char *call, int flag)
 
 /* basic interface */
 
-CAMLprim value c_cvode_session_finalize(value vdata)
+CAMLprim value sunml_cvode_session_finalize(value vdata)
 {
     if (CVODE_MEM_FROM_ML(vdata) != NULL) {
 	void *cvode_mem = CVODE_MEM_FROM_ML(vdata);
@@ -1125,7 +1125,7 @@ CAMLprim value c_cvode_session_finalize(value vdata)
     return Val_unit;
 }
 
-CAMLprim value c_cvode_ss_tolerances(value vdata, value reltol, value abstol)
+CAMLprim value sunml_cvode_ss_tolerances(value vdata, value reltol, value abstol)
 {
     CAMLparam3(vdata, reltol, abstol);
 
@@ -1136,7 +1136,7 @@ CAMLprim value c_cvode_ss_tolerances(value vdata, value reltol, value abstol)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_get_root_info(value vdata, value roots)
+CAMLprim value sunml_cvode_get_root_info(value vdata, value roots)
 {
     CAMLparam2(vdata, roots);
 
@@ -1153,7 +1153,7 @@ CAMLprim value c_cvode_get_root_info(value vdata, value roots)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_get_integrator_stats(value vdata)
+CAMLprim value sunml_cvode_get_integrator_stats(value vdata)
 {
     CAMLparam1(vdata);
     CAMLlocal1(r);
@@ -1204,7 +1204,7 @@ CAMLprim value c_cvode_get_integrator_stats(value vdata)
     CAMLreturn(r);
 }
 
-CAMLprim value c_cvode_set_error_file(value vdata, value vfile)
+CAMLprim value sunml_cvode_set_error_file(value vdata, value vfile)
 {
     CAMLparam2(vdata, vfile);
 
@@ -1214,7 +1214,7 @@ CAMLprim value c_cvode_set_error_file(value vdata, value vfile)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_set_functional (value vdata)
+CAMLprim value sunml_cvode_set_functional (value vdata)
 {
     CAMLparam1 (vdata);
     int flag = CVodeSetIterType (CVODE_MEM_FROM_ML (vdata), CV_FUNCTIONAL);
@@ -1222,7 +1222,7 @@ CAMLprim value c_cvode_set_functional (value vdata)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_set_root_direction(value vdata, value rootdirs)
+CAMLprim value sunml_cvode_set_root_direction(value vdata, value rootdirs)
 {
     CAMLparam2(vdata, rootdirs);
 
@@ -1239,7 +1239,7 @@ CAMLprim value c_cvode_set_root_direction(value vdata, value rootdirs)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_spils_set_prec_type(value vcvode_mem, value vptype)
+CAMLprim value sunml_cvode_spils_set_prec_type(value vcvode_mem, value vptype)
 {
     CAMLparam2(vcvode_mem, vptype);
 #if SUNDIALS_LIB_VERSION < 300
@@ -1252,7 +1252,7 @@ CAMLprim value c_cvode_spils_set_prec_type(value vcvode_mem, value vptype)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_diag (value vcvode_mem)
+CAMLprim value sunml_cvode_diag (value vcvode_mem)
 {
     CAMLparam1 (vcvode_mem);
     int flag = CVodeSetIterType (CVODE_MEM_FROM_ML (vcvode_mem), CV_NEWTON);
@@ -1268,7 +1268,7 @@ CAMLprim value c_cvode_diag (value vcvode_mem)
  *
  */
 
-CAMLprim value c_cvode_get_work_space(value vcvode_mem)
+CAMLprim value sunml_cvode_get_work_space(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
     CAMLlocal1(r);
@@ -1288,7 +1288,7 @@ CAMLprim value c_cvode_get_work_space(value vcvode_mem)
     CAMLreturn(r);
 }
 
-CAMLprim value c_cvode_get_num_steps(value vcvode_mem)
+CAMLprim value sunml_cvode_get_num_steps(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -1301,7 +1301,7 @@ CAMLprim value c_cvode_get_num_steps(value vcvode_mem)
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim value c_cvode_get_num_rhs_evals(value vcvode_mem)
+CAMLprim value sunml_cvode_get_num_rhs_evals(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -1314,7 +1314,7 @@ CAMLprim value c_cvode_get_num_rhs_evals(value vcvode_mem)
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim value c_cvode_get_num_lin_solv_setups(value vcvode_mem)
+CAMLprim value sunml_cvode_get_num_lin_solv_setups(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -1327,7 +1327,7 @@ CAMLprim value c_cvode_get_num_lin_solv_setups(value vcvode_mem)
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim value c_cvode_get_num_err_test_fails(value vcvode_mem)
+CAMLprim value sunml_cvode_get_num_err_test_fails(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -1340,7 +1340,7 @@ CAMLprim value c_cvode_get_num_err_test_fails(value vcvode_mem)
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim value c_cvode_get_last_order(value vcvode_mem)
+CAMLprim value sunml_cvode_get_last_order(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -1353,7 +1353,7 @@ CAMLprim value c_cvode_get_last_order(value vcvode_mem)
     CAMLreturn(Val_int(v));
 }
 
-CAMLprim value c_cvode_get_current_order(value vcvode_mem)
+CAMLprim value sunml_cvode_get_current_order(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -1366,7 +1366,7 @@ CAMLprim value c_cvode_get_current_order(value vcvode_mem)
     CAMLreturn(Val_int(v));
 }
 
-CAMLprim value c_cvode_get_actual_init_step(value vcvode_mem)
+CAMLprim value sunml_cvode_get_actual_init_step(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -1379,7 +1379,7 @@ CAMLprim value c_cvode_get_actual_init_step(value vcvode_mem)
     CAMLreturn(caml_copy_double(v));
 }
 
-CAMLprim value c_cvode_get_last_step(value vcvode_mem)
+CAMLprim value sunml_cvode_get_last_step(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -1392,7 +1392,7 @@ CAMLprim value c_cvode_get_last_step(value vcvode_mem)
     CAMLreturn(caml_copy_double(v));
 }
 
-CAMLprim value c_cvode_get_current_step(value vcvode_mem)
+CAMLprim value sunml_cvode_get_current_step(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -1405,7 +1405,7 @@ CAMLprim value c_cvode_get_current_step(value vcvode_mem)
     CAMLreturn(caml_copy_double(v));
 }
 
-CAMLprim value c_cvode_get_current_time(value vcvode_mem)
+CAMLprim value sunml_cvode_get_current_time(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -1418,7 +1418,7 @@ CAMLprim value c_cvode_get_current_time(value vcvode_mem)
     CAMLreturn(caml_copy_double(v));
 }
 
-CAMLprim value c_cvode_set_max_ord(value vcvode_mem, value maxord)
+CAMLprim value sunml_cvode_set_max_ord(value vcvode_mem, value maxord)
 {
     CAMLparam2(vcvode_mem, maxord);
 
@@ -1428,7 +1428,7 @@ CAMLprim value c_cvode_set_max_ord(value vcvode_mem, value maxord)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_set_max_num_steps(value vcvode_mem, value mxsteps)
+CAMLprim value sunml_cvode_set_max_num_steps(value vcvode_mem, value mxsteps)
 {
     CAMLparam2(vcvode_mem, mxsteps);
 
@@ -1439,7 +1439,7 @@ CAMLprim value c_cvode_set_max_num_steps(value vcvode_mem, value mxsteps)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_set_max_hnil_warns(value vcvode_mem, value mxhnil)
+CAMLprim value sunml_cvode_set_max_hnil_warns(value vcvode_mem, value mxhnil)
 {
     CAMLparam2(vcvode_mem, mxhnil);
 
@@ -1450,7 +1450,7 @@ CAMLprim value c_cvode_set_max_hnil_warns(value vcvode_mem, value mxhnil)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_set_stab_lim_det(value vcvode_mem, value stldet)
+CAMLprim value sunml_cvode_set_stab_lim_det(value vcvode_mem, value stldet)
 {
     CAMLparam2(vcvode_mem, stldet);
 
@@ -1461,7 +1461,7 @@ CAMLprim value c_cvode_set_stab_lim_det(value vcvode_mem, value stldet)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_set_init_step(value vcvode_mem, value hin)
+CAMLprim value sunml_cvode_set_init_step(value vcvode_mem, value hin)
 {
     CAMLparam2(vcvode_mem, hin);
 
@@ -1472,7 +1472,7 @@ CAMLprim value c_cvode_set_init_step(value vcvode_mem, value hin)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_set_min_step(value vcvode_mem, value hmin)
+CAMLprim value sunml_cvode_set_min_step(value vcvode_mem, value hmin)
 {
     CAMLparam2(vcvode_mem, hmin);
 
@@ -1483,7 +1483,7 @@ CAMLprim value c_cvode_set_min_step(value vcvode_mem, value hmin)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_set_max_step(value vcvode_mem, value hmax)
+CAMLprim value sunml_cvode_set_max_step(value vcvode_mem, value hmax)
 {
     CAMLparam2(vcvode_mem, hmax);
 
@@ -1494,7 +1494,7 @@ CAMLprim value c_cvode_set_max_step(value vcvode_mem, value hmax)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_set_stop_time(value vcvode_mem, value tstop)
+CAMLprim value sunml_cvode_set_stop_time(value vcvode_mem, value tstop)
 {
     CAMLparam2(vcvode_mem, tstop);
 
@@ -1505,7 +1505,7 @@ CAMLprim value c_cvode_set_stop_time(value vcvode_mem, value tstop)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_set_max_err_test_fails(value vcvode_mem, value maxnef)
+CAMLprim value sunml_cvode_set_max_err_test_fails(value vcvode_mem, value maxnef)
 {
     CAMLparam2(vcvode_mem, maxnef);
 
@@ -1516,7 +1516,7 @@ CAMLprim value c_cvode_set_max_err_test_fails(value vcvode_mem, value maxnef)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_set_max_nonlin_iters(value vcvode_mem, value maxcor)
+CAMLprim value sunml_cvode_set_max_nonlin_iters(value vcvode_mem, value maxcor)
 {
     CAMLparam2(vcvode_mem, maxcor);
 
@@ -1527,7 +1527,7 @@ CAMLprim value c_cvode_set_max_nonlin_iters(value vcvode_mem, value maxcor)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_set_max_conv_fails(value vcvode_mem, value maxncf)
+CAMLprim value sunml_cvode_set_max_conv_fails(value vcvode_mem, value maxncf)
 {
     CAMLparam2(vcvode_mem, maxncf);
 
@@ -1538,7 +1538,7 @@ CAMLprim value c_cvode_set_max_conv_fails(value vcvode_mem, value maxncf)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_set_nonlin_conv_coef(value vcvode_mem, value nlscoef)
+CAMLprim value sunml_cvode_set_nonlin_conv_coef(value vcvode_mem, value nlscoef)
 {
     CAMLparam2(vcvode_mem, nlscoef);
 
@@ -1549,7 +1549,7 @@ CAMLprim value c_cvode_set_nonlin_conv_coef(value vcvode_mem, value nlscoef)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_set_no_inactive_root_warn(value vcvode_mem)
+CAMLprim value sunml_cvode_set_no_inactive_root_warn(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -1559,7 +1559,7 @@ CAMLprim value c_cvode_set_no_inactive_root_warn(value vcvode_mem)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_spils_set_gs_type(value vcvode_mem, value vgstype)
+CAMLprim value sunml_cvode_spils_set_gs_type(value vcvode_mem, value vgstype)
 {
     CAMLparam2(vcvode_mem, vgstype);
 #if SUNDIALS_LIB_VERSION < 300
@@ -1573,7 +1573,7 @@ CAMLprim value c_cvode_spils_set_gs_type(value vcvode_mem, value vgstype)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_spils_set_eps_lin(value vcvode_mem, value eplifac)
+CAMLprim value sunml_cvode_spils_set_eps_lin(value vcvode_mem, value eplifac)
 {
     CAMLparam2(vcvode_mem, eplifac);
 
@@ -1583,7 +1583,7 @@ CAMLprim value c_cvode_spils_set_eps_lin(value vcvode_mem, value eplifac)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_spils_set_maxl(value vcvode_mem, value maxl)
+CAMLprim value sunml_cvode_spils_set_maxl(value vcvode_mem, value maxl)
 {
     CAMLparam2(vcvode_mem, maxl);
 #if SUNDIALS_LIB_VERSION < 300
@@ -1597,7 +1597,7 @@ CAMLprim value c_cvode_spils_set_maxl(value vcvode_mem, value maxl)
 
 /* statistic accessor functions */
 
-CAMLprim value c_cvode_get_num_stab_lim_order_reds(value vcvode_mem)
+CAMLprim value sunml_cvode_get_num_stab_lim_order_reds(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -1608,7 +1608,7 @@ CAMLprim value c_cvode_get_num_stab_lim_order_reds(value vcvode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_cvode_get_tol_scale_factor(value vcvode_mem)
+CAMLprim value sunml_cvode_get_tol_scale_factor(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -1619,7 +1619,7 @@ CAMLprim value c_cvode_get_tol_scale_factor(value vcvode_mem)
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value c_cvode_get_num_nonlin_solv_iters(value vcvode_mem)
+CAMLprim value sunml_cvode_get_num_nonlin_solv_iters(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -1630,7 +1630,7 @@ CAMLprim value c_cvode_get_num_nonlin_solv_iters(value vcvode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_cvode_get_num_nonlin_solv_conv_fails(value vcvode_mem)
+CAMLprim value sunml_cvode_get_num_nonlin_solv_conv_fails(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -1641,7 +1641,7 @@ CAMLprim value c_cvode_get_num_nonlin_solv_conv_fails(value vcvode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_cvode_get_nonlin_solv_stats(value vcvode_mem)
+CAMLprim value sunml_cvode_get_nonlin_solv_stats(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
     CAMLlocal1(r);
@@ -1658,7 +1658,7 @@ CAMLprim value c_cvode_get_nonlin_solv_stats(value vcvode_mem)
     CAMLreturn(r);
 }
 
-CAMLprim value c_cvode_get_num_g_evals(value vcvode_mem)
+CAMLprim value sunml_cvode_get_num_g_evals(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -1669,7 +1669,7 @@ CAMLprim value c_cvode_get_num_g_evals(value vcvode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_cvode_dls_get_work_space(value vcvode_mem)
+CAMLprim value sunml_cvode_dls_get_work_space(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
     CAMLlocal1(r);
@@ -1687,7 +1687,7 @@ CAMLprim value c_cvode_dls_get_work_space(value vcvode_mem)
     CAMLreturn(r);
 }
 
-CAMLprim value c_cvode_dls_get_num_jac_evals(value vcvode_mem)
+CAMLprim value sunml_cvode_dls_get_num_jac_evals(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -1698,7 +1698,7 @@ CAMLprim value c_cvode_dls_get_num_jac_evals(value vcvode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_cvode_dls_get_num_rhs_evals(value vcvode_mem)
+CAMLprim value sunml_cvode_dls_get_num_rhs_evals(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -1709,7 +1709,7 @@ CAMLprim value c_cvode_dls_get_num_rhs_evals(value vcvode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_cvode_diag_get_work_space(value vcvode_mem)
+CAMLprim value sunml_cvode_diag_get_work_space(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
     CAMLlocal1(r);
@@ -1728,7 +1728,7 @@ CAMLprim value c_cvode_diag_get_work_space(value vcvode_mem)
     CAMLreturn(r);
 }
 
-CAMLprim value c_cvode_diag_get_num_rhs_evals(value vcvode_mem)
+CAMLprim value sunml_cvode_diag_get_num_rhs_evals(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -1739,7 +1739,7 @@ CAMLprim value c_cvode_diag_get_num_rhs_evals(value vcvode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_cvode_bandprec_get_work_space(value vcvode_mem)
+CAMLprim value sunml_cvode_bandprec_get_work_space(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
     CAMLlocal1(r);
@@ -1758,7 +1758,7 @@ CAMLprim value c_cvode_bandprec_get_work_space(value vcvode_mem)
     CAMLreturn(r);
 }
 
-CAMLprim value c_cvode_bandprec_get_num_rhs_evals(value vcvode_mem)
+CAMLprim value sunml_cvode_bandprec_get_num_rhs_evals(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -1771,7 +1771,7 @@ CAMLprim value c_cvode_bandprec_get_num_rhs_evals(value vcvode_mem)
 
 /* spils functions */
 
-CAMLprim value c_cvode_spils_spgmr (value vcvode_mem, value vmaxl, value vtype)
+CAMLprim value sunml_cvode_spils_spgmr (value vcvode_mem, value vmaxl, value vtype)
 {
     CAMLparam3 (vcvode_mem, vmaxl, vtype);
 #if SUNDIALS_LIB_VERSION < 300
@@ -1788,7 +1788,7 @@ CAMLprim value c_cvode_spils_spgmr (value vcvode_mem, value vmaxl, value vtype)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_spils_spbcgs (value vcvode_mem, value vmaxl, value vtype)
+CAMLprim value sunml_cvode_spils_spbcgs (value vcvode_mem, value vmaxl, value vtype)
 {
     CAMLparam3 (vcvode_mem, vmaxl, vtype);
 #if SUNDIALS_LIB_VERSION < 300
@@ -1805,7 +1805,7 @@ CAMLprim value c_cvode_spils_spbcgs (value vcvode_mem, value vmaxl, value vtype)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_spils_sptfqmr (value vcvode_mem, value vmaxl,
+CAMLprim value sunml_cvode_spils_sptfqmr (value vcvode_mem, value vmaxl,
 				      value vtype)
 {
     CAMLparam3 (vcvode_mem, vmaxl, vtype);
@@ -1823,7 +1823,7 @@ CAMLprim value c_cvode_spils_sptfqmr (value vcvode_mem, value vmaxl,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_cvode_spils_get_num_lin_iters(value vcvode_mem)
+CAMLprim value sunml_cvode_spils_get_num_lin_iters(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -1834,7 +1834,7 @@ CAMLprim value c_cvode_spils_get_num_lin_iters(value vcvode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_cvode_spils_get_num_conv_fails(value vcvode_mem)
+CAMLprim value sunml_cvode_spils_get_num_conv_fails(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -1845,7 +1845,7 @@ CAMLprim value c_cvode_spils_get_num_conv_fails(value vcvode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_cvode_spils_get_work_space(value vcvode_mem)
+CAMLprim value sunml_cvode_spils_get_work_space(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
     CAMLlocal1(r);
@@ -1865,7 +1865,7 @@ CAMLprim value c_cvode_spils_get_work_space(value vcvode_mem)
     CAMLreturn(r);
 }
 
-CAMLprim value c_cvode_spils_get_num_prec_evals(value vcvode_mem)
+CAMLprim value sunml_cvode_spils_get_num_prec_evals(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -1876,7 +1876,7 @@ CAMLprim value c_cvode_spils_get_num_prec_evals(value vcvode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_cvode_spils_get_num_prec_solves(value vcvode_mem)
+CAMLprim value sunml_cvode_spils_get_num_prec_solves(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -1887,7 +1887,7 @@ CAMLprim value c_cvode_spils_get_num_prec_solves(value vcvode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_cvode_spils_get_num_jtsetup_evals(value vcvode_mem)
+CAMLprim value sunml_cvode_spils_get_num_jtsetup_evals(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
     long int r;
@@ -1900,7 +1900,7 @@ CAMLprim value c_cvode_spils_get_num_jtsetup_evals(value vcvode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_cvode_spils_get_num_jtimes_evals(value vcvode_mem)
+CAMLprim value sunml_cvode_spils_get_num_jtimes_evals(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
@@ -1911,7 +1911,7 @@ CAMLprim value c_cvode_spils_get_num_jtimes_evals(value vcvode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value c_cvode_spils_get_num_rhs_evals (value vcvode_mem)
+CAMLprim value sunml_cvode_spils_get_num_rhs_evals (value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 

@@ -21,7 +21,7 @@ type data =
 type t = data * Obj.t
 
 external wrap : data -> t
-  = "c_sundials_realarray2_wrap"
+  = "sunml_sundials_realarray2_wrap"
 
 let unwrap = fst
 
