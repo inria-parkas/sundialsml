@@ -234,6 +234,7 @@ define ADD_EXECUTE_RULES
     ifeq ($3,)
     $1.sundials.out: $1.sundials
 	$(TEST_WRAPPER) $(2:$$<=./$$<) > $$@
+    else ifeq ($3,custom-sundials-rule)
     else
     $1.sundials.out: $3.sundials.out
 	cp $$< $$@
