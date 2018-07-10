@@ -373,7 +373,7 @@ module Iterative : sig (* {{{ *)
     (** Functions that set up any problem data in preparation for calls to
       [psolvefn].
 
-      If a problem occurs the function raises {!PSetupFailure}. *)
+      If a problem occurs the function raises {!PSetFailure}. *)
     type psetupfn = unit -> unit
 
     (** A function [psolvefn r z tol lr] that solves the preconditioner
