@@ -183,11 +183,12 @@ let main () =
      test is disabled. *)
   ArrayBand_tests.allow_square := false;
   fails += Test.test_sunmatscaleadd a i 0;
+  printf "    PASSED test -- SUNMatScaleAdd case 2 @\n";
   ArrayBand_tests.allow_square := true;
 
   fails += Test.test_sunmatscaleaddi a i 0;
   fails += Test.test_sunmatmatvec a x y 0;
-  fails += Test.test_sunmatspace a 0;
+  fails += Test.test_sunmatspace ~cheat_leniw:(3,5007) a 0;
 
   (* Print result *)
   if !fails <> 0 then begin

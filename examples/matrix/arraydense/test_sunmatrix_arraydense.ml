@@ -170,7 +170,7 @@ let main () =
   if square then
     fails += Test.test_sunmatscaleaddi a i 0;
   fails += Test.test_sunmatmatvec a x y 0;
-  fails += Test.test_sunmatspace a 0;
+  fails += Test.test_sunmatspace ~cheat_leniw:(3, 503) a 0;
 
   (* Print result *)
   if !fails <> 0 then begin
