@@ -469,7 +469,8 @@ else
 	2.6.1) sundials=261 ;;
 	2.6.2) sundials=262 ;;
 	2.7.*) sundials=270 ;;
-	3.*)   sundials=300 ;;
+	3.0.*) sundials=300 ;;
+	3.*)   sundials=301 ;;
 	*) ;;
     esac
 
@@ -1411,3 +1412,4 @@ fi
 
 ${debug_configure} && (echo "#----${logfile}:"; cat ${logfile})
 
+exit 0
