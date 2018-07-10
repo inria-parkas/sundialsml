@@ -490,7 +490,7 @@ Printf.printf "Sum of abs. = %f\n" (Nvector_parallel.Ops.n_vl1norm pv);;
 
 {ol
     {- The message
-       {v Fatal error: cannot load shared library dllmlsundials v}
+       {v Fatal error: cannot load required shared library dllmlsundials v}
        can usually be fixed by updating [LD_LIBRARY_PATH], for example,
        {v export LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH} v}
        Otherwise you may have compiled Sundials without
