@@ -2303,6 +2303,9 @@ static int csmat_custom_space(SUNMatrix A, long int *lenrw, long int *leniw)
 	CAMLreturnT(int, 1);
     }
 
+    *lenrw = Long_val(Field(r, 0));
+    *leniw = Long_val(Field(r, 1));
+
     CAMLreturnT(int, 0);
 }
 #endif
