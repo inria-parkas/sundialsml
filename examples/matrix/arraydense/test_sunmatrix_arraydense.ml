@@ -164,8 +164,8 @@ let main () =
   (* SUNMatrix Tests *)
   fails += Test.test_sunmatgetid a Matrix.Custom 0;
   fails += Test.test_sunmatclone a 0;
-  fails += Test.test_sunmatzero a 0;
   fails += Test.test_sunmatcopy a 0;
+  fails += Test.test_sunmatzero a 0;
   fails += Test.test_sunmatscaleadd a i 0;
   if square then
     fails += Test.test_sunmatscaleaddi a i 0;
