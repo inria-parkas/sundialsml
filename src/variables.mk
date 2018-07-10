@@ -190,6 +190,13 @@ INSTALL_CMI=$(CMI_MAIN) $(CMI_SENS)			\
 	    $(if $(PTHREADS_ENABLED),$(CMI_PTHREADS))	\
 	    $(if $(OPENMP_ENABLED),$(CMI_OPENMP))
 
+INSTALL_CMX=$(MLOBJ_MAIN:.cmo=.cmx)				\
+	    $(MLOBJ_SENS:.cmo=.cmx) $(MLOBJ_NO_SENS:.cmo=.cmx)	\
+	    $(MLOBJ_MPI:.cmo=.cmx) $(MLOBJ_OPENMP:.cmo=.cmx)	\
+	    $(MLOBJ_PTHREADS:.cmo=.cmx)
+
+INSTALL_MLI=$(CMI_MAIN:.cmi=.mli) $(CMI_SENS:.cmi=.mli)
+
 INSTALL_CMA_FINDLIB = $(if $(TOP_ENABLED),sundials_top_findlib.cma)
 
 STUBLIBS=$(foreach file,$(CMA_OF_CMO_CMX_COBJ:.cma=$(XS)), dllml$(file))
@@ -198,6 +205,8 @@ STUBLIBS=$(foreach file,$(CMA_OF_CMO_CMX_COBJ:.cma=$(XS)), dllml$(file))
 INSTALL_FILES=								\
     META								\
     $(INSTALL_CMI)							\
+    $(INSTALL_MLI)							\
+    $(INSTALL_CMX)							\
     $(INSTALL_CMA)							\
     $(INSTALL_CMXA)							\
     $(INSTALL_CMXA:.cmxa=$(XA))						\
