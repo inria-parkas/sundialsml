@@ -234,8 +234,10 @@ The dependencies of Sundials/ML are
   {{:https://forge.ocamlcore.org/projects/ocamlmpi/}OCamlMPI} {b 1.02}.
 
 Normally, to install Sundials/ML, you need only type
-[opam install sundialsml], otherwise the following sections provide more
-detailed information.
+[opam install sundialsml].
+
+The following sections provide more detailed information on building and
+installing Sundials and Sundials/ML.
 
 {3:opam Installing Sundials/ML with OPAM}
 
@@ -252,7 +254,7 @@ In this case, Sundials/ML will still function correctly but with less features.
 }
 
 If OPAM fails to install the required Sundials package automatically, then
-you can try using your system's package manager directly, for example:
+try using your system's package manager directly, for example:
 {ul
     {- Debian/Ubuntu (version 2.7.0 without parallelism):
 	    [apt-get install libsundials-serial-dev]}
@@ -269,7 +271,7 @@ After installing Sundials, retry [opam install sundialsml].
 {3:sundials Manually Building and Installing Sundials}
 
 First
-{{:http://computation.llnl.gov/casc/sundials/download/download.php}download}
+{{:https://computation.llnl.gov/projects/sundials/sundials-software}download}
 the Sundials source code.
 It must be compiled with 64-bit floats (the default: {i
 --with-precision=double}) and the C compiler must provide 32-bit
@@ -303,10 +305,16 @@ For {b Debian}-based systems, we found the following worked:
 -DSUPERLUMT_LIBRARY_DIR=<full-path-to>/SuperLU_MT_3.0/lib \
 -DSUPERLUMT_INCLUDE_DIR=<full-path-to>/SuperLU_MT_3.0/SRC \
 -DSUPERLUMT_LIBRARIES=-lblas v}}
-    {- Configure Sundials/ML with
-	{v ./configure SUPERLUMT_LIBRARY_DIR=<full-path-to>/SuperLU_MT_3.0/lib v}
+    {- Build and install Sundials by running [make install].}
+    {- Change to the Sundials/ML source directory and run
+	{v ./configure v}
+	Adding, if necessary,
+	{v SUPERLUMT_INCLUDE_DIR=<full-path-to>/SuperLU_MT_3.0/SRC \
+SUPERLUMT_LIBRARY_DIR=<full-path-to>/SuperLU_MT_3.0/lib \
+KLU_INCLUDE_DIR=/usr/include/suitesparse v}
        Note that [SUPERLUMT_LIBRARY_DIR] must be registered with [ld]:
 	{v export LD_LIBRARY_PATH=<full-path-to>/SuperLU_MT_3.0/lib:$LD_LIBRARY_PATH v}}
+    {- Run [make] to build the library and [make install] or [make install-findlib] to install it.}
 }
 
 For {b macOS}, we found the following worked:
@@ -350,7 +358,7 @@ are only enabled if Sundials was built with them and OCamlMPI is available.
 
 Building Sundials/ML from source is a three step process:
 {ol
-    {- {{:http://computation.llnl.gov/casc/sundials/download/download.php}Download}
+    {- {{:https://computation.llnl.gov/projects/sundials/sundials-software}Download}
         and manually install Sundials,
         or use a package manager:
 	{ul
