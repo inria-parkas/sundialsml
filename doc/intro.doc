@@ -383,6 +383,11 @@ versions: they should be identical.
 The library's performance can be analyzed via [make perf.opt.log] which
 produces the graph explained {{:#performance}below}.
 
+The OPAM “pinning” feature is supported: perform step 1 above and then, from
+the Sundials/ML source directory, run {v opam pin add . v}
+Environment variables ([SUPERLUMT_LIBRARY_DIR], etc.) can be set to fine-tune
+the build process.
+
 {2:running Running programs}
 
 {3:compilation Compiling and linking}
