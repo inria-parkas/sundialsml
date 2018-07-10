@@ -28,8 +28,9 @@ module Matrix = Sundials.Matrix
 
 let printf = Format.printf
 let (+=) r x = r := !r + x
-let rand_max = 1 lsl 30 - 1
-let rand () = (float_of_int (Random.int rand_max) /. float_of_int rand_max)
+
+let rand_float () =
+  (float_of_int (Test_matrix.rand ()) /. float_of_int (Test_matrix.rand_max))
 
 module Sparse_tests (S : sig type sformat end) =
 struct
@@ -162,13 +163,12 @@ and main_with_type : type s. int -> int -> s Matrix.Sparse.sformat -> unit
   let module Test = Test_matrix.Test (SparseTests) (Nvector_serial.Ops) in
 
   let fails = ref 0 in
-  Random.self_init ();
 
   let print_timing = int_of_string Sys.argv.(4) in
   let _ = Test.set_timing (print_timing <> 0) in
 
   let square = (matrows = matcols) in
-  printf "@\nSparse matrix test: size %d by %d, type = %d@\n@\n@."
+  printf "@\nSparse matrix test: size %d by %d, type = %d@\n@."
     matrows matcols (int_of_mattype mattype);
 
   (* check creating sparse matrix from dense matrix *)
@@ -353,9 +353,9 @@ and main_with_type : type s. int -> int -> s Matrix.Sparse.sformat -> unit
   let cb = Matrix.Dense.make matrows matcols 0.0 in
   let b = Matrix.wrap_dense cb in
   for k = 0 to 3*matrows - 1 do
-    let i = Random.int matrows in
-    let j = Random.int matcols in
-    Matrix.Dense.set cb i j (rand ())
+    let i = Test_matrix.rand () mod matrows in
+    let j = Test_matrix.rand () mod matcols in
+    Matrix.Dense.set cb i j (rand_float ())
   done;
   let a = Matrix.wrap_sparse (Matrix.Sparse.from_dense mattype 0.0 cb) in
  
@@ -364,7 +364,7 @@ and main_with_type : type s. int -> int -> s Matrix.Sparse.sformat -> unit
   and y = Nvector_serial.make matrows 0.0 in
   let xdata = Nvector.unwrap x in
   for i = 0 to matcols - 1 do
-    xdata.{i} <- rand ()
+    xdata.{i} <- rand_float ()
   done;
 
   let () = try Matrix.matvec b x y

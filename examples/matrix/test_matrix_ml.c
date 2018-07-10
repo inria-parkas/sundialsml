@@ -18,6 +18,8 @@
  * -----------------------------------------------------------------
  */
 
+#include <stdlib.h>
+
 #if defined( SUNDIALS_HAVE_POSIX_TIMERS) && defined(_POSIX_TIMERS)
 #include <time.h>
 #include <unistd.h>
@@ -77,5 +79,17 @@ CAMLprim value stdc_version ()
 #define __STDC_VERSION__ 0
 #endif
     CAMLreturn (Val_int (__STDC_VERSION__));
+}
+
+CAMLprim value ml_rand ()
+{
+    CAMLparam0 ();
+    CAMLreturn (Val_int(rand()));
+}
+
+CAMLprim value ml_rand_max ()
+{
+    CAMLparam0 ();
+    CAMLreturn (Val_int(RAND_MAX));
 }
 

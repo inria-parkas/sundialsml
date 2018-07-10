@@ -2,7 +2,7 @@
 # wrapper around examples.mk that adds build rules for
 # test_matrix.ml.
 
-EXTRA_DEPS =../test_matrix_ml.o ../test_matrix.cmo
+EXTRA_DEPS = ../test_matrix_ml.o ../test_matrix.cmo
 
 FILES_TO_CLEAN=../test_matrix_ml.o		\
 	       ../test_matrix.o			\
