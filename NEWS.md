@@ -1,16 +1,23 @@
-Sundials/ML 3.1.0p0 (TBA)
+Sundials/ML 3.1.1p0 (July 2018)
 ------------------------------------
-Sundials/ML v3.1.0p0 adds support for v3.1.x of the Sundials Suite of
+Sundials/ML v3.1.1p0 adds support for v3.1.x of the Sundials Suite of
 numerical solvers.
 
-OCaml 4.02.3 or greater is now required, and optionally OCamlMPI 1.02.
+Notably this release adds support for the new generic matrix and linear 
+solver interfaces. The OCaml interface changes but the library is backward 
+compatible with Sundials 2.7.0.
+
+OCaml 4.02.3 or greater is now required and optionally OCamlMPI 1.03.
 
 Notes:
-* Potential incompatibility: changes to some label names:
-  comm_fn -> comm
-  iter_type -> iter
-* The ARKODE mass-solver interface is now untangled from the Jacobian 
-  interface.
+* New Sundials.Matrix and Sundials.LinearSolver modules.
+* Better treatment of integer type used for matrix indexing.
+* Refactor Dls and Sls modules into Sundials.Matrix.
+* Add confidence intervals to performance graph.
+* Miscellaneous improvements to configure script.
+* Potential incompatibility: changes to some label names: comm_fn -> comm;
+  iter_type -> iter.
+* Untangle the ARKODE mass-solver interface from the Jacobian interface.
 
 Sundials/ML 2.7.0p0 (December 2016)
 ------------------------------------
