@@ -1005,7 +1005,8 @@ module ArrayBand = struct (* {{{ *)
 
   let space (a, _) =
     let m, n = RealArray2.size a in
-    (m * n, 3)
+    (m * n, 5)
+    (* 3 integer variables + 2 integer dimensions *)
 
   let ops = {
     m_clone      = clone;
