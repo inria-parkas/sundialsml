@@ -185,38 +185,14 @@ struct cnvec {
 #define NVEC_VAL(v) (NVEC_CVAL(Field(v, 1)))
 
 // Internal functions
-N_Vector alloc_cnvec(size_t content_size, value backlink);
-void clone_cnvec_ops(N_Vector dst, N_Vector src);
-CAMLprim value alloc_caml_nvec(N_Vector nv, void (*finalizer)(value));
-void free_cnvec(N_Vector nv);
-CAMLprim void finalize_caml_nvec(value vnv);
+N_Vector sunml_alloc_cnvec(size_t content_size, value backlink);
+void sunml_clone_cnvec_ops(N_Vector dst, N_Vector src);
+CAMLprim value sunml_alloc_caml_nvec(N_Vector nv, void (*finalizer)(value));
+void sunml_free_cnvec(N_Vector nv);
+CAMLprim void sunml_finalize_caml_nvec(value vnv);
 
 // Creation functions
 value ml_nvec_wrap_serial(value payload, value checkfn);
 value ml_nvec_wrap_custom(value mlops, value payload, value checkfn);
-
-// Custom operations
-N_Vector callml_vclone(N_Vector w);
-void callml_vdestroy(N_Vector v);
-void callml_vspace(N_Vector v, sundials_ml_index *lrw, sundials_ml_index *liw);
-void callml_vlinearsum(realtype a, N_Vector x, realtype b, N_Vector y, N_Vector z);
-void callml_vconst(realtype c, N_Vector z);
-void callml_vprod(N_Vector x, N_Vector y, N_Vector z);
-void callml_vdiv(N_Vector x, N_Vector y, N_Vector z);
-void callml_vscale(realtype c, N_Vector x, N_Vector z);
-void callml_vabs(N_Vector x, N_Vector z);
-void callml_vinv(N_Vector x, N_Vector z);
-void callml_vaddconst(N_Vector x, realtype b, N_Vector z);
-realtype callml_vdotprod(N_Vector x, N_Vector y);
-realtype callml_vmaxnorm(N_Vector x);
-realtype callml_vwrmsnorm(N_Vector x, N_Vector w);
-realtype callml_vwrmsnormmask(N_Vector x, N_Vector w, N_Vector id);
-realtype callml_vmin(N_Vector x);
-realtype callml_vwl2norm(N_Vector x, N_Vector w);
-realtype callml_vl1norm(N_Vector x);
-void callml_vcompare(realtype c, N_Vector x, N_Vector z);
-booleantype callml_vinvtest(N_Vector x, N_Vector z);
-booleantype callml_vconstrmask(N_Vector c, N_Vector x, N_Vector m);
-realtype callml_vminquotient(N_Vector num, N_Vector denom);
 
 #endif

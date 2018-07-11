@@ -58,7 +58,7 @@ CAMLprim value sunml_kinsol_init_module (value cbs, value exns)
     CAMLreturn (Val_unit);
 }
 
-int kinsol_translate_exception(value session, value r,
+int sunml_kinsol_translate_exception(value session, value r,
 			       recoverability recoverable)
 {
     CAMLparam2(session, r);
@@ -105,7 +105,7 @@ static void errh(
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback_exn (Field(session, RECORD_KINSOL_SESSION_ERRH), a);
     if (Is_exception_result (r))
-	sundials_ml_warn_discarded_exn (Extract_exception (r),
+	sunml_warn_discarded_exn (Extract_exception (r),
 					"user-defined error handler");
 
     CAMLreturn0;
@@ -157,7 +157,7 @@ static void infoh(
     value r = caml_callback_exn (Field (session, RECORD_KINSOL_SESSION_INFOH),
 				 a);
     if (Is_exception_result (r))
-	sundials_ml_warn_discarded_exn (Extract_exception (r),
+	sunml_warn_discarded_exn (Extract_exception (r),
 					"user-defined info handler");
 
     CAMLreturn0;
@@ -219,7 +219,7 @@ static value make_prec_solve_arg(N_Vector uscale, N_Vector fscale)
     CAMLreturn(r);
 }
 
-value kinsol_make_jac_arg(N_Vector u, N_Vector fu, value tmp)
+value sunml_kinsol_make_jac_arg(N_Vector u, N_Vector fu, value tmp)
 {
     CAMLparam1(tmp);
     CAMLlocal1(r);
@@ -232,7 +232,7 @@ value kinsol_make_jac_arg(N_Vector u, N_Vector fu, value tmp)
     CAMLreturn(r);
 }
 
-value kinsol_make_double_tmp(N_Vector tmp1, N_Vector tmp2)
+value sunml_kinsol_make_double_tmp(N_Vector tmp1, N_Vector tmp2)
 {
     CAMLparam0();
     CAMLlocal1(r);
@@ -260,7 +260,7 @@ static int jacfn(
     cb = KINSOL_LS_CALLBACKS_FROM_ML(session);
     cb = Field (cb, 0);
 
-    args[0] = kinsol_make_jac_arg(u, fu, kinsol_make_double_tmp(tmp1, tmp2));
+    args[0] = sunml_kinsol_make_jac_arg(u, fu, sunml_kinsol_make_double_tmp(tmp1, tmp2));
     args[1] = MAT_BACKLINK(Jac);
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -294,7 +294,7 @@ static int jacfn(
 	Store_field(cb, 1, dmat);
     }
 
-    args[0] = kinsol_make_jac_arg(u, fu, kinsol_make_double_tmp(tmp1, tmp2));
+    args[0] = sunml_kinsol_make_jac_arg(u, fu, sunml_kinsol_make_double_tmp(tmp1, tmp2));
     args[1] = Some_val(dmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -328,7 +328,7 @@ static int bandjacfn(
 	Store_field(cb, 1, bmat);
     }
 
-    args[0] = kinsol_make_jac_arg(u, fu, kinsol_make_double_tmp(tmp1, tmp2));
+    args[0] = sunml_kinsol_make_jac_arg(u, fu, sunml_kinsol_make_double_tmp(tmp1, tmp2));
     args[1] = Some_val(bmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -355,7 +355,7 @@ static int precsetupfn(
     CAMLlocal2(session, cb);
     CAMLlocalN(args, 2);
 
-    args[0] = kinsol_make_jac_arg(uu, fu, Val_unit);
+    args[0] = sunml_kinsol_make_jac_arg(uu, fu, Val_unit);
     args[1] = make_prec_solve_arg(uscale, fscale);
 
     WEAK_DEREF (session, *(value*)user_data);
@@ -387,7 +387,7 @@ static int precsolvefn(
     CAMLlocal2(session, cb);
     CAMLlocalN(args, 3);
 
-    args[0] = kinsol_make_jac_arg(uu, fu, Val_unit);
+    args[0] = sunml_kinsol_make_jac_arg(uu, fu, Val_unit);
     args[1] = make_prec_solve_arg(uscale, fscale);
     args[2] = NVEC_BACKLINK(vv);
 
@@ -798,7 +798,7 @@ CAMLprim value sunml_kinsol_init(value weakref, value vtemp,
 	CHECK_FLAG("KINInit", flag);
     }
 
-    backref = c_sundials_malloc_value(weakref);
+    backref = sunml_sundials_malloc_value(weakref);
     if (backref == NULL) {
 	KINFree (&kin_mem);
 	caml_raise_out_of_memory();
@@ -1001,7 +1001,7 @@ CAMLprim value sunml_kinsol_session_finalize(value vdata)
 	void *kin_mem = KINSOL_MEM_FROM_ML(vdata);
 	value *backref = KINSOL_BACKREF_FROM_ML(vdata);
 	KINFree(&kin_mem);
-	c_sundials_free_value(backref);
+	sunml_sundials_free_value(backref);
     }
 
     return Val_unit;
@@ -1312,7 +1312,7 @@ CAMLprim value sunml_kinsol_set_eta_form(value vkin_mem, value vetachoice)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_set_eta_const_value(value vkin_mem, value veta)
+CAMLprim value sunml_kinsol_set_eta_const_value(value vkin_mem, value veta)
 {
     CAMLparam2(vkin_mem, veta);
 
@@ -1323,7 +1323,7 @@ CAMLprim value c_kinsol_set_eta_const_value(value vkin_mem, value veta)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value c_kinsol_set_eta_params(value vkin_mem, value vegamma, value vealpha)
+CAMLprim value sunml_kinsol_set_eta_params(value vkin_mem, value vegamma, value vealpha)
 {
     CAMLparam3(vkin_mem, vegamma, vealpha);
 

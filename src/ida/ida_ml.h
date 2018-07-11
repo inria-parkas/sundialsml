@@ -24,12 +24,12 @@ void sunml_ida_check_flag(const char *call, int flag);
 void sunml_ida_check_dls_flag(const char *call, int flag);
 void sunml_ida_check_spils_flag(const char *call, int flag);
 
-void ida_ml_set_linear_solver(void *ida_mem, value ls, int n);
+void sunml_ida_ml_set_linear_solver(void *ida_mem, value ls, int n);
 
-value ida_make_jac_arg(realtype t, realtype coef, N_Vector y, N_Vector yp,
+value sunml_ida_make_jac_arg(realtype t, realtype coef, N_Vector y, N_Vector yp,
 		       N_Vector res, value tmp);
-value ida_make_triple_tmp(N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
-value ida_make_double_tmp(N_Vector tmp1, N_Vector tmp2);
+value sunml_ida_make_triple_tmp(N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
+value sunml_ida_make_double_tmp(N_Vector tmp1, N_Vector tmp2);
 
 #define CHECK_FLAG(call, flag) if (flag != IDA_SUCCESS) \
 				 sunml_ida_check_flag(call, flag)
@@ -43,7 +43,7 @@ typedef enum {
     RECOVERABLE = 1
 } recoverability;
 
-int ida_translate_exception (value session, value exn_result,
+int sunml_ida_translate_exception (value session, value exn_result,
 			     recoverability recoverable);
 
 /* Check return value of a callback.  The common (no-error) case is
@@ -54,7 +54,7 @@ int ida_translate_exception (value session, value exn_result,
  *  -1 otherwise, and records the exception in result in the session */
 #define CHECK_EXCEPTION(session, result, recoverable)		\
     (Is_exception_result (result)				\
-     ? ida_translate_exception (session, result, recoverable)	\
+     ? sunml_ida_translate_exception (session, result, recoverable)	\
      : 0)
 
 /* Indices into the Ida_*.session type.  This enum must be in the same order as

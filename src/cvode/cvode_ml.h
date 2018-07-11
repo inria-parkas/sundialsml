@@ -141,8 +141,8 @@ void sunml_cvode_check_flag(const char *call, int flag);
 void sunml_cvode_check_dls_flag(const char *call, int flag);
 void sunml_cvode_check_spils_flag(const char *call, int flag);
 
-value cvode_make_jac_arg(realtype t, N_Vector y, N_Vector fy, value tmp);
-value cvode_make_triple_tmp(N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
+value sunml_cvode_make_jac_arg(realtype t, N_Vector y, N_Vector fy, value tmp);
+value sunml_cvode_make_triple_tmp(N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
 
 #define CHECK_FLAG(call, flag) if (flag != CV_SUCCESS) \
 				 sunml_cvode_check_flag(call, flag)
@@ -156,7 +156,7 @@ typedef enum {
     RECOVERABLE = 1
 } recoverability;
 
-int cvode_translate_exception (value session, value exn_result,
+int sunml_cvode_translate_exception (value session, value exn_result,
 			       recoverability recoverable);
 
 /* Check return value of a callback.  The common (no-error) case is
@@ -167,7 +167,7 @@ int cvode_translate_exception (value session, value exn_result,
  *  -1 otherwise, and records the exception in result in the session */
 #define CHECK_EXCEPTION(session, result, recoverable)			\
     (Is_exception_result (result)					\
-     ? cvode_translate_exception (session,				\
+     ? sunml_cvode_translate_exception (session,				\
 				  result = Extract_exception (result),	\
 				  recoverable)				\
      : 0)

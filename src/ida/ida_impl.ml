@@ -25,7 +25,7 @@ open Sundials
    bug.  Rather than raise an exception (which may or may not get
    propagated properly depending on the context), we immediately abort
    the program. *)
-external crash : string -> unit = "sundials_crash"
+external crash : string -> unit = "sunml_crash"
 
 type 'a double = 'a * 'a
 type 'a triple = 'a * 'a * 'a

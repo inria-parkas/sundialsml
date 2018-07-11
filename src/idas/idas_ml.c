@@ -77,7 +77,7 @@ CAMLprim value sunml_idas_alloc_nvector_array(value vn)
 // after we are finished using them (so as not to block the GC), but we
 // instead make the assumption that these elements come from 'within'
 // Sundials and thus that they would anyway not be GC-ed.
-void idas_wrap_to_nvector_table(int n, value vy, N_Vector *y)
+void sunml_idas_wrap_to_nvector_table(int n, value vy, N_Vector *y)
 {
     int i;
     for (i = 0; i < n; ++i) {
@@ -105,7 +105,7 @@ static void free_nvector_array(N_Vector *nvarr)
 }
 
 
-void idas_ml_check_flag(const char *call, int flag)
+void sunml_idas_ml_check_flag(const char *call, int flag)
 {
     static char exmsg[MAX_ERRMSG_LEN] = "";
 
@@ -236,7 +236,7 @@ void idas_ml_check_flag(const char *call, int flag)
 
 /* Callbacks */
 
-value idas_make_jac_arg(realtype t, N_Vector y, N_Vector yp,
+value sunml_idas_make_jac_arg(realtype t, N_Vector y, N_Vector yp,
 			N_Vector yb, N_Vector ypb, N_Vector resb,
 			realtype coef, value tmp)
 {
@@ -307,14 +307,14 @@ static int sensresfn(int Ns, realtype t,
 		 NVEC_BACKLINK(resval));
     Store_field (args, RECORD_IDAS_SENSRESFN_ARGS_SENS,
 	         IDAS_SENSARRAY1_FROM_EXT(sensext));
-    idas_wrap_to_nvector_table (Ns, IDAS_SENSARRAY1_FROM_EXT(sensext), yS);
+    sunml_idas_wrap_to_nvector_table (Ns, IDAS_SENSARRAY1_FROM_EXT(sensext), yS);
     Store_field (args, RECORD_IDAS_SENSRESFN_ARGS_SENSP,
 	         IDAS_SENSARRAY2_FROM_EXT(sensext));
-    idas_wrap_to_nvector_table (Ns, IDAS_SENSARRAY2_FROM_EXT(sensext), ypS);
+    sunml_idas_wrap_to_nvector_table (Ns, IDAS_SENSARRAY2_FROM_EXT(sensext), ypS);
     Store_field (args, RECORD_IDAS_SENSRESFN_ARGS_TMP,
-		 ida_make_triple_tmp (tmp1, tmp2, tmp3));
+		 sunml_ida_make_triple_tmp (tmp1, tmp2, tmp3));
 
-    idas_wrap_to_nvector_table (Ns, IDAS_SENSARRAY3_FROM_EXT(sensext), resvalS);
+    sunml_idas_wrap_to_nvector_table (Ns, IDAS_SENSARRAY3_FROM_EXT(sensext), resvalS);
 
     value r = caml_callback2_exn (IDAS_SENSRESFN_FROM_EXT(sensext), args,
 				  IDAS_SENSARRAY3_FROM_EXT(sensext));
@@ -341,16 +341,16 @@ static int quadsensrhsfn(int ns, realtype t, N_Vector yy, N_Vector yp,
 		 NVEC_BACKLINK (yy));
     Store_field (args, RECORD_IDAS_QUADSENSRHSFN_ARGS_YP,
 		 NVEC_BACKLINK (yp));
-    idas_wrap_to_nvector_table (ns, IDAS_SENSARRAY1_FROM_EXT(sensext), yyS);
+    sunml_idas_wrap_to_nvector_table (ns, IDAS_SENSARRAY1_FROM_EXT(sensext), yyS);
     Store_field (args, RECORD_IDAS_QUADSENSRHSFN_ARGS_SENS,
 		 IDAS_SENSARRAY1_FROM_EXT(sensext));
-    idas_wrap_to_nvector_table (ns, IDAS_SENSARRAY2_FROM_EXT(sensext), ypS);
+    sunml_idas_wrap_to_nvector_table (ns, IDAS_SENSARRAY2_FROM_EXT(sensext), ypS);
     Store_field (args, RECORD_IDAS_QUADSENSRHSFN_ARGS_SENSP,
 		 IDAS_SENSARRAY2_FROM_EXT(sensext));
     Store_field (args, RECORD_IDAS_QUADSENSRHSFN_ARGS_TMP,
-		 ida_make_triple_tmp (tmp1, tmp2, tmp3));
+		 sunml_ida_make_triple_tmp (tmp1, tmp2, tmp3));
 
-    idas_wrap_to_nvector_table (ns,
+    sunml_idas_wrap_to_nvector_table (ns,
 	    IDAS_SENSARRAY3_FROM_EXT(sensext), rhsvalQS);
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -405,8 +405,8 @@ static int bresfn_sens(realtype t, N_Vector y, N_Vector yp,
     Store_field (args, RECORD_IDAS_ADJ_BRESFN_ARGS_YB, NVEC_BACKLINK (yB));
     Store_field (args, RECORD_IDAS_ADJ_BRESFN_ARGS_YBP, NVEC_BACKLINK (ypB));
 
-    idas_wrap_to_nvector_table (ns, IDAS_BSENSARRAY1_FROM_EXT (bsensext), yS);
-    idas_wrap_to_nvector_table (ns, IDAS_BSENSARRAY2_FROM_EXT (bsensext), ypS);
+    sunml_idas_wrap_to_nvector_table (ns, IDAS_BSENSARRAY1_FROM_EXT (bsensext), yS);
+    sunml_idas_wrap_to_nvector_table (ns, IDAS_BSENSARRAY2_FROM_EXT (bsensext), ypS);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback_exn (IDAS_BRESFN_SENS_FROM_EXT(bsensext), args);
@@ -437,7 +437,7 @@ static int bprecsetupfn(realtype t,
     CAMLparam0();
     CAMLlocal3(session, cb, arg);
 
-    arg = idas_make_jac_arg(t, yy, yp, yB, ypB, resvalB, cjB, Val_unit);
+    arg = sunml_idas_make_jac_arg(t, yy, yp, yB, ypB, resvalB, cjB, Val_unit);
 
     WEAK_DEREF (session, *(value*)user_data);
     cb = IDA_LS_PRECFNS_FROM_ML (session);
@@ -479,11 +479,11 @@ static int bprecsetupfn_sens(realtype t,
     bsensext = IDA_SENSEXT_FROM_ML(session);
     ns = Int_val(Field(bsensext, RECORD_IDAS_BWD_SESSION_NUMSENSITIVITIES));
 
-    args[0] = idas_make_jac_arg(t, yy, yp, yB, ypB, resvalB, cjB, Val_unit);
+    args[0] = sunml_idas_make_jac_arg(t, yy, yp, yB, ypB, resvalB, cjB, Val_unit);
     args[1] = IDAS_BSENSARRAY1_FROM_EXT (bsensext);
     args[2] = IDAS_BSENSARRAY2_FROM_EXT (bsensext);
-    idas_wrap_to_nvector_table (ns, args[1], yyS);
-    idas_wrap_to_nvector_table (ns, args[2], ypS);
+    sunml_idas_wrap_to_nvector_table (ns, args[1], yyS);
+    sunml_idas_wrap_to_nvector_table (ns, args[2], ypS);
 
     cb = IDA_LS_PRECFNS_FROM_ML (session);
     cb = Field (cb, 0);
@@ -518,7 +518,7 @@ static int bprecsolvefn(realtype t,
     CAMLlocalN(args, 4);
     CAMLlocal2(session, cb);
 
-    args[0] = idas_make_jac_arg(t, yy, yp, yB, ypB, resvalB, cjB, Val_unit);
+    args[0] = sunml_idas_make_jac_arg(t, yy, yp, yB, ypB, resvalB, cjB, Val_unit);
     args[1] = NVEC_BACKLINK (rvecB);
     args[2] = NVEC_BACKLINK (zvecB);
     args[3] = caml_copy_double (deltaB);
@@ -562,13 +562,13 @@ static int bprecsolvefn_sens(realtype t,
     WEAK_DEREF (session, *(value*)user_data);
     bsensext = IDA_SENSEXT_FROM_ML(session);
 
-    args[0] = idas_make_jac_arg(t, yy, yp, yB, ypB, resvalB, cjB, Val_unit);
+    args[0] = sunml_idas_make_jac_arg(t, yy, yp, yB, ypB, resvalB, cjB, Val_unit);
 
     ns = Int_val(Field(bsensext, RECORD_IDAS_BWD_SESSION_NUMSENSITIVITIES));
     args[1] = IDAS_BSENSARRAY1_FROM_EXT (bsensext);
     args[2] = IDAS_BSENSARRAY2_FROM_EXT (bsensext);
-    idas_wrap_to_nvector_table (ns, args[1], yyS);
-    idas_wrap_to_nvector_table (ns, args[2], ypS);
+    sunml_idas_wrap_to_nvector_table (ns, args[1], yyS);
+    sunml_idas_wrap_to_nvector_table (ns, args[2], ypS);
 
     args[3] = NVEC_BACKLINK (rvecB);
     args[4] = NVEC_BACKLINK (zvecB);
@@ -598,7 +598,7 @@ static int bjacsetupfn(realtype t,
     CAMLparam0();
     CAMLlocal3(session, cb, arg);
 
-    arg = idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB, Val_unit);
+    arg = sunml_idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB, Val_unit);
 
     WEAK_DEREF (session, *(value*)user_data);
     cb = IDA_LS_CALLBACKS_FROM_ML (session);
@@ -630,13 +630,13 @@ static int bjacsetupfn_sens(realtype t,
     WEAK_DEREF (session, *(value*)user_data);
     bsensext = IDA_SENSEXT_FROM_ML(session);
 
-    args[0] = idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB, Val_unit);
+    args[0] = sunml_idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB, Val_unit);
 
     ns = Int_val(Field(bsensext, RECORD_IDAS_BWD_SESSION_NUMSENSITIVITIES));
     args[1] = IDAS_BSENSARRAY1_FROM_EXT (bsensext);
     args[2] = IDAS_BSENSARRAY2_FROM_EXT (bsensext);
-    idas_wrap_to_nvector_table (ns, args[1], yyS);
-    idas_wrap_to_nvector_table (ns, args[2], ypS);
+    sunml_idas_wrap_to_nvector_table (ns, args[1], yyS);
+    sunml_idas_wrap_to_nvector_table (ns, args[2], ypS);
 
     cb = IDA_LS_CALLBACKS_FROM_ML (session);
     cb = Field (cb, 0);
@@ -666,8 +666,8 @@ static int bjactimesfn(realtype t,
     CAMLlocalN(args, 3);
     CAMLlocal2(session, cb);
 
-    args[0] = idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
-			        ida_make_double_tmp (tmp1B, tmp2B));
+    args[0] = sunml_idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
+			        sunml_ida_make_double_tmp (tmp1B, tmp2B));
     args[1] = NVEC_BACKLINK(vB);
     args[2] = NVEC_BACKLINK(JvB);
 
@@ -706,14 +706,14 @@ static int bjactimesfn_sens(realtype t,
     WEAK_DEREF (session, *(value*)user_data);
     bsensext = IDA_SENSEXT_FROM_ML(session);
 
-    args[0] = idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
-			        ida_make_double_tmp (tmp1B, tmp2B));
+    args[0] = sunml_idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
+			        sunml_ida_make_double_tmp (tmp1B, tmp2B));
 
     ns = Int_val(Field(bsensext, RECORD_IDAS_BWD_SESSION_NUMSENSITIVITIES));
     args[1] = IDAS_BSENSARRAY1_FROM_EXT (bsensext);
     args[2] = IDAS_BSENSARRAY2_FROM_EXT (bsensext);
-    idas_wrap_to_nvector_table (ns, args[1], yyS);
-    idas_wrap_to_nvector_table (ns, args[2], ypS);
+    sunml_idas_wrap_to_nvector_table (ns, args[1], yyS);
+    sunml_idas_wrap_to_nvector_table (ns, args[2], ypS);
 
     args[3] = NVEC_BACKLINK(vB);
     args[4] = NVEC_BACKLINK(JvB);
@@ -752,8 +752,8 @@ static int bjacfn_nosens(realtype t,
     cb = IDA_LS_CALLBACKS_FROM_ML(session);
     cb = Field (cb, 0);
 
-    args[0] = idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
-			        ida_make_triple_tmp (tmp1B, tmp2B, tmp3B));
+    args[0] = sunml_idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
+			        sunml_ida_make_triple_tmp (tmp1B, tmp2B, tmp3B));
     args[1] = MAT_BACKLINK(JacB);
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -788,14 +788,14 @@ static int bjacfn_withsens(realtype t,
     cb = IDA_LS_CALLBACKS_FROM_ML(session);
     cb = Field (cb, 0);
 
-    args[0] = idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
-			        ida_make_triple_tmp (tmp1B, tmp2B, tmp3B));
+    args[0] = sunml_idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
+			        sunml_ida_make_triple_tmp (tmp1B, tmp2B, tmp3B));
 
     ns = Int_val(Field(bsensext, RECORD_IDAS_BWD_SESSION_NUMSENSITIVITIES));
     args[1] = IDAS_BSENSARRAY1_FROM_EXT (bsensext);
     args[2] = IDAS_BSENSARRAY2_FROM_EXT (bsensext);
-    idas_wrap_to_nvector_table (ns, args[1], yS);
-    idas_wrap_to_nvector_table (ns, args[2], ypS);
+    sunml_idas_wrap_to_nvector_table (ns, args[1], yS);
+    sunml_idas_wrap_to_nvector_table (ns, args[2], ypS);
 
     args[3] = MAT_BACKLINK(JacB);
 
@@ -834,8 +834,8 @@ static int bjacfn_nosens(long int NeqB,
 	Store_field(cb, 1, dmat);
     }
 
-    args[0] = idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
-			        ida_make_triple_tmp (tmp1B, tmp2B, tmp3B));
+    args[0] = sunml_idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
+			        sunml_ida_make_triple_tmp (tmp1B, tmp2B, tmp3B));
     args[1] = Some_val(dmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -878,14 +878,14 @@ static int bjacfn_withsens(long int NeqB,
 	Store_field(cb, 1, dmat);
     }
 
-    args[0] = idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
-			        ida_make_triple_tmp (tmp1B, tmp2B, tmp3B));
+    args[0] = sunml_idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
+			        sunml_ida_make_triple_tmp (tmp1B, tmp2B, tmp3B));
 
     ns = Int_val(Field(bsensext, RECORD_IDAS_BWD_SESSION_NUMSENSITIVITIES));
     args[1] = IDAS_BSENSARRAY1_FROM_EXT (bsensext);
     args[2] = IDAS_BSENSARRAY2_FROM_EXT (bsensext);
-    idas_wrap_to_nvector_table (ns, args[1], yS);
-    idas_wrap_to_nvector_table (ns, args[2], ypS);
+    sunml_idas_wrap_to_nvector_table (ns, args[1], yS);
+    sunml_idas_wrap_to_nvector_table (ns, args[2], ypS);
 
     args[3] = Some_val(dmat);
 
@@ -926,8 +926,8 @@ static int bbandjacfn_nosens(long int NeqB,
 	Store_field(cb, 1, bmat);
     }
 
-    args[0] = idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
-			        ida_make_triple_tmp(tmp1B, tmp2B, tmp3B));
+    args[0] = sunml_idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
+			        sunml_ida_make_triple_tmp(tmp1B, tmp2B, tmp3B));
     args[1] = Some_val(bmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -972,14 +972,14 @@ static int bbandjacfn_withsens(long int NeqB,
 	Store_field(cb, 1, bmat);
     }
 
-    args[0] = idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
-			        ida_make_triple_tmp(tmp1B, tmp2B, tmp3B));
+    args[0] = sunml_idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
+			        sunml_ida_make_triple_tmp(tmp1B, tmp2B, tmp3B));
 
     ns = Int_val(Field(bsensext, RECORD_IDAS_BWD_SESSION_NUMSENSITIVITIES));
     args[1] = IDAS_BSENSARRAY1_FROM_EXT (bsensext);
     args[2] = IDAS_BSENSARRAY2_FROM_EXT (bsensext);
-    idas_wrap_to_nvector_table (ns, args[2], yS);
-    idas_wrap_to_nvector_table (ns, args[3], ypS);
+    sunml_idas_wrap_to_nvector_table (ns, args[2], yS);
+    sunml_idas_wrap_to_nvector_table (ns, args[3], ypS);
 
     args[3] = Some_val(bmat);
 
@@ -1037,8 +1037,8 @@ static int bquadrhsfn_sens(realtype t, N_Vector y, N_Vector yp,
     Store_field (args, RECORD_IDAS_ADJ_BQUADRHSFN_ARGS_YBP,
 		 NVEC_BACKLINK (ypB));
 
-    idas_wrap_to_nvector_table (ns, IDAS_BSENSARRAY1_FROM_EXT (sensext), yS);
-    idas_wrap_to_nvector_table (ns, IDAS_BSENSARRAY2_FROM_EXT (sensext), ypS);
+    sunml_idas_wrap_to_nvector_table (ns, IDAS_BSENSARRAY1_FROM_EXT (sensext), yS);
+    sunml_idas_wrap_to_nvector_table (ns, IDAS_BSENSARRAY2_FROM_EXT (sensext), ypS);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback_exn (IDAS_BQUADRHSFN_SENS_FROM_EXT(sensext), args);
@@ -2002,7 +2002,7 @@ CAMLprim value sunml_idas_adj_spils_set_gs_type(value vparent, value vwhich,
     CAMLparam3(vparent, vwhich, vgstype);
 #if SUNDIALS_LIB_VERSION < 300
     int flag = IDASpilsSetGSTypeB(IDA_MEM_FROM_ML(vparent), Int_val(vwhich),
-				  lsolver_gs_type(vgstype));
+				  sunml_lsolver_gs_type(vgstype));
     SCHECK_FLAG("IDASpilsSetGSTypeB", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -2055,7 +2055,7 @@ CAMLprim value sunml_idas_adj_bsession_finalize(value vdata)
     if (IDA_MEM_FROM_ML(vdata) != NULL) {
 	value *backref = IDA_BACKREF_FROM_ML(vdata);
 	// NB: IDAFree() is *not* called: parents free-up backward problems
-	c_sundials_free_value(backref);
+	sunml_sundials_free_value(backref);
     }
     return Val_unit;
 }
@@ -2414,7 +2414,7 @@ CAMLprim value sunml_idas_adj_init_backward(value vparent, value weakref,
     vida_mem = caml_alloc_final(1, NULL, 1, 15);
     IDA_MEM(vida_mem) = IDAGetAdjIDABmem(parent, which);
 
-    value *backref = c_sundials_malloc_value(weakref);
+    value *backref = sunml_sundials_malloc_value(weakref);
     if (backref == NULL) {
 	caml_raise_out_of_memory();
     }

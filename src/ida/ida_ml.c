@@ -83,7 +83,7 @@ CAMLprim value sunml_ida_init_module (value exns)
     CAMLreturn (Val_unit);
 }
 
-int ida_translate_exception(value session, value exn,
+int sunml_ida_translate_exception(value session, value exn,
 			    recoverability recoverable)
 {
     CAMLparam2(session, exn);
@@ -129,7 +129,7 @@ static void errh(
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback_exn (Field(session, RECORD_IDA_SESSION_ERRH), a);
     if (Is_exception_result (r))
-	sundials_ml_warn_discarded_exn (Extract_exception (r),
+	sunml_warn_discarded_exn (Extract_exception (r),
 					"user-defined error handler");
 
     CAMLreturn0;
@@ -176,7 +176,7 @@ static int resfn (realtype t, N_Vector y, N_Vector yp,
     CAMLreturnT (int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
-value ida_make_jac_arg(realtype t, realtype coef, N_Vector y, N_Vector yp,
+value sunml_ida_make_jac_arg(realtype t, realtype coef, N_Vector y, N_Vector yp,
 		       N_Vector res, value tmp)
 {
     CAMLparam1(tmp);
@@ -193,7 +193,7 @@ value ida_make_jac_arg(realtype t, realtype coef, N_Vector y, N_Vector yp,
     CAMLreturn(r);
 }
 
-value ida_make_triple_tmp(N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
+value sunml_ida_make_triple_tmp(N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
 {
     CAMLparam0();
     CAMLlocal1(r);
@@ -205,7 +205,7 @@ value ida_make_triple_tmp(N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
     CAMLreturn(r);
 }
 
-value ida_make_double_tmp(N_Vector tmp1, N_Vector tmp2)
+value sunml_ida_make_double_tmp(N_Vector tmp1, N_Vector tmp2)
 {
     CAMLparam0();
     CAMLlocal1(r);
@@ -238,8 +238,8 @@ static int jacfn (realtype t,
     cb = IDA_LS_CALLBACKS_FROM_ML(session);
     cb = Field (cb, 0);
 
-    args[0] = ida_make_jac_arg (t, coef, y, yp, res,
-				ida_make_triple_tmp (tmp1, tmp2, tmp3));
+    args[0] = sunml_ida_make_jac_arg (t, coef, y, yp, res,
+				sunml_ida_make_triple_tmp (tmp1, tmp2, tmp3));
     args[1] = MAT_BACKLINK(jac);
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -278,8 +278,8 @@ static int jacfn (long int neq,
 	Store_field(cb, 1, dmat);
     }
 
-    args[0] = ida_make_jac_arg (t, coef, y, yp, res,
-				ida_make_triple_tmp (tmp1, tmp2, tmp3));
+    args[0] = sunml_ida_make_jac_arg (t, coef, y, yp, res,
+				sunml_ida_make_triple_tmp (tmp1, tmp2, tmp3));
     args[1] = Some_val(dmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -316,8 +316,8 @@ static int bandjacfn (long int neq,
 	Store_field(cb, 1, bmat);
     }
 
-    args[0] = ida_make_jac_arg (t, coef, y, yp, res,
-				ida_make_triple_tmp (tmp1, tmp2, tmp3));
+    args[0] = sunml_ida_make_jac_arg (t, coef, y, yp, res,
+				sunml_ida_make_triple_tmp (tmp1, tmp2, tmp3));
     args[1] = Some_val(bmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -365,7 +365,7 @@ static int errw(N_Vector y, N_Vector ewt, void *user_data)
     if (Is_exception_result (r)) {
 	r = Extract_exception (r);
 	if (Field (r, 0) != SUNDIALS_EXN_TAG (NonPositiveEwt))
-	    sundials_ml_warn_discarded_exn (r, "user-defined error weight fun");
+	    sunml_warn_discarded_exn (r, "user-defined error weight fun");
 	CAMLreturnT (int, -1);
     }
 
@@ -395,7 +395,7 @@ static int precsetupfn(realtype t,
     cb = Field (cb, RECORD_IDA_SPILS_PRECFNS_PREC_SETUP_FN);
     cb = Field (cb, 0);
 
-    arg = ida_make_jac_arg(t, cj, y, yp, res, Val_unit);
+    arg = sunml_ida_make_jac_arg(t, cj, y, yp, res, Val_unit);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback_exn (cb, arg);
@@ -423,7 +423,7 @@ static int precsolvefn(
     CAMLlocalN(args, 4);
     CAMLlocal2(session, cb);
 
-    args[0] = ida_make_jac_arg(t, cj, y, yp, res, Val_unit);
+    args[0] = sunml_ida_make_jac_arg(t, cj, y, yp, res, Val_unit);
     args[1] = NVEC_BACKLINK (rvec);
     args[2] = NVEC_BACKLINK (z);
     args[3] = caml_copy_double (delta);
@@ -454,8 +454,8 @@ static int jactimesfn(
     CAMLlocalN(args, 3);
     CAMLlocal2(session, cb);
 
-    args[0] = ida_make_jac_arg (t, cj, y, yp, res,
-				ida_make_double_tmp (tmp1, tmp2));
+    args[0] = sunml_ida_make_jac_arg (t, cj, y, yp, res,
+				sunml_ida_make_double_tmp (tmp1, tmp2));
     args[1] = NVEC_BACKLINK (v);
     args[2] = NVEC_BACKLINK (Jv);
 
@@ -481,7 +481,7 @@ static int jacsetupfn(realtype t,
     CAMLparam0();
     CAMLlocal3(session, cb, arg);
 
-    arg = ida_make_jac_arg(t, cj, y, yp, res, Val_unit);
+    arg = sunml_ida_make_jac_arg(t, cj, y, yp, res, Val_unit);
 
     WEAK_DEREF (session, *(value*)user_data);
     cb = IDA_LS_CALLBACKS_FROM_ML(session);
@@ -527,7 +527,7 @@ static int lsetup(IDAMem ida_mem, N_Vector yyp, N_Vector ypp, N_Vector resp,
     Store_field (args, RECORD_IDA_ALTERNATE_LSETUP_ARGS_RES,
 		 NVEC_BACKLINK (resp));
     Store_field (args, RECORD_IDA_ALTERNATE_LSETUP_ARGS_TMP,
-		 ida_make_triple_tmp (tmp1, tmp2, tmp3));
+		 sunml_ida_make_triple_tmp (tmp1, tmp2, tmp3));
 
     cb = IDA_LS_CALLBACKS_FROM_ML (session);
     cb = Field (cb, 0);
@@ -872,7 +872,7 @@ CAMLprim value sunml_ida_init (value weakref, value vt0, value vy, value vyp)
 	CHECK_FLAG ("IDAInit", flag);
     }
 
-    backref = c_sundials_malloc_value(weakref);
+    backref = sunml_sundials_malloc_value(weakref);
     if (backref == NULL) {
 	IDAFree (&ida_mem);
 	caml_failwith ("Out of memory");
@@ -1219,7 +1219,7 @@ CAMLprim value sunml_ida_session_finalize(value vdata)
 	void *ida_mem = IDA_MEM_FROM_ML(vdata);
 	value *backref = IDA_BACKREF_FROM_ML(vdata);
 	IDAFree(&ida_mem);
-	c_sundials_free_value(backref);
+	sunml_sundials_free_value(backref);
     }
 
     return Val_unit;
@@ -1708,7 +1708,7 @@ CAMLprim value sunml_ida_spils_set_gs_type(value vida_mem, value vgstype)
     CAMLparam2(vida_mem, vgstype);
 #if SUNDIALS_LIB_VERSION < 300
     int flag = IDASpilsSetGSType(IDA_MEM_FROM_ML(vida_mem),
-				 lsolver_gs_type(vgstype));
+				 sunml_lsolver_gs_type(vgstype));
     CHECK_SPILS_FLAG("IDASpilsSetGSType", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));

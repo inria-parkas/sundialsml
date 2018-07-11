@@ -59,12 +59,12 @@ static N_Vector clone_parallel(N_Vector w)
     Store_field(v_payload, 1, Field(w_payload, 1));
     Store_field(v_payload, 2, Field(w_payload, 2));
     
-    v = alloc_cnvec(sizeof(struct _N_VectorContent_Parallel), v_payload);
+    v = sunml_alloc_cnvec(sizeof(struct _N_VectorContent_Parallel), v_payload);
     if (v == NULL) CAMLreturnT (N_Vector, NULL);
     content = (N_VectorContent_Parallel) v->content;
 
     /* Create vector operation structure */
-    clone_cnvec_ops(v, w);
+    sunml_clone_cnvec_ops(v, w);
 
     /* Attach lengths and communicator */
     content->local_length  = NV_LOCLENGTH_P(w);
@@ -106,7 +106,7 @@ CAMLprim value sunml_nvec_wrap_parallel(value payload, value checkfn)
 #endif
 
     /* Create vector */
-    nv = alloc_cnvec(sizeof(struct _N_VectorContent_Parallel), payload);
+    nv = sunml_alloc_cnvec(sizeof(struct _N_VectorContent_Parallel), payload);
     if (nv == NULL) caml_raise_out_of_memory();
     ops = (N_Vector_Ops) nv->ops;
     content = (N_VectorContent_Parallel) nv->content;
@@ -114,7 +114,7 @@ CAMLprim value sunml_nvec_wrap_parallel(value payload, value checkfn)
     /* Create vector operation structure */
     ops->nvclone           = clone_parallel;		    /* ours */
     ops->nvcloneempty      = NULL;
-    ops->nvdestroy         = free_cnvec;
+    ops->nvdestroy         = sunml_free_cnvec;
 #if SUNDIALS_LIB_VERSION >= 270
     ops->nvgetvectorid	   = N_VGetVectorID_Parallel;
 #endif
@@ -151,7 +151,7 @@ CAMLprim value sunml_nvec_wrap_parallel(value payload, value checkfn)
 
     vnvec = caml_alloc_tuple(3);
     Store_field(vnvec, 0, payload);
-    Store_field(vnvec, 1, alloc_caml_nvec(nv, finalize_caml_nvec));
+    Store_field(vnvec, 1, sunml_alloc_caml_nvec(nv, sunml_finalize_caml_nvec));
     Store_field(vnvec, 2, checkfn);
 
     CAMLreturn(vnvec);

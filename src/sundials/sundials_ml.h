@@ -27,7 +27,7 @@
 #include <stdio.h>
 #include <assert.h>
 
-void sundials_ml_warn_discarded_exn (value exn, const char *context);
+void sunml_warn_discarded_exn (value exn, const char *context);
 
 /* Sundials and integers
  *
@@ -135,11 +135,11 @@ enum sundials_exn_set_index {
 };
 
 /* Set a field in sundials_ml_exn_table */
-void sundials_ml_register_exns (enum sundials_exn_set_index index, value exns);
+void sunml_register_exns (enum sundials_exn_set_index index, value exns);
 
 #define REGISTER_EXNS(MODULE, exns)					\
     (assert (Wosize_val (exns) == MODULE ## _EXN_SET_SIZE),		\
-     sundials_ml_register_exns (MODULE ## _EXN_SET, exns))
+     sunml_register_exns (MODULE ## _EXN_SET, exns))
 
 #define REGISTERED_EXN_OBJ(MODULE, name)			\
     (Field (Field (sundials_ml_exn_table, MODULE ## _EXN_SET),	\
@@ -192,8 +192,8 @@ enum sundials_exn_index {
 /* Functions for storing OCaml values in the C heap, with registration of a
    global root and construction of a block header. */
 
-value *c_sundials_malloc_value(value);
-void c_sundials_free_value(value *heapref);
+value *sunml_sundials_malloc_value(value);
+void sunml_sundials_free_value(value *heapref);
 
 /* Generate trampolines needed for functions with >= 6 arguments.  */
 #define COMMA ,

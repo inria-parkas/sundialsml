@@ -73,8 +73,8 @@ static int jacfn(
     CAMLlocal3(session, cb, smat);
 
     WEAK_DEREF (session, *(value*)user_data);
-    args[0] = cvode_make_jac_arg (t, y, fy,
-				  cvode_make_triple_tmp (tmp1, tmp2, tmp3));
+    args[0] = sunml_cvode_make_jac_arg (t, y, fy,
+				  sunml_cvode_make_triple_tmp (tmp1, tmp2, tmp3));
 
     cb = CVODE_LS_CALLBACKS_FROM_ML(session);
     cb = Field (cb, 0);

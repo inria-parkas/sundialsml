@@ -42,13 +42,13 @@ static N_Vector clone_openmp(N_Vector w)
     /* Create vector (we need not copy the data) */
     v_payload = caml_ba_alloc(w_ba->flags, w_ba->num_dims, NULL, w_ba->dim);
 
-    v = alloc_cnvec(sizeof(struct _N_VectorContent_OpenMP), v_payload);
+    v = sunml_alloc_cnvec(sizeof(struct _N_VectorContent_OpenMP), v_payload);
     if (v == NULL) CAMLreturnT (N_Vector, NULL);
 
     content = (N_VectorContent_OpenMP) v->content;
 
     /* Create vector operation structure */
-    clone_cnvec_ops(v, w);
+    sunml_clone_cnvec_ops(v, w);
 
     /* Create content */
     content->length      = NV_LENGTH_OMP(w);
@@ -74,7 +74,7 @@ CAMLprim value sunml_nvec_wrap_openmp(value nthreads,
     long int length = (Caml_ba_array_val(payload))->dim[0];
 
     /* Create vector */
-    nv = alloc_cnvec(sizeof(struct _N_VectorContent_OpenMP), payload);
+    nv = sunml_alloc_cnvec(sizeof(struct _N_VectorContent_OpenMP), payload);
     if (nv == NULL) caml_raise_out_of_memory();
     ops = (N_Vector_Ops) nv->ops;
     content = (N_VectorContent_OpenMP) nv->content;
@@ -83,7 +83,7 @@ CAMLprim value sunml_nvec_wrap_openmp(value nthreads,
     ops->nvclone           = clone_openmp;		    /* ours */
     ops->nvcloneempty      = NULL;
     /* This is registered but only ever called for C-allocated clones. */
-    ops->nvdestroy         = free_cnvec;
+    ops->nvdestroy         = sunml_free_cnvec;
 #if SUNDIALS_LIB_VERSION >= 270
     ops->nvgetvectorid	   = N_VGetVectorID_OpenMP;
 #endif
@@ -119,7 +119,7 @@ CAMLprim value sunml_nvec_wrap_openmp(value nthreads,
 
     vnvec = caml_alloc_tuple(3);
     Store_field(vnvec, 0, payload);
-    Store_field(vnvec, 1, alloc_caml_nvec(nv, finalize_caml_nvec));
+    Store_field(vnvec, 1, sunml_alloc_caml_nvec(nv, sunml_finalize_caml_nvec));
     Store_field(vnvec, 2, checkfn);
 
     CAMLreturn(vnvec);

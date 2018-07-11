@@ -60,8 +60,8 @@ static int jacfn_nosens( /* IDASlsSparseJacFnB */
     cb = IDA_LS_CALLBACKS_FROM_ML(session);
     cb = Field (cb, 0);
 
-    args[0] = idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
-			        ida_make_triple_tmp (tmp1B, tmp2B, tmp3B));
+    args[0] = sunml_idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
+			        sunml_ida_make_triple_tmp (tmp1B, tmp2B, tmp3B));
 
     smat = Field(cb, 1);
     if (smat == Val_none) {
@@ -106,14 +106,14 @@ static int jacfn_withsens( /* IDASlsSparseJacFnB */
     cb = IDA_LS_CALLBACKS_FROM_ML(session);
     cb = Field (cb, 0);
 
-    args[0] = idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
-			        ida_make_triple_tmp (tmp1B, tmp2B, tmp3B));
+    args[0] = sunml_idas_make_jac_arg(t, yy, yp, yyB, ypB, resvalB, cjB,
+			        sunml_ida_make_triple_tmp (tmp1B, tmp2B, tmp3B));
 
     int ns = Int_val(Field(bsensext, RECORD_IDAS_BWD_SESSION_NUMSENSITIVITIES));
     args[1] = IDAS_BSENSARRAY1_FROM_EXT(bsensext);
-    idas_wrap_to_nvector_table(ns, args[1], ys);
+    sunml_idas_wrap_to_nvector_table(ns, args[1], ys);
     args[2] = IDAS_BSENSARRAY2_FROM_EXT(bsensext);
-    idas_wrap_to_nvector_table(ns, args[2], yps);
+    sunml_idas_wrap_to_nvector_table(ns, args[2], yps);
 
     smat = Field(cb, 1);
     if (smat == Val_none) {

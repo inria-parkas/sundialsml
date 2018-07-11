@@ -34,7 +34,7 @@ open Sundials
  *     If these types are changed or augmented, the corresponding declarations
  *     in arkode_ml.h (and code in arkode_ml.c) must also be updated.
  *)
-external crash : string -> unit = "sundials_crash"
+external crash : string -> unit = "sunml_crash"
 
 type ('data, 'kind) nvector = ('data, 'kind) Nvector.t
 module LSI = Sundials_LinearSolver_impl

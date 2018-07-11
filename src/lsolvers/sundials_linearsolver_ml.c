@@ -274,7 +274,7 @@ CAMLprim void sunml_lsolver_superlumt_set_ordering(value vcptr, value vordering)
  * Iterative
  */
 
-int lsolver_precond_type(value vptype)
+int sunml_lsolver_precond_type(value vptype)
 {
     switch (Int_val(vptype)) {
     case VARIANT_LSOLVER_PRECONDITIONING_TYPE_PREC_TYPE_NONE:
@@ -293,7 +293,7 @@ int lsolver_precond_type(value vptype)
     return -1;
 }
 
-int lsolver_gs_type(value vgstype)
+int sunml_lsolver_gs_type(value vgstype)
 {
     switch (Int_val(vgstype)) {
     case VARIANT_LSOLVER_GRAMSCHMIDT_TYPE_MODIFIEDGS:
@@ -313,7 +313,7 @@ CAMLprim void sunml_lsolver_set_prec_type(value vcptr, value vsolver,
 
 #if SUNDIALS_LIB_VERSION >= 300
     int old_pretype = PREC_NONE;
-    int pretype = lsolver_precond_type(vpretype);
+    int pretype = sunml_lsolver_precond_type(vpretype);
     SUNLinearSolver lsolv = LSOLVER_VAL(vcptr);
 
     if (Bool_val(vdocheck)) {
@@ -409,11 +409,11 @@ CAMLprim void sunml_lsolver_set_gs_type(value vcptr, value vsolver, value vgst)
 #if SUNDIALS_LIB_VERSION >= 300
     switch (Int_val(vsolver)) {
 	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPFGMR:
-	    SUNSPFGMRSetGSType(LSOLVER_VAL(vcptr), lsolver_gs_type(vgst));
+	    SUNSPFGMRSetGSType(LSOLVER_VAL(vcptr), sunml_lsolver_gs_type(vgst));
 	    break;
 
 	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPGMR:
-	    SUNSPGMRSetGSType(LSOLVER_VAL(vcptr), lsolver_gs_type(vgst));
+	    SUNSPGMRSetGSType(LSOLVER_VAL(vcptr), sunml_lsolver_gs_type(vgst));
 	    break;
 
 	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPBCGS:
@@ -653,12 +653,12 @@ static void lsolver_raise_error(int r, const char *msg)
 }
 */
 
-SUNLinearSolver_Type callml_custom_gettype_direct(SUNLinearSolver ls)
+static SUNLinearSolver_Type callml_custom_gettype_direct(SUNLinearSolver ls)
 {
     return SUNLINEARSOLVER_DIRECT;
 }
 
-SUNLinearSolver_Type callml_custom_gettype_iterative(SUNLinearSolver ls)
+static SUNLinearSolver_Type callml_custom_gettype_iterative(SUNLinearSolver ls)
 {
     return SUNLINEARSOLVER_ITERATIVE;
 }
@@ -682,7 +682,8 @@ CAMLprim value sunml_lsolver_call_atimes(value vcptr, value vv, value vz)
     CAMLreturn(Val_unit);
 }
 
-int callml_custom_setatimes(SUNLinearSolver ls, void* A_data, ATimesFn ATimes)
+static int callml_custom_setatimes(SUNLinearSolver ls, void* A_data,
+				   ATimesFn ATimes)
 {
     CAMLparam0();
     CAMLlocal2(vcptr, r);
@@ -722,7 +723,7 @@ CAMLprim value sunml_lsolver_call_psetup(value vcptr)
 }
 
 CAMLprim value sunml_lsolver_call_psolve(value vcptr, value vr, value vz,
-				      value vtol, value vlr)
+				         value vtol, value vlr)
 {
     CAMLparam5(vcptr, vr, vz, vtol, vlr);
     int r;
@@ -741,8 +742,8 @@ CAMLprim value sunml_lsolver_call_psolve(value vcptr, value vr, value vz,
     CAMLreturn(Val_unit);
 }
 
-int callml_custom_setpreconditioner(SUNLinearSolver ls, void* P_data,
-				    PSetupFn Pset, PSolveFn Psol)
+static int callml_custom_setpreconditioner(SUNLinearSolver ls, void* P_data,
+				           PSetupFn Pset, PSolveFn Psol)
 {
     CAMLparam0();
     CAMLlocal2(vcptr, r);
@@ -761,7 +762,8 @@ int callml_custom_setpreconditioner(SUNLinearSolver ls, void* P_data,
     CAMLreturnT(int, CHECK_EXCEPTION_SUCCESS(r));
 }
 
-int callml_custom_setscalingvectors(SUNLinearSolver ls, N_Vector s1, N_Vector s2)
+static int callml_custom_setscalingvectors(SUNLinearSolver ls,
+					   N_Vector s1, N_Vector s2)
 {
     CAMLparam0();
     CAMLlocal3(r, ss1, ss2);
@@ -775,7 +777,7 @@ int callml_custom_setscalingvectors(SUNLinearSolver ls, N_Vector s1, N_Vector s2
     CAMLreturnT(int, CHECK_EXCEPTION_SUCCESS(r));
 }
 
-int callml_custom_initialize(SUNLinearSolver ls)
+static int callml_custom_initialize(SUNLinearSolver ls)
 {
     CAMLparam0();
     CAMLlocal1(r);
@@ -785,7 +787,7 @@ int callml_custom_initialize(SUNLinearSolver ls)
     CAMLreturnT(int, CHECK_EXCEPTION_SUCCESS(r));
 }
 
-int callml_custom_setup(SUNLinearSolver ls, SUNMatrix A)
+static int callml_custom_setup(SUNLinearSolver ls, SUNMatrix A)
 {
     CAMLparam0();
     CAMLlocal1(r);
@@ -796,8 +798,8 @@ int callml_custom_setup(SUNLinearSolver ls, SUNMatrix A)
     CAMLreturnT(int, CHECK_EXCEPTION_SUCCESS(r));
 }
 
-int callml_custom_solve(SUNLinearSolver ls, SUNMatrix A, N_Vector x,
-                        N_Vector b, realtype tol)
+static int callml_custom_solve(SUNLinearSolver ls, SUNMatrix A, N_Vector x,
+                               N_Vector b, realtype tol)
 {
     CAMLparam0();
     CAMLlocal1(r);
@@ -813,14 +815,14 @@ int callml_custom_solve(SUNLinearSolver ls, SUNMatrix A, N_Vector x,
     CAMLreturnT(int, CHECK_EXCEPTION_SUCCESS(r));
 }
 
-int callml_custom_numiters(SUNLinearSolver ls)
+static int callml_custom_numiters(SUNLinearSolver ls)
 {
     CAMLparam0();
     CAMLlocal1(r);
 
     r = caml_callback_exn(GET_OP(ls, GET_NUM_ITERS), Val_unit);
     if (Is_exception_result (r)) {
-	sundials_ml_warn_discarded_exn (Extract_exception (r),
+	sunml_warn_discarded_exn (Extract_exception (r),
 					"user-defined num iters handler");
 	CAMLreturnT(int, 0);
     }
@@ -828,14 +830,14 @@ int callml_custom_numiters(SUNLinearSolver ls)
     CAMLreturnT(int, Int_val(r));
 }
 
-realtype callml_custom_resnorm(SUNLinearSolver ls)
+static realtype callml_custom_resnorm(SUNLinearSolver ls)
 {
     CAMLparam0();
     CAMLlocal1(r);
 
     r = caml_callback_exn(GET_OP(ls, GET_RES_NORM), Val_unit);
     if (Is_exception_result (r)) {
-	sundials_ml_warn_discarded_exn (Extract_exception (r),
+	sunml_warn_discarded_exn (Extract_exception (r),
 					"user-defined res norm handler");
 	CAMLreturnT(realtype, 0.0);
     }
@@ -843,14 +845,14 @@ realtype callml_custom_resnorm(SUNLinearSolver ls)
     CAMLreturnT(realtype, Double_val(r));
 }
 
-N_Vector callml_custom_resid(SUNLinearSolver ls)
+static N_Vector callml_custom_resid(SUNLinearSolver ls)
 {
     CAMLparam0();
     CAMLlocal1(r);
 
     r = caml_callback_exn(GET_OP(ls, GET_RES_ID), Val_unit);
     if (Is_exception_result (r)) {
-	sundials_ml_warn_discarded_exn (Extract_exception (r),
+	sunml_warn_discarded_exn (Extract_exception (r),
 					"user-defined res id handler");
 	CAMLreturnT(N_Vector, NULL);
     }
@@ -858,7 +860,8 @@ N_Vector callml_custom_resid(SUNLinearSolver ls)
     CAMLreturnT(N_Vector, NVEC_VAL(r));
 }
 
-int callml_custom_space(SUNLinearSolver ls, long int *lenrwLS, long int *leniwLS)
+static int callml_custom_space(SUNLinearSolver ls,
+			       long int *lenrwLS, long int *leniwLS)
 {
     CAMLparam0();
     CAMLlocal1(r);
@@ -877,7 +880,7 @@ int callml_custom_space(SUNLinearSolver ls, long int *lenrwLS, long int *leniwLS
     CAMLreturnT(int, SUNLS_SUCCESS);
 }
 
-int callml_custom_free(SUNLinearSolver ls)
+static int callml_custom_free(SUNLinearSolver ls)
 {
     caml_remove_generational_global_root((value *)&(ls->content));
     if (ls->ops != NULL) free(ls->ops);

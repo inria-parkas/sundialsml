@@ -68,8 +68,8 @@ static int jacfn (realtype t, realtype coef,
     CAMLlocal3(session, cb, smat);
 
     WEAK_DEREF (session, *(value*)user_data);
-    args[0] = ida_make_jac_arg (t, coef, y, yp, res,
-				ida_make_triple_tmp (tmp1, tmp2, tmp3));
+    args[0] = sunml_ida_make_jac_arg (t, coef, y, yp, res,
+				sunml_ida_make_triple_tmp (tmp1, tmp2, tmp3));
 
     cb = IDA_LS_CALLBACKS_FROM_ML(session);
     cb = Field (cb, 0);

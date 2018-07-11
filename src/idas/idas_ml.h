@@ -58,16 +58,16 @@
  *
  */
 
-void idas_ml_check_flag(const char *call, int flag);
+void sunml_idas_ml_check_flag(const char *call, int flag);
 
-void idas_wrap_to_nvector_table(int n, value vy, N_Vector *y);
-value idas_make_jac_arg(realtype t, N_Vector y, N_Vector yp,
+void sunml_idas_wrap_to_nvector_table(int n, value vy, N_Vector *y);
+value sunml_idas_make_jac_arg(realtype t, N_Vector y, N_Vector yp,
                         N_Vector yb, N_Vector ypb, N_Vector resb,
                         realtype coef, value tmp);
 
 // NB: overrides CHECK_FLAG macro in ida_ml.h
 #define SCHECK_FLAG(call, flag) if (flag != IDA_SUCCESS) \
-				  idas_ml_check_flag(call, flag)
+				  sunml_idas_ml_check_flag(call, flag)
 
 enum idas_fwd_session_index {
     RECORD_IDAS_FWD_SESSION_QUADRHSFN = 0,

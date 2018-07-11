@@ -29,7 +29,7 @@
 
 /** Generic nvector functions and macros */
 
-N_Vector alloc_cnvec(size_t content_size, value backlink)
+N_Vector sunml_alloc_cnvec(size_t content_size, value backlink)
 {
     N_Vector nv;
 
@@ -59,7 +59,7 @@ static mlsize_t nvec_rough_size =
     + sizeof(struct _generic_N_Vector_Ops)
     + 4 * sizeof(void *);
 
-CAMLprim value alloc_caml_nvec(N_Vector nv, void (*finalizer)(value))
+CAMLprim value sunml_alloc_caml_nvec(N_Vector nv, void (*finalizer)(value))
 {
     CAMLparam0();
     CAMLlocal1(r);
@@ -70,7 +70,7 @@ CAMLprim value alloc_caml_nvec(N_Vector nv, void (*finalizer)(value))
     CAMLreturn(r);
 }
 
-void free_cnvec(N_Vector nv)
+void sunml_free_cnvec(N_Vector nv)
 {
     caml_remove_generational_global_root(&NVEC_BACKLINK(nv));
     if (nv->content != NULL) free(nv->content);
@@ -78,12 +78,12 @@ void free_cnvec(N_Vector nv)
     free(nv);
 }
 
-void finalize_caml_nvec (value vnv)
+void sunml_finalize_caml_nvec (value vnv)
 {
-    free_cnvec (NVEC_CVAL (vnv));
+    sunml_free_cnvec (NVEC_CVAL (vnv));
 }
 
-void clone_cnvec_ops(N_Vector dst, N_Vector src)
+void sunml_clone_cnvec_ops(N_Vector dst, N_Vector src)
 {
     N_Vector_Ops ops = (N_Vector_Ops) dst->ops;
 
@@ -137,13 +137,13 @@ static N_Vector clone_serial(N_Vector w)
     /* Create vector (we need not copy the data) */
     v_payload = caml_ba_alloc(w_ba->flags, w_ba->num_dims, NULL, w_ba->dim);
 
-    v = alloc_cnvec(sizeof(struct _N_VectorContent_Serial), v_payload);
+    v = sunml_alloc_cnvec(sizeof(struct _N_VectorContent_Serial), v_payload);
     if (v == NULL) CAMLreturnT (N_Vector, NULL);
 
     content = (N_VectorContent_Serial) v->content;
 
     /* Create vector operation structure */
-    clone_cnvec_ops(v, w);
+    sunml_clone_cnvec_ops(v, w);
 
     /* Create content */
     content->length   = NV_LENGTH_S(w);
@@ -193,7 +193,7 @@ CAMLprim value sunml_nvec_wrap_serial(value payload, value checkfn)
     long int length = (Caml_ba_array_val(payload))->dim[0];
 
     /* Create vector */
-    nv = alloc_cnvec(sizeof(struct _N_VectorContent_Serial), payload);
+    nv = sunml_alloc_cnvec(sizeof(struct _N_VectorContent_Serial), payload);
     if (nv == NULL) caml_raise_out_of_memory();
     ops = (N_Vector_Ops) nv->ops;
     content = (N_VectorContent_Serial) nv->content;
@@ -202,7 +202,7 @@ CAMLprim value sunml_nvec_wrap_serial(value payload, value checkfn)
     ops->nvclone           = clone_serial;		    /* ours */
     ops->nvcloneempty      = clone_empty_serial;	    /* ours */
     /* This is registered but only ever called for C-allocated clones. */
-    ops->nvdestroy         = free_cnvec;
+    ops->nvdestroy         = sunml_free_cnvec;
 #if SUNDIALS_LIB_VERSION >= 270
     ops->nvgetvectorid	   = N_VGetVectorID_Serial;
 #endif
@@ -237,7 +237,7 @@ CAMLprim value sunml_nvec_wrap_serial(value payload, value checkfn)
 
     vnvec = caml_alloc_tuple(3);
     Store_field(vnvec, 0, payload);
-    Store_field(vnvec, 1, alloc_caml_nvec(nv, finalize_caml_nvec));
+    Store_field(vnvec, 1, sunml_alloc_caml_nvec(nv, sunml_finalize_caml_nvec));
     Store_field(vnvec, 2, checkfn);
 
     CAMLreturn(vnvec);
@@ -257,7 +257,7 @@ static void free_custom_cnvec(N_Vector v)
 {
     caml_remove_generational_global_root((value *)&CNVEC_OP_TABLE(v));
     v->content = NULL;
-    free_cnvec(v);
+    sunml_free_cnvec(v);
 }
 
 static void finalize_custom_caml_nvec(value vnv)
@@ -272,6 +272,29 @@ static N_Vector_ID getvectorid_custom(N_Vector v)
 }
 #endif
 
+// Custom operations
+static N_Vector callml_vclone(N_Vector w);
+static void callml_vspace(N_Vector v, sundials_ml_index *lrw, sundials_ml_index *liw);
+static void callml_vlinearsum(realtype a, N_Vector x, realtype b, N_Vector y, N_Vector z);
+static void callml_vconst(realtype c, N_Vector z);
+static void callml_vprod(N_Vector x, N_Vector y, N_Vector z);
+static void callml_vdiv(N_Vector x, N_Vector y, N_Vector z);
+static void callml_vscale(realtype c, N_Vector x, N_Vector z);
+static void callml_vabs(N_Vector x, N_Vector z);
+static void callml_vinv(N_Vector x, N_Vector z);
+static void callml_vaddconst(N_Vector x, realtype b, N_Vector z);
+static realtype callml_vdotprod(N_Vector x, N_Vector y);
+static realtype callml_vmaxnorm(N_Vector x);
+static realtype callml_vwrmsnorm(N_Vector x, N_Vector w);
+static realtype callml_vwrmsnormmask(N_Vector x, N_Vector w, N_Vector id);
+static realtype callml_vmin(N_Vector x);
+static realtype callml_vwl2norm(N_Vector x, N_Vector w);
+static realtype callml_vl1norm(N_Vector x);
+static void callml_vcompare(realtype c, N_Vector x, N_Vector z);
+static booleantype callml_vinvtest(N_Vector x, N_Vector z);
+static booleantype callml_vconstrmask(N_Vector c, N_Vector x, N_Vector m);
+static realtype callml_vminquotient(N_Vector num, N_Vector denom);
+
 /* Creation from OCaml. */
 CAMLprim value sunml_nvec_wrap_custom(value mlops, value payload, value checkfn)
 {
@@ -282,7 +305,7 @@ CAMLprim value sunml_nvec_wrap_custom(value mlops, value payload, value checkfn)
     N_Vector_Ops ops;
 
     /* Create vector */
-    nv = alloc_cnvec(0, payload);
+    nv = sunml_alloc_cnvec(0, payload);
     if (nv == NULL) caml_raise_out_of_memory();
     ops = (N_Vector_Ops) nv->ops;
 
@@ -342,7 +365,7 @@ CAMLprim value sunml_nvec_wrap_custom(value mlops, value payload, value checkfn)
 
     vcnvec = caml_alloc_tuple(3);
     Store_field(vcnvec, 0, payload);
-    Store_field(vcnvec, 1, alloc_caml_nvec(nv, finalize_custom_caml_nvec));
+    Store_field(vcnvec, 1, sunml_alloc_caml_nvec(nv, finalize_custom_caml_nvec));
     Store_field(vcnvec, 2, checkfn);
 
     CAMLreturn(vcnvec);
@@ -364,19 +387,19 @@ N_Vector callml_vclone(N_Vector w)
     value r = caml_callback_exn (GET_OP(w, NVECTOR_OPS_NVCLONE), w_payload);
 
     if (Is_exception_result (r)) {
-	sundials_ml_warn_discarded_exn (Extract_exception (r),
+	sunml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vclone");
 	CAMLreturnT (N_Vector, NULL);
     }
     v_payload = r;
     /* Done processing r.  Now it's OK to trigger GC.  */
 
-    v = alloc_cnvec(0, v_payload);
+    v = sunml_alloc_cnvec(0, v_payload);
     if (v == NULL)
 	CAMLreturnT (N_Vector, NULL);
 
     /* Create vector operation structure */
-    clone_cnvec_ops(v, w);
+    sunml_clone_cnvec_ops(v, w);
 
     /* Create content */
     v->content = (void *) CNVEC_OP_TABLE(w);
@@ -385,7 +408,7 @@ N_Vector callml_vclone(N_Vector w)
     CAMLreturnT(N_Vector, v);
 }
 
-void callml_vspace(N_Vector v, sundials_ml_index *lrw, sundials_ml_index *liw)
+static void callml_vspace(N_Vector v, sundials_ml_index *lrw, sundials_ml_index *liw)
 {
     CAMLparam0();
     CAMLlocal1(mlop);
@@ -394,7 +417,7 @@ void callml_vspace(N_Vector v, sundials_ml_index *lrw, sundials_ml_index *liw)
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback_exn (mlop, NVEC_BACKLINK(v));
     if (Is_exception_result (r)) {
-	sundials_ml_warn_discarded_exn (Extract_exception (r),
+	sunml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vspace");
 	fputs ("Sundials/ML has no sensible value to return to Sundials, "
 	       "and incorrect values risk memory corruption.  Abort.", stderr);
@@ -408,7 +431,7 @@ void callml_vspace(N_Vector v, sundials_ml_index *lrw, sundials_ml_index *liw)
     CAMLreturn0;
 }
 
-void callml_vlinearsum(realtype a, N_Vector x, realtype b, N_Vector y, N_Vector z)
+static void callml_vlinearsum(realtype a, N_Vector x, realtype b, N_Vector y, N_Vector z)
 {
     CAMLparam0();
     CAMLlocal1(mlop);
@@ -425,14 +448,14 @@ void callml_vlinearsum(realtype a, N_Vector x, realtype b, N_Vector y, N_Vector 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callbackN_exn (mlop, 5, args);
     if (Is_exception_result (r)) {
-	sundials_ml_warn_discarded_exn (Extract_exception (r),
+	sunml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vlinearsum");
     }
 
     CAMLreturn0;
 }
 
-void callml_vconst(realtype c, N_Vector z)
+static void callml_vconst(realtype c, N_Vector z)
 {
     CAMLparam0();
     CAMLlocal1(vc);
@@ -443,13 +466,13 @@ void callml_vconst(realtype c, N_Vector z)
     value r = caml_callback2_exn(GET_OP(z, NVECTOR_OPS_NVCONST),
 				 vc, NVEC_BACKLINK(z));
     if (Is_exception_result (r))
-	sundials_ml_warn_discarded_exn (Extract_exception (r),
+	sunml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vconst");
 
     CAMLreturn0;
 }
 
-void callml_vprod(N_Vector x, N_Vector y, N_Vector z)
+static void callml_vprod(N_Vector x, N_Vector y, N_Vector z)
 {
     CAMLparam0();
     CAMLlocal1(mlop);
@@ -459,13 +482,13 @@ void callml_vprod(N_Vector x, N_Vector y, N_Vector z)
     value r = caml_callback3_exn (mlop, NVEC_BACKLINK(x),
 				  NVEC_BACKLINK(y), NVEC_BACKLINK(z));
     if (Is_exception_result (r))
-	sundials_ml_warn_discarded_exn (Extract_exception (r),
+	sunml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vprod");
 
     CAMLreturn0;
 }
 
-void callml_vdiv(N_Vector x, N_Vector y, N_Vector z)
+static void callml_vdiv(N_Vector x, N_Vector y, N_Vector z)
 {
     CAMLparam0();
     CAMLlocal1(mlop);
@@ -475,13 +498,13 @@ void callml_vdiv(N_Vector x, N_Vector y, N_Vector z)
     value r = caml_callback3_exn(mlop, NVEC_BACKLINK(x),
 				 NVEC_BACKLINK(y), NVEC_BACKLINK(z));
     if (Is_exception_result (r))
-	sundials_ml_warn_discarded_exn (Extract_exception (r),
+	sunml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vdiv");
 
     CAMLreturn0;
 }
 
-void callml_vscale(realtype c, N_Vector x, N_Vector z)
+static void callml_vscale(realtype c, N_Vector x, N_Vector z)
 {
     CAMLparam0();
     CAMLlocal1(vc);
@@ -492,13 +515,13 @@ void callml_vscale(realtype c, N_Vector x, N_Vector z)
     value r = caml_callback3_exn(GET_OP(x, NVECTOR_OPS_NVSCALE), vc,
 				 NVEC_BACKLINK(x), NVEC_BACKLINK(z));
     if (Is_exception_result (r))
-	sundials_ml_warn_discarded_exn (Extract_exception (r),
+	sunml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vscale");
 
     CAMLreturn0;
 }
 
-void callml_vabs(N_Vector x, N_Vector z)
+static void callml_vabs(N_Vector x, N_Vector z)
 {
     CAMLparam0();
     CAMLlocal1(mlop);
@@ -507,13 +530,13 @@ void callml_vabs(N_Vector x, N_Vector z)
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback2_exn (mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(z));
     if (Is_exception_result (r))
-	sundials_ml_warn_discarded_exn (Extract_exception (r),
+	sunml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vabs");
 
     CAMLreturn0;
 }
 
-void callml_vinv(N_Vector x, N_Vector z)
+static void callml_vinv(N_Vector x, N_Vector z)
 {
     CAMLparam0();
     CAMLlocal1(mlop);
@@ -522,13 +545,13 @@ void callml_vinv(N_Vector x, N_Vector z)
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback2_exn(mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(z));
     if (Is_exception_result (r))
-	sundials_ml_warn_discarded_exn (Extract_exception (r),
+	sunml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vinv");
 
     CAMLreturn0;
 }
 
-void callml_vaddconst(N_Vector x, realtype b, N_Vector z)
+static void callml_vaddconst(N_Vector x, realtype b, N_Vector z)
 {
     CAMLparam0();
     CAMLlocal1(vb);
@@ -539,13 +562,13 @@ void callml_vaddconst(N_Vector x, realtype b, N_Vector z)
     value r = caml_callback3_exn (GET_OP(x, NVECTOR_OPS_NVADDCONST),
 				  NVEC_BACKLINK(x), vb, NVEC_BACKLINK(z));
     if (Is_exception_result (r))
-	sundials_ml_warn_discarded_exn (Extract_exception (r),
+	sunml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vaddconst");
 
     CAMLreturn0;
 }
 
-realtype callml_vdotprod(N_Vector x, N_Vector y)
+static realtype callml_vdotprod(N_Vector x, N_Vector y)
 {
     CAMLparam0();
     CAMLlocal1(mlop);
@@ -554,7 +577,7 @@ realtype callml_vdotprod(N_Vector x, N_Vector y)
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback2_exn (mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(y));
     if (Is_exception_result (r)) {
-	sundials_ml_warn_discarded_exn (Extract_exception (r),
+	sunml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vdotprod");
 	CAMLreturnT(realtype, nan(""));
     }
@@ -562,7 +585,7 @@ realtype callml_vdotprod(N_Vector x, N_Vector y)
     CAMLreturnT(realtype, Double_val(r));
 }
 
-realtype callml_vmaxnorm(N_Vector x)
+static realtype callml_vmaxnorm(N_Vector x)
 {
     CAMLparam0();
     CAMLlocal1(mlop);
@@ -571,7 +594,7 @@ realtype callml_vmaxnorm(N_Vector x)
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback_exn (mlop, NVEC_BACKLINK(x));
     if (Is_exception_result (r)) {
-	sundials_ml_warn_discarded_exn (Extract_exception (r),
+	sunml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vmaxnorm");
 	CAMLreturnT(realtype, nan(""));
     }
@@ -579,7 +602,7 @@ realtype callml_vmaxnorm(N_Vector x)
     CAMLreturnT(realtype, Double_val(r));
 }
 
-realtype callml_vwrmsnorm(N_Vector x, N_Vector w)
+static realtype callml_vwrmsnorm(N_Vector x, N_Vector w)
 {
     CAMLparam0();
     CAMLlocal1(mlop);
@@ -588,7 +611,7 @@ realtype callml_vwrmsnorm(N_Vector x, N_Vector w)
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback2_exn (mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(w));
     if (Is_exception_result (r)) {
-	sundials_ml_warn_discarded_exn (Extract_exception (r),
+	sunml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vwrmsnorm");
 	CAMLreturnT(realtype, nan(""));
     }
@@ -596,7 +619,7 @@ realtype callml_vwrmsnorm(N_Vector x, N_Vector w)
     CAMLreturnT(realtype, Double_val(r));
 }
 
-realtype callml_vwrmsnormmask(N_Vector x, N_Vector w, N_Vector id)
+static realtype callml_vwrmsnormmask(N_Vector x, N_Vector w, N_Vector id)
 {
     CAMLparam0();
     CAMLlocal1(mlop);
@@ -606,7 +629,7 @@ realtype callml_vwrmsnormmask(N_Vector x, N_Vector w, N_Vector id)
     value r = caml_callback3_exn (mlop, NVEC_BACKLINK(x),
 				  NVEC_BACKLINK(w), NVEC_BACKLINK(id));
     if (Is_exception_result (r)) {
-	sundials_ml_warn_discarded_exn (Extract_exception (r),
+	sunml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vwrmsnormmask");
 	CAMLreturnT(realtype, nan(""));
     }
@@ -614,7 +637,7 @@ realtype callml_vwrmsnormmask(N_Vector x, N_Vector w, N_Vector id)
     CAMLreturnT(realtype, Double_val(r));
 }
 
-realtype callml_vmin(N_Vector x)
+static realtype callml_vmin(N_Vector x)
 {
     CAMLparam0();
     CAMLlocal1(mlop);
@@ -623,7 +646,7 @@ realtype callml_vmin(N_Vector x)
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback_exn (mlop, NVEC_BACKLINK(x));
     if (Is_exception_result (r)) {
-	sundials_ml_warn_discarded_exn (Extract_exception (r),
+	sunml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vmin");
 	CAMLreturnT(realtype, nan(""));
     }
@@ -631,7 +654,7 @@ realtype callml_vmin(N_Vector x)
     CAMLreturnT(realtype, Double_val(r));
 }
 
-realtype callml_vwl2norm(N_Vector x, N_Vector w)
+static realtype callml_vwl2norm(N_Vector x, N_Vector w)
 {
     CAMLparam0();
     CAMLlocal1(mlop);
@@ -640,7 +663,7 @@ realtype callml_vwl2norm(N_Vector x, N_Vector w)
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback2_exn (mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(w));
     if (Is_exception_result (r)) {
-	sundials_ml_warn_discarded_exn (Extract_exception (r),
+	sunml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vwl2norm");
 	CAMLreturnT(realtype, nan(""));
     }
@@ -648,7 +671,7 @@ realtype callml_vwl2norm(N_Vector x, N_Vector w)
     CAMLreturnT(realtype, Double_val(r));
 }
 
-realtype callml_vl1norm(N_Vector x)
+static realtype callml_vl1norm(N_Vector x)
 {
     CAMLparam0();
     CAMLlocal1(mlop);
@@ -657,7 +680,7 @@ realtype callml_vl1norm(N_Vector x)
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback_exn (mlop, NVEC_BACKLINK(x));
     if (Is_exception_result (r)) {
-	sundials_ml_warn_discarded_exn (Extract_exception (r),
+	sunml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vl1norm");
 	CAMLreturnT(realtype, nan(""));
     }
@@ -665,7 +688,7 @@ realtype callml_vl1norm(N_Vector x)
     CAMLreturnT(realtype, Double_val(r));
 }
 
-void callml_vcompare(realtype c, N_Vector x, N_Vector z)
+static void callml_vcompare(realtype c, N_Vector x, N_Vector z)
 {
     CAMLparam0();
     CAMLlocal1(vc);
@@ -676,13 +699,13 @@ void callml_vcompare(realtype c, N_Vector x, N_Vector z)
     value r = caml_callback3_exn (GET_OP(x, NVECTOR_OPS_NVCOMPARE), vc,
 				  NVEC_BACKLINK(x), NVEC_BACKLINK(z));
     if (Is_exception_result (r))
-	sundials_ml_warn_discarded_exn (Extract_exception (r),
+	sunml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vcompare");
 
     CAMLreturn0;
 }
 
-booleantype callml_vinvtest(N_Vector x, N_Vector z)
+static booleantype callml_vinvtest(N_Vector x, N_Vector z)
 {
     CAMLparam0();
     CAMLlocal1(mlop);
@@ -691,7 +714,7 @@ booleantype callml_vinvtest(N_Vector x, N_Vector z)
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback2_exn (mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(z));
     if (Is_exception_result (r)) {
-	sundials_ml_warn_discarded_exn (Extract_exception (r),
+	sunml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vinvtest");
 	CAMLreturnT(booleantype, 0);
     }
@@ -699,7 +722,7 @@ booleantype callml_vinvtest(N_Vector x, N_Vector z)
     CAMLreturnT(booleantype, Bool_val(r));
 }
 
-booleantype callml_vconstrmask(N_Vector c, N_Vector x, N_Vector m)
+static booleantype callml_vconstrmask(N_Vector c, N_Vector x, N_Vector m)
 {
     CAMLparam0();
     CAMLlocal1(mlop);
@@ -709,7 +732,7 @@ booleantype callml_vconstrmask(N_Vector c, N_Vector x, N_Vector m)
     value r = caml_callback3_exn (mlop, NVEC_BACKLINK(c),
 				  NVEC_BACKLINK(x), NVEC_BACKLINK(m));
     if (Is_exception_result (r)) {
-	sundials_ml_warn_discarded_exn (Extract_exception (r),
+	sunml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vconstrmask");
 	CAMLreturnT(booleantype, 0);
     }
@@ -717,7 +740,7 @@ booleantype callml_vconstrmask(N_Vector c, N_Vector x, N_Vector m)
     CAMLreturnT(booleantype, Bool_val(r));
 }
 
-realtype callml_vminquotient(N_Vector num, N_Vector denom)
+static realtype callml_vminquotient(N_Vector num, N_Vector denom)
 {
     CAMLparam0();
     CAMLlocal1(mlop);
@@ -727,7 +750,7 @@ realtype callml_vminquotient(N_Vector num, N_Vector denom)
     value r = caml_callback2_exn (mlop, NVEC_BACKLINK(num),
 				  NVEC_BACKLINK(denom));
     if (Is_exception_result (r)) {
-	sundials_ml_warn_discarded_exn (Extract_exception (r),
+	sunml_warn_discarded_exn (Extract_exception (r),
 					"user-defined n_vminquotient");
 	CAMLreturnT(realtype, nan(""));
     }

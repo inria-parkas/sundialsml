@@ -57,7 +57,7 @@ static int jacfn(
     CAMLlocal3(session, cb, smat);
 
     WEAK_DEREF (session, *(value*)user_data);
-    args[0] = kinsol_make_jac_arg(u, fu, kinsol_make_double_tmp(tmp1, tmp2));
+    args[0] = sunml_kinsol_make_jac_arg(u, fu, sunml_kinsol_make_double_tmp(tmp1, tmp2));
 
     cb = KINSOL_LS_CALLBACKS_FROM_ML(session);
     cb = Field (cb, 0);

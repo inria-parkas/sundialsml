@@ -33,7 +33,7 @@
 
 value sundials_ml_exn_table = 0;
 
-void sundials_ml_register_exns(enum sundials_exn_set_index index, value exns)
+void sunml_register_exns(enum sundials_exn_set_index index, value exns)
 {
     CAMLparam1 (exns);
     CAMLlocal1 (r);
@@ -53,7 +53,7 @@ void sundials_ml_register_exns(enum sundials_exn_set_index index, value exns)
 
 static value warn_discarded_exn = 0;
 
-void sundials_ml_warn_discarded_exn (value exn, const char *context)
+void sunml_warn_discarded_exn (value exn, const char *context)
 {
     CAMLparam1 (exn);
     CAMLlocal1 (vcontext);
@@ -143,7 +143,7 @@ CAMLprim value sunml_sundials_realarray2_wrap(value vba)
     CAMLreturn(r);
 }
 
-CAMLprim void sundials_crash (value msg)
+CAMLprim void sunml_crash (value msg)
 {
     CAMLparam1 (msg);
     fputs (String_val (msg), stderr);
@@ -154,7 +154,7 @@ CAMLprim void sundials_crash (value msg)
 
 /* Functions for storing OCaml values in the C heap. */
 
-value *c_sundials_malloc_value(value v)
+value *sunml_sundials_malloc_value(value v)
 {
     header_t *block;
     block = (header_t *)malloc(Bhsize_wosize(1));
@@ -165,7 +165,7 @@ value *c_sundials_malloc_value(value v)
     return Op_hp(block);
 }
 
-void c_sundials_free_value(value *pv)
+void sunml_sundials_free_value(value *pv)
 {
     caml_remove_generational_global_root (pv);
     free (Hp_op(pv));

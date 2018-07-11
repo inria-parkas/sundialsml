@@ -30,8 +30,8 @@ enum preconditioning_type_tag {
   VARIANT_SPILS_PRECONDITIONING_TYPE_PREC_TYPE_BOTH,
 };
 
-int lsolver_precond_type(value);
-int lsolver_gs_type(value);
+int sunml_lsolver_precond_type(value);
+int sunml_lsolver_gs_type(value);
 
 enum lsolver_iterative_solver_tag {
     VARIANT_LSOLVER_ITERATIVE_SOLVER_SPBCGS = 0,

@@ -75,7 +75,7 @@ CAMLprim value sunml_cvodes_alloc_nvector_array(value vn)
 // after we are finished using them (so as not to block the GC), but we
 // instead make the assumption that these elements come from 'within'
 // Sundials and thus that they would anyway not be GC-ed.
-void cvodes_wrap_to_nvector_table(int n, value vy, N_Vector *y)
+void sunml_cvodes_wrap_to_nvector_table(int n, value vy, N_Vector *y)
 {
     int i;
     for (i = 0; i < n; ++i) {
@@ -153,8 +153,8 @@ static int sensrhsfn(int ns, realtype t, N_Vector y, N_Vector ydot,
     Store_field (args, RECORD_CVODES_SENSRHSFN_ARGS_TMP,
 		 make_double_tmp (tmp1, tmp2));
 
-    cvodes_wrap_to_nvector_table(ns, CVODES_SENSARRAY1_FROM_EXT(sensext), ys);
-    cvodes_wrap_to_nvector_table(ns,
+    sunml_cvodes_wrap_to_nvector_table(ns, CVODES_SENSARRAY1_FROM_EXT(sensext), ys);
+    sunml_cvodes_wrap_to_nvector_table(ns,
 	    CVODES_SENSARRAY2_FROM_EXT(sensext), ysdot);
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -215,8 +215,8 @@ static int quadsensrhsfn(int ns, realtype t, N_Vector y, N_Vector *ys,
     Store_field (args, RECORD_CVODES_QUADSENSRHSFN_ARGS_TMP,
 		 make_double_tmp (tmp1, tmp2));
 
-    cvodes_wrap_to_nvector_table(ns, CVODES_SENSARRAY1_FROM_EXT(sensext), ys);
-    cvodes_wrap_to_nvector_table(ns,
+    sunml_cvodes_wrap_to_nvector_table(ns, CVODES_SENSARRAY1_FROM_EXT(sensext), ys);
+    sunml_cvodes_wrap_to_nvector_table(ns,
 	    CVODES_SENSARRAY2_FROM_EXT(sensext), yqsdot);
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -263,7 +263,7 @@ static int brhsfn_sens(realtype t, N_Vector y, N_Vector *ys, N_Vector yb,
     Store_field (args, RECORD_CVODES_ADJ_BRHSFN_ARGS_Y, NVEC_BACKLINK (y));
     Store_field (args, RECORD_CVODES_ADJ_BRHSFN_ARGS_YB, NVEC_BACKLINK (yb));
 
-    cvodes_wrap_to_nvector_table(ns, CVODES_BSENSARRAY_FROM_EXT(sensext), ys);
+    sunml_cvodes_wrap_to_nvector_table(ns, CVODES_BSENSARRAY_FROM_EXT(sensext), ys);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback3_exn(CVODES_BRHSFN_SENS_FROM_EXT(sensext),
@@ -315,7 +315,7 @@ static int bquadrhsfn_sens(realtype t, N_Vector y, N_Vector *ys, N_Vector yb,
     Store_field (args, RECORD_CVODES_ADJ_BQUADRHSFN_ARGS_YB,
 		 NVEC_BACKLINK (yb));
 
-    cvodes_wrap_to_nvector_table(ns, CVODES_BSENSARRAY_FROM_EXT(sensext), ys);
+    sunml_cvodes_wrap_to_nvector_table(ns, CVODES_BSENSARRAY_FROM_EXT(sensext), ys);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback3_exn (CVODES_BQUADRHSFN_SENS_FROM_EXT(sensext),
@@ -325,7 +325,7 @@ static int bquadrhsfn_sens(realtype t, N_Vector y, N_Vector *ys, N_Vector yb,
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
-value cvodes_make_jac_arg(realtype t, N_Vector y, N_Vector yb,
+value sunml_cvodes_make_jac_arg(realtype t, N_Vector y, N_Vector yb,
 			  N_Vector fyb, value tmp)
 {
     CAMLparam1(tmp);
@@ -383,7 +383,7 @@ static int bprecsolvefn(
     CAMLlocalN(args, 3);
     CAMLlocal2(session, cb);
 
-    args[0] = cvodes_make_jac_arg(t, y, yb, fyb, Val_unit);
+    args[0] = sunml_cvodes_make_jac_arg(t, y, yb, fyb, Val_unit);
     args[1] = make_spils_solve_arg(rvecb, gammab, deltab, lrb);
     args[2] = NVEC_BACKLINK(zvecb);
 
@@ -425,12 +425,12 @@ static int bprecsolvefn_withsens(
     WEAK_DEREF (session, *(value*)user_data);
     bsensext = CVODE_SENSEXT_FROM_ML(session);
 
-    args[0] = cvodes_make_jac_arg(t, y, yb, fyb, Val_unit);
+    args[0] = sunml_cvodes_make_jac_arg(t, y, yb, fyb, Val_unit);
     args[1] = make_spils_solve_arg(rvecb, gammab, deltab, lrb);
 
     ns = Int_val(Field(bsensext, RECORD_CVODES_BWD_SESSION_NUMSENSITIVITIES));
     args[2] = CVODES_BSENSARRAY_FROM_EXT(bsensext);
-    cvodes_wrap_to_nvector_table(ns, args[2], yS);
+    sunml_cvodes_wrap_to_nvector_table(ns, args[2], yS);
 
     args[3] = NVEC_BACKLINK(zvecb);
 
@@ -466,7 +466,7 @@ static int bprecsetupfn(
     CAMLlocal2(session, cb);
     CAMLlocalN(args, 3);
 
-    args[0] = cvodes_make_jac_arg(t, y, yb, fyb, Val_unit);
+    args[0] = sunml_cvodes_make_jac_arg(t, y, yb, fyb, Val_unit);
     args[1] = Val_bool(jokb);
     args[2] = caml_copy_double(gammab);
 
@@ -515,11 +515,11 @@ static int bprecsetupfn_withsens(
     WEAK_DEREF (session, *(value*)user_data);
     bsensext = CVODE_SENSEXT_FROM_ML(session);
 
-    args[0] = cvodes_make_jac_arg(t, y, yb, fyb, Val_unit);
+    args[0] = sunml_cvodes_make_jac_arg(t, y, yb, fyb, Val_unit);
 
     ns = Int_val(Field(bsensext, RECORD_CVODES_BWD_SESSION_NUMSENSITIVITIES));
     args[1] = CVODES_BSENSARRAY_FROM_EXT(bsensext);
-    cvodes_wrap_to_nvector_table(ns, args[1], yS);
+    sunml_cvodes_wrap_to_nvector_table(ns, args[1], yS);
 
     args[2] = Val_bool(jokb);
     args[3] = caml_copy_double(gammab);
@@ -553,7 +553,7 @@ static int bjacsetupfn(
     CAMLparam0();
     CAMLlocal3(session, cb, arg);
 
-    arg = cvodes_make_jac_arg(t, y, yb, fyb, Val_unit);
+    arg = sunml_cvodes_make_jac_arg(t, y, yb, fyb, Val_unit);
 
     WEAK_DEREF (session, *(value*)user_data);
     cb = CVODE_LS_CALLBACKS_FROM_ML (session);
@@ -583,11 +583,11 @@ static int bjacsetupfn_withsens(
     WEAK_DEREF (session, *(value*)user_data);
     bsensext = CVODE_SENSEXT_FROM_ML(session);
 
-    args[0] = cvodes_make_jac_arg(t, y, yb, fyb, Val_unit);
+    args[0] = sunml_cvodes_make_jac_arg(t, y, yb, fyb, Val_unit);
 
     ns = Int_val(Field(bsensext, RECORD_CVODES_BWD_SESSION_NUMSENSITIVITIES));
     args[1] = CVODES_BSENSARRAY_FROM_EXT(bsensext);
-    cvodes_wrap_to_nvector_table(ns, args[1], yS);
+    sunml_cvodes_wrap_to_nvector_table(ns, args[1], yS);
 
     cb = CVODE_LS_CALLBACKS_FROM_ML (session);
     cb = Field (cb, 0);
@@ -615,7 +615,7 @@ static int bjactimesfn(
     CAMLlocal2(session, cb);
     CAMLlocalN(args, 3);
 
-    args[0] = cvodes_make_jac_arg(t, y, yb, fyb, NVEC_BACKLINK(tmpb));
+    args[0] = sunml_cvodes_make_jac_arg(t, y, yb, fyb, NVEC_BACKLINK(tmpb));
     args[1] = NVEC_BACKLINK(vb);
     args[2] = NVEC_BACKLINK(Jvb);
 
@@ -651,11 +651,11 @@ static int bjactimesfn_withsens(
     WEAK_DEREF (session, *(value*)user_data);
     bsensext = CVODE_SENSEXT_FROM_ML(session);
 
-    args[0] = cvodes_make_jac_arg(t, y, yb, fyb, NVEC_BACKLINK(tmpb));
+    args[0] = sunml_cvodes_make_jac_arg(t, y, yb, fyb, NVEC_BACKLINK(tmpb));
 
     ns = Int_val(Field(bsensext, RECORD_CVODES_BWD_SESSION_NUMSENSITIVITIES));
     args[1] = CVODES_BSENSARRAY_FROM_EXT(bsensext);
-    cvodes_wrap_to_nvector_table(ns, args[1], yS);
+    sunml_cvodes_wrap_to_nvector_table(ns, args[1], yS);
 
     args[2] = NVEC_BACKLINK(vb);
     args[3] = NVEC_BACKLINK(Jvb);
@@ -693,8 +693,8 @@ static int bjacfn_nosens(
     cb = CVODE_LS_CALLBACKS_FROM_ML(session);
     cb = Field (cb, 0);
 
-    args[0] = cvodes_make_jac_arg(t, y, yb, fyb,
-		cvode_make_triple_tmp(tmp1b, tmp2b, tmp3b));
+    args[0] = sunml_cvodes_make_jac_arg(t, y, yb, fyb,
+		sunml_cvode_make_triple_tmp(tmp1b, tmp2b, tmp3b));
     args[1] = MAT_BACKLINK(jacb);
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -726,12 +726,12 @@ static int bjacfn_withsens(
     cb = CVODE_LS_CALLBACKS_FROM_ML(session);
     cb = Field (cb, 0);
 
-    args[0] = cvodes_make_jac_arg(t, y, yb, fyb,
-		cvode_make_triple_tmp(tmp1b, tmp2b, tmp3b));
+    args[0] = sunml_cvodes_make_jac_arg(t, y, yb, fyb,
+		sunml_cvode_make_triple_tmp(tmp1b, tmp2b, tmp3b));
 
     ns = Int_val(Field(bsensext, RECORD_CVODES_BWD_SESSION_NUMSENSITIVITIES));
     args[1] = CVODES_BSENSARRAY_FROM_EXT(bsensext);
-    cvodes_wrap_to_nvector_table(ns, args[1], ys);
+    sunml_cvodes_wrap_to_nvector_table(ns, args[1], ys);
 
     args[2] = MAT_BACKLINK(jacb);
 
@@ -769,8 +769,8 @@ static int bjacfn_nosens(
 	Store_field(cb, 1, dmat);
     }
 
-    args[0] = cvodes_make_jac_arg(t, y, yb, fyb,
-		cvode_make_triple_tmp(tmp1b, tmp2b, tmp3b));
+    args[0] = sunml_cvodes_make_jac_arg(t, y, yb, fyb,
+		sunml_cvode_make_triple_tmp(tmp1b, tmp2b, tmp3b));
     args[1] = Some_val(dmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -810,12 +810,12 @@ static int bjacfn_withsens(
 	Store_field(cb, 1, dmat);
     }
 
-    args[0] = cvodes_make_jac_arg(t, y, yb, fyb,
-		cvode_make_triple_tmp(tmp1b, tmp2b, tmp3b));
+    args[0] = sunml_cvodes_make_jac_arg(t, y, yb, fyb,
+		sunml_cvode_make_triple_tmp(tmp1b, tmp2b, tmp3b));
 
     ns = Int_val(Field(bsensext, RECORD_CVODES_BWD_SESSION_NUMSENSITIVITIES));
     args[1] = CVODES_BSENSARRAY_FROM_EXT(bsensext);
-    cvodes_wrap_to_nvector_table(ns, args[1], ys);
+    sunml_cvodes_wrap_to_nvector_table(ns, args[1], ys);
 
     args[2] = Some_val(dmat);
 
@@ -855,8 +855,8 @@ static int bbandjacfn_nosens(
 	Store_field(cb, 1, bmat);
     }
 
-    args[0] = cvodes_make_jac_arg(t, y, yb, fyb,
-		cvode_make_triple_tmp(tmp1b, tmp2b, tmp3b));
+    args[0] = sunml_cvodes_make_jac_arg(t, y, yb, fyb,
+		sunml_cvode_make_triple_tmp(tmp1b, tmp2b, tmp3b));
     args[1] = Some_val(bmat);
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -899,12 +899,12 @@ static int bbandjacfn_withsens(
 	Store_field(cb, 1, bmat);
     }
 
-    args[0] = cvodes_make_jac_arg(t, y, yb, fyb,
-		cvode_make_triple_tmp(tmp1b, tmp2b, tmp3b));
+    args[0] = sunml_cvodes_make_jac_arg(t, y, yb, fyb,
+		sunml_cvode_make_triple_tmp(tmp1b, tmp2b, tmp3b));
 
     ns = Int_val(Field(bsensext, RECORD_CVODES_BWD_SESSION_NUMSENSITIVITIES));
     args[1] = CVODES_BSENSARRAY_FROM_EXT(bsensext);
-    cvodes_wrap_to_nvector_table(ns, args[2], ys);
+    sunml_cvodes_wrap_to_nvector_table(ns, args[2], ys);
 
     args[2] = Some_val(bmat);
 
@@ -1674,7 +1674,7 @@ CAMLprim value sunml_cvodes_adj_init_backward(value vparent, value weakref,
     vcvode_mem = caml_alloc_final(1, NULL, 1, 15);
     CVODE_MEM(vcvode_mem) = CVodeGetAdjCVodeBmem(parent, which);
 
-    value *backref = c_sundials_malloc_value(weakref);
+    value *backref = sunml_sundials_malloc_value(weakref);
     if (backref == NULL) {
 	caml_raise_out_of_memory();
     }
@@ -1802,7 +1802,7 @@ CAMLprim value sunml_cvodes_adjquad_sv_tolerances(value vparent, value vwhich,
 
 #define MAX_ERRMSG_LEN 256
 
-void cvodes_ml_check_flag(const char *call, int flag)
+void sunml_cvodes_ml_check_flag(const char *call, int flag)
 {
     static char exmsg[MAX_ERRMSG_LEN] = "";
 
@@ -2429,7 +2429,7 @@ CAMLprim value sunml_cvodes_adj_spils_spgmr (value vparent, value vwhich,
 
     flag = CVodeSetIterTypeB (cvode_mem, which, CV_NEWTON);
     SCHECK_FLAG ("CVodeSetIterTypeB", flag);
-    flag = CVSpgmrB (cvode_mem, which, lsolver_precond_type (vtype),
+    flag = CVSpgmrB (cvode_mem, which, sunml_lsolver_precond_type (vtype),
 		     Int_val (vmaxl));
     SCHECK_FLAG ("CVSpgmrB", flag);
 #else
@@ -2449,7 +2449,7 @@ CAMLprim value sunml_cvodes_adj_spils_spbcgs (value vparent, value vwhich,
 
     flag = CVodeSetIterTypeB (cvode_mem, which, CV_NEWTON);
     SCHECK_FLAG ("CVodeSetIterTypeB", flag);
-    flag = CVSpbcgB (cvode_mem, which, lsolver_precond_type (vtype),
+    flag = CVSpbcgB (cvode_mem, which, sunml_lsolver_precond_type (vtype),
 		     Int_val (vmaxl));
     SCHECK_FLAG ("CVSpbcgB", flag);
 #else
@@ -2469,7 +2469,7 @@ CAMLprim value sunml_cvodes_adj_spils_sptfqmr (value vparent, value vwhich,
 
     flag = CVodeSetIterTypeB (cvode_mem, which, CV_NEWTON);
     SCHECK_FLAG ("CVodeSetIterTypeB", flag);
-    flag = CVSptfqmrB (cvode_mem, which, lsolver_precond_type (vtype),
+    flag = CVSptfqmrB (cvode_mem, which, sunml_lsolver_precond_type (vtype),
 		       Int_val (vmaxl));
     SCHECK_FLAG ("CVSptfqmrB", flag);
 #else
@@ -2492,7 +2492,7 @@ CAMLprim value sunml_cvodes_adj_bsession_finalize(value vdata)
     if (CVODE_MEM_FROM_ML(vdata) != NULL) {
 	value *backref = CVODE_BACKREF_FROM_ML(vdata);
 	// NB: CVodeFree() is *not* called: parents free-up backward problems
-	c_sundials_free_value(backref);
+	sunml_sundials_free_value(backref);
     }
     return Val_unit;
 }
@@ -2603,7 +2603,7 @@ CAMLprim value sunml_cvodes_adj_spils_set_prec_type(value vparent, value vwhich,
     CAMLparam3(vparent, vwhich, vptype);
 #if SUNDIALS_LIB_VERSION < 300
     int flag = CVSpilsSetPrecTypeB(CVODE_MEM_FROM_ML(vparent),
-				   Int_val(vwhich), lsolver_precond_type(vptype));
+				   Int_val(vwhich), sunml_lsolver_precond_type(vptype));
     SCHECK_FLAG("CVSpilsSetPrecTypeB", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -2617,7 +2617,7 @@ CAMLprim value sunml_cvodes_adj_spils_set_gs_type(value vparent, value vwhich,
     CAMLparam3(vparent, vwhich, vgstype);
 #if SUNDIALS_LIB_VERSION < 300
     int flag = CVSpilsSetGSTypeB(CVODE_MEM_FROM_ML(vparent), Int_val(vwhich),
-				 lsolver_gs_type(vgstype));
+				 sunml_lsolver_gs_type(vgstype));
     SCHECK_FLAG("CVSpilsSetGSTypeB", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));

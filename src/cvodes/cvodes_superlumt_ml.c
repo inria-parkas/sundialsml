@@ -58,8 +58,8 @@ static int jacfn_nosens( /* CVSlsSparseJacFnB */
     cb = CVODE_LS_CALLBACKS_FROM_ML(session);
     cb = Field (cb, 0);
 
-    args[0] = cvodes_make_jac_arg (t, y, yb, fyb,
-			    cvode_make_triple_tmp (tmp1b, tmp2b, tmp3b));
+    args[0] = sunml_cvodes_make_jac_arg (t, y, yb, fyb,
+			    sunml_cvode_make_triple_tmp (tmp1b, tmp2b, tmp3b));
 
     smat = Field(cb, 1);
     if (smat == Val_none) {
@@ -101,12 +101,12 @@ static int jacfn_withsens( /* CVSlsSparseJacFnBS */
     cb = CVODE_LS_CALLBACKS_FROM_ML(session);
     cb = Field (cb, 0);
 
-    args[0] = cvodes_make_jac_arg (t, y, yb, fyb,
-			    cvode_make_triple_tmp (tmp1b, tmp2b, tmp3b));
+    args[0] = sunml_cvodes_make_jac_arg (t, y, yb, fyb,
+			    sunml_cvode_make_triple_tmp (tmp1b, tmp2b, tmp3b));
 
     ns = Int_val(Field(bsensext, RECORD_CVODES_BWD_SESSION_NUMSENSITIVITIES));
     args[1] = CVODES_BSENSARRAY_FROM_EXT(bsensext);
-    cvodes_wrap_to_nvector_table(ns, args[1], ys);
+    sunml_cvodes_wrap_to_nvector_table(ns, args[1], ys);
 
     smat = Field(cb, 1);
     if (smat == Val_none) {

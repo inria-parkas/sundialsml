@@ -69,8 +69,8 @@ static int jacfn(realtype t,
     CAMLlocal3(session, cb, smat);
 
     WEAK_DEREF (session, *(value*)user_data);
-    args[0] = arkode_make_jac_arg (t, y, fy,
-				  arkode_make_triple_tmp (tmp1, tmp2, tmp3));
+    args[0] = sunml_arkode_make_jac_arg (t, y, fy,
+				  sunml_arkode_make_triple_tmp (tmp1, tmp2, tmp3));
 
     cb = ARKODE_LS_CALLBACKS_FROM_ML(session);
     cb = Field (cb, 0);
@@ -158,7 +158,7 @@ static int massfn(realtype t,
 
     WEAK_DEREF (session, *(value*)user_data);
     args[0] = caml_copy_double(t);
-    args[1] = arkode_make_triple_tmp (tmp1, tmp2, tmp3);
+    args[1] = sunml_arkode_make_triple_tmp (tmp1, tmp2, tmp3);
 
     cb = ARKODE_MASS_CALLBACKS_FROM_ML(session);
     cb = Field (cb, 0);

@@ -22,8 +22,8 @@ void sunml_kinsol_check_flag(const char *call, int flag);
 void sunml_kinsol_check_dls_flag(const char *call, int flag);
 void sunml_kinsol_check_spils_flag(const char *call, int flag);
 
-value kinsol_make_jac_arg(N_Vector u, N_Vector fu, value tmp);
-value kinsol_make_double_tmp(N_Vector tmp1, N_Vector tmp2);
+value sunml_kinsol_make_jac_arg(N_Vector u, N_Vector fu, value tmp);
+value sunml_kinsol_make_double_tmp(N_Vector tmp1, N_Vector tmp2);
 
 #define CHECK_FLAG(call, flag) if (flag != KIN_SUCCESS) \
 				 sunml_kinsol_check_flag(call, flag)
@@ -37,7 +37,7 @@ typedef enum {
     RECOVERABLE = 1
 } recoverability;
 
-int kinsol_translate_exception (value session, value exn_result,
+int sunml_kinsol_translate_exception (value session, value exn_result,
 				recoverability recoverable);
 
 /* Check return value of a callback.  The common (no-error) case is
@@ -48,7 +48,7 @@ int kinsol_translate_exception (value session, value exn_result,
  *  -1 otherwise, and records the exception in result in the session */
 #define CHECK_EXCEPTION(session, result, recoverable)			\
     (Is_exception_result (result)					\
-     ? kinsol_translate_exception (session, result, recoverable)	\
+     ? sunml_kinsol_translate_exception (session, result, recoverable)	\
      : 0)
 
 /* Indices into the Kinsol_*.session type.  This enum must be in the same order as

@@ -27,7 +27,7 @@ module LSI = Sundials_LinearSolver_impl
    bug.  Rather than raise an exception (which may or may not get
    propagated properly depending on the context), we immediately abort
    the program. *)
-external crash : string -> unit = "sundials_crash"
+external crash : string -> unit = "sunml_crash"
 
 type ('a, 'k) nvector = ('a, 'k) Nvector.t
 
