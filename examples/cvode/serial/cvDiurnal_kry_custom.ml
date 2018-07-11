@@ -286,6 +286,11 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
     lsolver.s1 <- mapo NV.wrap s1;
     lsolver.s2 <- mapo NV.wrap s2
 
+  let get_workspace lsolver =
+    let lrw1, liw1 = NV.Ops.n_vspace lsolver.vtemp in
+    let maxl = lsolver.maxl in
+    (lrw1*(maxl + 5) + maxl*(maxl + 4) + 1, liw1*(maxl + 5))
+
   let ops =
     let open Custom in
     {
@@ -298,7 +303,7 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
       get_num_iters       = Some (fun ls -> ls.numiters);
       get_res_norm        = Some (fun ls -> ls.resnorm);
       get_res_id          = Some (fun ls -> ls.vtemp);
-      get_work_space      = None;
+      get_work_space      = Some get_workspace;
     }
 
   let solver ?(maxl=maxl_default) ?(max_restarts=maxrs_default)
