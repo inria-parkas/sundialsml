@@ -1575,7 +1575,7 @@ CAMLprim value sunml_arkode_get_est_local_errors(value varkode_mem, value vele)
 }
 
 
-void arkode_ml_check_flag(const char *call, int flag)
+void sunml_arkode_check_flag(const char *call, int flag)
 {
     static char exmsg[MAX_ERRMSG_LEN] = "";
 
@@ -1652,6 +1652,58 @@ void arkode_ml_check_flag(const char *call, int flag)
 	default:
 	    snprintf(exmsg, MAX_ERRMSG_LEN, "%s: %s", call,
 		    ARKodeGetReturnFlagName(flag));
+	    caml_failwith(exmsg);
+    }
+}
+
+void sunml_arkode_check_dls_flag(const char *call, int flag)
+{
+    static char exmsg[MAX_ERRMSG_LEN] = "";
+
+    if (flag == ARKDLS_SUCCESS) return;
+
+    switch (flag) {
+	case ARKDLS_ILL_INPUT:
+	    caml_raise_constant(ARKODE_EXN(IllInput));
+
+	case ARKDLS_MEM_FAIL:
+	    caml_raise_out_of_memory();
+
+#if SUNDIALS_LIB_VERSION >= 300
+	case ARKDLS_SUNMAT_FAIL:
+#endif
+	case ARKDLS_JACFUNC_UNRECVR:
+	case ARKDLS_JACFUNC_RECVR:
+	case ARKDLS_MASSFUNC_UNRECVR:
+	case ARKDLS_MASSFUNC_RECVR:
+	default:
+	    /* e.g. ARKDLS_MEM_NULL, ARKDLS_LMEM_NULL */
+	    snprintf(exmsg, MAX_ERRMSG_LEN, "%s: %s", call,
+		    ARKDlsGetReturnFlagName(flag));
+	    caml_failwith(exmsg);
+    }
+}
+
+void sunml_arkode_check_spils_flag(const char *call, int flag)
+{
+    static char exmsg[MAX_ERRMSG_LEN] = "";
+
+    if (flag == ARKSPILS_SUCCESS) return;
+
+    switch (flag) {
+	case ARKSPILS_ILL_INPUT:
+	    caml_raise_constant(ARKODE_EXN(IllInput));
+
+	case ARKSPILS_MEM_FAIL:
+	    caml_raise_out_of_memory();
+
+#if SUNDIALS_LIB_VERSION >+ 300
+	case ARKSPILS_SUNLS_FAIL:
+#endif
+	default:
+	    /* e.g. ARKSPILS_MEM_NULL, ARKSPILS_PMEM_NULL, ARKSPILS_LMEM_NULL */
+	    snprintf(exmsg, MAX_ERRMSG_LEN, "%s: %s", call,
+		     ARKSpilsGetReturnFlagName(flag));
 	    caml_failwith(exmsg);
     }
 }

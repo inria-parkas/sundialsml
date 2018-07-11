@@ -18,12 +18,19 @@
 #include "../nvectors/nvector_ml.h"
 #include <caml/mlvalues.h>
 
-void kinsol_ml_check_flag(const char *call, int flag);
+void sunml_kinsol_check_flag(const char *call, int flag);
+void sunml_kinsol_check_dls_flag(const char *call, int flag);
+void sunml_kinsol_check_spils_flag(const char *call, int flag);
+
 value kinsol_make_jac_arg(N_Vector u, N_Vector fu, value tmp);
 value kinsol_make_double_tmp(N_Vector tmp1, N_Vector tmp2);
 
 #define CHECK_FLAG(call, flag) if (flag != KIN_SUCCESS) \
-				 kinsol_ml_check_flag(call, flag)
+				 sunml_kinsol_check_flag(call, flag)
+#define CHECK_SPILS_FLAG(call, flag) if (flag != KINSPILS_SUCCESS) \
+				 sunml_kinsol_check_spils_flag(call, flag)
+#define CHECK_DLS_FLAG(call, flag) if (flag != KINDLS_SUCCESS) \
+				 sunml_kinsol_check_dls_flag(call, flag)
 
 typedef enum {
     UNRECOVERABLE = 0,

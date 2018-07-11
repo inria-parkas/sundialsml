@@ -888,7 +888,7 @@ CAMLprim value sunml_kinsol_solve(value vdata, value vu, value vstrategy,
 }
 
 
-void kinsol_ml_check_flag(const char *call, int flag)
+void sunml_kinsol_check_flag(const char *call, int flag)
 {
     static char exmsg[MAX_ERRMSG_LEN] = "";
 
@@ -941,6 +941,55 @@ void kinsol_ml_check_flag(const char *call, int flag)
 	/* KIN_MEM_NULL, KIN_NO_MALLOC */
 	snprintf(exmsg, MAX_ERRMSG_LEN, "%s: unexpected error code", call);
 	caml_failwith(exmsg);
+    }
+}
+
+void sunml_kinsol_check_dls_flag(const char *call, int flag)
+{
+    static char exmsg[MAX_ERRMSG_LEN] = "";
+
+    if (flag == KINDLS_SUCCESS) return;
+
+    switch (flag) {
+	case KINDLS_ILL_INPUT:
+	    caml_raise_constant(KINSOL_EXN(IllInput));
+
+	case KINDLS_MEM_FAIL:
+	    caml_raise_out_of_memory();
+
+#if SUNDIALS_LIB_VERSION >= 300
+	case KINDLS_SUNMAT_FAIL:
+#endif
+	case KINDLS_JACFUNC_ERR:
+	default:
+	    /* e.g. KINDLS_MEM_NULL, KINDLS_LMEM_NULL */
+	    snprintf(exmsg, MAX_ERRMSG_LEN, "%s: %s", call,
+		    KINDlsGetReturnFlagName(flag));
+	    caml_failwith(exmsg);
+    }
+}
+
+void sunml_kinsol_check_spils_flag(const char *call, int flag)
+{
+    static char exmsg[MAX_ERRMSG_LEN] = "";
+
+    if (flag == KINSPILS_SUCCESS) return;
+
+    switch (flag) {
+	case KINSPILS_ILL_INPUT:
+	    caml_raise_constant(KINSOL_EXN(IllInput));
+
+	case KINSPILS_MEM_FAIL:
+	    caml_raise_out_of_memory();
+
+#if SUNDIALS_LIB_VERSION >+ 300
+	case KINSPILS_SUNLS_FAIL:
+#endif
+	default:
+	    /* e.g. KINSPILS_MEM_NULL, KINSPILS_PMEM_NULL, KINSPILS_LMEM_NULL */
+	    snprintf(exmsg, MAX_ERRMSG_LEN, "%s: %s", call,
+		     KINSpilsGetReturnFlagName(flag));
+	    caml_failwith(exmsg);
     }
 }
 

@@ -137,13 +137,19 @@
  * a major bottleneck, we can switch over to this alternative.
  */
 
-void cvode_ml_check_flag(const char *call, int flag);
+void sunml_cvode_check_flag(const char *call, int flag);
+void sunml_cvode_check_dls_flag(const char *call, int flag);
+void sunml_cvode_check_spils_flag(const char *call, int flag);
 
 value cvode_make_jac_arg(realtype t, N_Vector y, N_Vector fy, value tmp);
 value cvode_make_triple_tmp(N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
 
 #define CHECK_FLAG(call, flag) if (flag != CV_SUCCESS) \
-				 cvode_ml_check_flag(call, flag)
+				 sunml_cvode_check_flag(call, flag)
+#define CHECK_SPILS_FLAG(call, flag) if (flag != CVSPILS_SUCCESS) \
+				 sunml_cvode_check_spils_flag(call, flag)
+#define CHECK_DLS_FLAG(call, flag) if (flag != CVDLS_SUCCESS) \
+				 sunml_cvode_check_dls_flag(call, flag)
 
 typedef enum {
     UNRECOVERABLE = 0,

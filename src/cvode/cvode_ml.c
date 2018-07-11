@@ -671,7 +671,7 @@ CAMLprim value sunml_cvode_dls_dense (value vcvode_mem, value vneqs, value vset_
     CHECK_FLAG ("CVDense", flag);
     if (Bool_val (vset_jac)) {
 	flag = CVDlsSetDenseJacFn(cvode_mem, jacfn);
-	CHECK_FLAG("CVDlsSetDenseJacFn", flag);
+	CHECK_DLS_FLAG("CVDlsSetDenseJacFn", flag);
     }
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -694,7 +694,7 @@ CAMLprim value sunml_cvode_dls_lapack_dense (value vcvode_mem, value vneqs,
     CHECK_FLAG ("CVLapackDense", flag);
     if (Bool_val (vset_jac)) {
 	flag = CVDlsSetDenseJacFn (cvode_mem, jacfn);
-	CHECK_FLAG("CVDlsSetDenseJacFn", flag);
+	CHECK_DLS_FLAG("CVDlsSetDenseJacFn", flag);
     }
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -718,7 +718,7 @@ CAMLprim value sunml_cvode_dls_band (value vcvode_mem, value vneqs,
     CHECK_FLAG ("CVBand", flag);
     if (Bool_val (vset_jac)) {
 	flag = CVDlsSetBandJacFn(cvode_mem, bandjacfn);
-	CHECK_FLAG("CVDlsSetBandJacFn", flag);
+	CHECK_DLS_FLAG("CVDlsSetBandJacFn", flag);
     }
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -743,7 +743,7 @@ CAMLprim value sunml_cvode_dls_lapack_band (value vcvode_mem, value vneqs,
     CHECK_FLAG ("CVLapackBand", flag);
     if (Bool_val (vset_jac)) {
 	flag = CVDlsSetBandJacFn(cvode_mem, bandjacfn);
-	CHECK_FLAG("CVDlsSetBandJacFn", flag);
+	CHECK_DLS_FLAG("CVDlsSetBandJacFn", flag);
     }
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -764,10 +764,10 @@ CAMLprim value sunml_cvode_dls_set_linear_solver (value vcvode_mem, value vlsolv
     flag = CVodeSetIterType (cvode_mem, CV_NEWTON);
     CHECK_FLAG ("CVodeSetIterType", flag);
     flag = CVDlsSetLinearSolver(cvode_mem, lsolv, jmat);
-    CHECK_FLAG ("CVDlsSetLinearSolver", flag);
+    CHECK_DLS_FLAG ("CVDlsSetLinearSolver", flag);
     if (Bool_val (vhasjac)) {
 	flag = CVDlsSetJacFn(cvode_mem, jacfn);
-	CHECK_FLAG("CVDlsSetJacFn", flag);
+	CHECK_DLS_FLAG("CVDlsSetJacFn", flag);
     }
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -786,7 +786,7 @@ CAMLprim value sunml_cvode_spils_set_linear_solver (value vcvode_mem, value vlso
     flag = CVodeSetIterType (cvode_mem, CV_NEWTON);
     CHECK_FLAG ("CVodeSetIterType", flag);
     flag = CVSpilsSetLinearSolver(cvode_mem, lsolv);
-    CHECK_FLAG ("CVSpilsSetLinearSolver", flag);
+    CHECK_SPILS_FLAG ("CVSpilsSetLinearSolver", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
@@ -800,7 +800,7 @@ CAMLprim value sunml_cvode_spils_set_preconditioner (value vsession,
     void *mem = CVODE_MEM_FROM_ML (vsession);
     CVSpilsPrecSetupFn setup = Bool_val (vset_precsetup) ? precsetupfn : NULL;
     int flag = CVSpilsSetPreconditioner (mem, setup, precsolvefn);
-    CHECK_FLAG ("CVSpilsSetPreconditioner", flag);
+    CHECK_SPILS_FLAG ("CVSpilsSetPreconditioner", flag);
     CAMLreturn (Val_unit);
 }
 
@@ -826,11 +826,11 @@ CAMLprim value sunml_cvode_spils_set_jac_times(value vdata, value vhas_setup,
     CVSpilsJacTimesVecFn   times = Bool_val (vhas_times) ? jactimesfn : NULL;
 
     int flag = CVSpilsSetJacTimes(CVODE_MEM_FROM_ML(vdata), setup, times);
-    CHECK_FLAG("CVSpilsSetJacTimes", flag);
+    CHECK_SPILS_FLAG("CVSpilsSetJacTimes", flag);
 #else
     CVSpilsJacTimesVecFn times = Bool_val (vhas_times) ? jactimesfn : NULL;
     int flag = CVSpilsSetJacTimesVecFn(CVODE_MEM_FROM_ML(vdata), times);
-    CHECK_FLAG("CVSpilsSetJacTimesVecFn", flag);
+    CHECK_SPILS_FLAG("CVSpilsSetJacTimesVecFn", flag);
 #endif
     CAMLreturn (Val_unit);
 }
@@ -1046,7 +1046,7 @@ CAMLprim value sunml_cvode_get_est_local_errors(value vcvode_mem, value vele)
 }
 
 
-void cvode_ml_check_flag(const char *call, int flag)
+void sunml_cvode_check_flag(const char *call, int flag)
 {
     static char exmsg[MAX_ERRMSG_LEN] = "";
 
@@ -1107,6 +1107,56 @@ void cvode_ml_check_flag(const char *call, int flag)
 	    /* e.g. CVDIAG_MEM_NULL, CVDIAG_ILL_INPUT, CVDIAG_MEM_FAIL */
 	    snprintf(exmsg, MAX_ERRMSG_LEN, "%s: %s", call,
 		    CVodeGetReturnFlagName(flag));
+	    caml_failwith(exmsg);
+    }
+}
+
+void sunml_cvode_check_dls_flag(const char *call, int flag)
+{
+    static char exmsg[MAX_ERRMSG_LEN] = "";
+
+    if (flag == CVDLS_SUCCESS) return;
+
+    switch (flag) {
+	case CVDLS_ILL_INPUT:
+	    caml_raise_constant(CVODE_EXN(IllInput));
+
+	case CVDLS_MEM_FAIL:
+	    caml_raise_out_of_memory();
+
+#if SUNDIALS_LIB_VERSION >= 300
+	case CVDLS_SUNMAT_FAIL:
+#endif
+	case CVDLS_JACFUNC_UNRECVR:
+	case CVDLS_JACFUNC_RECVR:
+	default:
+	    /* e.g. CVDLS_MEM_NULL, CVDLS_LMEM_NULL */
+	    snprintf(exmsg, MAX_ERRMSG_LEN, "%s: %s", call,
+		    CVDlsGetReturnFlagName(flag));
+	    caml_failwith(exmsg);
+    }
+}
+
+void sunml_cvode_check_spils_flag(const char *call, int flag)
+{
+    static char exmsg[MAX_ERRMSG_LEN] = "";
+
+    if (flag == CVSPILS_SUCCESS) return;
+
+    switch (flag) {
+	case CVSPILS_ILL_INPUT:
+	    caml_raise_constant(CVODE_EXN(IllInput));
+
+	case CVSPILS_MEM_FAIL:
+	    caml_raise_out_of_memory();
+
+#if SUNDIALS_LIB_VERSION >+ 300
+	case CVSPILS_SUNLS_FAIL:
+#endif
+	default:
+	    /* e.g. CVSPILS_MEM_NULL, CVSPILS_PMEM_NULL, CVSPILS_LMEM_NULL */
+	    snprintf(exmsg, MAX_ERRMSG_LEN, "%s: %s", call,
+		     CVSpilsGetReturnFlagName(flag));
 	    caml_failwith(exmsg);
     }
 }
@@ -1245,7 +1295,7 @@ CAMLprim value sunml_cvode_spils_set_prec_type(value vcvode_mem, value vptype)
 #if SUNDIALS_LIB_VERSION < 300
     int flag = CVSpilsSetPrecType(CVODE_MEM_FROM_ML(vcvode_mem),
 				  lsolver_precond_type(vptype));
-    CHECK_FLAG("CVSpilsSetPrecType", flag);
+    CHECK_SPILS_FLAG("CVSpilsSetPrecType", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
@@ -1566,7 +1616,7 @@ CAMLprim value sunml_cvode_spils_set_gs_type(value vcvode_mem, value vgstype)
 
     int flag = CVSpilsSetGSType(CVODE_MEM_FROM_ML(vcvode_mem),
 				lsolver_gs_type(vgstype));
-    CHECK_FLAG("CVSpilsSetGSType", flag);
+    CHECK_SPILS_FLAG("CVSpilsSetGSType", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
@@ -1578,7 +1628,7 @@ CAMLprim value sunml_cvode_spils_set_eps_lin(value vcvode_mem, value eplifac)
     CAMLparam2(vcvode_mem, eplifac);
 
     int flag = CVSpilsSetEpsLin(CVODE_MEM_FROM_ML(vcvode_mem), Double_val(eplifac));
-    CHECK_FLAG("CVSpilsSetEpsLin", flag);
+    CHECK_SPILS_FLAG("CVSpilsSetEpsLin", flag);
 
     CAMLreturn (Val_unit);
 }
@@ -1588,7 +1638,7 @@ CAMLprim value sunml_cvode_spils_set_maxl(value vcvode_mem, value maxl)
     CAMLparam2(vcvode_mem, maxl);
 #if SUNDIALS_LIB_VERSION < 300
     int flag = CVSpilsSetMaxl(CVODE_MEM_FROM_ML(vcvode_mem), Int_val(maxl));
-    CHECK_FLAG("CVSpilsSetMaxl", flag);
+    CHECK_SPILS_FLAG("CVSpilsSetMaxl", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
@@ -1678,7 +1728,7 @@ CAMLprim value sunml_cvode_dls_get_work_space(value vcvode_mem)
     long int leniwLS;
 
     int flag = CVDlsGetWorkSpace(CVODE_MEM_FROM_ML(vcvode_mem), &lenrwLS, &leniwLS);
-    CHECK_FLAG("CVDlsGetWorkSpace", flag);
+    CHECK_DLS_FLAG("CVDlsGetWorkSpace", flag);
 
     r = caml_alloc_tuple(2);
     Store_field(r, 0, Val_long(lenrwLS));
@@ -1693,7 +1743,7 @@ CAMLprim value sunml_cvode_dls_get_num_jac_evals(value vcvode_mem)
 
     long int r;
     int flag = CVDlsGetNumJacEvals(CVODE_MEM_FROM_ML(vcvode_mem), &r);
-    CHECK_FLAG("CVDlsGetNumJacEvals", flag);
+    CHECK_DLS_FLAG("CVDlsGetNumJacEvals", flag);
 
     CAMLreturn(Val_long(r));
 }
@@ -1704,7 +1754,7 @@ CAMLprim value sunml_cvode_dls_get_num_rhs_evals(value vcvode_mem)
 
     long int r;
     int flag = CVDlsGetNumRhsEvals(CVODE_MEM_FROM_ML(vcvode_mem), &r);
-    CHECK_FLAG("CVDlsGetNumRhsEvals", flag);
+    CHECK_DLS_FLAG("CVDlsGetNumRhsEvals", flag);
 
     CAMLreturn(Val_long(r));
 }
@@ -1829,7 +1879,7 @@ CAMLprim value sunml_cvode_spils_get_num_lin_iters(value vcvode_mem)
 
     long int r;
     int flag = CVSpilsGetNumLinIters(CVODE_MEM_FROM_ML(vcvode_mem), &r);
-    CHECK_FLAG("CVSpilsGetNumLinIters", flag);
+    CHECK_SPILS_FLAG("CVSpilsGetNumLinIters", flag);
 
     CAMLreturn(Val_long(r));
 }
@@ -1840,7 +1890,7 @@ CAMLprim value sunml_cvode_spils_get_num_conv_fails(value vcvode_mem)
 
     long int r;
     int flag = CVSpilsGetNumConvFails(CVODE_MEM_FROM_ML(vcvode_mem), &r);
-    CHECK_FLAG("CVSpilsGetNumConvFails", flag);
+    CHECK_SPILS_FLAG("CVSpilsGetNumConvFails", flag);
 
     CAMLreturn(Val_long(r));
 }
@@ -1855,7 +1905,7 @@ CAMLprim value sunml_cvode_spils_get_work_space(value vcvode_mem)
     long int leniw;
 
     flag = CVSpilsGetWorkSpace(CVODE_MEM_FROM_ML(vcvode_mem), &lenrw, &leniw);
-    CHECK_FLAG("CVSpilsGetWorkSpace", flag);
+    CHECK_SPILS_FLAG("CVSpilsGetWorkSpace", flag);
 
     r = caml_alloc_tuple(2);
 
@@ -1871,7 +1921,7 @@ CAMLprim value sunml_cvode_spils_get_num_prec_evals(value vcvode_mem)
 
     long int r;
     int flag = CVSpilsGetNumPrecEvals(CVODE_MEM_FROM_ML(vcvode_mem), &r);
-    CHECK_FLAG("CVSpilsGetNumPrecEvals", flag);
+    CHECK_SPILS_FLAG("CVSpilsGetNumPrecEvals", flag);
 
     CAMLreturn(Val_long(r));
 }
@@ -1882,7 +1932,7 @@ CAMLprim value sunml_cvode_spils_get_num_prec_solves(value vcvode_mem)
 
     long int r;
     int flag = CVSpilsGetNumPrecSolves(CVODE_MEM_FROM_ML(vcvode_mem), &r);
-    CHECK_FLAG("CVSpilsGetNumPrecSolves", flag);
+    CHECK_SPILS_FLAG("CVSpilsGetNumPrecSolves", flag);
 
     CAMLreturn(Val_long(r));
 }
@@ -1893,7 +1943,7 @@ CAMLprim value sunml_cvode_spils_get_num_jtsetup_evals(value vcvode_mem)
     long int r;
 #if SUNDIALS_LIB_VERSION >= 300
     int flag = CVSpilsGetNumJTSetupEvals(CVODE_MEM_FROM_ML(vcvode_mem), &r);
-    CHECK_FLAG("CVSpilsGetNumJTSetupEvals", flag);
+    CHECK_SPILS_FLAG("CVSpilsGetNumJTSetupEvals", flag);
 #else
     r = 0;
 #endif
@@ -1906,7 +1956,7 @@ CAMLprim value sunml_cvode_spils_get_num_jtimes_evals(value vcvode_mem)
 
     long int r;
     int flag = CVSpilsGetNumJtimesEvals(CVODE_MEM_FROM_ML(vcvode_mem), &r);
-    CHECK_FLAG("CVSpilsGetNumJtimesEvals", flag);
+    CHECK_SPILS_FLAG("CVSpilsGetNumJtimesEvals", flag);
 
     CAMLreturn(Val_long(r));
 }
@@ -1917,7 +1967,7 @@ CAMLprim value sunml_cvode_spils_get_num_rhs_evals (value vcvode_mem)
 
     long int r;
     int flag = CVSpilsGetNumRhsEvals(CVODE_MEM_FROM_ML(vcvode_mem), &r);
-    CHECK_FLAG("CVSpilsGetNumRhsEvals", flag);
+    CHECK_SPILS_FLAG("CVSpilsGetNumRhsEvals", flag);
 
     CAMLreturn(Val_long(r));
 }

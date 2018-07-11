@@ -20,7 +20,10 @@
 
 #include "../sundials/sundials_ml.h"
 
-void ida_ml_check_flag(const char *call, int flag);
+void sunml_ida_check_flag(const char *call, int flag);
+void sunml_ida_check_dls_flag(const char *call, int flag);
+void sunml_ida_check_spils_flag(const char *call, int flag);
+
 void ida_ml_set_linear_solver(void *ida_mem, value ls, int n);
 
 value ida_make_jac_arg(realtype t, realtype coef, N_Vector y, N_Vector yp,
@@ -29,7 +32,11 @@ value ida_make_triple_tmp(N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
 value ida_make_double_tmp(N_Vector tmp1, N_Vector tmp2);
 
 #define CHECK_FLAG(call, flag) if (flag != IDA_SUCCESS) \
-				 ida_ml_check_flag(call, flag)
+				 sunml_ida_check_flag(call, flag)
+#define CHECK_SPILS_FLAG(call, flag) if (flag != IDASPILS_SUCCESS) \
+				 sunml_ida_check_spils_flag(call, flag)
+#define CHECK_DLS_FLAG(call, flag) if (flag != IDADLS_SUCCESS) \
+				 sunml_ida_check_dls_flag(call, flag)
 
 typedef enum {
     UNRECOVERABLE = 0,
