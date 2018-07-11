@@ -18,7 +18,7 @@ EXAMPLES_SINCE_2_5 = cvAdvDiff_bnd.ml \
 		     $(if $(KLU_ENABLED),cvRoberts_klu.ml) \
 		     $(if $(SUPERLUMT_ENABLED),cvRoberts_sps.ml) \
 
-EXAMPLES_SINCE_3_0 = cvDiurnal_kry_custom.ml
+EXAMPLES_SINCE_3_0 = cvDiurnal_kry_alt.ml
 
 EXAMPLES = $(EXAMPLES_SINCE_2_5) $(EXAMPLES_SINCE_3_0)
 
@@ -31,5 +31,5 @@ LAPACK_EXAMPLES = cvAdvDiff_bndL.ml \
 include ../../examples.mk
 
 $(eval $(call EXECUTION_RULE,cvRoberts_dns_uw_alt,$$<,cvRoberts_dns_uw))
-$(eval $(call EXECUTION_RULE,cvDiurnal_kry_custom,$$<,cvDiurnal_kry))
+$(eval $(call EXECUTION_RULE,cvDiurnal_kry_alt,$$<,cvDiurnal_kry))
 
