@@ -579,9 +579,10 @@ let main () =
   let mukeep = 1 in
   let mlkeep = 1 in
 
+  let lsolver = Ida.Spils.spgmr uu in
   let mem =
     Ida.(init
-      Spils.(solver (spgmr uu)
+      Spils.(solver lsolver
                     Ida_bbd.(prec_left ~dqrely:zero
                                        { mudq; mldq; mukeep; mlkeep }
                                        (reslocal data))
@@ -589,6 +590,9 @@ let main () =
       (SStolerances (rtol,atol))
       (heatres data) ~varid:id t0 uu up)
   in
+  (match Config.sundials_version with
+   | 3,_,_ -> Ida.Spils.set_max_restarts lsolver 5
+   | _ -> ());
   Ida.set_suppress_alg mem true;
   Ida.set_constraints mem constraints;
 
