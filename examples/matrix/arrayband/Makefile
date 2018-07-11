@@ -23,5 +23,8 @@ MATRIX_LBAND ?= 100
 $(eval $(call EXECUTION_RULE,test_sunmatrix_arrayband,$$< $(MATRIX_COLS) $(MATRIX_UBAND) $(MATRIX_LBAND) 0,custom-sundials-rule))
 $(eval $(call EXECUTION_RULE,test_sunmatrix_band,$$< $(MATRIX_COLS) $(MATRIX_UBAND) $(MATRIX_LBAND) 0))
 
+# SUNMatScaleAdd case 2 involves reallocation of the underlying
+# storage and doesn't apply to the OCaml version.
 test_sunmatrix_arrayband.sundials.out: test_sunmatrix_band.sundials.out
-	sed 's/^Band matrix test:/ArrayBand matrix test:/' $< > $@
+	sed -e 's/^Band matrix test:/ArrayBand matrix test:/' \
+	    -e '/SUNMatScaleAdd case 2/ d' $< > $@
