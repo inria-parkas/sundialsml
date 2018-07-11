@@ -311,6 +311,8 @@ module MakeOps =
       for i = 0 to A.length x - 1 do
         A.set z i (1.0 /. (A.get x i))
       done
+
+    let n_vspace (_, ng, comm) = (ng, 2 * Mpi.comm_size comm)
   end
 
 (* (* Too slow *)
@@ -526,7 +528,7 @@ module DataOps =
         A.set z i (1.0 /. (A.get x i))
       done
 
-    let n_vspace (_, ng, comm) = (ng, 2 * MPI.comm_size comm)
+    let n_vspace (_, ng, comm) = (ng, 2 * Mpi.comm_size comm)
   end
 
 
