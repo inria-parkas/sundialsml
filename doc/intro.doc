@@ -2,7 +2,7 @@
 
 {{:https://computation.llnl.gov/casc/sundials/main.html}Sundials} is a
 collection of six numeric solvers: CVODE,  CVODES, IDA, IDAS, ARKODE,
-and KINSOL.
+and KINSOL {{:#refs}\[1\]}.
 It is written by Carol S. Woodward, Daniel R. Reynolds, Alan C. Hindmarsh,
 Slaven Peles, and Lawrence E. Banks at the {e Center for Applied Scientific
 Computing, Lawrence Livermore National Laboratory} with significant
@@ -34,7 +34,8 @@ Support requests should be made to the
 We presented Sundials/ML at the 2016
 {{:https://ocaml.org/meetings/ocaml/2016/}The OCaml Users and Developers Workshop}.
 A brief {{:mlworkshop2016.pdf}technical summary} is included in the proceedings
-of the 2016 {{:http://www.mlworkshop.org/ml2016/}ACM Workshop on ML}.
+of the 2016 {{:http://www.mlworkshop.org/ml2016/}ACM Workshop on ML}
+{{:#refs}\[2\]}.
 
 {3:contents Contents}
 {ul
@@ -380,7 +381,7 @@ the [examples/] subdirectory.
 The library's behaviour can be tested via [make tests.opt.log] which runs the OCaml
 versions and compares their outputs against those of the original C
 versions: they should be identical.
-The library's performance can be analyzed via [make perf.opt.log] which
+The library's performance can be analyzed via [make perf-intv.opt.pdf] which
 produces the graph explained {{:#performance}below}.
 
 The OPAM “pinning” feature is supported: perform step 1 above and then, from
@@ -518,6 +519,13 @@ value of 2 on the left axis means that OCaml is twice as
 slow. The black dots indicate, against the right axis, the execution
 time of the C code.
 
+The colored bars show the confidence intervals of the estimated
+running times. More precisely, let {% $C$ %} and {% $O$ %} be random
+variables representing the running times of an example coded, respectively,
+in C and OCaml. The plot shows the range of {% $r$ %} such that the null
+hypothesis {% $P(rC < O) = P(rC > O)$ %} is {i not} rejected at the 99.5%
+confidence level.
+
 {img perf.opt.png}
 
 The graph shows that the OCaml examles are only sometimes more than 50% slower
@@ -534,8 +542,8 @@ examples are so short that accurate profiling is not possible, i.e.,
 and {{:https://sourceware.org/binutils/docs/gprof/}gprof} simply show 0
 seconds.
 The figures in the graph were obtained by modifying the examples to
-repeatedly execute their [main] functions; we trigger a [Gc.compact] after
-each execution since the C program must call [malloc] and [free].
+repeatedly execute their [main] functions; we trigger a [Gc.compact] at
+the end of each execution since the C program must call [malloc] and [free].
 The number of repetitions varies per example since otherwise the slower
 examples take too long.
 The timings indicated by the dots and the axis at right are calculated by
@@ -544,17 +552,15 @@ All but six of the serial examples ({color #de2d26 red}) run so fast that
 comparisons are made based on tens, or usually hundreds of repetitions and
 in some cases this amplifies factors other than the interface overhead.
 The slowest example, for instance, [kin--ser--kinRoberts_fp] is iterated
-more than 185 000 times to achieve a significant wall clock time.
+more than 170 000 times to achieve a significant wall clock time.
 This means creating and destroying many more data structures than usual for
 such code.
-Running the example without explicit compacts and with a larger minor
-heap ([OCAMLRUNPARAM=s=128M]) decreases the OCaml/C ratio to 2.6.
 
-The parallel examples ({color #fc9272 lighter red}) all have relatively long
-run times and results are obtained without iterating.
-Their OCaml/C ratios are almost all close to 1—the interface and other
-overheads are small compared to the dominating costs of parallelization and
-communication.
+The running times of the parallel examples ({color #fc9272 lighter red})
+often vary considerably between different runs.
+Those with the highest variations—with the exception of
+idaHeat2D_kry_bbd_p—often have relatively long running times
+and the results are obtained in relatively few (< 10) iterations.
 
 We were able to make our OCaml versions much faster (up to 4 times) by:
 {ul
@@ -583,7 +589,7 @@ We were able to make our OCaml versions much faster (up to 4 times) by:
        (projection from a tuple) and direct
        accesses to the underlying array.}
     {- Write numeric expressions and loops according to the advice in
-	{{:#refs}\[2\]}
+	{{:#refs}\[3\]}
        to avoid float ‘boxing’.}
 }
 
@@ -597,7 +603,7 @@ library offers a good comprise for programs combining symbolic manipulation and
 numeric calculation.
 
 The graph above can be generated from the Sundials source by running {[
-cd examples; make perf.opt.log GC_AT_END=1 PERF_DATA_POINTS=10
+cd examples; make perf-intv.opt.pdf GC_AT_END=1 PERF_DATA_POINTS=40
 ]}
 Be sure to build Sundials with [-DCMAKE_BUILD_TYPE=Release] otherwise the
 underlying library is unoptimized.
@@ -612,6 +618,9 @@ underlying library is unoptimized.
       SUNDIALS: Suite of Nonlinear and Differential/Algebraic Equation
       Solvers}},” ACM Transactions on Mathematical Software, 31(3),
       pp. 363-396, 2005.}
+  {- T. Bourke, J. Inoue, and M. Pouzet,
+     “{{:http://inria-parkas.github.io/sundialsml/mlworkshop2016.pdf}{b Sundials/ML: interfacing with numerical solvers}},”
+     ACM Workshop on ML, Nara, Japan, 2016.}
   {- X. Leroy,
      “{{:http://caml.inria.fr/pub/old_caml_site/ocaml/numerical.html}{b Old
       Objective Caml site: Writing efficient numerical code in Objective
