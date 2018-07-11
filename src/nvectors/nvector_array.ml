@@ -233,12 +233,13 @@ module MakeOps =
           A.set z i (1.0 /. (A.get x i))
         done
 
+      let n_vspace x = (A.length x, 1)
     end
 
     let array_nvec_ops = {
           Nvector_custom.n_vcheck        = checkfn;
           Nvector_custom.n_vclone        = DataOps.n_vclone;
-          Nvector_custom.n_vspace        = None;
+          Nvector_custom.n_vspace        = Some DataOps.n_vspace;
           Nvector_custom.n_vlinearsum    = DataOps.n_vlinearsum;
           Nvector_custom.n_vconst        = DataOps.n_vconst;
           Nvector_custom.n_vprod         = DataOps.n_vprod;
@@ -297,6 +298,7 @@ module MakeOps =
       let n_vconstrmask c x m
             = DataOps.n_vconstrmask (unwrap c) (unwrap x) (unwrap m)
       let n_vminquotient n d = DataOps.n_vminquotient (unwrap n) (unwrap d)
+      let n_vspace x = DataOps.n_vspace (unwrap x)
     end
   end
 
@@ -512,12 +514,14 @@ module Array =
         for i = 0 to A.length x - 1 do
           A.set z i (1.0 /. (A.get x i))
         done
+
+      let n_vspace (x : float array) = (A.length x, 1)
     end
 
     let array_nvec_ops = {
           Nvector_custom.n_vcheck        = checkfn;
           Nvector_custom.n_vclone        = DataOps.n_vclone;
-          Nvector_custom.n_vspace        = None;
+          Nvector_custom.n_vspace        = Some DataOps.n_vspace;
           Nvector_custom.n_vlinearsum    = DataOps.n_vlinearsum;
           Nvector_custom.n_vconst        = DataOps.n_vconst;
           Nvector_custom.n_vprod         = DataOps.n_vprod;
@@ -578,6 +582,7 @@ module Array =
       let n_vconstrmask c x m
             = DataOps.n_vconstrmask (unwrap c) (unwrap x) (unwrap m)
       let n_vminquotient n d = DataOps.n_vminquotient (unwrap n) (unwrap d)
+      let n_vspace x = DataOps.n_vspace (unwrap x)
     end
   end
 

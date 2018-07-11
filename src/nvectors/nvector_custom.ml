@@ -189,6 +189,10 @@ module MakeOps = functor (A : sig
       let n_vminquotient = match A.ops.n_vminquotient with
                            | None -> raise OperationNotSupported
                            | Some f -> (fun num denom -> f (uv num) (uv denom))
+
+      let n_vspace = match A.ops.n_vspace with
+                     | None -> raise OperationNotSupported
+                     | Some f -> (fun x -> f (uv x))
     end
 
     module DataOps = struct
@@ -223,6 +227,9 @@ module MakeOps = functor (A : sig
                             | None -> raise OperationNotSupported
                             | Some f -> f
       let n_vminquotient  = match A.ops.n_vminquotient with
+                            | None -> raise OperationNotSupported
+                            | Some f -> f
+      let n_vspace        = match A.ops.n_vspace with
                             | None -> raise OperationNotSupported
                             | Some f -> f
     end

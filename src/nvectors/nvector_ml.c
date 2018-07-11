@@ -874,3 +874,18 @@ CAMLprim value sunml_nvec_ser_n_vminquotient(value vnum, value vdenom)
     CAMLreturn(caml_copy_double(r));
 }
 
+CAMLprim value sunml_nvec_ser_n_vspace(value vx)
+{
+    CAMLparam1(vx);
+    CAMLlocal1(r);
+    sundials_ml_index lrw, liw;
+
+    N_VSpace_Serial(NVEC_VAL(vx), &lrw, &liw);
+
+    r = caml_alloc_tuple(2);
+    Store_field(r, 0, Val_index(lrw));
+    Store_field(r, 1, Val_index(liw));
+
+    CAMLreturn(r);
+}
+

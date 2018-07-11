@@ -123,6 +123,10 @@ module type NVECTOR_OPS =
     (** [n_vminquotient num denom] returns the minimum of [num(i) / denom(i)].
         Zero [denom] elements are skipped. *)
     val n_vminquotient  : t -> t -> float
+
+    (** [lrw, liw = n_vspace c] returns the number of realtype words [lrw] and
+        integer words [liw] required to store [c]. *)
+    val n_vspace : t -> int * int
   end
 
 (** Basic structure of a concrete nvector implementation module. *)

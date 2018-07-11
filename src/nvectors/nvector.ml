@@ -47,6 +47,8 @@ module type NVECTOR_OPS =
     val n_vwrmsnormmask : t -> t -> t -> float
     val n_vconstrmask   : t -> t -> t -> bool
     val n_vminquotient  : t -> t -> float
+
+    val n_vspace        : t -> int * int
   end
 
 module type NVECTOR =

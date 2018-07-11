@@ -83,6 +83,8 @@ module Ops = struct
   external n_vminquotient  : t -> t -> float
     = "sunml_nvec_ser_n_vminquotient"
 
+  external n_vspace  : t -> int * int
+    = "sunml_nvec_ser_n_vspace"
 end
 
 (* (* Too slow! *)
@@ -292,5 +294,6 @@ module DataOps =
         A.set z i (1.0 /. (A.get x i))
       done
 
+    let n_vspace (x : t) = (A.dim x, 1)
   end
 

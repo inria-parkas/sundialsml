@@ -84,5 +84,7 @@ module Ops = struct
   external n_vminquotient  : t -> t -> float
     = "sunml_nvec_pthreads_n_vminquotient"
 
+  external n_vspace  : t -> int * int
+    = "sunml_nvec_pthreads_n_vspace"
 end
 

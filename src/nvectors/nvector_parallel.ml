@@ -106,6 +106,8 @@ module Ops = struct
   external n_vminquotient  : t -> t -> float
     = "sunml_nvec_par_n_vminquotient"
 
+  external n_vspace  : t -> int * int
+    = "sunml_nvec_par_n_vspace"
 end
 
 module MakeOps =
@@ -523,6 +525,8 @@ module DataOps =
       for i = 0 to A.dim x - 1 do
         A.set z i (1.0 /. (A.get x i))
       done
+
+    let n_vspace (_, ng, comm) = (ng, 2 * MPI.comm_size comm)
   end
 
 
