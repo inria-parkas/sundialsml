@@ -22,10 +22,13 @@
 #include <sunmatrix/sunmatrix_band.h>
 #include <sunmatrix/sunmatrix_sparse.h>
 
-#else // SUNDIALS_LIB_VERSION < 300
+#elif SUNDIALS_LIB_VERSION >= 260 // 260 <= SUNDIALS_LIB_VERSION < 300
 #include <sundials/sundials_types.h>
 #include <sundials/sundials_direct.h>
 #include <sundials/sundials_sparse.h>
+#else // SUNDIALS_LIB_VERSION < 260
+#include <sundials/sundials_types.h>
+#include <sundials/sundials_direct.h>
 #endif
 
 #include <sundials/sundials_dense.h>
@@ -740,6 +743,126 @@ CAMLprim value c_matrix_band_wrap(DlsMat a)
  * SUNMatScaleAdd_Sparse functions so that they update the OCaml payload
  * when the C data structures are reallocated.
  */
+#if SUNDIALS_LIB_VERSION < 260
+CAMLprim value sunml_matrix_sparse_create(value vm, value vn, value vnnz,
+				       value vsformat)
+{
+    CAMLparam4(vm, vn, vnnz, vsformat);
+    CAMLreturn(Val_unit);
+}
+
+// Adapted directly from SUNSparseFromDenseMatrix
+CAMLprim value sunml_matrix_sparse_from_dense(value vsformat, value vcptrad,
+					   value vdroptol)
+{
+    CAMLparam3(vsformat, vcptrad, vdroptol);
+    CAMLreturn(Val_unit);
+}
+
+// Adapted directly from SUNSparseFromBandMatrix
+CAMLprim value sunml_matrix_sparse_from_band(value vsformat, value vcptrab,
+					  value vdroptol)
+{
+    CAMLparam3(vsformat, vcptrab, vdroptol);
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim value sunml_matrix_sparse_size(value vcptr)
+{
+    CAMLparam1(vcptr);
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim value sunml_matrix_sparse_dims(value vcptr)
+{
+    CAMLparam1(vcptr);
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim void sunml_matrix_sparse_scale_add(value vc, value va, value vcptrb)
+{
+    CAMLparam3(vc, va, vcptrb);
+    CAMLreturn0;
+}
+
+CAMLprim void sunml_matrix_sparse_scale_addi(value vc, value va)
+{
+    CAMLparam2(vc, va);
+    CAMLreturn0;
+}
+
+CAMLprim void sunml_matrix_sparse_matvec(value vcptra, value vx, value vy)
+{
+    CAMLparam3(vcptra, vx, vy);
+    CAMLreturn0;
+}
+
+CAMLprim void sunml_matrix_sparse_resize(value va, value vnnz, value vcopy)
+{
+    CAMLparam3(va, vnnz, vcopy);
+    CAMLreturn0;
+}
+
+CAMLprim void sunml_matrix_sparse_copy(value vcptra, value vb)
+{
+    CAMLparam2(vcptra, vb);
+    CAMLreturn0;
+}
+
+CAMLprim value sunml_matrix_sparse_space(value vcptr)
+{
+    CAMLparam1(vcptr);
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim void sunml_matrix_sparse_set_idx(value vcptr, value vj, value vidx)
+{
+    CAMLparam3(vcptr, vj, vidx);
+    CAMLreturn0;
+}
+
+CAMLprim value sunml_matrix_sparse_get_idx(value vcptr, value vj)
+{
+    CAMLparam2(vcptr, vj);
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim void sunml_matrix_sparse_set_data(value vcptr, value vj, value vv)
+{
+    CAMLparam3(vcptr, vj, vv);
+    CAMLreturn0;
+}
+
+CAMLprim value sunml_matrix_sparse_get_val(value vcptr, value vj)
+{
+    CAMLparam2(vcptr, vj);
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim void sunml_matrix_sparse_set_val(value vcptr, value vj, value vv)
+{
+    CAMLparam3(vcptr, vj, vv);
+    CAMLreturn0;
+}
+
+CAMLprim value sunml_matrix_sparse_get_data(value vcptr, value vj)
+{
+    CAMLparam2(vcptr, vj);
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim value sunml_matrix_sparse_rewrap(value vm)
+{
+    CAMLparam1(vm);
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim void sunml_matrix_sparse_set_to_zero(value vcptr)
+{
+    CAMLparam1(vcptr);
+    CAMLreturn0;
+}
+#else
 
 static void finalize_mat_content_sparse(value vcptra)
 {
@@ -1961,6 +2084,8 @@ CAMLprim void sunml_matrix_sparse_set_to_zero(value vcptr)
 
     CAMLreturn0;
 }
+
+#endif
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * Matrix

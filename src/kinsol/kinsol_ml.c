@@ -960,7 +960,9 @@ void sunml_kinsol_check_dls_flag(const char *call, int flag)
 #if SUNDIALS_LIB_VERSION >= 300
 	case KINDLS_SUNMAT_FAIL:
 #endif
+#if SUNDIALS_LIB_VERSION >= 260
 	case KINDLS_JACFUNC_ERR:
+#endif
 	default:
 	    /* e.g. KINDLS_MEM_NULL, KINDLS_LMEM_NULL */
 	    snprintf(exmsg, MAX_ERRMSG_LEN, "%s: %s", call,

@@ -18,9 +18,11 @@
 
 #if SUNDIALS_LIB_VERSION >= 300
 #include <sundials/sundials_matrix.h>
-#else
+#elif SUNDIALS_LIB_VERSION >= 260
 #include <sundials/sundials_dense.h>
 #include <sundials/sundials_sparse.h>
+#else
+#include <sundials/sundials_dense.h>
 #endif
 
 /*  OCaml matrix interface : Sundials >= 3.0.0
@@ -194,7 +196,7 @@ struct csmat {
 // MAT_VAL turns an OCaml Matrix.t into a c-sunmatrix
 #define MAT_VAL(v) (MAT_CVAL(Field(v, RECORD_MAT_MATRIX_RAWPTR)))
 
-#else // SUNDIALS_LIB_VERSION < 300
+#elif SUNDIALS_LIB_VERSION >= 260 // 260 <= SUNDIALS_LIB_VERSION < 300
 #define DLSMAT(v) (*(DlsMat *)Data_custom_val(v))
 #define SLSMAT(v) (*(SlsMat *)Data_custom_val(v))
 
@@ -210,6 +212,18 @@ CAMLprim value c_matrix_band_wrap(DlsMat a);
 
 CAMLprim value c_matrix_sparse_wrap(SlsMat a);
 CAMLprim value ml_matrix_sparse_rewrap(value vm);
+
+#else // SUNDIALS_LIB_VERSION < 260
+
+#define DLSMAT(v) (*(DlsMat *)Data_custom_val(v))
+
+#define MAT_CONTENT_DENSE(v)  DLSMAT(v)
+#define MAT_CONTENT_BAND(v)   DLSMAT(v)
+#define MAT_CONTENT_DENSE_TYPE DlsMat
+#define MAT_CONTENT_BAND_TYPE DlsMat
+
+CAMLprim value c_matrix_dense_wrap(DlsMat a);
+CAMLprim value c_matrix_band_wrap(DlsMat a);
 
 #endif
 

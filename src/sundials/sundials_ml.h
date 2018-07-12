@@ -27,6 +27,12 @@
 #include <stdio.h>
 #include <assert.h>
 
+#if SUNDIALS_LIB_VERSION < 260
+#define SUNMAX(A, B) ((A) > (B) ? (A) : (B))
+#define SUNMIN(A, B) ((A) < (B) ? (A) : (B))
+#define SUNSQR(A) ((A)*(A))
+#endif
+
 void sunml_warn_discarded_exn (value exn, const char *context);
 
 /* Sundials and integers

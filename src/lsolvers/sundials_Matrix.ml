@@ -454,6 +454,8 @@ module Sparse = struct (* {{{ *)
     end;
     if Sundials_configuration.safe then
       (match Config.sundials_version, sformat with
+       | (2,v,_), _ when v < 6 ->
+           raise Config.NotImplementedBySundialsVersion
        | (2,v,_), CSR when v < 7 ->
            raise Config.NotImplementedBySundialsVersion
        | _ -> ());
@@ -468,6 +470,8 @@ module Sparse = struct (* {{{ *)
     if Sundials_configuration.safe && droptol < 0.0 then invalid_arg "droptol";
     if Sundials_configuration.safe then
       (match Config.sundials_version, sformat with
+       | (2,v,_), _ when v < 6 ->
+           raise Config.NotImplementedBySundialsVersion
        | (2,v,_), CSR when v < 7 ->
            raise Config.NotImplementedBySundialsVersion
        | _ -> ());
@@ -482,6 +486,8 @@ module Sparse = struct (* {{{ *)
     if Sundials_configuration.safe && droptol < 0.0 then invalid_arg "droptol";
     if Sundials_configuration.safe then
       (match Config.sundials_version, sformat with
+       | (2,v,_), _ when v < 6 ->
+           raise Config.NotImplementedBySundialsVersion
        | (2,v,_), CSR when v < 7 ->
            raise Config.NotImplementedBySundialsVersion
        | _ -> ());
@@ -1085,7 +1091,11 @@ let band ?(mu=2) ?smu ?ml ?(i=0.0) n =
   let ml  = match ml with Some ml -> ml | None -> mu in
   wrap_band (Band.(make { n; mu; smu; ml } i))
 
-let wrap_sparse (data : 'f Sparse.t) = {
+let wrap_sparse (data : 'f Sparse.t) =
+  (match Config.sundials_version with
+   | (2,v,_) when v < 6 -> raise Config.NotImplementedBySundialsVersion
+   | _ -> ());
+  {
     payload = data;
     rawptr  = c_wrap Sparse data.rawptr data;
     id      = Sparse;
