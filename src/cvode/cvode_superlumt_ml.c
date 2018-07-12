@@ -80,7 +80,7 @@ static int jacfn(
     cb = Field (cb, 0);
 
     // always rewrap without caching (simplified backwards compatibility)
-    args[1] = c_matrix_sparse_wrap(Jac);
+    args[1] = sunml_matrix_sparse_wrap(Jac);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callbackN_exn (Field(cb, 0), 2, args);

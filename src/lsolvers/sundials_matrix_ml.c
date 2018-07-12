@@ -119,7 +119,7 @@ CAMLprim value sunml_matrix_dense_create(value vm, value vn)
 }
 
 #if SUNDIALS_LIB_VERSION < 300
-CAMLprim value c_matrix_dense_wrap(DlsMat a)
+CAMLprim value sunml_matrix_dense_wrap(DlsMat a)
 {
     CAMLparam0();
     CAMLlocal3(vcptr, vcontent, vr);
@@ -696,7 +696,7 @@ CAMLprim void sunml_matrix_band_matvec(value va, value vx, value vy)
 }
 
 #if SUNDIALS_LIB_VERSION < 300
-CAMLprim value c_matrix_band_wrap(DlsMat a)
+CAMLprim value sunml_matrix_band_wrap(DlsMat a)
 {
     CAMLparam0();
     CAMLlocal3(vcptr, vcontent, vr);
@@ -2053,7 +2053,7 @@ CAMLprim value sunml_matrix_sparse_rewrap(value vm)
 }
 
 #if SUNDIALS_LIB_VERSION < 300
-CAMLprim value c_matrix_sparse_wrap(SlsMat a)
+CAMLprim value sunml_matrix_sparse_wrap(SlsMat a)
 {
     CAMLparam0();
     CAMLlocal3(vpayload, vcptr, vr);

@@ -274,7 +274,7 @@ static int jacfn (long int neq,
 
     dmat = Field(cb, 1);
     if (dmat == Val_none) {
-	Store_some(dmat, c_matrix_dense_wrap(jac));
+	Store_some(dmat, sunml_matrix_dense_wrap(jac));
 	Store_field(cb, 1, dmat);
     }
 
@@ -312,7 +312,7 @@ static int bandjacfn (long int neq,
 
     bmat = Field(cb, 1);
     if (bmat == Val_none) {
-	Store_some(bmat, c_matrix_band_wrap(jac));
+	Store_some(bmat, sunml_matrix_band_wrap(jac));
 	Store_field(cb, 1, bmat);
     }
 

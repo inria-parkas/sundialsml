@@ -73,7 +73,7 @@ static int jacfn(
     cb = Field (cb, 0);
     smat = Field(cb, 1);
     if (smat == Val_none) {
-	Store_some(smat, c_matrix_sparse_wrap(Jac));
+	Store_some(smat, sunml_matrix_sparse_wrap(Jac));
 	Store_field(cb, 1, smat);
 
 	args[1] = Some_val(smat);

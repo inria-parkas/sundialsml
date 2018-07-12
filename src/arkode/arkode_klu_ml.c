@@ -82,7 +82,7 @@ static int jacfn(realtype t,
     cb = Field (cb, 0);
     smat = Field(cb, 1);
     if (smat == Val_none) {
-	Store_some(smat, c_matrix_sparse_wrap(Jac));
+	Store_some(smat, sunml_matrix_sparse_wrap(Jac));
 	Store_field(cb, 1, smat);
 	args[1] = Some_val(smat);
     } else {
@@ -186,7 +186,7 @@ static int massfn(realtype t,
     cb = Field (cb, 0);
     smat = Field(cb, 1);
     if (smat == Val_none) {
-	Store_some(smat, c_matrix_sparse_wrap(M));
+	Store_some(smat, sunml_matrix_sparse_wrap(M));
 	Store_field(cb, 1, smat);
 	args[2] = Some_val(smat);
     } else {

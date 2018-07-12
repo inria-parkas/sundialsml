@@ -63,7 +63,7 @@ static int jacfn_nosens( /* CVSlsSparseJacFnB */
 
     smat = Field(cb, 1);
     if (smat == Val_none) {
-	Store_some(smat, c_matrix_sparse_wrap(jacb));
+	Store_some(smat, sunml_matrix_sparse_wrap(jacb));
 	Store_field(cb, 1, smat);
 
 	args[1] = Some_val(smat);
@@ -110,7 +110,7 @@ static int jacfn_withsens( /* CVSlsSparseJacFnBS */
 
     smat = Field(cb, 1);
     if (smat == Val_none) {
-	Store_some(smat, c_matrix_sparse_wrap(jacb));
+	Store_some(smat, sunml_matrix_sparse_wrap(jacb));
 	Store_field(cb, 1, smat);
 
 	args[2] = Some_val(smat);

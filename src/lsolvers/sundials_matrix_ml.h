@@ -207,11 +207,11 @@ struct csmat {
 #define MAT_CONTENT_BAND_TYPE DlsMat
 #define MAT_CONTENT_SPARSE_TYPE SlsMat
 
-CAMLprim value c_matrix_dense_wrap(DlsMat a);
-CAMLprim value c_matrix_band_wrap(DlsMat a);
+CAMLprim value sunml_matrix_dense_wrap(DlsMat a);
+CAMLprim value sunml_matrix_band_wrap(DlsMat a);
 
-CAMLprim value c_matrix_sparse_wrap(SlsMat a);
-CAMLprim value ml_matrix_sparse_rewrap(value vm);
+CAMLprim value sunml_matrix_sparse_wrap(SlsMat a);
+CAMLprim value sunml_matrix_sparse_rewrap(value vm);
 
 #else // SUNDIALS_LIB_VERSION < 260
 
@@ -222,8 +222,8 @@ CAMLprim value ml_matrix_sparse_rewrap(value vm);
 #define MAT_CONTENT_DENSE_TYPE DlsMat
 #define MAT_CONTENT_BAND_TYPE DlsMat
 
-CAMLprim value c_matrix_dense_wrap(DlsMat a);
-CAMLprim value c_matrix_band_wrap(DlsMat a);
+CAMLprim value sunml_matrix_dense_wrap(DlsMat a);
+CAMLprim value sunml_matrix_band_wrap(DlsMat a);
 
 #endif
 

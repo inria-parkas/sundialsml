@@ -66,7 +66,7 @@ static int jacfn_nosens( /* IDASlsSparseJacFnB */
 
     smat = Field(cb, 1);
     if (smat == Val_none) {
-	Store_some(smat, c_matrix_sparse_wrap(jacB));
+	Store_some(smat, sunml_matrix_sparse_wrap(jacB));
 	Store_field(cb, 1, smat);
 
 	args[1] = Some_val(smat);
@@ -118,7 +118,7 @@ static int jacfn_withsens( /* IDASlsSparseJacFnB */
 
     smat = Field(cb, 1);
     if (smat == Val_none) {
-	Store_some(smat, c_matrix_sparse_wrap(jacB));
+	Store_some(smat, sunml_matrix_sparse_wrap(jacB));
 	Store_field(cb, 1, smat);
 
 	args[3] = Some_val(smat);

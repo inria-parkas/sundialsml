@@ -417,7 +417,7 @@ static int jacfn(long int n,
     cb = Field (cb, 0);
     dmat = Field(cb, 1);
     if (dmat == Val_none) {
-	Store_some(dmat, c_matrix_dense_wrap(Jac));
+	Store_some(dmat, sunml_matrix_dense_wrap(Jac));
 	Store_field(cb, 1, dmat);
     }
 
@@ -453,7 +453,7 @@ static int bandjacfn(long int N,
 
     bmat = Field(cb, 1);
     if (bmat == Val_none) {
-	Store_some(bmat, c_matrix_band_wrap(Jac));
+	Store_some(bmat, sunml_matrix_band_wrap(Jac));
 	Store_field(cb, 1, bmat);
     }
 
@@ -971,7 +971,7 @@ static int massfn(long int n,
     cb = Field (cb, 0);
     dmat = Field(cb, 1);
     if (dmat == Val_none) {
-	Store_some(dmat, c_matrix_dense_wrap(M));
+	Store_some(dmat, sunml_matrix_dense_wrap(M));
 	Store_field(cb, 1, dmat);
     }
 
@@ -1005,7 +1005,7 @@ static int bandmassfn(long int N,
 
     bmat = Field(cb, 1);
     if (bmat == Val_none) {
-	Store_some(bmat, c_matrix_band_wrap(M));
+	Store_some(bmat, sunml_matrix_band_wrap(M));
 	Store_field(cb, 1, bmat);
     }
 

@@ -290,7 +290,7 @@ static int jacfn(
 
     dmat = Field(cb, 1);
     if (dmat == Val_none) {
-	Store_some(dmat, c_matrix_dense_wrap(Jac));
+	Store_some(dmat, sunml_matrix_dense_wrap(Jac));
 	Store_field(cb, 1, dmat);
     }
 
@@ -324,7 +324,7 @@ static int bandjacfn(
 
     bmat = Field(cb, 1);
     if (bmat == Val_none) {
-	Store_some(bmat, c_matrix_band_wrap(Jac));
+	Store_some(bmat, sunml_matrix_band_wrap(Jac));
 	Store_field(cb, 1, bmat);
     }
 
@@ -959,8 +959,6 @@ void sunml_kinsol_check_dls_flag(const char *call, int flag)
 
 #if SUNDIALS_LIB_VERSION >= 300
 	case KINDLS_SUNMAT_FAIL:
-#endif
-#if SUNDIALS_LIB_VERSION >= 260
 	case KINDLS_JACFUNC_ERR:
 #endif
 	default:

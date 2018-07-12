@@ -79,7 +79,7 @@ static int jacfn (realtype t, realtype coef,
     smat = Field(cb, 1);
 
     if (smat == Val_none) {
-	Store_some(smat, c_matrix_sparse_wrap(jac));
+	Store_some(smat, sunml_matrix_sparse_wrap(jac));
 	Store_field(cb, 1, smat);
 
 	args[1] = Some_val(smat);
