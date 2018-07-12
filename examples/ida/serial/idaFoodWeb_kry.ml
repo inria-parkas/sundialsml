@@ -235,7 +235,7 @@ let web_rates webdata x y ((cxy : RealArray.t), cxy_off)
  * This routine computes the right-hand sides of the system equations,
  * consisting of the diffusion term and interaction term.
  * The interaction term is computed by the function WebRates.  *)
-let fweb webdata t c (crate : RealArray.t) =
+let fweb webdata t (c : RealArray.t) (crate : RealArray.t) =
   let cox = webdata.cox
   and coy = webdata.coy in
   (* Loop over grid points, evaluate interaction vector (length ns), form
@@ -274,7 +274,7 @@ let fweb webdata t c (crate : RealArray.t) =
 (* System residual function for predator-prey system.  This routine calls fweb
  * to get all the right-hand sides of the equations, then loads the residual
  * vector accordingly, using c' in the case of prey species.  *)
-let resweb webdata t c (c' : RealArray.t) res =
+let resweb webdata t (c : RealArray.t) (c' : RealArray.t) res =
   let np = webdata.np in
 
   (* Call Fweb to set res to vector of right-hand sides. *)

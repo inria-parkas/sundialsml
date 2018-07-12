@@ -526,10 +526,11 @@ in C and OCaml. The plot shows the range of {% $r$ %} such that the null
 hypothesis {% $P(rC < O) = P(rC > O)$ %} is {i not} rejected at the 99.5%
 confidence level.
 
-{img perf.opt.png}
+{img perf-intv.opt.png}
 
-The graph shows that the OCaml examles are only sometimes more than 50% slower
-than the original ones.
+The {{:perf-intv.opt.pdf}graph} shows that the OCaml examples are usually
+less than 50% slower than the original ones, sometimes up to 100% slower,
+and only very rarely any slower than that.
 The [*_custom] example ({color #deebf7 light blue}) uses custom nvectors
 with low-level operations in OCaml and the [*_alt] examples ({color #9ecae1
 darker blue}) use linear solvers implemented in OCaml.
