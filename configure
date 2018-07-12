@@ -450,6 +450,10 @@ query="SUNDIALS_PACKAGE_VERSION"
 sundials_version=`printf "#include %s\n%s" "${include}" "${query}" \
 		    | ${CPP} ${cppflags} ${Isundials_inc_path} -P 2>>${logfile} \
 		    | tail -1 | sed -e 's/ //g' -e 's/"//g'`
+if [ x"${sundials_version}" = x ]; then
+    sundials_version="UNKNOWN"
+    sundials=0
+fi
 Lsundials_arkode=
 arkode_mlobj_main=
 arkode_cobj_main=
