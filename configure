@@ -24,6 +24,7 @@ other_tweaks=
 unset EXAMPLESROOT
 debug_configure=false
 logfile=/dev/null
+bounds_checking=1
 
 configure_command="$0"
 
@@ -318,8 +319,6 @@ if [ "x${prefix}" = x ]; then
 	    fi
     esac
 fi
-
-bounds_checking=${bounds_checking:-1}
 
 if [ ${bounds_checking} -eq 0 ]; then
     ocamloptflags="-unsafe ${ocamloptflags}"
@@ -1380,7 +1379,7 @@ if [ "x${nvecopenmp_enabled}" = x ]; then
 else
     echo "let nvecopenmp_enabled = true"  >> src/sundials/sundials_configuration.ml
 fi
-if [ "x${bounds_checking}" = x ]; then
+if [ "x${bounds_checking}" = x0 ]; then
     echo "let safe = false" >> src/sundials/sundials_configuration.ml
 else
     echo "let safe = true"  >> src/sundials/sundials_configuration.ml

@@ -94,6 +94,8 @@ OCAML_IDAS_LIBLINK   = $(filter-out $(OCAML_ALL_LIBLINK), $(IDAS_LDFLAGS))
 OCAML_KINSOL_LIBLINK = $(filter-out $(OCAML_ALL_LIBLINK), $(KINSOL_LDFLAGS))
 OCAML_MPI_LIBLINK = -lsundials_nvecparallel
 
+BOUNDS_CHECKING = @bounds_checking@
+
 OCAML ?= @OCAMLBIN@ocaml
 
 OCAMLMPI ?= @ocamlmpi_path@

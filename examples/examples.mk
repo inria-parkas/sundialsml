@@ -288,9 +288,14 @@ perf-intv.byte.log perf-intv.opt.log: perf-intv.%.log: perf-intv.%.cache      \
 	$(UTILS)/crunchperf -s $< > $@
 	@cat $@
 
+ifeq ($(bounds_checking),0)
+OCAML_CONFIG=$(OCAML_VERSION), -unsafe
+else
+OCAML_CONFIG=$(OCAML_VERSION)
+endif
 C_TITLE=C ($(CC) $(filter-out -I% -DNDEBUG=1,$(CFLAGS)))
-NATIVE_TITLE='OCaml ($(OCAML_VERSION)) native code performance over $(C_TITLE)'
-BYTE_TITLE  ='OCaml ($(OCAML_VERSION)) byte code performance over $(C_TITLE)'
+NATIVE_TITLE='OCaml ($(OCAML_CONFIG)) native code performance over $(C_TITLE)'
+BYTE_TITLE  ='OCaml ($(OCAML_CONFIG)) byte code performance over $(C_TITLE)'
 PLOTTYPES=jpg png pdf eps
 
 perf.opt.plot: perf.opt.log
