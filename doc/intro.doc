@@ -534,6 +534,11 @@ and only very rarely any slower than that.
 The [*_custom] example ({color #deebf7 light blue}) uses custom nvectors
 with low-level operations in OCaml and the [*_alt] examples ({color #9ecae1
 darker blue}) use linear solvers implemented in OCaml.
+The OCaml library and examples were compiled in “unsafe” mode, that is,
+without array bounds and other safety checks—the C code does not perform
+these checks either.
+The {{:perf-intv-safe.opt.pdf}results with safety checks} are also
+available.
 
 This conclusion seems reasonable as a first approximation, but several
 details of the analysis process and individual results show that the real
@@ -608,6 +613,7 @@ cd examples; make perf-intv.opt.pdf GC_AT_END=1 PERF_DATA_POINTS=40
 ]}
 Be sure to build Sundials with [-DCMAKE_BUILD_TYPE=Release] otherwise the
 underlying library is unoptimized.
+Sundials/ML should be configured with [-unsafe].
 
 {2:refs References}
 
