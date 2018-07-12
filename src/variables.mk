@@ -190,10 +190,11 @@ INSTALL_CMI=$(CMI_MAIN) $(CMI_SENS)			\
 	    $(if $(PTHREADS_ENABLED),$(CMI_PTHREADS))	\
 	    $(if $(OPENMP_ENABLED),$(CMI_OPENMP))
 
-INSTALL_CMX=$(MLOBJ_MAIN:.cmo=.cmx)				\
-	    $(MLOBJ_SENS:.cmo=.cmx) $(MLOBJ_NO_SENS:.cmo=.cmx)	\
-	    $(MLOBJ_MPI:.cmo=.cmx) $(MLOBJ_OPENMP:.cmo=.cmx)	\
-	    $(MLOBJ_PTHREADS:.cmo=.cmx)
+INSTALL_CMX=$(MLOBJ_MAIN:.cmo=.cmx) $(MLOBJ_SENS:.cmo=.cmx)	  \
+	    $(MLOBJ_NO_SENS:.cmo=.cmx)				  \
+	    $(if $(MPI_ENABLED),$(MLOBJ_MPI:.cmo=.cmx))		  \
+	    $(if $(PTHREADS_ENABLED),$(MLOBJ_PTHREADS:.cmo=.cmx)) \
+	    $(if $(OPENMP_ENABLED),$(MLOBJ_OPENMP:.cmo=.cmx))
 
 INSTALL_MLI=$(CMI_MAIN:.cmi=.mli) $(CMI_SENS:.cmi=.mli)
 
