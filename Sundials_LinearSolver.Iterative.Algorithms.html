@@ -1,0 +1,141 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Sundials_LinearSolver.Iterative.Custom.html">
+<link rel="Up" href="Sundials_LinearSolver.Iterative.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials_Index" rel="Chapter" href="Sundials_Index.html">
+<link title="Sundials_Config" rel="Chapter" href="Sundials_Config.html">
+<link title="Sundials_RealArray" rel="Chapter" href="Sundials_RealArray.html">
+<link title="Sundials_RealArray2" rel="Chapter" href="Sundials_RealArray2.html">
+<link title="Sundials_LintArray" rel="Chapter" href="Sundials_LintArray.html">
+<link title="Sundials_Logfile" rel="Chapter" href="Sundials_Logfile.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Sundials_Matrix" rel="Chapter" href="Sundials_Matrix.html">
+<link title="Sundials_LinearSolver" rel="Chapter" href="Sundials_LinearSolver.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Arkode" rel="Chapter" href="Arkode.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Arkode_bbd" rel="Chapter" href="Arkode_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Nvector_openmp" rel="Chapter" href="Nvector_openmp.html">
+<link title="Nvector_pthreads" rel="Chapter" href="Nvector_pthreads.html"><title>Sundials/ML 3.1.1p0 : Sundials_LinearSolver.Iterative.Algorithms</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Sundials_LinearSolver.Iterative.Custom.html" title="Sundials_LinearSolver.Iterative.Custom">Previous</a>
+&nbsp;<a class="up" href="Sundials_LinearSolver.Iterative.html" title="Sundials_LinearSolver.Iterative">Up</a>
+&nbsp;</div>
+<h1>Module <a href="type_Sundials_LinearSolver.Iterative.Algorithms.html">Sundials_LinearSolver.Iterative.Algorithms</a></h1>
+
+<pre><span id="MODULEAlgorithms"><span class="keyword">module</span> Algorithms</span>: <code class="code"><span class="keyword">sig</span></code> <a href="Sundials_LinearSolver.Iterative.Algorithms.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+<div class="info-desc">
+<p>Low-level routines on arrays.</p>
+</div>
+</div>
+<hr width="100%">
+<p>Scaled Preconditioned Iterative Linear Solvers routines.</p>
+
+<p>Global constants and general purpose solver routines.</p>
+
+<pre><span id="VALqr_fact"><span class="keyword">val</span> qr_fact</span> : <code class="type">int -> Sundials.RealArray2.t -> Sundials.RealArray.t -> bool -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Performs a QR factorization of a Hessenberg matrix.
+      The call <code class="code">qr_fact&nbsp;n&nbsp;h&nbsp;q&nbsp;factored</code>, where <code class="code">h</code> is the <code class="code">n+1</code> by <code class="code">n</code>
+      Hessenberg matrix (stored row-wise), <code class="code">q</code> stores the computed Givens
+      rotation, and <code class="code">factored=<span class="keyword">true</span></code> indicates that the first <code class="code">n-1</code> columns of
+      <code class="code">h</code> have already been factored. The computed Givens rotation has the
+      form $\begin{bmatrix} c & -s \\ s & c \end{bmatrix}$ . It is
+      stored in the <code class="code">2n</code> elements of <code class="code">q</code> as <code class="code">[|c;&nbsp;s;&nbsp;c;&nbsp;s;&nbsp;...;&nbsp;c;&nbsp;s|]</code>.</p>
+</div>
+<ul class="info-attributes">
+<div class="raisedexceptions"><span class="raises">Raises</span> <code>Matrix.ZeroDiagonalElement</code> Zero found in matrix diagonal</div>
+</ul>
+</div>
+
+<pre><span id="VALqr_sol"><span class="keyword">val</span> qr_sol</span> : <code class="type">int -><br>       Sundials.RealArray2.t -> Sundials.RealArray.t -> Sundials.RealArray.t -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Solve the linear least squares problem. In
+      <code class="code">qr_sol&nbsp;n&nbsp;h&nbsp;q&nbsp;b</code>, <code class="code">h</code> and <code class="code">q</code> are, respectively, the upper triangular
+      factor $R$ of the original Hessenberg matrix and <code class="code"><span class="constructor">Q</span></code> the Givens
+      rotations used to factor it—both computed by <a href="Sundials_LinearSolver.Iterative.Algorithms.html#VALqr_fact"><code class="code"><span class="constructor">Sundials_LinearSolver</span>.<span class="constructor">Iterative</span>.<span class="constructor">Algorithms</span>.qr_fact</code></a>. The function
+      computes the <code class="code">n+1</code> elements of <code class="code">b</code> to solve $Rx = Qb$.</p>
+</div>
+<ul class="info-attributes">
+<div class="raisedexceptions"><span class="raises">Raises</span> <code>Matrix.ZeroDiagonalElement</code> Zero found in matrix diagonal</div>
+</ul>
+</div>
+
+<pre><span id="VALmodified_gs"><span class="keyword">val</span> modified_gs</span> : <code class="type">('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> array -> Sundials.RealArray2.t -> int -> int -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p>Performs a modified Gram-Schmidt orthogonalization. In
+      <code class="code">modified_gs&nbsp;v&nbsp;h&nbsp;k&nbsp;p</code>,</p>
+<ul>
+<li><code class="code">v</code> is an array of at least <code class="code">k&nbsp;+&nbsp;1</code> vectors with an L2-norm of 1,</li>
+<li><code class="code">h</code> is the output <code class="code">k</code> by <code class="code">k</code> Hessenberg matrix of inner products,</li>
+<li><code class="code">k</code> specifies the vector in <code class="code">v</code> to be orthogonalized against previous
+          ones, and,</li>
+<li><code class="code">p</code> is the number of previous vectors in <code class="code">v</code> to orthogonalize against.</li>
+</ul>
+<p>The vector <code class="code">v[k]</code> is orthogonalized against the <code class="code">p</code> unit vectors at
+    <code class="code">v.{k-1}</code>, <code class="code">v.{k-2}</code>, ..., <code class="code">v.{k-p}</code>.
+    The matrix <code class="code">h</code> must be allocated row-wise so that the <code class="code">(i,j)</code>th entry is
+    <code class="code">h.{i}.{j}</code>.
+    The inner products are computed, $\mathtt{h.\{}i\mathtt{, k-1\}} =
+      \mathtt{v.\{}i\mathtt{\}} \cdot \mathtt{v.\{k\}}$ , for
+    $i=\max(0, \mathtt{k}-\mathtt{p})\ldots \mathtt{k}-1$ .
+    The orthogonalized <code class="code">v.{k}</code> is <b>not</b> normalized and is stored over the
+    old <code class="code">v.{k}</code>. The function returns the Euclidean norm of the orthogonalized
+    vector.</p>
+</div>
+</div>
+
+<pre><span id="VALclassical_gs"><span class="keyword">val</span> classical_gs</span> : <code class="type">('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> array -><br>       Sundials.RealArray2.t -><br>       int -> int -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> Sundials.RealArray.t -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p>Performs a classical Gram-Schmidt orthogonalization. In
+      <code class="code">classical_gs&nbsp;v&nbsp;h&nbsp;k&nbsp;p&nbsp;temp&nbsp;s</code>,</p>
+<ul>
+<li><code class="code">v</code> is an array of at least <code class="code">k&nbsp;+&nbsp;1</code> vectors with an L2-norm of 1,</li>
+<li><code class="code">h</code> is the output <code class="code">k</code> by <code class="code">k</code> Hessenberg matrix of inner products,</li>
+<li><code class="code">k</code> specifies the vector in <code class="code">v</code> to be orthogonalized against previous
+          ones, and,</li>
+<li><code class="code">p</code> is the number of previous vectors in <code class="code">v</code> to orthogonalize against.</li>
+<li><code class="code">temp</code> and <code class="code">s</code> are used as workspaces.</li>
+</ul>
+<p>The vector <code class="code">v[k]</code> is orthogonalized against the <code class="code">p</code> unit vectors at
+    <code class="code">v.{k-1}</code>, <code class="code">v.{k-2}</code>, ..., <code class="code">v.{k-p}</code>.
+    The matrix <code class="code">h</code> must be allocated row-wise so that the <code class="code">(i,j)</code>th entry is
+    <code class="code">h.{i}.{j}</code>.
+    The inner products are computed, $\mathtt{h.\{}i\mathtt{, k-1\}} =
+      \mathtt{v.\{}i\mathtt{\}} \cdot \mathtt{v.\{k\}}$ , for
+    $i=\max(0, \mathtt{k}-\mathtt{p})\ldots \mathtt{k}-1$ .
+    The orthogonalized <code class="code">v.{k}</code> is <b>not</b> normalized and is stored over the
+    old <code class="code">v.{k}</code>. The function returns the Euclidean norm of the orthogonalized
+    vector.</p>
+</div>
+</div>
+</body></html>

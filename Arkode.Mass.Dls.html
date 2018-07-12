@@ -1,0 +1,145 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="Start" href="index.html">
+<link rel="next" href="Arkode.Mass.Spils.html">
+<link rel="Up" href="Arkode.Mass.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials_Index" rel="Chapter" href="Sundials_Index.html">
+<link title="Sundials_Config" rel="Chapter" href="Sundials_Config.html">
+<link title="Sundials_RealArray" rel="Chapter" href="Sundials_RealArray.html">
+<link title="Sundials_RealArray2" rel="Chapter" href="Sundials_RealArray2.html">
+<link title="Sundials_LintArray" rel="Chapter" href="Sundials_LintArray.html">
+<link title="Sundials_Logfile" rel="Chapter" href="Sundials_Logfile.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Sundials_Matrix" rel="Chapter" href="Sundials_Matrix.html">
+<link title="Sundials_LinearSolver" rel="Chapter" href="Sundials_LinearSolver.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Arkode" rel="Chapter" href="Arkode.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Arkode_bbd" rel="Chapter" href="Arkode_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Nvector_openmp" rel="Chapter" href="Nvector_openmp.html">
+<link title="Nvector_pthreads" rel="Chapter" href="Nvector_pthreads.html"><link title="Solver statistics" rel="Section" href="#stats">
+<title>Sundials/ML 3.1.1p0 : Arkode.Mass.Dls</title>
+</head>
+<body>
+<div class="navbar">&nbsp;<a class="up" href="Arkode.Mass.html" title="Arkode.Mass">Up</a>
+&nbsp;<a class="post" href="Arkode.Mass.Spils.html" title="Arkode.Mass.Spils">Next</a>
+</div>
+<h1>Module <a href="type_Arkode.Mass.Dls.html">Arkode.Mass.Dls</a></h1>
+
+<pre><span id="MODULEDls"><span class="keyword">module</span> Dls</span>: <code class="code"><span class="keyword">sig</span></code> <a href="Arkode.Mass.Dls.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+<div class="info-desc">
+<h4 id="dlsmass">Direct mass matrix solvers</h4></div>
+</div>
+<hr width="100%">
+
+<pre><span class="keyword">include</span> <a href="Sundials_LinearSolver.Direct.html">Sundials_LinearSolver.Direct</a></pre>
+
+<pre><span id="TYPEmass_fn"><span class="keyword">type</span> <code class="type">'m</code> mass_fn</span> = <code class="type">float -> Sundials.RealArray.t <a href="Arkode.html#TYPEtriple">Arkode.triple</a> -> 'm -> unit</code> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>Functions that compute a mass matrix (or an approximation of one).
+        In the call <code class="code">mass&nbsp;t&nbsp;work&nbsp;m</code>,</p>
+<ul>
+<li><code class="code">t</code> is the independent variable,</li>
+<li><code class="code">work</code> is workspace data, and</li>
+<li><code class="code">m</code> is the output dense mass matrix.</li>
+</ul>
+<p>The callback should load the <code class="code"><span class="constructor">N</span></code> by <code class="code"><span class="constructor">N</span></code> matrix <code class="code">m</code> with an
+        approximation to the mass matrix $M(t)$. Only nonzero elements
+        need be loaded into <code class="code">m</code>.</p>
+
+<p>Raising <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a> indicates a recoverable
+        error. Any other exception is treated as an unrecoverable error.</p>
+
+<p><div class="warningbox"> Neither the elements of <code class="code">work</code> nor the matrix <code class="code">m</code>
+                 should be accessed after the function has returned.</div></p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKDlsMassFn</div></ul>
+</div>
+
+
+<pre><span id="VALsolver"><span class="keyword">val</span> solver</span> : <code class="type">'m <a href="Arkode.Mass.Dls.html#TYPEmass_fn">mass_fn</a> -><br>       bool -><br>       ('m, [> <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a> ] as 'a, 't) serial_linear_solver -><br>       'a <a href="Arkode.Mass.html#TYPEserial_solver">Arkode.Mass.serial_solver</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Create an Arkode-specific mass linear solver from a mass-matrix
+        constructor function and a generic dense linear solver. The boolean
+        argument indicates whether the mass matrix depends on the independent
+        variable <code class="code">t</code>, if not it is only computed and factored once.</p>
+
+<p>NB: The boolean argument is ignored in
+        <a href="Sundials_Config.html#VALsundials_version">Config.sundials_version</a> &lt; 3.0.0.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKDlsSetMassLinearSolver</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKDlsSetMassFn</div></ul>
+</div>
+<h4 id="stats">Solver statistics</h4>
+<pre><span id="VALget_work_space"><span class="keyword">val</span> get_work_space</span> : <code class="type">[> <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a> ] <a href="Arkode.html#TYPEserial_session">Arkode.serial_session</a> -> int * int</code></pre><div class="info ">
+<div class="info-desc">
+<p>Returns the sizes of the real and integer workspaces used by a
+        direct linear mass matrix solver.</p>
+</div>
+<ul class="info-attributes">
+<li><b>Returns</b> (<code class="code">real_size</code>, <code class="code">integer_size</code>)</li>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKDlsGetMassWorkSpace</div></ul>
+</div>
+
+<pre><span id="VALget_num_setups"><span class="keyword">val</span> get_num_setups</span> : <code class="type">[> <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a> ] <a href="Arkode.html#TYPEserial_session">Arkode.serial_session</a> -> int</code></pre><div class="info ">
+<div class="info-desc">
+<p>Returns the number of calls made to the mass matrix solver setup
+        routine.</p>
+
+<p>NB: This function is not supported by
+        <a href="Sundials_Config.html#VALsundials_version">Config.sundials_version</a> &lt; 3.0.0.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKDlsGetNumMassSetups</div></ul>
+</div>
+
+<pre><span id="VALget_num_solves"><span class="keyword">val</span> get_num_solves</span> : <code class="type">[> <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a> ] <a href="Arkode.html#TYPEserial_session">Arkode.serial_session</a> -> int</code></pre><div class="info ">
+<div class="info-desc">
+<p>Returns the number of calls made to the mass matrix solver solve
+        routine.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKDlsGetNumMassSolves</div></ul>
+</div>
+
+<pre><span id="VALget_num_mult"><span class="keyword">val</span> get_num_mult</span> : <code class="type">[> <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a> ] <a href="Arkode.html#TYPEserial_session">Arkode.serial_session</a> -> int</code></pre><div class="info ">
+<div class="info-desc">
+<p>Returns the number of calls made to the mass matrix-times-vector
+        routine.</p>
+
+<p>NB: This function is not supported by
+        <a href="Sundials_Config.html#VALsundials_version">Config.sundials_version</a> &lt; 3.0.0.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKDlsGetNumMassMult</div></ul>
+</div>
+</body></html>

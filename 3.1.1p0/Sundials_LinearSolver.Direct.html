@@ -1,0 +1,183 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="Start" href="index.html">
+<link rel="next" href="Sundials_LinearSolver.Iterative.html">
+<link rel="Up" href="Sundials_LinearSolver.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials_Index" rel="Chapter" href="Sundials_Index.html">
+<link title="Sundials_Config" rel="Chapter" href="Sundials_Config.html">
+<link title="Sundials_RealArray" rel="Chapter" href="Sundials_RealArray.html">
+<link title="Sundials_RealArray2" rel="Chapter" href="Sundials_RealArray2.html">
+<link title="Sundials_LintArray" rel="Chapter" href="Sundials_LintArray.html">
+<link title="Sundials_Logfile" rel="Chapter" href="Sundials_Logfile.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Sundials_Matrix" rel="Chapter" href="Sundials_Matrix.html">
+<link title="Sundials_LinearSolver" rel="Chapter" href="Sundials_LinearSolver.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Arkode" rel="Chapter" href="Arkode.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Arkode_bbd" rel="Chapter" href="Arkode_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Nvector_openmp" rel="Chapter" href="Nvector_openmp.html">
+<link title="Nvector_pthreads" rel="Chapter" href="Nvector_pthreads.html"><link title="Types" rel="Section" href="#solvers">
+<title>Sundials/ML 3.1.1p0 : Sundials_LinearSolver.Direct</title>
+</head>
+<body>
+<div class="navbar">&nbsp;<a class="up" href="Sundials_LinearSolver.html" title="Sundials_LinearSolver">Up</a>
+&nbsp;<a class="post" href="Sundials_LinearSolver.Iterative.html" title="Sundials_LinearSolver.Iterative">Next</a>
+</div>
+<h1>Module <a href="type_Sundials_LinearSolver.Direct.html">Sundials_LinearSolver.Direct</a></h1>
+
+<pre><span id="MODULEDirect"><span class="keyword">module</span> Direct</span>: <code class="code"><span class="keyword">sig</span></code> <a href="Sundials_LinearSolver.Direct.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+<div class="info-desc">
+<p>Direct Linear Solvers</p>
+</div>
+</div>
+<hr width="100%">
+<p>Definitions in this module are more conveniently accessed
+      through session-specific direct linear solver modules like
+      <a href="Cvode.Dls.html"><code class="code"><span class="constructor">Cvode</span>.<span class="constructor">Dls</span></code></a> and <a href="Ida.Dls.html"><code class="code"><span class="constructor">Ida</span>.<span class="constructor">Dls</span></code></a>.  For example, <code class="code"><span class="constructor">Cvode</span>.<span class="constructor">Dls</span>.dense</code> is
+      an alias for <a href="Sundials_LinearSolver.Direct.html#VALdense"><code class="code"><span class="constructor">Sundials_LinearSolver</span>.<span class="constructor">Direct</span>.dense</code></a>.</p>
+<h4 id="solvers">Types</h4>
+<pre><span id="TYPEtag"><span class="keyword">type</span> <code class="type"></code>tag</span> = <code class="type">[ `Basic ]</code> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>Used to identify generic direct solvers.</p>
+</div>
+</div>
+
+
+<pre><span id="TYPElinear_solver"><span class="keyword">type</span> <code class="type">('matrix, 'data, 'kind, 'tag)</code> linear_solver</span> = <code class="type">('matrix, 'data, 'kind, 'tag) Sundials_LinearSolver_impl.Direct.linear_solver</code> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>A generic direct linear solver.
+    The type variables specify the Jacobian matrix (<code class="code"><span class="keywordsign">'</span>matrix</code>), the
+    <a href="Nvector.html#TYPEnvector"><code class="code"><span class="constructor">Nvector</span>.nvector</code></a> data (<code class="code"><span class="keywordsign">'</span>data</code>) and kind (<code class="code"><span class="keywordsign">'</span>kind</code>), and a
+    <code class="code"><span class="keywordsign">'</span>tag</code> used to identify specific solver features.</p>
+
+<p>A linear solver of this type must be converted to session-specific
+    form by <a href="Cvode.Dls.html#VALsolver"><code class="code"><span class="constructor">Cvode</span>.<span class="constructor">Dls</span>.solver</code></a>, <a href="Ida.Dls.html#VALsolver"><code class="code"><span class="constructor">Ida</span>.<span class="constructor">Dls</span>.solver</code></a>, etc., before being
+    attached to a session via <code class="code">init</code> or <code class="code">reinit</code>.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>Description of the SUNLinearSolver module</div><div class="sundials"><span class="seesundials">See sundials: </span>SUNLinearSolver</div></ul>
+</div>
+
+
+<pre><span id="TYPEserial_linear_solver"><span class="keyword">type</span> <code class="type">('mat, [> <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a> ], 'tag)</code> serial_linear_solver</span> = <code class="type">('mat, <a href="Nvector_serial.html#TYPEdata">Nvector_serial.data</a>, [> <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a> ] as 'kind, 'tag)<br>       <a href="Sundials_LinearSolver.Direct.html#TYPElinear_solver">linear_solver</a></code> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>Alias for linear solvers that are restricted to serial nvectors.</p>
+</div>
+</div>
+
+
+<pre><span id="VALdense"><span class="keyword">val</span> dense</span> : <code class="type">([> <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a> ] as 'a) <a href="Nvector_serial.html#TYPEany">Nvector_serial.any</a> -><br>       'a Sundials.Matrix.dense -><br>       (Sundials.Matrix.Dense.t, 'a, <a href="Sundials_LinearSolver.Direct.html#TYPEtag">tag</a>)<br>       <a href="Sundials_LinearSolver.Direct.html#TYPEserial_linear_solver">serial_linear_solver</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Creates a direct linear solver on dense matrices. The nvector and matrix
+    argument are used to determine the linear system size and to assess
+    compatibility with the linear solver implementation.
+    The matrix is used internally after the linear solver is attached to a
+    session.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNDenseLinearSolver</div></ul>
+</div>
+
+<pre><span id="VALlapack_dense"><span class="keyword">val</span> lapack_dense</span> : <code class="type">([> <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a> ] as 'a) <a href="Nvector_serial.html#TYPEany">Nvector_serial.any</a> -><br>       'a Sundials.Matrix.dense -><br>       (Sundials.Matrix.Dense.t, 'a, <a href="Sundials_LinearSolver.Direct.html#TYPEtag">tag</a>)<br>       <a href="Sundials_LinearSolver.Direct.html#TYPEserial_linear_solver">serial_linear_solver</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Creates a direct linear solver on dense matrices using LAPACK.
+      See <a href="Sundials_LinearSolver.Direct.html#VALdense"><code class="code"><span class="constructor">Sundials_LinearSolver</span>.<span class="constructor">Direct</span>.dense</code></a>. Only available if
+      <a href="Sundials_Config.html#VALlapack_enabled">Config.lapack_enabled</a>.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNLapackDense</div></ul>
+</div>
+
+<pre><span id="VALband"><span class="keyword">val</span> band</span> : <code class="type">([> <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a> ] as 'a) <a href="Nvector_serial.html#TYPEany">Nvector_serial.any</a> -><br>       'a Sundials.Matrix.band -><br>       (Sundials.Matrix.Band.t, 'a, <a href="Sundials_LinearSolver.Direct.html#TYPEtag">tag</a>)<br>       <a href="Sundials_LinearSolver.Direct.html#TYPEserial_linear_solver">serial_linear_solver</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Creates a direct linear solver on banded matrices. The nvector and matrix
+    argument are used to determine the linear system size and to assess
+    compatibility with the linear solver implementation.
+    The matrix is used internally after the linear solver is attached to a
+    session.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNBandLinearSolver</div></ul>
+</div>
+
+<pre><span id="VALlapack_band"><span class="keyword">val</span> lapack_band</span> : <code class="type">([> <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a> ] as 'a) <a href="Nvector_serial.html#TYPEany">Nvector_serial.any</a> -><br>       'a Sundials.Matrix.band -><br>       (Sundials.Matrix.Band.t, 'a, <a href="Sundials_LinearSolver.Direct.html#TYPEtag">tag</a>)<br>       <a href="Sundials_LinearSolver.Direct.html#TYPEserial_linear_solver">serial_linear_solver</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Creates a direct linear solver on banded matrices using LAPACK.
+      See <a href="Sundials_LinearSolver.Direct.html#VALband"><code class="code"><span class="constructor">Sundials_LinearSolver</span>.<span class="constructor">Direct</span>.band</code></a>.
+      Only available if <a href="Sundials_Config.html#VALlapack_enabled">Config.lapack_enabled</a>.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNLapackBand</div></ul>
+</div>
+
+<pre><span id="MODULEKlu"><span class="keyword">module</span> <a href="Sundials_LinearSolver.Direct.Klu.html">Klu</a></span>: <code class="code"><span class="keyword">sig</span></code> <a href="Sundials_LinearSolver.Direct.Klu.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+<p>KLU direct linear solver operating on sparse matrices (requires KLU).</p>
+
+</div>
+
+<pre><span id="VALklu"><span class="keyword">val</span> klu</span> : <code class="type">?ordering:<a href="Sundials_LinearSolver.Direct.Klu.html#TYPEordering">Klu.ordering</a> -><br>       ([> <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a> ] as 'a) <a href="Nvector_serial.html#TYPEany">Nvector_serial.any</a> -><br>       ('s, 'a) Sundials.Matrix.sparse -><br>       ('s Sundials.Matrix.Sparse.t, 'a, <a href="Sundials_LinearSolver.Direct.Klu.html#TYPEtag">Klu.tag</a>)<br>       <a href="Sundials_LinearSolver.Direct.html#TYPEserial_linear_solver">serial_linear_solver</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Creates a direct linear solver on sparse matrices using KLU.
+    See <a href="Sundials_LinearSolver.Direct.Klu.html#VALmake"><code class="code"><span class="constructor">Sundials_LinearSolver</span>.<span class="constructor">Direct</span>.<span class="constructor">Klu</span>.make</code></a>.</p>
+</div>
+<ul class="info-attributes">
+<div class="raisedexceptions"><span class="raises">Raises</span> <code>Config.NotImplementedBySundialsVersion</code> Solver not available.</div>
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNKLU</div></ul>
+</div>
+
+<pre><span id="MODULESuperlumt"><span class="keyword">module</span> <a href="Sundials_LinearSolver.Direct.Superlumt.html">Superlumt</a></span>: <code class="code"><span class="keyword">sig</span></code> <a href="Sundials_LinearSolver.Direct.Superlumt.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+<p>SuperLUMT direct linear solver operating on sparse matrices (requires
+    SuperLUMT).</p>
+
+</div>
+
+<pre><span id="VALsuperlumt"><span class="keyword">val</span> superlumt</span> : <code class="type">?ordering:<a href="Sundials_LinearSolver.Direct.Superlumt.html#TYPEordering">Superlumt.ordering</a> -><br>       nthreads:int -><br>       ([> <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a> ] as 'a) <a href="Nvector_serial.html#TYPEany">Nvector_serial.any</a> -><br>       ('s, 'a) Sundials.Matrix.sparse -><br>       ('s Sundials.Matrix.Sparse.t, 'a, <a href="Sundials_LinearSolver.Direct.Superlumt.html#TYPEtag">Superlumt.tag</a>)<br>       <a href="Sundials_LinearSolver.Direct.html#TYPEserial_linear_solver">serial_linear_solver</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Creates a direct linear solver on sparse matrices using SuperLUMT.
+    See <a href="Sundials_LinearSolver.Direct.Superlumt.html#VALmake"><code class="code"><span class="constructor">Sundials_LinearSolver</span>.<span class="constructor">Direct</span>.<span class="constructor">Superlumt</span>.make</code></a>.</p>
+
+<p>NB: The <a href="Sundials_Matrix.Sparse.html#TYPEcsr">Matrix.Sparse.csr</a> format is only
+        supported for
+        <a href="Sundials_Config.html#VALsundials_version">Config.sundials_version</a> &gt;= 3.0.0.</p>
+</div>
+<ul class="info-attributes">
+<div class="raisedexceptions"><span class="raises">Raises</span> <code>Config.NotImplementedBySundialsVersion</code> Solver not available.</div>
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNSuperLUMT</div></ul>
+</div>
+
+<pre><span id="MODULECustom"><span class="keyword">module</span> <a href="Sundials_LinearSolver.Direct.Custom.html">Custom</a></span>: <code class="code"><span class="keyword">sig</span></code> <a href="Sundials_LinearSolver.Direct.Custom.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+<p>Custom direct linear solvers.</p>
+
+</div>
+</body></html>

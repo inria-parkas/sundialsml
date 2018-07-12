@@ -1,0 +1,232 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Sundials_Matrix.html">
+<link rel="next" href="Nvector_custom.html">
+<link rel="Up" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials_Index" rel="Chapter" href="Sundials_Index.html">
+<link title="Sundials_Config" rel="Chapter" href="Sundials_Config.html">
+<link title="Sundials_RealArray" rel="Chapter" href="Sundials_RealArray.html">
+<link title="Sundials_RealArray2" rel="Chapter" href="Sundials_RealArray2.html">
+<link title="Sundials_LintArray" rel="Chapter" href="Sundials_LintArray.html">
+<link title="Sundials_Logfile" rel="Chapter" href="Sundials_Logfile.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Sundials_Matrix" rel="Chapter" href="Sundials_Matrix.html">
+<link title="Sundials_LinearSolver" rel="Chapter" href="Sundials_LinearSolver.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Arkode" rel="Chapter" href="Arkode.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Arkode_bbd" rel="Chapter" href="Arkode_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Nvector_openmp" rel="Chapter" href="Nvector_openmp.html">
+<link title="Nvector_pthreads" rel="Chapter" href="Nvector_pthreads.html"><link title="Linear Solver Families" rel="Section" href="#lsolvers">
+<link title="Exceptions" rel="Section" href="#exceptions">
+<title>Sundials/ML 3.1.1p0 : Sundials_LinearSolver</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Sundials_Matrix.html" title="Sundials_Matrix">Previous</a>
+&nbsp;<a class="up" href="index.html" title="Index">Up</a>
+&nbsp;<a class="post" href="Nvector_custom.html" title="Nvector_custom">Next</a>
+</div>
+<h1>Module <a href="type_Sundials_LinearSolver.html">Sundials_LinearSolver</a></h1>
+
+<pre><span id="MODULESundials_LinearSolver"><span class="keyword">module</span> Sundials_LinearSolver</span>: <code class="code"><span class="keyword">sig</span></code> <a href="Sundials_LinearSolver.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+<div class="info-desc">
+<p>Generic linear solvers.</p>
+
+<p>Sundials provides a set of functions for instantiating linear solvers from
+    two families: <a href="Sundials_LinearSolver.Direct.html"><code class="code"><span class="constructor">Sundials_LinearSolver</span>.<span class="constructor">Direct</span></code></a> and <a href="Sundials_LinearSolver.Iterative.html"><code class="code"><span class="constructor">Sundials_LinearSolver</span>.<span class="constructor">Iterative</span></code></a>. Any instance may
+    be associated with at most one solver session.</p>
+</div>
+<ul class="info-attributes">
+<div class="authors"><b>Author(s):</b> Timothy Bourke (Inria/ENS), Jun Inoue (Inria/ENS), Marc Pouzet (UPMC/ENS/Inria)</div>
+<li><b>Version:</b> 3.1.1</li>
+<li><b>Since</b> 3.0.0</li>
+<div class="sundials"><span class="seesundials">See sundials: </span>Description of the SUNLinearSolver module</div></ul>
+</div>
+<hr width="100%">
+<h3 id="lsolvers">Linear Solver Families</h3>
+<pre><span id="MODULEDirect"><span class="keyword">module</span> <a href="Sundials_LinearSolver.Direct.html">Direct</a></span>: <code class="code"><span class="keyword">sig</span></code> <a href="Sundials_LinearSolver.Direct.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+<p>Direct Linear Solvers</p>
+
+</div>
+
+<pre><span id="MODULEIterative"><span class="keyword">module</span> <a href="Sundials_LinearSolver.Iterative.html">Iterative</a></span>: <code class="code"><span class="keyword">sig</span></code> <a href="Sundials_LinearSolver.Iterative.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+<p>Iterative Linear Solvers</p>
+
+</div>
+<h3 id="exceptions">Exceptions</h3>
+<pre><span id="EXCEPTIONInvalidLinearSolver"><span class="keyword">exception</span> InvalidLinearSolver</span></pre>
+<div class="info ">
+<div class="info-desc">
+<p>Raised on invalid use of linear solver functions. For instance,
+    initializing a session with <a href="Cvode.Diag.html"><code class="code"><span class="constructor">Cvode</span>.<span class="constructor">Diag</span></code></a> and then calling
+    <a href="Cvode.Spils.html#VALget_num_lin_iters"><code class="code"><span class="constructor">Cvode</span>.<span class="constructor">Spils</span>.get_num_lin_iters</code></a>, which rather requires a
+    linear solver from <a href="Sundials_LinearSolver.Iterative.html"><code class="code"><span class="constructor">Sundials_LinearSolver</span>.<span class="constructor">Iterative</span></code></a>.</p>
+</div>
+</div>
+
+<pre><span id="EXCEPTIONUnrecoverableFailure"><span class="keyword">exception</span> UnrecoverableFailure</span> <span class="keyword">of</span> <code class="type">bool</code></pre>
+<div class="info ">
+<div class="info-desc">
+<p>Raised on an unrecoverable failure in a linear solver. The argument is
+    <code class="code"><span class="keyword">true</span></code> for a recoverable failure and <code class="code"><span class="keyword">false</span></code> for an unrecoverable one.
+    <span class="cconst">(SUNLS_PACKAGE_FAIL_REC/_UNREC)</span></p>
+</div>
+</div>
+
+<pre><span id="EXCEPTIONMatrixNotSquare"><span class="keyword">exception</span> MatrixNotSquare</span></pre>
+<div class="info ">
+<div class="info-desc">
+<p>Raised when creating a linear solver if the given matrix is not square.</p>
+</div>
+</div>
+
+<pre><span id="EXCEPTIONMatrixVectorMismatch"><span class="keyword">exception</span> MatrixVectorMismatch</span></pre>
+<div class="info ">
+<div class="info-desc">
+<p>Raised when creating a linear solver if the number of matrix rows and the
+    vector length are not equal.</p>
+</div>
+</div>
+
+<pre><span id="EXCEPTIONInsufficientStorageUpperBandwidth"><span class="keyword">exception</span> InsufficientStorageUpperBandwidth</span></pre>
+<div class="info ">
+<div class="info-desc">
+<p>Raised when the storage upper bandwidth (<code class="code">smu</code>) of a
+    <a href="Sundials_Matrix.Band.html#TYPEt">Matrix.Band.t</a> is
+    insufficient for use in a particular linear solver.</p>
+</div>
+</div>
+
+<pre><span id="EXCEPTIONLinearSolverInUse"><span class="keyword">exception</span> LinearSolverInUse</span></pre>
+<div class="info ">
+<div class="info-desc">
+<p>Raised on an attempt to associate a linear solver instance with more than
+    one session.</p>
+</div>
+</div>
+
+<pre><span id="EXCEPTIONATimesFailure"><span class="keyword">exception</span> ATimesFailure</span> <span class="keyword">of</span> <code class="type">bool</code></pre>
+<div class="info ">
+<div class="info-desc">
+<p>Indicates failure of an atimes function. The argument is <code class="code"><span class="keyword">true</span></code> for a
+    recoverable failure and <code class="code"><span class="keyword">false</span></code> for an unrecoverable one.
+    <span class="cconst">(SUNLS_ATIMES_FAIL_REC/_UNREC)</span></p>
+</div>
+</div>
+
+<pre><span id="EXCEPTIONPSetFailure"><span class="keyword">exception</span> PSetFailure</span> <span class="keyword">of</span> <code class="type">bool</code></pre>
+<div class="info ">
+<div class="info-desc">
+<p>Indicates failure of a preconditioner setup routine. The argument is
+    <code class="code"><span class="keyword">true</span></code> for a recoverable failure and <code class="code"><span class="keyword">false</span></code> for an unrecoverable one.
+    <span class="cconst">(SUNLS_PSET_FAIL_REC/_UNREC)</span></p>
+</div>
+</div>
+
+<pre><span id="EXCEPTIONPSolveFailure"><span class="keyword">exception</span> PSolveFailure</span> <span class="keyword">of</span> <code class="type">bool</code></pre>
+<div class="info ">
+<div class="info-desc">
+<p>Indicates failure of a preconditioner solver. The argument is <code class="code"><span class="keyword">true</span></code> for a
+    recoverable failure and <code class="code"><span class="keyword">false</span></code> for an unrecoverable one.
+    <span class="cconst">(SUNLS_PSOLVE_FAIL_REC/_UNREC)</span></p>
+</div>
+</div>
+
+<pre><span id="EXCEPTIONGSFailure"><span class="keyword">exception</span> GSFailure</span></pre>
+<div class="info ">
+<div class="info-desc">
+<p>Indicates failure of a Gram-Schmidt routine. <span class="cconst">(SUNLS_GS_FAIL)</span></p>
+</div>
+</div>
+
+<pre><span id="EXCEPTIONQRSolFailure"><span class="keyword">exception</span> QRSolFailure</span></pre>
+<div class="info ">
+<div class="info-desc">
+<p>Indicates that the QR solution found a singular result.
+    <span class="cconst">(SUNLS_QRSOL_FAIL)</span></p>
+</div>
+</div>
+
+<pre><span id="EXCEPTIONResReduced"><span class="keyword">exception</span> ResReduced</span></pre>
+<div class="info ">
+<div class="info-desc">
+<p>Indicates that the residual is reduced but without convergence to the
+    desired tolerance. <span class="cconst">(SUNLS_RES_REDUCED)</span></p>
+</div>
+</div>
+
+<pre><span id="EXCEPTIONConvFailure"><span class="keyword">exception</span> ConvFailure</span></pre>
+<div class="info ">
+<div class="info-desc">
+<p>Indicates that a solver failed to converge. <span class="cconst">(SUNLS_CONV_FAIL)</span></p>
+</div>
+</div>
+
+<pre><span id="EXCEPTIONQRfactFailure"><span class="keyword">exception</span> QRfactFailure</span></pre>
+<div class="info ">
+<div class="info-desc">
+<p>Indicates that QR factorization encountered a singular matrix.
+    <span class="cconst">(SUNLS_QRFACT_FAIL)</span></p>
+</div>
+</div>
+
+<pre><span id="EXCEPTIONLUfactFailure"><span class="keyword">exception</span> LUfactFailure</span></pre>
+<div class="info ">
+<div class="info-desc">
+<p>Indicates that LU factorization encountered a singular matrix.
+    <span class="cconst">(SUNLS_LUFACT_FAIL)</span></p>
+</div>
+</div>
+
+<pre><span id="EXCEPTIONPackageFailure"><span class="keyword">exception</span> PackageFailure</span> <span class="keyword">of</span> <code class="type">bool</code></pre>
+<div class="info ">
+<div class="info-desc">
+<p>Indicates failure in an external linear solver package. The argument
+    is <code class="code"><span class="keyword">true</span></code> for a recoverable failure and <code class="code"><span class="keyword">false</span></code> for an unrecoverable one.
+    <span class="cconst">(SUNLS_PACKAGE_FAIL_REC/_UNREC)</span></p>
+</div>
+</div>
+
+<pre><span id="EXCEPTIONIllegalPrecType"><span class="keyword">exception</span> IllegalPrecType</span></pre>
+<div class="info ">
+<div class="info-desc">
+<p>Raised by <a href="Sundials_LinearSolver.Iterative.html#VALset_prec_type"><code class="code"><span class="constructor">Sundials_LinearSolver</span>.<span class="constructor">Iterative</span>.set_prec_type</code></a> if the given type is not allowed.</p>
+</div>
+</div>
+
+<pre><span id="EXCEPTIONInternalFailure"><span class="keyword">exception</span> InternalFailure</span> <span class="keyword">of</span> <code class="type">(string * int)</code></pre>
+<div class="info ">
+<div class="info-desc">
+<p>Indicates that an internal callback, identified by the first argument,
+    returned the given unknown error code.</p>
+</div>
+</div>
+</body></html>

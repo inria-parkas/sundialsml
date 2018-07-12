@@ -1,0 +1,293 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Sundials_LinearSolver.Direct.html">
+<link rel="Up" href="Sundials_LinearSolver.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials_Index" rel="Chapter" href="Sundials_Index.html">
+<link title="Sundials_Config" rel="Chapter" href="Sundials_Config.html">
+<link title="Sundials_RealArray" rel="Chapter" href="Sundials_RealArray.html">
+<link title="Sundials_RealArray2" rel="Chapter" href="Sundials_RealArray2.html">
+<link title="Sundials_LintArray" rel="Chapter" href="Sundials_LintArray.html">
+<link title="Sundials_Logfile" rel="Chapter" href="Sundials_Logfile.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Sundials_Matrix" rel="Chapter" href="Sundials_Matrix.html">
+<link title="Sundials_LinearSolver" rel="Chapter" href="Sundials_LinearSolver.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Arkode" rel="Chapter" href="Arkode.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Arkode_bbd" rel="Chapter" href="Arkode_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Nvector_openmp" rel="Chapter" href="Nvector_openmp.html">
+<link title="Nvector_pthreads" rel="Chapter" href="Nvector_pthreads.html"><link title="Types" rel="Section" href="#solvers">
+<link title="Solvers" rel="Section" href="#solvers">
+<link title="Solver parameters" rel="Section" href="#parameters">
+<title>Sundials/ML 3.1.1p0 : Sundials_LinearSolver.Iterative</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Sundials_LinearSolver.Direct.html" title="Sundials_LinearSolver.Direct">Previous</a>
+&nbsp;<a class="up" href="Sundials_LinearSolver.html" title="Sundials_LinearSolver">Up</a>
+&nbsp;</div>
+<h1>Module <a href="type_Sundials_LinearSolver.Iterative.html">Sundials_LinearSolver.Iterative</a></h1>
+
+<pre><span id="MODULEIterative"><span class="keyword">module</span> Iterative</span>: <code class="code"><span class="keyword">sig</span></code> <a href="Sundials_LinearSolver.Iterative.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+<div class="info-desc">
+<p>Iterative Linear Solvers</p>
+</div>
+</div>
+<hr width="100%">
+<p>Definitions in this module are more conveniently accessed
+      through session-specific iterative linear solver modules like
+      <a href="Cvode.Spils.html"><code class="code"><span class="constructor">Cvode</span>.<span class="constructor">Spils</span></code></a> and <a href="Ida.Spils.html"><code class="code"><span class="constructor">Ida</span>.<span class="constructor">Spils</span></code></a>.  For example,
+      <code class="code"><span class="constructor">Cvode</span>.<span class="constructor">Spils</span>.spbcgs</code> is an alias for <a href="Sundials_LinearSolver.Iterative.html#VALspbcgs"><code class="code"><span class="constructor">Sundials_LinearSolver</span>.<span class="constructor">Iterative</span>.spbcgs</code></a>.</p>
+<h4 id="solvers">Types</h4>
+<pre><span id="TYPElinear_solver"><span class="keyword">type</span> <code class="type">('data, 'kind, 'tag)</code> linear_solver</span> = <code class="type">('data, 'kind, 'tag) Sundials_LinearSolver_impl.Iterative.linear_solver</code> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>An iterative linear solver.
+    The type variables specify the <a href="Nvector.html#TYPEnvector"><code class="code"><span class="constructor">Nvector</span>.nvector</code></a> data (<code class="code"><span class="keywordsign">'</span>data</code>) and
+    kind (<code class="code"><span class="keywordsign">'</span>kind</code>), and the iterative method (<code class="code"><span class="keywordsign">'</span>tag</code>).</p>
+
+<p>A linear solver of this type must be converted to session-specific
+    form by <a href="Cvode.Spils.html#VALsolver"><code class="code"><span class="constructor">Cvode</span>.<span class="constructor">Spils</span>.solver</code></a>, <a href="Ida.Spils.html#VALsolver"><code class="code"><span class="constructor">Ida</span>.<span class="constructor">Spils</span>.solver</code></a>, etc. before
+    being attached to a session.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>Description of the SUNLinearSolver module</div><div class="sundials"><span class="seesundials">See sundials: </span>SUNLinearSolver</div></ul>
+</div>
+
+
+<pre><span id="TYPEgramschmidt_type"><span class="keyword">type</span> <code class="type"></code>gramschmidt_type</span> = <code class="type">Sundials_LinearSolver_impl.Iterative.gramschmidt_type</code> = </pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTgramschmidt_type.ModifiedGS"><span class="constructor">ModifiedGS</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Modified Gram-Schmidt orthogonalization
+                       <span class="cconst">(MODIFIED_GS)</span></p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTgramschmidt_type.ClassicalGS"><span class="constructor">ClassicalGS</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Classical Gram Schmidt orthogonalization
+                       <span class="cconst">(CLASSICAL_GS)</span></p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info ">
+<div class="info-desc">
+<p>The type of Gram-Schmidt orthogonalization in iterative linear solvers.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>ModifiedGS/ClassicalGS</div></ul>
+</div>
+
+<h4 id="solvers">Solvers</h4>
+<pre><span id="VALspbcgs"><span class="keyword">val</span> spbcgs</span> : <code class="type">?maxl:int -><br>       ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -><br>       ('d, 'k, [ `Spbcgs ]) <a href="Sundials_LinearSolver.Iterative.html#TYPElinear_solver">linear_solver</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Krylov iterative solver using the scaled preconditioned biconjugate
+    stabilized (Bi-CGStab) method. The <code class="code">maxl</code> arguments gives the maximum
+    dimension of the Krylov subspace (defaults to 5). The nvector argument
+    is used as a template.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNSPBCGS</div></ul>
+</div>
+
+<pre><span id="VALspfgmr"><span class="keyword">val</span> spfgmr</span> : <code class="type">?maxl:int -><br>       ?max_restarts:int -><br>       ?gs_type:<a href="Sundials_LinearSolver.Iterative.html#TYPEgramschmidt_type">gramschmidt_type</a> -><br>       ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -><br>       ('d, 'k, [ `Spfgmr ]) <a href="Sundials_LinearSolver.Iterative.html#TYPElinear_solver">linear_solver</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Krylov iterative solver using the scaled preconditioned flexible
+    generalized minimum residual (GMRES) method. The <code class="code">maxl</code> arguments gives
+    the maximum dimension of the Krylov subspace (defaults to 5). The
+    nvector argument is used as a template.</p>
+
+<p>NB: <code class="code">max_restarts</code> is ignored by CVODE, CVODES, and ARKODE
+        for <a href="Sundials_Config.html#VALsundials_version">Config.sundials_version</a> &lt; 3.0.0.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNSPFGMR</div></ul>
+</div>
+
+<pre><span id="VALspgmr"><span class="keyword">val</span> spgmr</span> : <code class="type">?maxl:int -><br>       ?max_restarts:int -><br>       ?gs_type:<a href="Sundials_LinearSolver.Iterative.html#TYPEgramschmidt_type">gramschmidt_type</a> -><br>       ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -><br>       ('d, 'k, [ `Spgmr ]) <a href="Sundials_LinearSolver.Iterative.html#TYPElinear_solver">linear_solver</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Krylov iterative solver using the scaled preconditioned generalized
+    minimum residual (GMRES) method. The <code class="code">maxl</code> arguments gives the maximum
+    dimension of the Krylov subspace (defaults to 5). The nvector argument
+    is used as a template.</p>
+
+<p>NB: <code class="code">max_restarts</code> is ignored by CVODE, CVODES, and ARKODE
+        for <a href="Sundials_Config.html#VALsundials_version">Config.sundials_version</a> &lt; 3.0.0.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNSPGMR</div></ul>
+</div>
+
+<pre><span id="VALsptfqmr"><span class="keyword">val</span> sptfqmr</span> : <code class="type">?maxl:int -><br>       ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -><br>       ('d, 'k, [ `Sptfqmr ]) <a href="Sundials_LinearSolver.Iterative.html#TYPElinear_solver">linear_solver</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Krylov iterative with the scaled preconditioned transpose-free
+    quasi-minimal residual (SPTFQMR) method. The <code class="code">maxl</code> arguments gives the
+    maximum dimension of the Krylov subspace (defaults to 5). The nvector
+    argument is used as a template.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNSPTFQMR</div></ul>
+</div>
+
+<pre><span id="VALpcg"><span class="keyword">val</span> pcg</span> : <code class="type">?maxl:int -><br>       ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -><br>       ('d, 'k, [ `Pcg ]) <a href="Sundials_LinearSolver.Iterative.html#TYPElinear_solver">linear_solver</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Krylov iterative solver using the preconditioned conjugate gradient
+    (PCG) method. The <code class="code">maxl</code> arguments gives the maximum dimension of the
+    Krylov subspace (defaults to 5). The nvector argument is used as a
+    template.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNPCG</div></ul>
+</div>
+
+<pre><span id="MODULECustom"><span class="keyword">module</span> <a href="Sundials_LinearSolver.Iterative.Custom.html">Custom</a></span>: <code class="code"><span class="keyword">sig</span></code> <a href="Sundials_LinearSolver.Iterative.Custom.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+<p>Custom iterative linear solvers.</p>
+
+</div>
+
+<pre><span id="MODULEAlgorithms"><span class="keyword">module</span> <a href="Sundials_LinearSolver.Iterative.Algorithms.html">Algorithms</a></span>: <code class="code"><span class="keyword">sig</span></code> <a href="Sundials_LinearSolver.Iterative.Algorithms.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+<p>Low-level routines on arrays.</p>
+
+</div>
+<h4 id="parameters">Solver parameters</h4>
+<pre><span id="VALset_maxl"><span class="keyword">val</span> set_maxl</span> : <code class="type">('d, 'k, [< `Pcg | `Spbcgs | `Sptfqmr ])<br>       <a href="Sundials_LinearSolver.Iterative.html#TYPElinear_solver">linear_solver</a> -> int -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Updates the number of linear solver iterations to allow.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNSPBCGSSetMaxl</div><div class="sundials"><span class="seesundials">See sundials: </span>SUNSPTFQMRSetMaxl</div><div class="sundials"><span class="seesundials">See sundials: </span>SUNPCGSetMaxl</div></ul>
+</div>
+
+<pre><span id="VALset_gs_type"><span class="keyword">val</span> set_gs_type</span> : <code class="type">('d, 'k, [< `Spfgmr | `Spgmr ]) <a href="Sundials_LinearSolver.Iterative.html#TYPElinear_solver">linear_solver</a> -><br>       <a href="Sundials_LinearSolver.Iterative.html#TYPEgramschmidt_type">gramschmidt_type</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Sets the Gram-Schmidt orthogonalization to use.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNSPGMRSetGSType</div><div class="sundials"><span class="seesundials">See sundials: </span>SUNSPFGMRSetGSType</div></ul>
+</div>
+
+<pre><span id="VALset_max_restarts"><span class="keyword">val</span> set_max_restarts</span> : <code class="type">('d, 'k, [< `Spfgmr | `Spgmr ]) <a href="Sundials_LinearSolver.Iterative.html#TYPElinear_solver">linear_solver</a> -><br>       int -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Sets the number of GMRES restarts to allow.</p>
+
+<p>NB: This feature is not supported by CVODE, CVODES, and ARKODE
+        for <a href="Sundials_Config.html#VALsundials_version">Config.sundials_version</a> &lt; 3.0.0.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNSPGMRSetMaxRestarts</div><div class="sundials"><span class="seesundials">See sundials: </span>SUNSPFGMRSetMaxRestarts</div></ul>
+</div>
+
+<pre><span id="TYPEpreconditioning_type"><span class="keyword">type</span> <code class="type"></code>preconditioning_type</span> = <code class="type">Sundials_LinearSolver_impl.Iterative.preconditioning_type</code> = </pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTpreconditioning_type.PrecNone"><span class="constructor">PrecNone</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>No preconditioning</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTpreconditioning_type.PrecLeft"><span class="constructor">PrecLeft</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>$(P^{-1}A)x = P^{-1}b$</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTpreconditioning_type.PrecRight"><span class="constructor">PrecRight</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>$(AP^{-1})Px = b$</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTpreconditioning_type.PrecBoth"><span class="constructor">PrecBoth</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>$(P_L^{-1}AP_R^{-1})P_Rx = P_L^{-1}b$</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info ">
+<div class="info-desc">
+<p>The type of preconditioning in Krylov solvers.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>Preconditioning</div></ul>
+</div>
+
+
+<pre><span id="VALset_prec_type"><span class="keyword">val</span> set_prec_type</span> : <code class="type">('d, 'k, 'f) <a href="Sundials_LinearSolver.Iterative.html#TYPElinear_solver">linear_solver</a> -><br>       <a href="Sundials_LinearSolver.Iterative.html#TYPEpreconditioning_type">preconditioning_type</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Change the preconditioning direction without modifying callback
+    functions.</p>
+
+<p>Raises <a href="Sundials_LinearSolver.html#EXCEPTIONIllegalPrecType"><code class="code"><span class="constructor">Sundials_LinearSolver</span>.<span class="constructor">IllegalPrecType</span></code></a> if the current preconditioner
+    is <a href="Sundials_LinearSolver.Iterative.html#TYPEpreconditioning_type">PrecNone</a> and the given argument is not
+    (since no callback functions are specified in this case. May raise
+    <a href="Sundials_LinearSolver.html#EXCEPTIONIllegalPrecType"><code class="code"><span class="constructor">Sundials_LinearSolver</span>.<span class="constructor">IllegalPrecType</span></code></a> if the given type is not allowed by the
+    underlying solver.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNPCGSetPrecType</div><div class="sundials"><span class="seesundials">See sundials: </span>SUNSPBCGSSetPrecType</div><div class="sundials"><span class="seesundials">See sundials: </span>SUNSPFGMRSetPrecType</div><div class="sundials"><span class="seesundials">See sundials: </span>SUNSPGMRSetPrecType</div><div class="sundials"><span class="seesundials">See sundials: </span>SUNSPTFQMRSetPrecType</div></ul>
+</div>
+</body></html>

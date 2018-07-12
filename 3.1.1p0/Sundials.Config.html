@@ -1,0 +1,138 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="Start" href="index.html">
+<link rel="next" href="Sundials.Index.html">
+<link rel="Up" href="Sundials.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials_Index" rel="Chapter" href="Sundials_Index.html">
+<link title="Sundials_Config" rel="Chapter" href="Sundials_Config.html">
+<link title="Sundials_RealArray" rel="Chapter" href="Sundials_RealArray.html">
+<link title="Sundials_RealArray2" rel="Chapter" href="Sundials_RealArray2.html">
+<link title="Sundials_LintArray" rel="Chapter" href="Sundials_LintArray.html">
+<link title="Sundials_Logfile" rel="Chapter" href="Sundials_Logfile.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Sundials_Matrix" rel="Chapter" href="Sundials_Matrix.html">
+<link title="Sundials_LinearSolver" rel="Chapter" href="Sundials_LinearSolver.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Arkode" rel="Chapter" href="Arkode.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Arkode_bbd" rel="Chapter" href="Arkode_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Nvector_openmp" rel="Chapter" href="Nvector_openmp.html">
+<link title="Nvector_pthreads" rel="Chapter" href="Nvector_pthreads.html"><title>Sundials/ML 3.1.1p0 : Sundials.Config</title>
+</head>
+<body>
+<div class="navbar">&nbsp;<a class="up" href="Sundials.html" title="Sundials">Up</a>
+&nbsp;<a class="post" href="Sundials.Index.html" title="Sundials.Index">Next</a>
+</div>
+<h1>Module <a href="type_Sundials.Config.html">Sundials.Config</a></h1>
+
+<pre><span id="MODULEConfig"><span class="keyword">module</span> Config</span>: <code class="type"><a href="Sundials_Config.html">Sundials_Config</a></code></pre><div class="info module top">
+<div class="info-desc">
+<p>Installation specific constants.</p>
+</div>
+</div>
+<hr width="100%">
+
+<pre><span id="VALversion"><span class="keyword">val</span> version</span> : <code class="type">int * int * int * int</code></pre>
+<pre><span id="VALsundials_version"><span class="keyword">val</span> sundials_version</span> : <code class="type">int * int * int</code></pre><div class="info ">
+<div class="info-desc">
+<p>The <code class="code">major</code>, <code class="code">minor</code>, and <code class="code">patch</code> version numbers of the underlying
+    Sundials/C library. The OCaml interface may have been built against
+    an older version of</p>
+</div>
+</div>
+
+<pre><span id="VALlapack_enabled"><span class="keyword">val</span> lapack_enabled</span> : <code class="type">bool</code></pre><div class="info ">
+<div class="info-desc">
+<p>Indicates whether the interface was compiled with BLAS/LAPACK support.</p>
+</div>
+</div>
+
+<pre><span id="VALmpi_enabled"><span class="keyword">val</span> mpi_enabled</span> : <code class="type">bool</code></pre><div class="info ">
+<div class="info-desc">
+<p>Indicates whether the parallel nvectors and linear solvers are available.</p>
+</div>
+</div>
+
+<pre><span id="VALklu_enabled"><span class="keyword">val</span> klu_enabled</span> : <code class="type">bool</code></pre><div class="info ">
+<div class="info-desc">
+<p>Indicates whether the KLU sparse linear solver is available.</p>
+</div>
+</div>
+
+<pre><span id="VALsuperlumt_enabled"><span class="keyword">val</span> superlumt_enabled</span> : <code class="type">bool</code></pre><div class="info ">
+<div class="info-desc">
+<p>Indicates whether the SuperLU_MT sparse linear solver is available.</p>
+</div>
+</div>
+
+<pre><span id="VALnvecpthreads_enabled"><span class="keyword">val</span> nvecpthreads_enabled</span> : <code class="type">bool</code></pre><div class="info ">
+<div class="info-desc">
+<p>Indicates whether pthreads-based nvectors are available.</p>
+</div>
+</div>
+
+<pre><span id="VALnvecopenmp_enabled"><span class="keyword">val</span> nvecopenmp_enabled</span> : <code class="type">bool</code></pre><div class="info ">
+<div class="info-desc">
+<p>Indicates whether openmp-based nvectors are available.</p>
+</div>
+</div>
+
+<pre><span id="VALbig_real"><span class="keyword">val</span> big_real</span> : <code class="type">float</code></pre><div class="info ">
+<div class="info-desc">
+<p>The largest value representable as a real.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials cvode"><span class="seesundials">See sundials: </span>Data Types</div></ul>
+</div>
+
+<pre><span id="VALsmall_real"><span class="keyword">val</span> small_real</span> : <code class="type">float</code></pre><div class="info ">
+<div class="info-desc">
+<p>The smallest value representable as a real.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials cvode"><span class="seesundials">See sundials: </span>Data Types</div></ul>
+</div>
+
+<pre><span id="VALunit_roundoff"><span class="keyword">val</span> unit_roundoff</span> : <code class="type">float</code></pre><div class="info ">
+<div class="info-desc">
+<p>The difference bewteen 1.0 and the minimum real greater than 1.0.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials cvode"><span class="seesundials">See sundials: </span>Data Types</div></ul>
+</div>
+
+<pre><span id="EXCEPTIONNotImplementedBySundialsVersion"><span class="keyword">exception</span> NotImplementedBySundialsVersion</span></pre>
+<div class="info ">
+<div class="info-desc">
+<p>Raised for features that are not available in the installed version of
+    the underlying sundials library. See <a href="Sundials_Config.html#VALsundials_version"><code class="code"><span class="constructor">Sundials_Config</span>.sundials_version</code></a>.</p>
+</div>
+</div>
+</body></html>

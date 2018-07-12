@@ -1,0 +1,552 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Nvector_serial.html">
+<link rel="next" href="Sundials_LinearSolver.html">
+<link rel="Up" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials_Index" rel="Chapter" href="Sundials_Index.html">
+<link title="Sundials_Config" rel="Chapter" href="Sundials_Config.html">
+<link title="Sundials_RealArray" rel="Chapter" href="Sundials_RealArray.html">
+<link title="Sundials_RealArray2" rel="Chapter" href="Sundials_RealArray2.html">
+<link title="Sundials_LintArray" rel="Chapter" href="Sundials_LintArray.html">
+<link title="Sundials_Logfile" rel="Chapter" href="Sundials_Logfile.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Sundials_Matrix" rel="Chapter" href="Sundials_Matrix.html">
+<link title="Sundials_LinearSolver" rel="Chapter" href="Sundials_LinearSolver.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Arkode" rel="Chapter" href="Arkode.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Arkode_bbd" rel="Chapter" href="Arkode_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Nvector_openmp" rel="Chapter" href="Nvector_openmp.html">
+<link title="Nvector_pthreads" rel="Chapter" href="Nvector_pthreads.html"><link title="Shared definitions" rel="Section" href="#shared">
+<link title="Matrix content" rel="Section" href="#content">
+<link title="Arrays as matrices" rel="Section" href="#array">
+<link title="Generic matrices" rel="Section" href="#generic">
+<link title="Operations" rel="Subsection" href="#generic_ops">
+<title>Sundials/ML 3.1.1p0 : Sundials_Matrix</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Nvector_serial.html" title="Nvector_serial">Previous</a>
+&nbsp;<a class="up" href="index.html" title="Index">Up</a>
+&nbsp;<a class="post" href="Sundials_LinearSolver.html" title="Sundials_LinearSolver">Next</a>
+</div>
+<h1>Module <a href="type_Sundials_Matrix.html">Sundials_Matrix</a></h1>
+
+<pre><span id="MODULESundials_Matrix"><span class="keyword">module</span> Sundials_Matrix</span>: <code class="code"><span class="keyword">sig</span></code> <a href="Sundials_Matrix.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+<div class="info-desc">
+<p>Generic matrices.</p>
+</div>
+<ul class="info-attributes">
+<div class="authors"><b>Author(s):</b> Timothy Bourke (Inria/ENS), Jun Inoue (Inria/ENS), Marc Pouzet (UPMC/ENS/Inria)</div>
+<li><b>Version:</b> 3.1.1</li>
+<li><b>Since</b> 3.0.0</li>
+<div class="sundials"><span class="seesundials">See sundials: </span>Description of the SUNMatrix module</div></ul>
+</div>
+<hr width="100%">
+<h3 id="shared">Shared definitions</h3>
+<pre><code><span id="TYPEmatrix_ops"><span class="keyword">type</span> <code class="type">('m, 'd)</code> matrix_ops</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTmatrix_ops.m_clone">m_clone</span>&nbsp;: <code class="type">'m -> 'm</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Create a new, distinct matrix from an existing one without
+      copying the contents of the original matrix.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTmatrix_ops.m_zero">m_zero</span>&nbsp;: <code class="type">'m -> unit</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Set all elements to zero.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTmatrix_ops.m_copy">m_copy</span>&nbsp;: <code class="type">'m -> 'm -> unit</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p><code class="code">m_copy&nbsp;a&nbsp;b</code> copies the contents of <code class="code">a</code> into <code class="code">b</code>.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTmatrix_ops.m_scale_add">m_scale_add</span>&nbsp;: <code class="type">float -> 'm -> 'm -> unit</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p><code class="code">m_scale_add&nbsp;c&nbsp;a&nbsp;b</code> calculates $a = ca + b$.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTmatrix_ops.m_scale_addi">m_scale_addi</span>&nbsp;: <code class="type">float -> 'm -> unit</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p><code class="code">m_scale_addi&nbsp;c&nbsp;a</code> calculates $a = ca + I$.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTmatrix_ops.m_matvec">m_matvec</span>&nbsp;: <code class="type">'m -> 'd -> 'd -> unit</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p><code class="code">m_matvec&nbsp;a&nbsp;x&nbsp;y</code> calculates $y = ax$.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTmatrix_ops.m_space">m_space</span>&nbsp;: <code class="type">'m -> int * int</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p><code class="code">lrw,&nbsp;liw&nbsp;=&nbsp;m_space&nbsp;a</code> returns the number of realtype words <code class="code">lrw</code> and
+      integer words <code class="code">liw</code> required to store the matrix <code class="code">a</code>.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+}
+
+<div class="info ">
+<div class="info-desc">
+<p>Generic operations that all matrix types must implement. Failure is
+    signalled by raising an exception.</p>
+
+<p>There are two type variables:</p>
+<ul>
+<li><code class="code"><span class="keywordsign">'</span>m</code> represents the matrix data manipulated by the operations;</li>
+<li><code class="code"><span class="keywordsign">'</span>d</code> is the type of the vector arguments to <code class="code">m_matvec</code>.</li>
+</ul>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>Description of the SUNMatrix module</div></ul>
+</div>
+
+
+<pre><span id="EXCEPTIONInvalidated"><span class="keyword">exception</span> Invalidated</span></pre>
+<div class="info ">
+<div class="info-desc">
+<p>Raised in <a href="Sundials_Config.html#VALsundials_version">Config.sundials_version</a> &lt; 3.0.0 on an attempt to
+    access a value that has become invalid. Such values refer to matrices
+    that no longer exist in the underlying library. Values never
+    become invalid in <a href="Sundials_Config.html#VALsundials_version">Config.sundials_version</a> &gt;= 3.0.0.</p>
+</div>
+</div>
+
+<pre><span id="EXCEPTIONIncompatibleArguments"><span class="keyword">exception</span> IncompatibleArguments</span></pre>
+<div class="info ">
+<div class="info-desc">
+<p>Raised if matrix operation arguments are mutually incompatible.</p>
+</div>
+</div>
+
+<pre><span id="EXCEPTIONZeroDiagonalElement"><span class="keyword">exception</span> ZeroDiagonalElement</span> <span class="keyword">of</span> <code class="type">int</code></pre>
+<div class="info ">
+<div class="info-desc">
+<p>Raised if a zero diagonal element is found during factorization using a
+    low-level routine like
+    <a href="Sundials_LinearSolver.Iterative.Algorithms.html#VALqr_fact">LinearSolver.Iterative.Algorithms.qr_fact</a>,
+    <a href="Sundials_LinearSolver.Iterative.Algorithms.html#VALqr_sol">LinearSolver.Iterative.Algorithms.qr_sol</a>,
+    or <a href="Sundials_Matrix.ArrayDense.html#VALgetrf"><code class="code"><span class="constructor">Sundials_Matrix</span>.<span class="constructor">ArrayDense</span>.getrf</code></a>.
+    The argument gives the equation number (from 1).</p>
+</div>
+</div>
+<h3 id="content">Matrix content</h3>
+<pre><span id="MODULEDense"><span class="keyword">module</span> <a href="Sundials_Matrix.Dense.html">Dense</a></span>: <code class="code"><span class="keyword">sig</span></code> <a href="Sundials_Matrix.Dense.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+<p>Dense matrices</p>
+
+</div>
+
+<pre><span id="MODULEBand"><span class="keyword">module</span> <a href="Sundials_Matrix.Band.html">Band</a></span>: <code class="code"><span class="keyword">sig</span></code> <a href="Sundials_Matrix.Band.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+<p>Banded matrices</p>
+
+</div>
+
+<pre><span id="MODULESparse"><span class="keyword">module</span> <a href="Sundials_Matrix.Sparse.html">Sparse</a></span>: <code class="code"><span class="keyword">sig</span></code> <a href="Sundials_Matrix.Sparse.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+<p>Sparse matrices</p>
+
+</div>
+<h3 id="array">Arrays as matrices</h3>
+<pre><span id="MODULEArrayDense"><span class="keyword">module</span> <a href="Sundials_Matrix.ArrayDense.html">ArrayDense</a></span>: <code class="code"><span class="keyword">sig</span></code> <a href="Sundials_Matrix.ArrayDense.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+<p>General purpose dense matrix operations on arrays.</p>
+
+</div>
+
+<pre><span id="MODULEArrayBand"><span class="keyword">module</span> <a href="Sundials_Matrix.ArrayBand.html">ArrayBand</a></span>: <code class="code"><span class="keyword">sig</span></code> <a href="Sundials_Matrix.ArrayBand.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+<p>General-purpose band matrix operations on arrays.</p>
+
+</div>
+<h3 id="generic">Generic matrices</h3>
+<pre><span id="TYPEstandard"><span class="keyword">type</span> <code class="type"></code>standard</span> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>Distinguishes a library-supplied matrix from a custom one.</p>
+</div>
+</div>
+
+
+<pre><span id="TYPEcustom"><span class="keyword">type</span> <code class="type"></code>custom</span> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>Distinguishes a user-supplied matrix from a standard one.</p>
+</div>
+</div>
+
+
+<pre><span id="TYPEt"><span class="keyword">type</span> <code class="type">('k, 'm, 'nd, 'nk)</code> t</span> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>A generic matrix with a payload of type <code class="code"><span class="keywordsign">'</span>m</code>. The <code class="code"><span class="keywordsign">'</span>k</code> type argument tracks
+    whether the matrix is <a href="Sundials_Matrix.html#TYPEstandard"><code class="code"><span class="constructor">Sundials_Matrix</span>.standard</code></a> or <a href="Sundials_Matrix.html#TYPEcustom"><code class="code"><span class="constructor">Sundials_Matrix</span>.custom</code></a>. The <code class="code"><span class="keywordsign">'</span>nd</code> and <code class="code"><span class="keywordsign">'</span>nk</code> type
+    arguments track the compatiblity of the <a href="Sundials_Matrix.html#TYPEmatrix_ops">m_matvec</a> vector
+    parameters.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNMatrix</div></ul>
+</div>
+
+
+<pre><span id="TYPEdense"><span class="keyword">type</span> <code class="type">[> <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a> ]</code> dense</span> = <code class="type">(<a href="Sundials_Matrix.html#TYPEstandard">standard</a>, <a href="Sundials_Matrix.Dense.html#TYPEt">Dense.t</a>, <a href="Nvector_serial.html#TYPEdata">Nvector_serial.data</a>,<br>        [> <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a> ] as 'nk)<br>       <a href="Sundials_Matrix.html#TYPEt">t</a></code> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>Generic matrix with Dense content.</p>
+</div>
+</div>
+
+
+<pre><span id="VALdense"><span class="keyword">val</span> dense</span> : <code class="type">?m:int -> ?i:float -> int -> [> <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a> ] <a href="Sundials_Matrix.html#TYPEdense">dense</a></code></pre>
+<pre><span id="VALwrap_dense"><span class="keyword">val</span> wrap_dense</span> : <code class="type"><a href="Sundials_Matrix.Dense.html#TYPEt">Dense.t</a> -> [> <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a> ] <a href="Sundials_Matrix.html#TYPEdense">dense</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Creates a (dense) matrix by wrapping an existing dense matrix. The two
+    values share the same underlying storage.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNDenseMatrix</div></ul>
+</div>
+
+<pre><span id="TYPEband"><span class="keyword">type</span> <code class="type">[> <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a> ]</code> band</span> = <code class="type">(<a href="Sundials_Matrix.html#TYPEstandard">standard</a>, <a href="Sundials_Matrix.Band.html#TYPEt">Band.t</a>, <a href="Nvector_serial.html#TYPEdata">Nvector_serial.data</a>,<br>        [> <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a> ] as 'nk)<br>       <a href="Sundials_Matrix.html#TYPEt">t</a></code> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>Generic matrix with Band content.</p>
+</div>
+</div>
+
+
+<pre><span id="VALband"><span class="keyword">val</span> band</span> : <code class="type">?mu:int -><br>       ?smu:int -><br>       ?ml:int -> ?i:float -> int -> [> <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a> ] <a href="Sundials_Matrix.html#TYPEband">band</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>By default, <code class="code">band&nbsp;n</code> returns an <code class="code">n</code> by <code class="code">n</code> band matrix with all bandwidths
+    equal to 2 and all values initialized to <code class="code">0.0</code>.
+    Optional arguments allow specifying the upper bandwidth <code class="code">mu</code>, the lower
+    bandwidth <code class="code">ml</code>, the storage upper bandwidth <code class="code">smu</code> and the initial
+    values <code class="code">i</code>. If <code class="code">mu</code> is given but not <code class="code">smu</code>, then <code class="code">smu</code> is set to <code class="code">mu</code>.
+    If <code class="code">mu</code> is given but not <code class="code">ml</code>, then <code class="code">ml</code> is set to <code class="code">mu</code>.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNBandMatrix</div></ul>
+</div>
+
+<pre><span id="VALwrap_band"><span class="keyword">val</span> wrap_band</span> : <code class="type"><a href="Sundials_Matrix.Band.html#TYPEt">Band.t</a> -> [> <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a> ] <a href="Sundials_Matrix.html#TYPEband">band</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Creates a (band) matrix by wrapping an existing band matrix. The two
+    values share the same underlying storage.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNBandMatrix</div></ul>
+</div>
+
+<pre><span id="TYPEsparse"><span class="keyword">type</span> <code class="type">('s, [> <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a> ])</code> sparse</span> = <code class="type">(<a href="Sundials_Matrix.html#TYPEstandard">standard</a>, 's <a href="Sundials_Matrix.Sparse.html#TYPEt">Sparse.t</a>, <a href="Nvector_serial.html#TYPEdata">Nvector_serial.data</a>,<br>        [> <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a> ] as 'nk)<br>       <a href="Sundials_Matrix.html#TYPEt">t</a></code> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>Generic matrix with Sparse content.</p>
+</div>
+</div>
+
+
+<pre><span id="VALsparse_csc"><span class="keyword">val</span> sparse_csc</span> : <code class="type">?m:int -><br>       ?nnz:int -><br>       int -><br>       (<a href="Sundials_Matrix.Sparse.html#TYPEcsc">Sparse.csc</a>, [> <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a> ]) <a href="Sundials_Matrix.html#TYPEsparse">sparse</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>By default, <code class="code">sparse_csc&nbsp;n</code> returns an <code class="code">n</code> by <code class="code">n</code> sparse matrix in
+    <a href="Sundials_Matrix.Sparse.html#VALsformat">CSC</a> format with the capacity for <code class="code">n&nbsp;/&nbsp;10</code> non-zero
+    elements and all elements initialized to <code class="code">0.0</code>. Optional arguments allow
+    specifying the number of rows <code class="code">m</code>, and the number of non-zero
+    elements <code class="code">nnz</code>.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNSparseMatrix</div></ul>
+</div>
+
+<pre><span id="VALsparse_csr"><span class="keyword">val</span> sparse_csr</span> : <code class="type">?m:int -><br>       ?nnz:int -><br>       int -><br>       (<a href="Sundials_Matrix.Sparse.html#TYPEcsr">Sparse.csr</a>, [> <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a> ]) <a href="Sundials_Matrix.html#TYPEsparse">sparse</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>As for <a href="Sundials_Matrix.html#VALsparse_csc"><code class="code"><span class="constructor">Sundials_Matrix</span>.sparse_csc</code></a> but the returned matrix is in <a href="Sundials_Matrix.Sparse.html#VALsformat">CSR</a>
+    format.</p>
+
+<p>The <a href="Sundials_Matrix.Sparse.html#VALsformat">CSR</a> format is only available from Sundials 2.7.0
+    onwards.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNSparseMatrix</div></ul>
+</div>
+
+<pre><span id="VALwrap_sparse"><span class="keyword">val</span> wrap_sparse</span> : <code class="type">'s <a href="Sundials_Matrix.Sparse.html#TYPEt">Sparse.t</a> -><br>       ('s, [> <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a> ]) <a href="Sundials_Matrix.html#TYPEsparse">sparse</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Creates a (sparse) matrix by wrapping an existing sparse matrix. The two
+    values share the same underlying storage.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNSparseMatrix</div></ul>
+</div>
+
+<pre><span id="TYPEarraydense"><span class="keyword">type</span> <code class="type">'nk</code> arraydense</span> = <code class="type">(<a href="Sundials_Matrix.html#TYPEcustom">custom</a>, <a href="Sundials_Matrix.ArrayDense.html#TYPEt">ArrayDense.t</a>, Sundials.RealArray.t,<br>        'nk)<br>       <a href="Sundials_Matrix.html#TYPEt">t</a></code> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>Generic matrix with array-based dense content.</p>
+</div>
+</div>
+
+
+<pre><span id="VALarraydense"><span class="keyword">val</span> arraydense</span> : <code class="type">?m:int -> ?i:float -> int -> 'nk <a href="Sundials_Matrix.html#TYPEarraydense">arraydense</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>By default, <code class="code">arraydense&nbsp;n</code> returns an <code class="code">n</code> by <code class="code">n</code> dense matrix with all
+    elements initialized to <code class="code">0.0</code>. Optional arguments allow specifying the
+    number of rows (<code class="code">m</code>) and the initial value (<code class="code">i</code>).</p>
+</div>
+</div>
+
+<pre><span id="VALwrap_arraydense"><span class="keyword">val</span> wrap_arraydense</span> : <code class="type"><a href="Sundials_Matrix.ArrayDense.html#TYPEt">ArrayDense.t</a> -> 'nk <a href="Sundials_Matrix.html#TYPEarraydense">arraydense</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Creates an (array-based dense) matrix by wrapping an existing array-based
+    dense matrix. The two values share the same underlying storage.</p>
+</div>
+</div>
+
+<pre><span id="TYPEarrayband"><span class="keyword">type</span> <code class="type">'nk</code> arrayband</span> = <code class="type">(<a href="Sundials_Matrix.html#TYPEcustom">custom</a>, <a href="Sundials_Matrix.ArrayBand.html#TYPEt">ArrayBand.t</a>, Sundials.RealArray.t,<br>        'nk)<br>       <a href="Sundials_Matrix.html#TYPEt">t</a></code> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>Generic matrix with array-based band content.</p>
+</div>
+</div>
+
+
+<pre><span id="VALarrayband"><span class="keyword">val</span> arrayband</span> : <code class="type">?mu:int -><br>       ?smu:int -> ?ml:int -> ?i:float -> int -> 'nk <a href="Sundials_Matrix.html#TYPEarrayband">arrayband</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>By default, <code class="code">band&nbsp;n</code> returns an <code class="code">n</code> by <code class="code">n</code> band matrix with all bandwidths
+    equal to 2 and all values initialized to <code class="code">0.0</code>.
+    Optional arguments allow specifying the upper bandwidth <code class="code">mu</code>, the lower
+    bandwidth <code class="code">ml</code>, the storage upper bandwidth <code class="code">smu</code> and the initial
+    values <code class="code">i</code>. If <code class="code">mu</code> is given but not <code class="code">smu</code>, then <code class="code">smu</code> is set to <code class="code">mu</code>,
+    otherwise if <code class="code">smu</code> is given but not <code class="code">mu</code>, then <code class="code">mu</code> is set to <code class="code">smu</code>.
+    If <code class="code">ml</code> is not given, then it is set to <code class="code">mu</code>.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>newBandMat</div></ul>
+</div>
+
+<pre><span id="VALwrap_arrayband"><span class="keyword">val</span> wrap_arrayband</span> : <code class="type"><a href="Sundials_Matrix.ArrayBand.html#TYPEt">ArrayBand.t</a> -> 'nk <a href="Sundials_Matrix.html#TYPEarrayband">arrayband</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Creates an (array-based band) matrix by wrapping an existing array-based
+    band matrix. The two values share the same underlying storage.</p>
+</div>
+</div>
+
+<pre><span id="VALwrap_custom"><span class="keyword">val</span> wrap_custom</span> : <code class="type">('m, 'nd) <a href="Sundials_Matrix.html#TYPEmatrix_ops">matrix_ops</a> -><br>       'm -> (<a href="Sundials_Matrix.html#TYPEcustom">custom</a>, 'm, 'nd, 'nk) <a href="Sundials_Matrix.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Wrap a custom matrix value.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>Description of the SUNMatrix module</div></ul>
+</div>
+
+<pre><code><span id="TYPEid"><span class="keyword">type</span> <code class="type"></code>id</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTid.Dense"><span class="constructor">Dense</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTid.Band"><span class="constructor">Band</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTid.Sparse"><span class="constructor">Sparse</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTid.Custom"><span class="constructor">Custom</span></span></code></td>
+
+</tr></table>
+
+<div class="info ">
+<div class="info-desc">
+<p>Matrix internal type identifiers.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNMatrix_ID</div></ul>
+</div>
+
+
+<pre><span id="VALget_ops"><span class="keyword">val</span> get_ops</span> : <code class="type">('k, 'm, 'nd, 'nk) <a href="Sundials_Matrix.html#TYPEt">t</a> -> ('m, 'nd) <a href="Sundials_Matrix.html#TYPEmatrix_ops">matrix_ops</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Return a record of matrix operations.</p>
+</div>
+</div>
+
+<pre><span id="VALget_id"><span class="keyword">val</span> get_id</span> : <code class="type">('k, 'm, 'nd, 'nk) <a href="Sundials_Matrix.html#TYPEt">t</a> -> <a href="Sundials_Matrix.html#TYPEid">id</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Return the internal type identifier of a matrix.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNMatGetID</div></ul>
+</div>
+
+<pre><span id="VALunwrap"><span class="keyword">val</span> unwrap</span> : <code class="type">('k, 'm, 'nd, 'nk) <a href="Sundials_Matrix.html#TYPEt">t</a> -> 'm</code></pre><div class="info ">
+<div class="info-desc">
+<p>Direct access to the underlying storage array, which is accessed
+    column first (unlike in <a href="Sundials_Matrix.Dense.html#VALget"><code class="code"><span class="constructor">Sundials_Matrix</span>.<span class="constructor">Dense</span>.get</code></a>, <a href="Sundials_Matrix.Band.html#VALget"><code class="code"><span class="constructor">Sundials_Matrix</span>.<span class="constructor">Band</span>.get</code></a>, and <a href="Sundials_Matrix.Sparse.html#VALget"><code class="code"><span class="constructor">Sundials_Matrix</span>.<span class="constructor">Sparse</span>.get</code></a>).</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SM_CONTENT_B</div></ul>
+</div>
+<h4 id="generic_ops">Operations</h4>
+<pre><span id="VALscale_add"><span class="keyword">val</span> scale_add</span> : <code class="type">float -><br>       ('k, 'm, 'nd, 'nk) <a href="Sundials_Matrix.html#TYPEt">t</a> -><br>       ('k, 'm, 'nd, 'nk) <a href="Sundials_Matrix.html#TYPEt">t</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">scale_add&nbsp;c&nbsp;<span class="constructor">A</span>&nbsp;<span class="constructor">B</span></code> calculates $A = cA + B$.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNMatScaleAdd</div></ul>
+</div>
+
+<pre><span id="VALscale_addi"><span class="keyword">val</span> scale_addi</span> : <code class="type">float -> ('k, 'm, 'nd, 'nk) <a href="Sundials_Matrix.html#TYPEt">t</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">scale_addi&nbsp;c&nbsp;<span class="constructor">A</span></code> calculates $A = cA + I$.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNMatScaleAddI</div></ul>
+</div>
+
+<pre><span id="VALmatvec"><span class="keyword">val</span> matvec</span> : <code class="type">('k, 'm, 'nd, 'nk) <a href="Sundials_Matrix.html#TYPEt">t</a> -><br>       ('nd, 'nk) <a href="Nvector.html#TYPEt">Nvector.t</a> -> ('nd, 'nk) <a href="Nvector.html#TYPEt">Nvector.t</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>The call <code class="code">matvec&nbsp;a&nbsp;x&nbsp;y</code> computes the matrix-vector product $y = Ax$.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNMatMatvec</div></ul>
+</div>
+
+<pre><span id="VALset_to_zero"><span class="keyword">val</span> set_to_zero</span> : <code class="type">('k, 'm, 'nd, 'nk) <a href="Sundials_Matrix.html#TYPEt">t</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Fills a matrix with zeros.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNMatZero</div></ul>
+</div>
+
+<pre><span id="VALblit"><span class="keyword">val</span> blit</span> : <code class="type">('k, 'm, 'nd, 'nk) <a href="Sundials_Matrix.html#TYPEt">t</a> -><br>       ('k, 'm, 'nd, 'nk) <a href="Sundials_Matrix.html#TYPEt">t</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">blit&nbsp;src&nbsp;dst</code> copies the contents of <code class="code">src</code> into <code class="code">dst</code>. Both
+    must have the same size.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNMatCopy</div></ul>
+</div>
+
+<pre><span id="VALspace"><span class="keyword">val</span> space</span> : <code class="type">('k, 'm, 'nd, 'nk) <a href="Sundials_Matrix.html#TYPEt">t</a> -> int * int</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">lrw,&nbsp;liw&nbsp;=&nbsp;space&nbsp;a</code> returns the storage requirements of <code class="code">a</code> as
+    <code class="code">lrw</code> realtype words and <code class="code">liw</code> integer words.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNMatSpace</div></ul>
+</div>
+
+<pre><span id="VALprint_dense"><span class="keyword">val</span> print_dense</span> : <code class="type">[> <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a> ] <a href="Sundials_Matrix.html#TYPEdense">dense</a> -> Sundials.Logfile.t -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Prints a dense matrix to the given log file.</p>
+
+<p>NB: Not supported in <a href="Sundials_Config.html#VALsundials_version">Config.sundials_version</a> &lt; 3.0.0.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNDenseMatrix_Print</div></ul>
+</div>
+
+<pre><span id="VALprint_band"><span class="keyword">val</span> print_band</span> : <code class="type">[> <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a> ] <a href="Sundials_Matrix.html#TYPEband">band</a> -> Sundials.Logfile.t -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Prints a band matrix to the given log file.</p>
+
+<p>NB: Not supported in <a href="Sundials_Config.html#VALsundials_version">Config.sundials_version</a> &lt; 3.0.0.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNBandMatrix_Print</div></ul>
+</div>
+
+<pre><span id="VALprint_sparse"><span class="keyword">val</span> print_sparse</span> : <code class="type">('s, [> <a href="Nvector_serial.html#TYPEkind">Nvector_serial.kind</a> ]) <a href="Sundials_Matrix.html#TYPEsparse">sparse</a> -><br>       Sundials.Logfile.t -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Prints a sparse matrix to the given log file.</p>
+
+<p>NB: Not supported in <a href="Sundials_Config.html#VALsundials_version">Config.sundials_version</a> &lt; 3.0.0.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNSparseMatrix_Print</div></ul>
+</div>
+</body></html>
