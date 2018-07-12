@@ -278,11 +278,13 @@ perf.byte.log perf.opt.log: perf.%.log: $(ENABLED_EXAMPLES:.ml=.%.perf)       \
 perf-intv.byte.cache perf-intv.opt.cache: perf-intv.%.cache:	\
 		$(ENABLED_EXAMPLES:.ml=.%.perf)			\
 		$(UTILS)/crunchperf
+	$(UTILS)/crunchperf --check-external-deps octave
 	$(UTILS)/crunchperf -i $(PERF_CONFIDENCE) \
 		$(filter-out $(UTILS)/crunchperf,$^) > $@
 
 perf-intv.byte.log perf-intv.opt.log: perf-intv.%.log: perf-intv.%.cache      \
 						       $(UTILS)/crunchperf
+	$(UTILS)/crunchperf --check-external-deps octave
 	$(UTILS)/crunchperf -s $< > $@
 	@cat $@
 

@@ -354,14 +354,31 @@ let u_test ?(side="<>") xs ys =
     ret
   with e -> (close_in pipe; raise e)
 
+let find_octave_path () =
+  let path = try Unix.getenv "OCTAVE_CLI"
+             with Not_found -> "octave-cli"
+  in
+  let outpipe, inpipe =
+    Unix.open_process (Printf.sprintf "'%s' --eval exit" path)
+  in
+  try
+    (match Unix.close_process (outpipe,inpipe) with
+     | Unix.WEXITED 0 -> path
+     | Unix.WEXITED 141 -> (* pipe error *)
+        failwith (Printf.sprintf "Can't invoke octave; could be a version issue")
+     | _ -> raise Not_found)
+  with e ->
+    failwith
+      (Printf.sprintf
+         "Error: Can't find octave at path %s; install GNU octave and/or point OCTAVE_CLI to the octave-cli binary, and try again."
+         path)
+
 (* FIXME: This is really slow because it re-launches octave over and
    over.  *)
 let u_test ?(side="<>") xs ys =
   (* Returns p-value of Mann-Whitney U-test with the null hypothesis
      P(X > Y) = P(Y < X).  *)
-  let octave_path =
-    try Unix.getenv "OCTAVE_CLI"
-    with Not_found -> "octave-cli"
+  let octave_path = find_octave_path ()
   and script =
     Printf.sprintf
       "[p,_] = u_test(%s, %s, \"%s\"); disp(p)"
@@ -369,15 +386,15 @@ let u_test ?(side="<>") xs ys =
       (string_of_float_array ~sep:"," ys)
       side
   in
-  let command = Printf.sprintf "%s --eval '%s'" octave_path script in
+  let command = Printf.sprintf "'%s' --eval '%s'" octave_path script in
   let pipe = Unix.open_process_in command
   in
   try
     let ret = Scanf.bscanf (Scanf.Scanning.from_channel pipe)
                            " %f\n" (fun f -> f) in
-    close_in pipe;
+    ignore (Unix.close_process_in pipe);
     ret
-  with e -> (close_in pipe; raise e)
+  with e -> (ignore (Unix.close_process_in pipe); raise e)
 
 let u_intv ?(confidence=0.005) xs ys =
   (* Returns the range of gamma such that, when xs is scaled by gamma,
@@ -617,6 +634,13 @@ let print_confidence file =
   | IntvData (pvalue, records) ->
      Printf.printf "%g" ((1. -. pvalue) *. 100.)
 
+let check_external_deps deps =
+  List.iter (function
+      | "octave" -> ignore (find_octave_path ())
+      | dep -> failwith @@ "unsupported external dep: " ^ dep
+    )
+  deps
+
 let _ =
   if not !Sys.interactive
   then
@@ -634,6 +658,8 @@ let _ =
        recover_reps file
     | [_;"--conf";file] ->
        print_confidence file
+    | _::"--check-external-deps"::deps ->
+       check_external_deps deps
     | _ ->
        print_string synopsis;
        exit 0
