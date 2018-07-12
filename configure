@@ -210,6 +210,22 @@ END_HELP_TEXT
     esac
 done
 
+if [ -f /etc/debian_version ]; then
+    distribution=debian
+elif [ -f /etc/centos-release ]; then
+    distribution=centos
+elif [ -f /etc/gentoo-release ]; then
+    distribution=gentoo
+elif [ -f /etc/fedora-release ]; then
+    distribution=fedora
+elif [ -f /etc/arch-release ]; then
+    distribution=arch
+elif [ -f /etc/alpine-release ]; then
+    distribution=alpine
+else
+    distribution=unknown
+fi
+
 if [ x"${OCAMLROOT}" != x ]; then
     OCAMLBIN="${OCAMLROOT%/}/bin/"
 fi
@@ -242,6 +258,9 @@ fi
 if [ x"${SUPERLUMT_INCLUDE_DIR}" != x ]; then
     superlumt_inc_path="${SUPERLUMT_INCLUDE_DIR%/}"
     Isuperlumt_inc_path="-I${superlumt_inc_path}"
+elif [ "${distribution}" = centos ]; then
+    superlumt_inc_path="/usr/include/SuperLUMT/"
+    Isuperlumt_inc_path="-I${superlumt_inc_path}"
 fi
 if [ x"${SUPERLUMT_LIBRARY_DIR}" != x ]; then
     superlumt_lib_path="${SUPERLUMT_LIBRARY_DIR%/}"
@@ -249,6 +268,9 @@ if [ x"${SUPERLUMT_LIBRARY_DIR}" != x ]; then
 fi
 if [ x"${KLU_INCLUDE_DIR}" != x ]; then
     klu_inc_path="${KLU_INCLUDE_DIR%/}"
+    Iklu_inc_path="-I${klu_inc_path}"
+elif [ "${distribution}" = debian ] || [ "${distribution}" = centos ]; then
+    klu_inc_path="/usr/include/suitesparse/"
     Iklu_inc_path="-I${klu_inc_path}"
 fi
 if [ x"${KLU_LIBRARY_DIR}" != x ]; then
@@ -892,7 +914,7 @@ if [ $sundials -ge 260 ]; then
                 test_cmd="$CC $test_stem.c ${Iklu_inc_path} ${Lklu_lib_path} ${sparse_libs} -o ${test_stem}${XX}"
                 cat > $test_stem.c <<EOF
 /* ${test_cmd} */
-#include "klu.h"
+#include <klu.h>
 #include <stddef.h>
 
 int
@@ -923,8 +945,11 @@ EOF
 		superlumt_enabled=1
 	        superlumt_info="installed"
 
-		# TODO: detect which to install (how to do this?)
-		superlumt_libs="-lsuperlu_mt_PTHREAD -lpthread"
+		if [ "$distribution" = centos ]; then
+		    superlumt_libs="-lsuperlumt_d"
+		else
+		    superlumt_libs="-lsuperlu_mt_PTHREAD -lpthread"
+		fi
 		sparse_libs="$sparse_libs $superlumt_libs"
 		blas_libs="-lblas"
 		#sparse_libs="$sparse_libs -lsuperlu_mt_OPENMP -lopenmp"
