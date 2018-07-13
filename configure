@@ -552,11 +552,11 @@ if [ ${sundials} -ge 300 ]; then
 			| ${CPP} ${cppflags} ${Isundials_inc_path} \
 			    -P 2>>${logfile} \
 			| tail -1 | sed -e 's/ //g' -e 's/"//g'`
-    if [ "${sundials_int64_t}" -eq 1 ]; then
-	sundials_indextype=64
-    else
+    if [ "${sundials_int64_t}" = SUNDIALS_INT64_T ]; then
 	sundials_indextype=32
 	other_tweaks="${other_tweaks} index-int32"
+    else
+	sundials_indextype=64
     fi
 else
     sundials_indextype=64
@@ -1365,9 +1365,11 @@ printf "#define SUNDIALS_LIB_VERSION %d\\n" "${sundials}" >> src/config.h
 if [ "${sundials_indextype}" -eq 64 ]; then
 printf "#define Index_val(x) Long_val(x)\\n" >> src/config.h
 printf "#define Val_index(x) Val_long(x)\\n" >> src/config.h
+printf "#define CAML_BA_INDEX CAML_BA_INT64\\n" >> src/config.h
 else
 printf "#define Index_val(x) Int_val(x)\\n" >> src/config.h
 printf "#define Val_index(x) Val_int(x)\\n" >> src/config.h
+printf "#define CAML_BA_INDEX CAML_BA_INT32\\n" >> src/config.h
 fi
 printf "#endif /* __SUNDIALS_CONFIG_H__ */\\n" >> src/config.h
 

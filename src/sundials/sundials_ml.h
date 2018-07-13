@@ -64,7 +64,7 @@ typedef int sundials_ml_smat_index;
 
 /* Interfacing with OCaml's bigarray infrastructure.  */
 #define BIGARRAY_FLOAT (CAML_BA_FLOAT64 | CAML_BA_C_LAYOUT)
-#define BIGARRAY_INDEX (CAML_BA_INT64 | CAML_BA_C_LAYOUT)
+#define BIGARRAY_INDEX (CAML_BA_INDEX | CAML_BA_C_LAYOUT)
 
 #define INT_ARRAY(v) ((int *)Caml_ba_data_val(v))
 #define LONG_ARRAY(v) ((long int *)Caml_ba_data_val(v))

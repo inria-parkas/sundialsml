@@ -359,6 +359,7 @@ clean:
 
 distclean: clean
 	-@$(RM) -f META
+	-@$(RM) -f sundials/sundials_Index.mli sundials/sundials_Index.ml
 	-@$(RM) -f config.h sundials/sundials_configuration.ml
 
 -include .depend

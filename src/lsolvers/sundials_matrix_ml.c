@@ -745,7 +745,7 @@ CAMLprim value sunml_matrix_band_wrap(DlsMat a)
  */
 #if SUNDIALS_LIB_VERSION < 260
 CAMLprim value sunml_matrix_sparse_create(value vm, value vn, value vnnz,
-				       value vsformat)
+				          value vsformat)
 {
     CAMLparam4(vm, vn, vnnz, vsformat);
     CAMLreturn(Val_unit);

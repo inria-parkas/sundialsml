@@ -429,8 +429,6 @@ module Sparse = struct (* {{{ *)
   type index_array =
     (Index.t, Index.index_elt, Bigarray.c_layout) Bigarray.Array1.t
 
-  module Index = Index
-
   (* Must correspond with sundials_matrix_ml.h:mat_sparse_data_index *)
   type 's data = {
     idxvals : index_array;
@@ -706,8 +704,8 @@ module Sparse = struct (* {{{ *)
   let set_to_zero { payload = { idxvals; idxptrs; data }; rawptr; valid } =
     if check_valid && not valid then raise Invalidated;
     if unsafe_content then c_set_to_zero rawptr
-    else (Bigarray.Array1.fill idxvals 0L;
-          Bigarray.Array1.fill idxptrs 0L;
+    else (Bigarray.Array1.fill idxvals Index.zero;
+          Bigarray.Array1.fill idxptrs Index.zero;
           Bigarray.Array1.fill data 0.0)
 
   external c_copy : cptr -> 's t -> unit

@@ -121,7 +121,7 @@ CAMLprim value sunml_lsolver_lapack_dense(value vnvec, value vdmat)
     SUNLinearSolver ls = SUNLapackDense(NVEC_VAL(vnvec), dmat);
 
     if (ls == NULL) {
-	if (SUNDenseMatrix_Rows(bmat) != SUNDenseMatrix_Columns(bmat))
+	if (SUNDenseMatrix_Rows(dmat) != SUNDenseMatrix_Columns(dmat))
 	    caml_raise_constant(LSOLVER_EXN(MatrixNotSquare));
 
 	if (SUNDenseMatrix_Rows(dmat) != NV_LENGTH_S(NVEC_VAL(vnvec)))
