@@ -244,6 +244,12 @@ if [ x"${SUNDIALS_EXAMPLES_DIR}" != x ]; then
     else
 	EXAMPLESROOT="${SUNDIALS_EXAMPLES_DIR%/}"
     fi
+elif [ "${distribution}" = debian ]; then
+    if [ -d "/usr/share/doc/libsundials-serial-dev/examples/cvode/serial" ]; then
+	EXAMPLESROOT=/usr/share/doc/libsundials-serial-dev/examples
+    elif [ -d "/usr/share/doc/libsundials-dev/examples/cvode/serial" ]; then
+	EXAMPLESROOT=/usr/share/doc/libsundials-dev/examples
+    fi
 fi
 if [ x"${SUNDIALS_DIR}" != x ]; then
     if [ "x${sundials_lib_path}" = x ]; then
