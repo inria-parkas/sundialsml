@@ -191,8 +191,8 @@ let print_final_stats s =
   printf "\nFinal Statistics:\n";
   printf "nst = %-6d nfe  = %-6d nsetups = %-6d nfeLS = %-6d nje = %d\n"
   nst nfe nsetups nfeLS nje;
-  printf "nni = %-6d ncfn = %-6d netf = %d\n \n"
-  nni ncfn netf
+  printf "nni = %-6d ncfn = %-6d netf = %d\n" nni ncfn netf;
+  (match Config.sundials_version with 2,_,_ -> printf " \n" | _ -> ())
 
 let main () =
   (* Create a serial vector *)
@@ -221,7 +221,7 @@ let main () =
    * the initial dependent variable vector u. *)
   (* Call CVLapackBand to specify the CVBAND band linear solver *)
   (* Set the user-supplied Jacobian routine Jac *)
-  let mjac = Matrix.(band ~mu:my neq) in
+  let mjac = Matrix.(band ~smu:(2*my) ~mu:my neq) in
   let cvode_mem = Cvode.(init BDF
               (Newton Dls.(solver ~jac:(jac data) (lapack_band u mjac)))
               (SStolerances (reltol, abstol))
