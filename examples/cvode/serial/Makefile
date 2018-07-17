@@ -22,9 +22,6 @@ EXAMPLES_SINCE_3_0 = cvDiurnal_kry_alt.ml
 
 EXAMPLES = $(EXAMPLES_SINCE_2_5) $(EXAMPLES_SINCE_3_0)
 
-ENABLED_EXAMPLES = $(EXAMPLES_SINCE_2_5) \
-		   $(if $(AT_LEAST_3_0),$(EXAMPLES_SINCE_3_0))
-
 LAPACK_EXAMPLES = cvAdvDiff_bndL.ml \
 		  cvRoberts_dnsL.ml
 
