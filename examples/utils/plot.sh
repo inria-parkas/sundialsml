@@ -216,7 +216,7 @@ elif [ "x$STYLE" = xinterval ]; then
 
 LABELCMD="('< $crunch -S $1') u (1):xticlabels(7) lt -3 notitle"
 
-BOXCMD="'$1' using 1:5:(0.4):(\$6-\$5):(pickcolor(\$8)) w boxxyerror \
+BOXCMD="'$1' using 1:((\$5+\$6)/2):(0.4):((\$6-\$5)/2):(pickcolor(\$8)) w boxxyerror \
           fill solid lc rgb variable \
           title 'OCaml time / C time (left axis)'"
 DOTCMD="'$1' using 1:(\$4/\$2) \
