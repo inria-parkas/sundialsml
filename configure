@@ -1275,7 +1275,16 @@ elif [ -n "${warning}" ]; then
     printf "Warnings:${warning}\n\n"                                  >> ${LOG}
 fi
 
+if [ ! -f config.in ]; then
+    # Allow ./configure without source files (for troubleshooting)
+    printf "Not in source directory: skipping build file generation.\n" >> ${LOG}
+    cat ${LOG}
+    exit 0
+fi
+
 cat ${LOG}
+
+# Produce configuration files for Sundials/ML build
 
 (printf "# # # THIS FILE IS GENERATED AUTOMATICALLY BY CONFIGURE # # #\n"; \
  sed -e "s#@prefix@#${prefix}#;
