@@ -1,0 +1,54 @@
+diff -ru SuperLU_MT_3.1.orig/Makefile SuperLU_MT_3.1/Makefile
+--- SuperLU_MT_3.1.orig/Makefile	2019-01-28 11:40:14.092491628 +0100
++++ SuperLU_MT_3.1/Makefile	2019-01-28 11:41:04.616891568 +0100
+@@ -18,6 +18,10 @@
+ all: install lib testing
+ 
+ lib: superlulib tmglib
++	case `uname` in						\
++	Darwin) $(MAKE) -C ./SRC ../lib/libsuperlu_mt_PTHREAD.dylib;;	\
++	*) $(MAKE) -C ./SRC ../lib/libsuperlu_mt_PTHREAD.so;;		\
++	esac
+ 
+ clean: cleanlib cleantesting
+ 
+diff -ru SuperLU_MT_3.1.orig/make.inc SuperLU_MT_3.1/make.inc
+--- SuperLU_MT_3.1.orig/make.inc	2019-01-28 11:40:14.112491787 +0100
++++ SuperLU_MT_3.1/make.inc	2019-01-28 11:42:42.693663272 +0100
+@@ -22,7 +22,7 @@
+ TMGLIB       	= libtmglib$(PLAT).a
+ SUPERLULIB   	= libsuperlu_mt$(PLAT).a
+ BLASDEF	        = -DUSE_VENDOR_BLAS
+-BLASLIB		= -L/usr/lib -lf77blas -latlas
++BLASLIB		= -lblas
+ #BLASLIB = ../lib/libblas$(PLAT).a
+ MATHLIB		= -lm 
+ MPLIB		= -lpthread
+@@ -40,7 +40,7 @@
+ # Definitions used by CPP:
+ PREDEFS      	= -D__PTHREAD  ## -DDEBUGlevel=0 -DPRNTlevel=0
+ #
+-CC           	= gcc
++CC           	= gcc -fPIC
+ CFLAGS       	= $(PREDEFS) -g #-O3
+ # Uncomment the following to use 64-bit integer
+ CFLAGS          += -D_LONGINT
+Only in SuperLU_MT_3.1.orig: .make.inc.swp
+diff -ru SuperLU_MT_3.1.orig/SRC/Makefile SuperLU_MT_3.1/SRC/Makefile
+--- SuperLU_MT_3.1.orig/SRC/Makefile	2019-01-28 11:40:14.072491470 +0100
++++ SuperLU_MT_3.1/SRC/Makefile	2019-01-28 11:41:42.917193613 +0100
+@@ -117,6 +117,14 @@
+ 	$(ARCH) $(ARCHFLAGS) ../lib/$(SUPERLULIB) $(ZLUSRC) $(ALLAUX) $(DZAUX)
+ 	$(RANLIB) ../lib/$(SUPERLULIB)
+ 
++../lib/$(SUPERLULIB:.a=.dylib): $(ZLUSRC) $(ALLAUX) $(DZAUX)
++	$(CC) -dynamiclib -shared -undefined dynamic_lookup	\
++	   -compatibility_version 3.0 -current_version 3.0	\
++	$(DLUSRC) $(ALLAUX) $(DZAUX) -o $@
++
++../lib/$(SUPERLULIB:.a=.so): $(ZLUSRC) $(ALLAUX) $(DZAUX)
++	$(CC) -shared $(DLUSRC) $(ALLAUX) $(DZAUX) -o $@
++
+ ##################################
+ # Do not optimize this routine   #
+ ##################################

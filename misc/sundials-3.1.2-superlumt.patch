@@ -1,0 +1,12 @@
+diff -ru sundials-3.1.2.orig/config/FindSUPERLUMT.cmake sundials-3.1.2/config/FindSUPERLUMT.cmake
+--- sundials-3.1.2.orig/config/FindSUPERLUMT.cmake	2019-01-28 14:12:04.119571887 +0000
++++ sundials-3.1.2/config/FindSUPERLUMT.cmake	2019-01-28 14:28:26.550979411 +0000
+@@ -69,7 +69,7 @@
+ mark_as_advanced(SUPERLUMT_THREAD_LIBRARY)
+ 
+ # add to SUPERLUMT_LIBRARIES (Note: will be 'not found' if either are not found 
+-set(SUPERLUMT_LIBRARIES ${SUPERLUMT_LIBRARY} ${SUPERLUMT_THREAD_LIBRARY})
++set(SUPERLUMT_LIBRARIES ${SUPERLUMT_LIBRARIES} ${SUPERLUMT_LIBRARY} ${SUPERLUMT_THREAD_LIBRARY})
+ 
+ # If LAPACK/BLAS not enabled - find BLAS with SUPERLUMT
+ if(NOT BLAS_ENABLE AND NOT LAPACK_ENABLE)
