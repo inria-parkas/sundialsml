@@ -36,6 +36,9 @@ We presented Sundials/ML at the 2016
 A brief {{:mlworkshop2016.pdf}technical summary} is included in the proceedings
 of the 2016 {{:http://www.mlworkshop.org/ml2016/}ACM Workshop on ML}
 {{:#refs}\[2\]}.
+A greatly extended {{:https://arxiv.org/pdf/1812.11668}overview and
+technical description} is included in the {{:http://eptcs.web.cse.unsw.edu.au/paper.cgi?MLOCAML2016.4}Electronic Proceedings in
+Theoretical Computer Science} {{:#refs}\[3\]}.
 
 {3:contents Contents}
 {ul
@@ -594,7 +597,7 @@ We were able to make our OCaml versions much faster (up to 4 times) by:
        (projection from a tuple) and direct
        accesses to the underlying array.}
     {- Write numeric expressions and loops according to the advice in
-	{{:#refs}\[3\]}
+	{{:#refs}\[4\]}
        to avoid float ‘boxing’.}
 }
 
@@ -627,6 +630,10 @@ Sundials/ML should be configured with [-unsafe].
   {- T. Bourke, J. Inoue, and M. Pouzet,
      “{{:http://inria-parkas.github.io/sundialsml/mlworkshop2016.pdf}{b Sundials/ML: interfacing with numerical solvers}},”
      ACM Workshop on ML, Nara, Japan, 2016.}
+  {- T. Bourke, J. Inoue, and M. Pouzet,
+     “{{:https://dx.doi.org/10.4204/EPTCS.285.4}{b Sundials/ML: Connecting
+     OCaml to the Sundials Numeric Solvers}},”
+     EPTCS 285, pp. 101–130, 2018.}
   {- X. Leroy,
      “{{:http://caml.inria.fr/pub/old_caml_site/ocaml/numerical.html}{b Old
       Objective Caml site: Writing efficient numerical code in Objective
