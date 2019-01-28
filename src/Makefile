@@ -23,6 +23,7 @@ sundials.cma sundials.cmxa: $(MLOBJ_MAIN) $(MLOBJ_SENS)			    \
 	    $(OCAML_IDAS_LIBLINK)		\
 	    $(OCAML_KINSOL_LIBLINK)		\
 	    $(OCAML_ALL_LIBLINK)
+sundials.cma: | sundials.cmxa # prevent simultaneous builds
 
 sundials_no_sens.cma sundials_no_sens.cmxa:				  \
 			$(MLOBJ_MAIN) $(MLOBJ_NO_SENS)			  \
@@ -37,6 +38,7 @@ sundials_no_sens.cma sundials_no_sens.cmxa:				  \
 	    $(OCAML_IDA_LIBLINK)				\
 	    $(OCAML_KINSOL_LIBLINK)				\
 	    $(OCAML_ALL_LIBLINK)
+sundials_no_sens.cma: | sundials_no_sens.cmxa # prevent simultaneous builds
 
 sundials_mpi.cma sundials_mpi.cmxa: $(MLOBJ_MPI) $(MLOBJ_MPI:.cmo=.cmx) \
 				    $(COBJ_MPI)
@@ -44,14 +46,16 @@ sundials_mpi.cma sundials_mpi.cmxa: $(MLOBJ_MPI) $(MLOBJ_MPI:.cmo=.cmx) \
 	    $(if $(ENABLE_SHARED),,-custom)		\
 	    -o sundials_mpi -oc mlsundials_mpi $^	\
 	    $(LIB_PATH) $(MPI_LIBLINK)
+sundials_mpi.cma: | sundials_mpi.cmxa # prevent simultaneous builds
 
-sundials_pthreads.cma sundials_pthreads.cmxa: $(MLOBJ_PTHREADS)		  \
+sundials_pthreads.cmxa sundials_pthreads.cma: $(MLOBJ_PTHREADS)		  \
 					      $(MLOBJ_PTHREADS:.cmo=.cmx) \
 					      $(COBJ_PTHREADS)
 	$(OCAMLMKLIB) $(OCAMLMKLIBFLAGS)		\
 	    $(if $(ENABLE_SHARED),,-custom)		\
 	    -o sundials_pthreads -oc mlsundials_pthreads $^	\
 	    $(LIB_PATH) $(PTHREADS_LIBLINK)
+sundials_pthreads.cma: | sundials_pthreads.cmxa # prevent simultaneous builds
 
 sundials_openmp.cma sundials_openmp.cmxa: $(MLOBJ_OPENMP)		\
 					  $(MLOBJ_OPENMP:.cmo=.cmx)	\
@@ -60,6 +64,7 @@ sundials_openmp.cma sundials_openmp.cmxa: $(MLOBJ_OPENMP)		\
 	    $(if $(ENABLE_SHARED),,-custom)		\
 	    -o sundials_openmp -oc mlsundials_openmp $^	\
 	    $(LIB_PATH) $(OPENMP_LIBLINK)
+sundials_openmp.cma: | sundials_openmp.cmxa # prevent simultaneous builds
 
 $(CMA_TOP_ALL): %.cma:
 	$(OCAMLC) -a -o $@ $^
