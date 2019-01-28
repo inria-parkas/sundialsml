@@ -296,7 +296,6 @@ For {b Debian}-based systems, we found the following worked:
 -DOPENMP_ENABLE=1 \
 -DPTHREAD_ENABLE=1 \
 -DMPI_ENABLE=1 \
--DLAPACK_ENABLE=1 -DLAPACK_LIBRARIES='-llapack -lblas' \
 -DKLU_ENABLE=1 -DKLU_LIBRARY_DIR=/usr/lib/x86_64-linux-gnu \
 -DKLU_INCLUDE_DIR=/usr/include/suitesparse v}
        adding, optionally,
