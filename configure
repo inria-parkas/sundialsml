@@ -501,8 +501,15 @@ else
 	2.6.2) sundials=262 ;;
 	2.7.*) sundials=270 ;;
 	3.0.*) sundials=300 ;;
-	3.*)   sundials=301 ;;
-	*) ;;
+	3.1.*) sundials=310 ;;
+	3.*)   sundials=320 ;;
+	4.*)   sundials=400 ;;
+	5.*)   sundials=500 ;;
+	6.*)   sundials=600 ;;
+	7.*)   sundials=700 ;;
+	8.*)   sundials=800 ;;
+	9.*)   sundials=900 ;;
+	*)     sundials=1000 ;;
     esac
 
     # Make sure realtype has the right size.
@@ -530,7 +537,10 @@ EOF
     fi
 fi
 
-if [ ${sundials} -ge 300 ]; then
+if [ ${sundials} -ge 400 ]; then
+    sundials=0
+    error="${error}\n\tsundials <= 3.x required (${sundials_version} is not yet supported)"
+elif [ ${sundials} -ge 300 ]; then
     sundials_at_least_3_0=1
     sundials_at_least_2_7=1
     sundials_at_least_2_6=1
