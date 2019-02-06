@@ -1,0 +1,26 @@
+Only in sundials/config: .SundialsMPI.cmake.swp
+diff -ru sundials.orig/config/FindSUPERLUMT.cmake sundials/config/FindSUPERLUMT.cmake
+--- sundials.orig/config/FindSUPERLUMT.cmake	2019-02-06 09:25:24.281696196 +0000
++++ sundials/config/FindSUPERLUMT.cmake	2019-02-06 09:25:36.493787926 +0000
+@@ -69,7 +69,7 @@
+ mark_as_advanced(SUPERLUMT_THREAD_LIBRARY)
+ 
+ # add to SUPERLUMT_LIBRARIES (Note: will be 'not found' if either are not found 
+-set(SUPERLUMT_LIBRARIES ${SUPERLUMT_LIBRARY} ${SUPERLUMT_THREAD_LIBRARY})
++set(SUPERLUMT_LIBRARIES ${SUPERLUMT_LIBRARIES} ${SUPERLUMT_LIBRARY} ${SUPERLUMT_THREAD_LIBRARY})
+ 
+ # If LAPACK/BLAS not enabled - find BLAS with SUPERLUMT
+ if(NOT BLAS_ENABLE AND NOT LAPACK_ENABLE)
+diff -ru sundials.orig/config/SundialsMPI.cmake sundials/config/SundialsMPI.cmake
+--- sundials.orig/config/SundialsMPI.cmake	2019-02-06 09:25:24.281696196 +0000
++++ sundials/config/SundialsMPI.cmake	2019-02-06 10:07:06.736494259 +0000
+@@ -190,7 +190,8 @@
+     endif()
+ 
+   endif()
+-
++else()
++    set(MPI_C_FOUND TRUE)
+ endif()
+ 
+ # ---------------------------------------------------------------------------

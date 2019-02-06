@@ -1,4 +1,4 @@
-# docker build -t sundialsml-env:3.1.2 - <Dockerfile
+# docker build -t sundialsml-env:3.1.2 - <Dockerfile-3.1.2
 # docker run -v $HOME/Projects/sundialsml:/home/opam/sundialsml -it sundialsml-env:3.1.2 bash
 FROM ocaml/opam2
 ENV SUNDIALSML_SRC=https://raw.githubusercontent.com/inria-parkas/sundialsml/master\
@@ -27,7 +27,7 @@ RUN wget -qO- $SUPERLUMT_TARGZ | tar xz -C $BUILDDIR\
  && rm -rf $BUILDDIR/SuperLU_MT_3.1
 #-DLAPACK_ENABLE=1 -DLAPACK_LIBRARIES='-llapack -lblas'
 RUN git clone $SUNDIALS_GIT --branch $SUNDIALS_TAG --depth 1 $BUILDDIR/sundials\
- && wget -qO- $SUNDIALSML_SRC/misc/sundials-3.1.2-superlumt.patch\
+ && wget -qO- $SUNDIALSML_SRC/misc/sundials-3.1.2.patch\
 	| patch -d $BUILDDIR/sundials -p1\
  && mkdir $BUILDDIR/sundials-build\
  && cd $BUILDDIR/sundials-build\

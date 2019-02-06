@@ -4,9 +4,6 @@ doc: html/index.html
 	for f in cvode_skel.ml ida_skel.ml kinsol_skel.ml; do	\
 	    cp ../examples/ocaml/skeletons/$$f html/;	\
 	done
-	cp ../misc/sundials-2.5.0.patch html/
-	cp ../misc/sundials-2.6.2-superlumt.patch html/
-	cp ../misc/superlu_mt_2.4.patch html/
 
 DOCHTML_PP=$(CPP) $(ML_CPPFLAGS)
 DOCHTML_PLUGIN_PP=$(DOCHTML_PP)						\
@@ -95,9 +92,6 @@ uninstall:
 distclean clean:
 	-@$(RM) -f html/*.html sundials_doc.cmxs sundials_doc.cma
 	-@$(RM) -f dochtml.cmo dochtml.cmx dochtml.cmi dochtml.o
-	-@$(RM) -f html/sundials-2.5.0.patch
-	-@$(RM) -f sundials-2.6.2-superlumt.patch
-	-@$(RM) -f html/superlu_mt_2.4.patch
 
 depend: .depend
 .depend:
