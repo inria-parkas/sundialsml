@@ -100,7 +100,7 @@ module Dense : sig (* {{{ *)
       @nocvode <node> SUNDenseMatrix *)
   val create : int -> int -> t
 
-  (** [m, n = size a] returns the numbers of columns [m] and rows [n]
+  (** [m, n = size a] returns the numbers of rows [m] and columns [n]
       of [a].
 
       @nocvode <node> SM_ROWS_D
@@ -444,7 +444,7 @@ module Sparse : sig (* {{{ *)
       complications. *)
   val is_csc : 's t -> bool
 
-  (** [m, n = size a] returns the numbers of columns [m] and rows [n]
+  (** [m, n = size a] returns the numbers of rows [m] and columns [n]
       of [a].
 
       @nocvode <node> SM_ROWS_S
@@ -535,6 +535,7 @@ module Sparse : sig (* {{{ *)
       matrix argument. In this case, any previously 'unwrapped' array is no
       longer associated with the matrix storage.
 
+      @nocvode <node> SUNSparseMatrix_Realloc
       @nocvode <node> SUNSparseMatrix_Reallocate *)
   val resize : ?nnz:int -> 's t -> unit
 
@@ -653,7 +654,7 @@ module ArrayDense : sig (* {{{ *)
        @cvode <node9#ss:dense> newDenseMat *)
   val create : int -> int -> t
 
-  (** [m, n = size a] returns the numbers of columns [m] and rows [n]
+  (** [m, n = size a] returns the numbers of rows [m] and columns [n]
       of [a]. *)
   val size : t -> int * int
 
