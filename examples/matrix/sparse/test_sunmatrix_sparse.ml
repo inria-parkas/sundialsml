@@ -125,6 +125,228 @@ end
  * Main Matrix Testing Routine
  * --------------------------------------------------------------------*)
 
+let clone a = Matrix.(wrap_sparse ((get_ops a).m_clone (unwrap a)))
+
+(* ----------------------------------------------------------------------
+ * Extra ScaleAdd tests for sparse matrices:
+ *    A and B should have different sparsity patterns, and neither should
+ *      contain sufficient storage to for their sum
+ *    y should already equal A*x
+ *    z should already equal B*x
+ * --------------------------------------------------------------------*)
+let test_sunmatscaleadd2 check_vector a b x y z =
+  let tol = 1e-14 in
+  try
+    (* create clones for test *)
+    let c = clone a in
+    let u = Nvector_serial.Ops.n_vclone y in
+    let v = Nvector_serial.Ops.n_vclone y in
+
+    (* test 1: add A to B (output must be enlarged) *)
+    (try Matrix.blit a c
+     with _ -> printf ">>> FAILED test -- SUNMatCopy returned 1 \n";
+               raise Exit);
+    (try Matrix.scale_add 1.0 c b
+     with _ -> printf ">>> FAILED test -- SUNMatScaleAdd returned 1 \n";
+               raise Exit);
+    (try Matrix.matvec c x u
+     with _ -> printf ">>> FAILED test -- SUNMatMatvec returned 1 \n";
+               raise Exit);
+    Nvector_serial.Ops.n_vlinearsum 1. y 1. z v;  (* v = y+z *)
+    if not (check_vector u v tol)                 (* u ?= v *)
+    then printf "    PASSED test -- SUNMatScaleAdd2 check 1 \n"
+    else begin
+      printf ">>> FAILED test -- SUNMatScaleAdd2 check 1 \n";
+      printf "\nA =@.";
+      Matrix.print_sparse a Sundials.Logfile.stdout;
+      Sundials.Logfile.(flush stdout);
+      printf "\nB =@.";
+      Matrix.print_sparse b Sundials.Logfile.stdout;
+      Sundials.Logfile.(flush stdout);
+      printf "\nC =@.";
+      Matrix.print_sparse c Sundials.Logfile.stdout;
+      Sundials.Logfile.(flush stdout);
+      printf "\nx =\n%a@\n" Nvector_serial.pp x;
+      printf "\ny =\n%a@\n" Nvector_serial.pp y;
+      printf "\nz =\n%a@\n" Nvector_serial.pp z;
+      printf "\nu =\n%a@\n" Nvector_serial.pp u;
+      printf "\nv =\n%a@\n" Nvector_serial.pp v;
+      raise Exit
+    end;
+
+    (* test 2: add A to a matrix with sufficient but misplaced storage *)
+    let d = clone a in
+    (try let a_nnz, _ = Matrix.(Sparse.dims (unwrap a)) in
+         let b_nnz, _ = Matrix.(Sparse.dims (unwrap b)) in
+         Matrix.(Sparse.resize ~nnz:(a_nnz+b_nnz) (unwrap d));
+         Matrix.blit a d (* D = A *)
+     with _ -> printf ">>> FAILED test -- SUNMatCopy returned 1 @\n";
+               raise Exit);
+    (try Matrix.scale_add 1.0 d b (* D = A+B *)
+     with _ -> printf ">>> FAILED test -- SUNMatScaleAdd returned 1 @\n";
+               raise Exit);
+    (try Matrix.matvec d x u (* u = Cx = Ax+Bx *)
+     with _ -> printf ">>> FAILED test -- SUNMatMatvec returned 1 @\n";
+               raise Exit);
+    Nvector_serial.Ops.n_vlinearsum 1. y 1. z v; (* v = y+z *)
+    if not (check_vector u v tol)                (* u ?= v *)
+    then printf "    PASSED test -- SUNMatScaleAdd2 check 2 @\n"
+    else begin
+      printf ">>> FAILED test -- SUNMatScaleAdd2 check 2 @\n";
+      printf "\nA =@.";
+      Matrix.print_sparse a Sundials.Logfile.stdout;
+      Sundials.Logfile.(flush stdout);
+      printf "\nB =@.";
+      Matrix.print_sparse b Sundials.Logfile.stdout;
+      Sundials.Logfile.(flush stdout);
+      printf "\nC =@.";
+      Matrix.print_sparse c Sundials.Logfile.stdout;
+      Sundials.Logfile.(flush stdout);
+      printf "\nx =\n%a@\n" Nvector_serial.pp x;
+      printf "\ny =\n%a@\n" Nvector_serial.pp y;
+      printf "\nz =\n%a@\n" Nvector_serial.pp z;
+      printf "\nu =\n%a@\n" Nvector_serial.pp u;
+      printf "\nv =\n%a@\n" Nvector_serial.pp v;
+      raise Exit
+    end;
+
+    (* test 3: add A to a matrix with the appropriate structure already in place *)
+    let e = clone c in
+    (try Matrix.blit c e  (* E = A + B *)
+     with _ -> printf ">>> FAILED test -- SUNMatCopy returned 1 @\n";
+               raise Exit);
+
+    (try Matrix.scale_add (-1.0) e b (* E = -A *)
+     with _ -> printf ">>> FAILED test -- SUNMatScaleAdd returned 1 @\n";
+               raise Exit);
+    (try Matrix.matvec e x u (* u = Ex = -Ax *)
+     with _ -> printf ">>> FAILED test -- SUNMatMatvec returned 1 @\n";
+               raise Exit);
+    Nvector_serial.Ops.n_vlinearsum (-1.0) y 0.0 z v; (* v = -y *)
+    if not (check_vector u v tol)                     (* v ?= u *)
+    then printf "    PASSED test -- SUNMatScaleAdd2 check 3 @\n"
+    else begin
+      printf ">>> FAILED test -- SUNMatScaleAdd2 check 3 @\n";
+      printf "\nA =@.";
+      Matrix.print_sparse a Sundials.Logfile.stdout;
+      Sundials.Logfile.(flush stdout);
+      printf "\nB =@.";
+      Matrix.print_sparse b Sundials.Logfile.stdout;
+      Sundials.Logfile.(flush stdout);
+      printf "\nC =@.";
+      Matrix.print_sparse c Sundials.Logfile.stdout;
+      Sundials.Logfile.(flush stdout);
+      printf "\nE =@.";
+      Matrix.print_sparse e Sundials.Logfile.stdout;
+      Sundials.Logfile.(flush stdout);
+      printf "\nx =\n%a@\n" Nvector_serial.pp x;
+      printf "\ny =\n%a@\n" Nvector_serial.pp y;
+      printf "\nu =\n%a@\n" Nvector_serial.pp u;
+      printf "\nv =\n%a@\n" Nvector_serial.pp v;
+      raise Exit
+    end;
+    0
+  with Exit -> 1
+
+(* ----------------------------------------------------------------------
+ * Extra ScaleAddI tests for sparse matrices:
+ *    A should not contain values on the diagonal, nor should it contain
+ *      sufficient storage to add those in
+ *    y should already equal A*x
+ * --------------------------------------------------------------------*)
+let test_sunmatscaleaddi2 check_vector a x y =
+  let tol = 1e-14 in
+  try
+    (* create clones for test *)
+    let b = clone a in
+    let z = Nvector_serial.Ops.n_vclone x in
+    let w = Nvector_serial.Ops.n_vclone x in
+
+    (* test 1: add I to a matrix with insufficient storage *)
+    (try Matrix.blit a b
+     with _ -> printf ">>> FAILED test -- SUNMatCopy returned 1 @\n";
+               raise Exit);
+    (try Matrix.scale_addi (-1.0) b (* B = I-A *)
+     with _ -> printf ">>> FAILED test -- SUNMatScaleAddI returned 1 @\n";
+               raise Exit);
+    (try Matrix.matvec b x z
+     with _ -> printf ">>> FAILED test -- SUNMatMatvec returned 1 @\n";
+               raise Exit);
+    Nvector_serial.Ops.n_vlinearsum 1. x (-1.0) y w;
+    if not (check_vector z w tol)
+    then printf "    PASSED test -- SUNMatScaleAddI2 check 1 @\n"
+    else begin
+      printf ">>> FAILED test -- SUNMatScaleAddI2 check 1 @\n";
+      printf "\nA =@.";
+      Matrix.print_sparse a Sundials.Logfile.stdout;
+      Sundials.Logfile.(flush stdout);
+      printf "\nB =@.";
+      Matrix.print_sparse b Sundials.Logfile.stdout;
+      Sundials.Logfile.(flush stdout);
+      printf "\nz =\n%a@\n" Nvector_serial.pp z;
+      printf "\nw =\n%a@\n" Nvector_serial.pp w;
+      raise Exit
+    end;
+
+    (* test 2: add I to a matrix with sufficient but misplaced storage *)
+    let c = clone a in
+    (try let a_m       = Matrix.unwrap a in
+         let a_nnz, _  = Matrix.Sparse.dims a_m in
+         let a_rows, _ = Matrix.Sparse.size a_m in
+         Matrix.(Sparse.resize ~nnz:(a_nnz+a_rows) (unwrap c));
+         Matrix.blit a c
+     with _ -> printf ">>> FAILED test -- SUNMatCopy returned 1 @\n";
+               raise Exit);
+    (try Matrix.scale_addi (-1.0) c (* C = I-A *)
+     with _ -> printf ">>> FAILED test -- SUNMatScaleAddI returned 1 @\n";
+               raise Exit);
+    (try Matrix.matvec c x z (* u = Cx = Ax+Bx *)
+     with _ -> printf ">>> FAILED test -- SUNMatMatvec returned 1 @\n";
+               raise Exit);
+    Nvector_serial.Ops.n_vlinearsum 1. x (-1.0) y w;
+    if not (check_vector z w tol)                 (* u ?= v *)
+    then printf "    PASSED test -- SUNMatScaleAddI2 check 2 @\n"
+    else begin
+      printf ">>> FAILED test -- SUNMatScaleAddI2 check 2 @\n";
+      printf "\nA =@.";
+      Matrix.print_sparse a Sundials.Logfile.stdout;
+      Sundials.Logfile.(flush stdout);
+      printf "\nC =@.";
+      Matrix.print_sparse c Sundials.Logfile.stdout;
+      Sundials.Logfile.(flush stdout);
+      printf "\nz =\n%a@\n" Nvector_serial.pp z;
+      printf "\nw =\n%a@\n" Nvector_serial.pp w;
+      raise Exit
+    end;
+
+    (* test 3: add I to a matrix with appropriate structure already in place *)
+    let d = clone c in
+    (try Matrix.blit c d
+     with _ -> printf ">>> FAILED test -- SUNMatCopy returned 1 @\n";
+               raise Exit);
+    (try Matrix.scale_addi (-1.0) d (* D = A *)
+     with _ -> printf ">>> FAILED test -- SUNMatScaleAddI returned 1 @\n";
+               raise Exit);
+    (try Matrix.matvec d x z
+     with _ -> printf ">>> FAILED test -- SUNMatMatvec returned 1 @\n";
+               raise Exit);
+    if not (check_vector z y tol)
+    then printf "    PASSED test -- SUNMatScaleAddI2 check 3 @\n"
+    else begin
+      printf ">>> FAILED test -- SUNMatScaleAddI2 check 3 @\n";
+      printf "\nA =@.";
+      Matrix.print_sparse a Sundials.Logfile.stdout;
+      Sundials.Logfile.(flush stdout);
+      printf "\nD =@.";
+      Matrix.print_sparse d Sundials.Logfile.stdout;
+      Sundials.Logfile.(flush stdout);
+      printf "\nz =\n%a@\n" Nvector_serial.pp z;
+      printf "\ny =\n%a@\n" Nvector_serial.pp y;
+      raise Exit
+    end;
+    0
+  with Exit -> 1
+
 let int_of_mattype (type s) : s Matrix.Sparse.sformat -> int = function
   | Matrix.Sparse.CSC -> 0
   | Matrix.Sparse.CSR -> 1
@@ -348,31 +570,40 @@ and main_with_type : type s. int -> int -> s Matrix.Sparse.sformat -> unit
     rowptrs.{i}    <- to_index i
   done;
   rowptrs.{matrows} <- to_index matrows;
- 
-  (* Create/fill random dense matrix, create sparse from it *)
-  let cb = Matrix.Dense.make matrows matcols 0.0 in
-  let b = Matrix.wrap_dense cb in
+
+  (* Create/fill random dense matrices, create sparse from them *)
+  let mc = Matrix.Dense.make matrows matcols 0.0 in
+  let c = Matrix.wrap_dense mc in
+  let md = Matrix.Dense.make matrows matcols 0.0 in
+  let d = Matrix.wrap_dense md in
   for k = 0 to 3*matrows - 1 do
     let i = Test_matrix.rand () mod matrows in
     let j = Test_matrix.rand () mod matcols in
-    Matrix.Dense.set cb i j (rand_float ())
+    Matrix.Dense.set md i j (rand_float ())
   done;
-  let a = Matrix.wrap_sparse (Matrix.Sparse.from_dense mattype 0.0 cb) in
- 
+  for k = 0 to matrows - 1 do
+    let i = Test_matrix.rand () mod matrows in
+    let j = Test_matrix.rand () mod matcols in
+    Matrix.Dense.set mc i j (rand_float ())
+  done;
+  let a = Matrix.wrap_sparse (Matrix.Sparse.from_dense mattype 0.0 mc) in
+  let b = Matrix.wrap_sparse (Matrix.Sparse.from_dense mattype 0.0 md) in
+
   (* Create vectors and fill *)
   let x = Nvector_serial.make matcols 0.0
-  and y = Nvector_serial.make matrows 0.0 in
+  and y = Nvector_serial.make matrows 0.0
+  and z = Nvector_serial.make matrows 0.0 in
   let xdata = Nvector.unwrap x in
   for i = 0 to matcols - 1 do
     xdata.{i} <- rand_float ()
   done;
 
-  let () = try Matrix.matvec b x y
-    with _ -> begin
-      printf "FAIL: SUNMatrix module Dense matvec failure \n \n";
-      exit 1
-    end
-  in
+  (try Matrix.matvec c x y
+    with _ -> printf "FAIL: SUNMatrix module Dense matvec failure \n \n";
+              exit 1);
+  (try Matrix.matvec d x z
+    with _ -> printf "FAIL: SUNMatrix module Dense matvec failure \n \n";
+              exit 1);
 
   (* SUNMatrix Tests *)
   fails += Test.test_sunmatgetid a Matrix.Sparse 0;
@@ -380,8 +611,15 @@ and main_with_type : type s. int -> int -> s Matrix.Sparse.sformat -> unit
   fails += Test.test_sunmatcopy a 0;
   fails += Test.test_sunmatzero a 0;
   fails += Test.test_sunmatscaleadd a i 0;
-  if square then
+  (match Sundials.Config.sundials_version with
+   | 2,_,_ | 3,1,0 | 3,1,1 -> ()
+   | _ -> fails += test_sunmatscaleadd2 SparseTests.check_vector a b x y z);
+  if square then begin
     fails += Test.test_sunmatscaleaddi a i 0;
+    (match Sundials.Config.sundials_version with
+     | 2,_,_ | 3,1,0 | 3,1,1 -> ()
+     | _ -> fails += test_sunmatscaleaddi2 SparseTests.check_vector a x y)
+  end;
   fails += Test.test_sunmatmatvec a x y 0;
   fails += Test.test_sunmatspace a 0;
 
@@ -389,10 +627,16 @@ and main_with_type : type s. int -> int -> s Matrix.Sparse.sformat -> unit
   if !fails <> 0 then begin
     printf "FAIL: SUNMatrix module failed %d tests @\n @\n" !fails;
     printf "@\nA = %a@\n" Matrix.Sparse.pp (Matrix.unwrap a);
+    (match Sundials.Config.sundials_version with
+     | 2,_,_ | 3,1,0 | 3,1,1 -> ()
+     | _ -> printf "@\nB = %a@\n" Matrix.Sparse.pp (Matrix.unwrap b));
     if square then
       printf "@\nI = %a@\n" Matrix.Sparse.pp (Matrix.unwrap i);
     printf "@\nx = %a@\n" Nvector_serial.pp x;
-    printf "@\ny = %a@\n" Nvector_serial.pp y
+    printf "@\ny = %a@\n" Nvector_serial.pp y;
+    (match Sundials.Config.sundials_version with
+     | 2,_,_ | 3,1,0 | 3,1,1 -> ()
+     | _ -> printf "@\nz = %a@\n" Nvector_serial.pp z)
   end
   else
     printf "SUCCESS: SUNMatrix module passed all tests @\n @\n"

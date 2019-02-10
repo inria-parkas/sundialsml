@@ -110,12 +110,9 @@ let test_sunmatclone a myid =
     in
     let stop_time = get_time () in
 
-    let () = try Matrix.blit a b
-      with _ -> begin
-        printf ">>> FAILED test -- SUNMatCopy, Proc %d @\n" myid;
-        raise Exit
-      end
-    in
+    (try Matrix.blit a b
+     with _ -> printf ">>> FAILED test -- SUNMatCopy, Proc %d @\n" myid;
+               raise Exit);
 
     if M.check_matrix b a tol then begin
       printf ">>> FAILED test -- SUNMatClone, Proc %d @\n" myid;
@@ -124,7 +121,9 @@ let test_sunmatclone a myid =
     end;
 
     if (myid == 0) then begin
-      printf "    PASSED test -- N_VClone @\n";
+      (match Sundials.Config.sundials_version with
+       | 2,_,_ | 3,1,0 | 3,1,1 -> printf "    PASSED test -- N_VClone @\n"
+       | _ -> printf "    PASSED test -- SUNMatClone @\n");
       print_time "    SUNMatClone Time: %22.15e @\n @\n" (stop_time -. start_time)
     end;
     0
@@ -140,11 +139,9 @@ let test_sunmatzero a myid =
     let b = clone a in
     (* set matrix data to zero *)
     let start_time = get_time () in
-    let () = try Matrix.set_to_zero b with _ -> begin
-        printf ">>> FAILED test -- SUNMatZero failed on Proc %d @\n" myid;
-        raise Exit
-      end
-    in
+    (try Matrix.set_to_zero b
+     with _ -> printf ">>> FAILED test -- SUNMatZero failed on Proc %d @\n" myid;
+               raise Exit);
     let stop_time = get_time () in
 
     (* A data should be a vector of zeros *)
@@ -169,11 +166,9 @@ let test_sunmatcopy a myid =
     let b = clone a in
     (* copy matrix data *)
     let start_time = get_time () in
-    let () = try Matrix.blit a b with _ -> begin
-        printf ">>> FAILED test -- SUNMatZero failed on Proc %d @\n" myid;
-        raise Exit
-      end
-    in
+    (try Matrix.blit a b
+     with _ -> printf ">>> FAILED test -- SUNMatZero failed on Proc %d @\n" myid;
+               raise Exit);
     let stop_time = get_time () in
 
     (* check matrix entries *)
@@ -183,7 +178,9 @@ let test_sunmatcopy a myid =
       raise Exit
     end
     else if myid = 0 then begin
-      printf "    PASSED test -- N_VConst @\n";
+      (match Sundials.Config.sundials_version with
+       | 2,_,_ | 3,1,0 | 3,1,1 -> printf "    PASSED test -- N_VConst @\n"
+       | _ -> printf "    PASSED test -- SUNMatCopy @\n");
       print_time "    SUNMatCopy Time: %22.15e @\n @\n" (stop_time -. start_time);
     end;
     0
@@ -191,9 +188,6 @@ let test_sunmatcopy a myid =
 
 (* ----------------------------------------------------------------------
  * SUNMatScaleAdd Test: A = c * A + B
- *
- * NOTE: Sparse matrices will need additional testing for possibly
- * different sparsity patterns
  * --------------------------------------------------------------------*)
 let test_sunmatscaleadd a i myid =
   let tol = 1e-15 in
@@ -204,19 +198,17 @@ let test_sunmatscaleadd a i myid =
 
     (* protect A *)
     let b = clone a in
-    let () = try Matrix.blit a b with _ -> begin
-          printf ">>> FAILED test -- SUNMatCopy failed on Proc %d @\n" myid;
-          raise Exit
-        end
-    in
+    (try Matrix.blit a b
+     with _ ->
+       printf ">>> FAILED test -- SUNMatCopy failed on Proc %d @\n" myid;
+       raise Exit);
 
     (* fill vector data *)
     let start_time = get_time () in
-    let () = try Matrix.scale_add (-1.0) b b with _ -> begin
-        printf ">>> FAILED test -- SUNMatScaleAdd failed on Proc %d @\n" myid;
-        raise Exit
-      end
-    in
+    (try Matrix.scale_add (-1.0) b b
+     with _ ->
+       printf ">>> FAILED test -- SUNMatScaleAdd failed on Proc %d @\n" myid;
+       raise Exit);
     let stop_time = get_time () in
 
     (* check matrix entries *)
@@ -239,33 +231,26 @@ let test_sunmatscaleadd a i myid =
 
       (* protect A and I *)
       let d = clone a in
-      let () = try Matrix.blit a d;
-        with _ -> begin
-            printf ">>> FAILED test -- SUNMatCopy failed on Proc %d @\n" myid;
-            raise Exit
-          end
-      in
+      (try Matrix.blit a d;
+       with _ ->
+         printf ">>> FAILED test -- SUNMatCopy failed on Proc %d @\n" myid;
+         raise Exit);
 
       let c = clone i in
-      let () = try Matrix.blit i c
-        with _ -> begin
-            printf ">>> FAILED test -- SUNMatCopy failed on Proc %d @\n" myid;
-            raise Exit
-          end
-      in
-      
+      (try Matrix.blit i c
+       with _ ->
+         printf ">>> FAILED test -- SUNMatCopy failed on Proc %d @\n" myid;
+         raise Exit);
+
       (* fill B and C *)
       let start_time = get_time () in
-      let () = try Matrix.scale_add 1.0 d i with _ -> begin
-          printf ">>> FAILED test -- SUNMatScaleAdd failed on Proc %d @\n" myid;
-          raise Exit
-        end
-      in
-      let () = try Matrix.scale_add 1.0 c a with _ -> begin
-          printf ">>> FAILED test -- SUNMatScaleAdd failed on Proc %d @\n" myid;
-          raise Exit
-        end
-      in
+      (try Matrix.scale_add 1.0 d i
+       with _ ->
+         printf ">>> FAILED test -- SUNMatScaleAdd failed on Proc %d @\n" myid;
+         raise Exit);
+      (try Matrix.scale_add 1.0 c a with _ ->
+         printf ">>> FAILED test -- SUNMatScaleAdd failed on Proc %d @\n" myid;
+         raise Exit);
       let stop_time = get_time () in
 
       (* check matrix entries *)
@@ -286,28 +271,23 @@ let test_sunmatscaleadd a i myid =
 
 (* ----------------------------------------------------------------------
  * SUNMatScaleAddI Tests
- *
- * NOTE: Sparse matrices will need additional testing for possibly
- * different sparsity patterns
  * --------------------------------------------------------------------*)
 let test_sunmatscaleaddi a i myid =
   let tol = 1e-15 in
   try
     (* protect A *)
     let b = clone a in
-    let () = try Matrix.blit i b with _ -> begin
-          printf ">>> FAILED test -- SUNMatCopy failed on Proc %d @\n" myid;
-          raise Exit
-        end
-    in
+    (try Matrix.blit i b
+     with _ ->
+       printf ">>> FAILED test -- SUNMatCopy failed on Proc %d @\n" myid;
+       raise Exit);
 
     (* fill vector data *)
     let start_time = get_time () in
-    let () = try Matrix.scale_addi (-1.0) b with _ -> begin
+    (try Matrix.scale_addi (-1.0) b
+     with _ ->
         printf ">>> FAILED test -- SUNMatScaleAddI failed on Proc %d @\n" myid;
-        raise Exit
-      end
-    in
+        raise Exit);
     let stop_time = get_time () in
 
     (* check matrix *)
@@ -336,30 +316,24 @@ let test_sunmatmatvec a x y myid =
       if M.is_square a then begin
         (* protect A *)
         let b = clone a in
-        let () = try Matrix.blit a b;
-          with _ -> begin
-              printf ">>> FAILED test -- SUNMatCopy failed on Proc %d @\n" myid;
-              raise Exit
-            end
-        in
+        (try Matrix.blit a b
+         with _ ->
+           printf ">>> FAILED test -- SUNMatCopy failed on Proc %d @\n" myid;
+           raise Exit);
 
         (* compute matrix vector product *)
-        let () = try Matrix.scale_addi 3.0 b
-          with _ -> begin
-            printf ">>> FAILED test -- SUNMatScaleAddI failed on Proc %d @\n" myid;
-            raise Exit
-          end
-        in
+        (try Matrix.scale_addi 3.0 b
+         with _ ->
+           printf ">>> FAILED test -- SUNMatScaleAddI failed on Proc %d @\n" myid;
+           raise Exit);
         let z = NV.n_vclone y in
         let w = NV.n_vclone y in
 
         let start_time = get_time () in
-        let () = try Matrix.matvec b x z
-          with _ -> begin
+        (try Matrix.matvec b x z
+         with _ ->
             printf ">>> FAILED test -- SUNMatMatvec failed on Proc %d @\n" myid;
-            raise Exit
-          end
-        in
+            raise Exit);
         let stop_time = get_time () in
         NV.n_vlinearsum 3.0 y 1.0 x w;
         M.check_vector w z tol, start_time, stop_time
@@ -368,12 +342,10 @@ let test_sunmatmatvec a x y myid =
         let z = NV.n_vclone y in
 
         let start_time = get_time () in
-        let () = try Matrix.matvec a x z
-          with _ -> begin
-            printf ">>> FAILED test -- SUNMatMatvec failed on Proc %d @\n" myid;
-            raise Exit
-          end
-        in
+        (try Matrix.matvec a x z
+         with _ ->
+           printf ">>> FAILED test -- SUNMatMatvec failed on Proc %d @\n" myid;
+           raise Exit);
         let stop_time = get_time () in
 
         M.check_vector y z tol, start_time, stop_time
