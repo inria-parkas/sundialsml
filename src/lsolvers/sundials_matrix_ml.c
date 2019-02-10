@@ -1372,7 +1372,7 @@ static bool matrix_sparse_scale_add(realtype c, value va, value vcptrb)
     CAMLparam2(va, vcptrb);
     CAMLlocal5(vcptra, vdatac, vidxvalsc, vidxptrsc, vcptrc);
     CAMLlocal1(vpayload);
-    sundials_ml_smat_index j, i, p, nz;
+    sundials_ml_smat_index j, i, p, newvals, cend, nz;
     bool newmat;
     sundials_ml_smat_index *w, *Ap, *Ai, *Bp, *Bi, *Cp, *Ci;
     realtype *x, *Ax, *Bx, *Cx;
@@ -1422,11 +1422,8 @@ static bool matrix_sparse_scale_add(realtype c, value va, value vcptrb)
     B_indexvals = B->colptrs;
 #endif
 
-    /* determine if A already contains the sparsity pattern of B,
-       and calculate the number of non-zeroes required if we create
-       a new matrix (instead of reallocating). */
-    newmat = 0;
-    nz = 0;
+    /* determine if A already contains the sparsity pattern of B */
+    newvals = 0;
     for (j=0; j < N; j++) {
 
 	/* clear work array */
@@ -1434,28 +1431,30 @@ static bool matrix_sparse_scale_add(realtype c, value va, value vcptrb)
 	    w[i] = 0;
 
 	/* scan column of A, incrementing w by one */
-	for (i=A_indexptrs[j]; i < A_indexptrs[j+1]; i++) {
+	for (i=A_indexptrs[j]; i < A_indexptrs[j+1]; i++)
 	    w[A_indexvals[i]] += 1;
-	    nz += 1;
-	}
 
 	/* scan column of B, decrementing w by one */
-	for (i=B_indexptrs[j]; i < B_indexptrs[j+1]; i++) {
-	    if (w[B_indexvals[i]] == 0) {
-		newmat = 1;
-		nz += 1;
-	    }
+	for (i=B_indexptrs[j]; i < B_indexptrs[j+1]; i++)
+	    w[B_indexvals[i]] -= 1;
+
+	/* if any entry of w is negative, A doesn't contain B's sparsity,
+	   so increment necessary storage counter */
+	for (i = 0; i < M; i++) {
+	  if (w[i] < 0)  newvals += 1;
 	}
     }
 
-    /* perform operation */
+    /* If extra nonzeros required, check whether A has sufficient storage space
+       for new nonzero entries (so B can be inserted into existing storage) */
+    newmat = (newvals > (A->NNZ - A_indexptrs[N]));
 
-    /*   case 1: A already contains sparsity pattern of B */
-    if (!newmat) {
+    /* perform operation based on existing/necessary structure */
 
+    /* case 1: A already contains sparsity pattern of B */
+    if (newvals == 0) {
 	/* iterate through columns, adding matrices */
 	for (j=0; j < N; j++) {
-
 	    /* clear work array */
 	    for (i=0; i < M; i++)
 		x[i] = 0.0;
@@ -1469,9 +1468,53 @@ static bool matrix_sparse_scale_add(realtype c, value va, value vcptrb)
 		A->data[i] = c*A->data[i] + x[A_indexvals[i]];
 	}
 
-    /*   case 2: A does not already contain B's sparsity */
-    } else {
+    /*   case 2: A has sufficient storage, but does not already contain B's sparsity */
+    } else if (!newmat) {
+        /* determine storage location where last column (row) should end */
+        nz = A_indexptrs[N] + newvals;
 
+        /* store pointer past last column (row) from original A,
+           and store updated value in revised A */
+        cend = A_indexptrs[N];
+        A_indexptrs[N] = nz;
+
+        /* iterate through columns (rows) backwards */
+        for (j = N-1; j >= 0; j--) {
+
+	    /* clear out temporary arrays for this column (row) */
+	    for (i = 0; i < M; i++) {
+		w[i] = 0;
+		x[i] = 0.0;
+	    }
+
+	    /* iterate down column (row) of A, collecting nonzeros */
+	    for (p = A_indexptrs[j]; p < cend; p++) {
+		w[A_indexvals[p]] += 1; /* indicate that row (column) is filled */
+		x[A_indexvals[p]] = c*A->data[p];    /* collect/scale value */
+	    }
+
+	    /* iterate down column of B, collecting nonzeros */
+	    for (p = B_indexptrs[j]; p < B_indexptrs[j+1]; p++) {
+		w[B_indexvals[p]] += 1;          /* indicate that row is filled */
+		x[B_indexvals[p]] += B->data[p]; /* collect value */
+	    }
+
+	    /* fill entries of A with this column's (row's) data */
+	    for (i = M-1; i >= 0; i--) {
+	        if (w[i] > 0) {
+		    A_indexvals[--nz] = i;
+		    A->data[nz] = x[i];
+	        }
+	    }
+
+	    /* store ptr past this col (row) from orig A,
+	       update value for new A */
+	    cend = A_indexptrs[j];
+	    A_indexptrs[j] = nz;
+        }
+
+    /*   case 3: A must be reallocated with sufficient storage */
+    } else {
 	/* access data from (pre resize) CSR structures (return if failure) */
 	Ap = A_indexptrs;
 	Ai = A_indexvals;
@@ -1480,8 +1523,8 @@ static bool matrix_sparse_scale_add(realtype c, value va, value vcptrb)
 	Bi = B_indexvals;
 	Bx = B->data;
 
-	/* reallocate memory within A */
-	if (! matrix_sparse_resize(va, nz, 0, 0) ) { // no-copy, no-free
+	/* reallocate memory within A - no-copy, no-free */
+	if (! matrix_sparse_resize(va, Ap[N] + newvals, 0, 0) ) {
 	    free(w);
 	    free(x);
 	    CAMLreturnT(bool, false);
@@ -1613,7 +1656,7 @@ static bool matrix_sparse_scale_addi(realtype c, value va)
     CAMLparam1(va);
     CAMLlocal2(vcptr, vpayload);
     CAMLlocal4(vdatac, vidxvalsc, vidxptrsc, vcptrc);
-    sundials_ml_smat_index j, i, p, nz;
+    sundials_ml_smat_index j, i, p, nz, cend, newvals;
     bool newmat, found;
     sundials_ml_smat_index *w, *Ap, *Ai, *Cp, *Ci;
     realtype *x, *Ax, *Cx;
@@ -1649,28 +1692,31 @@ static bool matrix_sparse_scale_addi(realtype c, value va)
     /* determine if A already contains values on the diagonal (hence
        no memory allocation necessary), and calculate the number of non-zeroes
        required if we create a new matrix (instead of reallocating). */
-    newmat = 0;
-    nz = SUNMIN(N, M);
-    for (j=0; j < N; j++) {
+    newvals = 0;
+    for (j=0; j < SUNMIN(M, N); j++) {
 	/* scan column (row if CSR) of A, searching for diagonal value */
 	found = 0;
 	for (i=A_indexptrs[j]; i < A_indexptrs[j+1]; i++) {
 	    if (A_indexvals[i] == j) {
 		found = 1;
-	    } else {
-		nz += 1;
+		break;
 	    }
 	}
 	/* if no diagonal found, signal new matrix */
-	if (!found) newmat = 1;
+	if (!found) newvals += 1;
     }
 
-    /* perform operation */
+    /* If extra nonzeros required, check whether matrix has sufficient
+       storage space for new nonzero entries  (so I can be inserted into
+       existing storage) */
+    newmat = (newvals > (A->NNZ - A_indexptrs[N]));
+
+    /* perform operation based on existing/necessary structure */
 
     /*   case 1: A already contains a diagonal */
-    if (!newmat) {
+    if (newvals == 0) {
 	/* iterate through columns, adding 1.0 to diagonal */
-	for (j=0; j < SUNMIN(N, M); j++)
+	for (j=0; j < SUNMIN(M, N); j++)
 	    for (i=A_indexptrs[j]; i < A_indexptrs[j+1]; i++)
 		if (A_indexvals[i] == j) {
 		    A->data[i] = 1.0 + c * A->data[i];
@@ -1678,13 +1724,73 @@ static bool matrix_sparse_scale_addi(realtype c, value va)
 		    A->data[i] = c * A->data[i];
 		}
 
-    /*   case 2: A does not already contain a diagonal */
+    /*   case 2: A has sufficient storage,
+                 but does not already contain a diagonal */
+    } else if (!newmat) {
+
+      /* create work arrays for nonzero indices and values in a
+         single column (row) */
+      w = (sundials_ml_smat_index *) malloc(M * sizeof(sundials_ml_smat_index));
+      if (w == NULL) CAMLreturnT(bool, false);
+      x = (realtype *) malloc(M * sizeof(realtype));
+      if (x == NULL) {
+	  free(w);
+	  CAMLreturnT(bool, false);
+      }
+
+      /* determine storage location where last column (row) should end */
+      nz = A_indexptrs[N] + newvals;
+
+      /* store pointer past last column (row) from original A,
+         and store updated value in revised A */
+      cend = A_indexptrs[N];
+      A_indexptrs[N] = nz;
+
+      /* iterate through columns (rows) backwards */
+      for (j = N-1; j >= 0; j--) {
+
+        /* clear out temporary arrays for this column (row) */
+        for (i = 0; i < M; i++) {
+          w[i] = 0;
+          x[i] = 0.0;
+        }
+
+        /* iterate down column (row) of A, collecting nonzeros */
+        for (p = A_indexptrs[j]; p < cend; p++) {
+          w[A_indexvals[p]] += 1;    /* indicate that row (column) is filled */
+          x[A_indexvals[p]] = c * A->data[p];  /* collect/scale value */
+        }
+
+        /* add identity to this column (row) */
+        if (j < M) {
+          w[j] += 1;     /* indicate that row (column) is filled */
+          x[j] += 1.0;   /* update value */
+        }
+
+        /* fill entries of A with this column's (row's) data */
+        for (i = M-1; i >= 0; i--) {
+          if (w[i] > 0) {
+            A_indexvals[--nz] = i;
+            A->data[nz] = x[i];
+          }
+        }
+
+        /* store ptr past this col (row) from orig A, update value for new A */
+        cend = A_indexptrs[j];
+        A_indexptrs[j] = nz;
+      }
+
+      /* clean up */
+      free(w);
+      free(x);
+
+    /*   case 3: A must be reallocated with sufficient storage */
     } else {
 	/* create work arrays for row indices and nonzero column values */
 	w = (sundials_ml_smat_index *) malloc(M * sizeof(sundials_ml_smat_index));
 	if (w == NULL) CAMLreturnT(bool, false);
 
-	x = (realtype *) malloc(A->M * sizeof(realtype));
+	x = (realtype *) malloc(M * sizeof(realtype));
 	if (x == NULL) {
 	    free(w);
 	    CAMLreturnT(bool, false);
@@ -1695,8 +1801,8 @@ static bool matrix_sparse_scale_addi(realtype c, value va)
 	Ai = A_indexvals;
 	Ax = A->data;
 
-	/* reallocate memory within A */
-	if (! matrix_sparse_resize(va, nz, 0, 0)) { // no-copy, no-free
+	/* reallocate memory within A -- no-copy, no-free */
+	if (! matrix_sparse_resize(va, Ap[N] + newvals, 0, 0)) {
 	    free(w);
 	    free(x);
 	    CAMLreturnT(bool, false);
@@ -1742,7 +1848,7 @@ static bool matrix_sparse_scale_addi(realtype c, value va)
 
 	    /* fill entries of C with this column's (row's) data */
 	    for (i=0; i < M; i++) {
-		if ( w[i] > 0 ) {
+		if (w[i] > 0) {
 		    Ci[nz] = i;
 		    Cx[nz++] = x[i];
 		}
