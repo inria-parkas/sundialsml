@@ -220,8 +220,11 @@ CAMLprim value sunml_lsolver_klu(value vnvec, value vsmat)
 CAMLprim void sunml_lsolver_klu_reinit(value vcptr, value vsmat)
 {
     CAMLparam2(vcptr, vsmat);
-#if SUNDIALS_LIB_VERSION >= 300 && defined SUNDIALS_ML_KLU
-    // reinit is done at ML level; nnz arg is ignore when reinit_type = 2
+#if SUNDIALS_LIB_VERSION >= 312 && defined SUNDIALS_ML_KLU
+    // reinit is done at ML level; nnz arg is ignored on partial reinit
+    SUNKLUReInit(LSOLVER_VAL(vcptr), MAT_VAL(vsmat), 0, SUNKLU_REINIT_PARTIAL);
+#elif SUNDIALS_LIB_VERSION >= 300 && defined SUNDIALS_ML_KLU
+    // reinit is done at ML level; nnz arg is ignored when reinit_type = 2
     SUNKLUReInit(LSOLVER_VAL(vcptr), MAT_VAL(vsmat), 0, 2);
 #endif
     CAMLreturn0;

@@ -501,7 +501,9 @@ else
 	2.6.2) sundials=262 ;;
 	2.7.*) sundials=270 ;;
 	3.0.*) sundials=300 ;;
-	3.1.*) sundials=310 ;;
+	3.1.0) sundials=310 ;;
+	3.1.1) sundials=311 ;;
+	3.1.*) sundials=312 ;;
 	3.*)   sundials=320 ;;
 	4.*)   sundials=400 ;;
 	5.*)   sundials=500 ;;
