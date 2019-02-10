@@ -11,8 +11,8 @@ EXAMPLES = test_sunmatrix_sparse.ml
 
 include ../matrix.mk
 
-MATRIX_ROWS ?= 10000
-MATRIX_COLS ?= 10000
+MATRIX_ROWS ?= 500
+MATRIX_COLS ?= 500
 MATRIX_TYPE ?= 0
 $(eval $(call EXECUTION_RULE,test_sunmatrix_sparse,$$< $(MATRIX_ROWS) $(MATRIX_COLS) $(MATRIX_TYPE) 0))
 
