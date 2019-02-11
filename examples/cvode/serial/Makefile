@@ -20,7 +20,8 @@ EXAMPLES_SINCE_2_5 = cvAdvDiff_bnd.ml \
 
 EXAMPLES_SINCE_3_0 = cvDiurnal_kry_alt.ml
 
-EXAMPLES_SINCE_3_1_2 = cvDisc_dns.ml
+EXAMPLES_SINCE_3_1_2 = cvDisc_dns.ml \
+		       cvRoberts_dns_negsol.ml
 
 EXAMPLES = $(EXAMPLES_SINCE_2_5)				      \
 	   $(if $(AT_LEAST_3_0),$(EXAMPLES_SINCE_3_0))		      \
