@@ -239,28 +239,33 @@ module Sensitivity = struct (* {{{ *)
              else Array.iter check_pi p)
         end
 
-  let init s tol fmethod ?(sens_params=no_sens_params) fm v0 =
+  let init s tol fmethod ?sens_params fm v0 =
     if Sundials_configuration.safe then Array.iter s.checkvec v0;
     add_fwdsensext s;
     let se = fwdsensext s in
     let ns = Array.length v0 in
     if Sundials_configuration.safe && ns = 0 then
       invalid_arg "init: require at least one sensitivity parameter";
-    check_sens_params ns sens_params;
+    (match sens_params with None -> () | Some sp -> check_sens_params ns sp);
     (match fm with
      | AllAtOnce fo -> begin
          if fmethod = Staggered1 then
            failwith "init: Cannot combine AllAtOnce and Staggered1";
-         (match fo with Some f -> se.sensrhsfn <- f | None -> ());
+         (match fo with Some f -> se.sensrhsfn  <- f
+                      | None   -> se.sensrhsfn  <- dummy_sensrhsfn;
+                                  se.sensrhsfn1 <- dummy_sensrhsfn1);
          c_sens_init s fmethod (fo <> None) v0
        end
      | OneByOne fo -> begin
-         (match fo with Some f -> se.sensrhsfn1 <- f | None -> ());
+         (match fo with Some f -> se.sensrhsfn1 <- f
+                      | None   -> se.sensrhsfn  <- dummy_sensrhsfn;
+                                  se.sensrhsfn1 <- dummy_sensrhsfn1);
          c_sens_init_1 s fmethod (fo <> None) v0
        end);
     se.num_sensitivities <- ns;
-    c_set_params s sens_params;
-    se.senspvals <- sens_params.pvals;
+    (match sens_params with
+     | None -> se.senspvals <- None
+     | Some sp -> c_set_params s sp; se.senspvals <- sp.pvals);
     se.sensarray1 <- c_alloc_nvector_array ns;
     se.sensarray2 <- c_alloc_nvector_array ns;
     set_tolerances s tol

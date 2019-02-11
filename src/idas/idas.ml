@@ -240,7 +240,7 @@ module Sensitivity = struct (* {{{ *)
            else Array.iter check_pi p)
       end
 
-  let init s tol fmethod ?(sens_params=no_sens_params) ?fs y0 y'0 =
+  let init s tol fmethod ?sens_params ?fs y0 y'0 =
     if Sundials_configuration.safe then
       (Array.iter s.checkvec y0;
        Array.iter s.checkvec y'0);
@@ -252,14 +252,15 @@ module Sensitivity = struct (* {{{ *)
          invalid_arg "init: require at least one sensitivity parameter";
        if ns <> Array.length y'0 then
          invalid_arg "init: y0 and y'0 have inconsistent lengths");
-    check_sens_params ns sens_params;
+    (match sens_params with None -> () | Some sp -> check_sens_params ns sp);
     c_sens_init s fmethod (fs <> None) y0 y'0;
     (match fs with
      | Some f -> se.sensresfn <- f
      | None -> ());
     se.num_sensitivities <- ns;
-    c_set_params s sens_params;
-    se.senspvals <- sens_params.pvals;
+    (match sens_params with
+     | None -> se.senspvals <- None
+     | Some sp -> c_set_params s sp; se.senspvals <- sp.pvals);
     se.sensarray1 <- c_alloc_nvector_array ns;
     se.sensarray2 <- c_alloc_nvector_array ns;
     se.sensarray3 <- c_alloc_nvector_array ns;
