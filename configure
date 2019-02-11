@@ -1,7 +1,7 @@
 #! /bin/sh
 
 sysname='Sundials/ML'
-version=3.1.2
+version=3.2.0
 versionp=0
 contact='tim@tbrk.org'
 
@@ -504,7 +504,7 @@ else
 	3.1.0) sundials=310 ;;
 	3.1.1) sundials=311 ;;
 	3.1.*) sundials=312 ;;
-	3.*)   sundials=320 ;;
+	3.2.*) sundials=320 ;;
 	4.*)   sundials=400 ;;
 	5.*)   sundials=500 ;;
 	6.*)   sundials=600 ;;
@@ -542,6 +542,13 @@ fi
 if [ ${sundials} -ge 400 ]; then
     sundials=0
     error="${error}\n\tsundials <= 3.x required (${sundials_version} is not yet supported)"
+elif [ ${sundials} -ge 320 ]; then
+    sundials_at_least_3_2_0=1
+    sundials_at_least_3_1_2=1
+    sundials_at_least_3_0=1
+    sundials_at_least_2_7=1
+    sundials_at_least_2_6=1
+    sundials_at_least_2_5=1
 elif [ ${sundials} -ge 312 ]; then
     sundials_at_least_3_1_2=1
     sundials_at_least_3_0=1
@@ -1309,6 +1316,7 @@ cat ${LOG}
 	 s#@configure_command@#${configure_command}#;
 	 s#@version@#${version}#;
 	 s#@versionp@#${versionp}#;
+	 s#@sundials_at_least_3_2_0@#${sundials_at_least_3_2_0}#;
 	 s#@sundials_at_least_3_1_2@#${sundials_at_least_3_1_2}#;
 	 s#@sundials_at_least_3_0@#${sundials_at_least_3_0}#;
 	 s#@sundials_at_least_2_7@#${sundials_at_least_2_7}#;

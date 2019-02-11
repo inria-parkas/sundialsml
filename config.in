@@ -6,6 +6,7 @@ CONFIG_COMMAND ?= @configure_command@
 VERSION = @version@
 VERSIONP = @versionp@
 
+AT_LEAST_3_2_0 = @sundials_at_least_3_2_0@
 AT_LEAST_3_1_2 = @sundials_at_least_3_1_2@
 AT_LEAST_3_0 = @sundials_at_least_3_0@
 AT_LEAST_2_7 = @sundials_at_least_2_7@
