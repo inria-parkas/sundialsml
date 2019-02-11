@@ -405,6 +405,12 @@ module Sensitivity : sig (* {{{ *)
       @cvodes <node6#ss:sensi_malloc> CVodeSensToggleOff *)
   val toggle_off : ('d, 'k) Cvode.session -> unit
 
+  (** Deactivates forward sensitivity calculations with memory
+      deallocation.
+
+      @cvodes <node6#ss:cvodesensfree> CVodeSensFree *)
+  val turn_off : ('d, 'k) Cvode.session -> unit
+
   (** Support for quadrature sensitivity equations.
 
       Adds an additional vector {% $s_\mathit{Q}$%} of {% $N_\mathit{Q}$%}

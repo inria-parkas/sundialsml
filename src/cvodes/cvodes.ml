@@ -281,6 +281,9 @@ module Sensitivity = struct (* {{{ *)
        Array.iter s.checkvec s0);
     c_reinit s sm s0
 
+  external turn_off : ('a, 'k) session -> unit
+      = "sunml_cvodes_sens_free"
+
   external toggle_off : ('a, 'k) session -> unit
       = "sunml_cvodes_sens_toggle_off"
 

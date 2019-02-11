@@ -1029,14 +1029,23 @@ static int decode_sens_method(value vmethod)
     }
 }
 
+CAMLprim value sunml_cvodes_sens_free(value vdata)
+{
+    CAMLparam1(vdata);
+    CVodeSensFree(CVODE_MEM_FROM_ML(vdata));
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value sunml_cvodes_sens_init(value vdata, value vmethod, value vrhsfn,
 				  value vys0)
 {
     CAMLparam4(vdata, vmethod, vrhsfn, vys0);
     int ns = Wosize_val (vys0); /* vys0 : nvector array */
     N_Vector *ys0 = nvector_table_to_array(vys0);
+    void *cvode_mem = CVODE_MEM_FROM_ML(vdata);
 
-    int flag = CVodeSensInit(CVODE_MEM_FROM_ML(vdata), ns,
+    CVodeSensFree(cvode_mem);
+    int flag = CVodeSensInit(cvode_mem, ns,
 			     decode_sens_method(vmethod),
 			     ((Bool_val(vrhsfn)) ? sensrhsfn : NULL),
 			     ys0);
@@ -1052,13 +1061,15 @@ CAMLprim value sunml_cvodes_sens_init_1(value vdata, value vmethod, value vrhsfn
     CAMLparam4(vdata, vmethod, vrhsfn, vys0);
     int ns = Wosize_val (vys0); /* vys0 : nvector array */
     N_Vector *ys0 = nvector_table_to_array(vys0);
+    void *cvode_mem = CVODE_MEM_FROM_ML(vdata);
 
-    int flag = CVodeSensInit1(CVODE_MEM_FROM_ML(vdata), ns,
+    CVodeSensFree(cvode_mem);
+    int flag = CVodeSensInit1(cvode_mem, ns,
 			      decode_sens_method(vmethod),
 			      ((Bool_val(vrhsfn)) ? sensrhsfn1 : NULL),
 			      ys0);
     free_nvector_array(ys0); 
-    SCHECK_FLAG("CVodeSensInit", flag);
+    SCHECK_FLAG("CVodeSensInit1", flag);
 
     CAMLreturn (Val_unit);
 }
