@@ -1861,6 +1861,9 @@ void sunml_cvodes_ml_check_flag(const char *call, int flag)
 	case CV_RTFUNC_FAIL:
 	    caml_raise_constant(CVODE_EXN(RootFuncFailure));
 
+	case CV_CONSTR_FAIL:
+	    caml_raise_constant(CVODE_EXN(ConstraintFailure));
+
 	/* * */
 
 	case CV_ILL_INPUT:
@@ -2605,6 +2608,31 @@ CAMLprim value sunml_cvodes_adj_set_stab_lim_det(value vparent, value vwhich,
 			           Bool_val(vstldet));
     SCHECK_FLAG("CVodeSetStabLimDetB", flag);
 
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_cvodes_adj_set_constraints(value vparent, value vwhich,
+					        value vconstraints)
+{
+    CAMLparam3(vparent, vwhich, vconstraints);
+#if SUNDIALS_LIB_VERSION >= 320
+    N_Vector constraints = NVEC_VAL (vconstraints);
+
+    int flag = CVodeSetConstraintsB(CVODE_MEM_FROM_ML(vparent), Int_val(vwhich),
+			            constraints);
+    SCHECK_FLAG("CVodeSetConstraintsB", flag);
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_cvodes_adj_clear_constraints(value vparent, value vwhich)
+{
+    CAMLparam2(vparent, vwhich);
+#if SUNDIALS_LIB_VERSION >= 320
+    int flag = CVodeSetConstraintsB(CVODE_MEM_FROM_ML(vparent), Int_val(vwhich),
+			            NULL);
+    SCHECK_FLAG("CVodeSetConstraintsB", flag);
+#endif
     CAMLreturn (Val_unit);
 }
 

@@ -901,6 +901,17 @@ val set_max_conv_fails : ('d, 'k) session -> int -> unit
     @cvode <node3#ss:ivp_sol> IVP Solution *)
 val set_nonlin_conv_coef : ('d, 'k) session -> float -> unit
 
+(** Specifies a vector defining inequality constraints for each
+    component of the solution vector [y].  See {!Sundials.Constraint}.
+
+    @nocvode <node> CVodeSetConstraints *)
+val set_constraints : ('d, 'k) session -> ('d, 'k) Nvector.t -> unit
+
+(** Disables constraint checking.
+
+    @nocvode <node> CVodeSetConstraints *)
+val clear_constraints : ('d, 'k) session -> unit
+
 (** {2:get Querying the solver (optional output functions)} *)
 
 (** Returns the real and integer workspace sizes.
@@ -1149,6 +1160,11 @@ exception UnrecoverableRhsFuncFailure
 
     @cvode <node5#sss:cvode> CV_RTFUNC_FAIL *)
 exception RootFuncFailure
+
+(** No solution satisfying the inequality constraints could be found.
+
+    @nocvode <node> CV_CONSTR_FAIL *)
+exception ConstraintFailure
 
 (** Raised by {!get_dky} for invalid order values.
 

@@ -692,6 +692,27 @@ module Adjoint = struct (* {{{ *)
     let parent, which = parent_and_which bs in
     c_set_stab_lim_det parent which stldetb
 
+  external c_set_constraints : ('a,'k) session -> int -> ('a,'k) Nvector.t -> unit
+    = "sunml_cvodes_adj_set_constraints"
+
+  external c_clear_constraints : ('a,'k) session -> int -> unit
+    = "sunml_cvodes_adj_clear_constraints"
+
+  let set_constraints bs nv =
+    (match Config.sundials_version with
+     | 2,_,_ | 3,1,_ -> raise Config.NotImplementedBySundialsVersion
+     | _ -> ());
+    if Sundials_configuration.safe then (tosession bs).checkvec nv;
+    let parent, which = parent_and_which bs in
+    c_set_constraints parent which nv
+
+  let clear_constraints bs =
+    (match Config.sundials_version with
+     | 2,_,_ | 3,1,_ -> raise Config.NotImplementedBySundialsVersion
+     | _ -> ());
+    let parent, which = parent_and_which bs in
+    c_clear_constraints parent which
+
   module Diag = struct (* {{{ *)
 
     external c_diag : ('a, 'k) session -> int -> unit

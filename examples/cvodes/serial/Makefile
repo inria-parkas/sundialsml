@@ -13,7 +13,9 @@ EXAMPLES = cvsAdvDiff_ASAi_bnd.ml \
 	   $(if $(and $(KLU_ENABLED),$(AT_LEAST_2_7)),cvsRoberts_FSA_klu.ml) \
 	   $(if $(and $(SUPERLUMT_ENABLED),$(AT_LEAST_2_7)),cvsRoberts_ASAi_sps.ml) \
 	   $(if $(and $(SUPERLUMT_ENABLED),$(AT_LEAST_2_7)),cvsRoberts_FSA_sps.ml) \
-	   $(if $(AT_LEAST_3_1_2),cvsRoberts_FSA_dns_Switch.ml)
+	   $(if $(AT_LEAST_3_1_2),cvsRoberts_FSA_dns_Switch.ml) \
+	   $(if $(AT_LEAST_3_2_0),cvsRoberts_FSA_dns_constraints.ml) \
+	   $(if $(AT_LEAST_3_2_0),cvsRoberts_ASAi_dns_constraints.ml)
 
 include ../../examples.mk
 
@@ -22,5 +24,6 @@ include ../../examples.mk
 $(eval $(call EXECUTION_RULE,cvsAdvDiff_FSA_non,$$< -sensi sim t))
 $(eval $(call EXECUTION_RULE,cvsDiurnal_FSA_kry,$$< -sensi sim t))
 $(eval $(call EXECUTION_RULE,cvsRoberts_FSA_dns,$$< -sensi sim t))
+$(eval $(call EXECUTION_RULE,cvsRoberts_FSA_dns_constraints,$$< -sensi stg1 t))
 $(eval $(call EXECUTION_RULE,cvsRoberts_FSA_klu,$$< -sensi sim t))
 $(eval $(call EXECUTION_RULE,cvsRoberts_FSA_sps,$$< -sensi sim t))

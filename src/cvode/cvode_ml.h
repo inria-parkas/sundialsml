@@ -316,6 +316,7 @@ enum cvode_exn_index {
     CVODE_EXN_RepeatedRhsFuncFailure,
     CVODE_EXN_UnrecoverableRhsFuncFailure,
     CVODE_EXN_RootFuncFailure,
+    CVODE_EXN_ConstraintFailure,
     CVODE_EXN_BadK,
     CVODE_EXN_BadT,
     CVODE_EXN_SET_SIZE

@@ -1097,6 +1097,9 @@ void sunml_cvode_check_flag(const char *call, int flag)
 	case CV_RTFUNC_FAIL:
 	    caml_raise_constant(CVODE_EXN(RootFuncFailure));
 
+	case CV_CONSTR_FAIL:
+	    caml_raise_constant(CVODE_EXN(ConstraintFailure));
+
 	case CV_BAD_K:
 	    caml_raise_constant(CVODE_EXN(BadK));
 
@@ -1596,6 +1599,31 @@ CAMLprim value sunml_cvode_set_nonlin_conv_coef(value vcvode_mem, value nlscoef)
     int flag = CVodeSetNonlinConvCoef(CVODE_MEM_FROM_ML(vcvode_mem), Double_val(nlscoef));
     CHECK_FLAG("CVodeSetNonlinConvCoef", flag);
 
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_cvode_set_constraints (value vcvode_mem, value vconstraints)
+{
+    CAMLparam2(vcvode_mem, vconstraints);
+#if SUNDIALS_LIB_VERSION >= 320
+    int flag;
+
+    N_Vector constraints = NVEC_VAL (vconstraints);
+    flag = CVodeSetConstraints (CVODE_MEM_FROM_ML (vcvode_mem), constraints);
+    CHECK_FLAG ("CVodeSetConstraints", flag);
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_cvode_clear_constraints (value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+#if SUNDIALS_LIB_VERSION >= 320
+    int flag;
+
+    flag = CVodeSetConstraints (CVODE_MEM_FROM_ML (vcvode_mem), NULL);
+    CHECK_FLAG ("CVodeSetConstraints", flag);
+#endif
     CAMLreturn (Val_unit);
 }
 

@@ -2000,6 +2000,17 @@ module Adjoint : sig (* {{{ *)
       @cvode <node7#ss:optional_input_b> CVodeSetStabLimDet *)
   val set_stab_lim_det : ('d, 'k) bsession -> bool -> unit
 
+  (** Specifies a vector defining inequality constraints for each
+      component of the solution vector [y].  See {!Sundials.Constraint}.
+
+      @nocvodes <node> CVodeSetConstraintsB *)
+  val set_constraints : ('d, 'k) bsession -> ('d, 'k) Nvector.t -> unit
+
+  (** Disables constraint checking.
+
+      @nocvodes <node> CVodeSetConstraints *)
+  val clear_constraints : ('d, 'k) bsession -> unit
+
   (** {2:get Querying the solver (optional output functions)} *)
 
   (** Returns the real and integer workspace sizes.

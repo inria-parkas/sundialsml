@@ -39,6 +39,7 @@ exception FirstRhsFuncFailure
 exception RepeatedRhsFuncFailure
 exception UnrecoverableRhsFuncFailure
 exception RootFuncFailure
+exception ConstraintFailure
 
 (* get_dky exceptions *)
 exception BadK
@@ -854,6 +855,25 @@ external set_max_conv_fails     : ('a, 'k) session -> int -> unit
 external set_nonlin_conv_coef   : ('a, 'k) session -> float -> unit
     = "sunml_cvode_set_nonlin_conv_coef"
 
+external c_set_constraints : ('a,'k) session -> ('a,'k) Nvector.t -> unit
+  = "sunml_cvode_set_constraints"
+
+external c_clear_constraints : ('a,'k) session -> unit
+  = "sunml_cvode_clear_constraints"
+
+let set_constraints s nv =
+  (match Config.sundials_version with
+   | 2,_,_ | 3,1,_ -> raise Config.NotImplementedBySundialsVersion
+   | _ -> ());
+  if Sundials_configuration.safe then s.checkvec nv;
+  c_set_constraints s nv
+
+let clear_constraints s =
+  (match Config.sundials_version with
+   | 2,_,_ | 3,1,_ -> raise Config.NotImplementedBySundialsVersion
+   | _ -> ());
+  c_clear_constraints s
+
 external set_root_direction'   : ('a, 'k) session -> RootDirs.t -> unit
     = "sunml_cvode_set_root_direction"
 
@@ -921,6 +941,7 @@ let _ =
       RepeatedRhsFuncFailure;
       UnrecoverableRhsFuncFailure;
       RootFuncFailure;
+      ConstraintFailure;
       BadK;
       BadT;
     |]
