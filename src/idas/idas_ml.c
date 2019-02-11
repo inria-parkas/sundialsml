@@ -1996,6 +1996,30 @@ CAMLprim value sunml_idas_adj_set_max_step(value vparent, value vwhich, value vh
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_idas_adj_set_constraints(value vparent, value vwhich,
+					      value vconstraints)
+{
+    CAMLparam3(vparent, vwhich, vconstraints);
+    N_Vector constraints = NVEC_VAL (vconstraints);
+
+    int flag = IDASetConstraintsB(IDA_MEM_FROM_ML(vparent), Int_val(vwhich),
+			          constraints);
+    SCHECK_FLAG("IDASetConstraintsB", flag);
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_idas_adj_clear_constraints(value vparent, value vwhich)
+{
+    CAMLparam2(vparent, vwhich);
+
+    int flag = IDASetConstraintsB(IDA_MEM_FROM_ML(vparent), Int_val(vwhich),
+			          NULL);
+    SCHECK_FLAG("IDASetConstraintsB", flag);
+
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value sunml_idas_adj_spils_set_gs_type(value vparent, value vwhich,
 					    value vgstype)
 {

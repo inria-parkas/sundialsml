@@ -915,6 +915,11 @@ val set_nonlin_conv_coef : ('d, 'k) session -> float -> unit
     @ida <node5#sss:optin_main> IDASetConstraints *)
 val set_constraints : ('d, 'k) session -> ('d, 'k) Nvector.t -> unit
 
+(** Disables constraint checking.
+
+    @noida <node> IDASetConstraints *)
+val clear_constraints : ('d, 'k) session -> unit
+
 (** {2:get Querying the solver (optional output functions)} *)
 
 (** Returns the sizes of the real and integer workspaces.

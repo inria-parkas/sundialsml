@@ -1938,6 +1938,17 @@ module Adjoint : sig (* {{{ *)
       @idas <node7#ss:optional_input_b> IDASetMaxStepB *)
   val set_max_step : ('d, 'k) bsession -> float -> unit
 
+  (** Specifies a vector defining inequality constraints for each
+      component of the solution vector [u].  See {!Sundials.Constraint}.
+
+      @noidas <node> IDASetConstraintsB *)
+  val set_constraints : ('d, 'k) bsession -> ('d, 'k) Nvector.t -> unit
+
+  (** Disables constraint checking.
+
+      @noidas <node> IDASetConstraints *)
+  val clear_constraints : ('d, 'k) bsession -> unit
+
   (** {2:get Querying the solver (optional output functions)} *)
 
   (** Returns the real and integer workspace sizes.

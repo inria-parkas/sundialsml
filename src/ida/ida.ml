@@ -824,6 +824,9 @@ let set_constraints s nv =
   if Sundials_configuration.safe then s.checkvec nv;
   c_set_constraints s nv
 
+external clear_constraints : ('a,'k) session -> unit
+  = "sunml_ida_clear_constraints"
+
 external c_set_suppress_alg : ('a,'k) session -> bool -> unit
   = "sunml_ida_set_suppress_alg"
 

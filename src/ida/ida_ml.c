@@ -1098,6 +1098,17 @@ CAMLprim value sunml_ida_set_constraints (value vida_mem, value vconstraints)
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_ida_clear_constraints (value vida_mem)
+{
+    CAMLparam1(vida_mem);
+    int flag;
+
+    flag = IDASetConstraints (IDA_MEM_FROM_ML (vida_mem), NULL);
+    CHECK_FLAG ("IDASetConstraints", flag);
+
+    CAMLreturn (Val_unit);
+}
+
 void sunml_ida_check_flag(const char *call, int flag)
 {
     static char exmsg[MAX_ERRMSG_LEN] = "";
