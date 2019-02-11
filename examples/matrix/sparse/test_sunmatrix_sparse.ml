@@ -135,7 +135,10 @@ let clone a = Matrix.(wrap_sparse ((get_ops a).m_clone (unwrap a)))
  *    z should already equal B*x
  * --------------------------------------------------------------------*)
 let test_sunmatscaleadd2 check_vector a b x y z =
-  let tol = 1e-14 in
+  let tol = match Sundials.Config.sundials_version with
+            | 2,_,_ | 3,1,0 | 3,1,1 | 3,1,2 -> 1e-14
+            | _ -> 100.0 *. Sundials.Config.unit_roundoff
+  in
   try
     (* create clones for test *)
     let c = clone a in
@@ -255,7 +258,10 @@ let test_sunmatscaleadd2 check_vector a b x y z =
  *    y should already equal A*x
  * --------------------------------------------------------------------*)
 let test_sunmatscaleaddi2 check_vector a x y =
-  let tol = 1e-14 in
+  let tol = match Sundials.Config.sundials_version with
+            | 2,_,_ | 3,1,0 | 3,1,1 | 3,1,2 -> 1e-14
+            | _ -> 100.0 *. Sundials.Config.unit_roundoff
+  in
   try
     (* create clones for test *)
     let b = clone a in
