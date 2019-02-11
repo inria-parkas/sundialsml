@@ -12,7 +12,8 @@ EXAMPLES = cvsAdvDiff_ASAi_bnd.ml \
 	   $(if $(and $(KLU_ENABLED),$(AT_LEAST_2_7)),cvsRoberts_ASAi_klu.ml) \
 	   $(if $(and $(KLU_ENABLED),$(AT_LEAST_2_7)),cvsRoberts_FSA_klu.ml) \
 	   $(if $(and $(SUPERLUMT_ENABLED),$(AT_LEAST_2_7)),cvsRoberts_ASAi_sps.ml) \
-	   $(if $(and $(SUPERLUMT_ENABLED),$(AT_LEAST_2_7)),cvsRoberts_FSA_sps.ml)
+	   $(if $(and $(SUPERLUMT_ENABLED),$(AT_LEAST_2_7)),cvsRoberts_FSA_sps.ml) \
+	   $(if $(AT_LEAST_3_1_2),cvsRoberts_FSA_dns_Switch.ml)
 
 include ../../examples.mk
 
