@@ -66,6 +66,7 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
 
     xcor                 : ('data, 'kind) Nvector.t;
     vtemp                : ('data, 'kind) Nvector.t;
+    vtemps               : ('data, 'kind) Nvector.t array;
     v                    : ('data, 'kind) Nvector.t array;
     hes                  : RealArray2.t;
     givens               : RealArray.t;
@@ -172,7 +173,7 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
               (match gstype with
               | ClassicalGS ->
                   RealArray2.set hes l l_plus_1
-                    (Algorithms.classical_gs v hes l_plus_1 l_max vtemp yg);
+                    (Algorithms.classical_gs v hes l_plus_1 l_max yg vtemps);
               | ModifiedGS  ->
                   RealArray2.set hes l l_plus_1
                     (Algorithms.modified_gs v hes l_plus_1 l_max)
@@ -325,6 +326,7 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
 
         xcor         = NV.Ops.n_vclone nv_y;
         vtemp        = NV.Ops.n_vclone nv_y;
+        vtemps       = Array.init (maxl + 1) (fun _ -> NV.Ops.n_vclone nv_y);
         v            = Array.init (maxl + 1) (fun _ -> NV.Ops.n_vclone nv_y);
         hes          = RealArray2.create maxl (maxl + 1);
         givens       = RealArray.create (2 * maxl);

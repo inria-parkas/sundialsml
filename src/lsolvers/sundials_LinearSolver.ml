@@ -586,12 +586,23 @@ module Iterative = struct (* {{{ *)
                              * RealArray2.t
                              * int
                              * int
-                             * ('a, 'k) Nvector.t
                              * RealArray.t
+                             * (('a, 'k) Nvector.t) array
                              -> float
       = "sunml_spils_classical_gs"
 
-    let classical_gs v h k p temp s = classical_gs' (v, h, k, p, temp, s)
+    let classical_gs v h k p s temp =
+      if Sundials_configuration.safe then begin
+        if k < 1 then
+          invalid_arg "classical_gs: k is too small.";
+        if Array.length v < k then
+          invalid_arg "classical_gs: v is too small (< k).";
+        if Array.length temp < k + 1 then
+          invalid_arg "classical_gs: temp is too small (< k + 1).";
+        Array.iter (Nvector.check v.(0)) v;
+        Array.iter (Nvector.check v.(0)) temp
+      end;
+      classical_gs' (v, h, k, p, s, temp)
 
   end (* }}} *)
 end (* }}} *)

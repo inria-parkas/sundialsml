@@ -1020,11 +1020,11 @@ CAMLprim value sunml_spils_modified_gs(value vv, value vh, value vk, value vp)
 CAMLprim value sunml_spils_classical_gs(value vargs)
 {
     CAMLparam1(vargs);
-    CAMLlocal3(vv, vh, vs);
+    CAMLlocal4(vv, vh, vs, vtemp);
 
     int k = Int_val(Field(vargs, 2));
     int p = Int_val(Field(vargs, 3));
-    N_Vector temp = NVEC_VAL(Field(vargs, 4));
+    N_Vector *temp;
     int i;
     int i0 = SUNMAX(k-p, 0);
     realtype new_vk_norm;
@@ -1032,34 +1032,44 @@ CAMLprim value sunml_spils_classical_gs(value vargs)
 
     vv = Field(vargs, 0);
     vh = Field(vargs, 1);
-    vs = Field(vargs, 5);
+    vs = Field(vargs, 4);
+    vtemp = Field(vargs, 5);
 
 #if SUNDIALS_ML_SAFE == 1
     struct caml_ba_array *bh = ARRAY2_DATA(vh);
     intnat hn = bh->dim[0];
     intnat hm = bh->dim[1];
 
-    if (hn < k + 1)
-	caml_invalid_argument("classical_gs: h is too small (< k + 1).");
+    if (hn < k)
+	caml_invalid_argument("classical_gs: h is too small (< k).");
     if (hm < k)
 	caml_invalid_argument("classical_gs: h is too small (< k).");
 
-    if (Wosize_val (vv) < k + 1)
-	caml_invalid_argument("classical_gs: v is too small (< k + 1).");
-    if (ARRAY1_LEN(vs) < k)
-	caml_invalid_argument("classical_gs: s is too small (< k).");
+    if (ARRAY1_LEN(vs) < k + 1)
+	caml_invalid_argument("classical_gs: s is too small (< k + 1).");
 #endif
 
-    v = calloc(p + 1, sizeof(N_Vector));
+    temp = sunml_nvector_array_alloc(vtemp);
+    if (temp == NULL) caml_raise_out_of_memory();
 
-    if (v == NULL) caml_raise_out_of_memory();
+    v = calloc(k + 1, sizeof(N_Vector));
+    if (v == NULL) {
+	sunml_nvector_array_free(temp);
+	caml_raise_out_of_memory();
+    }
 
     for (i = i0; i <= k; ++i)
 	v[i] = NVEC_VAL(Field(vv, i));
 
+#if SUNDIALS_LIB_VERSION >= 400
     ClassicalGS(v, ARRAY2_ACOLS(vh), k, p, &new_vk_norm,
-	        temp, REAL_ARRAY(vs));
+	        REAL_ARRAY(vs), temp);
+#else
+    ClassicalGS(v, ARRAY2_ACOLS(vh), k, p, &new_vk_norm,
+	        temp[0], REAL_ARRAY(vs));
+#endif
 
+    sunml_nvector_array_free(temp);
     free(v);
 
     CAMLreturn(caml_copy_double(new_vk_norm));

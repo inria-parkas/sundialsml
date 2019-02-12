@@ -536,13 +536,15 @@ module Iterative : sig (* {{{ *)
                       -> float
 
     (** Performs a classical Gram-Schmidt orthogonalization. In
-      [classical_gs v h k p temp s],
+      [classical_gs v h k p s temp],
     - [v] is an array of at least [k + 1] vectors with an L2-norm of 1,
     - [h] is the output [k] by [k] Hessenberg matrix of inner products,
     - [k] specifies the vector in [v] to be orthogonalized against previous
-          ones, and,
-    - [p] is the number of previous vectors in [v] to orthogonalize against.
-    - [temp] and [s] are used as workspaces.
+          ones,
+    - [p] is the number of previous vectors in [v] to orthogonalize against,
+        and,
+    - [s] and [temp] are arrays of at least [k + 1] elements used
+      as workspaces.
 
     The vector [v[k]] is orthogonalized against the [p] unit vectors at
     [v.{k-1}], [v.{k-2}], ..., [v.{k-p}].
@@ -558,8 +560,8 @@ module Iterative : sig (* {{{ *)
                        -> RealArray2.t
                        -> int
                        -> int
-                       -> ('d, 'k) Nvector.t
                        -> RealArray.t
+                       -> (('d, 'k) Nvector.t) array
                        -> float
 
   end (* }}} *)
