@@ -138,18 +138,29 @@
  */
 
 void sunml_cvode_check_flag(const char *call, int flag);
+#if SUNDIALS_LIB_VERSION >= 400
+void sunml_cvode_check_ls_flag(const char *call, int flag);
+#else
 void sunml_cvode_check_dls_flag(const char *call, int flag);
 void sunml_cvode_check_spils_flag(const char *call, int flag);
+#endif
 
 value sunml_cvode_make_jac_arg(realtype t, N_Vector y, N_Vector fy, value tmp);
 value sunml_cvode_make_triple_tmp(N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
 
 #define CHECK_FLAG(call, flag) if (flag != CV_SUCCESS) \
 				 sunml_cvode_check_flag(call, flag)
+#if SUNDIALS_LIB_VERSION >= 400
+#define CHECK_SPILS_FLAG(call, flag) if (flag != CVLS_SUCCESS) \
+				 sunml_cvode_check_ls_flag(call, flag)
+#define CHECK_DLS_FLAG(call, flag) if (flag != CVLS_SUCCESS) \
+				 sunml_cvode_check_ls_flag(call, flag)
+#else
 #define CHECK_SPILS_FLAG(call, flag) if (flag != CVSPILS_SUCCESS) \
 				 sunml_cvode_check_spils_flag(call, flag)
 #define CHECK_DLS_FLAG(call, flag) if (flag != CVDLS_SUCCESS) \
 				 sunml_cvode_check_dls_flag(call, flag)
+#endif
 
 typedef enum {
     UNRECOVERABLE = 0,

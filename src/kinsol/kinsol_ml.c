@@ -944,6 +944,31 @@ void sunml_kinsol_check_flag(const char *call, int flag)
     }
 }
 
+#if SUNDIALS_LIB_VERSION >= 400
+void sunml_kinsol_check_ls_flag(const char *call, int flag)
+{
+    static char exmsg[MAX_ERRMSG_LEN] = "";
+
+    if (flag == KINLS_SUCCESS) return;
+
+    switch (flag) {
+	case KINLS_ILL_INPUT:
+	    caml_raise_constant(KINSOL_EXN(IllInput));
+
+	case KINLS_MEM_FAIL:
+	    caml_raise_out_of_memory();
+
+	case KINLS_SUNMAT_FAIL:
+	case KINLS_JACFUNC_ERR:
+	case KINLS_SUNLS_FAIL:
+	default:
+	    /* e.g. KINLS_MEM_NULL, KINLS_LMEM_NULL */
+	    snprintf(exmsg, MAX_ERRMSG_LEN, "%s: %s", call,
+		    KINDlsGetReturnFlagName(flag));
+	    caml_failwith(exmsg);
+    }
+}
+#else
 void sunml_kinsol_check_dls_flag(const char *call, int flag)
 {
     static char exmsg[MAX_ERRMSG_LEN] = "";
@@ -992,6 +1017,7 @@ void sunml_kinsol_check_spils_flag(const char *call, int flag)
 	    caml_failwith(exmsg);
     }
 }
+#endif
 
 /* basic interface */
 

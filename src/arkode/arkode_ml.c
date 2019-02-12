@@ -1656,6 +1656,34 @@ void sunml_arkode_check_flag(const char *call, int flag)
     }
 }
 
+#if SUNDIALS_LIB_VERSION >= 400
+void sunml_arkode_check_ls_flag(const char *call, int flag)
+{
+    static char exmsg[MAX_ERRMSG_LEN] = "";
+
+    if (flag == ARKLS_SUCCESS) return;
+
+    switch (flag) {
+	case ARKLS_ILL_INPUT:
+	    caml_raise_constant(ARKODE_EXN(IllInput));
+
+	case ARKLS_MEM_FAIL:
+	    caml_raise_out_of_memory();
+
+	case ARKLS_SUNMAT_FAIL:
+	case ARKLS_SUNLS_FAIL:
+	case ARKLS_JACFUNC_UNRECVR:
+	case ARKLS_JACFUNC_RECVR:
+	case ARKLS_MASSFUNC_UNRECVR:
+	case ARKLS_MASSFUNC_RECVR:
+	default:
+	    /* e.g. ARKLS_MEM_NULL, ARKLS_LMEM_NULL */
+	    snprintf(exmsg, MAX_ERRMSG_LEN, "%s: %s", call,
+		    ARKDlsGetReturnFlagName(flag));
+	    caml_failwith(exmsg);
+    }
+}
+#else
 void sunml_arkode_check_dls_flag(const char *call, int flag)
 {
     static char exmsg[MAX_ERRMSG_LEN] = "";
@@ -1707,6 +1735,7 @@ void sunml_arkode_check_spils_flag(const char *call, int flag)
 	    caml_failwith(exmsg);
     }
 }
+#endif
 
 CAMLprim value sunml_arkode_session_finalize(value vdata)
 {

@@ -1174,6 +1174,32 @@ void sunml_ida_check_flag(const char *call, int flag)
     }
 }
 
+#if SUNDIALS_LIB_VERSION >= 400
+void sunml_ida_check_ls_flag(const char *call, int flag)
+{
+    static char exmsg[MAX_ERRMSG_LEN] = "";
+
+    if (flag == IDALS_SUCCESS) return;
+
+    switch (flag) {
+	case IDALS_ILL_INPUT:
+	    caml_raise_constant(IDA_EXN(IllInput));
+
+	case IDALS_MEM_FAIL:
+	    caml_raise_out_of_memory();
+
+	case IDALS_SUNMAT_FAIL:
+	case IDALS_SUNLS_FAIL:
+	case IDALS_JACFUNC_UNRECVR:
+	case IDALS_JACFUNC_RECVR:
+	default:
+	    /* e.g. IDALS_MEM_NULL, IDALS_LMEM_NULL */
+	    snprintf(exmsg, MAX_ERRMSG_LEN, "%s: %s", call,
+		    IDADlsGetReturnFlagName(flag));
+	    caml_failwith(exmsg);
+    }
+}
+#else
 void sunml_ida_check_dls_flag(const char *call, int flag)
 {
     static char exmsg[MAX_ERRMSG_LEN] = "";
@@ -1223,6 +1249,7 @@ void sunml_ida_check_spils_flag(const char *call, int flag)
 	    caml_failwith(exmsg);
     }
 }
+#endif
 
 CAMLprim value sunml_ida_session_finalize(value vdata)
 {

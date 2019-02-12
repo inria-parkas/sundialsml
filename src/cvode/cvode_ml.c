@@ -1114,6 +1114,32 @@ void sunml_cvode_check_flag(const char *call, int flag)
     }
 }
 
+#if SUNDIALS_LIB_VERSION >= 400
+void sunml_cvode_check_ls_flag(const char *call, int flag)
+{
+    static char exmsg[MAX_ERRMSG_LEN] = "";
+
+    if (flag == CVLS_SUCCESS) return;
+
+    switch (flag) {
+	case CVLS_ILL_INPUT:
+	    caml_raise_constant(CVODE_EXN(IllInput));
+
+	case CVLS_MEM_FAIL:
+	    caml_raise_out_of_memory();
+
+	case CVLS_SUNMAT_FAIL:
+	case CVLS_SUNLS_FAIL:
+	case CVLS_JACFUNC_UNRECVR:
+	case CVLS_JACFUNC_RECVR:
+	default:
+	    /* e.g. CVLS_MEM_NULL, CVLS_LMEM_NULL */
+	    snprintf(exmsg, MAX_ERRMSG_LEN, "%s: %s", call,
+		    CVDlsGetReturnFlagName(flag));
+	    caml_failwith(exmsg);
+    }
+}
+#else
 void sunml_cvode_check_dls_flag(const char *call, int flag)
 {
     static char exmsg[MAX_ERRMSG_LEN] = "";
@@ -1153,7 +1179,7 @@ void sunml_cvode_check_spils_flag(const char *call, int flag)
 	case CVSPILS_MEM_FAIL:
 	    caml_raise_out_of_memory();
 
-#if SUNDIALS_LIB_VERSION >+ 300
+#if SUNDIALS_LIB_VERSION >= 300
 	case CVSPILS_SUNLS_FAIL:
 #endif
 	default:
@@ -1163,6 +1189,7 @@ void sunml_cvode_check_spils_flag(const char *call, int flag)
 	    caml_failwith(exmsg);
     }
 }
+#endif
 
 /* basic interface */
 
