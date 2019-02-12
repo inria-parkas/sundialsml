@@ -83,25 +83,6 @@ void sunml_cvodes_wrap_to_nvector_table(int n, value vy, N_Vector *y)
     }
 }
 
-static N_Vector *nvector_table_to_array(value vtable)
-{
-    int ns = Wosize_val (vtable); /* vtable : nvector array */
-    N_Vector *r = calloc(ns + 1, sizeof(N_Vector));
-    int i;
-
-    for (i=0; i < ns; ++i) {
-	r[i] = NVEC_VAL(Field(vtable, i));
-    }
-    r[ns] = NULL;
-
-    return r;
-}
-
-static void free_nvector_array(N_Vector *nvarr)
-{
-    free(nvarr);
-}
-
 static value make_double_tmp(N_Vector tmp1, N_Vector tmp2)
 {
     CAMLparam0();
@@ -1002,11 +983,11 @@ CAMLprim value sunml_cvodes_sens_sv_tolerances(value vdata, value reltol,
 					   value abstol)
 {
     CAMLparam3(vdata, reltol, abstol);
-    N_Vector *atol_nv = nvector_table_to_array(abstol);
+    N_Vector *atol_nv = sunml_nvector_array_alloc(abstol);
 
     int flag = CVodeSensSVtolerances(CVODE_MEM_FROM_ML(vdata),
 	    Double_val(reltol), atol_nv);
-    free_nvector_array(atol_nv); 
+    sunml_nvector_array_free(atol_nv); 
     SCHECK_FLAG("CVodeSensSVtolerances", flag);
 
     CAMLreturn (Val_unit);
@@ -1041,7 +1022,7 @@ CAMLprim value sunml_cvodes_sens_init(value vdata, value vmethod, value vrhsfn,
 {
     CAMLparam4(vdata, vmethod, vrhsfn, vys0);
     int ns = Wosize_val (vys0); /* vys0 : nvector array */
-    N_Vector *ys0 = nvector_table_to_array(vys0);
+    N_Vector *ys0 = sunml_nvector_array_alloc(vys0);
     void *cvode_mem = CVODE_MEM_FROM_ML(vdata);
 
     CVodeSensFree(cvode_mem);
@@ -1049,7 +1030,7 @@ CAMLprim value sunml_cvodes_sens_init(value vdata, value vmethod, value vrhsfn,
 			     decode_sens_method(vmethod),
 			     ((Bool_val(vrhsfn)) ? sensrhsfn : NULL),
 			     ys0);
-    free_nvector_array(ys0); 
+    sunml_nvector_array_free(ys0); 
     SCHECK_FLAG("CVodeSensInit", flag);
 
     CAMLreturn (Val_unit);
@@ -1060,7 +1041,7 @@ CAMLprim value sunml_cvodes_sens_init_1(value vdata, value vmethod, value vrhsfn
 {
     CAMLparam4(vdata, vmethod, vrhsfn, vys0);
     int ns = Wosize_val (vys0); /* vys0 : nvector array */
-    N_Vector *ys0 = nvector_table_to_array(vys0);
+    N_Vector *ys0 = sunml_nvector_array_alloc(vys0);
     void *cvode_mem = CVODE_MEM_FROM_ML(vdata);
 
     CVodeSensFree(cvode_mem);
@@ -1068,7 +1049,7 @@ CAMLprim value sunml_cvodes_sens_init_1(value vdata, value vmethod, value vrhsfn
 			      decode_sens_method(vmethod),
 			      ((Bool_val(vrhsfn)) ? sensrhsfn1 : NULL),
 			      ys0);
-    free_nvector_array(ys0); 
+    sunml_nvector_array_free(ys0); 
     SCHECK_FLAG("CVodeSensInit1", flag);
 
     CAMLreturn (Val_unit);
@@ -1079,12 +1060,12 @@ CAMLprim value sunml_cvodes_sens_reinit(value vdata, value vmethod, value vs0)
     CAMLparam3(vdata, vmethod, vs0);
     CAMLlocal1(r);
     int flag;
-    N_Vector *s0 = nvector_table_to_array(vs0);
+    N_Vector *s0 = sunml_nvector_array_alloc(vs0);
 
     flag = CVodeSensReInit(CVODE_MEM_FROM_ML(vdata),
 			   decode_sens_method(vmethod),
 			   s0);
-    free_nvector_array(s0);
+    sunml_nvector_array_free(s0);
     SCHECK_FLAG("CVodeSensReInit", flag);
 
     CAMLreturn (Val_unit);
@@ -1093,11 +1074,11 @@ CAMLprim value sunml_cvodes_sens_reinit(value vdata, value vmethod, value vs0)
 CAMLprim value sunml_cvodes_sens_get(value vdata, value vys)
 {
     CAMLparam2(vdata, vys);
-    N_Vector *ys = nvector_table_to_array(vys);
+    N_Vector *ys = sunml_nvector_array_alloc(vys);
     realtype tret;
 
     int flag = CVodeGetSens(CVODE_MEM_FROM_ML(vdata), &tret, ys);
-    free_nvector_array(ys);
+    sunml_nvector_array_free(ys);
     SCHECK_FLAG("CVodeGetSens", flag);
 
     CAMLreturn(caml_copy_double(tret));
@@ -1106,11 +1087,11 @@ CAMLprim value sunml_cvodes_sens_get(value vdata, value vys)
 CAMLprim value sunml_cvodes_sens_get_dky(value vdata, value vt, value vk, value vdkys)
 {
     CAMLparam4(vdata, vt, vk, vdkys);
-    N_Vector *dkys = nvector_table_to_array(vdkys);
+    N_Vector *dkys = sunml_nvector_array_alloc(vdkys);
 
     int flag = CVodeGetSensDky(CVODE_MEM_FROM_ML(vdata), Double_val(vt),
 	    Int_val(vk), dkys);
-    free_nvector_array(dkys);
+    sunml_nvector_array_free(dkys);
     SCHECK_FLAG("CVodeGetSensDky", flag);
 
     CAMLreturn (Val_unit);
@@ -1145,10 +1126,10 @@ CAMLprim value sunml_cvodes_sens_get_dky1(value vdata, value vt, value vk,
 CAMLprim value sunml_cvodes_sens_get_err_weights(value vdata, value vesweight)
 {
     CAMLparam2(vdata, vesweight);
-    N_Vector *esweight = nvector_table_to_array(vesweight);
+    N_Vector *esweight = sunml_nvector_array_alloc(vesweight);
 
     int flag = CVodeGetSensErrWeights(CVODE_MEM_FROM_ML(vdata), esweight);
-    free_nvector_array(esweight);
+    sunml_nvector_array_free(esweight);
     SCHECK_FLAG("CVodeGetSensErrWeights", flag);
 
     CAMLreturn (Val_unit);
@@ -1159,12 +1140,12 @@ CAMLprim value sunml_cvodes_sens_get_err_weights(value vdata, value vesweight)
 CAMLprim value sunml_cvodes_quadsens_init(value vdata, value vrhsfn, value vyqs0)
 {
     CAMLparam3(vdata, vrhsfn, vyqs0);
-    N_Vector *yqs0 = nvector_table_to_array(vyqs0);
+    N_Vector *yqs0 = sunml_nvector_array_alloc(vyqs0);
 
     int flag = CVodeQuadSensInit(CVODE_MEM_FROM_ML(vdata),
 				 Bool_val (vrhsfn) ? quadsensrhsfn : NULL,
 				 yqs0);
-    free_nvector_array(yqs0); 
+    sunml_nvector_array_free(yqs0); 
     SCHECK_FLAG("CVodeQuadSensInit", flag);
 
     CAMLreturn (Val_unit);
@@ -1173,10 +1154,10 @@ CAMLprim value sunml_cvodes_quadsens_init(value vdata, value vrhsfn, value vyqs0
 CAMLprim value sunml_cvodes_quadsens_reinit(value vdata, value vyqs0)
 {
     CAMLparam2(vdata, vyqs0);
-    N_Vector *yqs0 = nvector_table_to_array(vyqs0);
+    N_Vector *yqs0 = sunml_nvector_array_alloc(vyqs0);
 
     int flag = CVodeQuadSensReInit(CVODE_MEM_FROM_ML(vdata), yqs0);
-    free_nvector_array(yqs0); 
+    sunml_nvector_array_free(yqs0); 
     SCHECK_FLAG("CVodeQuadSensReInit", flag);
 
     CAMLreturn (Val_unit);
@@ -1186,11 +1167,11 @@ CAMLprim value sunml_cvodes_quadsens_sv_tolerances(value vdata, value reltol,
 					       value abstol)
 {
     CAMLparam3(vdata, reltol, abstol);
-    N_Vector *atol_nv = nvector_table_to_array(abstol);
+    N_Vector *atol_nv = sunml_nvector_array_alloc(abstol);
 
     int flag = CVodeQuadSensSVtolerances(CVODE_MEM_FROM_ML(vdata),
 	    Double_val(reltol), atol_nv);
-    free_nvector_array(atol_nv); 
+    sunml_nvector_array_free(atol_nv); 
     SCHECK_FLAG("CVodeQuadSensSVtolerances", flag);
 
     CAMLreturn (Val_unit);
@@ -1199,11 +1180,11 @@ CAMLprim value sunml_cvodes_quadsens_sv_tolerances(value vdata, value reltol,
 CAMLprim value sunml_cvodes_quadsens_get(value vdata, value vyqs)
 {
     CAMLparam2(vdata, vyqs);
-    N_Vector *yqs = nvector_table_to_array(vyqs);
+    N_Vector *yqs = sunml_nvector_array_alloc(vyqs);
     realtype tret;
 
     int flag = CVodeGetQuadSens(CVODE_MEM_FROM_ML(vdata), &tret, yqs);
-    free_nvector_array(yqs); 
+    sunml_nvector_array_free(yqs); 
     SCHECK_FLAG("CVodeGetQuadSens", flag);
 
     CAMLreturn(caml_copy_double(tret));
@@ -1226,11 +1207,11 @@ CAMLprim value sunml_cvodes_quadsens_get_dky(value vdata, value vt, value vk,
 					 value vdkyqs)
 {
     CAMLparam4(vdata, vt, vk, vdkyqs);
-    N_Vector *dkyqs = nvector_table_to_array(vdkyqs);
+    N_Vector *dkyqs = sunml_nvector_array_alloc(vdkyqs);
 
     int flag = CVodeGetQuadSensDky(CVODE_MEM_FROM_ML(vdata), Double_val(vt),
 				   Int_val(vk), dkyqs);
-    free_nvector_array(dkyqs); 
+    sunml_nvector_array_free(dkyqs); 
     SCHECK_FLAG("CVodeGetQuadSensDky", flag);
 
     CAMLreturn (Val_unit);
@@ -1252,10 +1233,10 @@ CAMLprim value sunml_cvodes_quadsens_get_dky1(value vdata, value vt, value vk,
 CAMLprim value sunml_cvodes_quadsens_get_err_weights(value vdata, value veqweights)
 {
     CAMLparam2(vdata, veqweights);
-    N_Vector *eqweights = nvector_table_to_array(veqweights);
+    N_Vector *eqweights = sunml_nvector_array_alloc(veqweights);
 
     int flag = CVodeGetQuadSensErrWeights(CVODE_MEM_FROM_ML(vdata), eqweights);
-    free_nvector_array(eqweights); 
+    sunml_nvector_array_free(eqweights); 
     SCHECK_FLAG("CVodeGetQuadSensErrWeights", flag);
 
     CAMLreturn (Val_unit);

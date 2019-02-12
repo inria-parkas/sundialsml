@@ -117,6 +117,25 @@ void sunml_clone_cnvec_ops(N_Vector dst, N_Vector src)
     ops->nvminquotient     = src->ops->nvminquotient;
 }
 
+N_Vector *sunml_nvector_array_alloc(value vtable)
+{
+    int ns = Wosize_val (vtable); /* vtable : nvector array */
+    N_Vector *r = calloc(ns + 1, sizeof(N_Vector));
+    int i;
+
+    for (i=0; i < ns; ++i) {
+	r[i] = NVEC_VAL(Field(vtable, i));
+    }
+    r[ns] = NULL;
+
+    return r;
+}
+
+void sunml_nvector_array_free(N_Vector *nvarr)
+{
+    free(nvarr);
+}
+
 /** Serial nvectors * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 /* Creation from Sundials/C.  */

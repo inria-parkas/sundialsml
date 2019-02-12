@@ -191,6 +191,9 @@ CAMLprim value sunml_alloc_caml_nvec(N_Vector nv, void (*finalizer)(value));
 void sunml_free_cnvec(N_Vector nv);
 CAMLprim void sunml_finalize_caml_nvec(value vnv);
 
+N_Vector *sunml_nvector_array_alloc(value vtable);
+void sunml_nvector_array_free(N_Vector *nvarr);
+
 // Creation functions
 value ml_nvec_wrap_serial(value payload, value checkfn);
 value ml_nvec_wrap_custom(value mlops, value payload, value checkfn);

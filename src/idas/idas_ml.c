@@ -85,26 +85,6 @@ void sunml_idas_wrap_to_nvector_table(int n, value vy, N_Vector *y)
     }
 }
 
-static N_Vector *nvector_table_to_array(value vtable)
-{
-    int ns = Wosize_val (vtable); /* vtable : nvector array */
-    N_Vector *r = calloc(ns + 1, sizeof(N_Vector));
-    int i;
-
-    for (i=0; i < ns; ++i) {
-	r[i] = NVEC_VAL(Field(vtable, i));
-    }
-    r[ns] = NULL;
-
-    return r;
-}
-
-static void free_nvector_array(N_Vector *nvarr)
-{
-    free(nvarr);
-}
-
-
 void sunml_idas_ml_check_flag(const char *call, int flag)
 {
     static char exmsg[MAX_ERRMSG_LEN] = "";
@@ -1225,15 +1205,15 @@ CAMLprim value sunml_idas_sens_init(value vdata, value vmethod, value vrhsfn,
 {
     CAMLparam5(vdata, vmethod, vrhsfn, vyS0, vypS0);
     int ns = Wosize_val (vyS0);	/* vyS0 : nvector array */
-    N_Vector *yS0 = nvector_table_to_array(vyS0);
-    N_Vector *ypS0 = nvector_table_to_array(vypS0);
+    N_Vector *yS0 = sunml_nvector_array_alloc(vyS0);
+    N_Vector *ypS0 = sunml_nvector_array_alloc(vypS0);
 
     int flag = IDASensInit(IDA_MEM_FROM_ML(vdata), ns,
 			   decode_sens_method(vmethod),
 			   ((Bool_val(vrhsfn)) ? sensresfn : NULL),
 			   yS0, ypS0);
-    free_nvector_array(yS0); 
-    free_nvector_array(ypS0); 
+    sunml_nvector_array_free(yS0); 
+    sunml_nvector_array_free(ypS0); 
     SCHECK_FLAG("IDASensInit", flag);
 
     CAMLreturn (Val_unit);
@@ -1245,14 +1225,14 @@ CAMLprim value sunml_idas_sens_reinit(value vdata, value vmethod, value vyS0,
     CAMLparam4(vdata, vmethod, vyS0, vypS0);
     CAMLlocal1(r);
     int flag;
-    N_Vector *yS0 = nvector_table_to_array(vyS0);
-    N_Vector *ypS0 = nvector_table_to_array(vypS0);
+    N_Vector *yS0 = sunml_nvector_array_alloc(vyS0);
+    N_Vector *ypS0 = sunml_nvector_array_alloc(vypS0);
 
     flag = IDASensReInit(IDA_MEM_FROM_ML(vdata),
 			 decode_sens_method(vmethod),
 			 yS0, ypS0);
-    free_nvector_array(yS0);
-    free_nvector_array(ypS0);
+    sunml_nvector_array_free(yS0);
+    sunml_nvector_array_free(ypS0);
     SCHECK_FLAG("IDASensReInit", flag);
 
     CAMLreturn (Val_unit);
@@ -1291,13 +1271,13 @@ static void sens_calc_ic (void *ida_mem, value session, int icopt, realtype tout
 	flag = IDAGetConsistentIC (ida_mem, y, yp);
 	CHECK_FLAG ("IDAGetConsistentIC", flag);
     }
-    ys  = (Is_block (vys))  ? nvector_table_to_array (Field (vys, 0))  : NULL;
-    yps = (Is_block (vyps)) ? nvector_table_to_array (Field (vyps, 0)) : NULL;
+    ys  = (Is_block (vys))  ? sunml_nvector_array_alloc (Field (vys, 0))  : NULL;
+    yps = (Is_block (vyps)) ? sunml_nvector_array_alloc (Field (vyps, 0)) : NULL;
     if (ys != NULL || yps != NULL) {
 	flag = IDAGetSensConsistentIC (ida_mem, ys, yps);
 	CHECK_FLAG ("IDAGetConsistentIC", flag);
-	if (ys)  free_nvector_array(ys); 
-	if (yps) free_nvector_array(yps); 
+	if (ys)  sunml_nvector_array_free(ys); 
+	if (yps) sunml_nvector_array_free(yps); 
     }
     CAMLreturn0;
 }
@@ -1331,11 +1311,11 @@ BYTE_STUB6(sunml_ida_sens_calc_ic_ya_ydp)
 CAMLprim value sunml_idas_sens_get(value vdata, value vys)
 {
     CAMLparam2(vdata, vys);
-    N_Vector *ys = nvector_table_to_array(vys);
+    N_Vector *ys = sunml_nvector_array_alloc(vys);
     realtype tret;
 
     int flag = IDAGetSens(IDA_MEM_FROM_ML(vdata), &tret, ys);
-    free_nvector_array(ys);
+    sunml_nvector_array_free(ys);
     SCHECK_FLAG("IDAGetSens", flag);
 
     CAMLreturn(caml_copy_double(tret));
@@ -1344,11 +1324,11 @@ CAMLprim value sunml_idas_sens_get(value vdata, value vys)
 CAMLprim value sunml_idas_sens_get_dky(value vdata, value vt, value vk, value vdkys)
 {
     CAMLparam4(vdata, vt, vk, vdkys);
-    N_Vector *dkys = nvector_table_to_array(vdkys);
+    N_Vector *dkys = sunml_nvector_array_alloc(vdkys);
 
     int flag = IDAGetSensDky(IDA_MEM_FROM_ML(vdata), Double_val(vt),
 	    Int_val(vk), dkys);
-    free_nvector_array(dkys);
+    sunml_nvector_array_free(dkys);
     SCHECK_FLAG("IDAGetSensDky", flag);
 
     CAMLreturn (Val_unit);
@@ -1383,10 +1363,10 @@ CAMLprim value sunml_idas_sens_get_dky1(value vdata, value vt, value vk,
 CAMLprim value sunml_idas_sens_get_err_weights(value vdata, value vesweight)
 {
     CAMLparam2(vdata, vesweight);
-    N_Vector *esweight = nvector_table_to_array(vesweight);
+    N_Vector *esweight = sunml_nvector_array_alloc(vesweight);
 
     int flag = IDAGetSensErrWeights(IDA_MEM_FROM_ML(vdata), esweight);
-    free_nvector_array(esweight);
+    sunml_nvector_array_free(esweight);
     SCHECK_FLAG("IDAGetSensErrWeights", flag);
 
     CAMLreturn (Val_unit);
@@ -1420,11 +1400,11 @@ CAMLprim value sunml_idas_sens_sv_tolerances(value vdata, value reltol,
 					 value abstol)
 {
     CAMLparam3(vdata, reltol, abstol);
-    N_Vector *atol_nv = nvector_table_to_array(abstol);
+    N_Vector *atol_nv = sunml_nvector_array_alloc(abstol);
 
     int flag = IDASensSVtolerances(IDA_MEM_FROM_ML(vdata),
 				   Double_val(reltol), atol_nv);
-    free_nvector_array(atol_nv);
+    sunml_nvector_array_free(atol_nv);
     SCHECK_FLAG("IDASensSVtolerances", flag);
 
     CAMLreturn (Val_unit);
@@ -1651,12 +1631,12 @@ CAMLprim value sunml_idas_sens_get_nonlin_solv_stats(value vdata)
 CAMLprim value sunml_idas_quadsens_init(value vdata, value vrhsfn, value vyqs0)
 {
     CAMLparam3(vdata, vrhsfn, vyqs0);
-    N_Vector *yqs0 = nvector_table_to_array(vyqs0);
+    N_Vector *yqs0 = sunml_nvector_array_alloc(vyqs0);
 
     int flag = IDAQuadSensInit(IDA_MEM_FROM_ML(vdata),
 			       Bool_val (vrhsfn) ? quadsensrhsfn : NULL,
 			       yqs0);
-    free_nvector_array(yqs0); 
+    sunml_nvector_array_free(yqs0); 
     SCHECK_FLAG("IDAQuadSensInit", flag);
 
     CAMLreturn (Val_unit);
@@ -1665,10 +1645,10 @@ CAMLprim value sunml_idas_quadsens_init(value vdata, value vrhsfn, value vyqs0)
 CAMLprim value sunml_idas_quadsens_reinit(value vdata, value vyqs0)
 {
     CAMLparam2(vdata, vyqs0);
-    N_Vector *yqs0 = nvector_table_to_array(vyqs0);
+    N_Vector *yqs0 = sunml_nvector_array_alloc(vyqs0);
 
     int flag = IDAQuadSensReInit(IDA_MEM_FROM_ML(vdata), yqs0);
-    free_nvector_array(yqs0); 
+    sunml_nvector_array_free(yqs0); 
     SCHECK_FLAG("IDAQuadSensReInit", flag);
 
     CAMLreturn (Val_unit);
@@ -1704,11 +1684,11 @@ CAMLprim value sunml_idas_quadsens_sv_tolerances(value vdata, value reltol,
 					     value abstol)
 {
     CAMLparam3(vdata, reltol, abstol);
-    N_Vector *atol_nv = nvector_table_to_array(abstol);
+    N_Vector *atol_nv = sunml_nvector_array_alloc(abstol);
 
     int flag = IDAQuadSensSVtolerances(IDA_MEM_FROM_ML(vdata),
 				       Double_val(reltol), atol_nv);
-    free_nvector_array(atol_nv);
+    sunml_nvector_array_free(atol_nv);
     SCHECK_FLAG("IDAQuadSensSVtolerances", flag);
 
     CAMLreturn (Val_unit);
@@ -1727,11 +1707,11 @@ CAMLprim value sunml_idas_quadsens_ee_tolerances(value vdata)
 CAMLprim value sunml_idas_quadsens_get(value vdata, value vyqs)
 {
     CAMLparam2(vdata, vyqs);
-    N_Vector *yqs = nvector_table_to_array(vyqs);
+    N_Vector *yqs = sunml_nvector_array_alloc(vyqs);
     realtype tret;
 
     int flag = IDAGetQuadSens(IDA_MEM_FROM_ML(vdata), &tret, yqs);
-    free_nvector_array(yqs);
+    sunml_nvector_array_free(yqs);
     SCHECK_FLAG("IDAGetQuadSens", flag);
 
     CAMLreturn(caml_copy_double(tret));
@@ -1754,11 +1734,11 @@ CAMLprim value sunml_idas_quadsens_get_dky(value vdata, value vt, value vk,
 				       value vdkyqs)
 {
     CAMLparam4(vdata, vt, vk, vdkyqs);
-    N_Vector *dkyqs = nvector_table_to_array(vdkyqs);
+    N_Vector *dkyqs = sunml_nvector_array_alloc(vdkyqs);
 
     int flag = IDAGetQuadSensDky(IDA_MEM_FROM_ML(vdata), Double_val(vt),
 				 Int_val(vk), dkyqs);
-    free_nvector_array(dkyqs);
+    sunml_nvector_array_free(dkyqs);
     SCHECK_FLAG("IDAGetQuadSensDky", flag);
 
     CAMLreturn (Val_unit);
@@ -1780,10 +1760,10 @@ CAMLprim value sunml_idas_quadsens_get_dky1(value vdata, value vt, value vk,
 CAMLprim value sunml_idas_quadsens_get_err_weights(value vdata, value veqweights)
 {
     CAMLparam2(vdata, veqweights);
-    N_Vector *eqweights = nvector_table_to_array(veqweights);
+    N_Vector *eqweights = sunml_nvector_array_alloc(veqweights);
 
     int flag = IDAGetQuadSensErrWeights(IDA_MEM_FROM_ML(vdata), eqweights);
-    free_nvector_array(eqweights);
+    sunml_nvector_array_free(eqweights);
     SCHECK_FLAG("IDAGetQuadSensErrWeights", flag);
 
     CAMLreturn (Val_unit);
@@ -2502,15 +2482,15 @@ CAMLprim value sunml_idas_adj_calc_ic_sens (value vparent, value vwhich,
 {
     CAMLparam5 (vparent, vwhich, vtB, vyB0, vypB0);
     CAMLxparam2 (vyS0, vypS0);
-    N_Vector *yS0 = nvector_table_to_array (vyS0);
-    N_Vector *ypS0 = nvector_table_to_array (vypS0);
+    N_Vector *yS0 = sunml_nvector_array_alloc (vyS0);
+    N_Vector *ypS0 = sunml_nvector_array_alloc (vypS0);
     int flag;
 
     flag = IDACalcICBS (IDA_MEM_FROM_ML (vparent), Int_val (vwhich),
 			Double_val (vtB), NVEC_VAL (vyB0), NVEC_VAL (vypB0),
 			yS0, ypS0);
-    free_nvector_array (yS0);
-    free_nvector_array (ypS0);
+    sunml_nvector_array_free (yS0);
+    sunml_nvector_array_free (ypS0);
     SCHECK_FLAG ("IDACalcICBS", flag);
 
     CAMLreturn (Val_unit);
