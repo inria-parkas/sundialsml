@@ -107,6 +107,7 @@ enum lsolver_exn_index {
     LSOLVER_EXN_PSolveFailure,
     LSOLVER_EXN_GSFailure,
     LSOLVER_EXN_QRSolFailure,
+    LSOLVER_EXN_VectorOpError,
     LSOLVER_EXN_ResReduced,
     LSOLVER_EXN_ConvFailure,
     LSOLVER_EXN_QRfactFailure,

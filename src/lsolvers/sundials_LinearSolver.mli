@@ -672,6 +672,10 @@ exception GSFailure
     {cconst SUNLS_QRSOL_FAIL} *)
 exception QRSolFailure
 
+(** An error occurred in a vector operation.
+    {cconst SUNLS_VECTOROP_ERR} *)
+exception VectorOpError
+
 (** Indicates that the residual is reduced but without convergence to the
     desired tolerance. {cconst SUNLS_RES_REDUCED} *)
 exception ResReduced

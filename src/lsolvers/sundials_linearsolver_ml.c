@@ -567,6 +567,13 @@ static int lsolver_translate_exception(value vexn)
     } else if (vtag == LSOLVER_EXN_TAG(QRSolFailure)) {
 	r = SUNLS_QRSOL_FAIL;
 
+    } else if (vtag == LSOLVER_EXN_TAG(VectorOpError)) {
+#if SUNDIALS_LIB_VERSION >= 400
+	r = SUNLS_VECTOROP_ERR;
+#else
+	r = -100;
+#endif
+
     } else if (vtag == LSOLVER_EXN_TAG(ResReduced)) {
 	r = SUNLS_RES_REDUCED;
 
@@ -620,6 +627,11 @@ static void lsolver_raise_error(int r, const char *msg)
 
 	case SUNLS_QRSOL_FAIL:
 	    caml_raise_constant(LSOLVER_EXN(QRSolFailure));
+
+#if SUNDIALS_LIB_VERSION >= 400
+	case SUNLS_VECTOROP_ERR:
+	    caml_raise_constant(LSOLVER_EXN(VectorOpError));
+#endif
 
 	case SUNLS_RES_REDUCED:
 	    caml_raise_constant(LSOLVER_EXN(ResReduced));

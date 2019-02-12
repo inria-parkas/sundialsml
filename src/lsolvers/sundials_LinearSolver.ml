@@ -24,6 +24,7 @@ exception PSetFailure of bool
 exception PSolveFailure of bool
 exception GSFailure
 exception QRSolFailure
+exception VectorOpError
 exception ResReduced
 exception ConvFailure
 exception QRfactFailure
@@ -626,6 +627,7 @@ let _ =
       PSolveFailure false;
       GSFailure;
       QRSolFailure;
+      VectorOpError;
       ResReduced;
       ConvFailure;
       QRfactFailure;
