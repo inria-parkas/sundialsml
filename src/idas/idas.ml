@@ -1257,12 +1257,13 @@ module Adjoint = struct (* {{{ *)
           (tosession bs).ls_callbacks <- BSpilsCallbackSens (None, None)
       | _ -> raise LinearSolver.InvalidLinearSolver
 
-    external set_eps_lin : ('a, 'k) bsession -> float -> unit
+    external set_eps_lin : ('a, 'k) session -> int -> float -> unit
         = "sunml_idas_adj_spils_set_eps_lin"
 
     let set_eps_lin bs epsl =
       ls_check_spils (tosession bs);
-      set_eps_lin bs epsl
+      let parent, which = parent_and_which bs in
+      set_eps_lin parent which epsl
 
     let get_work_space bs =
       Ida.Spils.get_work_space (tosession bs)

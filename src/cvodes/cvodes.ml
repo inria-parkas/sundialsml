@@ -1194,9 +1194,12 @@ module Adjoint = struct (* {{{ *)
     external set_eps_lin : ('a, 'k) bsession -> float -> unit
         = "sunml_cvodes_adj_spils_set_eps_lin"
 
-    let set_eps_lin bs epsl =
+      let parent, which = parent_and_which bs in
       ls_check_spils (tosession bs);
-      set_eps_lin bs epsl
+      set_eps_lin parent which epsl
+
+    let set_max_steps_between_jac bs =
+      Cvode.Spils.set_max_steps_between_jac (tosession bs)
 
     let get_work_space bs =
       Cvode.Spils.get_work_space (tosession bs)
