@@ -81,11 +81,10 @@ type 'd triple = 'd * 'd * 'd
 
 (** Arguments common to Jacobian callback functions.
 
-    @ida <node5#ss:djacFn> IDADlsDenseJacFn
-    @ida <node5#ss:bjacFn> IDADlsBandJacFn
-    @ida <node5#ss:jtimesFn> IDASpilsJacTimesVecFn
-    @ida <node5#ss:psolveFn> IDASpilsPrecSolveFn
-    @ida <node5#ss:precondFn> IDASpilsPrecSetupFn *)
+    @noida <node5> IDALsJacFn
+    @noida <node5> IDALsJacTimesVecFn
+    @noida <node5> IDALsPrecSolveFn
+    @noida <node5> IDALsPrecSetupFn *)
 type ('t, 'd) jacobian_arg = ('t, 'd) Ida_impl.jacobian_arg =
   {
     jac_t    : float;        (** The independent variable. *)
@@ -122,7 +121,7 @@ module Dls : sig (* {{{ *)
       {warning Neither the elements of [arg] nor the matrix [jm] should
                be accessed after the function has returned.}
 
-      @ida <node5#ss:djacFn> IDADlsDenseJacFn *)
+      @ida <node5#ss:djacFn> IDALsJacFn *)
   type 'm jac_fn = (RealArray.t triple, RealArray.t) jacobian_arg -> 'm -> unit
 
   (** Create an Ida-specific linear solver from a Jacobian approximation
@@ -132,8 +131,8 @@ module Dls : sig (* {{{ *)
       used), but must be provided for other solvers (or [Invalid_argument] is
       raised).
 
-      @nocvode <node> IDADlsSetLinearSolver
-      @nocvode <node> IDADlsSetJacFn *)
+      @nocvode <node> IDASetLinearSolver
+      @nocvode <node> IDASetJacFn *)
   val solver :
     ?jac:'m jac_fn ->
     ('m, 'kind, 't) LinearSolver.Direct.serial_linear_solver ->
@@ -144,7 +143,7 @@ module Dls : sig (* {{{ *)
   (** Returns the sizes of the real and integer workspaces used by a direct
       linear solver.
 
-      @ida <node5#sss:optout_dls> IDADlsGetWorkSpace
+      @ida <node5#sss:optout_dls> IDAGetLinWorkSpace
       @return ([real_size], [integer_size]) *)
   val get_work_space : 'k serial_session -> int * int
 
@@ -152,14 +151,14 @@ module Dls : sig (* {{{ *)
   (** Returns the number of calls made by a direct linear solver to the
       Jacobian approximation function.
 
-      @ida <node5#sss:optout_dls> IDADlsGetNumJacEvals *)
+      @ida <node5#sss:optout_dls> IDAGetNumJacEvals *)
   val get_num_jac_evals : 'k serial_session -> int
 
   (** Returns the number of calls to the residual callback due to
       the finite difference Jacobian approximation.
 
-      @ida <node5#sss:optout_dls> IDADlsGetNumResEvals *)
-  val get_num_res_evals : 'k serial_session -> int
+      @ida <node5#sss:optout_dls> IDAGetNumLinResEvals *)
+  val get_num_lin_res_evals : 'k serial_session -> int
 
 end (* }}} *)
 
@@ -194,7 +193,7 @@ module Spils : sig (* {{{ *)
       {warning The elements of [jac], [r], and [z] should not
                be accessed after the function has returned.}
 
-      @ida <node5#ss:psolveFn> IDASpilsPrecSolveFn *)
+      @ida <node5#ss:psolveFn> IDALsPrecSolveFn *)
   type 'd prec_solve_fn =
     (unit, 'd) jacobian_arg
     -> 'd
@@ -212,7 +211,7 @@ module Spils : sig (* {{{ *)
       {warning The elements of the argument should not be accessed after the
                function has returned.}
 
-      @ida <node5#ss:precondFn> IDASpilsPrecSetupFn *)
+      @ida <node5#ss:precondFn> IDALsPrecSetupFn *)
   type 'd prec_setup_fn = (unit, 'd) jacobian_arg -> unit
 
   (** Specifies a preconditioner and its callback functions.
@@ -222,9 +221,9 @@ module Spils : sig (* {{{ *)
       The {!prec_solve_fn} is mandatory. The {!prec_setup_fn} can be
       omitted if not needed.
 
-      @ida <node5#sss:optin_spils> IDASpilsSetPreconditioner
-      @ida <node5#ss:psolveFn> IDASpilsPrecSolveFn
-      @ida <node5#ss:precondFn> IDASpilsPrecSetupFn *)
+      @ida <node5> IDASetPreconditioner
+      @ida <node5> IDALsPrecSolveFn
+      @ida <node5> IDALsPrecSetupFn *)
   type ('d, 'k) preconditioner = ('d, 'k) Ida_impl.SpilsTypes.preconditioner
 
   (** No preconditioning.  *)
@@ -250,7 +249,7 @@ module Spils : sig (* {{{ *)
       {warning The elements of [arg] should not be accessed after the
                function has returned.}
 
-      @nocvode <node> IDASpilsJacTimesSetupFn *)
+      @nocvode <node> IDALsJacTimesSetupFn *)
   type 'd jac_times_setup_fn = (unit, 'd) jacobian_arg -> unit
 
   (** Callback functions that compute the Jacobian times a vector. In the
@@ -265,7 +264,7 @@ module Spils : sig (* {{{ *)
       {warning Neither the elements of [arg] nor [v] or [jv] should be
                accessed after the function has returned.}
 
-      @ida <node5#ss:jtimesFn> IDASpilsJacTimesVecFn *)
+      @ida <node5#ss:jtimesFn> IDALsJacTimesVecFn *)
   type 'd jac_times_vec_fn =
     ('d double, 'd) jacobian_arg
     -> 'd
@@ -278,8 +277,8 @@ module Spils : sig (* {{{ *)
       NB: a [jac_times_setup_fn] is not supported in
           {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
 
-      @nocvode <node> IDASpilsSetLinearSolver
-      @nocvode <node> IDASpilsSetJacTimes *)
+      @nocvode <node> IDASetLinearSolver
+      @nocvode <node> IDASetJacTimes *)
   val solver :
     ('d, 'k, 'f) LinearSolver.Iterative.linear_solver
     -> ?jac_times_vec:'d jac_times_setup_fn option * 'd jac_times_vec_fn
@@ -292,58 +291,74 @@ module Spils : sig (* {{{ *)
       constant is reduced from the Newton iteration test constant.
       This factor must be >= 0; passing 0 specifies the default (0.05).
 
-      @ida <node5#sss:optin_spils> IDASpilsSetEpsLin *)
+      @ida <node5> IDASetEpsLin *)
   val set_eps_lin : ('d, 'k) session -> float -> unit
+
+  (** Sets the increment factor ([dqincfac]) to use in the difference-quotient
+      approximation.
+
+      Specifically, the  product {% $Jv$ %} is approximated
+      by {% $Jv = \frac{1}{\sigma}\left(
+                    F(t, \tilde{y}, \tilde{y}') - F(t, y, y')
+                  \right)$ %}.
+      where {% $\tilde{y} = y + \sigma v$ %},
+            {% $\tilde{y}' = y' + c_j \sigma v$ %},
+      {% $c_j$ %} is a BDF parameter proportional to the step size,
+      {% $\sigma = \sqrt{N} \mathtt{dqincfac}$ %},
+      and {% $N$ %} is the number of equations in the DAE system.
+
+      @ida <node5> IDASetIncrementFactor *)
+  val set_increment_factor : ('d, 'k) session -> float -> unit
 
   (** {3:stats Solver statistics} *)
 
   (** Returns the sizes of the real and integer workspaces used by the spils
       linear solver.
 
-      @ida <node5#sss:optout_spils> IDASpilsGetWorkSpace
+      @ida <node5#sss:optout_spils> IDAGetLinWorkSpace
       @return ([real_size], [integer_size]) *)
   val get_work_space       : ('d, 'k) session -> int * int
 
   (** Returns the cumulative number of linear iterations.
 
-      @ida <node5#sss:optout_spils> IDASpilsGetNumLinIters *)
+      @ida <node5#sss:optout_spils> IDAGetNumLinIters *)
   val get_num_lin_iters    : ('d, 'k) session -> int
 
   (** Returns the cumulative number of linear convergence failures.
 
-      @ida <node5#sss:optout_spils> IDASpilsGetNumConvFails *)
-  val get_num_conv_fails   : ('d, 'k) session -> int
+      @ida <node5#sss:optout_spils> IDAGetNumLinConvFails *)
+  val get_num_lin_conv_fails   : ('d, 'k) session -> int
 
   (** Returns the number of calls to the setup function.
 
-      @ida <node5#sss:optout_spils> IDASpilsGetNumPrecEvals *)
+      @ida <node5#sss:optout_spils> IDAGetNumPrecEvals *)
   val get_num_prec_evals   : ('d, 'k) session -> int
 
   (** Returns the cumulative number of calls to the preconditioner solve
       function.
 
-      @ida <node5#sss:optout_spils> IDASpilsGetNumPrecSolves *)
+      @ida <node5#sss:optout_spils> IDAGetNumPrecSolves *)
   val get_num_prec_solves  : ('d, 'k) session -> int
 
   (** Returns the cumulative number of calls to the Jacobian-vector
       setup function.
 
       @since 3.0.0
-      @noida <node> IDASpilsGetNumJTSetupEvals *)
+      @noida <node> IDAGetNumJTSetupEvals *)
   val get_num_jtsetup_evals : ('d, 'k) session -> int
 
   (** Returns the cumulative number of calls to the Jacobian-vector
       function.
 
-      @ida <node5#sss:optout_spils> IDASpilsGetNumJtimesEvals *)
+      @ida <node5#sss:optout_spils> IDAGetNumJtimesEvals *)
   val get_num_jtimes_evals : ('d, 'k) session -> int
 
   (** Returns the number of calls to the residual callback for
       finite difference Jacobian-vector product approximation. This counter is
       only updated if the default difference quotient function is used.
 
-      @ida <node5#sss:optout_spils> IDASpilsGetNumResEvals *)
-  val get_num_res_evals    : ('d, 'k) session -> int
+      @ida <node5#sss:optout_spils> IDAGetNumLinResEvals *)
+  val get_num_lin_res_evals    : ('d, 'k) session -> int
 
   (** {3:lowlevel Low-level solver manipulation}
 
@@ -354,9 +369,9 @@ module Spils : sig (* {{{ *)
 
   (** Change the preconditioner functions.
 
-      @ida <node5#sss:optin_spils> IDASpilsSetPreconditioner
-      @ida <node5#ss:psolveFn> IDASpilsPrecSolveFn
-      @ida <node5#ss:precondFn> IDASpilsPrecSetupFn *)
+      @ida <node5#sss:optin_spils> IDASetPreconditioner
+      @ida <node5#ss:psolveFn> IDALsPrecSolveFn
+      @ida <node5#ss:precondFn> IDALsPrecSetupFn *)
    val set_preconditioner :
      ('d,'k) session
      -> ?setup:'d prec_setup_fn
@@ -368,8 +383,8 @@ module Spils : sig (* {{{ *)
       NB: the [jac_times_setup] argument is not supported in
           {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
 
-      @ida <node5#sss:optin_spils> IDASpilsSetJacTimes
-      @ida <node5#ss:jtimesFn> IDASpilsJacTimesVecFn *)
+      @ida <node5#sss:optin_spils> IDASetJacTimes
+      @ida <node5#ss:jtimesFn> IDALsJacTimesVecFn *)
   val set_jac_times :
     ('d,'k) session
     -> ?jac_times_setup:'d jac_times_setup_fn
@@ -379,8 +394,8 @@ module Spils : sig (* {{{ *)
   (** Remove a Jacobian-times-vector function and use the default
       implementation.
 
-      @ida <node5#sss:optin_spils> IDASpilsSetJacTimes
-      @ida <node5#ss:jtimesFn> IDASpilsJacTimesVecFn *)
+      @ida <node5#sss:optin_spils> IDASetJacTimes
+      @ida <node5#ss:jtimesFn> IDAJacTimesVecFn *)
   val clear_jac_times : ('d, 'k) session -> unit
 end (* }}} *)
 
@@ -564,8 +579,10 @@ type 'd rootsfn = float -> 'd -> 'd -> RealArray.t -> unit
 (** Creates and initializes a session with the solver. The call
     {[init linsolv tol f ~varid:varid ~roots:(nroots, g) t0 y0 y'0]} has
     as arguments:
-    - [linsolv], the linear solver to use,
     - [tol],     the integration tolerances,
+    - [nlsolver], the solver to use to calculate integration steps
+                  and initial conditions,
+    - [lsolver],  used by [nlsolver]s based on Newton interation,
     - [f],       the DAE residual function,
     - [varid],   optionally classifies variables as algebraic or differential,
     - [nroots],  the number of root functions,
@@ -580,17 +597,27 @@ type 'd rootsfn = float -> 'd -> 'd -> RealArray.t -> unit
     it makes the calls referenced below. The {!solve_normal} and
     {!solve_one_step} functions may be called directly.
 
+    If an [nlsolver] is not specified, then the
+    {{!Sundials_NonlinearSolver.Newton}Newton} module is used by default.
+    The [nlsolver] must be of type
+    {{!Sundials_NonlinearSolver.nonlinear_solver_Type}RootFind}, otherwise an
+    {!IllInput} exception is raised.
+
     @ida <node5#sss:idainit>       IDACreate/IDAInit
     @ida <node5#ss:idarootinit>    IDARootInit
-    @ida <node5#sss:lin_solv_init> Linear solvers
+    @ida <node>                    IDASetLinearSolver
+    @ida <node>                    IDASetNonlinearSolver
     @ida <node5#sss:idatolerances> IDASStolerances
     @ida <node5#sss:idatolerances> IDASVtolerances
     @ida <node5#sss:idatolerances> IDAWFtolerances
     @ida <node5#ss:ewtsetFn>       IDAEwtFn
     @ida <node5#sss:idasetid>      IDASetId *)
 val init :
-    ('d, 'kind) session_linear_solver
-    -> ('d, 'kind) tolerance
+    ('d, 'kind) tolerance
+    -> ?nlsolver: ('d, 'kind,
+                   (('d, 'kind) session) Sundials_NonlinearSolver.integrator)
+                  Sundials_NonlinearSolver.nonlinear_solver
+    -> lsolver:('d, 'kind) session_linear_solver
     -> 'd resfn
     -> ?varid:('d, 'kind) Nvector.t
     -> ?roots:(int * 'd rootsfn)
@@ -819,10 +846,15 @@ val get_dky : ('d, 'k) session -> ('d, 'k) Nvector.t -> float -> int -> unit
     remains unchanged. The argument [~roots] works similarly; pass
     {!no_roots} to disable root finding.
 
-    @ida <node5#sss:cvreinit> IDAReInit *)
+    @ida <node5#sss:cvreinit> IDAReInit
+    @ida <node>               IDASetLinearSolver
+    @ida <node>               IDASetNonlinearSolver *)
 val reinit :
   ('d, 'k) session
-  -> ?linsolv:('d, 'k) session_linear_solver
+  -> ?nlsolver:('d, 'k,
+                (('d, 'k) session) Sundials_NonlinearSolver.integrator)
+               Sundials_NonlinearSolver.nonlinear_solver
+  -> ?lsolver:('d, 'k) session_linear_solver
   -> ?roots:(int * 'd rootsfn)
   -> float
   -> ('d, 'k) Nvector.t
@@ -1128,6 +1160,16 @@ exception LinearSetupFailure
     @ida <node5#sss:idasolve> IDA_LSOLVE_FAIL *)
 exception LinearSolveFailure
 
+(** Nonlinear solver initialization failed.
+
+    @noida <node5> IDA_NLS_INIT_FAIL *)
+exception NonlinearInitFailure
+
+(** Nonlinear solver setup failed in an unrecoverable manner.
+
+    @noida <node5> IDA_NLS_SETUP_FAIL *)
+exception NonlinearSetupFailure
+
 (** The residual function failed in an unrecoverable manner.
 
     @ida <node5#ss:idasolve> IDA_RES_FAIL *)
@@ -1183,4 +1225,9 @@ exception BadT
 
 (** Variable ids are required but not set. See {!set_id}. *)
 exception IdNotSet
+
+(** A fused vector operation failed.
+
+    @nocvode <node> IDA_VECTOROP_ERR *)
+exception VectorOpErr
 

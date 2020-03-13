@@ -78,11 +78,10 @@ type 'd triple = 'd * 'd * 'd
 
 (** Arguments common to Jacobian callback functions.
 
-    @cvode <node5#ss:djacFn> CVDlsDenseJacFn
-    @cvode <node5#ss:bjacFn> CVDlsBandJacFn
-    @cvode <node5#ss:jtimesfn> CVSpilsJacTimesVecFn
-    @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
-    @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
+    @cvode <node5#ss:jacFn> CVLsJacFn
+    @cvode <node5#ss:jtimesfn> CVLsJacTimesVecFn
+    @cvode <node5#ss:psolveFn> CVLsPrecSolveFn
+    @cvode <node5#ss:precondFn> CVLsPrecSetupFn *)
 type ('t, 'd) jacobian_arg = ('t, 'd) Cvode_impl.jacobian_arg =
   {
     jac_t   : float;        (** The independent variable. *)
@@ -138,7 +137,7 @@ module Dls : sig (* {{{ *)
       {warning Neither the elements of [arg] nor the matrix [jm] should
                be accessed after the function has returned.}
 
-      @nocvode <node> CVDlsSetJacFn *)
+      @nocvode <node> CVodeSetJacFn *)
   type 'm jac_fn =
     (RealArray.t triple, RealArray.t) jacobian_arg -> 'm -> unit
 
@@ -149,8 +148,8 @@ module Dls : sig (* {{{ *)
       used), but must be provided for other solvers (or [Invalid_argument]
       is raised).
 
-      @nocvode <node> CVDlsSetLinearSolver
-      @nocvode <node> CVDlsSetJacFn *)
+      @nocvode <node> CVodeSetLinearSolver
+      @nocvode <node> CVodeSetJacFn *)
   val solver :
     ?jac:'m jac_fn ->
     ('m, 'kind, 'tag) LinearSolver.Direct.serial_linear_solver ->
@@ -161,30 +160,28 @@ module Dls : sig (* {{{ *)
   (** Returns the sizes of the real and integer workspaces used by a direct
       linear solver.
 
-      @cvode <node5#sss:optout_dls> CVDlsGetWorkSpace
+      @cvode <node5#sss:optout_dls> CVodeGetLinWorkSpace
       @return ([real_size], [integer_size]) *)
   val get_work_space : 'kind serial_session -> int * int
 
   (** Returns the number of calls made by a direct linear solver to the
       Jacobian approximation function.
 
-      @cvode <node5#sss:optout_dls> CVDlsGetNumJacEvals *)
+      @cvode <node5#sss:optout_dls> CVodeGetNumJacEvals *)
   val get_num_jac_evals : 'kind serial_session -> int
 
   (** Returns the number of calls to the right-hand side callback due to
       the finite difference Jacobian approximation.
 
-      @cvode <node5#sss:optout_dls> CVDlsGetNumRhsEvals *)
-  val get_num_rhs_evals : 'kind serial_session -> int
+      @cvode <node5#sss:optout_dls> CVodeGetNumLinRhsEvals *)
+  val get_num_lin_rhs_evals : 'kind serial_session -> int
 
 end (* }}} *)
 
 (** Scaled Preconditioned Iterative Linear Solvers.
 
     @cvode <node5#sss:optin_spils> Iterative linear solvers optional input functions.
-    @cvode <node5#sss:optout_spils> Iterative linear solvers optional output functions.
-    @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
-    @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
+    @cvode <node5#sss:optout_spils> Iterative linear solvers optional output functions. *)
 module Spils : sig (* {{{ *)
   include module type of Sundials_LinearSolver.Iterative
 
@@ -192,7 +189,7 @@ module Spils : sig (* {{{ *)
 
   (** Arguments passed to the preconditioner solver function.
 
-      @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn *)
+      @cvode <node5#ss:psolveFn> CVLsPrecSolveFn *)
   type 'd prec_solve_arg =
     {
       rhs   : 'd;         (** Right-hand side vector of the linear system. *)
@@ -218,7 +215,7 @@ module Spils : sig (* {{{ *)
       {warning The elements of [jac], [arg], and [z] should not
                be accessed after the function has returned.}
 
-      @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn *)
+      @cvode <node5#ss:psolveFn> CVLsPrecSolveFn *)
   type 'd prec_solve_fn =
     (unit, 'd) jacobian_arg
     -> 'd prec_solve_arg
@@ -240,8 +237,8 @@ module Spils : sig (* {{{ *)
       {warning The elements of [jac] should not be accessed after the
                function has returned.}
 
-      @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
-      @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
+      @cvode <node5#sss:optin_spils> CVodeSetPreconditioner
+      @cvode <node5#ss:precondFn> CVLsPrecSetupFn *)
   type 'd prec_setup_fn =
     (unit, 'd) jacobian_arg
     -> bool
@@ -256,9 +253,9 @@ module Spils : sig (* {{{ *)
       The {!prec_solve_fn} is mandatory. The {!prec_setup_fn} can be
       omitted if not needed.
 
-      @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
-      @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn
-      @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn *)
+      @cvode <node5#sss:optin_spils> CVodeSetPreconditioner
+      @cvode <node5#ss:precondFn> CVLsPrecSetupFn
+      @cvode <node5#ss:psolveFn> CVLsPrecSolveFn *)
   type ('d,'k) preconditioner = ('d,'k) Cvode_impl.SpilsTypes.preconditioner
 
   (** No preconditioning.  *)
@@ -341,7 +338,7 @@ module Spils : sig (* {{{ *)
       {warning The elements of [arg] should not be accessed after the
                function has returned.}
 
-      @nocvode <node> CVSpilsJacTimesSetupFn *)
+      @nocvode <node> CVLsJacTimesSetupFn *)
   type 'd jac_times_setup_fn = (unit, 'd) jacobian_arg -> unit
 
   (** Callback functions that compute the Jacobian times a vector. In the
@@ -356,13 +353,12 @@ module Spils : sig (* {{{ *)
       {warning Neither the elements of [arg] nor [v] or [jv] should be
                accessed after the function has returned.}
 
-      @nocvode <node> CVSpilsJacTimesVecFn *)
+      @nocvode <node> CVLsJacTimesVecFn *)
   type 'd jac_times_vec_fn =
     ('d, 'd) jacobian_arg
     -> 'd (* v *)
     -> 'd (* Jv *)
     -> unit
-
 
   (** Create a Cvode-specific linear solver from a generic iterative
       linear solver.
@@ -370,8 +366,8 @@ module Spils : sig (* {{{ *)
       NB: a [jac_times_setup_fn] is not supported in
           {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
 
-      @nocvode <node> CVSpilsSetLinearSolver
-      @nocvode <node> CVSpilsSetJacTimes *)
+      @nocvode <node> CVodeSetLinearSolver
+      @nocvode <node> CVodeSetJacTimes *)
   val solver :
     ('d, 'k, 'f) LinearSolver.Iterative.linear_solver
     -> ?jac_times_vec:'d jac_times_setup_fn option * 'd jac_times_vec_fn
@@ -380,11 +376,19 @@ module Spils : sig (* {{{ *)
 
   (** {3:set Solver parameters} *)
 
+  (** Sets the maximum number of time steps to wait before recomputation of
+      the Jacobian or recommendation to update the preconditioner.
+      If the integer argument is less than 1, a default value of 50 is used.
+
+      @nocvode <node5> CVodeSetMaxStepsBetweenJac
+      @since 4.0.0 *)
+  val set_max_steps_between_jac : ('d, 'k) session -> int -> unit
+
   (** Sets the factor by which the Krylov linear solver's convergence test
       constant is reduced from the Newton iteration test constant.
       This factor must be >= 0; passing 0 specifies the default (0.05).
 
-      @cvode <node5#sss:optin_spils> CVSpilsSetEpsLin *)
+      @cvode <node5#sss:optin_spils> CVodeSetEpsLin *)
   val set_eps_lin : ('d, 'k) session -> float -> unit
 
   (** {3:stats Solver statistics} *)
@@ -392,51 +396,51 @@ module Spils : sig (* {{{ *)
   (** Returns the sizes of the real and integer workspaces used by the spils
       linear solver.
 
-      @cvode <node5#sss:optout_spils> CVSpilsGetWorkSpace
+      @cvode <node5#sss:optout_spils> CVodeGetLinWorkSpace
       @return ([real_size], [integer_size]) *)
   val get_work_space       : ('d, 'k) session -> int * int
 
   (** Returns the cumulative number of linear iterations.
 
-      @cvode <node5#sss:optout_spils> CVSpilsGetNumLinIters *)
+      @cvode <node5#sss:optout_spils> CVodeGetNumLinIters *)
   val get_num_lin_iters    : ('d, 'k) session -> int
 
   (** Returns the cumulative number of linear convergence failures.
 
-      @cvode <node5#sss:optout_spils> CVSpilsGetNumConvFails *)
-  val get_num_conv_fails   : ('d, 'k) session -> int
+      @cvode <node5#sss:optout_spils> CVodeGetNumLinConvFails *)
+  val get_num_lin_conv_fails: ('d, 'k) session -> int
 
   (** Returns the cumulative number of calls to the setup function with
       [jok=false].
 
-      @cvode <node5#sss:optout_spils> CVSpilsGetNumPrecEvals *)
+      @cvode <node5#sss:optout_spils> CVodeGetNumPrecEvals *)
   val get_num_prec_evals   : ('d, 'k) session -> int
 
   (** Returns the cumulative number of calls to the preconditioner solve
       function.
 
-      @cvode <node5#sss:optout_spils> CVSpilsGetNumPrecSolves *)
+      @cvode <node5#sss:optout_spils> CVodeGetNumPrecSolves *)
   val get_num_prec_solves  : ('d, 'k) session -> int
 
   (** Returns the cumulative number of calls to the Jacobian-vector
       setup function.
 
       @since 3.0.0
-      @nocvode <node> CVSpilsGetNumJTSetupEvals *)
+      @nocvode <node> CVodeGetNumJTSetupEvals *)
   val get_num_jtsetup_evals : ('d, 'k) session -> int
 
   (** Returns the cumulative number of calls to the Jacobian-vector
       function.
 
-      @cvode <node5#sss:optout_spils> CVSpilsGetNumJtimesEvals *)
+      @cvode <node5#sss:optout_spils> CVodeGetNumJtimesEvals *)
   val get_num_jtimes_evals : ('d, 'k) session -> int
 
   (** Returns the number of calls to the right-hand side callback for
       finite difference Jacobian-vector product approximation. This counter is
       only updated if the default difference quotient function is used.
 
-      @cvode <node5#sss:optout_spils> CVSpilsGetNumRhsEvals *)
-  val get_num_rhs_evals    : ('d, 'k) session -> int
+      @cvode <node5#sss:optout_spils> CVodeGetNumLinRhsEvals *)
+  val get_num_lin_rhs_evals : ('d, 'k) session -> int
 
   (** {3:lowlevel Low-level solver manipulation}
 
@@ -447,9 +451,9 @@ module Spils : sig (* {{{ *)
 
   (** Change the preconditioner functions.
 
-      @cvode <node5#sss:optin_spils> CVSpilsSetPreconditioner
-      @cvode <node5#ss:psolveFn> CVSpilsPrecSolveFn
-      @cvode <node5#ss:precondFn> CVSpilsPrecSetupFn *)
+      @cvode <node5#sss:optin_spils> CVodeSetPreconditioner
+      @cvode <node5#ss:psolveFn> CVLsPrecSolveFn
+      @cvode <node5#ss:precondFn> CVLsPrecSetupFn *)
   val set_preconditioner :
     ('d, 'k) session
     -> ?setup:'d prec_setup_fn
@@ -461,9 +465,9 @@ module Spils : sig (* {{{ *)
       NB: the [jac_times_setup] argument is not supported in
           {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
 
-      @nocvode <node> CVSpilsSetJacTimes
-      @nocvode <node> CVSpilsJacTimesSetupFn
-      @nocvode <node> CVSpilsJacTimesVecFn *)
+      @nocvode <node> CVodeSetJacTimes
+      @nocvode <node> CVLsJacTimesSetupFn
+      @nocvode <node> CVLsJacTimesVecFn *)
   val set_jac_times :
     ('d, 'k) session
     -> ?jac_times_setup:'d jac_times_setup_fn
@@ -473,9 +477,9 @@ module Spils : sig (* {{{ *)
   (** Remove a Jacobian-times-vector function and use the default
       implementation.
 
-      @nocvode <node> CVSpilsSetJacTimes
-      @nocvode <node> CVSpilsJacTimesSetupFn
-      @nocvode <node> CVSpilsJacTimesVecFn *)
+      @nocvode <node> CVodeSetJacTimes
+      @nocvode <node> CVodeJacTimesSetupFn
+      @nocvode <node> CVodeJacTimesVecFn *)
   val clear_jac_times : ('d, 'k) session -> unit
 
 end (* }}} *)
@@ -642,17 +646,6 @@ val default_tolerances : ('data, 'kind) tolerance
 
 (** {2:solver Solver initialization and use} *)
 
-(** Choice of method for solving non-linear systems that arise in solver
-    formulas.
-
-    @cvode <node3#ss:ivp_sol> IVP Solution
-    @cvode <node5#sss:cvodemalloc> CVodeCreate *)
-type ('d, 'kind) iter =
-  | Newton of ('d, 'kind) session_linear_solver
-    (** Newton iteration with a given linear solver. *)
-  | Functional
-    (** Functional iteration (non-stiff systems only). *)
-
 (** Choice of linear multistep method.
 
     @cvode <node3#ss:ivp_sol> IVP Solution
@@ -693,31 +686,45 @@ type 'd rootsfn = float -> 'd -> RealArray.t -> unit
 (** Creates and initializes a session with the solver. The call
     {[init lmm iter tol f ~roots:(nroots, g) t0 y0]} has
     as arguments:
-    - [lmm],    the linear multistep method (see {!lmm}),
-    - [iter],   either functional or Newton iteration (see {!iter}),
-    - [tol],    the integration tolerances,
-    - [f],      the ODE right-hand side function,
-    - [nroots], the number of root functions,
-    - [g],      the root function ([(nroots, g)] defaults to {!no_roots}),
-    - [t0],     the initial value of the independent variable, and,
-    - [y0],     a vector of initial values that also determines the number
-                of equations.
+    - [lmm],      the linear multistep method (see {!lmm}),
+    - [tol],      the integration tolerances,
+    - [nlsolver], the solver to use to calculate integration steps,
+    - [lsolver],  used by [nlsolver]s based on Newton interation,
+    - [f],        the ODE right-hand side function,
+    - [nroots],   the number of root functions,
+    - [g],        the root function ([(nroots, g)] defaults to {!no_roots}),
+    - [t0],       the initial value of the independent variable, and,
+    - [y0],       a vector of initial values that also determines the number
+                  of equations.
 
     This function does everything necessary to initialize a session, i.e.,
     it makes the calls referenced below. The {!solve_normal} and
     {!solve_one_step} functions may be called directly.
 
+    If an [nlsolver] is not specified, then the
+    {{!Sundials_NonlinearSolver.Newton}Newton} module is used by default.
+    In this case only, [lsolver] defaults to {!Diag.solver} if not otherwise
+    specified. Specifying an [nlsolver] that requires a linear solver without
+    specifying an [lsolver] results in a {!NonlinearInitFailure} (or
+    {!IllInput} for Sundials < 4.0.0) exception on the first call to
+    {!solve_normal} or {!solve_one_step}.
+
     @cvode <node5#sss:cvodemalloc>   CVodeCreate/CVodeInit
     @cvode <node5#ss:cvrootinit>     CVodeRootInit
-    @cvode <node5#sss:lin_solv_init> Linear solvers
+    @cvode <node>                    CVodeSetLinearSolver
+    @cvode <node>                    CVodeSetNonlinearSolver
     @cvode <node5#sss:cvtolerances>  CVodeSStolerances
     @cvode <node5#sss:cvtolerances>  CVodeSVtolerances
     @cvode <node5#sss:cvtolerances>  CVodeWFtolerances
     @cvode <node5#ss:ewtsetFn>       CVEwtFn *)
 val init :
     lmm
-    -> ('data, 'kind) iter
     -> ('data, 'kind) tolerance
+    -> ?nlsolver
+         : ('data, 'kind,
+            (('data, 'kind) session) Sundials_NonlinearSolver.integrator)
+           Sundials_NonlinearSolver.nonlinear_solver
+    -> ?lsolver  : ('data, 'kind) session_linear_solver
     -> 'data rhsfn
     -> ?roots:(int * 'data rootsfn)
     -> float
@@ -791,17 +798,22 @@ val get_dky : ('d, 'k) session -> ('d, 'k) Nvector.t -> float -> int -> unit
 
 (** Reinitializes the solver with new parameters and state values. The
     values of the independent variable, i.e., the simulation time, and the
-    state variables must be given. If given, [iter] specifies a new
-    iteration method, and [roots] specifies a new root finding function;
-    both default to unchanged.
+    state variables must be given. If given, [nlsolver] specifies a nonlinear
+    solver, [lsolver] specifies a linear solver, and [roots] specifies a
+    new root finding function; both default to unchanged.
 
-    @cvode <node5#sss:cvreinit> CVodeReInit *)
+    @cvode <node5#sss:cvreinit> CVodeReInit
+    @cvode <node>               CVodeSetLinearSolver
+    @cvode <node>               CVodeSetNonlinearSolver *)
 val reinit :
-  ('d, 'kind) session
-  -> ?iter:('d, 'kind) iter
+  ('d, 'k) session
+  -> ?nlsolver:('d, 'k,
+                (('d, 'k) session) Sundials_NonlinearSolver.integrator)
+               Sundials_NonlinearSolver.nonlinear_solver
+  -> ?lsolver:('d, 'k) session_linear_solver
   -> ?roots:(int * 'd rootsfn)
   -> float
-  -> ('d, 'kind) Nvector.t
+  -> ('d, 'k) Nvector.t
   -> unit
 
 (** {2:set Modifying the solver (optional input functions)} *)
@@ -1133,6 +1145,16 @@ exception LinearSetupFailure
     @cvode <node5#sss:cvode> CV_LSOLVE_FAIL *)
 exception LinearSolveFailure
 
+(** Nonlinear solver initialization failed.
+
+    @nocvode <node5#sss:cvode> CV_NLS_INIT_FAIL *)
+exception NonlinearInitFailure
+
+(** Nonlinear solver setup failed in an unrecoverable manner.
+
+    @cvode <node5#sss:cvode> CV_NLS_SETUP_FAIL *)
+exception NonlinearSetupFailure
+
 (** The right-hand side function failed in an unrecoverable manner.
 
     @cvode <node5#sss:cvode> CV_RHSFUNC_FAIL *)
@@ -1175,4 +1197,9 @@ exception BadK
 
     @cvode <node5#ss:optional_dky> CVodeGetDky (CV_BAD_T) *)
 exception BadT
+
+(** A fused vector operation failed.
+
+    @nocvode <node> CV_VECTOROP_ERR *)
+exception VectorOpErr
 

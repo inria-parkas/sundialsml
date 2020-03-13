@@ -330,10 +330,16 @@ module Sensitivity : sig (* {{{ *)
       @idas <node6#sss:idafwdtolerances> IDASetSensParams
       @idas <node6#sss:idafwdtolerances> IDASensSStolerances
       @idas <node6#sss:idafwdtolerances> IDASensSVtolerances
-      @idas <node6#sss:idafwdtolerances> IDASensEEtolerances *)
+      @idas <node6#sss:idafwdtolerances> IDASensEEtolerances
+      @idas <node6> IDASetNonlinearSolverSensSim
+      @idas <node6> IDASetNonlinearSolverSensStg *)
   val init : ('d, 'k) Ida.session
              -> ('d, 'k) tolerance
              -> sens_method
+             -> ?sens_nlsolver:
+                 (('d, 'k) Sundials_NonlinearSolver.Senswrapper.t, 'k,
+                  (('d, 'k) Ida.session) Sundials_NonlinearSolver.integrator)
+                                Sundials_NonlinearSolver.nonlinear_solver
              -> ?sens_params:sens_params
              -> ?fs:'d sensresfn
              -> ('d, 'k) Nvector.t array
@@ -345,6 +351,10 @@ module Sensitivity : sig (* {{{ *)
       @idas <node6#ss:sensi_init> IDASensReInit *)
   val reinit : ('d, 'k) Ida.session
                -> sens_method
+               -> ?sens_nlsolver:
+                   (('d, 'k) Sundials_NonlinearSolver.Senswrapper.t, 'k,
+                    (('d, 'k) Ida.session) Sundials_NonlinearSolver.integrator)
+                                  Sundials_NonlinearSolver.nonlinear_solver
                -> ('d, 'k) Nvector.t array
                -> ('d, 'k) Nvector.t array
                -> unit
@@ -902,11 +912,10 @@ module Adjoint : sig (* {{{ *)
 
   (** Arguments common to Jacobian callback functions.
 
-      @idas <node7#ss:densejac_b> IDADlsDenseJacFnB
-      @idas <node7#ss:bandjac_b> IDADlsBandJacFnB
-      @idas <node7#ss:jactimesvec_b> IDASpilsJacTimesVecFnB
-      @idas <node7#ss:psolve_b> IDASpilsPrecSolveFnB
-      @idas <node7#ss:psetup_b> IDASpilsPrecSetupFnB *)
+      @idas <node7#ss:densejac_b> IDALsJacFnB
+      @idas <node7#ss:jactimesvec_b> IDAJacTimesVecFnB
+      @idas <node7#ss:psolve_b> IDALsPrecSolveFnB
+      @idas <node7#ss:psetup_b> IDALsPrecSetupFnB *)
   type ('t, 'd) jacobian_arg = ('t, 'd) Ida_impl.AdjointTypes.jacobian_arg =
     {
       jac_t : float;        (** The independent variable. *)
@@ -942,7 +951,7 @@ module Adjoint : sig (* {{{ *)
         {warning Neither the elements of [arg] nor the matrix [jm] should
                  be accessed after the function has returned.}
 
-        @idas <node7#ss:densejac_b> IDADlsDenseJacFnB *)
+        @idas <node7#ss:densejac_b> IDALsJacFnB *)
     type 'm jac_fn_no_sens =
       (RealArray.t triple, RealArray.t) jacobian_arg -> 'm -> unit
 
@@ -965,7 +974,7 @@ module Adjoint : sig (* {{{ *)
         {warning Neither the elements of [arg] nor the matrix [jm] should
                  be accessed after the function has returned.}
 
-        @noidas <node7#ss:densejac_bs> IDADlsDenseJacFnBS *)
+        @noidas <node7#ss:densejac_bs> IDALsJacFnBS *)
     type 'm jac_fn_with_sens =
       (RealArray.t triple, RealArray.t) jacobian_arg
       -> RealArray.t array
@@ -976,8 +985,8 @@ module Adjoint : sig (* {{{ *)
     (** Callback functions that compute dense approximations to a Jacobian
         matrix.
 
-        @noidas <node7#ss:densejac_b> IDADlsDenseJacFnB
-        @noidas <node7#ss:densejac_bs> IDADlsDenseJacFnBS *)
+        @noidas <node7#ss:densejac_b> IDALsJacFnB
+        @noidas <node7#ss:densejac_bs> IDALsJacFnBS *)
     type 'm jac_fn =
         NoSens of 'm jac_fn_no_sens
         (** Does not depend on forward sensitivities. *)
@@ -991,9 +1000,9 @@ module Adjoint : sig (* {{{ *)
         used), but must be provided for other solvers (or [Invalid_argument]
         is raised).
 
-        @noidas <node> IDADlsSetLinearSolverB
-        @noidas <node> IDADlsSetJacFnB
-        @noidas <node> IDADlsSetJacFnBS *)
+        @noidas <node> IDASetLinearSolverB
+        @noidas <node> IDASetJacFnB
+        @noidas <node> IDASetJacFnBS *)
     val solver :
       ?jac:'m jac_fn ->
       ('m, 'kind, 't) LinearSolver.Direct.serial_linear_solver ->
@@ -1004,7 +1013,7 @@ module Adjoint : sig (* {{{ *)
     (** Returns the sizes of the real and integer workspaces used by a direct
         linear solver.
 
-        @ida <node5#sss:optout_dls> IDADlsGetWorkSpace
+        @ida <node5#sss:optout_dls> IDAGetWorkSpace
         @idas <node7#SECTION007210100000000000000> IDAGetAdjIDABmem
         @return ([real_size], [integer_size]) *)
     val get_work_space : 'k serial_bsession -> int * int
@@ -1012,24 +1021,24 @@ module Adjoint : sig (* {{{ *)
     (** Returns the number of calls made by a direct linear solver to the
         Jacobian approximation function.
 
-        @ida <node5#sss:optout_dls> IDADlsGetNumJacEvals
+        @ida <node5#sss:optout_dls> IDAGetNumJacEvals
         @idas <node7#SECTION007210100000000000000> IDAGetAdjIDABmem *)
     val get_num_jac_evals : 'k serial_bsession -> int
 
     (** Returns the number of calls to the residual callback due to
         the finite difference Jacobian approximation.
 
-        @ida <node5#sss:optout_dls> IDADlsGetNumResEvals
+        @ida <node5#sss:optout_dls> IDAGetNumResEvals
         @idas <node7#SECTION007210100000000000000> IDAGetAdjIDABmem *)
-    val get_num_res_evals : 'k serial_bsession -> int
+    val get_num_lin_res_evals : 'k serial_bsession -> int
 
   end (* }}} *)
 
   (** Scaled Preconditioned Iterative Linear Solvers
 
       @idas <node7#ss:optional_output_b> Optional output functions for the backward problem.
-      @idas <node7#ss:psolve_b> IDASpilsPrecSolveFnB
-      @idas <node7#ss:psetup_b> IDASpilsPrecSetupFnB *)
+      @idas <node7#ss:psolve_b> IDALsPrecSolveFnB
+      @idas <node7#ss:psetup_b> IDALsPrecSetupFnB *)
   module Spils : sig (* {{{ *)
     include module type of Sundials_LinearSolver.Iterative
 
@@ -1057,7 +1066,7 @@ module Adjoint : sig (* {{{ *)
         {warning The elements of [jac], [r], and [z] should not
                  be accessed after the function has returned.}
 
-        @idas <node7#ss:psolve_b> IDASpilsPrecSolveFnB *)
+        @idas <node7#ss:psolve_b> IDALsPrecSolveFnB *)
     type 'd prec_solve_fn =
       (unit, 'd) jacobian_arg
       -> 'd
@@ -1090,7 +1099,7 @@ module Adjoint : sig (* {{{ *)
         {warning The elements of [jac], [ys], [yps], [r], and [z] should not
                  be accessed after the function has returned.}
 
-        @noidas <node7#ss:psolve_bs> IDASpilsPrecSolveFnBS *)
+        @noidas <node7#ss:psolve_bs> IDALsPrecSolveFnBS *)
     type 'd prec_solve_fn_with_sens =
       (unit, 'd) jacobian_arg
       -> 'd array
@@ -1110,7 +1119,7 @@ module Adjoint : sig (* {{{ *)
         {warning The elements of the argument should not be accessed after
                  the function has returned.}
 
-        @idas <node7#ss:psetup_b> IDASpilsPrecSetupFnB *)
+        @idas <node7#ss:psetup_b> IDALsPrecSetupFnB *)
     type 'd prec_setup_fn =
       (unit, 'd) jacobian_arg
       -> unit
@@ -1129,7 +1138,7 @@ module Adjoint : sig (* {{{ *)
         {warning The elements of the arguments should not be accessed after
                  the function has returned.}
 
-        @noidas <node7#ss:psetup_bs> IDASpilsPrecSetupFnBS *)
+        @noidas <node7#ss:psetup_bs> IDALsPrecSetupFnBS *)
     type 'd prec_setup_fn_with_sens =
       (unit, 'd) jacobian_arg
       -> 'd array
@@ -1143,12 +1152,12 @@ module Adjoint : sig (* {{{ *)
         The {!prec_solve_fn} is mandatory. The {!prec_setup_fn} can be
         omitted if not needed.
 
-        @idas <node7#SECTION00729400000000000000> IDASpilsSetPreconditionerB
-        @noidas <node7> IDASpilsSetPreconditionerBS
-        @idas <node7#ss:psolve_b> IDASpilsPrecSolveFnB
-        @idas <node7#ss:psetup_b> IDASpilsPrecSetupFnB
-        @noidas <node7#ss:psolve_bs> IDASpilsPrecSolveFnBS
-        @noidas <node7#ss:psetup_bs> IDASpilsPrecSetupFnBS *)
+        @idas <node7#SECTION00729400000000000000> IDALsSetPreconditionerB
+        @noidas <node7> IDALsSetPreconditionerBS
+        @idas <node7#ss:psolve_b> IDALsPrecSolveFnB
+        @idas <node7#ss:psetup_b> IDALsPrecSetupFnB
+        @noidas <node7#ss:psolve_bs> IDALsPrecSolveFnBS
+        @noidas <node7#ss:psetup_bs> IDAlsPrecSetupFnBS *)
     type ('d, 'k) preconditioner =
       ('d, 'k) Ida_impl.AdjointTypes.SpilsTypes.preconditioner
 
@@ -1184,8 +1193,8 @@ module Adjoint : sig (* {{{ *)
         {warning The elements of [arg] should not be accessed after the
                  function has returned.}
 
-        @noidas <node> IDASpilsSetJacTimesB
-        @noidas <node> IDASpilsJacTimesSetupFnB *)
+        @noidas <node> IDASetJacTimesVecFnB
+        @noidas <node> IDALsJacTimesSetupFnB *)
     type 'd jac_times_setup_fn_no_sens = (unit, 'd) jacobian_arg -> unit
 
     (** Callback functions that preprocess or evaluate Jacobian-related
@@ -1199,8 +1208,8 @@ module Adjoint : sig (* {{{ *)
         {warning The elements of [arg] should not be accessed after the
                  function has returned.}
 
-        @noidas <node> IDASpilsSetJacTimesBS
-        @noidas <node> IDASpilsJacTimesSetupFnBS *)
+        @noidas <node> IDASetJacTimesVecFnBS
+        @noidas <node> IDALsJacTimesSetupFnBS *)
     type 'd jac_times_setup_fn_with_sens =
       (unit, 'd) jacobian_arg -> 'd array -> unit
 
@@ -1218,7 +1227,7 @@ module Adjoint : sig (* {{{ *)
         {warning Neither the elements of [arg] nor [v] or [jv] should be
                  accessed after the function has returned.}
 
-        @idas <node7#ss:jactimesvec_b> IDASpilsJacTimesVecFnB *)
+        @idas <node7#ss:jactimesvec_b> IDALsJacTimesVecFnB *)
     type 'd jac_times_vec_fn_no_sens =
       ('d, 'd) jacobian_arg
       -> 'd
@@ -1242,7 +1251,7 @@ module Adjoint : sig (* {{{ *)
         {warning Neither the elements of [arg], [ys], [yps], [v] nor [jv]
                  should be accessed after the function has returned.}
 
-        @noidas <node7#ss:jactimesvec_bs> IDASpilsJacTimesVecFnBS *)
+        @noidas <node7#ss:jactimesvec_bs> IDALsJacTimesVecFnBS *)
     type 'd jac_times_vec_fn_with_sens =
       ('d, 'd) jacobian_arg
       -> 'd array
@@ -1253,8 +1262,8 @@ module Adjoint : sig (* {{{ *)
 
     (** Callback functions that compute the Jacobian times a vector.
 
-        @idas <node7#ss:jactimesvec_b> IDASpilsJacTimesVecFnB
-        @noidas <node7#ss:jactimesvec_bs> IDASpilsJacTimesVecFnBS *)
+        @idas <node7#ss:jactimesvec_b> IDALsJacTimesVecFnB
+        @noidas <node7#ss:jactimesvec_bs> IDALsJacTimesVecFnBS *)
     type 'd jac_times_vec_fn =
       | NoSens of 'd jac_times_setup_fn_no_sens option
                   * 'd jac_times_vec_fn_no_sens
@@ -1270,9 +1279,9 @@ module Adjoint : sig (* {{{ *)
         NB: the [jac_times_setup] argument is not supported in
             {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
 
-        @noidas <node> IDASpilsSetLinearSolverB
-        @noidas <node> IDASpilsSetJacTimesB
-        @noidas <node> IDASpilsSetJacTimesBS *)
+        @noidas <node> IDASetLinearSolverB
+        @noidas <node> IDASetJacTimesVecFnB
+        @noidas <node> IDASetJacTimesVecFnBS *)
     val solver :
       ('d, 'k, 'f) LinearSolver.Iterative.linear_solver
       -> ?jac_times_vec:'d jac_times_vec_fn
@@ -1285,41 +1294,47 @@ module Adjoint : sig (* {{{ *)
         constant is reduced from the Newton iteration test constant.
         This factor must be >= 0; passing 0 specifies the default (0.05).
 
-        @idas <node7#SECTION00729400000000000000> IDASpilsSetEpsLinB *)
+        @idas <node7#SECTION00729400000000000000> IDASetEpsLinB *)
     val set_eps_lin : ('d, 'k) bsession -> float -> unit
+
+    (** Sets the increment factor ([dqincfac]) to use in the difference-quotient
+        approximation for the backward problem.
+
+        @ida <node5> IDASetIncrementFactorB *)
+    val set_increment_factor : ('d, 'k) bsession -> float -> unit
 
     (** {3:stats Solver statistics} *)
 
     (** Returns the sizes of the real and integer workspaces used by the
         linear solver.
 
-        @idas <node5#sss:optout_spils> IDASpilsGetWorkSpace
+        @idas <node5#sss:optout_spils> IDAGetLinWorkSpace
         @idas <node7#ss:optional_output_b> IDAGetAdjIDABmem
         @return ([real_size], [integer_size]) *)
     val get_work_space : ('d, 'k) bsession -> int * int
 
     (** Returns the cumulative number of linear iterations.
 
-        @idas <node5#sss:optout_spils> IDASpilsGetNumLinIters
+        @idas <node5#sss:optout_spils> IDAGetNumLinIters
         @idas <node7#ss:optional_output_b> IDAGetAdjIDABmem *)
     val get_num_lin_iters : ('d, 'k) bsession -> int
 
     (** Returns the cumulative number of linear convergence failures.
 
-        @idas <node5#sss:optout_spils> IDASpilsGetNumConvFails
+        @idas <node5#sss:optout_spils> IDAGetNumLinConvFails
         @idas <node7#ss:optional_output_b> IDAGetAdjIDABmem *)
-    val get_num_conv_fails : ('d, 'k) bsession -> int
+    val get_num_lin_conv_fails : ('d, 'k) bsession -> int
 
     (** Returns the number of calls to the setup function.
 
-        @idas <node5#sss:optout_spils> IDASpilsGetNumPrecEvals
+        @idas <node5#sss:optout_spils> IDAGetNumPrecEvals
         @idas <node7#ss:optional_output_b> IDAGetAdjIDABmem *)
     val get_num_prec_evals : ('d, 'k) bsession -> int
 
     (** Returns the cumulative number of calls to the preconditioner solve
         function.
 
-        @idas <node5#sss:optout_spils> IDASpilsGetNumPrecSolves
+        @idas <node5#sss:optout_spils> IDAGetNumPrecSolves
         @idas <node7#ss:optional_output_b> IDAGetAdjIDABmem *)
     val get_num_prec_solves : ('d, 'k) bsession -> int
 
@@ -1327,14 +1342,14 @@ module Adjoint : sig (* {{{ *)
         setup function.
 
         @since 3.0.0
-        @noidas <node> IDASpilsGetNumJTSetupEvals
+        @noidas <node> IDAGetNumJTSetupEvals
         @idas <node7#ss:optional_output_b> IDAGetAdjIDABmem *)
     val get_num_jtsetup_evals : ('d, 'k) bsession -> int
 
     (** Returns the cumulative number of calls to the Jacobian-vector
         function.
 
-        @idas <node5#sss:optout_spils> IDASpilsGetNumJtimesEvals
+        @idas <node5#sss:optout_spils> IDAGetNumJtimesEvals
         @idas <node7#ss:optional_output_b> IDAGetAdjIDABmem *)
     val get_num_jtimes_evals : ('d, 'k) bsession -> int
 
@@ -1342,9 +1357,9 @@ module Adjoint : sig (* {{{ *)
         finite difference Jacobian-vector product approximation. This counter is
         only updated if the default difference quotient function is used.
 
-        @idas <node5#sss:optout_spils> IDASpilsGetNumRhsEvals
+        @idas <node5#sss:optout_spils> IDAGetNumLinResEvals
         @idas <node7#ss:optional_output_b> IDAGetAdjIDABmem *)
-    val get_num_res_evals : ('d, 'k) bsession -> int
+    val get_num_lin_res_evals : ('d, 'k) bsession -> int
 
     (** {3:lowlevel Low-level solver manipulation}
 
@@ -1356,9 +1371,9 @@ module Adjoint : sig (* {{{ *)
     (** Change the preconditioner functions without using forward
         sensitivities.
 
-        @idas <node7#SECTION00729400000000000000> IDASpilsSetPreconditionerB
-        @idas <node7#ss:psolve_b> IDASpilsPrecSolveFnB
-        @idas <node7#ss:psetup_b> IDASpilsPrecSetupFnB *)
+        @idas <node7#SECTION00729400000000000000> IDASetPreconditionerB
+        @idas <node7#ss:psolve_b> IDALsPrecSolveFnB
+        @idas <node7#ss:psetup_b> IDALsPrecSetupFnB *)
     val set_preconditioner :
       ('d,'k) bsession
       -> ?setup:'d prec_setup_fn
@@ -1367,9 +1382,9 @@ module Adjoint : sig (* {{{ *)
 
     (** Change the preconditioner functions using forward sensitivities.
 
-        @noidas <node7> IDASpilsSetPreconditionerBS
-        @noidas <node7#ss:psolve_bs> IDASpilsPrecSolveFnBS
-        @noidas <node7#ss:psetup_bs> IDASpilsPrecSetupFnBS *)
+        @noidas <node7> IDASetPreconditionerBS
+        @noidas <node7#ss:psolve_bs> IDALsPrecSolveFnBS
+        @noidas <node7#ss:psetup_bs> IDALsPrecSetupFnBS *)
     val set_preconditioner_with_sens :
       ('d,'k) bsession
       -> ?setup:'d prec_setup_fn_with_sens
@@ -1378,10 +1393,10 @@ module Adjoint : sig (* {{{ *)
 
     (** Change the Jacobian-times-vector function.
 
-        @idas <node7#SECTION00729400000000000000> IDASpilsSetJacTimesVecFnB
-        @noidas <node7> IDASpilsSetJacTimesVecFnBS
-        @idas <node7#ss:jactimesvec_b> IDASpilsJacTimesB
-        @noidas <node7#ss:jactimesvec_bs> IDASpilsJacTimesBS *)
+        @idas <node7#SECTION00729400000000000000> IDASetJacTimesVecFnB
+        @noidas <node7> IDASetJacTimesVecFnBS
+        @idas <node7#ss:jactimesvec_b> IDALsJacTimesVecFnB
+        @noidas <node7#ss:jactimesvec_bs> IDAJacTimesVecFnBS *)
     val set_jac_times :
       ('d,'k) bsession
       -> 'd jac_times_vec_fn
@@ -1390,7 +1405,7 @@ module Adjoint : sig (* {{{ *)
     (** Remove a Jacobian-times-vector function and use the default
         implementation.
 
-        @idas <node7#SECTION00729400000000000000> IDASpilsSetJacTimesB *)
+        @idas <node7#SECTION00729400000000000000> IDASetJacTimesVecFnB *)
     val clear_jac_times : ('d, 'k) bsession -> unit
   end (* }}} *)
 
@@ -1576,6 +1591,12 @@ module Adjoint : sig (* {{{ *)
       {!backward_normal} and {!backward_one_step} functions may be called
       directly.
 
+      If an [nlsolver] is not specified, then the
+      {{!Sundials_NonlinearSolver.Newton}Newton} module is used by default.
+      The [nlsolver] must be of type
+      {{!Sundials_NonlinearSolver.nonlinear_solver_Type}RootFind}, otherwise an
+      {!Ida.IllInput} exception is raised.
+
       @idas <node7#sss:idainitb> IDACreateB
       @idas <node7#sss:idainitb> IDAInitB
       @idas <node7#sss:idainitb> IDAInitBS
@@ -1585,8 +1606,11 @@ module Adjoint : sig (* {{{ *)
       @raise BadFinalTime      The final time is outside the interval over which the forward problem was solved. *)
   val init_backward :
        ('d, 'k) Ida.session
-    -> ('d, 'k) session_linear_solver
     -> ('d, 'k) tolerance
+    -> ?nlsolver:('d, 'k,
+                  (('d, 'k) session) Sundials_NonlinearSolver.integrator)
+                  Sundials_NonlinearSolver.nonlinear_solver
+    -> lsolver:('d, 'k) session_linear_solver
     -> 'd bresfn
     -> ?varid:('d, 'k) Nvector.t
     -> float
@@ -1822,7 +1846,10 @@ module Adjoint : sig (* {{{ *)
       @raise BadFinalTime      The final time is outside the interval over which the forward problem was solved. *)
   val reinit :
     ('d, 'k) bsession
-    -> ?linsolv:('d, 'k) session_linear_solver
+    -> ?nlsolver:('d, 'k,
+                  (('d, 'k) session) Sundials_NonlinearSolver.integrator)
+                  Sundials_NonlinearSolver.nonlinear_solver
+    -> ?lsolver:('d, 'k) session_linear_solver
     -> float
     -> ('d, 'k) Nvector.t
     -> ('d, 'k) Nvector.t

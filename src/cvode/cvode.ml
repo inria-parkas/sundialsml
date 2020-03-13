@@ -13,9 +13,16 @@ open Sundials
 include Cvode_impl
 
 (* "Simulate" Linear Solvers in Sundials < 3.0.0 *)
-let in_compat_mode =
+let in_compat_mode2 =
   match Config.sundials_version with
   | 2,_,_ -> true
+  | _ -> false
+
+(* "Simulate" Nonlinear Solvers in Sundials < 4.0.0 *)
+let in_compat_mode2_3 =
+  match Config.sundials_version with
+  | 2,_,_ -> true
+  | 3,_,_ -> true
   | _ -> false
 
 (*
@@ -34,6 +41,8 @@ exception ConvergenceFailure
 exception LinearInitFailure
 exception LinearSetupFailure
 exception LinearSolveFailure
+exception NonlinearInitFailure
+exception NonlinearSetupFailure
 exception RhsFuncFailure
 exception FirstRhsFuncFailure
 exception RepeatedRhsFuncFailure
@@ -45,15 +54,13 @@ exception ConstraintFailure
 exception BadK
 exception BadT
 
+exception VectorOpErr
+
 let no_roots = (0, dummy_rootsfn)
 
 type lmm =
   | Adams
   | BDF
-
-type ('a, 'kind) iter =
-  | Newton of ('a, 'kind) session_linear_solver
-  | Functional
 
 type integrator_stats = {
     num_steps : int;
@@ -255,7 +262,7 @@ module Dls = struct (* {{{ *)
     end;
     session.ls_precfns <- NoPrecFns
 
-  (* Sundials >= 3.0.0 *)
+  (* 3.0.0 <= Sundials < 4.0.0 *)
   external c_dls_set_linear_solver
     : 'k serial_session
       -> ('m, Nvector_serial.data, 'k) LSD.cptr
@@ -264,17 +271,29 @@ module Dls = struct (* {{{ *)
       -> unit
     = "sunml_cvode_dls_set_linear_solver"
 
+  (* 4.0.0 <= Sundials *)
+  external c_set_linear_solver
+    : ('d, 'k) session
+      -> ('m, 'd, 'k) LSD.cptr
+      -> ('mk, 'm, 'd, 'k) Matrix.t option
+      -> bool
+      -> unit
+    = "sunml_cvode_set_linear_solver"
+
   let solver ?jac ((LSD.S { LSD.rawptr; LSD.solver; LSD.matrix }) as ls)
              session nv =
     set_ls_callbacks ?jac solver matrix session;
-    if in_compat_mode then make_compat (jac <> None) solver matrix session
-    else c_dls_set_linear_solver session rawptr matrix (jac <> None);
+    if in_compat_mode2
+       then make_compat (jac <> None) solver matrix session
+    else if in_compat_mode2_3
+         then c_dls_set_linear_solver session rawptr matrix (jac <> None)
+    else c_set_linear_solver session rawptr (Some matrix) (jac <> None);
     LSD.attach ls;
     session.ls_solver <- LSI.DirectSolver ls
 
   (* Sundials < 3.0.0 *)
   let invalidate_callback session =
-    if in_compat_mode then
+    if in_compat_mode2 then
       match session.ls_callbacks with
       | DlsDenseCallback ({ jmat = Some d } as cb) ->
           Matrix.Dense.invalidate d;
@@ -298,7 +317,7 @@ module Dls = struct (* {{{ *)
     get_work_space s
 
   external c_get_num_jac_evals : 'k serial_session -> int
-      = "sunml_cvode_dls_get_num_jac_evals"
+      = "sunml_cvode_get_num_jac_evals"
 
   (* Sundials < 3.0.0 *)
   external c_klu_get_num_jac_evals : 'k serial_session -> int
@@ -318,15 +337,15 @@ module Dls = struct (* {{{ *)
 
   let get_num_jac_evals s =
     ls_check_direct s;
-    if in_compat_mode then compat_get_num_jac_evals s else
+    if in_compat_mode2 then compat_get_num_jac_evals s else
     c_get_num_jac_evals s
 
-  external c_get_num_rhs_evals : 'k serial_session -> int
-      = "sunml_cvode_dls_get_num_rhs_evals"
+  external c_get_num_lin_rhs_evals : 'k serial_session -> int
+      = "sunml_cvode_dls_get_num_lin_rhs_evals"
 
-  let get_num_rhs_evals s =
+  let get_num_lin_rhs_evals s =
     ls_check_direct s;
-    c_get_num_rhs_evals s
+    c_get_num_lin_rhs_evals s
 
 end (* }}} *)
 
@@ -385,9 +404,19 @@ module Spils = struct (* {{{ *)
     : ('a, 'k) session -> bool -> unit
     = "sunml_cvode_spils_set_preconditioner"
 
+  (* Sundials < 4.0.0 *)
   external c_spils_set_linear_solver
     : ('a, 'k) session -> ('a, 'k) LSI.Iterative.cptr -> unit
     = "sunml_cvode_spils_set_linear_solver"
+
+  (* 4.0.0 <= Sundials *)
+  external c_set_linear_solver
+    : ('d, 'k) session
+      -> ('d, 'k) LSI.Iterative.cptr
+      -> ('mk, 'm, 'd, 'k) Matrix.t option
+      -> bool
+      -> unit
+    = "sunml_cvode_set_linear_solver"
 
   let init_preconditioner solve setup session nv =
     c_set_preconditioner session (setup <> None);
@@ -416,7 +445,7 @@ module Spils = struct (* {{{ *)
     let jac_times_setup, jac_times_vec =
       match jac_times_vec with None -> None, None
                              | Some (ojts, jtv) -> ojts, Some jtv in
-    if in_compat_mode then begin
+    if in_compat_mode2 then begin
       if jac_times_setup <> None then
         raise Config.NotImplementedBySundialsVersion;
       let open LSI.Iterative in
@@ -440,7 +469,8 @@ module Spils = struct (* {{{ *)
       session.ls_callbacks <- SpilsCallback (jac_times_vec, None);
       if jac_times_vec <> None then c_set_jac_times session true false
     end else
-      c_spils_set_linear_solver session rawptr;
+      if in_compat_mode2_3 then c_spils_set_linear_solver session rawptr
+      else c_set_linear_solver session rawptr None false;
       LSI.Iterative.attach ls;
       session.ls_solver <- LSI.IterativeSolver ls;
       LSI.Iterative.(c_set_prec_type rawptr solver prec_type false);
@@ -451,7 +481,7 @@ module Spils = struct (* {{{ *)
                                 (jac_times_vec <> None)
 
   let set_jac_times s ?jac_times_setup f =
-    if in_compat_mode && jac_times_setup <> None then
+    if in_compat_mode2 && jac_times_setup <> None then
         raise Config.NotImplementedBySundialsVersion;
     match s.ls_callbacks with
     | SpilsCallback _ ->
@@ -474,26 +504,33 @@ module Spils = struct (* {{{ *)
                                   prec_solve_fn = solve }
     | _ -> raise LinearSolver.InvalidLinearSolver
 
+  external set_max_steps_between_jac : ('a, 'k) session -> int -> unit
+      = "sunml_cvode_spils_set_max_steps_between_jac"
+
+  let set_max_steps_between_jac s maxsteps =
+    ls_check_spils s;
+    set_max_steps_between_jac s maxsteps
+
   external set_eps_lin            : ('a, 'k) session -> float -> unit
-      = "sunml_cvode_spils_set_eps_lin"
+      = "sunml_cvode_set_eps_lin"
 
   let set_eps_lin s epsl =
     ls_check_spils s;
     set_eps_lin s epsl
 
   external get_num_lin_iters      : ('a, 'k) session -> int
-      = "sunml_cvode_spils_get_num_lin_iters"
+      = "sunml_cvode_get_num_lin_iters"
 
   let get_num_lin_iters s =
     ls_check_spils s;
     get_num_lin_iters s
 
-  external get_num_conv_fails     : ('a, 'k) session -> int
-      = "sunml_cvode_spils_get_num_conv_fails"
+  external get_num_lin_conv_fails  : ('a, 'k) session -> int
+      = "sunml_cvode_get_num_lin_conv_fails"
 
-  let get_num_conv_fails s =
+  let get_num_lin_conv_fails s =
     ls_check_spils s;
-    get_num_conv_fails s
+    get_num_lin_conv_fails s
 
   external get_work_space         : ('a, 'k) session -> int * int
       = "sunml_cvode_spils_get_work_space"
@@ -503,39 +540,39 @@ module Spils = struct (* {{{ *)
     get_work_space s
 
   external get_num_prec_evals     : ('a, 'k) session -> int
-      = "sunml_cvode_spils_get_num_prec_evals"
+      = "sunml_cvode_get_num_prec_evals"
 
   let get_num_prec_evals s =
     ls_check_spils s;
     get_num_prec_evals s
 
   external get_num_prec_solves    : ('a, 'k) session -> int
-      = "sunml_cvode_spils_get_num_prec_solves"
+      = "sunml_cvode_get_num_prec_solves"
 
   let get_num_prec_solves s =
     ls_check_spils s;
     get_num_prec_solves s
 
   external get_num_jtsetup_evals   : ('a, 'k) session -> int
-      = "sunml_cvode_spils_get_num_jtsetup_evals"
+      = "sunml_cvode_get_num_jtsetup_evals"
 
   let get_num_jtsetup_evals s =
     ls_check_spils s;
     get_num_jtsetup_evals s
 
   external get_num_jtimes_evals   : ('a, 'k) session -> int
-      = "sunml_cvode_spils_get_num_jtimes_evals"
+      = "sunml_cvode_get_num_jtimes_evals"
 
   let get_num_jtimes_evals s =
     ls_check_spils s;
     get_num_jtimes_evals s
 
-  external get_num_rhs_evals      : ('a, 'k) session -> int
-      = "sunml_cvode_spils_get_num_rhs_evals"
+  external get_num_lin_rhs_evals  : ('a, 'k) session -> int
+      = "sunml_cvode_get_num_lin_rhs_evals"
 
-  let get_num_rhs_evals s =
+  let get_num_lin_rhs_evals s =
     ls_check_spils s;
-    get_num_rhs_evals s
+    get_num_lin_rhs_evals s
 
   module Banded = struct (* {{{ *)
 
@@ -631,18 +668,6 @@ module Alternate = struct (* {{{ *)
 
 end (* }}} *)
 
-external c_set_functional : ('a, 'k) session -> unit
-  = "sunml_cvode_set_functional"
-
-let set_iter_type session nv iter =
-  session.ls_callbacks <- NoCallbacks;
-  session.ls_precfns <- NoPrecFns;
-  match iter with
-  | Functional -> c_set_functional session
-  | Newton linsolv -> linsolv session nv
-    (* Iter type will be set to CV_NEWTON in the functions that set the linear
-       solver.  *)
-
 external sv_tolerances  : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
     = "sunml_cvode_sv_tolerances"
 external ss_tolerances  : ('a, 'k) session -> float -> float -> unit
@@ -669,19 +694,39 @@ external c_session_finalize : ('a, 'kind) session -> unit
 
 let session_finalize s =
   Dls.invalidate_callback s;
+  (match s.nls_solver with
+   | None -> ()
+   | Some nls -> NLSI.detach nls);
+  (match s.sensext with
+   | FwdSensExt { fnls_solver = NLS nls } -> NLSI.detach nls
+   | FwdSensExt { fnls_solver = NLS_sens nls } -> NLSI.detach nls
+   | _ -> ());
   c_session_finalize s
 
+(* Sundials >= 4.0.0 *)
+external c_set_nonlinear_solver
+    : ('d, 'k) session
+      -> ('d, 'k, (('d, 'k) session) NLSI.integrator) NLSI.cptr
+      -> unit
+    = "sunml_cvode_set_nonlinear_solver"
+
 external c_init
-    : ('a, 'k) session Weak.t -> lmm -> ('a, 'k) iter -> ('a, 'k) nvector
+    : ('a, 'k) session Weak.t -> lmm -> bool -> ('a, 'k) nvector
       -> float -> (cvode_mem * c_weak_ref)
     = "sunml_cvode_init"
 
-let init lmm iter tol f ?(roots=no_roots) t0 y0 =
+let init lmm tol ?(nlsolver : ('data, 'kind,
+            (('data, 'kind) session) Sundials_NonlinearSolver.integrator)
+           Sundials_NonlinearSolver.nonlinear_solver option) ?lsolver f ?(roots=no_roots) t0 y0 =
   let (nroots, roots) = roots in
   let checkvec = Nvector.check y0 in
-  if Sundials_configuration.safe && nroots < 0 then
-    raise (Invalid_argument "number of root functions is negative");
+  if Sundials_configuration.safe && nroots < 0
+  then invalid_arg "number of root functions is negative";
   let weakref = Weak.create 1 in
+  let iter = match nlsolver with
+             | None -> true
+             | Some { NLSI.solver = s } -> s = NLSI.NewtonSolver
+  in
   let cvode_mem, backref = c_init weakref lmm iter y0 t0 in
   (* cvode_mem and backref have to be immediately captured in a session and
      associated with the finalizer before we do anything else.  *)
@@ -702,6 +747,8 @@ let init lmm iter tol f ?(roots=no_roots) t0 y0 =
           ls_callbacks = NoCallbacks;
           ls_precfns   = NoPrecFns;
 
+          nls_solver   = None;
+
           sensext      = NoSensExt;
         } in
   Gc.finalise session_finalize session;
@@ -710,23 +757,54 @@ let init lmm iter tol f ?(roots=no_roots) t0 y0 =
      an exception, the GC will take care of freeing cvode_mem and backref.  *)
   if nroots > 0 then
     c_root_init session nroots;
-  set_iter_type session y0 iter;
   set_tolerances session tol;
+  (match lsolver, nlsolver with
+   | None, None      -> Diag.solver session y0
+   | None, Some _    -> ()
+   | Some linsolv, _ -> linsolv session y0);
+  (match nlsolver with
+   | Some ({ NLSI.rawptr = nlcptr } as nls) when not in_compat_mode2_3 ->
+       NLSI.attach nls;
+       session.nls_solver <- Some nls;
+       c_set_nonlinear_solver session nlcptr
+   | _ -> ());
   session
 
 let get_num_roots { nroots } = nroots
+
+(* Sundials < 4.0.0 *)
+external c_set_functional : ('a, 'k) session -> unit
+  = "sunml_cvode_set_functional"
+
+(* Sundials < 4.0.0 *)
+external c_set_newton : ('a, 'k) session -> unit
+  = "sunml_cvode_set_newton"
 
 external c_reinit
     : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
     = "sunml_cvode_reinit"
 
-let reinit session ?iter ?roots t0 y0 =
+let reinit session ?nlsolver ?lsolver ?roots t0 y0 =
   if Sundials_configuration.safe then session.checkvec y0;
   Dls.invalidate_callback session;
   c_reinit session t0 y0;
-  (match iter with
+  (match lsolver with
    | None -> ()
-   | Some iter_type -> set_iter_type session y0 iter_type);
+   | Some linsolv -> linsolv session y0);
+  if in_compat_mode2_3 then
+    match nlsolver with
+    | None -> ()
+    | Some { NLSI.solver = NLSI.FixedPointSolver } -> c_set_functional session
+    | Some _ -> c_set_newton session
+  else
+    match nlsolver with
+    | Some ({ NLSI.rawptr = nlcptr } as nls) ->
+        (match session.nls_solver with
+         | None -> () | Some old_nls -> NLSI.detach old_nls);
+        NLSI.attach nls;
+        session.nls_solver <- Some nls;
+        c_set_nonlinear_solver session nlcptr
+    | _ -> ();
   (match roots with
    | None -> ()
    | Some roots -> root_init session roots)
@@ -936,6 +1014,8 @@ let _ =
       LinearInitFailure;
       LinearSetupFailure;
       LinearSolveFailure;
+      NonlinearInitFailure;
+      NonlinearSetupFailure;
       RhsFuncFailure;
       FirstRhsFuncFailure;
       RepeatedRhsFuncFailure;
@@ -944,4 +1024,5 @@ let _ =
       ConstraintFailure;
       BadK;
       BadT;
+      VectorOpErr;
     |]

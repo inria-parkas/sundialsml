@@ -32,6 +32,7 @@ type 'a triple = 'a * 'a * 'a
 
 type ('data, 'kind) nvector = ('data, 'kind) Nvector.t
 module LSI = Sundials_LinearSolver_impl
+module NLSI = Sundials_NonlinearSolver_impl
 
 type ('t, 'a) jacobian_arg =
   {
@@ -324,6 +325,7 @@ type 'a error_weight_fun = 'a -> 'a -> unit
    garbage collected while still being used by a session.
 *)
 
+(* Fields must be given in the same order as in cvode_session_index *)
 type ('a,'kind) session = {
   ida        : ida_mem;
   backref    : c_weak_ref;
@@ -343,6 +345,9 @@ type ('a,'kind) session = {
   mutable ls_solver    : LSI.solver;
   mutable ls_callbacks : ('a, 'kind) linsolv_callbacks;
   mutable ls_precfns   : 'a linsolv_precfns;
+
+  mutable nls_solver   : ('a, 'kind, (('a, 'kind) session) NLSI.integrator)
+                           NLSI.nonlinear_solver option;
 
   mutable sensext      : ('a, 'kind) sensext; (* Used by IDAS *)
 }
@@ -369,6 +374,11 @@ and ('a, 'kind) fsensext = {
   mutable sensresfn         : 'a SensitivityTypes.sensresfn;
 
   mutable quadsensrhsfn     : 'a SensitivityTypes.QuadratureTypes.quadsensrhsfn;
+
+  mutable fnls_solver       : (('a, 'kind) NLSI.Senswrapper.t,
+                               'kind, (('a, 'kind) session) NLSI.integrator)
+                                 NLSI.nonlinear_solver option;
+  (* keep a reference to prevent garbage collection *)
 
   (* Adjoint *)
   mutable bsessions         : ('a, 'kind) session list;

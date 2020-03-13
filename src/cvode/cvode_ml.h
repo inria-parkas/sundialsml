@@ -138,7 +138,7 @@
  */
 
 void sunml_cvode_check_flag(const char *call, int flag);
-#if SUNDIALS_LIB_VERSION >= 400
+#if 400 <= SUNDIALS_LIB_VERSION
 void sunml_cvode_check_ls_flag(const char *call, int flag);
 #else
 void sunml_cvode_check_dls_flag(const char *call, int flag);
@@ -150,10 +150,8 @@ value sunml_cvode_make_triple_tmp(N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
 
 #define CHECK_FLAG(call, flag) if (flag != CV_SUCCESS) \
 				 sunml_cvode_check_flag(call, flag)
-#if SUNDIALS_LIB_VERSION >= 400
-#define CHECK_SPILS_FLAG(call, flag) if (flag != CVLS_SUCCESS) \
-				 sunml_cvode_check_ls_flag(call, flag)
-#define CHECK_DLS_FLAG(call, flag) if (flag != CVLS_SUCCESS) \
+#if 400 <= SUNDIALS_LIB_VERSION
+#define CHECK_LS_FLAG(call, flag) if (flag != CVLS_SUCCESS) \
 				 sunml_cvode_check_ls_flag(call, flag)
 #else
 #define CHECK_SPILS_FLAG(call, flag) if (flag != CVSPILS_SUCCESS) \
@@ -200,6 +198,7 @@ enum cvode_session_index {
     RECORD_CVODE_SESSION_LS_SOLVER,
     RECORD_CVODE_SESSION_LS_CALLBACKS,
     RECORD_CVODE_SESSION_LS_PRECFNS,
+    RECORD_CVODE_SESSION_NLS_SOLVER,
     RECORD_CVODE_SESSION_SENSEXT,
     RECORD_CVODE_SESSION_SIZE,	/* This has to come last.  */
 };
@@ -322,6 +321,8 @@ enum cvode_exn_index {
     CVODE_EXN_LinearInitFailure,
     CVODE_EXN_LinearSetupFailure,
     CVODE_EXN_LinearSolveFailure,
+    CVODE_EXN_NonlinearInitFailure,
+    CVODE_EXN_NonlinearSetupFailure,
     CVODE_EXN_RhsFuncFailure,
     CVODE_EXN_FirstRhsFuncFailure,
     CVODE_EXN_RepeatedRhsFuncFailure,
@@ -330,6 +331,7 @@ enum cvode_exn_index {
     CVODE_EXN_ConstraintFailure,
     CVODE_EXN_BadK,
     CVODE_EXN_BadT,
+    CVODE_EXN_VectorOpErr,
     CVODE_EXN_SET_SIZE
 };
 

@@ -451,7 +451,7 @@ val init :
   -> ('data, 'kind) Nvector.t
   -> ('data, 'kind) session
 
-(** Strategy used to solve the non-linear system. *)
+(** Strategy used to solve the nonlinear system. *)
 type strategy =
   | Newton            (** Basic Newton iteration. {cconst KIN_NONE} *)
   | LineSearch        (** Newton iteration with globalization.
@@ -461,7 +461,7 @@ type strategy =
   | FixedPoint        (** Fixed-point iteration with Anderson Acceleration.
                           {cconst KIN_FP} *)
 
-(** Results of non-linear solution attempts. *)
+(** Results of nonlinear solution attempts. *)
 type result =
   | Success           (** The scaled norm of $F(u)$ is less than [fnormtol].
                           See {!set_func_norm_tol}. {cconst KIN_SUCCESS} *)
@@ -479,7 +479,7 @@ type result =
     - [s], a solver session,
     - [u], an initial guess that is replaced with an approximate solution
            for $F(u) = 0$,
-    - [strategy], strategy used to solve the non-linear system,
+    - [strategy], strategy used to solve the nonlinear system,
     - [u_scale], the diagonal elements of the scaling matrix $D_u$ for
                  vector [u] chosen so that all $D_u u$ all have roughly the
                  same magnitude when [u] is close to a root of $F(u)$, and,

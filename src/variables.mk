@@ -24,6 +24,7 @@ include ../config
 COBJ_COMMON = sundials/sundials_ml$(XO)	\
 	      lsolvers/sundials_matrix_ml$(XO)	\
 	      lsolvers/sundials_linearsolver_ml$(XO)	\
+	      lsolvers/sundials_nonlinearsolver_ml$(XO)	\
 	      nvectors/nvector_ml$(XO)
 
 COBJ_MAIN = $(COBJ_COMMON) kinsol/kinsol_ml$(XO) $(ARKODE_COBJ_MAIN)
@@ -41,6 +42,8 @@ MLOBJ_MAIN =	sundials/sundials_configuration.cmo	\
 		lsolvers/sundials_Matrix.cmo		\
 		lsolvers/sundials_LinearSolver_impl.cmo	\
 		lsolvers/sundials_LinearSolver.cmo	\
+		lsolvers/sundials_NonlinearSolver_impl.cmo \
+		lsolvers/sundials_NonlinearSolver.cmo	\
 		nvectors/nvector_custom.cmo		\
 		nvectors/nvector_array.cmo		\
 		cvode/cvode_impl.cmo			\

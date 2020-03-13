@@ -25,10 +25,12 @@
 #include <caml/bigarray.h>
 
 /* linear solvers */
+#if   400 <= SUNDIALS_LIB_VERSION
+#include <idas/idas_ls.h>
+#elif 300 <= SUNDIALS_LIB_VERSION
 #include <idas/idas_direct.h>
 #include <idas/idas_spils.h>
-
-#if SUNDIALS_LIB_VERSION < 300
+#else
 #include <idas/idas_dense.h>
 #include <idas/idas_band.h>
 #include <idas/idas_spgmr.h>
@@ -45,6 +47,7 @@
 #include "../sundials/sundials_ml.h"
 #include "../nvectors/nvector_ml.h"
 #include "../lsolvers/sundials_linearsolver_ml.h"
+#include "../lsolvers/sundials_nonlinearsolver_ml.h"
 #include "../lsolvers/sundials_matrix_ml.h"
 
 #define MAX_ERRMSG_LEN 256
@@ -709,7 +712,7 @@ static int bjactimesfn_sens(realtype t,
 }
 #endif
 
-#if SUNDIALS_LIB_VERSION >= 300
+#if 300 <= SUNDIALS_LIB_VERSION
 
 static int bjacfn_nosens(realtype t,
 			 realtype cjB,
@@ -1184,6 +1187,37 @@ CAMLprim value sunml_idas_quad_get_stats(value vdata)
 
 /* sensitivity interface */
 
+CAMLprim value sunml_idas_set_nonlinear_solver_sim(value vida_mem,
+						   value vnlsolv)
+{
+    CAMLparam2(vida_mem, vnlsolv);
+#if 400 <= SUNDIALS_LIB_VERSION
+    void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
+    SUNNonlinearSolver nlsolv = NLSOLVER_VAL(vnlsolv);
+
+    int flag = IDASetNonlinearSolverSensSim(ida_mem, nlsolv);
+    CHECK_FLAG ("IDASetNonlinearSolverSensSim", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_idas_set_nonlinear_solver_stg(value vida_mem,
+						   value vnlsolv)
+{
+    CAMLparam2(vida_mem, vnlsolv);
+#if 400 <= SUNDIALS_LIB_VERSION
+    void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
+    SUNNonlinearSolver nlsolv = NLSOLVER_VAL(vnlsolv);
+
+    int flag = IDASetNonlinearSolverSensStg(ida_mem, nlsolv);
+    CHECK_FLAG ("IDASetNonlinearSolverSensStg", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
 
 static int decode_sens_method(value vmethod)
 {
@@ -1818,6 +1852,24 @@ CAMLprim value sunml_idas_quadsens_get_stats(value vdata)
 
 /* adjoint interface */
 
+CAMLprim value sunml_idas_adj_set_nonlinear_solver(value vparent,
+						   value vwhich, value vnlsolv)
+{
+    CAMLparam3(vparent, vwhich, vnlsolv);
+#if 400 <= SUNDIALS_LIB_VERSION
+    void *ida_mem = IDA_MEM_FROM_ML (vparent);
+    SUNNonlinearSolver nlsolv = NLSOLVER_VAL(vnlsolv);
+    int flag;
+
+    flag = IDASetNonlinearSolverB(ida_mem, Int_val(vwhich), nlsolv);
+    CHECK_FLAG ("IDASetNonlinearSolverB", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+
 CAMLprim value sunml_idas_adj_init(value vdata, value vnd, value vinterptype)
 {
     CAMLparam3(vdata, vnd, vinterptype);
@@ -2028,14 +2080,38 @@ CAMLprim value sunml_idas_adj_spils_set_max_restarts(value vparent, value vwhich
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_idas_adj_spils_set_eps_lin(value vparent, value vwhich,
-					    value eplifac)
+CAMLprim value sunml_idas_adj_set_eps_lin(value vparent, value vwhich,
+					  value eplifac)
 {
     CAMLparam3(vparent, vwhich, eplifac);
 
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = IDASetEpsLinB(IDA_MEM_FROM_ML(vparent), Int_val(vwhich),
+			     Double_val(eplifac));
+    SCHECK_FLAG("IDASetEpsLinB", flag);
+#else
     int flag = IDASpilsSetEpsLinB(IDA_MEM_FROM_ML(vparent), Int_val(vwhich),
 				  Double_val(eplifac));
     SCHECK_FLAG("IDASpilsSetEpsLinB", flag);
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_idas_adj_set_increment_factor(value vparent, value vwhich,
+						   value dqincfac)
+{
+    CAMLparam3(vparent, vwhich, dqincfac);
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = IDASetIncrementFactorB(IDA_MEM_FROM_ML(vparent),
+	    Int_val(vwhich), Double_val(dqincfac));
+    SCHECK_FLAG("IDASetIncrementFactorB", flag);
+#else
+    int flag = IDASpilsSetIncrementFactorB(IDA_MEM_FROM_ML(vparent),
+	    Int_val(vwhich), Double_val(dqincfac));
+    SCHECK_FLAG("IDASpilsSetIncrementFactorB", flag);
+#endif
 
     CAMLreturn (Val_unit);
 }
@@ -2148,6 +2224,23 @@ CAMLprim value sunml_idas_adj_spils_set_preconditioner(value vparent,
     int which = Int_val(vwhich);
     int flag;
 
+#if 400 <= SUNDIALS_LIB_VERSION
+    if (Bool_val(vusesens)) {
+	flag = IDASetPreconditionerBS(
+		    mem,
+		    which,
+		    Bool_val(vset_precsetup) ? bprecsetupfn_sens : NULL,
+		    bprecsolvefn_sens);
+	SCHECK_FLAG ("IDASetPreconditionerBS", flag);
+    } else {
+	flag = IDASetPreconditionerB(
+		    mem,
+		    which,
+		    Bool_val(vset_precsetup) ? bprecsetupfn : NULL,
+		    bprecsolvefn);
+	SCHECK_FLAG ("IDASetPreconditionerB", flag);
+    }
+#else
     if (Bool_val(vusesens)) {
 #if SUNDIALS_LIB_VERSION >= 260
 	flag = IDASpilsSetPreconditionerBS(
@@ -2167,6 +2260,8 @@ CAMLprim value sunml_idas_adj_spils_set_preconditioner(value vparent,
 		    bprecsolvefn);
 	SCHECK_FLAG ("IDASpilsSetPreconditionerB", flag);
     }
+#endif
+
     CAMLreturn (Val_unit);
 }
 
@@ -2181,7 +2276,20 @@ CAMLprim value sunml_idas_adj_spils_set_jac_times(value vparent,
     int which = Int_val(vwhich);
     int flag;
 
-#if SUNDIALS_LIB_VERSION >= 300
+#if   400 <= SUNDIALS_LIB_VERSION
+    if (Bool_val(vusesens)) {
+	flag = IDASetJacTimesBS(mem, which,
+			Bool_val(vhas_setup) ? bjacsetupfn_sens : NULL,
+			Bool_val(vhas_times) ? bjactimesfn_sens : NULL);
+	SCHECK_FLAG ("IDASetJacTimesBS", flag);
+    } else {
+	flag = IDASetJacTimesB(mem, which,
+			Bool_val(vhas_setup) ? bjacsetupfn : NULL,
+			Bool_val(vhas_times) ? bjactimesfn : NULL);
+	SCHECK_FLAG ("IDASetJacTimesB", flag);
+    }
+
+#elif 300 <= SUNDIALS_LIB_VERSION
     if (Bool_val(vusesens)) {
 	flag = IDASpilsSetJacTimesBS(mem, which,
 			Bool_val(vhas_setup) ? bjacsetupfn_sens : NULL,
@@ -2335,12 +2443,41 @@ CAMLprim value sunml_idas_adj_dls_lapack_band (value vparent_which, value vsizes
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_idas_adj_set_linear_solver (value vparent_which,
+		    value vlsolv, value vojmat, value vhasjac, value vusesens)
+{
+    CAMLparam5(vparent_which, vlsolv, vojmat, vhasjac, vusesens);
+#if 400 <= SUNDIALS_LIB_VERSION
+    void *ida_mem = IDA_MEM_FROM_ML (Field(vparent_which, 0));
+    int which = Int_val(Field(vparent_which, 1));
+    SUNLinearSolver lsolv = LSOLVER_VAL(vlsolv);
+    SUNMatrix jmat = (vojmat == Val_none) ? NULL : MAT_VAL(Some_val(vojmat));
+    int flag;
+
+    flag = IDASetLinearSolverB(ida_mem, which, lsolv, jmat);
+    CHECK_FLAG ("IDASetLinearSolverB", flag);
+
+    if (Bool_val (vhasjac)) {
+	if (Bool_val (vusesens)) {
+	    flag = IDASetJacFnBS(ida_mem, which, bjacfn_withsens);
+	    SCHECK_FLAG("IDASetJacFnBS", flag);
+	} else {
+	    flag = IDASetJacFnB(ida_mem, which, bjacfn_nosens);
+	    SCHECK_FLAG("IDASetJacFnB", flag);
+	}
+    }
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value sunml_idas_adj_dls_set_linear_solver (value vparent_which,
 						 value vlsolv, value vjmat,
 						 value vhasjac, value vusesens)
 {
     CAMLparam5(vparent_which, vlsolv, vjmat, vhasjac, vusesens);
-#if SUNDIALS_LIB_VERSION >= 300
+#if 300 <= SUNDIALS_LIB_VERSION && SUNDIALS_LIB_VERSION < 400
     void *ida_mem = IDA_MEM_FROM_ML (Field(vparent_which, 0));
     int which = Int_val(Field(vparent_which, 1));
     SUNLinearSolver lsolv = LSOLVER_VAL(vlsolv);
@@ -2369,7 +2506,7 @@ CAMLprim value sunml_idas_adj_spils_set_linear_solver (value vparent, value vwhi
 						   value vlsolv)
 {
     CAMLparam3(vparent, vwhich, vlsolv);
-#if SUNDIALS_LIB_VERSION >= 300
+#if 300 <= SUNDIALS_LIB_VERSION && SUNDIALS_LIB_VERSION < 400
     void *ida_mem = IDA_MEM_FROM_ML (vparent);
     int which = Int_val(vwhich);
     SUNLinearSolver lsolv = LSOLVER_VAL(vlsolv);

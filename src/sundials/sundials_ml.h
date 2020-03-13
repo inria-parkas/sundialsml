@@ -137,6 +137,7 @@ enum sundials_exn_set_index {
     NVECTOR_PARALLEL_EXN_SET,
     MATRIX_EXN_SET,
     LSOLVER_EXN_SET,
+    NLSOLVER_EXN_SET,
     SUNDIALS_NUM_EXN_SETS
 };
 

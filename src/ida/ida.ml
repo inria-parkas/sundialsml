@@ -13,9 +13,16 @@ open Sundials
 include Ida_impl
 
 (* "Simulate" Linear Solvers in Sundials < 3.0.0 *)
-let in_compat_mode =
+let in_compat_mode2 =
   match Config.sundials_version with
   | 2,_,_ -> true
+  | _ -> false
+
+(* "Simulate" Nonlinear Solvers in Sundials < 4.0.0 *)
+let in_compat_mode2_3 =
+  match Config.sundials_version with
+  | 2,_,_ -> true
+  | 3,_,_ -> true
   | _ -> false
 
 (*
@@ -33,6 +40,8 @@ exception ConvergenceFailure
 exception LinearInitFailure
 exception LinearSetupFailure
 exception LinearSolveFailure
+exception NonlinearInitFailure
+exception NonlinearSetupFailure
 exception ResFuncFailure
 exception FirstResFuncFailure
 exception RepeatedResFuncFailure
@@ -50,6 +59,8 @@ exception BadT
 
 (* SetId exceptions *)
 exception IdNotSet
+
+exception VectorOpErr
 
 let no_roots = (0, dummy_rootsfn)
 
@@ -253,14 +264,14 @@ module Dls = struct (* {{{ *)
   let solver ?jac ((LSD.S { LSD.rawptr; LSD.solver; LSD.matrix }) as ls)
              session nv =
     set_ls_callbacks ?jac solver matrix session;
-    if in_compat_mode then make_compat (jac <> None) solver matrix session
+    if in_compat_mode2 then make_compat (jac <> None) solver matrix session
     else c_dls_set_linear_solver session rawptr matrix (jac <> None);
     LSD.attach ls;
     session.ls_solver <- LSI.DirectSolver ls
 
   (* Sundials < 3.0.0 *)
   let invalidate_callback session =
-    if in_compat_mode then
+    if in_compat_mode2 then
       match session.ls_callbacks with
       | DlsDenseCallback ({ jmat = Some d } as cb) ->
           Matrix.Dense.invalidate d;
@@ -284,7 +295,7 @@ module Dls = struct (* {{{ *)
     get_work_space s
 
   external c_get_num_jac_evals : 'k serial_session -> int
-      = "sunml_ida_dls_get_num_jac_evals"
+      = "sunml_ida_get_num_jac_evals"
 
   external c_klu_get_num_jac_evals : 'k serial_session -> int
     = "sunml_ida_klu_get_num_jac_evals"
@@ -302,15 +313,15 @@ module Dls = struct (* {{{ *)
 
   let get_num_jac_evals s =
     ls_check_direct s;
-    if in_compat_mode then compat_get_num_jac_evals s else
+    if in_compat_mode2 then compat_get_num_jac_evals s else
     c_get_num_jac_evals s
 
-  external get_num_res_evals : 'k serial_session -> int
-      = "sunml_ida_dls_get_num_res_evals"
+  external get_num_lin_res_evals : 'k serial_session -> int
+      = "sunml_ida_get_num_lin_res_evals"
 
-  let get_num_res_evals s =
+  let get_num_lin_res_evals s =
     ls_check_direct s;
-    get_num_res_evals s
+    get_num_lin_res_evals s
 end (* }}} *)
 
 module Spils = struct (* {{{ *)
@@ -393,7 +404,7 @@ module Spils = struct (* {{{ *)
     let jac_times_setup, jac_times_vec =
       match jac_times_vec with None -> None, None
                              | Some (ojts, jtv) -> ojts, Some jtv in
-    if in_compat_mode then begin
+    if in_compat_mode2 then begin
       if jac_times_setup <> None then
         raise Config.NotImplementedBySundialsVersion;
       let open LSI.Iterative in
@@ -430,7 +441,7 @@ module Spils = struct (* {{{ *)
                                 (jac_times_vec <> None)
 
   let set_jac_times s ?jac_times_setup f =
-    if in_compat_mode && jac_times_setup <> None then
+    if in_compat_mode2 && jac_times_setup <> None then
         raise Config.NotImplementedBySundialsVersion;
     match s.ls_callbacks with
     | SpilsCallback _ ->
@@ -454,11 +465,18 @@ module Spils = struct (* {{{ *)
     | _ -> raise LinearSolver.InvalidLinearSolver
 
   external set_eps_lin            : ('a, 'k) session -> float -> unit
-      = "sunml_ida_spils_set_eps_lin"
+      = "sunml_ida_set_eps_lin"
 
   let set_eps_lin s epsl =
     ls_check_spils s;
     set_eps_lin s epsl
+
+  external set_increment_factor   : ('a, 'k) session -> float -> unit
+      = "sunml_ida_set_increment_factor"
+
+  let set_increment_factor s dqincfac =
+    ls_check_spils s;
+    set_increment_factor s dqincfac
 
   external get_num_lin_iters      : ('a, 'k) session -> int
       = "sunml_ida_spils_get_num_lin_iters"
@@ -467,12 +485,12 @@ module Spils = struct (* {{{ *)
     ls_check_spils s;
     get_num_lin_iters s
 
-  external get_num_conv_fails     : ('a, 'k) session -> int
-      = "sunml_ida_spils_get_num_conv_fails"
+  external get_num_lin_conv_fails     : ('a, 'k) session -> int
+      = "sunml_ida_spils_get_num_lin_conv_fails"
 
-  let get_num_conv_fails s =
+  let get_num_lin_conv_fails s =
     ls_check_spils s;
-    get_num_conv_fails s
+    get_num_lin_conv_fails s
 
   external get_work_space         : ('a, 'k) session -> int * int
       = "sunml_ida_spils_get_work_space"
@@ -509,12 +527,12 @@ module Spils = struct (* {{{ *)
     ls_check_spils s;
     get_num_jtimes_evals s
 
-  external get_num_res_evals      : ('a, 'k) session -> int
-      = "sunml_ida_spils_get_num_res_evals"
+  external get_num_lin_res_evals      : ('a, 'k) session -> int
+      = "sunml_ida_spils_get_num_lin_res_evals"
 
-  let get_num_res_evals s =
+  let get_num_lin_res_evals s =
     ls_check_spils s;
-    get_num_res_evals s
+    get_num_lin_res_evals s
 
 end (* }}} *)
 
@@ -534,11 +552,6 @@ module Alternate = struct (* {{{ *)
   external get_cj : ('data, 'kind) session -> float = "sunml_ida_get_cj"
   external get_cjratio : ('data, 'kind) session -> float = "sunml_ida_get_cjratio"
 end (* }}} *)
-
-let set_linear_solver session solver nv =
-  session.ls_callbacks <- NoCallbacks;
-  session.ls_precfns <- NoPrecFns;
-  solver session nv
 
 external sv_tolerances
     : ('a, 'k) session -> float -> ('a, 'k) Nvector.t -> unit
@@ -577,22 +590,37 @@ external c_session_finalize : ('a, 'kind) session -> unit
 
 let session_finalize s =
   Dls.invalidate_callback s;
+  (match s.nls_solver with
+   | None -> ()
+   | Some nls -> NLSI.detach nls);
+  (match s.sensext with
+   | FwdSensExt { fnls_solver = Some nls } -> NLSI.detach nls
+   | _ -> ());
   c_session_finalize s
+
+(* Sundials >= 4.0.0 *)
+external c_set_nonlinear_solver
+    : ('d, 'k) session
+      -> ('d, 'k, (('d, 'k) session) NLSI.integrator) NLSI.cptr
+      -> unit
+    = "sunml_ida_set_nonlinear_solver"
 
 external c_init : ('a, 'k) session Weak.t -> float
                   -> ('a, 'k) Nvector.t -> ('a, 'k) Nvector.t
                   -> (ida_mem * c_weak_ref)
     = "sunml_ida_init"
 
-let init linsolv tol resfn ?varid ?(roots=no_roots) t0 y y' =
+let init tol ?nlsolver ~lsolver resfn ?varid ?(roots=no_roots) t0 y y' =
   let (nroots, rootsfn) = roots in
   let checkvec = Nvector.check y in
   if Sundials_configuration.safe then
     (checkvec y';
      if nroots < 0 then invalid_arg "number of root functions is negative");
-  (* FIXME: can we check y and y' have the same length, at least for
-     some nvector types?  *)
   let weakref = Weak.create 1 in
+  (if in_compat_mode2_3 then
+    match nlsolver with
+    | Some nls when NLSI.(get_type nls <> RootFind) -> raise IllInput
+    | _ -> ());
   let ida_mem, backref = c_init weakref t0 y y' in
   (* ida_mem and backref have to be immediately captured in a session and
      associated with the finalizer before we do anything else.  *)
@@ -600,15 +628,21 @@ let init linsolv tol resfn ?varid ?(roots=no_roots) t0 y y' =
                   backref    = backref;
                   nroots     = nroots;
                   checkvec   = checkvec;
+
                   exn_temp   = None;
+
                   id_set     = false;
                   resfn      = resfn;
                   rootsfn    = rootsfn;
                   errh       = dummy_errh;
                   errw       = dummy_errw;
+
                   ls_solver  = LSI.NoSolver;
                   ls_callbacks = NoCallbacks;
                   ls_precfns = NoPrecFns;
+
+                  nls_solver = None;
+
                   sensext    = NoSensExt;
                 }
   in
@@ -621,8 +655,14 @@ let init linsolv tol resfn ?varid ?(roots=no_roots) t0 y y' =
    | Some x -> set_id session x);
   if nroots > 0 then
     c_root_init session nroots;
-  set_linear_solver session linsolv y;
   set_tolerances session tol;
+  lsolver session y;
+  (match nlsolver with
+   | Some ({ NLSI.rawptr = nlcptr } as nls) when not in_compat_mode2_3 ->
+       NLSI.attach nls;
+       session.nls_solver <- Some nls;
+       c_set_nonlinear_solver session nlcptr
+   | _ -> ());
   session
 
 let get_num_roots { nroots } = nroots
@@ -632,15 +672,28 @@ external c_reinit
       -> ('a, 'k) Nvector.t -> unit
     = "sunml_ida_reinit"
 
-let reinit session ?linsolv ?roots t0 y0 y'0 =
+let reinit session ?nlsolver ?lsolver ?roots t0 y0 y'0 =
   if Sundials_configuration.safe then
     (session.checkvec y0;
      session.checkvec y'0);
   Dls.invalidate_callback session;
   c_reinit session t0 y0 y'0;
-  (match linsolv with
+  (match lsolver with
    | None -> ()
-   | Some linsolv -> set_linear_solver session linsolv y0);
+   | Some linsolv -> linsolv session y0);
+  if in_compat_mode2_3 then
+    match nlsolver with
+    | Some nls when NLSI.(get_type nls <> RootFind) -> raise IllInput
+    | _ -> ()
+  else
+    match nlsolver with
+    | Some ({ NLSI.rawptr = nlcptr } as nls) ->
+        (match session.nls_solver with
+         | None -> () | Some old_nls -> NLSI.detach old_nls);
+        NLSI.attach nls;
+        session.nls_solver <- Some nls;
+        c_set_nonlinear_solver session nlcptr
+    | _ -> ();
   (match roots with
    | None -> ()
    | Some roots -> root_init session roots)
@@ -899,6 +952,8 @@ let _ =
       LinearInitFailure;
       LinearSetupFailure;
       LinearSolveFailure;
+      NonlinearInitFailure;
+      NonlinearSetupFailure;
       ResFuncFailure;
       FirstResFuncFailure;
       RepeatedResFuncFailure;
@@ -911,4 +966,6 @@ let _ =
 
       BadK;
       BadT;
+
+      VectorOpErr;
     |]

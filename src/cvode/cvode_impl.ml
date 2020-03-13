@@ -37,6 +37,7 @@ open Sundials
  *)
 
 module LSI = Sundials_LinearSolver_impl
+module NLSI = Sundials_NonlinearSolver_impl
 
 (*
  * NB: The order of variant constructors and record fields is important!
@@ -357,6 +358,7 @@ type 'a error_weight_fun = 'a -> 'a -> unit
    garbage collected while still being used by a session.
 *)
 
+(* Fields must be given in the same order as in cvode_session_index *)
 type ('a, 'kind) session = {
   cvode      : cvode_mem;
   backref    : c_weak_ref;
@@ -373,6 +375,9 @@ type ('a, 'kind) session = {
   mutable ls_solver    : LSI.solver;
   mutable ls_callbacks : ('a, 'kind) linsolv_callbacks;
   mutable ls_precfns   : 'a linsolv_precfns;
+
+  mutable nls_solver   : ('a, 'kind, (('a, 'kind) session) NLSI.integrator)
+                           NLSI.nonlinear_solver option;
 
   mutable sensext      : ('a, 'kind) sensext (* Used by Cvodes *)
 }
@@ -480,6 +485,10 @@ and ('a, 'kind) fsensext = {
   mutable sensrhsfn         : 'a SensitivityTypes.sensrhsfn_all;
   mutable sensrhsfn1        : 'a SensitivityTypes.sensrhsfn1;
   mutable quadsensrhsfn     : 'a SensitivityTypes.QuadratureTypes.quadsensrhsfn;
+
+  mutable fnls_solver       : ('a, 'kind, (('a, 'kind) session) NLSI.integrator)
+                                NLSI.nonlinear_solver_hold;
+  (* keep a reference to prevent garbage collection *)
 
   (* Adjoint *)
   mutable bsessions         : ('a, 'kind) session list;

@@ -297,24 +297,34 @@ module Sensitivity : sig (* {{{ *)
           @cvodes <node6#ss:sensi_malloc> CVodeSensInit1
           @cvodes <node6#ss:user_fct_fwd> CVSensRhs1Fn *)
 
-  (** Specifies a sensitivity solution method.
+  (** Specifies a sensitivity solution method. The method specification may
+      optionally include the nonlinear solver to be used for corrections.
 
       @cvodes <node6#ss:sensi_malloc> CVodeSensInit
-      @cvodes <node6#ss:sensi_malloc> CVodeSensInit1 *)
-  type sens_method =
-      Simultaneous
+      @cvodes <node6#ss:sensi_malloc> CVodeSensInit1
+      @cvodes <node6> CVodeSetNonlinearSolverSensSim
+      @cvodes <node6> CVodeSetNonlinearSolverSensStg
+      @cvodes <node6> CVodeSetNonlinearSolverSensStg1 *)
+  type ('d, 'k) sens_method =
+      Simultaneous of
+        ((('d, 'k) Sundials_NonlinearSolver.Senswrapper.t, 'k,
+         (('d, 'k) Cvode.session) Sundials_NonlinearSolver.integrator)
+                       Sundials_NonlinearSolver.nonlinear_solver) option
       (** Correct state and sensitivity variables at the same time.
-          If [Newton] was selected as the nonlinear system
-          solution method, this amounts to performing a modified Newton
-          iteration on the combined nonlinear system.
           {cconst CV_SIMULTANEOUS} *)
-    | Staggered
+    | Staggered of
+        ((('d, 'k) Sundials_NonlinearSolver.Senswrapper.t, 'k,
+         (('d, 'k) Cvode.session) Sundials_NonlinearSolver.integrator)
+                       Sundials_NonlinearSolver.nonlinear_solver) option
       (** The correction step for the sensitivity variables takes place at the
           same time for all sensitivity equations, but only after the
           correction of the state variables has converged and the state
           variables have passed the local error test.
           {cconst CV_STAGGERED} *)
-    | Staggered1
+    | Staggered1 of
+        (('d, 'k,
+          (('d, 'k) Cvode.session) Sundials_NonlinearSolver.integrator)
+                       Sundials_NonlinearSolver.nonlinear_solver) option
       (** All corrections are done sequentially, first for the state variables
           and then for the sensitivity variables, one parameter at a time. If
           the sensitivity variables are not included in the error control,
@@ -387,7 +397,7 @@ module Sensitivity : sig (* {{{ *)
       @cvodes <node6#sss:cvfwdtolerances> CVodeSensEEtolerances *)
   val init : ('d, 'k) Cvode.session
              -> ('d, 'k) tolerance
-             -> sens_method
+             -> ('d, 'k) sens_method
              -> ?sens_params:sens_params
              -> 'd sensrhsfn
              -> ('d, 'k) Nvector.t array
@@ -396,7 +406,7 @@ module Sensitivity : sig (* {{{ *)
   (** Reinitializes the forward sensitivity computation.
 
       @cvodes <node6#ss:sensi_malloc> CVodeSensReInit *)
-  val reinit : ('d, 'k) Cvode.session -> sens_method
+  val reinit : ('d, 'k) Cvode.session -> ('d, 'k) sens_method
                     -> ('d, 'k) Nvector.t array -> unit
 
   (** Deactivates forward sensitivity calculations without deallocating
@@ -951,11 +961,10 @@ module Adjoint : sig (* {{{ *)
 
   (** Arguments common to Jacobian callback functions.
 
-      @cvodes <node7#ss:densejac_b> CVDlsDenseJacFnB
-      @cvodes <node7#ss:bandjac_b> CVDlsBandJacFnB
-      @cvodes <node7#ss:jtimesv_b> CVSpilsJacTimesVecFnB
-      @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB
-      @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB *)
+      @cvodes <node7> CVodeLsJacFnB
+      @cvodes <node7> CVodeJacTimesVecFnB
+      @cvodes <node7> CVodeLsPrecSolveFnB
+      @cvodes <node7> CVodeLsPrecSetupFnB *)
   type ('t, 'd) jacobian_arg = ('t, 'd) Cvode_impl.AdjointTypes.jacobian_arg =
     {
       jac_t   : float;        (** The independent variable. *)
@@ -1009,7 +1018,7 @@ module Adjoint : sig (* {{{ *)
         {warning Neither the elements of [arg] nor the matrix [jm] should
                  be accessed after the function has returned.}
 
-        @cvodes <node7#ss:densejac_b> CVDlsDenseJacFnB *)
+        @cvodes <node7#ss:densejac_b> CVodeLsJacFnB *)
     type 'm jac_fn_no_sens =
       (RealArray.t triple, RealArray.t) jacobian_arg -> 'm -> unit
 
@@ -1031,7 +1040,7 @@ module Adjoint : sig (* {{{ *)
         {warning Neither the elements of [arg], [s] nor the matrix [jm]
                  should be accessed after the function has returned.}
 
-        @nocvodes <node7#ss:densejac_bs> CVDlsDenseJacFnBS *)
+        @nocvodes <node7> CVodeLsJacFnBS *)
     type 'm jac_fn_with_sens =
       (RealArray.t triple, RealArray.t) jacobian_arg
       -> RealArray.t array
@@ -1041,8 +1050,8 @@ module Adjoint : sig (* {{{ *)
     (** Callback functions that compute dense approximations to a Jacobian
         matrix.
 
-        @cvodes <node5#ss:sjacFnB> CVDlsDenseJacFnB
-        @nocvodes <node5#ss:sjacFnBS> CVDlsDenseJacFnBS *)
+        @cvodes <node5>   CVodeLsJacFnB
+        @nocvodes <node5> CVodeLsJacFnBS *)
     type 'm jac_fn =
         NoSens of 'm jac_fn_no_sens
         (** Does not depend on forward sensitivities. *)
@@ -1056,9 +1065,9 @@ module Adjoint : sig (* {{{ *)
         used), but must be provided for other solvers (or [Invalid_argument]
         is raised).
 
-        @nocvode <node> CVDlsSetLinearSolverB
-        @nocvode <node> CVDlsSetJacFnB
-        @nocvode <node> CVDlsSetJacFnBS *)
+        @nocvode <node> CVodeSetLinearSolverB
+        @nocvode <node> CVodeSetJacFnB
+        @nocvode <node> CVodeSetJacFnBS *)
     val solver :
       ?jac:'m jac_fn ->
       ('m, 'kind, 't) LinearSolver.Direct.serial_linear_solver ->
@@ -1069,7 +1078,7 @@ module Adjoint : sig (* {{{ *)
     (** Returns the sizes of the real and integer workspaces used by a direct
         linear solver.
 
-        @cvode <node5#sss:optout_dls> CVDlsGetWorkSpace
+        @cvode <node5#sss:optout_dls> CVodeGetLinWorkSpace
         @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
         @return ([real_size], [integer_size]) *)
     val get_work_space : 'k serial_bsession -> int * int
@@ -1077,24 +1086,24 @@ module Adjoint : sig (* {{{ *)
     (** Returns the number of calls made by a direct linear solver to the
         Jacobian approximation function.
 
-        @cvode <node5#sss:optout_dls> CVDlsGetNumJacEvals
+        @cvode <node5#sss:optout_dls> CVodeGetNumJacEvals
         @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
     val get_num_jac_evals : 'k serial_bsession -> int
 
     (** Returns the number of calls to the right-hand side callback due to
         the finite difference Jacobian approximation.
 
-        @cvode <node5#sss:optout_dls> CVDlsGetNumRhsEvals
+        @cvode <node5#sss:optout_dls> CVodeGetNumLinRhsEvals
         @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
-    val get_num_rhs_evals : 'k serial_bsession -> int
+    val get_num_lin_rhs_evals : 'k serial_bsession -> int
 
   end (* }}} *)
 
   (** Scaled Preconditioned Iterative Linear Solvers.
 
       @cvodes <node7#ss:optional_output_b> Optional output functions for the backward problem.
-      @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB
-      @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB *)
+      @cvodes <node7#ss:psolve_b> CVodePrecSolveFnB
+      @cvodes <node7#ss:psetup_b> CVodePrecSetupFnB *)
   module Spils : sig (* {{{ *)
     include module type of Sundials_LinearSolver.Iterative
 
@@ -1102,7 +1111,7 @@ module Adjoint : sig (* {{{ *)
 
     (** Arguments passed to the preconditioner solver function.
 
-        @cvode <node7#ss:psolve_b> CVSpilsPrecSolveFnB *)
+        @cvode <node7#ss:psolve_b> CVodePrecSolveFnB *)
     type 'd prec_solve_arg =
       {
         rhs   : 'd;         (** Right-hand side vector of the linear system. *)
@@ -1129,7 +1138,7 @@ module Adjoint : sig (* {{{ *)
         {warning The elements of [jac], [arg], and [z] should not be
         accessed after the function has returned.}
 
-        @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB *)
+        @cvodes <node7#ss:psolve_b> CVodePrecSolveFnB *)
     type 'd prec_solve_fn =
       (unit, 'd) jacobian_arg
       -> 'd prec_solve_arg
@@ -1153,7 +1162,7 @@ module Adjoint : sig (* {{{ *)
         {warning The elements of [jac], [arg], [s], and [z] should not be
                  accessed after the function has returned.}
 
-        @nocvodes <node7#ss:psolve_bs> CVSpilsPrecSolveFnBS *)
+        @nocvodes <node7#ss:psolve_bs> CVodePrecSolveFnBS *)
     type 'd prec_solve_fn_with_sens =
       (unit, 'd) jacobian_arg
       -> 'd prec_solve_arg
@@ -1179,7 +1188,7 @@ module Adjoint : sig (* {{{ *)
         {warning The elements of [jac] should not be accessed after the
                  function has returned.}
 
-        @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB *)
+        @cvodes <node7#ss:psetup_b> CVodePrecSetupFnB *)
     type 'd prec_setup_fn =
       (unit, 'd) jacobian_arg
       -> bool
@@ -1205,7 +1214,7 @@ module Adjoint : sig (* {{{ *)
         {warning The elements of [jac] should not be accessed after the
                  function has returned.}
 
-        @nocvodes <node7#ss:psetup_bs> CVSpilsPrecSetupFnBS *)
+        @nocvodes <node7#ss:psetup_bs> CVodePrecSetupFnBS *)
     type 'd prec_setup_fn_with_sens =
       (unit, 'd) jacobian_arg
       -> 'd array
@@ -1221,11 +1230,11 @@ module Adjoint : sig (* {{{ *)
         The {!prec_solve_fn} is mandatory. The {!prec_setup_fn} can
         be omitted if not needed.
 
-        @cvodes <node7#SECTION00728400000000000000> CVSpilsSetPreconditionerB
-        @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB
-        @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB
-        @nocvodes <node7#ss:psolve_bs> CVSpilsPrecSolveFnBS
-        @nocvodes <node7#ss:psetup_bs> CVSpilsPrecSetupFnBS *)
+        @cvodes <node7#SECTION00728400000000000000> CVodeSetPreconditionerB
+        @cvodes <node7#ss:psolve_b> CVodePrecSolveFnB
+        @cvodes <node7#ss:psetup_b> CVodePrecSetupFnB
+        @nocvodes <node7#ss:psolve_bs> CVodePrecSolveFnBS
+        @nocvodes <node7#ss:psetup_bs> CVodePrecSetupFnBS *)
     type ('d, 'k) preconditioner =
       ('d, 'k) Cvode_impl.AdjointTypes.SpilsTypes.preconditioner
 
@@ -1335,8 +1344,8 @@ module Adjoint : sig (* {{{ *)
         {warning The elements of [arg] should not be accessed after the
                  function has returned.}
 
-        @nocvode <node> CVSpilsSetJacTimesB
-        @nocvode <node> CVSpilsJacTimesSetupFnB *)
+        @nocvode <node> CVodeSetJacTimesB
+        @nocvode <node> CVodeJacTimesSetupFnB *)
     type 'd jac_times_setup_fn_no_sens = (unit, 'd) jacobian_arg -> unit
 
     (** Callback functions that preprocess or evaluate Jacobian-related
@@ -1350,8 +1359,8 @@ module Adjoint : sig (* {{{ *)
         {warning The elements of [arg] should not be accessed after the
                  function has returned.}
 
-        @nocvode <node> CVSpilsSetJacTimesBS
-        @nocvode <node> CVSpilsJacTimesSetupFnBS *)
+        @nocvode <node> CVodeSetJacTimesBS
+        @nocvode <node> CVodeJacTimesSetupFnBS *)
     type 'd jac_times_setup_fn_with_sens =
       (unit, 'd) jacobian_arg -> 'd array -> unit
 
@@ -1369,7 +1378,7 @@ module Adjoint : sig (* {{{ *)
         {warning Neither the elements of [arg] nor [v] or [jv] should be
                  accessed after the function has returned.}
 
-        @cvodes <node7#ss:jtimesv_b> CVSpilsJacTimesVecFnB *)
+        @cvodes <node7#ss:jtimesv_b> CVodeJacTimesVecFnB *)
     type 'd jac_times_vec_fn_no_sens =
       ('d, 'd) jacobian_arg
       -> 'd
@@ -1391,7 +1400,7 @@ module Adjoint : sig (* {{{ *)
         {warning Neither the elements of [arg], [s], [v], nor [jv] should be
                  accessed after the function has returned.}
 
-        @nocvodes <node7#ss:jtimesv_bs> CVSpilsJacTimesVecFnBS *)
+        @nocvodes <node7#ss:jtimesv_bs> CVodeJacTimesVecFnBS *)
     type 'd jac_times_vec_fn_with_sens =
       ('d, 'd) jacobian_arg
       -> 'd array
@@ -1401,10 +1410,10 @@ module Adjoint : sig (* {{{ *)
 
     (** Callback functions that compute the Jacobian times a vector.
 
-        @cvodes <node7#ss:jtimesv_b> CVSpilsJacTimesSetupFnB
-        @nocvodes <node7#ss:jtimesv_bs> CVSpilsJacTimesSetupFnBS
-        @cvodes <node7#ss:jtimesv_b> CVSpilsJacTimesVecFnB
-        @nocvodes <node7#ss:jtimesv_bs> CVSpilsJacTimesVecFnBS *)
+        @cvodes <node7#ss:jtimesv_b> CVodeJacTimesSetupFnB
+        @nocvodes <node7#ss:jtimesv_bs> CVodeJacTimesSetupFnBS
+        @cvodes <node7#ss:jtimesv_b> CVodeJacTimesVecFnB
+        @nocvodes <node7#ss:jtimesv_bs> CVodeJacTimesVecFnBS *)
     type 'd jac_times_vec_fn =
       | NoSens of 'd jac_times_setup_fn_no_sens option
                   * 'd jac_times_vec_fn_no_sens
@@ -1419,9 +1428,9 @@ module Adjoint : sig (* {{{ *)
         NB: the [jac_times_setup] argument is not supported in
             {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
 
-        @nocvode <node> CVSpilsSetLinearSolverB
-        @nocvode <node> CVSpilsSetJacTimesB
-        @nocvode <node> CVSpilsSetJacTimesBS *)
+        @nocvode <node> CVodeSetLinearSolverB
+        @nocvode <node> CVodeSetJacTimesB
+        @nocvode <node> CVodeSetJacTimesBS *)
     val solver :
       ('d, 'k, 'f) LinearSolver.Iterative.linear_solver
       -> ?jac_times_vec:'d jac_times_vec_fn
@@ -1430,11 +1439,19 @@ module Adjoint : sig (* {{{ *)
 
     (** {3:set Solver parameters} *)
 
+    (** Sets the maximum number of time steps to wait before recomputation of
+        the Jacobian or recommendation to update the preconditioner.
+        If the integer argument is less than 1, a default value of 50 is used.
+
+        @nocvodes <node5> CVodeSetMaxStepsBetweenJac
+        @since 4.0.0 *)
+    val set_max_steps_between_jac : ('d, 'k) bsession -> int -> unit
+
     (** Sets the factor by which the Krylov linear solver's convergence test
         constant is reduced from the Newton iteration test constant.
         This factor must be >= 0; passing 0 specifies the default (0.05).
 
-        @cvodes <node7#SECTION00728400000000000000> CVSpilsSetEpsLinB *)
+        @cvodes <node7#SECTION00728400000000000000> CVodeSetEpsLinB *)
     val set_eps_lin : ('d, 'k) bsession -> float -> unit
 
     (** {3:stats Solver statistics} *)
@@ -1442,34 +1459,34 @@ module Adjoint : sig (* {{{ *)
     (** Returns the sizes of the real and integer workspaces used by the spils
         linear solver.
 
-        @cvodes <node5#sss:optout_spils> CVSpilsGetWorkSpace
+        @cvodes <node5#sss:optout_spils> CVodeGetWorkSpace
         @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
         @return ([real_size], [integer_size]) *)
     val get_work_space       : ('d, 'k) bsession -> int * int
 
     (** Returns the cumulative number of linear iterations.
 
-        @cvodes <node5#sss:optout_spils> CVSpilsGetNumLinIters
+        @cvodes <node5#sss:optout_spils> CVodeGetNumLinIters
         @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
     val get_num_lin_iters    : ('d, 'k) bsession -> int
 
     (** Returns the cumulative number of linear convergence failures.
 
-        @cvodes <node5#sss:optout_spils> CVSpilsGetNumConvFails
+        @cvodes <node5#sss:optout_spils> CVodeGetNumLinConvFails
         @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
-    val get_num_conv_fails   : ('d, 'k) bsession -> int
+    val get_num_lin_conv_fails   : ('d, 'k) bsession -> int
 
     (** Returns the cumulative number of calls to the setup function with
         [jok=false].
 
-        @cvodes <node5#sss:optout_spils> CVSpilsGetNumPrecEvals
+        @cvodes <node5#sss:optout_spils> CVodeGetNumPrecEvals
         @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
     val get_num_prec_evals   : ('d, 'k) bsession -> int
 
     (** Returns the cumulative number of calls to the preconditioner solve
         function.
 
-        @cvodes <node5#sss:optout_spils> CVSpilsGetNumPrecSolves
+        @cvodes <node5#sss:optout_spils> CVodeGetNumPrecSolves
         @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
     val get_num_prec_solves  : ('d, 'k) bsession -> int
 
@@ -1477,14 +1494,14 @@ module Adjoint : sig (* {{{ *)
         setup function.
 
         @since 3.0.0
-        @nocvode <node> CVSpilsGetNumJTSetupEvals
+        @nocvode <node> CVodeGetNumJTSetupEvals
         @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
     val get_num_jtsetup_evals : ('d, 'k) bsession -> int
 
     (** Returns the cumulative number of calls to the Jacobian-vector
         function.
 
-        @cvodes <node5#sss:optout_spils> CVSpilsGetNumJtimesEvals
+        @cvodes <node5#sss:optout_spils> CVodeGetNumJtimesEvals
         @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
     val get_num_jtimes_evals : ('d, 'k) bsession -> int
 
@@ -1492,9 +1509,9 @@ module Adjoint : sig (* {{{ *)
         finite difference Jacobian-vector product approximation. This counter is
         only updated if the default difference quotient function is used.
 
-        @cvodes <node5#sss:optout_spils> CVSpilsGetNumRhsEvals
+        @cvodes <node5#sss:optout_spils> CVodeGetNumLinRhsEvals
         @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
-    val get_num_rhs_evals    : ('d, 'k) bsession -> int
+    val get_num_lin_rhs_evals    : ('d, 'k) bsession -> int
 
     (** {3:lowlevel Low-level solver manipulation}
 
@@ -1506,9 +1523,9 @@ module Adjoint : sig (* {{{ *)
     (** Change the preconditioner functions without using forward
         sensitivities.
 
-        @cvodes <node7#SECTION00728400000000000000> CVSpilsSetPreconditionerB
-        @cvodes <node7#ss:psolve_b> CVSpilsPrecSolveFnB
-        @cvodes <node7#ss:psetup_b> CVSpilsPrecSetupFnB *)
+        @cvodes <node7#SECTION00728400000000000000> CVodeSetPreconditionerB
+        @cvodes <node7#ss:psolve_b> CVodePrecSolveFnB
+        @cvodes <node7#ss:psetup_b> CVodePrecSetupFnB *)
     val set_preconditioner :
       ('d,'k) bsession
       -> ?setup:'d prec_setup_fn
@@ -1517,9 +1534,9 @@ module Adjoint : sig (* {{{ *)
 
     (** Change the preconditioner functions using forward sensitivities.
 
-        @nocvodes <node7> CVSpilsSetPreconditionerBS
-        @nocvodes <node7#ss:psolve_bs> CVSpilsPrecSolveFnBS
-        @nocvodes <node7#ss:psetup_bs> CVSpilsPrecSetupFnBS *)
+        @nocvodes <node7> CVodeSetPreconditionerBS
+        @nocvodes <node7#ss:psolve_bs> CVodePrecSolveFnBS
+        @nocvodes <node7#ss:psetup_bs> CVodePrecSetupFnBS *)
     val set_preconditioner_with_sens :
       ('d,'k) bsession
       -> ?setup:'d prec_setup_fn_with_sens
@@ -1528,10 +1545,10 @@ module Adjoint : sig (* {{{ *)
 
     (** Change the Jacobian-times-vector function.
 
-        @cvodes <node7#SECTION00728400000000000000> CVSpilsSetJacTimesVecFnB
-        @nocvodes <node7> CVSpilsSetJacTimesVecFnBS
-        @cvodes <node7#ss:jtimesv_b> CVSpilsJacTimesVecFnB
-        @nocvodes <node7#ss:jtimesv_bs> CVSpilsJacTimesVecFnBS *)
+        @cvodes <node7#SECTION00728400000000000000> CVodeSetJacTimesVecFnB
+        @nocvodes <node7> CVodeSetJacTimesVecFnBS
+        @cvodes <node7#ss:jtimesv_b> CVodeJacTimesVecFnB
+        @nocvodes <node7#ss:jtimesv_bs> CVodeJacTimesVecFnBS *)
     val set_jac_times :
       ('d,'k) bsession
       -> 'd jac_times_vec_fn
@@ -1540,7 +1557,7 @@ module Adjoint : sig (* {{{ *)
     (** Remove a Jacobian-times-vector function and use the default
         implementation.
 
-        @cvodes <node7#SECTION00728400000000000000> CVSpilsSetJacTimesVecFnB *)
+        @cvodes <node7#SECTION00728400000000000000> CVodeSetJacTimesVecFnB *)
     val clear_jac_times : ('d, 'k) bsession -> unit
 
   end (* }}} *)
@@ -1691,23 +1708,14 @@ module Adjoint : sig (* {{{ *)
     | SVtolerances of float * ('d, 'k) Nvector.t
       (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
 
-  (** Choice of method for solving non-linear systems that arise in solver
-      formulas.
-
-      @cvodes <node7#sss:cvinitb> CVodeCreateB *)
-  type ('data, 'kind) iter =
-    | Newton of ('data, 'kind) session_linear_solver
-      (** Newton iteration with a given linear solver *)
-    | Functional
-      (** Functional iteration (non-stiff systems only) *)
-
   (** Creates and initializes a backward session attached to an existing
       (forward) session. The call
       {[init_backward s lmm iter tol fb tb0 yb0]} has as arguments:
       - [s], the parent (forward) session,
       - [lmm], the linear multistep method (see {!Cvode.lmm}),
-      - [iter], either functional or Newton iteration (see {!iter}),
       - [tol], the integration tolerances,
+      - [nlsolver], the solver to use to calculate integration steps,
+      - [lsolver],  used by [nlsolver]s based on Newton interation,
       - [fb], the backward right-hand side function,
       - [tb0], specifies the endpoint where final conditions are provided
                for the backward problem, which is normally the endpoint of
@@ -1720,18 +1728,33 @@ module Adjoint : sig (* {{{ *)
       {!backward_normal} and {!backward_one_step} functions may be called
       directly.
 
+      If an [nlsolver] is not specified, then the
+      {{!Sundials_NonlinearSolver.Newton}Newton} module is used by default.
+      In this case only, [lsolver] defaults to {!Diag.solver} if not otherwise
+      specified. Specifying an [nlsolver] that requires a linear solver without
+      specifying an [lsolver] results in a {!NonlinearInitFailure} (or
+      {!IllInput} for Sundials < 4.0.0) exception on the first call to
+      {!backward_normal} or {!backward_one_step}.
+
       @cvodes <node7#sss:cvinitb> CVodeCreateB
       @cvodes <node7#sss:cvinitb> CVodeInitB
       @cvodes <node7#sss:cvinitb> CVodeInitBS
+      @cvodes <node>              CVodeSetLinearSolverB
+      @cvodes <node>              CVodeSetNonlinearSolverB
       @cvodes <node7#sss:cvtolerances_b> CVodeSStolerancesB
+      @cvodes <node7#sss:cvtolerances_b> CVodeSVtolerancesB
       @cvodes <node7#sss:cvtolerances_b> CVodeSVtolerancesB
       @raise AdjointNotInitialized The {!init} function has not been called.
       @raise BadFinalTime The final time is outside the interval over which the forward problem was solved. *)
   val init_backward :
        ('d, 'k) Cvode.session
     -> Cvode.lmm
-    -> ('d, 'k) iter
     -> ('d, 'k) tolerance
+    -> ?nlsolver
+         : ('d, 'k,
+            (('d, 'k) Cvode.session) Sundials_NonlinearSolver.integrator)
+           Sundials_NonlinearSolver.nonlinear_solver
+    -> ?lsolver  : ('d, 'k) session_linear_solver
     -> 'd brhsfn
     -> float
     -> ('d, 'k) Nvector.t
@@ -1945,11 +1968,17 @@ module Adjoint : sig (* {{{ *)
       change the solution method (and linear solver).
 
       @cvodes <node7#sss:cvinitb> CVodeReInitB
+      @cvode <node>               CVodeSetLinearSolverB
+      @cvode <node>               CVodeSetNonlinearSolverB
       @raise AdjointNotInitialized The {!init} function has not been called.
       @raise BadFinalTime The final time is not within the forward problem solution interval. *)
   val reinit :
     ('d, 'k) bsession
-    -> ?iter:('d, 'k) iter
+    -> ?nlsolver
+         : ('d, 'k,
+            (('d, 'k) Cvode.session) Sundials_NonlinearSolver.integrator)
+           Sundials_NonlinearSolver.nonlinear_solver
+    -> ?lsolver  : ('d, 'k) session_linear_solver
     -> float
     -> ('d, 'k) Nvector.t
     -> unit

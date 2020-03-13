@@ -21,14 +21,12 @@
 #include "../sundials/sundials_ml.h"
 
 void sunml_ida_check_flag(const char *call, int flag);
-#if SUNDIALS_LIB_VERSION >= 400
+#if 400 <= SUNDIALS_LIB_VERSION
 void sunml_ida_check_ls_flag(const char *call, int flag);
 #else
 void sunml_ida_check_dls_flag(const char *call, int flag);
 void sunml_ida_check_spils_flag(const char *call, int flag);
 #endif
-
-void sunml_ida_ml_set_linear_solver(void *ida_mem, value ls, int n);
 
 value sunml_ida_make_jac_arg(realtype t, realtype coef, N_Vector y, N_Vector yp,
 		       N_Vector res, value tmp);
@@ -37,10 +35,8 @@ value sunml_ida_make_double_tmp(N_Vector tmp1, N_Vector tmp2);
 
 #define CHECK_FLAG(call, flag) if (flag != IDA_SUCCESS) \
 				 sunml_ida_check_flag(call, flag)
-#if SUNDIALS_LIB_VERSION >= 400
-#define CHECK_SPILS_FLAG(call, flag) if (flag != IDALS_SUCCESS) \
-				 sunml_ida_check_ls_flag(call, flag)
-#define CHECK_DLS_FLAG(call, flag) if (flag != IDALS_SUCCESS) \
+#if 400 <= SUNDIALS_LIB_VERSION
+#define CHECK_LS_FLAG(call, flag) if (flag != IDALS_SUCCESS) \
 				 sunml_ida_check_ls_flag(call, flag)
 #else
 #define CHECK_SPILS_FLAG(call, flag) if (flag != IDASPILS_SUCCESS) \
@@ -86,6 +82,7 @@ enum ida_index {
     RECORD_IDA_SESSION_LS_SOLVER,
     RECORD_IDA_SESSION_LS_CALLBACKS,
     RECORD_IDA_SESSION_LS_PRECFNS,
+    RECORD_IDA_SESSION_NLS_SOLVER,
     RECORD_IDA_SESSION_SENSEXT,
     RECORD_IDA_SESSION_SIZE	/* This has to come last. */
 };
@@ -195,6 +192,8 @@ enum ida_exn_index {
     IDA_EXN_LinearInitFailure,
     IDA_EXN_LinearSetupFailure,
     IDA_EXN_LinearSolveFailure,
+    IDA_EXN_NonlinearInitFailure,
+    IDA_EXN_NonlinearSetupFailure,
     IDA_EXN_ResFuncFailure,
     IDA_EXN_FirstResFuncFailure,
     IDA_EXN_RepeatedResFuncFailure,
@@ -207,6 +206,7 @@ enum ida_exn_index {
 
     IDA_EXN_BadK,
     IDA_EXN_BadT,
+    IDA_EXN_VectorOpErr,
     IDA_EXN_SET_SIZE,
 };
 

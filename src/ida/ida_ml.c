@@ -28,7 +28,9 @@
 #include <idas/idas_impl.h>
 
 /* linear solvers */
-#if SUNDIALS_LIB_VERSION >= 300
+#if   400 <= SUNDIALS_LIB_VERSION
+#include <idas/idas_ls.h>
+#elif 300 <= SUNDIALS_LIB_VERSION
 #include <idas/idas_direct.h>
 #include <idas/idas_spils.h>
 #else
@@ -49,7 +51,9 @@
 #include <ida/ida_impl.h>
 
 /* linear solvers */
-#if SUNDIALS_LIB_VERSION >= 300
+#if   400 <= SUNDIALS_LIB_VERSION
+#include <ida/ida_ls.h>
+#elif 300 <= SUNDIALS_LIB_VERSION
 #include <ida/ida_direct.h>
 #include <ida/ida_spils.h>
 #else
@@ -73,6 +77,7 @@
 #include "ida_ml.h"
 #include "../nvectors/nvector_ml.h"
 #include "../lsolvers/sundials_matrix_ml.h"
+#include "../lsolvers/sundials_nonlinearsolver_ml.h"
 #include "../lsolvers/sundials_linearsolver_ml.h"
 
 
@@ -216,8 +221,7 @@ value sunml_ida_make_double_tmp(N_Vector tmp1, N_Vector tmp2)
     CAMLreturn(r);
 }
 
-#if SUNDIALS_LIB_VERSION >= 300
-
+#if 300 <= SUNDIALS_LIB_VERSION
 static int jacfn (realtype t,
 		  realtype coef,
 		  N_Vector y,
@@ -704,11 +708,33 @@ CAMLprim value sunml_ida_dls_lapack_band (value vida_mem, value vneqs,
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_ida_set_linear_solver (value vida_mem, value vlsolv,
+					      value vojmat, value vhasjac)
+{
+    CAMLparam4(vida_mem, vlsolv, vojmat, vhasjac);
+#if 400 <= SUNDIALS_LIB_VERSION
+    void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
+    SUNLinearSolver lsolv = LSOLVER_VAL(vlsolv);
+    SUNMatrix jmat = (vojmat == Val_none) ? NULL : MAT_VAL(Some_val(vojmat));
+    int flag;
+
+    flag = IDASetLinearSolver(ida_mem, lsolv, jmat);
+    CHECK_LS_FLAG ("IDASetLinearSolver", flag);
+    if (Bool_val (vhasjac)) {
+	flag = IDASetJacFn(ida_mem, jacfn);
+	CHECK_LS_FLAG("IDASetJacFn", flag);
+    }
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value sunml_ida_dls_set_linear_solver (value vida_mem, value vlsolv,
 					    value vjmat, value vhasjac)
 {
     CAMLparam4(vida_mem, vlsolv, vjmat, vhasjac);
-#if SUNDIALS_LIB_VERSION >= 300
+#if 300 <= SUNDIALS_LIB_VERSION && SUNDIALS_LIB_VERSION < 400
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
     SUNLinearSolver lsolv = LSOLVER_VAL(vlsolv);
     SUNMatrix jmat = MAT_VAL(vjmat);
@@ -729,12 +755,11 @@ CAMLprim value sunml_ida_dls_set_linear_solver (value vida_mem, value vlsolv,
 CAMLprim value sunml_ida_spils_set_linear_solver (value vida_mem, value vlsolv)
 {
     CAMLparam2(vida_mem, vlsolv);
-#if SUNDIALS_LIB_VERSION >= 300
+#if 300 <= SUNDIALS_LIB_VERSION && SUNDIALS_LIB_VERSION < 400
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
     SUNLinearSolver lsolv = LSOLVER_VAL(vlsolv);
-    int flag;
 
-    flag = IDASpilsSetLinearSolver(ida_mem, lsolv);
+    int flag = IDASpilsSetLinearSolver(ida_mem, lsolv);
     CHECK_SPILS_FLAG ("IDASpilsSetLinearSolver", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -747,9 +772,15 @@ CAMLprim value sunml_ida_spils_set_preconditioner (value vsession,
 {
     CAMLparam2 (vsession, vset_presetup);
     void *mem = IDA_MEM_FROM_ML (vsession);
+#if 400 <= SUNDIALS_LIB_VERSION
+    IDALsPrecSetupFn setup = Bool_val (vset_presetup) ? precsetupfn : NULL;
+    int flag = IDASetPreconditioner (mem, setup, precsolvefn);
+    CHECK_LS_FLAG ("IDASetPreconditioner", flag);
+#else
     IDASpilsPrecSetupFn setup = Bool_val (vset_presetup) ? precsetupfn : NULL;
     int flag = IDASpilsSetPreconditioner (mem, setup, precsolvefn);
     CHECK_SPILS_FLAG ("IDASpilsSetPreconditioner", flag);
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -757,7 +788,13 @@ CAMLprim value sunml_ida_spils_set_jac_times(value vdata, value vhas_setup,
 						      value vhas_times)
 {
     CAMLparam3(vdata, vhas_setup, vhas_times);
-#if SUNDIALS_LIB_VERSION >= 300
+#if 400 <= SUNDIALS_LIB_VERSION
+    IDALsJacTimesSetupFn setup = Bool_val (vhas_setup) ? jacsetupfn : NULL;
+    IDALsJacTimesVecFn   times = Bool_val (vhas_times) ? jactimesfn : NULL;
+
+    int flag = IDASetJacTimes(IDA_MEM_FROM_ML(vdata), setup, times);
+    CHECK_LS_FLAG("IDASetJacTimes", flag);
+#elif 300 <= SUNDIALS_LIB_VERSION
     IDASpilsJacTimesSetupFn setup = Bool_val (vhas_setup) ? jacsetupfn : NULL;
     IDASpilsJacTimesVecFn   times = Bool_val (vhas_times) ? jactimesfn : NULL;
 
@@ -810,6 +847,21 @@ CAMLprim value sunml_ida_spils_sptfqmr (value vida_mem, value vmaxl)
 
     flag = IDASptfqmr (ida_mem, Int_val (vmaxl));
     CHECK_FLAG ("IDASptfqmr", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_ida_set_nonlinear_solver(value vida_mem, value vnlsolv)
+{
+    CAMLparam2(vida_mem, vnlsolv);
+#if 400 <= SUNDIALS_LIB_VERSION
+    void *ida_mem = IDA_MEM_FROM_ML(vida_mem);
+    SUNNonlinearSolver nlsolv = NLSOLVER_VAL(vnlsolv);
+
+    int flag = IDASetNonlinearSolver(ida_mem, nlsolv);
+    CHECK_FLAG ("IDASetNonlinearSolver", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
@@ -1166,6 +1218,17 @@ void sunml_ida_check_flag(const char *call, int flag)
     case IDA_BAD_T:
 	caml_raise_constant(IDA_EXN(BadT));
 
+#if SUNDIALS_LIB_VERSION >= 400
+    case IDA_NLS_INIT_FAIL:
+	caml_raise_constant(IDA_EXN(NonlinearInitFailure));
+
+    case IDA_NLS_SETUP_FAIL:
+	caml_raise_constant(IDA_EXN(NonlinearSetupFailure));
+
+    case IDA_VECTOROP_ERR:
+	caml_raise_constant(IDA_EXN(VectorOpErr));
+#endif
+
     default:
 	/* e.g. IDA_MEM_NULL, IDA_MEM_FAIL */
 	snprintf(exmsg, MAX_ERRMSG_LEN, "%s: %s", call,
@@ -1174,7 +1237,7 @@ void sunml_ida_check_flag(const char *call, int flag)
     }
 }
 
-#if SUNDIALS_LIB_VERSION >= 400
+#if 400 <= SUNDIALS_LIB_VERSION
 void sunml_ida_check_ls_flag(const char *call, int flag)
 {
     static char exmsg[MAX_ERRMSG_LEN] = "";
@@ -1195,7 +1258,7 @@ void sunml_ida_check_ls_flag(const char *call, int flag)
 	default:
 	    /* e.g. IDALS_MEM_NULL, IDALS_LMEM_NULL */
 	    snprintf(exmsg, MAX_ERRMSG_LEN, "%s: %s", call,
-		    IDADlsGetReturnFlagName(flag));
+		    IDAGetReturnFlagName(flag));
 	    caml_failwith(exmsg);
     }
 }
@@ -1767,13 +1830,35 @@ CAMLprim value sunml_ida_spils_set_max_restarts(value vida_mem, value vmaxr)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_ida_spils_set_eps_lin(value vida_mem, value eplifac)
+CAMLprim value sunml_ida_set_eps_lin(value vida_mem, value eplifac)
 {
     CAMLparam2(vida_mem, eplifac);
 
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = IDASetEpsLin(IDA_MEM_FROM_ML(vida_mem), Double_val(eplifac));
+    CHECK_LS_FLAG("IDASetEpsLin", flag);
+#else
     int flag = IDASpilsSetEpsLin(IDA_MEM_FROM_ML(vida_mem),
 				 Double_val(eplifac));
     CHECK_SPILS_FLAG("IDASpilsSetEpsLin", flag);
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_ida_set_increment_factor(value vida_mem, value dqincfac)
+{
+    CAMLparam2(vida_mem, dqincfac);
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = IDASetIncrementFactor(IDA_MEM_FROM_ML(vida_mem),
+				     Double_val(dqincfac));
+    CHECK_LS_FLAG("IDASetIncrementFactor", flag);
+#else
+    int flag = IDASpilsSetIncrementFactor(IDA_MEM_FROM_ML(vida_mem),
+					  Double_val(dqincfac));
+    CHECK_SPILS_FLAG("IDASpilsSetIncrementFactor", flag);
+#endif
 
     CAMLreturn (Val_unit);
 }
@@ -1863,8 +1948,13 @@ CAMLprim value sunml_ida_dls_get_work_space(value vida_mem)
     long int lenrwLS;
     long int leniwLS;
 
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = IDAGetLinWorkSpace(IDA_MEM_FROM_ML(vida_mem), &lenrwLS, &leniwLS);
+    CHECK_LS_FLAG("IDAGetLinWorkSpace", flag);
+#else
     int flag = IDADlsGetWorkSpace(IDA_MEM_FROM_ML(vida_mem), &lenrwLS, &leniwLS);
     CHECK_DLS_FLAG("IDADlsGetWorkSpace", flag);
+#endif
 
     r = caml_alloc_tuple(2);
 
@@ -1875,24 +1965,34 @@ CAMLprim value sunml_ida_dls_get_work_space(value vida_mem)
 }
 
 
-CAMLprim value sunml_ida_dls_get_num_jac_evals(value vida_mem)
+CAMLprim value sunml_ida_get_num_jac_evals(value vida_mem)
 {
     CAMLparam1(vida_mem);
 
     long int r;
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = IDAGetNumJacEvals(IDA_MEM_FROM_ML(vida_mem), &r);
+    CHECK_LS_FLAG("IDAGetNumJacEvals", flag);
+#else
     int flag = IDADlsGetNumJacEvals(IDA_MEM_FROM_ML(vida_mem), &r);
     CHECK_DLS_FLAG("IDADlsGetNumJacEvals", flag);
+#endif
 
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value sunml_ida_dls_get_num_res_evals(value vida_mem)
+CAMLprim value sunml_ida_get_num_lin_res_evals(value vida_mem)
 {
     CAMLparam1(vida_mem);
 
     long int r;
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = IDAGetNumResEvals(IDA_MEM_FROM_ML(vida_mem), &r);
+    CHECK_LS_FLAG("IDAGetNumResEvals", flag);
+#else
     int flag = IDADlsGetNumResEvals(IDA_MEM_FROM_ML(vida_mem), &r);
     CHECK_DLS_FLAG("IDADlsGetNumResEvals", flag);
+#endif
 
     CAMLreturn(Val_long(r));
 }
@@ -1904,19 +2004,29 @@ CAMLprim value sunml_ida_spils_get_num_lin_iters(value vida_mem)
     CAMLparam1(vida_mem);
 
     long int r;
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = IDAGetNumLinIters(IDA_MEM_FROM_ML(vida_mem), &r);
+    CHECK_LS_FLAG("IDAGetNumLinIters", flag);
+#else
     int flag = IDASpilsGetNumLinIters(IDA_MEM_FROM_ML(vida_mem), &r);
     CHECK_SPILS_FLAG("IDASpilsGetNumLinIters", flag);
+#endif
 
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value sunml_ida_spils_get_num_conv_fails(value vida_mem)
+CAMLprim value sunml_ida_spils_get_num_lin_conv_fails(value vida_mem)
 {
     CAMLparam1(vida_mem);
 
     long int r;
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = IDAGetNumLinConvFails(IDA_MEM_FROM_ML(vida_mem), &r);
+    CHECK_LS_FLAG("IDAGetNumLinConvFails", flag);
+#else
     int flag = IDASpilsGetNumConvFails(IDA_MEM_FROM_ML(vida_mem), &r);
     CHECK_SPILS_FLAG("IDASpilsGetNumConvFails", flag);
+#endif
 
     CAMLreturn(Val_long(r));
 }
@@ -1930,8 +2040,13 @@ CAMLprim value sunml_ida_spils_get_work_space(value vida_mem)
     long int lenrw;
     long int leniw;
 
+#if 400 <= SUNDIALS_LIB_VERSION
+    flag = IDAGetLinWorkSpace(IDA_MEM_FROM_ML(vida_mem), &lenrw, &leniw);
+    CHECK_LS_FLAG("IDAGetLinWorkSpace", flag);
+#else
     flag = IDASpilsGetWorkSpace(IDA_MEM_FROM_ML(vida_mem), &lenrw, &leniw);
     CHECK_SPILS_FLAG("IDASpilsGetWorkSpace", flag);
+#endif
 
     r = caml_alloc_tuple(2);
 
@@ -1946,8 +2061,13 @@ CAMLprim value sunml_ida_spils_get_num_prec_evals(value vida_mem)
     CAMLparam1(vida_mem);
 
     long int r;
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = IDAGetNumPrecEvals(IDA_MEM_FROM_ML(vida_mem), &r);
+    CHECK_LS_FLAG("IDAGetNumPrecEvals", flag);
+#else
     int flag = IDASpilsGetNumPrecEvals(IDA_MEM_FROM_ML(vida_mem), &r);
     CHECK_SPILS_FLAG("IDASpilsGetNumPrecEvals", flag);
+#endif
 
     CAMLreturn(Val_long(r));
 }
@@ -1957,8 +2077,13 @@ CAMLprim value sunml_ida_spils_get_num_prec_solves(value vida_mem)
     CAMLparam1(vida_mem);
 
     long int r;
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = IDAGetNumPrecSolves(IDA_MEM_FROM_ML(vida_mem), &r);
+    CHECK_LS_FLAG("IDAGetNumPrecSolves", flag);
+#else
     int flag = IDASpilsGetNumPrecSolves(IDA_MEM_FROM_ML(vida_mem), &r);
     CHECK_SPILS_FLAG("IDASpilsGetNumPrecSolves", flag);
+#endif
 
     CAMLreturn(Val_long(r));
 }
@@ -1972,7 +2097,10 @@ CAMLprim value sunml_ida_spils_get_num_jtsetup_evals(value vida_mem)
 {
     CAMLparam1(vida_mem);
     long int r;
-#if SUNDIALS_LIB_VERSION >= 300
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = IDAGetNumJTSetupEvals(IDA_MEM_FROM_ML(vida_mem), &r);
+    CHECK_LS_FLAG("IDAGetNumJTSetupEvals", flag);
+#elif 300 <= SUNDIALS_LIB_VERSION
     int flag = IDASpilsGetNumJTSetupEvals(IDA_MEM_FROM_ML(vida_mem), &r);
     CHECK_SPILS_FLAG("IDASpilsGetNumJTSetupEvals", flag);
 #else
@@ -1986,19 +2114,29 @@ CAMLprim value sunml_ida_spils_get_num_jtimes_evals(value vida_mem)
     CAMLparam1(vida_mem);
 
     long int r;
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = IDAGetNumJtimesEvals(IDA_MEM_FROM_ML(vida_mem), &r);
+    CHECK_LS_FLAG("IDAGetNumJtimesEvals", flag);
+#else
     int flag = IDASpilsGetNumJtimesEvals(IDA_MEM_FROM_ML(vida_mem), &r);
     CHECK_SPILS_FLAG("IDASpilsGetNumJtimesEvals", flag);
+#endif
 
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value sunml_ida_spils_get_num_res_evals (value vida_mem)
+CAMLprim value sunml_ida_spils_get_num_lin_res_evals (value vida_mem)
 {
     CAMLparam1(vida_mem);
 
     long int r;
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = IDAGetNumLinResEvals(IDA_MEM_FROM_ML(vida_mem), &r);
+    CHECK_LS_FLAG("IDAGetNumLinResEvals", flag);
+#else
     int flag = IDASpilsGetNumResEvals(IDA_MEM_FROM_ML(vida_mem), &r);
     CHECK_SPILS_FLAG("IDASpilsGetNumResEvals", flag);
+#endif
 
     CAMLreturn(Val_long(r));
 }

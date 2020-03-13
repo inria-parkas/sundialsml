@@ -23,12 +23,15 @@
 #include <caml/bigarray.h>
 
 /* linear solvers */
-#include <cvodes/cvodes_direct.h>
-#include <cvodes/cvodes_spils.h>
 #include <cvodes/cvodes_diag.h>
 #include <cvodes/cvodes_bandpre.h>
 
-#if SUNDIALS_LIB_VERSION < 300
+#if   400 <= SUNDIALS_LIB_VERSION
+#include <cvodes/cvodes_ls.h>
+#elif 300 <= SUNDIALS_LIB_VERSION
+#include <cvodes/cvodes_direct.h>
+#include <cvodes/cvodes_spils.h>
+#else
 #include <cvodes/cvodes_dense.h>
 #include <cvodes/cvodes_band.h>
 #include <cvodes/cvodes_spgmr.h>
@@ -42,6 +45,7 @@
 
 #include "../lsolvers/sundials_matrix_ml.h"
 #include "../lsolvers/sundials_linearsolver_ml.h"
+#include "../lsolvers/sundials_nonlinearsolver_ml.h"
 #include "../sundials/sundials_ml.h"
 #include "../cvode/cvode_ml.h"
 #include "cvodes_ml.h"
@@ -653,7 +657,7 @@ static int bjactimesfn_withsens(
 }
 #endif
 
-#if SUNDIALS_LIB_VERSION >= 300
+#if 300 <= SUNDIALS_LIB_VERSION
 
 static int bjacfn_nosens(
     realtype t,
@@ -979,6 +983,54 @@ CAMLprim value sunml_cvodes_quad_get_err_weights(value vdata, value veqweight)
 
 /* sensitivity interface */
 
+CAMLprim value sunml_cvodes_set_nonlinear_solver_sim(value vcvode_mem,
+						     value vnlsolv)
+{
+    CAMLparam2(vcvode_mem, vnlsolv);
+#if 400 <= SUNDIALS_LIB_VERSION
+    void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
+    SUNNonlinearSolver nlsolv = NLSOLVER_VAL(vnlsolv);
+
+    int flag = CVodeSetNonlinearSolverSensSim(cvode_mem, nlsolv);
+    CHECK_FLAG ("CVodeSetNonlinearSolverSensSim", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_cvodes_set_nonlinear_solver_stg(value vcvode_mem,
+						     value vnlsolv)
+{
+    CAMLparam2(vcvode_mem, vnlsolv);
+#if 400 <= SUNDIALS_LIB_VERSION
+    void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
+    SUNNonlinearSolver nlsolv = NLSOLVER_VAL(vnlsolv);
+
+    int flag = CVodeSetNonlinearSolverSensStg(cvode_mem, nlsolv);
+    CHECK_FLAG ("CVodeSetNonlinearSolverSensStg", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_cvodes_set_nonlinear_solver_stg1(value vcvode_mem,
+						      value vnlsolv)
+{
+    CAMLparam2(vcvode_mem, vnlsolv);
+#if 400 <= SUNDIALS_LIB_VERSION
+    void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
+    SUNNonlinearSolver nlsolv = NLSOLVER_VAL(vnlsolv);
+
+    int flag = CVodeSetNonlinearSolverSensStg1(cvode_mem, nlsolv);
+    CHECK_FLAG ("CVodeSetNonlinearSolverSensStg1", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value sunml_cvodes_sens_sv_tolerances(value vdata, value reltol,
 					   value abstol)
 {
@@ -995,7 +1047,7 @@ CAMLprim value sunml_cvodes_sens_sv_tolerances(value vdata, value reltol,
 
 static int decode_sens_method(value vmethod)
 {
-    switch (Int_val(vmethod)) {
+    switch (Tag_val(vmethod)) {
     case VARIANT_CVODES_SENS_METHOD_SIMULTANEOUS:
 	return CV_SIMULTANEOUS;
 
@@ -1325,8 +1377,25 @@ CAMLprim value sunml_cvodes_adj_spils_set_preconditioner(value vparent,
     int which = Int_val(vwhich);
     int flag;
 
+#if 400 <= SUNDIALS_LIB_VERSION
     if (Bool_val(vusesens)) {
-#if SUNDIALS_LIB_VERSION >= 260
+	flag = CVodeSetPreconditionerBS(
+		    mem,
+		    which,
+		    Bool_val(vset_precsetup) ? bprecsetupfn_withsens : NULL,
+		    bprecsolvefn_withsens);
+	SCHECK_FLAG ("CVodeSetPreconditionerBS", flag);
+    } else {
+	flag = CVodeSetPreconditionerB(
+		    mem,
+		    which,
+		    Bool_val(vset_precsetup) ? bprecsetupfn : NULL,
+		    bprecsolvefn);
+	SCHECK_FLAG ("CVodeSetPreconditionerB", flag);
+    }
+#else
+    if (Bool_val(vusesens)) {
+#if 260 <= SUNDIALS_LIB_VERSION
 	flag = CVSpilsSetPreconditionerBS(
 		    mem,
 		    which,
@@ -1344,6 +1413,7 @@ CAMLprim value sunml_cvodes_adj_spils_set_preconditioner(value vparent,
 		    bprecsolvefn);
 	SCHECK_FLAG ("CVSpilsSetPreconditionerB", flag);
     }
+#endif
 
     CAMLreturn (Val_unit);
 }
@@ -1381,9 +1451,21 @@ CAMLprim value sunml_cvodes_adj_spils_set_jac_times(value vparent,
     int which = Int_val(vwhich);
     int flag;
 
-#if SUNDIALS_LIB_VERSION >= 300
+#if 400 <= SUNDIALS_LIB_VERSION
     if (Bool_val(vusesens)) {
-#if SUNDIALS_LIB_VERSION > 301
+	flag = CVodeSetJacTimesBS(mem, which,
+			Bool_val(vhas_setup) ? bjacsetupfn_withsens : NULL,
+			Bool_val(vhas_times) ? bjactimesfn_withsens : NULL);
+	SCHECK_FLAG ("CVodeSetJacTimesBS", flag);
+    } else {
+	flag = CVodeSetJacTimesB(mem, which,
+			Bool_val(vhas_setup) ? bjacsetupfn : NULL,
+			Bool_val(vhas_times) ? bjactimesfn : NULL);
+	SCHECK_FLAG ("CVodeSetJacTimesB", flag);
+    }
+#elif 300 <= SUNDIALS_LIB_VERSION
+    if (Bool_val(vusesens)) {
+#if 301 < SUNDIALS_LIB_VERSION
 	flag = CVSpilsSetJacTimesBS(mem, which,
 			Bool_val(vhas_setup) ? bjacsetupfn_withsens : NULL,
 			Bool_val(vhas_times) ? bjactimesfn_withsens : NULL);
@@ -1403,7 +1485,7 @@ CAMLprim value sunml_cvodes_adj_spils_set_jac_times(value vparent,
     }
 #else
     if (Bool_val(vusesens)) {
-#if SUNDIALS_LIB_VERSION >= 260
+#if 260 <= SUNDIALS_LIB_VERSION
 	flag = CVSpilsSetJacTimesVecFnBS(mem, which,
 			Bool_val(vhas_times) ? bjactimesfn_withsens : NULL);
 	SCHECK_FLAG ("CVSpilsSetJacTimesVecFnBS", flag);
@@ -1561,12 +1643,41 @@ CAMLprim value sunml_cvodes_adj_dls_lapack_band (value vparent_which, value vsiz
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_cvodes_adj_set_linear_solver (value vparent_which,
+		    value vlsolv, value vojmat, value vhasjac, value vusesens)
+{
+    CAMLparam5(vparent_which, vlsolv, vojmat, vhasjac, vusesens);
+#if 400 <= SUNDIALS_LIB_VERSION
+    void *cvode_mem = CVODE_MEM_FROM_ML (Field(vparent_which, 0));
+    int which = Int_val(Field(vparent_which, 1));
+    SUNLinearSolver lsolv = LSOLVER_VAL(vlsolv);
+    SUNMatrix jmat = (vojmat == Val_none) ? NULL : MAT_VAL(Some_val(vojmat));
+    int flag;
+
+    flag = CVodeSetLinearSolverB(cvode_mem, which, lsolv, jmat);
+    CHECK_FLAG ("CVodeSetLinearSolverB", flag);
+
+    if (Bool_val (vhasjac)) {
+	if (Bool_val (vusesens)) {
+	    flag = CVodeSetJacFnBS(cvode_mem, which, bjacfn_withsens);
+	    SCHECK_FLAG("CVodeSetJacFnBS", flag);
+	} else {
+	    flag = CVodeSetJacFnB(cvode_mem, which, bjacfn_nosens);
+	    SCHECK_FLAG("CVodeSetJacFnB", flag);
+	}
+    }
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value sunml_cvodes_adj_dls_set_linear_solver (value vparent_which,
 						   value vlsolv, value vjmat,
 						   value vhasjac, value vusesens)
 {
     CAMLparam5(vparent_which, vlsolv, vjmat, vhasjac, vusesens);
-#if SUNDIALS_LIB_VERSION >= 300
+#if 300 <= SUNDIALS_LIB_VERSION && SUNDIALS_LIB_VERSION < 400
     void *cvode_mem = CVODE_MEM_FROM_ML (Field(vparent_which, 0));
     int which = Int_val(Field(vparent_which, 1));
     SUNLinearSolver lsolv = LSOLVER_VAL(vlsolv);
@@ -1597,7 +1708,7 @@ CAMLprim value sunml_cvodes_adj_spils_set_linear_solver (value vparent, value vw
 						     value vlsolv)
 {
     CAMLparam3(vparent, vwhich, vlsolv);
-#if SUNDIALS_LIB_VERSION >= 300
+#if 300 <= SUNDIALS_LIB_VERSION && SUNDIALS_LIB_VERSION < 400
     void *cvode_mem = CVODE_MEM_FROM_ML (vparent);
     int which = Int_val(vwhich);
     SUNLinearSolver lsolv = LSOLVER_VAL(vlsolv);
@@ -1614,16 +1725,18 @@ CAMLprim value sunml_cvodes_adj_spils_set_linear_solver (value vparent, value vw
 }
 
 CAMLprim value sunml_cvodes_adj_init_backward(value vparent, value weakref,
-					 value vargs, value vwithsens)
+					      value vargs, value vwithsens)
 {
     CAMLparam4(vparent, weakref, vargs, vwithsens);
     CAMLlocal2(r, vcvode_mem);
     CAMLlocal2(vlmm, viter);
-    int flag, lmm_c, iter_c, which;
+    int flag, lmm_c, which;
     void *parent = CVODE_MEM_FROM_ML(vparent);
 
     int lmm = Field(vargs, 0);
+#if SUNDIALS_LIB_VERSION < 400
     int iter = Field(vargs, 1);
+#endif
     realtype tb0 = Double_val(Field(vargs, 2));
     N_Vector initial_nv = NVEC_VAL(Field(vargs, 3));
 
@@ -1640,13 +1753,13 @@ CAMLprim value sunml_cvodes_adj_init_backward(value vparent, value weakref,
 	caml_failwith("Illegal lmm value.");
     }
 
-    if (Is_block(iter)) {
-	iter_c = CV_NEWTON;
-    } else {
-	iter_c = CV_FUNCTIONAL;
-    }
-
-    flag = CVodeCreateB(parent, lmm_c, iter_c, &which);
+#if SUNDIALS_LIB_VERSION >= 400
+    flag = CVodeCreateB(parent, lmm_c, &which);
+#else
+    flag = CVodeCreateB(parent, lmm_c,
+			Bool_val(iter) ? CV_NEWTON : CV_FUNCTIONAL),
+			&which);
+#endif
     if (flag != CV_SUCCESS) {
 	SCHECK_FLAG("CVodeCreateB", flag);
     }
@@ -2366,6 +2479,23 @@ CAMLprim value sunml_cvodes_quadsens_get_stats(value vdata)
 
 /* adjoint interface */
 
+CAMLprim value sunml_cvodes_adj_set_nonlinear_solver(value vparent,
+						     value vwhich, value vnlsolv)
+{
+    CAMLparam3(vparent, vwhich, vnlsolv);
+#if 400 <= SUNDIALS_LIB_VERSION
+    void *cvode_mem = CVODE_MEM_FROM_ML (vparent);
+    SUNNonlinearSolver nlsolv = NLSOLVER_VAL(vnlsolv);
+    int flag;
+
+    flag = CVodeSetNonlinearSolverB(cvode_mem, Int_val(vwhich), nlsolv);
+    CHECK_FLAG ("CVodeSetNonlinearSolverB", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value sunml_cvodes_adj_init(value vdata, value vnd, value vinterptype)
 {
     CAMLparam3(vdata, vnd, vinterptype);
@@ -2476,9 +2606,26 @@ CAMLprim value sunml_cvodes_adj_spils_sptfqmr (value vparent, value vwhich,
 CAMLprim value sunml_cvodes_adj_set_functional (value vparent, value vwhich)
 {
     CAMLparam2 (vparent, vwhich);
+#if SUNDIALS_LIB_VERSION < 400
     int flag = CVodeSetIterTypeB (CVODE_MEM_FROM_ML (vparent), Int_val(vwhich),
 				  CV_FUNCTIONAL);
     SCHECK_FLAG ("CVodeSetIterTypeB", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_cvodes_adj_set_newton (value vparent, value vwhich)
+{
+    CAMLparam2 (vparent, vwhich);
+#if SUNDIALS_LIB_VERSION < 400
+    int flag = CVodeSetIterTypeB (CVODE_MEM_FROM_ML (vparent), Int_val(vwhich),
+				  CV_NEWTON);
+    SCHECK_FLAG ("CVodeSetIterTypeB", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -2650,14 +2797,20 @@ SUNDIALS_EXPORT int CVSpilsSetEpsLinB(void *cvode_mem, int which,
 				      realtype eplifacB);
 #endif
 
-CAMLprim value sunml_cvodes_adj_spils_set_eps_lin(value vparent, value vwhich,
-					      value eplifac)
+CAMLprim value sunml_cvodes_adj_set_eps_lin(value vparent, value vwhich,
+					    value eplifac)
 {
     CAMLparam3(vparent, vwhich, eplifac);
 
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = CVodeSetEpsLinB(CVODE_MEM_FROM_ML(vparent), Int_val(vwhich),
+			       Double_val(eplifac));
+    SCHECK_FLAG("CVodeSetEpsLinB", flag);
+#else
     int flag = CVSpilsSetEpsLinB(CVODE_MEM_FROM_ML(vparent), Int_val(vwhich),
 				 Double_val(eplifac));
     SCHECK_FLAG("CVSpilsSetEpsLinB", flag);
+#endif
 
     CAMLreturn (Val_unit);
 }
