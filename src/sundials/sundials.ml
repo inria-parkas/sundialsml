@@ -420,6 +420,8 @@ module Matrix = Sundials_Matrix
 
 module LinearSolver = Sundials_LinearSolver
 
+module NonLinearSolver = Sundials_NonlinearSolver
+
 module Util = struct (* {{{ *)
 
   type error_details = {

@@ -280,11 +280,13 @@ module Constraint : sig (* {{{ *)
   val of_float : float -> t
 end (* }}} *)
 
-(** {2:matlin Matrices and Linear Solvers} *)
+(** {2:matlin Matrices, Linear Solvers, and Nonlinear Solvers} *)
 
 module Matrix = Sundials_Matrix
 
 module LinearSolver = Sundials_LinearSolver
+
+module NonLinearSolver = Sundials_NonlinearSolver
 
 (** {2:results Solver results and error reporting} *)
 

@@ -1,3 +1,12 @@
+Sundials/ML 4.1.0p0 (March 2020)
+--------------------------------
+Sundials/ML v4.1.0p0 adds support for v4.x of the Sundials Suite of
+numerical solvers.
+
+Notes:
+* New Sundials.Nonlinear module and corresponding changes to the Cvode, 
+  Cvodes, Ida, and Idas integrators.
+
 Sundials/ML 3.1.1p0 (July 2018)
 ------------------------------------
 Sundials/ML v3.1.1p0 adds support for v3.1.x of the Sundials Suite of
