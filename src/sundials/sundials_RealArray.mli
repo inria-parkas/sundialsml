@@ -23,6 +23,12 @@ val create : int -> t
 (** An array with no elements. *)
 val empty : t
 
+(** [get a i] returns the [i]th element of [a]. *)
+val get : t -> int -> float
+
+(** [set a i v] sets the [i]th element of [a] to [v]. *)
+val set : t -> int -> float -> unit
+
 (** [init n f] returns an array with [n] elements, with element [i]
     set to [f i]. *)
 val init : int -> (int -> float) -> t
