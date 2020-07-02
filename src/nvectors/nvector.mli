@@ -45,13 +45,33 @@ exception IncompatibleNvector
     @raise IncompatibleNvector The vectors are not compatible. *)
 val check : ('data, 'kind) t -> ('data, 'kind) t -> unit
 
-(** Generic vector operations.
+(** Vector type identifiers. *)
+type nvector_id =
+    Serial
+  | Parallel
+  | OpenMP
+  | Pthreads
+  | ParHyp
+  | PETSc
+  | CUDA
+  | RAJA
+  | OpenMPdev
+  | Custom
+
+(** Returns the vector type identifier.
+
+    @since 2.9.0 *)
+val get_id : ('data, 'kind) t -> nvector_id
+
+(** {2: Generic vector operations}
 
     @cvode <node7> Description of the NVECTOR module. *)
 
+open Sundials
+
 (** Basic operations underlying an nvector. *)
 module type NVECTOR_OPS =
-  sig
+  sig (* {{{ *)
     (** The vector type. *)
     type t
 
@@ -127,11 +147,95 @@ module type NVECTOR_OPS =
     (** [lrw, liw = n_vspace c] returns the number of realtype words [lrw] and
         integer words [liw] required to store [c]. *)
     val n_vspace : t -> int * int
-  end
+
+    (* Fused and array operations *)
+
+    (** [n_vlinearcombination c x z] calculates
+        {% $z_i = \sum_{j=0}^{n_v-1} c_j (x_j)_i$ %}.
+        The sum is over the {% $n_v$ %} elements of [c] and [x]. *)
+    val n_vlinearcombination : Sundials.RealArray.t -> t array -> t -> unit
+
+    (** [n_vscaleaddmulti c x y z] scales [x] and adds it to the
+        {% $n_v$ %} vectors in [y].
+        That is,
+        {% $\forall j=0,\ldots,n_v-1, (z_j)_i = c_j x_i + (y_j)_i}$ %}. *)
+    val n_vscaleaddmulti
+      : Sundials.RealArray.t -> t -> t array -> t array -> unit
+
+    (** [n_vdotprodmulti x y d] calculates the dot product of [x] with
+        the {% $n_v$ %} elements of [y].
+        That is, {% $\forall j=0,\ldots,n_v-1,
+                       d_j = \sum_{i=0}^{n-1} x_i (y_j)_i$ %}. *)
+    val n_vdotprodmulti      : t -> t array -> Sundials.RealArray.t -> unit
+
+    (* {2: Vector array operations} *)
+
+    (** [n_vlinearsumvectorarray a x b y z] computes the linear sum of the
+        {% $n_v$ %} elements of [x] and [y].
+        That is,
+        {% $\forall j=0,\ldots,n_v-1, (z_j)_i = a (x_j)_i + b (y_j)_i$ %}. *)
+    val n_vlinearsumvectorarray
+      : float -> t array -> float -> t array -> t array -> unit
+
+    (** [n_vscalevectorarray c x z] scales each of the {% $n_v$ %} vectors
+        of [x].
+        That is, {% $\forall j=0,\ldots,n_v-1, (z_j)_i = c_j (x_j)_i$ %}. *)
+    val n_vscalevectorarray
+      : Sundials.RealArray.t -> t array -> t array -> unit
+
+    (** [n_vconstvectorarray c x] sets all elements of the {% $n_v$ %} nvectors
+        in [x] to [c].
+        That is, {% $\forall j=0,\ldots,n_v, (z_j)_i = c$ %}. *)
+    val n_vconstvectorarray
+      : float -> t array -> unit
+
+    (** [n_vwrmsnormvectorarray x w m] computes the weighted root mean
+        square norm of the {% $n_v$ %} vectors in [x] and [w].
+        That is,
+        {% $\forall j=0,\ldots,n_v,
+            m_j = \left( \frac{1}{n}
+            \sum_{i=0}^{n-1} ((x_j)_i (w_j)_i)^2
+            \right)^\frac{1}{2}$ %},
+        where {% $n$ %} is the number of elements in each nvector. *)
+    val n_vwrmsnormvectorarray
+      : t array -> t array -> Sundials.RealArray.t -> unit
+
+    (** [n_vwrmsnormmaskvectorarray x w id m] computes the weighted root mean
+        square norm of the {% $n_v$ %} vectors in [x] and [w].
+        That is,
+        {% $\forall j=0,\ldots,n_v,
+            m_j = \left( \frac{1}{n}
+            \sum_{i=0}^{n-1} ((x_j)_i (w_j)_i H(\mathit{id}_i))^2
+            \right)^\frac{1}{2}$ %},
+        where {% $H(x) = \begin{cases} 1 & \text{if } x > 0 \\
+                                       0 & \text{otherwise}
+                         \end{cases}$ %} and
+        {% $n$ %} is the number of elements in each nvector. *)
+    val n_vwrmsnormmaskvectorarray
+      : t array -> t array -> t -> Sundials.RealArray.t -> unit
+
+    (** [n_vscaleaddmultivectorarray a x yy zz] scales and adds {% $n_v$ %}
+        vectors in [x] across the {% $n_s$ %} vector arrays in [yy].
+        That is, {% $\forall j=0,\ldots,n_s-1,
+                     \forall k=0,\ldots,n_v-1,
+          (\mathit{zz}_{j,k})_i = a_k (x_k)_i + (\mathit{yy}_{j,k})_i$ %}. *)
+    val n_vscaleaddmultivectorarray
+      : Sundials.RealArray.t -> t array -> t array array -> t array array -> unit
+
+    (** [n_vlinearcombinationvectorarray c xx z] computes the linear
+        combinations of {% $n_s$ %} vector arrays containing {% $n_v$ %}
+        vectors.
+        That is, {% $\forall k=0,\ldots,n_v-1,
+                      (z_k)_i = \sum_{j=0}^{n_s-1} c_j (x_{j,k})_i$ %}. *)
+    val n_vlinearcombinationvectorarray
+      : Sundials.RealArray.t -> t array array -> t array -> unit
+
+  end (* }}} *)
 
 (** Basic structure of a concrete nvector implementation module. *)
 module type NVECTOR =
-  sig
+  sig (* {{{ *)
+
     (** Classifies the internal structure of an nvector. *)
     type kind
 
@@ -142,12 +246,29 @@ module type NVECTOR =
     type t = (data, kind) nvector
 
     (** Wrap data in an nvector. *)
-    val wrap : data -> t
+    val wrap : ?with_fused_ops:bool -> data -> t
+
+    (** Selectively enable or disable fused and array operations. *)
+    val enable :
+         ?with_fused_ops                       : bool
+      -> ?with_linear_combination              : bool
+      -> ?with_scale_add_multi                 : bool
+      -> ?with_dot_prod_multi                  : bool
+      -> ?with_linear_sum_vector_array         : bool
+      -> ?with_scale_vector_array              : bool
+      -> ?with_const_vector_array              : bool
+      -> ?with_wrms_norm_vector_array          : bool
+      -> ?with_wrms_norm_mask_vector_array     : bool
+      -> ?with_scale_add_multi_vector_array    : bool
+      -> ?with_linear_combination_vector_array : bool
+      -> t
+      -> unit
 
     (** Standard operations over nvectors. *)
     module Ops : NVECTOR_OPS with type t = t
 
     (** Standard operations over the underlying data. *)
     module DataOps : NVECTOR_OPS with type t = data
-  end
+
+  end (* }}} *)
 

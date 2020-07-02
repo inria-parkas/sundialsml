@@ -6,6 +6,8 @@ numerical solvers.
 Notes:
 * New Sundials.Nonlinear module and corresponding changes to the Cvode, 
   Cvodes, Ida, and Idas integrators.
+* Support for the new fused and array nvector operations.
+* Testing of all OCaml nvector operations and several bug fixes.
 
 Sundials/ML 3.1.1p0 (July 2018)
 ------------------------------------

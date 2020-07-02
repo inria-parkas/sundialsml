@@ -13,7 +13,7 @@
 type kind
 type 'a t = ('a, kind) Nvector.t
 
-type 'a nvector_ops = {
+type 'a nvector_ops = { (* {{{ *)
   n_vcheck           : 'a -> 'a -> bool;
   n_vclone           : 'a -> 'a;
   n_vspace           : ('a -> (int * int)) option;
@@ -38,17 +38,108 @@ type 'a nvector_ops = {
   n_vwrmsnormmask    : ('a -> 'a -> 'a -> float) option;
   n_vconstrmask      : ('a -> 'a -> 'a -> bool) option;
   n_vminquotient     : ('a -> 'a -> float) option;
-}
+
+  n_vlinearcombination :
+    (Sundials.RealArray.t -> 'a array -> 'a -> unit) option;
+  n_vscaleaddmulti :
+    (Sundials.RealArray.t -> 'a -> 'a array -> 'a array -> unit) option;
+  n_vdotprodmulti : ('a -> 'a array -> Sundials.RealArray.t -> unit) option;
+
+  n_vlinearsumvectorarray :
+    (float -> 'a array -> float -> 'a array -> 'a array -> unit) option;
+  n_vscalevectorarray :
+    (Sundials.RealArray.t -> 'a array -> 'a array -> unit) option;
+  n_vconstvectorarray : (float -> 'a array -> unit) option;
+  n_vwrmsnormvectorarray :
+    ('a array -> 'a array -> Sundials.RealArray.t -> unit) option;
+  n_vwrmsnormmaskvectorarray :
+    ('a array -> 'a array -> 'a -> Sundials.RealArray.t -> unit) option;
+  n_vscaleaddmultivectorarray :
+    (Sundials.RealArray.t -> 'a array -> 'a array array -> 'a array array ->
+      unit) option;
+  n_vlinearcombinationvectorarray :
+    (Sundials.RealArray.t -> 'a array array -> 'a array -> unit) option;
+} (* }}} *)
+
+exception OperationNotSupported
+
+(* Selectively enable and disable fused and array operations *)
+external c_enablefusedops_custom                       : 'd t -> bool -> bool
+  = "sunml_nvec_custom_enablefusedops"
+external c_enablelinearcombination_custom              : 'd t -> bool -> bool
+  = "sunml_nvec_custom_enablelinearcombination"
+external c_enablescaleaddmulti_custom                  : 'd t -> bool -> bool
+  = "sunml_nvec_custom_enablescaleaddmulti"
+external c_enabledotprodmulti_custom                   : 'd t -> bool -> bool
+  = "sunml_nvec_custom_enabledotprodmulti"
+external c_enablelinearsumvectorarray_custom           : 'd t -> bool -> bool
+  = "sunml_nvec_custom_enablelinearsumvectorarray"
+external c_enablescalevectorarray_custom               : 'd t -> bool -> bool
+  = "sunml_nvec_custom_enablescalevectorarray"
+external c_enableconstvectorarray_custom               : 'd t -> bool -> bool
+  = "sunml_nvec_custom_enableconstvectorarray"
+external c_enablewrmsnormvectorarray_custom            : 'd t -> bool -> bool
+  = "sunml_nvec_custom_enablewrmsnormvectorarray"
+external c_enablewrmsnormmaskvectorarray_custom        : 'd t -> bool -> bool
+  = "sunml_nvec_custom_enablewrmsnormmaskvectorarray"
+external c_enablescaleaddmultivectorarray_custom       : 'd t -> bool -> bool
+  = "sunml_nvec_custom_enablescaleaddmultivectorarray"
+external c_enablelinearcombinationvectorarray_custom   : 'd t -> bool -> bool
+  = "sunml_nvec_custom_enablelinearcombinationvectorarray"
 
 external c_make_wrap : 'a nvector_ops -> 'a -> ('a -> bool) -> 'a t
     = "sunml_nvec_wrap_custom"
 
-let make_wrap ops v =
-  c_make_wrap ops v (ops.n_vcheck v)
+let do_enable f nv v =
+  match v with
+  | None -> ()
+  | Some v -> if not (f nv v) then raise OperationNotSupported
+
+let enable
+   ?with_fused_ops
+   ?with_linear_combination
+   ?with_scale_add_multi
+   ?with_dot_prod_multi
+   ?with_linear_sum_vector_array
+   ?with_scale_vector_array
+   ?with_const_vector_array
+   ?with_wrms_norm_vector_array
+   ?with_wrms_norm_mask_vector_array
+   ?with_scale_add_multi_vector_array
+   ?with_linear_combination_vector_array
+   nv
+  = do_enable c_enablefusedops_custom nv
+              with_fused_ops;
+    do_enable c_enablelinearcombination_custom nv
+              with_linear_combination;
+    do_enable c_enablescaleaddmulti_custom nv
+              with_scale_add_multi;
+    do_enable c_enabledotprodmulti_custom nv
+              with_dot_prod_multi;
+    do_enable c_enablelinearsumvectorarray_custom nv
+              with_linear_sum_vector_array;
+    do_enable c_enablescalevectorarray_custom nv
+              with_scale_vector_array;
+    do_enable c_enableconstvectorarray_custom nv
+              with_const_vector_array;
+    do_enable c_enablewrmsnormvectorarray_custom nv
+              with_wrms_norm_vector_array;
+    do_enable c_enablewrmsnormmaskvectorarray_custom nv
+              with_wrms_norm_mask_vector_array;
+    do_enable c_enablescaleaddmultivectorarray_custom nv
+              with_scale_add_multi_vector_array;
+    do_enable c_enablelinearcombinationvectorarray_custom nv
+              with_linear_combination_vector_array
+
+let make_wrap ops ?(with_fused_ops=false) v =
+  let nv = c_make_wrap ops v (ops.n_vcheck v) in
+  if with_fused_ops && not (c_enablefusedops_custom nv true)
+    then raise OperationNotSupported;
+  nv
 
 let add_tracing msg ops =
   let pr s = print_string msg; print_endline s in
-  let {
+  let { (* {{{ *)
       n_vcheck           = n_vcheck;
       n_vclone           = n_vclone;
       n_vspace           = n_vspace;
@@ -73,7 +164,19 @@ let add_tracing msg ops =
       n_vwrmsnormmask    = n_vwrmsnormmask;
       n_vconstrmask      = n_vconstrmask;
       n_vminquotient     = n_vminquotient;
-    } = ops
+
+      n_vlinearcombination            = n_vlinearcombination;
+      n_vscaleaddmulti                = n_vscaleaddmulti;
+      n_vdotprodmulti                 = n_vdotprodmulti;
+
+      n_vlinearsumvectorarray         = n_vlinearsumvectorarray;
+      n_vscalevectorarray             = n_vscalevectorarray;
+      n_vconstvectorarray             = n_vconstvectorarray;
+      n_vwrmsnormvectorarray          = n_vwrmsnormvectorarray;
+      n_vwrmsnormmaskvectorarray      = n_vwrmsnormmaskvectorarray;
+      n_vscaleaddmultivectorarray     = n_vscaleaddmultivectorarray;
+      n_vlinearcombinationvectorarray = n_vlinearcombinationvectorarray;
+    } = ops (* }}} *)
   in
   let fo f f' = match f with None -> None | Some f -> Some (f' f) in
 
@@ -84,6 +187,7 @@ let add_tracing msg ops =
       pr "nvcheck-check";
       check y
   and tr_nvclone a = pr "nvclone"; n_vclone a
+  (* ... {{{ *)
   and tr_nvspace = fo n_vspace (fun f -> fun a -> (pr "nvspace"; f a))
   and tr_nvlinearsum a x b y z = pr "nvlinearsum"; n_vlinearsum a x b y z
   and tr_nvconst c z = pr "nvconst"; n_vconst c z
@@ -108,8 +212,42 @@ let add_tracing msg ops =
     fo n_vconstrmask (fun f -> fun c x m -> pr "nvconstrmask"; f c x m)
   and tr_nvminquotient =
     fo n_vminquotient (fun f -> fun n d -> pr "nvminquotient"; f n d)
+
+  and tr_nvlinearcombination =
+    fo n_vlinearcombination
+    (fun f -> fun c x z -> pr "nvlinearcombination"; f c x z)
+  and tr_nvscaleaddmulti =
+    fo n_vscaleaddmulti
+    (fun f -> fun c x y z -> pr "nvscaleaddmulti"; f c x y z)
+  and tr_nvdotprodmulti =
+    fo n_vdotprodmulti
+    (fun f -> fun x y d -> pr "nvdotprodmulti"; f x y d)
+
+  and tr_nvlinearsumvectorarray =
+    fo n_vlinearsumvectorarray
+    (fun f -> fun a x b y z -> pr "nvlinearsumvectorarray"; f a x b y z)
+  and tr_nvscalevectorarray =
+    fo n_vscalevectorarray
+    (fun f -> fun c x z -> pr "nvscalevectorarray"; f c x z)
+  and tr_nvconstvectorarray =
+    fo n_vconstvectorarray
+    (fun f -> fun c x -> pr "nvconstvectorarray"; f c x)
+  and tr_nvwrmsnormvectorarray =
+    fo n_vwrmsnormvectorarray
+    (fun f -> fun x w m -> pr "nvwrmsnormvectorarray"; f x w m)
+  and tr_nvwrmsnormmaskvectorarray =
+    fo n_vwrmsnormmaskvectorarray
+    (fun f -> fun x w m -> pr "nvwrmsnormmaskvectorarray"; f x w m)
+  and tr_nvscaleaddmultivectorarray =
+    fo n_vscaleaddmultivectorarray
+    (fun f -> fun a x yy zz -> pr "nvscaleaddmultivectorarray"; f a x yy zz)
+  and tr_nvlinearcombinationvectorarray =
+    fo n_vlinearcombinationvectorarray
+    (fun f -> fun c xx z -> pr "nvlinearcombinationvectorarray"; f c xx z)
+  (* }}} *)
   in
   {
+      (* {{{ *)
       n_vcheck           = tr_nvcheck;
       n_vclone           = tr_nvclone;
       n_vspace           = tr_nvspace;
@@ -134,9 +272,20 @@ let add_tracing msg ops =
       n_vwrmsnormmask    = tr_nvwrmsnormmask;
       n_vconstrmask      = tr_nvconstrmask;
       n_vminquotient     = tr_nvminquotient;
-   }
 
-exception OperationNotSupported
+      n_vlinearcombination            = tr_nvlinearcombination;
+      n_vscaleaddmulti                = tr_nvscaleaddmulti;
+      n_vdotprodmulti                 = tr_nvdotprodmulti;
+
+      n_vlinearsumvectorarray         = tr_nvlinearsumvectorarray;
+      n_vscalevectorarray             = tr_nvscalevectorarray;
+      n_vconstvectorarray             = tr_nvconstvectorarray;
+      n_vwrmsnormvectorarray          = tr_nvwrmsnormvectorarray;
+      n_vwrmsnormmaskvectorarray      = tr_nvwrmsnormmaskvectorarray;
+      n_vscaleaddmultivectorarray     = tr_nvscaleaddmultivectorarray;
+      n_vlinearcombinationvectorarray = tr_nvlinearcombinationvectorarray;
+      (* }}} *)
+  }
 
 let uv = Nvector.unwrap
 
@@ -150,8 +299,9 @@ module MakeOps = functor (A : sig
     type t = (data, kind) Nvector.t
 
     let wrap = make_wrap A.ops
+    let enable = enable
 
-    module Ops = struct
+    module Ops = struct (* {{{ *)
       type t = (data, kind) Nvector.t
 
       let n_vclone n = wrap (A.ops.n_vclone (uv n))
@@ -170,32 +320,94 @@ module MakeOps = functor (A : sig
       let n_vcompare c x z = A.ops.n_vcompare c (uv x) (uv z)
       let n_vinvtest x z = A.ops.n_vinvtest (uv x) (uv z)
 
-      let n_vwl2norm = match A.ops.n_vwl2norm with
-                       | None -> raise OperationNotSupported
-                       | Some f -> (fun x w -> f (uv x) (uv w))
+      let n_vwl2norm =
+        match A.ops.n_vwl2norm with
+        | None -> (fun x w -> raise OperationNotSupported)
+        | Some f -> (fun x w -> f (uv x) (uv w))
 
-      let n_vl1norm = match A.ops.n_vl1norm with
-                      | None -> raise OperationNotSupported
-                      | Some f -> (fun x -> f (uv x))
+      let n_vl1norm =
+        match A.ops.n_vl1norm with
+        | None -> (fun x -> raise OperationNotSupported)
+        | Some f -> (fun x -> f (uv x))
 
-      let n_vwrmsnormmask = match A.ops.n_vwrmsnormmask with
-                            | None -> raise OperationNotSupported
-                            | Some f -> (fun x w id -> f (uv x) (uv w) (uv id))
+      let n_vwrmsnormmask =
+        match A.ops.n_vwrmsnormmask with
+        | None -> (fun x w id -> raise OperationNotSupported)
+        | Some f -> (fun x w id -> f (uv x) (uv w) (uv id))
 
-      let n_vconstrmask = match A.ops.n_vconstrmask with
-                          | None -> raise OperationNotSupported
-                          | Some f -> (fun c x m -> f (uv c) (uv x) (uv m))
+      let n_vconstrmask =
+        match A.ops.n_vconstrmask with
+        | None -> (fun c x m -> raise OperationNotSupported)
+        | Some f -> (fun c x m -> f (uv c) (uv x) (uv m))
 
-      let n_vminquotient = match A.ops.n_vminquotient with
-                           | None -> raise OperationNotSupported
-                           | Some f -> (fun num denom -> f (uv num) (uv denom))
+      let n_vminquotient =
+        match A.ops.n_vminquotient with
+        | None -> (fun num denom -> raise OperationNotSupported)
+        | Some f -> (fun num denom -> f (uv num) (uv denom))
 
-      let n_vspace = match A.ops.n_vspace with
-                     | None -> raise OperationNotSupported
-                     | Some f -> (fun x -> f (uv x))
-    end
+      let n_vspace =
+        match A.ops.n_vspace with
+        | None -> (fun x -> raise OperationNotSupported)
+        | Some f -> (fun x -> f (uv x))
 
-    module DataOps = struct
+      let n_vlinearcombination =
+        match A.ops.n_vlinearcombination with
+        | None -> (fun c x z -> raise OperationNotSupported)
+        | Some f -> (fun c x z -> f c (Array.map uv x) (uv z))
+
+      let n_vscaleaddmulti =
+        match A.ops.n_vscaleaddmulti with
+        | None -> (fun c x y z -> raise OperationNotSupported)
+        | Some f ->
+            (fun c x y z -> f c (uv x) (Array.map uv y) (Array.map uv z))
+
+      let n_vdotprodmulti =
+        match A.ops.n_vdotprodmulti with
+        | None -> (fun x y d -> raise OperationNotSupported)
+        | Some f -> (fun x y d -> f (uv x) (Array.map uv y) d)
+
+      let n_vlinearsumvectorarray =
+        match A.ops.n_vlinearsumvectorarray with
+        | None -> (fun a x b y z -> raise OperationNotSupported)
+        | Some f -> (fun a x b y z -> f a (Array.map uv x) b (Array.map uv y)
+                                          (Array.map uv z))
+
+      let n_vscalevectorarray =
+        match A.ops.n_vscalevectorarray with
+        | None -> (fun c x z -> raise OperationNotSupported)
+        | Some f -> (fun c x z -> f c (Array.map uv x) (Array.map uv z))
+
+      let n_vconstvectorarray =
+        match A.ops.n_vconstvectorarray with
+        | None -> (fun c x -> raise OperationNotSupported)
+        | Some f -> (fun c x -> f c (Array.map uv x))
+
+      let n_vwrmsnormvectorarray =
+        match A.ops.n_vwrmsnormvectorarray with
+        | None -> (fun x w m -> raise OperationNotSupported)
+        | Some f -> (fun x w m -> f (Array.map uv x) (Array.map uv w) m)
+
+      let n_vwrmsnormmaskvectorarray =
+        match A.ops.n_vwrmsnormmaskvectorarray with
+        | None -> (fun x w id m -> raise OperationNotSupported)
+        | Some f -> (fun x w id m -> f (Array.map uv x) (Array.map uv w)
+                                       (uv id) m)
+
+      let n_vscaleaddmultivectorarray =
+        match A.ops.n_vscaleaddmultivectorarray with
+        | None -> (fun a x yy zz -> raise OperationNotSupported)
+        | Some f -> (fun a x yy zz -> f a (Array.map uv x)
+                                        (Array.map (Array.map uv) yy)
+                                        (Array.map (Array.map uv) zz))
+
+      let n_vlinearcombinationvectorarray =
+        match A.ops.n_vlinearcombinationvectorarray with
+        | None -> (fun c xx z -> raise OperationNotSupported)
+        | Some f -> (fun c xx z -> f c (Array.map (Array.map uv) xx)
+                                       (Array.map uv z))
+    end (* }}} *)
+
+    module DataOps = struct (* {{{ *)
       type t = data
 
       let n_vclone        = A.ops.n_vclone
@@ -214,24 +426,85 @@ module MakeOps = functor (A : sig
       let n_vcompare      = A.ops.n_vcompare
       let n_vinvtest      = A.ops.n_vinvtest
 
-      let n_vwl2norm      = match A.ops.n_vwl2norm with
-                            | None -> raise OperationNotSupported
-                            | Some f -> f
-      let n_vl1norm       = match A.ops.n_vl1norm with
-                            | None -> raise OperationNotSupported
-                            | Some f -> f
-      let n_vwrmsnormmask = match A.ops.n_vwrmsnormmask with
-                            | None -> raise OperationNotSupported
-                            | Some f -> f
-      let n_vconstrmask   = match A.ops.n_vconstrmask with
-                            | None -> raise OperationNotSupported
-                            | Some f -> f
-      let n_vminquotient  = match A.ops.n_vminquotient with
-                            | None -> raise OperationNotSupported
-                            | Some f -> f
-      let n_vspace        = match A.ops.n_vspace with
-                            | None -> raise OperationNotSupported
-                            | Some f -> f
-    end
+      let n_vwl2norm =
+        match A.ops.n_vwl2norm with
+        | None -> (fun x w -> raise OperationNotSupported)
+        | Some f -> f
+
+      let n_vl1norm =
+        match A.ops.n_vl1norm with
+        | None -> (fun x -> raise OperationNotSupported)
+        | Some f -> f
+
+      let n_vwrmsnormmask =
+        match A.ops.n_vwrmsnormmask with
+        | None -> (fun x w id -> raise OperationNotSupported)
+        | Some f -> f
+
+      let n_vconstrmask =
+        match A.ops.n_vconstrmask with
+        | None -> (fun c x m -> raise OperationNotSupported)
+        | Some f -> f
+
+      let n_vminquotient =
+        match A.ops.n_vminquotient with
+        | None -> (fun num denom -> raise OperationNotSupported)
+        | Some f -> f
+
+      let n_vspace =
+        match A.ops.n_vspace with
+        | None -> (fun x -> raise OperationNotSupported)
+        | Some f -> f
+
+      let n_vlinearcombination =
+        match A.ops.n_vlinearcombination with
+        | None -> (fun c x z -> raise OperationNotSupported)
+        | Some f -> f
+
+      let n_vscaleaddmulti =
+        match A.ops.n_vscaleaddmulti with
+        | None -> (fun c x y z -> raise OperationNotSupported)
+        | Some f -> f
+
+      let n_vdotprodmulti =
+        match A.ops.n_vdotprodmulti with
+        | None -> (fun x y d -> raise OperationNotSupported)
+        | Some f -> f
+
+      let n_vlinearsumvectorarray =
+        match A.ops.n_vlinearsumvectorarray with
+        | None -> (fun a x b y z -> raise OperationNotSupported)
+        | Some f -> f
+
+      let n_vscalevectorarray =
+        match A.ops.n_vscalevectorarray with
+        | None -> (fun c x z -> raise OperationNotSupported)
+        | Some f -> f
+
+      let n_vconstvectorarray =
+        match A.ops.n_vconstvectorarray with
+        | None -> (fun c x -> raise OperationNotSupported)
+        | Some f -> f
+
+      let n_vwrmsnormvectorarray =
+        match A.ops.n_vwrmsnormvectorarray with
+        | None -> (fun x w m -> raise OperationNotSupported)
+        | Some f -> f
+
+      let n_vwrmsnormmaskvectorarray =
+        match A.ops.n_vwrmsnormmaskvectorarray with
+        | None -> (fun x w id m -> raise OperationNotSupported)
+        | Some f -> f
+
+      let n_vscaleaddmultivectorarray =
+        match A.ops.n_vscaleaddmultivectorarray with
+        | None -> (fun a x yy zz -> raise OperationNotSupported)
+        | Some f -> f
+
+      let n_vlinearcombinationvectorarray =
+        match A.ops.n_vlinearcombinationvectorarray with
+        | None -> (fun c xx z -> raise OperationNotSupported)
+        | Some f -> f
+    end (* }}} *)
   end
 

@@ -24,7 +24,13 @@ module Nvector_openmp_ops : Test_nvector.NVECTOR_OPS_EXT
   =
 struct
   include Nvector_openmp.Ops
+  let get_id = Nvector.get_id
+  type data = Sundials.RealArray.t
   let n_vgetarray = Nvector_openmp.unwrap
+  let get = Sundials.RealArray.get
+  let set = Sundials.RealArray.set
+  let max_time x t = t
+  let sync_device () = ()
 end
 
 module Test = Test_nvector.Test (Nvector_openmp_ops)
@@ -44,8 +50,8 @@ let main () =
     exit (-1)
   );
 
-  let veclen = int_of_string Sys.argv.(1) in
-  if veclen <= 0 then (
+  let length = int_of_string Sys.argv.(1) in
+  if length <= 0 then (
     printf "ERROR: length of vector must be a positive integer \n";
     exit (-1);
   );
@@ -57,52 +63,117 @@ let main () =
   );
 
   let print_timing = int_of_string Sys.argv.(3) in
-  let _ = Test.set_timing (print_timing <> 0) in
+  let _ = Test.set_timing (print_timing <> 0) true in
 
-  printf "\nRunning with vector length %d \n \n" veclen;
-  printf "\nRunning with number of threads %d \n \n" num_threads;
+  if Test_nvector.compat_ge400
+  then printf "Testing the OpenMP N_Vector \n\
+               Vector length %d \n\
+               Number of threads %d \n\n" length num_threads
+  else printf "\nRunning with vector length %d \n \n\
+               \nRunning with number of threads %d \n \n" length num_threads;
 
   (* Create vectors *)
-  let w = Nvector_openmp.make num_threads veclen 0.0
-  and x = Nvector_openmp.make num_threads veclen 0.0
-  and y = Nvector_openmp.make num_threads veclen 0.0
-  and z = Nvector_openmp.make num_threads veclen 0.0
+  let w = Nvector_openmp.make num_threads length 0.0
+  and x = Nvector_openmp.make num_threads length 0.0
+  and y = Nvector_openmp.make num_threads length 0.0
+  and z = Nvector_openmp.make num_threads length 0.0
   in
 
   (* NVector Tests *)
-  fails += Test.test_n_vsetarraypointer w veclen 0;
-  fails += Test.test_n_vgetarraypointer x veclen 0;
-  fails += Test.test_n_vlinearsum x y z veclen 0;
-  fails += Test.test_n_vconst x veclen 0;
-  fails += Test.test_n_vprod x y z veclen 0;
-  fails += Test.test_n_vdiv x y z veclen 0;
-  fails += Test.test_n_vscale x z veclen 0;
-  fails += Test.test_n_vabs x z veclen 0;
-  fails += Test.test_n_vinv x z veclen 0;
-  fails += Test.test_n_vaddconst x z veclen 0;
-  fails += Test.test_n_vdotprod x y veclen veclen 0;
-  fails += Test.test_n_vmaxnorm x veclen 0;
-  fails += Test.test_n_vwrmsnorm x y veclen 0;
-  fails += Test.test_n_vwrmsnormmask x y z veclen veclen 0;
-  fails += Test.test_n_vmin x veclen 0;
-  fails += Test.test_n_vwl2norm x y veclen veclen 0;
-  fails += Test.test_n_vl1norm x veclen veclen 0;
-  fails += Test.test_n_vcompare x z veclen 0;
-  fails += Test.test_n_vinvtest x z veclen 0;
-  fails += Test.test_n_vconstrmask x y z veclen 0;
-  fails += Test.test_n_vminquotient x y veclen 0;
-  fails += Test.test_n_vclonevectorarray 5 x veclen 0;
-  fails += Test.test_n_vcloneemptyvectorarray 5 x 0;
-  fails += Test.test_n_vcloneempty x 0;
-  fails += Test.test_n_vclone x veclen 0;
+  if Test_nvector.compat_ge400 then begin
+    fails += Test.test_n_vgetvectorid x Nvector.OpenMP 0;
+    fails += Test.test_n_vcloneempty x 0;
+    fails += Test.test_n_vclone x length 0;
+    fails += Test.test_n_vcloneemptyvectorarray 5 x 0;
+    fails += Test.test_n_vclonevectorarray 5 x length 0
+  end;
+  fails += Test.test_n_vsetarraypointer w length 0;
+  fails += Test.test_n_vgetarraypointer x length 0;
+  if Test_nvector.compat_ge400 then begin
+    printf "\nTesting standard vector operations:\n\n";
+    fails += Test.test_n_vconst x length 0
+  end;
+  fails += Test.test_n_vlinearsum x y z length 0;
+  if not Test_nvector.compat_ge400 then begin
+    fails += Test.test_n_vconst x length 0;
+  end;
+  fails += Test.test_n_vprod x y z length 0;
+  fails += Test.test_n_vdiv x y z length 0;
+  fails += Test.test_n_vscale x z length 0;
+  fails += Test.test_n_vabs x z length 0;
+  fails += Test.test_n_vinv x z length 0;
+  fails += Test.test_n_vaddconst x z length 0;
+  fails += Test.test_n_vdotprod x y length length 0;
+  fails += Test.test_n_vmaxnorm x length 0;
+  fails += Test.test_n_vwrmsnorm x y length 0;
+  if Test_nvector.compat_ge400
+  then fails += Test.test_n_vwrmsnormmask x y z length length 0
+  else fails += Test.test_n_vwrmsnormmask_lt400 x y z length length 0;
+  fails += Test.test_n_vmin x length 0;
+  fails += Test.test_n_vwl2norm x y length length 0;
+  fails += Test.test_n_vl1norm x length length 0;
+  fails += Test.test_n_vcompare x z length 0;
+  fails += Test.test_n_vinvtest x z length 0;
+  fails += Test.test_n_vconstrmask x y z length 0;
+  fails += Test.test_n_vminquotient x y length 0;
+  if not Test_nvector.compat_ge400 then begin
+    fails += Test.test_n_vclonevectorarray 5 x length 0;
+    fails += Test.test_n_vcloneemptyvectorarray 5 x 0;
+    fails += Test.test_n_vcloneempty x 0;
+    fails += Test.test_n_vclone x length 0;
+  end;
+
+  if Test_nvector.compat_ge400 then begin
+    (* Fused and vector array operations tests (disabled) *)
+    printf "\nTesting fused and vector array operations (disabled):\n\n";
+
+    let u = Nvector_openmp.make ~with_fused_ops:false num_threads length 0.0 in
+
+    (* fused operations *)
+    fails += Test.test_n_vlinearcombination u length 0;
+    fails += Test.test_n_vscaleaddmulti u length 0;
+    fails += Test.test_n_vdotprodmulti u length length 0;
+
+    (* vector array operations *)
+    fails += Test.test_n_vlinearsumvectorarray u length 0;
+    fails += Test.test_n_vscalevectorarray u length 0;
+    fails += Test.test_n_vconstvectorarray u length 0;
+    fails += Test.test_n_vwrmsnormvectorarray u length 0;
+    fails += Test.test_n_vwrmsnormmaskvectorarray u length length 0;
+    fails += Test.test_n_vscaleaddmultivectorarray u length 0;
+    fails += Test.test_n_vlinearcombinationvectorarray u length 0
+  end;
+
+  if Test_nvector.compat_ge400 then begin
+    (* Fused and vector array operations tests (enabled) *)
+    printf "\nTesting fused and vector array operations (enabled):\n\n";
+
+    let u = Nvector_openmp.make ~with_fused_ops:true num_threads length 0.0 in
+
+    (* fused operations *)
+    fails += Test.test_n_vlinearcombination u length 0;
+    fails += Test.test_n_vscaleaddmulti u length 0;
+    fails += Test.test_n_vdotprodmulti u length length 0;
+
+    (* vector array operations *)
+    fails += Test.test_n_vlinearsumvectorarray u length 0;
+    fails += Test.test_n_vscalevectorarray u length 0;
+    fails += Test.test_n_vconstvectorarray u length 0;
+    fails += Test.test_n_vwrmsnormvectorarray u length 0;
+    fails += Test.test_n_vwrmsnormmaskvectorarray u length length 0;
+    fails += Test.test_n_vscaleaddmultivectorarray u length 0;
+    fails += Test.test_n_vlinearcombinationvectorarray u length 0
+  end;
 
   (* Free vectors *)
 
   (* Print results *)
   if !fails <> 0 then
-    printf "FAIL: NVector module failed %i tests \n \n" !fails
+    printf "FAIL: NVector module failed %d tests \n%s\n" !fails
+      (if Test_nvector.compat_ge400 then "" else " ")
   else
-    printf"SUCCESS: NVector module passed all tests \n \n"
+    printf "SUCCESS: NVector module passed all tests \n%s\n"
+      (if Test_nvector.compat_ge400 then "" else " ")
 
 (* Check environment variables for extra arguments.  *)
 let reps =

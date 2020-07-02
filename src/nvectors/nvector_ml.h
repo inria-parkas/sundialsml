@@ -144,6 +144,7 @@
 
 */
 
+/* must match the fields of Nvector_custom.nvector_ops */
 enum nvector_ops_tag {
   NVECTOR_OPS_NVCHECK = 0,
   NVECTOR_OPS_NVCLONE,
@@ -169,7 +170,34 @@ enum nvector_ops_tag {
   NVECTOR_OPS_NVWRMSNORMMASK,
   NVECTOR_OPS_NVCONSTRMASK,
   NVECTOR_OPS_NVMINQUOTIENT,
+
+  NVECTOR_OPS_NVLINEARCOMBINATION,
+  NVECTOR_OPS_NVSCALEADDMULTI,
+  NVECTOR_OPS_NVDOTPRODMULTI,
+
+  NVECTOR_OPS_NVLINEARSUMVECTORARRAY,
+  NVECTOR_OPS_NVSCALEVECTORARRAY,
+  NVECTOR_OPS_NVCONSTVECTORARRAY,
+  NVECTOR_OPS_NVWRMSNORMVECTORARRAY,
+  NVECTOR_OPS_NVWRMSNORMMASKVECTORARRAY,
+  NVECTOR_OPS_NVSCALEADDMULTIVECTORARRAY,
+  NVECTOR_OPS_NVLINEARCOMBINATIONVECTORARRAY,
+
   NVECTOR_OPS_SIZE
+};
+
+/* must match the declaration of Nvector.nvector_id */
+enum nvector_id_tag {
+  VARIANT_NVECTOR_ID_TAG_SERIAL	    = 0,
+  VARIANT_NVECTOR_ID_TAG_PARALLEL,
+  VARIANT_NVECTOR_ID_TAG_OPENMP,
+  VARIANT_NVECTOR_ID_TAG_PTHREADS,
+  VARIANT_NVECTOR_ID_TAG_PARHYP,
+  VARIANT_NVECTOR_ID_TAG_PETSC,
+  VARIANT_NVECTOR_ID_TAG_CUDA,
+  VARIANT_NVECTOR_ID_TAG_RAJA,
+  VARIANT_NVECTOR_ID_TAG_OPENMPDEV,
+  VARIANT_NVECTOR_ID_TAG_CUSTOM,
 };
 
 struct cnvec {
@@ -190,6 +218,11 @@ void sunml_clone_cnvec_ops(N_Vector dst, N_Vector src);
 CAMLprim value sunml_alloc_caml_nvec(N_Vector nv, void (*finalizer)(value));
 void sunml_free_cnvec(N_Vector nv);
 CAMLprim void sunml_finalize_caml_nvec(value vnv);
+
+#if 400 <= SUNDIALS_LIB_VERSION
+int sunml_arrays_of_nvectors(N_Vector *r[], int n, ...);
+void sunml_arrays_of_nvectors2(int* nrows, int *ncols, N_Vector **vv[], int n, ...);
+#endif
 
 N_Vector *sunml_nvector_array_alloc(value vtable);
 void sunml_nvector_array_free(N_Vector *nvarr);

@@ -34,12 +34,17 @@ type 'd t = ('d, kind) Nvector.t
     reference that loops back to the enclosing nvector. Such loops
     will not be properly garbage collected.
 
-    nvector operations are not allowed to throw exceptions, as they
+    Nvector operations are not allowed to throw exceptions, as they
     cannot be propagated reliably.  Uncaught exceptions will be
     discarded with a warning.
 
+    Note that the fused and array custom nvector operations currently
+    reallocate fresh arrays at each call. There is thus a tradeoff between
+    the speed advantages of providing a single callback that handles many
+    values at once but allocates more heap memory and multiple callbacks.
+
     @cvode <node7#s:nvector> _generic_N_Vector_Ops *)
-type 'd nvector_ops = {
+type 'd nvector_ops = { (* {{{ *)
   n_vcheck           : 'd -> 'd ->  bool;
   (** Returns [true] if the vectors are compatible. See {!Nvector.check}. *)
 
@@ -120,18 +125,120 @@ type 'd nvector_ops = {
   (** [n_vminquotient num denom] returns the minimum of [num(i) / denom(i)].
       Zero [denom] elements are skipped. If no such quotients are found,
       then {{!Sundials_Config.big_real}Config.big_real} is returned. *)
-}
 
-(** [make_wrap ops] takes a set of operations on the data
+  (* optional fused vector operations *)
+
+  n_vlinearcombination :
+    (Sundials.RealArray.t -> 'd array -> 'd -> unit) option;
+  (** [n_vlinearcombination c x z] calculates
+      [z(i) = c(0)*x(0)(i) + ... + c(nv-1)*x(nv-1)(i)] for the [nv] elements
+      of [c] and [x], where [i] ranges over the nvector elements. *)
+
+  n_vscaleaddmulti :
+    (Sundials.RealArray.t -> 'd -> 'd array -> 'd array -> unit) option;
+  (** [n_vscaleaddmulti c x y z] calculates
+      [z(j)(i) = c(j)*x(i) + y(j)(i)], where [j] ranges over the array
+      elements, and [i] ranges over the nvector elements. *)
+
+  n_vdotprodmulti :
+    ('d -> 'd array -> Sundials.RealArray.t -> unit) option;
+  (** [n_vdotprodmulti x y d] calculates
+      [d(j) = x(0)*y(j)(0) + ... + x(n-1)*y(j)(n-1)] for the [n] elements in
+      the nvectors and where [j] ranges over the array elements. *)
+
+  (* vector array operations *)
+
+  n_vlinearsumvectorarray :
+    (float -> 'd array -> float -> 'd array -> 'd array -> unit) option;
+  (** [n_vlinearsumvectorarray a x b y z] calculates
+      [z(j)(i) = a*x(j)(i) + b*y(j)(i)], where [j] ranges over the array
+      elements and [i] ranges over the nvector elements. *)
+
+  n_vscalevectorarray :
+    (Sundials.RealArray.t -> 'd array -> 'd array -> unit) option;
+  (** [n_vscalevectorarray c x z] calculates [z(j)(i) = c(j)*x(j)(i)],
+      where [j] ranges over the array elements and [i] ranges over the nvector
+      elements. *)
+
+  n_vconstvectorarray :
+    (float -> 'd array -> unit) option;
+  (** [n_vconstvectorarray c x] sets [z(j)(i) = c],
+      where [j] ranges over the array elements and [i] ranges over the
+      nvector elements. *)
+
+  n_vwrmsnormvectorarray :
+    ('d array -> 'd array -> Sundials.RealArray.t -> unit) option;
+  (** [n_vwrmsnormvectorarray x w m] calculates
+      [m(j) = sqrt(((x(j)(0)*w(j)(0))^2 + ... + (x(j)(n-1)*w(j)(n-1))^2)/n)]
+      for the [n] elements in the nvectors and where [j] ranges over the array
+      elements. *)
+
+  n_vwrmsnormmaskvectorarray :
+    ('d array -> 'd array -> 'd -> Sundials.RealArray.t -> unit) option;
+  (** [n_vwrmsnormvectorarray x w id m] calculates
+      [m(j) = sqrt(((x(j)(0)*w(j)(0)*H(id(o)))^2 + ... + (x(j)(n-1)*w(j)(n-1)*H(id(n-1))^2)/n)]
+      for the [n] elements in the nvectors, where [j] ranges over the array
+      elements, and where [H(x) = if x > 0 then 1. else 0]. *)
+
+  n_vscaleaddmultivectorarray :
+    (Sundials.RealArray.t -> 'd array -> 'd array array -> 'd array array ->
+      unit) option;
+  (** [n_vscaleaddmultivectorarray a x yy zz] calculates
+      [zz(j)(k)(i) = a(k)*x(k)(i) + yy(j)(k)(i)] where [j] and [k] range over
+      the arrays and [i] ranges over the nvector elements. *)
+
+  n_vlinearcombinationvectorarray :
+    (Sundials.RealArray.t -> 'd array array -> 'd array -> unit) option;
+  (** [n_vlinearcombinationvectorarray c xx z] calculates
+      [z(k)(i) = c(0)*x(0)(k)(i) + ... + c(ns)*x(ns)(k)(i)] where [k] ranges
+      over the array elements, [ns] is the number of arrays in [xx], and
+      [i] ranges over the nvector elements. *)
+} (* }}} *)
+
+(** Instantiation of custom nvectors.
+    [make_wrap ops] takes set a set of operations on the data
     type ['d] and yields a function for lifting values of type ['d]
     into ['d] nvectors which can be passed to a solver. *)
-val make_wrap  : 'd nvector_ops -> 'd -> 'd t
+val make_wrap  : 'd nvector_ops -> ?with_fused_ops:bool -> 'd -> 'd t
 
-(** [add_tracing p ops] modifies a set of {!nvector_ops} so that
+(** Add tracing to custom operations.
+    [add_tracing p ops] modifies a set of {!nvector_ops} so that
     a message, prefixed by [p], is printed each time an operation
     is called. This function is intended to help debug sets of
     vector operations. *)
 val add_tracing     : string -> 'd nvector_ops -> 'd nvector_ops
+
+(** Selectively enable or disable fused and array operations.
+    The [with_fused_ops] argument enables or disables all such operations.
+
+    @since 4.0.0
+    @cvode <node5> N_VEnableFusedOps_Serial
+    @cvode <node5> N_VEnableLinearCombination_Serial
+    @cvode <node5> N_VEnableScaleAddMulti_Serial
+    @cvode <node5> N_VEnableDotProdMulti_Serial
+    @cvode <node5> N_VEnableLinearSumVectorArray_Serial
+    @cvode <node5> N_VEnableScaleVectorArray_Serial
+    @cvode <node5> N_VEnableConstVectorArray_Serial
+    @cvode <node5> N_VEnableWrmsNormVectorArray_Serial
+    @cvode <node5> N_VEnableWrmsNormMaskVectorArray_Serial
+    @cvode <node5> N_VEnableScaleAddMultiVectorArray_Serial
+    @cvode <node5> N_VEnableLinearCombinationVectorArray_Serial
+    @raise OperationNotSupported The requested functionality has not been provided.
+    @raise Config.NotImplementedBySundialsVersion Fused and array operations not available. *)
+val enable :
+     ?with_fused_ops                       : bool
+  -> ?with_linear_combination              : bool
+  -> ?with_scale_add_multi                 : bool
+  -> ?with_dot_prod_multi                  : bool
+  -> ?with_linear_sum_vector_array         : bool
+  -> ?with_scale_vector_array              : bool
+  -> ?with_const_vector_array              : bool
+  -> ?with_wrms_norm_vector_array          : bool
+  -> ?with_wrms_norm_mask_vector_array     : bool
+  -> ?with_scale_add_multi_vector_array    : bool
+  -> ?with_linear_combination_vector_array : bool
+  -> 'd t
+  -> unit
 
 (** Thrown for operations not provided to {!MakeOps} *)
 exception OperationNotSupported

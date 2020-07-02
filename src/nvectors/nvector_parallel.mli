@@ -38,12 +38,27 @@ exception IncorrectGlobalSize
 
 (** [make nl ng c iv] creates a new parallel nvector with [nl] local elements,
     that is part of a global array with [ng] elements. The local elements are
-    initialized to [iv], and communications occur on [c]. *)
-val make : int -> int -> Mpi.communicator -> float -> t
+    initialized to [iv], and communications occur on [c].
+
+    The optional argument enables the fused and array operations for a given
+    nvector (they are disabled by default).
+
+    @cvode <node5> N_VEnableFusedOps_Parallel
+    @raise Config.NotImplementedBySundialsVersion Fused and array operations not available. *)
+val make : ?with_fused_ops:bool -> int -> int -> Mpi.communicator -> float -> t
 
 (** Creates an nvector with a distinct underlying array but that shares the
     original global size and communicator. *)
 val clone : t -> t
+
+(** [wrap a] creates a new parallel nvector from [a].
+
+    The optional arguments permit to enable all the fused and array operations
+    for a given nvector (they are disabled by default).
+
+    @cvode <node5> N_VEnableFusedOps_Parallel
+    @raise Config.NotImplementedBySundialsVersion Fused and array operations not available. *)
+val wrap : ?with_fused_ops:bool -> data -> t
 
 (** Aliases {!Nvector.unwrap}. *)
 val unwrap : t -> data
@@ -66,8 +81,39 @@ val global_length : t -> int
 (** Returns the communicator used for the parallel nvector. *)
 val communicator : t -> Mpi.communicator
 
-(** Produce a set of parallel {!Nvector.NVECTOR_OPS} from basic operations on
-    an underlying array. *)
+(** Selectively enable or disable fused and array operations.
+    The [with_fused_ops] argument enables or disables all such operations.
+
+    @since 4.0.0
+    @cvode <node5> N_VEnableFusedOps_Parallel
+    @cvode <node5> N_VEnableLinearCombination_Parallel
+    @cvode <node5> N_VEnableScaleAddMulti_Parallel
+    @cvode <node5> N_VEnableDotProdMulti_Parallel
+    @cvode <node5> N_VEnableLinearSumVectorArray_Parallel
+    @cvode <node5> N_VEnableScaleVectorArray_Parallel
+    @cvode <node5> N_VEnableConstVectorArray_Parallel
+    @cvode <node5> N_VEnableWrmsNormVectorArray_Parallel
+    @cvode <node5> N_VEnableWrmsNormMaskVectorArray_Parallel
+    @cvode <node5> N_VEnableScaleAddMultiVectorArray_Parallel
+    @cvode <node5> N_VEnableLinearCombinationVectorArray_Parallel
+    @raise Config.NotImplementedBySundialsVersion Fused and array operations not available. *)
+val enable :
+     ?with_fused_ops                       : bool
+  -> ?with_linear_combination              : bool
+  -> ?with_scale_add_multi                 : bool
+  -> ?with_dot_prod_multi                  : bool
+  -> ?with_linear_sum_vector_array         : bool
+  -> ?with_scale_vector_array              : bool
+  -> ?with_const_vector_array              : bool
+  -> ?with_wrms_norm_vector_array          : bool
+  -> ?with_wrms_norm_mask_vector_array     : bool
+  -> ?with_scale_add_multi_vector_array    : bool
+  -> ?with_linear_combination_vector_array : bool
+  -> t
+  -> unit
+
+(** Produce a set of parallel {!Nvector.NVECTOR_OPS} from basic
+    operations on an underlying array. *)
 module MakeOps : functor (A : sig
       type local_data
       val get       : local_data -> int -> float

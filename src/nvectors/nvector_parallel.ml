@@ -11,14 +11,41 @@ external c_wrap : (RealArray.t * int * Mpi.communicator)
                   -> t
   = "sunml_nvec_wrap_parallel"
 
-let wrap ((nl, ng, comm) as v) =
+(* Selectively enable and disable fused and array operations *)
+external c_enablefusedops_parallel                          : t -> bool -> unit
+  = "sunml_nvec_par_enablefusedops"
+external c_enablelinearcombination_parallel                 : t -> bool -> unit
+  = "sunml_nvec_par_enablelinearcombination"
+external c_enablescaleaddmulti_parallel                     : t -> bool -> unit
+  = "sunml_nvec_par_enablescaleaddmulti"
+external c_enabledotprodmulti_parallel                      : t -> bool -> unit
+  = "sunml_nvec_par_enabledotprodmulti"
+external c_enablelinearsumvectorarray_parallel              : t -> bool -> unit
+  = "sunml_nvec_par_enablelinearsumvectorarray"
+external c_enablescalevectorarray_parallel                  : t -> bool -> unit
+  = "sunml_nvec_par_enablescalevectorarray"
+external c_enableconstvectorarray_parallel                  : t -> bool -> unit
+  = "sunml_nvec_par_enableconstvectorarray"
+external c_enablewrmsnormvectorarray_parallel               : t -> bool -> unit
+  = "sunml_nvec_par_enablewrmsnormvectorarray"
+external c_enablewrmsnormmaskvectorarray_parallel           : t -> bool -> unit
+  = "sunml_nvec_par_enablewrmsnormmaskvectorarray"
+external c_enablescaleaddmultivectorarray_parallel          : t -> bool -> unit
+  = "sunml_nvec_par_enablescaleaddmultivectorarray"
+external c_enablelinearcombinationvectorarray_parallel      : t -> bool -> unit
+  = "sunml_nvec_par_enablelinearcombinationvectorarray"
+
+let wrap ?(with_fused_ops=false) ((nl, ng, comm) as v) =
   let nl_len = RealArray.length nl in
   let check (nl', ng', comm') =
     (nl_len = RealArray.length nl') && (ng <= ng') && (comm == comm')
   in
-  c_wrap v check
+  let nv = c_wrap v check in
+  if with_fused_ops then c_enablefusedops_parallel nv true;
+  nv
 
-let make nl ng comm iv = wrap (RealArray.make nl iv, ng, comm)
+let make ?with_fused_ops nl ng comm iv =
+  wrap ?with_fused_ops (RealArray.make nl iv, ng, comm)
 
 let clone nv =
   let loc, glen, comm = Nvector.unwrap nv in
@@ -44,7 +71,48 @@ let communicator nv =
   let _, _, comm = Nvector.unwrap nv in
   comm
 
-module Ops = struct
+let do_enable f nv v =
+  match v with
+  | None -> ()
+  | Some v -> f nv v
+
+let enable
+   ?with_fused_ops
+   ?with_linear_combination
+   ?with_scale_add_multi
+   ?with_dot_prod_multi
+   ?with_linear_sum_vector_array
+   ?with_scale_vector_array
+   ?with_const_vector_array
+   ?with_wrms_norm_vector_array
+   ?with_wrms_norm_mask_vector_array
+   ?with_scale_add_multi_vector_array
+   ?with_linear_combination_vector_array
+   nv
+  = do_enable c_enablefusedops_parallel nv
+              with_fused_ops;
+    do_enable c_enablelinearcombination_parallel nv
+              with_linear_combination;
+    do_enable c_enablescaleaddmulti_parallel nv
+              with_scale_add_multi;
+    do_enable c_enabledotprodmulti_parallel nv
+              with_dot_prod_multi;
+    do_enable c_enablelinearsumvectorarray_parallel nv
+              with_linear_sum_vector_array;
+    do_enable c_enablescalevectorarray_parallel nv
+              with_scale_vector_array;
+    do_enable c_enableconstvectorarray_parallel nv
+              with_const_vector_array;
+    do_enable c_enablewrmsnormvectorarray_parallel nv
+              with_wrms_norm_vector_array;
+    do_enable c_enablewrmsnormmaskvectorarray_parallel nv
+              with_wrms_norm_mask_vector_array;
+    do_enable c_enablescaleaddmultivectorarray_parallel nv
+              with_scale_add_multi_vector_array;
+    do_enable c_enablelinearcombinationvectorarray_parallel nv
+              with_linear_combination_vector_array
+
+module Ops = struct (* {{{ *)
   type t = (data, kind) Nvector.t
 
   let n_vclone = clone
@@ -108,7 +176,44 @@ module Ops = struct
 
   external n_vspace  : t -> int * int
     = "sunml_nvec_par_n_vspace"
-end
+
+  external n_vlinearcombination : RealArray.t -> t array -> t -> unit
+    = "sunml_nvec_par_n_vlinearcombination"
+
+  external n_vscaleaddmulti : RealArray.t -> t -> t array -> t array -> unit
+    = "sunml_nvec_par_n_vscaleaddmulti"
+
+  external n_vdotprodmulti : t -> t array -> RealArray.t -> unit
+    = "sunml_nvec_par_n_vdotprodmulti"
+
+  external n_vlinearsumvectorarray
+    : float -> t array -> float -> t array -> t array -> unit
+    = "sunml_nvec_par_n_vlinearsumvectorarray"
+
+  external n_vscalevectorarray
+    : RealArray.t -> t array -> t array -> unit
+    = "sunml_nvec_par_n_vscalevectorarray"
+
+  external n_vconstvectorarray
+    : float -> t array -> unit
+    = "sunml_nvec_par_n_vconstvectorarray"
+
+  external n_vwrmsnormvectorarray
+    : t array -> t array -> RealArray.t -> unit
+    = "sunml_nvec_par_n_vwrmsnormvectorarray"
+
+  external n_vwrmsnormmaskvectorarray
+    : t array -> t array -> t -> RealArray.t -> unit
+    = "sunml_nvec_par_n_vwrmsnormmaskvectorarray"
+
+  external n_vscaleaddmultivectorarray
+    : RealArray.t -> t array -> t array array -> t array array -> unit
+    = "sunml_nvec_par_n_vscaleaddmultivectorarray"
+
+  external n_vlinearcombinationvectorarray
+    : RealArray.t -> t array array -> t array -> unit
+    = "sunml_nvec_par_n_vlinearcombinationvectorarray"
+end (* }}} *)
 
 module MakeOps =
   functor (A : sig
@@ -120,11 +225,11 @@ module MakeOps =
       val clone     : local_data -> local_data
       val length    : local_data -> int
     end) ->
-  struct
+  struct (* {{{ *)
     type t = A.local_data * int * Mpi.communicator
 
     (* let n_vclone (d, gl, comm) = (A.clone d, gl, comm) *)
-    let n_vclone (d, gl, comm) = (d, gl, comm)
+    let n_vclone (d, gl, comm) = (A.clone d, gl, comm)
 
     let arr_vaxpy a x y =
       if a = 1.0 then
@@ -152,7 +257,7 @@ module MakeOps =
       else if (a = 1.0 && b = -1.0) || (a = -1.0 && b == 1.0) then
         let v1, v2 = if (a = 1.0 && b = -1.0) then y, x else x, y in
         for i = 0 to A.length v1 - 1 do
-          A.set z i (A.get v1 i -. A.get v2 i)
+          A.set z i (A.get v2 i -. A.get v1 i)
         done
       else if a = 1.0 || b = 1.0 then
         let c, v1, v2 = if a = 1.0 then b, y, x else a, x, y in
@@ -245,12 +350,12 @@ module MakeOps =
       done
 
     let n_vinvtest (x, _, comm) (z, _, _) =
-      let lval = ref 1.0 in
-      for i = 0 to A.length x do
-        if A.get x i = 0.0 then lval := 0.0
+      let lval = ref 1 in
+      for i = 0 to A.length x - 1 do
+        if A.get x i = 0.0 then lval := 0
         else A.set z i (1.0 /. (A.get x i))
       done;
-      (Mpi.allreduce_float !lval Mpi.Float_min comm = 0.0)
+      (Mpi.allreduce_int !lval Mpi.Int_min comm <> 0)
 
     let n_vwl2norm (x, _, comm) (w, _, _) =
       let lsum = ref 0.0 in
@@ -313,7 +418,397 @@ module MakeOps =
       done
 
     let n_vspace (_, ng, comm) = (ng, 2 * Mpi.comm_size comm)
-  end
+
+    (* fused and array operations *)
+
+    let n_vlinearcombination (ca : RealArray.t) (xa : t array) (z : t) =
+      let nvec = Array.length xa in
+      if nvec = 1 then n_vscale ca.{0} xa.(0) z
+      else if nvec = 2 then n_vlinearsum ca.{0} xa.(0) ca.{1} xa.(1) z
+      else
+        let zd, _, _ = z in
+        let n = A.length zd in
+        if xa.(0) == z then begin
+          let c0 = ca.{0} in
+          if c0 <> 1.0 then
+            for j = 0 to n - 1 do
+              A.set zd j (A.get zd j *. c0)
+            done;
+          for i = 1 to nvec - 1 do
+            let ci, (xd, _, _) = ca.{i}, xa.(i) in
+            for j = 0 to n - 1 do
+              A.set zd j (A.get zd j +. ci *. A.get xd j)
+            done
+          done
+        end
+        else begin
+          let c0, (xd, _, _) = ca.{0}, xa.(0) in
+          for j = 0 to n - 1 do
+            A.set zd j (c0 *. A.get xd j)
+          done;
+          for i = 1 to nvec - 1 do
+            let ci, (xd, _, _) = ca.{i}, xa.(i) in
+            for j = 0 to n - 1 do
+              A.set zd j (A.get zd j +. ci *. A.get xd j)
+            done
+          done
+        end
+
+    let n_vscaleaddmulti (aa : RealArray.t) (x : t) (ya : t array) (za : t array) =
+      let nvec = Array.length ya in
+      if nvec = 1 then n_vlinearsum aa.{0} x 1.0 ya.(0) za.(0)
+      else
+        let xd, _, _ = x in
+        let n = A.length xd in
+        if ya == za then
+          for i = 0 to nvec - 1 do
+            let a, (yd, _, _) = aa.{i}, ya.(i) in
+            for j = 0 to n - 1 do
+              A.set yd j (A.get yd j +. a *. A.get xd j)
+            done
+          done
+        else
+          for i = 0 to nvec - 1 do
+            let ai, (yd, _, _), (zd, _, _) = aa.{i}, ya.(i), za.(i) in
+            for j = 0 to n - 1 do
+              A.set zd j (ai *. A.get xd j +. A.get yd j)
+            done
+          done
+
+    let n_vdotprodmulti (x : t) (ya : t array) (dp : RealArray.t) =
+      let nvec = Array.length ya in
+      if nvec = 1 then dp.{0} <- n_vdotprod x ya.(0)
+      else
+        let xd, _, comm = x in
+        let n = A.length xd in
+        for i = 0 to nvec - 1 do
+          let yd, _, _ = ya.(i) in
+          dp.{i} <- 0.0;
+          for j = 0 to n - 1 do
+            dp.{i} <- dp.{i} +. A.get xd j *. A.get yd j
+          done
+        done;
+        (* Note: ocamlmpi does not provide MPI_IN_PLACE *)
+        Mpi.(allreduce_bigarray dp dp Int_sum comm)
+
+    let arr_vaxpy_array a (xa : t array) (ya : t array) =
+      let nvec = Array.length xa in
+      let xad, _, _ = xa.(0) in
+      let n = A.length xad in
+      if a = 1.0 then
+        for i = 0 to nvec - 1 do
+          let xd, _, _ = xa.(i) in
+          let yd, _, _ = ya.(i) in
+          for j = 0 to n - 1 do
+            A.set yd j (A.get yd j +. A.get xd j)
+          done
+        done
+      else if a = -1.0 then
+        for i = 0 to nvec - 1 do
+          let xd, _, _ = xa.(i) in
+          let yd, _, _ = ya.(i) in
+          for j = 0 to n - 1 do
+            A.set yd j (A.get yd j -. A.get xd j)
+          done
+        done
+      else
+        for i = 0 to nvec - 1 do
+          let xd, _, _ = xa.(i) in
+          let yd, _, _ = ya.(i) in
+          for j = 0 to n - 1 do
+            A.set yd j (A.get yd j +. a *. A.get xd j)
+          done
+        done
+
+    let v_sumvectorarray (xa : t array) (ya : t array) (za : t array) =
+      let nvec = Array.length xa in
+      let xad, _, _ = xa.(0) in
+      let n = A.length xad in
+      for i = 0 to nvec - 1 do
+        let xd, _, _ = xa.(i) in
+        let yd, _, _ = ya.(i) in
+        let zd, _, _ = za.(i) in
+        for j = 0 to n - 1 do
+          A.set zd j (A.get xd j +. A.get yd j)
+        done
+      done
+
+    let v_diffvectorarray (xa : t array) (ya : t array) (za : t array) =
+      let nvec = Array.length xa in
+      let xad, _, _ = xa.(0) in
+      let n = A.length xad in
+      for i = 0 to nvec - 1 do
+        let xd, _, _ = xa.(i) in
+        let yd, _, _ = ya.(i) in
+        let zd, _, _ = za.(i) in
+        for j = 0 to n - 1 do
+          A.set zd j (A.get xd j -. A.get yd j)
+        done
+      done
+
+    let v_lin1vectorarray a (xa : t array) (ya : t array) (za : t array) =
+      let nvec = Array.length xa in
+      let xad, _, _ = xa.(0) in
+      let n = A.length xad in
+      for i = 0 to nvec - 1 do
+        let xd, _, _ = xa.(i) in
+        let yd, _, _ = ya.(i) in
+        let zd, _, _ = za.(i) in
+        for j = 0 to n - 1 do
+          A.set zd j (a *. A.get xd j +. A.get yd j)
+        done
+      done
+
+    let v_lin2vectorarray a (xa : t array) (ya : t array) (za : t array) =
+      let nvec = Array.length xa in
+      let xad, _, _ = xa.(0) in
+      let n = A.length xad in
+      for i = 0 to nvec - 1 do
+        let xd, _, _ = xa.(i) in
+        let yd, _, _ = ya.(i) in
+        let zd, _, _ = za.(i) in
+        for j = 0 to n - 1 do
+          A.set zd j (a *. A.get xd j -. A.get yd j)
+        done
+      done
+
+    let v_scalesumvectorarray c (xa : t array) (ya : t array) (za : t array) =
+      let nvec = Array.length xa in
+      let xad, _, _ = xa.(0) in
+      let n = A.length xad in
+      for i = 0 to nvec - 1 do
+        let xd, _, _ = xa.(i) in
+        let yd, _, _ = ya.(i) in
+        let zd, _, _ = za.(i) in
+        for j = 0 to n - 1 do
+          A.set zd j (c *. (A.get xd j +. A.get yd j))
+        done
+      done
+
+    let v_scalediffvectorarray c (xa : t array) (ya : t array) (za : t array) =
+      let nvec = Array.length xa in
+      let xad, _, _ = xa.(0) in
+      let n = A.length xad in
+      for i = 0 to nvec - 1 do
+        let xd, _, _ = xa.(i) in
+        let yd, _, _ = ya.(i) in
+        let zd, _, _ = za.(i) in
+        for j = 0 to n - 1 do
+          A.set zd j (c *. (A.get xd j -. A.get yd j))
+        done
+      done
+
+    let n_vlinearsumvectorarray a (xa : t array) b (ya : t array) (za : t array) =
+      let nvec = Array.length ya in
+      if nvec = 1 then n_vlinearsum a xa.(0) b ya.(0) za.(0)
+      else if b =  1.0 && (za == ya) then arr_vaxpy_array a xa ya
+      else if a =  1.0 && (za == xa) then arr_vaxpy_array a ya xa
+      else if a =  1.0 && b =  1.0 then v_sumvectorarray xa ya za
+      else if a =  1.0 && b = -1.0 then v_diffvectorarray xa ya za
+      else if a = -1.0 && b =  1.0 then v_diffvectorarray ya xa za
+      else if a =  1.0 then v_lin1vectorarray b ya xa za
+      else if b =  1.0 then v_lin1vectorarray a xa ya za
+      else if a = -1.0 then v_lin2vectorarray b ya xa za
+      else if b = -1.0 then v_lin2vectorarray a xa ya za
+      else if a = b then v_scalesumvectorarray a xa ya za
+      else if a = -. b then v_scalediffvectorarray a xa ya za
+      else
+        let xad, _, _ = xa.(0) in
+        let n = A.length xad in
+        for i = 0 to nvec - 1 do
+          let xd, _, _ = xa.(i) in
+          let yd, _, _ = ya.(i) in
+          let zd, _, _ = za.(i) in
+          for j = 0 to n - 1 do
+            A.set zd j (a *. A.get xd j +. b *. A.get yd j)
+          done
+        done
+
+    let n_vscalevectorarray (c : RealArray.t) (xa : t array) (za : t array) =
+      let nvec = Array.length xa in
+      if nvec = 1 then n_vscale c.{0} xa.(0) za.(0)
+      else
+        let xad, _, _ = xa.(0) in
+        let n = A.length xad in
+        if xa == za then
+          for i = 0 to nvec - 1 do
+            let (xd, _, _), c = xa.(i), c.{i} in
+            for j = 0 to n - 1 do
+              A.set xd j (c *. A.get xd j)
+            done
+          done
+        else
+          for i = 0 to nvec - 1 do
+            let c = c.{i} in
+            let xd, _, _ = xa.(i) in
+            let zd, _, _ = za.(i) in
+            for j = 0 to n - 1 do
+              A.set zd j (c *. A.get xd j)
+            done
+          done
+
+    let n_vconstvectorarray c (za : t array) =
+      let nvec = Array.length za in
+      if nvec = 1 then n_vconst c za.(0)
+      else
+        let zad, _, _ = za.(0) in
+        let n = A.length zad in
+        for i = 0 to nvec - 1 do
+          let zd, _, _ = za.(i) in
+          for j = 0 to n - 1 do
+            A.set zd j c
+          done
+        done
+
+    let n_vwrmsnormvectorarray (xa : t array) (wa : t array) (nrm : RealArray.t) =
+      let nvec = Array.length xa in
+      if nvec = 1 then nrm.{0} <- n_vwrmsnorm xa.(0) wa.(0)
+      else
+        let xad, ng, comm = xa.(0) in
+        let nl = A.length xad in
+        let nf = float ng in
+        for i = 0 to nvec - 1 do
+          let xd, _, _ = xa.(i) in
+          let wd, _, _ = wa.(i) in
+          nrm.{i} <- 0.0;
+          for j = 0 to nl - 1 do
+            let s = A.get xd j *. A.get wd j in
+            nrm.{i} <- nrm.{i} +. s *. s
+          done
+        done;
+        (* Note: ocamlmpi does not provide MPI_IN_PLACE *)
+        Mpi.(allreduce_bigarray nrm nrm Int_sum comm);
+        for i = 0 to nvec - 1 do
+          nrm.{i} <- sqrt (nrm.{i}/.nf)
+        done
+
+    let n_vwrmsnormmaskvectorarray (xa : t array) (wa : t array) (id : t)
+                                   (nrm : RealArray.t) =
+      let nvec = Array.length xa in
+      if nvec = 1 then nrm.{0} <- n_vwrmsnormmask xa.(0) wa.(0) id
+      else
+        let xad, ng, comm = xa.(0) in
+        let idd, _, _ = id in
+        let nl = A.length xad in
+        let nf = float ng in
+        for i = 0 to nvec - 1 do
+          let xd, _, _ = xa.(i) in
+          let wd, _, _ = wa.(i) in
+          nrm.{i} <- 0.0;
+          for j = 0 to nl - 1 do
+            if A.get idd j > 0.0 then begin
+              let s = A.get xd j *. A.get wd j in
+              nrm.{i} <- nrm.{i} +. s *. s
+            end
+          done;
+        done;
+        (* Note: ocamlmpi does not provide MPI_IN_PLACE *)
+        Mpi.(allreduce_bigarray nrm nrm Int_sum comm);
+        for i = 0 to nvec - 1 do
+          nrm.{i} <- sqrt (nrm.{i}/.nf)
+        done
+
+    let n_vscaleaddmultivectorarray (ra : RealArray.t) (xa : t array)
+                                    (yaa : t array array) (zaa : t array array) =
+      let nsum = Array.length yaa in
+      let nvec = Array.length yaa.(0) in
+      if nvec = 1 then begin
+        if nsum = 1 then n_vlinearsum ra.{0} xa.(0) 1.0 yaa.(0).(0) zaa.(0).(0)
+        else
+          let yya = Array.init nsum (fun j -> yaa.(j).(0)) in
+          let zza = Array.init nsum (fun j -> zaa.(j).(0)) in
+          n_vscaleaddmulti ra xa.(0) yya zza
+      end
+      else if nsum = 1 then n_vlinearsumvectorarray ra.{0} xa 1.0 yaa.(0) zaa.(0)
+      else
+        let xad, _, _ = xa.(0) in
+        let n = A.length xad in
+        if (yaa == zaa) then
+          for i = 0 to nvec - 1 do
+            let xd, _, _ = xa.(i) in
+            for j = 0 to nsum - 1 do
+              let a, (yd, _, _) = ra.{j}, yaa.(j).(i) in
+              for k = 0 to n - 1 do
+                A.set yd k (A.get yd k +. a *. A.get xd k)
+              done
+            done
+          done
+        else
+          for i = 0 to nvec - 1 do
+            let xd, _, _ = xa.(i) in
+            for j = 0 to nsum - 1 do
+              let a = ra.{j} in
+              let yd, _, _ = yaa.(j).(i) in
+              let zd, _, _ = zaa.(j).(i) in
+              for k = 0 to n - 1 do
+                A.set zd k (a *. A.get xd k +. A.get yd k)
+              done
+            done
+          done
+
+    let n_vlinearcombinationvectorarray (ca : RealArray.t) (xaa : t array array)
+                                        (za : t array) =
+      let nsum = Array.length xaa in
+      let nvec = Array.length xaa.(0) in
+      if nvec = 1 then begin
+        if nsum = 1 then n_vscale ca.{0} xaa.(0).(0) za.(0)
+        else if nsum = 2
+             then n_vlinearsum ca.{0} xaa.(0).(0) ca.{1} xaa.(1).(0) za.(0)
+        else
+          let ya = Array.init nsum (fun i -> xaa.(i).(0)) in
+          n_vlinearcombination ca ya za.(0)
+      end
+      else
+        if nsum = 1 then
+          let ctmp = RealArray.make nvec ca.{0} in
+          n_vscalevectorarray ctmp xaa.(0) za
+        else if nsum = 2 then
+          n_vlinearsumvectorarray ca.{0} xaa.(0) ca.{1} xaa.(1) za
+        else
+          let zad, _, _ = za.(0) in
+          let n = A.length zad in
+          if xaa.(0) == za then begin
+            if ca.{0} = 1.0 then
+              for j = 0 to nvec - 1 do
+                let zd, _, _ = za.(j) in
+                for i = 1 to nsum - 1 do
+                  let c, (xd, _, _) = ca.{i}, xaa.(i).(j) in
+                  for k = 0 to n - 1 do
+                    A.set zd k (A.get zd k +. c *. A.get xd k)
+                  done
+                done
+              done
+            else
+              let c0 = ca.{0} in
+              for j = 0 to nvec - 1 do
+                let zd, _, _ = za.(j) in
+                for k = 0 to n - 1 do
+                  A.set zd k (A.get zd k *. c0)
+                done;
+                for i = 1 to nsum - 1 do
+                  let c, (xd, _, _) = ca.{i}, xaa.(i).(j) in
+                  for k = 0 to n - 1 do
+                    A.set zd k (A.get zd k +. c *. A.get xd k)
+                  done
+                done
+              done
+          end
+          else
+            let c0 = ca.{0} in
+            for j = 0 to nvec - 1 do
+              let xd, _, _ = xaa.(0).(j) in
+              let zd, _, _ = za.(j) in
+              for k = 0 to n - 1 do
+                A.set zd k (c0 *. A.get xd k)
+              done;
+              for i = 1 to nsum - 1 do
+                let c, (xd, _, _) = ca.{i}, xaa.(i).(j) in
+                for k = 0 to n - 1 do
+                  A.set zd k (A.get zd k +. c *. A.get xd k)
+                done
+              done
+            done
+  end (* }}} *)
 
 (* (* Too slow *)
 module SlowerDataOps = MakeOps (struct
@@ -330,7 +825,7 @@ module SlowerDataOps = MakeOps (struct
 *)
 
 module DataOps =
-  struct
+  struct (* {{{ *)
     module A = Bigarray.Array1
 
     let make      = RealArray.make
@@ -339,8 +834,7 @@ module DataOps =
     type t = RealArray.t * int * Mpi.communicator
     type d = RealArray.t
 
-    (* let n_vclone (d, gl, comm) = (A.clone d, gl, comm) *)
-    let n_vclone (d, gl, comm) = (d, gl, comm)
+    let n_vclone (d, gl, comm) = (clone d, gl, comm)
 
     let arr_vaxpy a (x : d) (y : d) =
       if a = 1.0 then
@@ -368,7 +862,7 @@ module DataOps =
       else if (a = 1.0 && b = -1.0) || (a = -1.0 && b == 1.0) then
         let v1, v2 = if (a = 1.0 && b = -1.0) then y, x else x, y in
         for i = 0 to A.dim v1 - 1 do
-          A.set z i (A.get v1 i -. A.get v2 i)
+          A.set z i (A.get v2 i -. A.get v1 i)
         done
       else if a = 1.0 || b = 1.0 then
         let c, v1, v2 = if a = 1.0 then b, y, x else a, x, y in
@@ -461,12 +955,12 @@ module DataOps =
       done
 
     let n_vinvtest ((x : d), _, comm) ((z : d), _, _) =
-      let lval = ref 1.0 in
-      for i = 0 to A.dim x do
-        if A.get x i = 0.0 then lval := 0.0
+      let lval = ref 1 in
+      for i = 0 to A.dim x - 1 do
+        if A.get x i = 0.0 then lval := 0
         else A.set z i (1.0 /. (A.get x i))
       done;
-      (Mpi.allreduce_float !lval Mpi.Float_min comm = 0.0)
+      (Mpi.allreduce_int !lval Mpi.Int_min comm <> 0)
 
     let n_vwl2norm ((x : d), _, comm) ((w : d), _, _) =
       let lsum = ref 0.0 in
@@ -529,7 +1023,398 @@ module DataOps =
       done
 
     let n_vspace (_, ng, comm) = (ng, 2 * Mpi.comm_size comm)
-  end
+
+    (* fused and array operations *)
+
+    let n_vlinearcombination (ca : RealArray.t) (xa : t array) (z : t) =
+      let nvec = Array.length xa in
+      if nvec = 1 then n_vscale ca.{0} xa.(0) z
+      else if nvec = 2 then n_vlinearsum ca.{0} xa.(0) ca.{1} xa.(1) z
+      else
+        let zd, _, _ = z in
+        let n = RealArray.length zd in
+        if xa.(0) == z then begin
+          let c0 = ca.{0} in
+          if c0 <> 1.0 then
+            for j = 0 to n - 1 do
+              A.set zd j (A.get zd j *. c0)
+            done;
+          for i = 1 to nvec - 1 do
+            let ci, (xd, _, _) = ca.{i}, xa.(i) in
+            for j = 0 to n - 1 do
+              A.set zd j (A.get zd j +. ci *. A.get xd j)
+            done
+          done
+        end
+        else begin
+          let c0, (xd, _, _) = ca.{0}, xa.(0) in
+          for j = 0 to n - 1 do
+            A.set zd j (c0 *. A.get xd j)
+          done;
+          for i = 1 to nvec - 1 do
+            let ci, (xd, _, _) = ca.{i}, xa.(i) in
+            for j = 0 to n - 1 do
+              A.set zd j (A.get zd j +. ci *. A.get xd j)
+            done
+          done
+        end
+
+    let n_vscaleaddmulti (aa : RealArray.t) (x : t) (ya : t array) (za : t array) =
+      let nvec = Array.length ya in
+      if nvec = 1 then n_vlinearsum aa.{0} x 1.0 ya.(0) za.(0)
+      else
+        let xd, _, _ = x in
+        let n = RealArray.length xd in
+        if ya == za then
+          for i = 0 to nvec - 1 do
+            let a, (yd, _, _) = aa.{i}, ya.(i) in
+            for j = 0 to n - 1 do
+              A.set yd j (A.get yd j +. a *. A.get xd j)
+            done
+          done
+        else
+          for i = 0 to nvec - 1 do
+            let ai, (yd, _, _), (zd, _, _) = aa.{i}, ya.(i), za.(i) in
+            for j = 0 to n - 1 do
+              A.set zd j (ai *. A.get xd j +. A.get yd j)
+            done
+          done
+
+    let n_vdotprodmulti (x : t) (ya : t array) (dp : RealArray.t) =
+      let nvec = Array.length ya in
+      if nvec = 1 then dp.{0} <- n_vdotprod x ya.(0)
+      else
+        let xd, _, comm = x in
+        let n = RealArray.length xd in
+        for i = 0 to nvec - 1 do
+          let yd, _, _ = ya.(i) in
+          dp.{i} <- 0.0;
+          for j = 0 to n - 1 do
+            dp.{i} <- dp.{i} +. A.get xd j *. A.get yd j
+          done
+        done;
+        (* Note: ocamlmpi does not provide MPI_IN_PLACE *)
+        Mpi.(allreduce_bigarray dp dp Int_sum comm)
+
+    let arr_vaxpy_array a (xa : t array) (ya : t array) =
+      let nvec = Array.length xa in
+      let xad, _, _ = xa.(0) in
+      let n = A.dim xad in
+      if a = 1.0 then
+        for i = 0 to nvec - 1 do
+          let xd, _, _ = xa.(i) in
+          let yd, _, _ = ya.(i) in
+          for j = 0 to n - 1 do
+            A.set yd j (A.get yd j +. A.get xd j)
+          done
+        done
+      else if a = -1.0 then
+        for i = 0 to nvec - 1 do
+          let xd, _, _ = xa.(i) in
+          let yd, _, _ = ya.(i) in
+          for j = 0 to n - 1 do
+            A.set yd j (A.get yd j -. A.get xd j)
+          done
+        done
+      else
+        for i = 0 to nvec - 1 do
+          let xd, _, _ = xa.(i) in
+          let yd, _, _ = ya.(i) in
+          for j = 0 to n - 1 do
+            A.set yd j (A.get yd j +. a *. A.get xd j)
+          done
+        done
+
+    let v_sumvectorarray (xa : t array) (ya : t array) (za : t array) =
+      let nvec = Array.length xa in
+      let xad, _, _ = xa.(0) in
+      let n = A.dim xad in
+      for i = 0 to nvec - 1 do
+        let xd, _, _ = xa.(i) in
+        let yd, _, _ = ya.(i) in
+        let zd, _, _ = za.(i) in
+        for j = 0 to n - 1 do
+          A.set zd j (A.get xd j +. A.get yd j)
+        done
+      done
+
+    let v_diffvectorarray (xa : t array) (ya : t array) (za : t array) =
+      let nvec = Array.length xa in
+      let xad, _, _ = xa.(0) in
+      let n = A.dim xad in
+      for i = 0 to nvec - 1 do
+        let xd, _, _ = xa.(i) in
+        let yd, _, _ = ya.(i) in
+        let zd, _, _ = za.(i) in
+        for j = 0 to n - 1 do
+          A.set zd j (A.get xd j -. A.get yd j)
+        done
+      done
+
+    let v_lin1vectorarray a (xa : t array) (ya : t array) (za : t array) =
+      let nvec = Array.length xa in
+      let xad, _, _ = xa.(0) in
+      let n = A.dim xad in
+      for i = 0 to nvec - 1 do
+        let xd, _, _ = xa.(i) in
+        let yd, _, _ = ya.(i) in
+        let zd, _, _ = za.(i) in
+        for j = 0 to n - 1 do
+          A.set zd j (a *. A.get xd j +. A.get yd j)
+        done
+      done
+
+    let v_lin2vectorarray a (xa : t array) (ya : t array) (za : t array) =
+      let nvec = Array.length xa in
+      let xad, _, _ = xa.(0) in
+      let n = A.dim xad in
+      for i = 0 to nvec - 1 do
+        let xd, _, _ = xa.(i) in
+        let yd, _, _ = ya.(i) in
+        let zd, _, _ = za.(i) in
+        for j = 0 to n - 1 do
+          A.set zd j (a *. A.get xd j -. A.get yd j)
+        done
+      done
+
+    let v_scalesumvectorarray c (xa : t array) (ya : t array) (za : t array) =
+      let nvec = Array.length xa in
+      let xad, _, _ = xa.(0) in
+      let n = A.dim xad in
+      for i = 0 to nvec - 1 do
+        let xd, _, _ = xa.(i) in
+        let yd, _, _ = ya.(i) in
+        let zd, _, _ = za.(i) in
+        for j = 0 to n - 1 do
+          A.set zd j (c *. (A.get xd j +. A.get yd j))
+        done
+      done
+
+    let v_scalediffvectorarray c (xa : t array) (ya : t array) (za : t array) =
+      let nvec = Array.length xa in
+      let xad, _, _ = xa.(0) in
+      let n = A.dim xad in
+      for i = 0 to nvec - 1 do
+        let xd, _, _ = xa.(i) in
+        let yd, _, _ = ya.(i) in
+        let zd, _, _ = za.(i) in
+        for j = 0 to n - 1 do
+          A.set zd j (c *. (A.get xd j -. A.get yd j))
+        done
+      done
+
+    let n_vlinearsumvectorarray a (xa : t array) b (ya : t array) (za : t array) =
+      let nvec = Array.length ya in
+      if nvec = 1 then n_vlinearsum a xa.(0) b ya.(0) za.(0)
+      else if b =  1.0 && (za == ya) then arr_vaxpy_array a xa ya
+      else if a =  1.0 && (za == xa) then arr_vaxpy_array a ya xa
+      else if a =  1.0 && b =  1.0 then v_sumvectorarray xa ya za
+      else if a =  1.0 && b = -1.0 then v_diffvectorarray xa ya za
+      else if a = -1.0 && b =  1.0 then v_diffvectorarray ya xa za
+      else if a =  1.0 then v_lin1vectorarray b ya xa za
+      else if b =  1.0 then v_lin1vectorarray a xa ya za
+      else if a = -1.0 then v_lin2vectorarray b ya xa za
+      else if b = -1.0 then v_lin2vectorarray a xa ya za
+      else if a = b then v_scalesumvectorarray a xa ya za
+      else if a = -. b then v_scalediffvectorarray a xa ya za
+      else
+        let xad, _, _ = xa.(0) in
+        let n = A.dim xad in
+        for i = 0 to nvec - 1 do
+          let xd, _, _ = xa.(i) in
+          let yd, _, _ = ya.(i) in
+          let zd, _, _ = za.(i) in
+          for j = 0 to n - 1 do
+            A.set zd j (a *. A.get xd j +. b *. A.get yd j)
+          done
+        done
+
+    let n_vscalevectorarray (c : RealArray.t) (xa : t array) (za : t array) =
+      let nvec = Array.length xa in
+      if nvec = 1 then n_vscale c.{0} xa.(0) za.(0)
+      else
+        let xad, _, _ = xa.(0) in
+        let n = A.dim xad in
+        if xa == za then
+          for i = 0 to nvec - 1 do
+            let (xd, _, _), c = xa.(i), c.{i} in
+            for j = 0 to n - 1 do
+              A.set xd j (c *. A.get xd j)
+            done
+          done
+        else
+          for i = 0 to nvec - 1 do
+            let c = c.{i} in
+            let xd, _, _ = xa.(i) in
+            let zd, _, _ = za.(i) in
+            for j = 0 to n - 1 do
+              A.set zd j (c *. A.get xd j)
+            done
+          done
+
+    let n_vconstvectorarray c (za : t array) =
+      let nvec = Array.length za in
+      if nvec = 1 then n_vconst c za.(0)
+      else
+        let zad, _, _ = za.(0) in
+        let n = A.dim zad in
+        for i = 0 to nvec - 1 do
+          let zd, _, _ = za.(i) in
+          for j = 0 to n - 1 do
+            A.set zd j c
+          done
+        done
+
+    let n_vwrmsnormvectorarray (xa : t array) (wa : t array) (nrm : RealArray.t) =
+      let nvec = Array.length xa in
+      if nvec = 1 then nrm.{0} <- n_vwrmsnorm xa.(0) wa.(0)
+      else
+        let xad, ng, comm = xa.(0) in
+        let nl = A.dim xad in
+        let nf = float ng in
+        for i = 0 to nvec - 1 do
+          let xd, _, _ = xa.(i) in
+          let wd, _, _ = wa.(i) in
+          nrm.{i} <- 0.0;
+          for j = 0 to nl - 1 do
+            let s = A.get xd j *. A.get wd j in
+            nrm.{i} <- nrm.{i} +. s *. s
+          done
+        done;
+        (* Note: ocamlmpi does not provide MPI_IN_PLACE *)
+        Mpi.(allreduce_bigarray nrm nrm Int_sum comm);
+        for i = 0 to nvec - 1 do
+          nrm.{i} <- sqrt (nrm.{i}/.nf)
+        done
+
+    let n_vwrmsnormmaskvectorarray (xa : t array) (wa : t array) (id : t)
+                                   (nrm : RealArray.t) =
+      let nvec = Array.length xa in
+      if nvec = 1 then nrm.{0} <- n_vwrmsnormmask xa.(0) wa.(0) id
+      else
+        let xad, ng, comm = xa.(0) in
+        let idd, _, _ = id in
+        let nl = A.dim xad in
+        let nf = float ng in
+        for i = 0 to nvec - 1 do
+          let xd, _, _ = xa.(i) in
+          let wd, _, _ = wa.(i) in
+          nrm.{i} <- 0.0;
+          for j = 0 to nl - 1 do
+            if A.get idd j > 0.0 then begin
+              let s = A.get xd j *. A.get wd j in
+              nrm.{i} <- nrm.{i} +. s *. s
+            end
+          done;
+        done;
+        (* Note: ocamlmpi does not provide MPI_IN_PLACE *)
+        Mpi.(allreduce_bigarray nrm nrm Int_sum comm);
+        for i = 0 to nvec - 1 do
+          nrm.{i} <- sqrt (nrm.{i}/.nf)
+        done
+
+    let n_vscaleaddmultivectorarray (ra : RealArray.t) (xa : t array)
+                                    (yaa : t array array) (zaa : t array array) =
+      let nsum = Array.length yaa in
+      let nvec = Array.length yaa.(0) in
+      if nvec = 1 then begin
+        if nsum = 1 then n_vlinearsum ra.{0} xa.(0) 1.0 yaa.(0).(0) zaa.(0).(0)
+        else
+          let yya = Array.init nsum (fun j -> yaa.(j).(0)) in
+          let zza = Array.init nsum (fun j -> zaa.(j).(0)) in
+          n_vscaleaddmulti ra xa.(0) yya zza
+      end
+      else if nsum = 1 then n_vlinearsumvectorarray ra.{0} xa 1.0 yaa.(0) zaa.(0)
+      else
+        let xad, _, _ = xa.(0) in
+        let n = A.dim xad in
+        if (yaa == zaa) then
+          for i = 0 to nvec - 1 do
+            let xd, _, _ = xa.(i) in
+            for j = 0 to nsum - 1 do
+              let a, (yd, _, _) = ra.{j}, yaa.(j).(i) in
+              for k = 0 to n - 1 do
+                A.set yd k (A.get yd k +. a *. A.get xd k)
+              done
+            done
+          done
+        else
+          for i = 0 to nvec - 1 do
+            let xd, _, _ = xa.(i) in
+            for j = 0 to nsum - 1 do
+              let a = ra.{j} in
+              let yd, _, _ = yaa.(j).(i) in
+              let zd, _, _ = zaa.(j).(i) in
+              for k = 0 to n - 1 do
+                A.set zd k (a *. A.get xd k +. A.get yd k)
+              done
+            done
+          done
+
+    let n_vlinearcombinationvectorarray (ca : RealArray.t) (xaa : t array array)
+                                        (za : t array) =
+      let nsum = Array.length xaa in
+      let nvec = Array.length xaa.(0) in
+      if nvec = 1 then begin
+        if nsum = 1 then n_vscale ca.{0} xaa.(0).(0) za.(0)
+        else if nsum = 2
+             then n_vlinearsum ca.{0} xaa.(0).(0) ca.{1} xaa.(1).(0) za.(0)
+        else
+          let ya = Array.init nsum (fun i -> xaa.(i).(0)) in
+          n_vlinearcombination ca ya za.(0)
+      end
+      else
+        if nsum = 1 then
+          let ctmp = RealArray.make nvec ca.{0} in
+          n_vscalevectorarray ctmp xaa.(0) za
+        else if nsum = 2 then
+          n_vlinearsumvectorarray ca.{0} xaa.(0) ca.{1} xaa.(1) za
+        else
+          let zad, _, _ = za.(0) in
+          let n = A.dim zad in
+          if xaa.(0) == za then begin
+            if ca.{0} = 1.0 then
+              for j = 0 to nvec - 1 do
+                let zd, _, _ = za.(j) in
+                for i = 1 to nsum - 1 do
+                  let c, (xd, _, _) = ca.{i}, xaa.(i).(j) in
+                  for k = 0 to n - 1 do
+                    A.set zd k (A.get zd k +. c *. A.get xd k)
+                  done
+                done
+              done
+            else
+              let c0 = ca.{0} in
+              for j = 0 to nvec - 1 do
+                let zd, _, _ = za.(j) in
+                for k = 0 to n - 1 do
+                  A.set zd k (A.get zd k *. c0)
+                done;
+                for i = 1 to nsum - 1 do
+                  let c, (xd, _, _) = ca.{i}, xaa.(i).(j) in
+                  for k = 0 to n - 1 do
+                    A.set zd k (A.get zd k +. c *. A.get xd k)
+                  done
+                done
+              done
+          end
+          else
+            let c0 = ca.{0} in
+            for j = 0 to nvec - 1 do
+              let xd, _, _ = xaa.(0).(j) in
+              let zd, _, _ = za.(j) in
+              for k = 0 to n - 1 do
+                A.set zd k (c0 *. A.get xd k)
+              done;
+              for i = 1 to nsum - 1 do
+                let c, (xd, _, _) = ca.{i}, xaa.(i).(j) in
+                for k = 0 to n - 1 do
+                  A.set zd k (A.get zd k +. c *. A.get xd k)
+                done
+              done
+            done
+
+  end (* }}} *)
 
 
 (* Let C code know about some of the values in this module.  *)

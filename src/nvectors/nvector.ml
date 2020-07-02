@@ -22,6 +22,21 @@ let check (_, _, checkfn) = (function (payload, _, _) ->
                               if not (checkfn payload) then
                                 raise IncompatibleNvector)
 
+type nvector_id =
+    Serial
+  | Parallel
+  | OpenMP
+  | Pthreads
+  | ParHyp
+  | PETSc
+  | CUDA
+  | RAJA
+  | OpenMPdev
+  | Custom
+
+external get_id : ('data, 'kind) t -> nvector_id
+  = "sunml_nvec_get_id"
+
 module type NVECTOR_OPS =
   sig
     type t
@@ -49,6 +64,28 @@ module type NVECTOR_OPS =
     val n_vminquotient  : t -> t -> float
 
     val n_vspace        : t -> int * int
+
+    val n_vlinearcombination
+      : Sundials.RealArray.t -> t array -> t -> unit
+    val n_vscaleaddmulti
+      : Sundials.RealArray.t -> t -> t array -> t array -> unit
+    val n_vdotprodmulti
+      : t -> t array -> Sundials.RealArray.t -> unit
+
+    val n_vlinearsumvectorarray
+      : float -> t array -> float -> t array -> t array -> unit
+    val n_vscalevectorarray
+      : Sundials.RealArray.t -> t array -> t array -> unit
+    val n_vconstvectorarray
+      : float -> t array -> unit
+    val n_vwrmsnormvectorarray
+      : t array -> t array -> Sundials.RealArray.t -> unit
+    val n_vwrmsnormmaskvectorarray
+      : t array -> t array -> t -> Sundials.RealArray.t -> unit
+    val n_vscaleaddmultivectorarray
+      : Sundials.RealArray.t -> t array -> t array array -> t array array -> unit
+    val n_vlinearcombinationvectorarray
+      : Sundials.RealArray.t -> t array array -> t array -> unit
   end
 
 module type NVECTOR =
@@ -56,7 +93,21 @@ module type NVECTOR =
     type kind
     type data
     type t = (data, kind) nvector
-    val wrap : data -> t
+    val wrap : ?with_fused_ops:bool -> data -> t
+    val enable :
+         ?with_fused_ops                       : bool
+      -> ?with_linear_combination              : bool
+      -> ?with_scale_add_multi                 : bool
+      -> ?with_dot_prod_multi                  : bool
+      -> ?with_linear_sum_vector_array         : bool
+      -> ?with_scale_vector_array              : bool
+      -> ?with_const_vector_array              : bool
+      -> ?with_wrms_norm_vector_array          : bool
+      -> ?with_wrms_norm_mask_vector_array     : bool
+      -> ?with_scale_add_multi_vector_array    : bool
+      -> ?with_linear_combination_vector_array : bool
+      -> t
+      -> unit
     module Ops : NVECTOR_OPS with type t = t
     module DataOps : NVECTOR_OPS with type t = data
   end
