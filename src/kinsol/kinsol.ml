@@ -688,7 +688,7 @@ let solve s u strategy u_scale f_scale =
   else c_solve s u strategy u_scale f_scale
 
 (* Let C code know about some of the values in this module.  *)
-external c_init_module : 'fcns -> exn array -> unit =
+external c_init_module : exn array -> unit =
   "sunml_kinsol_init_module"
 
 let _ =

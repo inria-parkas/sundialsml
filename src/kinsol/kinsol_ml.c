@@ -51,9 +51,9 @@
 #include <stdio.h>
 #define MAX_ERRMSG_LEN 256
 
-CAMLprim value sunml_kinsol_init_module (value cbs, value exns)
+CAMLprim value sunml_kinsol_init_module (value exns)
 {
-    CAMLparam2 (cbs, exns);
+    CAMLparam1 (exns);
     REGISTER_EXNS (KINSOL, exns);
     CAMLreturn (Val_unit);
 }
