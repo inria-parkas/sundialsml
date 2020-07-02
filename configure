@@ -36,9 +36,10 @@ do
             SUNDIALS_DIR=
             SUNDIALS_LIBRARY_DIR=
             SUNDIALS_INCLUDE_DIR=
-	    SUPERLUMT_INCLUDE_DIR=
+            SUPERLUMT_DIR=
+            SUPERLUMT_INCLUDE_DIR=
             SUPERLUMT_LIBRARY_DIR=
-	    KLU_INCLUDE_DIR=
+            KLU_INCLUDE_DIR=
             KLU_LIBRARY_DIR=
             LAPACKLIB=
             SUNDIALS_EXAMPLES_DIR=
@@ -122,32 +123,36 @@ do
 	Optional Features:
 	  --disable-doc          do not install html documentation
 	  --disable-mpi          build without parallel features
-	  --disable-klu		 build without KLU features
-	  --disable-superlumt	 build without SuperLU/MT features
+	  --disable-klu          build without KLU features
+	  --disable-superlumt    build without SuperLU/MT features
 	  --no-lib-path          do not record paths in the OCaml library
 	  --enable-debug         enable assertions and debug symbols
 	  --unsafe               no bounds or other runtime checks
 
 	Influential environment variables:
-	  OCAMLROOT		Path to OCaml installation
-	  SUNDIALS_DIR		Path to Sundials installation
-	  SUNDIALS_LIBRARY_DIR	Path to Sundials libraries (for linking)
+	  OCAMLROOT             Path to OCaml installation
+	  SUNDIALS_DIR          Path to Sundials installation
+	  SUNDIALS_LIBRARY_DIR  Path to Sundials libraries (for linking)
 	                        (default: \$SUNDIALS_DIR/lib)
-	  SUNDIALS_INCLUDE_DIR	Path to Sundials header files (for compiling)
+	  SUNDIALS_INCLUDE_DIR  Path to Sundials header files (for compiling)
 	                        (default: \$SUNDIALS_DIR/include)
+	  SUPERLUMT_DIR         Path to SuperLU_MT build files
 	  SUPERLUMT_INCLUDE_DIR Path to SuperLU_MT header files
-	  SUPERLUMT_LIBRARY_DIR	Path to SuperLU_MT libraries
-	  KLU_INCLUDE_DIR	Path to KLU (SuiteSparse) header files
-	  KLU_LIBRARY_DIR	Path to KLU (SuiteSparse) libraries
-	  LAPACKLIB		Command for linking with Lapack (default: -llapack)
+	                        (default: \$SUPERLUMT_DIR/SRC)
+	  SUPERLUMT_LIBRARY_DIR Path to SuperLU_MT libraries
+	                        (default: \$SUPERLUMT_DIR/lib)
+	  KLU_INCLUDE_DIR       Path to KLU (SuiteSparse) header files
+	  KLU_LIBRARY_DIR       Path to KLU (SuiteSparse) libraries
+	  LAPACKLIB             Command for linking with Lapack (default: -llapack)
 	                        (sometimes also: -lSimTKlapack)
-	  SUNDIALS_EXAMPLES_DIR	Path to installed examples (for comparison with Sundials)
-	  OCAMLMPI		Path to OCamlMPI installation
-	  CFLAGS_OPENMP		Compiler flag to enable OpenMP compilation
-	  MPICC			Name of the MPI compiler (default: mpicc)
-	  MPIRUN		Name of MPI program launcher (default: mpirun)
-	  MPI_LIBRARY_DIR	Path to include for MPI libraries (optional)
-	  MATHJAX		Local or remote directory containing MathJax.js
+	  SUNDIALS_EXAMPLES_DIR Path to installed examples (for comparison with Sundials)
+	                        (default: \$SUNDIALS_DIR/examples)
+	  OCAMLMPI              Path to OCamlMPI installation
+	  CFLAGS_OPENMP         Compiler flag to enable OpenMP compilation
+	  MPICC                 Name of the MPI compiler (default: mpicc)
+	  MPIRUN                Name of MPI program launcher (default: mpirun)
+	  MPI_LIBRARY_DIR       Path to include for MPI libraries (optional)
+	  MATHJAX               Local or remote directory containing MathJax.js
 	                        (e.g., MATHJAX=/usr/share/javascript/mathjax)
 
 	Set these options by passing arguments of the form FOO=value to help
@@ -169,6 +174,8 @@ END_HELP_TEXT
 	SUNDIALS_LIBRARY_DIR="${value}";;
     SUNDIALS_INCLUDE_DIR)
 	SUNDIALS_INCLUDE_DIR="${value}";;
+    SUPERLUMT_DIR)
+	SUPERLUMT_DIR="${value}";;
     SUPERLUMT_LIBRARY_DIR)
 	SUPERLUMT_LIBRARY_DIR="${value}";;
     SUPERLUMT_INCLUDE_DIR)
@@ -237,20 +244,6 @@ if [ x"${SUNDIALS_INCLUDE_DIR}" != x ]; then
     sundials_inc_path="${SUNDIALS_INCLUDE_DIR%/}"
     Isundials_inc_path="-I${sundials_inc_path}"
 fi
-if [ x"${SUNDIALS_EXAMPLES_DIR}" != x ]; then
-    if [ ! -d "${SUNDIALS_EXAMPLES_DIR%/}/cvode/serial" ]; then
-	msg="ignoring invalid examples directory (${SUNDIALS_EXAMPLES_DIR%})"
-	warning="${warning}\n\t${msg}"
-    else
-	EXAMPLESROOT="${SUNDIALS_EXAMPLES_DIR%/}"
-    fi
-elif [ "${distribution}" = debian ]; then
-    if [ -d "/usr/share/doc/libsundials-serial-dev/examples/cvode/serial" ]; then
-	EXAMPLESROOT=/usr/share/doc/libsundials-serial-dev/examples
-    elif [ -d "/usr/share/doc/libsundials-dev/examples/cvode/serial" ]; then
-	EXAMPLESROOT=/usr/share/doc/libsundials-dev/examples
-    fi
-fi
 if [ x"${SUNDIALS_DIR}" != x ]; then
     if [ "x${sundials_lib_path}" = x ]; then
 	sundials_lib_path="${SUNDIALS_DIR%/}/lib/"
@@ -259,6 +252,33 @@ if [ x"${SUNDIALS_DIR}" != x ]; then
     if [ "x${sundials_inc_path}" = x ]; then
 	sundials_inc_path="${SUNDIALS_DIR%/}/include/"
 	Isundials_inc_path="-I${sundials_inc_path}"
+    fi
+    if [ x"${SUNDIALS_EXAMPLES_DIR}" = x ]; then
+	SUNDIALS_EXAMPLES_DIR="${SUNDIALS_DIR%/}/examples/"
+    fi
+fi
+if [ x"${SUNDIALS_EXAMPLES_DIR}" != x ]; then
+    if [ ! -d "${SUNDIALS_EXAMPLES_DIR%/}/cvode/serial" ]; then
+	msg="ignoring invalid examples directory (${SUNDIALS_EXAMPLES_DIR%})"
+	warning="${warning}\n\t${msg}"
+	SUNDIALS_EXAMPLES_DIR=
+    else
+	EXAMPLESROOT="${SUNDIALS_EXAMPLES_DIR%/}"
+    fi
+fi
+if [ x"${SUNDIALS_EXAMPLES_DIR}" = x -a "${distribution}" = debian ]; then
+    if [ -d "/usr/share/doc/libsundials-serial-dev/examples/cvode/serial" ]; then
+	EXAMPLESROOT=/usr/share/doc/libsundials-serial-dev/examples
+    elif [ -d "/usr/share/doc/libsundials-dev/examples/cvode/serial" ]; then
+	EXAMPLESROOT=/usr/share/doc/libsundials-dev/examples
+    fi
+fi
+if [ x"${SUPERLUMT_DIR}" != x ]; then
+    if [ x"${SUPERLUMT_INCLUDE_DIR}" = x ]; then
+	SUPERLUMT_INCLUDE_DIR="${SUPERLUMT_DIR%/}/SRC"
+    fi
+    if [ x"${SUPERLUMT_LIBRARY_DIR}" = x ]; then
+	SUPERLUMT_LIBRARY_DIR="${SUPERLUMT_DIR%/}/lib"
     fi
 fi
 if [ x"${SUPERLUMT_INCLUDE_DIR}" != x ]; then
