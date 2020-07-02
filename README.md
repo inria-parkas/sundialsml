@@ -43,3 +43,16 @@ Contact
 * [Support (public OCaml list)](mailto:caml-list@inria.fr?subject=Sundials/ML:)
 * [Bug reports/Feature requests](https://github.com/inria-parkas/sundialsml/issues/new)
 * [Pull requests](https://github.com/inria-parkas/sundialsml/compare)
+
+Known Limitations
+-----------------
+Our goal is to provide access from OCaml to as much of Sundials as we can. 
+We do not, however, expose features for which there is no corresponding 
+OCaml library (e.g., some of the nvector modules) or whose implementation 
+would be overly complicated (e.g., in terms of types or mixed C/OCaml data 
+structures) or inefficient.
+
+* Unsupported nvector modules: CUDA, Hypre ParVector, PETSC, RAJA, and 
+  Trilinos (if you provide the required OCaml interface, we'll add the 
+  nvector).
+
