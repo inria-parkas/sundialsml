@@ -70,10 +70,9 @@ COBJ_SENS  =	cvodes/cvode_ml_s$(XO)		\
 		idas/idas_klu_ml${XO}		\
 		idas/ida_superlumt_ml_s${XO}	\
 		idas/idas_superlumt_ml${XO}	\
-		arkode/arkode_klu_ml$(XO)	\
-		arkode/arkode_superlumt_ml$(XO)	\
 		kinsol/kinsol_klu_ml${XO}	\
-		kinsol/kinsol_superlumt_ml${XO}
+		kinsol/kinsol_superlumt_ml${XO} \
+		$(ARKODE_COBJ_SENS)
 MLOBJ_SENS =	cvodes/cvodes.cmo		\
 		idas/idas.cmo
 CMI_SENS = $(MLOBJ_SENS:.cmo=.cmi)
