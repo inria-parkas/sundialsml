@@ -289,7 +289,7 @@ library to work.
 
 For {b Debian}-based systems, we found the following worked:
 {ol
-    {- {v apt-get install cmake liblapack-dev libopenmpi-dev openmpi-bin libsuitesparse-dev v}}
+    {- {v apt-get install cmake liblapack-dev libopenmpi-dev libsuitesparse-dev v}}
     {- Optionally
     {{:http://crd-legacy.lbl.gov/~xiaoye/SuperLU/superlu_mt_3.1.tar.gz}download}
     and build SuperLU/MT 3.1.}
