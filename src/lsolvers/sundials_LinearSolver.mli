@@ -66,7 +66,7 @@ module Direct : sig (* {{{ *)
     The matrix is used internally after the linear solver is attached to a
     session.
 
-  @nocvode <node> SUNDenseLinearSolver *)
+  @nocvode <node> SUNLinSol_Dense *)
   val dense :
     'k Nvector_serial.any
     -> 'k Matrix.dense
@@ -76,7 +76,7 @@ module Direct : sig (* {{{ *)
       See {!dense}. Only available if
       {{!Sundials_Config.lapack_enabled}Config.lapack_enabled}.
 
-  @nocvode <node> SUNLapackDense *)
+  @nocvode <node> SUNLinSol_LapackDense *)
   val lapack_dense :
     'k Nvector_serial.any
     -> 'k Matrix.dense
@@ -88,7 +88,7 @@ module Direct : sig (* {{{ *)
     The matrix is used internally after the linear solver is attached to a
     session.
 
-  @nocvode <node> SUNBandLinearSolver *)
+  @nocvode <node> SUNLinSol_Band *)
   val band :
     'k Nvector_serial.any
     -> 'k Matrix.band
@@ -98,7 +98,7 @@ module Direct : sig (* {{{ *)
       See {!band}.
       Only available if {{!Sundials_Config.lapack_enabled}Config.lapack_enabled}.
 
-  @nocvode <node> SUNLapackBand *)
+  @nocvode <node> SUNLinSol_LapackBand *)
   val lapack_band :
     'k Nvector_serial.any
     -> 'k Matrix.band
@@ -124,7 +124,7 @@ module Direct : sig (* {{{ *)
       session.
 
       @raise Config.NotImplementedBySundialsVersion Solver not available.
-      @nocvode <node> SUNKLU *)
+      @nocvode <node> SUNLinSol_KLU *)
     val make :
       ?ordering:ordering
       -> 'k Nvector_serial.any
@@ -137,13 +137,13 @@ module Direct : sig (* {{{ *)
       number of non-zeros if [nnz] if given. New symbolic and numeric
       factorizations will be completed at the next solver step.
 
-      @nocvode <node> SUNKLUReInit *)
+      @nocvode <node> SUNLinSol_KLUReInit *)
     val reinit : ('s Matrix.Sparse.t, 'k, [>tag]) serial_linear_solver
                  -> ('s, 'k) Matrix.sparse -> ?nnz:int -> unit -> unit
 
     (** Sets the ordering algorithm used to minimize fill-in.
 
-      @nocvode <node> SUNKLUSetOrdering *)
+      @nocvode <node> SUNLinSol_KLUSetOrdering *)
     val set_ordering : ('s Matrix.Sparse.t, 'k, [>tag]) serial_linear_solver
                        -> ordering -> unit
 
@@ -153,7 +153,7 @@ module Direct : sig (* {{{ *)
     See {!Klu.make}.
 
     @raise Config.NotImplementedBySundialsVersion Solver not available.
-    @nocvode <node> SUNKLU *)
+    @nocvode <node> SUNLinSol_KLU *)
   val klu :
     ?ordering:Klu.ordering
     -> 'k Nvector_serial.any
@@ -186,7 +186,7 @@ module Direct : sig (* {{{ *)
           {{!Sundials_Config.sundials_version}Config.sundials_version} >= 3.0.0.
 
       @raise Config.NotImplementedBySundialsVersion Solver not available.
-      @nocvode <node> SUNSuperLUMT *)
+      @nocvode <node> SUNLinSol_SuperLUMT *)
     val make :
       ?ordering:ordering
       -> nthreads:int
@@ -196,7 +196,7 @@ module Direct : sig (* {{{ *)
 
     (** Sets the ordering algorithm used to minimize fill-in.
 
-      @nocvode <node> SUNSuperLUMTSetOrdering *)
+      @nocvode <node> SUNLinSol_SuperLUMTSetOrdering *)
     val set_ordering : ('s Matrix.Sparse.t, 'k, [>tag]) serial_linear_solver
                        -> ordering -> unit
 
@@ -210,7 +210,7 @@ module Direct : sig (* {{{ *)
         {{!Sundials_Config.sundials_version}Config.sundials_version} >= 3.0.0.
 
     @raise Config.NotImplementedBySundialsVersion Solver not available.
-    @nocvode <node> SUNSuperLUMT *)
+    @nocvode <node> SUNLinSol_SuperLUMT *)
   val superlumt :
     ?ordering:Superlumt.ordering
     -> nthreads:int
@@ -304,7 +304,7 @@ module Iterative : sig (* {{{ *)
     dimension of the Krylov subspace (defaults to 5). The nvector argument
     is used as a template.
 
-    @nocvode <node> SUNSPBCGS *)
+    @nocvode <node> SUNLinSol_SPBCGS *)
   val spbcgs : ?maxl:int -> ('d, 'k) Nvector.t
                -> ('d, 'k, [`Spbcgs]) linear_solver
 
@@ -316,7 +316,7 @@ module Iterative : sig (* {{{ *)
     NB: [max_restarts] is ignored by CVODE, CVODES, and ARKODE
         for {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
 
-    @nocvode <node> SUNSPFGMR *)
+    @nocvode <node> SUNLinSol_SPFGMR *)
   val spfgmr : ?maxl:int -> ?max_restarts:int
                -> ?gs_type:gramschmidt_type
                -> ('d, 'k) Nvector.t
@@ -330,7 +330,7 @@ module Iterative : sig (* {{{ *)
     NB: [max_restarts] is ignored by CVODE, CVODES, and ARKODE
         for {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
 
-    @nocvode <node> SUNSPGMR *)
+    @nocvode <node> SUNLinSol_SPGMR *)
   val spgmr : ?maxl:int -> ?max_restarts:int
               -> ?gs_type:gramschmidt_type
               -> ('d, 'k) Nvector.t
@@ -341,7 +341,7 @@ module Iterative : sig (* {{{ *)
     maximum dimension of the Krylov subspace (defaults to 5). The nvector
     argument is used as a template.
 
-    @nocvode <node> SUNSPTFQMR *)
+    @nocvode <node> SUNLinSol_SPTFQMR *)
   val sptfqmr : ?maxl:int -> ('d, 'k) Nvector.t
                 -> ('d, 'k, [`Sptfqmr]) linear_solver
 
@@ -350,7 +350,7 @@ module Iterative : sig (* {{{ *)
     Krylov subspace (defaults to 5). The nvector argument is used as a
     template.
 
-    @nocvode <node> SUNPCG *)
+    @nocvode <node> SUNLinSol_PCG *)
   val pcg : ?maxl:int -> ('d, 'k) Nvector.t
             -> ('d, 'k, [`Pcg]) linear_solver
 
@@ -570,16 +570,16 @@ module Iterative : sig (* {{{ *)
 
   (** Updates the number of linear solver iterations to allow.
 
-    @nocvode <node> SUNSPBCGSSetMaxl
-    @nocvode <node> SUNSPTFQMRSetMaxl
-    @nocvode <node> SUNPCGSetMaxl *)
+    @nocvode <node> SUNLinSol_SPBCGSSetMaxl
+    @nocvode <node> SUNLinSol_SPTFQMRSetMaxl
+    @nocvode <node> SUNLinSol_PCGSetMaxl *)
   val set_maxl : ('d, 'k, [< `Spbcgs|`Sptfqmr|`Pcg]) linear_solver
                  -> int -> unit
 
   (** Sets the Gram-Schmidt orthogonalization to use.
 
-    @nocvode <node> SUNSPGMRSetGSType
-    @nocvode <node> SUNSPFGMRSetGSType *)
+    @nocvode <node> SUNLinSol_SPGMRSetGSType
+    @nocvode <node> SUNLinSol_SPFGMRSetGSType *)
   val set_gs_type :
     ('d, 'k, [< `Spfgmr|`Spgmr]) linear_solver -> gramschmidt_type -> unit
 
@@ -588,8 +588,8 @@ module Iterative : sig (* {{{ *)
     NB: This feature is not supported by CVODE, CVODES, and ARKODE
         for {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
 
-    @nocvode <node> SUNSPGMRSetMaxRestarts
-    @nocvode <node> SUNSPFGMRSetMaxRestarts *)
+    @nocvode <node> SUNLinSol_SPGMRSetMaxRestarts
+    @nocvode <node> SUNLinSol_SPFGMRSetMaxRestarts *)
   val set_max_restarts : ('d, 'k, [< `Spfgmr|`Spgmr]) linear_solver
                          -> int -> unit
 
@@ -612,11 +612,11 @@ module Iterative : sig (* {{{ *)
     {!IllegalPrecType} if the given type is not allowed by the
     underlying solver.
 
-    @nocvode <node> SUNPCGSetPrecType
-    @nocvode <node> SUNSPBCGSSetPrecType
-    @nocvode <node> SUNSPFGMRSetPrecType
-    @nocvode <node> SUNSPGMRSetPrecType
-    @nocvode <node> SUNSPTFQMRSetPrecType *)
+    @nocvode <node> SUNLinSol_PCGSetPrecType
+    @nocvode <node> SUNLinSol_SPBCGSSetPrecType
+    @nocvode <node> SUNLinSol_SPFGMRSetPrecType
+    @nocvode <node> SUNLinSol_SPGMRSetPrecType
+    @nocvode <node> SUNLinSol_SPTFQMRSetPrecType *)
   val set_prec_type : ('d, 'k, 'f) linear_solver -> preconditioning_type -> unit
 
 end (* }}} *)

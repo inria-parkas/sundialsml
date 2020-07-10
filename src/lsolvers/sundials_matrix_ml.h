@@ -114,9 +114,9 @@
     by Sundials/ML. They thus do not concern the interface code.
 
     SUNSparseMatrix is called from SUNSparseFromDenseMatrix,
-    SUNSparseFromBandMatrix, and SUNKLUReInit. These latter three functions
-    are not used within Sundials, we reimplement them to function properly
-    with OCaml.
+    SUNSparseFromBandMatrix, and SUNLinSol_KLUReInit. These latter three
+    functions are not used within Sundials, we reimplement them to function
+    properly with OCaml.
 
     SUNBandMatrix is also called from SUNMatScaleAdd_Band (via the internal
     function SMScaleAddNew_Band) to reallocate the storage within the A matrix

@@ -41,14 +41,14 @@ enum lsolver_iterative_solver_tag {
     VARIANT_LSOLVER_ITERATIVE_SOLVER_PCG,
 };
 
-// values must match convention for SUNKLUSetOrdering
+// values must match convention for SUNLinSol_KLUSetOrdering
 enum lsolver_klu_ordering_tag {
     VARIANT_LSOLVER_KLU_ORDERING_AMD     = 0,
     VARIANT_LSOLVER_KLU_ORDERING_COLAMD  = 1,
     VARIANT_LSOLVER_KLU_ORDERING_NATURAL = 2,
 };
 
-// values must match convention for SUNSuperLUMTSetOrdering
+// values must match convention for SUNLinSol_SuperLUMTSetOrdering
 enum lsolver_superlumt_ordering_tag {
     VARIANT_LSOLVER_SUPERLUMT_ORDERING_NATURAL       = 0,
     VARIANT_LSOLVER_SUPERLUMT_ORDERING_MINDEGREEPROD = 1,
