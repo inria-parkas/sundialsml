@@ -489,7 +489,7 @@ module MakeOps =
           done
         done;
         (* Note: ocamlmpi does not provide MPI_IN_PLACE *)
-        Mpi.(allreduce_bigarray dp dp Int_sum comm)
+        Mpi.(allreduce_bigarray1 dp dp Int_sum comm)
 
     let arr_vaxpy_array a (xa : t array) (ya : t array) =
       let nvec = Array.length xa in
@@ -677,7 +677,7 @@ module MakeOps =
           done
         done;
         (* Note: ocamlmpi does not provide MPI_IN_PLACE *)
-        Mpi.(allreduce_bigarray nrm nrm Int_sum comm);
+        Mpi.(allreduce_bigarray1 nrm nrm Int_sum comm);
         for i = 0 to nvec - 1 do
           nrm.{i} <- sqrt (nrm.{i}/.nf)
         done
@@ -703,7 +703,7 @@ module MakeOps =
           done;
         done;
         (* Note: ocamlmpi does not provide MPI_IN_PLACE *)
-        Mpi.(allreduce_bigarray nrm nrm Int_sum comm);
+        Mpi.(allreduce_bigarray1 nrm nrm Int_sum comm);
         for i = 0 to nvec - 1 do
           nrm.{i} <- sqrt (nrm.{i}/.nf)
         done
@@ -1094,7 +1094,7 @@ module DataOps =
           done
         done;
         (* Note: ocamlmpi does not provide MPI_IN_PLACE *)
-        Mpi.(allreduce_bigarray dp dp Int_sum comm)
+        Mpi.(allreduce_bigarray1 dp dp Int_sum comm)
 
     let arr_vaxpy_array a (xa : t array) (ya : t array) =
       let nvec = Array.length xa in
@@ -1282,7 +1282,7 @@ module DataOps =
           done
         done;
         (* Note: ocamlmpi does not provide MPI_IN_PLACE *)
-        Mpi.(allreduce_bigarray nrm nrm Int_sum comm);
+        Mpi.(allreduce_bigarray1 nrm nrm Int_sum comm);
         for i = 0 to nvec - 1 do
           nrm.{i} <- sqrt (nrm.{i}/.nf)
         done
@@ -1308,7 +1308,7 @@ module DataOps =
           done;
         done;
         (* Note: ocamlmpi does not provide MPI_IN_PLACE *)
-        Mpi.(allreduce_bigarray nrm nrm Int_sum comm);
+        Mpi.(allreduce_bigarray1 nrm nrm Int_sum comm);
         for i = 0 to nvec - 1 do
           nrm.{i} <- sqrt (nrm.{i}/.nf)
         done
