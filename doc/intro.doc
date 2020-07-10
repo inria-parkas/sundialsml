@@ -18,9 +18,9 @@ and
 {{:http://www.di.ens.fr/~pouzet/}Marc Pouzet}
 ({{:http://www.upmc.fr/}UPMC}/{{:http://www.di.ens.fr/}ENS}/{{:http://www.inria.fr/}Inria}).
 It provides an OCaml interface to Sundials version {b {var version}}.
-The only features missing are the Hypre ParVector, PETSC, CUDA, and RAJA
-nvector modules
-since these require libraries that are not available in OCaml—{{:mailto:tim\@tbrk.org}contact us} if you need these.
+The only features missing are the Hypre ParVector, PETSC, CUDA, RAJA, and
+OpenMPdev nvector modules since these require libraries that are not available
+in OCaml—{{:mailto:tim\@tbrk.org}contact us} if you need these.
 
 The source code is available under a New BSD license at
 {{:https://github.com/inria-parkas/sundialsml}git\@github.com:inria-parkas/sundialsml.git}.
