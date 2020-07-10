@@ -1085,8 +1085,8 @@ let wrap_band (data : Band.t) = {
   }
 
 let band ?(mu=2) ?smu ?ml ?(i=0.0) n =
-  let smu = match smu with Some smu -> smu | None -> mu in
   let ml  = match ml with Some ml -> ml | None -> mu in
+  let smu = match smu with Some smu -> smu | None -> mu+ml in
   wrap_band (Band.(make { n; mu; smu; ml } i))
 
 let wrap_sparse (data : 'f Sparse.t) =

@@ -367,7 +367,7 @@ static bool matrix_band_realloc(sundials_ml_index n, sundials_ml_index mu,
     CAMLreturnT(bool, true);
 }
 
-#if SUNDIALS_LIB_VERSION >= 300
+#if 300 <= SUNDIALS_LIB_VERSION
 static value sunml_matrix_band_create_mat(sundials_ml_index n,
 	sundials_ml_index mu, sundials_ml_index ml, sundials_ml_index smu)
 {

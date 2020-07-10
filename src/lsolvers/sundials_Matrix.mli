@@ -231,12 +231,12 @@ module Band : sig (* {{{ *)
   (** Returns a band matrix with the given {!dimensions} and all elements
       initialized to the given value.
 
-      @nocvode <node> SUNBandMatrix *)
+      @nocvode <node> SUNBandMatrixStorage *)
   val make : dimensions -> float -> t
 
   (** Returns an uninitialized band matrix with the given {!dimensions}.
 
-      @nocvode <node> SUNBandMatrix *)
+      @nocvode <node> SUNBandMatrixStorage *)
   val create : dimensions -> t
 
   (** [m, n = size a] returns the numbers of rows [m] and columns [n] of [a].
@@ -972,10 +972,11 @@ type 'nk band =
     equal to 2 and all values initialized to [0.0].
     Optional arguments allow specifying the upper bandwidth [mu], the lower
     bandwidth [ml], the storage upper bandwidth [smu] and the initial
-    values [i]. If [mu] is given but not [smu], then [smu] is set to [mu].
-    If [mu] is given but not [ml], then [ml] is set to [mu].
+    values [i]. If [mu] is given but not [ml], then [ml] is set to [mu].
+    If [mu] is given but not [smu], then [smu] is set to [mu+ml].
 
-    @nocvode <node> SUNBandMatrix *)
+    @nocvode <node> SUNBandMatrix
+    @nocvode <node> SUNBandMatrixStorage *)
 val band : ?mu:int -> ?smu:int -> ?ml:int -> ?i:float -> int -> 'nk band
 
 (** Creates a (band) matrix by wrapping an existing band matrix. The two
