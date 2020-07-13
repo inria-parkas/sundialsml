@@ -937,6 +937,11 @@ void sunml_kinsol_check_flag(const char *call, int flag)
     case KIN_REPTD_SYSFUNC_ERR:
         caml_raise_constant(KINSOL_EXN(RepeatedSystemFunctionFailure));
 
+#if 400 <= SUNDIALS_LIB_VERSION
+    case KIN_VECTOROP_ERR:
+	caml_raise_constant(KINSOL_EXN(VectorOpErr));
+#endif
+
     default:
 	/* KIN_MEM_NULL, KIN_NO_MALLOC */
 	snprintf(exmsg, MAX_ERRMSG_LEN, "%s: unexpected error code", call);

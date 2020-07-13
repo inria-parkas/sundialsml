@@ -31,6 +31,7 @@ exception LinearSolverFailure            (* KIN_LSOLVE_FAIL *)
 exception SystemFunctionFailure          (* KIN_SYSFUNC_FAIL *)
 exception FirstSystemFunctionFailure     (* KIN_FIRST_SYSFUNC_FAIL *)
 exception RepeatedSystemFunctionFailure  (* KIN_REPTD_SYSFUNC_ERR *)
+exception VectorOpErr                    (* KIN_VECTOROP_ERR *)
 exception MissingLinearSolver
 
 type print_level =
@@ -708,4 +709,5 @@ let _ =
       SystemFunctionFailure;
       FirstSystemFunctionFailure;
       RepeatedSystemFunctionFailure;
+      VectorOpErr;
     |]

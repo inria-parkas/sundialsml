@@ -190,6 +190,7 @@ enum kinsol_exn_index {
     KINSOL_EXN_SystemFunctionFailure,
     KINSOL_EXN_FirstSystemFunctionFailure,
     KINSOL_EXN_RepeatedSystemFunctionFailure,
+    KINSOL_EXN_VectorOpErr,
     KINSOL_EXN_SET_SIZE,
 };
 

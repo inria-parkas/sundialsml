@@ -849,3 +849,8 @@ exception RepeatedSystemFunctionFailure
 (** A linear solver is required but was not specified. *)
 exception MissingLinearSolver
 
+(** A fused vector operation failed.
+
+    @nocvode <node> KIN_VECTOROP_ERR *)
+exception VectorOpErr
+
