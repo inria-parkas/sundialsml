@@ -258,7 +258,7 @@ module Dls = struct (* {{{ *)
     get_work_space s
 
   external c_get_num_jac_evals : 'k serial_session -> int
-      = "sunml_kinsol_dls_get_num_jac_evals"
+      = "sunml_kinsol_get_num_jac_evals"
 
   (* Sundials < 3.0.0 *)
   external c_klu_get_num_jac_evals : 'k serial_session -> int
@@ -413,35 +413,35 @@ module Spils = struct (* {{{ *)
     get_work_space s
 
   external get_num_lin_iters    : ('a, 'k) session -> int
-      = "sunml_kinsol_spils_get_num_lin_iters"
+      = "sunml_kinsol_get_num_lin_iters"
 
   let get_num_lin_iters s =
     ls_check_spils s;
     get_num_lin_iters s
 
-  external get_num_conv_fails   : ('a, 'k) session -> int
-      = "sunml_kinsol_spils_get_num_conv_fails"
+  external get_num_lin_conv_fails   : ('a, 'k) session -> int
+      = "sunml_kinsol_get_num_lin_conv_fails"
 
-  let get_num_conv_fails s =
+  let get_num_lin_conv_fails s =
     ls_check_spils s;
-    get_num_conv_fails s
+    get_num_lin_conv_fails s
 
   external get_num_prec_evals   : ('a, 'k) session -> int
-      = "sunml_kinsol_spils_get_num_prec_evals"
+      = "sunml_kinsol_get_num_prec_evals"
 
   let get_num_prec_evals s =
     ls_check_spils s;
     get_num_prec_evals s
 
   external get_num_prec_solves  : ('a, 'k) session -> int
-      = "sunml_kinsol_spils_get_num_prec_solves"
+      = "sunml_kinsol_get_num_prec_solves"
 
   let get_num_prec_solves s =
     ls_check_spils s;
     get_num_prec_solves s
 
   external get_num_jtimes_evals : ('a, 'k) session -> int
-      = "sunml_kinsol_spils_get_num_jtimes_evals"
+      = "sunml_kinsol_get_num_jtimes_evals"
 
   let get_num_jtimes_evals s =
     ls_check_spils s;

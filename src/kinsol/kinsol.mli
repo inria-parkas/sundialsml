@@ -72,10 +72,9 @@ type 'd double = 'd * 'd
 
 (** Arguments common to Jacobian callback functions.
 
-    @kinsol <node5#ss:djacFn> KINDlsDenseJacFn
-    @kinsol <node5#ss:bjacFn> KINDlsBandJacFn
-    @kinsol <node5#ss:psolveFn> KINSpilsPrecSolveFn
-    @kinsol <node5#ss:precondFn> KINSpilsPrecSetupFn *)
+    @kinsol <node5#ss:djacFn> KINLsJacFn
+    @kinsol <node5#ss:psolveFn> KINLsPrecSolveFn
+    @kinsol <node5#ss:precondFn> KINLsPrecSetupFn *)
 type ('t, 'd) jacobian_arg = ('t, 'd) Kinsol_impl.jacobian_arg =
   {
     jac_u   : 'd;   (** The current unscaled iterate. *)
@@ -104,7 +103,7 @@ module Dls : sig (* {{{ *)
       {warning Neither the elements of [arg] nor the matrix [jm] should
                be accessed after the function has returned.}
 
-      @kinsol <node5#ss:djacFn> KINDlsDenseJacFn *)
+      @kinsol <node5#ss:djacFn> KINLsJacFn *)
   type 'm jac_fn =
     (RealArray.t double, RealArray.t) jacobian_arg -> 'm -> unit
 
@@ -115,8 +114,8 @@ module Dls : sig (* {{{ *)
       used), but must be provided for other solvers (or [Invalid_argument] is
       raised).
 
-      @nocvode <node> CVDlsSetLinearSolver
-      @nocvode <node> CVDlsSetJacFn *)
+      @nokinsol <node> KINSetLinearSolver
+      @nokinsol <node> KINSetJacFn *)
   val solver :
     ?jac:'m jac_fn ->
     ('m, 'kind, 't) LinearSolver.Direct.serial_linear_solver ->
@@ -127,21 +126,21 @@ module Dls : sig (* {{{ *)
   (** Returns the sizes of the real and integer workspaces used by a direct
       linear solver.
 
-      @kinsol <node5#sss:optout_dense> KINDlsGetWorkSpace
+      @kinsol <node5#sss:optout_dense> KINGetLinWorkSpace
       @return ([real_size], [integer_size]) *)
   val get_work_space : 'k serial_session -> int * int
 
   (** Returns the number of calls made by a direct linear solver to the
       Jacobian approximation function.
 
-      @kinsol <node5#sss:optout_dense> KINDlsGetNumJacEvals *)
+      @kinsol <node5#sss:optout_dense> KINGetNumJacEvals *)
   val get_num_jac_evals : 'k serial_session -> int
 
   (** Returns the number of calls made by a direct linear solver to the
       user system function for computing the difference quotient approximation
       to the Jacobian.
 
-      @kinsol <node5#sss:optout_dense> KINDlsGetNumFuncEvals *)
+      @kinsol <node5#sss:optout_dense> KINGetNumLinFuncEvals *)
   val get_num_func_evals : 'k serial_session -> int
 
 end (* }}} *)
@@ -157,7 +156,7 @@ module Spils : sig (* {{{ *)
 
   (** Arguments passed to the preconditioner solver function.
 
-      @kinsol <node5#ss:psolveFn> KINSpilsPrecSolveFn *)
+      @kinsol <node5#ss:psolveFn> KINLsPrecSolveFn *)
   type 'data solve_arg =
     {
       uscale : 'data; (** Diagonal elements of the scaling matrix for [u]. *)
@@ -180,8 +179,8 @@ module Spils : sig (* {{{ *)
       {warning Neither the elements of [jarg] or [sarg], nor [z] should be
                accessed after the function has returned.}
 
-      @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
-      @kinsol <node5#ss:psolveFn> KINSpilsPrecSolveFn *)
+      @kinsol <node5#sss:optin_spils> KINSetPreconditioner
+      @kinsol <node5#ss:psolveFn> KINLsPrecSolveFn *)
   type 'd prec_solve_fn =
     (unit, 'd) jacobian_arg
     -> 'd solve_arg
@@ -198,8 +197,8 @@ module Spils : sig (* {{{ *)
       {warning The elements of [jarg] and [sarg] should not be accessed after
                the function has returned.}
 
-      @kinsol <node5#ss:precondFn> KINSpilsPrecSetupFn
-      @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
+      @kinsol <node5#ss:precondFn> KINLsPrecSetupFn
+      @kinsol <node5#sss:optin_spils> KINSetPreconditioner
    *)
   type 'd prec_setup_fn =
     (unit, 'd) jacobian_arg
@@ -211,9 +210,9 @@ module Spils : sig (* {{{ *)
       The following functions and those in {!Kinsol_bbd} construct
       preconditioners.
 
-      @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
-      @kinsol <node5#ss:psolveFn> KINSpilsPrecSolveFn
-      @kinsol <node5#ss:precondFn> KINSpilsPrecSetupFn *)
+      @kinsol <node5#sss:optin_spils> KINSetPreconditioner
+      @kinsol <node5#ss:psolveFn> KINLsPrecSolveFn
+      @kinsol <node5#ss:precondFn> KINLsPrecSetupFn *)
   type ('d, 'k) preconditioner = ('d, 'k) Kinsol_impl.SpilsTypes.preconditioner
 
   (** No preconditioning.  *)
@@ -241,7 +240,7 @@ module Spils : sig (* {{{ *)
       {warning [v], [jv], and [u] should not be accessed after the function
                has returned.}
 
-      @kinsol <node5#ss:jtimesFn> KINSpilsJacTimesVecFn
+      @kinsol <node5#ss:jtimesFn> KINLsJacTimesVecFn
    *)
   type 'data jac_times_vec_fn =
     'data      (* v *)
@@ -250,14 +249,14 @@ module Spils : sig (* {{{ *)
     -> bool    (* new_u *)
     -> bool
 
-  (** Create a Cvode-specific linear solver from a generic iterative
+  (** Create a Kinsol-specific linear solver from a generic iterative
       linear solver.
 
       NB: a [jac_times_setup_fn] is not supported in
           {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
 
-      @nocvode <node> CVSpilsSetLinearSolver
-      @nocvode <node> CVSpilsSetJacTimes *)
+      @nokinsol <node> KINSetLinearSolver
+      @nokinsol <node> KINSetJacTimesVecFn *)
   val solver :
     ('d, 'k, 'f) LinearSolver.Iterative.linear_solver
     -> ?jac_times_vec:'d jac_times_vec_fn
@@ -269,35 +268,35 @@ module Spils : sig (* {{{ *)
   (** Returns the sizes of the real and integer workspaces used by the spils
       linear solver.
 
-      @kinsol <node5#sss:optout_spils> KINSpilsGetWorkSpace
+      @kinsol <node5#sss:optout_spils> KINGetLinWorkSpace
       @return ([real_size], [integer_size]) *)
   val get_work_space       : ('d, 'k) session -> int * int
 
   (** Returns the cumulative number of linear iterations.
 
-      @kinsol <node5#sss:optout_spils> KINSpilsGetNumLinIters *)
+      @kinsol <node5#sss:optout_spils> KINGetNumLinIters *)
   val get_num_lin_iters    : ('d, 'k) session -> int
 
   (** Returns the cumulative number of linear convergence failures.
 
-      @kinsol <node5#sss:optout_spils> KINSpilsGetNumConvFails *)
-  val get_num_conv_fails   : ('d, 'k) session -> int
+      @kinsol <node5#sss:optout_spils> KINGetNumLinConvFails *)
+  val get_num_lin_conv_fails   : ('d, 'k) session -> int
 
   (** Returns the cumulative number of calls to the setup function.
 
-      @kinsol <node5#sss:optout_spils> KINSpilsGetNumPrecEvals *)
+      @kinsol <node5#sss:optout_spils> KINGetNumPrecEvals *)
   val get_num_prec_evals   : ('d, 'k) session -> int
 
   (** Returns the cumulative number of calls to the preconditioner solve
       function.
 
-      @kinsol <node5#sss:optout_spils> KINSpilsGetNumPrecSolves *)
+      @kinsol <node5#sss:optout_spils> KINGetNumPrecSolves *)
   val get_num_prec_solves  : ('d, 'k) session -> int
 
   (** Returns the cumulative number of calls to the Jacobian-vector
       function.
 
-      @kinsol <node5#sss:optout_spils> KINSpilsGetNumJtimesEvals *)
+      @kinsol <node5#sss:optout_spils> KINGetNumJtimesEvals *)
   val get_num_jtimes_evals : ('d, 'k) session -> int
 
   (** Returns the number of calls to the system function for finite
@@ -305,16 +304,16 @@ module Spils : sig (* {{{ *)
       counter is only updated if the default difference quotient function
       is used.
 
-      @kinsol <node5#sss:optout_spils> KINSpilsGetNumFuncEvals *)
+      @kinsol <node5#sss:optout_spils> KINGetNumLinFuncEvals *)
   val get_num_func_evals    : ('d, 'k) session -> int
 
   (** {3:lowlevel Low-level solver manipulation} *)
 
   (** Change the preconditioner functions.
 
-      @kinsol <node5#sss:optin_spils> KINSpilsSetPreconditioner
-      @kinsol <node5#ss:precondFn> KINSpilsPrecSetupFn
-      @kinsol <node5#ss:psolveFn> KINSpilsPrecSolveFn *)
+      @kinsol <node5#sss:optin_spils> KINSetPreconditioner
+      @kinsol <node5#ss:precondFn> KINLsPrecSetupFn
+      @kinsol <node5#ss:psolveFn> KINLsPrecSolveFn *)
   val set_preconditioner :
     ('d, 'k) session
     -> ?setup:'d prec_setup_fn
@@ -323,8 +322,8 @@ module Spils : sig (* {{{ *)
 
   (** Change the Jacobian-times-vector function.
 
-      @kinsol <node5#sss:optin_spils> KINSpilsSetJacTimes
-      @kinsol <node5#ss:jtimesFn> KINSpilsJacTimesVecFn *)
+      @kinsol <node5#sss:optin_spils> KINSetJacTimesVecFn
+      @kinsol <node5#ss:jtimesFn> KINLsJacTimesVecFn *)
   val set_jac_times :
     ('d, 'k) session
     -> 'd jac_times_vec_fn
@@ -333,7 +332,7 @@ module Spils : sig (* {{{ *)
   (** Remove a Jacobian-times-vector function and use the default
       implementation.
 
-      @kinsol <node5#sss:optin_spils> KINSpilsSetJacTimes *)
+      @kinsol <node5#sss:optin_spils> KINSetJacTimesVecFn *)
   val clear_jac_times : ('d, 'k) session -> unit
 end (* }}} *)
 
@@ -347,7 +346,7 @@ module Alternate : sig (* {{{ *)
       Raising any exception in this function (including
       {!Sundials.RecoverableFailure}) is treated as an unrecoverable error.
 
-      @cvode <node8#SECTION00810000000000000000> linit *)
+      @nokinsol <node8> linit *)
   type ('data, 'kind) linit = ('data, 'kind) session -> unit
 
   (** Functions that prepare the linear solver for subsequent calls to
@@ -851,6 +850,6 @@ exception MissingLinearSolver
 
 (** A fused vector operation failed.
 
-    @nocvode <node> KIN_VECTOROP_ERR *)
+    @nokinsol <node> KIN_VECTOROP_ERR *)
 exception VectorOpErr
 

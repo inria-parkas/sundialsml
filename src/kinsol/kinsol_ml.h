@@ -19,7 +19,7 @@
 #include <caml/mlvalues.h>
 
 void sunml_kinsol_check_flag(const char *call, int flag);
-#if SUNDIALS_LIB_VERSION >= 400
+#if 400 <= SUNDIALS_LIB_VERSION
 void sunml_kinsol_check_ls_flag(const char *call, int flag);
 #else
 void sunml_kinsol_check_dls_flag(const char *call, int flag);
@@ -31,10 +31,8 @@ value sunml_kinsol_make_double_tmp(N_Vector tmp1, N_Vector tmp2);
 
 #define CHECK_FLAG(call, flag) if (flag != KIN_SUCCESS) \
 				 sunml_kinsol_check_flag(call, flag)
-#if SUNDIALS_LIB_VERSION >= 400
-#define CHECK_SPILS_FLAG(call, flag) if (flag != KINLS_SUCCESS) \
-				 sunml_kinsol_check_ls_flag(call, flag)
-#define CHECK_DLS_FLAG(call, flag) if (flag != KINLS_SUCCESS) \
+#if 400 <= SUNDIALS_LIB_VERSION
+#define CHECK_LS_FLAG(call, flag) if (flag != KINLS_SUCCESS) \
 				 sunml_kinsol_check_ls_flag(call, flag)
 #else
 #define CHECK_SPILS_FLAG(call, flag) if (flag != KINSPILS_SUCCESS) \
