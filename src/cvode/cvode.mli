@@ -684,7 +684,7 @@ type 'd rhsfn = float -> 'd -> 'd -> unit
 type 'd rootsfn = float -> 'd -> RealArray.t -> unit
 
 (** Creates and initializes a session with the solver. The call
-    {[init lmm iter tol f ~roots:(nroots, g) t0 y0]} has
+    {[init lmm tol ~nlsolver ~lsolver f ~roots:(nroots, g) t0 y0]} has
     as arguments:
     - [lmm],      the linear multistep method (see {!lmm}),
     - [tol],      the integration tolerances,

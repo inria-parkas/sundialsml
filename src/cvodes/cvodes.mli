@@ -375,15 +375,15 @@ module Sensitivity : sig (* {{{ *)
           in {{!sens_params}pbar}. *)
 
   (** Activates the calculation of forward sensitivities. The call
-      [init s tol sm sp fs ys0], has as arguments:
+      [init s tol sens_method ~sens_params fs ys0], has as arguments:
       - [s], a session created with {!Cvode.init},
       - [tol], the tolerances desired,
       - [sens_method], the solution method,
-      - [~sens_params], the parameter information (see {!sens_params}),
-      - [~fs], the sensitivity function, and,
+      - [sens_params], the parameter information (see {!sens_params}),
+      - [fs], the sensitivity function, and,
       - [ys0], initial values of the sensitivities for each parameter.
 
-      If [~fs] is not given, an internal difference quotient routine
+      If [fs] is not given, an internal difference quotient routine
       is used.  In that case, or if the internal difference quotient
       routine will be specified in a subsequent call to
       {!Sensitivity.Quadrature.init}, then [sens_params] must be

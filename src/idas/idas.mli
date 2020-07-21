@@ -310,12 +310,14 @@ module Sensitivity : sig (* {{{ *)
           in {{!sens_params}pbar}. *)
 
   (** Activates the calculation of forward sensitivities. The call
-      {[init s tol ism ps ~fs:fs s0 s0']} has as arguments:
+      {[init s tol sm ~sens_nlsolver ~sens_params ~fs s0 s0']}
+      has as arguments:
       - [s], a session created with {!Ida.init},
       - [tol], the tolerances desired,
       - [sm], the solution method,
-      - [~sens_params], the parameter information (see {!sens_params}),
-      - [~fs], the sensitivity function,
+      - [sens_nlsolver], the solver to use to calculate integration steps,
+      - [sens_params], the parameter information (see {!sens_params}),
+      - [fs], the sensitivity function,
       - [s0], initial values of the sensitivities for each parameter, and,
       - [s0'], initial values of the sensitivity derivatives for each
                parameter.

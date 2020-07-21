@@ -577,8 +577,8 @@ type 'd resfn = float -> 'd -> 'd -> 'd -> unit
 type 'd rootsfn = float -> 'd -> 'd -> RealArray.t -> unit
 
 (** Creates and initializes a session with the solver. The call
-    {[init linsolv tol f ~varid:varid ~roots:(nroots, g) t0 y0 y'0]} has
-    as arguments:
+    {[init linsolv tol ~nlsolver ~lsolver f ~varid:varid ~roots:(nroots, g) t0 y0 y'0]}
+    has as arguments:
     - [tol],     the integration tolerances,
     - [nlsolver], the solver to use to calculate integration steps
                   and initial conditions,
