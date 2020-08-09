@@ -46,10 +46,10 @@ enum nlsolver_callbacks_index {
 };
 
 enum nlsolver_solver_tag {
-  VARIANT_NLSOLVER_SOLVER_FIXEDPOINTSOLVER        = 0, // constant constrs
-  VARIANT_NLSOLVER_SOLVER_NEWTONSOLVER            = 1,
-  VARIANT_NLSOLVER_SOLVER_CUSTOMSOLVER            = 0, // non-constant constrs
-  VARIANT_NLSOLVER_SOLVER_CUSTOMSENSSOLVER        = 1
+  VARIANT_NLSOLVER_SOLVER_NEWTONSOLVER            = 0, // constant constrs
+  VARIANT_NLSOLVER_SOLVER_FIXEDPOINTSOLVER        = 0, // non-constant constrs
+  VARIANT_NLSOLVER_SOLVER_CUSTOMSOLVER            = 1,
+  VARIANT_NLSOLVER_SOLVER_CUSTOMSENSSOLVER        = 2
 };
 
 enum nlsolver_ops_index {

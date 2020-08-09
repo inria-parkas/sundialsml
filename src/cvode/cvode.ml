@@ -771,7 +771,7 @@ let reinit session ?nlsolver ?lsolver ?roots t0 y0 =
   if in_compat_mode2_3 then
     match nlsolver with
     | None -> ()
-    | Some { NLSI.solver = NLSI.FixedPointSolver } -> c_set_functional session
+    | Some { NLSI.solver = NLSI.FixedPointSolver _ } -> c_set_functional session
     | Some _ -> c_set_newton session
   else
     match nlsolver with

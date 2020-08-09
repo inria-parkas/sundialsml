@@ -1470,7 +1470,7 @@ module Adjoint = struct (* {{{ *)
     if in_compat_mode2_3 then begin
       match nlsolver with
       | None -> ()
-      | Some { NLSI.solver = NLSI.FixedPointSolver } ->
+      | Some { NLSI.solver = NLSI.FixedPointSolver _ } ->
           c_set_functional parent which
       | Some _ -> c_set_newton parent which
     end else begin

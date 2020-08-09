@@ -70,21 +70,21 @@ let init (type d k s) ({ rawptr; solver } : (d, k, s) nonlinear_solver) =
   | CustomSensSolver { init = Some f }  -> f ()
   | CustomSolver _     -> ()
   | CustomSensSolver _ -> ()
-  | FixedPointSolver | NewtonSolver     -> c_init rawptr     (* O/Cnls *)
+  | FixedPointSolver _ | NewtonSolver     -> c_init rawptr   (* O/Cnls *)
 
 let setup { rawptr; solver } ~y =
   check_compat ();
   match solver with
   | CustomSolver     { setup = Some f } -> f y ()            (* O/Onls *)
   | CustomSolver     { setup = None   } -> ()
-  | FixedPointSolver | NewtonSolver
+  | FixedPointSolver _ | NewtonSolver
       -> c_setup rawptr y                                    (* O/Cnls *)
 
 let solve { rawptr; solver } ~y0 ~y ~w tol callLSetup =
   check_compat ();
   match solver with
   | CustomSolver { solve = f } -> f y0 y w tol callLSetup () (* O/Onls *)
-  | FixedPointSolver | NewtonSolver
+  | FixedPointSolver _ | NewtonSolver
       -> c_solve rawptr (y0, y, w, tol, callLSetup)          (* O/Cnls *)
 
 (* - - - OCaml callback configuration - - - *)
@@ -94,7 +94,7 @@ let set_sys_fn { rawptr; solver; callbacks } cbf =
   match (solver : ('d, 'k, user) solver) with
   | CustomSolver { set_sys_fn = set }                        (* O/Onls *)
       -> set (fun y fg -> Nvector.(cbf (unwrap y) (unwrap fg)))
-  | FixedPointSolver | NewtonSolver                          (* O/Cnls *)
+  | FixedPointSolver _ | NewtonSolver                        (* O/Cnls *)
       -> callbacks.sysfn <- cbf;
          c_set_sys_fn rawptr
 
@@ -104,7 +104,7 @@ let set_lsetup_fn { rawptr; solver; callbacks } cbf =
   | CustomSolver { set_lsetup_fn = Some set }                (* O/Onls *)
       -> set (fun y f -> Nvector.(cbf (unwrap y) (unwrap f)))
   | CustomSolver { set_lsetup_fn = None } -> ()
-  | FixedPointSolver | NewtonSolver                          (* O/Cnls *)
+  | FixedPointSolver _ | NewtonSolver                        (* O/Cnls *)
       -> callbacks.lsetupfn <- cbf;
          c_set_lsetup_fn rawptr
 
@@ -114,7 +114,7 @@ let set_lsolve_fn { rawptr; solver; callbacks } cbf =
   | CustomSolver { set_lsolve_fn = Some set }                (* O/Onls *)
       -> set (fun y b -> Nvector.(cbf (unwrap y) (unwrap b)))
   | CustomSolver { set_lsolve_fn = None } -> ()
-  | FixedPointSolver | NewtonSolver                          (* O/Cnls *)
+  | FixedPointSolver _ | NewtonSolver                        (* O/Cnls *)
       -> callbacks.lsolvefn <- cbf;
          c_set_lsolve_fn rawptr
 
@@ -129,7 +129,7 @@ let set_convtest_fn (type d k s)
   | CustomSensSolver { set_convtest_fn = Some set } -> set cbf
   | CustomSolver _ -> ()
   | CustomSensSolver _ -> ()
-  | FixedPointSolver | NewtonSolver                          (* O/Cnls *)
+  | FixedPointSolver _ | NewtonSolver                        (* O/Cnls *)
       -> callbacks.convtestfn <- cbf;
          c_set_convtest_fn rawptr
 
@@ -140,7 +140,7 @@ let set_max_iters (type d k s) ({ rawptr; solver } : (d, k, s) nonlinear_solver)
   | CustomSensSolver { set_max_iters = Some f } -> f i
   | CustomSolver _ -> ()
   | CustomSensSolver _ -> ()
-  | FixedPointSolver | NewtonSolver
+  | FixedPointSolver _ | NewtonSolver
       -> c_set_max_iters rawptr i
 
 let get_num_iters (type d k s) ({ rawptr; solver } : (d, k, s) nonlinear_solver) =
@@ -150,7 +150,7 @@ let get_num_iters (type d k s) ({ rawptr; solver } : (d, k, s) nonlinear_solver)
   | CustomSensSolver { get_num_iters = Some f } -> f ()
   | CustomSolver _     -> 0
   | CustomSensSolver _ -> 0
-  | FixedPointSolver | NewtonSolver
+  | FixedPointSolver _ | NewtonSolver
       -> c_get_num_iters rawptr
 
 let get_cur_iter (type d k s) ({ rawptr; solver } : (d, k, s) nonlinear_solver) =
@@ -160,7 +160,7 @@ let get_cur_iter (type d k s) ({ rawptr; solver } : (d, k, s) nonlinear_solver) 
   | CustomSensSolver { get_cur_iter = Some f } -> f ()
   | CustomSolver _     -> 0
   | CustomSensSolver _ -> 0
-  | FixedPointSolver | NewtonSolver
+  | FixedPointSolver _ | NewtonSolver
       -> c_get_cur_iter rawptr
 
 let get_num_conv_fails (type d k s)
@@ -171,7 +171,7 @@ let get_num_conv_fails (type d k s)
   | CustomSensSolver { get_num_conv_fails = Some f } -> f ()
   | CustomSolver _     -> 0
   | CustomSensSolver _ -> 0
-  | FixedPointSolver | NewtonSolver
+  | FixedPointSolver _ | NewtonSolver
       -> c_get_num_conv_fails rawptr
 
 type ('d, 's) c_sysfn
@@ -300,7 +300,7 @@ module FixedPoint = struct (* {{{ *)
     let callbacks = empty_callbacks () in
     {
       rawptr    = c_make y m callbacks;
-      solver    = FixedPointSolver;
+      solver    = FixedPointSolver m;
       callbacks = callbacks;
       attached  = false;
     }
@@ -309,7 +309,7 @@ module FixedPoint = struct (* {{{ *)
     let callbacks = empty_callbacks () in
     {
       rawptr    = c_make_sens count y m callbacks;
-      solver    = FixedPointSolver;
+      solver    = FixedPointSolver m;
       callbacks = callbacks;
       attached  = false;
     }
@@ -318,7 +318,9 @@ module FixedPoint = struct (* {{{ *)
      this dynamic check. *)
   let get_sys_fn { rawptr; solver } =
     check_compat ();
-    if solver <> FixedPointSolver then invalid_arg "not a FixedPoint solver";
+    (match solver with
+     | FixedPointSolver _ -> ()
+     | _ -> invalid_arg "not a FixedPoint solver");
     match c_get_sys_fn rawptr with
     | None -> None
     | Some f -> Some (c_call_sys_fn f)

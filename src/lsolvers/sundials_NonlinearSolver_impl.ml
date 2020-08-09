@@ -76,8 +76,9 @@ type nonlinear_solver_type =
 
 (* Accessed from sundials_nonlinearsolver_ml.c: nlsolver_solver_tag *)
 type ('d, 'k, _) solver =
-  | FixedPointSolver : ('d, 'k, 's) solver
   | NewtonSolver     : ('d, 'k, 's) solver
+  | FixedPointSolver : int (* argument for backwards compatability in Arkode *)
+                       -> ('d, 'k, 's) solver
   | CustomSolver     : (('d, 'k) Nvector.t, 's) ops
                        -> ('d, 'k, 's) solver
   | CustomSensSolver : (('d, 'k) Senswrapper.t, 'a integrator) ops
@@ -129,12 +130,12 @@ let assert_senswrapper_solver { solver } =
   | CustomSolver _ -> raise IncorrectUse
   | CustomSensSolver _ -> ()
   (* The native nl_solvers can handle senswrappers *)
-  | FixedPointSolver -> ()
+  | FixedPointSolver _ -> ()
   | NewtonSolver     -> ()
 
 let get_type (type d k s) ({ rawptr; solver } : (d, k, s) nonlinear_solver) =
   match solver with
-  | FixedPointSolver              -> FixedPoint
+  | FixedPointSolver _            -> FixedPoint
   | NewtonSolver                  -> RootFind
   | CustomSolver { nls_type }     -> nls_type
   | CustomSensSolver { nls_type } -> nls_type
