@@ -1348,56 +1348,6 @@ module Adjoint = struct (* {{{ *)
     end (* }}} *)
   end (* }}} *)
 
-  module Alternate = struct (* {{{ *)
-
-    type ('data, 'kind) linit = ('data, 'kind) bsession -> unit
-
-    type ('data, 'kind) lsetup =
-      ('data, 'kind) bsession
-      -> 'data Cvode.Alternate.lsetup_args
-      -> bool
-
-    type ('data, 'kind) lsolve =
-      ('data, 'kind) bsession
-      -> 'data Cvode.Alternate.lsolve_args
-      -> 'data
-      -> unit
-
-    type ('data, 'kind) callbacks =
-      {
-        linit  : ('data, 'kind) linit option;
-        lsetup : ('data, 'kind) lsetup option;
-        lsolve : ('data, 'kind) lsolve;
-      }
-
-    let wrapo fo =
-      match fo with
-      | None -> None
-      | Some f -> Some (fun s -> f (Bsession s))
-
-    let wrap_callbacks { linit; lsetup; lsolve } =
-      Cvode.Alternate.({
-          linit  = wrapo linit;
-          lsetup = wrapo lsetup;
-          lsolve = (fun s -> lsolve (Bsession s));
-        })
-
-    external c_set_alternate
-      : ('data, 'kind) session -> int -> bool -> bool -> unit
-      = "sunml_cvode_adj_set_alternate"
-
-    let get_gammas bs = Cvode.Alternate.get_gammas (tosession bs)
-
-    let solver f bs nv =
-      let { linit; lsetup; lsolve } as cb = f bs nv in
-      let s = tosession bs in
-      let parent, which = parent_and_which bs in
-      c_set_alternate parent which (linit <> None) (lsetup <> None);
-      s.ls_precfns <- NoPrecFns;
-      s.ls_callbacks <- AlternateCallback (wrap_callbacks cb)
-
-  end (* }}} *)
-
   external c_bsession_finalize : ('a, 'k) session -> unit
       = "sunml_cvodes_adj_bsession_finalize"
 

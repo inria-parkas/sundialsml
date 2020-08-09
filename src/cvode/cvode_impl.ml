@@ -120,13 +120,6 @@ module SpilsTypes' = struct
     }
 end
 
-module AlternateTypes' = struct
-  type conv_fail =
-    | NoFailures
-    | FailBadJ
-    | FailOther
-end
-
 module CvodeBbdParamTypes = struct
   type 'a local_fn = float -> 'a -> 'a -> unit
   type 'a comm_fn = float -> 'a -> unit
@@ -449,9 +442,6 @@ and ('a, 'kind) linsolv_callbacks =
       of 'a AdjointTypes'.SpilsTypes'.jac_times_vec_fn_with_sens option
          * 'a AdjointTypes'.SpilsTypes'.jac_times_setup_fn_with_sens option
 
-  (* Alternate *)
-  | AlternateCallback of ('a, 'kind) alternate_linsolv
-
 and 'a linsolv_precfns =
   | NoPrecFns
 
@@ -511,36 +501,6 @@ and ('a, 'kind) bsensext = {
   mutable bquadrhsfn_sens : 'a AdjointTypes'.QuadratureTypes.bquadrhsfn_with_sens;
   mutable checkbquadvec   : (('a, 'kind) Nvector.t -> unit);
 }
-
-and ('data, 'kind) alternate_linsolv =
-  {
-    linit  : ('data, 'kind) linit' option;
-    lsetup : ('data, 'kind) lsetup' option;
-    lsolve : ('data, 'kind) lsolve';
-  }
-and 'data alternate_lsetup_args =
-  {
-    lsetup_conv_fail : AlternateTypes'.conv_fail;
-    lsetup_y : 'data;
-    lsetup_rhs : 'data;
-    lsetup_tmp : 'data triple;
-  }
-and 'data alternate_lsolve_args =
-  {
-    lsolve_ewt : 'data;
-    lsolve_y : 'data;
-    lsolve_rhs : 'data;
-  }
-and ('data, 'kind) linit' = ('data, 'kind) session -> unit
-and ('data, 'kind) lsetup' =
-  ('data, 'kind) session
-  -> 'data alternate_lsetup_args
-  -> bool
-and ('data, 'kind) lsolve' =
-  ('data, 'kind) session
-  -> 'data alternate_lsolve_args
-  -> 'data
-  -> unit
 
 (* Linear solver check functions *)
 
@@ -604,31 +564,6 @@ module SpilsTypes = struct
 
   type 'k serial_preconditioner = (Nvector_serial.data, 'k) preconditioner
                                   constraint 'k = [>Nvector_serial.kind]
-
-end
-
-module AlternateTypes = struct
-  include AlternateTypes'
-  type ('data, 'kind) callbacks = ('data, 'kind) alternate_linsolv =
-    {
-      linit  : ('data, 'kind) linit option;
-      lsetup : ('data, 'kind) lsetup option;
-      lsolve : ('data, 'kind) lsolve;
-    }
-  and ('data, 'kind) linit = ('data, 'kind) linit'
-  and ('data, 'kind) lsetup = ('data, 'kind) lsetup'
-  and ('data, 'kind) lsolve = ('data, 'kind) lsolve'
-  and 'data lsetup_args = 'data alternate_lsetup_args = {
-    lsetup_conv_fail : conv_fail;
-    lsetup_y : 'data;
-    lsetup_rhs : 'data;
-    lsetup_tmp : 'data triple;
-  }
-  and 'data lsolve_args = 'data alternate_lsolve_args = {
-    lsolve_ewt : 'data;
-    lsolve_y : 'data;
-    lsolve_rhs : 'data;
-  }
 
 end
 

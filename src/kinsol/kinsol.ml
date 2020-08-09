@@ -455,33 +455,6 @@ module Spils = struct (* {{{ *)
     get_num_func_evals s
 end (* }}} *)
 
-module Alternate = struct (* {{{ *)
-  include AlternateTypes
-
-  external c_set_alternate
-    : ('data, 'kind) session -> bool -> bool -> unit
-    = "sunml_kinsol_set_alternate"
-
-  external get_u_uscale : ('data, 'kind) session -> 'data * 'data
-    = "sunml_kinsol_get_u_uscale"
-
-  external get_f_fscale  : ('data, 'kind) session -> 'data * 'data
-    = "sunml_kinsol_get_f_fscale"
-
-  external set_sjpnorm   : ('data, 'kind) session -> float -> unit
-    = "sunml_kinsol_set_sjpnorm"
-
-  external set_sfdotjp   : ('data, 'kind) session -> float -> unit
-    = "sunml_kinsol_set_sfdotjp"
-
-  let solver f s nv =
-    let { linit; lsetup; lsolve } as cb = f s nv in
-    c_set_alternate s (linit <> None) (lsetup <> None);
-    s.ls_precfns <- NoPrecFns;
-    s.ls_callbacks <- AlternateCallback cb
-
-end (* }}} *)
-
 external set_error_file : ('a, 'k) session -> Logfile.t -> unit
     = "sunml_kinsol_set_error_file"
 

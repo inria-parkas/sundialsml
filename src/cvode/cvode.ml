@@ -645,29 +645,6 @@ module Spils = struct (* {{{ *)
   end (* }}} *)
 end (* }}} *)
 
-module Alternate = struct (* {{{ *)
-  include AlternateTypes
-
-  external c_set_alternate
-    : ('data, 'kind) session -> bool -> bool -> unit
-    = "sunml_cvode_set_alternate"
-
-  type gammas = {
-    gamma : float;
-    gammap : float;
-  }
-
-  external get_gammas : ('data, 'kind) session -> gammas
-    = "sunml_cvode_get_gamma"
-
-  let solver f s nv =
-    let { linit; lsetup; lsolve } as cb = f s nv in
-    c_set_alternate s (linit <> None) (lsetup <> None);
-    s.ls_precfns <- NoPrecFns;
-    s.ls_callbacks <- AlternateCallback cb
-
-end (* }}} *)
-
 external sv_tolerances  : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
     = "sunml_cvode_sv_tolerances"
 external ss_tolerances  : ('a, 'k) session -> float -> float -> unit

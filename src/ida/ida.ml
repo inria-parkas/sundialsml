@@ -536,23 +536,6 @@ module Spils = struct (* {{{ *)
 
 end (* }}} *)
 
-module Alternate = struct (* {{{ *)
-  include AlternateTypes
-
-  external c_set_alternate
-    : ('data, 'kind) session -> bool -> bool -> unit
-    = "sunml_ida_set_alternate"
-
-  let solver f s nv =
-    let { linit; lsetup; lsolve } as cb = f s nv in
-    c_set_alternate s (linit <> None) (lsetup <> None);
-    s.ls_precfns <- NoPrecFns;
-    s.ls_callbacks <- AlternateCallback cb
-
-  external get_cj : ('data, 'kind) session -> float = "sunml_ida_get_cj"
-  external get_cjratio : ('data, 'kind) session -> float = "sunml_ida_get_cjratio"
-end (* }}} *)
-
 external sv_tolerances
     : ('a, 'k) session -> float -> ('a, 'k) Nvector.t -> unit
     = "sunml_ida_sv_tolerances"

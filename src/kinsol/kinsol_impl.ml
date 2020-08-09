@@ -156,26 +156,10 @@ and ('a, 'kind) linsolv_callbacks =
 
   | SpilsCallback of 'a SpilsTypes'.jac_times_vec_fn option
 
-  | AlternateCallback of ('a, 'kind) alternate_linsolv
-
 and 'a linsolv_precfns =
   | NoPrecFns
   | PrecFns of 'a SpilsTypes'.precfns
   | BBDPrecFns of 'a KinsolBbdParamTypes.precfns
-
-and ('data, 'kind) alternate_linsolv =
-  {
-    linit  : ('data, 'kind) linit' option;
-    lsetup : ('data, 'kind) lsetup' option;
-    lsolve : ('data, 'kind) lsolve';
-  }
-and ('data, 'kind) linit' = ('data, 'kind) session -> unit
-and ('data, 'kind) lsetup' = ('data, 'kind) session -> unit
-and ('data, 'kind) lsolve' =
-  ('data, 'kind) session
-  -> 'data
-  -> 'data
-  -> float option * float option
 
 (* Linear solver check functions *)
 
@@ -219,18 +203,6 @@ module SpilsTypes = struct
   type ('a, 'k) preconditioner =
     LSI.Iterative.preconditioning_type * ('a, 'k) set_preconditioner
 
-end
-
-module AlternateTypes = struct
-  type ('data, 'kind) callbacks = ('data, 'kind) alternate_linsolv =
-    {
-      linit  : ('data, 'kind) linit option;
-      lsetup : ('data, 'kind) lsetup option;
-      lsolve : ('data, 'kind) lsolve;
-    }
-  and ('data, 'kind) linit  = ('data, 'kind) linit'
-  and ('data, 'kind) lsetup = ('data, 'kind) lsetup'
-  and ('data, 'kind) lsolve = ('data, 'kind) lsolve'
 end
 
 let read_weak_ref x : ('a, 'k) session =

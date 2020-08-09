@@ -8,6 +8,9 @@ Notes:
   Cvodes, Ida, and Idas integrators.
 * Support for the new fused and array nvector operations.
 * Testing of all OCaml nvector operations and several bug fixes.
+* Removal of the _Solver_.Alternate modules for attaching custom linear
+  solvers. This interface was superseded since Sundials 3.x by the new 
+  linear solver interface which provides similar functionality.
 
 Sundials/ML 3.1.1p0 (July 2018)
 ------------------------------------

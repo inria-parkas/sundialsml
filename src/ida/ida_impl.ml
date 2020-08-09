@@ -470,9 +470,6 @@ and ('a, 'kind) linsolv_callbacks =
       of 'a AdjointTypes'.SpilsTypes'.jac_times_vec_fn_with_sens option
          * 'a AdjointTypes'.SpilsTypes'.jac_times_setup_fn_with_sens option
 
-  (* Alternate *)
-  | AlternateCallback of ('a, 'kind) alternate_linsolv
-
 and 'a linsolv_precfns =
   | NoPrecFns
 
@@ -484,37 +481,6 @@ and 'a linsolv_precfns =
 
   | BBDPrecFns of 'a IdaBbdParamTypes.precfns
   | BBBDPrecFns of 'a IdasBbdParamTypes.precfns
-
-and ('data, 'kind) alternate_linsolv =
-  {
-    linit  : ('data, 'kind) linit' option;
-    lsetup : ('data, 'kind) lsetup' option;
-    lsolve : ('data, 'kind) lsolve';
-  }
-and ('data, 'kind) linit' = ('data, 'kind) session -> unit
-and 'data alternate_lsetup_args =
-  {
-    lsetup_y : 'data;
-    lsetup_y' : 'data;
-    lsetup_res : 'data;
-    lsetup_tmp : 'data triple;
-  }
-and ('data, 'kind) lsetup' =
-  ('data, 'kind) session
-  -> 'data alternate_lsetup_args
-  -> unit
-and 'data alternate_lsolve_args =
-  {
-    lsolve_ewt : 'data;
-    lsolve_y : 'data;
-    lsolve_y' : 'data;
-    lsolve_res : 'data;
-  }
-and ('data, 'kind) lsolve' =
-  ('data, 'kind) session
-  -> 'data alternate_lsolve_args
-  -> 'data
-  -> unit
 
 (* Linear solver check functions *)
 
@@ -568,32 +534,6 @@ module SpilsTypes = struct
   type 'k serial_preconditioner = (Nvector_serial.data, 'k) preconditioner
                                   constraint 'k = [>Nvector_serial.kind]
 
-end
-
-module AlternateTypes = struct
-  type ('data, 'kind) callbacks = ('data, 'kind) alternate_linsolv =
-    {
-      linit  : ('data, 'kind) linit option;
-      lsetup : ('data, 'kind) lsetup option;
-      lsolve : ('data, 'kind) lsolve;
-    }
-  and ('data, 'kind) linit  = ('data, 'kind) linit'
-  and ('data, 'kind) lsetup = ('data, 'kind) lsetup'
-  and ('data, 'kind) lsolve = ('data, 'kind) lsolve'
-  and 'data lsetup_args = 'data alternate_lsetup_args =
-    {
-      lsetup_y : 'data;
-      lsetup_y' : 'data;
-      lsetup_res : 'data;
-      lsetup_tmp : 'data triple;
-    }
-  and 'data lsolve_args = 'data alternate_lsolve_args =
-    {
-      lsolve_ewt : 'data;
-      lsolve_y : 'data;
-      lsolve_y' : 'data;
-      lsolve_res : 'data;
-    }
 end
 
 module AdjointTypes = struct
