@@ -32,6 +32,7 @@ exception LUfactFailure
 exception PackageFailure of bool
 exception IllegalPrecType
 exception InternalFailure of (string * int)
+exception ZeroInDiagonal of int
 
 (* "Simulate" Linear Solvers in Sundials < 3.0.0 *)
 let in_compat_mode =
@@ -635,5 +636,6 @@ let _ =
       PackageFailure false;
       IllegalPrecType;
       InternalFailure ("", 0);
+      ZeroInDiagonal 0;
     |]
 

@@ -743,15 +743,32 @@ exception LinearSolverNoRecovery
 exception LinearSolverInitFailure
 
 (** The {!Spils.prec_setup_fn} callback failed unrecoverably.
+    If possible, the exception in the underlying linear solver is specified.
+    It is typically one of
+    {!Sundials_LinearSolver.ZeroInDiagonal},
+    {!Sundials_LinearSolver.PSetFailure},
+    or
+    {!Sundials_LinearSolver.PackageFailure}.
 
+    @nokinsol <node> KINGetLastLinFlag
     @kinsol <node5#sss:kinsol> KIN_LSETUP_FAIL *)
-exception LinearSetupFailure
+exception LinearSetupFailure of exn option
 
 (** Either {!Spils.prec_solve_fn} failed unrecoverably or the linear solver
     encountered an error condition.
+    If possible, the exception in the underlying linear solver is specified.
+    It is typically one of
+    {!Sundials_LinearSolver.ZeroInDiagonal},
+    {!Sundials_LinearSolver.ATimesFailure},
+    {!Sundials_LinearSolver.PSolveFailure},
+    {!Sundials_LinearSolver.GSFailure},
+    {!Sundials_LinearSolver.QRSolFailure},
+    or
+    {!Sundials_LinearSolver.PackageFailure}.
 
+    @nokinsol <node> KINGetLastLinFlag
     @kinsol <node5#sss:kinsol> KIN_LSOLVE_FAIL *)
-exception LinearSolverFailure
+exception LinearSolveFailure of exn option
 
 (** The {!sysfn} callback failed unrecoverably.
 

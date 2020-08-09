@@ -56,7 +56,7 @@
  *
  */
 
-void sunml_cvodes_ml_check_flag(const char *call, int flag);
+void sunml_cvodes_check_flag(const char *call, int flag, void *cvode_mem);
 
 value sunml_cvodes_make_jac_arg(realtype t, N_Vector y, N_Vector yb,
 			  N_Vector fyb, value tmp);
@@ -65,7 +65,7 @@ void sunml_cvodes_wrap_to_nvector_table(int n, value vy, N_Vector *y);
 
 // NB: overrides CHECK_FLAG macro in cvode_ml.h
 #define SCHECK_FLAG(call, flag) if (flag != CV_SUCCESS) \
-				  sunml_cvodes_ml_check_flag(call, flag)
+				  sunml_cvodes_check_flag(call, flag, NULL)
 
 enum cvodes_fwd_session_index {
     RECORD_CVODES_FWD_SESSION_QUADRHSFN = 0,

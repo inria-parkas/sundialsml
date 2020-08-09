@@ -997,14 +997,31 @@ exception ConvergenceFailure
 exception LinearInitFailure
 
 (** Linear solver setup failed in an unrecoverable manner.
+    If possible, the exception in the underlying linear solver is specified.
+    It is typically one of
+    {!Sundials_LinearSolver.ZeroInDiagonal},
+    {!Sundials_LinearSolver.PSetFailure},
+    or
+    {!Sundials_LinearSolver.PackageFailure}.
 
+    @nocvode <node> CVodeGetLastLinFlag
     @cvode <node5#sss:cvode> CV_LSETUP_FAIL *)
-exception LinearSetupFailure
+exception LinearSetupFailure of exn option
 
 (** Linear solver solution failed in an unrecoverable manner.
+    If possible, the exception in the underlying linear solver is specified.
+    It is typically one of
+    {!Sundials_LinearSolver.ZeroInDiagonal},
+    {!Sundials_LinearSolver.ATimesFailure},
+    {!Sundials_LinearSolver.PSolveFailure},
+    {!Sundials_LinearSolver.GSFailure},
+    {!Sundials_LinearSolver.QRSolFailure},
+    or
+    {!Sundials_LinearSolver.PackageFailure}.
 
+    @nocvode <node> CVodeGetLastLinFlag
     @cvode <node5#sss:cvode> CV_LSOLVE_FAIL *)
-exception LinearSolveFailure
+exception LinearSolveFailure of exn option
 
 (** Nonlinear solver initialization failed.
 

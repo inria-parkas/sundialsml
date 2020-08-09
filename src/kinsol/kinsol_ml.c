@@ -776,7 +776,7 @@ CAMLprim value sunml_kinsol_solve(value vdata, value vu, value vstrategy,
 	     * execution.  */
 	    caml_raise (Field (ret, 0));
 	}
-	CHECK_FLAG ("KIN", flag);
+	sunml_kinsol_check_flag("KIN", flag, KINSOL_MEM_FROM_ML(vdata));
     }
 
     assert (Field (vdata, RECORD_KINSOL_SESSION_EXN_TEMP) == Val_none);
@@ -784,8 +784,19 @@ CAMLprim value sunml_kinsol_solve(value vdata, value vu, value vstrategy,
     CAMLreturn (Val_int (result));
 }
 
+static value sunml_kinsol_last_lin_exception(KINMem kin_mem)
+{
+#if 400 <= SUNDIALS_LIB_VERSION
+    long int lsflag;
 
-void sunml_kinsol_check_flag(const char *call, int flag)
+    if (kin_mem != NULL
+	  && KINGetLastLinFlag(kin_mem, &lsflag) == KINLS_SUCCESS)
+	return sunml_lsolver_exception_from_flag(lsflag);
+#endif
+    return Val_none;
+}
+
+void sunml_kinsol_check_flag(const char *call, int flag, void *kin_mem)
 {
     static char exmsg[MAX_ERRMSG_LEN] = "";
 
@@ -820,10 +831,12 @@ void sunml_kinsol_check_flag(const char *call, int flag)
         caml_raise_constant(KINSOL_EXN(LinearSolverInitFailure));
 
     case KIN_LSETUP_FAIL:
-        caml_raise_constant(KINSOL_EXN(LinearSetupFailure));
+        caml_raise_with_arg(KINSOL_EXN(LinearSetupFailure),
+			    sunml_kinsol_last_lin_exception(kin_mem));
 
     case KIN_LSOLVE_FAIL:
-        caml_raise_constant(KINSOL_EXN(LinearSolverFailure));
+        caml_raise_with_arg(KINSOL_EXN(LinearSolveFailure),
+			    sunml_kinsol_last_lin_exception(kin_mem));
 
     case KIN_SYSFUNC_FAIL:
         caml_raise_constant(KINSOL_EXN(SystemFunctionFailure));
@@ -841,7 +854,8 @@ void sunml_kinsol_check_flag(const char *call, int flag)
 
     default:
 	/* KIN_MEM_NULL, KIN_NO_MALLOC */
-	snprintf(exmsg, MAX_ERRMSG_LEN, "%s: unexpected error code", call);
+	snprintf(exmsg, MAX_ERRMSG_LEN, "%s: %s", call,
+		 KINGetReturnFlagName(flag));
 	caml_failwith(exmsg);
     }
 }

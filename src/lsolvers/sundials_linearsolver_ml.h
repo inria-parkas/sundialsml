@@ -115,9 +115,13 @@ enum lsolver_exn_index {
     LSOLVER_EXN_PackageFailure,
     LSOLVER_EXN_IllegalPrecType,
     LSOLVER_EXN_InternalFailure,
+    LSOLVER_EXN_ZeroInDiagonal,
     LSOLVER_EXN_SET_SIZE
 };
 
+/* Translates a SUNLS_* flag into a (linear solver) exception option.
+   Intended to encapsulate the result of the *GetLastLinFlag functions. */
+value sunml_lsolver_exception_from_flag(int);
 
 #define LSOLVER_EXN(name)     REGISTERED_EXN(LSOLVER, name)
 #define LSOLVER_EXN_TAG(name) REGISTERED_EXN_TAG(LSOLVER, name)

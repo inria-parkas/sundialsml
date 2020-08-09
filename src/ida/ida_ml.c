@@ -881,7 +881,7 @@ static value solve (value vdata, value nextt, value vy, value vyp, int onestep)
 	     * execution.  */
 	    caml_raise (Field (ret, 0));
 	}
-	CHECK_FLAG ("IDASolve", flag);
+	sunml_ida_check_flag("IDASolve", flag, ida_mem);
     }
 
     assert (Field (vdata, RECORD_IDA_SESSION_EXN_TEMP) == Val_none);
@@ -1037,7 +1037,19 @@ CAMLprim value sunml_ida_clear_constraints (value vida_mem)
     CAMLreturn (Val_unit);
 }
 
-void sunml_ida_check_flag(const char *call, int flag)
+value sunml_ida_last_lin_exception(void *ida_mem)
+{
+#if 400 <= SUNDIALS_LIB_VERSION
+    long int lsflag;
+
+    if (ida_mem != NULL
+	  && IDAGetLastLinFlag(ida_mem, &lsflag) == IDALS_SUCCESS)
+	return sunml_lsolver_exception_from_flag(lsflag);
+#endif
+    return Val_none;
+}
+
+void sunml_ida_check_flag(const char *call, int flag, void *ida_mem)
 {
     static char exmsg[MAX_ERRMSG_LEN] = "";
 
@@ -1062,10 +1074,12 @@ void sunml_ida_check_flag(const char *call, int flag)
 	caml_raise_constant(IDA_EXN(LinearInitFailure));
 
     case IDA_LSETUP_FAIL:
-	caml_raise_constant(IDA_EXN(LinearSetupFailure));
+	caml_raise_with_arg(IDA_EXN(LinearSetupFailure),
+			    sunml_ida_last_lin_exception(ida_mem));
 
     case IDA_LSOLVE_FAIL:
-	caml_raise_constant(IDA_EXN(LinearSolveFailure));
+	caml_raise_with_arg(IDA_EXN(LinearSolveFailure),
+			    sunml_ida_last_lin_exception(ida_mem));
 
     case IDA_BAD_EWT:
 	caml_raise_constant(IDA_EXN(BadEwt));

@@ -88,7 +88,7 @@ void sunml_idas_wrap_to_nvector_table(int n, value vy, N_Vector *y)
     }
 }
 
-void sunml_idas_ml_check_flag(const char *call, int flag)
+void sunml_idas_check_flag(const char *call, int flag, void *ida_mem)
 {
     static char exmsg[MAX_ERRMSG_LEN] = "";
 
@@ -114,10 +114,12 @@ void sunml_idas_ml_check_flag(const char *call, int flag)
 	caml_raise_constant(IDA_EXN(LinearInitFailure));
 
     case IDA_LSETUP_FAIL:
-	caml_raise_constant(IDA_EXN(LinearSetupFailure));
+	caml_raise_with_arg(IDA_EXN(LinearSetupFailure),
+			    sunml_ida_last_lin_exception(ida_mem));
 
     case IDA_LSOLVE_FAIL:
-	caml_raise_constant(IDA_EXN(LinearSolveFailure));
+	caml_raise_with_arg(IDA_EXN(LinearSolveFailure),
+			    sunml_ida_last_lin_exception(ida_mem));
 
     case IDA_RES_FAIL:
 	caml_raise_constant(IDA_EXN(ResFuncFailure));
@@ -2174,7 +2176,7 @@ static value forward_solve(value vdata, value vtout, value vy,
 	     * execution.  */
 	    caml_raise (Field (ret, 0));
 	}
-	SCHECK_FLAG ("IDASolveF", flag);
+	sunml_idas_check_flag("IDASolveF", flag, IDA_MEM_FROM_ML(vdata));
     }
 
     assert (Field (vdata, RECORD_IDA_SESSION_EXN_TEMP) == Val_none);

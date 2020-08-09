@@ -39,8 +39,8 @@ exception TooMuchAccuracy
 exception ErrFailure
 exception ConvergenceFailure
 exception LinearInitFailure
-exception LinearSetupFailure
-exception LinearSolveFailure
+exception LinearSetupFailure of exn option
+exception LinearSolveFailure of exn option
 exception NonlinearInitFailure
 exception NonlinearSetupFailure
 exception RhsFuncFailure
@@ -989,8 +989,8 @@ let _ =
       ErrFailure;
       ConvergenceFailure;
       LinearInitFailure;
-      LinearSetupFailure;
-      LinearSolveFailure;
+      LinearSetupFailure None;
+      LinearSolveFailure None;
       NonlinearInitFailure;
       NonlinearSetupFailure;
       RhsFuncFailure;

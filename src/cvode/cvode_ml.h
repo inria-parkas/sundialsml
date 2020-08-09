@@ -137,7 +137,7 @@
  * a major bottleneck, we can switch over to this alternative.
  */
 
-void sunml_cvode_check_flag(const char *call, int flag);
+void sunml_cvode_check_flag(const char *call, int flag, void *cvode_mem);
 #if 400 <= SUNDIALS_LIB_VERSION
 void sunml_cvode_check_ls_flag(const char *call, int flag);
 #else
@@ -148,8 +148,10 @@ void sunml_cvode_check_spils_flag(const char *call, int flag);
 value sunml_cvode_make_jac_arg(realtype t, N_Vector y, N_Vector fy, value tmp);
 value sunml_cvode_make_triple_tmp(N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
 
+value sunml_cvode_last_lin_exception(void *cvode_mem);
+
 #define CHECK_FLAG(call, flag) if (flag != CV_SUCCESS) \
-				 sunml_cvode_check_flag(call, flag)
+				 sunml_cvode_check_flag(call, flag, NULL)
 #if 400 <= SUNDIALS_LIB_VERSION
 #define CHECK_LS_FLAG(call, flag) if (flag != CVLS_SUCCESS) \
 				 sunml_cvode_check_ls_flag(call, flag)

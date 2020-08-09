@@ -18,7 +18,7 @@
 #include "../nvectors/nvector_ml.h"
 #include <caml/mlvalues.h>
 
-void sunml_kinsol_check_flag(const char *call, int flag);
+void sunml_kinsol_check_flag(const char *call, int flag, void *kin_mem);
 #if 400 <= SUNDIALS_LIB_VERSION
 void sunml_kinsol_check_ls_flag(const char *call, int flag);
 #else
@@ -30,7 +30,7 @@ value sunml_kinsol_make_jac_arg(N_Vector u, N_Vector fu, value tmp);
 value sunml_kinsol_make_double_tmp(N_Vector tmp1, N_Vector tmp2);
 
 #define CHECK_FLAG(call, flag) if (flag != KIN_SUCCESS) \
-				 sunml_kinsol_check_flag(call, flag)
+				 sunml_kinsol_check_flag(call, flag, NULL)
 #if 400 <= SUNDIALS_LIB_VERSION
 #define CHECK_LS_FLAG(call, flag) if (flag != KINLS_SUCCESS) \
 				 sunml_kinsol_check_ls_flag(call, flag)
@@ -177,7 +177,7 @@ enum kinsol_exn_index {
     KINSOL_EXN_LinearSolverNoRecovery,
     KINSOL_EXN_LinearSolverInitFailure,
     KINSOL_EXN_LinearSetupFailure,
-    KINSOL_EXN_LinearSolverFailure,
+    KINSOL_EXN_LinearSolveFailure,
     KINSOL_EXN_SystemFunctionFailure,
     KINSOL_EXN_FirstSystemFunctionFailure,
     KINSOL_EXN_RepeatedSystemFunctionFailure,

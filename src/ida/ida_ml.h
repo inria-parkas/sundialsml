@@ -20,7 +20,7 @@
 
 #include "../sundials/sundials_ml.h"
 
-void sunml_ida_check_flag(const char *call, int flag);
+void sunml_ida_check_flag(const char *call, int flag, void *ida_mem);
 #if 400 <= SUNDIALS_LIB_VERSION
 void sunml_ida_check_ls_flag(const char *call, int flag);
 #else
@@ -33,8 +33,10 @@ value sunml_ida_make_jac_arg(realtype t, realtype coef, N_Vector y, N_Vector yp,
 value sunml_ida_make_triple_tmp(N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
 value sunml_ida_make_double_tmp(N_Vector tmp1, N_Vector tmp2);
 
+value sunml_ida_last_lin_exception(void *ida_mem);
+
 #define CHECK_FLAG(call, flag) if (flag != IDA_SUCCESS) \
-				 sunml_ida_check_flag(call, flag)
+				 sunml_ida_check_flag(call, flag, NULL)
 #if 400 <= SUNDIALS_LIB_VERSION
 #define CHECK_LS_FLAG(call, flag) if (flag != IDALS_SUCCESS) \
 				 sunml_ida_check_ls_flag(call, flag)

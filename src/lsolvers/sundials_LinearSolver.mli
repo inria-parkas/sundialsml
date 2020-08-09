@@ -703,3 +703,7 @@ exception IllegalPrecType
     returned the given unknown error code. *)
 exception InternalFailure of (string * int)
 
+(** Setup failed due to a zero diagonal element during LU factorization.
+    The argument indicates the column index numbered from one. *)
+exception ZeroInDiagonal of int
+

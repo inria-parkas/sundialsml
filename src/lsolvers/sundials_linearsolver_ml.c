@@ -64,6 +64,68 @@ CAMLprim void sunml_lsolver_init_module (value exns)
     CAMLreturn0;
 }
 
+value sunml_lsolver_exception_from_flag(int linflag)
+{
+    CAMLparam0();
+    CAMLlocal2(vro, vr);
+
+    if (linflag > 0) {
+	vr = caml_alloc_small(1, 0);
+	Field(vr, 0) = LSOLVER_EXN(ZeroInDiagonal);
+	Field(vr, 1) = Val_int(linflag);
+	Store_some(vro, vr);
+    } else {
+	switch (linflag) {
+#if 300 <= SUNDIALS_LIB_VERSION
+	    case SUNLS_ATIMES_FAIL_UNREC:
+		vr = caml_alloc_small(1, 0);
+		Field(vr, 0) = LSOLVER_EXN(ATimesFailure);
+		Field(vr, 1) = Val_bool(0);
+		Store_some(vro, vr);
+		break;
+
+	    case SUNLS_PSET_FAIL_UNREC:
+		vr = caml_alloc_small(1, 0);
+		Field(vr, 0) = LSOLVER_EXN(PSetFailure);
+		Field(vr, 1) = Val_bool(0);
+		Store_some(vro, vr);
+		break;
+
+	    case SUNLS_PSOLVE_FAIL_UNREC:
+		vr = caml_alloc_small(1, 0);
+		Field(vr, 0) = LSOLVER_EXN(PSolveFailure);
+		Field(vr, 1) = Val_bool(0);
+		Store_some(vro, vr);
+		break;
+
+	    case SUNLS_PACKAGE_FAIL_UNREC:
+		vr = caml_alloc_small(1, 0);
+		Field(vr, 0) = LSOLVER_EXN(PackageFailure);
+		Field(vr, 1) = Val_bool(0);
+		Store_some(vro, vr);
+		break;
+
+	    case SUNLS_GS_FAIL:
+		Store_some(vro, LSOLVER_EXN(GSFailure));
+		break;
+
+	    case SUNLS_QRSOL_FAIL:
+		Store_some(vro, LSOLVER_EXN(QRSolFailure));
+		break;
+#endif
+#if 400 <= SUNDIALS_LIB_VERSION
+	    case SUNLS_VECTOROP_ERR:
+		Store_some(vro, LSOLVER_EXN(VectorOpError));
+		break;
+#endif
+	    default:
+		vro = Val_none;
+	}
+    }
+
+    CAMLreturn(vro);
+}
+
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * Linear Solver cptrs
  */

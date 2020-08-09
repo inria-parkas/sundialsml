@@ -1328,7 +1328,7 @@ static value forward_solver(value vdata, value vtout, value vyret, int onestep)
 	     * execution.  */
 	    caml_raise (Field (ret, 0));
 	}
-	SCHECK_FLAG ("CVodeF", flag);
+	sunml_cvodes_check_flag("CVodeF", flag, CVODE_MEM_FROM_ML(vdata));
     }
 
     assert (Field (vdata, RECORD_CVODE_SESSION_EXN_TEMP) == Val_none);
@@ -1907,7 +1907,7 @@ CAMLprim value sunml_cvodes_adjquad_sv_tolerances(value vparent, value vwhich,
 
 #define MAX_ERRMSG_LEN 256
 
-void sunml_cvodes_ml_check_flag(const char *call, int flag)
+void sunml_cvodes_check_flag(const char *call, int flag, void *cvode_mem)
 {
     static char exmsg[MAX_ERRMSG_LEN] = "";
 
@@ -1935,10 +1935,12 @@ void sunml_cvodes_ml_check_flag(const char *call, int flag)
 	    caml_raise_constant(CVODE_EXN(LinearInitFailure));
 
 	case CV_LSETUP_FAIL:
-	    caml_raise_constant(CVODE_EXN(LinearSetupFailure));
+	    caml_raise_with_arg(CVODE_EXN(LinearSetupFailure),
+				sunml_cvode_last_lin_exception(cvode_mem));
 
 	case CV_LSOLVE_FAIL:
-	    caml_raise_constant(CVODE_EXN(LinearSolveFailure));
+	    caml_raise_with_arg(CVODE_EXN(LinearSolveFailure),
+				sunml_cvode_last_lin_exception(cvode_mem));
 
 	case CV_RHSFUNC_FAIL:
 	    caml_raise_constant(CVODE_EXN(RhsFuncFailure));

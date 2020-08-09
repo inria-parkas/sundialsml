@@ -26,8 +26,8 @@ exception MaxNewtonStepExceeded          (* KIN_MXNEWT_5X_EXCEEDED *)
 exception LineSearchBetaConditionFailure (* KIN_LINESEARCH_BCFAIL *)
 exception LinearSolverNoRecovery         (* KIN_LINSOLV_NO_RECOVERY *)
 exception LinearSolverInitFailure        (* KIN_LINIT_FAIL *)
-exception LinearSetupFailure             (* KIN_LSETUP_FAIL *)
-exception LinearSolverFailure            (* KIN_LSOLVE_FAIL *)
+exception LinearSetupFailure of exn option (* KIN_LSETUP_FAIL *)
+exception LinearSolveFailure of exn option (* KIN_LSOLVE_FAIL *)
 exception SystemFunctionFailure          (* KIN_SYSFUNC_FAIL *)
 exception FirstSystemFunctionFailure     (* KIN_FIRST_SYSFUNC_FAIL *)
 exception RepeatedSystemFunctionFailure  (* KIN_REPTD_SYSFUNC_ERR *)
@@ -677,8 +677,8 @@ let _ =
       LineSearchBetaConditionFailure;
       LinearSolverNoRecovery;
       LinearSolverInitFailure;
-      LinearSetupFailure;
-      LinearSolverFailure;
+      LinearSetupFailure None;
+      LinearSolveFailure None;
       SystemFunctionFailure;
       FirstSystemFunctionFailure;
       RepeatedSystemFunctionFailure;
