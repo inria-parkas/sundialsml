@@ -668,8 +668,8 @@ CAMLprim value sunml_cvode_spils_set_linear_solver (value vcvode_mem, value vlso
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_cvode_spils_set_preconditioner (value vsession,
-						 value vset_precsetup)
+CAMLprim value sunml_cvode_set_preconditioner (value vsession,
+					       value vset_precsetup)
 {
     CAMLparam2 (vsession, vset_precsetup);
     void *mem = CVODE_MEM_FROM_ML (vsession);
@@ -685,10 +685,10 @@ CAMLprim value sunml_cvode_spils_set_preconditioner (value vsession,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_cvode_spils_set_banded_preconditioner (value vsession,
-							value vneqs,
-							value vmupper,
-							value vmlower)
+CAMLprim value sunml_cvode_set_banded_preconditioner (value vsession,
+						      value vneqs,
+						      value vmupper,
+						      value vmlower)
 {
     CAMLparam3 (vsession, vmupper, vmlower);
     long neqs = Index_val (vneqs);
@@ -698,8 +698,8 @@ CAMLprim value sunml_cvode_spils_set_banded_preconditioner (value vsession,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_cvode_spils_set_jac_times(value vdata, value vhas_setup,
-							value vhas_times)
+CAMLprim value sunml_cvode_set_jac_times(value vdata, value vhas_setup,
+					 value vhas_times)
 {
     CAMLparam3(vdata, vhas_setup, vhas_times);
 #if 400 <= SUNDIALS_LIB_VERSION
@@ -1618,8 +1618,8 @@ CAMLprim value sunml_cvode_spils_set_gs_type(value vcvode_mem, value vgstype)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_cvode_spils_set_max_steps_between_jac(value vcvode_mem,
-							   value vmaxsteps)
+CAMLprim value sunml_cvode_set_max_steps_between_jac(value vcvode_mem,
+						     value vmaxsteps)
 {
     CAMLparam2(vcvode_mem, vmaxsteps);
 

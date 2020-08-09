@@ -398,11 +398,11 @@ module Spils = struct (* {{{ *)
     c_set_gs_type s t
 
   external c_set_jac_times : ('a, 'k) session -> bool -> bool -> unit
-    = "sunml_cvode_spils_set_jac_times"
+    = "sunml_cvode_set_jac_times"
 
   external c_set_preconditioner
     : ('a, 'k) session -> bool -> unit
-    = "sunml_cvode_spils_set_preconditioner"
+    = "sunml_cvode_set_preconditioner"
 
   (* Sundials < 4.0.0 *)
   external c_spils_set_linear_solver
@@ -505,7 +505,7 @@ module Spils = struct (* {{{ *)
     | _ -> raise LinearSolver.InvalidLinearSolver
 
   external set_max_steps_between_jac : ('a, 'k) session -> int -> unit
-      = "sunml_cvode_spils_set_max_steps_between_jac"
+      = "sunml_cvode_set_max_steps_between_jac"
 
   let set_max_steps_between_jac s maxsteps =
     ls_check_spils s;
@@ -581,7 +581,7 @@ module Spils = struct (* {{{ *)
 
     external c_set_preconditioner
       : ('a, 'k) session -> int -> int -> int -> unit
-      = "sunml_cvode_spils_set_banded_preconditioner"
+      = "sunml_cvode_set_banded_preconditioner"
     (* Note: CVBandPrecInit seems to be designed only to be called on
        a fresh spils solver (i.e. right after CVSpgmr, CVSpbcg, or
        CVSptfqmr).

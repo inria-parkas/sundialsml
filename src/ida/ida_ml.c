@@ -643,8 +643,8 @@ CAMLprim value sunml_ida_spils_set_linear_solver (value vida_mem, value vlsolv)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_ida_spils_set_preconditioner (value vsession,
-					       value vset_presetup)
+CAMLprim value sunml_ida_set_preconditioner (value vsession,
+					     value vset_presetup)
 {
     CAMLparam2 (vsession, vset_presetup);
     void *mem = IDA_MEM_FROM_ML (vsession);
@@ -660,8 +660,8 @@ CAMLprim value sunml_ida_spils_set_preconditioner (value vsession,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_ida_spils_set_jac_times(value vdata, value vhas_setup,
-						      value vhas_times)
+CAMLprim value sunml_ida_set_jac_times(value vdata, value vhas_setup,
+				       value vhas_times)
 {
     CAMLparam3(vdata, vhas_setup, vhas_times);
 #if 400 <= SUNDIALS_LIB_VERSION
@@ -1871,7 +1871,7 @@ CAMLprim value sunml_ida_get_num_jac_evals(value vida_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value sunml_ida_get_num_lin_res_evals(value vida_mem)
+CAMLprim value sunml_ida_dls_get_num_lin_res_evals(value vida_mem)
 {
     CAMLparam1(vida_mem);
 
@@ -1889,7 +1889,7 @@ CAMLprim value sunml_ida_get_num_lin_res_evals(value vida_mem)
 
 /* spils functions */
 
-CAMLprim value sunml_ida_spils_get_num_lin_iters(value vida_mem)
+CAMLprim value sunml_ida_get_num_lin_iters(value vida_mem)
 {
     CAMLparam1(vida_mem);
 
@@ -1905,7 +1905,7 @@ CAMLprim value sunml_ida_spils_get_num_lin_iters(value vida_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value sunml_ida_spils_get_num_lin_conv_fails(value vida_mem)
+CAMLprim value sunml_ida_get_num_lin_conv_fails(value vida_mem)
 {
     CAMLparam1(vida_mem);
 
@@ -1946,7 +1946,7 @@ CAMLprim value sunml_ida_spils_get_work_space(value vida_mem)
     CAMLreturn(r);
 }
 
-CAMLprim value sunml_ida_spils_get_num_prec_evals(value vida_mem)
+CAMLprim value sunml_ida_get_num_prec_evals(value vida_mem)
 {
     CAMLparam1(vida_mem);
 
@@ -1962,7 +1962,7 @@ CAMLprim value sunml_ida_spils_get_num_prec_evals(value vida_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value sunml_ida_spils_get_num_prec_solves(value vida_mem)
+CAMLprim value sunml_ida_get_num_prec_solves(value vida_mem)
 {
     CAMLparam1(vida_mem);
 
@@ -1983,7 +1983,7 @@ SUNDIALS_EXPORT int IDASpilsGetNumJTSetupEvals(void *ida_mem,
 					       long int *njtsetups);
 #endif
 
-CAMLprim value sunml_ida_spils_get_num_jtsetup_evals(value vida_mem)
+CAMLprim value sunml_ida_get_num_jtsetup_evals(value vida_mem)
 {
     CAMLparam1(vida_mem);
     long int r;
@@ -1999,7 +1999,7 @@ CAMLprim value sunml_ida_spils_get_num_jtsetup_evals(value vida_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value sunml_ida_spils_get_num_jtimes_evals(value vida_mem)
+CAMLprim value sunml_ida_get_num_jtimes_evals(value vida_mem)
 {
     CAMLparam1(vida_mem);
 
@@ -2015,7 +2015,7 @@ CAMLprim value sunml_ida_spils_get_num_jtimes_evals(value vida_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value sunml_ida_spils_get_num_lin_res_evals (value vida_mem)
+CAMLprim value sunml_spils_ida_get_num_lin_res_evals (value vida_mem)
 {
     CAMLparam1(vida_mem);
 

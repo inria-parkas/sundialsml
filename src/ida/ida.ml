@@ -317,7 +317,7 @@ module Dls = struct (* {{{ *)
     c_get_num_jac_evals s
 
   external get_num_lin_res_evals : 'k serial_session -> int
-      = "sunml_ida_get_num_lin_res_evals"
+      = "sunml_ida_dls_get_num_lin_res_evals"
 
   let get_num_lin_res_evals s =
     ls_check_direct s;
@@ -369,11 +369,11 @@ module Spils = struct (* {{{ *)
     c_set_max_restarts s t
 
   external c_set_jac_times : ('a, 'k) session -> bool -> bool -> unit
-    = "sunml_ida_spils_set_jac_times"
+    = "sunml_ida_set_jac_times"
 
   external c_set_preconditioner
     : ('a, 'k) session -> bool -> unit
-    = "sunml_ida_spils_set_preconditioner"
+    = "sunml_ida_set_preconditioner"
 
   external c_spils_set_linear_solver
     : ('a, 'k) session -> ('a, 'k) LSI.Iterative.cptr -> unit
@@ -479,14 +479,14 @@ module Spils = struct (* {{{ *)
     set_increment_factor s dqincfac
 
   external get_num_lin_iters      : ('a, 'k) session -> int
-      = "sunml_ida_spils_get_num_lin_iters"
+      = "sunml_ida_get_num_lin_iters"
 
   let get_num_lin_iters s =
     ls_check_spils s;
     get_num_lin_iters s
 
   external get_num_lin_conv_fails     : ('a, 'k) session -> int
-      = "sunml_ida_spils_get_num_lin_conv_fails"
+      = "sunml_ida_get_num_lin_conv_fails"
 
   let get_num_lin_conv_fails s =
     ls_check_spils s;
@@ -500,28 +500,28 @@ module Spils = struct (* {{{ *)
     get_work_space s
 
   external get_num_prec_evals     : ('a, 'k) session -> int
-      = "sunml_ida_spils_get_num_prec_evals"
+      = "sunml_ida_get_num_prec_evals"
 
   let get_num_prec_evals s =
     ls_check_spils s;
     get_num_prec_evals s
 
   external get_num_prec_solves    : ('a, 'k) session -> int
-      = "sunml_ida_spils_get_num_prec_solves"
+      = "sunml_ida_get_num_prec_solves"
 
   let get_num_prec_solves s =
     ls_check_spils s;
     get_num_prec_solves s
 
   external get_num_jtsetup_evals   : ('a, 'k) session -> int
-      = "sunml_ida_spils_get_num_jtsetup_evals"
+      = "sunml_ida_get_num_jtsetup_evals"
 
   let get_num_jtsetup_evals s =
     ls_check_spils s;
     get_num_jtsetup_evals s
 
   external get_num_jtimes_evals   : ('a, 'k) session -> int
-      = "sunml_ida_spils_get_num_jtimes_evals"
+      = "sunml_ida_get_num_jtimes_evals"
 
   let get_num_jtimes_evals s =
     ls_check_spils s;
