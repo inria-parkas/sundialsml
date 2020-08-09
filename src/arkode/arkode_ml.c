@@ -869,6 +869,20 @@ CAMLprim value sunml_arkode_ark_wf_tolerances (value vdata)
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_arkode_erk_wf_tolerances (value vdata)
+{
+    CAMLparam1(vdata);
+ 
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepWFtolerances(ARKODE_MEM_FROM_ML(vdata), errw);
+    CHECK_FLAG("ERKStepWFtolerances", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
 /* Mass matrix routines. */
 
 #if 300 <= SUNDIALS_LIB_VERSION
@@ -1292,6 +1306,144 @@ CAMLprim value sunml_arkode_ark_set_mass_times(value varkode_mem,
 
 /** ARKode generic interface: ARKStep, ERKStep, MRIStep **/
 
+static value sunml_arkode_ark_last_lin_exception(void *arkode_mem)
+{
+#if 400 <= SUNDIALS_LIB_VERSION
+    long int lsflag;
+
+    if (arkode_mem != NULL
+	  && ARKStepGetLastLinFlag(arkode_mem, &lsflag) == ARKLS_SUCCESS)
+	return sunml_lsolver_exception_from_flag(lsflag);
+#endif
+    return Val_none;
+}
+
+static value sunml_arkode_ark_last_mass_exception(void *arkode_mem)
+{
+#if 400 <= SUNDIALS_LIB_VERSION
+    long int mlsflag;
+
+    if (arkode_mem != NULL
+	  && ARKStepGetLastMassFlag(arkode_mem, &mlsflag) == ARKLS_SUCCESS)
+	return sunml_lsolver_exception_from_flag(mlsflag);
+#endif
+    return Val_none;
+}
+
+void sunml_arkode_check_flag(const char *call, int flag, void *arkode_mem)
+{
+    static char exmsg[MAX_ERRMSG_LEN] = "";
+
+    if (flag == ARK_SUCCESS
+	    || flag == ARK_ROOT_RETURN
+	    || flag == ARK_TSTOP_RETURN) return;
+
+    switch (flag) {
+	case ARK_ILL_INPUT:
+	    caml_raise_constant(ARKODE_EXN(IllInput));
+
+	case ARK_TOO_CLOSE:
+	    caml_raise_constant(ARKODE_EXN(TooClose));
+
+	case ARK_TOO_MUCH_WORK:
+	    caml_raise_constant(ARKODE_EXN(TooMuchWork));
+
+	case ARK_TOO_MUCH_ACC:
+	    caml_raise_constant(ARKODE_EXN(TooMuchAccuracy));
+
+	case ARK_ERR_FAILURE:
+	    caml_raise_constant(ARKODE_EXN(ErrFailure));
+
+	case ARK_CONV_FAILURE:
+	    caml_raise_constant(ARKODE_EXN(ConvergenceFailure));
+
+	case ARK_LINIT_FAIL:
+	    caml_raise_constant(ARKODE_EXN(LinearInitFailure));
+
+	case ARK_LSETUP_FAIL:
+	    // NB: Only ARKStep should return this error
+	    caml_raise_with_arg(ARKODE_EXN(LinearSetupFailure),
+				sunml_arkode_ark_last_lin_exception(arkode_mem));
+
+	case ARK_LSOLVE_FAIL:
+	    // NB: Only ARKStep should return this error
+	    caml_raise_with_arg(ARKODE_EXN(LinearSolveFailure),
+				sunml_arkode_ark_last_lin_exception(arkode_mem));
+
+	case ARK_MASSINIT_FAIL:
+	    caml_raise_constant(ARKODE_EXN(MassInitFailure));
+
+	case ARK_MASSSETUP_FAIL:
+	    // NB: Only ARKStep should return this error
+	    caml_raise_with_arg(ARKODE_EXN(MassSetupFailure),
+				sunml_arkode_ark_last_mass_exception(arkode_mem));
+
+	case ARK_MASSSOLVE_FAIL:
+	    // NB: Only ARKStep should return this error
+	    caml_raise_with_arg(ARKODE_EXN(MassSolveFailure),
+				sunml_arkode_ark_last_mass_exception(arkode_mem));
+
+	case ARK_MASSMULT_FAIL:
+	    caml_raise_constant(ARKODE_EXN(MassMultFailure));
+
+	case ARK_RHSFUNC_FAIL:
+	    caml_raise_constant(ARKODE_EXN(RhsFuncFailure));
+
+	case ARK_FIRST_RHSFUNC_ERR:
+	    caml_raise_constant(ARKODE_EXN(FirstRhsFuncFailure));
+
+	case ARK_REPTD_RHSFUNC_ERR:
+	    caml_raise_constant(ARKODE_EXN(RepeatedRhsFuncFailure));
+
+	case ARK_UNREC_RHSFUNC_ERR:
+	    caml_raise_constant(ARKODE_EXN(UnrecoverableRhsFuncFailure));
+
+	case ARK_RTFUNC_FAIL:
+	    caml_raise_constant(ARKODE_EXN(RootFuncFailure));
+
+#if 270 <= SUNDIALS_LIB_VERSION
+	case ARK_POSTPROCESS_FAIL:
+	    caml_raise_constant(ARKODE_EXN(PostprocStepFailure));
+#endif
+
+	case ARK_BAD_K:
+	    caml_raise_constant(ARKODE_EXN(BadK));
+
+	case ARK_BAD_T:
+	    caml_raise_constant(ARKODE_EXN(BadT));
+
+#if 400 <= SUNDIALS_LIB_VERSION
+	case ARK_NLS_INIT_FAIL:
+	    caml_raise_constant(ARKODE_EXN(NonlinearInitFailure));
+
+	case ARK_NLS_SETUP_FAIL:
+	    caml_raise_constant(ARKODE_EXN(NonlinearSetupFailure));
+
+	case ARK_NLS_SETUP_RECVR:
+	    caml_raise_constant(ARKODE_EXN(NonlinearSetupRecoverable));
+
+	case ARK_NLS_OP_ERR:
+	    caml_raise_constant(ARKODE_EXN(NonlinearOperationError));
+
+	case ARK_VECTOROP_ERR:
+	    caml_raise_constant(ARKODE_EXN(VectorOpErr));
+#endif
+
+	default:
+#if 400 <= SUNDIALS_LIB_VERSION
+	    snprintf(exmsg, MAX_ERRMSG_LEN, "%s: %s", call,
+		     ARKStepGetReturnFlagName(flag));
+	    // ARKStepGetReturnFlagName, ERKStepGetReturnFlagName, and
+	    // MRIStepGetReturnFlagName share the same underlying
+	    // implementation.
+#else
+	    snprintf(exmsg, MAX_ERRMSG_LEN, "%s: %s", call,
+		     ARKodeGetReturnFlagName(flag));
+#endif
+	    caml_failwith(exmsg);
+    }
+}
+
 /** ARKStep basic interface **/
 
 /* ARKStepCreate() */
@@ -1429,7 +1581,7 @@ CAMLprim value sunml_arkode_ark_reinit(value vdata, value t0, value y0)
     CAMLreturn (Val_unit);
 }
 
-static value solver(value vdata, value nextt, value vy, int onestep)
+static value ark_solver(value vdata, value nextt, value vy, int onestep)
 {
     CAMLparam3(vdata, nextt, vy);
     CAMLlocal1(ret);
@@ -1437,6 +1589,7 @@ static value solver(value vdata, value nextt, value vy, int onestep)
     int flag;
     N_Vector y;
     enum arkode_solver_result_tag result = -1;
+    const char* call;
 
     y = NVEC_VAL (vy);
     // Caml_ba_data_val(y) must not be shifted by the OCaml GC during this
@@ -1445,9 +1598,11 @@ static value solver(value vdata, value nextt, value vy, int onestep)
 #if 400 <= SUNDIALS_LIB_VERSION
     flag = ARKStepEvolve(ARKODE_MEM_FROM_ML (vdata), Double_val (nextt),
 			 y, &tret, onestep ? ARK_ONE_STEP : ARK_NORMAL);
+    call = "ARKStepEvolve";
 #else
     flag = ARKode (ARKODE_MEM_FROM_ML (vdata), Double_val (nextt),
 		   y, &tret, onestep ? ARK_ONE_STEP : ARK_NORMAL);
+    call = "ARKode";
 #endif
 
     switch (flag) {
@@ -1475,7 +1630,7 @@ static value solver(value vdata, value nextt, value vy, int onestep)
 	     * execution.  */
 	    caml_raise (Field (ret, 0));
 	}
-	sunml_arkode_check_flag("ARKode", flag, ARKODE_MEM_FROM_ML(vdata));
+	sunml_arkode_check_flag(call, flag, ARKODE_MEM_FROM_ML(vdata));
     }
 
     assert (Field (vdata, RECORD_ARKODE_SESSION_EXN_TEMP) == Val_none);
@@ -1490,13 +1645,13 @@ static value solver(value vdata, value nextt, value vy, int onestep)
 CAMLprim value sunml_arkode_ark_solve_normal(value vdata, value nextt, value y)
 {
     CAMLparam3(vdata, nextt, y);
-    CAMLreturn(solver(vdata, nextt, y, 0));
+    CAMLreturn(ark_solver(vdata, nextt, y, 0));
 }
 
 CAMLprim value sunml_arkode_ark_solve_one_step(value vdata, value nextt, value y)
 {
     CAMLparam3(vdata, nextt, y);
-    CAMLreturn(solver(vdata, nextt, y, 1));
+    CAMLreturn(ark_solver(vdata, nextt, y, 1));
 }
 
 CAMLprim value sunml_arkode_ark_get_dky(value vdata, value vt, value vk, value vy)
@@ -1570,141 +1725,6 @@ CAMLprim value sunml_arkode_ark_get_est_local_errors(value varkode_mem,
 #endif
 
     CAMLreturn (Val_unit);
-}
-
-static value sunml_arkode_ark_last_lin_exception(void *arkode_mem)
-{
-#if 400 <= SUNDIALS_LIB_VERSION
-    long int lsflag;
-
-    if (arkode_mem != NULL
-	  && ARKStepGetLastLinFlag(arkode_mem, &lsflag) == ARKLS_SUCCESS)
-	return sunml_lsolver_exception_from_flag(lsflag);
-#endif
-    return Val_none;
-}
-
-static value sunml_arkode_ark_last_mass_exception(void *arkode_mem)
-{
-#if 400 <= SUNDIALS_LIB_VERSION
-    long int mlsflag;
-
-    if (arkode_mem != NULL
-	  && ARKStepGetLastMassFlag(arkode_mem, &mlsflag) == ARKLS_SUCCESS)
-	return sunml_lsolver_exception_from_flag(mlsflag);
-#endif
-    return Val_none;
-}
-
-void sunml_arkode_check_flag(const char *call, int flag, void *arkode_mem)
-{
-    static char exmsg[MAX_ERRMSG_LEN] = "";
-
-    if (flag == ARK_SUCCESS
-	    || flag == ARK_ROOT_RETURN
-	    || flag == ARK_TSTOP_RETURN) return;
-
-    switch (flag) {
-	case ARK_ILL_INPUT:
-	    caml_raise_constant(ARKODE_EXN(IllInput));
-
-	case ARK_TOO_CLOSE:
-	    caml_raise_constant(ARKODE_EXN(TooClose));
-
-	case ARK_TOO_MUCH_WORK:
-	    caml_raise_constant(ARKODE_EXN(TooMuchWork));
-
-	case ARK_TOO_MUCH_ACC:
-	    caml_raise_constant(ARKODE_EXN(TooMuchAccuracy));
-
-	case ARK_ERR_FAILURE:
-	    caml_raise_constant(ARKODE_EXN(ErrFailure));
-
-	case ARK_CONV_FAILURE:
-	    caml_raise_constant(ARKODE_EXN(ConvergenceFailure));
-
-	case ARK_LINIT_FAIL:
-	    caml_raise_constant(ARKODE_EXN(LinearInitFailure));
-
-	case ARK_LSETUP_FAIL:
-	    // NB: Only ARKStep should return this error
-	    caml_raise_with_arg(ARKODE_EXN(LinearSetupFailure),
-				sunml_arkode_ark_last_lin_exception(arkode_mem));
-
-	case ARK_LSOLVE_FAIL:
-	    // NB: Only ARKStep should return this error
-	    caml_raise_with_arg(ARKODE_EXN(LinearSolveFailure),
-				sunml_arkode_ark_last_lin_exception(arkode_mem));
-
-	case ARK_MASSINIT_FAIL:
-	    caml_raise_constant(ARKODE_EXN(MassInitFailure));
-
-	case ARK_MASSSETUP_FAIL:
-	    // NB: Only ARKStep should return this error
-	    caml_raise_with_arg(ARKODE_EXN(MassSetupFailure),
-				sunml_arkode_ark_last_mass_exception(arkode_mem));
-
-	case ARK_MASSSOLVE_FAIL:
-	    // NB: Only ARKStep should return this error
-	    caml_raise_with_arg(ARKODE_EXN(MassSolveFailure),
-				sunml_arkode_ark_last_mass_exception(arkode_mem));
-
-	case ARK_MASSMULT_FAIL:
-	    caml_raise_constant(ARKODE_EXN(MassMultFailure));
-
-	case ARK_RHSFUNC_FAIL:
-	    caml_raise_constant(ARKODE_EXN(RhsFuncFailure));
-
-	case ARK_FIRST_RHSFUNC_ERR:
-	    caml_raise_constant(ARKODE_EXN(FirstRhsFuncFailure));
-
-	case ARK_REPTD_RHSFUNC_ERR:
-	    caml_raise_constant(ARKODE_EXN(RepeatedRhsFuncFailure));
-
-	case ARK_UNREC_RHSFUNC_ERR:
-	    caml_raise_constant(ARKODE_EXN(UnrecoverableRhsFuncFailure));
-
-	case ARK_RTFUNC_FAIL:
-	    caml_raise_constant(ARKODE_EXN(RootFuncFailure));
-
-#if 270 <= SUNDIALS_LIB_VERSION
-	case ARK_POSTPROCESS_FAIL:
-	    caml_raise_constant(ARKODE_EXN(PostprocStepFailure));
-#endif
-
-	case ARK_BAD_K:
-	    caml_raise_constant(ARKODE_EXN(BadK));
-
-	case ARK_BAD_T:
-	    caml_raise_constant(ARKODE_EXN(BadT));
-
-#if 400 <= SUNDIALS_LIB_VERSION
-	case ARK_NLS_INIT_FAIL:
-	    caml_raise_constant(ARKODE_EXN(NonlinearInitFailure));
-
-	case ARK_NLS_SETUP_FAIL:
-	    caml_raise_constant(ARKODE_EXN(NonlinearSetupFailure));
-
-	case ARK_NLS_SETUP_RECVR:
-	    caml_raise_constant(ARKODE_EXN(NonlinearSetupRecoverable));
-
-	case ARK_NLS_OP_ERR:
-	    caml_raise_constant(ARKODE_EXN(NonlinearOperationError));
-
-	case ARK_VECTOROP_ERR:
-	    caml_raise_constant(ARKODE_EXN(VectorOpErr));
-#endif
-
-	default:
-#if 400 <= SUNDIALS_LIB_VERSION
-	    snprintf(exmsg, MAX_ERRMSG_LEN, "%s: %s", call,
-		     ARKStepGetReturnFlagName(flag));
-#else
-	    snprintf(exmsg, MAX_ERRMSG_LEN, "%s: %s", call,
-		     ARKodeGetReturnFlagName(flag));
-#endif
-	    caml_failwith(exmsg);
-    }
 }
 
 #if 400 <= SUNDIALS_LIB_VERSION
@@ -1894,21 +1914,21 @@ CAMLprim value sunml_arkode_ark_get_time_stepper_stats(value vdata)
     CHECK_FLAG("ARKodeGetIntegratorStats", flag);
 #endif
 
-    r = caml_alloc_tuple(RECORD_ARKODE_TIMESTEPPER_STATS_SIZE);
-    Store_field(r, RECORD_ARKODE_TIMESTEPPER_STATS_EXP_STEPS,
-						    Val_long(expsteps));
-    Store_field(r, RECORD_ARKODE_TIMESTEPPER_STATS_ACC_STEPS,
-						    Val_long(accsteps));
-    Store_field(r, RECORD_ARKODE_TIMESTEPPER_STATS_STEP_ATTEMPTS,
-						    Val_long(step_attempts));
-    Store_field(r, RECORD_ARKODE_TIMESTEPPER_STATS_NUM_NFE_EVALS,
-						    Val_long(nfe_evals));
-    Store_field(r, RECORD_ARKODE_TIMESTEPPER_STATS_NUM_NFI_EVALS,
-						    Val_long(nfi_evals));
-    Store_field(r, RECORD_ARKODE_TIMESTEPPER_STATS_LIN_SOLV_SETUPS,
-						    Val_long(nlinsetups));
-    Store_field(r, RECORD_ARKODE_TIMESTEPPER_STATS_NUM_ERR_TEST_FAILS,
-						    Val_long(netfails));
+    r = caml_alloc_tuple(RECORD_ARKODE_ARK_TIMESTEPPER_STATS_SIZE);
+    Store_field(r, RECORD_ARKODE_ARK_TIMESTEPPER_STATS_EXP_STEPS,
+		   Val_long(expsteps));
+    Store_field(r, RECORD_ARKODE_ARK_TIMESTEPPER_STATS_ACC_STEPS,
+		   Val_long(accsteps));
+    Store_field(r, RECORD_ARKODE_ARK_TIMESTEPPER_STATS_STEP_ATTEMPTS,
+		   Val_long(step_attempts));
+    Store_field(r, RECORD_ARKODE_ARK_TIMESTEPPER_STATS_NUM_NFE_EVALS,
+		   Val_long(nfe_evals));
+    Store_field(r, RECORD_ARKODE_ARK_TIMESTEPPER_STATS_NUM_NFI_EVALS,
+		   Val_long(nfi_evals));
+    Store_field(r, RECORD_ARKODE_ARK_TIMESTEPPER_STATS_LIN_SOLV_SETUPS,
+		   Val_long(nlinsetups));
+    Store_field(r, RECORD_ARKODE_ARK_TIMESTEPPER_STATS_NUM_ERR_TEST_FAILS,
+		   Val_long(netfails));
 
     CAMLreturn(r);
 }
@@ -2130,7 +2150,7 @@ static value val_butcher_table(ARKodeButcherTable bt)
 }
 #endif
 
-CAMLprim value sunml_arkode_get_current_butcher_tables(value varkode_mem)
+CAMLprim value sunml_arkode_ark_get_current_butcher_tables(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
     CAMLlocal3(vobti, vobte, vr);
@@ -2808,7 +2828,7 @@ CAMLprim value sunml_arkode_ark_set_postprocess_step_fn(value varkode_mem,
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * Boiler plate definitions for Arkode interface.
+ * Boiler plate definitions for ARKStep interface.
  */
 
 CAMLprim value sunml_arkode_ark_resv_tolerance(value vdata, value abstol)
@@ -4403,5 +4423,1056 @@ CAMLprim value sunml_arkode_ark_get_num_mass_prec_solves(value varkode_mem)
 #endif
 
     CAMLreturn(Val_long(r));
+}
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * ERKStep basic interface
+ */
+
+/* ERKStepCreate() */
+CAMLprim value sunml_arkode_erk_init(value weakref, value y0, value t0)
+{
+    CAMLparam3(weakref, y0, t0);
+    CAMLlocal2(r, varkode_mem);
+#if 400 <= SUNDIALS_LIB_VERSION
+    value *backref;
+
+    void *arkode_mem = ERKStepCreate(rhsfn1, Double_val(t0), NVEC_VAL(y0));
+
+    if (arkode_mem == NULL)
+	caml_failwith("ERKStepCreate returned NULL");
+
+    varkode_mem = caml_alloc_final(1, NULL, 1, 5);
+    ARKODE_MEM(varkode_mem) = arkode_mem;
+
+    backref = sunml_sundials_malloc_value(weakref);
+    if (backref == NULL) {
+	ERKStepFree (&arkode_mem);
+	caml_raise_out_of_memory();
+    }
+    ERKStepSetUserData (arkode_mem, backref);
+
+    r = caml_alloc_tuple (2);
+    Store_field (r, 0, varkode_mem);
+    Store_field (r, 1, (value)backref);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(r);
+}
+
+/* Set the root function to a generic trampoline and set the number of
+ * roots.  */
+CAMLprim value sunml_arkode_erk_root_init (value vdata, value vnroots)
+{
+    CAMLparam2 (vdata, vnroots);
+#if 400 <= SUNDIALS_LIB_VERSION
+    void *arkode_mem = ARKODE_MEM_FROM_ML (vdata);
+    int nroots = Int_val (vnroots);
+    int flag = ERKStepRootInit (arkode_mem, nroots, roots);
+    CHECK_FLAG ("ERKStepRootInit", flag);
+    Store_field (vdata, RECORD_ARKODE_SESSION_NROOTS, vnroots);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_sv_tolerances(value vdata, value reltol,
+					      value abstol)
+{
+    CAMLparam3(vdata, reltol, abstol);
+#if 400 <= SUNDIALS_LIB_VERSION
+    N_Vector atol_nv = NVEC_VAL(abstol);
+
+    int flag = ERKStepSVtolerances(ARKODE_MEM_FROM_ML(vdata),
+			 	   Double_val(reltol), atol_nv);
+    CHECK_FLAG("ERKStepSVtolerances", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_reinit(value vdata, value t0, value y0)
+{
+    CAMLparam3(vdata, t0, y0);
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepReInit(ARKODE_MEM_FROM_ML(vdata),
+			     rhsfn1, Double_val(t0), NVEC_VAL(y0));
+    CHECK_FLAG("ERKStepReInit", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+static value erk_solver(value vdata, value nextt, value vy, int onestep)
+{
+    CAMLparam3(vdata, nextt, vy);
+    CAMLlocal1(ret);
+#if 400 <= SUNDIALS_LIB_VERSION
+    realtype tret;
+    int flag;
+    N_Vector y;
+    enum arkode_solver_result_tag result = -1;
+
+    y = NVEC_VAL (vy);
+    // Caml_ba_data_val(y) must not be shifted by the OCaml GC during this
+    // function call, which calls Caml through the callback f.  Is this
+    // guaranteed?
+    flag = ERKStepEvolve(ARKODE_MEM_FROM_ML (vdata), Double_val (nextt),
+			 y, &tret, onestep ? ARK_ONE_STEP : ARK_NORMAL);
+
+    switch (flag) {
+    case ARK_SUCCESS:
+	result = VARIANT_ARKODE_SOLVER_RESULT_SUCCESS;
+	break;
+
+    case ARK_ROOT_RETURN:
+	result = VARIANT_ARKODE_SOLVER_RESULT_ROOTSFOUND;
+	break;
+
+    case ARK_TSTOP_RETURN:
+	result = VARIANT_ARKODE_SOLVER_RESULT_STOPTIMEREACHED;
+	break;
+
+    default:
+	/* If an exception was recorded, propagate it.  This accounts for
+	 * almost all failures except for repeated recoverable failures in the
+	 * residue function.  */
+	ret = Field (vdata, RECORD_ARKODE_SESSION_EXN_TEMP);
+	if (Is_block (ret)) {
+	    Store_field (vdata, RECORD_ARKODE_SESSION_EXN_TEMP, Val_none);
+	    /* In bytecode, caml_raise() duplicates some parts of the
+	     * stacktrace.  This does not seem to happen in native code
+	     * execution.  */
+	    caml_raise (Field (ret, 0));
+	}
+	sunml_arkode_check_flag("ERKStepEvolve", flag,
+				ARKODE_MEM_FROM_ML(vdata));
+    }
+
+    assert (Field (vdata, RECORD_ARKODE_SESSION_EXN_TEMP) == Val_none);
+
+    ret = caml_alloc_tuple (2);
+    Store_field (ret, 0, caml_copy_double (tret));
+    Store_field (ret, 1, Val_int (result));
+
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (ret);
+}
+
+CAMLprim value sunml_arkode_erk_solve_normal(value vdata, value nextt, value y)
+{
+    CAMLparam3(vdata, nextt, y);
+    CAMLreturn(erk_solver(vdata, nextt, y, 0));
+}
+
+CAMLprim value sunml_arkode_erk_solve_one_step(value vdata, value nextt, value y)
+{
+    CAMLparam3(vdata, nextt, y);
+    CAMLreturn(erk_solver(vdata, nextt, y, 1));
+}
+
+CAMLprim value sunml_arkode_erk_get_dky(value vdata, value vt, value vk, value vy)
+{
+    CAMLparam4(vdata, vt, vk, vy);
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepGetDky(ARKODE_MEM_FROM_ML(vdata), Double_val(vt),
+			     Int_val(vk), NVEC_VAL(vy));
+    CHECK_FLAG("ERKStepGetDky", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_session_finalize(value vdata)
+{
+#if 400 <= SUNDIALS_LIB_VERSION
+    if (ARKODE_MEM_FROM_ML(vdata) != NULL) {
+	void *arkode_mem = ARKODE_MEM_FROM_ML(vdata);
+	value *backref = ARKODE_BACKREF_FROM_ML(vdata);
+	ERKStepFree(&arkode_mem);
+	sunml_sundials_free_value(backref);
+    }
+#endif
+    return Val_unit;
+}
+
+CAMLprim value sunml_arkode_erk_ss_tolerances(value vdata, value reltol,
+					      value abstol)
+{
+    CAMLparam3(vdata, reltol, abstol);
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSStolerances(ARKODE_MEM_FROM_ML(vdata),
+				   Double_val(reltol),
+				   Double_val(abstol));
+    CHECK_FLAG("ERKStepSStolerances", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_get_time_stepper_stats(value vdata)
+{
+    CAMLparam1(vdata);
+    CAMLlocal1(r);
+#if 400 <= SUNDIALS_LIB_VERSION
+
+    int flag;
+
+    long int expsteps;
+    long int accsteps;
+    long int step_attempts;
+    long int nf_evals;
+    long int netfails;
+
+    flag = ERKStepGetTimestepperStats(ARKODE_MEM_FROM_ML(vdata),
+                                      &expsteps,
+                                      &accsteps,
+                                      &step_attempts,
+                                      &nf_evals,
+                                      &netfails);
+    CHECK_FLAG("ERKStepGetTimestepperStats", flag);
+
+    r = caml_alloc_tuple(RECORD_ARKODE_ERK_TIMESTEPPER_STATS_SIZE);
+    Store_field(r, RECORD_ARKODE_ERK_TIMESTEPPER_STATS_EXP_STEPS,
+		   Val_long(expsteps));
+    Store_field(r, RECORD_ARKODE_ERK_TIMESTEPPER_STATS_ACC_STEPS,
+		   Val_long(accsteps));
+    Store_field(r, RECORD_ARKODE_ERK_TIMESTEPPER_STATS_STEP_ATTEMPTS,
+		   Val_long(step_attempts));
+    Store_field(r, RECORD_ARKODE_ERK_TIMESTEPPER_STATS_NUM_NF_EVALS,
+		   Val_long(nf_evals));
+    Store_field(r, RECORD_ARKODE_ERK_TIMESTEPPER_STATS_NUM_ERR_TEST_FAILS,
+		   Val_long(netfails));
+
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(r);
+}
+
+CAMLprim value sunml_arkode_erk_get_step_stats(value vdata)
+{
+    CAMLparam1(vdata);
+    CAMLlocal1(r);
+#if 400 <= SUNDIALS_LIB_VERSION
+    long int nsteps;
+    realtype hinused;
+    realtype hlast;
+    realtype hcur;
+    realtype tcur;
+
+    int flag = ERKStepGetStepStats(ARKODE_MEM_FROM_ML(vdata),
+				   &nsteps,
+				   &hinused,
+				   &hlast,
+				   &hcur,
+				   &tcur);
+    CHECK_FLAG("ERKStepGetStepStats", flag);
+
+    r = caml_alloc_tuple(RECORD_ARKODE_STEP_STATS_SIZE);
+    Store_field(r, RECORD_ARKODE_STEP_STATS_STEPS, Val_long(nsteps));
+    Store_field(r, RECORD_ARKODE_STEP_STATS_ACTUAL_INIT_STEP,
+						    caml_copy_double(hinused));
+    Store_field(r, RECORD_ARKODE_STEP_STATS_LAST_STEP,
+						    caml_copy_double(hlast));
+    Store_field(r, RECORD_ARKODE_STEP_STATS_CURRENT_STEP,
+						    caml_copy_double(hcur));
+    Store_field(r, RECORD_ARKODE_STEP_STATS_CURRENT_TIME,
+						    caml_copy_double(tcur));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(r);
+}
+
+CAMLprim value sunml_arkode_erk_set_root_direction(value vdata, value rootdirs)
+{
+    CAMLparam2(vdata, rootdirs);
+#if 400 <= SUNDIALS_LIB_VERSION
+    int rootdirs_l = Caml_ba_array_val(rootdirs)->dim[0];
+    int *rootdirs_d = INT_ARRAY(rootdirs);
+
+    if (rootdirs_l < ARKODE_NROOTS_FROM_ML(vdata)) {
+	caml_invalid_argument("root directions array is too short");
+    }
+
+    int flag = ERKStepSetRootDirection(ARKODE_MEM_FROM_ML(vdata), rootdirs_d);
+    CHECK_FLAG("ERKStepSetRootDirection", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_resize(value varkode_mem,
+				       value vhasfn, value vhscale,
+				       value vt0, value vynew)
+{
+    CAMLparam5(varkode_mem, vhasfn, vhscale, vt0, vynew);
+#if 400 <= SUNDIALS_LIB_VERSION
+    void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
+
+    int flag = ERKStepResize(
+		 arkode_mem,
+		 NVEC_VAL(vynew),
+		 Double_val(vhscale),
+		 Double_val(vt0),
+		 Bool_val(vhasfn) ? resizefn : NULL,
+		 Bool_val(vhasfn) ? ARKODE_BACKREF_FROM_ML(varkode_mem) : NULL);
+    CHECK_FLAG("ERKStepResize", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_get_current_butcher_tables(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    CAMLlocal1(vr);
+#if 400 <= SUNDIALS_LIB_VERSION
+    ARKodeButcherTable bt;
+    int flag = ERKStepGetCurrentButcherTable(ARKODE_MEM_FROM_ML(varkode_mem),
+					     &bt);
+    CHECK_FLAG("ERKStepGetCurrentButcherTable", flag);
+
+    vr = val_butcher_table(bt);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(vr);
+}
+
+CAMLprim value sunml_arkode_erk_set_table(value varkode_mem, value vob)
+{
+    CAMLparam2(varkode_mem, vob);
+#if 400 <= SUNDIALS_LIB_VERSION
+    ARKodeButcherTable bt = butcher_table_val(vob);
+
+    int flag = ERKStepSetTable(ARKODE_MEM_FROM_ML(varkode_mem), bt);
+    CHECK_FLAG("ERKStepSetTable", flag);
+
+    if (bt != NULL) ARKodeButcherTable_Free(bt);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_set_table_num(value varkode_mem, value vnum)
+{
+    CAMLparam2(varkode_mem, vnum);
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetTableNum(ARKODE_MEM_FROM_ML(varkode_mem),
+				  Int_val(vnum));
+    CHECK_FLAG("ERKStepSetTableNum", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_set_adaptivity_method(value varkode_mem,
+						      value vmeth)
+{
+    CAMLparam2(varkode_mem, vmeth);
+    CAMLlocal2(vks, vorder);
+#if 400 <= SUNDIALS_LIB_VERSION
+    void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
+    int flag;
+
+    if (Tag_val(vmeth) == VARIANT_ARKODE_ADAPTIVITY_METHOD_ADAPTIVITYFN) {
+	flag = ERKStepSetAdaptivityFn(arkode_mem,
+				      adaptfn,
+				      ARKODE_BACKREF_FROM_ML(varkode_mem));
+	CHECK_FLAG("ERKStepSetAdaptivityFn", flag);
+
+    } else {
+	realtype adapt_params[3] = { 0 };
+
+	vks = Field(Field(vmeth, 0), RECORD_ARKODE_ADAPTIVITY_PARAMS_KS);
+	vorder = Field(Field(vmeth, 0),
+			RECORD_ARKODE_ADAPTIVITY_PARAMS_METHOD_ORDER);
+
+	if (vks != Val_none) {
+	    adapt_params[0] = Double_val(Field(Some_val(vks), 0));
+	    adapt_params[1] = Double_val(Field(Some_val(vks), 1));
+	    adapt_params[2] = Double_val(Field(Some_val(vks), 2));
+	}
+
+	flag = ERKStepSetAdaptivityMethod(arkode_mem, 
+					  Tag_val(vmeth), 
+					  vks == Val_none,
+					  Bool_val(vorder),
+					  vks != Val_none ? adapt_params : NULL);
+	CHECK_FLAG("ERKStepSetAdaptivityMethod", flag);
+    }
+
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_set_stability_fn(value varkode_mem, value vhasf)
+{
+    CAMLparam2(varkode_mem, vhasf);
+#if 400 <= SUNDIALS_LIB_VERSION
+    void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
+
+    int flag = ERKStepSetStabilityFn(arkode_mem,
+				     Bool_val(vhasf) ? stabfn : NULL,
+				     ARKODE_BACKREF_FROM_ML(varkode_mem));
+    CHECK_FLAG("ERKStepSetStabilityFn", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_set_postprocess_step_fn(value varkode_mem,
+							value vhasf)
+{
+    CAMLparam2(varkode_mem, vhasf);
+#if 400 <= SUNDIALS_LIB_VERSION
+    void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
+
+    int flag = ERKStepSetPostprocessStepFn(arkode_mem,
+					   Bool_val(vhasf) ? poststepfn : NULL);
+    CHECK_FLAG("ERKStepSetPostprocessStepFn", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Boiler plate definitions for ERKStep interface.
+ */
+
+/* main solver optional output functions */
+
+CAMLprim value sunml_arkode_erk_get_work_space(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    CAMLlocal1(r);
+#if 400 <= SUNDIALS_LIB_VERSION
+
+    int flag;
+    long int lenrw;
+    long int leniw;
+
+    flag = ERKStepGetWorkSpace(ARKODE_MEM_FROM_ML(varkode_mem), &lenrw, &leniw);
+    CHECK_FLAG("ERKStepGetWorkSpace", flag);
+
+    r = caml_alloc_tuple(2);
+
+    Store_field(r, 0, Val_long(lenrw));
+    Store_field(r, 1, Val_long(leniw));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(r);
+}
+
+CAMLprim value sunml_arkode_erk_get_num_steps(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    long int v = 0;
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepGetNumSteps(ARKODE_MEM_FROM_ML(varkode_mem), &v);
+    CHECK_FLAG("ERKStepGetNumSteps", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(Val_long(v));
+}
+
+CAMLprim value sunml_arkode_erk_get_actual_init_step(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    realtype v = 0.0;
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepGetActualInitStep(ARKODE_MEM_FROM_ML(varkode_mem), &v);
+    CHECK_FLAG("ERKStepGetActualInitStep", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(caml_copy_double(v));
+}
+
+CAMLprim value sunml_arkode_erk_get_last_step(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    realtype v = 0.0;
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepGetLastStep(ARKODE_MEM_FROM_ML(varkode_mem), &v);
+    CHECK_FLAG("ERKStepGetLastStep", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(caml_copy_double(v));
+}
+
+CAMLprim value sunml_arkode_erk_get_current_step(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    realtype v = 0.0;
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepGetCurrentStep(ARKODE_MEM_FROM_ML(varkode_mem), &v);
+    CHECK_FLAG("ERKStepGetCurrentStep", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(caml_copy_double(v));
+}
+
+CAMLprim value sunml_arkode_erk_get_current_time(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    realtype v = 0.0;
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepGetCurrentTime(ARKODE_MEM_FROM_ML(varkode_mem), &v);
+    CHECK_FLAG("ERKStepGetCurrentTime", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(caml_copy_double(v));
+}
+
+CAMLprim value sunml_arkode_erk_get_err_weights(value varkode_mem, value verrws)
+{
+    CAMLparam2(varkode_mem, verrws);
+#if 400 <= SUNDIALS_LIB_VERSION
+    N_Vector errws_nv = NVEC_VAL(verrws);
+    int flag = ERKStepGetErrWeights(ARKODE_MEM_FROM_ML(varkode_mem), errws_nv);
+    CHECK_FLAG("ERKStepGetErrWeights", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_get_tol_scale_factor(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    realtype r = 0.0;
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepGetTolScaleFactor(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    CHECK_FLAG("ERKStepGetTolScaleFactor", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(caml_copy_double(r));
+}
+
+CAMLprim value sunml_arkode_erk_get_num_exp_steps(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    long int v = 0;
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepGetNumExpSteps(ARKODE_MEM_FROM_ML(varkode_mem), &v);
+    CHECK_FLAG("ERKStepGetNumExpSteps", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(Val_long(v));
+}
+
+CAMLprim value sunml_arkode_erk_get_num_acc_steps(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    long int v = 0;
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepGetNumAccSteps(ARKODE_MEM_FROM_ML(varkode_mem), &v);
+    CHECK_FLAG("ERKStepGetNumAccSteps", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(Val_long(v));
+}
+
+CAMLprim value sunml_arkode_erk_get_num_step_attempts(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    long int v = 0;
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepGetNumStepAttempts(ARKODE_MEM_FROM_ML(varkode_mem), &v);
+    CHECK_FLAG("ERKStepGetNumStepAttempts", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(Val_long(v));
+}
+
+CAMLprim value sunml_arkode_erk_get_num_rhs_evals(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    CAMLlocal1(r);
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    long int nf;
+
+    int flag = ERKStepGetNumRhsEvals(ARKODE_MEM_FROM_ML(varkode_mem), &nf);
+    CHECK_FLAG("ERKStepGetNumRhsEvals", flag);
+
+    r = Val_long(nf);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(r);
+}
+
+CAMLprim value sunml_arkode_erk_get_num_err_test_fails(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    long int v = 0;
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepGetNumErrTestFails(ARKODE_MEM_FROM_ML(varkode_mem), &v);
+    CHECK_FLAG("ERKStepGetNumErrTestFails", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(Val_long(v));
+}
+
+CAMLprim value sunml_arkode_erk_get_est_local_errors(value varkode_mem,
+						     value vele)
+{
+    CAMLparam2(varkode_mem, vele);
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepGetEstLocalErrors(ARKODE_MEM_FROM_ML(varkode_mem),
+					NVEC_VAL(vele));
+    CHECK_FLAG("ERKStepGetEstLocalErrors", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+/* optional inputs for ERKStep */
+
+CAMLprim value sunml_arkode_erk_set_defaults(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetDefaults(ARKODE_MEM_FROM_ML(varkode_mem));
+    CHECK_FLAG("ERKStepSetDefaults", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_set_dense_order(value varkode_mem, value varg)
+{
+    CAMLparam2(varkode_mem, varg);
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetDenseOrder(ARKODE_MEM_FROM_ML(varkode_mem),
+				   Int_val(varg));
+    CHECK_FLAG("ERKStepSetDenseOrder", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_set_diagnostics(value vdata, value vfile)
+{
+    CAMLparam2(vdata, vfile);
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), ML_CFILE(vfile));
+    CHECK_FLAG("ERKStepSetDiagnostics", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_clear_diagnostics(value vdata)
+{
+    CAMLparam1(vdata);
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), NULL);
+    CHECK_FLAG("ERKStepSetDiagnostics", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_set_error_file(value vdata, value vfile)
+{
+    CAMLparam2(vdata, vfile);
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetErrFile(ARKODE_MEM_FROM_ML(vdata), ML_CFILE(vfile));
+    CHECK_FLAG("ERKStepSetErrFile", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_set_err_handler_fn(value vdata)
+{
+    CAMLparam1(vdata);
+ 
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetErrHandlerFn(ARKODE_MEM_FROM_ML(vdata), errh,
+				      ARKODE_BACKREF_FROM_ML(vdata));
+    CHECK_FLAG("ERKStepSetErrHandlerFn", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_set_fixed_step(value varkode_mem, value varg)
+{
+    CAMLparam2(varkode_mem, varg);
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetFixedStep(ARKODE_MEM_FROM_ML(varkode_mem),
+				  Double_val(varg));
+    CHECK_FLAG("ERKStepSetFixedStep", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_set_init_step(value varkode_mem, value hin)
+{
+    CAMLparam2(varkode_mem, hin);
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetInitStep(ARKODE_MEM_FROM_ML(varkode_mem),
+				  Double_val(hin));
+    CHECK_FLAG("ERKStepSetInitStep", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_set_max_hnil_warns(value varkode_mem, value mxhnil)
+{
+    CAMLparam2(varkode_mem, mxhnil);
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetMaxHnilWarns(ARKODE_MEM_FROM_ML(varkode_mem),
+				      Int_val(mxhnil));
+    CHECK_FLAG("ERKStepSetMaxHnilWarns", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_set_max_num_steps(value varkode_mem, value mxsteps)
+{
+    CAMLparam2(varkode_mem, mxsteps);
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetMaxNumSteps(ARKODE_MEM_FROM_ML(varkode_mem),
+				     Long_val(mxsteps));
+    CHECK_FLAG("ERKStepSetMaxNumSteps", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_set_max_step(value varkode_mem, value hmax)
+{
+    CAMLparam2(varkode_mem, hmax);
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetMaxStep(ARKODE_MEM_FROM_ML(varkode_mem),
+		 		 Double_val(hmax));
+    CHECK_FLAG("ERKStepSetMaxStep", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_set_min_step(value varkode_mem, value hmin)
+{
+    CAMLparam2(varkode_mem, hmin);
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetMinStep(ARKODE_MEM_FROM_ML(varkode_mem),
+		 		 Double_val(hmin));
+    CHECK_FLAG("ERKStepSetMinStep", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_set_stop_time(value varkode_mem, value tstop)
+{
+    CAMLparam2(varkode_mem, tstop);
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetStopTime(ARKODE_MEM_FROM_ML(varkode_mem),
+				  Double_val(tstop));
+    CHECK_FLAG("ERKStepSetStopTime", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_set_max_err_test_fails(value varkode_mem, value maxnef)
+{
+    CAMLparam2(varkode_mem, maxnef);
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetMaxErrTestFails(ARKODE_MEM_FROM_ML(varkode_mem),
+					 Int_val(maxnef));
+    CHECK_FLAG("ERKStepSetMaxErrTestFails", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+/* Optional inputs for time-step adaptivity */
+
+CAMLprim value sunml_arkode_erk_set_cfl_fraction(value varkode_mem, value varg)
+{
+    CAMLparam2(varkode_mem, varg);
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetCFLFraction(ARKODE_MEM_FROM_ML(varkode_mem),
+				    Double_val(varg));
+    CHECK_FLAG("ERKStepSetCFLFraction", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_set_error_bias(value varkode_mem, value varg)
+{
+    CAMLparam2(varkode_mem, varg);
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetErrorBias(ARKODE_MEM_FROM_ML(varkode_mem),
+				  Double_val(varg));
+    CHECK_FLAG("ERKStepSetErrorBias", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_set_fixed_step_bounds(value varkode_mem,
+						      value vlb, value vub)
+{
+    CAMLparam3(varkode_mem, vlb, vub);
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetFixedStepBounds(ARKODE_MEM_FROM_ML(varkode_mem),
+				        Double_val(vlb), Double_val(vub));
+    CHECK_FLAG("ERKStepSetFixedStepBounds", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_set_max_efail_growth(value varkode_mem, value varg)
+{
+    CAMLparam2(varkode_mem, varg);
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetMaxEFailGrowth(ARKODE_MEM_FROM_ML(varkode_mem),
+				       Double_val(varg));
+    CHECK_FLAG("ERKStepSetMaxEFailGrowth", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_set_max_first_growth(value varkode_mem, value varg)
+{
+    CAMLparam2(varkode_mem, varg);
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetMaxFirstGrowth(ARKODE_MEM_FROM_ML(varkode_mem),
+				       Double_val(varg));
+    CHECK_FLAG("ERKStepSetMaxFirstGrowth", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_set_max_growth(value varkode_mem, value varg)
+{
+    CAMLparam2(varkode_mem, varg);
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetMaxGrowth(ARKODE_MEM_FROM_ML(varkode_mem),
+				   Double_val(varg));
+    CHECK_FLAG("ERKStepSetMaxGrowth", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_set_safety_factor(value varkode_mem, value varg)
+{
+    CAMLparam2(varkode_mem, varg);
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetSafetyFactor(ARKODE_MEM_FROM_ML(varkode_mem),
+				      Double_val(varg));
+    CHECK_FLAG("ERKStepSetSafetyFactor", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_set_small_num_efails(value varkode_mem, value varg)
+{
+    CAMLparam2(varkode_mem, varg);
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetSmallNumEFails(ARKODE_MEM_FROM_ML(varkode_mem),
+				        Int_val(varg));
+    CHECK_FLAG("ERKStepSetSmallNumEFails", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_set_order(value varkode_mem, value varg)
+{
+    CAMLparam2(varkode_mem, varg);
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetOrder(ARKODE_MEM_FROM_ML(varkode_mem), Int_val(varg));
+    CHECK_FLAG("ERKStepSetOrder", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_get_root_info(value vdata, value roots)
+{
+    CAMLparam2(vdata, roots);
+#if 400 <= SUNDIALS_LIB_VERSION
+    int roots_l = Caml_ba_array_val(roots)->dim[0];
+    int *roots_d = INT_ARRAY(roots);
+
+    if (roots_l < ARKODE_NROOTS_FROM_ML(vdata)) {
+	caml_invalid_argument("roots array is too short");
+    }
+
+    int flag = ERKStepGetRootInfo(ARKODE_MEM_FROM_ML(vdata), roots_d);
+    CHECK_FLAG("ERKStepGetRootInfo", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_get_num_g_evals(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+
+    long int r;
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepGetNumGEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    CHECK_FLAG("ERKStepGetNumGEvals", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(Val_long(r));
+}
+
+CAMLprim value sunml_arkode_erk_set_no_inactive_root_warn(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetNoInactiveRootWarn(ARKODE_MEM_FROM_ML(varkode_mem));
+    CHECK_FLAG("ERKStepSetNoInactiveRootWarn", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
 }
 

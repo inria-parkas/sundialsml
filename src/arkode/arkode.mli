@@ -113,22 +113,7 @@ type 'd rootsfn = float -> 'd -> RealArray.t -> unit
 (** A convenience value for signalling that there are no roots to monitor. *)
 val no_roots : (int * 'd rootsfn)
 
-(** {3:arkode-callbacks Callback functions} *)
-
-(** Right-hand side functions for calculating ODE derivatives. They are passed
-    three arguments:
-    - [t], the value of the independent variable, i.e., the simulation time,
-    - [y], the vector of dependent-variable values, i.e., $y(t)$, and,
-    - [y'], a vector for storing the value of $f(t, y)$.
-
-    Within the function, raising a {!Sundials.RecoverableFailure} exception
-    indicates a recoverable error. Any other exception is treated as an
-    unrecoverable error.
-
-    {warning [y] and [y'] should not be accessed after the function returns.}
-
-    @noarkode <node> ARKRhsFn *)
-type 'd rhsfn = float -> 'd -> 'd -> unit
+(** {3:arkode-adapt Adaptivity} *)
 
 type adaptivity_args = {
     h1 : float;  (** the current step size, {% $t_m - t_{m-1}$%}. *)
@@ -156,6 +141,54 @@ type adaptivity_args = {
 
     @noarkode <node> ARKAdaptFn *)
 type 'd adaptivity_fn = float -> 'd -> adaptivity_args -> float
+
+(** Parameters for the standard adaptivity algorithms.
+    There are two:
+    - [adaptivity_ks], the [k1], [k2], and [k3] parameters, or [None]
+      to use the defaults, and
+    - [adaptivity_method_order], [true] specifies the method order of
+      accuracy $q$ and [false] specifies the embedding order of
+      accuracy $p$. *)
+type adaptivity_params = {
+    ks : (float * float * float) option;
+    method_order : bool;
+  }
+
+(** Asymptotic error control algorithms.
+
+    @noarkode <node> Asymptotic error control *)
+type 'd adaptivity_method =
+  | PIDcontroller of adaptivity_params
+        (** The default time adaptivity controller. *)
+  | PIcontroller of adaptivity_params
+        (** Uses the two most recent step sizes. *)
+  | Icontroller of adaptivity_params
+        (** Standard time adaptivity control algorithm. *)
+  | ExplicitGustafsson of adaptivity_params
+        (** Primarily used with explicit RK methods. *)
+  | ImplicitGustafsson of adaptivity_params
+        (** Primarily used with implicit RK methods. *)
+  | ImExGustafsson of adaptivity_params
+        (** An ImEx version of the two preceding controllers. *)
+  | AdaptivityFn of 'd adaptivity_fn
+        (** A custom time-step adaptivity function. *)
+
+(** {3:arkode-callbacks Callback functions} *)
+
+(** Right-hand side functions for calculating ODE derivatives. They are passed
+    three arguments:
+    - [t], the value of the independent variable, i.e., the simulation time,
+    - [y], the vector of dependent-variable values, i.e., $y(t)$, and,
+    - [y'], a vector for storing the value of $f(t, y)$.
+
+    Within the function, raising a {!Sundials.RecoverableFailure} exception
+    indicates a recoverable error. Any other exception is treated as an
+    unrecoverable error.
+
+    {warning [y] and [y'] should not be accessed after the function returns.}
+
+    @noarkode <node> ARKRhsFn *)
+type 'd rhsfn = float -> 'd -> 'd -> unit
 
 (** A function that predicts the maximum stable step size for the explicit
     portions of an ImEx ODE system. The call [hstab = stab_fn t y]
@@ -351,10 +384,10 @@ end (* }}} *)
     @noarkode <node> Using ARKSTEP for C and C++ Applications *)
 module ARKStep : sig (* {{{ *)
 
-  (** A session with the ARKODE solver.
+  (** A session with the ARKStep time-stepping solver.
 
-      An example session with Arkode ({openfile arkode_skel.ml}): {[
-  #include "../../examples/ocaml/skeletons/arkode_skel.ml"
+      An example session with Arkode ({openfile arkode_ark_skel.ml}): {[
+  #include "../../examples/ocaml/skeletons/arkode_ark_skel.ml"
       ]}
 
       @noarkode <node> Skeleton of main program *)
@@ -438,7 +471,7 @@ module ARKStep : sig (* {{{ *)
       ('m, 'kind, 't) LinearSolver.Direct.serial_linear_solver ->
       'kind serial_session_linear_solver
 
-    (** {3:stats Solver statistics} *)
+    (** {3:ark-dls-stats Solver statistics} *)
 
     (** Returns the sizes of the real and integer workspaces used by a direct
         linear solver.
@@ -469,7 +502,7 @@ module ARKStep : sig (* {{{ *)
   module Spils : sig (* {{{ *)
     include module type of Sundials_LinearSolver.Iterative
 
-    (** {3:precond Preconditioners} *)
+    (** {3:ark-spils-precond Preconditioners} *)
 
     (** Arguments passed to the preconditioner solver function.
 
@@ -615,7 +648,7 @@ module ARKStep : sig (* {{{ *)
       val get_num_rhs_evals : 'k serial_session -> int
     end (* }}} *)
 
-    (** {3:lsolvers Solvers} *)
+    (** {3:ark-spils-lsolvers Solvers} *)
 
     (** Callback functions that preprocess or evaluate Jacobian-related data
         needed by the jac_times_vec_fn. In the call [jac_times_setup_fn arg],
@@ -665,7 +698,7 @@ module ARKStep : sig (* {{{ *)
       -> ('d, 'k) preconditioner
       -> ('d, 'k) session_linear_solver
 
-    (** {3:set Solver parameters} *)
+    (** {3:ark-spils-set Solver parameters} *)
 
     (** Sets the maximum number of time steps to wait before recomputation of
         the Jacobian or recommendation to update the preconditioner. If the
@@ -682,7 +715,7 @@ module ARKStep : sig (* {{{ *)
         @noarkode <node> ARKStepSetEpsLin *)
     val set_eps_lin : ('d, 'k) session -> float -> unit
 
-    (** {3:stats Solver statistics} *)
+    (** {3:ark-spils-stats Solver statistics} *)
 
     (** Returns the sizes of the real and integer workspaces used by the spils
         linear solver.
@@ -733,7 +766,7 @@ module ARKStep : sig (* {{{ *)
         @noarkode <node> ARKStepGetNumLinRhsEvals *)
     val get_num_lin_rhs_evals    : ('d, 'k) session -> int
 
-    (** {3:lowlevel Low-level solver manipulation}
+    (** {3:ark-spils-lowlevel Low-level solver manipulation}
 
         The {!init} and {!reinit} functions are the preferred way to set or
         change preconditioner functions. These low-level functions are
@@ -783,7 +816,7 @@ module ARKStep : sig (* {{{ *)
     type 'kind serial_solver = (Nvector_serial.data, 'kind) solver
                                constraint 'kind = [>Nvector_serial.kind]
 
-    (** {3:dlsmass Direct mass matrix solvers} *)
+    (** {3:ark-dlsmass Direct mass matrix solvers} *)
     module Dls : sig (* {{{ *)
       include module type of Sundials_LinearSolver.Direct
 
@@ -823,7 +856,7 @@ module ARKStep : sig (* {{{ *)
         -> ('m, 'kind, 't) serial_linear_solver
         -> 'kind serial_solver
 
-      (** {3:stats Solver statistics} *)
+      (** {3:ark-dlsmass-stats Solver statistics} *)
 
       (** Returns the sizes of the real and integer workspaces used by a
           direct linear mass matrix solver.
@@ -858,11 +891,11 @@ module ARKStep : sig (* {{{ *)
 
     end (* }}} *)
 
-    (** {3:spilsmass Iterative mass matrix solvers} *)
+    (** {3:ark-spilsmass Iterative mass matrix solvers} *)
     module Spils : sig (* {{{ *)
       include module type of Sundials_LinearSolver.Iterative
 
-      (** {3:precond Preconditioners} *)
+      (** {3:ark-spilsmass-precond Preconditioners} *)
 
       (** Arguments passed to the mass matrix preconditioner solver function.
 
@@ -941,7 +974,7 @@ module ARKStep : sig (* {{{ *)
         -> 'd prec_solve_fn
         -> ('d, 'k) preconditioner
 
-      (** {3:lsolvers Solvers} *)
+      (** {3:ark-spilsmass-lsolvers Solvers} *)
 
       (** Callback functions that preprocess or evaluate Jacobian-related
           data needed by the mass_times_vec_fn. The argument gives the
@@ -994,7 +1027,7 @@ module ARKStep : sig (* {{{ *)
         -> ('d, 'k) preconditioner
         -> ('d, 'k) solver
 
-      (** {3:set Solver parameters} *)
+      (** {3:ark-spilsmass-set Solver parameters} *)
 
       (** Sets the factor by which the Krylov linear solver's convergence
           test constant is reduced from the Newton iteration test constant.
@@ -1003,7 +1036,7 @@ module ARKStep : sig (* {{{ *)
           @noarkode <node> ARKStepSetMassEpsLin *)
       val set_eps_lin : ('d, 'k) session -> float -> unit
 
-      (** {3:stats Solver statistics} *)
+      (** {3:ark-spilsmass-stats Solver statistics} *)
 
       (** Returns the sizes of the real and integer workspaces used by the
           spils linear solver.
@@ -1048,7 +1081,7 @@ module ARKStep : sig (* {{{ *)
           @noarkode <node> ARKStepGetNumMassPrecSolves *)
       val get_num_prec_solves  : ('d, 'k) session -> int
 
-      (** {3:lowlevel Low-level solver manipulation}
+      (** {3:ark-spilsmass-lowlevel Low-level solver manipulation}
 
           The {!init} and {!reinit} functions are the preferred way to set or
           change preconditioner functions. These low-level functions are
@@ -1247,9 +1280,10 @@ module ARKStep : sig (* {{{ *)
   (** Reinitializes the solver with new parameters and state values. The
       values of the independent variable, i.e., the simulation time, and the
       state variables must be given. If given, [problem] specifies new
-      callback functions and solvers, [roots] specifies a new root
-      finding function, and [mass] specifies a new linear mass matrix solver.
-      The new problem must have the same size as the previous one.
+      callback functions and solvers, [order] changes the order of accuracy,
+      [roots] specifies a new root finding function, and [mass] specifies a
+      new linear mass matrix solver. The new problem must have the same size
+      as the previous one.
 
       The allowed values for [order] are as for {!init}.
 
@@ -1258,8 +1292,7 @@ module ARKStep : sig (* {{{ *)
       @noarkode <node> ARKStepSetOrder
       @noarkode <node> ARKStepSetLinearSolver
       @noarkode <node> ARKStepSetMassLinearSolver
-      @noarkode <node> ARKStepSetNonlinearSolver
-      @noarkode <node> ARKStepRootInit *)
+      @noarkode <node> ARKStepSetNonlinearSolver *)
   val reinit :
     ('d, 'k) session
     -> ?problem:('d, 'k) problem
@@ -1313,7 +1346,7 @@ module ARKStep : sig (* {{{ *)
 
   (** {2:set Modifying the solver (optional input functions)} *)
 
-  (** {3:setarkode Optional inputs for ARKode} *)
+  (** {3:ark-set Optional inputs for ARKStep} *)
 
   (** Sets the integration tolerances.
 
@@ -1428,7 +1461,7 @@ module ARKStep : sig (* {{{ *)
       @noarkode <node> ARKStepSetStopTime *)
   val set_stop_time : ('d, 'k) session -> float -> unit
 
-  (** {3:setivp Optional inputs for IVP method selection} *)
+  (** {3:ark-setivp Optional inputs for IVP method selection} *)
 
   (** Enables both the implicit and explicit portions of a problem.
 
@@ -1516,38 +1549,7 @@ module ARKStep : sig (* {{{ *)
       @noarkode <node> ARKStepSetImplicit *)
   val set_dirk_table_num : ('d, 'k) session -> ButcherTable.dirk_table -> unit
 
-  (** {3:setadap Optional inputs for time step adaptivity} *)
-
-  (** Parameters for the standard adaptivity algorithms.
-      There are two:
-      - [adaptivity_ks], the [k1], [k2], and [k3] parameters, or [None]
-        to use the defaults, and
-      - [adaptivity_method_order], [true] specifies the method order of
-        accuracy $q$ and [false] specifies the embedding order of
-        accuracy $p$. *)
-  type adaptivity_params = {
-      ks : (float * float * float) option;
-      method_order : bool;
-    }
-
-  (** Asymptotic error control algorithms.
-
-      @noarkode <node> Asymptotic error control *)
-  type 'd adaptivity_method =
-    | PIDcontroller of adaptivity_params
-          (** The default time adaptivity controller. *)
-    | PIcontroller of adaptivity_params
-          (** Uses the two most recent step sizes. *)
-    | Icontroller of adaptivity_params
-          (** Standard time adaptivity control algorithm. *)
-    | ExplicitGustafsson of adaptivity_params
-          (** Primarily used with explicit RK methods. *)
-    | ImplicitGustafsson of adaptivity_params
-          (** Primarily used with implicit RK methods. *)
-    | ImExGustafsson of adaptivity_params
-          (** An ImEx version of the two preceding controllers. *)
-    | AdaptivityFn of 'd adaptivity_fn
-          (** A custom time-step adaptivity function. *)
+  (** {3:ark-adapt Optional inputs for time step adaptivity} *)
 
   (** Specifies the method and associated parameters used for time step
       adaptivity.
@@ -1628,7 +1630,7 @@ module ARKStep : sig (* {{{ *)
       @noarkode <node> ARKStepSetStabilityFn *)
   val clear_stability_fn : ('d, 'k) session -> unit
 
-  (** {3:setimplicit Optional inputs for implicit stage solves} *)
+  (** {3:ark-setimplicit Optional inputs for implicit stage solves} *)
 
   (** Solve the implicit portion of the problem using the accelerated
       fixed-point solver instead of the modified Newton iteration. The integer
@@ -1877,7 +1879,7 @@ module ARKStep : sig (* {{{ *)
       @noarkode <node> ARKStepGetStepStats *)
   val print_step_stats  : ('d, 'k) session -> out_channel -> unit
 
-  (** {3:setimplicit Implicit solver optional output functions} *)
+  (** {3:ark-getimplicit Implicit solver optional output functions} *)
 
   (** Returns the number of calls made to the linear solver's setup function.
 
@@ -1937,6 +1939,508 @@ module ARKStep : sig (* {{{ *)
       function g.
 
       @noarkode <node> ARKStepGetNumGEvals *)
+  val get_num_g_evals : ('d, 'k) session -> int
+
+end (* }}} *)
+
+(** ERKStep Time-Stepping Module for nonstiff initial value problems.
+
+    This module solves problems of the form
+    {% $\dot{y} = f(t, y)$%}, {% $y(t_0) = y_0$%}.
+
+    Its interface is structured as follows.
+    {ol
+      {- {{:#solver}Solver initialization and use}}
+      {- {{:#set}Modifying the solver}}
+      {- {{:#get}Querying the solver}}
+      {- {{:#roots}Additional root finding functions}}}
+
+    @noarkode <node> Using ERKSTEP for C and C++ Applications *)
+module ERKStep : sig (* {{{ *)
+
+  (** A session with the ERKStep time-stepping solver.
+
+      An example session with Arkode ({openfile arkode_erk_skel.ml}): {[
+  #include "../../examples/ocaml/skeletons/arkode_erk_skel.ml"
+      ]}
+
+      @noarkode <node> Skeleton of main program *)
+  type ('d, 'k) session = ('d, 'k, Arkode_impl.erkstep) Arkode_impl.session
+
+  (** {2:solver Solver initialization and use} *)
+
+  (** Creates and initializes a session with the solver. The call
+      {[init tol f ~roots:(nroots, g) t0 y0]}
+      has as arguments:
+      - [tol],    the integration tolerances,
+      - [order],  the order of accuracy for the integration method,
+      - [f],      the ODE right-hand side function,
+      - [nroots], the number of root functions,
+      - [g],      the root function ([(nroots, g)] defaults to {!no_roots}),
+      - [t0],     the initial value of the independent variable, and
+      - [y0],     a vector of initial values that also determines the number
+                  of equations.
+
+      This function does everything necessary to initialize a session, i.e.,
+      it makes the calls referenced below. The {!solve_normal} and
+      {!solve_one_step} functions may be called directly.
+
+      @since 4.0.0
+      @noarkode <node> ERKStepCreate
+      @noarkode <node> ERKStepSetOrder
+      @noarkode <node> ERKStepRootInit
+      @noarkode <node> ERKStepSStolerances
+      @noarkode <node> ERKStepSVtolerances
+      @noarkode <node> ERKStepWFtolerances *)
+  val init :
+      ('data, 'kind) tolerance
+      -> ?order:int
+      -> 'data rhsfn
+      -> ?roots:(int * 'data rootsfn)
+      -> float
+      -> ('data, 'kind) Nvector.t
+      -> ('data, 'kind) session
+
+  (** Integrates an ODE system over an interval. The call
+      [tret, r = solve_normal s tout yout] has as arguments
+      - [s], a solver session,
+      - [tout], the next time at which a solution is desired, and,
+      - [yout], a vector to store the computed solution.
+
+      It returns [tret], the time reached by the solver, which will be equal to
+      [tout] if no errors occur, and, [r], a {!solver_result}.
+
+      @noarkode <node> ERKStepEvolve (ARK_NORMAL)
+      @raise IllInput Missing or illegal solver inputs.
+      @raise TooMuchWork The requested time could not be reached in [mxstep] internal steps.
+      @raise TooMuchAccuracy The requested accuracy could not be satisfied.
+      @raise ErrFailure Too many error test failures within a step or at the minimum step size.
+      @raise RhsFuncFailure Unrecoverable failure in one of the RHS functions.
+      @raise FirstRhsFuncFailure Initial unrecoverable failure in one of the RHS functions.
+      @raise RepeatedRhsFuncFailure Too many convergence test failures, or unable to estimate the initial step size, due to repeated recoverable errors in one of the right-hand side functions.
+      @raise UnrecoverableRhsFuncFailure One of the right-hand side functions had a recoverable error, but no recovery was possible. This error can only occur after an error test failure at order one.
+      @raise RootFuncFailure Failure in the rootfinding function [g]. *)
+  val solve_normal : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
+                          -> float * solver_result
+
+  (** Like {!solve_normal} but returns after one internal solver step.
+
+      @noarkode <node> ERKStepEvolve (ARK_ONE_STEP) *)
+  val solve_one_step : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
+                          -> float * solver_result
+
+  (** Returns the interpolated solution or derivatives.
+      [get_dky s dky t k] computes the [k]th derivative of the function
+      at time [t], i.e.,
+      {% $\frac{d^\mathtt{k}}{\mathit{dt}^\mathtt{k}}y(\mathtt{t})$%},
+      and stores it in [dky]. The arguments must satisfy
+      {% $t_n - h_n \leq \mathtt{t} \leq t_n$%}—where $t_n$
+      denotes {!get_current_time} and $h_n$ denotes {!get_last_step},—
+      and {% $0 \leq \mathtt{k} \leq 3$%}.
+
+      This function may only be called after a successful return from either
+      {!solve_normal} or {!solve_one_step}.
+
+      @noarkode <node> ERKStepGetDky
+      @raise BadT [t] is not in the interval {% $[t_n - h_n, t_n]$%}.
+      @raise BadK [k] is not in the range \{0, 1, ..., dord\}. *)
+  val get_dky : ('d, 'k) session -> ('d, 'k) Nvector.t -> float -> int -> unit
+
+  (** Reinitializes the solver with new parameters and state values. The
+      values of the independent variable, i.e., the simulation time, and the
+      state variables must be given. If given, [order] changes the order of
+      accuracy, and [roots] specifies a new root finding function. The new
+      problem must have the same size as the previous one.
+
+      The allowed values for [order] are as for {!init}.
+
+      @noarkode <node> ERKStepReInit
+      @noarkode <node> ERKStepRootInit
+      @noarkode <node> ERKStepSetOrder *)
+  val reinit :
+    ('d, 'k) session
+    -> ?order:int
+    -> ?roots:(int * 'd rootsfn)
+    -> float
+    -> ('d, 'k) Nvector.t
+    -> unit
+
+  (** Change the number of equations and unknowns between integrator steps.
+      The call
+      [resize s ~resize_nvec:rfn tol hscale ynew t0]
+      has as arguments:
+      - [s], the solver session to resize,
+      - [rfn], a resize function that transforms nvectors in place-otherwise
+               they are simply destroyed and recloned,
+      - [tol], tolerance values (ensures that any tolerance vectors are resized),
+      - [hscale], the next step will be of size {% $h \mathtt{hscale}$%},
+      - [ynew], the newly-sized solution vector with the value {% $y(t_0)$%}, and
+      - [t0], the current value of the independent variable $t_0$.
+
+      @noarkode <node> ERKStepResize *)
+  val resize :
+    ('d, 'k) session
+    -> ?resize_nvec:('d resize_fn)
+    -> ('d, 'k) tolerance
+    -> float
+    -> ('d, 'k) Nvector.t
+    -> float
+    -> unit
+
+  (** {2:set Modifying the solver (optional input functions)} *)
+
+  (** {3:erk-set Optional inputs for ERKStep} *)
+
+  (** Sets the integration tolerances.
+
+      @noarkode <node> ERKStepSStolerances
+      @noarkode <node> ERKStepSVtolerances
+      @noarkode <node> ERKStepWFtolerances *)
+  val set_tolerances : ('d, 'k) session -> ('d, 'k) tolerance -> unit
+
+  (** Resets all optional input parameters to their default values. Neither
+      the problem-defining functions nor the root-finding functions are
+      changed.
+
+      @noarkode <node> ERKStepSetDefaults *)
+  val set_defaults : ('d, 'k) session -> unit
+
+  (** Specifies the order of accuracy for the polynomial interpolant used for
+      dense output.
+
+      @noarkode <node> ERKStepSetDenseOrder *)
+  val set_dense_order : ('d, 'k) session -> int -> unit
+
+  (** Write step adaptivity and solver diagnostics to the given file.
+
+      @noarkode <node> ERKStepSetDiagnostics *)
+  val set_diagnostics : ('d, 'k) session -> Logfile.t -> unit
+
+  (** Do not write step adaptivity or solver diagnostics of a file.
+
+      @noarkode <node> ERKStepSetDiagnostics *)
+  val clear_diagnostics : ('d, 'k) session -> unit
+
+  (** Configure the default error handler to write messages to a file.
+      By default it writes to Logfile.stderr.
+
+      @noarkode <node> ERKStepSetErrFile *)
+  val set_error_file : ('d, 'k) session -> Logfile.t -> unit
+
+  (** Specifies a custom function for handling error messages.
+      The handler must not fail: any exceptions are trapped and discarded.
+
+      @noarkode <node> ERKStepSetErrHandlerFn
+      @noarkode <node> ARKErrHandlerFn *)
+  val set_err_handler_fn
+    : ('d, 'k) session -> (Util.error_details -> unit) -> unit
+
+  (** Restores the default error handling function.
+
+      @noarkode <node> ERKStepSetErrHandlerFn *)
+  val clear_err_handler_fn : ('d, 'k) session -> unit
+
+  (** Specifies the initial step size.
+
+      @noarkode <node> ERKStepSetInitStep *)
+  val set_init_step : ('d, 'k) session -> float -> unit
+
+  (** Disables time step adaptivity and fix the step size for all internal
+      steps. Pass [None] to restore time step adaptivity. This function is not
+      recommended since there is no assurance of the validity of the computed
+      solutions. It is provided primarily for code-to-code verification
+      testing. Use in conjunction with {!set_min_step} or {!set_max_step}.
+
+      @noarkode <node> ERKStepSetFixedStep *)
+  val set_fixed_step : ('d, 'k) session -> float option -> unit
+
+  (** Specifies the maximum number of messages warning that [t + h = t] on
+      the next internal step.
+
+      @noarkode <node> ERKStepSetMaxHnilWarns *)
+  val set_max_hnil_warns : ('d, 'k) session -> int -> unit
+
+  (** Specifies the maximum number of steps taken in attempting to reach
+      a given output time.
+
+      @noarkode <node> ERKStepSetMaxNumSteps *)
+  val set_max_num_steps : ('d, 'k) session -> int -> unit
+
+  (** Specifies the maximum number of error test failures permitted in
+      attempting one step.
+
+      @noarkode <node> ERKStepSetMaxErrTestFails *)
+  val set_max_err_test_fails : ('d, 'k) session -> int -> unit
+
+  (** Specifies a lower bound on the magnitude of the step size.
+
+      @noarkode <node> ERKStepSetMinStep *)
+  val set_min_step : ('d, 'k) session -> float -> unit
+
+  (** Specifies an upper bound on the magnitude of the step size.
+
+      @noarkode <node> ERKStepSetMaxStep *)
+  val set_max_step : ('d, 'k) session -> float -> unit
+
+  (** Limits the value of the independent variable [t] when solving.
+      By default no stop time is imposed.
+
+      @noarkode <node> ERKStepSetStopTime *)
+  val set_stop_time : ('d, 'k) session -> float -> unit
+
+  (** {3:erk-setivp Optional inputs for IVP method selection} *)
+
+  (** Specifies a customized Butcher table.
+
+      @noarkode <node> ERKStepSetTable *)
+  val set_table
+    : ('d, 'k) session
+      -> ButcherTable.t
+      -> unit
+
+  (** Use a specific built-in Butcher table for integration.
+
+      @noarkode <node> ERKStepSetTableNum *)
+  val set_table_num : ('d, 'k) session -> ButcherTable.erk_table -> unit
+
+  (** {3:erk-setadap Optional inputs for time step adaptivity} *)
+
+  (** Specifies the method and associated parameters used for time step
+      adaptivity.
+
+      @noarkode <node> ERKStepSetAdaptivityMethod
+      @noarkode <node> ERKStepSetAdaptivityFn *)
+  val set_adaptivity_method : ('d, 'k) session -> 'd adaptivity_method -> unit
+
+  (** Specifies the fraction of the estimated explicitly stable step to use.
+      Any non-positive argument resets to the default value (0.5).
+
+      @noarkode <node> ERKStepSetCFLFraction *)
+  val set_cfl_fraction : ('d, 'k) session -> float -> unit
+
+  (** Specifies the bias to apply to the error estimates within accuracy-based
+      adaptivity strategies.
+
+      @noarkode <node> ERKStepSetErrorBias *)
+  val set_error_bias : ('d, 'k) session -> float -> unit
+
+  (** Specifies the step growth interval in which the step size will remain
+      unchanged. In the call [set_fixed_step_bounds s lb ub], [lb] specifies a
+      lower bound on the window to leave the step size fixed and [ub]
+      specifies an upper bound. Any interval not containing 1.0 resets to
+      default values.
+
+      @noarkode <node> ERKStepSetFixedStepBounds *)
+  val set_fixed_step_bounds : ('d, 'k) session -> float -> float -> unit
+
+  (** Specifies the maximum step size growth factor upon multiple successive
+      accuracy-based error failures in the solver. Any value outside the
+      interval {% $(0, 1]$%} resets to the default value.
+
+      @noarkode <node> ERKStepSetMaxEFailGrowth *)
+  val set_max_efail_growth : ('d, 'k) session -> float -> unit
+
+  (** Specifies the maximum allowed step size change following the very first
+      integration step. Any value $\le 1$ resets to the default value.
+
+      @noarkode <node> ERKStepSetMaxFirstGrowth *)
+  val set_max_first_growth : ('d, 'k) session -> float -> unit
+
+  (** Specifies the maximum growth of the step size between consecutive time
+      steps. Any value $\le 1$ resets to the default value.
+
+      @noarkode <node> ERKStepSetMaxGrowth *)
+  val set_max_growth : ('d, 'k) session -> float -> unit
+
+  (** Specifies the safety factor to be applied to the accuracy-based
+      estimated step. Any non-positive value resets to the default value.
+
+      @noarkode <node> ERKStepSetSafetyFactor *)
+  val set_safety_factor : ('d, 'k) session -> float -> unit
+
+  (** Specifies the threshold for “multiple” successive error failures
+      before the factor from {!set_max_efail_growth} is applied. Any
+      non-positive value resets to the default value.
+
+      @noarkode <node> ERKStepSetSmallNumEFails *)
+  val set_small_num_efails : ('d, 'k) session -> float -> unit
+
+  (** Sets a problem-dependent function to estimate a stable time step size
+      for the explicit portion of the ODE system.
+
+      @noarkode <node> ERKStepSetStabilityFn *)
+  val set_stability_fn : ('d, 'k) session -> 'd stability_fn -> unit
+
+  (** Clears the problem-dependent function that estimates a stable time step
+      size for the explicit portion of the ODE system.
+
+      @noarkode <node> ERKStepSetStabilityFn *)
+  val clear_stability_fn : ('d, 'k) session -> unit
+
+  (** Set a post processing step function.
+
+      @noarkode <node> ERKSetPostprocessStepFn *)
+  val set_postprocess_step_fn : ('d, 'k) session -> 'd postprocess_step_fn -> unit
+
+  (** Clear the post processing step function.
+
+      @noarkode <node> ERKSetPostprocessStepFn *)
+  val clear_postprocess_step_fn : ('d, 'k) session -> unit
+
+  (** {2:get Querying the solver (optional output functions)} *)
+
+  (** Returns the real and integer workspace sizes.
+
+      @noarkode <node> ERKStepGetWorkSpace
+      @return ([real_size], [integer_size]) *)
+  val get_work_space          : ('d, 'k) session -> int * int
+
+  (** Returns the cumulative number of internal steps taken by the solver.
+
+      @noarkode <node> ERKStepGetNumSteps *)
+  val get_num_steps           : ('d, 'k) session -> int
+
+  (** Returns the cumulative number of stability-limited steps taken by the
+      solver.
+
+      @noarkode <node> ERKStepGetNumExpSteps *)
+  val get_num_exp_steps       : ('d, 'k) session -> int
+
+  (** Returns the cumulative number of accuracy-limited steps taken by the
+      solver.
+
+      @noarkode <node> ERKStepGetNumAccSteps *)
+  val get_num_acc_steps       : ('d, 'k) session -> int
+
+  (** Returns the cumulative number of steps attempted by the solver.
+
+      @noarkode <node> ERKStepGetNumStepAttempts *)
+  val get_num_step_attempts   : ('d, 'k) session -> int
+
+  (** Returns the number of calls to the right-hand side functions.
+      In the call [(nfe_evals, nfi_evals) = get_num_rhs_evals s],
+      - [nfe_evals] is the number of calls to {% $f_E$%}, and
+      - [nfi_evals] is the number of calls to {% $f_I$%}.
+
+      @noarkode <node> ERKStepGetNumRhsEvals *)
+  val get_num_rhs_evals       : ('d, 'k) session -> int * int
+
+  (** Returns the number of local error test failures that have occurred.
+
+      @noarkode <node> ERKStepGetNumErrTestFails *)
+  val get_num_err_test_fails  : ('d, 'k) session -> int
+
+  (** Returns the integration step size taken on the last successful internal
+      step.
+
+      @noarkode <node> ERKStepGetLastStep *)
+  val get_last_step           : ('d, 'k) session -> float
+
+  (** Returns the integration step size to be attempted on the next internal
+      step.
+
+      @noarkode <node> ERKStepGetCurrentStep *)
+  val get_current_step        : ('d, 'k) session -> float
+
+  (** Returns the the value of the integration step size used on the first
+      step.
+
+      @noarkode <node> ERKStepGetActualInitStep *)
+  val get_actual_init_step    : ('d, 'k) session -> float
+
+  (** Returns the the current internal time reached by the solver.
+
+      @noarkode <node> ERKStepGetCurrentTime *)
+  val get_current_time        : ('d, 'k) session -> float
+
+  (** Returns the Butcher table in use by the solver.
+
+      @noarkode <node> ERKStepGetCurrentButcherTable *)
+  val get_current_butcher_table : ('d, 'k) session -> ButcherTable.t
+
+  (** Returns a suggested factor by which the user's tolerances should be
+      scaled when too much accuracy has been requested for some internal step.
+
+      @noarkode <node> ERKStepGetTolScaleFactor *)
+  val get_tol_scale_factor : ('d, 'k) session -> float
+
+  (** Returns the solution error weights at the current time.
+
+      @noarkode <node> ERKStepGetErrWeights *)
+  val get_err_weights : ('d, 'k) session -> ('d, 'k) Nvector.t -> unit
+
+  (** Returns the vector of estimated local errors.
+
+      @noarkode <node> ERKStepGetEstLocalErrors *)
+  val get_est_local_errors : ('d, 'k) session -> ('d, 'k) Nvector.t -> unit
+
+  (** Summaries of time-stepper statistics. *)
+  type timestepper_stats = {
+      exp_steps : int;
+        (** Cumulative number of stability-limited solver steps. *)
+      acc_steps : int;
+        (** Cumulative number of accuracy-limited solver steps. *)
+      step_attempts : int;
+        (** Cumulative number of steps attempted by the solver. *)
+      num_nf_evals : int;
+        (** Number of calls to the right-hand side function. *)
+      num_err_test_fails : int;
+        (** Number of error test failures. *)
+    }
+
+  (** Returns a grouped set of time-stepper statistics.
+
+      @noarkode <node> ERKStepGetTimestepperStats *)
+  val get_timestepper_stats    : ('d, 'k) session -> timestepper_stats
+
+  (** Returns a grouped set of integrator statistics.
+
+      @noarkode <node> ERKStepGetStepStats *)
+  val get_step_stats           : ('d, 'k) session -> step_stats
+
+  (** Prints time-stepper statistics on the given channel.
+
+      @noarkode <node> ERKStepGetTimestepperStats *)
+  val print_timestepper_stats  : ('d, 'k) session -> out_channel -> unit
+
+  (** Prints integrator statistics on the given channel.
+
+      @noarkode <node> ERKStepGetStepStats *)
+  val print_step_stats  : ('d, 'k) session -> out_channel -> unit
+
+  (** {2:roots Additional root-finding functions} *)
+
+  (** [set_root_direction s dir] specifies the direction of zero-crossings to
+      be located and returned. [dir] may contain one entry for each root
+      function.
+
+      @noarkode <node> ERKStepSetRootDirection *)
+  val set_root_direction : ('d, 'k) session -> RootDirs.d array -> unit
+
+  (** Like {!set_root_direction} but specifies a single direction for all root
+      functions.
+
+      @noarkode <node> ERKStepSetRootDirection *)
+  val set_all_root_directions : ('d, 'k) session -> RootDirs.d -> unit
+
+  (** Disables issuing a warning if some root function appears to be
+      identically zero at the beginning of the integration.
+
+      @noarkode <node> ERKStepSetNoInactiveRootWarn *)
+  val set_no_inactive_root_warn : ('d, 'k) session -> unit
+
+  (** Returns the number of root functions. *)
+  val get_num_roots : ('d, 'k) session -> int
+
+  (** Fills an array showing which functions were found to have a root.
+
+      @noarkode <node> ERKStepGetRootInfo *)
+  val get_root_info : ('d, 'k) session -> Roots.t -> unit
+
+  (** Returns the cumulative number of calls made to the user-supplied root
+      function g.
+
+      @noarkode <node> ERKStepGetNumGEvals *)
   val get_num_g_evals : ('d, 'k) session -> int
 
 end (* }}} *)

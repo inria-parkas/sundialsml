@@ -73,6 +73,13 @@ type step_stats = {
     current_time        : float
   }
 
+let print_step_stats oc stats =
+  Printf.fprintf oc "num_steps = %d\n"           stats.num_steps;
+  Printf.fprintf oc "actual_init_step = %e\n"    stats.actual_init_step;
+  Printf.fprintf oc "last_step = %e\n"           stats.last_step;
+  Printf.fprintf oc "current_step = %e\n"        stats.current_step;
+  Printf.fprintf oc "current_time = %e\n"        stats.current_time
+
 (* Synchronized with arkode_solver_result_tag in arkode_ml.h *)
 type solver_result =
   | Success             (** ARK_SUCCESS *)
@@ -265,6 +272,20 @@ type ('a, 'k) tolerance =
   | WFtolerances of 'a error_weight_fun
 
 let default_tolerances = SStolerances (1.0e-4, 1.0e-9)
+
+type adaptivity_params = {
+    ks : (float * float * float) option;
+    method_order : bool;
+  }
+
+type 'd adaptivity_method =
+  | PIDcontroller of adaptivity_params
+  | PIcontroller of adaptivity_params
+  | Icontroller of adaptivity_params
+  | ExplicitGustafsson of adaptivity_params
+  | ImplicitGustafsson of adaptivity_params
+  | ImExGustafsson of adaptivity_params
+  | AdaptivityFn of 'd adaptivity_fn
 
 module ARKStep = struct (* {{{ *)
 
@@ -1667,13 +1688,7 @@ module ARKStep = struct (* {{{ *)
     Printf.fprintf oc "num_err_test_fails = %d\n"  stats.num_err_test_fails
 
   let print_step_stats s oc =
-    let stats = get_step_stats s
-    in
-    Printf.fprintf oc "num_steps = %d\n"           stats.num_steps;
-    Printf.fprintf oc "actual_init_step = %e\n"    stats.actual_init_step;
-    Printf.fprintf oc "last_step = %e\n"           stats.last_step;
-    Printf.fprintf oc "current_step = %e\n"        stats.current_step;
-    Printf.fprintf oc "current_time = %e\n"        stats.current_time
+    print_step_stats oc (get_step_stats s)
 
   external set_diagnostics : ('a, 'k) session -> Logfile.t -> unit
       = "sunml_arkode_ark_set_diagnostics"
@@ -1757,20 +1772,6 @@ module ARKStep = struct (* {{{ *)
 
   let set_ark_table_num s v =
     c_set_table_num s (ButcherTable.ints_of_ark_table v)
-
-  type adaptivity_params = {
-      ks : (float * float * float) option;
-      method_order : bool;
-    }
-
-  type 'd adaptivity_method =
-    | PIDcontroller of adaptivity_params
-    | PIcontroller of adaptivity_params
-    | Icontroller of adaptivity_params
-    | ExplicitGustafsson of adaptivity_params
-    | ImplicitGustafsson of adaptivity_params
-    | ImExGustafsson of adaptivity_params
-    | AdaptivityFn of 'd adaptivity_fn
 
   external c_set_adaptivity_method
       : ('d, 'k) session -> 'd adaptivity_method -> unit
@@ -1924,6 +1925,357 @@ module ARKStep = struct (* {{{ *)
 
   external get_num_g_evals                : ('a, 'k) session -> int
       = "sunml_arkode_ark_get_num_g_evals"
+
+end (* }}} *)
+
+module ERKStep = struct (* {{{ *)
+
+  include Arkode_impl
+
+  type ('d, 'k) session = ('d, 'k, Arkode_impl.erkstep) Arkode_impl.session
+
+  external c_root_init : ('a, 'k) session -> int -> unit
+      = "sunml_arkode_erk_root_init"
+
+  let root_init session (nroots, rootsfn) =
+    c_root_init session nroots;
+    session.rootsfn <- rootsfn
+
+  external sv_tolerances
+      : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
+      = "sunml_arkode_erk_sv_tolerances"
+  external ss_tolerances
+      : ('a, 'k) session -> float -> float -> unit
+      = "sunml_arkode_erk_ss_tolerances"
+  external wf_tolerances 
+      : ('a, 'k) session -> unit
+      = "sunml_arkode_erk_wf_tolerances"
+
+  let set_tolerances s tol =
+    match tol with
+    | SStolerances (rel, abs) -> (s.errw <- dummy_errw; ss_tolerances s rel abs)
+    | SVtolerances (rel, abs) -> (if Sundials_configuration.safe then s.checkvec abs;
+                                  s.errw <- dummy_errw; sv_tolerances s rel abs)
+    | WFtolerances ferrw -> (s.errw <- ferrw; wf_tolerances s)
+
+  external c_set_order : ('a, 'k) session -> int -> unit
+    = "sunml_arkode_erk_set_order"
+
+  external session_finalize : ('a, 'k) session -> unit
+      = "sunml_arkode_erk_session_finalize"
+
+  external c_init :
+    ('a, 'k) session Weak.t
+    -> ('a, 'k) nvector (* y_0 *)
+    -> float            (* t_0 *)
+    -> (erkstep arkode_mem * c_weak_ref)
+    = "sunml_arkode_erk_init"
+
+  let init tol ?order f ?(roots=no_roots) t0 y0 =
+    let (nroots, roots) = roots in
+    let checkvec = Nvector.check y0 in
+    if Sundials_configuration.safe && nroots < 0 then
+      raise (Invalid_argument "number of root functions is negative");
+    let weakref = Weak.create 1 in
+    let arkode_mem, backref = c_init weakref y0 t0 in
+    (* arkode_mem and backref have to be immediately captured in a session and
+       associated with the finalizer before we do anything else.  *)
+    let session = {
+            arkode       = arkode_mem;
+            backref      = backref;
+            nroots       = nroots;
+            checkvec     = checkvec;
+            uses_resv    = false;
+
+            exn_temp     = None;
+
+            problem      = ExplicitOnly;
+            rhsfn1       = f;
+            rhsfn2       = dummy_rhsfn2;
+
+            rootsfn      = roots;
+            errh         = dummy_errh;
+            errw         = dummy_errw;
+            resw         = dummy_resw;
+
+            adaptfn      = dummy_adaptfn;
+            stabfn       = dummy_stabfn;
+            resizefn     = dummy_resizefn;
+            poststepfn   = dummy_poststepfn;
+
+            linsolver      = None;
+            ls_solver      = LSI.NoSolver;
+            ls_callbacks   = NoCallbacks;
+            ls_precfns     = NoPrecFns;
+
+            mass_solver    = LSI.NoSolver;
+            mass_callbacks = NoMassCallbacks;
+            mass_precfns   = NoMassPrecFns;
+
+            nls_solver     = None;
+          } in
+    Gc.finalise session_finalize session;
+    Weak.set weakref 0 (Some session);
+    (* Now the session is safe to use.  If any of the following fails and raises
+       an exception, the GC will take care of freeing arkode_mem and backref.  *)
+    if nroots > 0 then
+      c_root_init session nroots;
+    set_tolerances session tol;
+    (match order with Some o -> c_set_order session o | None -> ());
+    session
+
+  let get_num_roots { nroots } = nroots
+
+  external c_reinit
+      : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
+      = "sunml_arkode_erk_reinit"
+
+  let reinit session ?order ?roots t0 y0 =
+    if Sundials_configuration.safe then session.checkvec y0;
+    c_reinit session t0 y0;
+    (match order with Some o -> c_set_order session o | None -> ());
+    (match roots with Some roots -> root_init session roots| None -> ())
+
+  external c_resize
+      : ('a, 'k) session -> bool -> float -> float -> ('a, 'k) nvector -> unit
+      = "sunml_arkode_erk_resize"
+
+  let resize session ?resize_nvec tol hscale ynew t0 =
+    session.checkvec <- Nvector.check ynew;
+    (match resize_nvec with None -> () | Some f -> session.resizefn <- f);
+    c_resize session (resize_nvec <> None) hscale t0 ynew;
+    session.resizefn <- dummy_resizefn;
+    set_tolerances session tol
+
+  external get_root_info  : ('a, 'k) session -> Roots.t -> unit
+      = "sunml_arkode_erk_get_root_info"
+
+  external c_solve_normal : ('a, 'k) session -> float -> ('a, 'k) nvector
+                                -> float * solver_result
+      = "sunml_arkode_erk_solve_normal"
+
+  let solve_normal s t y =
+    if Sundials_configuration.safe then s.checkvec y;
+    c_solve_normal s t y
+
+  external c_solve_one_step : ('a, 'k) session -> float -> ('a, 'k) nvector
+                                -> float * solver_result
+      = "sunml_arkode_erk_solve_one_step"
+
+  let solve_one_step s t y =
+    if Sundials_configuration.safe then s.checkvec y;
+    c_solve_one_step s t y
+
+  external c_get_dky
+      : ('a, 'k) session -> float -> int -> ('a, 'k) nvector -> unit
+      = "sunml_arkode_erk_get_dky"
+
+  let get_dky s y =
+    if Sundials_configuration.safe then s.checkvec y;
+    fun t k -> c_get_dky s t k y
+
+  (* Synchronized with arkode_timestepper_stats_index in arkode_ml.h *)
+  type timestepper_stats = {
+      exp_steps           : int;
+      acc_steps           : int;
+      step_attempts       : int;
+      num_nf_evals        : int;
+      num_err_test_fails  : int;
+    }
+
+  external get_timestepper_stats : ('a, 'k) session -> timestepper_stats
+      = "sunml_arkode_erk_get_timestepper_stats"
+
+  external get_step_stats : ('a, 'k) session -> step_stats
+      = "sunml_arkode_erk_get_step_stats"
+
+  external get_work_space         : ('a, 'k) session -> int * int
+      = "sunml_arkode_erk_get_work_space"
+
+  external get_num_steps          : ('a, 'k) session -> int
+      = "sunml_arkode_erk_get_num_steps"
+
+  external get_num_exp_steps      : ('d, 'k) session -> int
+      = "sunml_arkode_erk_get_num_exp_steps"
+
+  external get_num_acc_steps      : ('d, 'k) session -> int
+      = "sunml_arkode_erk_get_num_acc_steps"
+
+  external get_num_step_attempts  : ('d, 'k) session -> int
+      = "sunml_arkode_erk_get_num_step_attempts"
+
+  external get_num_rhs_evals      : ('a, 'k) session -> int * int
+      = "sunml_arkode_erk_get_num_rhs_evals"
+
+  external get_num_err_test_fails : ('a, 'k) session -> int
+      = "sunml_arkode_erk_get_num_err_test_fails"
+
+  external get_actual_init_step   : ('a, 'k) session -> float
+      = "sunml_arkode_erk_get_actual_init_step"
+
+  external get_last_step          : ('a, 'k) session -> float
+      = "sunml_arkode_erk_get_last_step"
+
+  external get_current_step       : ('a, 'k) session -> float
+      = "sunml_arkode_erk_get_current_step"
+
+  external get_current_time       : ('a, 'k) session -> float
+      = "sunml_arkode_erk_get_current_time"
+
+  let print_timestepper_stats s oc =
+    let stats = get_timestepper_stats s
+    in
+    Printf.fprintf oc "exp_steps = %d\n"           stats.exp_steps;
+    Printf.fprintf oc "acc_steps = %d\n"           stats.acc_steps;
+    Printf.fprintf oc "step_attempts = %d\n"       stats.step_attempts;
+    Printf.fprintf oc "num_nf_evals = %d\n"        stats.num_nf_evals;
+    Printf.fprintf oc "num_err_test_fails = %d\n"  stats.num_err_test_fails
+
+  let print_step_stats s oc =
+    print_step_stats oc (get_step_stats s)
+
+  external set_diagnostics : ('a, 'k) session -> Logfile.t -> unit
+      = "sunml_arkode_erk_set_diagnostics"
+
+  external clear_diagnostics : ('a, 'k) session -> unit
+      = "sunml_arkode_erk_clear_diagnostics"
+
+  external set_error_file : ('a, 'k) session -> Logfile.t -> unit
+      = "sunml_arkode_erk_set_error_file"
+
+  external c_set_err_handler_fn  : ('a, 'k) session -> unit
+      = "sunml_arkode_erk_set_err_handler_fn"
+
+  let set_err_handler_fn s ferrh =
+    s.errh <- ferrh;
+    c_set_err_handler_fn s
+
+  external clear_err_handler_fn  : ('a, 'k) session -> unit
+      = "sunml_arkode_erk_clear_err_handler_fn"
+
+  let clear_err_handler_fn s =
+    s.errh <- dummy_errh;
+    clear_err_handler_fn s
+
+  external c_set_table
+    : ('d, 'k) session -> ButcherTable.t option -> unit
+    = "sunml_arkode_erk_set_tables"
+
+  let set_table s table =
+    c_set_table s (Some table)
+
+  external c_set_table_num : ('d, 'k) session -> int -> unit
+      = "sunml_arkode_erk_set_table_num"
+
+  let set_table_num s v =
+    c_set_table_num s (ButcherTable.int_of_erk_table v)
+
+  external c_set_adaptivity_method
+      : ('d, 'k) session -> 'd adaptivity_method -> unit
+      = "sunml_arkode_erk_set_adaptivity_method"
+
+  let set_adaptivity_method s am =
+    (match am with
+     | AdaptivityFn fn -> s.adaptfn <- fn
+     | _ -> s.adaptfn <- dummy_adaptfn);
+    c_set_adaptivity_method s am
+
+  external c_set_stability_fn : ('d, 'k) session -> bool -> unit
+      = "sunml_arkode_erk_set_stability_fn"
+
+  let set_stability_fn s f =
+    s.stabfn <- f;
+    c_set_stability_fn s true
+
+  let clear_stability_fn s =
+    s.stabfn <- dummy_stabfn;
+    c_set_stability_fn s false
+
+  external set_defaults           : ('a, 'k) session -> unit
+      = "sunml_arkode_erk_set_defaults"
+  external set_dense_order        : ('a, 'k) session -> int -> unit
+      = "sunml_arkode_erk_set_dense_order"
+  external set_fixed_step         : ('a, 'k) session -> float option -> unit
+      = "sunml_arkode_erk_set_fixed_step"
+  external set_init_step          : ('a, 'k) session -> float -> unit
+      = "sunml_arkode_erk_set_init_step"
+  external set_max_hnil_warns     : ('a, 'k) session -> int -> unit
+      = "sunml_arkode_erk_set_max_hnil_warns"
+  external set_max_num_steps      : ('a, 'k) session -> int -> unit
+      = "sunml_arkode_erk_set_max_num_steps"
+  external set_max_step           : ('a, 'k) session -> float -> unit
+      = "sunml_arkode_erk_set_max_step"
+  external set_min_step           : ('a, 'k) session -> float -> unit
+      = "sunml_arkode_erk_set_min_step"
+  external set_stop_time          : ('a, 'k) session -> float -> unit
+      = "sunml_arkode_erk_set_stop_time"
+  external set_max_err_test_fails : ('a, 'k) session -> int -> unit
+      = "sunml_arkode_erk_set_max_err_test_fails"
+  external set_cfl_fraction       : ('a, 'k) session -> float -> unit
+      = "sunml_arkode_erk_set_cfl_fraction"
+  external set_error_bias         : ('a, 'k) session -> float -> unit
+      = "sunml_arkode_erk_set_error_bias"
+  external set_fixed_step_bounds  : ('a, 'k) session -> float -> float -> unit
+      = "sunml_arkode_erk_set_fixed_step_bounds"
+  external set_max_efail_growth   : ('a, 'k) session -> float -> unit
+      = "sunml_arkode_erk_set_max_efail_growth"
+  external set_max_first_growth   : ('a, 'k) session -> float -> unit
+      = "sunml_arkode_erk_set_max_first_growth"
+  external set_max_growth         : ('a, 'k) session -> float -> unit
+      = "sunml_arkode_erk_set_max_growth"
+  external set_safety_factor      : ('a, 'k) session -> float -> unit
+      = "sunml_arkode_erk_set_safety_factor"
+  external set_small_num_efails   : ('a, 'k) session -> float -> unit
+      = "sunml_arkode_erk_set_small_num_efails"
+
+  external c_set_postprocess_step_fn : ('a, 'k) session -> bool -> unit
+      = "sunml_arkode_erk_set_postprocess_step_fn"
+
+  let set_postprocess_step_fn s fn =
+    s.poststepfn <- fn;
+    c_set_postprocess_step_fn s true
+
+  let clear_postprocess_step_fn s =
+    s.poststepfn <- dummy_poststepfn;
+    c_set_postprocess_step_fn s false
+
+  external c_set_root_direction   : ('a, 'k) session -> RootDirs.t -> unit
+      = "sunml_arkode_erk_set_root_direction"
+
+  let set_root_direction s rda =
+    c_set_root_direction s (RootDirs.copy (get_num_roots s) rda)
+
+  let set_all_root_directions s rd =
+    c_set_root_direction s (RootDirs.make (get_num_roots s) rd)
+
+  external set_no_inactive_root_warn      : ('a, 'k) session -> unit
+      = "sunml_arkode_erk_set_no_inactive_root_warn"
+
+  external get_current_butcher_table
+      : ('d, 'k) session -> ButcherTable.t
+      = "sunml_arkode_erk_get_current_butcher_tables"
+
+  external get_tol_scale_factor           : ('a, 'k) session -> float
+      = "sunml_arkode_erk_get_tol_scale_factor"
+
+  external c_get_err_weights
+      : ('a, 'k) session -> ('a, 'k) nvector -> unit
+      = "sunml_arkode_erk_get_err_weights"
+
+  let get_err_weights s ew =
+    if Sundials_configuration.safe then s.checkvec ew;
+    c_get_err_weights s ew
+
+  external c_get_est_local_errors
+      : ('a, 'k) session -> ('a, 'k) nvector -> unit
+      = "sunml_arkode_erk_get_est_local_errors"
+
+  let get_est_local_errors s ew =
+    if Sundials_configuration.safe then s.checkvec ew;
+    c_get_est_local_errors s ew
+
+  external get_num_g_evals                : ('a, 'k) session -> int
+      = "sunml_arkode_erk_get_num_g_evals"
 
 end (* }}} *)
 
