@@ -1113,7 +1113,7 @@ CAMLprim value sunml_spils_modified_gs(value vv, value vh, value vk, value vp)
     N_Vector* v;
 
 #if SUNDIALS_ML_SAFE == 1
-    struct caml_ba_array *bh = ARRAY2_DATA(vh);
+    struct caml_ba_array *bh = ARRAY2_BA(vh);
     intnat hn = bh->dim[0];
     intnat hm = bh->dim[1];
 
@@ -1158,7 +1158,7 @@ CAMLprim value sunml_spils_classical_gs(value vargs)
     vtemp = Field(vargs, 5);
 
 #if SUNDIALS_ML_SAFE == 1
-    struct caml_ba_array *bh = ARRAY2_DATA(vh);
+    struct caml_ba_array *bh = ARRAY2_BA(vh);
     intnat hn = bh->dim[0];
     intnat hm = bh->dim[1];
 
@@ -1204,7 +1204,7 @@ CAMLprim value sunml_spils_qr_fact(value vn, value vh, value vq, value vnewjob)
     int n = Int_val(vn);
 
 #if SUNDIALS_ML_SAFE == 1
-    struct caml_ba_array *bh = ARRAY2_DATA(vh);
+    struct caml_ba_array *bh = ARRAY2_BA(vh);
     intnat hn = bh->dim[0];
     intnat hm = bh->dim[1];
 
@@ -1233,7 +1233,7 @@ CAMLprim value sunml_spils_qr_sol(value vn, value vh, value vq, value vb)
     int n = Int_val(vn);
 
 #if SUNDIALS_ML_SAFE == 1
-    struct caml_ba_array *bh = ARRAY2_DATA(vh);
+    struct caml_ba_array *bh = ARRAY2_BA(vh);
     intnat hm = bh->dim[1];
     intnat hn = bh->dim[0];
 

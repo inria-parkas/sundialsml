@@ -69,7 +69,6 @@ typedef int sundials_ml_smat_index;
 #define INT_ARRAY(v) ((int *)Caml_ba_data_val(v))
 #define LONG_ARRAY(v) ((long int *)Caml_ba_data_val(v))
 #define REAL_ARRAY(v) ((realtype *)Caml_ba_data_val(v))
-#define REAL_ARRAY2(v) ((realtype **)Caml_ba_data_val(v))
 
 #define ARRAY1_LEN(v) (Caml_ba_array_val((v))->dim[0])
 
@@ -95,10 +94,14 @@ value sundials_ml_weak_get (value ar, value n);
       Store_field(dest, 0, v);			\
     } while (0)
 
-#define ARRAY2_DATA(v)  (Caml_ba_array_val(Field((v), 0)))
+#define ARRAY2_BA(v)    (Caml_ba_array_val(Field((v), 0)))
+#define ARRAY2_DATA(v)  ((realtype *)Caml_ba_data_val(Field((v), 0)))
 #define ARRAY2_ACOLS(v) ((realtype **) Data_custom_val(Field((v), 1)))
 #define ARRAY2_NCOLS(v) (ARRAY2_DATA(v)->dim[0])
 #define ARRAY2_NROWS(v) (ARRAY2_DATA(v)->dim[1])
+
+// create a Sundials.RealArray2.t from C
+CAMLprim value sunml_sundials_realarray2_create(int nc, int nr);
 
 enum sundials_error_details_index {
   RECORD_SUNDIALS_ERROR_DETAILS_ERROR_CODE    = 0,

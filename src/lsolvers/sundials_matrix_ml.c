@@ -2661,7 +2661,7 @@ CAMLprim value sunml_arraydensematrix_scale(value vc, value va)
 {
     CAMLparam2(vc, va);
 
-    struct caml_ba_array *ba = ARRAY2_DATA(va);
+    struct caml_ba_array *ba = ARRAY2_BA(va);
     intnat m = ba->dim[1];
     intnat n = ba->dim[0];
 
@@ -2673,7 +2673,7 @@ CAMLprim value sunml_arraydensematrix_add_identity(value va)
 {
     CAMLparam1(va);
 
-    struct caml_ba_array *ba = ARRAY2_DATA(va);
+    struct caml_ba_array *ba = ARRAY2_BA(va);
     intnat m = ba->dim[1];
 
 #if SUNDIALS_ML_SAFE == 1
@@ -2691,7 +2691,7 @@ CAMLprim value sunml_arraydensematrix_add_identity(value va)
 CAMLprim value sunml_arraydensematrix_matvec(value va, value vx, value vy)
 {
     CAMLparam3(va, vx, vy);
-    struct caml_ba_array *ba = ARRAY2_DATA(va);
+    struct caml_ba_array *ba = ARRAY2_BA(va);
     intnat m = ba->dim[1];
     intnat n = ba->dim[0];
 
@@ -2715,7 +2715,7 @@ CAMLprim value sunml_arraydensematrix_getrf(value va, value vp)
 {
     CAMLparam2(va, vp);
 
-    struct caml_ba_array *ba = ARRAY2_DATA(va);
+    struct caml_ba_array *ba = ARRAY2_BA(va);
     intnat m = ba->dim[1];
     intnat n = ba->dim[0];
 
@@ -2737,7 +2737,7 @@ CAMLprim value sunml_arraydensematrix_getrs(value va, value vp, value vb)
 {
     CAMLparam3(va, vp, vb);
 
-    struct caml_ba_array *ba = ARRAY2_DATA(va);
+    struct caml_ba_array *ba = ARRAY2_BA(va);
     intnat m = ba->dim[1];
 
 #if SUNDIALS_ML_SAFE == 1
@@ -2759,7 +2759,7 @@ CAMLprim value sunml_arraydensematrix_getrs_off(value va, value vp,
 {
     CAMLparam4(va, vp, vb, vboff);
 
-    struct caml_ba_array *ba = ARRAY2_DATA(va);
+    struct caml_ba_array *ba = ARRAY2_BA(va);
     intnat m = ba->dim[1];
     intnat boff = Int_val(vboff);
 
@@ -2781,7 +2781,7 @@ CAMLprim value sunml_arraydensematrix_potrf(value va)
 {
     CAMLparam1(va);
 
-    struct caml_ba_array *ba = ARRAY2_DATA(va);
+    struct caml_ba_array *ba = ARRAY2_BA(va);
     intnat m = ba->dim[1];
 
 #if SUNDIALS_ML_SAFE == 1
@@ -2798,7 +2798,7 @@ CAMLprim value sunml_arraydensematrix_potrs(value va, value vb)
 {
     CAMLparam2(va, vb);
 
-    struct caml_ba_array *ba = ARRAY2_DATA(va);
+    struct caml_ba_array *ba = ARRAY2_BA(va);
     intnat m = ba->dim[1];
 
 #if SUNDIALS_ML_SAFE == 1
@@ -2817,7 +2817,7 @@ CAMLprim value sunml_arraydensematrix_geqrf(value va, value vbeta, value vv)
 {
     CAMLparam3(va, vbeta, vv);
 
-    struct caml_ba_array *ba = ARRAY2_DATA(va);
+    struct caml_ba_array *ba = ARRAY2_BA(va);
     intnat m = ba->dim[1];
     intnat n = ba->dim[0];
 
@@ -2838,7 +2838,7 @@ CAMLprim value sunml_arraydensematrix_ormqr(value va, value vormqr)
 {
     CAMLparam2(va, vormqr);
 
-    struct caml_ba_array *ba = ARRAY2_DATA(va);
+    struct caml_ba_array *ba = ARRAY2_BA(va);
     intnat m = ba->dim[1];
     intnat n = ba->dim[0];
 
@@ -2870,7 +2870,7 @@ CAMLprim value sunml_arraybandmatrix_copy(value va, value vb, value vsizes)
 {
     CAMLparam3(va, vb, vsizes);
 
-    struct caml_ba_array *ba = ARRAY2_DATA(va);
+    struct caml_ba_array *ba = ARRAY2_BA(va);
     intnat am = ba->dim[0];
 
     sundials_ml_index a_smu  = Index_val(Field(vsizes, 0));
@@ -2880,7 +2880,7 @@ CAMLprim value sunml_arraybandmatrix_copy(value va, value vb, value vsizes)
 
 #if SUNDIALS_ML_SAFE == 1
     intnat an = ba->dim[1];
-    struct caml_ba_array *bb = ARRAY2_DATA(vb);
+    struct caml_ba_array *bb = ARRAY2_BA(vb);
 
     intnat bm = bb->dim[0];
     intnat bn = bb->dim[1];
@@ -2902,7 +2902,7 @@ CAMLprim value sunml_arraybandmatrix_scale(value vc, value va, value vsizes)
 {
     CAMLparam3(vc, va, vsizes);
 
-    struct caml_ba_array *ba = ARRAY2_DATA(va);
+    struct caml_ba_array *ba = ARRAY2_BA(va);
     intnat m = ba->dim[0];
 
     sundials_ml_index smu = Index_val(Field(vsizes, 0));
@@ -2924,7 +2924,7 @@ CAMLprim value sunml_arraybandmatrix_add_identity(value vsmu, value va)
 {
     CAMLparam2(vsmu, va);
 
-    struct caml_ba_array *ba = ARRAY2_DATA(va);
+    struct caml_ba_array *ba = ARRAY2_BA(va);
     intnat m = ba->dim[0];
     sundials_ml_index smu = Index_val(vsmu);
 
@@ -2945,7 +2945,7 @@ CAMLprim value sunml_arraybandmatrix_matvec(value va, value vsizes,
 {
     CAMLparam4(va, vsizes, vx, vy);
 
-    struct caml_ba_array *ba = ARRAY2_DATA(va);
+    struct caml_ba_array *ba = ARRAY2_BA(va);
     intnat m = ba->dim[0];
 
     sundials_ml_index smu = Index_val(Field(vsizes, 0));
@@ -2979,7 +2979,7 @@ CAMLprim value sunml_arraybandmatrix_gbtrf(value va, value vsizes, value vp)
 {
     CAMLparam3(va, vsizes, vp);
 
-    struct caml_ba_array *ba = ARRAY2_DATA(va);
+    struct caml_ba_array *ba = ARRAY2_BA(va);
     intnat m = ba->dim[0];
 
     sundials_ml_index smu = Index_val(Field(vsizes, 0));
@@ -3003,7 +3003,7 @@ CAMLprim value sunml_arraybandmatrix_gbtrs(value va, value vsizes, value vp, val
 {
     CAMLparam4(va, vsizes, vp, vb);
 
-    struct caml_ba_array *ba = ARRAY2_DATA(va);
+    struct caml_ba_array *ba = ARRAY2_BA(va);
     intnat m = ba->dim[0];
 
     sundials_ml_index smu = Index_val(Field(vsizes, 0));

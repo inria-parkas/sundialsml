@@ -143,6 +143,15 @@ CAMLprim value sunml_sundials_realarray2_wrap(value vba)
     CAMLreturn(r);
 }
 
+CAMLprim value sunml_sundials_realarray2_create(int nc, int nr)
+{
+    CAMLparam0();
+    CAMLlocal1(vba);
+
+    vba = caml_ba_alloc_dims(BIGARRAY_FLOAT, 2, NULL, nc, nr);
+    CAMLreturn(sunml_sundials_realarray2_wrap(vba));
+}
+
 CAMLprim void sunml_crash (value msg)
 {
     CAMLparam1 (msg);
