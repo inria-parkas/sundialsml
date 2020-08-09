@@ -374,6 +374,7 @@ enum arkode_exn_index {
     ARKODE_EXN_TooClose,
     ARKODE_EXN_TooMuchWork,
     ARKODE_EXN_TooMuchAccuracy,
+    ARKODE_EXN_InnerStepFail,
     ARKODE_EXN_ErrFailure,
     ARKODE_EXN_ConvergenceFailure,
     ARKODE_EXN_LinearInitFailure,

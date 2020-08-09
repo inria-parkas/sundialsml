@@ -34,6 +34,8 @@
     {ol
       {- {{:#generic}Generic constants and types}
       {- The ARKStep time-stepping module}
+      {- The ERKStep time-stepping module}
+      {- The MRIStep time-stepping module}
       {- {{:#exceptions}Exceptions}}}
 
     @version VERSION()
@@ -381,7 +383,7 @@ end (* }}} *)
       {- {{:#get}Querying the solver}}
       {- {{:#roots}Additional root finding functions}}}
 
-    @noarkode <node> Using ARKSTEP for C and C++ Applications *)
+    @noarkode <node> Using ARKStep for C and C++ Applications *)
 module ARKStep : sig (* {{{ *)
 
   (** A session with the ARKStep time-stepping solver.
@@ -1274,7 +1276,7 @@ module ARKStep : sig (* {{{ *)
 
       @noarkode <node> ARKStepGetDky
       @raise BadT [t] is not in the interval {% $[t_n - h_n, t_n]$%}.
-      @raise BadK [k] is not in the range \{0, 1, 2, 3\}. *)
+      @raise BadK [k] is not in the range \{0, 1, ..., dord\}. *)
   val get_dky : ('d, 'k) session -> ('d, 'k) Nvector.t -> float -> int -> unit
 
   (** Reinitializes the solver with new parameters and state values. The
@@ -1955,7 +1957,7 @@ end (* }}} *)
       {- {{:#get}Querying the solver}}
       {- {{:#roots}Additional root finding functions}}}
 
-    @noarkode <node> Using ERKSTEP for C and C++ Applications *)
+    @noarkode <node> Using ERKStep for C and C++ Applications *)
 module ERKStep : sig (* {{{ *)
 
   (** A session with the ERKStep time-stepping solver.
@@ -1970,7 +1972,7 @@ module ERKStep : sig (* {{{ *)
   (** {2:solver Solver initialization and use} *)
 
   (** Creates and initializes a session with the solver. The call
-      {[init tol f ~roots:(nroots, g) t0 y0]}
+      {[init tol ~order f ~roots:(nroots, g) t0 y0]}
       has as arguments:
       - [tol],    the integration tolerances,
       - [order],  the order of accuracy for the integration method,
@@ -2317,13 +2319,10 @@ module ERKStep : sig (* {{{ *)
       @noarkode <node> ERKStepGetNumStepAttempts *)
   val get_num_step_attempts   : ('d, 'k) session -> int
 
-  (** Returns the number of calls to the right-hand side functions.
-      In the call [(nfe_evals, nfi_evals) = get_num_rhs_evals s],
-      - [nfe_evals] is the number of calls to {% $f_E$%}, and
-      - [nfi_evals] is the number of calls to {% $f_I$%}.
+  (** Returns the number of calls to the right-hand side function.
 
       @noarkode <node> ERKStepGetNumRhsEvals *)
-  val get_num_rhs_evals       : ('d, 'k) session -> int * int
+  val get_num_rhs_evals       : ('d, 'k) session -> int
 
   (** Returns the number of local error test failures that have occurred.
 
@@ -2445,6 +2444,331 @@ module ERKStep : sig (* {{{ *)
 
 end (* }}} *)
 
+(** MRIStep Time-Stepping Module for two-rate initial value problems.
+
+    This module solves problems of the form
+    {% $\dot{y} = f_s(t, y) + f_f(t, y)$%}, {% $y(t_0) = y_0$%}.
+
+    Its interface is structured as follows.
+    {ol
+      {- {{:#solver}Solver initialization and use}}
+      {- {{:#set}Modifying the solver}}
+      {- {{:#get}Querying the solver}}
+      {- {{:#roots}Additional root finding functions}}}
+
+    @noarkode <node> Using MRIStep for C and C++ Applications *)
+module MRIStep : sig (* {{{ *)
+
+  (** A session with the MRIStep time-stepping solver.
+
+      An example session with Arkode ({openfile arkode_mri_skel.ml}): {[
+  #include "../../examples/ocaml/skeletons/arkode_mri_skel.ml"
+      ]}
+
+      @noarkode <node> Skeleton of main program *)
+  type ('d, 'k) session = ('d, 'k, Arkode_impl.mristep) Arkode_impl.session
+
+  (** {2:solver Solver initialization and use} *)
+
+  (** Creates and initializes a session with the solver. The call
+      {[init ~slow:f_s ~fast:f_f ~hslow:h_s ~hfast:h_f ~roots:(nroots, g) t0 y0]}
+      has as arguments:
+      - [f_s],    the slow portion of the right-hand side function,
+      - [f_f],    the fast portion of the right-hand side function,
+      - [h_s],    the slow step size,
+      - [h_f],    the fast step size,
+      - [nroots], the number of root functions,
+      - [g],      the root function ([(nroots, g)] defaults to {!no_roots}),
+      - [t0],     the initial value of the independent variable, and
+      - [y0],     a vector of initial values that also determines the number
+                  of equations.
+
+      This function does everything necessary to initialize a session, i.e.,
+      it makes the calls referenced below. The {!solve_normal} and
+      {!solve_one_step} functions may be called directly.
+
+      If [h_s] does not evenly divide the time interval between the stages
+      of the slow method, then the actual value used for the fast steps will
+      be slightly smaller than [h_f] to ensure
+      {% $(c_i^s - c_{i-1}^s)h_s/h_f$ %} is an integer value. Specifically,
+      the fast step for the ith slow stage will be
+      {% $h = \frac{(c_i^s - c_{i-1}^s)h_s}
+                   {\left\lceil (c_i^s - c_{i-1}^s)h_s/h_f \right\rceil}$ %}.
+
+      If fixed step sizes and a stop time are used, then the fixed step size
+      will be used for all steps except the final step, which may be shorter.
+      To resume use of the previous fixed step size, another call to
+      {!set_fixed_step} is required before calling either {!solve_normal} or
+      {!solve_one_step}.
+
+      @since 4.0.0
+      @noarkode <node> MRIStepCreate
+      @noarkode <node> MRIStepRootInit
+      @noarkode <node> MRIStepSetFixedStep *)
+  val init :
+         slow:'data rhsfn
+      -> fast:'data rhsfn
+      -> ?hslow:float
+      -> ?hfast:float
+      -> ?roots:(int * 'data rootsfn)
+      -> float
+      -> ('data, 'kind) Nvector.t
+      -> ('data, 'kind) session
+
+  (** Integrates an ODE system over an interval. The call
+      [tret, r = solve_normal s tout yout] has as arguments
+      - [s], a solver session,
+      - [tout], the next time at which a solution is desired, and,
+      - [yout], a vector to store the computed solution.
+
+      It returns [tret], the time reached by the solver, which will be equal to
+      [tout] if no errors occur, and, [r], a {!solver_result}.
+
+      @noarkode <node> MRIStepEvolve (ARK_NORMAL)
+      @raise IllInput Missing or illegal solver inputs.
+      @raise TooMuchWork The requested time could not be reached in [mxstep] internal steps.
+      @raise VectorOpErr A vector operation error occurred
+      @raise InnerStepFail The inner stepper had an unrecoverable error *)
+  val solve_normal : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
+                          -> float * solver_result
+
+  (** Like {!solve_normal} but returns after one internal solver step.
+
+      @noarkode <node> MRIStepEvolve (ARK_ONE_STEP) *)
+  val solve_one_step : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
+                          -> float * solver_result
+
+  (** Returns the interpolated solution or derivatives.
+      [get_dky s dky t k] computes the [k]th derivative of the function
+      at time [t], i.e.,
+      {% $\frac{d^\mathtt{k}}{\mathit{dt}^\mathtt{k}}y(\mathtt{t})$%},
+      and stores it in [dky]. The arguments must satisfy
+      {% $t_n - h_n \leq \mathtt{t} \leq t_n$%}—where $t_n$
+      denotes {!get_current_time} and $h_n$ denotes {!get_last_step},—
+      and {% $0 \leq \mathtt{k} \leq 3$%}.
+
+      This function may only be called after a successful return from either
+      {!solve_normal} or {!solve_one_step}.
+
+      @noarkode <node> MRIStepGetDky
+      @raise BadT [t] is not in the interval {% $[t_n - h_n, t_n]$%}.
+      @raise BadK [k] is not in the range \{0, 1, ..., dord\}. *)
+  val get_dky : ('d, 'k) session -> ('d, 'k) Nvector.t -> float -> int -> unit
+
+  (** Reinitializes the solver with new parameters and state values. The
+      values of the independent variable, i.e., the simulation time, and the
+      state variables must be given. If given, [roots] specifies a new root
+      finding function. The new problem must have the same size as the
+      previous one.
+
+      @noarkode <node> MRIStepReInit
+      @noarkode <node> MRIStepRootInit *)
+  val reinit :
+    ('d, 'k) session
+    -> ?roots:(int * 'd rootsfn)
+    -> float
+    -> ('d, 'k) Nvector.t
+    -> unit
+
+  (** Change the number of equations and unknowns between integrator steps.
+      The call
+      [resize s ~resize_nvec:rfn ynew t0]
+      has as arguments:
+      - [s], the solver session to resize,
+      - [rfn], a resize function that transforms nvectors in place-otherwise
+               they are simply destroyed and recloned,
+      - [ynew], the newly-sized solution vector with the value {% $y(t_0)$%}, and
+      - [t0], the current value of the independent variable $t_0$.
+
+      @noarkode <node> MRIStepResize *)
+  val resize :
+    ('d, 'k) session
+    -> ?resize_nvec:('d resize_fn)
+    -> ('d, 'k) Nvector.t
+    -> float
+    -> unit
+
+  (** {2:set Modifying the solver (optional input functions)} *)
+
+  (** {3:mri-set Optional inputs for MRIStep} *)
+
+  (** Resets all optional input parameters to their default values. Neither
+      the problem-defining functions nor the root-finding functions are
+      changed.
+
+      @noarkode <node> MRIStepSetDefaults *)
+  val set_defaults : ('d, 'k) session -> unit
+
+  (** Specifies the order of accuracy for the polynomial interpolant used for
+      dense output.
+
+      @noarkode <node> MRIStepSetDenseOrder *)
+  val set_dense_order : ('d, 'k) session -> int -> unit
+
+  (** Write step adaptivity and solver diagnostics to the given file.
+
+      @noarkode <node> MRIStepSetDiagnostics *)
+  val set_diagnostics : ('d, 'k) session -> Logfile.t -> unit
+
+  (** Do not write step adaptivity or solver diagnostics of a file.
+
+      @noarkode <node> MRIStepSetDiagnostics *)
+  val clear_diagnostics : ('d, 'k) session -> unit
+
+  (** Configure the default error handler to write messages to a file.
+      By default it writes to Logfile.stderr.
+
+      @noarkode <node> MRIStepSetErrFile *)
+  val set_error_file : ('d, 'k) session -> Logfile.t -> unit
+
+  (** Specifies a custom function for handling error messages.
+      The handler must not fail: any exceptions are trapped and discarded.
+
+      @noarkode <node> MRIStepSetErrHandlerFn
+      @noarkode <node> ARKErrHandlerFn *)
+  val set_err_handler_fn
+    : ('d, 'k) session -> (Util.error_details -> unit) -> unit
+
+  (** Restores the default error handling function.
+
+      @noarkode <node> MRIStepSetErrHandlerFn *)
+  val clear_err_handler_fn : ('d, 'k) session -> unit
+
+  (** Disables time step adaptivity and fix the step size for all internal
+      steps. See the notes under {!init}.
+
+      @noarkode <node> MRIStepSetFixedStep *)
+  val set_fixed_step
+    : ('d, 'k) session
+      -> ?hslow:float
+      -> ?hfast:float
+      -> unit
+      -> unit
+
+  (** Specifies the maximum number of messages warning that [t + h = t] on
+      the next internal step.
+
+      @noarkode <node> MRIStepSetMaxHnilWarns *)
+  val set_max_hnil_warns : ('d, 'k) session -> int -> unit
+
+  (** Specifies the maximum number of steps taken in attempting to reach
+      a given output time.
+
+      @noarkode <node> MRIStepSetMaxNumSteps *)
+  val set_max_num_steps : ('d, 'k) session -> int -> unit
+
+  (** Limits the value of the independent variable [t] when solving.
+      By default no stop time is imposed.
+
+      @noarkode <node> MRIStepSetStopTime *)
+  val set_stop_time : ('d, 'k) session -> float -> unit
+
+  (** {3:mri-setivp Optional inputs for IVP method selection} *)
+
+  (** Specifies customized Butcher tables.
+
+      @noarkode <node> MRIStepSetTables *)
+  val set_tables
+    : ('d, 'k) session
+      -> global_method_order:int
+      -> slow:ButcherTable.t
+      -> fast:ButcherTable.t
+      -> unit
+
+  (** Use a specific built-in Butcher tables for integration.
+
+      @noarkode <node> MRIStepSetTableNum *)
+  val set_table_nums
+    : ('d, 'k) session
+      -> slow:ButcherTable.erk_table
+      -> fast:ButcherTable.erk_table
+      -> unit
+
+  (** {3:mri-setadap Optional inputs for time step adaptivity} *)
+
+  (** Set a post processing step function.
+
+      @noarkode <node> MRISetPostprocessStepFn *)
+  val set_postprocess_step_fn : ('d, 'k) session -> 'd postprocess_step_fn -> unit
+
+  (** Clear the post processing step function.
+
+      @noarkode <node> MRISetPostprocessStepFn *)
+  val clear_postprocess_step_fn : ('d, 'k) session -> unit
+
+  (** {2:get Querying the solver (optional output functions)} *)
+
+  (** Returns the real and integer workspace sizes.
+
+      @noarkode <node> MRIStepGetWorkSpace
+      @return ([real_size], [integer_size]) *)
+  val get_work_space          : ('d, 'k) session -> int * int
+
+  (** Returns the cumulative number of internal steps taken by the solver.
+      The call [slow, fast = get_num_steps] returns the number of slow and
+      fast internal steps taken by the solver.
+
+      @noarkode <node> MRIStepGetNumSteps *)
+  val get_num_steps           : ('d, 'k) session -> int * int
+
+  (** Returns the integration step size taken on the last successful internal
+      step.
+
+      @noarkode <node> MRIStepGetLastStep *)
+  val get_last_step           : ('d, 'k) session -> float
+
+  (** Returns the number of calls to the right-hand side functions.
+      The call [slow, fast = get_num_rhs_evals] returns the number of calls to
+      the slow and fast right-hand-side functions.
+
+      @noarkode <node> MRIStepGetNumRhsEvals *)
+  val get_num_rhs_evals       : ('d, 'k) session -> int * int
+
+  (** Returns the Butcher tables in use by the solver.
+      The call [slow, fast = get_current_butcher_tables s] returns the slow
+      and fast butcher tables.
+
+      @noarkode <node> MRIStepGetCurrentButcherTables *)
+  val get_current_butcher_tables
+    : ('d, 'k) session -> ButcherTable.t * ButcherTable.t
+
+  (** {2:roots Additional root-finding functions} *)
+
+  (** [set_root_direction s dir] specifies the direction of zero-crossings to
+      be located and returned. [dir] may contain one entry for each root
+      function.
+
+      @noarkode <node> MRIStepSetRootDirection *)
+  val set_root_direction : ('d, 'k) session -> RootDirs.d array -> unit
+
+  (** Like {!set_root_direction} but specifies a single direction for all root
+      functions.
+
+      @noarkode <node> MRIStepSetRootDirection *)
+  val set_all_root_directions : ('d, 'k) session -> RootDirs.d -> unit
+
+  (** Disables issuing a warning if some root function appears to be
+      identically zero at the beginning of the integration.
+
+      @noarkode <node> MRIStepSetNoInactiveRootWarn *)
+  val set_no_inactive_root_warn : ('d, 'k) session -> unit
+
+  (** Returns the number of root functions. *)
+  val get_num_roots : ('d, 'k) session -> int
+
+  (** Fills an array showing which functions were found to have a root.
+
+      @noarkode <node> MRIStepGetRootInfo *)
+  val get_root_info : ('d, 'k) session -> Roots.t -> unit
+
+  (** Returns the cumulative number of calls made to the user-supplied root
+      function g.
+
+      @noarkode <node> MRIStepGetNumGEvals *)
+  val get_num_g_evals : ('d, 'k) session -> int
+
+end (* }}} *)
+
 (** {2:exceptions Exceptions} *)
 
 (** Raised on missing or illegal solver inputs. Also raised if an element
@@ -2471,6 +2795,13 @@ exception TooMuchWork
 
     @noarkode <node> ARK_TOO_MUCH_ACC *)
 exception TooMuchAccuracy
+
+(** The inner stepper returned with an unrecoverable error.
+    If possible, the exception in the inner stepper is specified.
+
+    @noarkode <node> MRIStepGetLastInnerStepFlag
+    @noarkode <node> ARK_INNER_STEP_FAILED *)
+exception InnerStepFail of exn option
 
 (** Too many error test failures within a step or at the minimum step size.
     See {!set_max_err_test_fails} and {!set_min_step}.
