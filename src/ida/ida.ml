@@ -42,6 +42,7 @@ exception LinearSetupFailure of exn option
 exception LinearSolveFailure of exn option
 exception NonlinearInitFailure
 exception NonlinearSetupFailure
+exception NonlinearSetupRecoverable
 exception ResFuncFailure
 exception FirstResFuncFailure
 exception RepeatedResFuncFailure
@@ -937,6 +938,7 @@ let _ =
       LinearSolveFailure None;
       NonlinearInitFailure;
       NonlinearSetupFailure;
+      NonlinearSetupRecoverable;
       ResFuncFailure;
       FirstResFuncFailure;
       RepeatedResFuncFailure;

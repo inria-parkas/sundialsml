@@ -1115,6 +1115,9 @@ void sunml_ida_check_flag(const char *call, int flag, void *ida_mem)
     case IDA_NLS_SETUP_FAIL:
 	caml_raise_constant(IDA_EXN(NonlinearSetupFailure));
 
+    case IDA_NLS_SETUP_RECVR:
+	caml_raise_constant(IDA_EXN(NonlinearSetupRecoverable));
+
     case IDA_VECTOROP_ERR:
 	caml_raise_constant(IDA_EXN(VectorOpErr));
 #endif

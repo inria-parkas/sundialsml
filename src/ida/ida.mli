@@ -1066,6 +1066,11 @@ exception NonlinearInitFailure
     @noida <node5> IDA_NLS_SETUP_FAIL *)
 exception NonlinearSetupFailure
 
+(** Nonlinear solver setup failed in a recoverable manner.
+
+    @noida <node5> IDA_NLS_SETUP_RECVR *)
+exception NonlinearSetupRecoverable
+
 (** The residual function failed in an unrecoverable manner.
 
     @ida <node5#ss:idasolve> IDA_RES_FAIL *)
