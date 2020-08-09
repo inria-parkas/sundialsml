@@ -45,9 +45,6 @@ CAMLprim value sunml_arkode_mass_klu_set_ordering (value varkode_mem,
 CAMLprim value sunml_arkode_mass_klu_reinit (value varkode_mem,
 					 value vn, value vnnz)
 { CAMLparam0(); CAMLreturn (Val_unit); }
-
-CAMLprim value sunml_arkode_klu_get_num_mass_evals(value varkode_mem)
-{ CAMLparam0(); CAMLreturn (Val_unit); }
 #else
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #include "arkode_ml.h"
@@ -253,20 +250,4 @@ CAMLprim value sunml_arkode_mass_klu_reinit (value varkode_mem, value vn,
 #endif
     CAMLreturn (Val_unit);
 }
-
-CAMLprim value sunml_arkode_klu_get_num_mass_evals(value varkode_mem)
-{
-    CAMLparam1(varkode_mem);
-    long int r = 0;
-#if SUNDIALS_LIB_VERSION < 300
-    void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
-
-    int flag = ARKSlsGetNumMassEvals(arkode_mem, &r);
-    CHECK_FLAG("ARKSlsGetNumMassEvals", flag);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-    CAMLreturn(Val_long(r));
-}
-
 #endif

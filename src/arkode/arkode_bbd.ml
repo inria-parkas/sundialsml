@@ -19,8 +19,8 @@ include ArkodeBbdTypes
 type data = Nvector_parallel.data
 type kind = Nvector_parallel.kind
 
-type parallel_session = (data, kind) session
-type parallel_preconditioner = (data, kind) Arkode.Spils.preconditioner
+type parallel_session = (data, kind) Arkode.ARKStep.session
+type parallel_preconditioner = (data, kind) Arkode.ARKStep.Spils.preconditioner
 
 module Impl = ArkodeBbdParamTypes
 type local_fn = data Impl.local_fn

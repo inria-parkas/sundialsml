@@ -1,11 +1,11 @@
-Sundials/ML 4.1.0p0 (March 2020)
---------------------------------
+Sundials/ML 4.1.0p0 (August 2020)
+---------------------------------
 Sundials/ML v4.1.0p0 adds support for v4.x of the Sundials Suite of
 numerical solvers.
 
 Notes:
 * New Sundials.Nonlinear module and corresponding changes to the Cvode, 
-  Cvodes, Ida, and Idas integrators.
+  Cvodes, Ida, Idas, Kinsol, and ARKode integrators.
 * Support for the new fused and array nvector operations.
 * Testing of all OCaml nvector operations and several bug fixes.
 * Removal of the _Solver_.Alternate modules for attaching custom linear

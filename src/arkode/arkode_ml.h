@@ -92,8 +92,8 @@
  * should be just an array of float's.
  */
 
-void sunml_arkode_check_flag(const char *call, int flag);
-#if SUNDIALS_LIB_VERSION >= 400
+void sunml_arkode_check_flag(const char *call, int flag, void *arkode_mem);
+#if 400 <= SUNDIALS_LIB_VERSION
 void sunml_arkode_check_ls_flag(const char *call, int flag);
 #else
 void sunml_arkode_check_dls_flag(const char *call, int flag);
@@ -104,12 +104,10 @@ value sunml_arkode_make_jac_arg(realtype t, N_Vector y, N_Vector fy, value tmp);
 value sunml_arkode_make_triple_tmp(N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
 
 #define CHECK_FLAG(call, flag) if (flag != ARK_SUCCESS) \
-				 sunml_arkode_check_flag(call, flag)
-#if SUNDIALS_LIB_VERSION >= 400
-#define CHECK_SPILS_FLAG(call, flag) if (flag != ARKSPILS_SUCCESS) \
-				 sunml_arkode_check_spils_flag(call, flag)
-#define CHECK_DLS_FLAG(call, flag) if (flag != ARKDLS_SUCCESS) \
-				 sunml_arkode_check_dls_flag(call, flag)
+				 sunml_arkode_check_flag(call, flag, NULL)
+#if 400 <= SUNDIALS_LIB_VERSION
+#define CHECK_LS_FLAG(call, flag) if (flag != ARKLS_SUCCESS) \
+				 sunml_arkode_check_ls_flag(call, flag)
 #else
 #define CHECK_SPILS_FLAG(call, flag) if (flag != ARKLS_SUCCESS) \
 				 sunml_arkode_check_ls_flag(call, flag)
@@ -150,8 +148,8 @@ enum arkode_session_index {
     RECORD_ARKODE_SESSION_USES_RESV,
     RECORD_ARKODE_SESSION_EXN_TEMP,
     RECORD_ARKODE_SESSION_PROBLEM,
-    RECORD_ARKODE_SESSION_IRHSFN,
-    RECORD_ARKODE_SESSION_ERHSFN,
+    RECORD_ARKODE_SESSION_RHSFN1,
+    RECORD_ARKODE_SESSION_RHSFN2,
     RECORD_ARKODE_SESSION_ROOTSFN,
     RECORD_ARKODE_SESSION_ERRH,
     RECORD_ARKODE_SESSION_ERRW,
@@ -167,6 +165,7 @@ enum arkode_session_index {
     RECORD_ARKODE_SESSION_MASS_SOLVER,
     RECORD_ARKODE_SESSION_MASS_CALLBACKS,
     RECORD_ARKODE_SESSION_MASS_PRECFNS,
+    RECORD_ARKODE_SESSION_NLS_SOLVER,
     RECORD_ARKODE_SESSION_SIZE,
 };
 
@@ -254,20 +253,24 @@ enum arkode_solver_result_tag {
   VARIANT_ARKODE_SOLVER_RESULT_STOPTIMEREACHED,
 };
 
-enum arkode_integrator_stats_index {
-  RECORD_ARKODE_INTEGRATOR_STATS_STEPS = 0,
-  RECORD_ARKODE_INTEGRATOR_STATS_EXP_STEPS,
-  RECORD_ARKODE_INTEGRATOR_STATS_ACC_STEPS,
-  RECORD_ARKODE_INTEGRATOR_STATS_STEP_ATTEMPTS,
-  RECORD_ARKODE_INTEGRATOR_STATS_NUM_NFE_EVALS,
-  RECORD_ARKODE_INTEGRATOR_STATS_NUM_NFI_EVALS,
-  RECORD_ARKODE_INTEGRATOR_STATS_LIN_SOLV_SETUPS,
-  RECORD_ARKODE_INTEGRATOR_STATS_NUM_ERR_TEST_FAILS,
-  RECORD_ARKODE_INTEGRATOR_STATS_ACTUAL_INIT_STEP,
-  RECORD_ARKODE_INTEGRATOR_STATS_LAST_STEP,
-  RECORD_ARKODE_INTEGRATOR_STATS_CURRENT_STEP,
-  RECORD_ARKODE_INTEGRATOR_STATS_CURRENT_TIME,
-  RECORD_ARKODE_INTEGRATOR_STATS_SIZE
+enum arkode_timestepper_stats_index {
+  RECORD_ARKODE_TIMESTEPPER_STATS_EXP_STEPS = 0,
+  RECORD_ARKODE_TIMESTEPPER_STATS_ACC_STEPS,
+  RECORD_ARKODE_TIMESTEPPER_STATS_STEP_ATTEMPTS,
+  RECORD_ARKODE_TIMESTEPPER_STATS_NUM_NFE_EVALS,
+  RECORD_ARKODE_TIMESTEPPER_STATS_NUM_NFI_EVALS,
+  RECORD_ARKODE_TIMESTEPPER_STATS_LIN_SOLV_SETUPS,
+  RECORD_ARKODE_TIMESTEPPER_STATS_NUM_ERR_TEST_FAILS,
+  RECORD_ARKODE_TIMESTEPPER_STATS_SIZE
+};
+
+enum arkode_step_stats_index {
+  RECORD_ARKODE_STEP_STATS_STEPS = 0,
+  RECORD_ARKODE_STEP_STATS_ACTUAL_INIT_STEP,
+  RECORD_ARKODE_STEP_STATS_LAST_STEP,
+  RECORD_ARKODE_STEP_STATS_CURRENT_STEP,
+  RECORD_ARKODE_STEP_STATS_CURRENT_TIME,
+  RECORD_ARKODE_STEP_STATS_SIZE
 };
 
 enum arkode_jacobian_arg_index {
@@ -307,18 +310,15 @@ enum arkode_bandblock_bandwidths_index {
   RECORD_ARKODE_BANDBLOCK_BANDWIDTHS_SIZE
 };
 
-enum arkode_rk_method_index {
-  RECORD_ARKODE_RK_METHOD_STAGES = 0,
-  RECORD_ARKODE_RK_METHOD_GLOBAL_ORDER,
-  RECORD_ARKODE_RK_METHOD_GLOBAL_EMBEDDED_ORDER,
-  RECORD_ARKODE_RK_METHOD_SIZE
-};
-
-enum arkode_rk_timescoefs_index {
-  RECORD_ARKODE_RK_TIMESCOEFS_STAGE_TIMES,
-  RECORD_ARKODE_RK_TIMESCOEFS_COEFFICIENTS,
-  RECORD_ARKODE_RK_TIMESCOEFS_BEMBED,
-  RECORD_ARKODE_RK_TIMESCOEFS_SIZE
+enum arkode_butcher_table_index {
+  RECORD_ARKODE_BUTCHER_TABLE_METHOD_ORDER = 0,
+  RECORD_ARKODE_BUTCHER_TABLE_EMBEDDING_ORDER,
+  RECORD_ARKODE_BUTCHER_TABLE_STAGES,
+  RECORD_ARKODE_BUTCHER_TABLE_STAGE_VALUES,
+  RECORD_ARKODE_BUTCHER_TABLE_STAGE_TIMES,
+  RECORD_ARKODE_BUTCHER_TABLE_COEFFICIENTS,
+  RECORD_ARKODE_BUTCHER_TABLE_BEMBED,
+  RECORD_ARKODE_BUTCHER_TABLE_SIZE
 };
 
 enum arkode_adaptivity_args_index {
@@ -355,6 +355,7 @@ enum arkode_predictor_method_tag {
   VARIANT_ARKODE_PREDICTOR_METHOD_VARIABLEORDERPREDICTOR = 2,
   VARIANT_ARKODE_PREDICTOR_METHOD_CUTOFFORDERPREDICTOR = 3,
   VARIANT_ARKODE_PREDICTOR_METHOD_BOOTSTRAPPREDICTOR = 4,
+  VARIANT_ARKODE_PREDICTOR_METHOD_MINIMALCORRECTIONPREDICTOR = 5,
 };
 
 /* This enum must list exceptions in the same order as the call to
@@ -369,6 +370,10 @@ enum arkode_exn_index {
     ARKODE_EXN_LinearInitFailure,
     ARKODE_EXN_LinearSetupFailure,
     ARKODE_EXN_LinearSolveFailure,
+    ARKODE_EXN_NonlinearInitFailure,
+    ARKODE_EXN_NonlinearSetupFailure,
+    ARKODE_EXN_NonlinearSetupRecoverable,
+    ARKODE_EXN_NonlinearOperationError,
     ARKODE_EXN_MassInitFailure,
     ARKODE_EXN_MassSetupFailure,
     ARKODE_EXN_MassSolveFailure,
@@ -381,6 +386,7 @@ enum arkode_exn_index {
     ARKODE_EXN_PostprocStepFailure,
     ARKODE_EXN_BadK,
     ARKODE_EXN_BadT,
+    ARKODE_EXN_VectorOpErr,
     ARKODE_EXN_SET_SIZE
 };
 

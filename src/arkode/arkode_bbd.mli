@@ -23,11 +23,12 @@ open Sundials
 
 (** Alias for sessions based on parallel nvectors. *)
 type parallel_session =
-  (Nvector_parallel.data, Nvector_parallel.kind) Arkode.session
+  (Nvector_parallel.data, Nvector_parallel.kind) Arkode.ARKStep.session
 
 (** Alias for preconditioners based on parallel nvectors. *)
 type parallel_preconditioner =
-  (Nvector_parallel.data, Nvector_parallel.kind) Arkode.Spils.preconditioner
+  (Nvector_parallel.data, Nvector_parallel.kind)
+  Arkode.ARKStep.Spils.preconditioner
 
 (** The bandwidths for the difference quotient Jacobian operation. *)
 type bandwidths = Arkode_impl.ArkodeBbdTypes.bandwidths =

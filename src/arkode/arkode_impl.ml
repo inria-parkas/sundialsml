@@ -38,6 +38,7 @@ external crash : string -> unit = "sunml_crash"
 
 type ('data, 'kind) nvector = ('data, 'kind) Nvector.t
 module LSI = Sundials_LinearSolver_impl
+module NLSI = Sundials_NonlinearSolver_impl
 
 type 'a triple = 'a * 'a * 'a
 
@@ -164,13 +165,6 @@ module MassTypes' = struct
   end
 end
 
-module AlternateTypes' = struct
-  type conv_fail =
-    | NoFailures
-    | FailBadJ
-    | FailOther
-end
-
 module ArkodeBbdParamTypes = struct
   type 'a local_fn = float -> 'a -> 'a -> unit
   type 'a comm_fn = float -> 'a -> unit
@@ -191,30 +185,39 @@ module ArkodeBbdTypes = struct
     }
 end
 
-type arkode_mem
+type arkstep = [`ARKStep]
+type erkstep = [`ERKStep]
+type mristep = [`MRIStep]
+
+type 'step arkode_mem
 type c_weak_ref
 
-type 'a rhsfn = float -> 'a -> 'a -> unit
-type 'a rootsfn = float -> 'a -> RealArray.t -> unit
-type error_handler = Util.error_details -> unit
-type 'a error_weight_fun = 'a -> 'a -> unit
+module Global = struct
+  type 'a rhsfn = float -> 'a -> 'a -> unit
+  type 'a rootsfn = float -> 'a -> RealArray.t -> unit
+  type error_handler = Util.error_details -> unit
+  type 'a error_weight_fun = 'a -> 'a -> unit
+
+  type adaptivity_args = {
+      h1 : float;
+      h2 : float;
+      h3 : float;
+      e1 : float;
+      e2 : float;
+      e3 : float;
+      q  : int;
+      p  : int;
+    }
+
+  type 'd adaptivity_fn = float -> 'd -> adaptivity_args -> float
+  type 'd stability_fn = float -> 'd -> float
+  type 'd resize_fn = 'd -> 'd -> unit
+  type 'd postprocess_step_fn = float -> 'd -> unit
+end
+
+open Global
+
 type 'a res_weight_fun = 'a -> 'a -> unit
-
-type adaptivity_args = {
-    h1 : float;
-    h2 : float;
-    h3 : float;
-    e1 : float;
-    e2 : float;
-    e3 : float;
-    q  : int;
-    p  : int;
-  }
-
-type 'd adaptivity_fn = float -> 'd -> adaptivity_args -> float
-type 'd stability_fn = float -> 'd -> float
-type 'd resize_fn = 'd -> 'd -> unit
-type 'd postprocess_step_fn = float -> 'd -> unit
 
 (* Session: here comes the big blob.  These mutually recursive types
    cannot be handed out separately to modules without menial
@@ -225,8 +228,8 @@ type 'd postprocess_step_fn = float -> 'd -> unit
    solver is not garbage collected while still being used by a session.
 *)
 
-type ('a, 'kind) session = {
-  arkode     : arkode_mem;
+type ('a, 'kind, 'step) session = {
+  arkode     : 'step arkode_mem;
   backref    : c_weak_ref;
   nroots     : int;
   mutable checkvec     : (('a, 'kind) Nvector.t -> unit);
@@ -234,28 +237,35 @@ type ('a, 'kind) session = {
 
   mutable exn_temp     : exn option;
 
-  mutable problem      : problem_type;
-  mutable irhsfn       : 'a rhsfn;
-  mutable erhsfn       : 'a rhsfn;
+  mutable problem      : problem_type; (* ARK only *)
+  mutable rhsfn1       : 'a rhsfn;  (* ARK: implicit; ERK: f; MRI: slow *)
+  mutable rhsfn2       : 'a rhsfn;  (* ARK: explicit; ERK: unused; MRI: fast *)
 
   mutable rootsfn      : 'a rootsfn;
   mutable errh         : error_handler;
   mutable errw         : 'a error_weight_fun;
-  mutable resw         : 'a res_weight_fun;
+  mutable resw         : 'a res_weight_fun;  (* ARK only *)
 
   mutable adaptfn      : 'a adaptivity_fn;
   mutable stabfn       : 'a stability_fn;
   mutable resizefn     : 'a resize_fn;
   mutable poststepfn   : 'a postprocess_step_fn;
 
+  (* ARK only *)
   mutable linsolver      : ('a, 'kind) session_linear_solver option;
   mutable ls_solver      : LSI.solver;
   mutable ls_callbacks   : ('a, 'kind) linsolv_callbacks;
   mutable ls_precfns     : 'a linsolv_precfns;
 
+  (* ARK only *)
   mutable mass_solver    : LSI.solver;
   mutable mass_callbacks : ('a, 'kind) mass_callbacks;
   mutable mass_precfns   : 'a mass_precfns;
+
+  (* ARK only *)
+  mutable nls_solver     : ('a, 'kind, (('a, 'kind, arkstep) session)
+                             NLSI.integrator)
+                           NLSI.nonlinear_solver option;
 }
 
 and problem_type =
@@ -264,7 +274,7 @@ and problem_type =
   | ImplicitAndExplicit
 
 and ('data, 'kind) session_linear_solver =
-  ('data, 'kind) session
+  ('data, 'kind, arkstep) session
   -> ('data, 'kind) nvector
   -> unit
 
@@ -313,43 +323,11 @@ and ('a, 'kind) linsolv_callbacks =
   | SpilsCallback of 'a SpilsTypes'.jac_times_vec_fn option
                      * 'a SpilsTypes'.jac_times_setup_fn option
 
-  (* Alternate *)
-  | AlternateCallback of ('a, 'kind) alternate_linsolv
-
 and 'a linsolv_precfns =
   | NoPrecFns
   | PrecFns of 'a SpilsTypes'.precfns
   | BandedPrecFns
   | BBDPrecFns of 'a ArkodeBbdParamTypes.precfns
-
-and ('data, 'kind) alternate_linsolv =
-  {
-    linit  : ('data, 'kind) linit' option;
-    lsetup : ('data, 'kind) lsetup' option;
-    lsolve : ('data, 'kind) lsolve';
-  }
-and 'data alternate_lsetup_args =
-  {
-    lsetup_conv_fail : AlternateTypes'.conv_fail;
-    lsetup_y : 'data;
-    lsetup_rhs : 'data;
-    lsetup_tmp : 'data triple;
-  }
-and 'data alternate_lsolve_args =
-  {
-    lsolve_y : 'data;
-    lsolve_rhs : 'data;
-  }
-and ('data, 'kind) linit' = ('data, 'kind) session -> unit
-and ('data, 'kind) lsetup' =
-  ('data, 'kind) session
-  -> 'data alternate_lsetup_args
-  -> bool
-and ('data, 'kind) lsolve' =
-  ('data, 'kind) session
-  -> 'data alternate_lsolve_args
-  -> 'data
-  -> unit
 
 (* Note: When compatibility with Sundials < 3.0.0 is no longer required,
          this type can be greatly simplified since we would no longer
@@ -386,28 +364,9 @@ and ('a, 'kind) mass_callbacks =
   | SpilsMassCallback of 'a MassTypes'.Iterative'.mass_times_vec_fn
                        * MassTypes'.Iterative'.mass_times_setup_fn option
 
-  (* Alternate *)
-  | AlternateMassCallback of ('a, 'kind) alternate_mass
-
 and 'a mass_precfns =
   | NoMassPrecFns
   | MassPrecFns of 'a MassTypes'.Iterative'.precfns
-
-and ('data, 'kind) alternate_mass =
-  {
-    minit  : ('data, 'kind) minit' option;
-    msetup : ('data, 'kind) msetup' option;
-    msolve : ('data, 'kind) msolve';
-  }
-and ('data, 'kind) minit' = ('data, 'kind) session -> unit
-and ('data, 'kind) msetup' =
-  ('data, 'kind) session
-  -> 'data triple
-  -> unit
-and ('data, 'kind) msolve' =
-  ('data, 'kind) session
-  -> 'data
-  -> unit
 
 (* Linear solver check functions *)
 
@@ -453,8 +412,8 @@ let mass_check_spils session =
 
 (* Types that depend on session *)
 
-type 'k serial_session = (Nvector_serial.data, 'k) session
-                         constraint 'k = [>Nvector_serial.kind]
+type ('k, 'step) serial_session = (Nvector_serial.data, 'k, 'step) session
+                                  constraint 'k = [>Nvector_serial.kind]
 
 type 'k serial_session_linear_solver =
   (Nvector_serial.data, 'k) session_linear_solver
@@ -464,47 +423,26 @@ module SpilsTypes = struct
   include SpilsTypes'
 
   type ('a, 'k) set_preconditioner =
-    ('a, 'k) session -> ('a, 'k) nvector -> unit
+    ('a, 'k, arkstep) session -> ('a, 'k) nvector -> unit
 
   type ('a, 'k) preconditioner =
     LSI.Iterative.preconditioning_type * ('a, 'k) set_preconditioner
 
-  type 'k serial_preconditioner = (Nvector_serial.data, 'k) preconditioner
-                                  constraint 'k = [>Nvector_serial.kind]
+  type 'k serial_preconditioner =
+    (Nvector_serial.data, 'k) preconditioner
+    constraint 'k = [>Nvector_serial.kind]
 
-end
-
-module AlternateTypes = struct
-  include AlternateTypes'
-  type ('data, 'kind) callbacks = ('data, 'kind) alternate_linsolv =
-    {
-      linit  : ('data, 'kind) linit option;
-      lsetup : ('data, 'kind) lsetup option;
-      lsolve : ('data, 'kind) lsolve;
-    }
-  and ('data, 'kind) linit = ('data, 'kind) linit'
-  and ('data, 'kind) lsetup = ('data, 'kind) lsetup'
-  and ('data, 'kind) lsolve = ('data, 'kind) lsolve'
-  and 'data lsetup_args = 'data alternate_lsetup_args = {
-    lsetup_conv_fail : conv_fail;
-    lsetup_y : 'data;
-    lsetup_rhs : 'data;
-    lsetup_tmp : 'data triple;
-  }
-  and 'data lsolve_args = 'data alternate_lsolve_args = {
-    lsolve_y : 'data;
-    lsolve_rhs : 'data;
-  }
 end
 
 module MassTypes = struct
   type ('data, 'kind) solver =
-    ('data, 'kind) session
+    ('data, 'kind, arkstep) session
     -> ('data, 'kind) nvector
     -> unit
 
-  type 'k serial_solver = (Nvector_serial.data, 'k) solver
-                          constraint 'k = [>Nvector_serial.kind]
+  type 'k serial_solver =
+    (Nvector_serial.data, 'k) solver
+    constraint 'k = [>Nvector_serial.kind]
 
   module Direct' = struct
     include MassTypes'.Direct'
@@ -514,29 +452,18 @@ module MassTypes = struct
     include MassTypes'.Iterative'
 
     type ('a, 'k) set_preconditioner =
-      ('a, 'k) session -> ('a, 'k) nvector -> unit
+      ('a, 'k, arkstep) session -> ('a, 'k) nvector -> unit
 
     type ('a, 'k) preconditioner =
       LSI.Iterative.preconditioning_type * ('a, 'k) set_preconditioner
 
-    type 'k serial_preconditioner = (Nvector_serial.data, 'k) preconditioner
-                                    constraint 'k = [>Nvector_serial.kind]
-  end
-
-  module Alternate' = struct
-    type ('data, 'kind) callbacks = ('data, 'kind) alternate_mass =
-      {
-        minit  : ('data, 'kind) minit option;
-        msetup : ('data, 'kind) msetup option;
-        msolve : ('data, 'kind) msolve;
-      }
-    and ('data, 'kind) minit = ('data, 'kind) minit'
-    and ('data, 'kind) msetup = ('data, 'kind) msetup'
-    and ('data, 'kind) msolve = ('data, 'kind) msolve'
+    type 'k serial_preconditioner =
+      (Nvector_serial.data, 'k) preconditioner
+      constraint 'k = [>Nvector_serial.kind]
   end
 end
 
-let read_weak_ref x : ('a, 'kind) session =
+let read_weak_ref x : ('a, 'kind, 'step) session =
   match Weak.get x 0 with
   | Some y -> y
   | None -> raise (Failure "Internal error: weak reference is dead")
@@ -545,10 +472,10 @@ let read_weak_ref x : ('a, 'kind) session =
    bug.  Rather than raise an exception (which may or may not get
    propagated properly depending on the context), we immediately abort
    the program. *)
-let dummy_erhsfn _ _ _ =
-  crash "Internal error: dummy_eresfn called\n"
-let dummy_irhsfn _ _ _ =
-  crash "Internal error: dummy_iresfn called\n"
+let dummy_rhsfn1 _ _ _ =
+  crash "Internal error: dummy_rhsfn1 called\n"
+let dummy_rhsfn2 _ _ _ =
+  crash "Internal error: dummy_rhsfn2 called\n"
 let dummy_rootsfn _ _ _ =
   crash "Internal error: dummy_rootsfn called\n"
 let dummy_errh _ =
