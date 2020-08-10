@@ -26,7 +26,16 @@ arkode/arkode.cmx : \
     nvectors/nvector.cmx \
     arkode/arkode_impl.cmx \
     arkode/arkode.cmi
-arkode/arkode.cmi :
+arkode/arkode.cmi : \
+    sundials/sundials_RealArray2.cmi \
+    sundials/sundials_RealArray.cmi \
+    lsolvers/sundials_NonlinearSolver.cmi \
+    sundials/sundials_Logfile.cmi \
+    lsolvers/sundials_LinearSolver.cmi \
+    sundials/sundials.cmi \
+    nvectors/nvector_serial.cmi \
+    nvectors/nvector.cmi \
+    arkode/arkode_impl.cmo
 arkode/arkode_bbd.cmo : \
     sundials/sundials_RealArray.cmi \
     lsolvers/sundials_LinearSolver.cmi \
@@ -671,3 +680,12 @@ sundials/sundials_top.cmx : \
 sundials/sundials_top.cmi :
 sundials/sundials_top_findlib.cmo :
 sundials/sundials_top_findlib.cmx :
+sundials/sundials.cmo : \
+    sundials/sundials_configuration.cmo \
+    sundials/sundials_Config.cmi \
+    sundials/sundials.cmi
+sundials/sundials.cmx : \
+    sundials/sundials_configuration.cmx \
+    sundials/sundials_Config.cmx \
+    sundials/sundials.cmi
+sundials/sundials.cmi :
