@@ -420,7 +420,7 @@ module Matrix = Sundials_Matrix
 
 module LinearSolver = Sundials_LinearSolver
 
-module NonLinearSolver = Sundials_NonlinearSolver
+module NonlinearSolver = Sundials_NonlinearSolver
 
 module Util = struct (* {{{ *)
 

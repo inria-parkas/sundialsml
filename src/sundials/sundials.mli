@@ -286,7 +286,7 @@ module Matrix = Sundials_Matrix
 
 module LinearSolver = Sundials_LinearSolver
 
-module NonLinearSolver = Sundials_NonlinearSolver
+module NonlinearSolver = Sundials_NonlinearSolver
 
 (** {2:results Solver results and error reporting} *)
 
