@@ -31,11 +31,13 @@
 #endif
 
 /* linear solvers */
+#include <arkode/arkode_bandpre.h>
+#if   400 <= SUNDIALS_LIB_VERSION
+#include <arkode/arkode_ls.h>
+#elif 300 <= SUNDIALS_LIB_VERSION
 #include <arkode/arkode_direct.h>
 #include <arkode/arkode_spils.h>
-#include <arkode/arkode_bandpre.h>
-
-#if SUNDIALS_LIB_VERSION < 300
+#elif
 #include <arkode/arkode_dense.h>
 #include <arkode/arkode_band.h>
 #include <arkode/arkode_spgmr.h>
@@ -790,11 +792,12 @@ CAMLprim value sunml_arkode_ark_set_preconditioner (value vsession,
 {
     CAMLparam2 (vsession, vset_precsetup);
     void *mem = ARKODE_MEM_FROM_ML (vsession);
-    ARKSpilsPrecSetupFn setup = Bool_val (vset_precsetup) ? precsetupfn : NULL;
 #if 400 <= SUNDIALS_LIB_VERSION
+    ARKLsPrecSetupFn setup = Bool_val (vset_precsetup) ? precsetupfn : NULL;
     int flag = ARKStepSetPreconditioner (mem, setup, precsolvefn);
     CHECK_FLAG ("ARKStepSetPreconditioner", flag);
 #else
+    ARKSpilsPrecSetupFn setup = Bool_val (vset_precsetup) ? precsetupfn : NULL;
     int flag = ARKSpilsSetPreconditioner (mem, setup, precsolvefn);
     CHECK_FLAG ("ARKSpilsSetPreconditioner", flag);
 #endif
@@ -1252,12 +1255,14 @@ CAMLprim value sunml_arkode_ark_set_mass_preconditioner(value vsession,
 {
     CAMLparam2 (vsession, vset_precsetup);
     void *mem = ARKODE_MEM_FROM_ML (vsession);
-    ARKSpilsMassPrecSetupFn setup
-	= Bool_val (vset_precsetup) ? massprecsetupfn : NULL;
 #if 400 <= SUNDIALS_LIB_VERSION
+    ARKLsMassPrecSetupFn setup
+	= Bool_val (vset_precsetup) ? massprecsetupfn : NULL;
     int flag = ARKStepSetMassPreconditioner (mem, setup, massprecsolvefn);
     CHECK_FLAG ("ARKStepSetMassPreconditioner", flag);
 #else
+    ARKSpilsMassPrecSetupFn setup
+	= Bool_val (vset_precsetup) ? massprecsetupfn : NULL;
     int flag = ARKSpilsSetMassPreconditioner (mem, setup, massprecsolvefn);
     CHECK_FLAG ("ARKSpilsSetMassPreconditioner", flag);
 #endif
