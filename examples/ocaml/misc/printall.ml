@@ -24,8 +24,7 @@ let g t_s y gout =
 let y = Sundials.RealArray.of_array [| x_i |]
 let y_nvec= Nvector_serial.wrap y
 
-let s = Cvode.init Cvode.Adams Cvode.Functional Cvode.default_tolerances
-                   f ~roots:(1, g) 0. y_nvec
+let s = Cvode.(init Adams default_tolerances f ~roots:(1, g) 0. y_nvec)
 let rootdata = Sundials.Roots.create 1
 
 let _ = Cvode.set_stop_time s max_sim_t

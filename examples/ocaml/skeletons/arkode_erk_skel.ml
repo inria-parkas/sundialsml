@@ -1,7 +1,8 @@
 open Sundials
 
-(* 1. Define a right-hand-side function. *)
-let f t y yd = yd.{0} <- y.{1}; yd.{1} <- -9.81
+(* 1. Define right-hand-side functions. *)
+let f t y yd = yd.{0} <- y.{1};
+               yd.{1} <- -9.81
 
 (* 2. Optionally define a root function. *)
 let g t y gout = gout.{0} <- 1.0 -. y.{0}
@@ -11,34 +12,30 @@ let g t y gout = gout.{0} <- 1.0 -. y.{0}
 let yd = RealArray.of_list [ 10.0; 0.0 ]
 let y = Nvector_serial.wrap yd
 
-(* 4. Create and initialize a solver session.
-      This will initialize a specific linear solver and the root-finding
-      mechanism, if necessary. *)
-let s = Cvode.(init Adams
-                    (SStolerances (1e-4, 1e-8))
-                    f ~roots:(1, g) 0.0 y);;
+(* 4. Create and initialize a solver session. *)
+let s = Arkode.ERKStep.(init (SStolerances (1e-4, 1e-9)) f ~roots:(1, g) 0.0 y);;
 
 (* 5. Set optional inputs, e.g.,
       call [set_*] functions to change solver parameters. *)
-Cvode.set_stop_time s 10.0;;
-Cvode.set_all_root_directions s RootDirs.Increasing;;
+Arkode.ERKStep.set_stop_time s 10.0;;
+Arkode.ERKStep.set_all_root_directions s RootDirs.Increasing;;
 
 (* 6. Advance the solution in time,
       by repeatedly calling [solve_normal] or [solve_one_step]. *)
 let rec go (t, r) =
   Printf.printf "% .10e\t% .10e\t% .10e\n" t yd.{0} yd.{1};
   match r with
-  | Cvode.Success -> go (Cvode.solve_normal s (t +. 0.5) y)
-  | Cvode.RootsFound -> begin
+  | Arkode.Success -> go (Arkode.ERKStep.solve_normal s (t +. 0.5) y)
+  | Arkode.RootsFound -> begin
         yd.{1} <- -0.8 *. yd.{1};
-        Cvode.reinit s t y;
-        go (t, Cvode.Success)
+        Arkode.ERKStep.reinit s t y;
+        go (t, Arkode.Success)
       end
-  | Cvode.StopTimeReached -> ();;
+  | Arkode.StopTimeReached -> ();;
 
 Printf.printf "time\ty\ty'\n";;
-go (0.0, Cvode.Success);;
+go (0.0, Arkode.Success);;
 
 (* 7. Get optional outputs,
       call the [get_*] functions to examine solver statistics. *)
-let ns = Cvode.get_num_steps s
+let ns = Arkode.ERKStep.get_num_steps s

@@ -70,8 +70,7 @@ let run_experiment with_zeros with_reinit =
   let gg = if with_zeros then (2, g) else Cvode.no_roots in
   let ff = if with_zeros then f1 else f2 in
 
-  let s = Cvode.init Cvode.Adams Cvode.Functional Cvode.default_tolerances
-                     ff ~roots:gg 0. y_nvec in
+  let s = Cvode.(init Adams default_tolerances ff ~roots:gg 0. y_nvec) in
   let _ = Cvode.set_stop_time s max_sim_t in
 
   printf "t_sim\t\t\tt\t\t\ty\t\t\ty (ideal)\t\tattempted step\t\tactual step\t\terr test fails\n";

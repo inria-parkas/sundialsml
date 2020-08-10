@@ -18,11 +18,11 @@ let y = Nvector_serial.wrap yd
       implicit component, and root-finding if necessary. It is also possible to
       specify a mass matrix solver. *)
 let m = Matrix.dense 2
-let s = Arkode.(
+let s = Arkode.ARKStep.(
   init
-    (ImEx { explicit = f_e;
-            implicit = (f_i, Newton Arkode.Dls.(solver (dense y m)),
-                        Linear true); })
+    (ImEx (f_e,
+           implicit ~lsolver:Dls.(solver (dense y m))
+                    ~linearity:(Linear true) f_i))
     (SStolerances (1e-4, 1e-9))
     ~roots:(1, g)
     0.0
@@ -30,18 +30,18 @@ let s = Arkode.(
 
 (* 5. Set optional inputs, e.g.,
       call [set_*] functions to change solver parameters. *)
-Arkode.set_stop_time s 10.0;;
-Arkode.set_all_root_directions s RootDirs.Increasing;;
+Arkode.ARKStep.set_stop_time s 10.0;;
+Arkode.ARKStep.set_all_root_directions s RootDirs.Increasing;;
 
 (* 6. Advance the solution in time,
       by repeatedly calling [solve_normal] or [solve_one_step]. *)
 let rec go (t, r) =
   Printf.printf "% .10e\t% .10e\t% .10e\n" t yd.{0} yd.{1};
   match r with
-  | Arkode.Success -> go (Arkode.solve_normal s (t +. 0.5) y)
+  | Arkode.Success -> go (Arkode.ARKStep.solve_normal s (t +. 0.5) y)
   | Arkode.RootsFound -> begin
         yd.{1} <- -0.8 *. yd.{1};
-        Arkode.reinit s t y;
+        Arkode.ARKStep.reinit s t y;
         go (t, Arkode.Success)
       end
   | Arkode.StopTimeReached -> ();;
@@ -51,4 +51,4 @@ go (0.0, Arkode.Success);;
 
 (* 7. Get optional outputs,
       call the [get_*] functions to examine solver statistics. *)
-let ns = Arkode.get_num_steps s
+let ns = Arkode.ARKStep.get_num_steps s

@@ -6,7 +6,9 @@ SRCROOT = ../../../src
 
 EXAMPLES = cvode_skel.byte  \
 	   ida_skel.byte    \
-	   arkode_skel.byte \
+	   arkode_ark_skel.byte \
+	   arkode_erk_skel.byte \
+	   arkode_mri_skel.byte \
 	   kinsol_skel.byte
 
 all: $(EXAMPLES)
@@ -20,6 +22,15 @@ ida_skel.opt: ida_skel.ml
 
 kinsol_skel.byte: kinsol_skel.ml
 kinsol_skel.opt: kinsol_skel.ml
+
+arkode_ark_skel.byte: arkode_ark_skel.ml
+arkode_ark_skel.opt:  arkode_ark_skel.ml
+
+arkode_erk_skel.byte: arkode_erk_skel.ml
+arkode_erk_skel.opt:  arkode_erk_skel.ml
+
+arkode_mri_skel.byte: arkode_mri_skel.ml
+arkode_mri_skel.opt:  arkode_mri_skel.ml
 
 intro1.out: intro1.ml
 	# Requires that ../../.. is called "sundialsml"

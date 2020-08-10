@@ -61,8 +61,7 @@ let d t_s r ys =
 let y = Sundials.RealArray.of_array [| x_i; t_i |]
 let y_nvec = Nvector_serial.wrap y
 
-let s = Cvode.init Cvode.Adams Cvode.Functional Cvode.default_tolerances
-                   f ~roots:(num_roots, g) 0. y_nvec
+let s = Cvode.(init Adams default_tolerances f ~roots:(num_roots, g) 0. y_nvec)
 let rootdata = Sundials.Roots.create num_roots
 let _ = Cvode.set_all_root_directions s Sundials.RootDirs.Increasing
 

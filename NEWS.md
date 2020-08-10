@@ -12,6 +12,23 @@ Notes:
   solvers. This interface was superseded since Sundials 3.x by the new 
   linear solver interface which provides similar functionality.
 
+Compatibility:
+* When initializing Cvode, the new non-linear solver interface replaces the 
+  previous iteration argument, so
+    Cvode.init lmm Cvode.Functional tol ...
+  becomes
+    Cvode.init lmm tol ~nlsolver:(NonlinearSolver.FixedPoint.make y0 0) ...
+  Otherwise, not passing an nlsolver argument specifies a default nonlinear 
+  solver based on Newton iteration.
+
+* When initializing Ida, the tolerance argument is now given first (for 
+  consistency with Cvode) and the linear solver arguments has a label (to 
+  avoid confusion with the nonlinear solver and for consistency with other
+  integrators where this argument is optional), so
+    let ida = Ida.init solver (Ida.SStolerances (1e-9, 1e-9)) ...
+  becomes
+    let ida = Ida.init (Ida.SStolerances (1e-9, 1e-9)) ~lsolver:solver ...
+
 Sundials/ML 3.1.1p0 (July 2018)
 ------------------------------------
 Sundials/ML v3.1.1p0 adds support for v3.1.x of the Sundials Suite of

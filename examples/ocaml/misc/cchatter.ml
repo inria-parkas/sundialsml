@@ -10,8 +10,7 @@ let f t y yd =
 let y = Sundials.RealArray.of_array [| 1.0 |]
 let y_nvec = Nvector_serial.wrap y
 
-let s = Cvode.init Cvode.Adams Cvode.Functional
-                   Cvode.default_tolerances f 0. y_nvec
+let s = Cvode.(init Adams default_tolerances f 0. y_nvec)
 
 (* let _ = Cvode.set_stop_time s 10.0 *)
 
