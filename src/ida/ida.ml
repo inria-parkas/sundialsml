@@ -262,11 +262,23 @@ module Dls = struct (* {{{ *)
       -> unit
     = "sunml_ida_dls_set_linear_solver"
 
+  (* 4.0.0 <= Sundials *)
+  external c_set_linear_solver
+    : ('d, 'k) session
+      -> ('m, 'd, 'k) LSD.cptr
+      -> ('mk, 'm, 'd, 'k) Matrix.t option
+      -> bool
+      -> unit
+    = "sunml_ida_set_linear_solver"
+
   let solver ?jac ((LSD.S { LSD.rawptr; LSD.solver; LSD.matrix }) as ls)
              session nv =
     set_ls_callbacks ?jac solver matrix session;
-    if in_compat_mode2 then make_compat (jac <> None) solver matrix session
-    else c_dls_set_linear_solver session rawptr matrix (jac <> None);
+    if in_compat_mode2
+       then make_compat (jac <> None) solver matrix session
+    else if in_compat_mode2_3
+         then c_dls_set_linear_solver session rawptr matrix (jac <> None)
+    else c_set_linear_solver session rawptr (Some matrix) (jac <> None);
     LSD.attach ls;
     session.ls_solver <- LSI.DirectSolver ls
 
@@ -380,6 +392,15 @@ module Spils = struct (* {{{ *)
     : ('a, 'k) session -> ('a, 'k) LSI.Iterative.cptr -> unit
     = "sunml_ida_spils_set_linear_solver"
 
+  (* 4.0.0 <= Sundials *)
+  external c_set_linear_solver
+    : ('d, 'k) session
+      -> ('d, 'k) LSI.Iterative.cptr
+      -> ('mk, 'm, 'd, 'k) Matrix.t option
+      -> bool
+      -> unit
+    = "sunml_ida_set_linear_solver"
+
   let init_preconditioner solve setup session nv =
     c_set_preconditioner session (setup <> None);
     session.ls_precfns <- PrecFns { prec_solve_fn = solve;
@@ -431,7 +452,8 @@ module Spils = struct (* {{{ *)
       session.ls_callbacks <- SpilsCallback (jac_times_vec, None);
       if jac_times_vec <> None then c_set_jac_times session true false
     end else
-      c_spils_set_linear_solver session rawptr;
+      if in_compat_mode2_3 then c_spils_set_linear_solver session rawptr
+      else c_set_linear_solver session rawptr None false;
       LSI.Iterative.attach lsolver;
       session.ls_solver <- LSI.IterativeSolver lsolver;
       LSI.Iterative.(c_set_prec_type rawptr solver prec_type false);

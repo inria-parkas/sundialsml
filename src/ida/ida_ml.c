@@ -2018,7 +2018,7 @@ CAMLprim value sunml_ida_get_num_jtimes_evals(value vida_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value sunml_spils_ida_get_num_lin_res_evals (value vida_mem)
+CAMLprim value sunml_ida_spils_get_num_lin_res_evals (value vida_mem)
 {
     CAMLparam1(vida_mem);
 

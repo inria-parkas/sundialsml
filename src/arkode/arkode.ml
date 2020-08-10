@@ -556,7 +556,7 @@ module ARKStep = struct (* {{{ *)
       c_get_num_jac_evals s
 
     external get_num_lin_rhs_evals : 'k serial_session -> int
-        = "sunml_arkode_ark_get_num_lin_rhs_evals"
+        = "sunml_arkode_dls_get_num_lin_rhs_evals"
 
     let get_num_lin_rhs_evals s =
       ls_check_direct s;
@@ -805,7 +805,7 @@ module ARKStep = struct (* {{{ *)
       get_num_jtimes_evals s
 
     external get_num_lin_rhs_evals  : ('a, 'k) session -> int
-      = "sunml_arkode_ark_get_num_lin_rhs_evals"
+      = "sunml_arkode_spils_get_num_lin_rhs_evals"
 
     let get_num_lin_rhs_evals s =
       ls_check_spils s;
@@ -1087,7 +1087,7 @@ module ARKStep = struct (* {{{ *)
           | _ -> ()
 
       external get_work_space : 'k serial_session -> int * int
-          = "sunml_arkode_ark_get_mass_work_space"
+          = "sunml_arkode_dls_get_mass_work_space"
 
       let get_work_space s =
         mass_check_direct s;
@@ -1325,7 +1325,7 @@ module ARKStep = struct (* {{{ *)
         get_num_mass_mult s
 
       external get_work_space         : ('a, 'k) session -> int * int
-          = "sunml_arkode_ark_get_mass_work_space"
+          = "sunml_arkode_spils_get_mass_work_space"
 
       let get_work_space s =
         mass_check_spils s;
@@ -2413,21 +2413,6 @@ module MRIStep = struct (* {{{ *)
     if Sundials_configuration.safe then s.checkvec y;
     fun t k -> c_get_dky s t k y
 
-  (* Synchronized with arkode_timestepper_stats_index in arkode_ml.h *)
-  type timestepper_stats = {
-      exp_steps           : int;
-      acc_steps           : int;
-      step_attempts       : int;
-      num_nf_evals        : int;
-      num_err_test_fails  : int;
-    }
-
-  external get_timestepper_stats : ('a, 'k) session -> timestepper_stats
-      = "sunml_arkode_mri_get_timestepper_stats"
-
-  external get_step_stats : ('a, 'k) session -> step_stats
-      = "sunml_arkode_mri_get_step_stats"
-
   external get_work_space         : ('a, 'k) session -> int * int
       = "sunml_arkode_mri_get_work_space"
 
@@ -2460,18 +2445,6 @@ module MRIStep = struct (* {{{ *)
 
   external get_current_time       : ('a, 'k) session -> float
       = "sunml_arkode_mri_get_current_time"
-
-  let print_timestepper_stats s oc =
-    let stats = get_timestepper_stats s
-    in
-    Printf.fprintf oc "exp_steps = %d\n"           stats.exp_steps;
-    Printf.fprintf oc "acc_steps = %d\n"           stats.acc_steps;
-    Printf.fprintf oc "step_attempts = %d\n"       stats.step_attempts;
-    Printf.fprintf oc "num_nf_evals = %d\n"        stats.num_nf_evals;
-    Printf.fprintf oc "num_err_test_fails = %d\n"  stats.num_err_test_fails
-
-  let print_step_stats s oc =
-    print_step_stats oc (get_step_stats s)
 
   external set_diagnostics : ('a, 'k) session -> Logfile.t -> unit
       = "sunml_arkode_mri_set_diagnostics"
@@ -2518,16 +2491,6 @@ module MRIStep = struct (* {{{ *)
     c_set_table_nums s (ButcherTable.int_of_erk_table slow)
                        (ButcherTable.int_of_erk_table fast)
 
-  external c_set_adaptivity_method
-      : ('d, 'k) session -> 'd adaptivity_method -> unit
-      = "sunml_arkode_mri_set_adaptivity_method"
-
-  let set_adaptivity_method s am =
-    (match am with
-     | AdaptivityFn fn -> s.adaptfn <- fn
-     | _ -> s.adaptfn <- dummy_adaptfn);
-    c_set_adaptivity_method s am
-
   external set_defaults           : ('a, 'k) session -> unit
       = "sunml_arkode_mri_set_defaults"
   external set_dense_order        : ('a, 'k) session -> int -> unit
@@ -2569,22 +2532,6 @@ module MRIStep = struct (* {{{ *)
 
   external get_tol_scale_factor           : ('a, 'k) session -> float
       = "sunml_arkode_mri_get_tol_scale_factor"
-
-  external c_get_err_weights
-      : ('a, 'k) session -> ('a, 'k) nvector -> unit
-      = "sunml_arkode_mri_get_err_weights"
-
-  let get_err_weights s ew =
-    if Sundials_configuration.safe then s.checkvec ew;
-    c_get_err_weights s ew
-
-  external c_get_est_local_errors
-      : ('a, 'k) session -> ('a, 'k) nvector -> unit
-      = "sunml_arkode_mri_get_est_local_errors"
-
-  let get_est_local_errors s ew =
-    if Sundials_configuration.safe then s.checkvec ew;
-    c_get_est_local_errors s ew
 
   external get_num_g_evals                : ('a, 'k) session -> int
       = "sunml_arkode_mri_get_num_g_evals"
