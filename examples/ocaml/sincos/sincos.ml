@@ -30,7 +30,7 @@ let g t y gout =
 let y = Sundials.RealArray.of_array [| 0.0; 0.0; 0.0 |]
 let y_nvec= Nvector_serial.wrap y
 
-let s = Cvode.init Cvode.Adams Cvode.Functional Cvode.default_tolerances
+let s = Cvode.init Cvode.Adams Cvode.default_tolerances
                    f 0.0 ~roots:(2, g) y_nvec
 let rootdata = Sundials.Roots.create 2
 

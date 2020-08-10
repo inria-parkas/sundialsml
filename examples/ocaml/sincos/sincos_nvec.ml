@@ -11,7 +11,7 @@ let g t y gout =
 let y = [| 0.0; 0.0; 0.0 |]
 let y_nvec = Nvector_array.wrap y
 
-let s = Cvode.init Cvode.Adams Cvode.Functional Cvode.default_tolerances
+let s = Cvode.init Cvode.Adams Cvode.default_tolerances
                    f ~roots:(2, g) 0.0 y_nvec
 let rootdata = Sundials.Roots.create 2
 

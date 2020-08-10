@@ -431,7 +431,7 @@ let main () =
     if !use_analytical_jac then Ida.Dls.solver ~jac:jac dense_solver
     else Ida.Dls.solver dense_solver
   in
-  let ida = Ida.init solver (Ida.SStolerances (1e-9, 1e-9)) residual
+  let ida = Ida.init (Ida.SStolerances (1e-9, 1e-9)) ~lsolver:solver residual
                      ~roots:(1, roots) 0. nv_vars nv_vars'
   in
   Ida.set_all_root_directions ida RootDirs.Decreasing;

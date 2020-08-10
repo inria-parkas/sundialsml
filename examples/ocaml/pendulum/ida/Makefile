@@ -2,7 +2,8 @@ include ../../../../config
 
 SRCROOT = ../../../../src
 
-all: pendulum.byte pendulum.opt simplependulum.byte simplependulum.opt
+all: $(if $(OCAML_GRAPHICS_PATH),pendulum.byte pendulum.opt \
+				 simplependulum.byte simplependulum.opt)
 
 test-pendulum: pendulum.opt simplependulum.opt
 	./$< $(PARAMS)
@@ -10,24 +11,28 @@ test-pendulum: pendulum.opt simplependulum.opt
 pendulum.byte: showpendulum.ml pendulum.ml
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ -dllpath $(SRCROOT) $(INCLUDES) \
 	    -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) \
+	    -I "$(OCAML_GRAPHICS_PATH)" \
 	    unix.cma bigarray.cma graphics.cma sundials.cma \
 	    showpendulum.ml pendulum.ml
 
 pendulum.opt: showpendulum.cmx pendulum.ml
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
 	    $(INCLUDES) -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) \
+	    -I "$(OCAML_GRAPHICS_PATH)" \
 	    unix.cmxa bigarray.cmxa graphics.cmxa sundials.cmxa \
 	    showpendulum.ml pendulum.ml
 
 simplependulum.byte: showpendulum.ml simplependulum.ml
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ -dllpath $(SRCROOT) $(INCLUDES) \
 	    -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) \
+	    -I "$(OCAML_GRAPHICS_PATH)" \
 	    unix.cma bigarray.cma graphics.cma sundials.cma \
 	    showpendulum.ml simplependulum.ml
 
 simplependulum.opt: showpendulum.cmx simplependulum.ml
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
 	    $(INCLUDES) -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) \
+	    -I "$(OCAML_GRAPHICS_PATH)" \
 	    unix.cmxa bigarray.cmxa graphics.cmxa sundials.cmxa \
 	    showpendulum.ml simplependulum.ml
 

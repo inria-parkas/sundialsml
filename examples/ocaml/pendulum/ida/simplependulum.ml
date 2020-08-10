@@ -161,8 +161,8 @@ let main () =
   let var_types = Nvector.wrap (RealArray.of_list [ d; d; d; d; a ]) in
   let nv_vars, nv_vars' = Nvector.(wrap vars, wrap vars') in
 
-  let s = Ida.(init Dls.(solver ~jac (dense nv_vars (Matrix.dense 5)))
-                    (SStolerances (1e-9, 1e-9))
+  let s = Ida.(init (SStolerances (1e-9, 1e-9))
+                    ~lsolver:Dls.(solver ~jac (dense nv_vars (Matrix.dense 5)))
                     residual ~roots:(1, roots) 0. nv_vars nv_vars')
   in
   Ida.set_id s var_types;

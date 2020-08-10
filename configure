@@ -154,6 +154,7 @@ do
 	  MPI_LIBRARY_DIR       Path to include for MPI libraries (optional)
 	  MATHJAX               Local or remote directory containing MathJax.js
 	                        (e.g., MATHJAX=/usr/share/javascript/mathjax)
+	  OCAML_GRAPHICS	Path to OCaml graphics library (for some examples)
 
 	Set these options by passing arguments of the form FOO=value to help
 	configure find libraries and programs with nonstandard names/locations.
@@ -212,6 +213,8 @@ END_HELP_TEXT
 	MPI_LIBRARY_DIR="${value}";;
     MATHJAX)
 	MATHJAX="${value}";;
+    OCAML_GRAPHICS)
+	OCAML_GRAPHICS="${value%/}";;
     *)
 	printf "illegal option \"%s\".\n" "$option" 1>&2; exit 2;;
     esac
@@ -1283,6 +1286,22 @@ else
     fi
 fi
 
+# OCaml Graphics
+# Check for the optional OCaml graphics library
+if [ "x$OCAML_GRAPHICS" != x ] && [ ! -f "$OCAML_GRAPHICS/graphics.cma" ]; then
+    warning="${warning}\n\tYour OCAML_GRAPHICS path does not contain graphics.cma."
+    warning="${warning}\n\tThe result of ocamlfind will be used instead."
+fi
+
+if [ "x$OCAML_GRAPHICS" = x ] || [ ! -f "$OCAML_GRAPHICS/graphics.cma" ]; then
+    OCAML_GRAPHICS="$(ocamlfind query graphics 2> /dev/null)"
+fi
+
+if [ "x$OCAML_GRAPHICS" != x ] && [ -f "$OCAML_GRAPHICS/graphics.cma" ]; then
+    ocaml_graphics_path="$OCAML_GRAPHICS"
+else
+    ocaml_graphics_path=
+fi
 
 # Show a summary
 
@@ -1408,6 +1427,7 @@ cat ${LOG}
 	 s#@mpicc@#${mpicc}#;
 	 s#@mpirun@#${mpirun}#;
 	 s#@mathjax@#${mathjax%/}#;
+	 s#@ocaml_graphics_path@#${ocaml_graphics_path%/}#;
 	 s#@c_suppress_warnings@#${c_suppress_warnings}#;
 	 s#@XA@#${XA}#;
 	 s#@XO@#${XO}#;

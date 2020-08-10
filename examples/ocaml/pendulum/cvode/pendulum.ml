@@ -49,8 +49,7 @@ let main () =
   let y = RealArray.of_list [ pi/2. ; 0. ] in
   let nv_y = Nvector.(wrap y) in
 
-  let s = Cvode.(init Adams Functional default_tolerances
-                      rhs ~roots:(1, roots) 0.0 nv_y)
+  let s = Cvode.(init Adams default_tolerances rhs ~roots:(1, roots) 0.0 nv_y)
   in
   Cvode.set_stop_time s 10.0;
   Cvode.set_all_root_directions s Sundials.RootDirs.Increasing;

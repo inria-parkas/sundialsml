@@ -129,6 +129,8 @@ ENABLE_SHARED = @enable_shared@
 
 GNUPLOT = gnuplot
 
+OCAML_GRAPHICS_PATH = @ocaml_graphics_path@
+
 EXAMPLESROOT = @EXAMPLESROOT@
 
 SUBDIRS = sundials nvectors lsolvers cvode cvodes ida idas \
