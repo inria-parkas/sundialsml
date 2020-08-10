@@ -14,7 +14,7 @@
 (** A {{:OCAML_DOC_ROOT(Bigarray.Array1.html)} Bigarray} of integers. *)
 type t = (int, Bigarray.int_elt, Bigarray.c_layout) Bigarray.Array1.t
 
-(** [make n x] returns an array with [n] elements each set to [v]. *)
+(** [make n v] returns an array with [n] elements each set to [v]. *)
 val make  : int -> int -> t
 
 (** [create n] returns an uninitialized array with [n] elements. *)
