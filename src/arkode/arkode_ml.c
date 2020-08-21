@@ -2475,7 +2475,7 @@ CAMLprim value sunml_arkode_butcher_table_write(value vbt, value volog)
 {
     CAMLparam2(vbt, volog);
 #if 400 <= SUNDIALS_LIB_VERSION
-    FILE *vlog = (volog == Val_none) ? NULL : ML_CFILE(Some_val(vlog));
+    FILE *vlog = (volog == Val_none) ? NULL : ML_CFILE(Some_val(volog));
 
     ARKodeButcherTable bt = butcher_table_val(vbt);
     ARKodeButcherTable_Write(bt, vlog);
