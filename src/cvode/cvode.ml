@@ -313,7 +313,7 @@ module Dls = struct (* {{{ *)
       = "sunml_cvode_dls_get_work_space"
 
   let get_work_space s =
-    ls_check_direct s;
+    if in_compat_mode2_3 then ls_check_direct s;
     get_work_space s
 
   external c_get_num_jac_evals : 'k serial_session -> int
@@ -336,7 +336,7 @@ module Dls = struct (* {{{ *)
     | _ -> c_get_num_jac_evals s
 
   let get_num_jac_evals s =
-    ls_check_direct s;
+    if in_compat_mode2_3 then ls_check_direct s;
     if in_compat_mode2 then compat_get_num_jac_evals s else
     c_get_num_jac_evals s
 
@@ -344,7 +344,7 @@ module Dls = struct (* {{{ *)
       = "sunml_cvode_dls_get_num_lin_rhs_evals"
 
   let get_num_lin_rhs_evals s =
-    ls_check_direct s;
+    if in_compat_mode2_3 then ls_check_direct s;
     c_get_num_lin_rhs_evals s
 
 end (* }}} *)
@@ -508,70 +508,70 @@ module Spils = struct (* {{{ *)
       = "sunml_cvode_set_max_steps_between_jac"
 
   let set_max_steps_between_jac s maxsteps =
-    ls_check_spils s;
+    if in_compat_mode2_3 then ls_check_spils s;
     set_max_steps_between_jac s maxsteps
 
   external set_eps_lin            : ('a, 'k) session -> float -> unit
       = "sunml_cvode_set_eps_lin"
 
   let set_eps_lin s epsl =
-    ls_check_spils s;
+    if in_compat_mode2_3 then ls_check_spils s;
     set_eps_lin s epsl
 
   external get_num_lin_iters      : ('a, 'k) session -> int
       = "sunml_cvode_get_num_lin_iters"
 
   let get_num_lin_iters s =
-    ls_check_spils s;
+    if in_compat_mode2_3 then ls_check_spils s;
     get_num_lin_iters s
 
   external get_num_lin_conv_fails  : ('a, 'k) session -> int
       = "sunml_cvode_get_num_lin_conv_fails"
 
   let get_num_lin_conv_fails s =
-    ls_check_spils s;
+    if in_compat_mode2_3 then ls_check_spils s;
     get_num_lin_conv_fails s
 
   external get_work_space         : ('a, 'k) session -> int * int
       = "sunml_cvode_spils_get_work_space"
 
   let get_work_space s =
-    ls_check_spils s;
+    if in_compat_mode2_3 then ls_check_spils s;
     get_work_space s
 
   external get_num_prec_evals     : ('a, 'k) session -> int
       = "sunml_cvode_get_num_prec_evals"
 
   let get_num_prec_evals s =
-    ls_check_spils s;
+    if in_compat_mode2_3 then ls_check_spils s;
     get_num_prec_evals s
 
   external get_num_prec_solves    : ('a, 'k) session -> int
       = "sunml_cvode_get_num_prec_solves"
 
   let get_num_prec_solves s =
-    ls_check_spils s;
+    if in_compat_mode2_3 then ls_check_spils s;
     get_num_prec_solves s
 
   external get_num_jtsetup_evals   : ('a, 'k) session -> int
       = "sunml_cvode_get_num_jtsetup_evals"
 
   let get_num_jtsetup_evals s =
-    ls_check_spils s;
+    if in_compat_mode2_3 then ls_check_spils s;
     get_num_jtsetup_evals s
 
   external get_num_jtimes_evals   : ('a, 'k) session -> int
       = "sunml_cvode_get_num_jtimes_evals"
 
   let get_num_jtimes_evals s =
-    ls_check_spils s;
+    if in_compat_mode2_3 then ls_check_spils s;
     get_num_jtimes_evals s
 
   external get_num_lin_rhs_evals  : ('a, 'k) session -> int
       = "sunml_cvode_get_num_lin_rhs_evals"
 
   let get_num_lin_rhs_evals s =
-    ls_check_spils s;
+    if in_compat_mode2_3 then ls_check_spils s;
     get_num_lin_rhs_evals s
 
   module Banded = struct (* {{{ *)
@@ -765,9 +765,6 @@ let reinit session ?nlsolver ?lsolver ?roots t0 y0 =
   if Sundials_configuration.safe then session.checkvec y0;
   Dls.invalidate_callback session;
   c_reinit session t0 y0;
-  (match lsolver with
-   | None -> ()
-   | Some linsolv -> linsolv session y0);
   if in_compat_mode2_3 then
     match nlsolver with
     | None -> ()
@@ -782,6 +779,9 @@ let reinit session ?nlsolver ?lsolver ?roots t0 y0 =
         session.nls_solver <- Some nls;
         c_set_nonlinear_solver session nlcptr
     | _ -> ();
+  (match lsolver with
+   | None -> ()
+   | Some linsolv -> linsolv session y0);
   (match roots with
    | None -> ()
    | Some roots -> root_init session roots)

@@ -1324,7 +1324,7 @@ module Adjoint = struct (* {{{ *)
         = "sunml_idas_adj_set_eps_lin"
 
     let set_eps_lin bs epsl =
-      ls_check_spils (tosession bs);
+      if in_compat_mode2_3 then ls_check_spils (tosession bs);
       let parent, which = parent_and_which bs in
       set_eps_lin parent which epsl
 
@@ -1332,7 +1332,7 @@ module Adjoint = struct (* {{{ *)
         = "sunml_idas_adj_set_increment_factor"
 
     let set_increment_factor bs dqincfac =
-      ls_check_spils (tosession bs);
+      if in_compat_mode2_3 then ls_check_spils (tosession bs);
       let parent, which = parent_and_which bs in
       set_increment_factor parent which dqincfac
 

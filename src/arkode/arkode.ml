@@ -530,7 +530,7 @@ module ARKStep = struct (* {{{ *)
         = "sunml_arkode_ark_get_lin_work_space"
 
     let get_work_space s =
-      ls_check_direct s;
+      if in_compat_mode2_3 then ls_check_direct s;
       get_work_space s
 
     external c_get_num_jac_evals : 'k serial_session -> int
@@ -551,7 +551,7 @@ module ARKStep = struct (* {{{ *)
       | _ -> c_get_num_jac_evals s
 
     let get_num_jac_evals s =
-      ls_check_direct s;
+      if in_compat_mode2_3 then ls_check_direct s;
       if in_compat_mode2 then compat_get_num_jac_evals s else
       c_get_num_jac_evals s
 
@@ -559,7 +559,7 @@ module ARKStep = struct (* {{{ *)
         = "sunml_arkode_dls_get_num_lin_rhs_evals"
 
     let get_num_lin_rhs_evals s =
-      ls_check_direct s;
+      if in_compat_mode2_3 then ls_check_direct s;
       get_num_lin_rhs_evals s
 
   end (* }}} *)
@@ -614,15 +614,15 @@ module ARKStep = struct (* {{{ *)
       = "sunml_arkode_spils_set_prec_type"
 
     let old_set_maxl s maxl =
-      ls_check_spils s;
+      if in_compat_mode2_3 then ls_check_spils s;
       c_set_maxl s maxl
 
     let old_set_prec_type s t =
-      ls_check_spils s;
+      if in_compat_mode2_3 then ls_check_spils s;
       c_set_prec_type s t
 
     let old_set_gs_type s t =
-      ls_check_spils s;
+      if in_compat_mode2_3 then ls_check_spils s;
       c_set_gs_type s t
 
     external c_set_jac_times : ('a, 'k) session -> bool -> bool -> unit
@@ -745,42 +745,42 @@ module ARKStep = struct (* {{{ *)
         = "sunml_arkode_ark_set_max_steps_between_jac"
 
     let set_max_steps_between_jac s maxsteps =
-      ls_check_spils s;
+      if in_compat_mode2_3 then ls_check_spils s;
       set_max_steps_between_jac s maxsteps
 
     external set_eps_lin            : ('a, 'k) session -> float -> unit
       = "sunml_arkode_ark_set_eps_lin"
 
     let set_eps_lin s epsl =
-      ls_check_spils s;
+      if in_compat_mode2_3 then ls_check_spils s;
       set_eps_lin s epsl
 
     external get_num_lin_iters      : ('a, 'k) session -> int
       = "sunml_arkode_ark_get_num_lin_iters"
 
     let get_num_lin_iters s =
-      ls_check_spils s;
+      if in_compat_mode2_3 then ls_check_spils s;
       get_num_lin_iters s
 
     external get_num_lin_conv_fails : ('a, 'k) session -> int
       = "sunml_arkode_ark_get_num_lin_conv_fails"
 
     let get_num_lin_conv_fails s =
-      ls_check_spils s;
+      if in_compat_mode2_3 then ls_check_spils s;
       get_num_lin_conv_fails s
 
     external get_work_space         : ('a, 'k) session -> int * int
       = "sunml_arkode_spils_get_work_space"
 
     let get_work_space s =
-      ls_check_spils s;
+      if in_compat_mode2_3 then ls_check_spils s;
       get_work_space s
 
     external get_num_prec_evals     : ('a, 'k) session -> int
       = "sunml_arkode_ark_get_num_prec_evals"
 
     let get_num_prec_evals s =
-      ls_check_spils s;
+      if in_compat_mode2_3 then ls_check_spils s;
       get_num_prec_evals s
 
     external get_num_prec_solves    : ('a, 'k) session -> int

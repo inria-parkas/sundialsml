@@ -14,9 +14,15 @@ open Sundials
 include Kinsol_impl
 
 (* "Simulate" Linear Solvers in Sundials < 3.0.0 *)
-let in_compat_mode =
+let in_compat_mode2 =
   match Config.sundials_version with
   | 2,_,_ -> true
+  | _ -> false
+
+let in_compat_mode2_3 =
+  match Config.sundials_version with
+  | 2,_,_ -> true
+  | 3,_,_ -> true
   | _ -> false
 
 exception IllInput                       (* KIN_ILL_INPUT *)
@@ -227,14 +233,14 @@ module Dls = struct (* {{{ *)
   let solver ?jac ((LSD.S { LSD.rawptr; LSD.solver; LSD.matrix }) as ls)
              session nv =
     set_ls_callbacks ?jac solver matrix session;
-    if in_compat_mode then make_compat (jac <> None) solver matrix session
+    if in_compat_mode2 then make_compat (jac <> None) solver matrix session
     else c_dls_set_linear_solver session rawptr matrix (jac <> None);
     LSD.attach ls;
     session.ls_solver <- LSI.DirectSolver ls
 
   (* Sundials < 3.0.0 *)
   let invalidate_callback session =
-    if in_compat_mode then
+    if in_compat_mode2 then
       match session.ls_callbacks with
       | DlsDenseCallback ({ jmat = Some d } as cb) ->
           Matrix.Dense.invalidate d;
@@ -254,7 +260,7 @@ module Dls = struct (* {{{ *)
       = "sunml_kinsol_dls_get_work_space"
 
   let get_work_space s =
-    ls_check_direct s;
+    if in_compat_mode2_3 then ls_check_direct s;
     get_work_space s
 
   external c_get_num_jac_evals : 'k serial_session -> int
@@ -275,15 +281,15 @@ module Dls = struct (* {{{ *)
     | _ -> c_get_num_jac_evals s
 
   let get_num_jac_evals s =
-    ls_check_direct s;
-    if in_compat_mode then compat_get_num_jac_evals s else
+    if in_compat_mode2_3 then ls_check_direct s;
+    if in_compat_mode2 then compat_get_num_jac_evals s else
     c_get_num_jac_evals s
 
   external get_num_func_evals : 'k serial_session -> int
       = "sunml_kinsol_dls_get_num_func_evals"
 
   let get_num_func_evals s =
-    ls_check_direct s;
+    if in_compat_mode2_3 then ls_check_direct s;
     get_num_func_evals s
 end (* }}} *)
 
@@ -344,7 +350,7 @@ module Spils = struct (* {{{ *)
            LSI.Iterative.solver;
            LSI.Iterative.compat; } as ls)
         ?jac_times_vec (prec_type, set_prec) session nv =
-    if in_compat_mode then begin
+    if in_compat_mode2 then begin
       let open LSI.Iterative in
       (match (solver : ('nd, 'nk, s) solver) with
        | Spgmr ->
@@ -409,49 +415,49 @@ module Spils = struct (* {{{ *)
       = "sunml_kinsol_spils_get_work_space"
 
   let get_work_space s =
-    ls_check_spils s;
+    if in_compat_mode2_3 then ls_check_spils s;
     get_work_space s
 
   external get_num_lin_iters    : ('a, 'k) session -> int
       = "sunml_kinsol_get_num_lin_iters"
 
   let get_num_lin_iters s =
-    ls_check_spils s;
+    if in_compat_mode2_3 then ls_check_spils s;
     get_num_lin_iters s
 
   external get_num_lin_conv_fails   : ('a, 'k) session -> int
       = "sunml_kinsol_get_num_lin_conv_fails"
 
   let get_num_lin_conv_fails s =
-    ls_check_spils s;
+    if in_compat_mode2_3 then ls_check_spils s;
     get_num_lin_conv_fails s
 
   external get_num_prec_evals   : ('a, 'k) session -> int
       = "sunml_kinsol_get_num_prec_evals"
 
   let get_num_prec_evals s =
-    ls_check_spils s;
+    if in_compat_mode2_3 then ls_check_spils s;
     get_num_prec_evals s
 
   external get_num_prec_solves  : ('a, 'k) session -> int
       = "sunml_kinsol_get_num_prec_solves"
 
   let get_num_prec_solves s =
-    ls_check_spils s;
+    if in_compat_mode2_3 then ls_check_spils s;
     get_num_prec_solves s
 
   external get_num_jtimes_evals : ('a, 'k) session -> int
       = "sunml_kinsol_get_num_jtimes_evals"
 
   let get_num_jtimes_evals s =
-    ls_check_spils s;
+    if in_compat_mode2_3 then ls_check_spils s;
     get_num_jtimes_evals s
 
   external get_num_func_evals    : ('a, 'k) session -> int
       = "sunml_kinsol_spils_get_num_func_evals"
 
   let get_num_func_evals s =
-    ls_check_spils s;
+    if in_compat_mode2_3 then ls_check_spils s;
     get_num_func_evals s
 end (* }}} *)
 

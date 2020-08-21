@@ -1286,7 +1286,7 @@ module Adjoint = struct (* {{{ *)
 
     let set_eps_lin bs epsl =
       let parent, which = parent_and_which bs in
-      ls_check_spils (tosession bs);
+      if in_compat_mode2_3 then ls_check_spils (tosession bs);
       set_eps_lin parent which epsl
 
     let set_max_steps_between_jac bs =

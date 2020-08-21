@@ -304,7 +304,7 @@ module Dls = struct (* {{{ *)
       = "sunml_ida_dls_get_work_space"
 
   let get_work_space s =
-    ls_check_direct s;
+    if in_compat_mode2_3 then ls_check_direct s;
     get_work_space s
 
   external c_get_num_jac_evals : 'k serial_session -> int
@@ -325,7 +325,7 @@ module Dls = struct (* {{{ *)
     | _ -> c_get_num_jac_evals s
 
   let get_num_jac_evals s =
-    ls_check_direct s;
+    if in_compat_mode2_3 then ls_check_direct s;
     if in_compat_mode2 then compat_get_num_jac_evals s else
     c_get_num_jac_evals s
 
@@ -333,7 +333,7 @@ module Dls = struct (* {{{ *)
       = "sunml_ida_dls_get_num_lin_res_evals"
 
   let get_num_lin_res_evals s =
-    ls_check_direct s;
+    if in_compat_mode2_3 then ls_check_direct s;
     get_num_lin_res_evals s
 end (* }}} *)
 
@@ -491,70 +491,70 @@ module Spils = struct (* {{{ *)
       = "sunml_ida_set_eps_lin"
 
   let set_eps_lin s epsl =
-    ls_check_spils s;
+    if in_compat_mode2_3 then ls_check_spils s;
     set_eps_lin s epsl
 
   external set_increment_factor   : ('a, 'k) session -> float -> unit
       = "sunml_ida_set_increment_factor"
 
   let set_increment_factor s dqincfac =
-    ls_check_spils s;
+    if in_compat_mode2_3 then ls_check_spils s;
     set_increment_factor s dqincfac
 
   external get_num_lin_iters      : ('a, 'k) session -> int
       = "sunml_ida_get_num_lin_iters"
 
   let get_num_lin_iters s =
-    ls_check_spils s;
+    if in_compat_mode2_3 then ls_check_spils s;
     get_num_lin_iters s
 
   external get_num_lin_conv_fails     : ('a, 'k) session -> int
       = "sunml_ida_get_num_lin_conv_fails"
 
   let get_num_lin_conv_fails s =
-    ls_check_spils s;
+    if in_compat_mode2_3 then ls_check_spils s;
     get_num_lin_conv_fails s
 
   external get_work_space         : ('a, 'k) session -> int * int
       = "sunml_ida_spils_get_work_space"
 
   let get_work_space s =
-    ls_check_spils s;
+    if in_compat_mode2_3 then ls_check_spils s;
     get_work_space s
 
   external get_num_prec_evals     : ('a, 'k) session -> int
       = "sunml_ida_get_num_prec_evals"
 
   let get_num_prec_evals s =
-    ls_check_spils s;
+    if in_compat_mode2_3 then ls_check_spils s;
     get_num_prec_evals s
 
   external get_num_prec_solves    : ('a, 'k) session -> int
       = "sunml_ida_get_num_prec_solves"
 
   let get_num_prec_solves s =
-    ls_check_spils s;
+    if in_compat_mode2_3 then ls_check_spils s;
     get_num_prec_solves s
 
   external get_num_jtsetup_evals   : ('a, 'k) session -> int
       = "sunml_ida_get_num_jtsetup_evals"
 
   let get_num_jtsetup_evals s =
-    ls_check_spils s;
+    if in_compat_mode2_3 then ls_check_spils s;
     get_num_jtsetup_evals s
 
   external get_num_jtimes_evals   : ('a, 'k) session -> int
       = "sunml_ida_get_num_jtimes_evals"
 
   let get_num_jtimes_evals s =
-    ls_check_spils s;
+    if in_compat_mode2_3 then ls_check_spils s;
     get_num_jtimes_evals s
 
   external get_num_lin_res_evals      : ('a, 'k) session -> int
       = "sunml_ida_spils_get_num_lin_res_evals"
 
   let get_num_lin_res_evals s =
-    ls_check_spils s;
+    if in_compat_mode2_3 then ls_check_spils s;
     get_num_lin_res_evals s
 
 end (* }}} *)
