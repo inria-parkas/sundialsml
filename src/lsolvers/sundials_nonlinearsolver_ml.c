@@ -777,7 +777,7 @@ static value rewrap_nlsolver(SUNNonlinearSolver nls0, value vcallbacks)
 
     nls = (SUNNonlinearSolver)malloc(sizeof(struct sunml_nls));
     if (nls == NULL) {
-	SUNNonlinSolFree_Newton(nls0);
+	SUNNonlinSolFree(nls0);
 	caml_raise_out_of_memory();
     }
 
