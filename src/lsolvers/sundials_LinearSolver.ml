@@ -218,12 +218,12 @@ module Direct = struct (* {{{ *)
 
         setup : 'lsolver -> 'matrix -> unit;
 
-        solve : 'lsolver -> 'matrix -> 'data -> 'data -> unit;
+        solve : 'lsolver -> 'matrix -> 'data -> 'data -> float -> unit;
 
-        get_work_space : ('lsolver -> int * int) option;
+        space : ('lsolver -> int * int) option;
       }
 
-    let make { init = fi; setup = fs0; solve = fs; get_work_space = fgws}
+    let make { init = fi; setup = fs0; solve = fs; space = fgws}
              ldata mat =
       (match Config.sundials_version with
        | 2,_,_ -> raise Config.NotImplementedBySundialsVersion;
@@ -231,7 +231,7 @@ module Direct = struct (* {{{ *)
       let ops = LSI.Custom.({
                   init = (fun () -> fi ldata);
                   setup = fs0 ldata;
-                  solve = (fun a x b tol -> fs ldata a x b);
+                  solve = fs ldata;
                   set_atimes = (fun _ ->
                     failwith "internal error: Direct.Custom.set_atimes");
                   set_preconditioner = (fun _ _ ->

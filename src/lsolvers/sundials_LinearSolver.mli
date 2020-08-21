@@ -236,11 +236,11 @@ module Direct : sig (* {{{ *)
         setup : 'lsolver -> 'matrix -> unit;
         (** Performs linear solver setup based on an updated matrix. *)
 
-        solve : 'lsolver -> 'matrix -> 'data -> 'data -> unit;
-        (** The call [solve ls A x b] should solve the linear system
-        {% $Ax = b$ %}. *)
+        solve : 'lsolver -> 'matrix -> 'data -> 'data -> float -> unit;
+        (** The call [solve ls A x b tols] should solve the linear system
+        {% $Ax = b$ %} to the requested tolerance. *)
 
-        get_work_space : ('lsolver -> int * int) option;
+        space : ('lsolver -> int * int) option;
         (** Return the storage requirements for the linear solver.
         The result [(lrw, liw)] gives the number of words used for
         storing real values ([lrw]) and the number of words used
