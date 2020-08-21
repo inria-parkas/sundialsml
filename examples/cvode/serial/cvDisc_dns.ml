@@ -23,15 +23,6 @@ open Sundials
 
 let printf = Printf.printf
 
-(* XXX
-#include <cvode/cvode.h>               /* prototypes for CVODE functions and const */
-#include <cvode/cvode_direct.h>        /* access to CVDls interface                */
-#include <nvector/nvector_serial.h>    /* access to serial NVector                 */
-#include <sunmatrix/sunmatrix_dense.h> /* access to dense SUNMatrix                */
-#include <sunlinsol/sunlinsol_dense.h> /* access to dense SUNLinearSolver          */
-#include <sundials/sundials_types.h>   /* defs. of realtype, sunindextype          */
-*)
-
 (* Problem Constants *)
 let neq = 1 (* number of equations *)
 type flag = RHS1 | RHS2
@@ -59,15 +50,6 @@ let solve cvode_mem ynv y t_stop =
   go
 
 let main () =
-(* XXX
-  void *cvode_mem;
-  SUNMatrix A;
-  SUNLinearSolver LS;
-  N_Vector y;
-  int flag, ret;
-  realtype reltol, abstol, t0, t1, t2, t;
-  long int nst1, nst2, nst;
-*)
   let reltol = 1.0e-3 in
   let abstol = 1.0e-4 in
   let t0 = 0.0 in
@@ -99,7 +81,7 @@ let main () =
   (* Create dense linear solver for use by CVode *)
   (* Attach the linear solver and matrix to CVode by calling CVDlsSetLinearSolver *)
   let cvode_mem = Cvode.(init
-    BDF (Newton Dls.(solver (dense ynv a)))
+    BDF ~lsolver:Dls.(solver (dense ynv a))
     (SStolerances (reltol, abstol))
     (f flag) t0 ynv)
   in

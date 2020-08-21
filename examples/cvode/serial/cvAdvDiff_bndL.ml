@@ -223,7 +223,7 @@ let main () =
   (* Set the user-supplied Jacobian routine Jac *)
   let mjac = Matrix.(band ~smu:(2*my) ~mu:my neq) in
   let cvode_mem = Cvode.(init BDF
-              (Newton Dls.(solver ~jac:(jac data) (lapack_band u mjac)))
+              ~lsolver:Dls.(solver ~jac:(jac data) (lapack_band u mjac))
               (SStolerances (reltol, abstol))
               (f data) t0 u)
   in

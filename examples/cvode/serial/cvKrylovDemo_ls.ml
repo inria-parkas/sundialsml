@@ -236,8 +236,8 @@ let print_final_stats s linsolver =
   and nli   = Spils.get_num_lin_iters s
   and npe   = Spils.get_num_prec_evals s
   and nps   = Spils.get_num_prec_solves s
-  and ncfl  = Spils.get_num_conv_fails s
-  and nfeLS = Spils.get_num_rhs_evals s
+  and ncfl  = Spils.get_num_lin_conv_fails s
+  and nfeLS = Spils.get_num_lin_rhs_evals s
   in
   printf "\nFinal Statistics.. \n\n";
   printf "lenrw   = %5d     leniw   = %5d\n"   lenrw leniw;
@@ -465,7 +465,7 @@ let main () =
    * user's right hand side function in u'=f(t,u), the inital time T0, and
    * the initial dependent variable vector u. *)
   let cvode_mem =
-    Cvode.(init BDF Functional (SStolerances (reltol, abstol)) (f data) t0 u)
+    Cvode.(init BDF (SStolerances (reltol, abstol)) (f data) t0 u)
   in
 
   (* START: Loop through SPGMR, SPBCG and SPTFQMR linear solver modules *)
@@ -499,9 +499,8 @@ let main () =
            setup and solve routines Precond and PSolve, and the pointer
            to the user-defined block data *)
         Cvode.(reinit cvode_mem t0 u
-          ~iter:(Newton
-               Spils.(solver (spgmr ~gs_type:ModifiedGS u)
-                             (prec_left ~setup:(precond data) (psolve data)))));
+          ~lsolver:Spils.(solver (spgmr ~gs_type:ModifiedGS u)
+                                 (prec_left ~setup:(precond data) (psolve data))));
       end
 
     (* (b) SPBCG *)
@@ -518,9 +517,8 @@ let main () =
         (* Call CVSpbcg to specify the linear solver CVSPBCG
            with left preconditioning and the maximum Krylov dimension maxl *)
         Cvode.(reinit cvode_mem t0 u
-          ~iter:(Newton
-               Spils.(solver (spbcgs u)
-                             (prec_left ~setup:(precond data) (psolve data)))));
+          ~lsolver:Spils.(solver (spbcgs u)
+                                 (prec_left ~setup:(precond data) (psolve data))));
       end
 
     (* (c) SPTFQMR *)
@@ -533,9 +531,8 @@ let main () =
         (* Call CVSptfqmr to specify the linear solver CVSPTFQMR
            with left preconditioning and the maximum Krylov dimension maxl *)
         Cvode.(reinit cvode_mem t0 u
-          ~iter:(Newton
-               Spils.(solver (sptfqmr u)
-                             (prec_left ~setup:(precond data) (psolve data)))))
+          ~lsolver:Spils.(solver (sptfqmr u)
+                                 (prec_left ~setup:(precond data) (psolve data))))
       end);
 
     (* In loop over output points, call CVode, print results, test for error *)

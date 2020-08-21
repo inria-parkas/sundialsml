@@ -102,7 +102,7 @@ let print_final_stats s =
   and nni     = get_num_nonlin_solv_iters s
   and ncfn    = get_num_nonlin_solv_conv_fails s
   and nje     = Dls.get_num_jac_evals s
-  and nfeLS   = Dls.get_num_rhs_evals s
+  and nfeLS   = Dls.get_num_lin_rhs_evals s
   and nge     = get_num_g_evals s
   in
   printf "\nFinal Statistics:\n";
@@ -136,7 +136,7 @@ let main () =
   (* Set the Jacobian routine to Jac (user-supplied) *)
   let m = Matrix.dense neq in
   let cvode_mem =
-    Cvode.(init BDF (Newton Dls.(solver ~jac:jac (dense y m)))
+    Cvode.(init BDF ~lsolver:Dls.(solver ~jac (dense y m))
                 (WFtolerances ewt) f ~roots:(nroots, g) t0 y)
   in
 

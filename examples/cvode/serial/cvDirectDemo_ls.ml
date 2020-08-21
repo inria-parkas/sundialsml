@@ -58,6 +58,12 @@
 
 open Sundials
 
+let compat2_3 =
+  match Config.sundials_version with
+  | 2,_,_ -> true
+  | 3,_,_ -> true
+  | _ -> false
+
 let unwrap = Nvector.unwrap
 
 let printf = Printf.printf
@@ -161,7 +167,7 @@ let prepare_next_run cvode_mem lmm miter neq mu ml t y =
 
   (* Func comes first and is set via init; for all other cases, reinit.  *)
   if miter = Func
-  then printf "FUNCTIONAL\n"
+  then printf (if compat2_3 then "FUNCTIONAL\n" else "FIXEDPOINT\n")
   else begin
     printf "NEWTON\n";
     printf "Linear Solver           : ";
@@ -170,36 +176,40 @@ let prepare_next_run cvode_mem lmm miter neq mu ml t y =
     | Dense_User -> begin
           printf "Dense, User-Supplied Jacobian\n";
           let dmat = Matrix.dense neq in
-          let solver = Cvode.Dls.(solver ~jac:jac1 (dense y dmat))
-          in
-          Cvode.(reinit cvode_mem t y ~iter:(Newton solver))
+          let nlsolver = NonlinearSolver.Newton.make y in
+          let lsolver = Cvode.Dls.(solver ~jac:jac1 (dense y dmat)) in
+          Cvode.(reinit cvode_mem t y ~nlsolver ~lsolver)
         end
 
     | Dense_DQ -> begin
           printf("Dense, Difference Quotient Jacobian\n");
           let dmat = Matrix.dense neq in
-          let solver = Cvode.Dls.(solver (dense y dmat)) in
-          Cvode.(reinit cvode_mem t y ~iter:(Newton solver))
+          let nlsolver = NonlinearSolver.Newton.make y in
+          let lsolver = Cvode.Dls.(solver (dense y dmat)) in
+          Cvode.(reinit cvode_mem t y ~nlsolver ~lsolver)
         end
 
     | Diag -> begin
           printf("Diagonal Jacobian\n");
-          Cvode.(reinit cvode_mem t y ~iter:(Newton Diag.solver))
+          let nlsolver = NonlinearSolver.Newton.make y in
+          Cvode.(reinit cvode_mem t y ~nlsolver ~lsolver:Diag.solver)
         end
 
     | Band_User -> begin
           printf("Band, User-Supplied Jacobian\n");
           let bmat = Matrix.band ~smu:(mu+ml) ~mu:mu ~ml:ml neq in
-          let solver = Cvode.Dls.(solver ~jac:jac2 (band y bmat))
+          let nlsolver = NonlinearSolver.Newton.make y in
+          let lsolver = Cvode.Dls.(solver ~jac:jac2 (band y bmat))
           in
-          Cvode.(reinit cvode_mem t y ~iter:(Newton solver))
+          Cvode.(reinit cvode_mem t y ~nlsolver ~lsolver)
         end
 
     | Band_DQ -> begin
           printf("Band, Difference Quotient Jacobian\n");
           let bmat = Matrix.band ~smu:(mu+ml) ~mu:mu ~ml:ml neq in
-          let solver = Cvode.Dls.(solver (band y bmat)) in
-          Cvode.(reinit cvode_mem t y ~iter:(Newton solver))
+          let nlsolver = NonlinearSolver.Newton.make y in
+          let lsolver = Cvode.Dls.(solver (band y bmat)) in
+          Cvode.(reinit cvode_mem t y ~nlsolver ~lsolver)
         end
 
     | Func -> assert false
@@ -229,14 +239,14 @@ let print_final_stats cvode_mem miter ero =
     let nje, nfeLS, (lenrwLS, leniwLS) =
       match miter with
       | Dense_User | Dense_DQ ->
-          Dls.get_num_jac_evals cvode_mem,
-          Dls.get_num_rhs_evals cvode_mem,
-          Dls.get_work_space    cvode_mem
+          Dls.get_num_jac_evals     cvode_mem,
+          Dls.get_num_lin_rhs_evals cvode_mem,
+          Dls.get_work_space        cvode_mem
 
       | Band_User | Band_DQ ->
-          Dls.get_num_jac_evals cvode_mem,
-          Dls.get_num_rhs_evals cvode_mem,
-          Dls.get_work_space    cvode_mem
+          Dls.get_num_jac_evals     cvode_mem,
+          Dls.get_num_lin_rhs_evals cvode_mem,
+          Dls.get_work_space        cvode_mem
 
       | Diag ->
           nsetups,
@@ -299,6 +309,7 @@ let problem1 () =
       if miter <> Func then init_y ();
 
       prepare_next_run cvode_mem lmm miter p1_neq 0 0 p1_t0 y;
+      flush stdout;
 
       print_header1 ();
 
@@ -337,7 +348,8 @@ let problem1 () =
 
   let run_tests lmm =
     init_y ();
-    let cvode_mem = Cvode.(init lmm Functional
+    let cvode_mem = Cvode.(init lmm
+                                ~nlsolver:(NonlinearSolver.FixedPoint.make y 0)
                                 (SStolerances (rtol, atol)) f1 p1_t0 y)
     in
     List.iter (run cvode_mem lmm) [ Func; Dense_User; Dense_DQ; Diag]
@@ -458,7 +470,8 @@ let problem2 () =
 
   let run_tests lmm =
     init_y ();
-    let cvode_mem = Cvode.(init lmm Functional
+    let cvode_mem = Cvode.(init lmm
+                                ~nlsolver:(NonlinearSolver.FixedPoint.make y 0)
                                 (SStolerances (rtol, atol)) f2 p2_t0 y)
     in
     List.iter (run cvode_mem lmm) [ Func; Diag; Band_User; Band_DQ]

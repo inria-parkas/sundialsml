@@ -144,7 +144,7 @@ let main () =
   (* Set the Jacobian routine to Jac (user-supplied) *)
   let m = Matrix.sparse_csc ~nnz neq in
   let cvode_mem =
-    Cvode.(init BDF (Newton Dls.(solver ~jac (klu y m)))
+    Cvode.(init BDF ~lsolver:Dls.(solver ~jac (klu y m))
                 (SVtolerances (rtol, (Nvector_serial.wrap abstol))) f
                 ~roots:(nroots, g) t0 y)
   in

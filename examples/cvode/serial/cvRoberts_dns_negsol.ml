@@ -74,7 +74,7 @@ let print_final_stats s =
   and nni     = get_num_nonlin_solv_iters s
   and ncfn    = get_num_nonlin_solv_conv_fails s
   and nje     = Dls.get_num_jac_evals s
-  and nfeLS   = Dls.get_num_rhs_evals s
+  and nfeLS   = Dls.get_num_lin_rhs_evals s
   in
   printf "\nFinal Statistics:\n";
   printf "nst = %-6d nfe  = %-6d nsetups = %-6d nfeLS = %-6d nje = %d\n"
@@ -109,7 +109,7 @@ let main () =
   let m = Matrix.dense neq in
   let check_negative = ref false in
   let cvode_mem =
-    Cvode.(init BDF (Newton Dls.(solver (dense y m)))
+    Cvode.(init BDF ~lsolver:Dls.(solver (dense y m))
                 (SVtolerances (rtol, (Nvector_serial.wrap abstol)))
                 (f check_negative) t0 y)
   in

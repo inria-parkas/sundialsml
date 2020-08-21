@@ -186,7 +186,7 @@ let print_final_stats s =
   and nni     = get_num_nonlin_solv_iters s
   and ncfn    = get_num_nonlin_solv_conv_fails s
   and nje     = Dls.get_num_jac_evals s
-  and nfeLS   = Dls.get_num_rhs_evals s
+  and nfeLS   = Dls.get_num_lin_rhs_evals s
   in
   printf "\nFinal Statistics:\n";
   printf "nst = %-6d nfe  = %-6d nsetups = %-6d nfeLS = %-6d nje = %d\n"
@@ -223,9 +223,9 @@ let main () =
   (* Call CVBand to specify the CVBAND band linear solver *)
   (* Set the user-supplied Jacobian routine Jac *)
   let mjac = Matrix.(band ~mu:my ~smu:(2*my) neq) in
-  let solver = Cvode.Dls.(solver ~jac:(jac data) (band u mjac))
+  let lsolver = Cvode.Dls.(solver ~jac:(jac data) (band u mjac))
   in
-  let cvode_mem = Cvode.(init BDF (Newton solver)
+  let cvode_mem = Cvode.(init BDF ~lsolver
                              (SStolerances (reltol, abstol))
                              (f data) t0 u)
   in

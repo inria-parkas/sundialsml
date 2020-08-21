@@ -202,8 +202,8 @@ let print_final_stats s =
   and nli   = Spils.get_num_lin_iters s
   and npe   = Spils.get_num_prec_evals s
   and nps   = Spils.get_num_prec_solves s
-  and ncfl  = Spils.get_num_conv_fails s
-  and nfeLS = Spils.get_num_rhs_evals s
+  and ncfl  = Spils.get_num_lin_conv_fails s
+  and nfeLS = Spils.get_num_lin_rhs_evals s
   in
   let lenrwBP, leniwBP = Spils.Banded.get_work_space s in
   let nfeBP = Spils.Banded.get_num_rhs_evals s in
@@ -333,8 +333,8 @@ let main () =
   in
   let lsolver = Cvode.Spils.(spgmr u) in
   let cvode_mem = Cvode.(
-    init BDF (Newton Spils.(solver lsolver
-                      Banded.(prec_left { mupper = mu; mlower = ml})))
+    init BDF ~lsolver:Spils.(solver lsolver
+                        Banded.(prec_left { mupper = mu; mlower = ml}))
              (SStolerances (reltol, abstol))
              (f data) t0 u)
   in
@@ -381,9 +381,8 @@ let main () =
       Cvode.Spils.(set_prec_type lsolver PrecRight);
    | _ ->
       Cvode.reinit cvode_mem t0 u
-        ~iter:Cvode.(Newton Spils.(solver
-                             (spgmr u)
-                             (Banded.(prec_right { mupper = mu; mlower = ml}))))
+        ~lsolver:Cvode.(Spils.(solver (spgmr u)
+                                 (Banded.(prec_right { mupper = mu; mlower = ml}))))
   );
 
   printf "\n\n-------------------------------------------------------";

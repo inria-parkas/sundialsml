@@ -92,8 +92,11 @@
 
 open Sundials
 
-let new_version =
-  match Config.sundials_version with 2,_,_ -> false | _ -> true
+let compat2, compat2_3 =
+  match Config.sundials_version with
+  | 2,_,_ -> true,  true
+  | 3,_,_ -> false, true
+  | _     -> false, false
 
 module Densemat = Matrix.ArrayDense
 open Bigarray
@@ -754,10 +757,10 @@ let cinit wdata (cdata : RealArray.t) =
   done
 
 let print_intro () =
-  if new_version then
-    printf "\n\nDemonstration program for CVODE - SPGMR linear solver\n\n"
+  if compat2 then
+    printf "\n\nDemonstration program for CVODE - CVSPGMR linear solver\n\n"
   else
-    printf "\n\nDemonstration program for CVODE - CVSPGMR linear solver\n\n";
+    printf "\n\nDemonstration program for CVODE - SPGMR linear solver\n\n";
   printf "Food web problem with ns species, ns = %d\n" ns;
   printf "Predator-prey interaction and diffusion on a 2-D square\n\n";
 
@@ -827,16 +830,20 @@ let print_final_stats s =
   and nli   = Spils.get_num_lin_iters s
   and npe   = Spils.get_num_prec_evals s
   and nps   = Spils.get_num_prec_solves s
-  and ncfl  = Spils.get_num_conv_fails s
-  and nfeLS = Spils.get_num_rhs_evals s
+  and ncfl  = Spils.get_num_lin_conv_fails s
+  and nfeLS = Spils.get_num_lin_rhs_evals s
   in
-  let name = if new_version then "CVSPILS" else "CVSPGMR" in
+  let name = if compat2 then "CVSPGMR"
+             else if compat2_3 then "CVSPILS"
+             else "CVLS"
+  in
+  let space = if compat2_3 then "" else "   " in
 
   printf "\n\n Final statistics for this run:\n\n";
   printf " CVode real workspace length           = %4d \n" lenrw;
   printf " CVode integer workspace length        = %4d \n" leniw;
-  printf " %s real workspace length         = %4d \n" name lenrwLS;
-  printf " %s integer workspace length      = %4d \n" name leniwLS;
+  printf " %s real workspace length         %s= %4d \n" name space lenrwLS;
+  printf " %s integer workspace length      %s= %4d \n" name space leniwLS;
   printf " Number of steps                       = %4d \n" nst;
   printf " Number of f-s                         = %4d \n" nfe;
   printf " Number of f-s (SPGMR)                 = %4d \n" nfeLS;
@@ -871,8 +878,8 @@ let main () =
   let cvode_mem =
     Cvode.(init
         BDF
-        (Newton Spils.(solver spgmr_ls
-                         (prec_left ~setup:(precond wdata) (psolve wdata))))
+        ~lsolver:Spils.(solver spgmr_ls
+                          (prec_left ~setup:(precond wdata) (psolve wdata)))
         (SStolerances (reltol, abstol))
         (f wdata) t0 c)
   in

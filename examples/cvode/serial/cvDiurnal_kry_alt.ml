@@ -36,6 +36,12 @@
 
 open Sundials
 
+let compat2_3 =
+  match Config.sundials_version with
+  | 2,_,_ -> true
+  | 3,_,_ -> true
+  | _ -> false
+
 module Direct = Matrix.ArrayDense
 let unwrap = Nvector.unwrap
 
@@ -82,7 +88,8 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
 
   (* Adapted directly from sunlinsol_spgmr/sunlinsol_spgmr.c *)
   let solve ({ maxl = l_max; max_restarts; gstype; v; hes; givens; xcor; yg;
-               vtemp; s1; s2; atimes; psolve } as lsolver) xdata bdata delta =
+               vtemp; vtemps; s1; s2; atimes; psolve } as lsolver)
+            xdata bdata delta =
   (* {{{ *)
     let x = NV.wrap xdata in
     let b = NV.wrap bdata in
@@ -290,7 +297,9 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
   let get_workspace lsolver =
     let lrw1, liw1 = NV.Ops.n_vspace lsolver.vtemp in
     let maxl = lsolver.maxl in
-    (lrw1*(maxl + 5) + maxl*(maxl + 4) + 1, liw1*(maxl + 5))
+    ((if compat2_3 then lrw1*(maxl + 5) + maxl*(maxl + 4) + 1
+                   else lrw1*(maxl + 5) + maxl*(maxl + 5) + 2),
+     liw1*(maxl + 5))
 
   let ops =
     let open Custom in
@@ -536,8 +545,8 @@ let print_final_stats s = (* {{{ *)
   and nli   = Spils.get_num_lin_iters s
   and npe   = Spils.get_num_prec_evals s
   and nps   = Spils.get_num_prec_solves s
-  and ncfl  = Spils.get_num_conv_fails s
-  and nfeLS = Spils.get_num_rhs_evals s
+  and ncfl  = Spils.get_num_lin_conv_fails s
+  and nfeLS = Spils.get_num_lin_rhs_evals s
   in
   printf "\nFinal Statistics.. \n\n";
   printf "lenrw   = %5d     leniw   = %5d\n"   lenrw leniw;
@@ -852,9 +861,8 @@ let main () =
   let lsolver = CustomSpgmr.solver ~prec_type:PrecLeft u in
   let cvode_mem = Cvode.(
     init BDF
-      (Newton
-          Spils.(solver lsolver ~jac_times_vec:(None, jtv data)
-                      (prec_left ~setup:(precond data) (psolve data))))
+      ~lsolver:Spils.(solver lsolver ~jac_times_vec:(None, jtv data)
+                       (prec_left ~setup:(precond data) (psolve data)))
       (SStolerances (reltol, abstol))
       (f data) t0 u
   ) in
