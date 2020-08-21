@@ -1657,14 +1657,14 @@ CAMLprim value sunml_cvodes_adj_set_linear_solver (value vparent_which,
     flag = CVodeSetLinearSolverB(cvode_mem, which, lsolv, jmat);
     CHECK_FLAG ("CVodeSetLinearSolverB", flag);
 
-    if (Bool_val (vhasjac)) {
-	if (Bool_val (vusesens)) {
-	    flag = CVodeSetJacFnBS(cvode_mem, which, bjacfn_withsens);
-	    SCHECK_FLAG("CVodeSetJacFnBS", flag);
-	} else {
-	    flag = CVodeSetJacFnB(cvode_mem, which, bjacfn_nosens);
-	    SCHECK_FLAG("CVodeSetJacFnB", flag);
-	}
+    if (Bool_val (vusesens)) {
+	flag = CVodeSetJacFnBS(cvode_mem, which,
+			       Bool_val (vhasjac) ? bjacfn_withsens : NULL);
+	SCHECK_FLAG("CVodeSetJacFnBS", flag);
+    } else {
+	flag = CVodeSetJacFnB(cvode_mem, which,
+			       Bool_val (vhasjac) ? bjacfn_nosens : NULL);
+	SCHECK_FLAG("CVodeSetJacFnB", flag);
     }
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -1689,14 +1689,14 @@ CAMLprim value sunml_cvodes_adj_dls_set_linear_solver (value vparent_which,
     flag = CVDlsSetLinearSolverB(cvode_mem, which, lsolv, jmat);
     CHECK_FLAG ("CVDlsSetLinearSolverB", flag);
 
-    if (Bool_val (vhasjac)) {
-	if (Bool_val (vusesens)) {
-	    flag = CVDlsSetJacFnBS(cvode_mem, which, bjacfn_withsens);
-	    SCHECK_FLAG("CVDlsSetJacFnBS", flag);
-	} else {
-	    flag = CVDlsSetJacFnB(cvode_mem, which, bjacfn_nosens);
-	    SCHECK_FLAG("CVDlsSetJacFnB", flag);
-	}
+    if (Bool_val (vusesens)) {
+	flag = CVDlsSetJacFnBS(cvode_mem, which,
+			       Bool_val (vhasjac) ? bjacfn_withsens : NULL);
+	SCHECK_FLAG("CVDlsSetJacFnBS", flag);
+    } else {
+	flag = CVDlsSetJacFnB(cvode_mem, which,
+			      Bool_val (vhasjac) ? bjacfn_nosens : NULL);
+	SCHECK_FLAG("CVDlsSetJacFnB", flag);
     }
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));

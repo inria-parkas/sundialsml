@@ -536,10 +536,8 @@ CAMLprim value sunml_kinsol_set_linear_solver (value vkin_mem, value vlsolv,
 
     flag = KINSetLinearSolver(kin_mem, lsolv, jmat);
     CHECK_LS_FLAG ("KINSetLinearSolver", flag);
-    if (Bool_val (vhasjac)) {
-	flag = KINSetJacFn(kin_mem, jacfn);
-	CHECK_LS_FLAG("KINSetJacFn", flag);
-    }
+    flag = KINSetJacFn(kin_mem, Bool_val(vhasjac) ? jacfn : NULL);
+    CHECK_LS_FLAG("KINSetJacFn", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
@@ -558,10 +556,8 @@ CAMLprim value sunml_kinsol_dls_set_linear_solver (value vkin_mem, value vlsolv,
 
     flag = KINDlsSetLinearSolver(kin_mem, lsolv, jmat);
     CHECK_DLS_FLAG ("KINDlsSetLinearSolver", flag);
-    if (Bool_val (vhasjac)) {
-	flag = KINDlsSetJacFn(kin_mem, jacfn);
-	CHECK_DLS_FLAG("KINDlsSetJacFn", flag);
-    }
+    flag = KINDlsSetJacFn(kin_mem, Bool_val(vhasjac) ? jacfn : NULL);
+    CHECK_DLS_FLAG("KINDlsSetJacFn", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif

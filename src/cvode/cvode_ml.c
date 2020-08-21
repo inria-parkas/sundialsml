@@ -620,10 +620,8 @@ CAMLprim value sunml_cvode_set_linear_solver (value vcvode_mem, value vlsolv,
 
     flag = CVodeSetLinearSolver(cvode_mem, lsolv, jmat);
     CHECK_LS_FLAG ("CVodeSetLinearSolver", flag);
-    if (Bool_val (vhasjac)) {
-	flag = CVodeSetJacFn(cvode_mem, jacfn);
-	CHECK_LS_FLAG("CVodeSetJacFn", flag);
-    }
+    flag = CVodeSetJacFn(cvode_mem, Bool_val(vhasjac) ? jacfn : NULL);
+    CHECK_LS_FLAG("CVodeSetJacFn", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
@@ -642,10 +640,8 @@ CAMLprim value sunml_cvode_dls_set_linear_solver (value vcvode_mem, value vlsolv
 
     flag = CVDlsSetLinearSolver(cvode_mem, lsolv, jmat);
     CHECK_DLS_FLAG ("CVDlsSetLinearSolver", flag);
-    if (Bool_val (vhasjac)) {
-	flag = CVDlsSetJacFn(cvode_mem, jacfn);
-	CHECK_DLS_FLAG("CVDlsSetJacFn", flag);
-    }
+    flag = CVDlsSetJacFn(cvode_mem, Bool_val(vhasjac) ? jacfn : NULL);
+    CHECK_DLS_FLAG("CVDlsSetJacFn", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif

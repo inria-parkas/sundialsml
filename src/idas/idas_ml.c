@@ -2459,14 +2459,14 @@ CAMLprim value sunml_idas_adj_set_linear_solver (value vparent_which,
     flag = IDASetLinearSolverB(ida_mem, which, lsolv, jmat);
     CHECK_FLAG ("IDASetLinearSolverB", flag);
 
-    if (Bool_val (vhasjac)) {
-	if (Bool_val (vusesens)) {
-	    flag = IDASetJacFnBS(ida_mem, which, bjacfn_withsens);
-	    SCHECK_FLAG("IDASetJacFnBS", flag);
-	} else {
-	    flag = IDASetJacFnB(ida_mem, which, bjacfn_nosens);
-	    SCHECK_FLAG("IDASetJacFnB", flag);
-	}
+    if (Bool_val (vusesens)) {
+	flag = IDASetJacFnBS(ida_mem, which,
+			     Bool_val(vhasjac) ? bjacfn_withsens : NULL);
+	SCHECK_FLAG("IDASetJacFnBS", flag);
+    } else {
+	flag = IDASetJacFnB(ida_mem, which,
+			     Bool_val(vhasjac) ? bjacfn_nosens : NULL);
+	SCHECK_FLAG("IDASetJacFnB", flag);
     }
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -2489,14 +2489,14 @@ CAMLprim value sunml_idas_adj_dls_set_linear_solver (value vparent_which,
     flag = IDADlsSetLinearSolverB(ida_mem, which, lsolv, jmat);
     CHECK_FLAG ("IDADlsSetLinearSolverB", flag);
 
-    if (Bool_val (vhasjac)) {
-	if (Bool_val (vusesens)) {
-	    flag = IDADlsSetJacFnBS(ida_mem, which, bjacfn_withsens);
-	    SCHECK_FLAG("IDADlsSetJacFnBS", flag);
-	} else {
-	    flag = IDADlsSetJacFnB(ida_mem, which, bjacfn_nosens);
-	    SCHECK_FLAG("IDADlsSetJacFnB", flag);
-	}
+    if (Bool_val (vusesens)) {
+	flag = IDADlsSetJacFnBS(ida_mem, which,
+			        Bool_val(vhasjac) ? bjacfn_withsens : NULL);
+	SCHECK_FLAG("IDADlsSetJacFnBS", flag);
+    } else {
+	flag = IDADlsSetJacFnB(ida_mem, which,
+			       Bool_val(vhasjac) ? bjacfn_nosens : NULL);
+	SCHECK_FLAG("IDADlsSetJacFnB", flag);
     }
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));

@@ -596,10 +596,8 @@ CAMLprim value sunml_ida_set_linear_solver (value vida_mem, value vlsolv,
 
     flag = IDASetLinearSolver(ida_mem, lsolv, jmat);
     CHECK_LS_FLAG ("IDASetLinearSolver", flag);
-    if (Bool_val (vhasjac)) {
-	flag = IDASetJacFn(ida_mem, jacfn);
-	CHECK_LS_FLAG("IDASetJacFn", flag);
-    }
+    flag = IDASetJacFn(ida_mem, Bool_val(vhasjac) ? jacfn : NULL);
+    CHECK_LS_FLAG("IDASetJacFn", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
@@ -618,10 +616,8 @@ CAMLprim value sunml_ida_dls_set_linear_solver (value vida_mem, value vlsolv,
 
     flag = IDADlsSetLinearSolver(ida_mem, lsolv, jmat);
     CHECK_DLS_FLAG ("IDADlsSetLinearSolver", flag);
-    if (Bool_val (vhasjac)) {
-	flag = IDADlsSetJacFn(ida_mem, jacfn);
-	CHECK_DLS_FLAG("IDADlsSetJacFn", flag);
-    }
+    flag = IDADlsSetJacFn(ida_mem, Bool_val(vhasjac) ? jacfn : NULL);
+    CHECK_DLS_FLAG("IDADlsSetJacFn", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif

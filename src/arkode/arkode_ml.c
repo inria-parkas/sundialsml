@@ -738,10 +738,8 @@ CAMLprim value sunml_arkode_ark_set_linear_solver (value varkode_mem,
 
     flag = ARKStepSetLinearSolver(arkode_mem, lsolv, jmat);
     CHECK_LS_FLAG ("ARKStepSetLinearSolver", flag);
-    if (Bool_val (vhasjac)) {
-	flag = ARKStepSetJacFn(arkode_mem, jacfn);
-	CHECK_LS_FLAG("ARKStepSetJacFn", flag);
-    }
+    flag = ARKStepSetJacFn(arkode_mem, Bool_val(vhasjac) ? jacfn : NULL);
+    CHECK_LS_FLAG("ARKStepSetJacFn", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
@@ -760,10 +758,8 @@ CAMLprim value sunml_arkode_dls_set_linear_solver (value varkode_mem, value vlso
 
     flag = ARKDlsSetLinearSolver(arkode_mem, lsolv, jmat);
     CHECK_FLAG ("ARKDlsSetLinearSolver", flag);
-    if (Bool_val (vhasjac)) {
-	flag = ARKDlsSetJacFn(arkode_mem, jacfn);
-	CHECK_FLAG("ARKDlsSetJacFn", flag);
-    }
+    flag = ARKDlsSetJacFn(arkode_mem, Bool_val(vhasjac) ? jacfn : NULL);
+    CHECK_FLAG("ARKDlsSetJacFn", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
