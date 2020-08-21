@@ -121,16 +121,16 @@ CAMLprim value sunml_sundials_realarray2_wrap(value vba)
     CAMLlocal2(r, vtable);
 
     struct caml_ba_array *ba = Caml_ba_array_val(vba);
+    realtype *ba_data = ba->data; // ba is invalid after caml_alloc_final
     int nc = ba->dim[0];
     int nr = ba->dim[1];
 
     vtable = caml_alloc_final(nc, NULL, 1, 20);
     realtype **table = (realtype **)Data_custom_val(vtable);
 
-    int j;
-
     if (nc > 0) {
-	table[0] = (realtype *)(ba->data);
+	int j;
+	table[0] = ba_data;
 	for (j = 1; j < nc; ++j) {
 	    table[j] = table[j - 1] + nr;
 	}
