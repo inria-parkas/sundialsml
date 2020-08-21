@@ -930,10 +930,10 @@ static int callml_custom_solve(SUNLinearSolver ls, SUNMatrix A, N_Vector x,
     CAMLlocal1(r);
     CAMLlocalN(args, 4);
 
-    Store_field(args, 0, (A == NULL) ? Val_unit : MAT_BACKLINK(A));
-    Store_field(args, 1, NVEC_BACKLINK(x));
-    Store_field(args, 2, NVEC_BACKLINK(b));
-    Store_field(args, 3, caml_copy_double(tol));
+    args[0] = (A == NULL) ? Val_unit : MAT_BACKLINK(A);
+    args[1] = NVEC_BACKLINK(x);
+    args[2] = NVEC_BACKLINK(b);
+    args[3] = caml_copy_double(tol);
 
     r = caml_callbackN_exn(GET_OP(ls, SOLVE), 4, args);
 
