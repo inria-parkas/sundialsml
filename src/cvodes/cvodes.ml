@@ -1464,9 +1464,6 @@ module Adjoint = struct (* {{{ *)
     if Sundials_configuration.safe then (tosession bs).checkvec yb0;
     let parent, which = parent_and_which bs in
     c_reinit parent which tb0 yb0;
-    (match lsolver with
-     | None -> ()
-     | Some linsolv -> linsolv bs yb0);
     if in_compat_mode2_3 then begin
       match nlsolver with
       | None -> ()
@@ -1482,7 +1479,10 @@ module Adjoint = struct (* {{{ *)
           (tosession bs).nls_solver <- Some nls;
           set_nonlinear_solver bs nlcptr
       | _ -> ()
-    end
+    end;
+    (match lsolver with
+     | None -> ()
+     | Some linsolv -> linsolv bs yb0)
 
   let get_work_space bs = Cvode.get_work_space (tosession bs)
 

@@ -1547,12 +1547,6 @@ module ARKStep = struct (* {{{ *)
           session.rhsfn2 <- fe;
           Some linearity, nlsolver, lsolver
     in
-    (match lin with
-     | None -> ()
-     | Some Nonlinear -> set_nonlinear session
-     | Some (Linear timedepend) -> set_linear session timedepend);
-    (match lsolver with None -> () | Some ls -> ls session y0);
-    session.linsolver <- lsolver;
     if in_compat_mode2_3 then begin
       match nlsolver with
       | None -> ()
@@ -1570,6 +1564,12 @@ module ARKStep = struct (* {{{ *)
           c_set_nonlinear_solver session nlcptr
       | _ -> ()
     end;
+    (match lin with
+     | None -> ()
+     | Some Nonlinear -> set_nonlinear session
+     | Some (Linear timedepend) -> set_linear session timedepend);
+    (match lsolver with None -> () | Some ls -> ls session y0);
+    session.linsolver <- lsolver;
     (match mass with Some msolver -> msolver session y0 | None -> ());
     c_reinit session t0 y0;
     (match order with Some o -> c_set_order session o | None -> ());

@@ -684,9 +684,6 @@ let reinit session ?nlsolver ?lsolver ?roots t0 y0 y'0 =
      session.checkvec y'0);
   Dls.invalidate_callback session;
   c_reinit session t0 y0 y'0;
-  (match lsolver with
-   | None -> ()
-   | Some linsolv -> linsolv session y0);
   if in_compat_mode2_3 then
     match nlsolver with
     | Some nls when NLSI.(get_type nls <> RootFind) -> raise IllInput
@@ -700,6 +697,9 @@ let reinit session ?nlsolver ?lsolver ?roots t0 y0 y'0 =
         session.nls_solver <- Some nls;
         c_set_nonlinear_solver session nlcptr
     | _ -> ();
+  (match lsolver with
+   | None -> ()
+   | Some linsolv -> linsolv session y0);
   (match roots with
    | None -> ()
    | Some roots -> root_init session roots)

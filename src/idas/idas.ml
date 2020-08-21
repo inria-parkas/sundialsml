@@ -1480,9 +1480,6 @@ module Adjoint = struct (* {{{ *)
        checkvec y'b0);
     let parent, which = parent_and_which bs in
     c_reinit parent which tb0 yb0 y'b0;
-    (match lsolver with
-     | None -> ()
-     | Some linsolv -> linsolv bs yb0);
     if in_compat_mode2_3 then
       match nlsolver with
       | Some nls when NLSI.(get_type nls <> RootFind) -> raise Ida.IllInput
@@ -1495,7 +1492,10 @@ module Adjoint = struct (* {{{ *)
           NLSI.attach nls;
           (tosession bs).nls_solver <- Some nls;
           set_nonlinear_solver bs nlcptr
-      | _ -> ()
+      | _ -> ();
+    (match lsolver with
+     | None -> ()
+     | Some linsolv -> linsolv bs yb0)
 
   let get_work_space bs = Ida.get_work_space (tosession bs)
 
