@@ -29,6 +29,10 @@ Compatibility:
   becomes
     let ida = Ida.init (Ida.SStolerances (1e-9, 1e-9)) ~lsolver:solver ...
 
+* *.Dls.get_num_rhs_evals -> *.Dls.get_num_lin_rhs_evals
+* *.Spils.get_num_rhs_evals -> *.Spils.get_num_lin_rhs_evals
+* *.Spils.get_num_conv_fails -> *.Spils.get_num_lin_conv_fails
+
 Sundials/ML 3.1.1p0 (July 2018)
 ------------------------------------
 Sundials/ML v3.1.1p0 adds support for v3.1.x of the Sundials Suite of

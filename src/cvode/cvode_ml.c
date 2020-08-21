@@ -1782,8 +1782,8 @@ CAMLprim value sunml_cvode_dls_get_num_lin_rhs_evals(value vcvode_mem)
 
     long int r;
 #if 400 <= SUNDIALS_LIB_VERSION
-    int flag = CVodeGetNumRhsEvals(CVODE_MEM_FROM_ML(vcvode_mem), &r);
-    CHECK_LS_FLAG("CVodeGetNumRhsEvals", flag);
+    int flag = CVodeGetNumLinRhsEvals(CVODE_MEM_FROM_ML(vcvode_mem), &r);
+    CHECK_LS_FLAG("CVodeGetNumLinRhsEvals", flag);
 #else
     int flag = CVDlsGetNumRhsEvals(CVODE_MEM_FROM_ML(vcvode_mem), &r);
     CHECK_DLS_FLAG("CVDlsGetNumRhsEvals", flag);
