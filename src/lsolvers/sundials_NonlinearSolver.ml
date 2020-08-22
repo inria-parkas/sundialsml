@@ -296,11 +296,11 @@ module FixedPoint = struct (* {{{ *)
     : ('d, 'k, 's) cptr -> (('d, 'k) Nvector.t, 's) c_sysfn option
     = "sunml_nlsolver_fixedpoint_get_sys_fn"
 
-  let make y m =
+  let make ?(acceleration_vectors=0) y =
     let callbacks = empty_callbacks () in
     {
-      rawptr    = c_make y m callbacks;
-      solver    = FixedPointSolver m;
+      rawptr    = c_make y acceleration_vectors callbacks;
+      solver    = FixedPointSolver acceleration_vectors;
       callbacks = callbacks;
       attached  = false;
     }

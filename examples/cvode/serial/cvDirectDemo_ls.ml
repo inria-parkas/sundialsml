@@ -349,7 +349,7 @@ let problem1 () =
   let run_tests lmm =
     init_y ();
     let cvode_mem = Cvode.(init lmm
-                                ~nlsolver:(NonlinearSolver.FixedPoint.make y 0)
+                                ~nlsolver:(NonlinearSolver.FixedPoint.make y)
                                 (SStolerances (rtol, atol)) f1 p1_t0 y)
     in
     List.iter (run cvode_mem lmm) [ Func; Dense_User; Dense_DQ; Diag]
@@ -471,7 +471,7 @@ let problem2 () =
   let run_tests lmm =
     init_y ();
     let cvode_mem = Cvode.(init lmm
-                                ~nlsolver:(NonlinearSolver.FixedPoint.make y 0)
+                                ~nlsolver:(NonlinearSolver.FixedPoint.make y)
                                 (SStolerances (rtol, atol)) f2 p2_t0 y)
     in
     List.iter (run cvode_mem lmm) [ Func; Diag; Band_User; Band_DQ]

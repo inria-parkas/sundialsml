@@ -295,11 +295,12 @@ module FixedPoint : sig (* {{{ *)
 
   (** Creates a nonlinear solver using fixed-point (functional) iteration.
       Solves nonlinear systems of the form {% $G(y) = y$ %}.
-      The integer argument specifies the number of acceleration vectors to
-      use.
+      The number of [acceleration_vectors] defaults to zero.
 
       @nocvode <node> SUNNonlinSol_FixedPoint *)
-  val make : ('d, 'k) Nvector.t -> int -> ('d, 'k, 's) nonlinear_solver
+  val make : ?acceleration_vectors:int
+             -> ('d, 'k) Nvector.t
+             -> ('d, 'k, 's) nonlinear_solver
 
   (** Creates a nonlinear solver using fixed-point (functional) iteration for
       sensitivity-enabled integrators.
