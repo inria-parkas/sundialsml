@@ -224,6 +224,13 @@ ifeq ($(RUN_WITH_VALGRIND),1)
 TEST_WRAPPER=valgrind --trace-children=yes '--log-file=valgrind-$$<.%p'
 endif
 
+# Enables assertions in the OCaml runtime which can sometimes detect heap
+# corruption (in which case the example is terminated directly).
+ifeq ($(COMPILE_WITH_RUNTIME_DEBUG),1)
+OCAMLFLAGS:=$(OCAMLFLAGS) -runtime-variant d
+OCAMLOPTFLAGS:=$(OCAMLOPTFLAGS) -runtime-variant d
+endif
+
 # Rules for producing *.out files.  Subroutine of EXECUTION_RULE.
 define ADD_EXECUTE_RULES
     $1.byte.out: $1.byte

@@ -32,3 +32,8 @@ Triggering leak checks from gdb + valgrind:
     # Assume gdb is attached to a process supervised by valgrind.
     monitor leak_check full reachable any  # Check leaks.
     monitor block_list <loss record ID(s)> # Get details of the leak.
+
+The examples can be compiled to use the OCaml runtime with debugging 
+features (like assertions) enabled.
+    make COMPILE_WITH_RUNTIME_DEBUG=1
+
