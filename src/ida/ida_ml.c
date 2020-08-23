@@ -1876,8 +1876,8 @@ CAMLprim value sunml_ida_dls_get_num_lin_res_evals(value vida_mem)
 
     long int r;
 #if 400 <= SUNDIALS_LIB_VERSION
-    int flag = IDAGetNumResEvals(IDA_MEM_FROM_ML(vida_mem), &r);
-    CHECK_LS_FLAG("IDAGetNumResEvals", flag);
+    int flag = IDAGetNumLinResEvals(IDA_MEM_FROM_ML(vida_mem), &r);
+    CHECK_LS_FLAG("IDAGetNumLinResEvals", flag);
 #else
     int flag = IDADlsGetNumResEvals(IDA_MEM_FROM_ML(vida_mem), &r);
     CHECK_DLS_FLAG("IDADlsGetNumResEvals", flag);
