@@ -194,7 +194,7 @@ let print_output mem t u =
   and nre   = get_num_res_evals mem
   and hused = get_last_step mem
   and nje   = Spils.get_num_jtimes_evals mem
-  and nreLS = Spils.get_num_res_evals mem
+  and nreLS = Spils.get_num_lin_res_evals mem
   and npe   = Spils.get_num_prec_evals mem
   and nps   = Spils.get_num_prec_solves mem in
   printf " %5.2f %13.5e  %d  %3d  %3d  %3d  %4d  %4d  %9.2e  %3d %3d\n"
@@ -238,11 +238,12 @@ let main () =
   (* Call IDACreate to initialize solution with SPGMR linear solver.  *)
 
   let lsolver = Ida.Spils.(spgmr ~maxl:5 wu) in
-  let mem = Ida.(init Spils.(solver lsolver
-                                    (prec_left ~setup:(p_setup_heat data)
-                                                      (p_solve_heat data)))
-              (SStolerances (rtol, atol))
-              (res_heat data) t0 wu wu') in
+  let mem = Ida.(init
+                  (SStolerances (rtol, atol))
+                  ~lsolver:Spils.(solver lsolver
+                                         (prec_left ~setup:(p_setup_heat data)
+                                                           (p_solve_heat data)))
+                  (res_heat data) t0 wu wu') in
   Ida.set_constraints mem (Nvector_serial.wrap constraints);
 
   (* Print output heading. *)
@@ -274,7 +275,7 @@ let main () =
 
   let netf = Ida.get_num_err_test_fails mem
   and ncfn = Ida.get_num_nonlin_solv_conv_fails mem
-  and ncfl = Ida.Spils.get_num_conv_fails mem in
+  and ncfl = Ida.Spils.get_num_lin_conv_fails mem in
   printf "\nError test failures            = %d\n" netf;
   printf "Nonlinear convergence failures = %d\n" ncfn;
   printf "Linear convergence failures    = %d\n" ncfl;
@@ -312,7 +313,7 @@ let main () =
 
   let netf = Ida.get_num_err_test_fails mem
   and ncfn = Ida.get_num_nonlin_solv_conv_fails mem
-  and ncfl = Ida.Spils.get_num_conv_fails mem in
+  and ncfl = Ida.Spils.get_num_lin_conv_fails mem in
   printf "\nError test failures            = %d\n" netf;
   printf "Nonlinear convergence failures = %d\n" ncfn;
   printf "Linear convergence failures    = %d\n" ncfl

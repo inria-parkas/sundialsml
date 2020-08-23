@@ -428,7 +428,8 @@ let set_initial_profiles webdata c c' id =
 let idaspgmr =
   match Config.sundials_version with
   | 2,_,_ -> "IDASpgmr,  Spgmr parameters"
-  | _ -> "SUNSPGMR,"
+  | 3,_,_ -> "SUNSPGMR,"
+  | _,_,_ -> "SUNLinSol_SPGMR,"
 
 (* Print first lines of output (problem description) *)
 let print_header maxl rtol atol =
@@ -517,10 +518,11 @@ let main () =
      solver. *)
   let maxl = 16 in
   let mem =
-    Ida.(init Spils.(solver (spgmr ~maxl wcc)
-                            (prec_left ~setup:(precond webdata)
-                                       (psolve webdata)))
+    Ida.(init
       (SStolerances (rtol, atol))
+      ~lsolver:Spils.(solver (spgmr ~maxl wcc)
+                               (prec_left ~setup:(precond webdata)
+                                          (psolve webdata)))
       (resweb webdata) t0 wcc wcp)
   in
   webdata.ida_mem <- Some mem;

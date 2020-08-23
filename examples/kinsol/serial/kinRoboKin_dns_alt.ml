@@ -35,53 +35,37 @@ let nvdotprod = Nvector_serial.DataOps.n_vdotprod
 
 let unwrap = RealArray2.unwrap
 
-type cvdls_mem = {
-  dj     : DM.t;
+type dense_solver = {
+  n : int;
   pivots : LintArray.t;
 }
 
-let alternate_dense jacfn =
-  let nje = ref 0 in
+let alternate_dense y a =
+  let m, n = Matrix.Dense.size a in
+  if m <> n then failwith "The matrix is not square";
+  (* TODO: replace with new nvector length function when available *)
+  let yd = Nvector_serial.unwrap y in
+  if m <> RealArray.length yd then failwith "Matrix has wrong dimensions";
 
-  let linit mem s = (nje := 0) in
-
-  let lsetup mem s =
-    incr nje;
-    DM.set_to_zero mem.dj;
-    let uu, _   = Kinsol.Alternate.get_u_uscale s in
-    let fval, _ = Kinsol.Alternate.get_f_fscale s in
-    (try
-      jacfn uu fval mem.dj
-     with RecoverableFailure -> failwith "Cannot recover!");
-    DM.getrf mem.dj mem.pivots
+  let linit s = ()
   in
-
-  let lsolve mem s x b =
+  let lsetup { pivots } a =
+    let acols = Matrix.Dense.unwrap a in
+    Matrix.ArrayDense.getrf (RealArray2.wrap acols) pivots
+  in
+  let lsolve { pivots } a x b tol =
     RealArray.blit b x;
-    DM.getrs mem.dj mem.pivots x;
-    let fval, fscale = Kinsol.Alternate.get_f_fscale s in
-    Kinsol.Alternate.set_sjpnorm s (nvwl2norm b fscale);
-    RealArray.mapi (fun i v -> v *. fscale.{i} *. fscale.{i}) b;
-    Kinsol.Alternate.set_sfdotjp s (nvdotprod fval b);
-    None, None
+    let acols = Matrix.Dense.unwrap a in
+    Matrix.ArrayDense.getrs (RealArray2.wrap acols) pivots x
   in
-
-  let solver =
-    Kinsol.Alternate.(solver (fun s nv ->
-        let n = RealArray.length (Nvector.unwrap nv) in
-        let mem = {
-          dj     = DM.create n n;
-          pivots = LintArray.create n;
-        }
-        in
-        {
-          linit = Some (linit mem);
-          lsetup = Some (lsetup mem);
-          lsolve = lsolve mem;
-        }))
+  let lspace { n } = (0, 2 + n)
   in
-  (solver, fun () -> 0, !nje)
-
+  LinearSolver.Direct.Custom.make {
+      init=linit;
+      setup=lsetup;
+      solve=lsolve;
+      space=Some lspace;
+    } { n=m; pivots=LintArray.make m 0 } (Matrix.wrap_dense a)
 
 (* Problem Constants *)
 
@@ -153,7 +137,9 @@ let func (yd : RealArray.t) (fd : RealArray.t) =
   fd.{7} <- eq8; fd.{15} <- lb8; fd.{23} <- ub8
 
 (* System Jacobian *)
-let jac (yd : RealArray.t) f jm =
+let jac { Kinsol.jac_u   = (yd : RealArray.t);
+          Kinsol.jac_fu  = f;
+          Kinsol.jac_tmp = (tmp1, tmp2)} j =
   let x1 = yd.{0}
   and x2 = yd.{1}
   and x3 = yd.{2}
@@ -163,84 +149,83 @@ let jac (yd : RealArray.t) f jm =
   and x7 = yd.{6}
   and x8 = yd.{7} in
 
-  let j = unwrap jm in
-
   (* Nonlinear equations *)
+  let set_ijth r c = Matrix.Dense.set j (r - 1) (c - 1) in
 
   (*
      - 0.1238*x1 + x7 - 0.001637*x2
      - 0.9338*x4 + 0.004731*x1*x3 - 0.3578*x2*x3 - 0.3571
   *)
-  j.{0, 0} <- - 0.1238 +. 0.004731*.x3;
-  j.{1, 0} <- - 0.001637 -. 0.3578*.x3;
-  j.{2, 0} <- 0.004731*.x1 -. 0.3578*.x2;
-  j.{3, 0} <- - 0.9338;
-  j.{6, 0} <- 1.0;
+  set_ijth 1 1 (- 0.1238 +. 0.004731*.x3);
+  set_ijth 1 2 (- 0.001637 -. 0.3578*.x3);
+  set_ijth 1 3 (0.004731*.x1 -. 0.3578*.x2);
+  set_ijth 1 4 (- 0.9338);
+  set_ijth 1 7 (1.0);
 
   (*
     0.2638*x1 - x7 - 0.07745*x2
     - 0.6734*x4 + 0.2238*x1*x3 + 0.7623*x2*x3 - 0.6022
   *)
-  j.{0, 1} <- 0.2638 +. 0.2238*.x3;
-  j.{1, 1} <- - 0.07745 +. 0.7623*.x3;
-  j.{2, 1} <- 0.2238*.x1 +. 0.7623*.x2;
-  j.{3, 1} <- - 0.6734;
-  j.{6, 1} <- -1.0;
+  set_ijth 2 1 (0.2638 +. 0.2238*.x3);
+  set_ijth 2 2 (- 0.07745 +. 0.7623*.x3);
+  set_ijth 2 3 (0.2238*.x1 +. 0.7623*.x2);
+  set_ijth 2 4 (- 0.6734);
+  set_ijth 2 7 (-1.0);
 
   (*
     0.3578*x1 + 0.004731*x2 + x6*x8
   *)
-  j.{0, 2} <- 0.3578;
-  j.{1, 2} <- 0.004731;
-  j.{5, 2} <- x8;
-  j.{7, 2} <- x6;
+  set_ijth 3 1 0.3578;
+  set_ijth 3 2 0.004731;
+  set_ijth 3 6 x8;
+  set_ijth 3 8 x6;
 
   (*
     - 0.7623*x1 + 0.2238*x2 + 0.3461
   *)
-  j.{0, 3} <- - 0.7623;
-  j.{1, 3} <- 0.2238;
+  set_ijth 4 1 (- 0.7623);
+  set_ijth 4 2 (0.2238);
 
   (*
     x1*x1 + x2*x2 - 1
   *)
-  j.{0, 4} <- 2.0*.x1;
-  j.{1, 4} <- 2.0*.x2;
+  set_ijth 5 1 (2.0*.x1);
+  set_ijth 5 2 (2.0*.x2);
 
   (*
     x3*x3 + x4*x4 - 1
   *)
-  j.{2, 5} <- 2.0*.x3;
-  j.{3, 5} <- 2.0*.x4;
+  set_ijth 6 3 (2.0*.x3);
+  set_ijth 6 4 (2.0*.x4);
 
   (*
     x5*x5 + x6*x6 - 1
   *)
-  j.{4, 6} <- 2.0*.x5;
-  j.{5, 6} <- 2.0*.x6;
+  set_ijth 7 5 (2.0*.x5);
+  set_ijth 7 6 (2.0*.x6);
 
   (*
     x7*x7 + x8*x8 - 1
   *)
-  j.{6, 7} <- 2.0*.x7;
-  j.{7, 7} <- 2.0*.x8;
+  set_ijth 8 7 (2.0*.x7);
+  set_ijth 8 8 (2.0*.x8);
 
   (*
     Lower bounds ( l_i = 1 + x_i >= 0)
     l_i - 1.0 - x_i
    *)
-  for i=0 to 7 do
-    j.{i,   8+i} <- -1.0;
-    j.{8+i, 8+i} <- 1.0
+  for i=1 to 8 do
+    set_ijth (8+i) (i) (-1.0);
+    set_ijth (8+i) (8+i) (1.0)
   done;
 
   (*
     Upper bounds ( u_i = 1 - x_i >= 0)
     u_i - 1.0 + x_i
    *)
-  for i=0 to 7 do
-    j.{i,    16+i} <- 1.0;
-    j.{16+i, 16+i} <- 1.0
+  for i=1 to 8 do
+    set_ijth (16+i) i (1.0);
+    set_ijth (16+i) (16+i) (1.0)
   done
 
 (* Print solution *)
@@ -256,9 +241,11 @@ let print_output y =
   done
 
 (* Print final statistics *)
-let print_final_stats kmem nfeD nje =
-  let nni = Kinsol.get_num_nonlin_solv_iters kmem in
-  let nfe = Kinsol.get_num_func_evals kmem in
+let print_final_stats kmem =
+  let nni  = Kinsol.get_num_nonlin_solv_iters kmem in
+  let nfe  = Kinsol.get_num_func_evals kmem in
+  let nje  = Kinsol.Dls.get_num_jac_evals kmem in
+  let nfeD = Kinsol.Dls.get_num_lin_func_evals kmem in
   printf "\nFinal Statistics.. \n";
   printf "nni    = %5d    nfe   = %5d \n" nni nfe;
   printf "nje    = %5d    nfeD  = %5d \n" nje nfeD
@@ -279,8 +266,9 @@ let main () =
 
   (* Initialize and allocate memory for KINSOL *)
   (* Attach dense linear solver *)
-  let altdense, get_stats = alternate_dense jac in
-  let kmem = Kinsol.init ~linsolv:altdense func y in
+  let a = Matrix.Dense.create neq neq in
+  let lsolver = Kinsol.Dls.solver ~jac (alternate_dense y a) in
+  let kmem = Kinsol.init ~lsolver func y in
 
   (* Set optional inputs *)
   let constraints = RealArray.make neq zero in
@@ -310,8 +298,7 @@ let main () =
   print_output ydata;
 
   (* Print final statistics and free memory *)
-  let nfeD, nje = get_stats () in
-  print_final_stats kmem nfeD nje
+  print_final_stats kmem
 
 (* Check environment variables for extra arguments.  *)
 let reps =

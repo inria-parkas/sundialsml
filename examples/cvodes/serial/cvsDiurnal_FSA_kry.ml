@@ -257,7 +257,7 @@ let print_final_stats s sensi =
   and ncfn    = get_num_nonlin_solv_conv_fails s
   in
   let nli   = Spils.get_num_lin_iters s
-  and ncfl  = Spils.get_num_conv_fails s
+  and ncfl  = Spils.get_num_lin_conv_fails s
   and npe   = Spils.get_num_prec_evals s
   and nps   = Spils.get_num_prec_solves s
   in
@@ -267,18 +267,26 @@ let print_final_stats s sensi =
   printf "netf    = %5d    nsetups  = %5d\n" netf nsetups;
   printf "nni     = %5d    ncfn     = %5d\n" nni ncfn;
 
-  if sensi then begin
-    let open Sens in
-    let nfSe     = get_num_rhs_evals s
-    and nfeS     = get_num_rhs_evals_sens s
-    and nsetupsS = get_num_lin_solv_setups s
-    and netfS    = get_num_err_test_fails s
-    and nniS     = get_num_nonlin_solv_iters s
-    and ncfnS    = get_num_nonlin_solv_conv_fails s in
-    printf "\n";
-    printf "nfSe    = %5d    nfeS     = %5d\n" nfSe nfeS;
-    printf "netfs   = %5d    nsetupsS = %5d\n" netfS nsetupsS;
-    printf "nniS    = %5d    ncfnS    = %5d\n" nniS ncfnS;
+  match sensi with
+  | None -> ()
+  | Some sensi_meth -> begin
+      let open Sens in
+      let nfSe     = get_num_rhs_evals s
+      and nfeS     = get_num_rhs_evals_sens s
+      and nsetupsS = get_num_lin_solv_setups s
+      and netfS    = get_num_err_test_fails s
+      in
+      let nniS, ncfnS =
+        match sensi_meth with
+        | Staggered _ | Staggered1 _   ->
+            get_num_nonlin_solv_iters s,
+            get_num_nonlin_solv_conv_fails s
+        | Simultaneous _ -> 0, 0
+      in
+      printf "\n";
+      printf "nfSe    = %5d    nfeS     = %5d\n" nfSe nfeS;
+      printf "netfs   = %5d    nsetupsS = %5d\n" netfS nsetupsS;
+      printf "nniS    = %5d    ncfnS    = %5d\n" nniS ncfnS;
   end;
   printf "\n";
   printf "nli     = %5d    ncfl     = %5d\n" nli ncfl;
@@ -494,9 +502,9 @@ let process_args () =
   else begin
     if argc <> 4 then wrong_args argv.(0);
     let sensi_meth =
-      if argv.(2) = "sim" then Sens.Simultaneous
-      else if argv.(2) = "stg" then Sens.Staggered
-      else if argv.(2) = "stg1" then Sens.Staggered1
+      if argv.(2) = "sim" then Sens.Simultaneous None
+      else if argv.(2) = "stg" then Sens.Staggered None
+      else if argv.(2) = "stg1" then Sens.Staggered1 None
       else wrong_args argv.(0)
     in
     let err_con =
@@ -530,9 +538,9 @@ let main () =
   (* Create CVODES object *)
   let cvode_mem =
     Cvode.(init BDF
-      (Newton Spils.(solver (spgmr y)
-                            (prec_left ~setup:(precond data) (psolve data))))
       (SStolerances (reltol, abstol))
+      ~lsolver:Spils.(solver (spgmr y)
+                             (prec_left ~setup:(precond data) (psolve data)))
       (f data) t0 y)
   in
   Cvode.set_max_num_steps cvode_mem 2000;
@@ -562,9 +570,9 @@ let main () =
 
         printf "Sensitivity: YES ";
         (match sensi_meth with
-         | Sens.Simultaneous -> printf "( SIMULTANEOUS +"
-         | Sens.Staggered    -> printf "( STAGGERED +"
-         | Sens.Staggered1   -> printf "( STAGGERED1 +");
+         | Sens.Simultaneous _ -> printf "( SIMULTANEOUS +"
+         | Sens.Staggered _    -> printf "( STAGGERED +"
+         | Sens.Staggered1 _   -> printf "( STAGGERED1 +");
         if err_con then printf " FULL ERROR CONTROL )"
                    else printf " PARTIAL ERROR CONTROL )";
 
@@ -588,7 +596,7 @@ let main () =
   done;
 
   (* Print final statistics *)
-  print_final_stats cvode_mem (sensi <> None)
+  print_final_stats cvode_mem sensi
 
 (* Check environment variables for extra arguments.  *)
 let reps =

@@ -632,8 +632,8 @@ let print_final_stats kmem =
   let nli   = Spils.get_num_lin_iters kmem in
   let npe   = Spils.get_num_prec_evals kmem in
   let nps   = Spils.get_num_prec_solves kmem in
-  let ncfl  = Spils.get_num_conv_fails kmem in
-  let nfeSG = Spils.get_num_func_evals kmem in
+  let ncfl  = Spils.get_num_lin_conv_fails kmem in
+  let nfeSG = Spils.get_num_lin_func_evals kmem in
   printf "Final Statistics.. \n";
   printf "nni    = %5d    nli   = %5d\n" nni nli;
   printf "nfe    = %5d    nfeSG = %5d\n" nfe nfeSG;
@@ -678,7 +678,7 @@ let main () =
      and psolvebd. *)
   let kmem =
     Kinsol.(init ~max_iters:250
-                 ~linsolv:Spils.(solver
+                 ~lsolver:Spils.(solver
                     (spgmr ~maxl:maxl ~max_restarts:maxlrst cc)
                     (prec_right ~setup:(precondbd data) (psolvebd data)))
                  (funcprpr data) cc) in

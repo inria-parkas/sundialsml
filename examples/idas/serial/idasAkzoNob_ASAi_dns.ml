@@ -248,8 +248,8 @@ let main () =
 
   (* Call IDACreate and IDAInit to initialize IDA memory *)
   let m = Matrix.dense neq in
-  let mem = Ida.(init Dls.(solver (dense wyy m))
-                      (SStolerances (rtol,atol))
+  let mem = Ida.(init (SStolerances (rtol,atol))
+                      Dls.(solver (dense wyy m))
                       (res data) t0 wyy wyp)
   in
 
@@ -290,8 +290,9 @@ let main () =
   in
 
   let m = Matrix.dense neq in
-  let indexB = Adjoint.(init_backward mem Dls.(solver (dense wyB m))
+  let indexB = Adjoint.(init_backward mem
                                       (SStolerances (rtolb, atolb))
+                                      ~lsolver:Dls.(solver (dense wyB m))
                                       (NoSens (resB data))
                                       tf wyB wypB)
   in

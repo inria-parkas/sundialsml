@@ -245,15 +245,18 @@ let print_final_stats ida_mem sensi =
       and nfeS     = get_num_res_evals_sens ida_mem
       and nsetupsS = get_num_lin_solv_setups ida_mem
       and netfS    = get_num_err_test_fails ida_mem
-      and nniS     = get_num_nonlin_solv_iters ida_mem
-      and ncfnS    = get_num_nonlin_solv_conv_fails ida_mem
+      and nniS, ncfnS =
+        try
+          get_num_nonlin_solv_iters ida_mem,
+          get_num_nonlin_solv_conv_fails ida_mem
+        with Failure _ -> 0,0
       in lazy (nfSe, nfeS, nsetupsS, netfS, nniS, ncfnS)
     else
       lazy (failwith "bug in C code transcribed to OCaml")
   in
 
   let nje   = Dls.get_num_jac_evals ida_mem
-  and nfeLS = Dls.get_num_res_evals ida_mem
+  and nfeLS = Dls.get_num_lin_res_evals ida_mem
   in
 
   print_string "\nFinal Statistics\n\n";
@@ -291,11 +294,11 @@ let main () =
 
   let reltol = 1.0e-6
   and abstol = RealArray.of_array [|1.0e-8; 1.0e-14; 1.0e-6|] in
-  let tol = Ida.SVtolerances (reltol, wrap abstol) in
 
   let m = Matrix.dense 3 in
-  let ida_mem = Ida.(init Dls.(solver (dense wy m))
-                          tol (res data) t0 wy wyp) in
+  let ida_mem = Ida.(init (SVtolerances (reltol, wrap abstol))
+                          ~lsolver:Dls.(solver (dense wy m))
+                          (res data) t0 wy wyp) in
 
   printf "\n3-species chemical kinetics problem\n";
 

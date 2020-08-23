@@ -19,7 +19,9 @@ Compatibility:
   becomes
     Cvode.init lmm tol ~nlsolver:(NonlinearSolver.FixedPoint.make y0 0) ...
   Otherwise, not passing an nlsolver argument specifies a default nonlinear 
-  solver based on Newton iteration.
+  solver based on Newton iteration. The linear solver must now be specified 
+  with the `~lsolver` label. Note that the tolerances must now be passed as 
+  the second argument.
 
 * When initializing Ida, the tolerance argument is now given first (for 
   consistency with Cvode) and the linear solver arguments has a label (to 
@@ -29,9 +31,17 @@ Compatibility:
   becomes
     let ida = Ida.init (Ida.SStolerances (1e-9, 1e-9)) ~lsolver:solver ...
 
+* For Kinsol.init, the ?linsolv argument has been renamed to ?lsolver for 
+  consistency with the other solvers.
+
+* The sensitivity method for the Cvodes/Idas.Sensitivity solvers now takes a 
+  nonlinear solver as an optional argument.
+
 * *.Dls.get_num_rhs_evals -> *.Dls.get_num_lin_rhs_evals
+* *.Dls.get_num_func_evals -> *.Dls.get_num_lin_func_evals
 * *.Spils.get_num_rhs_evals -> *.Spils.get_num_lin_rhs_evals
 * *.Spils.get_num_conv_fails -> *.Spils.get_num_lin_conv_fails
+* *.Spils.get_num_func_evals -> *.Spils.get_num_lin_func_evals
 
 Sundials/ML 3.1.1p0 (July 2018)
 ------------------------------------

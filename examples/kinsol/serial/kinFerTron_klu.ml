@@ -205,7 +205,7 @@ let main () =
 
   (* Call KINKlu to specify the linear solver *)
   let m = Matrix.sparse_csr ~nnz neq in
-  let kmem = Kinsol.(init ~linsolv:Dls.(solver ~jac (klu u_nvec m))
+  let kmem = Kinsol.(init ~lsolver:Dls.(solver ~jac (klu u_nvec m))
                           func u_nvec) in
   Kinsol.set_constraints kmem c_nvec;
   Kinsol.set_func_norm_tol kmem fnormtol;

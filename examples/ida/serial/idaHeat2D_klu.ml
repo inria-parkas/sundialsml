@@ -525,8 +525,8 @@ let main () =
   in
   let m = Matrix.sparse_csc ~nnz neq in
   let mem =
-    Ida.(init Dls.(solver ~jac:jacfn (klu wu m))
-              (SStolerances (rtol, atol))
+    Ida.(init (SStolerances (rtol, atol))
+              ~lsolver:Dls.(solver ~jac:jacfn (klu wu m))
               (fun t u u' r -> heatres t u u' r data)
               t0 wu wu')
   in

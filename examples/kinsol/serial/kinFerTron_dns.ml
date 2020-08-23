@@ -130,7 +130,7 @@ let print_final_stats kmem =
   let nni  = get_num_nonlin_solv_iters kmem in
   let nfe  = get_num_func_evals kmem in
   let nje  = Dls.get_num_jac_evals kmem in
-  let nfeD = Dls.get_num_func_evals kmem in
+  let nfeD = Dls.get_num_lin_func_evals kmem in
   print_string "Final Statistics:\n";
   printf "  nni = %5d    nfe  = %5d \n  nje = %5d    nfeD = %5d \n"
     nni nfe nje nfeD
@@ -175,7 +175,7 @@ let main () =
 
   (* Call KINDense to specify the linear solver *)
   let m = Matrix.dense neq in
-  let kmem = Kinsol.(init ~linsolv:Dls.(solver (dense u_nvec m)) func u_nvec) in
+  let kmem = Kinsol.(init ~lsolver:Dls.(solver (dense u_nvec m)) func u_nvec) in
   Kinsol.set_constraints kmem c_nvec;
   Kinsol.set_func_norm_tol kmem fnormtol;
   Kinsol.set_scaled_step_tol kmem scsteptol;

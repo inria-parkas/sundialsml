@@ -277,8 +277,8 @@ let print_final_stats s =
   and nli   = Spils.get_num_lin_iters s
   and npe   = Spils.get_num_prec_evals s
   and nps   = Spils.get_num_prec_solves s
-  and ncfl  = Spils.get_num_conv_fails s
-  and nfeLS = Spils.get_num_rhs_evals s
+  and ncfl  = Spils.get_num_lin_conv_fails s
+  and nfeLS = Spils.get_num_lin_rhs_evals s
   in
   printf "\nFinal Statistics: \n\n";
   printf "lenrw   = %5d     leniw   = %5d\n"   lenrw leniw;
@@ -572,12 +572,11 @@ let main () =
   let lsolver = Cvode.Spils.spgmr u in
   let cvode_mem =
     Cvode.(init BDF
-      (Newton
-         Spils.(solver lsolver
+      (SStolerances (reltol, abstol))
+      ~lsolver:Spils.(solver lsolver
                        BBD.(prec_left { mudq   = mudq;   mldq = mldq;
                                         mukeep = mukeep; mlkeep = mlkeep }
-                            (flocal data))))
-      (SStolerances (reltol, abstol))
+                            (flocal data)))
       (f data) t0 u)
   in
 

@@ -648,7 +648,10 @@ let set_initial_profiles data uv uvp id resid =
  *)
 
 let idaspgmr =
-  match Config.sundials_version with 2,_,_ -> "IDASPGMR" | _ -> "SUNSPGMR"
+  match Config.sundials_version with
+  | 2,_,_ -> "IDASPGMR"
+  | 3,_,_ -> "SUNSPGMR"
+  | _,_,_ -> "SUNLinSol_SPGMR"
 
 let print_header system_size maxl mudq mldq mukeep mlkeep rtol atol =
   printf "\nidasBruss_kry_bbd_p: Brusselator DAE parallel example problem for IDAS \n\n";
@@ -751,11 +754,11 @@ let print_final_stats mem =
   let ncfn = get_num_nonlin_solv_conv_fails mem in
   let nni  = get_num_nonlin_solv_iters mem in
 
-  let ncfl  = Spils.get_num_conv_fails mem in
+  let ncfl  = Spils.get_num_lin_conv_fails mem in
   let nli   = Spils.get_num_lin_iters mem in
   let npe   = Spils.get_num_prec_evals mem in
   let nps   = Spils.get_num_prec_solves mem in
-  let nreLS = Spils.get_num_res_evals mem in
+  let nreLS = Spils.get_num_lin_res_evals mem in
 
   let nge = Ida_bbd.get_num_gfn_evals mem in
 
@@ -831,11 +834,11 @@ let main () =
   let maxl = 16 in
   let mem =
     Ida.(init
-      Spils.(solver (spgmr ~maxl uv)
-                    Ida_bbd.(prec_left ~dqrely:zero
-                                       { mudq; mldq; mukeep; mlkeep }
-                                       (reslocal data)))
       (SStolerances (rtol,atol))
+      ~lsolver:Spils.(solver (spgmr ~maxl uv)
+                        Ida_bbd.(prec_left ~dqrely:zero
+                                           { mudq; mldq; mukeep; mlkeep }
+                                           (reslocal data)))
       (res data) t0 uv uvp)
   in
 

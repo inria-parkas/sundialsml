@@ -106,7 +106,7 @@ let print_output mem t u linsolver =
   and hused = get_last_step mem
 
   and nje   = Spils.get_num_jtimes_evals mem
-  and nreLS = Spils.get_num_res_evals mem
+  and nreLS = Spils.get_num_lin_res_evals mem
   and npe   = Spils.get_num_prec_evals mem
   and nps   = Spils.get_num_prec_solves mem in
 
@@ -261,8 +261,8 @@ let main() =
   (* Call IDACreate with dummy linear solver *)
 
   let m = Matrix.dense neq in
-  let mem = Ida.(init Dls.(solver (dense wu m))
-                      (SStolerances (rtol, atol))
+  let mem = Ida.(init (SStolerances (rtol, atol))
+                      ~lsolver:Dls.(solver (dense wu m))
                       (res_heat data) t0 wu wu') in
   Ida.set_constraints mem (Nvector_serial.wrap constraints);
 
@@ -290,7 +290,7 @@ let main() =
                       printf " \n| SPGMR |\n";
                       printf " -------\n";
                       flush stdout;
-                      Ida.(reinit mem ~linsolv:Spils.(solver (spgmr wu) prec)
+                      Ida.(reinit mem ~lsolver:Spils.(solver (spgmr wu) prec)
                                   t0 wu wu'))
       | USE_SPBCG -> ((match Config.sundials_version with
                        | 2,_,_ -> printf " -------";
@@ -300,13 +300,13 @@ let main() =
                                   printf " \n| SPBCGS |\n";
                                   printf " -------\n");
                       flush stdout;
-                      Ida.(reinit mem ~linsolv:Spils.(solver (spbcgs wu) prec)
+                      Ida.(reinit mem ~lsolver:Spils.(solver (spbcgs wu) prec)
                                   t0 wu wu'))
       | USE_SPTFQMR -> (printf " ---------";
                         printf " \n| SPTFQMR |\n";
                         printf " ---------\n";
                       flush stdout;
-                      Ida.(reinit mem ~linsolv:Spils.(solver (sptfqmr wu) prec)
+                      Ida.(reinit mem ~lsolver:Spils.(solver (sptfqmr wu) prec)
                                   t0 wu wu'))
     end;
 
@@ -331,7 +331,7 @@ let main() =
     (* Print remaining counters. *)
     let netf = Ida.get_num_err_test_fails mem
     and ncfn = Ida.get_num_nonlin_solv_conv_fails mem
-    and ncfl = Ida.Spils.get_num_conv_fails mem in
+    and ncfl = Ida.Spils.get_num_lin_conv_fails mem in
 
     printf "\nError test failures            = %d\n" netf;
     printf "Nonlinear convergence failures = %d\n" ncfn;

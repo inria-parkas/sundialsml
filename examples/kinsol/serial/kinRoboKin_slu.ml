@@ -277,7 +277,7 @@ let main () =
   (* Attach dense linear solver *)
   let m = Matrix.sparse_csc ~nnz:56 neq in
   let kmem = Kinsol.(init
-              ~linsolv:Dls.(solver ~jac (superlumt ~nthreads:2 y m))
+              ~lsolver:Dls.(solver ~jac (superlumt ~nthreads:2 y m))
               func y)
   in
 

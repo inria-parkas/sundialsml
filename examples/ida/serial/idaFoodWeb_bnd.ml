@@ -372,7 +372,7 @@ let print_final_stats mem =
   and netf  = get_num_err_test_fails mem
   and ncfn  = get_num_nonlin_solv_conv_fails mem
   and nje   = Dls.get_num_jac_evals mem
-  and nreLS = Dls.get_num_res_evals mem in
+  and nreLS = Dls.get_num_lin_res_evals mem in
 
   printf "-----------------------------------------------------------\n";
   printf "Final run statistics: \n\n";
@@ -403,8 +403,8 @@ let main () =
      solver. *)
   let mu = nsmx and ml = nsmx in
   let m = Matrix.band ~smu:(mu+ml) ~mu ~ml neq in
-  let mem = Ida.(init Dls.(solver (band wc m))
-                      (SStolerances (rtol, atol))
+  let mem = Ida.(init (SStolerances (rtol, atol))
+                      ~lsolver:Dls.(solver (band wc m))
                       (resweb webdata) t0 wc wc') in
   let tout1 = 0.001 in
   Ida.calc_ic_ya_yd' mem ~varid:(Nvector_serial.wrap id) tout1;

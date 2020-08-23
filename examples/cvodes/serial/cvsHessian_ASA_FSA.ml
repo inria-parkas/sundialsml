@@ -37,6 +37,12 @@
 
 open Sundials
 
+let compat2_3 =
+  match Config.sundials_version with
+  | 2,_,_ -> true
+  | 3,_,_ -> true
+  | _ -> false
+
 module Quad = Cvodes.Quadrature
 module Sens = Cvodes.Sensitivity
 module QuadSens = Cvodes.Sensitivity.Quadrature
@@ -256,7 +262,8 @@ let print_fwd_stats cvode_mem =
         Sens.num_err_test_fails = netfS;
         Sens.num_lin_solv_setups = nsetupsS;
       } = Sens.get_stats cvode_mem
-  and nniS, ncfnS = Sens.get_nonlin_solv_stats cvode_mem
+  and nniS, ncfnS =
+    if compat2_3 then Sens.get_nonlin_solv_stats cvode_mem else 0,0
   and nfQSe, netfQS = QuadSens.get_stats cvode_mem
   in
   printf " Number steps: %5d\n\n" nst;
@@ -269,9 +276,11 @@ let print_fwd_stats cvode_mem =
   printf " Linear solver setups:\n";
   printf "  nsetups:  %5d\n  nsetupsS: %5d\n" nsetups nsetupsS;
   printf " Nonlinear iterations:\n";
-  printf "  nni:      %5d\n  nniS:     %5d\n" nni nniS;
+  printf "  nni:      %5d\n" nni;
+  if compat2_3 then printf "  nniS:     %5d\n" nniS;
   printf " Convergence failures:\n";
-  printf "  ncfn:     %5d\n  ncfnS:    %5d\n" ncfn ncfnS;
+  printf "  ncfn:     %5d\n" ncfn;
+  if compat2_3 then printf "  ncfnS:    %5d\n" ncfnS;
   printf "\n"
 
 let print_bck_stats cvode_mem =
@@ -345,8 +354,8 @@ let main () =
   let m = Matrix.dense neq in
   let cvode_mem =
     Cvode.(init BDF
-                (Newton Dls.(solver (dense y m)))
                 (SStolerances (reltol, abstol))
+                ~lsolver:Dls.(solver (dense y m))
                 (f data)
                 t0
                 y)
@@ -354,7 +363,7 @@ let main () =
   Quad.init cvode_mem (fQ data) yQ;
   Quad.set_tolerances cvode_mem (Quad.SStolerances (reltol, abstolQ));
 
-  Sens.(init cvode_mem EEtolerances Simultaneous
+  Sens.(init cvode_mem EEtolerances (Simultaneous None)
                        (AllAtOnce (Some (fS data))) yS);
   Sens.set_err_con cvode_mem true;
 
@@ -410,8 +419,8 @@ let main () =
   let m = Matrix.dense (2*neq) in
   let cvode_memB1 =
     Adj.(init_backward cvode_mem Cvode.BDF
-                                 (Newton Dls.(solver (dense yB1 m)))
                                  (SStolerances (reltol, abstolB))
+                                 ~lsolver:Dls.(solver (dense yB1 m))
                                  (WithSens (fB1 data))
                                  tf yB1)
   in
@@ -421,8 +430,8 @@ let main () =
   let m = Matrix.dense (2*neq) in
   let cvode_memB2 =
     Adj.(init_backward cvode_mem Cvode.BDF
-                                 (Newton Dls.(solver (dense yB2 m)))
                                  (SStolerances (reltol, abstolB))
+                                 ~lsolver:Dls.(solver (dense yB2 m))
                                  (WithSens (fB2 data))
                                  tf yB2)
   in
@@ -478,8 +487,8 @@ let main () =
   let m = Matrix.dense neq in
   let cvode_mem =
     Cvode.(init BDF
-                (Newton Dls.(solver (dense y m)))
                 (SStolerances (reltol, abstol))
+                ~lsolver:Dls.(solver (dense y m))
                 (f data)
                 t0
                 y)

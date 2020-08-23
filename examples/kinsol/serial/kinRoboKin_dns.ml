@@ -203,7 +203,7 @@ let print_final_stats kmem =
   let nni  = get_num_nonlin_solv_iters kmem in
   let nfe  = get_num_func_evals kmem in
   let nje  = Dls.get_num_jac_evals kmem in
-  let nfeD = Dls.get_num_func_evals kmem in
+  let nfeD = Dls.get_num_lin_func_evals kmem in
   printf "\nFinal Statistics.. \n";
   printf "nni    = %5d    nfe   = %5d \n" nni nfe;
   printf "nje    = %5d    nfeD  = %5d \n" nje nfeD
@@ -225,7 +225,7 @@ let main () =
   (* Initialize and allocate memory for KINSOL *)
   (* Attach dense linear solver *)
   let m = Matrix.dense neq in
-  let kmem = Kinsol.(init ~linsolv:Dls.(solver ~jac:jac (dense y m)) func y) in
+  let kmem = Kinsol.(init ~lsolver:Dls.(solver ~jac:jac (dense y m)) func y) in
 
   (* Set optional inputs *)
   let constraints = RealArray.make neq zero in

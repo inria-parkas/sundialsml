@@ -278,10 +278,11 @@ let alloc_init_user_data comm local_N system_size thispe npes =
  * Print first lines of output (problem description)
  *)
 
-let spgmr = match Config.sundials_version with
+let spgmr =
+  match Config.sundials_version with
   | 2,_,_ -> "IDASPGMR"
-  | _ -> "SUNSPGMR"
-
+  | 3,_,_ -> "SUNSPGMR"
+  | _,_,_ -> "SUNLinSol_SPGMR"
 
 let print_header system_size maxl rtol atol =
   printf "\nidaFoodWeb_kry_p: Predator-prey DAE parallel example problem for IDA \n\n";
@@ -356,11 +357,11 @@ let print_final_stats mem =
   let ncfn = get_num_nonlin_solv_conv_fails mem in
   let nni  = get_num_nonlin_solv_iters mem in
 
-  let ncfl  = Spils.get_num_conv_fails mem in
+  let ncfl  = Spils.get_num_lin_conv_fails mem in
   let nli   = Spils.get_num_lin_iters mem in
   let npe   = Spils.get_num_prec_evals mem in
   let nps   = Spils.get_num_prec_solves mem in
-  let nreLS = Spils.get_num_res_evals mem in
+  let nreLS = Spils.get_num_lin_res_evals mem in
 
   printf "-----------------------------------------------------------\n";
   printf "\nFinal statistics: \n\n";
@@ -894,9 +895,9 @@ let main () =
   let lsolver = Ida.Spils.(spgmr ~maxl cc) in
   let mem =
     Ida.(init
-      Spils.(solver lsolver
-                    (prec_left ~setup:(precondbd webdata) (psolvebd webdata)))
       (SStolerances (rtol, atol))
+      ~lsolver:Spils.(solver lsolver
+                       (prec_left ~setup:(precondbd webdata) (psolvebd webdata)))
       (resweb webdata)
       t0 cc cp)
   in

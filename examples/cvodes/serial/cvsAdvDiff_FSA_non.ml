@@ -107,7 +107,7 @@ let wrong_args name =
   printf "         err_con    = t or f\n";
   exit 0
 
-let process_args () =
+let process_args u =
   let argv = Sys.argv in
   let argc = Array.length argv in
   if argc < 2 then wrong_args argv.(0);
@@ -123,8 +123,11 @@ let process_args () =
     if argc <> 4 then wrong_args argv.(0);
     let sensi_meth =
       if argv.(2) = "sim" then Sens.Simultaneous
+                          (Some (NonlinearSolver.FixedPoint.make_sens (ns+1) u))
       else if argv.(2) = "stg" then Sens.Staggered
+                          (Some (NonlinearSolver.FixedPoint.make_sens ns u))
       else if argv.(2) = "stg1" then Sens.Staggered1
+                          (Some (NonlinearSolver.FixedPoint.make u))
       else wrong_args argv.(0)
     in
     let err_con =
@@ -195,27 +198,37 @@ let print_final_stats cvode_mem sensi =
   print_string_5d "    ncfn     = " ncfn;
   print_newline ();
 
-  if sensi then begin
-    let open Sens in
-    let nfSe     = get_num_rhs_evals cvode_mem
-    and nfeS     = get_num_rhs_evals_sens cvode_mem
-    and nsetupsS = get_num_lin_solv_setups cvode_mem
-    and netfS    = get_num_err_test_fails cvode_mem
-    and nniS     = get_num_nonlin_solv_iters cvode_mem
-    and ncfnS    = get_num_nonlin_solv_conv_fails cvode_mem in
-    print_newline ();
-    print_string_5d "nfSe    = " nfSe;
-    print_string_5d "    nfeS     = " nfeS;
-    print_string_5d "\nnetfs   = " netfS;
-    print_string_5d "    nsetupsS = " nsetupsS;
-    print_string_5d "\nnniS    = " nniS;
-    print_string_5d "    ncfnS    = " ncfnS;
-    print_newline ()
+  match sensi with
+  | None -> ()
+  | Some sensi_meth -> begin
+      let open Sens in
+      let nfSe     = get_num_rhs_evals cvode_mem
+      and nfeS     = get_num_rhs_evals_sens cvode_mem
+      and nsetupsS = get_num_lin_solv_setups cvode_mem
+      and netfS    = get_num_err_test_fails cvode_mem
+      in
+      let nniS, ncfnS =
+        match sensi_meth with
+        | Staggered _ | Staggered1 _ ->
+            get_num_nonlin_solv_iters cvode_mem,
+            get_num_nonlin_solv_conv_fails cvode_mem
+        | Simultaneous _ -> 0, 0
+      in
+      print_newline ();
+      print_string_5d "nfSe    = " nfSe;
+      print_string_5d "    nfeS     = " nfeS;
+      print_string_5d "\nnetfs   = " netfS;
+      print_string_5d "    nsetupsS = " nsetupsS;
+      print_string_5d "\nnniS    = " nniS;
+      print_string_5d "    ncfnS    = " ncfnS;
+      print_newline ()
   end
 
 let main () =
+  let u = Nvector_serial.make neq 0.0 in
+
   (* Process arguments *)
-  let sensi, err_con = process_args () in
+  let sensi, err_con = process_args u in
 
   (* Set user data *)
   let dx = xmax/.(float (mx+1)) in
@@ -225,7 +238,6 @@ let main () =
     } in
 
   (* Allocate and set initial states *)
-  let u = Nvector_serial.make neq 0.0 in
   set_ic (unwrap u) dx;
 
   (* Set integration tolerances *)
@@ -233,10 +245,11 @@ let main () =
   let abstol = atol in
 
   (* Create CVODES object *)
+  let nlsolver = Sundials.NonlinearSolver.FixedPoint.make u in
   let cvode_mem = Cvode.(init
                            Adams
-                           Functional
                            (SStolerances (reltol, abstol))
+                           ~nlsolver
                            (f data)
                            t0
                            u)
@@ -268,9 +281,9 @@ let main () =
 
         print_string "Sensitivity: YES ";
         (match sensi_meth with
-         | Sens.Simultaneous -> print_string "( SIMULTANEOUS +"
-         | Sens.Staggered    -> print_string "( STAGGERED +"
-         | Sens.Staggered1   -> print_string "( STAGGERED1 +");
+         | Sens.Simultaneous _ -> print_string "( SIMULTANEOUS +"
+         | Sens.Staggered _    -> print_string "( STAGGERED +"
+         | Sens.Staggered1 _   -> print_string "( STAGGERED1 +");
         print_string (if err_con then " FULL ERROR CONTROL )"
                                  else " PARTIAL ERROR CONTROL )");
 
@@ -294,7 +307,7 @@ let main () =
   done;
 
   (* Print final statistics *)
-  print_final_stats cvode_mem (sensi <> None)
+  print_final_stats cvode_mem sensi
 
 (* Check environment variables for extra arguments.  *)
 let reps =

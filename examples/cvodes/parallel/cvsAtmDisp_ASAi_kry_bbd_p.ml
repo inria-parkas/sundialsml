@@ -526,8 +526,8 @@ let print_final_stats s =
   and nli      = Spils.get_num_lin_iters s
   and npe      = Spils.get_num_prec_evals s
   and nps      = Spils.get_num_prec_solves s
-  and ncfl     = Spils.get_num_conv_fails s
-  and nfeSPGMR = Spils.get_num_rhs_evals s
+  and ncfl     = Spils.get_num_lin_conv_fails s
+  and nfeSPGMR = Spils.get_num_lin_rhs_evals s
   in
   printf "\nFinal Statistics.. \n\n";
   printf "lenrw   = %6d     leniw = %6d\n"   lenrw leniw;
@@ -553,8 +553,8 @@ let print_final_statsB s =
   and nli      = Spils.get_num_lin_iters s
   and npe      = Spils.get_num_prec_evals s
   and nps      = Spils.get_num_prec_solves s
-  and ncfl     = Spils.get_num_conv_fails s
-  and nfeSPGMR = Spils.get_num_rhs_evals s
+  and ncfl     = Spils.get_num_lin_conv_fails s
+  and nfeSPGMR = Spils.get_num_lin_rhs_evals s
   in
   printf "\nFinal Statistics.. \n\n";
   printf "lenrw   = %6d     leniw = %6d\n"   lenrw leniw;
@@ -1044,12 +1044,12 @@ let main () =
   let abstol, reltol = atol, rtol in
   let cvode_mem =
     Cvode.(init BDF
-      (Newton Spils.(solver (spgmr y)
-                            Bbd.(prec_left { mudq = d.l_m.(0) + 1;
-                                             mldq = d.l_m.(0) + 1;
-                                             mukeep = 2;
-                                             mlkeep = 2; }
-                                           (f_local d))))
+      ~lsolver:Spils.(solver (spgmr y)
+                             Bbd.(prec_left { mudq = d.l_m.(0) + 1;
+                                              mldq = d.l_m.(0) + 1;
+                                              mukeep = 2;
+                                              mlkeep = 2; }
+                                            (f_local d)))
       (SStolerances (reltol, abstol))
       (f d) ti y)
   in
@@ -1072,7 +1072,7 @@ let main () =
   (* Extract quadratures *)
   ignore (Quad.get cvode_mem q);
   let qdata = local_array q in
-  let g = Mpi.allreduce_float qdata.{0} Mpi.Float_sum comm in
+  let g = Mpi.allreduce_float qdata.{0} Mpi.Sum comm in
   if myId = 0 then printf "  G = %e\n" g;
 
   (* Print statistics for forward run *)
@@ -1095,14 +1095,14 @@ let main () =
   let cvode_memB =
     Adj.(init_backward cvode_mem
                        Cvode.BDF
-                       (Newton Spils.(solver
+                       (SStolerances (reltolB, abstolB))
+                       ~lsolver:Spils.(solver
                           (spgmr yB)
                           Adjbbd.(prec_left { mudq = d.l_m.(0) + 1;
                                               mldq = d.l_m.(0) + 1;
                                               mukeep = 2;
                                               mlkeep = 2; }
-                                             (fB_local d))))
-                       (SStolerances (reltolB, abstolB))
+                                             (fB_local d)))
                        (NoSens (fB d))
                        tf yB)
   in

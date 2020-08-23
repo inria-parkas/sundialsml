@@ -171,9 +171,9 @@ let process_args () =
   else begin
     if argc <> 4 then wrong_args argv.(0);
     let sensi_meth =
-      if argv.(2) = "sim" then Sens.Simultaneous
-      else if argv.(2) = "stg" then Sens.Staggered
-      else if argv.(2) = "stg1" then Sens.Staggered1
+      if argv.(2) = "sim" then Sens.Simultaneous None
+      else if argv.(2) = "stg" then Sens.Staggered None
+      else if argv.(2) = "stg1" then Sens.Staggered1 None
       else wrong_args argv.(0)
     in
     let err_con =
@@ -243,8 +243,12 @@ let print_final_stats s sensi =
     and nfeS     = get_num_rhs_evals_sens s
     and nsetupsS = get_num_lin_solv_setups s
     and netfS    = get_num_err_test_fails s
-    and nniS     = get_num_nonlin_solv_iters s
-    and ncfnS    = get_num_nonlin_solv_conv_fails s in
+    in
+    let nniS, ncfnS =
+      try get_num_nonlin_solv_iters s,
+          get_num_nonlin_solv_conv_fails s
+      with Failure _ -> 0, 0
+    in
     print_string_5d "\nnfSe    = " nfSe;
     print_string_5d "    nfeS     = " nfeS;
     print_string_5d "\nnetfs   = " netfS;
@@ -255,7 +259,7 @@ let print_final_stats s sensi =
   end;
 
   let nje   = Dls.get_num_jac_evals s
-  and nfeLS = Dls.get_num_rhs_evals s
+  and nfeLS = Dls.get_num_lin_rhs_evals s
   in
   print_string_5d "\nnje    = " nje;
   print_string_5d "    nfeLS     = " nfeLS;
@@ -281,8 +285,10 @@ let main () =
   (* Create CVODES object *)
   let m = Matrix.dense neq in
   let cvode_mem =
-    Cvode.(init BDF (Newton Dls.(solver ~jac:(jac data) (dense y m)))
-                (WFtolerances (ewt data)) (f data) t0 y)
+    Cvode.(init BDF
+                (WFtolerances (ewt data))
+                ~lsolver:Dls.(solver ~jac:(jac data) (dense y m))
+                (f data) t0 y)
   in
 
   print_string "\n3-species chemical kinetics problem\n";
@@ -308,9 +314,9 @@ let main () =
 
         print_string "Sensitivity: YES ";
         (match sensi_meth with
-         | Sens.Simultaneous -> print_string "( SIMULTANEOUS +"
-         | Sens.Staggered    -> print_string "( STAGGERED +"
-         | Sens.Staggered1   -> print_string "( STAGGERED1 +");
+         | Sens.Simultaneous _ -> print_string "( SIMULTANEOUS +"
+         | Sens.Staggered _    -> print_string "( STAGGERED +"
+         | Sens.Staggered1 _   -> print_string "( STAGGERED1 +");
         print_string (if err_con then " FULL ERROR CONTROL )"
                                  else " PARTIAL ERROR CONTROL )");
 

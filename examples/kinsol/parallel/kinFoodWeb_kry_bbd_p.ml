@@ -565,8 +565,8 @@ let print_final_stats kmem =
   let nli   = Spils.get_num_lin_iters kmem in
   let npe   = Spils.get_num_prec_evals kmem in
   let nps   = Spils.get_num_prec_solves kmem in
-  let ncfl  = Spils.get_num_conv_fails kmem in
-  let nfeSG = Spils.get_num_func_evals kmem in
+  let ncfl  = Spils.get_num_lin_conv_fails kmem in
+  let nfeSG = Spils.get_num_lin_func_evals kmem in
   printf "Final Statistics.. \n";
   printf "nni    = %5d    nli   = %5d\n" nni nli;
   printf "nfe    = %5d    nfeSG = %5d\n" nfe nfeSG;
@@ -616,11 +616,11 @@ let main () =
   let mlkeep = num_species in
   let kmem =
     Kinsol.(init
-        ~linsolv:Spils.(solver
-          (spgmr ~maxl:maxl ~max_restarts:maxlrst cc)
-          (Kinsol_bbd.prec_right Bbd.({ mudq; mldq; mukeep; mlkeep })
-                                 (func_local data)))
-        (func data) cc) in
+              ~lsolver:Spils.(solver
+                (spgmr ~maxl:maxl ~max_restarts:maxlrst cc)
+                (Kinsol_bbd.prec_right Bbd.({ mudq; mldq; mukeep; mlkeep })
+                                       (func_local data)))
+              (func data) cc) in
   Kinsol.set_constraints kmem (Nvector.make local_N neq comm 0.0);
   Kinsol.set_func_norm_tol kmem fnormtol;
   Kinsol.set_scaled_step_tol kmem scsteptol;

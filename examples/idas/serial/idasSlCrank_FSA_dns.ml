@@ -218,7 +218,7 @@ let print_final_stats mem =
   let nni   = get_num_nonlin_solv_iters mem in
   let netf  = get_num_err_test_fails mem in
   let ncfn  = get_num_nonlin_solv_conv_fails mem in
-  let nreLS = Dls.get_num_res_evals mem in
+  let nreLS = Dls.get_num_lin_res_evals mem in
 
   printf "\nFinal Run Statistics: \n\n";
   printf "Number of steps                    = %d\n" nst;
@@ -290,8 +290,8 @@ let main () =
   (* Call IDADense and set up the linear solver. *)
   let m = Matrix.dense neq in
   let mem =
-    Ida.(init Dls.(solver (dense wyy m))
-              (SStolerances (rtolf, atolf))
+    Ida.(init (SStolerances (rtolf, atolf))
+              ~lsolver:Dls.(solver (dense wyy m))
               (ressc data)
               ~varid:wid
               tbegin
@@ -350,8 +350,8 @@ let main () =
   (* Call IDADense and set up the linear solver. *)
   let m = Matrix.dense neq in
   let mem =
-    Ida.(init Dls.(solver (dense wyy m))
-              (SStolerances (rtolfd, atolfd))
+    Ida.(init (SStolerances (rtolfd, atolfd))
+              ~lsolver:Dls.(solver (dense wyy m))
               (ressc data)
               ~varid:wid
               tbegin wyy wyp)

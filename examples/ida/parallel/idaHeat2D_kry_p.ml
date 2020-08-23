@@ -495,7 +495,8 @@ let set_initial_profile data uu up id res =
 let truetext, spgmr =
   match Config.sundials_version with
   | 2,_,_ -> "TRUE", "IDASPGMR"
-  | _ -> "SUNTRUE", "SUNSPGMR"
+  | 3,_,_ -> "SUNTRUE", "SUNSPGMR"
+  | _,_,_ -> "SUNTRUE", "SUNLinSol_SPGMR"
 
 let print_header neq rtol atol =
   printf "\nidaHeat2D_kry_p: Heat equation, parallel example problem for IDA\n";
@@ -534,7 +535,7 @@ let print_output id mem t uu =
     let nre   = get_num_res_evals mem in
     let hused = get_last_step mem in
     let nje   = Spils.get_num_jtimes_evals mem in
-    let nreLS = Spils.get_num_res_evals mem in
+    let nreLS = Spils.get_num_lin_res_evals mem in
     let npe   = Spils.get_num_prec_evals mem in
     let nps   = Spils.get_num_prec_solves mem in
     printf " %5.2f %13.5e  %d  %3d  %3d  %3d  %4d  %4d  %9.2e  %3d %3d\n"
@@ -549,7 +550,7 @@ let print_output id mem t uu =
 let print_final_stats mem =
   let netf = Ida.get_num_err_test_fails mem in
   let ncfn = Ida.get_num_nonlin_solv_conv_fails mem in
-  let ncfl = Ida.Spils.get_num_conv_fails mem in
+  let ncfl = Ida.Spils.get_num_lin_conv_fails mem in
 
   printf "\nError test failures            = %d\n" netf;
   printf "Nonlinear convergence failures = %d\n" ncfn;
@@ -615,9 +616,9 @@ let main () =
 
   let mem =
     Ida.(init
-      Spils.(solver (spgmr uu)
-                    (prec_left ~setup:(psetup_heat data) (psolve_heat data)))
       (SStolerances (rtol, atol))
+      ~lsolver:Spils.(solver (spgmr uu)
+                       (prec_left ~setup:(psetup_heat data) (psolve_heat data)))
       (res_heat data)
       t0 uu up)
   in

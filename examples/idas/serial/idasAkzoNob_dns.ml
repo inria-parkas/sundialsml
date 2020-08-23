@@ -136,7 +136,7 @@ let print_final_stats mem =
   and nni   = get_num_nonlin_solv_iters mem
   and netf  = get_num_err_test_fails mem
   and ncfn  = get_num_nonlin_solv_conv_fails mem
-  and nreLS = Dls.get_num_res_evals mem
+  and nreLS = Dls.get_num_lin_res_evals mem
   in
 
   print_string "\nFinal Run Statistics: \n\n";
@@ -201,8 +201,8 @@ let main () =
 
   (* Call IDACreate and IDAInit to initialize IDA memory *)
   let m = Matrix.dense neq in
-  let mem = Ida.(init Dls.(solver (dense wyy m))
-                      (SStolerances (rtol,atol))
+  let mem = Ida.(init (SStolerances (rtol,atol))
+                      ~lsolver:Dls.(solver (dense wyy m))
                       (res data) t0 wyy wyp)
   in
 

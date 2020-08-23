@@ -436,7 +436,8 @@ let set_initial_profile data uu up id res =
 let truetext, spgmr =
   match Config.sundials_version with
   | 2,_,_ -> "TRUE", "IDASPGMR"
-  | _ -> "SUNTRUE", "SUNSPGMR"
+  | 3,_,_ -> "SUNTRUE", "SUNSPGMR"
+  | _,_,_ -> "SUNTRUE", "SUNLinSol_SPGMR"
 
 let print_header _Neq rtol atol =
     printf "\nidaHeat2D_kry_bbd_p: Heat equation, parallel example problem for IDA\n";
@@ -485,7 +486,7 @@ let print_output id mem t uu =
     let nre   = get_num_res_evals mem in
     let hused = get_last_step mem in
     let nli   = Spils.get_num_lin_iters mem in
-    let nreLS = Spils.get_num_res_evals mem in
+    let nreLS = Spils.get_num_lin_res_evals mem in
     let nge   = Ida_bbd.get_num_gfn_evals mem in
     let npe   = Spils.get_num_prec_evals mem in
     let nps   = Spils.get_num_prec_solves mem in
@@ -502,7 +503,7 @@ let print_final_stats mem =
 
   let netf = Ida.get_num_err_test_fails mem in
   let ncfn = Ida.get_num_nonlin_solv_conv_fails mem in
-  let ncfl = Ida.Spils.get_num_conv_fails mem in
+  let ncfl = Ida.Spils.get_num_lin_conv_fails mem in
 
   printf "\nError test failures            = %d\n" netf;
   printf "Nonlinear convergence failures = %d\n" ncfn;
@@ -582,17 +583,17 @@ let main () =
   let lsolver = Ida.Spils.spgmr uu in
   let mem =
     Ida.(init
-      Spils.(solver lsolver
-                    Ida_bbd.(prec_left ~dqrely:zero
-                                       { mudq; mldq; mukeep; mlkeep }
-                                       (reslocal data))
-      )
       (SStolerances (rtol,atol))
+      ~lsolver:Spils.(solver lsolver
+                        Ida_bbd.(prec_left ~dqrely:zero
+                                           { mudq; mldq; mukeep; mlkeep }
+                                           (reslocal data))
+      )
       (heatres data) ~varid:id t0 uu up)
   in
   (match Config.sundials_version with
-   | 3,_,_ -> Ida.Spils.set_max_restarts lsolver 5
-   | _ -> ());
+   | 2,_,_ -> ()
+   | _,_,_ -> Ida.Spils.set_max_restarts lsolver 5);
   Ida.set_suppress_alg mem true;
   Ida.set_constraints mem constraints;
 

@@ -31,88 +31,55 @@
 
 open Sundials
 
-module Alt = Ida.Alternate
-module DM = Matrix.ArrayDense
+let compat2_3 =
+  match Config.sundials_version with
+  | 2,_,_ -> true
+  | 3,_,_ -> true
+  | _ -> false
 
+module DM = Matrix.ArrayDense
 let printf = Printf.printf
 
-(* Test the Alt module.  This is a re-implementation of the Dense
-   direct linear solver in OCaml.  Original C code is found in
-     src/ida/ida_direct_impl.h
-     src/ida/ida_dense.c
-   of the Sundials source tree.  As a simplification, this solver
-   requires a user-supplied Jacobian function, with a
-   simplified type.
- *)
-module AltDense = struct
-  type dense_jacfn =
-    float                               (* tt *)
-    -> float                            (* cj *)
-    -> RealArray.t                      (* y *)
-    -> RealArray.t                      (* y' *)
-    -> RealArray.t                      (* res *)
-    -> DM.t                             (* J *)
-    -> RealArray.t Ida.triple
-    -> unit
-
-  (* See IDADlsMem in ida_direct_impl.h *)
-  type idadls_mem =
-    {
-      jj : DM.t;
-      pivots : LintArray.t;
-    }
-
-  let make (jacfn : dense_jacfn) =
-    let nje = ref 0 in
-
-    let linit mem s = (nje := 0) in
-
-    let lsetup mem s { Alt.lsetup_y = yp;    Alt.lsetup_y' = y'p;
-                       Alt.lsetup_res = rrp; Alt.lsetup_tmp = tmps } =
-
-      nje := !nje + 1;
-      (* Zero out jj; call Jacobian routine jac; return if it failed. *)
-      DM.set_to_zero mem.jj;
-      let tn = Ida.get_current_time s in
-      let cj = Alt.get_cj s in
-      jacfn tn cj yp y'p rrp mem.jj tmps;
-      (* Do LU factorization of jj; return success or fail flag. *)
-      try DM.getrf mem.jj mem.pivots
-      with _ -> raise RecoverableFailure
-    in
-
-    let lsolve mem s args b =
-      DM.getrs mem.jj mem.pivots b;
-
-      (* Scale the correction to account for change in cj. *)
-      let cjratio = Alt.get_cjratio s in
-      Nvector_serial.DataOps.n_vscale (2.0/.(1.0 +. cjratio)) b b
-    in
-
-    let solver =
-      Alt.(solver (fun s nv ->
-          let n = RealArray.length (Nvector.unwrap nv) in
-          let mem = { jj = DM.create n n;
-                      pivots = LintArray.create n;
-                    }
-          in
-          {
-            linit = Some (linit mem);
-            lsetup = Some (lsetup mem);
-            lsolve = lsolve mem;
-          }))
-    in
-    (solver, fun () -> (0, !nje))
-end
 
 (* Auxiliary indexing functions *)
 (* Translates 1-based indexing into 0-based indexing, just like corresponding
  * macros do in the original C implementation of this example.  *)
-let ijth a (i,j) = DM.get a (i-1) (j-1)
-and set_ijth a (i,j) x = DM.set a (i-1) (j-1) x
 and ith (v : RealArray.t) i = v.{i-1}
 and set_ith (v : RealArray.t) i x = v.{i-1} <- x
 
+(* Test the Alt module *)
+
+type dense_solver = {
+  n : int;
+  pivots : LintArray.t;
+}
+
+let alternate_dense y a =
+  let m, n = Matrix.Dense.size a in
+  if m <> n then failwith "The matrix is not square";
+  (* TODO: replace with new nvector length function when available *)
+  let yd = Nvector_serial.unwrap y in
+  if m <> RealArray.length yd then failwith "Matrix has wrong dimensions";
+
+  let linit s = ()
+  in
+  let lsetup { pivots } a =
+    let acols = Matrix.Dense.unwrap a in
+    Matrix.ArrayDense.getrf (RealArray2.wrap acols) pivots
+  in
+  let lsolve { pivots } a x b tol =
+    RealArray.blit b x;
+    let acols = Matrix.Dense.unwrap a in
+    Matrix.ArrayDense.getrs (RealArray2.wrap acols) pivots x
+  in
+  let lspace { n } = (0, 2 + n)
+  in
+  LinearSolver.Direct.Custom.make {
+      init=linit;
+      setup=lsetup;
+      solve=lsolve;
+      space=Some lspace;
+    } { n=m; pivots=LintArray.make m 0 } (Matrix.wrap_dense a)
 (* Problem Constants *)
 
 let neq    = 3        (* number of equations  *)
@@ -155,14 +122,16 @@ and print_output ida t y =
   printf "%10.4e %12.4e %12.4e %12.4e | %3d  %1d %12.4e\n"
     t y.{0} y.{1} y.{2} nst kused hused
 
-and print_final_stats ida nreLS nje =
+and print_final_stats ida =
   let open Ida in
-  let nst  = get_num_steps ida
-  and nre  = get_num_res_evals ida
-  and nni  = get_num_nonlin_solv_iters ida
-  and netf = get_num_err_test_fails ida
-  and ncfn = get_num_nonlin_solv_conv_fails ida
-  and nge  = get_num_g_evals ida
+  let nst   = get_num_steps ida
+  and nre   = get_num_res_evals ida
+  and nje   = Dls.get_num_jac_evals ida
+  and nni   = get_num_nonlin_solv_iters ida
+  and netf  = get_num_err_test_fails ida
+  and ncfn  = get_num_nonlin_solv_conv_fails ida
+  and nge   = get_num_g_evals ida
+  and nreLS = Dls.get_num_lin_res_evals ida
   in
   printf "\nFinal Run Statistics: \n\n";
   printf "Number of steps                    = %d\n" nst;
@@ -192,16 +161,23 @@ let resrob tres (y : RealArray.t) (yp : RealArray.t) (rr : RealArray.t) =
   rr.{0} <-  rr.{0} -. yp.{0};
   rr.{2} <-  y.{0} +. y.{1} +. y.{2} -. 1.0
 
-and jacrob : AltDense.dense_jacfn = fun tt cj y y' res jj tmps ->
-  set_ijth jj (1,1) (-. 0.04 -. cj);
-  set_ijth jj (2,1) (0.04);
-  set_ijth jj (3,1) (1.);
-  set_ijth jj (1,2) (1.0e4*.y.{2});
-  set_ijth jj (2,2) (-. 1.0e4*.y.{2} -. 6.0e7*.y.{1} -. cj);
-  set_ijth jj (3,2) (1.);
-  set_ijth jj (1,3) (1.0e4*.y.{1});
-  set_ijth jj (2,3) (-.1.0e4*.y.{1});
-  set_ijth jj (3,3) (1.)
+and jacrob params jj =
+  match params with
+    { Ida.jac_t=tt;
+      Ida.jac_coef=cj;
+      Ida.jac_y=(y : RealArray.t);
+      Ida.jac_res=resvec }
+    ->
+  let set = Matrix.Dense.set jj in
+  set 0 0 (-. 0.04 -. cj);
+  set 1 0 (0.04);
+  set 2 0 (1.);
+  set 0 1 (1.0e4*.y.{2});
+  set 1 1 (-. 1.0e4*.y.{2} -. 6.0e7*.y.{1} -. cj);
+  set 2 1 (1.);
+  set 0 2 (1.0e4*.y.{1});
+  set 1 2 (-.1.0e4*.y.{1});
+  set 2 2 (1.)
 
 and grob t (y : RealArray.t) y' (gout : RealArray.t) =
   let y1 = y.{0}
@@ -218,7 +194,10 @@ let main () =
   let y = RealArray.of_array [|1.; 0.; 0.|]
   and y' = RealArray.of_array [|-0.04; 0.04; 0.|]
   and rtol = 1.0e-4
-  and avtol = RealArray.of_array [|1.0e-8; 1.0e-14; 1.0e-6|] in
+  and avtol =
+    if compat2_3 then RealArray.of_array [|1.0e-8; 1.0e-14; 1.0e-6|]
+                 else RealArray.of_array [|1.0e-8; 1.0e-6;  1.0e-6|]
+  in
   (* Integration limits *)
   let t0 = 0.0
   and tout1 = 0.4
@@ -235,11 +214,11 @@ let main () =
 
   (* Call IDACreate, IDAInit, and IDARootInit to initialize IDA memory with
    * a 2-component root function and the dense direct linear solver.  *)
-  let altdense, get_stats = AltDense.make jacrob in
+  let a = Matrix.Dense.create neq neq in
+  let lsolver = Ida.Dls.solver ~jac:jacrob (alternate_dense wy a) in
   let ida_mem =
-    Ida.init altdense
-             (Ida.SVtolerances (rtol, Nvector_serial.wrap avtol))
-             resrob ~roots:(nroots, grob) t0 wy wy'
+    Ida.init (Ida.SVtolerances (rtol, Nvector_serial.wrap avtol))
+             ~lsolver resrob ~roots:(nroots, grob) t0 wy wy'
   in
   (* In loop, call IDASolve, print results, and test for error.  Break out of
    * loop when NOUT preset output times have been reached. *)
@@ -266,8 +245,7 @@ let main () =
         iout := nout
   done;
 
-  let nre, nje = get_stats () in
-  print_final_stats ida_mem nre nje
+  print_final_stats ida_mem
 
 (* Check environment variables for extra arguments.  *)
 let reps =

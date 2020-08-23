@@ -53,7 +53,8 @@ type user_data = {
   mutable sensi   : bool; (* turn on (T) or off (F) sensitivity analysis    *)
   mutable errconS : bool; (* full (T) or partial error control (F)          *)
   mutable fsDQ    : bool; (* user provided r.h.s sensitivity analysis (T/F) *)
-  mutable meth    : Sens.sens_method; (* sensitivity method                 *)
+  mutable meth    : (RealArray.t, Nvector_serial.kind) Sens.sens_method;
+                          (* sensitivity method                 *)
   p               : RealArray.t
 }
 
@@ -167,7 +168,7 @@ let print_final_stats s data =
   print_string_5d "    ncfn     = " ncfn;
 
   let njeD = Dls.get_num_jac_evals s
-  and nfeD = Dls.get_num_rhs_evals s
+  and nfeD = Dls.get_num_lin_rhs_evals s
   in
   print_string_5d "\n   njeD    = " njeD;
   print_string_5d "    nfeD     = " nfeD;
@@ -178,9 +179,13 @@ let print_final_stats s data =
     let nfSe     = get_num_rhs_evals s
     and nfeS     = get_num_rhs_evals_sens s
     and nsetupsS = get_num_lin_solv_setups s
-    and netfS    = get_num_err_test_fails s
-    and nniS     = get_num_nonlin_solv_iters s
-    and ncfnS    = get_num_nonlin_solv_conv_fails s in
+    and netfS    = if data.errconS then get_num_err_test_fails s else 0
+    and nniS, ncfnS =
+      match data.meth with
+      | Staggered _ -> get_num_nonlin_solv_iters s,
+                       get_num_nonlin_solv_conv_fails s
+      | Staggered1 _ | Simultaneous _ -> 0,0
+    in
     print_string "   -----------------------------------\n";
     print_string_5d "   nfSe    = " nfSe;
     print_string_5d "    nfeS     = " nfeS;
@@ -197,9 +202,9 @@ let print_header data =
   if data.sensi then begin
     printf "YES (%s + %s + %s)\n"
       (match data.meth with
-       | Sens.Simultaneous -> "SIMULTANEOUS"
-       | Sens.Staggered    -> "STAGGERED"
-       | Sens.Staggered1   -> "STAGGERED-1")
+       | Sens.Simultaneous _ -> "SIMULTANEOUS"
+       | Sens.Staggered _    -> "STAGGERED"
+       | Sens.Staggered1 _   -> "STAGGERED-1")
       (if data.errconS then "FULL ERROR CONTROL" else "PARTIAL ERROR CONTROL")
       (if data.fsDQ    then "DQ sensitivity RHS"
                        else "user-provided sensitivity RHS")
@@ -230,10 +235,10 @@ let run_cvode data cvode_mem y =
 let main () =
   (* User data structure *)
   let data = {
-    sensi   = true;              (* sensitivity ON                *)
-    meth    = Sens.Simultaneous; (* simultaneous corrector method *)
-    errconS = true;              (* full error control            *)
-    fsDQ    = false;             (* user-provided sensitvity RHS  *)
+    sensi   = true;                   (* sensitivity ON                *)
+    meth    = Sens.Simultaneous None; (* simultaneous corrector method *)
+    errconS = true;                   (* full error control            *)
+    fsDQ    = false;                  (* user-provided sensitvity RHS  *)
     p       = RealArray.of_list [ 0.04; 1.0e4; 3.0e7 ]
   } in
 
@@ -249,8 +254,10 @@ let main () =
   (* Create CVODES object *)
   let m = Matrix.dense neq in
   let cvode_mem =
-    Cvode.(init BDF (Newton Dls.(solver ~jac:(jac data) (dense y m)))
-                (SVtolerances (reltol, abstol)) (f data) t0 y0)
+    Cvode.(init BDF
+                (SVtolerances (reltol, abstol))
+                ~lsolver:Dls.(solver ~jac:(jac data) (dense y m))
+                (f data) t0 y0)
   in
   Cvode.set_max_num_steps cvode_mem mxsteps;
 
@@ -320,7 +327,7 @@ let main () =
   data.sensi   <- true;
   data.errconS <- false;
   data.fsDQ    <- false;
-  data.meth    <- Sens.Staggered;
+  data.meth    <- Sens.Staggered None;
 
   Cvode.reinit cvode_mem t0 y0;
   Sens.set_err_con cvode_mem data.errconS;

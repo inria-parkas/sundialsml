@@ -418,8 +418,10 @@ let main () =
   set_ic u dx local_n my_base;
 
   (* Allocate CVODES memory for forward integration *)
-  let cvode_mem = Cvode.(init Adams Functional
+  let nlsolver = NonlinearSolver.FixedPoint.make u in
+  let cvode_mem = Cvode.(init Adams
                               (SStolerances (reltol, abstol))
+                              ~nlsolver
                               (f data) t0 u)
   in
 
@@ -445,10 +447,11 @@ let main () =
   set_ic_back uB my_base;
 
   (* Allocate CVODES memory for the backward integration *)
+  let nlsolver = NonlinearSolver.FixedPoint.make uB in
   let bcvode_mem = Adjoint.(init_backward cvode_mem
                               Cvode.Adams
-                              Functional
                               (SStolerances (reltol, abstol))
+                              ~nlsolver
                               (NoSens (fB data)) tout uB) in
 
   (* Integrate to T0 *)

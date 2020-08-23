@@ -493,8 +493,8 @@ let main () =
   let lsolver = Ida.Spils.(spgmr ~maxl:maxl wcc) in
   let mem =
     Ida.(init
-      Spils.(solver lsolver
-                    (prec_left ~setup:(precond webdata) (psolve webdata)))
+      ~lsolver:Spils.(solver lsolver
+                       (prec_left ~setup:(precond webdata) (psolve webdata)))
       (Ida.SStolerances (rtol, atol)))
       (resweb webdata) t0 wcc wcp in
   (match Config.sundials_version with

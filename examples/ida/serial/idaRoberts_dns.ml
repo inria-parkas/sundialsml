@@ -31,6 +31,12 @@
 
 open Sundials
 
+let compat2_3 =
+  match Config.sundials_version with
+  | 2,_,_ -> true
+  | 3,_,_ -> true
+  | _ -> false
+
 let printf = Printf.printf
 
 (* Problem Constants *)
@@ -83,7 +89,7 @@ and print_final_stats ida =
   and nni   = get_num_nonlin_solv_iters ida
   and netf  = get_num_err_test_fails ida
   and ncfn  = get_num_nonlin_solv_conv_fails ida
-  and nreLS = Dls.get_num_res_evals ida
+  and nreLS = Dls.get_num_lin_res_evals ida
   and nge   = get_num_g_evals ida
   in
   printf "\nFinal Run Statistics: \n\n";
@@ -147,7 +153,10 @@ let main () =
   let y = RealArray.of_array [|1.; 0.; 0.|]
   and y' = RealArray.of_array [|-0.04; 0.04; 0.|]
   and rtol = 1.0e-4
-  and avtol = RealArray.of_array [|1.0e-8; 1.0e-14; 1.0e-6|] in
+  and avtol =
+    if compat2_3 then RealArray.of_array [|1.0e-8; 1.0e-14; 1.0e-6|]
+                 else RealArray.of_array [|1.0e-8; 1.0e-6;  1.0e-6|]
+  in
   (* Integration limits *)
   let t0 = 0.0
   and tout1 = 0.4
@@ -164,10 +173,15 @@ let main () =
 
   (* Call IDACreate, IDAInit, and IDARootInit to initialize IDA memory with
    * a 2-component root function and the dense direct linear solver.  *)
+  (* Create Newton SUNNonlinearSolver object. IDA uses a
+   * Newton SUNNonlinearSolver by default, so it is unecessary
+   * to create it and attach it. It is done in this example code
+   * solely for demonstration purposes. *)
+  let nlsolver = NonlinearSolver.Newton.make wy in
   let m = Matrix.dense neq in
   let ida_mem =
-    Ida.(init Dls.(solver ~jac:jacrob (dense wy m))
-              (SVtolerances (rtol, Nvector_serial.wrap avtol))
+    Ida.(init (SVtolerances (rtol, Nvector_serial.wrap avtol))
+              ~nlsolver ~lsolver:Dls.(solver ~jac:jacrob (dense wy m))
               resrob ~roots:(nroots, grob) t0 wy wy')
   in
   (* In loop, call IDASolve, print results, and test for error.  Break out of

@@ -276,9 +276,10 @@ let main () =
 
   let m = Matrix.dense neq in
   let cvode_mem =
-    Cvode.(init BDF (Newton Dls.(solver ~jac:(jac data)
-                                 (dense y m)))
-                (WFtolerances (ewt data)) (f data) t0 y)
+    Cvode.(init BDF
+                (WFtolerances (ewt data))
+                ~lsolver:Dls.(solver ~jac:(jac data) (dense y m))
+                (f data) t0 y)
   in
   Cvode.set_constraints cvode_mem (Nvector_serial.make neq Constraint.geq_zero);
 
@@ -325,8 +326,8 @@ let main () =
   let cvode_memB =
     Adj.(init_backward
           cvode_mem Cvode.BDF
-            (Newton Dls.(solver ~jac:(NoSens (jacb data)) (dense yB m)))
             (SStolerances (reltolB, abstolB))
+            ~lsolver:Dls.(solver ~jac:(NoSens (jacb data)) (dense yB m))
             (NoSens (fB data))
             tb1 yB)
   in

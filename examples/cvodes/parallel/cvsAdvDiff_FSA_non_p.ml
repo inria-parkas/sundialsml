@@ -108,7 +108,7 @@ let wrong_args my_pe name =
   end;
   exit 0
 
-let process_args my_pe =
+let process_args my_pe u =
   let argv = Sys.argv in
   let argc = Array.length argv in
   if argc < 2 then wrong_args my_pe argv.(0);
@@ -124,8 +124,11 @@ let process_args my_pe =
     if argc <> 4 then wrong_args my_pe argv.(0);
     let sensi_meth =
       if argv.(2) = "sim" then Sens.Simultaneous
+                          (Some (NonlinearSolver.FixedPoint.make_sens (ns+1) u))
       else if argv.(2) = "stg" then Sens.Staggered
+                          (Some (NonlinearSolver.FixedPoint.make_sens ns u))
       else if argv.(2) = "stg1" then Sens.Staggered1
+                          (Some (NonlinearSolver.FixedPoint.make u))
       else wrong_args my_pe argv.(0)
     in
     let err_con =
@@ -192,18 +195,25 @@ let print_final_stats cvode_mem sensi =
   printf "netf    = %5d    nsetups  = %5d\n" netf nsetups;
   printf "nni     = %5d    ncfn     = %5d\n" nni ncfn;
 
-  if sensi then begin
-    let open Sens in
-    let nfSe     = get_num_rhs_evals cvode_mem
-    and nfeS     = get_num_rhs_evals_sens cvode_mem
-    and nsetupsS = get_num_lin_solv_setups cvode_mem
-    and netfS    = get_num_err_test_fails cvode_mem
-    and nniS     = get_num_nonlin_solv_iters cvode_mem
-    and ncfnS    = get_num_nonlin_solv_conv_fails cvode_mem in
-    printf "\n";
-    printf "nfSe    = %5d    nfeS     = %5d\n" nfSe nfeS;
-    printf "netfs   = %5d    nsetupsS = %5d\n" netfS nsetupsS;
-    printf "nniS    = %5d    ncfnS    = %5d\n" nniS ncfnS
+  match sensi with
+  | None -> ()
+  | Some sensi_meth -> begin
+      let open Sens in
+      let nfSe     = get_num_rhs_evals cvode_mem
+      and nfeS     = get_num_rhs_evals_sens cvode_mem
+      and nsetupsS = get_num_lin_solv_setups cvode_mem
+      and netfS    = get_num_err_test_fails cvode_mem
+      and nniS, ncfnS =
+        match sensi_meth with
+        | Staggered _ | Staggered1 _ ->
+            get_num_nonlin_solv_iters cvode_mem,
+            get_num_nonlin_solv_conv_fails cvode_mem
+        | Simultaneous _ -> 0,0
+      in
+      printf "\n";
+      printf "nfSe    = %5d    nfeS     = %5d\n" nfSe nfeS;
+      printf "netfs   = %5d    nsetupsS = %5d\n" netfS nsetupsS;
+      printf "nniS    = %5d    ncfnS    = %5d\n" nniS ncfnS
   end
 
 (*
@@ -272,14 +282,16 @@ let main () =
   let npes  = Mpi.comm_size comm in
   let my_pe = Mpi.comm_rank comm in
 
-  (* Process arguments *)
-  let sensi, err_con = process_args my_pe in
-
   (* Set local vector length. *)
   let nperpe = neq/npes in
   let nrem = neq - npes*nperpe in
   let local_n = if my_pe < nrem then nperpe+1 else nperpe in
   let my_base = if my_pe < nrem then my_pe*local_n else my_pe*nperpe + nrem in
+
+  let u = Nvector_parallel.make local_n neq comm 0.0 in
+
+  (* Process arguments *)
+  let sensi, err_con = process_args my_pe u in
 
   (* USER DATA STRUCTURE *)
   let dx = xmax/.(float (mx+1)) in
@@ -294,7 +306,6 @@ let main () =
     } in
 
   (* INITIAL STATES *)
-  let u = Nvector_parallel.make local_n neq comm 0.0 in
   set_ic u dx local_n my_base;
 
   (* TOLERANCES *)
@@ -302,9 +313,10 @@ let main () =
   let abstol = atol in
 
   (* CVODE_CREATE & CVODE_MALLOC *)
+  let nlsolver = NonlinearSolver.FixedPoint.make u in
   let cvode_mem = Cvode.(init Adams
-                              Functional
                               (SStolerances (reltol, abstol))
+                              ~nlsolver
                               (f data)
                               t0
                               u)
@@ -345,9 +357,9 @@ let main () =
         if my_pe = 0 then begin
           printf "Sensitivity: YES ";
           (match sensi_meth with
-           | Sens.Simultaneous -> printf "( SIMULTANEOUS +"
-           | Sens.Staggered    -> printf "( STAGGERED +"
-           | Sens.Staggered1   -> printf "( STAGGERED1 +");
+           | Sens.Simultaneous _ -> printf "( SIMULTANEOUS +"
+           | Sens.Staggered _    -> printf "( STAGGERED +"
+           | Sens.Staggered1 _   -> printf "( STAGGERED1 +");
           if err_con then printf " FULL ERROR CONTROL )"
                      else printf " PARTIAL ERROR CONTROL )";
         end;
@@ -375,7 +387,7 @@ let main () =
   done;
 
   (* Print final statistics *)
-  if my_pe = 0 then print_final_stats cvode_mem (sensi <> None)
+  if my_pe = 0 then print_final_stats cvode_mem sensi
 
 (* Check environment variables for extra arguments.  *)
 let reps =

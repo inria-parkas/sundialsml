@@ -60,7 +60,7 @@ let print_final_stats mem =
   and nni   = get_num_nonlin_solv_iters mem
   and netf  = get_num_err_test_fails mem
   and ncfn  = get_num_nonlin_solv_conv_fails mem
-  and nreLS = Dls.get_num_res_evals mem in
+  and nreLS = Dls.get_num_lin_res_evals mem in
 
   print_string "\nFinal Run Statistics: \n\n";
   print_string "Number of steps                    = ";   print_int nst;
@@ -221,8 +221,8 @@ let main () =
 
   (* IDA initialization *)
   let m = Matrix.dense neq in
-  let mem = Ida.(init Dls.(solver (dense wy m))
-                      (SStolerances (rtol, atol))
+  let mem = Ida.(init (SStolerances (rtol, atol))
+                      ~lsolver:Dls.(solver (dense wy m))
                       (ressc data) ~varid:(Nvector_serial.wrap id) t0 wy wy') in
   Ida.set_suppress_alg mem true;
 

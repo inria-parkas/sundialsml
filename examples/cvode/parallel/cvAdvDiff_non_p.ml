@@ -198,8 +198,10 @@ let main () =
   in
   set_ic u dx local_N my_base;  (* Initialize u vector *)
 
-  let cvode_mem = Cvode.(init Adams Functional
+  let nlsolver = NonlinearSolver.FixedPoint.make u in
+  let cvode_mem = Cvode.(init Adams
                               (SStolerances (reltol, abstol))
+                              ~nlsolver
                               (f data) t0 u)
   in
 

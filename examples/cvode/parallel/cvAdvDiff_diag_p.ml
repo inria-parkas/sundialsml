@@ -200,7 +200,6 @@ let main () =
   set_ic u dx local_N my_base;  (* Initialize u vector *)
 
   let cvode_mem = Cvode.(init Adams
-                              (Newton Diag.solver)
                               (SStolerances (reltol, abstol))
                               (f data) t0 u)
   in

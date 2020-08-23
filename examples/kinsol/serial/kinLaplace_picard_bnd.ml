@@ -144,7 +144,7 @@ let print_final_stats kmem =
 
   (* Band linear solver statistics *)
   let nje  = Dls.get_num_jac_evals kmem in
-  let nfeD = Dls.get_num_func_evals kmem in
+  let nfeD = Dls.get_num_lin_func_evals kmem in
 
   (* Band linear solver workspace size *)
   let lenrwB, leniwB = Dls.get_work_space kmem in
@@ -181,7 +181,7 @@ let main () =
    * ----------------------------------------- *)
   let m = Matrix.band ~smu:(2*nx) ~mu:nx ~ml:nx neq in
   let kmem = Kinsol.(init ~maa:3
-                          ~linsolv:Dls.(solver ~jac:jac (band y m))
+                          ~lsolver:Dls.(solver ~jac:jac (band y m))
                           func y)
   in
 

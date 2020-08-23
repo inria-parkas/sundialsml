@@ -144,7 +144,7 @@ let print_output mem t u =
   and nre   = get_num_res_evals mem
   and hused = get_last_step mem
   and nje   = Dls.get_num_jac_evals mem
-  and nreLS = Dls.get_num_res_evals mem in
+  and nreLS = Dls.get_num_lin_res_evals mem in
 
   printf " %5.2f %13.5e  %d  %3d  %3d  %3d  %4d  %4d  %9.2e \n"
          t umax kused nst nni nje nre nreLS hused
@@ -189,8 +189,8 @@ let main () =
   let mu = mgrid and ml = mgrid in
   let m = Matrix.band ~smu:(mu+ml) ~mu ~ml neq in
   let mem =
-    Ida.(init Dls.(solver (band wu m))
-              (SStolerances (rtol, atol))
+    Ida.(init (SStolerances (rtol, atol))
+              ~lsolver:Dls.(solver (band wu m))
               (fun t u u' r -> heatres t u u' r data)
               t0 wu wu')
   in

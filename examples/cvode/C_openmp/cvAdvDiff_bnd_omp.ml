@@ -202,7 +202,7 @@ let print_final_stats s =
   and nni     = get_num_nonlin_solv_iters s
   and ncfn    = get_num_nonlin_solv_conv_fails s
   and nje     = Dls.get_num_jac_evals s
-  and nfeLS   = Dls.get_num_rhs_evals s
+  and nfeLS   = Dls.get_num_lin_rhs_evals s
   in
   printf "\nFinal Statistics:\n";
   printf "nst = %-6d nfe  = %-6d nsetups = %-6d nfeLS = %-6d nje = %d\n"
@@ -246,8 +246,8 @@ let main () =
   (* Set the user-supplied Jacobian routine Jac *)
   let m = Matrix.band ~smu:(2*my) ~mu:my ~ml:my neq in
   let cvode_mem = Cvode.(init BDF
-                    (Newton Dls.(solver ~jac:(jac data) (band u m)))
                     (SStolerances (reltol, abstol))
+                    ~lsolver:(Dls.(solver ~jac:(jac data) (band u m)))
                     (f data) t0 u)
   in
 

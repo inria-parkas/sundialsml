@@ -296,8 +296,8 @@ let main () =
 
   let m = Matrix.dense neq in
   let ida_mem =
-    Ida.(init Dls.(solver ~jac:(jac data) (dense wyy m))
-              (WFtolerances (ewt data))
+    Ida.(init (WFtolerances (ewt data))
+              ~lsolver:Dls.(solver ~jac:(jac data) (dense wyy m))
               (res data)
               t0
               wyy wyp)
@@ -365,8 +365,8 @@ let main () =
   let m = Matrix.dense neq in
   let indexB =
     Adjoint.(init_backward ida_mem
-               Dls.(solver ~jac:(NoSens (jacB data)) (dense wyB m))
                (SStolerances (reltolB, abstolB))
+               ~lsolver:Dls.(solver ~jac:(NoSens (jacB data)) (dense wyB m))
                (NoSens (resB data))
                tb2 wyB wypB)
   in
