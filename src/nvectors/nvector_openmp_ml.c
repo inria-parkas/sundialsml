@@ -59,6 +59,32 @@ static N_Vector clone_openmp(N_Vector w)
     CAMLreturnT(N_Vector, v);
 }
 
+/*
+ * N_VCloneEmpty is used in Sundials as a "light-weight" way to wrap
+ * array data for use in calculations with N_Vectors. At the time of
+ * writing (Sundials 3.1.0), this feature is only used in the *DenseDQJac
+ * routines (e.g., cvDlsDenseDQJac) and the cloned N_Vectors are never
+ * passed back into OCaml. So, we do not bother to reproduce the backlink.
+ *
+ * If the use of this feature is generalized, it will be necessary to
+ * duplicate the backlink, and to override the N_VSetArrayPointer function
+ * to update the backlink appropriately. Currently, N_VSetArrayPointer is
+ * only used in the *DenseDQJac functions and in the *_bbdpre
+ * implementations (which only use N_Vectors locally and never pass them
+ * back into OCaml).
+ */
+static N_Vector clone_empty_openmp(N_Vector w)
+{
+    N_Vector v;
+
+    v = N_VCloneEmpty_OpenMP(w);
+    v->ops->nvdestroy = N_VDestroy_OpenMP;
+    v->ops->nvclone = NULL;
+    v->ops->nvcloneempty = NULL;
+
+    return v;
+}
+
 /* Creation from OCaml.  */
 /* Adapted from sundials-2.6.1/src/nvec_openmp/nvector_openmp.c:
    N_VNewEmpty_OpenMP */
@@ -81,7 +107,7 @@ CAMLprim value sunml_nvec_wrap_openmp(value nthreads,
 
     /* Create vector operation structure */
     ops->nvclone           = clone_openmp;		    /* ours */
-    ops->nvcloneempty      = NULL;
+    ops->nvcloneempty      = clone_empty_openmp;	    /* ours */
     /* This is registered but only ever called for C-allocated clones. */
     ops->nvdestroy         = sunml_free_cnvec;
 #if SUNDIALS_LIB_VERSION >= 270
