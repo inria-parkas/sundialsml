@@ -141,7 +141,7 @@ module Dls : sig (* {{{ *)
       to the Jacobian.
 
       @kinsol <node5#sss:optout_dense> KINGetNumLinFuncEvals *)
-  val get_num_func_evals : 'k serial_session -> int
+  val get_num_lin_func_evals : 'k serial_session -> int
 
 end (* }}} *)
 
@@ -305,7 +305,7 @@ module Spils : sig (* {{{ *)
       is used.
 
       @kinsol <node5#sss:optout_spils> KINGetNumLinFuncEvals *)
-  val get_num_func_evals    : ('d, 'k) session -> int
+  val get_num_lin_func_evals    : ('d, 'k) session -> int
 
   (** {3:lowlevel Low-level solver manipulation} *)
 

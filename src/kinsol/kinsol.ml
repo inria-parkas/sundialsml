@@ -285,12 +285,12 @@ module Dls = struct (* {{{ *)
     if in_compat_mode2 then compat_get_num_jac_evals s else
     c_get_num_jac_evals s
 
-  external get_num_func_evals : 'k serial_session -> int
+  external get_num_lin_func_evals : 'k serial_session -> int
       = "sunml_kinsol_dls_get_num_func_evals"
 
-  let get_num_func_evals s =
+  let get_num_lin_func_evals s =
     if in_compat_mode2_3 then ls_check_direct s;
-    get_num_func_evals s
+    get_num_lin_func_evals s
 end (* }}} *)
 
 module Spils = struct (* {{{ *)
@@ -453,12 +453,12 @@ module Spils = struct (* {{{ *)
     if in_compat_mode2_3 then ls_check_spils s;
     get_num_jtimes_evals s
 
-  external get_num_func_evals    : ('a, 'k) session -> int
+  external get_num_lin_func_evals    : ('a, 'k) session -> int
       = "sunml_kinsol_spils_get_num_func_evals"
 
-  let get_num_func_evals s =
+  let get_num_lin_func_evals s =
     if in_compat_mode2_3 then ls_check_spils s;
-    get_num_func_evals s
+    get_num_lin_func_evals s
 end (* }}} *)
 
 external set_error_file : ('a, 'k) session -> Logfile.t -> unit
