@@ -52,6 +52,8 @@ Debugging Tips
   assertions in the OCaml runtime.
 * Use `valgrind --track-origins=yes` to run OCaml programs.
 * Use `ltrace -l 'libsundials_*'
+* Use the `misc/ltrace_mpi_wrapper` to debug mpi problems:
+  `mpirun -np 4 ../../../misc/ltrace_mpi_wrapper -l 'libsundials_*' ./prog.opt`
 * Debug with both `valgrind` and `gdb`:
 ```
 valgrind --track-origins=yes --vgdb=yes --vgdb-error=0 ./blah.opt

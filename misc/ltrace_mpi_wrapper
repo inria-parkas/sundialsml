@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# idea from Hristo Iliev: https://stackoverflow.com/a/25681064/1088827
+# for MPICH, replace $OMPI_COMM_WORLD_RANK with $PMI_RANK
+
+exec ltrace --output trace.$OMPI_COMM_WORLD_RANK $*
+
