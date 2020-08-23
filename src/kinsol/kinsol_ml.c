@@ -480,9 +480,9 @@ CAMLprim value sunml_kinsol_dls_lapack_dense (value vkin_mem, value vset_jac)
 }
 
 CAMLprim value sunml_kinsol_dls_band (value vkin_mem,
-				  value vmupper,
-				  value vmlower,
-				  value vset_jac)
+				      value vmupper,
+				      value vmlower,
+				      value vset_jac)
 {
     CAMLparam4(vkin_mem, vmupper, vmlower, vset_jac);
 #if SUNDIALS_LIB_VERSION < 300
@@ -503,7 +503,7 @@ CAMLprim value sunml_kinsol_dls_band (value vkin_mem,
 }
 
 CAMLprim value sunml_kinsol_dls_lapack_band (value vkin_mem, value vmupper,
-					 value vmlower, value vset_jac)
+					     value vmlower, value vset_jac)
 {
     CAMLparam4(vkin_mem, vmupper, vmlower, vset_jac);
 #if SUNDIALS_LIB_VERSION < 300 && defined SUNDIALS_ML_LAPACK
@@ -545,7 +545,7 @@ CAMLprim value sunml_kinsol_set_linear_solver (value vkin_mem, value vlsolv,
 }
 
 CAMLprim value sunml_kinsol_dls_set_linear_solver (value vkin_mem, value vlsolv,
-					       value vjmat, value vhasjac)
+						   value vjmat, value vhasjac)
 {
     CAMLparam4(vkin_mem, vlsolv, vjmat, vhasjac);
 #if 300 <= SUNDIALS_LIB_VERSION && SUNDIALS_LIB_VERSION < 400
@@ -1187,8 +1187,8 @@ CAMLprim value sunml_kinsol_spils_get_num_func_evals (value vkin_mem)
 
     long int r;
 #if 400 <= SUNDIALS_LIB_VERSION
-    int flag = KINGetNumFuncEvals(KINSOL_MEM_FROM_ML(vkin_mem), &r);
-    CHECK_LS_FLAG("KINGetNumFuncEvals", flag);
+    int flag = KINGetNumLinFuncEvals(KINSOL_MEM_FROM_ML(vkin_mem), &r);
+    CHECK_LS_FLAG("KINGetNumLinFuncEvals", flag);
 #else
     int flag = KINSpilsGetNumFuncEvals(KINSOL_MEM_FROM_ML(vkin_mem), &r);
     CHECK_SPILS_FLAG("KINSpilsGetNumFuncEvals", flag);

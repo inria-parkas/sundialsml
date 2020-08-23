@@ -221,7 +221,7 @@ module Dls = struct (* {{{ *)
     end;
     session.ls_precfns <- NoPrecFns
 
-  (* Sundials >= 3.0.0 *)
+  (* 3.0.0 <= Sundials < 4.0.0 *)
   external c_dls_set_linear_solver
     : 'k serial_session
       -> ('m, Nvector_serial.data, 'k) LSD.cptr
@@ -230,11 +230,22 @@ module Dls = struct (* {{{ *)
       -> unit
     = "sunml_kinsol_dls_set_linear_solver"
 
+  (* 4.0.0 <= Sundials *)
+  external c_set_linear_solver
+    : ('d, 'k) session
+      -> ('m, 'd, 'k) LSD.cptr
+      -> ('mk, 'm, 'd, 'k) Matrix.t option
+      -> bool
+      -> unit
+    = "sunml_kinsol_set_linear_solver"
+
   let solver ?jac ((LSD.S { LSD.rawptr; LSD.solver; LSD.matrix }) as ls)
              session nv =
     set_ls_callbacks ?jac solver matrix session;
     if in_compat_mode2 then make_compat (jac <> None) solver matrix session
-    else c_dls_set_linear_solver session rawptr matrix (jac <> None);
+    else if in_compat_mode2_3
+      then c_dls_set_linear_solver session rawptr matrix (jac <> None)
+    else c_set_linear_solver session rawptr (Some matrix) (jac <> None);
     LSD.attach ls;
     session.ls_solver <- LSI.DirectSolver ls
 
@@ -324,9 +335,19 @@ module Spils = struct (* {{{ *)
     : ('a, 'k) session -> bool -> unit
     = "sunml_kinsol_spils_set_preconditioner"
 
+  (* Sundials < 4.0.0 *)
   external c_spils_set_linear_solver
     : ('a, 'k) session -> ('a, 'k) LSI.Iterative.cptr -> unit
     = "sunml_kinsol_spils_set_linear_solver"
+
+  (* 4.0.0 <= Sundials *)
+  external c_set_linear_solver
+    : ('d, 'k) session
+      -> ('d, 'k) LSI.Iterative.cptr
+      -> ('mk, 'm, 'd, 'k) Matrix.t option
+      -> bool
+      -> unit
+    = "sunml_kinsol_set_linear_solver"
 
   let old_set_max_restarts s t =
     ls_check_spils s;
@@ -381,7 +402,8 @@ module Spils = struct (* {{{ *)
       session.ls_callbacks <- SpilsCallback jac_times_vec;
       if jac_times_vec <> None then c_set_jac_times_vec_fn session true
     end else
-      c_spils_set_linear_solver session rawptr;
+      if in_compat_mode2_3 then c_spils_set_linear_solver session rawptr
+      else c_set_linear_solver session rawptr None false;
       LSI.Iterative.attach ls;
       session.ls_solver <- LSI.IterativeSolver ls;
       LSI.Iterative.(c_set_prec_type rawptr solver prec_type false);
