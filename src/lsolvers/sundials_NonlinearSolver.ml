@@ -305,11 +305,11 @@ module FixedPoint = struct (* {{{ *)
       attached  = false;
     }
 
-  let make_sens count y m =
+  let make_sens ?(acceleration_vectors=0) count y =
     let callbacks = empty_callbacks () in
     {
-      rawptr    = c_make_sens count y m callbacks;
-      solver    = FixedPointSolver m;
+      rawptr    = c_make_sens count y acceleration_vectors callbacks;
+      solver    = FixedPointSolver acceleration_vectors;
       callbacks = callbacks;
       attached  = false;
     }

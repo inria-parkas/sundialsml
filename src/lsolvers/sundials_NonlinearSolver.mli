@@ -306,17 +306,17 @@ module FixedPoint : sig (* {{{ *)
       sensitivity-enabled integrators.
       Solves nonlinear systems of the form {% $G(y) = y$ %}.
 
-      In the call [make_sens count y m],
-
+      In the call [make_sens count y],
       - [count] is the number of vectors in the nonlinear problem,
         if there are {% $N_s$ %} sensitivities, then [count] should be
         {% $N_s + 1$ %} if using a simultaneous corrector
         or {% $N_s$ %} if using a staggered corrector;
       - [y] is a template for cloning vectors; and,
-      - [m] is the number of acceleration vectors to use.
+
+      The number of [acceleration_vectors] defaults to zero.
 
       @nocvode <node> SUNNonlinSol_FixedPointSens *)
-  val make_sens : int -> ('d, 'k) Nvector.t -> int
+  val make_sens : ?acceleration_vectors:int -> int -> ('d, 'k) Nvector.t
     -> (('d, 'k) Senswrapper.t, 'k, 'a integrator) nonlinear_solver
 
   (** Returns the residual function that defines the nonlinear system.
