@@ -51,6 +51,7 @@ Debugging Tips
 * Compile OCaml programs with `-runtime-variant d` to enable debugging 
   assertions in the OCaml runtime.
 * Use `valgrind --track-origins=yes` to run OCaml programs.
+* Use `ltrace -l 'libsundials_*'
 * Debug with both `valgrind` and `gdb`:
 ```
 valgrind --track-origins=yes --vgdb=yes --vgdb-error=0 ./blah.opt
