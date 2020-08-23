@@ -369,7 +369,7 @@ type 'data sysfn = 'data -> 'data -> unit
 val init :
   ?max_iters:int
   -> ?maa:int
-  -> ?linsolv:('data, 'kind) session_linear_solver
+  -> ?lsolver:('data, 'kind) session_linear_solver
   -> 'data sysfn
   -> ('data, 'kind) Nvector.t
   -> ('data, 'kind) session

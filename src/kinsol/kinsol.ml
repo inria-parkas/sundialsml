@@ -615,7 +615,7 @@ let session_finalize s =
   Dls.invalidate_callback s;
   c_session_finalize s
 
-let init ?max_iters ?maa ?linsolv f u0 =
+let init ?max_iters ?maa ?lsolver f u0 =
   let checkvec = Nvector.check u0 in
   let weakref = Weak.create 1 in
   let kin_mem, backref = c_init weakref u0 max_iters maa
@@ -640,7 +640,7 @@ let init ?max_iters ?maa ?linsolv f u0 =
         } in
   Gc.finalise session_finalize session;
   Weak.set weakref 0 (Some session);
-  (match linsolv with Some lsolver -> lsolver session u0 | None -> ());
+  (match lsolver with Some lsolver -> lsolver session u0 | None -> ());
   session
 
 type strategy =
