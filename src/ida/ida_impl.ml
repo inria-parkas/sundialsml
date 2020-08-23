@@ -12,6 +12,10 @@
 
 open Sundials
 
+(* Hack to ensure that Sundials.c_init_module is executed so that the global
+   exceptions are properly registered. *)
+let e = Sundials.RecoverableFailure
+
 (* Types shared between Ida, Idas, Ida_bbd, and Idas_bbd.  See the
    notes on Cvode_impl about the rationale behind this module.  *)
 

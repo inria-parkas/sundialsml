@@ -12,6 +12,10 @@
 
 open Sundials
 
+(* Hack to ensure that Sundials.c_init_module is executed so that the global
+   exceptions are properly registered. *)
+let e = Sundials.RecoverableFailure
+
 (* Types underlying LinearSolver.  *)
 
 (* This module defines the lsolver types which are manipulated (abstractly)

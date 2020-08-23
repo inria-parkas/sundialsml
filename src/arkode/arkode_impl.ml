@@ -12,6 +12,10 @@
 
 open Sundials
 
+(* Hack to ensure that Sundials.c_init_module is executed so that the global
+   exceptions are properly registered. *)
+let e = Sundials.RecoverableFailure
+
 (* Types shared between Arkode, Arkode_bbd, Arkode_klu, and Arkode_superlumt. *)
 
 (* This module's purpose is just to define types shared between Arkode,

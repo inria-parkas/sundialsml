@@ -112,3 +112,7 @@ module type NVECTOR =
     module DataOps : NVECTOR_OPS with type t = data
   end
 
+(* Hack to ensure that Sundials.c_init_module is executed so that the global
+   exceptions are properly registered. *)
+let e = Sundials.RecoverableFailure
+
