@@ -2731,6 +2731,11 @@ module MRIStep : sig (* {{{ *)
       @noarkode <node> MRIStepGetNumRhsEvals *)
   val get_num_rhs_evals       : ('d, 'k) session -> int * int
 
+  (** Returns the the current internal time reached by the solver.
+
+      @noarkode <node> MRIStepGetCurrentTime *)
+  val get_current_time        : ('d, 'k) session -> float
+
   (** Returns the Butcher tables in use by the solver.
       The call [slow, fast = get_current_butcher_tables s] returns the slow
       and fast butcher tables.

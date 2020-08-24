@@ -6108,6 +6108,21 @@ CAMLprim value sunml_arkode_mri_set_stop_time(value varkode_mem, value tstop)
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_arkode_mri_get_current_time(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    realtype v = 0.0;
+
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepGetCurrentTime(ARKODE_MEM_FROM_ML(varkode_mem), &v);
+    CHECK_FLAG("MRIStepGetCurrentTime", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(caml_copy_double(v));
+}
+
 CAMLprim value sunml_arkode_mri_get_root_info(value vdata, value roots)
 {
     CAMLparam2(vdata, roots);

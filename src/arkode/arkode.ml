@@ -322,7 +322,7 @@ module ARKStep = struct (* {{{ *)
 
   let explicit f = Explicit f
 
-  let imex ?nlsolver ?lsolver ?linearity ~fi ~fe =
+  let imex ?nlsolver ?lsolver ?linearity ~fi fe =
     ImEx (fe, implicit_problem ?nlsolver ?lsolver ?linearity fi)
 
   external c_root_init : ('a, 'k) session -> int -> unit
@@ -2427,29 +2427,11 @@ module MRIStep = struct (* {{{ *)
   external get_num_steps          : ('a, 'k) session -> int * int
       = "sunml_arkode_mri_get_num_steps"
 
-  external get_num_exp_steps      : ('d, 'k) session -> int
-      = "sunml_arkode_mri_get_num_exp_steps"
-
-  external get_num_acc_steps      : ('d, 'k) session -> int
-      = "sunml_arkode_mri_get_num_acc_steps"
-
-  external get_num_step_attempts  : ('d, 'k) session -> int
-      = "sunml_arkode_mri_get_num_step_attempts"
-
   external get_num_rhs_evals      : ('a, 'k) session -> int * int
       = "sunml_arkode_mri_get_num_rhs_evals"
 
-  external get_num_err_test_fails : ('a, 'k) session -> int
-      = "sunml_arkode_mri_get_num_err_test_fails"
-
-  external get_actual_init_step   : ('a, 'k) session -> float
-      = "sunml_arkode_mri_get_actual_init_step"
-
   external get_last_step          : ('a, 'k) session -> float
       = "sunml_arkode_mri_get_last_step"
-
-  external get_current_step       : ('a, 'k) session -> float
-      = "sunml_arkode_mri_get_current_step"
 
   external get_current_time       : ('a, 'k) session -> float
       = "sunml_arkode_mri_get_current_time"
@@ -2537,9 +2519,6 @@ module MRIStep = struct (* {{{ *)
   external get_current_butcher_tables
       : ('d, 'k) session -> ButcherTable.t * ButcherTable.t
       = "sunml_arkode_mri_get_current_butcher_tables"
-
-  external get_tol_scale_factor           : ('a, 'k) session -> float
-      = "sunml_arkode_mri_get_tol_scale_factor"
 
   external get_num_g_evals                : ('a, 'k) session -> int
       = "sunml_arkode_mri_get_num_g_evals"
