@@ -1140,16 +1140,16 @@ module ARKStep : sig (* {{{ *)
                           time-dependent. *)
     | Nonlinear       (** Implicit portion is nonlinear. *)
 
-  (* Represents the implicit component of the problem and its solution. *)
-  type ('d, 'k) implicit_problem
+  (** The form of the initial value problem. *)
+  type ('d, 'k) problem
 
-  (** Specifies the implicit component of the problem and its solution.
+  (** Diagonally Implicit Runge-Kutta (DIRK) solution of stiff problem.
       The fields are as follows.
-      - [irhsfn], the implicit portion of the right-hand-side function,
-      - [linearity], specifies whether the implicit portion is linear or
-                     nonlinear (the default),
-      - [nlsolver], the nonlinear solver used for implicit stage solves, and
+      - [nlsolver], the nonlinear solver used for implicit stage solves,
       - [lsolver], used by [nlsolver]s based on Newton interation.
+      - [linearity], specifies whether the implicit portion is linear or
+                     nonlinear (the default), and
+      - [irhsfn], the implicit portion of the right-hand-side function,
 
       If an [nlsolver] is not specified, then the
       {{!Sundials_NonlinearSolver.Newton}Newton} module is used by default.
@@ -1157,25 +1157,6 @@ module ARKStep : sig (* {{{ *)
       specifying an [lsolver] results in a {!NonlinearInitFailure} (or
       {!IllInput} for Sundials < 4.0.0) exception on the first call to
       {!solve_normal} or {!solve_one_step}. *)
-  val implicit_problem :
-    ?nlsolver : ('data, 'kind,
-                  (('data, 'kind) session) Sundials_NonlinearSolver.integrator)
-                Sundials_NonlinearSolver.nonlinear_solver
-    -> ?lsolver  : ('data, 'kind) session_linear_solver
-    -> ?linearity : linearity
-    -> 'data rhsfn
-    -> ('data, 'kind) implicit_problem
-
-  (** The form of the initial value problem. *)
-  type ('d, 'k) problem =
-    | Implicit of ('d, 'k) implicit_problem
-        (** Diagonally Implicit Runge-Kutta (DIRK) solution of stiff problem. *)
-    | Explicit of 'd rhsfn
-        (** Explicit Runge-Kutta (ERK) solution of non-stiff problem. *)
-    | ImEx of 'd rhsfn * ('d, 'k) implicit_problem
-        (** Additive Runge-Kutta (ARK) solution of multi-rate problem. *)
-
-  (* Combines {{!problem}Implicit} and {!implicit_problem}. *)
   val implicit :
     ?nlsolver : ('data, 'kind,
                   (('data, 'kind) session) Sundials_NonlinearSolver.integrator)
@@ -1185,18 +1166,20 @@ module ARKStep : sig (* {{{ *)
     -> 'data rhsfn
     -> ('data, 'kind) problem
 
-  (* Alternative name for {{!problem}Explicit}. *)
+  (** Explicit Runge-Kutta (ERK) solution of non-stiff problem. The argument
+      specifies the explicit portion of the right-hand-side problem. *)
   val explicit : 'data rhsfn -> ('data, 'kind) problem
 
-  (* Combines {{!problem}ImEx} and {!implicit_problem}. *)
+  (** Additive Runge-Kutta (ARK) solution of multi-rate problem. The arguments
+      are as described under {!implict} and {!explicit}. *)
   val imex :
     ?nlsolver : ('data, 'kind,
                   (('data, 'kind) session) Sundials_NonlinearSolver.integrator)
                 Sundials_NonlinearSolver.nonlinear_solver
     -> ?lsolver  : ('data, 'kind) session_linear_solver
     -> ?linearity : linearity
-    -> fi : 'data rhsfn
-    -> fe : 'data rhsfn
+    -> fi:'data rhsfn
+    -> 'data rhsfn
     -> ('data, 'kind) problem
 
   (** Creates and initializes a session with the solver. The call
