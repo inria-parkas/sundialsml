@@ -98,6 +98,7 @@
  *)
 
 open Sundials
+module ARKStep = Arkode.ARKStep
 
 module Densemat = Matrix.ArrayDense
 open Bigarray
@@ -204,7 +205,7 @@ type web_data = {
     tmp       : RealArray.t;
     rewt      : Nvector_serial.t;
 
-    mutable arkode_mem : Nvector_serial.kind Arkode.serial_session option;
+    mutable arkode_mem : Nvector_serial.kind ARKStep.serial_session option;
   }
 
 (* Private Helper Functions *)
@@ -272,9 +273,9 @@ let v_sum_prods ((u : RealArray.t), u_off) p ((q : RealArray.t), q_off) v
  there are ngrp=ngx*ngy blocks computed in the block-grouping scheme.
 *)
 let precond wdata jacarg jok gamma =
-  let { Arkode.jac_t   = t;
-        Arkode.jac_y   = (cdata : RealArray.t);
-        Arkode.jac_fy  = fc } = jacarg
+  let { ARKStep.jac_t   = t;
+        ARKStep.jac_y   = (cdata : RealArray.t);
+        ARKStep.jac_fy  = fc } = jacarg
   in
   let f1 = wdata.tmp in
   let arkode_mem =
@@ -282,7 +283,7 @@ let precond wdata jacarg jok gamma =
     | Some c -> c | None -> assert false
   and rewtdata  = Nvector.unwrap wdata.rewt
   in
-  Arkode.get_err_weights arkode_mem wdata.rewt;
+  ARKStep.get_err_weights arkode_mem wdata.rewt;
 
   let uround = Config.unit_roundoff
   and p      = wdata.p
@@ -542,9 +543,9 @@ let gs_iter wdata gamma zd xd =
   blocks in P, and pivot information in pivot, and returns the result in z.
 *)
 let psolve wdata jac_arg solve_arg z =
-  let { Arkode.Spils.rhs = r; Arkode.Spils.gamma = gamma } = solve_arg
+  let ARKStep.Spils.({ rhs; gamma }) = solve_arg
   in
-  Array1.blit r z;
+  Array1.blit rhs z;
 
   (* call GSIter for Gauss-Seidel iterations *)
   gs_iter wdata gamma z wdata.tmp;
@@ -753,8 +754,13 @@ let cinit wdata (cdata : RealArray.t) =
     done
   done
 
+let spgmr =
+  match Config.sundials_version with
+  | 2,_,_ | 3,_,_ -> "ARKSPGMR"
+  | _,_,_ -> "SPGMR"
+
 let print_intro () =
-  printf "\n\nDemonstration program for ARKODE - ARKSPGMR linear solver\n\n";
+  printf "\n\nDemonstration program for ARKODE - %s linear solver\n\n" spgmr;
   printf "Food web problem with ns species, ns = %d\n" ns;
   printf "Predator-prey interaction and diffusion on a 2-D square\n\n";
 
@@ -780,9 +786,9 @@ let print_intro () =
 
 let print_header jpre gstype =
   printf "\n\nPreconditioner type is           jpre = %s\n"
-    (if jpre = Arkode.Spils.PrecLeft then "PREC_LEFT" else "PREC_RIGHT");
+    (if jpre = ARKStep.Spils.PrecLeft then "PREC_LEFT" else "PREC_RIGHT");
   printf"\nGram-Schmidt method type is    gstype = %s\n\n\n"
-    (if gstype = Arkode.Spils.ModifiedGS
+    (if gstype = ARKStep.Spils.ModifiedGS
      then "MODIFIED_GS" else "CLASSICAL_GS")
 
 let print_all_species (cdata : RealArray.t) ns mxns t =
@@ -800,16 +806,26 @@ let print_all_species (cdata : RealArray.t) ns mxns t =
   done
 
 let print_output s t =
-  let nst     = Arkode.get_num_steps s
-  and nfe,nfi = Arkode.get_num_rhs_evals s
-  and nni     = Arkode.get_num_nonlin_solv_iters s
-  and hu      = Arkode.get_last_step s
+  let nst     = ARKStep.get_num_steps s
+  and nfe,nfi = ARKStep.get_num_rhs_evals s
+  and nni     = ARKStep.get_num_nonlin_solv_iters s
+  and hu      = ARKStep.get_last_step s
   in
   printf "t = %10.2e  nst = %d  nfe = %d  nfi = %d  nni = %d" t nst nfe nfi nni;
   printf "  hu = %11.2e\n\n" hu
 
+let stepper, _stepper =
+  match Config.sundials_version with
+  | 2,_,_ | 3,_,_ -> "ARKode", " "
+  | _,_,_ -> "ARKStep", ""
+
+let lsolver, _lsolver =
+  match Config.sundials_version with
+  | 2,_,_ | 3,_,_ -> "SUNSPGMR", ""
+  | _,_,_ -> "ARKLS", "   "
+
 let print_final_stats s =
-  let open Arkode in
+  let open ARKStep in
   let lenrw, leniw = get_work_space s
   and nst          = get_num_steps s
   and nfe, nfi     = get_num_rhs_evals s
@@ -822,8 +838,8 @@ let print_final_stats s =
   and nli   = Spils.get_num_lin_iters s
   and npe   = Spils.get_num_prec_evals s
   and nps   = Spils.get_num_prec_solves s
-  and ncfl  = Spils.get_num_conv_fails s
-  and nfeLS = Spils.get_num_rhs_evals s
+  and ncfl  = Spils.get_num_lin_conv_fails s
+  and nfeLS = Spils.get_num_lin_rhs_evals s
   in
   printf "\n\n Final statistics for this run:\n\n";
   (match Config.sundials_version with
@@ -833,10 +849,10 @@ let print_final_stats s =
   printf " ARKSPGMR real workspace length         = %4d \n" lenrwLS;
   printf " ARKSPGMR integer workspace length      = %4d \n" leniwLS;
   | _ ->
-  printf " ARKode real workspace length          = %4d \n" lenrw;
-  printf " ARKode integer workspace length       = %4d \n" leniw;
-  printf " SUNSPGMR real workspace length        = %4d \n" lenrwLS;
-  printf " SUNSPGMR integer workspace length     = %4d \n" leniwLS);
+  printf " %s real workspace length%s         = %4d \n" stepper _stepper lenrw;
+  printf " %s integer workspace length%s      = %4d \n" stepper _stepper leniw;
+  printf " %s real workspace length%s        = %4d \n" lsolver _lsolver lenrwLS;
+  printf " %s integer workspace length%s     = %4d \n" lsolver _lsolver leniwLS);
   printf " Number of steps                       = %4d \n" nst;
   printf " Number of f-s (explicit)              = %4d \n" nfe;
   printf " Number of f-s (implicit)              = %4d \n" nfi;
@@ -868,23 +884,21 @@ let main () =
   cinit wdata (unwrap c);
 
   (* Call ARKodeInit or ARKodeReInit, then ARKSpgmr to set up problem *)
-  let lsolver= Arkode.Spils.(spgmr ~maxl:maxl c) in
-  let arkode_mem = Arkode.(
-    init
-      (Implicit
-        (f wdata,
-         Newton Spils.(solver lsolver
-                         (prec_left ~setup:(precond wdata) (psolve wdata))),
-         Nonlinear))
+  let lsolver= ARKStep.Spils.(spgmr ~maxl:maxl c) in
+  let arkode_mem = ARKStep.(init
+      (implicit
+        ~lsolver:Spils.(solver lsolver
+                          (prec_left ~setup:(precond wdata) (psolve wdata)))
+        (f wdata))
       (SStolerances (reltol, abstol))
       t0
       c
   ) in
   wdata.arkode_mem <- Some arkode_mem;
-  Arkode.set_max_num_steps arkode_mem 1000;
-  Arkode.set_nonlin_conv_coef arkode_mem 1.0e-3;
-  Arkode.Spils.(set_gs_type lsolver ModifiedGS);
-  Arkode.Spils.set_eps_lin arkode_mem delt;
+  ARKStep.set_max_num_steps arkode_mem 1000;
+  ARKStep.set_nonlin_conv_coef arkode_mem 1.0e-3;
+  ARKStep.Spils.(set_gs_type lsolver ModifiedGS);
+  ARKStep.Spils.set_eps_lin arkode_mem delt;
 
   let ns   = wdata.ns
   and mxns = wdata.mxns
@@ -903,15 +917,15 @@ let main () =
       (* Print initial values *)
       print_all_species (unwrap c) ns mxns t0
     else begin
-      Arkode.reinit arkode_mem t0 c;
-      Arkode.Spils.(set_prec_type lsolver jpre);
-      Arkode.Spils.(set_gs_type lsolver gstype)
+      ARKStep.reinit arkode_mem t0 c;
+      ARKStep.Spils.(set_prec_type lsolver jpre);
+      ARKStep.Spils.(set_gs_type lsolver gstype)
     end;
 
     (* Loop over output points, call ARKode, print sample solution values. *)
     let tout = ref t1 in
     for iout = 1 to nout do
-      let (t, _) = Arkode.solve_normal arkode_mem !tout c in
+      let (t, _) = ARKStep.solve_normal arkode_mem !tout c in
       print_output arkode_mem t;
       if !firstrun && (iout mod 3 = 0)
         then print_all_species (unwrap c) ns mxns t;
@@ -925,7 +939,7 @@ let main () =
   in
 
   (* Loop over jpre and gstype (four cases) *)
-  let open Arkode.Spils in
+  let open ARKStep.Spils in
   run PrecLeft  ModifiedGS;
   run PrecLeft  ClassicalGS;
   run PrecRight ModifiedGS;

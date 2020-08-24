@@ -40,6 +40,7 @@
  *---------------------------------------------------------------*)
 
 open Sundials
+module ARKStep = Arkode.ARKStep
 
 let printf = Printf.printf
 let fprintf = Printf.fprintf
@@ -68,7 +69,7 @@ let g t (y : RealArray.t) (gout : RealArray.t) =
   gout.{1} <- w -. 0.01     (* check for w == 1e-2 *)
 
 (* Jacobian routine to compute J(t,y) = df/dy. *)
-let jac { Arkode.jac_y = (y : RealArray.t) } j =
+let jac { ARKStep.jac_y = (y : RealArray.t) } j =
   let v = y.{1} in   (* access current solution *)
   let w = y.{2} in
 
@@ -116,22 +117,21 @@ let main () =
      the initial dependent variable vector y.  Note: since this
      problem is fully implicit, we set f_E to NULL and f_I to f. *)
   let m = Matrix.dense 3 in
-  let arkode_mem = Arkode.(
+  let arkode_mem = ARKStep.(
     init
-      (Implicit (f, Newton Dls.(solver ~jac:jac (dense y_nv m)),
-                 Nonlinear))
+      (implicit ~lsolver:Dls.(solver ~jac:jac (dense y_nv m)) f)
       (SVtolerances (reltol, atols))
       ~roots:(2, g)
       t0
       y_nv
   ) in
-  Arkode.set_max_err_test_fails arkode_mem 20;(* Increase max error test fails*)
-  Arkode.set_max_nonlin_iters arkode_mem 8;   (* Increase max nonlin iters  *)
-  Arkode.set_nonlin_conv_coef arkode_mem 1.e-7;(* Nonlinear convergence coeff.*)
-  Arkode.set_max_num_steps arkode_mem 100000; (* Increase max num steps *)
+  ARKStep.set_max_err_test_fails arkode_mem 20;(* Increase max error test fails*)
+  ARKStep.set_max_nonlin_iters arkode_mem 8;   (* Increase max nonlin iters  *)
+  ARKStep.set_nonlin_conv_coef arkode_mem 1.e-7;(* Nonlinear convergence coeff.*)
+  ARKStep.set_max_num_steps arkode_mem 100000; (* Increase max num steps *)
 
   if sundials_270_or_later then
-    Arkode.(set_predictor_method arkode_mem MaximumOrderPredictor);
+    ARKStep.(set_predictor_method arkode_mem MaximumOrderPredictor);
 
   (* Open output stream for results, output comment line *)
   let ufid = open_out "solution.txt" in
@@ -151,14 +151,14 @@ let main () =
   (try
      for iout=0 to nt-1 do
        (* call integrator *)
-       let t, flag = Arkode.solve_normal arkode_mem !tout y_nv in
+       let t, flag = ARKStep.solve_normal arkode_mem !tout y_nv in
 
        (* access/print solution *)
        printf "  %12.5e  %12.5e  %12.5e  %12.5e\n" t y.{0} y.{1} y.{2};
        fprintf ufid " %.16e %.16e %.16e %.16e\n" t y.{0} y.{1} y.{2};
 
        if flag = Arkode.RootsFound then begin
-         Arkode.get_root_info arkode_mem rootsfound;
+         ARKStep.get_root_info arkode_mem rootsfound;
          printf "      rootsfound[] = %3d %3d\n" (root 0) (root 1)
        end;
        tout := !tout *. tmult
@@ -169,7 +169,7 @@ let main () =
   close_out ufid;
 
   (* Print some final statistics *)
-  let open Arkode in
+  let open ARKStep in
   let nst      = get_num_steps arkode_mem in
   let nst_a    = get_num_step_attempts arkode_mem in
   let nfe, nfi = get_num_rhs_evals arkode_mem in
@@ -178,7 +178,7 @@ let main () =
   let nni      = get_num_nonlin_solv_iters arkode_mem in
   let ncfn     = get_num_nonlin_solv_conv_fails arkode_mem in
   let nje      = Dls.get_num_jac_evals arkode_mem in
-  let nfeLS    = Dls.get_num_rhs_evals arkode_mem in
+  let nfeLS    = Dls.get_num_lin_rhs_evals arkode_mem in
   let nge      = get_num_g_evals arkode_mem in
 
   printf "\nFinal Solver Statistics:\n";

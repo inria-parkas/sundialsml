@@ -61,6 +61,7 @@
  *)
 
 open Sundials
+module ARKStep = Arkode.ARKStep
 
 module BBD = Arkode_bbd
 open Bigarray
@@ -256,8 +257,8 @@ let print_output s my_pe comm u t =
       blit buf 0 tempu 0 2
     end;
 
-    let nst = Arkode.get_num_steps s
-    and hu  = Arkode.get_last_step s
+    let nst = ARKStep.get_num_steps s
+    and hu  = ARKStep.get_last_step s
     in
     printf "t = %.2e   no. steps = %d   stepsize = %.2e\n" t nst hu;
     printf "At bottom left:  c1, c2 = %12.3e %12.3e \n" udata.{0} udata.{1};
@@ -267,7 +268,7 @@ let print_output s my_pe comm u t =
 (* Print final statistics contained in iopt *)
 
 let print_final_stats s =
-  let open Arkode in
+  let open ARKStep in
   let lenrw, leniw = get_work_space s
   and nst          = get_num_steps s
   and nfe,nfi      = get_num_rhs_evals s
@@ -280,8 +281,8 @@ let print_final_stats s =
   and nli   = Spils.get_num_lin_iters s
   and npe   = Spils.get_num_prec_evals s
   and nps   = Spils.get_num_prec_solves s
-  and ncfl  = Spils.get_num_conv_fails s
-  and nfeLS = Spils.get_num_rhs_evals s
+  and ncfl  = Spils.get_num_lin_conv_fails s
+  and nfeLS = Spils.get_num_lin_rhs_evals s
   in
   printf "\nFinal Statistics: \n\n";
   printf "lenrw   = %5d     leniw   = %5d\n"   lenrw leniw;
@@ -571,20 +572,19 @@ let main () =
   let mldq   = mudq in
   let mukeep = nvars in
   let mlkeep = mukeep in
-  let lsolver = Arkode.Spils.(spgmr u) in
-  let arkode_mem = Arkode.(
+  let lsolver = ARKStep.Spils.(spgmr u) in
+  let arkode_mem = ARKStep.(
     init
-      (Implicit (f data,
-                 Newton Spils.(solver lsolver BBD.(prec_left
+      (implicit (f data)
+                 ~lsolver:Spils.(solver lsolver BBD.(prec_left
                             { mudq   = mudq;   mldq = mldq;
                               mukeep = mukeep; mlkeep = mlkeep }
-                            (flocal data))),
-                 Nonlinear))
+                            (flocal data))))
       (SStolerances (reltol, abstol))
       t0
       u
   ) in
-  Arkode.set_max_num_steps arkode_mem 10000;
+  ARKStep.set_max_num_steps arkode_mem 10000;
 
   (* Print heading *)
   if my_pe = 0 then print_intro npes mudq mldq mukeep mlkeep;
@@ -592,11 +592,11 @@ let main () =
   let solve_problem jpre =
     (* On second run, re-initialize u, the integrator, ARKBBDPRE,
        and ARKSPGMR *)
-    if jpre = Arkode.Spils.PrecRight then begin
+    if jpre = ARKStep.Spils.PrecRight then begin
       set_initial_profiles data u;
-      Arkode.reinit arkode_mem t0 u;
+      ARKStep.reinit arkode_mem t0 u;
       BBD.reinit arkode_mem mudq mldq;
-      Arkode.Spils.(set_prec_type lsolver PrecRight);
+      ARKStep.Spils.(set_prec_type lsolver PrecRight);
 
       if my_pe = 0 then begin
         printf "\n\n-------------------------------------------------------";
@@ -606,13 +606,13 @@ let main () =
 
     if my_pe = 0 then
       printf "\n\nPreconditioner type is:  jpre = %s\n\n"
-             (if jpre = Arkode.Spils.PrecLeft
+             (if jpre = ARKStep.Spils.PrecLeft
               then "PREC_LEFT" else "PREC_RIGHT");
 
     (* In loop over output points, call ARKode, print results, test for error *)
     let tout = ref twohr in
     for iout=1 to nout do
-      let (t, flag) = Arkode.solve_normal arkode_mem !tout u in
+      let (t, flag) = ARKStep.solve_normal arkode_mem !tout u in
       print_output arkode_mem my_pe comm u t;
       tout := !tout +. twohr
     done;
@@ -620,7 +620,7 @@ let main () =
     (* Print final statistics *)
     if my_pe = 0 then print_final_stats arkode_mem
   in
-  List.iter solve_problem Arkode.Spils.([PrecLeft; PrecRight])
+  List.iter solve_problem ARKStep.Spils.([PrecLeft; PrecRight])
 
 (* Check environment variables for extra arguments.  *)
 let reps =

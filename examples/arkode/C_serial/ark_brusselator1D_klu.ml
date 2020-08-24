@@ -52,6 +52,7 @@
  *---------------------------------------------------------------*)
 
 open Sundials
+module ARKStep = Arkode.ARKStep
 
 let printf = Printf.printf
 let fprintf = Printf.fprintf
@@ -203,7 +204,7 @@ let reaction_jac ud (y : RealArray.t) jac =
   set_col ((idx (ud.n-1) 2)+1)
 
 (* Jacobian routine to compute J(t,y) = df/dy. *)
-let jac ud { Arkode.jac_y = (y : RealArray.t) } j =
+let jac ud { ARKStep.jac_y = (y : RealArray.t) } j =
   let m, n = Matrix.Sparse.size j in
   let nnz, _ = Matrix.Sparse.dims j in
 
@@ -311,11 +312,9 @@ let main () =
      problem is fully implicit, we set f_E to NULL and f_I to f. *)
   let nnz = 5*neq in
   let m = Matrix.sparse_csc ~nnz neq in
-  let arkode_mem = Arkode.(
+  let arkode_mem = ARKStep.(
     init
-      (Implicit (f udata,
-                 Newton Dls.(solver ~jac:(jac udata) (klu y m)),
-       Nonlinear))
+      (implicit ~lsolver:Dls.(solver ~jac:(jac udata) (klu y m)) (f udata))
       (SStolerances (reltol, abstol))
       t0
       y
@@ -352,7 +351,7 @@ let main () =
   (try
      for iout=0 to nt-1 do
        (* call integrator *)
-       let t, _ = Arkode.solve_normal arkode_mem !tout y in
+       let t, _ = ARKStep.solve_normal arkode_mem !tout y in
 
        (* access/print solution statistics *)
        let u = n_vwl2norm y umask in
@@ -384,7 +383,7 @@ let main () =
   close_out wfid;
 
   (* Print some final statistics *)
-  let open Arkode in
+  let open ARKStep in
   let nst      = get_num_steps arkode_mem in
   let nst_a    = get_num_step_attempts arkode_mem in
   let nfe, nfi = get_num_rhs_evals arkode_mem in

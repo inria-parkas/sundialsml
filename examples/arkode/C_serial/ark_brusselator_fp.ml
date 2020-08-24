@@ -57,6 +57,7 @@
  *-----------------------------------------------------------------*)
 
 open Sundials
+module ARKStep = Arkode.ARKStep
 
 let printf = Printf.printf
 let fprintf = Printf.fprintf
@@ -150,17 +151,17 @@ let main () =
   (* Call ARKodeInit to initialize the integrator memory and specify the
      hand-side side functions in y'=fe(t,y)+fi(t,y), the inital time T0,
      and the initial dependent variable vector y. *)
-  let arkode_mem = Arkode.(
-      init
-        (ImEx {
-          implicit = (fi rdata, FixedPoint fp_m, Nonlinear);
-          explicit = fe rdata
-        })
-        (SStolerances (reltol, abstol))
-        t0
-        y
+  let arkode_mem = ARKStep.(
+    init
+      (imex
+        ~nlsolver:(NonlinearSolver.FixedPoint.make ~acceleration_vectors:fp_m y)
+        ~fi:(fi rdata)
+        (fe rdata))
+      (SStolerances (reltol, abstol))
+      t0
+      y
   ) in
-  Arkode.set_max_nonlin_iters arkode_mem maxcor;
+  ARKStep.set_max_nonlin_iters arkode_mem maxcor;
 
   (* Open output stream for results, output comment line *)
   let ufid = open_out "solution.txt" in
@@ -177,7 +178,7 @@ let main () =
   (try
      for iout=0 to nt-1 do
        (* call integrator *)
-       let t, _ = Arkode.solve_normal arkode_mem !tout y in
+       let t, _ = ARKStep.solve_normal arkode_mem !tout y in
        (* access/print solution *)
        printf "  %10.6f  %10.6f  %10.6f  %10.6f\n" t data.{0} data.{1} data.{2};
        fprintf ufid " %.16e %.16e %.16e %.16e\n" t data.{0} data.{1} data.{2};
@@ -190,7 +191,7 @@ let main () =
   close_out ufid;
 
   (* Print some final statistics *)
-  let open Arkode in
+  let open ARKStep in
   let nst      = get_num_steps arkode_mem in
   let nst_a    = get_num_step_attempts arkode_mem in
   let nfe, nfi = get_num_rhs_evals arkode_mem in

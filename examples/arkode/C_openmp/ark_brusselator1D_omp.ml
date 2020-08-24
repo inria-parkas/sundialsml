@@ -49,6 +49,7 @@
  *---------------------------------------------------------------*)
 
 open Sundials
+module ARKStep = Arkode.ARKStep
 
 let printf = Printf.printf
 let fprintf = Printf.fprintf
@@ -154,7 +155,7 @@ let reaction_jac ud c y jac =
   done
 
 (* Jacobian routine to compute J(t,y) = df/dy. *)
-let jac ud { Arkode.jac_y = y } j =
+let jac ud { ARKStep.jac_y = y } j =
   (* Fill in the Laplace matrix *)
   laplace_matrix ud 1.0 j;
   (* Add in the Jacobian of the reaction terms matrix *)
@@ -239,11 +240,9 @@ let main () =
      the initial dependent variable vector y.  Note: since this
      problem is fully implicit, we set f_E to NULL and f_I to f. *)
   let m = Matrix.band ~smu:8 ~mu:4 ~ml:4 neq in
-  let arkode_mem = Arkode.(
+  let arkode_mem = ARKStep.(
     init
-      (Implicit (f udata,
-                 Newton Dls.(solver (band y m) ~jac:(jac udata)),
-                 Nonlinear))
+      (implicit ~lsolver:Dls.(solver (band y m) ~jac:(jac udata)) (f udata))
       (SStolerances (reltol, abstol))
       t0
       y
@@ -280,7 +279,7 @@ let main () =
   (try
      for iout=0 to nt-1 do
        (* call integrator *)
-       let t, _ = Arkode.solve_normal arkode_mem !tout y in
+       let t, _ = ARKStep.solve_normal arkode_mem !tout y in
 
        (* access/print solution statistics *)
        let u = n_vwl2norm y umask in
@@ -312,7 +311,7 @@ let main () =
   close_out wfid;
 
   (* Print some final statistics *)
-  let open Arkode in
+  let open ARKStep in
   let nst      = get_num_steps arkode_mem in
   let nst_a    = get_num_step_attempts arkode_mem in
   let nfe, nfi = get_num_rhs_evals arkode_mem in
@@ -321,7 +320,7 @@ let main () =
   let nni      = get_num_nonlin_solv_iters arkode_mem in
   let ncfn     = get_num_nonlin_solv_conv_fails arkode_mem in
   let nje      = Dls.get_num_jac_evals arkode_mem in
-  let nfeLS    = Dls.get_num_rhs_evals arkode_mem in
+  let nfeLS    = Dls.get_num_lin_rhs_evals arkode_mem in
 
   printf "\nFinal Solver Statistics:\n";
   printf "   Internal solver steps = %d (attempted = %d)\n" nst nst_a;

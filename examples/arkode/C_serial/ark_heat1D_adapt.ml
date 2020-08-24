@@ -40,6 +40,7 @@
  *---------------------------------------------------------------*)
 
 open Sundials
+module ARKStep = Arkode.ARKStep
 
 let printf = Printf.printf
 let fprintf = Printf.fprintf
@@ -240,24 +241,25 @@ let main () =
   (* Initialize the integrator memory *)
   let jac = jac udata in
   let linearity = match Config.sundials_version with
-                  | 2,_,_ -> Arkode.Nonlinear
-                  | _ -> Arkode.Linear true
+                  | 2,_,_ -> ARKStep.Nonlinear
+                  | _ -> ARKStep.Linear true
   in
-  let arkode_mem = Arkode.(
+  let arkode_mem = Arkode.ARKStep.(
     init
-      (Implicit (f udata,
-                 Newton Spils.(solver (pcg ~maxl:n_mesh y)
-                                      ~jac_times_vec:(None, jac)
-                                      prec_none),
-                 linearity))
+      (implicit
+        ~lsolver:Spils.(solver (pcg ~maxl:n_mesh y)
+                               ~jac_times_vec:(None, jac)
+                               prec_none)
+        ~linearity
+        (f udata))
       (SStolerances (rtol, atol))
       t0
       y
   ) in
-  Arkode.set_max_num_steps arkode_mem 10000;      (* Increase max num steps  *)
-  Arkode.(set_adaptivity_method arkode_mem
+  ARKStep.set_max_num_steps arkode_mem 10000;      (* Increase max num steps  *)
+  ARKStep.(set_adaptivity_method arkode_mem
             (Icontroller { ks = None; method_order = false}));
-  Arkode.(set_predictor_method arkode_mem TrivialPredictor);
+  ARKStep.(set_predictor_method arkode_mem TrivialPredictor);
 
   (* Main time-stepping loop: calls ARKode to perform the integration, then
      prints results.  Stops when the final time has been reached *)
@@ -266,27 +268,27 @@ let main () =
   printf " %s\n" border;
   printf " %4d  %19.15e  %19.15e  %19.15e  %d   %2d  %3d\n"
          0 0.0 0.0 (sqrt(n_vdotprod y y /. float udata.n)) udata.n 0 0;
-  let rec loop t newdt y iout nni_cur nni_tot nli_tot =
+  let rec loop t newdt y iout nni_tot nli_tot =
     if t >= tf then iout, nni_tot, nli_tot
     else begin
       (* "set" routines *)
-      Arkode.set_stop_time arkode_mem tf;
-      Arkode.set_init_step arkode_mem newdt;
+      ARKStep.set_stop_time arkode_mem tf;
+      ARKStep.set_init_step arkode_mem newdt;
 
       (* call integrator *)
-      let t, _ = Arkode.solve_one_step arkode_mem tf y in
+      let t, _ = ARKStep.solve_one_step arkode_mem tf y in
 
       (* "get" routines *)
-      let olddt = Arkode.get_last_step arkode_mem in
-      let newdt = Arkode.get_current_step arkode_mem in
-      let nni   = Arkode.get_num_nonlin_solv_iters arkode_mem in
-      let nli   = Arkode.Spils.get_num_lin_iters arkode_mem in
+      let olddt = ARKStep.get_last_step arkode_mem in
+      let newdt = ARKStep.get_current_step arkode_mem in
+      let nni   = ARKStep.get_num_nonlin_solv_iters arkode_mem in
+      let nli   = ARKStep.Spils.get_num_lin_iters arkode_mem in
 
       (* print current solution stats *)
       printf " %4d  %19.15e  %19.15e  %19.15e  %d   %2d  %3d\n"
              (iout + 1) olddt newdt
              (sqrt(n_vdotprod y y /. float udata.n))
-             udata.n (nni-nni_cur) nli;
+             udata.n nni nli;
 
       (* output results and current mesh to disk *)
       let data = Nvector.unwrap y in
@@ -313,16 +315,16 @@ let main () =
                  | 2,_,_ -> nnew
                  | _ -> n_mesh
       in
-      Arkode.(resize arkode_mem
-        ~linsolv:Spils.(solver (pcg ~maxl y2) ~jac_times_vec:(None, jac)
+      ARKStep.(resize arkode_mem
+        ~lsolver:Spils.(solver (pcg ~maxl y2) ~jac_times_vec:(None, jac)
                                prec_none)
         (SStolerances (rtol, atol))
         hscale y2 t);
 
-      loop t newdt y2 (iout + 1) nni nni (nli_tot + nli)
+      loop t newdt y2 (iout + 1) (nni_tot+nni) (nli_tot + nli)
     end
   in
-  let iout, nni_tot, nli_tot = loop t0 0.0 y 0 0 0 0 in
+  let iout, nni_tot, nli_tot = loop t0 0.0 y 0 0 0 in
   printf " %s\n" border;
 
   (* print some final statistics *)

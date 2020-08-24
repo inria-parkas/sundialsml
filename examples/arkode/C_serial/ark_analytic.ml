@@ -35,6 +35,7 @@
  *-----------------------------------------------------------------*)
 
 open Sundials
+module ARKStep = Arkode.ARKStep
 
 let printf = Printf.printf
 let fprintf = Printf.fprintf
@@ -78,10 +79,12 @@ let main () =
      the initial dependent variable vector y.  Note: since this
      problem is fully implicit, we set f_E to NULL and f_I to f. *)
   let m = Matrix.dense neq in
-  let arkode_mem = Arkode.(
+  let arkode_mem = ARKStep.(
     init
-      (Implicit (f lamda, Newton Dls.(solver ~jac:(jac lamda) (dense y m)),
-                 Linear false))
+      (implicit
+        ~lsolver:Dls.(solver ~jac:(jac lamda) (dense y m))
+        ~linearity:(Linear false)
+        (f lamda))
       (SStolerances (reltol, abstol))
       t0
       y
@@ -102,7 +105,7 @@ let main () =
   (try
      while (tf -. !t > 1.0e-15) do
        (* call integrator *)
-       let t', _ = Arkode.solve_normal arkode_mem !tout y in
+       let t', _ = ARKStep.solve_normal arkode_mem !tout y in
        t := t';
        printf "  %10.6f  %10.6f\n" t' data.{0};     (* access/print solution *)
        fprintf ufid " %.16e %.16e\n" t' data.{0};
@@ -115,7 +118,7 @@ let main () =
   close_out ufid;
 
   (* Get/print some final statistics on how the solve progressed *)
-  let open Arkode in
+  let open ARKStep in
   let nst      = get_num_steps arkode_mem in
   let nst_a    = get_num_step_attempts arkode_mem in
   let nfe, nfi = get_num_rhs_evals arkode_mem in
@@ -124,7 +127,7 @@ let main () =
   let nni      = get_num_nonlin_solv_iters arkode_mem in
   let ncfn     = get_num_nonlin_solv_conv_fails arkode_mem in
   let nje      = Dls.get_num_jac_evals arkode_mem in
-  let nfeLS    = Dls.get_num_rhs_evals arkode_mem in
+  let nfeLS    = Dls.get_num_lin_rhs_evals arkode_mem in
 
   printf "\nFinal Solver Statistics:\n";
   printf "   Internal solver steps = %d (attempted = %d)\n" nst nst_a;

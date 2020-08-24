@@ -40,6 +40,7 @@
  *---------------------------------------------------------------*)
 
 open Sundials
+module ARKStep = Arkode.ARKStep
 
 let printf = Printf.printf
 let fprintf = Printf.fprintf
@@ -119,23 +120,23 @@ let main () =
      hand-side side function in y'=f(t,y), the inital time t0, and
      the initial dependent variable vector y.  Note: since this
      problem is fully implicit, we set f_E to NULL and f_I to f. *)
-  let arkode_mem = Arkode.(
+  let arkode_mem = ARKStep.(
     init
-      (Implicit
-        (f udata,
-         Newton Spils.(solver (pcg ~maxl:mesh_n y)
-                              ~jac_times_vec:(None, jac udata)
-                              prec_none),
-         Linear true))
+      (implicit
+         ~lsolver:Spils.(solver (pcg ~maxl:mesh_n y)
+                                ~jac_times_vec:(None, jac udata)
+                                prec_none)
+         ~linearity:(Linear true)
+        (f udata))
       (SStolerances (rtol, atol))
       t0
       y
   ) in
   (* Set routines *)
-  Arkode.set_max_num_steps arkode_mem 10000;   (* Increase max num steps  *)
+  ARKStep.set_max_num_steps arkode_mem 10000;   (* Increase max num steps  *)
 
   if sundials_270_or_later then
-    Arkode.(set_predictor_method arkode_mem MaximumOrderPredictor);
+    ARKStep.(set_predictor_method arkode_mem MaximumOrderPredictor);
 
   (* output mesh to disk *)
   let fid = open_out "heat_mesh.txt" in
@@ -164,7 +165,7 @@ let main () =
      for iout=0 to nt-1 do
 
        (* call integrator *)
-       let t, _ = Arkode.solve_normal arkode_mem !tout y in
+       let t, _ = ARKStep.solve_normal arkode_mem !tout y in
        (* print solution stats *)
        printf "  %10.6f  %10.6f\n" t (sqrt((n_vdotprod y y)/.float mesh_n));
        (* successful solve: update output time *)
@@ -184,7 +185,7 @@ let main () =
   close_out ufid;
 
   (* Print some final statistics *)
-  let open Arkode in
+  let open ARKStep in
   let nst      = get_num_steps arkode_mem in
   let nst_a    = get_num_step_attempts arkode_mem in
   let nfe, nfi = get_num_rhs_evals arkode_mem in
@@ -194,7 +195,7 @@ let main () =
   let ncfn     = get_num_nonlin_solv_conv_fails arkode_mem in
   let nli      = Spils.get_num_lin_iters arkode_mem in
   let nJv      = Spils.get_num_jtimes_evals arkode_mem in
-  let nlcf     = Spils.get_num_conv_fails arkode_mem in
+  let nlcf     = Spils.get_num_lin_conv_fails arkode_mem in
 
   printf "\nFinal Solver Statistics:\n";
   printf "   Internal solver steps = %d (attempted = %d)\n" nst nst_a;

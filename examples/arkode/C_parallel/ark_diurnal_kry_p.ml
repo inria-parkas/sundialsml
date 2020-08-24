@@ -58,6 +58,7 @@
  *)
 
 open Sundials
+module ARKStep = Arkode.ARKStep
 
 module Direct = Matrix.ArrayDense
 open Bigarray
@@ -270,8 +271,8 @@ let print_output s my_pe comm u t =
       blit buf 0 tempu 0 2
     end;
 
-    let nst = Arkode.get_num_steps s
-    and hu  = Arkode.get_last_step s
+    let nst = ARKStep.get_num_steps s
+    and hu  = ARKStep.get_last_step s
     in
     printf "t = %.2e   no. steps = %d   stepsize = %.2e\n" t nst hu;
     printf "At bottom left:  c1, c2 = %12.3e %12.3e \n" udata.{0} udata.{1};
@@ -281,7 +282,7 @@ let print_output s my_pe comm u t =
 (* Print final statistics contained in iopt *)
 
 let print_final_stats s =
-  let open Arkode in
+  let open ARKStep in
   let lenrw, leniw = get_work_space s
   and nst          = get_num_steps s
   and nfe,nfi      = get_num_rhs_evals s
@@ -294,8 +295,8 @@ let print_final_stats s =
   and nli   = Spils.get_num_lin_iters s
   and npe   = Spils.get_num_prec_evals s
   and nps   = Spils.get_num_prec_solves s
-  and ncfl  = Spils.get_num_conv_fails s
-  and nfeLS = Spils.get_num_rhs_evals s
+  and ncfl  = Spils.get_num_lin_conv_fails s
+  and nfeLS = Spils.get_num_lin_rhs_evals s
   in
   printf "\nFinal Statistics: \n\n";
   printf "lenrw   = %5d     leniw   = %5d\n" lenrw leniw;
@@ -546,8 +547,8 @@ let f data t ((udata : RealArray.t),_,_) ((dudata : RealArray.t),_,_) =
 
 (* Preconditioner setup routine. Generate and preprocess P. *)
 let precond data jacarg jok gamma =
-  let { Arkode.jac_t   = tn;
-        Arkode.jac_y   = ((udata : RealArray.t), _, _);
+  let { ARKStep.jac_t   = tn;
+        ARKStep.jac_y   = ((udata : RealArray.t), _, _);
       } = jacarg
   in
   (* Make local copies of pointers in user_data, and of pointer to u's data *)
@@ -623,10 +624,10 @@ let precond data jacarg jok gamma =
 (* Preconditioner solve routine *)
 
 let psolve data jac_arg solve_arg ((zdata : RealArray.t), _, _) =
-  let { Arkode.Spils.rhs = ((r : RealArray.t), _, _);
-        Arkode.Spils.gamma = gamma;
-        Arkode.Spils.delta = delta;
-        Arkode.Spils.left = lr } = solve_arg
+  let ARKStep.Spils.({ rhs = ((r : RealArray.t), _, _);
+                       gamma;
+                       delta;
+                       left = lr }) = solve_arg
   in
   (* Extract the P and pivot arrays from user_data. *)
   let p       = data.p
@@ -675,18 +676,17 @@ let main () =
   and reltol = rtol
   in
   (* Call ARKodeCreate to create the solver memory *)
-  let arkode_mem = Arkode.(
+  let arkode_mem = ARKStep.(
     init
-      (Implicit (f data,
-           Newton Spils.(solver (spgmr u)
-                                (prec_left ~setup:(precond data)
-                                           (psolve data))),
-       Nonlinear))
+      (implicit ~lsolver:Spils.(solver (spgmr u)
+                                  (prec_left ~setup:(precond data)
+                                             (psolve data)))
+                (f data))
       (SStolerances (reltol, abstol))
       t0
       u)
   in
-  Arkode.set_max_num_steps arkode_mem 10000;
+  ARKStep.set_max_num_steps arkode_mem 10000;
 
   if my_pe = 0 then
     printf "\n2-species diurnal advection-diffusion problem\n\n";
@@ -694,7 +694,7 @@ let main () =
   (* In loop over output points, call Arkode, print results, test for error *)
   let tout = ref twohr in
   for iout=1 to nout do
-    let (t, flag) = Arkode.solve_normal arkode_mem !tout u in
+    let (t, flag) = ARKStep.solve_normal arkode_mem !tout u in
     print_output arkode_mem my_pe comm u t;
     tout := !tout +. twohr
   done;

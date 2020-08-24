@@ -58,6 +58,13 @@
  *-----------------------------------------------------------------*)
 
 open Sundials
+module ARKStep = Arkode.ARKStep
+
+let compat2_3 =
+  match Config.sundials_version with
+  | 2,_,_ -> true
+  | 3,_,_ -> true
+  | _ -> false
 
 let printf = Printf.printf
 let fprintf = Printf.fprintf
@@ -77,7 +84,7 @@ let f rdata t (y : RealArray.t) (ydot : RealArray.t) =
   ydot.{2} <- (b-.w)/.ep -. w*.u
 
 (* Jacobian routine to compute J(t,y) = df/dy. *)
-let jac rdata { Arkode.jac_y = y } j =
+let jac rdata { ARKStep.jac_y = y } j =
   let ep = rdata.(2) in   (* access data entries *)
   let u = y.{0} in        (* access solution values *)
   let v = y.{1} in
@@ -163,13 +170,12 @@ let main () =
      the initial dependent variable vector y.  Note: since this
      problem is fully implicit, we set f_E to NULL and f_I to f. *)
   let m = Matrix.dense 3 in
-  let arkode_mem = Arkode.(
-    init
-      (Implicit (f rdata, Newton Dls.(solver ~jac:(jac rdata) (dense y m)),
-       Nonlinear))
-      (SStolerances (reltol, abstol))
-      t0
-      y
+  let arkode_mem = ARKStep.(
+    init (implicit (f rdata)
+                   ~lsolver:Dls.(solver ~jac:(jac rdata) (dense y m)))
+         (SStolerances (reltol, abstol))
+         t0
+         y
   ) in
 
   (* Open output stream for results, output comment line *)
@@ -185,9 +191,13 @@ let main () =
   printf "        t           u           v           w\n";
   printf "   -------------------------------------------\n";
   (try
+     if not compat2_3 then begin
+       printf "  %10.6f  %10.6f  %10.6f  %10.6f\n" 0. data.{0} data.{1} data.{2};
+       fprintf ufid " %.16e %.16e %.16e %.16e\n" 0. data.{0} data.{1} data.{2}
+     end;
      for iout=0 to nt-1 do
        (* call integrator *)
-       let t, _ = Arkode.solve_normal arkode_mem !tout y in
+       let t, _ = ARKStep.solve_normal arkode_mem !tout y in
        (* access/print solution *)
        printf "  %10.6f  %10.6f  %10.6f  %10.6f\n" t data.{0} data.{1} data.{2};
        fprintf ufid " %.16e %.16e %.16e %.16e\n" t data.{0} data.{1} data.{2};
@@ -200,7 +210,7 @@ let main () =
   close_out ufid;
 
   (* Print some final statistics *)
-  let open Arkode in
+  let open ARKStep in
   let nst      = get_num_steps arkode_mem in
   let nst_a    = get_num_step_attempts arkode_mem in
   let nfe, nfi = get_num_rhs_evals arkode_mem in
@@ -209,7 +219,7 @@ let main () =
   let nni      = get_num_nonlin_solv_iters arkode_mem in
   let ncfn     = get_num_nonlin_solv_conv_fails arkode_mem in
   let nje      = Dls.get_num_jac_evals arkode_mem in
-  let nfeLS    = Dls.get_num_rhs_evals arkode_mem in
+  let nfeLS    = Dls.get_num_lin_rhs_evals arkode_mem in
 
   printf "\nFinal Solver Statistics:\n";
   printf "   Internal solver steps = %d (attempted = %d)\n" nst nst_a;

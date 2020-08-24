@@ -30,6 +30,7 @@
  *-----------------------------------------------------------------*)
 
 open Sundials
+module ERKStep = Arkode.ERKStep
 
 let printf = Printf.printf
 let fprintf = Printf.fprintf
@@ -64,7 +65,7 @@ let main () =
      the initial dependent variable vector y.  Note: since this
      problem is fully explicit, we set f_U to NULL and f_E to f. *)
   let arkode_mem =
-    Arkode.(init (Explicit f) (SStolerances (reltol, abstol)) t0 y)
+    ERKStep.(init (SStolerances (reltol, abstol)) f t0 y)
   in
   (* Open output stream for results, output comment line *)
   let ufid = open_out "solution.txt" in
@@ -82,7 +83,7 @@ let main () =
   (try
      while (tf -. !t > 1.0e-15) do
        (* call integrator *)
-       let t', _ = Arkode.solve_normal arkode_mem !tout y in
+       let t', _ = ERKStep.solve_normal arkode_mem !tout y in
        t := t';
        printf "  %10.6f  %10.6f\n" t' data.{0};      (* access/print solution *)
        fprintf ufid " %.16e %.16e\n" t' data.{0};
@@ -95,15 +96,15 @@ let main () =
   close_out ufid;
 
   (* Get/print some final statistics *)
-  let open Arkode in
+  let open ERKStep in
   let nst      = get_num_steps arkode_mem in
   let nst_a    = get_num_step_attempts arkode_mem in
-  let nfe, nfi = get_num_rhs_evals arkode_mem in
+  let nfe      = get_num_rhs_evals arkode_mem in
   let netf     = get_num_err_test_fails arkode_mem in
 
   printf "\nFinal Solver Statistics:\n";
   printf "   Internal solver steps = %d (attempted = %d)\n" nst nst_a;
-  printf "   Total RHS evals:  Fe = %d,  Fi = %d\n" nfe nfi;
+  printf "   Total RHS evals = %d\n" nfe;
   printf "   Total number of error test failures = %d\n\n" netf
 
 (* Check environment variables for extra arguments.  *)
