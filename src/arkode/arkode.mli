@@ -1157,7 +1157,7 @@ module ARKStep : sig (* {{{ *)
       specifying an [lsolver] results in a {!NonlinearInitFailure} (or
       {!IllInput} for Sundials < 4.0.0) exception on the first call to
       {!solve_normal} or {!solve_one_step}. *)
-  val implicit :
+  val implicit_problem :
     ?nlsolver : ('data, 'kind,
                   (('data, 'kind) session) Sundials_NonlinearSolver.integrator)
                 Sundials_NonlinearSolver.nonlinear_solver
@@ -1174,6 +1174,30 @@ module ARKStep : sig (* {{{ *)
         (** Explicit Runge-Kutta (ERK) solution of non-stiff problem. *)
     | ImEx of 'd rhsfn * ('d, 'k) implicit_problem
         (** Additive Runge-Kutta (ARK) solution of multi-rate problem. *)
+
+  (* Combines {{!problem}Implicit} and {!implicit_problem}. *)
+  val implicit :
+    ?nlsolver : ('data, 'kind,
+                  (('data, 'kind) session) Sundials_NonlinearSolver.integrator)
+                Sundials_NonlinearSolver.nonlinear_solver
+    -> ?lsolver  : ('data, 'kind) session_linear_solver
+    -> ?linearity : linearity
+    -> 'data rhsfn
+    -> ('data, 'kind) problem
+
+  (* Alternative name for {{!problem}Explicit}. *)
+  val explicit : 'data rhsfn -> ('data, 'kind) problem
+
+  (* Combines {{!problem}ImEx} and {!implicit_problem}. *)
+  val imex :
+    ?nlsolver : ('data, 'kind,
+                  (('data, 'kind) session) Sundials_NonlinearSolver.integrator)
+                Sundials_NonlinearSolver.nonlinear_solver
+    -> ?lsolver  : ('data, 'kind) session_linear_solver
+    -> ?linearity : linearity
+    -> fi : 'data rhsfn
+    -> fe : 'data rhsfn
+    -> ('data, 'kind) problem
 
   (** Creates and initializes a session with the solver. The call
       {[init problem tol ~restol ~order ~mass:msolver ~roots:(nroots, g) t0 y0]}

@@ -309,13 +309,21 @@ module ARKStep = struct (* {{{ *)
       lsolver   : ('d, 'k) session_linear_solver option;
     }
 
-  let implicit ?nlsolver ?lsolver ?(linearity=Nonlinear) fi =
+  let implicit_problem ?nlsolver ?lsolver ?(linearity=Nonlinear) fi =
     { irhsfn = fi; linearity; nlsolver; lsolver }
 
   type ('d, 'k) problem =
     | Implicit of ('d, 'k) implicit_problem
     | Explicit of 'd rhsfn
     | ImEx of 'd rhsfn * ('d, 'k) implicit_problem
+
+  let implicit ?nlsolver ?lsolver ?linearity fi =
+    Implicit (implicit_problem ?nlsolver ?lsolver ?linearity fi)
+
+  let explicit f = Explicit f
+
+  let imex ?nlsolver ?lsolver ?linearity ~fi ~fe =
+    ImEx (fe, implicit_problem ?nlsolver ?lsolver ?linearity fi)
 
   external c_root_init : ('a, 'k) session -> int -> unit
       = "sunml_arkode_ark_root_init"
