@@ -11,6 +11,7 @@ Notes:
 * Removal of the _Solver_.Alternate modules for attaching custom linear
   solvers. This interface was superseded since Sundials 3.x by the new 
   linear solver interface which provides similar functionality.
+* ARKode: reworked interface to new ARKStep, ERKStep, and MRIStep modules.
 
 Compatibility:
 * When initializing Cvode, the new non-linear solver interface replaces the 
@@ -36,6 +37,32 @@ Compatibility:
 
 * The sensitivity method for the Cvodes/Idas.Sensitivity solvers now takes a 
   nonlinear solver as an optional argument.
+
+* When initializing Arkode(.ARKStep), the call
+    let arkode_mem = Arkode.(
+      init
+        (Implicit (f udata,
+                   Newton Spils.(solver (pcg ~maxl:n_mesh y)
+                                        ~jac_times_vec:(None, jac)
+                                        prec_none),
+                   linearity))
+        (SStolerances (rtol, atol))
+        t0
+        y
+    ) ...
+  becomes
+    let arkode_mem = Arkode.ARKStep.(
+      init
+        (implicit
+          ~lsolver:Spils.(solver (pcg ~maxl:n_mesh y)
+                                 ~jac_times_vec:(None, jac)
+                                 prec_none)
+          ~linearity
+          (f udata))
+        (SStolerances (rtol, atol))
+        t0
+        y
+    ) ...
 
 * *.Dls.get_num_rhs_evals -> *.Dls.get_num_lin_rhs_evals
 * *.Dls.get_num_func_evals -> *.Dls.get_num_lin_func_evals
