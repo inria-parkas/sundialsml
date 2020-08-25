@@ -1,8 +1,8 @@
 open Sundials
 
 (* 1. Define right-hand-side functions. *)
-let f_e t y yd = yd.{0} <- y.{1}
-let f_i t y yd = yd.{1} <- -9.81
+let fe t y yd = yd.{0} <- y.{1}
+let fi t y yd = yd.{1} <- -9.81
 
 (* 2. Optionally define a root function. *)
 let g t y gout = gout.{0} <- 1.0 -. y.{0}
@@ -20,9 +20,10 @@ let y = Nvector_serial.wrap yd
 let m = Matrix.dense 2
 let s = Arkode.ARKStep.(
   init
-    (ImEx (f_e,
-           implicit ~lsolver:Dls.(solver (dense y m))
-                    ~linearity:(Linear true) f_i))
+    (imex ~lsolver:Dls.(solver (dense y m))
+          ~linearity:(Linear true)
+          ~fi
+          fe)
     (SStolerances (1e-4, 1e-9))
     ~roots:(1, g)
     0.0
