@@ -190,22 +190,22 @@ let main () =
   print_string "  [x1,x2] = ";
   print_output u1;
 
-  RealArray.blit u1 u;
+  RealArray.blit ~src:u1 ~dst:u;
   solve_it kmem u_nvec s_nvec false 1;
 
   (* --------------------------- *)
 
-  RealArray.blit u1 u;
+  RealArray.blit ~src:u1 ~dst:u;
   solve_it kmem u_nvec s_nvec true 1;
 
   (* --------------------------- *)
 
-  RealArray.blit u1 u;
+  RealArray.blit ~src:u1 ~dst:u;
   solve_it kmem u_nvec s_nvec false 0;
 
   (* --------------------------- *)
 
-  RealArray.blit u1 u;
+  RealArray.blit ~src:u1 ~dst:u;
   solve_it kmem u_nvec s_nvec true 0;
 
   (* --------------------------- *)
@@ -215,22 +215,22 @@ let main () =
   print_string "  [x1,x2] = ";
   print_output u2;
 
-  RealArray.blit u2 u;
+  RealArray.blit ~src:u2 ~dst:u;
   solve_it kmem u_nvec s_nvec false 1;
 
   (* --------------------------- *)
 
-  RealArray.blit u2 u;
+  RealArray.blit ~src:u2 ~dst:u;
   solve_it kmem u_nvec s_nvec true 1;
 
   (* --------------------------- *)
 
-  RealArray.blit u2 u;
+  RealArray.blit ~src:u2 ~dst:u;
   solve_it kmem u_nvec s_nvec false 0;
 
   (* --------------------------- *)
 
-  RealArray.blit u2 u;
+  RealArray.blit ~src:u2 ~dst:u;
   solve_it kmem u_nvec s_nvec true 0
 
 (* Check environment variables for extra arguments.  *)

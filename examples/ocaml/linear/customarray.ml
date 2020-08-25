@@ -159,7 +159,7 @@ let main () =
   with Config.NotImplementedBySundialsVersion -> ());
 
   let b = M.create nrows ncols in
-  Matrix.blit a b;
+  Matrix.blit ~src:a ~dst:b;
 
   Matrix.scale_add 2.0 b zero;
   printf "scale copy x2: b=@\n%a@\n" print_mat b;

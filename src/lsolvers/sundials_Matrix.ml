@@ -188,8 +188,8 @@ module Dense = struct (* {{{ *)
     if check_valid && not valid then raise Invalidated;
     Bigarray.Array2.fill data 0.0
 
-  let blit { payload = data1; valid = valid1 }
-           { payload = data2; valid = valid2 } =
+  let blit ~src:{ payload = data1; valid = valid1 }
+           ~dst:{ payload = data2; valid = valid2 } =
     if check_valid && not (valid1 && valid2) then raise Invalidated;
     Bigarray.Array2.blit data1 data2
 
@@ -210,7 +210,7 @@ module Dense = struct (* {{{ *)
 
     m_zero       = set_to_zero;
 
-    m_copy       = blit;
+    m_copy       = (fun src dst -> blit ~src ~dst);
 
     m_scale_add  = scale_add;
 
@@ -379,8 +379,8 @@ module Band = struct (* {{{ *)
   external c_copy : cptr -> t -> unit
     = "sunml_matrix_band_copy"
 
-  let blit { rawptr = cptr1; valid = valid1 }
-           ({ valid = valid2 } as m2) =
+  let blit ~src:{ rawptr = cptr1; valid = valid1 }
+           ~dst:({ valid = valid2 } as m2) =
     if check_valid && not (valid1 && valid2) then raise Invalidated;
     c_copy cptr1 m2
 
@@ -397,7 +397,7 @@ module Band = struct (* {{{ *)
 
     m_zero       = set_to_zero;
 
-    m_copy       = blit;
+    m_copy       = (fun src dst -> blit ~src ~dst);
 
     m_scale_add  = scale_add;
 
@@ -711,8 +711,8 @@ module Sparse = struct (* {{{ *)
   external c_copy : cptr -> 's t -> unit
       = "sunml_matrix_sparse_copy"
 
-  let blit { rawptr = ptr1; valid = valid1 }
-           ({ rawptr = ptr2; valid = valid2 } as m2) =
+  let blit ~src:{ rawptr = ptr1; valid = valid1 }
+           ~dst:({ rawptr = ptr2; valid = valid2 } as m2) =
     if check_valid && not (valid1 && valid2) then raise Invalidated;
     if Sundials_configuration.safe && c_size ptr1 <> c_size ptr2
     then raise IncompatibleArguments;
@@ -737,7 +737,7 @@ module Sparse = struct (* {{{ *)
 
     m_zero       = set_to_zero;
 
-    m_copy       = blit;
+    m_copy       = (fun src dst -> blit ~src ~dst);
 
     m_scale_add  = scale_add;
 
@@ -841,7 +841,7 @@ module ArrayDense = struct (* {{{ *)
 
     m_zero       = set_to_zero;
 
-    m_copy       = blit;
+    m_copy       = (fun src dst -> blit ~src ~dst);
 
     m_scale_add  = scale_add;
 
@@ -950,7 +950,7 @@ module ArrayBand = struct (* {{{ *)
   let set_to_zero (x, dims) =
     Bigarray.Array2.fill (RealArray2.unwrap x) 0.0
 
-  let blit (a, (a_smu, a_mu, a_ml)) (b, (b_smu, b_mu, b_ml))
+  let blit ~src:(a, (a_smu, a_mu, a_ml)) ~dst:(b, (b_smu, b_mu, b_ml))
       = copy' a b (a_smu, b_smu, a_mu, a_ml)
 
   external scale' : float -> RealArray2.t -> int * int * int -> unit
@@ -1017,7 +1017,7 @@ module ArrayBand = struct (* {{{ *)
 
     m_zero       = set_to_zero;
 
-    m_copy       = blit;
+    m_copy       = (fun src dst -> blit ~src ~dst);
 
     m_scale_add  = scale_add;
 
@@ -1191,8 +1191,8 @@ let set_to_zero ({ payload = a; mat_ops = { m_zero } } as m) =
 external c_copy : ('k, 'm, 'nd, 'nk) t -> ('k, 'm, 'nd, 'nk) t -> unit
   = "sunml_matrix_copy"
 
-let blit ({ payload = a; mat_ops = { m_copy } } as m1)
-         ({ payload = b } as m2) =
+let blit ~src:({ payload = a; mat_ops = { m_copy } } as m1)
+         ~dst:({ payload = b } as m2) =
   match Config.sundials_version with
   | 2,_,_ -> m_copy a b
   | _ -> c_copy m1 m2

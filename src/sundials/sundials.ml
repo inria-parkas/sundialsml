@@ -120,20 +120,20 @@ module ArrayLike (A : ArrayBaseOps) = struct (* {{{ *)
       set a i x
     done
 
-  let blit_some a oa b ob len =
-    let na = length a
-    and nb = length b in
+  let blitn ~src ?(spos=0) ~dst ?(dpos=0) len =
+    let na = length src
+    and nb = length dst in
     if Sundials_configuration.safe &&
-       (len < 0 || oa < 0 || na < oa+len || ob < 0 || nb < ob+len)
-    then invalid_arg (Printf.sprintf "%s.blit" error_name)
+       (len < 0 || spos < 0 || na < spos+len || dpos < 0 || nb < dpos+len)
+    then invalid_arg (Printf.sprintf "%s.blitn" error_name)
     else
       for i = 0 to len-1 do
-        set b (ob + i) (get a (oa + i))
+        set dst (dpos + i) (get src (spos + i))
       done
 
-  let blit a b =
-    for i = 0 to min (length a) (length b) - 1 do
-      set b i (get a i)
+  let blit ~src ~dst =
+    for i = 0 to min (length src) (length dst) - 1 do
+      set dst i (get src i)
     done
 
   let init n f =
@@ -258,7 +258,7 @@ module Roots = struct (* {{{ *)
   let to_list = A.to_list
 
   let fill = A.fill
-  let blit_some = A.blit_some
+  let blitn = A.blitn
   let blit = A.blit
 
   let rising  roots i = roots.{i} = 1l
@@ -377,7 +377,7 @@ module RootDirs = struct (* {{{ *)
   let to_array  = A.to_array
   let to_list   = A.to_list
   let fill      = A.fill
-  let blit_some = A.blit_some
+  let blitn     = A.blitn
   let blit      = A.blit
 
   let init = A.init

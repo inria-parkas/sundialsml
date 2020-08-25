@@ -147,7 +147,7 @@ let test_sunmatscaleadd2 check_vector a b x y z =
     let v = Nvector_serial.Ops.n_vclone y in
 
     (* test 1: add A to B (output must be enlarged) *)
-    (try Matrix.blit a c
+    (try Matrix.blit ~src:a ~dst:c
      with _ -> printf ">>> FAILED test -- SUNMatCopy returned 1 \n";
                raise Exit);
     (try Matrix.scale_add 1.0 c b
@@ -183,7 +183,7 @@ let test_sunmatscaleadd2 check_vector a b x y z =
     (try let a_nnz, _ = Matrix.(Sparse.dims (unwrap a)) in
          let b_nnz, _ = Matrix.(Sparse.dims (unwrap b)) in
          Matrix.(Sparse.resize ~nnz:(a_nnz+b_nnz) (unwrap d));
-         Matrix.blit a d (* D = A *)
+         Matrix.blit ~src:a ~dst:d (* D = A *)
      with _ -> printf ">>> FAILED test -- SUNMatCopy returned 1 @\n";
                raise Exit);
     (try Matrix.scale_add 1.0 d b (* D = A+B *)
@@ -216,7 +216,7 @@ let test_sunmatscaleadd2 check_vector a b x y z =
 
     (* test 3: add A to a matrix with the appropriate structure already in place *)
     let e = clone c in
-    (try Matrix.blit c e  (* E = A + B *)
+    (try Matrix.blit ~src:c ~dst:e  (* E = A + B *)
      with _ -> printf ">>> FAILED test -- SUNMatCopy returned 1 @\n";
                raise Exit);
 
@@ -270,7 +270,7 @@ let test_sunmatscaleaddi2 check_vector a x y =
     let w = Nvector_serial.Ops.n_vclone x in
 
     (* test 1: add I to a matrix with insufficient storage *)
-    (try Matrix.blit a b
+    (try Matrix.blit ~src:a ~dst:b
      with _ -> printf ">>> FAILED test -- SUNMatCopy returned 1 @\n";
                raise Exit);
     (try Matrix.scale_addi (-1.0) b (* B = I-A *)
@@ -301,7 +301,7 @@ let test_sunmatscaleaddi2 check_vector a x y =
          let a_nnz, _  = Matrix.Sparse.dims a_m in
          let a_rows, _ = Matrix.Sparse.size a_m in
          Matrix.(Sparse.resize ~nnz:(a_nnz+a_rows) (unwrap c));
-         Matrix.blit a c
+         Matrix.blit ~src:a ~dst:c
      with _ -> printf ">>> FAILED test -- SUNMatCopy returned 1 @\n";
                raise Exit);
     (try Matrix.scale_addi (-1.0) c (* C = I-A *)
@@ -328,7 +328,7 @@ let test_sunmatscaleaddi2 check_vector a x y =
 
     (* test 3: add I to a matrix with appropriate structure already in place *)
     let d = clone c in
-    (try Matrix.blit c d
+    (try Matrix.blit ~src:c ~dst:d
      with _ -> printf ">>> FAILED test -- SUNMatCopy returned 1 @\n";
                raise Exit);
     (try Matrix.scale_addi (-1.0) d (* D = A *)

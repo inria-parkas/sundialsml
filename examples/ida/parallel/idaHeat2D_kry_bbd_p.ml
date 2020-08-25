@@ -49,11 +49,6 @@ let vmaxnorm = Nvector_parallel.Ops.n_vmaxnorm
 let slice = Bigarray.Array1.sub
 let unwrap = Nvector.unwrap
 
-let blit buf buf_offset dst dst_offset len =
-  for i = 0 to len-1 do
-    dst.{dst_offset + i} <- buf.{buf_offset + i}
-  done
-
 let header_and_empty_array_size =
   Marshal.total_size (Marshal.to_bytes (RealArray.create 0) []) 0
 let float_cell_size =
@@ -204,14 +199,14 @@ let brecvwait requests ixsub jysub dsizex uext =
   (* If jysub > 0, receive data for bottom x-line of uext. *)
   if jysub <> 0 then begin
     let buf = (Mpi.wait_receive requests.(0) : RealArray.t) in
-    blit buf 0 uext 1 dsizex
+    RealArray.blitn ~src:buf ~dst:uext ~dpos:1 dsizex
   end;
 
   (* If jysub < npey-1, receive data for top x-line of uext. *)
   if jysub <> npey-1 then begin
     let offsetue = 1 + (mysub+1)*(mxsub+2) in
     let buf = (Mpi.wait_receive requests.(1) : RealArray.t) in
-    blit buf 0 uext offsetue dsizex
+    RealArray.blitn ~src:buf ~dst:uext ~dpos:offsetue dsizex
   end;
 
   (* If ixsub > 0, receive data for left y-line of uext (via bufleft). *)

@@ -89,7 +89,7 @@ let main () =
   with Config.NotImplementedBySundialsVersion -> ());
 
   let b = M.create {M.n; M.mu; M.ml; M.smu} in
-  M.blit a b;
+  M.blit ~src:a ~dst:b;
 
   M.scale_add 2.0 b zero;
   printf "scale copy x2: b=@\n%a@\n" print_mat b;

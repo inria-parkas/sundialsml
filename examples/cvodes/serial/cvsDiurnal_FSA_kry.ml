@@ -395,7 +395,7 @@ let precond data jacarg jok gamma =
       (* jok = TRUE: Copy Jbd to P *)
       for jz = 0 to mz - 1 do
         for jx = 0 to mx - 1 do
-          Direct.blit jbd.(jx).(jz) p.(jx).(jz)
+          Direct.blit ~src:jbd.(jx).(jz) ~dst:p.(jx).(jz)
         done
       done;
       false

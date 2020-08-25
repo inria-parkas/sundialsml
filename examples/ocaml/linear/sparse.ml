@@ -58,7 +58,7 @@ let main () =
   S.scale_addi 1.0 a;
   printf "a + 1=@\n%a@\n" print_mat a;
 
-  S.blit a b;
+  S.blit ~src:a ~dst:b;
   S.scale_add 2.0 b zero;
   printf "scale copy x2: b=@\n%a@\n" print_mat b;
 

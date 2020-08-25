@@ -749,7 +749,7 @@ let precond data jacarg jok gamma = (* {{{ *)
       (* jok = TRUE: Copy Jbd to P *)
       for jy = 0 to my - 1 do
         for jx = 0 to mx - 1 do
-          Direct.blit jbd.(jx).(jy) p.(jx).(jy)
+          Direct.blit ~src:jbd.(jx).(jy) ~dst:p.(jx).(jy)
         done
       done;
       false
@@ -783,7 +783,7 @@ let precond data jacarg jok gamma = (* {{{ *)
           set_ijth j 1 2 (-. q2 *. c1 +. q4coef);
           set_ijth j 2 1 (q1 *. c3 -. q2 *. c2);
           set_ijth j 2 2 ((-. q2 *. c1 -. q4coef) +. diag);
-          Direct.blit j a
+          Direct.blit ~src:j ~dst:a
         done
       done;
       true

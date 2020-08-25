@@ -293,14 +293,14 @@ let brecvwait requests ixsub jysub dsizex uext =
   (* If jysub > 0, receive data for bottom x-line of uext. *)
   if jysub <> 0 then begin
     let buf = (Mpi.wait_receive requests.(0) : RealArray.t) in
-    blit buf 0 uext 1 dsizex
+    RealArray.blitn ~src:buf ~dst:uext ~dpos:1 dsizex
   end;
 
   (* If jysub < npey-1, receive data for top x-line of uext. *)
   if jysub <> npey-1 then begin
     let offsetue = 1 + (mysub+1)*(mxsub+2) in
     let buf = (Mpi.wait_receive requests.(1) : RealArray.t) in
-    blit buf 0 uext offsetue dsizex
+    RealArray.blitn ~src:buf ~dst:uext ~dpos:offsetue dsizex
   end;
 
   (* If ixsub > 0, receive data for left y-line of uext (via bufleft). *)

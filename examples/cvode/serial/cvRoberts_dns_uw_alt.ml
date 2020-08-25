@@ -62,7 +62,7 @@ let alternate_dense y a =
     Matrix.ArrayDense.getrf (RealArray2.wrap acols) pivots
   in
   let lsolve { pivots } a x b tol =
-    RealArray.blit b x;
+    RealArray.blit ~src:b ~dst:x;
     let acols = Matrix.Dense.unwrap a in
     Matrix.ArrayDense.getrs (RealArray2.wrap acols) pivots x
   in

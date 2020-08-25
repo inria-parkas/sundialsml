@@ -76,11 +76,6 @@ let slice = Array1.sub
 let printf = Printf.printf
 let eprintf = Printf.eprintf
 
-let blit (buf : RealArray.t) buf_offset (dst : RealArray.t) dst_offset len =
-  for i = 0 to len-1 do
-    dst.{dst_offset + i} <- buf.{buf_offset + i}
-  done
-
 let header_and_empty_array_size =
   Marshal.total_size (Marshal.to_bytes (RealArray.create 0) []) 0
 let float_cell_size =
@@ -324,7 +319,7 @@ let bsend comm my_pe isubx isuby dsizex dsizey udata =
   (* If isubx > 0, send data from left y-line of u (via bufleft) *)
   if isubx <> 0 then begin
     for ly = 0 to mysub-1 do
-      blit udata (ly*dsizex) buf (ly*nvars) nvars
+      RealArray.blitn ~src:udata ~spos:(ly*dsizex) ~dst:buf ~dpos:(ly*nvars) nvars
     done;
     Mpi.send buf (my_pe-1) 0 comm
   end;
@@ -334,7 +329,7 @@ let bsend comm my_pe isubx isuby dsizex dsizey udata =
     for ly = 0 to mysub-1 do
       let offsetbuf = ly*nvars in
       let offsetu = offsetbuf*mxsub + (mxsub-1)*nvars in
-      blit udata offsetu buf offsetbuf nvars
+      RealArray.blitn ~src:udata ~spos:offsetu ~dst:buf ~dpos:offsetbuf nvars
     done;
     Mpi.send buf (my_pe+1) 0 comm
   end
@@ -385,13 +380,15 @@ let brecvwait request isubx isuby dsizex uext =
   (* If isuby > 0, receive data for bottom x-line of uext *)
   if isuby <> 0 then begin
     let buf = (Mpi.wait_receive request.(0) : RealArray.t) in
-    blit buf 0 uext nvars dsizex
+    RealArray.blitn ~src:buf ~dst:uext ~dpos:nvars dsizex
   end;
 
   (* If isuby < NPEY-1, receive data for top x-line of uext *)
   if isuby <> npey-1 then begin
     let buf = (Mpi.wait_receive request.(1) : RealArray.t) in
-    blit buf 0 uext (nvars*(1 + (mysub+1)*(mxsub+2))) dsizex
+    RealArray.blitn ~src:buf
+                    ~dst:uext ~dpos:(nvars*(1 + (mysub+1)*(mxsub+2)))
+                    dsizex
   end;
 
   (* If isubx > 0, receive data for left y-line of uext (via bufleft) *)
@@ -401,7 +398,9 @@ let brecvwait request isubx isuby dsizex uext =
     for ly = 0 to mysub - 1 do
       let offsetbuf = ly*nvars in
       let offsetue = (ly+1)*dsizex2 in
-      blit bufleft offsetbuf uext offsetue nvars
+      RealArray.blitn ~src:bufleft ~spos:offsetbuf
+                      ~dst:uext ~dpos:offsetue
+                      nvars
     done
   end;
 
@@ -412,7 +411,9 @@ let brecvwait request isubx isuby dsizex uext =
     for ly = 0 to mysub-1 do
       let offsetbuf = ly*nvars in
       let offsetue = (ly+2)*dsizex2 - nvars in
-      blit bufright offsetbuf uext offsetue nvars
+      RealArray.blitn ~src:bufright ~spos:offsetbuf
+                      ~dst:uext ~dpos:offsetue
+                      nvars
     done
   end
 
@@ -460,29 +461,39 @@ let fcalc data t (udata : RealArray.t) (dudata : RealArray.t) =
 
   (* Copy local segment of u vector into the working extended array uext *)
   for ly = 0 to mysub-1 do
-    blit udata (ly*nvmxsub) uext ((ly + 1)*nvmxsub2 + nvars) nvmxsub;
+    RealArray.blitn ~src:udata ~spos:(ly*nvmxsub)
+                    ~dst:uext ~dpos:((ly + 1)*nvmxsub2 + nvars)
+                    nvmxsub
   done;
 
   (* To facilitate homogeneous Neumann boundary conditions, when this is
   a boundary PE, copy data from the first interior mesh line of u to uext *)
 
   (* If isuby = 0, copy x-line 2 of u to uext *)
-  if isuby = 0 then blit udata nvmxsub uext nvars nvmxsub;
+  if isuby = 0 then RealArray.blitn ~src:udata ~spos:nvmxsub
+                                    ~dst:uext ~dpos:nvars
+                                    nvmxsub;
 
   (* If isuby = NPEY-1, copy x-line MYSUB-1 of u to uext *)
-  if isuby = npey-1 then blit udata ((mysub-2)*nvmxsub)
-                              uext  ((mysub+1)*nvmxsub2 + nvars) nvmxsub;
+  if isuby = npey-1
+    then RealArray.blitn ~src:udata ~spos:((mysub-2)*nvmxsub)
+                         ~dst:uext  ~dpos:((mysub+1)*nvmxsub2 + nvars)
+                         nvmxsub;
 
   (* If isubx = 0, copy y-line 2 of u to uext *)
   if isubx = 0 then
     for ly = 0 to mysub-1 do
-      blit udata (ly*nvmxsub + nvars) uext ((ly+1)*nvmxsub2) nvars
+      RealArray.blitn ~src:udata ~spos:(ly*nvmxsub + nvars)
+                      ~dst:uext  ~dpos:((ly+1)*nvmxsub2)
+                      nvars
     done;
 
   (* If isubx = NPEX-1, copy y-line MXSUB-1 of u to uext *)
   if isubx = npex-1 then
     for ly = 0 to mysub-1 do
-      blit udata ((ly+1)*nvmxsub - 2*nvars) uext ((ly+2)*nvmxsub2 - nvars) nvars
+      RealArray.blitn ~src:udata ~spos:((ly+1)*nvmxsub - 2*nvars)
+                      ~dst:uext  ~dpos:((ly+2)*nvmxsub2 - nvars)
+                      nvars
     done;
 
   (* Make local copies of problem variables, for efficiency *)
@@ -565,7 +576,7 @@ let print_output s my_pe comm u t =
   if my_pe = 0 then begin
     if npelast <> 0 then begin
       let buf = (Mpi.receive npelast 0 comm : RealArray.t) in
-      blit buf 0 tempu 0 2
+      RealArray.blitn ~src:buf ~dst:tempu 2
     end;
 
     let nst = Cvode.get_num_steps s
@@ -600,7 +611,7 @@ let print_output_s my_pe comm uS =
     if my_pe = 0 then begin
       if npelast <> 0 then begin
         let buf = (Mpi.receive npelast 0 comm : RealArray.t) in
-        blit buf 0 temps 0 2
+        RealArray.blitn ~src:buf ~dst:temps 2
       end;
       printf "                                ----------------------------------------\n";
       printf "                                Sensitivity %d  " i;

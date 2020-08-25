@@ -249,7 +249,9 @@ let bsend comm my_pe isubx isuby dsizex dsizey (udata : RealArray.t) =
   (* If isubx > 0, send data from left y-line of u (via bufleft) *)
   if isubx <> 0 then begin
     for ly = 0 to mysub-1 do
-      blit udata (ly*dsizex) buf (ly*num_species) num_species
+      RealArray.blitn ~src:udata ~spos:(ly*dsizex)
+                      ~dst:buf ~dpos:(ly*num_species)
+                      num_species
     done;
     Mpi.send buf (my_pe-1) 0 comm
   end;
@@ -259,7 +261,9 @@ let bsend comm my_pe isubx isuby dsizex dsizey (udata : RealArray.t) =
     for ly = 0 to mysub-1 do
       let offsetbuf = ly*num_species in
       let offsetu = offsetbuf*mxsub + (mxsub-1)*num_species in
-      blit udata offsetu buf offsetbuf num_species
+      RealArray.blitn ~src:udata ~spos:offsetu
+                      ~dst:buf ~dpos:offsetbuf
+                      num_species
     done;
     Mpi.send buf (my_pe+1) 0 comm
   end
@@ -307,7 +311,7 @@ let brecvwait request isubx isuby dsizex (cext : RealArray.t) =
   (* If isuby > 0, receive data for bottom x-line of cext *)
   if isuby <> 0 then begin
     let buf = (Mpi.wait_receive request.(0) : RealArray.t) in
-    blit buf 0 cext num_species dsizex
+    RealArray.blitn ~src:buf ~dst:cext ~dpos:num_species dsizex
   end;
 
   (* If isuby < NPEY-1, receive data for top x-line of cext *)
@@ -323,7 +327,9 @@ let brecvwait request isubx isuby dsizex (cext : RealArray.t) =
     for ly = 0 to mysub - 1 do
       let offsetbuf = ly*num_species in
       let offsetue = (ly+1)*dsizex2 in
-      blit bufleft offsetbuf cext offsetue num_species
+      RealArray.blitn ~src:bufleft ~spos:offsetbuf
+                      ~dst:cext ~dpos:offsetue
+                      num_species
     done
   end;
 
@@ -334,7 +340,9 @@ let brecvwait request isubx isuby dsizex (cext : RealArray.t) =
     for ly = 0 to mysub-1 do
       let offsetbuf = ly*num_species in
       let offsetue = (ly+2)*dsizex2 - num_species in
-      blit bufright offsetbuf cext offsetue num_species
+      RealArray.blitn ~src:bufright ~spos:offsetbuf
+                      ~dst:cext ~dpos:offsetue
+                      num_species
     done
   end
 

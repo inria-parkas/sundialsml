@@ -71,17 +71,18 @@ val copy : t -> t
 (** Access a sub-array of the given array without copying. *)
 val sub : t -> int -> int -> t
 
-(** [blit_some src isrc dst idst len] copies [len] elements of [src] at
-    offset [isrc] to [dst] at offset [idst].
+(** [blitn ~src ?spos ~dst ?dpos len] copies [len] elements of [src] at
+    offset [spos] to [dst] at offset [dpos].
+    The [spos] and [dpos] arguments are optional and default to zero.
 
-    @raise Invalid_argument "RealArray.blit_some" if [isrc], [idst], and
+    @raise Invalid_argument "RealArray.nblit" if [spos], [dpos], and
     [len] do not specify valid subarrays of [src] and [dst]. *)
-val blit_some : t -> int -> t -> int -> int -> unit
+val blitn : src:t -> ?spos:int -> dst:t -> ?dpos:int -> int -> unit
 
 (** Copy the first array into the second one.
     See {{:OCAML_DOC_ROOT(Bigarray.Genarray.html#VALblit)}
     [Bigarray.Genarray.blit]} for more details. *)
-val blit : t -> t -> unit
+val blit : src:t -> dst:t -> unit
 
 (** [fill a c] sets all elements of [a] to the constant [c]. *)
 val fill : t -> float -> unit

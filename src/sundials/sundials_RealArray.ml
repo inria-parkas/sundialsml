@@ -59,16 +59,16 @@ let ppi ?(start="[") ?(stop="]") ?(sep=";")
 let pp fmt a = ppi ~item:(fun fmt _ x -> Format.fprintf fmt "% -14e" x)
   () fmt a
 
-let blit_some src isrc dst idst len =
+let blitn ~src ?(spos=0) ~dst ?(dpos=0) len =
   if Sundials_configuration.safe &&
-     (len < 0 || isrc < 0 || isrc + len >= length src
-      || idst < 0 || idst + len >= length dst)
-  then invalid_arg "RealArray.blit_some";
+     (len < 0 || spos < 0 || spos + len > length src
+      || dpos < 0 || dpos + len > length dst)
+  then invalid_arg "RealArray.blitn";
   for k = 0 to len - 1 do
-    Array1.unsafe_set dst (idst + k) (Array1.unsafe_get src (isrc + k))
+    Array1.unsafe_set dst (dpos + k) (Array1.unsafe_get src (spos + k))
   done
 
-let blit = Array1.blit
+let blit ~src ~dst = Array1.blit src dst
 
 let copy src =
   let dst = create (length src) in

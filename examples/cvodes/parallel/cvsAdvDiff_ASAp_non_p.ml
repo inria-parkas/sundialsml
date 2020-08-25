@@ -53,9 +53,9 @@ let local_array = Nvector_parallel.local_array
 let printf = Printf.printf
 let eprintf = Printf.eprintf
 
-let blit buf buf_offset dst dst_offset len =
+let blitn ~src ?(spos=0) ~dst ?(dpos=0) len =
   for i = 0 to len-1 do
-    dst.(dst_offset + i) <- buf.{buf_offset + i}
+    dst.(dpos + i) <- src.{spos + i}
   done
 
 (* Problem Constants *)
@@ -190,7 +190,7 @@ let print_output data g_val uB =
     for i = 0 to npes - 1 do
       let ni = if i < nrem then nperpe+1 else nperpe in
       let buf = (Mpi.receive i 0 comm : RealArray.t) in
-      blit buf 0 mu !indx ni;
+      blitn ~src:buf ~dst:mu ~dpos:!indx ni;
       indx := !indx + ni
     done;
 

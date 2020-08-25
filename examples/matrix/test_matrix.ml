@@ -112,7 +112,7 @@ let test_sunmatclone a myid =
     in
     let stop_time = get_time () in
 
-    (try Matrix.blit a b
+    (try Matrix.blit ~src:a ~dst:b
      with _ -> printf ">>> FAILED test -- SUNMatCopy, Proc %d @\n" myid;
                raise Exit);
 
@@ -168,7 +168,7 @@ let test_sunmatcopy a myid =
     let b = clone a in
     (* copy matrix data *)
     let start_time = get_time () in
-    (try Matrix.blit a b
+    (try Matrix.blit ~src:a ~dst:b
      with _ -> printf ">>> FAILED test -- SUNMatZero failed on Proc %d @\n" myid;
                raise Exit);
     let stop_time = get_time () in
@@ -200,7 +200,7 @@ let test_sunmatscaleadd a i myid =
 
     (* protect A *)
     let b = clone a in
-    (try Matrix.blit a b
+    (try Matrix.blit ~src:a ~dst:b
      with _ ->
        printf ">>> FAILED test -- SUNMatCopy failed on Proc %d @\n" myid;
        raise Exit);
@@ -233,13 +233,13 @@ let test_sunmatscaleadd a i myid =
 
       (* protect A and I *)
       let d = clone a in
-      (try Matrix.blit a d;
+      (try Matrix.blit ~src:a ~dst:d;
        with _ ->
          printf ">>> FAILED test -- SUNMatCopy failed on Proc %d @\n" myid;
          raise Exit);
 
       let c = clone i in
-      (try Matrix.blit i c
+      (try Matrix.blit ~src:i ~dst:c
        with _ ->
          printf ">>> FAILED test -- SUNMatCopy failed on Proc %d @\n" myid;
          raise Exit);
@@ -279,7 +279,7 @@ let test_sunmatscaleaddi a i myid =
   try
     (* protect A *)
     let b = clone a in
-    (try Matrix.blit i b
+    (try Matrix.blit ~src:i ~dst:b
      with _ ->
        printf ">>> FAILED test -- SUNMatCopy failed on Proc %d @\n" myid;
        raise Exit);
@@ -318,7 +318,7 @@ let test_sunmatmatvec a x y myid =
       if M.is_square a then begin
         (* protect A *)
         let b = clone a in
-        (try Matrix.blit a b
+        (try Matrix.blit ~src:a ~dst:b
          with _ ->
            printf ">>> FAILED test -- SUNMatCopy failed on Proc %d @\n" myid;
            raise Exit);

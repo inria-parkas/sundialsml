@@ -62,7 +62,7 @@ let heatres t (u : RealArray.t) (u' : RealArray.t) resval data =
   and coeff = data.coeff
   in
   (* Initialize resval to u, to take care of boundary equations. *)
-  RealArray.blit u resval;
+  RealArray.blit ~src:u ~dst:resval;
 
   (* Loop over interior points; set res = u' - (central difference). *)
   for j = 1 to mm-2 do

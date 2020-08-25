@@ -109,11 +109,6 @@ let vscale = Nvector_parallel.DataOps.n_vscale
 
 let slice = Bigarray.Array1.sub
 
-let blit (buf : RealArray.t) buf_offset (dst : RealArray.t) dst_offset len =
-  for i = 0 to len-1 do
-    dst.{dst_offset + i} <- buf.{buf_offset + i}
-  done
-
 let header_and_empty_array_size =
   Marshal.total_size (Marshal.to_bytes (RealArray.create 0) []) 0
 let float_cell_size =
@@ -330,7 +325,7 @@ let print_output webdata comm mem ((cdata : RealArray.t),_,_) tt =
 
     if npelast <> 0 then begin
       let buf = (Mpi.receive npelast 0 comm : RealArray.t) in
-      blit buf 0 clast 0 2
+      RealArray.blitn ~src:buf ~dst:clast 2
     end;
 
     let kused = Ida.get_last_order mem in
@@ -406,7 +401,9 @@ let bsend comm my_pe isubx isuby dsizex dsizey udata =
   (* If isubx > 0, send data from left y-line of u (via bufleft) *)
   if isubx <> 0 then begin
     for ly = 0 to mysub-1 do
-      blit udata (ly*dsizex) bufleft (ly*num_species) num_species
+      RealArray.blitn ~src:udata ~spos:(ly*dsizex)
+                      ~dst:bufleft ~dpos:(ly*num_species)
+                      num_species
     done;
     Mpi.send (slice bufleft 0 dsizey) (my_pe-1) 0 comm
   end;
@@ -416,7 +413,9 @@ let bsend comm my_pe isubx isuby dsizex dsizey udata =
     for ly = 0 to mysub-1 do
       let offsetbuf = ly*num_species in
       let offsetu = offsetbuf*mxsub + (mxsub-1)*num_species in
-      blit udata offsetu bufright offsetbuf num_species
+      RealArray.blitn ~src:udata ~spos:offsetu
+                      ~dst:bufright ~dpos:offsetbuf
+                      num_species
     done;
     Mpi.send (slice bufright 0 dsizey) (my_pe+1) 0 comm
   end
@@ -467,13 +466,15 @@ let brecvwait request isubx isuby dsizex cext =
   (* If isuby > 0, receive data for bottom x-line of cext *)
   if isuby <> 0 then begin
     let buf = (Mpi.wait_receive request.(0) : RealArray.t) in
-    blit buf 0 cext num_species dsizex
+    RealArray.blitn ~src:buf ~dst:cext ~dpos:num_species dsizex
   end;
 
   (* If isuby < NPEY-1, receive data for top x-line of cext *)
   if isuby <> npey-1 then begin
     let buf = (Mpi.wait_receive request.(1) : RealArray.t) in
-    blit buf 0 cext (num_species*(1 + (mysub+1)*(mxsub+2))) dsizex
+    RealArray.blitn ~src:buf
+                    ~dst:cext ~dpos:(num_species*(1 + (mysub+1)*(mxsub+2)))
+                    dsizex
   end;
 
   (* If isubx > 0, receive data for left y-line of cext (via bufleft) *)
@@ -483,7 +484,9 @@ let brecvwait request isubx isuby dsizex cext =
     for ly = 0 to mysub - 1 do
       let offsetbuf = ly*num_species in
       let offsetue = (ly+1)*dsizex2 in
-      blit bufleft offsetbuf cext offsetue num_species
+      RealArray.blitn ~src:bufleft ~spos:offsetbuf
+                      ~dst:cext ~dpos:offsetue
+                      num_species
     done
   end;
 
@@ -494,7 +497,9 @@ let brecvwait request isubx isuby dsizex cext =
     for ly = 0 to mysub-1 do
       let offsetbuf = ly*num_species in
       let offsetue = (ly+2)*dsizex2 - num_species in
-      blit bufright offsetbuf cext offsetue num_species
+      RealArray.blitn ~src:bufright ~spos:offsetbuf
+                      ~dst:cext ~dpos:offsetue
+                      num_species
     done
   end
 

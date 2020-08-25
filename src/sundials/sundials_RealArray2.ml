@@ -89,6 +89,6 @@ let copy a =
   Array2.blit d d';
   wrap d'
 
-let blit a1 a2 =
-  Array2.blit (unwrap a1) (unwrap a2)
+let blit ~src ~dst =
+  Array2.blit (unwrap src) (unwrap dst)
 

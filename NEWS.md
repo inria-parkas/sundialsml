@@ -70,6 +70,9 @@ Compatibility:
 * *.Spils.get_num_conv_fails -> *.Spils.get_num_lin_conv_fails
 * *.Spils.get_num_func_evals -> *.Spils.get_num_lin_func_evals
 
+* *.blit now requires ~src and ~dst labels.
+* *.blit_some becomes *.blitn and requires labels.
+
 Sundials/ML 3.1.1p0 (July 2018)
 ------------------------------------
 Sundials/ML v3.1.1p0 adds support for v3.1.x of the Sundials Suite of

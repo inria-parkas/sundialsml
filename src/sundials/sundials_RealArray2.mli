@@ -72,7 +72,7 @@ val copy : t -> t
 (** Copy the first array into the second one.
     See {{:OCAML_DOC_ROOT(Bigarray.Genarray.html#VALblit)}
     [Bigarray.Genarray.blit]} for more details. *)
-val blit : t -> t -> unit
+val blit : src:t -> dst:t -> unit
 
 (** [fill a c] sets all elements of [a] to the constant [c]. *)
 val fill : t -> float -> unit

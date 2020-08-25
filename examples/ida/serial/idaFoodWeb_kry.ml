@@ -360,7 +360,7 @@ let precond webdata jac =
   done (* End of jy loop. *)
 
 let psolve webdata jac rvec zvec delta =
-  RealArray.blit rvec zvec;
+  RealArray.blit ~src:rvec ~dst:zvec;
 
   (* Loop through subgrid and apply preconditioner factors at each point. *)
   for jx = 0 to webdata.mx-1 do

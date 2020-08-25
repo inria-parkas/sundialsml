@@ -187,14 +187,14 @@ let brecvwait request ixsub jysub dsizex cext =
   (* If jysub > 0, receive data for bottom x-line of cext. *)
   if jysub <> 0 then begin
     let buf = (Mpi.wait_receive request.(0) : RealArray.t) in
-    blit buf 0 cext num_species dsizex
+    RealArray.blitn ~src:buf ~dst:cext ~dpos:num_species dsizex
   end;
 
   (* If jysub < npey-1, receive data for top x-line of cext. *)
   if jysub <> npey-1 then begin
     let buf = (Mpi.wait_receive request.(1) : RealArray.t) in
     let offsetce = num_species*(1 + (mysub+1)*(mxsub+2)) in
-    blit buf 0 cext offsetce dsizex
+    RealArray.blitn ~src:buf ~dst:cext ~dpos:offsetce dsizex
   end;
 
   (* If ixsub > 0, receive data for left y-line of cext (via bufleft). *)
@@ -698,7 +698,7 @@ let print_output mem uv tt data comm =
 
     if npelast <> 0 then begin
       let buf = (Mpi.receive npelast 0 comm : RealArray.t) in
-      blit buf 0 clast 0 2
+      RealArray.blitn ~src:buf ~dst:clast 2
     end;
 
     let kused = Ida.get_last_order mem in

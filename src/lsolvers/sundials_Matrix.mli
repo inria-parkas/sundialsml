@@ -182,12 +182,12 @@ module Dense : sig (* {{{ *)
       @nocvode <node> SUNMatZero_Dense *)
   val set_to_zero : t -> unit
 
-  (** [blit src dst] copies the contents of [src] into [dst]. Both
+  (** [blit ~src ~dst] copies the contents of [src] into [dst]. Both
       must have the same size.
 
       @nocvode <node> SUNMatCopy
       @nocvode <node> SUNMatCopy_Dense *)
-  val blit : t -> t -> unit
+  val blit : src:t -> dst:t -> unit
 
   (** [lrw, liw = space a] returns the storage requirements of [a] as
       [lrw] realtype words and [liw] integer words.
@@ -356,7 +356,7 @@ module Band : sig (* {{{ *)
       @nocvode <node> SUNMatZero_Band *)
   val set_to_zero : t -> unit
 
-  (** [blit src dst] copies the contents of [src] into [dst]. Both
+  (** [blit ~src ~dst] copies the contents of [src] into [dst]. Both
       must have the same size.
 
       NB: This operation, invoked either directly or from within a solver,
@@ -365,7 +365,7 @@ module Band : sig (* {{{ *)
 
       @nocvode <node> SUNMatCopy
       @nocvode <node> SUNMatCopy_Band *)
-  val blit : t -> t -> unit
+  val blit : src:t -> dst:t -> unit
 
   (** [lrw, liw = space a] returns the storage requirements of [a] as
       [lrw] realtype words and [liw] integer words.
@@ -580,7 +580,7 @@ module Sparse : sig (* {{{ *)
       @nocvode <node> SUNMatZero_Sparse *)
   val set_to_zero : 's t -> unit
 
-  (** [blit src dst] copies the contents of [src] into [dst]. Both
+  (** [blit ~src ~dst] copies the contents of [src] into [dst]. Both
       must have the same size.
 
       NB: This operation, invoked either directly or from within a solver,
@@ -591,7 +591,7 @@ module Sparse : sig (* {{{ *)
 
       @nocvode <node> SUNMatCopy
       @nocvode <node> SUNMatCopy_Sparse *)
-  val blit : 's t -> 's t -> unit
+  val blit : src:'s t -> dst:'s t -> unit
 
   (** [lrw, liw = space a] returns the storage requirements of [a] as
       [lrw] realtype words and [liw] integer words.
@@ -698,11 +698,11 @@ module ArrayDense : sig (* {{{ *)
       @cvode <node9#ss:dense> SetToZero *)
   val set_to_zero    : t -> unit
 
-  (** [blit src dst] copies the contents of [src] into [dst]. Both
+  (** [blit ~src ~dst] copies the contents of [src] into [dst]. Both
       must have the same size.
 
       @cvode <node9#ss:dense> denseCopy *)
-  val blit  : t -> t -> unit
+  val blit  : src:t -> dst:t -> unit
 
   (** [lrw, liw = space a] returns the storage requirements of [a] as
       [lrw] realtype words and [liw] integer words. *)
@@ -893,10 +893,10 @@ module ArrayBand : sig (* {{{ *)
       @nocvode <node9> SetToZero *)
   val set_to_zero : t -> unit
 
-  (** [blit src dst] copies the contents of [src] into [dst].
+  (** [blit ~src ~dst] copies the contents of [src] into [dst].
 
       @cvode <node9#ss:band> bandCopy *)
-  val blit : t -> t -> unit
+  val blit : src:t -> dst:t -> unit
 
   (** [lrw, liw = space a] returns the storage requirements of [a] as
       [lrw] realtype words and [liw] integer words. *)
@@ -1098,11 +1098,11 @@ val matvec :
     @nocvode <node> SUNMatZero *)
 val set_to_zero : ('k, 'm, 'nd, 'nk) t -> unit
 
-(** [blit src dst] copies the contents of [src] into [dst]. Both
+(** [blit ~src ~dst] copies the contents of [src] into [dst]. Both
     must have the same size.
 
     @nocvode <node> SUNMatCopy *)
-val blit : ('k, 'm, 'nd, 'nk) t -> ('k, 'm, 'nd, 'nk) t -> unit
+val blit : src:('k, 'm, 'nd, 'nk) t -> dst:('k, 'm, 'nd, 'nk) t -> unit
 
 (** [lrw, liw = space a] returns the storage requirements of [a] as
     [lrw] realtype words and [liw] integer words.
