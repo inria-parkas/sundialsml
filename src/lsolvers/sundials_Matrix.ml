@@ -1034,11 +1034,13 @@ type standard
 type custom
 
 (* Must correspond with sundials_matrix_ml.h:mat_matrix_id_tag *)
-type id =
-  | Dense
-  | Band
-  | Sparse
-  | Custom
+type (_,_,_,_) id =
+  | Dense : (standard, Dense.t, Nvector_serial.data, [>Nvector_serial.kind]) id
+  | Band  : (standard, Band.t, Nvector_serial.data, [>Nvector_serial.kind]) id
+  | Sparse : (standard, 's Sparse.t, Nvector_serial.data, [>Nvector_serial.kind]) id
+  | Custom : (custom, 'm, 'nd, 'nk) id
+  | ArrayDense : (custom, ArrayDense.t, RealArray.t, 'nk) id
+  | ArrayBand  : (custom, ArrayBand.t, RealArray.t, 'nk) id
 
 type cmat
 
@@ -1046,7 +1048,7 @@ type cmat
 type ('k, 'm, 'nd, 'nk) t = {
   payload : 'm;
   rawptr  : cmat;
-  id      : id;
+  id      : ('k, 'm, 'nd, 'nk) id;
   mat_ops : ('m, 'nd) matrix_ops;
 }
 
@@ -1063,7 +1065,7 @@ type 'nk arraydense = (custom, ArrayDense.t, RealArray.t, 'nk) t
 
 type 'nk arrayband = (custom, ArrayBand.t, RealArray.t, 'nk) t
 
-external c_wrap : id -> 'content_cptr -> 'm -> cmat
+external c_wrap : ('k, 'm, 'nd, 'nk) id -> 'content_cptr -> 'm -> cmat
   = "sunml_matrix_wrap"
 
 let wrap_dense (data : Dense.t) = {
@@ -1117,13 +1119,23 @@ let wrap_custom ops data = {
     mat_ops = ops;
   }
 
-let wrap_arraydense = wrap_custom ArrayDense.ops
+let wrap_arraydense data = {
+    payload = data;
+    rawptr  = c_wrap ArrayDense ArrayDense.ops data;
+    id      = ArrayDense;
+    mat_ops = ArrayDense.ops;
+  }
 
 let arraydense ?m ?(i=0.0) n =
   let m = match m with Some m -> m | None -> n in
   wrap_arraydense (ArrayDense.make m n i)
 
-let wrap_arrayband = wrap_custom ArrayBand.ops
+let wrap_arrayband data = {
+    payload = data;
+    rawptr  = c_wrap ArrayBand ArrayBand.ops data;
+    id      = ArrayBand;
+    mat_ops = ArrayBand.ops;
+  }
 
 let arrayband ?mu ?smu ?ml ?(i=0.0) n =
   let mu = match mu, smu with
@@ -1160,7 +1172,7 @@ let scale_addi c ({ payload = a; mat_ops = { m_scale_addi } } as m) =
   | _ -> c_scale_addi c m
 
 external c_matvec
-  : ('k, 'm, 'nd, 'nk) t -> ('d, 'k) Nvector.t -> ('d, 'k) Nvector.t -> unit
+  : ('k, 'm, 'nd, 'nk) t -> ('nd, 'nk) Nvector.t -> ('nd, 'nk) Nvector.t -> unit
   = "sunml_matrix_matvec"
 
 let matvec ({ payload = a; mat_ops = { m_matvec } } as m) x y =

@@ -2347,7 +2347,7 @@ CAMLprim value sunml_matrix_wrap(value vid, value vcontent, value vpayload)
     SUNMatrix smat;
 
     /* Create matrix */
-    if (mat_id == MATRIX_ID_CUSTOM) {
+    if (mat_id >= MATRIX_ID_CUSTOM) {
 	smat = alloc_smat((void *)vcontent, vpayload, true);
     } else {
 	smat = alloc_smat(MAT_CONTENT(vcontent), vpayload, false);
@@ -2393,6 +2393,8 @@ CAMLprim value sunml_matrix_wrap(value vid, value vcontent, value vpayload)
 	break;
 
     case MATRIX_ID_CUSTOM:
+    case MATRIX_ID_ARRAYDENSE:
+    case MATRIX_ID_ARRAYBAND:
 	smat->ops->clone       = csmat_custom_clone;
 	smat->ops->destroy     = free_custom_smat;  // ours (only called for
 						   //	    c clones)
@@ -2958,7 +2960,7 @@ CAMLprim value sunml_arraybandmatrix_matvec(value va, value vsizes,
     if (n < mu + ml + 1)
 	caml_invalid_argument("matrix badly sized.");
 
-    if (ARRAY1_LEN(vx) < n)
+    if (ARRAY1_LEN(vx) < m)
 	caml_invalid_argument("x array too small.");
     if (ARRAY1_LEN(vy) < m)
 	caml_invalid_argument("y array too small.");

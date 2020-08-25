@@ -925,10 +925,10 @@ module Adjoint = struct (* {{{ *)
     | LSD.Custom _ ->
         assert false
 
-    let set_ls_callbacks (type m) (type tag)
+    let set_ls_callbacks (type mk m nd nk) (type tag)
           ?(jac : m jac_fn option)
-          (solver : (m, 'nd, 'nk, tag) LSD.solver)
-          (mat : ('mk, m, 'nd, 'nk) Matrix.t) session =
+          (solver : (m, nd, nk, tag) LSD.solver)
+          (mat : (mk, m, nd, nk) Matrix.t) session =
       let none = (None : m option) in
       begin match solver with
       | LSD.Dense ->

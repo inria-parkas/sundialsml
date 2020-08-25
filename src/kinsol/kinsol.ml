@@ -190,7 +190,8 @@ module Dls = struct (* {{{ *)
     | LSD.Custom _ ->
         assert false
 
-  let check_dqjac jac mat = let open Matrix in
+  let check_dqjac (type k m nd nk) jac (mat : (k,m,nd,nk) Matrix.t) =
+    let open Matrix in
     match get_id mat with
     | Dense | Band -> ()
     | _ -> if jac = None then invalid_arg "A Jacobian function is required"

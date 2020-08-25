@@ -1032,7 +1032,7 @@ type 'nk arrayband = (custom, ArrayBand.t, RealArray.t, 'nk) t
     equal to 2 and all values initialized to [0.0].
     Optional arguments allow specifying the upper bandwidth [mu], the lower
     bandwidth [ml], the storage upper bandwidth [smu] and the initial
-    values [i]. If [mu] is given but not [smu], then [smu] is set to [mu+ml],
+    values [i]. If [mu] is given but not [smu], then [smu] is set to [mu],
     otherwise if [smu] is given but not [mu], then [mu] is set to [smu].
     If [ml] is not given, then it is set to [mu].
 
@@ -1052,11 +1052,13 @@ val wrap_custom : ('m, 'nd) matrix_ops -> 'm -> (custom, 'm, 'nd, 'nk) t
 (** Matrix internal type identifiers.
 
     @nocvode <node> SUNMatrix_ID *)
-type id =
-  | Dense
-  | Band
-  | Sparse
-  | Custom
+type (_,_,_,_) id =
+  | Dense : (standard, Dense.t, Nvector_serial.data, [>Nvector_serial.kind]) id
+  | Band  : (standard, Band.t, Nvector_serial.data, [>Nvector_serial.kind]) id
+  | Sparse : (standard, 's Sparse.t, Nvector_serial.data, [>Nvector_serial.kind]) id
+  | Custom : (custom, 'm, 'nd, 'nk) id
+  | ArrayDense : (custom, ArrayDense.t, RealArray.t, 'nk) id
+  | ArrayBand  : (custom, ArrayBand.t, RealArray.t, 'nk) id
 
 (** Return a record of matrix operations. *)
 val get_ops : ('k, 'm, 'nd, 'nk) t -> ('m, 'nd) matrix_ops
@@ -1064,7 +1066,7 @@ val get_ops : ('k, 'm, 'nd, 'nk) t -> ('m, 'nd) matrix_ops
 (** Return the internal type identifier of a matrix.
 
     @nocvode <node> SUNMatGetID *)
-val get_id : ('k, 'm, 'nd, 'nk) t -> id
+val get_id : ('k, 'm, 'nd, 'nk) t -> ('k, 'm, 'nd, 'nk) id
 
 (** Direct access to the underlying storage array, which is accessed
     column first (unlike in {!Dense.get}, {!Band.get}, and {!Sparse.get}).
