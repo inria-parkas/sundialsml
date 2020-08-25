@@ -18,7 +18,11 @@ EXAMPLES_SINCE_2_5 = ark_KrylovDemo_prec.ml \
 		     $(if $(KLU_ENABLED),ark_brusselator1D_klu.ml) \
 		     $(if $(SUPERLUMT_ENABLED),ark_brusselator1D_FEM_slu.ml)
 
-EXAMPLES_SINCE_4_0_0 = ark_analytic_nonlin.ml
+EXAMPLES_SINCE_4_0_0 = ark_analytic_nonlin.ml \
+		       ark_brusselator_mri.ml \
+		       ark_onewaycouple_mri.ml \
+		       ark_twowaycouple_mri.ml \
+		       ark_reaction_diffusion_mri.ml
 
 EXAMPLES = $(EXAMPLES_SINCE_2_5)				\
 	   $(if $(AT_LEAST_4_0_0),$(EXAMPLES_SINCE_4_0_0))
