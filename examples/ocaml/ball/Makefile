@@ -21,13 +21,13 @@ ball.opt: showball.cmi showball.cmx ball.ml
 showball.cmi : showball.mli
 	$(OCAMLC) $(OCAMLFLAGS) $^
 
-showball.cmo : showball.ml
+showball.cmo : showball.ml showball.cmi
 	$(OCAMLC) $(OCAMLFLAGS) -I $(OCAML_GRAPHICS_PATH) \
-	    unix.cma graphics.cma -c $^
+	    unix.cma graphics.cma -c $<
 
-showball.cmx : showball.ml
+showball.cmx : showball.ml showball.cmi
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -I "$(OCAML_GRAPHICS_PATH)" \
-	    unix.cmxa graphics.cmxa -c $^
+	    unix.cmxa graphics.cmxa -c $<
 
 clean:
 	-@rm -f showball.cmi showball.cmo showball.cmx showball.o
