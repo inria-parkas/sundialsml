@@ -237,7 +237,7 @@ let main () =
 
   (* Create vectors *)
   if Test_nvector.compat_ge400 && myid = 0 then begin
-     printf "Testing the %S N_Vector \n" name;
+     printf "Testing the %s N_Vector \n" name;
      printf "Vector global length %d \n" global_length;
      printf "MPI processes %d \n" nprocs
   end;
