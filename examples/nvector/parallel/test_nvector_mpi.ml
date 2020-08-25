@@ -34,7 +34,7 @@ struct
   let max_time x t =
     let _, _, comm = Nvector.unwrap x in
     (* get max time across all MPI ranks *)
-    Mpi.(reduce_float t Float_max 0 comm)
+    Mpi.(reduce_float t Max 0 comm)
   let sync_device () = ()
 end
 
@@ -352,7 +352,7 @@ let main () =
       printf "SUCCESS: NVector module passed all tests \n%s\n"
         (if Test_nvector.compat_ge400 then "" else " ")
   end;
-  match Mpi.(allreduce_int (!fails) Int_max comm) with
+  match Mpi.(allreduce_int (!fails) Max comm) with
   | 0 -> ();
   | n -> failwith "Tests failed"
 

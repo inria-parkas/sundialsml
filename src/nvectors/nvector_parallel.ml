@@ -309,7 +309,7 @@ module MakeOps =
         let ax = abs_float (A.get x i) in
         if ax > !lmax then lmax := ax
       done;
-      Mpi.allreduce_float !lmax Mpi.Float_max comm
+      Mpi.allreduce_float !lmax Mpi.Max comm
 
     let n_vwrmsnorm (x, n_global, comm) (w, _, _) =
       let lsum = ref 0.0 in
@@ -317,7 +317,7 @@ module MakeOps =
         lsum := !lsum
                   +. ((A.get x i) *. (A.get w i) *. (A.get x i) *. (A.get w i))
       done;
-      let gsum = Mpi.allreduce_float !lsum Mpi.Float_sum comm in
+      let gsum = Mpi.allreduce_float !lsum Mpi.Sum comm in
       sqrt (gsum /. float n_global)
 
     let n_vwrmsnormmask (x, n_global, comm) (w, _, _) (id, _, _) =
@@ -326,7 +326,7 @@ module MakeOps =
         if A.get id i > 0.0 then
           lsum := !lsum +. (A.get x i *. A.get w i *. A.get x i *. A.get w i)
       done;
-      let gsum = Mpi.allreduce_float !lsum Mpi.Float_sum comm in
+      let gsum = Mpi.allreduce_float !lsum Mpi.Sum comm in
       sqrt (gsum /. float n_global)
 
     let n_vmin (x, _, comm) =
@@ -335,14 +335,14 @@ module MakeOps =
         let xv = A.get x i in
         if xv < !lmin then lmin := xv
       done;
-      Mpi.allreduce_float !lmin Mpi.Float_min comm
+      Mpi.allreduce_float !lmin Mpi.Min comm
 
     let n_vdotprod (x, _, comm) (y, _, _) =
       let lsum = ref 0.0 in
       for i = 0 to A.length x - 1 do
         lsum := !lsum +. (A.get x i *. A.get y i)
       done;
-      Mpi.allreduce_float !lsum Mpi.Float_sum comm
+      Mpi.allreduce_float !lsum Mpi.Sum comm
 
     let n_vcompare c (x, _, _) (z, _, _) =
       for i = 0 to A.length x - 1 do
@@ -355,14 +355,14 @@ module MakeOps =
         if A.get x i = 0.0 then lval := 0
         else A.set z i (1.0 /. (A.get x i))
       done;
-      (Mpi.allreduce_int !lval Mpi.Int_min comm <> 0)
+      (Mpi.allreduce_int !lval Mpi.Min comm <> 0)
 
     let n_vwl2norm (x, _, comm) (w, _, _) =
       let lsum = ref 0.0 in
       for i = 0 to A.length x - 1 do
         lsum := !lsum +. (A.get x i *. A.get w i *. A.get x i *. A.get w i)
       done;
-      let gsum = Mpi.allreduce_float !lsum Mpi.Float_sum comm in
+      let gsum = Mpi.allreduce_float !lsum Mpi.Sum comm in
       sqrt gsum
 
     let n_vl1norm (x, _, comm) =
@@ -370,7 +370,7 @@ module MakeOps =
       for i = 0 to A.length x - 1 do
         lsum := !lsum +. abs_float (A.get x i)
       done;
-      Mpi.allreduce_float !lsum Mpi.Float_sum comm
+      Mpi.allreduce_float !lsum Mpi.Sum comm
 
     let n_vconstrmask (c, _, _) (x, _, comm) (m, _, _) =
       let test = ref 1.0 in
@@ -387,7 +387,7 @@ module MakeOps =
       for i = 0 to A.length c - 1 do
         A.set m i (f (A.get c i) (A.get x i))
       done;
-      (Mpi.allreduce_float !test Mpi.Float_min comm = 1.0)
+      (Mpi.allreduce_float !test Mpi.Min comm = 1.0)
 
     let n_vminquotient (num, _, comm) (denom, _, _) =
       let lmin = ref Config.big_real in
@@ -395,7 +395,7 @@ module MakeOps =
         if (A.get denom i) <> 0.0 then
           lmin := min !lmin (A.get num i /. A.get denom i)
       done;
-      Mpi.allreduce_float !lmin Mpi.Float_min comm
+      Mpi.allreduce_float !lmin Mpi.Min comm
 
     let n_vprod (x, _, _) (y, _, _) (z, _, _) =
       for i = 0 to A.length x - 1 do
@@ -489,7 +489,7 @@ module MakeOps =
           done
         done;
         (* Note: ocamlmpi does not provide MPI_IN_PLACE *)
-        Mpi.(allreduce_bigarray1 dp dp Int_sum comm)
+        Mpi.(allreduce_bigarray1 dp dp Sum comm)
 
     let arr_vaxpy_array a (xa : t array) (ya : t array) =
       let nvec = Array.length xa in
@@ -677,7 +677,7 @@ module MakeOps =
           done
         done;
         (* Note: ocamlmpi does not provide MPI_IN_PLACE *)
-        Mpi.(allreduce_bigarray1 nrm nrm Int_sum comm);
+        Mpi.(allreduce_bigarray1 nrm nrm Sum comm);
         for i = 0 to nvec - 1 do
           nrm.{i} <- sqrt (nrm.{i}/.nf)
         done
@@ -703,7 +703,7 @@ module MakeOps =
           done;
         done;
         (* Note: ocamlmpi does not provide MPI_IN_PLACE *)
-        Mpi.(allreduce_bigarray1 nrm nrm Int_sum comm);
+        Mpi.(allreduce_bigarray1 nrm nrm Sum comm);
         for i = 0 to nvec - 1 do
           nrm.{i} <- sqrt (nrm.{i}/.nf)
         done
@@ -914,7 +914,7 @@ module DataOps =
         let ax = abs_float (A.get x i) in
         if ax > !lmax then lmax := ax
       done;
-      Mpi.allreduce_float !lmax Mpi.Float_max comm
+      Mpi.allreduce_float !lmax Mpi.Max comm
 
     let n_vwrmsnorm ((x : d), n_global, comm) ((w : d), _, _) =
       let lsum = ref 0.0 in
@@ -922,7 +922,7 @@ module DataOps =
         lsum := !lsum
                   +. ((A.get x i) *. (A.get w i) *. (A.get x i) *. (A.get w i))
       done;
-      let gsum = Mpi.allreduce_float !lsum Mpi.Float_sum comm in
+      let gsum = Mpi.allreduce_float !lsum Mpi.Sum comm in
       sqrt (gsum /. float n_global)
 
     let n_vwrmsnormmask ((x : d), n_global, comm) ((w : d), _, _) ((id : d), _, _) =
@@ -931,7 +931,7 @@ module DataOps =
         if A.get id i > 0.0 then
           lsum := !lsum +. (A.get x i *. A.get w i *. A.get x i *. A.get w i)
       done;
-      let gsum = Mpi.allreduce_float !lsum Mpi.Float_sum comm in
+      let gsum = Mpi.allreduce_float !lsum Mpi.Sum comm in
       sqrt (gsum /. float n_global)
 
     let n_vmin ((x : d), _, comm) =
@@ -940,14 +940,14 @@ module DataOps =
         let xv = A.get x i in
         if xv < !lmin then lmin := xv
       done;
-      Mpi.allreduce_float !lmin Mpi.Float_min comm
+      Mpi.allreduce_float !lmin Mpi.Min comm
 
     let n_vdotprod ((x : d), _, comm) ((y : d), _, _) =
       let lsum = ref 0.0 in
       for i = 0 to A.dim x - 1 do
         lsum := !lsum +. (A.get x i *. A.get y i)
       done;
-      Mpi.allreduce_float !lsum Mpi.Float_sum comm
+      Mpi.allreduce_float !lsum Mpi.Sum comm
 
     let n_vcompare c ((x : d), _, _) ((z : d), _, _) =
       for i = 0 to A.dim x - 1 do
@@ -960,14 +960,14 @@ module DataOps =
         if A.get x i = 0.0 then lval := 0
         else A.set z i (1.0 /. (A.get x i))
       done;
-      (Mpi.allreduce_int !lval Mpi.Int_min comm <> 0)
+      (Mpi.allreduce_int !lval Mpi.Min comm <> 0)
 
     let n_vwl2norm ((x : d), _, comm) ((w : d), _, _) =
       let lsum = ref 0.0 in
       for i = 0 to A.dim x - 1 do
         lsum := !lsum +. (A.get x i *. A.get w i *. A.get x i *. A.get w i)
       done;
-      let gsum = Mpi.allreduce_float !lsum Mpi.Float_sum comm in
+      let gsum = Mpi.allreduce_float !lsum Mpi.Sum comm in
       sqrt gsum
 
     let n_vl1norm ((x : d), _, comm) =
@@ -975,7 +975,7 @@ module DataOps =
       for i = 0 to A.dim x - 1 do
         lsum := !lsum +. abs_float (A.get x i)
       done;
-      Mpi.allreduce_float !lsum Mpi.Float_sum comm
+      Mpi.allreduce_float !lsum Mpi.Sum comm
 
     let n_vconstrmask ((c : d), _, _) ((x : d), _, comm) ((m : d), _, _) =
       let test = ref 1.0 in
@@ -992,7 +992,7 @@ module DataOps =
       for i = 0 to A.dim c - 1 do
         A.set m i (f (A.get c i) (A.get x i))
       done;
-      (Mpi.allreduce_float !test Mpi.Float_min comm = 1.0)
+      (Mpi.allreduce_float !test Mpi.Min comm = 1.0)
 
     let n_vminquotient ((num : d), _, comm) ((denom : d), _, _) =
       let lmin = ref Config.big_real in
@@ -1000,7 +1000,7 @@ module DataOps =
         if (A.get denom i) <> 0.0 then
           lmin := min !lmin (A.get num i /. A.get denom i)
       done;
-      Mpi.allreduce_float !lmin Mpi.Float_min comm
+      Mpi.allreduce_float !lmin Mpi.Min comm
 
     let n_vprod ((x : d), _, _) ((y : d), _, _) ((z : d), _, _) =
       for i = 0 to A.dim x - 1 do
@@ -1094,7 +1094,7 @@ module DataOps =
           done
         done;
         (* Note: ocamlmpi does not provide MPI_IN_PLACE *)
-        Mpi.(allreduce_bigarray1 dp dp Int_sum comm)
+        Mpi.(allreduce_bigarray1 dp dp Sum comm)
 
     let arr_vaxpy_array a (xa : t array) (ya : t array) =
       let nvec = Array.length xa in
@@ -1282,7 +1282,7 @@ module DataOps =
           done
         done;
         (* Note: ocamlmpi does not provide MPI_IN_PLACE *)
-        Mpi.(allreduce_bigarray1 nrm nrm Int_sum comm);
+        Mpi.(allreduce_bigarray1 nrm nrm Sum comm);
         for i = 0 to nvec - 1 do
           nrm.{i} <- sqrt (nrm.{i}/.nf)
         done
@@ -1308,7 +1308,7 @@ module DataOps =
           done;
         done;
         (* Note: ocamlmpi does not provide MPI_IN_PLACE *)
-        Mpi.(allreduce_bigarray1 nrm nrm Int_sum comm);
+        Mpi.(allreduce_bigarray1 nrm nrm Sum comm);
         for i = 0 to nvec - 1 do
           nrm.{i} <- sqrt (nrm.{i}/.nf)
         done
