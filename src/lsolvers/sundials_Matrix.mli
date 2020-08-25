@@ -1032,7 +1032,7 @@ type 'nk arrayband = (custom, ArrayBand.t, RealArray.t, 'nk) t
     equal to 2 and all values initialized to [0.0].
     Optional arguments allow specifying the upper bandwidth [mu], the lower
     bandwidth [ml], the storage upper bandwidth [smu] and the initial
-    values [i]. If [mu] is given but not [smu], then [smu] is set to [mu],
+    values [i]. If [mu] is given but not [smu], then [smu] is set to [mu+ml],
     otherwise if [smu] is given but not [mu], then [mu] is set to [smu].
     If [ml] is not given, then it is set to [mu].
 

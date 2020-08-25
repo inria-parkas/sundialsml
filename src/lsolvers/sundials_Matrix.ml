@@ -1007,9 +1007,9 @@ module ArrayBand = struct (* {{{ *)
       done;
     done
 
-  let space (a, _) =
+  let space (a, (smu, mu, ml)) =
     let m, n = RealArray2.size a in
-    (m * n, 5)
+    (n * (smu + ml + 1), 7 + n)
     (* 3 integer variables + 2 integer dimensions *)
 
   let ops = {
@@ -1131,9 +1131,9 @@ let arrayband ?mu ?smu ?ml ?(i=0.0) n =
            | Some mu, _  -> mu
            | _, Some smu -> smu
   in
-  let smu = match smu with Some smu -> smu | None -> mu in
   let ml  = match ml  with Some ml  -> ml  | None -> mu in
-  wrap_custom ArrayBand.ops (ArrayBand.make (smu, mu, ml) n i)
+  let smu = match smu with Some smu -> smu | None -> mu+ml in
+  wrap_arrayband (ArrayBand.make (smu, mu, ml) n i)
 
 let get_ops { mat_ops } = mat_ops
 
