@@ -1214,6 +1214,15 @@ external print_band : 'nk band -> Logfile.t -> unit
 external print_sparse : ('s, 'nk) sparse -> Logfile.t -> unit
     = "sunml_matrix_print_sparse"
 
+let pp (type k m nd nk) fmt ({ id; payload } : (k, m, nd, nk) t) =
+  match id with
+  | Dense  -> Dense.pp fmt payload
+  | Band   -> Band.pp fmt payload
+  | Sparse -> Sparse.pp fmt payload
+  | Custom -> Format.pp_print_string fmt "<custom matrix>"
+  | ArrayDense -> ArrayDense.pp fmt payload
+  | ArrayBand  -> ArrayBand.pp fmt payload
+
 (* Let C code know about some of the values in this module.  *)
 external c_init_module : exn array -> unit =
   "sunml_mat_init_module"

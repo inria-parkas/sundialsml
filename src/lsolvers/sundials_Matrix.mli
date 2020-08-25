@@ -1131,3 +1131,8 @@ val print_band : 'nk band -> Logfile.t -> unit
     @nocvode <node> SUNSparseMatrix_Print *)
 val print_sparse : ('s, 'nk) sparse -> Logfile.t -> unit
 
+(** Pretty-print a generic matrix using the
+    {{:OCAML_DOC_ROOT(Format.html)} Format} module.
+    For {{!id}Custom} matrices, it simply prints {e <custom matrix>}. *)
+val pp : Format.formatter -> ('k, 'm, 'nd, 'nk) t -> unit
+
