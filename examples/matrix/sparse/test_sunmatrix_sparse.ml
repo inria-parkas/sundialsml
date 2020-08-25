@@ -119,6 +119,7 @@ struct
       else false
     end
 
+  let nvec_pp = Nvector_serial.pp
 end
 
 (* ----------------------------------------------------------------------

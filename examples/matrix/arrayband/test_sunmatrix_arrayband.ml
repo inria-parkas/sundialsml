@@ -99,6 +99,7 @@ struct
     done;
     !failure > 0
 
+  let nvec_pp = Nvector_serial.pp
 end
 
 module Test = Test_matrix.Test (ArrayBand_tests) (Nvector_serial.Ops)
@@ -156,7 +157,7 @@ let main () =
     let kstart = if j < uband then -j else -uband in
     let kend = if j > cols - 1 - lband then cols -1 - j else lband in
     for k = kstart to kend do
-      adata.{j, k + uband} <- float_of_int (j - k)
+      adata.{j, k + (uband+lband)} <- float_of_int (j - k)
     done
   done;
 
@@ -174,7 +175,7 @@ let main () =
   done;
 
   (* SUNMatrix Tests *)
-  fails += Test.test_sunmatgetid a Matrix.Custom 0;
+  fails += Test.test_sunmatgetid a Matrix.ArrayBand 0;
   fails += Test.test_sunmatclone a 0;
   fails += Test.test_sunmatcopy a 0;
   fails += Test.test_sunmatzero a 0;

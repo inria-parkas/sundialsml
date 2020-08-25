@@ -42,6 +42,8 @@ module type MATRIX_TESTS = sig
   val is_square : t -> bool
 
   val check_vector : nvec -> nvec -> float -> bool
+
+  val nvec_pp : Format.formatter -> nvec -> unit
 end
 
 let isnan (x : float) = x <> x

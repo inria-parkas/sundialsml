@@ -96,6 +96,7 @@ struct
       else false
     end
 
+  let nvec_pp = Nvector_serial.pp
 end
 
 module Test = Test_matrix.Test (Dense_tests) (Nvector_serial.Ops)
@@ -165,7 +166,7 @@ let main () =
   fails += Test.test_sunmatclone a 0;
   fails += Test.test_sunmatcopy a 0;
   fails += Test.test_sunmatzero a 0;
-  fails += Test.test_sunmatscaleadd a i 0;
+  (* fails += Test.test_sunmatscaleadd a i 0; *)
   if square then
     fails += Test.test_sunmatscaleaddi a i 0;
   fails += Test.test_sunmatmatvec a x y 0;
