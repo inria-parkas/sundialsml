@@ -351,7 +351,7 @@ depend: .depend
 	    > .depend
 	$(OCAMLDEP) $(foreach d,$(SUBDIRS),-I $d) \
 	    -as-map sundials/sundials.mli sundials/sundials.ml >> .depend
-	#$(CC) -MM $(CPPFLAGS) */*.c >> .depend
+	$(CC) -MM $(CPPFLAGS) */*.c >> .depend
 
 clean:
 	-@$(RM) -f $(ALL_MLOBJ) $(ALL_MLOBJ:.cmo=.cmx) $(ALL_MLOBJ:.cmo=.o)
