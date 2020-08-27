@@ -404,12 +404,11 @@ module ARKStep : sig (* {{{ *)
   (** Linear solvers used by Arkode.
 
       @noarkode <node> Linear Solver Specification Functions *)
-  type ('data, 'kind) session_linear_solver =
-    ('data, 'kind) Arkode_impl.session_linear_solver
+  type ('data, 'kind) linear_solver = ('data, 'kind) Arkode_impl.linear_solver
 
   (** Alias for linear solvers that are restricted to serial nvectors. *)
-  type 'kind serial_session_linear_solver =
-    (Nvector_serial.data, 'kind) session_linear_solver
+  type 'kind serial_linear_solver =
+    (Nvector_serial.data, 'kind) linear_solver
     constraint 'kind = [>Nvector_serial.kind]
 
   (** Workspaces with three temporary vectors. *)
@@ -470,8 +469,8 @@ module ARKStep : sig (* {{{ *)
         @noarkode <node> ARKStepSetJacFn *)
     val solver :
       ?jac:'m jac_fn ->
-      ('m, 'kind, 't) LinearSolver.Direct.serial_linear_solver ->
-      'kind serial_session_linear_solver
+        ('m, RealArray.t, 'kind, [>`Dls]) LinearSolver.t ->
+      'kind serial_linear_solver
 
     (** {3:ark-dls-stats Solver statistics} *)
 
@@ -695,10 +694,10 @@ module ARKStep : sig (* {{{ *)
         @noarkode <node> ARKStepSetLinearSolver
         @noarkode <node> ARKStepSetJacTimes *)
     val solver :
-      ('d, 'k, 'f) LinearSolver.Iterative.linear_solver
+      ('m, 'd, 'k, [>`Iter]) LinearSolver.t
       -> ?jac_times_vec:'d jac_times_setup_fn option * 'd jac_times_vec_fn
       -> ('d, 'k) preconditioner
-      -> ('d, 'k) session_linear_solver
+      -> ('d, 'k) linear_solver
 
     (** {3:ark-spils-set Solver parameters} *)
 
@@ -855,7 +854,7 @@ module ARKStep : sig (* {{{ *)
       val solver :
         'm mass_fn
         -> bool
-        -> ('m, 'kind, 't) serial_linear_solver
+        -> ('m, RealArray.t, 'kind, [>`Dls]) LinearSolver.t
         -> 'kind serial_solver
 
       (** {3:ark-dlsmass-stats Solver statistics} *)
@@ -1022,7 +1021,7 @@ module ARKStep : sig (* {{{ *)
           @noarkode <node> ARKStepSetMassLinearSolver
           @noarkode <node> ARKStepSetMassTimes *)
       val solver :
-        ('d, 'k, 'f) linear_solver
+        ('m, 'd, 'k, [>`Iter]) LinearSolver.t
         -> ?mass_times_setup:mass_times_setup_fn
         -> 'd mass_times_vec_fn
         -> bool
@@ -1161,7 +1160,7 @@ module ARKStep : sig (* {{{ *)
     ?nlsolver : ('data, 'kind,
                   (('data, 'kind) session) Sundials_NonlinearSolver.integrator)
                 Sundials_NonlinearSolver.nonlinear_solver
-    -> ?lsolver  : ('data, 'kind) session_linear_solver
+    -> ?lsolver  : ('data, 'kind) linear_solver
     -> ?linearity : linearity
     -> 'data rhsfn
     -> ('data, 'kind) problem
@@ -1176,7 +1175,7 @@ module ARKStep : sig (* {{{ *)
     ?nlsolver : ('data, 'kind,
                   (('data, 'kind) session) Sundials_NonlinearSolver.integrator)
                 Sundials_NonlinearSolver.nonlinear_solver
-    -> ?lsolver  : ('data, 'kind) session_linear_solver
+    -> ?lsolver  : ('data, 'kind) linear_solver
     -> ?linearity : linearity
     -> fi:'data rhsfn
     -> 'data rhsfn
@@ -1344,7 +1343,7 @@ module ARKStep : sig (* {{{ *)
   val resize :
     ('d, 'k) session
     -> ?resize_nvec:('d resize_fn)
-    -> ?lsolver:('d, 'k) session_linear_solver
+    -> ?lsolver:('d, 'k) linear_solver
     -> ?mass:('d, 'k) Mass.solver
     -> ('d, 'k) tolerance
     -> ?restol:(('d, 'k) res_tolerance)

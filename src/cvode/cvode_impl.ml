@@ -369,7 +369,7 @@ type ('a, 'kind) session = {
   mutable errh         : error_handler;
   mutable errw         : 'a error_weight_fun;
 
-  mutable ls_solver    : LSI.solver;
+  mutable ls_solver    : LSI.held_linear_solver;
   mutable ls_callbacks : ('a, 'kind) linsolv_callbacks;
   mutable ls_precfns   : 'a linsolv_precfns;
 
@@ -546,13 +546,13 @@ let ls_check_spils_bbd session =
 type 'kind serial_session = (Nvector_serial.data, 'kind) session
                             constraint 'kind = [>Nvector_serial.kind]
 
-type ('data, 'kind) session_linear_solver =
+type ('data, 'kind) linear_solver =
   ('data, 'kind) session
   -> ('data, 'kind) Nvector.t
   -> unit
 
-type 'k serial_session_linear_solver =
-  (Nvector_serial.data, 'k) session_linear_solver
+type 'k serial_linear_solver =
+  (Nvector_serial.data, 'k) linear_solver
   constraint 'k = [>Nvector_serial.kind]
 
 module SpilsTypes = struct
@@ -583,12 +583,12 @@ module AdjointTypes = struct
     | BwdSensExt se -> (se.parent, se.which)
     | _ -> failwith "Internal error: bsession invalid"
 
-  type ('data, 'kind) session_linear_solver =
+  type ('data, 'kind) linear_solver =
     ('data, 'kind) bsession
     -> ('data, 'kind) nvector
     -> unit
-  type 'kind serial_session_linear_solver =
-    (Nvector_serial.data, 'kind) session_linear_solver
+  type 'kind serial_linear_solver =
+    (Nvector_serial.data, 'kind) linear_solver
     constraint 'kind = [>Nvector_serial.kind]
 
   module SpilsTypes = struct

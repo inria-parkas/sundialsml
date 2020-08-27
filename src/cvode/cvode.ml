@@ -175,32 +175,30 @@ module Dls = struct (* {{{ *)
         c_superlumt_set_ordering session ordering
     | _ -> ()
 
-  module LSD = LSI.Direct
-
   (* Sundials < 3.0.0 *)
   let make_compat (type s) (type tag) hasjac
-        (solver : (s, 'nd, 'nk, tag) LSD.solver)
+        (solver_data : (s, 'nd, 'nk, tag) LSI.solver_data)
         (mat : ('k, s, 'nd, 'nk) Matrix.t) session =
-    match solver with
-    | LSD.Dense ->
+    match solver_data with
+    | LSI.Dense ->
         let m, n = Matrix.(Dense.size (unwrap mat)) in
         if m <> n then raise LinearSolver.MatrixNotSquare;
         c_dls_dense session m hasjac
-    | LSD.LapackDense ->
+    | LSI.LapackDense ->
         let m, n = Matrix.(Dense.size (unwrap mat)) in
         if m <> n then raise LinearSolver.MatrixNotSquare;
         c_dls_lapack_dense session m hasjac
 
-    | LSD.Band ->
+    | LSI.Band ->
         let open Matrix.Band in
         let { n; mu; ml } = dims (Matrix.unwrap mat) in
         c_dls_band session n mu ml hasjac
-    | LSD.LapackBand ->
+    | LSI.LapackBand ->
         let open Matrix.Band in
         let { n; mu; ml } = dims (Matrix.unwrap mat) in
         c_dls_lapack_band session n mu ml hasjac
 
-    | LSD.Klu sinfo ->
+    | LSI.(Klu sinfo) ->
         if not Config.klu_enabled
           then raise Config.NotImplementedBySundialsVersion;
         let smat = Matrix.unwrap mat in
@@ -214,7 +212,7 @@ module Dls = struct (* {{{ *)
         (match sinfo.ordering with None -> ()
                                  | Some o -> c_klu_set_ordering session o)
 
-    | LSD.Superlumt sinfo ->
+    | LSI.(Superlumt sinfo) ->
         if not Config.superlumt_enabled
           then raise Config.NotImplementedBySundialsVersion;
         let smat = Matrix.unwrap mat in
@@ -227,8 +225,7 @@ module Dls = struct (* {{{ *)
         (match sinfo.ordering with None -> ()
                                  | Some o -> c_superlumt_set_ordering session o)
 
-    | LSD.Custom _ ->
-        assert false
+    | _ -> assert false
 
   let check_dqjac (type k m nd nk) jac (mat : (k,m,nd,nk) Matrix.t) =
     let open Matrix in
@@ -237,36 +234,37 @@ module Dls = struct (* {{{ *)
     | _ -> if jac = None then invalid_arg "A Jacobian function is required"
 
   let set_ls_callbacks (type m) (type tag)
-        ?jac (solver : (m, 'nd, 'nk, tag) LSD.solver)
+        ?jac (solver_data : (m, 'nd, 'nk, tag) LSI.solver_data)
         (mat : ('mk, m, 'nd, 'nk) Matrix.t)
         session =
     let cb = { jacfn = (match jac with None -> no_callback | Some f -> f);
                jmat  = (None : m option) } in
-    begin match solver with
-    | LSD.Dense ->
+    begin match solver_data with
+    | LSI.Dense ->
         session.ls_callbacks <- DlsDenseCallback cb
-    | LSD.LapackDense ->
+    | LSI.LapackDense ->
         session.ls_callbacks <- DlsDenseCallback cb
-    | LSD.Band ->
+    | LSI.Band ->
         session.ls_callbacks <- DlsBandCallback cb
-    | LSD.LapackBand ->
+    | LSI.LapackBand ->
         session.ls_callbacks <- DlsBandCallback cb
-    | LSD.Klu _ ->
+    | LSI.Klu _ ->
         if jac = None then invalid_arg "Klu requires Jacobian function";
         session.ls_callbacks <- SlsKluCallback cb
-    | LSD.Superlumt _ ->
+    | LSI.Superlumt _ ->
         if jac = None then invalid_arg "Superlumt requires Jacobian function";
         session.ls_callbacks <- SlsSuperlumtCallback cb
-    | LSD.Custom _ ->
+    | LSI.Custom _ ->
         check_dqjac jac mat;
         session.ls_callbacks <- DirectCustomCallback cb
+    | _ -> assert false
     end;
     session.ls_precfns <- NoPrecFns
 
   (* 3.0.0 <= Sundials < 4.0.0 *)
   external c_dls_set_linear_solver
     : 'k serial_session
-      -> ('m, Nvector_serial.data, 'k) LSD.cptr
+      -> ('m, Nvector_serial.data, 'k) LSI.cptr
       -> ('mk, 'm, Nvector_serial.data, 'k) Matrix.t
       -> bool
       -> unit
@@ -275,22 +273,27 @@ module Dls = struct (* {{{ *)
   (* 4.0.0 <= Sundials *)
   external c_set_linear_solver
     : ('d, 'k) session
-      -> ('m, 'd, 'k) LSD.cptr
+      -> ('m, 'd, 'k) LSI.cptr
       -> ('mk, 'm, 'd, 'k) Matrix.t option
       -> bool
       -> unit
     = "sunml_cvode_set_linear_solver"
 
-  let solver ?jac ((LSD.S { LSD.rawptr; LSD.solver; LSD.matrix }) as ls)
+  let assert_matrix = function
+    | Some m -> m
+    | None -> failwith "a direct linear solver is required"
+
+  let solver ?jac (LSI.(LS ({ rawptr; solver; matrix } as hls)) as ls)
              session nv =
+    let matrix = assert_matrix matrix in
     set_ls_callbacks ?jac solver matrix session;
     if in_compat_mode2
        then make_compat (jac <> None) solver matrix session
     else if in_compat_mode2_3
          then c_dls_set_linear_solver session rawptr matrix (jac <> None)
     else c_set_linear_solver session rawptr (Some matrix) (jac <> None);
-    LSD.attach ls;
-    session.ls_solver <- LSI.DirectSolver ls
+    LSI.attach ls;
+    session.ls_solver <- LSI.HLS hls
 
   (* Sundials < 3.0.0 *)
   let invalidate_callback session =
@@ -407,13 +410,13 @@ module Spils = struct (* {{{ *)
 
   (* Sundials < 4.0.0 *)
   external c_spils_set_linear_solver
-    : ('a, 'k) session -> ('a, 'k) LSI.Iterative.cptr -> unit
+    : ('a, 'k) session -> ('m, 'a, 'k) LSI.cptr -> unit
     = "sunml_cvode_spils_set_linear_solver"
 
   (* 4.0.0 <= Sundials *)
   external c_set_linear_solver
     : ('d, 'k) session
-      -> ('d, 'k) LSI.Iterative.cptr
+      -> ('m, 'd, 'k) LSI.cptr
       -> ('mk, 'm, 'd, 'k) Matrix.t option
       -> bool
       -> unit
@@ -436,45 +439,47 @@ module Spils = struct (* {{{ *)
   let prec_both ?setup solve  = LSI.Iterative.(PrecBoth,
                                             init_preconditioner solve setup)
 
+  (* Sundials < 3.0.0 *)
+  let make_compat (type tag)
+        (LSI.Iterative.({ maxl; gs_type }) as compat)
+        prec_type
+        (solver_data : ('s, 'nd, 'nk, tag) LSI.solver_data) session =
+    match solver_data with
+    | LSI.Spgmr ->
+        c_spgmr session maxl prec_type;
+        (match gs_type with None -> () | Some t -> c_set_gs_type session t);
+        compat.set_gs_type <- old_set_gs_type session;
+        compat.set_prec_type <- old_set_prec_type session
+    | LSI.Spbcgs ->
+        c_spbcgs session maxl prec_type;
+        compat.set_maxl <- old_set_maxl session;
+        compat.set_prec_type <- old_set_prec_type session
+    | LSI.Sptfqmr ->
+        c_sptfqmr session maxl prec_type;
+        compat.set_maxl <- old_set_maxl session;
+        compat.set_prec_type <- old_set_prec_type session
+    | _ -> raise Config.NotImplementedBySundialsVersion
+
   let solver (type s)
-        ({ LSI.Iterative.rawptr;
-           LSI.Iterative.solver;
-           LSI.Iterative.compat =
-             ({ LSI.Iterative.maxl;
-                LSI.Iterative.gs_type } as compat) } as ls)
-        ?jac_times_vec (prec_type, set_prec) session nv =
+      (LSI.(LS ({ rawptr; solver; compat } as hls)) as ls)
+      ?jac_times_vec (prec_type, set_prec) session nv =
     let jac_times_setup, jac_times_vec =
       match jac_times_vec with None -> None, None
                              | Some (ojts, jtv) -> ojts, Some jtv in
     if in_compat_mode2 then begin
       if jac_times_setup <> None then
         raise Config.NotImplementedBySundialsVersion;
-      let open LSI.Iterative in
-      (match (solver : ('nd, 'nk, s) solver) with
-       | Spgmr ->
-           c_spgmr session maxl prec_type;
-           (match gs_type with None -> () | Some t -> c_set_gs_type session t);
-           compat.set_gs_type <- old_set_gs_type session;
-           compat.set_prec_type <- old_set_prec_type session
-       | Spbcgs ->
-           c_spbcgs session maxl prec_type;
-           compat.set_maxl <- old_set_maxl session;
-           compat.set_prec_type <- old_set_prec_type session
-       | Sptfqmr ->
-           c_sptfqmr session maxl prec_type;
-           compat.set_maxl <- old_set_maxl session;
-           compat.set_prec_type <- old_set_prec_type session
-       | _ -> raise Config.NotImplementedBySundialsVersion);
-      session.ls_solver <- LSI.IterativeSolver ls;
+      make_compat compat prec_type solver session;
+      session.ls_solver <- LSI.HLS hls;
       set_prec session nv;
       session.ls_callbacks <- SpilsCallback (jac_times_vec, None);
       if jac_times_vec <> None then c_set_jac_times session true false
     end else
       if in_compat_mode2_3 then c_spils_set_linear_solver session rawptr
       else c_set_linear_solver session rawptr None false;
-      LSI.Iterative.attach ls;
-      session.ls_solver <- LSI.IterativeSolver ls;
-      LSI.Iterative.(c_set_prec_type rawptr solver prec_type false);
+      LSI.attach ls;
+      session.ls_solver <- LSI.HLS hls;
+      LSI.(c_set_prec_type rawptr solver prec_type false);
       set_prec session nv;
       session.ls_callbacks <- SpilsCallback (jac_times_vec, jac_times_setup);
       if jac_times_setup <> None || jac_times_vec <> None then
@@ -721,7 +726,7 @@ let init lmm tol ?(nlsolver : ('data, 'kind,
           errh         = dummy_errh;
           errw         = dummy_errw;
 
-          ls_solver    = LSI.NoSolver;
+          ls_solver    = LSI.NoHLS;
           ls_callbacks = NoCallbacks;
           ls_precfns   = NoPrecFns;
 

@@ -425,8 +425,7 @@ let print_final_stats kmem linsolver =
     printf "\n=========================================================\n\n"
 
 type ('data, 'kind) any =
-  Any : ('data, 'kind, 'iter) Kinsol.Spils.linear_solver
-        -> ('data, 'kind) any
+  Any : ('m, 'data, 'kind, [>`Iter]) LinearSolver.t -> ('data, 'kind) any
 
 (* MAIN PROGRAM *)
 let main () =

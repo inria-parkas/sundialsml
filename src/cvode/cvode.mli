@@ -62,12 +62,11 @@ type 'k serial_session = (Nvector_serial.data, 'k) session
 (** Linear solvers used by Cvode.
 
     @cvode <node5#sss:lin_solv_init> Linear Solver Specification Functions *)
-type ('data, 'kind) session_linear_solver =
-  ('data, 'kind) Cvode_impl.session_linear_solver
+type ('data, 'kind) linear_solver = ('data, 'kind) Cvode_impl.linear_solver
 
 (** Alias for linear solvers that are restricted to serial nvectors. *)
-type 'kind serial_session_linear_solver =
-  (Nvector_serial.data, 'kind) session_linear_solver
+type 'kind serial_linear_solver =
+  (Nvector_serial.data, 'kind) linear_solver
   constraint 'kind = [>Nvector_serial.kind]
 
 (** Workspaces with two temporary vectors. *)
@@ -97,7 +96,7 @@ module Diag : sig (* {{{ *)
       quotients.
 
       @cvode <node5#sss:lin_solv_init> CVDiag *)
-  val solver : ('data, 'kind) session_linear_solver
+  val solver : ('data, 'kind) linear_solver
 
   (** Returns the sizes of the real and integer workspaces used by the
       Diagonal linear solver.
@@ -152,8 +151,8 @@ module Dls : sig (* {{{ *)
       @nocvode <node> CVodeSetJacFn *)
   val solver :
     ?jac:'m jac_fn ->
-    ('m, 'kind, 'tag) LinearSolver.Direct.serial_linear_solver ->
-    'kind serial_session_linear_solver
+    ('m, RealArray.t, 'kind, [>`Dls]) LinearSolver.t ->
+    'kind serial_linear_solver
 
   (** {3:stats Solver statistics} *)
 
@@ -369,10 +368,10 @@ module Spils : sig (* {{{ *)
       @nocvode <node> CVodeSetLinearSolver
       @nocvode <node> CVodeSetJacTimes *)
   val solver :
-    ('d, 'k, 'f) LinearSolver.Iterative.linear_solver
+    ('m, 'd, 'k, [>`Iter]) LinearSolver.t
     -> ?jac_times_vec:'d jac_times_setup_fn option * 'd jac_times_vec_fn
     -> ('d, 'k) preconditioner
-    -> ('d, 'k) session_linear_solver
+    -> ('d, 'k) linear_solver
 
   (** {3:set Solver parameters} *)
 
@@ -585,7 +584,7 @@ val init :
          : ('data, 'kind,
             (('data, 'kind) session) Sundials_NonlinearSolver.integrator)
            Sundials_NonlinearSolver.nonlinear_solver
-    -> ?lsolver  : ('data, 'kind) session_linear_solver
+    -> ?lsolver  : ('data, 'kind) linear_solver
     -> 'data rhsfn
     -> ?roots:(int * 'data rootsfn)
     -> float
@@ -671,7 +670,7 @@ val reinit :
   -> ?nlsolver:('d, 'k,
                 (('d, 'k) session) Sundials_NonlinearSolver.integrator)
                Sundials_NonlinearSolver.nonlinear_solver
-  -> ?lsolver:('d, 'k) session_linear_solver
+  -> ?lsolver:('d, 'k) linear_solver
   -> ?roots:(int * 'd rootsfn)
   -> float
   -> ('d, 'k) Nvector.t

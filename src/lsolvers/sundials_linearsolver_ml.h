@@ -33,12 +33,24 @@ enum preconditioning_type_tag {
 int sunml_lsolver_precond_type(value);
 int sunml_lsolver_gs_type(value);
 
-enum lsolver_iterative_solver_tag {
-    VARIANT_LSOLVER_ITERATIVE_SOLVER_SPBCGS = 0,
-    VARIANT_LSOLVER_ITERATIVE_SOLVER_SPFGMR,
-    VARIANT_LSOLVER_ITERATIVE_SOLVER_SPGMR,
-    VARIANT_LSOLVER_ITERATIVE_SOLVER_SPTFQMR,
-    VARIANT_LSOLVER_ITERATIVE_SOLVER_PCG,
+// ONLY the constructors without arguments, since we decode with Int_val.
+// In any case, only the iterative ones are used from C.
+enum lsolver_solver_data_tag {
+    /* iterative */
+    VARIANT_LSOLVER_SOLVER_DATA_SPBCGS = 0,
+    VARIANT_LSOLVER_SOLVER_DATA_SPFGMR,
+    VARIANT_LSOLVER_SOLVER_DATA_SPGMR,
+    VARIANT_LSOLVER_SOLVER_DATA_SPTFQMR,
+    VARIANT_LSOLVER_SOLVER_DATA_PCG,
+    /* direct */
+    VARIANT_LSOLVER_SOLVER_DATA_DENSE,
+    VARIANT_LSOLVER_SOLVER_DATA_LAPACKDENSE,
+    VARIANT_LSOLVER_SOLVER_DATA_BAND,
+    VARIANT_LSOLVER_SOLVER_DATA_LAPACKBAND,
+    // NO! VARIANT_LSOLVER_SOLVER_DATA_KLU,
+    // NO! VARIANT_LSOLVER_SOLVER_DATA_SUPERLUMT,
+    /* custom */
+    // NO! VARIANT_LSOLVER_SOLVER_DATA_CUSTOM
 };
 
 // values must match convention for SUNLinSol_KLUSetOrdering

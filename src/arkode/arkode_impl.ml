@@ -256,13 +256,13 @@ type ('a, 'kind, 'step) session = {
   mutable poststepfn   : 'a postprocess_step_fn;
 
   (* ARK only *)
-  mutable linsolver      : ('a, 'kind) session_linear_solver option;
-  mutable ls_solver      : LSI.solver;
+  mutable linsolver      : ('a, 'kind) linear_solver option;
+  mutable ls_solver      : LSI.held_linear_solver;
   mutable ls_callbacks   : ('a, 'kind) linsolv_callbacks;
   mutable ls_precfns     : 'a linsolv_precfns;
 
   (* ARK only *)
-  mutable mass_solver    : LSI.solver;
+  mutable mass_solver    : LSI.held_linear_solver;
   mutable mass_callbacks : ('a, 'kind) mass_callbacks;
   mutable mass_precfns   : 'a mass_precfns;
 
@@ -277,7 +277,7 @@ and problem_type =
   | ExplicitOnly
   | ImplicitAndExplicit
 
-and ('data, 'kind) session_linear_solver =
+and ('data, 'kind) linear_solver =
   ('data, 'kind, arkstep) session
   -> ('data, 'kind) nvector
   -> unit
@@ -419,8 +419,8 @@ let mass_check_spils session =
 type ('k, 'step) serial_session = (Nvector_serial.data, 'k, 'step) session
                                   constraint 'k = [>Nvector_serial.kind]
 
-type 'k serial_session_linear_solver =
-  (Nvector_serial.data, 'k) session_linear_solver
+type 'k serial_linear_solver =
+  (Nvector_serial.data, 'k) linear_solver
   constraint 'k = [>Nvector_serial.kind]
 
 module SpilsTypes = struct

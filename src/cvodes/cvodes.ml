@@ -659,10 +659,6 @@ module Adjoint = struct (* {{{ *)
 
   type 'a triple = 'a * 'a * 'a
 
-  type ('data, 'kind) iter =
-    | Newton of ('data, 'kind) session_linear_solver
-    | Functional
-
   type ('a, 'k) tolerance =
     | SStolerances of float * float
     | SVtolerances of float * ('a, 'k) nvector
@@ -867,33 +863,31 @@ module Adjoint = struct (* {{{ *)
           c_superlumt_set_ordering session ordering
       | _ -> ()
 
-    module LSD = LSI.Direct
-
     (* Sundials < 3.0.0 *)
     let make_compat (type s) (type tag) hasjac usesens
-        (solver : (s, 'nd, 'nk, tag) LSD.solver)
+        (solver_data : (s, 'nd, 'nk, tag) LSI.solver_data)
         (mat : ('k, s, 'nd, 'nk) Matrix.t) bs =
       let parent, which = parent_and_which bs in
-      match solver with
-      | LSD.Dense ->
+      match solver_data with
+      | LSI.Dense ->
           let m, n = Matrix.(Dense.size (unwrap mat)) in
           if m <> n then raise LinearSolver.MatrixNotSquare;
           c_dls_dense parent which m hasjac usesens
-      | LSD.LapackDense ->
+      | LSI.LapackDense ->
           let m, n = Matrix.(Dense.size (unwrap mat)) in
           if m <> n then raise LinearSolver.MatrixNotSquare;
           c_dls_lapack_dense parent which m hasjac usesens
 
-      | LSD.Band ->
+      | LSI.Band ->
           let open Matrix.Band in
           let { n; mu; ml } = dims (Matrix.unwrap mat) in
           c_dls_band (parent, which) (n, mu, ml) hasjac usesens
-      | LSD.LapackBand ->
+      | LSI.LapackBand ->
           let open Matrix.Band in
           let { n; mu; ml } = dims (Matrix.unwrap mat) in
           c_dls_lapack_band (parent, which) (n, mu, ml) hasjac usesens
 
-      | LSD.Klu sinfo ->
+      | LSI.Klu sinfo ->
           if not Config.klu_enabled
             then raise Config.NotImplementedBySundialsVersion;
           let smat = Matrix.unwrap mat in
@@ -908,7 +902,7 @@ module Adjoint = struct (* {{{ *)
           (match sinfo.ordering with None -> ()
                                    | Some o -> c_klu_set_ordering session o)
 
-      | LSD.Superlumt sinfo ->
+      | LSI.Superlumt sinfo ->
           if not Config.superlumt_enabled
             then raise Config.NotImplementedBySundialsVersion;
           let smat = Matrix.unwrap mat in
@@ -922,16 +916,15 @@ module Adjoint = struct (* {{{ *)
           (match sinfo.ordering with None -> ()
                                    | Some o -> c_superlumt_set_ordering session o)
 
-    | LSD.Custom _ ->
-        assert false
+    | _ -> assert false
 
     let set_ls_callbacks (type mk m nd nk) (type tag)
           ?(jac : m jac_fn option)
-          (solver : (m, nd, nk, tag) LSD.solver)
+          (solver_data : (m, nd, nk, tag) LSI.solver_data)
           (mat : (mk, m, nd, nk) Matrix.t) session =
       let none = (None : m option) in
-      begin match solver with
-      | LSD.Dense ->
+      begin match solver_data with
+      | LSI.Dense ->
           session.ls_callbacks <- (match jac with
             | None ->
                 BDlsDenseCallback { jacfn = no_callback; jmat = none }
@@ -939,7 +932,7 @@ module Adjoint = struct (* {{{ *)
                 BDlsDenseCallback { jacfn = f; jmat = none }
             | Some (WithSens f) ->
                 BDlsDenseCallbackSens { jacfn_sens = f; jmat = none })
-      | LSD.LapackDense ->
+      | LSI.LapackDense ->
           session.ls_callbacks <- (match jac with
             | None ->
                 BDlsDenseCallback { jacfn = no_callback; jmat = none }
@@ -947,7 +940,7 @@ module Adjoint = struct (* {{{ *)
                 BDlsDenseCallback { jacfn = f; jmat = none }
             | Some (WithSens f) ->
                 BDlsDenseCallbackSens { jacfn_sens = f; jmat = none })
-      | LSD.Band ->
+      | LSI.Band ->
           session.ls_callbacks <- (match jac with
             | None ->
                 BDlsBandCallback { jacfn = no_callback; jmat = none }
@@ -955,7 +948,7 @@ module Adjoint = struct (* {{{ *)
                 BDlsBandCallback { jacfn = f; jmat = none }
             | Some (WithSens f) ->
                 BDlsBandCallbackSens { jacfn_sens = f; jmat = none })
-      | LSD.LapackBand ->
+      | LSI.LapackBand ->
           session.ls_callbacks <- (match jac with
             | None ->
                 BDlsBandCallback { jacfn = no_callback; jmat = none }
@@ -963,21 +956,21 @@ module Adjoint = struct (* {{{ *)
                 BDlsBandCallback { jacfn = f; jmat = none }
             | Some (WithSens f) ->
                 BDlsBandCallbackSens { jacfn_sens = f; jmat = none })
-      | LSD.Klu _ ->
+      | LSI.Klu _ ->
           session.ls_callbacks <- (match jac with
             | None -> invalid_arg "Klu requires Jacobian function";
             | Some (NoSens f) ->
                 BSlsKluCallback { jacfn = f; jmat = none }
             | Some (WithSens f) ->
                 BSlsKluCallbackSens { jacfn_sens = f; jmat = none })
-      | LSD.Superlumt _ ->
+      | LSI.Superlumt _ ->
           session.ls_callbacks <- (match jac with
             | None -> invalid_arg "Superlumt requires Jacobian function";
             | Some (NoSens f) ->
                 BSlsSuperlumtCallback { jacfn = f; jmat = none }
             | Some (WithSens f) ->
                 BSlsSuperlumtCallbackSens { jacfn_sens = f; jmat = none })
-      | LSD.Custom _ ->
+      | LSI.Custom _ ->
           session.ls_callbacks <- (match jac with
             | None ->
                 (match Matrix.get_id mat with
@@ -988,13 +981,14 @@ module Adjoint = struct (* {{{ *)
                 BDirectCustomCallback { jacfn = f; jmat = none }
             | Some (WithSens f) ->
                 BDirectCustomCallbackSens { jacfn_sens = f; jmat = none })
+      | _ -> assert false
       end;
       session.ls_precfns <- NoPrecFns
 
     (* 3.0.0 <= Sundials < 4.0.0 *)
     external c_dls_set_linear_solver
       : 'k serial_session * int
-        -> ('m, Nvector_serial.data, 'k) LSD.cptr
+        -> ('m, Nvector_serial.data, 'k) LSI.cptr
         -> ('mk, 'm, Nvector_serial.data, 'k) Matrix.t
         -> bool
         -> bool
@@ -1004,17 +998,21 @@ module Adjoint = struct (* {{{ *)
     (* 4.0.0 <= Sundials *)
     external c_set_linear_solver
       : ('d, 'k) session * int
-        -> ('m, 'd, 'k) LSD.cptr
+        -> ('m, 'd, 'k) LSI.cptr
         -> ('mk, 'm, 'd, 'k) Matrix.t option
         -> bool
         -> bool
         -> unit
       = "sunml_cvodes_adj_set_linear_solver"
 
-    let solver ?jac (LSD.S ({ LSD.rawptr; LSD.solver; LSD.matrix }) as ls)
-               bs nv =
+    let assert_matrix = function
+      | Some m -> m
+      | None -> failwith "a direct linear solver is required"
+
+    let solver ?jac LSI.(LS ({ rawptr; solver; matrix } as hls) as ls) bs nv =
       let session = tosession bs in
       let parent, which = parent_and_which bs in
+      let matrix = assert_matrix matrix in
       let use_sens = match jac with Some (WithSens _) -> true | _ -> false in
       set_ls_callbacks ?jac solver matrix session;
       if in_compat_mode2
@@ -1024,8 +1022,8 @@ module Adjoint = struct (* {{{ *)
                                                      (jac <> None) use_sens
       else c_set_linear_solver (parent, which) rawptr (Some matrix)
                                                      (jac <> None) use_sens;
-      LSD.attach ls;
-      session.ls_solver <- LSI.DirectSolver ls
+      LSI.attach ls;
+      session.ls_solver <- LSI.HLS hls
 
     (* Sundials < 3.0.0 *)
     let invalidate_callback s =
@@ -1126,7 +1124,7 @@ module Adjoint = struct (* {{{ *)
     (* 4.0.0 <= Sundials *)
     external c_set_linear_solver
       : ('d, 'k) session * int
-        -> ('d, 'k) LSI.Iterative.cptr
+        -> ('m, 'd, 'k) LSI.cptr
         -> ('mk, 'm, 'd, 'k) Matrix.t option
         -> bool
         -> bool
@@ -1168,15 +1166,34 @@ module Adjoint = struct (* {{{ *)
 
     (* Sundials < 4.0.0 *)
     external c_spils_set_linear_solver
-    : ('a, 'k) session -> int -> ('a, 'k) LSI.Iterative.cptr -> unit
+    : ('a, 'k) session -> int -> ('m, 'a, 'k) LSI.cptr -> unit
       = "sunml_cvodes_adj_spils_set_linear_solver"
 
+    (* Sundials < 3.0.0 *)
+    let make_compat (type tag)
+          (LSI.Iterative.({ maxl; gs_type }) as compat)
+          prec_type
+          (solver_data : ('s, 'nd, 'nk, tag) LSI.solver_data) bs =
+      let parent, which = parent_and_which bs in
+      match solver_data with
+      | LSI.Spgmr ->
+          c_spgmr parent which maxl prec_type;
+          (match gs_type with None -> () | Some t ->
+              c_set_gs_type parent which t);
+          compat.set_gs_type <- old_set_gs_type bs;
+          compat.set_prec_type <- old_set_prec_type bs
+      | LSI.Spbcgs ->
+          c_spbcgs parent which maxl prec_type;
+          compat.set_maxl <- old_set_maxl bs;
+          compat.set_prec_type <- old_set_prec_type bs
+      | LSI.Sptfqmr ->
+          c_sptfqmr parent which maxl prec_type;
+          compat.set_maxl <- old_set_maxl bs;
+          compat.set_prec_type <- old_set_prec_type bs
+      | _ -> raise Config.NotImplementedBySundialsVersion
+
     let solver (type s)
-          ({ LSI.Iterative.rawptr;
-             LSI.Iterative.solver;
-             LSI.Iterative.compat =
-               ({ LSI.Iterative.maxl;
-                  LSI.Iterative.gs_type } as compat) } as ls)
+          (LSI.(LS ({ rawptr; solver; compat } as hls)) as ls)
           ?jac_times_vec (prec_type, set_prec) bs nv =
       let session = tosession bs in
       let parent, which = parent_and_which bs in
@@ -1185,24 +1202,8 @@ module Adjoint = struct (* {{{ *)
         | Some (NoSens (Some _, _)) | Some (WithSens (Some _, _)) ->
             raise Config.NotImplementedBySundialsVersion;
         | _ -> ();
-        let open LSI.Iterative in
-        (match (solver : ('nd, 'nk, s) solver) with
-         | Spgmr ->
-             c_spgmr parent which maxl prec_type;
-             (match gs_type with None -> () | Some t ->
-                 c_set_gs_type parent which t);
-             compat.set_gs_type <- old_set_gs_type bs;
-             compat.set_prec_type <- old_set_prec_type bs
-         | Spbcgs ->
-             c_spbcgs parent which maxl prec_type;
-             compat.set_maxl <- old_set_maxl bs;
-             compat.set_prec_type <- old_set_prec_type bs
-         | Sptfqmr ->
-             c_sptfqmr parent which maxl prec_type;
-             compat.set_maxl <- old_set_maxl bs;
-             compat.set_prec_type <- old_set_prec_type bs
-         | _ -> raise Config.NotImplementedBySundialsVersion);
-        session.ls_solver <- LSI.IterativeSolver ls;
+        make_compat compat prec_type solver bs;
+        session.ls_solver <- LSI.HLS hls;
         set_prec bs parent which nv;
         (match jac_times_vec with
          | Some (NoSens (ojs, jt)) ->
@@ -1216,9 +1217,9 @@ module Adjoint = struct (* {{{ *)
       end else
         if in_compat_mode2_3 then c_spils_set_linear_solver parent which rawptr
         else c_set_linear_solver (parent, which) rawptr None false false;
-        LSI.Iterative.attach ls;
-        session.ls_solver <- LSI.IterativeSolver ls;
-        LSI.Iterative.(c_set_prec_type rawptr solver prec_type false);
+        LSI.attach ls;
+        session.ls_solver <- LSI.HLS hls;
+        LSI.(c_set_prec_type rawptr solver prec_type false);
         set_prec bs parent which nv;
         let has_setup, has_times, use_sens =
           match jac_times_vec with
@@ -1403,7 +1404,7 @@ module Adjoint = struct (* {{{ *)
             rootsfn      = dummy_rootsfn;
             errh         = dummy_errh;
             errw         = dummy_errw;
-            ls_solver    = LSI.NoSolver;
+            ls_solver    = LSI.NoHLS;
             ls_callbacks = NoCallbacks;
             ls_precfns   = NoPrecFns;
 

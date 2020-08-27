@@ -408,6 +408,7 @@ CAMLprim void sunml_lsolver_set_prec_type(value vcptr, value vsolver,
 	value vpretype, value vdocheck)
 {
     CAMLparam4(vcptr, vsolver, vpretype, vdocheck);
+    const char* interrmsg = "internal error in sunml_lsolver_set_prec_type";
 
 #if 300 <= SUNDIALS_LIB_VERSION
     int old_pretype = PREC_NONE;
@@ -416,30 +417,33 @@ CAMLprim void sunml_lsolver_set_prec_type(value vcptr, value vsolver,
 
     if (Bool_val(vdocheck)) {
 	switch (Int_val(vsolver)) {
-	    case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPFGMR:
+	    case VARIANT_LSOLVER_SOLVER_DATA_SPFGMR:
 		old_pretype =
 		    ((SUNLinearSolverContent_SPFGMR)(lsolv->content))->pretype;
 		break;
 
-	    case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPGMR:
+	    case VARIANT_LSOLVER_SOLVER_DATA_SPGMR:
 		old_pretype =
 		    ((SUNLinearSolverContent_SPGMR)(lsolv->content))->pretype;
 		break;
 
-	    case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPBCGS:
+	    case VARIANT_LSOLVER_SOLVER_DATA_SPBCGS:
 		old_pretype =
 		    ((SUNLinearSolverContent_SPBCGS)(lsolv->content))->pretype;
 		break;
 
-	    case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPTFQMR:
+	    case VARIANT_LSOLVER_SOLVER_DATA_SPTFQMR:
 		old_pretype =
 		    ((SUNLinearSolverContent_SPTFQMR)(lsolv->content))->pretype;
 		break;
 
-	    case VARIANT_LSOLVER_ITERATIVE_SOLVER_PCG:
+	    case VARIANT_LSOLVER_SOLVER_DATA_PCG:
 		old_pretype =
 		    ((SUNLinearSolverContent_PCG)(lsolv->content))->pretype;
 		break;
+
+	    default:
+		caml_failwith(interrmsg);
 	}
 
 	if ((old_pretype == PREC_NONE) && (pretype != PREC_NONE))
@@ -449,46 +453,48 @@ CAMLprim void sunml_lsolver_set_prec_type(value vcptr, value vsolver,
     // ignore returned values
     switch (Int_val(vsolver)) {
 #if 400 <= SUNDIALS_LIB_VERSION
-	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPFGMR:
+	case VARIANT_LSOLVER_SOLVER_DATA_SPFGMR:
 	    SUNLinSol_SPFGMRSetPrecType(lsolv, pretype);
 	    break;
 
-	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPGMR:
+	case VARIANT_LSOLVER_SOLVER_DATA_SPGMR:
 	    SUNLinSol_SPGMRSetPrecType(lsolv, pretype);
 	    break;
 
-	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPBCGS:
+	case VARIANT_LSOLVER_SOLVER_DATA_SPBCGS:
 	    SUNLinSol_SPBCGSSetPrecType(lsolv, pretype);
 	    break;
 
-	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPTFQMR:
+	case VARIANT_LSOLVER_SOLVER_DATA_SPTFQMR:
 	    SUNLinSol_SPTFQMRSetPrecType(lsolv, pretype);
 	    break;
 
-	case VARIANT_LSOLVER_ITERATIVE_SOLVER_PCG:
+	case VARIANT_LSOLVER_SOLVER_DATA_PCG:
 	    SUNLinSol_PCGSetPrecType(lsolv, pretype);
 	    break;
 #else
-	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPFGMR:
+	case VARIANT_LSOLVER_SOLVER_DATA_SPFGMR:
 	    SUNSPFGMRSetPrecType(lsolv, pretype);
 	    break;
 
-	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPGMR:
+	case VARIANT_LSOLVER_SOLVER_DATA_SPGMR:
 	    SUNSPGMRSetPrecType(lsolv, pretype);
 	    break;
 
-	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPBCGS:
+	case VARIANT_LSOLVER_SOLVER_DATA_SPBCGS:
 	    SUNSPBCGSSetPrecType(lsolv, pretype);
 	    break;
 
-	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPTFQMR:
+	case VARIANT_LSOLVER_SOLVER_DATA_SPTFQMR:
 	    SUNSPTFQMRSetPrecType(lsolv, pretype);
 	    break;
 
-	case VARIANT_LSOLVER_ITERATIVE_SOLVER_PCG:
+	case VARIANT_LSOLVER_SOLVER_DATA_PCG:
 	    SUNPCGSetPrecType(lsolv, pretype);
 	    break;
 #endif
+	default:
+	    caml_failwith(interrmsg);
     }
 #endif
 
@@ -502,34 +508,37 @@ CAMLprim void sunml_lsolver_set_maxl(value vcptr, value vsolver, value vmaxl)
 #if 300 <= SUNDIALS_LIB_VERSION
     switch (Int_val(vsolver)) {
 #if 400 <= SUNDIALS_LIB_VERSION
-	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPBCGS:
+	case VARIANT_LSOLVER_SOLVER_DATA_SPBCGS:
 	    SUNLinSol_SPBCGSSetMaxl(LSOLVER_VAL(vcptr), Int_val(vmaxl));
 	    break;
 
-	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPTFQMR:
+	case VARIANT_LSOLVER_SOLVER_DATA_SPTFQMR:
 	    SUNLinSol_SPTFQMRSetMaxl(LSOLVER_VAL(vcptr), Int_val(vmaxl));
 	    break;
 
-	case VARIANT_LSOLVER_ITERATIVE_SOLVER_PCG:
+	case VARIANT_LSOLVER_SOLVER_DATA_PCG:
 	    SUNLinSol_PCGSetMaxl(LSOLVER_VAL(vcptr), Int_val(vmaxl));
 	    break;
 #else
-	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPBCGS:
+	case VARIANT_LSOLVER_SOLVER_DATA_SPBCGS:
 	    SUNSPBCGSSetMaxl(LSOLVER_VAL(vcptr), Int_val(vmaxl));
 	    break;
 
-	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPTFQMR:
+	case VARIANT_LSOLVER_SOLVER_DATA_SPTFQMR:
 	    SUNSPTFQMRSetMaxl(LSOLVER_VAL(vcptr), Int_val(vmaxl));
 	    break;
 
-	case VARIANT_LSOLVER_ITERATIVE_SOLVER_PCG:
+	case VARIANT_LSOLVER_SOLVER_DATA_PCG:
 	    SUNPCGSetMaxl(LSOLVER_VAL(vcptr), Int_val(vmaxl));
 	    break;
 #endif
 
-	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPFGMR:
-	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPGMR:
+	case VARIANT_LSOLVER_SOLVER_DATA_SPFGMR:
+	case VARIANT_LSOLVER_SOLVER_DATA_SPGMR:
 	    break;
+
+	default:
+	    caml_failwith("internal error in sunml_lsolver_set_maxl");
     }
 #endif
 
@@ -543,29 +552,31 @@ CAMLprim void sunml_lsolver_set_gs_type(value vcptr, value vsolver, value vgst)
 #if 300 <= SUNDIALS_LIB_VERSION
     switch (Int_val(vsolver)) {
 #if 400 <= SUNDIALS_LIB_VERSION
-	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPFGMR:
+	case VARIANT_LSOLVER_SOLVER_DATA_SPFGMR:
 	    SUNLinSol_SPFGMRSetGSType(LSOLVER_VAL(vcptr),
 				      sunml_lsolver_gs_type(vgst));
 	    break;
 
-	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPGMR:
+	case VARIANT_LSOLVER_SOLVER_DATA_SPGMR:
 	    SUNLinSol_SPGMRSetGSType(LSOLVER_VAL(vcptr),
 				     sunml_lsolver_gs_type(vgst));
 	    break;
 #else
-	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPFGMR:
+	case VARIANT_LSOLVER_SOLVER_DATA_SPFGMR:
 	    SUNSPFGMRSetGSType(LSOLVER_VAL(vcptr), sunml_lsolver_gs_type(vgst));
 	    break;
 
-	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPGMR:
+	case VARIANT_LSOLVER_SOLVER_DATA_SPGMR:
 	    SUNSPGMRSetGSType(LSOLVER_VAL(vcptr), sunml_lsolver_gs_type(vgst));
 	    break;
 #endif
 
-	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPBCGS:
-	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPTFQMR:
-	case VARIANT_LSOLVER_ITERATIVE_SOLVER_PCG:
+	case VARIANT_LSOLVER_SOLVER_DATA_SPBCGS:
+	case VARIANT_LSOLVER_SOLVER_DATA_SPTFQMR:
+	case VARIANT_LSOLVER_SOLVER_DATA_PCG:
 	    break;
+	default:
+	    caml_failwith("internal error in sunml_lsolver_set_gs_type");
     }
 #endif
 
@@ -580,27 +591,29 @@ CAMLprim void sunml_lsolver_set_max_restarts(value vcptr, value vsolver,
 #if 300 <= SUNDIALS_LIB_VERSION
     switch (Int_val(vsolver)) {
 #if 400 <= SUNDIALS_LIB_VERSION
-	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPFGMR:
+	case VARIANT_LSOLVER_SOLVER_DATA_SPFGMR:
 	    SUNLinSol_SPFGMRSetMaxRestarts(LSOLVER_VAL(vcptr), Int_val(vmaxr));
 	    break;
 
-	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPGMR:
+	case VARIANT_LSOLVER_SOLVER_DATA_SPGMR:
 	    SUNLinSol_SPGMRSetMaxRestarts(LSOLVER_VAL(vcptr), Int_val(vmaxr));
 	    break;
 #else
-	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPFGMR:
+	case VARIANT_LSOLVER_SOLVER_DATA_SPFGMR:
 	    SUNSPFGMRSetMaxRestarts(LSOLVER_VAL(vcptr), Int_val(vmaxr));
 	    break;
 
-	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPGMR:
+	case VARIANT_LSOLVER_SOLVER_DATA_SPGMR:
 	    SUNSPGMRSetMaxRestarts(LSOLVER_VAL(vcptr), Int_val(vmaxr));
 	    break;
 #endif
 
-	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPBCGS:
-	case VARIANT_LSOLVER_ITERATIVE_SOLVER_SPTFQMR:
-	case VARIANT_LSOLVER_ITERATIVE_SOLVER_PCG:
+	case VARIANT_LSOLVER_SOLVER_DATA_SPBCGS:
+	case VARIANT_LSOLVER_SOLVER_DATA_SPTFQMR:
+	case VARIANT_LSOLVER_SOLVER_DATA_PCG:
 	    break;
+	default:
+	    caml_failwith("internal error in sunml_lsolver_set_max_restarts");
     }
 #endif
 

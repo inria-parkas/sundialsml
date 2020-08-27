@@ -5,7 +5,7 @@
 (*             Timothy Bourke, Jun Inoue, and Marc Pouzet              *)
 (*             (Inria/ENS)     (Inria/ENS)    (UPMC/ENS/Inria)         *)
 (*                                                                     *)
-(*  Copyright 2018 Institut National de Recherche en Informatique et   *)
+(*  Copyright 2020 Institut National de Recherche en Informatique et   *)
 (*  en Automatique.  All rights reserved.  This file is distributed    *)
 (*  under a New BSD License, refer to the file LICENSE.                *)
 (*                                                                     *)
@@ -27,6 +27,26 @@
 
 open Sundials
 
+(** A linear solver.
+    The type variables specify the Jacobian matrix (['matrix]), the
+    {!Nvector.nvector} data (['data]) and kind (['kind]), and a
+    ['tag] used to identify specific solver features (like the iterative
+    method).
+
+    A linear solver of this type must be converted to session-specific
+    form by {!Cvode.Dls.solver}, {!Ida.Dls.solver}, {!Cvode.Spils.solver},
+    {!Ida.Spils.solver}, etc., before being
+    attached to a session via [init] or [reinit].
+
+  @nocvode <node> Description of the SUNLinearSolver module
+  @nocvode <node> SUNLinearSolver *)
+type ('matrix, 'data, 'kind, 'tag) t
+  = ('matrix, 'data, 'kind, 'tag) Sundials_LinearSolver_impl.linear_solver
+
+(** Alias for linear solvers that are restricted to serial nvectors. *)
+type ('mat, 'kind, 'tag) serial_t
+  = ('mat, Nvector_serial.data, [>Nvector_serial.kind] as 'kind, 'tag) t
+
 (** {2:lsolvers Linear Solver Families} *)
 
 (** Direct Linear Solvers *)
@@ -38,28 +58,6 @@ module Direct : sig (* {{{ *)
 
   (** {3:solvers Types} *)
 
-  (** Used to identify generic direct solvers. *)
-  type tag = [`Basic]
-
-  (** A generic direct linear solver.
-    The type variables specify the Jacobian matrix (['matrix]), the
-    {!Nvector.nvector} data (['data]) and kind (['kind]), and a
-    ['tag] used to identify specific solver features.
-
-    A linear solver of this type must be converted to session-specific
-    form by {!Cvode.Dls.solver}, {!Ida.Dls.solver}, etc., before being
-    attached to a session via [init] or [reinit].
-
-    @nocvode <node> Description of the SUNLinearSolver module
-    @nocvode <node> SUNLinearSolver *)
-  type ('matrix, 'data, 'kind, 'tag) linear_solver
-    = ('matrix, 'data, 'kind, 'tag) Sundials_LinearSolver_impl.Direct.linear_solver
-
-  (** Alias for linear solvers that are restricted to serial nvectors. *)
-  type ('mat, 'kind, 'tag) serial_linear_solver
-    = ('mat, Nvector_serial.data, [>Nvector_serial.kind] as 'kind, 'tag)
-        linear_solver
-
   (** Creates a direct linear solver on dense matrices. The nvector and matrix
     argument are used to determine the linear system size and to assess
     compatibility with the linear solver implementation.
@@ -70,7 +68,7 @@ module Direct : sig (* {{{ *)
   val dense :
     'k Nvector_serial.any
     -> 'k Matrix.dense
-    -> (Matrix.Dense.t, 'k, tag) serial_linear_solver
+    -> (Matrix.Dense.t, 'k, [`Dls]) serial_t
 
   (** Creates a direct linear solver on dense matrices using LAPACK.
       See {!dense}. Only available if
@@ -80,7 +78,7 @@ module Direct : sig (* {{{ *)
   val lapack_dense :
     'k Nvector_serial.any
     -> 'k Matrix.dense
-    -> (Matrix.Dense.t, 'k, tag) serial_linear_solver
+    -> (Matrix.Dense.t, 'k, [`Dls]) serial_t
 
   (** Creates a direct linear solver on banded matrices. The nvector and matrix
     argument are used to determine the linear system size and to assess
@@ -92,7 +90,7 @@ module Direct : sig (* {{{ *)
   val band :
     'k Nvector_serial.any
     -> 'k Matrix.band
-    -> (Matrix.Band.t, 'k, tag) serial_linear_solver
+    -> (Matrix.Band.t, 'k, [`Dls]) serial_t
 
   (** Creates a direct linear solver on banded matrices using LAPACK.
       See {!band}.
@@ -102,13 +100,10 @@ module Direct : sig (* {{{ *)
   val lapack_band :
     'k Nvector_serial.any
     -> 'k Matrix.band
-    -> (Matrix.Band.t, 'k, tag) serial_linear_solver
+    -> (Matrix.Band.t, 'k, [`Dls]) serial_t
 
   (** KLU direct linear solver operating on sparse matrices (requires KLU). *)
   module Klu : sig (* {{{ *)
-
-    (** Used to distinguish KLU direct solvers. *)
-    type tag = [`Klu]
 
     (** The ordering algorithm used for reducing fill. *)
     type ordering =
@@ -129,7 +124,7 @@ module Direct : sig (* {{{ *)
       ?ordering:ordering
       -> 'k Nvector_serial.any
       -> ('s, 'k) Matrix.sparse
-      -> ('s Matrix.Sparse.t, 'k, tag) serial_linear_solver
+      -> ('s Matrix.Sparse.t, 'k, [`Dls|`Klu]) serial_t
 
     (** Reinitializes memory and flags for a new factorization (symbolic and
       numeric) at the next solver setup call. In the call [reinit ls a nnz],
@@ -138,13 +133,13 @@ module Direct : sig (* {{{ *)
       factorizations will be completed at the next solver step.
 
       @nocvode <node> SUNLinSol_KLUReInit *)
-    val reinit : ('s Matrix.Sparse.t, 'k, [>tag]) serial_linear_solver
+    val reinit : ('s Matrix.Sparse.t, 'k, [>`Klu]) serial_t
                  -> ('s, 'k) Matrix.sparse -> ?nnz:int -> unit -> unit
 
     (** Sets the ordering algorithm used to minimize fill-in.
 
       @nocvode <node> SUNLinSol_KLUSetOrdering *)
-    val set_ordering : ('s Matrix.Sparse.t, 'k, [>tag]) serial_linear_solver
+    val set_ordering : ('s Matrix.Sparse.t, 'k, [>`Klu]) serial_t
                        -> ordering -> unit
 
   end (* }}} *)
@@ -158,14 +153,11 @@ module Direct : sig (* {{{ *)
     ?ordering:Klu.ordering
     -> 'k Nvector_serial.any
     -> ('s, 'k) Matrix.sparse
-    -> ('s Matrix.Sparse.t, 'k, Klu.tag) serial_linear_solver
+    -> ('s Matrix.Sparse.t, 'k, [`Klu|`Dls]) serial_t
 
   (** SuperLUMT direct linear solver operating on sparse matrices (requires
     SuperLUMT). *)
   module Superlumt : sig (* {{{ *)
-
-    (** Used to distinguish SuperLUMT direct solvers. *)
-    type tag = [`Superlumt]
 
     (** The ordering algorithm used for reducing fill. *)
     type ordering =
@@ -192,12 +184,12 @@ module Direct : sig (* {{{ *)
       -> nthreads:int
       -> 'k Nvector_serial.any
       -> ('s, 'k) Matrix.sparse
-      -> ('s Matrix.Sparse.t, 'k, tag) serial_linear_solver
+      -> ('s Matrix.Sparse.t, 'k, [`Dls|`Slu]) serial_t
 
     (** Sets the ordering algorithm used to minimize fill-in.
 
       @nocvode <node> SUNLinSol_SuperLUMTSetOrdering *)
-    val set_ordering : ('s Matrix.Sparse.t, 'k, [>tag]) serial_linear_solver
+    val set_ordering : ('s Matrix.Sparse.t, 'k, [>`Slu]) serial_t
                        -> ordering -> unit
 
   end (* }}} *)
@@ -216,51 +208,8 @@ module Direct : sig (* {{{ *)
     -> nthreads:int
     -> 'k Nvector_serial.any
     -> ('s, 'k) Matrix.sparse
-    -> ('s Matrix.Sparse.t, 'k, Superlumt.tag) serial_linear_solver
+    -> ('s Matrix.Sparse.t, 'k, [>`Slu|`Dls]) serial_t
 
-  (** Custom direct linear solvers. *)
-  module Custom : sig (* {{{ *)
-
-    (** Used to distinguish custom linear solvers *)
-    type 'lsolver tag = [`Custom of 'lsolver]
-
-    (** The operations required to implement a direct linear solver.
-      Failure should be indicated by raising an exception (preferably
-      one of the exceptions in this package). Raising
-      {!exception:Sundials.RecoverableFailure} indicates a generic
-      recoverable failure. *)
-    type ('matrix, 'data, 'kind, 'lsolver) ops = {
-        init : 'lsolver -> unit;
-        (** Performs linear solver initalization. *)
-
-        setup : 'lsolver -> 'matrix -> unit;
-        (** Performs linear solver setup based on an updated matrix. *)
-
-        solve : 'lsolver -> 'matrix -> 'data -> 'data -> float -> unit;
-        (** The call [solve ls A x b tols] should solve the linear system
-        {% $Ax = b$ %} to the requested tolerance. *)
-
-        space : ('lsolver -> int * int) option;
-        (** Return the storage requirements for the linear solver.
-        The result [(lrw, liw)] gives the number of words used for
-        storing real values ([lrw]) and the number of words used
-        for storing integer values ([liw]). *)
-      }
-
-    (** Create a direct linear solver given a set of operations and an
-      internal state.
-
-      NB: This feature is only available for
-          {{!Sundials_Config.sundials_version}Config.sundials_version} >= 3.0.0. *)
-    val make : ('matrix, 'data, 'kind, 'lsolver) ops
-               -> 'lsolver
-               -> ('matrixkind, 'matrix, 'data, 'kind) Matrix.t
-               -> ('matrix, 'data, 'kind, 'lsolver tag) linear_solver
-
-    (** Return the internal state from an custom direct linear solver. *)
-    val unwrap : ('matrix, 'data, 'kind, 'lsolver tag) linear_solver -> 'lsolver
-
-  end (* }}} *)
 end (* }}} *)
 
 (** Iterative Linear Solvers *)
@@ -272,20 +221,6 @@ module Iterative : sig (* {{{ *)
       [Cvode.Spils.spbcgs] is an alias for {!spbcgs}.  *)
 
   (** {3:solvers Types} *)
-
-  (** An iterative linear solver.
-    The type variables specify the {!Nvector.nvector} data (['data]) and
-    kind (['kind]), and the iterative method (['tag]).
-
-    A linear solver of this type must be converted to session-specific
-    form by {!Cvode.Spils.solver}, {!Ida.Spils.solver}, etc. before
-    being attached to a session.
-
-
-    @nocvode <node> Description of the SUNLinearSolver module
-    @nocvode <node> SUNLinearSolver *)
-  type ('data, 'kind, 'tag) linear_solver
-    = ('data, 'kind, 'tag) Sundials_LinearSolver_impl.Iterative.linear_solver
 
   (** The type of Gram-Schmidt orthogonalization in iterative linear solvers.
 
@@ -306,7 +241,7 @@ module Iterative : sig (* {{{ *)
 
     @nocvode <node> SUNLinSol_SPBCGS *)
   val spbcgs : ?maxl:int -> ('d, 'k) Nvector.t
-               -> ('d, 'k, [`Spbcgs]) linear_solver
+               -> ('m, 'd, 'k, [`Iter|`Spbcgs]) t
 
   (** Krylov iterative solver using the scaled preconditioned flexible
     generalized minimum residual (GMRES) method. The [maxl] arguments gives
@@ -320,7 +255,7 @@ module Iterative : sig (* {{{ *)
   val spfgmr : ?maxl:int -> ?max_restarts:int
                -> ?gs_type:gramschmidt_type
                -> ('d, 'k) Nvector.t
-               -> ('d, 'k, [`Spfgmr]) linear_solver
+               -> ('m, 'd, 'k, [`Iter|`Spfgmr]) t
 
   (** Krylov iterative solver using the scaled preconditioned generalized
     minimum residual (GMRES) method. The [maxl] arguments gives the maximum
@@ -334,7 +269,7 @@ module Iterative : sig (* {{{ *)
   val spgmr : ?maxl:int -> ?max_restarts:int
               -> ?gs_type:gramschmidt_type
               -> ('d, 'k) Nvector.t
-              -> ('d, 'k, [`Spgmr]) linear_solver
+              -> ('m, 'd, 'k, [`Iter|`Spgmr]) t
 
   (** Krylov iterative with the scaled preconditioned transpose-free
     quasi-minimal residual (SPTFQMR) method. The [maxl] arguments gives the
@@ -343,7 +278,7 @@ module Iterative : sig (* {{{ *)
 
     @nocvode <node> SUNLinSol_SPTFQMR *)
   val sptfqmr : ?maxl:int -> ('d, 'k) Nvector.t
-                -> ('d, 'k, [`Sptfqmr]) linear_solver
+                -> ('m, 'd, 'k, [`Iter|`Sptfqmr]) t
 
   (** Krylov iterative solver using the preconditioned conjugate gradient
     (PCG) method. The [maxl] arguments gives the maximum dimension of the
@@ -352,123 +287,7 @@ module Iterative : sig (* {{{ *)
 
     @nocvode <node> SUNLinSol_PCG *)
   val pcg : ?maxl:int -> ('d, 'k) Nvector.t
-            -> ('d, 'k, [`Pcg]) linear_solver
-
-  (** Custom iterative linear solvers. *)
-  module Custom : sig (* {{{ *)
-
-    (** Used to distinguish custom linear solvers *)
-    type 'lsolver tag = [`Custom of 'lsolver]
-
-    (** A function [atimesfn v z] computes the action of the system
-        matrix on the vector [v], storing the result in [z]. The matrix is
-        represented implicitly by the effect of the function.
-
-        If a problem occurs the function raises {!ATimesFailure}. *)
-    type ('data, 'kind) atimesfn =
-      ('data, 'kind) Nvector.t
-      -> ('data, 'kind) Nvector.t
-      -> unit
-
-    (** Functions that set up any problem data in preparation for calls to
-      [psolvefn].
-
-      If a problem occurs the function raises {!PSetFailure}. *)
-    type psetupfn = unit -> unit
-
-    (** A function [psolvefn r z tol lr] that solves the preconditioner
-      equation {% $Pz = r$ %} for the vector [z] such that
-      {% $\left\lVert Pz - r \right\rVert_\mathrm{wrms} < \mathit{tol}$ %}.
-      If [lr] is [true] then {% $P$ %} should be treated as a left
-      preconditioner and otherwise as a right preconditioner.
-
-      If a problem occurs the function raises {!PSolveFailure}. *)
-    type ('data, 'kind) psolvefn =
-      ('data, 'kind) Nvector.t
-      -> ('data, 'kind) Nvector.t
-      -> float
-      -> bool
-      -> unit
-
-    (** The operations required to implement an iterative linear solver.
-      Failure should be indicated by raising an exception (preferably
-      one of the exceptions in this package). Raising
-      {!exception:Sundials.RecoverableFailure} indicates a generic
-      recoverable failure. *)
-    type ('data, 'kind, 'lsolver) ops = {
-
-        init : 'lsolver -> unit;
-        (** Performs linear solver initalization. *)
-
-        setup : 'lsolver -> unit;
-        (** Performs linear solver setup. *)
-
-        solve : 'lsolver -> 'data -> 'data -> float -> unit;
-        (** The call [solve ls x b tol] should solve the linear system
-        {% $Ax = b$ %} to within the weight 2-norm tolerance [tol].
-        {% $A$ %} is only available indirectly via the [atimes] function. *)
-
-        set_atimes
-          : ('lsolver -> ('data, 'kind) atimesfn -> unit) option;
-        (** Provides the linear solver with a problem-specific {!atimesfn}.
-          The given function may only be used within [init], [setup],
-          and [solve]. *)
-
-        set_preconditioner
-        : ('lsolver
-           -> psetupfn option
-           -> ('data, 'kind) psolvefn option
-           -> unit) option;
-        (** Provides the linear solver with preconditioner routines.
-          The given functions may only be used within [init], [setup],
-          and [solve]. *)
-
-        set_scaling_vectors
-          : ('lsolver -> 'data option -> 'data option -> unit) option;
-        (** Passes the left/right scaling vectors for use in [solve].
-        The call [set_scaling_vectors ls s1 s2] provides diagonal matrices
-        of scale factors for solving the system
-        {% $\tilde{A}\tilde{x} = \tilde{b}$ %}
-        where
-        {% $\tilde{A} = S_1 P_1^{-1} A P_2^{-1} S_2^{-1}$ %},
-        {% $\tilde{b} = S_1 P_1^{-1} b$ %}, and
-        {% $\tilde{x} = S_2 P_2 x$ %}.
-        A [None] argument indicates an identity scaling matrix. *)
-
-        get_num_iters : ('lsolver -> int) option;
-        (** The number of linear iterations performed in the last
-       [solve] call. *)
-
-        get_res_norm : ('lsolver -> float) option;
-        (** The final residual norm from the last [solve] call. *)
-
-        get_res_id : ('lsolver -> ('data, 'kind) Nvector.t) option;
-        (** The preconditioned initial residual vector. This vector may be
-        requested if the iterative method computes the preconditioned
-        initial residual and returns from [solve] successfully without
-        performing any iterations (i.e., either the initial guess or the
-        preconditioner is sufficiently accurate). *)
-
-        get_work_space : ('lsolver -> int * int) option;
-        (** Return the storage requirements for the linear solver.
-        The result [(lrw, liw)] gives the number of words used for
-        storing real values ([lrw]) and the number of words used
-        for storing integer values ([liw]). * *)
-      }
-
-    (** Create an iterative linear solver given a set of operations and an
-      internal state.
-
-      NB: This feature is only available for
-          {{!Sundials_Config.sundials_version}Config.sundials_version} >= 3.0.0. *)
-    val make : ('data, 'kind, 'lsolver) ops
-               -> 'lsolver
-               -> ('data, 'kind, 'lsolver tag) linear_solver
-
-    (** Return the internal state from an custom iterative linear solver. *)
-    val unwrap : ('data, 'kind, 'lsolver tag) linear_solver -> 'lsolver
-
-  end (* }}} *)
+            -> ('m, 'd, 'k, [`Iter|`Pcg]) t
 
   (** Low-level routines on arrays. *)
   module Algorithms : sig (* {{{ *)
@@ -573,15 +392,15 @@ module Iterative : sig (* {{{ *)
     @nocvode <node> SUNLinSol_SPBCGSSetMaxl
     @nocvode <node> SUNLinSol_SPTFQMRSetMaxl
     @nocvode <node> SUNLinSol_PCGSetMaxl *)
-  val set_maxl : ('d, 'k, [< `Spbcgs|`Sptfqmr|`Pcg]) linear_solver
+  val set_maxl : ('m, 'd, 'k, [< `Iter|`Spbcgs|`Sptfqmr|`Pcg]) t
                  -> int -> unit
 
   (** Sets the Gram-Schmidt orthogonalization to use.
 
     @nocvode <node> SUNLinSol_SPGMRSetGSType
     @nocvode <node> SUNLinSol_SPFGMRSetGSType *)
-  val set_gs_type :
-    ('d, 'k, [< `Spfgmr|`Spgmr]) linear_solver -> gramschmidt_type -> unit
+  val set_gs_type : ('m, 'd, 'k, [< `Iter|`Spfgmr|`Spgmr]) t
+                    -> gramschmidt_type -> unit
 
   (** Sets the number of GMRES restarts to allow.
 
@@ -590,7 +409,7 @@ module Iterative : sig (* {{{ *)
 
     @nocvode <node> SUNLinSol_SPGMRSetMaxRestarts
     @nocvode <node> SUNLinSol_SPFGMRSetMaxRestarts *)
-  val set_max_restarts : ('d, 'k, [< `Spfgmr|`Spgmr]) linear_solver
+  val set_max_restarts : ('m, 'd, 'k, [< `Iter|`Spfgmr|`Spgmr]) t
                          -> int -> unit
 
   (** The type of preconditioning in Krylov solvers.
@@ -617,7 +436,159 @@ module Iterative : sig (* {{{ *)
     @nocvode <node> SUNLinSol_SPFGMRSetPrecType
     @nocvode <node> SUNLinSol_SPGMRSetPrecType
     @nocvode <node> SUNLinSol_SPTFQMRSetPrecType *)
-  val set_prec_type : ('d, 'k, 'f) linear_solver -> preconditioning_type -> unit
+  val set_prec_type : ('m, 'd, 'k, [>`Iter]) t
+                      -> preconditioning_type -> unit
+
+end (* }}} *)
+
+(** Custom linear solvers. *)
+module Custom : sig (* {{{ *)
+
+  (** A function [atimesfn v z] computes the action of the system
+      matrix on the vector [v], storing the result in [z]. The matrix is
+      represented implicitly by the effect of the function.
+
+      If a problem occurs the function raises {!ATimesFailure}. *)
+  type ('data, 'kind) atimesfn =
+    ('data, 'kind) Nvector.t
+    -> ('data, 'kind) Nvector.t
+    -> unit
+
+  (** Functions that set up any problem data in preparation for calls to
+    [psolvefn].
+
+    If a problem occurs the function raises {!PSetFailure}. *)
+  type psetupfn = unit -> unit
+
+  (** A function [psolvefn r z tol lr] that solves the preconditioner
+    equation {% $Pz = r$ %} for the vector [z] such that
+    {% $\left\lVert Pz - r \right\rVert_\mathrm{wrms} < \mathit{tol}$ %}.
+    If [lr] is [true] then {% $P$ %} should be treated as a left
+    preconditioner and otherwise as a right preconditioner.
+
+    If a problem occurs the function raises {!PSolveFailure}. *)
+  type ('data, 'kind) psolvefn =
+    ('data, 'kind) Nvector.t
+    -> ('data, 'kind) Nvector.t
+    -> float
+    -> bool
+    -> unit
+
+  (** The operations required to implement an iterative linear solver.
+    Failure should be indicated by raising an exception (preferably
+    one of the exceptions in this package). Raising
+    {!exception:Sundials.RecoverableFailure} indicates a generic
+    recoverable failure. *)
+  type ('matrix, 'data, 'kind, 'lsolver) ops = {
+
+      init : 'lsolver -> unit;
+      (** Performs linear solver initalization. *)
+
+      setup : 'lsolver -> 'matrix -> unit;
+      (** Performs linear solver setup. *)
+
+      solve : 'lsolver -> 'matrix -> 'data -> 'data -> float -> unit;
+      (** The call [solve ls x b tol] should solve the linear system
+      {% $Ax = b$ %} to within the weight 2-norm tolerance [tol].
+      {% $A$ %} is only available indirectly via the [atimes] function. *)
+
+      set_atimes
+        : ('lsolver -> ('data, 'kind) atimesfn -> unit) option;
+      (** Provides the linear solver with a problem-specific {!atimesfn}.
+        The given function may only be used within [init], [setup],
+        and [solve]. *)
+
+      set_preconditioner
+      : ('lsolver
+         -> psetupfn option
+         -> ('data, 'kind) psolvefn option
+         -> unit) option;
+      (** Provides the linear solver with preconditioner routines.
+        The given functions may only be used within [init], [setup],
+        and [solve]. *)
+
+      set_scaling_vectors
+        : ('lsolver -> 'data option -> 'data option -> unit) option;
+      (** Passes the left/right scaling vectors for use in [solve].
+      The call [set_scaling_vectors ls s1 s2] provides diagonal matrices
+      of scale factors for solving the system
+      {% $\tilde{A}\tilde{x} = \tilde{b}$ %}
+      where
+      {% $\tilde{A} = S_1 P_1^{-1} A P_2^{-1} S_2^{-1}$ %},
+      {% $\tilde{b} = S_1 P_1^{-1} b$ %}, and
+      {% $\tilde{x} = S_2 P_2 x$ %}.
+      A [None] argument indicates an identity scaling matrix. *)
+
+      get_num_iters : ('lsolver -> int) option;
+      (** The number of linear iterations performed in the last
+     [solve] call. *)
+
+      get_res_norm : ('lsolver -> float) option;
+      (** The final residual norm from the last [solve] call. *)
+
+      get_res_id : ('lsolver -> ('data, 'kind) Nvector.t) option;
+      (** The preconditioned initial residual vector. This vector may be
+      requested if the iterative method computes the preconditioned
+      initial residual and returns from [solve] successfully without
+      performing any iterations (i.e., either the initial guess or the
+      preconditioner is sufficiently accurate). *)
+
+      get_work_space : ('lsolver -> int * int) option;
+      (** Return the storage requirements for the linear solver.
+      The result [(lrw, liw)] gives the number of words used for
+      storing real values ([lrw]) and the number of words used
+      for storing integer values ([liw]). * *)
+    }
+
+  (** Create a linear solver given a set of operations and an internal state.
+      The resulting solver is tagged with both [`Dls] and [`Iter], although
+      its suitability depends on which operations are defined and whether a
+      matrix is passed or not. Use a type cast to filter inappropriate tags.
+
+    NB: This feature is only available for
+        {{!Sundials_Config.sundials_version}Config.sundials_version} >= 3.0.0. *)
+  val make : ('matrix, 'data, 'kind, 'lsolver) ops
+     -> 'lsolver
+     -> ('matrixkind, 'matrix, 'data, 'kind) Matrix.t option
+     -> ('matrix, 'data, 'kind, [`Dls|`Iter|`Custom of 'lsolver]) t
+
+  (** Return the internal state from an custom iterative linear solver. *)
+  val unwrap : ('m, 'data, 'kind, [>`Custom of 'lsolver]) t -> 'lsolver
+
+  (** {3:dlscustom Wrapper for making custom Direct linear solvers.} *)
+
+  (** The operations required to implement a direct linear solver.
+      Failure should be indicated by raising an exception (preferably
+      one of the exceptions in this package). Raising
+      {!exception:Sundials.RecoverableFailure} indicates a generic
+      recoverable failure. *)
+  type ('matrix, 'data, 'kind, 'lsolver) dls_ops = {
+      init : 'lsolver -> unit;
+      (** Performs linear solver initalization. *)
+
+      setup : 'lsolver -> 'matrix -> unit;
+      (** Performs linear solver setup based on an updated matrix. *)
+
+      solve : 'lsolver -> 'matrix -> 'data -> 'data -> float -> unit;
+      (** The call [solve ls A x b tols] should solve the linear system
+      {% $Ax = b$ %} to the requested tolerance. *)
+
+      space : ('lsolver -> int * int) option;
+      (** Return the storage requirements for the linear solver.
+      The result [(lrw, liw)] gives the number of words used for
+      storing real values ([lrw]) and the number of words used
+      for storing integer values ([liw]). *)
+    }
+
+  (** Create a direct linear solver given a set of operations and an
+      internal state.
+
+      NB: This feature is only available for
+          {{!Sundials_Config.sundials_version}Config.sundials_version} >= 3.0.0. *)
+  val make_dls : ('matrix, 'data, 'kind, 'lsolver) dls_ops
+           -> 'lsolver
+           -> ('matrixkind, 'matrix, 'data, 'kind) Matrix.t
+           -> ('matrix, 'data, 'kind, [`Dls|`Custom of 'lsolver]) t
 
 end (* }}} *)
 

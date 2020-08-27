@@ -134,7 +134,7 @@ type ('a, 'k) session = {
   mutable errh       : errh;
   mutable infoh      : infoh;
 
-  mutable ls_solver    : LSI.solver;
+  mutable ls_solver    : LSI.held_linear_solver;
   mutable ls_callbacks : ('a, 'k) linsolv_callbacks;
   mutable ls_precfns : 'a linsolv_precfns;
 }
@@ -191,7 +191,7 @@ let ls_check_spils_bbd session =
 type 'kind serial_session = (Nvector_serial.data, 'kind) session
                             constraint 'kind = [>Nvector_serial.kind]
 
-type ('data, 'kind) session_linear_solver =
+type ('data, 'kind) linear_solver =
   ('data, 'kind) session
   -> ('data, 'kind) nvector
   -> unit

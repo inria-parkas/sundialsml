@@ -49,24 +49,25 @@ let printf = Printf.printf
 
 (* Custom SPGMR Linear Solver implemented in OCaml for testing *)
 
+module LS = LinearSolver
+
 module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
-  open LinearSolver.Iterative
 
   let maxl_default   = 5
   let maxrs_default  = 0
-  let gstype_default = ModifiedGS
+  let gstype_default = LS.Iterative.ModifiedGS
 
   type ('data, 'kind) lsolver = {
     maxl                 : int;
-    mutable pretype      : preconditioning_type;
-    mutable gstype       : gramschmidt_type;
+    mutable pretype      : LS.Iterative.preconditioning_type;
+    mutable gstype       : LS.Iterative.gramschmidt_type;
     mutable max_restarts : int;
     mutable numiters     : int;
     mutable resnorm      : float;
 
-    mutable atimes       : ('data, 'kind) Custom.atimesfn;
-    mutable psetup       : Custom.psetupfn option;
-    mutable psolve       : ('data, 'kind) Custom.psolvefn;
+    mutable atimes       : ('data, 'kind) LS.Custom.atimesfn;
+    mutable psetup       : LS.Custom.psetupfn option;
+    mutable psolve       : ('data, 'kind) LS.Custom.psolvefn;
     mutable s1           : ('data, 'kind) Nvector.t option;
     mutable s2           : ('data, 'kind) Nvector.t option;
 
@@ -81,14 +82,14 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
 
   let init lsolver = ()
 
-  let setup lsolver =
+  let setup lsolver _ =
     match lsolver.psetup with
     | None -> ()
     | Some psetup -> psetup ()
 
   (* Adapted directly from sunlinsol_spgmr/sunlinsol_spgmr.c *)
   let solve ({ maxl = l_max; max_restarts; gstype; v; hes; givens; xcor; yg;
-               vtemp; vtemps; s1; s2; atimes; psolve } as lsolver)
+               vtemp; vtemps; s1; s2; atimes; psolve } as lsolver) _
             xdata bdata delta =
   (* {{{ *)
     let x = NV.wrap xdata in
@@ -180,14 +181,14 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
               (match gstype with
               | ClassicalGS ->
                   RealArray2.set hes l l_plus_1
-                    (Algorithms.classical_gs v hes l_plus_1 l_max yg vtemps);
+                    (LS.Iterative.Algorithms.classical_gs v hes l_plus_1 l_max yg vtemps);
               | ModifiedGS  ->
                   RealArray2.set hes l l_plus_1
-                    (Algorithms.modified_gs v hes l_plus_1 l_max)
+                    (LS.Iterative.Algorithms.modified_gs v hes l_plus_1 l_max)
               );
 
               (*  Update the QR factorization of Hes *)
-              Algorithms.qr_fact l_plus_1 hes givens (l > 0);
+              LS.Iterative.Algorithms.qr_fact l_plus_1 hes givens (l > 0);
 
               (*  Update residual norm estimate; break if convergence test passes *)
               rotation_product := !rotation_product *. givens.{2*l+1};
@@ -214,7 +215,7 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
           for i = 1 to krydim do
             yg.{i} <- 0.
           done;
-          Algorithms.qr_sol krydim hes givens yg;
+          LS.Iterative.Algorithms.qr_sol krydim hes givens yg;
 
           (*   Add correction vector V_l y to xcor *)
           for k = 0 to krydim - 1 do
@@ -302,7 +303,7 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
      liw1*(maxl + 5))
 
   let ops =
-    let open Custom in
+    let open LS.Custom in
     {
       init                = init;
       setup               = setup;
@@ -317,9 +318,9 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
     }
 
   let solver ?(maxl=maxl_default) ?(max_restarts=maxrs_default)
-             ?(gs_type=gstype_default) ?(prec_type=PrecNone) nv_y =
+             ?(gs_type=gstype_default) ?(prec_type=LS.Iterative.PrecNone) nv_y =
     let maxl = if maxl <= 0 then maxl_default else maxl in
-    Custom.make ops {
+    LS.Custom.make ops {
         maxl         = maxl;
         pretype      = prec_type;
         gstype       = gs_type;
@@ -340,16 +341,16 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
         hes          = RealArray2.create maxl (maxl + 1);
         givens       = RealArray.create (2 * maxl);
         yg           = RealArray.create (maxl + 1);
-      }
+      } None
 
   let set_prec_type ls pretype =
-    (Custom.unwrap ls).pretype <- pretype
+    (LS.Custom.unwrap ls).pretype <- pretype
 
   let set_gs_type ls gstype =
-    (Custom.unwrap ls).gstype <- gstype
+    (LS.Custom.unwrap ls).gstype <- gstype
 
   let set_max_restarts ls maxrs =
-    (Custom.unwrap ls).max_restarts <-
+    (LS.Custom.unwrap ls).max_restarts <-
       (if maxrs < 0 then maxrs_default else maxrs)
 
 end (* }}} *)

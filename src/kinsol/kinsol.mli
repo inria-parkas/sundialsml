@@ -59,12 +59,11 @@ type 'kind serial_session = (Nvector_serial.data, 'kind) session
 (** Linear solvers used by Kinsol.
 
     @kinsol <node5#sss:lin_solv_init> Linear Solver Specification Functions *)
-type ('data, 'kind) session_linear_solver =
-  ('data, 'kind) Kinsol_impl.session_linear_solver
+type ('data, 'kind) linear_solver = ('data, 'kind) Kinsol_impl.linear_solver
 
 (** Alias for linear solvers that are restricted to serial nvectors. *)
-type 'kind serial_session_linear_solver =
-  (Nvector_serial.data, 'kind) session_linear_solver
+type 'kind serial_linear_solver =
+  (Nvector_serial.data, 'kind) linear_solver
   constraint 'kind = [>Nvector_serial.kind]
 
 (** Workspaces with two temporary vectors. *)
@@ -118,8 +117,8 @@ module Dls : sig (* {{{ *)
       @nokinsol <node> KINSetJacFn *)
   val solver :
     ?jac:'m jac_fn ->
-    ('m, 'kind, 't) LinearSolver.Direct.serial_linear_solver ->
-    'kind serial_session_linear_solver
+    ('m, RealArray.t, 'kind, [>`Dls]) LinearSolver.t ->
+    'kind serial_linear_solver
 
   (** {3:stats Solver statistics} *)
 
@@ -258,10 +257,10 @@ module Spils : sig (* {{{ *)
       @nokinsol <node> KINSetLinearSolver
       @nokinsol <node> KINSetJacTimesVecFn *)
   val solver :
-    ('d, 'k, 'f) LinearSolver.Iterative.linear_solver
+    ('m, 'd, 'k, [>`Iter]) LinearSolver.t
     -> ?jac_times_vec:'d jac_times_vec_fn
     -> ('d, 'k) preconditioner
-    -> ('d, 'k) session_linear_solver
+    -> ('d, 'k) linear_solver
 
   (** {3:stats Solver statistics} *)
 
@@ -369,7 +368,7 @@ type 'data sysfn = 'data -> 'data -> unit
 val init :
   ?max_iters:int
   -> ?maa:int
-  -> ?lsolver:('data, 'kind) session_linear_solver
+  -> ?lsolver:('data, 'kind) linear_solver
   -> 'data sysfn
   -> ('data, 'kind) Nvector.t
   -> ('data, 'kind) session

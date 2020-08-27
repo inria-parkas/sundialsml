@@ -12,6 +12,8 @@ Notes:
   solvers. This interface was superseded since Sundials 3.x by the new 
   linear solver interface which provides similar functionality.
 * ARKode: reworked interface to new ARKStep, ERKStep, and MRIStep modules.
+* LinearSolver: use a generic linear solver type, replacing the previous 
+  distinction between Dls and Iterative linear solvers.
 
 Compatibility:
 * When initializing Cvode, the new non-linear solver interface replaces the 
@@ -72,6 +74,9 @@ Compatibility:
 
 * *.blit now requires ~src and ~dst labels.
 * *.blit_some becomes *.blitn and requires labels.
+
+* Sundials.LinearSolver.linear_solver -> Sundials.LinearSolver.t
+* *.session_linear_solver -> *.linear_solver
 
 Sundials/ML 3.1.1p0 (July 2018)
 ------------------------------------

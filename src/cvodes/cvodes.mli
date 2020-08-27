@@ -948,12 +948,12 @@ module Adjoint : sig (* {{{ *)
   (** Linear solvers used in backward problems.
 
       @cvodes <node7#sss:lin_solv_b> Linear Solver Initialization Functions *)
-  type ('data, 'kind) session_linear_solver =
-          ('data, 'kind) Cvode_impl.AdjointTypes.session_linear_solver
+  type ('data, 'kind) linear_solver =
+          ('data, 'kind) Cvode_impl.AdjointTypes.linear_solver
 
   (** Alias for linear solvers that are restricted to serial nvectors. *)
-  type 'kind serial_session_linear_solver =
-    (Nvector_serial.data, 'kind) session_linear_solver
+  type 'kind serial_linear_solver =
+    (Nvector_serial.data, 'kind) linear_solver
     constraint 'kind = [>Nvector_serial.kind]
 
   (** Workspaces with three temporary vectors. *)
@@ -980,7 +980,7 @@ module Adjoint : sig (* {{{ *)
         quotients.
 
         @cvodes <node7#sss:lin_solv_b> CVDiagB *)
-    val solver : ('data, 'kind) session_linear_solver
+    val solver : ('data, 'kind) linear_solver
 
     (** Returns the sizes of the real and integer workspaces used by the
         Diagonal linear solver.
@@ -1070,8 +1070,8 @@ module Adjoint : sig (* {{{ *)
         @nocvode <node> CVodeSetJacFnBS *)
     val solver :
       ?jac:'m jac_fn ->
-      ('m, 'kind, 't) LinearSolver.Direct.serial_linear_solver ->
-      'kind serial_session_linear_solver
+      ('m, RealArray.t, 'kind, 't) LinearSolver.t ->
+      'kind serial_linear_solver
 
     (** {3:stats Solver statistics} *)
 
@@ -1432,10 +1432,10 @@ module Adjoint : sig (* {{{ *)
         @nocvode <node> CVodeSetJacTimesB
         @nocvode <node> CVodeSetJacTimesBS *)
     val solver :
-      ('d, 'k, 'f) LinearSolver.Iterative.linear_solver
+      ('m, 'd, 'k, 'f) LinearSolver.t
       -> ?jac_times_vec:'d jac_times_vec_fn
       -> ('d, 'k) preconditioner
-      -> ('d, 'k) session_linear_solver
+      -> ('d, 'k) linear_solver
 
     (** {3:set Solver parameters} *)
 
@@ -1673,7 +1673,7 @@ module Adjoint : sig (* {{{ *)
          : ('d, 'k,
             (('d, 'k) Cvode.session) Sundials_NonlinearSolver.integrator)
            Sundials_NonlinearSolver.nonlinear_solver
-    -> ?lsolver  : ('d, 'k) session_linear_solver
+    -> ?lsolver  : ('d, 'k) linear_solver
     -> 'd brhsfn
     -> float
     -> ('d, 'k) Nvector.t
@@ -1897,7 +1897,7 @@ module Adjoint : sig (* {{{ *)
          : ('d, 'k,
             (('d, 'k) Cvode.session) Sundials_NonlinearSolver.integrator)
            Sundials_NonlinearSolver.nonlinear_solver
-    -> ?lsolver  : ('d, 'k) session_linear_solver
+    -> ?lsolver  : ('d, 'k) linear_solver
     -> float
     -> ('d, 'k) Nvector.t
     -> unit

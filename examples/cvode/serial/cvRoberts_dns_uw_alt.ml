@@ -68,7 +68,7 @@ let alternate_dense y a =
   in
   let lspace { n } = (0, 2 + n)
   in
-  LinearSolver.Direct.Custom.make {
+  LinearSolver.Custom.make_dls {
       init=linit;
       setup=lsetup;
       solve=lsolve;
