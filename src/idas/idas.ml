@@ -1262,7 +1262,7 @@ module Adjoint = struct (* {{{ *)
         else c_set_linear_solver (parent, which) rawptr None false false;
         LSI.attach ls;
         session.ls_solver <- LSI.HLS lsolver;
-        LSI.(c_set_prec_type rawptr solver prec_type false);
+        LSI.(impl_set_prec_type rawptr solver prec_type false);
         set_prec bs parent which nv;
         let has_setup, has_times, use_sens =
           match jac_times_vec with

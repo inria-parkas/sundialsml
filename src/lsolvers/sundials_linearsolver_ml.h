@@ -85,6 +85,7 @@ enum lsolver_ops_index {
     RECORD_LSOLVER_OPS_GET_RES_NORM,
     RECORD_LSOLVER_OPS_GET_RES_ID,
     RECORD_LSOLVER_OPS_GET_WORK_SPACE,
+    RECORD_LSOLVER_OPS_SET_PREC_TYPE,
 };
 
 // values must match LinearSolver_impl.Custom.has_ops type

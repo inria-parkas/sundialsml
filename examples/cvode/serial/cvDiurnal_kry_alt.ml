@@ -302,6 +302,9 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
                    else lrw1*(maxl + 5) + maxl*(maxl + 5) + 2),
      liw1*(maxl + 5))
 
+  let set_prec_type ls pretype =
+    ls.pretype <- pretype
+
   let ops =
     let open LS.Custom in
     {
@@ -315,14 +318,15 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
       get_res_norm        = Some (fun ls -> ls.resnorm);
       get_res_id          = Some (fun ls -> ls.vtemp);
       get_work_space      = Some get_workspace;
+      set_prec_type       = Some set_prec_type;
     }
 
   let solver ?(maxl=maxl_default) ?(max_restarts=maxrs_default)
-             ?(gs_type=gstype_default) ?(prec_type=LS.Iterative.PrecNone) nv_y =
+             ?(gs_type=gstype_default) nv_y =
     let maxl = if maxl <= 0 then maxl_default else maxl in
     LS.Custom.make ops {
         maxl         = maxl;
-        pretype      = prec_type;
+        pretype      = PrecNone;
         gstype       = gs_type;
         max_restarts = max_restarts;
         numiters     = 0;
@@ -859,7 +863,7 @@ let main () =
    * with left preconditioning and the maximum Krylov dimension maxl *)
   (* set the Jacobian-times-vector function *)
   (* Set the preconditioner solve and setup functions *)
-  let lsolver = CustomSpgmr.solver ~prec_type:PrecLeft u in
+  let lsolver = CustomSpgmr.solver u in
   let cvode_mem = Cvode.(
     init BDF
       ~lsolver:Spils.(solver lsolver ~jac_times_vec:(None, jtv data)

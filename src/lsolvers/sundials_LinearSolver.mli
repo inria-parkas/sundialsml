@@ -538,6 +538,11 @@ module Custom : sig (* {{{ *)
       The result [(lrw, liw)] gives the number of words used for
       storing real values ([lrw]) and the number of words used
       for storing integer values ([liw]). * *)
+
+      (** Called by Iterative.set_prec_type and when a linear solver is
+          associated with an integrator. *)
+      set_prec_type :
+        ('lsolver -> Iterative.preconditioning_type -> unit) option;
     }
 
   (** Create a linear solver given a set of operations and an internal state.

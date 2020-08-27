@@ -464,7 +464,7 @@ module Spils = struct (* {{{ *)
       else c_set_linear_solver session rawptr None false;
       LSI.attach (LS lsolver);
       session.ls_solver <- LSI.HLS lsolver;
-      LSI.(c_set_prec_type rawptr solver prec_type false);
+      LSI.(impl_set_prec_type rawptr solver prec_type false);
       set_prec session nv;
       session.ls_callbacks <- SpilsCallback (jac_times_vec, jac_times_setup);
       if jac_times_setup <> None || jac_times_vec <> None then

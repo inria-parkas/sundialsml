@@ -269,7 +269,7 @@ module Iterative = struct (* {{{ *)
   let set_prec_type (LS { rawptr; solver; compat; check_prec_type }) prec_type =
     if not (check_prec_type prec_type) then raise IllegalPrecType;
     if in_compat_mode then compat.set_prec_type prec_type
-    else c_set_prec_type rawptr solver prec_type true
+    else impl_set_prec_type rawptr solver prec_type true
 
   let default = function
     | Some x -> x
@@ -503,6 +503,9 @@ module Custom = struct (* {{{ *)
       get_res_id : ('lsolver -> ('data, 'kind) Nvector.t) option;
 
       get_work_space : ('lsolver -> int * int) option;
+
+      set_prec_type
+      : ('lsolver -> Iterative.preconditioning_type -> unit) option;
     }
 
   let wrap_set_atimes fseto ldata =
@@ -526,6 +529,11 @@ module Custom = struct (* {{{ *)
          (if has_solve
           then Some (LSI.Custom.call_psolve fd) else None)
 
+  let mapignore fo x =
+    match fo with
+    | None -> (fun _ -> ())
+    | Some f -> f x
+
   let mapo s fo x =
     match fo with
     | None -> (fun _ -> failwith ("internal error: Iterative.Custom." ^ s))
@@ -545,7 +553,8 @@ module Custom = struct (* {{{ *)
              get_num_iters = fget_num_iters;
              get_res_norm = fget_res_norm;
              get_res_id = fget_res_id;
-             get_work_space = fget_work_space } ldata mat =
+             get_work_space = fget_work_space;
+             set_prec_type = fset_prec_type } ldata mat =
     (match Config.sundials_version with
      | 2,_,_ -> raise Config.NotImplementedBySundialsVersion;
      | _ -> ());
@@ -562,6 +571,8 @@ module Custom = struct (* {{{ *)
         get_res_norm = mapu "get_res_norm" fget_res_norm ldata;
         get_res_id = mapu "get_res_id" fget_res_id ldata;
         get_work_space = mapu "get_work_space" fget_work_space ldata;
+        (* set_prec_type is only every called from OCaml and never from C. *)
+        set_prec_type = mapignore fset_prec_type ldata;
       }) in
     let only_ops = LSI.Custom.({
           has_set_atimes          = fset_atimes <> None;
@@ -620,9 +631,10 @@ module Custom = struct (* {{{ *)
           failwith "internal error: Direct.Custom.get_res_norm");
         get_res_id = (fun _ ->
           failwith "internal error: Direct.Custom.get_res_id");
-        get_work_space = match fgws with
+        get_work_space = (match fgws with
           | Some f -> (fun _ -> f ldata)
-          | None -> (fun () -> (0, 0))
+          | None -> (fun () -> (0, 0)));
+        set_prec_type = (fun _ -> ());
       }) in
     let only_ops = LSI.Custom.({
           has_set_atimes          = false;

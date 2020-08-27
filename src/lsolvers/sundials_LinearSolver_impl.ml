@@ -154,7 +154,9 @@ module Custom = struct (* {{{ *)
 
     get_res_id : unit -> ('data, 'kind) Nvector.t;
 
-    get_work_space : unit -> int * int
+    get_work_space : unit -> int * int;
+
+    set_prec_type : Iterative.preconditioning_type -> unit;
   }
 
   (* The fields and their order must match linearSolver_ml.h:lsolver_hasops_index *)
@@ -258,6 +260,11 @@ external c_set_prec_type
     -> bool
     -> unit
   = "sunml_lsolver_set_prec_type"
+
+let impl_set_prec_type (type t) rawptr solver prec_type docheck =
+  match (solver : ('m, 'nd, 'nk, t) solver_data) with
+  | Custom (_, { Custom.set_prec_type = f }) -> f prec_type
+  | _ -> c_set_prec_type rawptr solver prec_type docheck
 
 external c_make_custom
   : int

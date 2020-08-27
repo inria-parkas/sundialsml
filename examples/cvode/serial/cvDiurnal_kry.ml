@@ -461,7 +461,7 @@ let precond data jacarg jok gamma =
           set_ijth j 1 2 (-. q2 *. c1 +. q4coef);
           set_ijth j 2 1 (q1 *. c3 -. q2 *. c2);
           set_ijth j 2 2 ((-. q2 *. c1 -. q4coef) +. diag);
-          Direct.blit j a
+          Direct.blit ~src:j ~dst:a
         done
       done;
       true
