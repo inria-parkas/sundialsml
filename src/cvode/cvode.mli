@@ -583,7 +583,7 @@ val init :
     -> ?nlsolver
          : ('data, 'kind,
             (('data, 'kind) session) Sundials_NonlinearSolver.integrator)
-           Sundials_NonlinearSolver.nonlinear_solver
+           Sundials_NonlinearSolver.t
     -> ?lsolver  : ('data, 'kind) linear_solver
     -> 'data rhsfn
     -> ?roots:(int * 'data rootsfn)
@@ -669,7 +669,7 @@ val reinit :
   ('d, 'k) session
   -> ?nlsolver:('d, 'k,
                 (('d, 'k) session) Sundials_NonlinearSolver.integrator)
-               Sundials_NonlinearSolver.nonlinear_solver
+               Sundials_NonlinearSolver.t
   -> ?lsolver:('d, 'k) linear_solver
   -> ?roots:(int * 'd rootsfn)
   -> float

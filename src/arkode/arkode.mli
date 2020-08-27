@@ -1159,7 +1159,7 @@ module ARKStep : sig (* {{{ *)
   val implicit :
     ?nlsolver : ('data, 'kind,
                   (('data, 'kind) session) Sundials_NonlinearSolver.integrator)
-                Sundials_NonlinearSolver.nonlinear_solver
+                Sundials_NonlinearSolver.t
     -> ?lsolver  : ('data, 'kind) linear_solver
     -> ?linearity : linearity
     -> 'data rhsfn
@@ -1174,7 +1174,7 @@ module ARKStep : sig (* {{{ *)
   val imex :
     ?nlsolver : ('data, 'kind,
                   (('data, 'kind) session) Sundials_NonlinearSolver.integrator)
-                Sundials_NonlinearSolver.nonlinear_solver
+                Sundials_NonlinearSolver.t
     -> ?lsolver  : ('data, 'kind) linear_solver
     -> ?linearity : linearity
     -> fi:'data rhsfn

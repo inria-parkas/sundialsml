@@ -305,7 +305,7 @@ module ARKStep = struct (* {{{ *)
       irhsfn    : 'd rhsfn;
       linearity : linearity;
       nlsolver  : ('d, 'k, (('d, 'k) session) Sundials_NonlinearSolver.integrator)
-                  Sundials_NonlinearSolver.nonlinear_solver option;
+                  Sundials_NonlinearSolver.t option;
       lsolver   : ('d, 'k) linear_solver option;
     }
 

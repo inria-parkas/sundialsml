@@ -309,13 +309,13 @@ module Sensitivity : sig (* {{{ *)
       Simultaneous of
         ((('d, 'k) Sundials_NonlinearSolver.Senswrapper.t, 'k,
          (('d, 'k) Cvode.session) Sundials_NonlinearSolver.integrator)
-                       Sundials_NonlinearSolver.nonlinear_solver) option
+                       Sundials_NonlinearSolver.t) option
       (** Correct state and sensitivity variables at the same time.
           {cconst CV_SIMULTANEOUS} *)
     | Staggered of
         ((('d, 'k) Sundials_NonlinearSolver.Senswrapper.t, 'k,
          (('d, 'k) Cvode.session) Sundials_NonlinearSolver.integrator)
-                       Sundials_NonlinearSolver.nonlinear_solver) option
+                       Sundials_NonlinearSolver.t) option
       (** The correction step for the sensitivity variables takes place at the
           same time for all sensitivity equations, but only after the
           correction of the state variables has converged and the state
@@ -324,7 +324,7 @@ module Sensitivity : sig (* {{{ *)
     | Staggered1 of
         (('d, 'k,
           (('d, 'k) Cvode.session) Sundials_NonlinearSolver.integrator)
-                       Sundials_NonlinearSolver.nonlinear_solver) option
+                       Sundials_NonlinearSolver.t) option
       (** All corrections are done sequentially, first for the state variables
           and then for the sensitivity variables, one parameter at a time. If
           the sensitivity variables are not included in the error control,
@@ -1672,7 +1672,7 @@ module Adjoint : sig (* {{{ *)
     -> ?nlsolver
          : ('d, 'k,
             (('d, 'k) Cvode.session) Sundials_NonlinearSolver.integrator)
-           Sundials_NonlinearSolver.nonlinear_solver
+           Sundials_NonlinearSolver.t
     -> ?lsolver  : ('d, 'k) linear_solver
     -> 'd brhsfn
     -> float
@@ -1896,7 +1896,7 @@ module Adjoint : sig (* {{{ *)
     -> ?nlsolver
          : ('d, 'k,
             (('d, 'k) Cvode.session) Sundials_NonlinearSolver.integrator)
-           Sundials_NonlinearSolver.nonlinear_solver
+           Sundials_NonlinearSolver.t
     -> ?lsolver  : ('d, 'k) linear_solver
     -> float
     -> ('d, 'k) Nvector.t

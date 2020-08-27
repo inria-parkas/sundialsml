@@ -15,6 +15,9 @@ open Sundials
 
 include Sundials_NonlinearSolver_impl
 
+type ('data, 'kind, 's) t
+    = ('data, 'kind, 's) Sundials_NonlinearSolver_impl.nonlinear_solver
+
 (* "Simulate" Linear Solvers in Sundials < 4.0.0 *)
 let in_compat_mode =
   match Config.sundials_version with
@@ -63,7 +66,7 @@ external c_get_num_conv_fails : ('d, 'k, 's) cptr -> int
 
 (* - - - OCaml invoking init/setup/solve - - - *)
 
-let init (type d k s) ({ rawptr; solver } : (d, k, s) nonlinear_solver) =
+let init (type d k s) ({ rawptr; solver } : (d, k, s) t) =
   check_compat ();
   match solver with
   | CustomSolver     { init = Some f }  -> f ()              (* O/Onls *)
@@ -119,7 +122,7 @@ let set_lsolve_fn { rawptr; solver; callbacks } cbf =
          c_set_lsolve_fn rawptr
 
 let set_convtest_fn (type d k s)
-                    ({ rawptr; solver; callbacks } : (d, k, s) nonlinear_solver)
+                    ({ rawptr; solver; callbacks } : (d, k, s) t)
                     (cbf : (d, s) convtestfn) =
   check_compat ();
   match solver with
@@ -133,7 +136,7 @@ let set_convtest_fn (type d k s)
       -> callbacks.convtestfn <- cbf;
          c_set_convtest_fn rawptr
 
-let set_max_iters (type d k s) ({ rawptr; solver } : (d, k, s) nonlinear_solver) i =
+let set_max_iters (type d k s) ({ rawptr; solver } : (d, k, s) t) i =
   check_compat ();
   match solver with
   | CustomSolver     { set_max_iters = Some f } -> f i
@@ -143,7 +146,7 @@ let set_max_iters (type d k s) ({ rawptr; solver } : (d, k, s) nonlinear_solver)
   | FixedPointSolver _ | NewtonSolver
       -> c_set_max_iters rawptr i
 
-let get_num_iters (type d k s) ({ rawptr; solver } : (d, k, s) nonlinear_solver) =
+let get_num_iters (type d k s) ({ rawptr; solver } : (d, k, s) t) =
   check_compat ();
   match solver with
   | CustomSolver     { get_num_iters = Some f } -> f ()
@@ -153,7 +156,7 @@ let get_num_iters (type d k s) ({ rawptr; solver } : (d, k, s) nonlinear_solver)
   | FixedPointSolver _ | NewtonSolver
       -> c_get_num_iters rawptr
 
-let get_cur_iter (type d k s) ({ rawptr; solver } : (d, k, s) nonlinear_solver) =
+let get_cur_iter (type d k s) ({ rawptr; solver } : (d, k, s) t) =
   check_compat ();
   match solver with
   | CustomSolver     { get_cur_iter = Some f } -> f ()
@@ -164,7 +167,7 @@ let get_cur_iter (type d k s) ({ rawptr; solver } : (d, k, s) nonlinear_solver) 
       -> c_get_cur_iter rawptr
 
 let get_num_conv_fails (type d k s)
-                       ({ rawptr; solver } : (d, k, s) nonlinear_solver) =
+                       ({ rawptr; solver } : (d, k, s) t) =
   check_compat ();
   match solver with
   | CustomSolver     { get_num_conv_fails = Some f } -> f ()

@@ -700,7 +700,7 @@ external c_init
 
 let init lmm tol ?(nlsolver : ('data, 'kind,
             (('data, 'kind) session) Sundials_NonlinearSolver.integrator)
-           Sundials_NonlinearSolver.nonlinear_solver option) ?lsolver f ?(roots=no_roots) t0 y0 =
+           Sundials_NonlinearSolver.t option) ?lsolver f ?(roots=no_roots) t0 y0 =
   let (nroots, roots) = roots in
   let checkvec = Nvector.check y0 in
   if Sundials_configuration.safe && nroots < 0

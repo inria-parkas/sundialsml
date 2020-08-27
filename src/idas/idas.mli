@@ -341,7 +341,7 @@ module Sensitivity : sig (* {{{ *)
              -> ?sens_nlsolver:
                  (('d, 'k) Sundials_NonlinearSolver.Senswrapper.t, 'k,
                   (('d, 'k) Ida.session) Sundials_NonlinearSolver.integrator)
-                                Sundials_NonlinearSolver.nonlinear_solver
+                                Sundials_NonlinearSolver.t
              -> ?sens_params:sens_params
              -> ?fs:'d sensresfn
              -> ('d, 'k) Nvector.t array
@@ -356,7 +356,7 @@ module Sensitivity : sig (* {{{ *)
                -> ?sens_nlsolver:
                    (('d, 'k) Sundials_NonlinearSolver.Senswrapper.t, 'k,
                     (('d, 'k) Ida.session) Sundials_NonlinearSolver.integrator)
-                                  Sundials_NonlinearSolver.nonlinear_solver
+                                  Sundials_NonlinearSolver.t
                -> ('d, 'k) Nvector.t array
                -> ('d, 'k) Nvector.t array
                -> unit
@@ -1523,7 +1523,7 @@ module Adjoint : sig (* {{{ *)
     -> ('d, 'k) tolerance
     -> ?nlsolver:('d, 'k,
                   (('d, 'k) session) Sundials_NonlinearSolver.integrator)
-                  Sundials_NonlinearSolver.nonlinear_solver
+                  Sundials_NonlinearSolver.t
     -> lsolver:('d, 'k) linear_solver
     -> 'd bresfn
     -> ?varid:('d, 'k) Nvector.t
@@ -1762,7 +1762,7 @@ module Adjoint : sig (* {{{ *)
     ('d, 'k) bsession
     -> ?nlsolver:('d, 'k,
                   (('d, 'k) session) Sundials_NonlinearSolver.integrator)
-                  Sundials_NonlinearSolver.nonlinear_solver
+                  Sundials_NonlinearSolver.t
     -> ?lsolver:('d, 'k) linear_solver
     -> float
     -> ('d, 'k) Nvector.t
