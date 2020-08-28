@@ -53,6 +53,14 @@ enum lsolver_solver_data_tag {
     // NO! VARIANT_LSOLVER_SOLVER_DATA_CUSTOM
 };
 
+// values must match convention for SUNLinSolGetType and the declaration
+// LinearSolver.linear_solver_type
+enum lsolver_linear_solver_type {
+    VARIANT_LSOLVER_TYPE_DIRECT = 0,
+    VARIANT_LSOLVER_TYPE_ITERATIVE,
+    VARIANT_LSOLVER_TYPE_ITERATIVE_MATRIX,
+};
+
 // values must match convention for SUNLinSol_KLUSetOrdering
 enum lsolver_klu_ordering_tag {
     VARIANT_LSOLVER_KLU_ORDERING_AMD     = 0,
@@ -86,6 +94,15 @@ enum lsolver_ops_index {
     RECORD_LSOLVER_OPS_GET_RES_ID,
     RECORD_LSOLVER_OPS_GET_WORK_SPACE,
     RECORD_LSOLVER_OPS_SET_PREC_TYPE,
+};
+
+// values must match LinearSolver_impl.ocaml_callbacks type
+enum lsolver_ocaml_callbacks_index {
+    RECORD_LSOLVER_OCAML_CALLBACKS_ATIMES = 0,
+    RECORD_LSOLVER_OCAML_CALLBACKS_PSETUP,
+    RECORD_LSOLVER_OCAML_CALLBACKS_PSOLVE,
+    RECORD_LSOLVER_OCAML_CALLBACKS_SCALING_VECTOR1,
+    RECORD_LSOLVER_OCAML_CALLBACKS_SCALING_VECTOR2,
 };
 
 // values must match LinearSolver_impl.Custom.has_ops type

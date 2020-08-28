@@ -47,6 +47,37 @@ type ('matrix, 'data, 'kind, 'tag) t
 type ('mat, 'kind, 'tag) serial_t
   = ('mat, Nvector_serial.data, [>Nvector_serial.kind] as 'kind, 'tag) t
 
+(** Broadly classifies the operations provided by a linear solver and its
+    operating principle. *)
+type linear_solver_type =
+  | Direct          (** Performs an exact computation based on a matrix. *)
+  | Iterative       (** Computes an inexact approximation without a matrix. *)
+  | MatrixIterative (** Computes an inexact approximation using a matrix. *)
+
+(** {3:callbacks Callback Routines} *)
+
+(** A function [atimesfn v z] computes the action of the system
+    matrix on the vector [v], storing the result in [z]. The matrix is
+    represented implicitly by the effect of the function.
+
+    If a problem occurs the function raises {!ATimesFailure}. *)
+type 'data atimesfn = 'data -> 'data -> unit
+
+(** Functions that set up any problem data in preparation for calls to
+    [psolvefn].
+
+    If a problem occurs the function raises {!PSetFailure}. *)
+type psetupfn = unit -> unit
+
+(** A function [psolvefn r z tol lr] that solves the preconditioner
+    equation {% $Pz = r$ %} for the vector [z] such that
+    {% $\left\lVert Pz - r \right\rVert_\mathrm{wrms} < \mathit{tol}$ %}.
+    If [lr] is [true] then {% $P$ %} should be treated as a left
+    preconditioner and otherwise as a right preconditioner.
+
+    If a problem occurs the function raises {!PSolveFailure}. *)
+type 'data psolvefn = 'data -> 'data -> float -> bool -> unit
+
 (** {2:lsolvers Linear Solver Families} *)
 
 (** Direct Linear Solvers *)
@@ -455,18 +486,18 @@ module Custom : sig (* {{{ *)
     -> unit
 
   (** Functions that set up any problem data in preparation for calls to
-    [psolvefn].
+      [psolvefn].
 
-    If a problem occurs the function raises {!PSetFailure}. *)
+      If a problem occurs the function raises {!PSetFailure}. *)
   type psetupfn = unit -> unit
 
   (** A function [psolvefn r z tol lr] that solves the preconditioner
-    equation {% $Pz = r$ %} for the vector [z] such that
-    {% $\left\lVert Pz - r \right\rVert_\mathrm{wrms} < \mathit{tol}$ %}.
-    If [lr] is [true] then {% $P$ %} should be treated as a left
-    preconditioner and otherwise as a right preconditioner.
+      equation {% $Pz = r$ %} for the vector [z] such that
+      {% $\left\lVert Pz - r \right\rVert_\mathrm{wrms} < \mathit{tol}$ %}.
+      If [lr] is [true] then {% $P$ %} should be treated as a left
+      preconditioner and otherwise as a right preconditioner.
 
-    If a problem occurs the function raises {!PSolveFailure}. *)
+      If a problem occurs the function raises {!PSolveFailure}. *)
   type ('data, 'kind) psolvefn =
     ('data, 'kind) Nvector.t
     -> ('data, 'kind) Nvector.t
@@ -475,11 +506,14 @@ module Custom : sig (* {{{ *)
     -> unit
 
   (** The operations required to implement an iterative linear solver.
-    Failure should be indicated by raising an exception (preferably
-    one of the exceptions in this package). Raising
-    {!exception:Sundials.RecoverableFailure} indicates a generic
-    recoverable failure. *)
+      Failure should be indicated by raising an exception (preferably
+      one of the exceptions in this package). Raising
+      {!exception:Sundials.RecoverableFailure} indicates a generic
+      recoverable failure. *)
   type ('matrix, 'data, 'kind, 'lsolver) ops = {
+      solver_type : linear_solver_type;
+      (** Broadly classifies the operations provided by a linear solver and
+          its operating principle. *)
 
       init : 'lsolver -> unit;
       (** Performs linear solver initalization. *)
@@ -488,15 +522,20 @@ module Custom : sig (* {{{ *)
       (** Performs linear solver setup. *)
 
       solve : 'lsolver -> 'matrix -> 'data -> 'data -> float -> unit;
-      (** The call [solve ls x b tol] should solve the linear system
-      {% $Ax = b$ %} to within the weight 2-norm tolerance [tol].
-      {% $A$ %} is only available indirectly via the [atimes] function. *)
+      (** The call [solve ls a x b tol] should solve the linear system
+          {% $Ax = b$ %}.
+
+          Direct solvers can ignore [tol].
+          Matrix-free solvers can ignore [a] (relying instead on the [atimes]
+          function).
+          Iterative solvesr should attempt to solve to within the weighted
+          2-norm tolerance, [tol]. *)
 
       set_atimes
         : ('lsolver -> ('data, 'kind) atimesfn -> unit) option;
       (** Provides the linear solver with a problem-specific {!atimesfn}.
-        The given function may only be used within [init], [setup],
-        and [solve]. *)
+          The given function may only be used within [init], [setup],
+          and [solve]. *)
 
       set_preconditioner
       : ('lsolver
@@ -504,20 +543,20 @@ module Custom : sig (* {{{ *)
          -> ('data, 'kind) psolvefn option
          -> unit) option;
       (** Provides the linear solver with preconditioner routines.
-        The given functions may only be used within [init], [setup],
-        and [solve]. *)
+          The given functions may only be used within [init], [setup],
+          and [solve]. *)
 
       set_scaling_vectors
         : ('lsolver -> 'data option -> 'data option -> unit) option;
       (** Passes the left/right scaling vectors for use in [solve].
-      The call [set_scaling_vectors ls s1 s2] provides diagonal matrices
-      of scale factors for solving the system
-      {% $\tilde{A}\tilde{x} = \tilde{b}$ %}
-      where
-      {% $\tilde{A} = S_1 P_1^{-1} A P_2^{-1} S_2^{-1}$ %},
-      {% $\tilde{b} = S_1 P_1^{-1} b$ %}, and
-      {% $\tilde{x} = S_2 P_2 x$ %}.
-      A [None] argument indicates an identity scaling matrix. *)
+          The call [set_scaling_vectors ls s1 s2] provides diagonal matrices
+          of scale factors for solving the system
+          {% $\tilde{A}\tilde{x} = \tilde{b}$ %}
+          where
+          {% $\tilde{A} = S_1 P_1^{-1} A P_2^{-1} S_2^{-1}$ %},
+          {% $\tilde{b} = S_1 P_1^{-1} b$ %}, and
+          {% $\tilde{x} = S_2 P_2 x$ %}.
+          A [None] argument indicates an identity scaling matrix. *)
 
       get_num_iters : ('lsolver -> int) option;
       (** The number of linear iterations performed in the last
@@ -528,16 +567,16 @@ module Custom : sig (* {{{ *)
 
       get_res_id : ('lsolver -> ('data, 'kind) Nvector.t) option;
       (** The preconditioned initial residual vector. This vector may be
-      requested if the iterative method computes the preconditioned
-      initial residual and returns from [solve] successfully without
-      performing any iterations (i.e., either the initial guess or the
-      preconditioner is sufficiently accurate). *)
+          requested if the iterative method computes the preconditioned
+          initial residual and returns from [solve] successfully without
+          performing any iterations (i.e., either the initial guess or the
+          preconditioner is sufficiently accurate). *)
 
       get_work_space : ('lsolver -> int * int) option;
       (** Return the storage requirements for the linear solver.
-      The result [(lrw, liw)] gives the number of words used for
-      storing real values ([lrw]) and the number of words used
-      for storing integer values ([liw]). * *)
+          The result [(lrw, liw)] gives the number of words used for
+          storing real values ([lrw]) and the number of words used
+          for storing integer values ([liw]). * *)
 
       (** Called by Iterative.set_prec_type and when a linear solver is
           associated with an integrator. *)
@@ -596,6 +635,105 @@ module Custom : sig (* {{{ *)
            -> ('matrix, 'data, 'kind, [`Dls|`Custom of 'lsolver]) t
 
 end (* }}} *)
+
+(** {2:ops Operations} *)
+
+(** Set the linear solver's problem-specific {!atimesfn}.
+
+    @nocvode <node> SUNLinSolSetATimes *)
+val set_atimes : ('m, 'd, 'k, 't) t -> 'd atimesfn -> unit
+
+(** Set the linear solver's preconditioner routines.
+
+    @nocvode <node> SUNLinSolSetPreconditioner *)
+val set_preconditioner :
+    ('m, 'd, 'k, 't) t
+  -> psetupfn
+  -> 'd psolvefn
+  -> unit
+
+(** Sets the linear solver's left/right scaling vectors for use in {!solve}.
+    The call [set_scaling_vectors ls s1 s2] provides diagonal matrices
+    of scale factors for solving the system
+    {% $\tilde{A}\tilde{x} = \tilde{b}$ %}
+    where
+    {% $\tilde{A} = S_1 P_1^{-1} A P_2^{-1} S_2^{-1}$ %},
+    {% $\tilde{b} = S_1 P_1^{-1} b$ %}, and
+    {% $\tilde{x} = S_2 P_2 x$ %}.
+
+    Note that the underlying data structures may be used directly by the
+    linear solver, i.e., without a copy.
+
+    @nocvode <node> SUNLinSolSetScalingVectors *)
+val set_scaling_vectors :
+     ('m, 'd, 'k, 't) t
+  -> ('d, 'k) Nvector.t
+  -> ('d, 'k) Nvector.t
+  -> unit
+
+(** Initializes a linear solver.
+
+    @nocvode <node> SUNLinSolInitialize *)
+val init : ('m, 'd, 'k, 't) t -> unit
+
+(** Instruct the linear solver to prepare to solve using an updated
+    system matrix.
+
+    @nocvode <node> SUNLinSolSetup *)
+val setup : ('m, 'd, 'k, 't) t -> ('a, 'm, 'd, 'k) Matrix.t -> unit
+
+(** Solve a linear system.
+    The call [solve ls a x b tol] solves the linear system
+    {% $Ax = b$ %}.
+
+    Direct solvers ignore [tol].
+    Matrix-free solvers ignore [a], relying instead on the function passed to
+    {!set_atimes}.
+    Iterative solvesr attempt to respect the weighted 2-norm tolerance,
+    [tol].
+
+    @nocvode <node> SUNLinSolSolve *)
+val solve :
+     ('m, 'd, 'k, 't) t
+  -> ('a, 'm, 'd, 'k) Matrix.t
+  -> ('d, 'k) Nvector.t
+  -> ('d, 'k) Nvector.t
+  -> float
+  -> unit
+
+(* The number of linear iterations performed in the last {!solve} call.
+
+    @nocvode <node> SUNLinNumIters *)
+val get_num_iters : ('m, 'd, 'k, 't) t -> int
+
+(* The final residual norm from the last {!solve} call.
+
+    @nocvode <node> SUNLinResNorm *)
+val get_res_norm : ('m, 'd, 'k, 't) t -> float
+
+(* The preconditioned initial residual vector.
+   May be called when an iterative method computes the preconditioned initial
+   residual and {!solve} succeeds without performing any iterations, i.e., if
+   the intial guess or the preconditioner is sufficiently accurate.
+
+   The linear solver may return a reference to its internal array, i.e., it
+   may not return a copy.
+
+   @nocvode <node> SUNLinResNorm *)
+val get_res_id : ('m, 'd, 'k, 't) t -> 'd
+
+(** Returns the type of the linear solver.
+
+    @nocvode <node> SUNLinSolGetType *)
+val get_type : ('m, 'd, 'k, 't) t -> linear_solver_type
+
+(** The storage requirements of the linear solver.
+    The result [(lrw, liw)] gives the number of words used for
+    storing real values ([lrw]) and the number of words used
+    for storing integer values ([liw]).
+
+    @nocvode <node> SUNLinSpace *)
+val get_work_space : ('m, 'd, 'k, 't) t -> int * int
 
 (** {2:exceptions Exceptions} *)
 

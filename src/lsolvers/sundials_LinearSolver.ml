@@ -48,6 +48,12 @@ type ('mat, 'kind, 'tag) serial_t
   = ('mat, Nvector_serial.data, [>Nvector_serial.kind] as 'kind, 'tag)
       linear_solver
 
+(* Must correspond with linearSolver_ml.h:lsolver_linear_solver_type *)
+type linear_solver_type = LSI.linear_solver_type =
+  | Direct
+  | Iterative
+  | MatrixIterative
+
 module Direct = struct (* {{{ *)
 
   external c_dense
@@ -62,6 +68,7 @@ module Direct = struct (* {{{ *)
     matrix = Some mat;
     compat = LSI.Iterative.info;
     check_prec_type = (fun _ -> true);
+    ocaml_callbacks = empty_ocaml_callbacks ();
     attached = false;
   }
 
@@ -80,6 +87,7 @@ module Direct = struct (* {{{ *)
       matrix = Some mat;
       compat = LSI.Iterative.info;
       check_prec_type = (fun _ -> true);
+      ocaml_callbacks = empty_ocaml_callbacks ();
       attached = false;
     }
 
@@ -95,6 +103,7 @@ module Direct = struct (* {{{ *)
     matrix = Some mat;
     compat = LSI.Iterative.info;
     check_prec_type = (fun _ -> true);
+    ocaml_callbacks = empty_ocaml_callbacks ();
     attached = false;
   }
 
@@ -113,6 +122,7 @@ module Direct = struct (* {{{ *)
       matrix = Some mat;
       compat = LSI.Iterative.info;
       check_prec_type = (fun _ -> true);
+      ocaml_callbacks = empty_ocaml_callbacks ();
       attached = false;
     }
 
@@ -141,6 +151,7 @@ module Direct = struct (* {{{ *)
         matrix = Some mat;
         compat = LSI.Iterative.info;
         check_prec_type = (fun _ -> true);
+        ocaml_callbacks = empty_ocaml_callbacks ();
         attached = false;
       }
 
@@ -208,6 +219,7 @@ module Direct = struct (* {{{ *)
         matrix = Some mat;
         compat = LSI.Iterative.info;
         check_prec_type = (fun _ -> true);
+        ocaml_callbacks = empty_ocaml_callbacks ();
         attached = false;
       }
 
@@ -294,6 +306,7 @@ module Iterative = struct (* {{{ *)
       matrix = None;
       compat = compat;
       check_prec_type = (fun _ -> true);
+      ocaml_callbacks = empty_ocaml_callbacks ();
       attached = false;
     }
 
@@ -330,6 +343,7 @@ module Iterative = struct (* {{{ *)
       matrix = None;
       compat = compat;
       check_prec_type = (fun _ -> true);
+      ocaml_callbacks = empty_ocaml_callbacks ();
       attached = false;
     }
 
@@ -366,6 +380,7 @@ module Iterative = struct (* {{{ *)
       matrix = None;
       compat = compat;
       check_prec_type = (fun _ -> true);
+      ocaml_callbacks = empty_ocaml_callbacks ();
       attached = false;
     }
 
@@ -388,6 +403,7 @@ module Iterative = struct (* {{{ *)
       matrix = None;
       compat = compat;
       check_prec_type = (fun _ -> true);
+      ocaml_callbacks = empty_ocaml_callbacks ();
       attached = false;
     }
 
@@ -409,6 +425,7 @@ module Iterative = struct (* {{{ *)
       matrix = None;
       compat = compat;
       check_prec_type = (fun _ -> true);
+      ocaml_callbacks = empty_ocaml_callbacks ();
       attached = false;
     }
 
@@ -462,21 +479,16 @@ end (* }}} *)
 
 module Custom = struct (* {{{ *)
 
-  type ('data, 'kind) atimesfn =
-    ('data, 'kind) Nvector.t
-    -> ('data, 'kind) Nvector.t
-    -> unit
+  type ('d, 'k) atimesfn =
+    ('d, 'k) Nvector.t -> ('d, 'k) Nvector.t -> unit
 
   type psetupfn = unit -> unit
 
-  type ('data, 'kind) psolvefn =
-    ('data, 'kind) Nvector.t
-    -> ('data, 'kind) Nvector.t
-    -> float
-    -> bool
-    -> unit
+  type ('d, 'k) psolvefn =
+    ('d, 'k) Nvector.t -> ('d, 'k) Nvector.t -> float -> bool -> unit
 
   type ('matrix, 'data, 'kind, 'lsolver) ops = {
+      solver_type : linear_solver_type;
 
       init : 'lsolver -> unit;
 
@@ -544,7 +556,8 @@ module Custom = struct (* {{{ *)
     | None -> (fun _ -> failwith ("internal error: Iterative.Custom." ^ s))
     | Some f -> fun () -> f x
 
-  let make { init = finit;
+  let make { solver_type = stype;
+             init = finit;
              setup = fsetup;
              solve = fsolve;
              set_atimes = fset_atimes;
@@ -585,11 +598,12 @@ module Custom = struct (* {{{ *)
        })
     in
     LS {
-       rawptr = c_make_custom 1 ops only_ops;
+       rawptr = c_make_custom stype ops only_ops;
        solver = Custom (ldata, ops);
        matrix = mat;
        compat = LSI.Iterative.info;
        check_prec_type = (fun _ -> true);
+       ocaml_callbacks = empty_ocaml_callbacks ();
        attached = false;
      }
 
@@ -647,15 +661,97 @@ module Custom = struct (* {{{ *)
        })
     in
     LS {
-     rawptr = c_make_custom 0 ops only_ops;
+     rawptr = c_make_custom Direct ops only_ops;
      solver = Custom (ldata, ops);
      matrix = Some mat;
      compat = LSI.Iterative.info;
      check_prec_type = (fun _ -> true);
+     ocaml_callbacks = empty_ocaml_callbacks ();
      attached = false;
    }
 
 end (* }}} *)
+
+external c_get_type : ('m, 'd, 'k) cptr -> linear_solver_type
+  = "sunml_lsolver_get_type"
+
+let get_type (LS { rawptr }) = c_get_type rawptr
+
+external c_set_atimes
+  : ('m, 'd, 'k) cptr
+    -> ('d, 'k) ocaml_callbacks Sundials_impl.Vptr.vptr
+    -> unit
+  = "sunml_lsolver_set_atimes"
+
+let set_atimes (LS { rawptr; ocaml_callbacks }) fn =
+  (Sundials_impl.Vptr.unwrap ocaml_callbacks).ocaml_atimes <- fn;
+  c_set_atimes rawptr ocaml_callbacks
+
+external c_set_preconditioner
+  : ('m, 'd, 'k) cptr
+    -> ('d, 'k) ocaml_callbacks Sundials_impl.Vptr.vptr
+    -> unit
+  = "sunml_lsolver_set_preconditioner"
+
+let set_preconditioner (LS { rawptr; ocaml_callbacks }) psetupf psolvef =
+  let cb = Sundials_impl.Vptr.unwrap ocaml_callbacks in
+  cb.ocaml_psetup <- psetupf;
+  cb.ocaml_psolve <- psolvef;
+  c_set_preconditioner rawptr ocaml_callbacks
+
+external c_set_scaling_vectors
+  : ('m, 'd, 'k) cptr
+    -> ('d, 'k) Nvector.t
+    -> ('d, 'k) Nvector.t
+    -> unit
+  = "sunml_lsolver_set_scaling_vectors"
+
+let set_scaling_vectors (LS { rawptr; ocaml_callbacks }) s1 s2 =
+  let cb = Sundials_impl.Vptr.unwrap ocaml_callbacks in
+  cb.scaling_vector1 <- Some s1; (* prevent garbage collection *)
+  cb.scaling_vector2 <- Some s2; (* prevent garbage collection *)
+  c_set_scaling_vectors rawptr s1 s2
+
+external c_initialize : ('m, 'd, 'k) cptr -> unit
+  = "sunml_lsolver_initialize"
+
+let init (LS { rawptr }) = c_initialize rawptr
+
+external c_setup : ('m, 'nd, 'nk) cptr -> ('a, 'm, 'd, 'k) Matrix.t -> unit
+  = "sunml_lsolver_setup"
+
+let setup (LS { rawptr }) = c_setup rawptr
+
+external c_solve :
+     ('m, 'd, 'k) cptr
+  -> ('a, 'm, 'd, 'k) Matrix.t
+  -> ('d, 'k) Nvector.t
+  -> ('d, 'k) Nvector.t
+  -> float
+  -> unit
+  = "sunml_lsolver_solve"
+
+let solve (LS { rawptr }) = c_solve rawptr
+
+external c_iters : ('m, 'd, 'k) cptr -> int
+  = "sunml_lsolver_iters"
+
+let get_num_iters (LS { rawptr }) = c_iters rawptr
+
+external c_res_norm : ('m, 'd, 'k) cptr -> float
+  = "sunml_lsolver_res_norm"
+
+let get_res_norm (LS { rawptr }) = c_res_norm rawptr
+
+external c_res_id : ('m, 'd, 'k) cptr -> 'd
+  = "sunml_lsolver_res_id"
+
+let get_res_id (LS { rawptr }) = c_res_id rawptr
+
+external c_space : ('m, 'd, 'k) cptr -> int * int
+  = "sunml_lsolver_space"
+
+let get_work_space (LS { rawptr }) = c_space rawptr
 
 (* Let C code know about some of the values in this module.  *)
 external c_init_module : exn array -> unit =

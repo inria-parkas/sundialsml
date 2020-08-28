@@ -21,6 +21,8 @@
 #if 300 <= SUNDIALS_LIB_VERSION
 #include <sundials/sundials_linearsolver.h>
 
+#include <assert.h>
+
 #include <stdio.h>
 #include <sunlinsol/sunlinsol_band.h>
 #include <sunlinsol/sunlinsol_dense.h>
@@ -57,10 +59,18 @@
 #include <caml/fail.h>
 #include <caml/bigarray.h>
 
+#define MAX_ERRMSG_LEN 256
+
 CAMLprim void sunml_lsolver_init_module (value exns)
 {
     CAMLparam1 (exns);
     REGISTER_EXNS (LSOLVER, exns);
+    assert((int)VARIANT_LSOLVER_TYPE_DIRECT
+	    == SUNLINEARSOLVER_DIRECT);
+    assert((int)VARIANT_LSOLVER_TYPE_ITERATIVE
+	    == SUNLINEARSOLVER_ITERATIVE);
+    assert((int)VARIANT_LSOLVER_TYPE_ITERATIVE_MATRIX
+	    == SUNLINEARSOLVER_MATRIX_ITERATIVE);
     CAMLreturn0;
 }
 
@@ -801,6 +811,14 @@ static SUNLinearSolver_Type callml_custom_gettype_iterative(SUNLinearSolver ls)
     return SUNLINEARSOLVER_ITERATIVE;
 }
 
+#if 400 <= SUNDIALS_LIB_VERSION
+static SUNLinearSolver_Type callml_custom_gettype_matrix_iterative(
+							    SUNLinearSolver ls)
+{
+    return SUNLINEARSOLVER_MATRIX_ITERATIVE;
+}
+#endif
+
 struct atimes_with_data {
     ATimesFn atimes_func;
     void *atimes_data;
@@ -1052,12 +1070,14 @@ CAMLprim value sunml_lsolver_call_psolve(value vcptr, value vr, value vz,
 }
 #endif
 
-CAMLprim value sunml_lsolver_make_custom(value vid, value vops, value vhasops)
+CAMLprim value sunml_lsolver_make_custom(value vlstype,
+					 value vops, value vhasops)
 {
-    CAMLparam3(vid, vops, vhasops);
+    CAMLparam3(vlstype, vops, vhasops);
 #if 300 <= SUNDIALS_LIB_VERSION
     SUNLinearSolver ls;
     SUNLinearSolver_Ops ops;
+    SUNLinearSolver_Type (*callml_get_type)(SUNLinearSolver ls) = NULL;
 
     ls = (SUNLinearSolver)malloc(sizeof *ls);
     if (ls == NULL) caml_raise_out_of_memory();
@@ -1069,10 +1089,25 @@ CAMLprim value sunml_lsolver_make_custom(value vid, value vops, value vhasops)
 	caml_raise_out_of_memory();
     }
 
+    switch (Int_val(vlstype)) {
+	case SUNLINEARSOLVER_DIRECT:
+	    callml_get_type = callml_custom_gettype_direct;
+	    break;
+	case SUNLINEARSOLVER_ITERATIVE:
+	    callml_get_type = callml_custom_gettype_iterative;
+	    break;
+#if 400 <= SUNDIALS_LIB_VERSION
+	case SUNLINEARSOLVER_MATRIX_ITERATIVE:
+	    callml_get_type = callml_custom_gettype_matrix_iterative;
+	    break;
+#endif
+	default:
+	    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+	    break;
+    }
+
     /* Attach operations */
-    ops->gettype           = (Int_val(vid) == 0)
-				? callml_custom_gettype_direct
-				: callml_custom_gettype_iterative;
+    ops->gettype           = callml_get_type;
     ops->initialize	   = callml_custom_initialize;
     ops->setup             = callml_custom_setup;
     ops->solve             = callml_custom_solve;
@@ -1268,5 +1303,278 @@ CAMLprim value sunml_spils_qr_sol(value vn, value vh, value vq, value vb)
     }
 
     CAMLreturn (Val_unit);
+}
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Invoking linear solver functions from OCaml
+ */
+
+#if 400 <= SUNDIALS_LIB_VERSION
+static int ocaml_atimes(void *callback_croot, N_Vector v, N_Vector z)
+{
+    CAMLparam0();
+    CAMLlocalN (args, 2);
+
+    value *croot = VPTRCROOT(callback_croot);
+
+    args[0] = NVEC_BACKLINK(v);
+    args[1] = NVEC_BACKLINK(z);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn
+	(Field(*croot, RECORD_LSOLVER_OCAML_CALLBACKS_ATIMES), 2, args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION(r));
+}
+
+static int ocaml_psetup(void *callback_croot)
+{
+    CAMLparam0();
+
+    value *croot = VPTRCROOT(callback_croot);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback_exn
+	(Field(*croot, RECORD_LSOLVER_OCAML_CALLBACKS_PSETUP), Val_unit);
+
+    CAMLreturnT(int, CHECK_EXCEPTION(r));
+}
+
+int ocaml_psolve(void *callback_croot,
+		 N_Vector w, N_Vector z, realtype tol, int lr)
+{
+    CAMLparam0();
+    CAMLlocalN (args, 4);
+
+    value *croot = VPTRCROOT(callback_croot);
+
+    args[0] = NVEC_BACKLINK(w);
+    args[1] = NVEC_BACKLINK(z);
+    args[2] = caml_copy_double(tol);
+    args[3] = (lr == 1) ? Val_true : Val_false;
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn
+	(Field(*croot, RECORD_LSOLVER_OCAML_CALLBACKS_PSOLVE), 4, args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION(r));
+}
+#endif
+
+static void sunml_lsolver_check_flag(const char *call, int flag)
+{
+    static char exmsg[MAX_ERRMSG_LEN] = "";
+
+    if (flag == SUNLS_SUCCESS) return;
+
+    switch (flag) {
+#if 400 <= SUNDIALS_LIB_VERSION
+	case SUNLS_ILL_INPUT:
+	    caml_invalid_argument(call);
+
+	case SUNLS_MEM_FAIL:
+	    caml_raise_out_of_memory();
+
+	case SUNLS_ATIMES_FAIL_UNREC:
+	    caml_raise_with_arg(LSOLVER_EXN(ATimesFailure), Val_false);
+
+	case SUNLS_PSET_FAIL_UNREC:
+	    caml_raise_with_arg(LSOLVER_EXN(PSetFailure), Val_false);
+
+	case SUNLS_PSOLVE_FAIL_UNREC:
+	    caml_raise_with_arg(LSOLVER_EXN(PSolveFailure), Val_false);
+
+	case SUNLS_PACKAGE_FAIL_UNREC:
+	    caml_raise_with_arg(LSOLVER_EXN(PackageFailure), Val_false);
+
+	case SUNLS_GS_FAIL:
+	    caml_raise_constant(LSOLVER_EXN(GSFailure));
+
+	case SUNLS_QRSOL_FAIL:
+	    caml_raise_constant(LSOLVER_EXN(QRSolFailure));
+
+	case SUNLS_VECTOROP_ERR:
+	    caml_raise_constant(LSOLVER_EXN(VectorOpError));
+
+	case SUNLS_RES_REDUCED:
+	    caml_raise_constant(LSOLVER_EXN(ResReduced));
+
+	case SUNLS_CONV_FAIL:
+	    caml_raise_constant(LSOLVER_EXN(ConvFailure));
+
+	case SUNLS_ATIMES_FAIL_REC:
+	    caml_raise_with_arg(LSOLVER_EXN(ATimesFailure), Val_true);
+
+	case SUNLS_PSET_FAIL_REC:
+	    caml_raise_with_arg(LSOLVER_EXN(PSetFailure), Val_true);
+
+	case SUNLS_PSOLVE_FAIL_REC:
+	    caml_raise_with_arg(LSOLVER_EXN(PSolveFailure), Val_true);
+
+	case SUNLS_PACKAGE_FAIL_REC:
+	    caml_raise_with_arg(LSOLVER_EXN(PackageFailure), Val_true);
+
+	case SUNLS_QRFACT_FAIL:
+	    caml_raise_constant(LSOLVER_EXN(QRfactFailure));
+
+	case SUNLS_LUFACT_FAIL:
+	    caml_raise_constant(LSOLVER_EXN(LUfactFailure));
+#endif
+	default:
+	    if (flag > 0) {
+		caml_raise_constant(SUNDIALS_EXN(RecoverableFailure));
+	    } else {
+		snprintf(exmsg, MAX_ERRMSG_LEN, "%s: unexpected error", call);
+		caml_failwith(exmsg);
+	    }
+    }
+}
+
+#define CHECK_FLAG(call, flag) if (flag != SUNLS_SUCCESS) \
+				 sunml_lsolver_check_flag(call, flag)
+
+CAMLprim value sunml_lsolver_get_type(value vcptr)
+{
+    CAMLparam1(vcptr);
+    CAMLlocal1(r);
+#if 400 <= SUNDIALS_LIB_VERSION
+    r = Val_int(SUNLinSolGetType(LSOLVER_VAL(vcptr)));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(r);
+}
+
+CAMLprim value sunml_lsolver_set_atimes(value vcptr, value vcroot)
+{
+    CAMLparam2(vcroot, vcroot);
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = SUNLinSolSetATimes(LSOLVER_VAL(vcptr), VPTRCROOT(vcroot),
+				  ocaml_atimes);
+    CHECK_FLAG("SUNLinSolSetATimes", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim value sunml_lsolver_set_preconditioner(value vcptr, value vcroot)
+{
+    CAMLparam2(vcptr, vcroot);
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = SUNLinSolSetPreconditioner(LSOLVER_VAL(vcptr), VPTRCROOT(vcroot),
+					  ocaml_psetup, ocaml_psolve);
+    CHECK_FLAG("SUNLinSolSetATimes", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim value sunml_lsolver_set_scaling_vectors(value vcptr,
+						 value vs1, value vs2)
+{
+    CAMLparam3(vcptr, vs1, vs2);
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = SUNLinSolSetScalingVectors(LSOLVER_VAL(vcptr),
+					  NVEC_VAL(vs1), NVEC_VAL(vs2));
+    CHECK_FLAG("SUNLinSolSetScalingVectors", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim value sunml_lsolver_initialize(value vcptr)
+{
+    CAMLparam1(vcptr);
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = SUNLinSolInitialize(LSOLVER_VAL(vcptr));
+    CHECK_FLAG("SUNLinSolInitialize", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim value sunml_lsolver_setup(value vcptr, value vm)
+{
+    CAMLparam1(vcptr);
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = SUNLinSolSetup(LSOLVER_VAL(vcptr), MAT_VAL(vm));
+    CHECK_FLAG("SUNLinSolSetup", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim value sunml_lsolver_solve(value vcptr, value va, value vx,
+				   value vb, value vtol)
+{
+    CAMLparam5(vcptr, va, vx, vb, vtol);
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag = SUNLinSolSolve(LSOLVER_VAL(vcptr), MAT_VAL(va), NVEC_VAL(vx),
+			      NVEC_VAL(vb), Double_val(vtol));
+    CHECK_FLAG("SUNLinSolSolve", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim value sunml_lsolver_iters(value vcptr)
+{
+    CAMLparam1(vcptr);
+    CAMLlocal1(r);
+#if 400 <= SUNDIALS_LIB_VERSION
+    r = Val_int(SUNLinSolNumIters(LSOLVER_VAL(vcptr)));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(r);
+}
+
+CAMLprim value sunml_lsolver_res_norm(value vcptr)
+{
+    CAMLparam1(vcptr);
+    CAMLlocal1(r);
+#if 400 <= SUNDIALS_LIB_VERSION
+    r = caml_copy_double(SUNLinSolResNorm(LSOLVER_VAL(vcptr)));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(r);
+}
+
+CAMLprim value sunml_lsolver_res_id(value vcptr)
+{
+    CAMLparam1(vcptr);
+    CAMLlocal1(r);
+#if 400 <= SUNDIALS_LIB_VERSION
+    N_Vector resid = SUNLinSolResid(LSOLVER_VAL(vcptr));
+    r = NVEC_BACKLINK(resid);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(r);
+}
+
+CAMLprim value sunml_lsolver_space(value vcptr)
+{
+    CAMLparam1(vcptr);
+    CAMLlocal1(r);
+#if 400 <= SUNDIALS_LIB_VERSION
+    long int lenrwLS, leniwLS;
+    int flag = SUNLinSolSpace(LSOLVER_VAL(vcptr), &lenrwLS, &leniwLS);
+    CHECK_FLAG("SUNLinSolSpace", flag);
+
+    r = caml_alloc_tuple(3);
+    Store_field(r, 0, Val_int(lenrwLS));
+    Store_field(r, 1, Val_int(leniwLS));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(r);
 }
 

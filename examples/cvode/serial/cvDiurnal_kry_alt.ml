@@ -308,6 +308,7 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
   let ops =
     let open LS.Custom in
     {
+      solver_type         = Iterative;
       init                = init;
       setup               = setup;
       solve               = solve;

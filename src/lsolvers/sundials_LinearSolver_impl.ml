@@ -24,6 +24,11 @@ let e = Sundials.RecoverableFailure
    be opaque outside of Sundials/ML, we simply do not install the
    lsolver_impl.cmi file. *)
 
+type linear_solver_type =
+  | Direct
+  | Iterative
+  | MatrixIterative
+
 module Klu = struct (* {{{ *)
 
   (* Must correspond with linearSolver_ml.h:lsolver_klu_ordering_tag *)
@@ -197,6 +202,19 @@ type ('m, 'nd, 'nk, 't) solver_data =
   | Custom      : 'lsolver * ('m, 'nd, 'nk) Custom.ops
                    -> ('m, 'nd, 'nk, [>`Custom of 'lsolver]) solver_data
 
+type 'd atimesfn = 'd -> 'd -> unit
+type psetupfn = unit -> unit
+type 'd psolvefn = 'd -> 'd -> float -> bool -> unit
+
+(* Must correspond with linearSolver_ml.h:lsolver_ocaml_callbacks_index *)
+type ('d, 'k) ocaml_callbacks = {
+  mutable ocaml_atimes : 'd atimesfn;
+  mutable ocaml_psetup : psetupfn;
+  mutable ocaml_psolve : 'd psolvefn;
+  mutable scaling_vector1 : ('d, 'k) Nvector.t option;
+  mutable scaling_vector2 : ('d, 'k) Nvector.t option;
+}
+
 (* The type t is defined in two parts, record and constructor, for
    compatiblity with older versions of OCaml.
 
@@ -226,8 +244,18 @@ type ('m, 'mk, 'nd, 'nk, 't) linear_solver_data = {
   matrix : ('mk, 'm, 'nd, 'nk) Matrix.t option;
   compat : Iterative.info;
   mutable check_prec_type : Iterative.preconditioning_type -> bool;
+  ocaml_callbacks : ('nd, 'nk) ocaml_callbacks Sundials_impl.Vptr.vptr;
   mutable attached : bool;
 }
+
+let empty_ocaml_callbacks () =
+  Sundials_impl.Vptr.make ({
+    ocaml_atimes = (fun _ _     -> failwith "internal error: ocaml_atimes");
+    ocaml_psetup = (fun _       -> failwith "internal error: ocaml_psetup");
+    ocaml_psolve = (fun _ _ _ _ -> failwith "internal error: ocaml_psolve");
+    scaling_vector1 = None;
+    scaling_vector2 = None;
+  })
 
 (* Slight complication to hide matrix kind type argument as existential.
    This type argument is enforced by the module interface -- some
@@ -267,7 +295,7 @@ let impl_set_prec_type (type t) rawptr solver prec_type docheck =
   | _ -> c_set_prec_type rawptr solver prec_type docheck
 
 external c_make_custom
-  : int
+  : linear_solver_type
     -> ('m, 'nd, 'nk) Custom.ops
     -> Custom.has_ops
     -> ('m, 'nd, 'nk) cptr
