@@ -236,7 +236,7 @@ void sunml_nlsolver_check_flag(const char *call, int flag)
 		caml_raise_constant(SUNDIALS_EXN(RecoverableFailure));
 	    } else {
 		snprintf(exmsg, MAX_ERRMSG_LEN, "%s: unexpected error", call);
-		caml_failwith("unexpected nonlinear solver error");
+		caml_failwith(exmsg);
 	    }
     }
 }
