@@ -180,6 +180,39 @@ void sunml_sundials_free_value(value *pv)
     free (Hp_op(pv));
 }
 
+/* Functions for sharing OCaml values with C. */
+
+static void sunml_finalize_vptr(value cptr)
+{
+    value *croot = (*(value **)Data_custom_val(cptr));
+    if (croot != NULL) {
+	caml_remove_generational_global_root(croot);
+	free(croot);
+    }
+}
+
+CAMLprim value sunml_make_vptr(value v)
+{
+    CAMLparam1(v);
+    CAMLlocal2(cptr, vptr);
+    value *croot;
+
+    // create the croot and wrap it
+    cptr = caml_alloc_final(1, &sunml_finalize_vptr, 1, 20);
+    croot = malloc(sizeof(value));
+    (*(value **)Data_custom_val(cptr)) = croot;
+    if (croot == NULL) caml_raise_out_of_memory();
+    *croot = v;
+    caml_register_generational_global_root(croot);
+
+    // create the vptr pair
+    vptr = caml_alloc_tuple(1);
+    Store_field(vptr, 0, v);
+    Store_field(vptr, 1, cptr);
+
+    CAMLreturn(vptr);
+}
+
 /* Functions for manipulating FILE pointers. */
 
 static void finalize_cfile(value vf)

@@ -174,6 +174,8 @@ enum sundials_exn_index {
 #define SUNDIALS_EXN(name)     REGISTERED_EXN(SUNDIALS, name)
 #define SUNDIALS_EXN_TAG(name) REGISTERED_EXN_TAG(SUNDIALS, name)
 
+/* Return the value that a vptr points to. See Sundials_impl.make_vptr. */
+#define VPTRCROOT(x) (*(value **)Data_custom_val(Field(x, 1)))
 
 /* Callback functions are passed from OCaml to C by basically the same
  * mechanism as exceptions, but since callbacks are very frequently
