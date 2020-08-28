@@ -38,7 +38,6 @@ let e = Sundials.RecoverableFailure
  *     If these types are changed or augmented, the corresponding declarations
  *     in arkode_ml.h (and code in arkode_ml.c) must also be updated.
  *)
-external crash : string -> unit = "sunml_crash"
 
 type ('data, 'kind) nvector = ('data, 'kind) Nvector.t
 module LSI = Sundials_LinearSolver_impl
@@ -67,7 +66,7 @@ module DirectTypes = struct
       mutable jmat : 'm option (* Not used in Sundials >= 3.0.0 *)
     }
 
-  let no_callback = fun _ _ -> crash "no direct callback"
+  let no_callback = fun _ _ -> Sundials_impl.crash "no direct callback"
 
 end
 
@@ -133,7 +132,7 @@ module MassTypes' = struct
         mutable mmat : 'm option (* Not used in Sundials >= 3.0.0 *)
       }
 
-    let no_mass_callback = fun _ _ -> crash "no mass callback"
+    let no_mass_callback = fun _ _ -> Sundials_impl.crash "no mass callback"
   end
 
   module Iterative' = struct
@@ -477,23 +476,23 @@ let read_weak_ref x : ('a, 'kind, 'step) session =
    propagated properly depending on the context), we immediately abort
    the program. *)
 let dummy_rhsfn1 _ _ _ =
-  crash "Internal error: dummy_rhsfn1 called\n"
+  Sundials_impl.crash "Internal error: dummy_rhsfn1 called\n"
 let dummy_rhsfn2 _ _ _ =
-  crash "Internal error: dummy_rhsfn2 called\n"
+  Sundials_impl.crash "Internal error: dummy_rhsfn2 called\n"
 let dummy_rootsfn _ _ _ =
-  crash "Internal error: dummy_rootsfn called\n"
+  Sundials_impl.crash "Internal error: dummy_rootsfn called\n"
 let dummy_errh _ =
-  crash "Internal error: dummy_errh called\n"
+  Sundials_impl.crash "Internal error: dummy_errh called\n"
 let dummy_errw _ _ =
-  crash "Internal error: dummy_errw called\n"
+  Sundials_impl.crash "Internal error: dummy_errw called\n"
 let dummy_resw _ _ =
-  crash "Internal error: dummy_resw called\n"
+  Sundials_impl.crash "Internal error: dummy_resw called\n"
 let dummy_adaptfn _ _ _ =
-  (crash "Internal error: dummy_adaptfn called\n"; 0.0)
+  (Sundials_impl.crash "Internal error: dummy_adaptfn called\n")
 let dummy_stabfn _ _ =
-  (crash "Internal error: dummy_stabfn called\n"; 0.0)
+  (Sundials_impl.crash "Internal error: dummy_stabfn called\n")
 let dummy_resizefn _ _ =
-  crash "Internal error: dummy_resizefn called\n"
+  Sundials_impl.crash "Internal error: dummy_resizefn called\n"
 let dummy_poststepfn _ _ =
-  crash "Internal error: dummy_poststepfn called\n"
+  Sundials_impl.crash "Internal error: dummy_poststepfn called\n"
 

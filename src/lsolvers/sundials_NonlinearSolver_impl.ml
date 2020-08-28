@@ -144,12 +144,14 @@ let get_type (type d k s) ({ rawptr; solver } : (d, k, s) nonlinear_solver) =
   | CustomSolver { nls_type }     -> nls_type
   | CustomSensSolver { nls_type } -> nls_type
 
-external crash : string -> 'a = "sunml_crash"
-
-let empty_sysfn _ _ _ = crash "Internal error: nls_sysn called\n"
-let empty_lsetupfn _ _ _ _ = crash "Internal error: nls_lsetupfn called\n"
-let empty_lsolvefn _ _ _ = crash "Internal error: nls_lsolvefn called\n"
-let empty_convtestfn _ _ _ _ = crash "Internal error: nls_convtestfn called\n"
+let empty_sysfn _ _ _ =
+  Sundials_impl.crash "Internal error: nls_sysn called\n"
+let empty_lsetupfn _ _ _ _ =
+  Sundials_impl.crash "Internal error: nls_lsetupfn called\n"
+let empty_lsolvefn _ _ _ =
+  Sundials_impl.crash "Internal error: nls_lsolvefn called\n"
+let empty_convtestfn _ _ _ _ =
+  Sundials_impl.crash "Internal error: nls_convtestfn called\n"
 
 let empty_callbacks () = {
     sysfn      = empty_sysfn;

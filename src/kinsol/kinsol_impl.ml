@@ -31,7 +31,6 @@ module LSI = Sundials_LinearSolver_impl
    bug.  Rather than raise an exception (which may or may not get
    propagated properly depending on the context), we immediately abort
    the program. *)
-external crash : string -> unit = "sunml_crash"
 
 type ('a, 'k) nvector = ('a, 'k) Nvector.t
 
@@ -59,7 +58,7 @@ module DirectTypes = struct
       mutable jmat : 'm option
     }
 
-  let no_callback = fun _ _ -> crash "no direct callback"
+  let no_callback = fun _ _ -> Sundials_impl.crash "no direct callback"
 end
 
 module SpilsTypes' = struct
@@ -215,8 +214,8 @@ let read_weak_ref x : ('a, 'k) session =
   | None -> raise (Failure "Internal error: weak reference is dead")
 
 let dummy_sysfn _ _ =
-  crash "Internal error: dummy_sysfn called\n"
+  Sundials_impl.crash "Internal error: dummy_sysfn called\n"
 let dummy_errh _ =
-  crash "Internal error: dummy_errh called\n"
+  Sundials_impl.crash "Internal error: dummy_errh called\n"
 let dummy_infoh _ =
-  crash "Internal error: dummy_infoh called\n"
+  Sundials_impl.crash "Internal error: dummy_infoh called\n"

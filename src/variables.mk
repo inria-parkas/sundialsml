@@ -30,6 +30,7 @@ COBJ_COMMON = sundials/sundials_ml$(XO)	\
 COBJ_MAIN = $(COBJ_COMMON) kinsol/kinsol_ml$(XO) $(ARKODE_COBJ_MAIN)
 
 MLOBJ_MAIN =	sundials/sundials_configuration.cmo	\
+		sundials/sundials_impl.cmo		\
 		sundials/sundials_Index.cmo		\
 		sundials/sundials_Config.cmo		\
 		sundials/sundials_RealArray.cmo		\

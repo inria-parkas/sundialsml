@@ -60,6 +60,7 @@ arkode/arkode_bbd.cmi : \
     arkode/arkode_impl.cmo \
     arkode/arkode.cmi
 arkode/arkode_impl.cmo : \
+    sundials/sundials_impl.cmo \
     sundials/sundials_configuration.cmo \
     sundials/sundials_RealArray.cmi \
     lsolvers/sundials_NonlinearSolver_impl.cmo \
@@ -70,6 +71,7 @@ arkode/arkode_impl.cmo : \
     nvectors/nvector_serial.cmi \
     nvectors/nvector.cmi
 arkode/arkode_impl.cmx : \
+    sundials/sundials_impl.cmx \
     sundials/sundials_configuration.cmx \
     sundials/sundials_RealArray.cmx \
     lsolvers/sundials_NonlinearSolver_impl.cmx \
@@ -138,6 +140,7 @@ cvode/cvode_bbd.cmi : \
     cvode/cvode_impl.cmo \
     cvode/cvode.cmi
 cvode/cvode_impl.cmo : \
+    sundials/sundials_impl.cmo \
     sundials/sundials_configuration.cmo \
     sundials/sundials_RealArray.cmi \
     lsolvers/sundials_NonlinearSolver_impl.cmo \
@@ -148,6 +151,7 @@ cvode/cvode_impl.cmo : \
     nvectors/nvector_serial.cmi \
     nvectors/nvector.cmi
 cvode/cvode_impl.cmx : \
+    sundials/sundials_impl.cmx \
     sundials/sundials_configuration.cmx \
     sundials/sundials_RealArray.cmx \
     lsolvers/sundials_NonlinearSolver_impl.cmx \
@@ -269,6 +273,7 @@ ida/ida_bbd.cmi : \
     ida/ida_impl.cmo \
     ida/ida.cmi
 ida/ida_impl.cmo : \
+    sundials/sundials_impl.cmo \
     sundials/sundials_configuration.cmo \
     sundials/sundials_RealArray.cmi \
     lsolvers/sundials_NonlinearSolver_impl.cmo \
@@ -279,6 +284,7 @@ ida/ida_impl.cmo : \
     nvectors/nvector_serial.cmi \
     nvectors/nvector.cmi
 ida/ida_impl.cmx : \
+    sundials/sundials_impl.cmx \
     sundials/sundials_configuration.cmx \
     sundials/sundials_RealArray.cmx \
     lsolvers/sundials_NonlinearSolver_impl.cmx \
@@ -397,6 +403,7 @@ kinsol/kinsol_bbd.cmi : \
     nvectors/nvector_parallel.cmi \
     kinsol/kinsol.cmi
 kinsol/kinsol_impl.cmo : \
+    sundials/sundials_impl.cmo \
     sundials/sundials_configuration.cmo \
     sundials/sundials_RealArray.cmi \
     lsolvers/sundials_Matrix.cmi \
@@ -406,6 +413,7 @@ kinsol/kinsol_impl.cmo : \
     nvectors/nvector_serial.cmi \
     nvectors/nvector.cmi
 kinsol/kinsol_impl.cmx : \
+    sundials/sundials_impl.cmx \
     sundials/sundials_configuration.cmx \
     sundials/sundials_RealArray.cmx \
     lsolvers/sundials_Matrix.cmx \
@@ -506,9 +514,11 @@ lsolvers/sundials_NonlinearSolver.cmi : \
     sundials/sundials.cmi \
     nvectors/nvector.cmi
 lsolvers/sundials_NonlinearSolver_impl.cmo : \
+    sundials/sundials_impl.cmo \
     sundials/sundials.cmi \
     nvectors/nvector.cmi
 lsolvers/sundials_NonlinearSolver_impl.cmx : \
+    sundials/sundials_impl.cmx \
     sundials/sundials.cmx \
     nvectors/nvector.cmx
 nvectors/nvector.cmo : \
@@ -673,6 +683,8 @@ sundials/sundials_RealArray2.cmi : \
     sundials/sundials.cmi
 sundials/sundials_configuration.cmo :
 sundials/sundials_configuration.cmx :
+sundials/sundials_impl.cmo :
+sundials/sundials_impl.cmx :
 sundials/sundials_top.cmo : \
     sundials/sundials_top.cmi
 sundials/sundials_top.cmx : \

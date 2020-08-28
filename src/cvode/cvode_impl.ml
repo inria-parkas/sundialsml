@@ -48,7 +48,6 @@ module NLSI = Sundials_NonlinearSolver_impl
  *     If these types are changed or augmented, the corresponding declarations
  *     in cvode_ml.h (and code in cvode_ml.c) must also be updated.
  *)
-external crash : string -> unit = "sunml_crash"
 
 type ('data, 'kind) nvector = ('data, 'kind) Nvector.t
 
@@ -76,7 +75,7 @@ module DirectTypes = struct
       mutable jmat : 'm option (* Not used in Sundials >= 3.0.0 *)
     }
 
-  let no_callback = fun _ _ -> crash "no direct callback"
+  let no_callback = fun _ _ -> Sundials_impl.crash "no direct callback"
 end
 
 module SpilsCommonTypes = struct
@@ -253,7 +252,7 @@ module AdjointTypes' = struct
         mutable jmat : 'm option
       }
 
-    let no_callback = fun _ _ -> crash "no direct callback"
+    let no_callback = fun _ _ -> Sundials_impl.crash "no direct callback"
 
     (* These fields are accessed from cvodes_ml.c *)
     type 'm jac_callback_with_sens =
@@ -615,26 +614,26 @@ let read_weak_ref x : ('a, 'kind) session =
    propagated properly depending on the context), we immediately abort
    the program. *)
 let dummy_rhsfn _ _ _ =
-  crash "Internal error: dummy_resfn called\n"
+  Sundials_impl.crash "Internal error: dummy_resfn called\n"
 let dummy_rootsfn _ _ _ =
-  crash "Internal error: dummy_rootsfn called\n"
+  Sundials_impl.crash "Internal error: dummy_rootsfn called\n"
 let dummy_errh _ =
-  crash "Internal error: dummy_errh called\n"
+  Sundials_impl.crash "Internal error: dummy_errh called\n"
 let dummy_errw _ _ =
-  crash "Internal error: dummy_errw called\n"
+  Sundials_impl.crash "Internal error: dummy_errw called\n"
 let dummy_brhsfn_no_sens _ _ =
-  crash "Internal error: dummy_brhsfn_no_sens called\n"
+  Sundials_impl.crash "Internal error: dummy_brhsfn_no_sens called\n"
 let dummy_brhsfn_with_sens _ _ _ =
-  crash "Internal error: dummy_brhsfn_with_sens called\n"
+  Sundials_impl.crash "Internal error: dummy_brhsfn_with_sens called\n"
 let dummy_bquadrhsfn_no_sens _ _ =
-  crash "Internal error: dummy_bquadrhsfn_no_sens called\n"
+  Sundials_impl.crash "Internal error: dummy_bquadrhsfn_no_sens called\n"
 let dummy_bquadrhsfn_with_sens _ _ _ =
-  crash "Internal error: dummy_bquadrhsfn_with_sens called\n"
+  Sundials_impl.crash "Internal error: dummy_bquadrhsfn_with_sens called\n"
 let dummy_quadrhsfn _ _ _ =
-  crash "Internal error: dummy_quadrhsfn called\n"
+  Sundials_impl.crash "Internal error: dummy_quadrhsfn called\n"
 let dummy_sensrhsfn _ _ _ =
-  crash "Internal error: dummy_sensresfn called\n"
+  Sundials_impl.crash "Internal error: dummy_sensresfn called\n"
 let dummy_sensrhsfn1 _ _ _ _ =
-  crash "Internal error: dummy_sensresfn1 called\n"
+  Sundials_impl.crash "Internal error: dummy_sensresfn1 called\n"
 let dummy_quadsensrhsfn _ _ =
-  crash "Internal error: dummy_quadsensrhsfn called\n"
+  Sundials_impl.crash "Internal error: dummy_quadsensrhsfn called\n"
