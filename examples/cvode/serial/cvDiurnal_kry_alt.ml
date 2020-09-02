@@ -88,10 +88,16 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
     | Some psetup -> psetup ()
 
   (* Adapted directly from sunlinsol_spgmr/sunlinsol_spgmr.c *)
-  let solve ({ maxl = l_max; max_restarts; gstype; v; hes; givens; xcor; yg;
-               vtemp; vtemps; s1; s2; atimes; psolve } as lsolver) _
-            xdata bdata delta =
+  let solve lsolver _ xdata bdata delta =
   (* {{{ *)
+    let { maxl = l_max; max_restarts; gstype; v; hes; givens; xcor; yg;
+          vtemp; vtemps; s1; s2; atimes; psolve } = lsolver
+      (* NB: pattern matching directly in the function definition is incorrect
+             because it occurs when [solve] is (partially) applied to
+             [lsolver]. The mutable fields of [lsolver] may change, however,
+             before the function is fully applied (e.g., by calling
+             [set_preconditioner] and we need the latest values. *)
+    in
     let x = NV.wrap xdata in
     let b = NV.wrap bdata in
     let open NV.Ops in
@@ -108,11 +114,11 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
       | PrecRight -> false, true
       | PrecBoth  ->  true, true
     in
-
     (* Set vtemp and V[0] to initial (unscaled) residual r_0 = b - A*x_0 *)
     if n_vdotprod x x = 0.
     then (n_vscale 1. b vtemp)
-    else (atimes x vtemp; n_vlinearsum 1. b (-1.) vtemp vtemp);
+    else (atimes x vtemp;
+          n_vlinearsum 1. b (-1.) vtemp vtemp);
     n_vscale 1. vtemp v.(0);
 
     (* Apply left preconditioner and left scaling to V[0] = r_0 *)
@@ -129,12 +135,12 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
     let beta = sqrt(n_vdotprod v.(0) v.(0)) in
     r_norm := beta;
     lsolver.resnorm <- beta;
-    if !r_norm > delta then
+    if !r_norm > delta then begin
       (* Initialize rho to avoid compiler warning message *)
       let rho = ref beta in
 
       (* Set xcor = 0 *)
-      let () = n_vconst 0. xcor in
+      n_vconst 0. xcor;
 
       (* Begin outer iterations: up to (max_restarts + 1) attempts *)
       let rec outer_loop ntries =
@@ -178,14 +184,12 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
                | None    -> n_vscale 1. vtemp v.(l_plus_1));
 
               (*  Orthogonalize v.(l+1) against previous v.(i): v.(l+1) = w_tilde *)
-              (match gstype with
-              | ClassicalGS ->
-                  RealArray2.set hes l l_plus_1
-                    (LS.Iterative.Algorithms.classical_gs v hes l_plus_1 l_max yg vtemps);
-              | ModifiedGS  ->
-                  RealArray2.set hes l l_plus_1
-                    (LS.Iterative.Algorithms.modified_gs v hes l_plus_1 l_max)
-              );
+              RealArray2.set hes l l_plus_1
+                (match gstype with
+                 | ClassicalGS ->
+                     (LS.Iterative.Algorithms.classical_gs v hes l_plus_1 l_max yg vtemps);
+                 | ModifiedGS  ->
+                     (LS.Iterative.Algorithms.modified_gs v hes l_plus_1 l_max));
 
               (*  Update the QR factorization of Hes *)
               LS.Iterative.Algorithms.qr_fact l_plus_1 hes givens (l > 0);
@@ -270,11 +274,11 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
 
             (* Add vtemp to initial x to get final solution x, and return *)
             n_vlinearsum 1. x 1. vtemp x;
-
             raise LinearSolver.ResReduced
           end
           else raise LinearSolver.ConvFailure
       in outer_loop 0
+    end
   (* }}} *)
 
   let no_atimes _ _ = failwith "No atimes function."
@@ -285,9 +289,10 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
 
   let set_preconditioner lsolver psetup psolve =
     lsolver.psetup <- psetup;
-    lsolver.psolve <- match psolve with
-                      | Some f -> f
-                      | None -> no_psolve
+    lsolver.psolve <-
+      match psolve with
+      | Some f -> f
+      | None -> no_psolve
 
   let mapo f = function None -> None | Some x -> Some (f x)
 
