@@ -14,6 +14,12 @@ Notes:
 * ARKode: reworked interface to new ARKStep, ERKStep, and MRIStep modules.
 * LinearSolver: use a generic linear solver type, replacing the previous 
   distinction between Dls and Iterative linear solvers.
+* It is best to avoid specifying Nonlinear solvers with 4.0.0 <= Sundials <= 
+  4.0.2 as there is a bug that can lead to OCaml-owned data structures being 
+  freed (e.g., examples/cvode/serial/cvDirectDemo_ls.ml sometimes crashes 
+  with a segmentation error)
+* The arkode/C_openmp/ark_head1D_omp.c example gives inconsistent results; 
+  they change depending on the number of OpenMP threads.
 
 Compatibility:
 * When initializing Cvode, the new non-linear solver interface replaces the 
