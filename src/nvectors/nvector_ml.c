@@ -395,14 +395,17 @@ static booleantype callml_vconstrmask(N_Vector c, N_Vector x, N_Vector m);
 static realtype callml_vminquotient(N_Vector num, N_Vector denom);
 
 /* Custom fused vector operations */
+#if 400 <= SUNDIALS_LIB_VERSION
 static int callml_vlinearcombination(int nvec, realtype* c,
 				     N_Vector* V, N_Vector z);
 static int callml_vscaleaddmulti(int nvec, realtype* a,
 			            N_Vector x, N_Vector* Y, N_Vector* Z);
 static int callml_vdotprodmulti(int nvec, N_Vector x, N_Vector *Y,
 				   realtype* dotprods);
+#endif
 
 /* Custom vector array operations */
+#if 400 <= SUNDIALS_LIB_VERSION
 static int callml_vlinearsumvectorarray(int nvec, realtype a, N_Vector* X,
 					realtype b, N_Vector* Y, N_Vector* Z);
 static int callml_vscalevectorarray(int nvec, realtype* c, N_Vector* X,
@@ -417,6 +420,7 @@ static int callml_vscaleaddmultivectorarray(int nvec, int nsum, realtype* a,
 					    N_Vector** Z);
 static int callml_vlinearcombinationvectorarray(int nvec, int nsum, realtype* c,
 						N_Vector** X, N_Vector* Z);
+#endif
 
 /* Creation from OCaml. */
 CAMLprim value sunml_nvec_wrap_custom(value mlops, value payload, value checkfn)
@@ -901,6 +905,7 @@ static realtype callml_vminquotient(N_Vector num, N_Vector denom)
 // after we are finished using them (so as not to block the GC), but we
 // instead make the assumption that these elements come from 'within'
 // Sundials and thus that they would anyway not be GC-ed.
+#if 400 <= SUNDIALS_LIB_VERSION
 static value wrap_to_nvector_table(int n, N_Vector *y)
 {
     CAMLparam0();
@@ -915,7 +920,9 @@ static value wrap_to_nvector_table(int n, N_Vector *y)
 
     CAMLreturn (vy);
 }
+#endif
 
+#if 400 <= SUNDIALS_LIB_VERSION
 static value wrap_to_nvector_tables(int n1, int n2, N_Vector **yy)
 {
     CAMLparam0();
@@ -930,13 +937,14 @@ static value wrap_to_nvector_tables(int n1, int n2, N_Vector **yy)
 
     CAMLreturn (vyy);
 }
+#endif
 
 /* fused vector operations */
+#if 400 <= SUNDIALS_LIB_VERSION
 static int callml_vlinearcombination(int nvec, realtype* c,
 				     N_Vector* V, N_Vector z)
 {
     CAMLparam0();
-#if 400 <= SUNDIALS_LIB_VERSION
     CAMLlocal3(mlop, vc, vv);
     intnat n = nvec;
 
@@ -951,17 +959,15 @@ static int callml_vlinearcombination(int nvec, realtype* c,
 					"user-defined n_vlinearcombination");
 	CAMLreturnT(int, 0);
     }
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
     CAMLreturnT(int, 1);
 }
+#endif
 
+#if 400 <= SUNDIALS_LIB_VERSION
 static int callml_vscaleaddmulti(int nvec, realtype* a,
 			         N_Vector x, N_Vector* Y, N_Vector* Z)
 {
     CAMLparam0();
-#if 400 <= SUNDIALS_LIB_VERSION
     CAMLlocal1(mlop);
     CAMLlocalN(args, 4);
     intnat n = nvec;
@@ -979,17 +985,15 @@ static int callml_vscaleaddmulti(int nvec, realtype* a,
 					"user-defined n_vscaleaddmulti");
 	CAMLreturnT(int, 0);
     }
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
     CAMLreturnT(int, 1);
 }
+#endif
 
+#if 400 <= SUNDIALS_LIB_VERSION
 static int callml_vdotprodmulti(int nvec, N_Vector x, N_Vector *Y,
 				realtype* dotprods)
 {
     CAMLparam0();
-#if 400 <= SUNDIALS_LIB_VERSION
     CAMLlocal3(mlop, vy, vdotprods);
     intnat n = nvec;
 
@@ -1004,20 +1008,17 @@ static int callml_vdotprodmulti(int nvec, N_Vector x, N_Vector *Y,
 					"user-defined n_vdotprodmulti");
 	CAMLreturnT(int, 0);
     }
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
     CAMLreturnT(int, 1);
 }
-
+#endif
 
 /* vector array operations */
+#if 400 <= SUNDIALS_LIB_VERSION
 static int callml_vlinearsumvectorarray(int nvec, realtype a, N_Vector* X,
 					   realtype b, N_Vector* Y,
                                            N_Vector* Z)
 {
     CAMLparam0();
-#if 400 <= SUNDIALS_LIB_VERSION
     CAMLlocal1(mlop);
     CAMLlocalN(args, 5);
 
@@ -1037,16 +1038,14 @@ static int callml_vlinearsumvectorarray(int nvec, realtype a, N_Vector* X,
 					"user-defined n_vlinearsumvectorarray");
 	CAMLreturnT(int, 0);
     }
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
     CAMLreturnT(int, 1);
 }
+#endif
 
+#if 400 <= SUNDIALS_LIB_VERSION
 static int callml_vscalevectorarray(int nvec, realtype* c, N_Vector* X, N_Vector* Z)
 {
     CAMLparam0();
-#if 400 <= SUNDIALS_LIB_VERSION
     CAMLlocal4(mlop, vc, vx, vz);
     intnat n = nvec;
 
@@ -1064,16 +1063,14 @@ static int callml_vscalevectorarray(int nvec, realtype* c, N_Vector* X, N_Vector
 					"user-defined n_vscalevectorarray");
 	CAMLreturnT(int, 0);
     }
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
     CAMLreturnT(int, 1);
 }
+#endif
 
+#if 400 <= SUNDIALS_LIB_VERSION
 static int callml_vconstvectorarray(int nvec, realtype c, N_Vector* Z)
 {
     CAMLparam0();
-#if 400 <= SUNDIALS_LIB_VERSION
     CAMLlocal3(mlop, vc, vz);
 
     if (nvec <= 0) CAMLreturnT(int, 1);
@@ -1089,17 +1086,15 @@ static int callml_vconstvectorarray(int nvec, realtype c, N_Vector* Z)
 					"user-defined n_vconstvectorarray");
 	CAMLreturnT(int, 0);
     }
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
     CAMLreturnT(int, 1);
 }
+#endif
 
+#if 400 <= SUNDIALS_LIB_VERSION
 static int callml_vwrmsnormvectorarray(int nvec, N_Vector* X,
 				       N_Vector* W, realtype* nrm)
 {
     CAMLparam0();
-#if 400 <= SUNDIALS_LIB_VERSION
     CAMLlocal4(mlop, vx, vw, vnrm);
     intnat n = nvec;
 
@@ -1117,17 +1112,15 @@ static int callml_vwrmsnormvectorarray(int nvec, N_Vector* X,
 					"user-defined n_vwrmsnormvectorarray");
 	CAMLreturnT(int, 0);
     }
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
     CAMLreturnT(int, 1);
 }
+#endif
 
+#if 400 <= SUNDIALS_LIB_VERSION
 static int callml_vwrmsnormmaskvectorarray(int nvec, N_Vector* X, N_Vector* W,
 					   N_Vector id, realtype* nrm)
 {
     CAMLparam0();
-#if 400 <= SUNDIALS_LIB_VERSION
     CAMLlocal1(mlop);
     CAMLlocalN(args, 4);
     intnat n = nvec;
@@ -1147,18 +1140,16 @@ static int callml_vwrmsnormmaskvectorarray(int nvec, N_Vector* X, N_Vector* W,
 				    "user-defined n_vwrmsnormmaskvectorarray");
 	CAMLreturnT(int, 0);
     }
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
     CAMLreturnT(int, 1);
 }
+#endif
 
+#if 400 <= SUNDIALS_LIB_VERSION
 static int callml_vscaleaddmultivectorarray(int nvec, int nsum, realtype* a,
 					       N_Vector* X, N_Vector** Y,
 					       N_Vector** Z)
 {
     CAMLparam0();
-#if 400 <= SUNDIALS_LIB_VERSION
     CAMLlocal1(mlop);
     CAMLlocalN(args, 4);
     intnat n = nsum;
@@ -1178,17 +1169,15 @@ static int callml_vscaleaddmultivectorarray(int nvec, int nsum, realtype* a,
 				    "user-defined n_vscaleaddmultivectorarray");
 	CAMLreturnT(int, 0);
     }
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
     CAMLreturnT(int, 1);
 }
+#endif
 
+#if 400 <= SUNDIALS_LIB_VERSION
 static int callml_vlinearcombinationvectorarray(int nvec, int nsum, realtype* c,
 						N_Vector** X, N_Vector* Z)
 {
     CAMLparam0();
-#if 400 <= SUNDIALS_LIB_VERSION
     CAMLlocal4(mlop, vc, vxx, vz);
     intnat n2 = nsum;
 
@@ -1206,11 +1195,9 @@ static int callml_vlinearcombinationvectorarray(int nvec, int nsum, realtype* c,
 			    "user-defined n_vlinearcombinationvectorarray");
 	CAMLreturnT(int, 0);
     }
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
     CAMLreturnT(int, 1);
 }
+#endif
 
 /** Interface to underlying serial nvector functions */
 

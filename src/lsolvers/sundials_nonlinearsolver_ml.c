@@ -183,6 +183,7 @@ typedef enum {
     WITH_WARN	       = 0x2,
 } recoverability;
 
+#if 400 <= SUNDIALS_LIB_VERSION
 static int translate_exception(value exn, recoverability recoverable)
 {
     CAMLparam1(exn);
@@ -202,6 +203,7 @@ static int translate_exception(value exn, recoverability recoverable)
     (Is_exception_result (result)					      \
      ? translate_exception (result = Extract_exception (result), recoverable) \
      : 0)
+#endif
 
 CAMLprim void sunml_nlsolver_init_module (value exns)
 {
@@ -210,6 +212,7 @@ CAMLprim void sunml_nlsolver_init_module (value exns)
     CAMLreturn0;
 }
 
+#if 400 <= SUNDIALS_LIB_VERSION
 void sunml_nlsolver_check_flag(const char *call, int flag)
 {
     static char exmsg[MAX_ERRMSG_LEN] = "";
@@ -240,10 +243,11 @@ void sunml_nlsolver_check_flag(const char *call, int flag)
 	    }
     }
 }
+#endif
 
 /* - - - Senswrappers - - - */
 
-#if SUNDIALS_LIB_VERSION >= 400
+#if 400 <= SUNDIALS_LIB_VERSION
 
 #define SENSWRAPPER(v) (*(N_Vector *)Data_custom_val(v))
 
@@ -283,11 +287,13 @@ static void invalidate_senswrapper(value vsw)
 {
     SENSWRAPPER(vsw) = NULL;
 }
+#endif
 
 CAMLprim value sunml_senswrapper_data(value vsw)
 {
     CAMLparam1(vsw);
     CAMLlocal2(vr, vnv);
+#if 400 <= SUNDIALS_LIB_VERSION
     N_Vector sw = SENSWRAPPER(vsw);
     int nvecs, i;
 
@@ -301,11 +307,12 @@ CAMLprim value sunml_senswrapper_data(value vsw)
 	    Store_field(vr, i, vnv);
 	}
     }
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn(vr);
 }
 
-#endif
 
 /* - - - O/Cnls functions (OCaml invoking init/setup/solve in a C NLS) - - - */
 
@@ -355,6 +362,7 @@ CAMLprim value sunml_nlsolver_solve(value vnls, value vargs, value vmem)
 
 /* - - - O/Cnls: callback invocation (also C/Cnls for convtestfn) - - - */
 
+#if 400 <= SUNDIALS_LIB_VERSION
 static int sys_callback(N_Vector y, N_Vector F, void* mem)
 {
     CAMLparam0();
@@ -374,7 +382,9 @@ static int sys_callback(N_Vector y, N_Vector F, void* mem)
     r = Extract_exception (r);
     CAMLreturnT(int, translate_exception (r, RECOVERABLE));
 }
+#endif
 
+#if 400 <= SUNDIALS_LIB_VERSION
 static int lsetup_callback(N_Vector y, N_Vector F, booleantype jbad,
 			   booleantype* jcur, void* mem)
 {
@@ -401,7 +411,9 @@ static int lsetup_callback(N_Vector y, N_Vector F, booleantype jbad,
     r = Extract_exception (r);
     CAMLreturnT(int, translate_exception (r, RECOVERABLE));
 }
+#endif
 
+#if 400 <= SUNDIALS_LIB_VERSION
 static int lsolve_callback(N_Vector y, N_Vector b, void* mem)
 {
     CAMLparam0();
@@ -419,7 +431,9 @@ static int lsolve_callback(N_Vector y, N_Vector b, void* mem)
 
     CAMLreturnT(int, CHECK_NLS_EXCEPTION (r, UNRECOVERABLE));
 }
+#endif
 
+#if 400 <= SUNDIALS_LIB_VERSION
 static int convtest_callback(SUNNonlinearSolver nls, N_Vector y, N_Vector del,
 			     realtype tol, N_Vector ewt, void* mem)
 {
@@ -472,6 +486,7 @@ static int convtest_callback(SUNNonlinearSolver nls, N_Vector y, N_Vector del,
     r = Extract_exception (r);
     CAMLreturnT(int, translate_exception (r, UNRECOVERABLE));
 }
+#endif
 
 /* - - - O/Cnls: callback configuration - - - */
 

@@ -65,12 +65,16 @@ CAMLprim void sunml_lsolver_init_module (value exns)
 {
     CAMLparam1 (exns);
     REGISTER_EXNS (LSOLVER, exns);
+#if 400 <= SUNDIALS_LIB_VERSION
     assert((int)VARIANT_LSOLVER_TYPE_DIRECT
 	    == SUNLINEARSOLVER_DIRECT);
+#endif
+#if 300 <= SUNDIALS_LIB_VERSION
     assert((int)VARIANT_LSOLVER_TYPE_ITERATIVE
 	    == SUNLINEARSOLVER_ITERATIVE);
     assert((int)VARIANT_LSOLVER_TYPE_ITERATIVE_MATRIX
 	    == SUNLINEARSOLVER_MATRIX_ITERATIVE);
+#endif
     CAMLreturn0;
 }
 
@@ -418,9 +422,9 @@ CAMLprim void sunml_lsolver_set_prec_type(value vcptr, value vsolver,
 	value vpretype, value vdocheck)
 {
     CAMLparam4(vcptr, vsolver, vpretype, vdocheck);
-    const char* interrmsg = "internal error in sunml_lsolver_set_prec_type";
 
 #if 300 <= SUNDIALS_LIB_VERSION
+    const char* interrmsg = "internal error in sunml_lsolver_set_prec_type";
     int old_pretype = PREC_NONE;
     int pretype = sunml_lsolver_precond_type(vpretype);
     SUNLinearSolver lsolv = LSOLVER_VAL(vcptr);
@@ -1361,6 +1365,7 @@ int ocaml_psolve(void *callback_croot,
 }
 #endif
 
+#if 300 <= SUNDIALS_LIB_VERSION
 static void sunml_lsolver_check_flag(const char *call, int flag)
 {
     static char exmsg[MAX_ERRMSG_LEN] = "";
@@ -1432,6 +1437,8 @@ static void sunml_lsolver_check_flag(const char *call, int flag)
 
 #define CHECK_FLAG(call, flag) if (flag != SUNLS_SUCCESS) \
 				 sunml_lsolver_check_flag(call, flag)
+
+#endif
 
 CAMLprim value sunml_lsolver_get_type(value vcptr)
 {

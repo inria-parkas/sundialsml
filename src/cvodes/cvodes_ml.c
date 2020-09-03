@@ -1753,11 +1753,11 @@ CAMLprim value sunml_cvodes_adj_init_backward(value vparent, value weakref,
 	caml_failwith("Illegal lmm value.");
     }
 
-#if SUNDIALS_LIB_VERSION >= 400
+#if 400 <= SUNDIALS_LIB_VERSION
     flag = CVodeCreateB(parent, lmm_c, &which);
 #else
     flag = CVodeCreateB(parent, lmm_c,
-			Bool_val(iter) ? CV_NEWTON : CV_FUNCTIONAL),
+			Bool_val(iter) ? CV_NEWTON : CV_FUNCTIONAL,
 			&which);
 #endif
     if (flag != CV_SUCCESS) {
@@ -1957,8 +1957,10 @@ void sunml_cvodes_check_flag(const char *call, int flag, void *cvode_mem)
 	case CV_RTFUNC_FAIL:
 	    caml_raise_constant(CVODE_EXN(RootFuncFailure));
 
+#if 320 <= SUNDIALS_LIB_VERSION
 	case CV_CONSTR_FAIL:
 	    caml_raise_constant(CVODE_EXN(ConstraintFailure));
+#endif
 
 	/* * */
 

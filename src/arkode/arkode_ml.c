@@ -37,7 +37,7 @@
 #elif 300 <= SUNDIALS_LIB_VERSION
 #include <arkode/arkode_direct.h>
 #include <arkode/arkode_spils.h>
-#elif
+#else
 #include <arkode/arkode_dense.h>
 #include <arkode/arkode_band.h>
 #include <arkode/arkode_spgmr.h>
@@ -1331,6 +1331,7 @@ static value sunml_arkode_ark_last_mass_exception(void *arkode_mem)
     return Val_none;
 }
 
+#if 400 <= SUNDIALS_LIB_VERSION
 static value sunml_stepper_exception_from_flag(int flag)
 {
     CAMLparam0();
@@ -1409,7 +1410,9 @@ static value sunml_stepper_exception_from_flag(int flag)
 
     CAMLreturn(vro);
 }
+#endif
 
+#if 400 <= SUNDIALS_LIB_VERSION
 static value sunml_arkode_mri_innerstep_exception(void *arkode_mem)
 {
 #if 400 <= SUNDIALS_LIB_VERSION
@@ -1421,6 +1424,7 @@ static value sunml_arkode_mri_innerstep_exception(void *arkode_mem)
 #endif
     return Val_none;
 }
+#endif
 
 void sunml_arkode_check_flag(const char *call, int flag, void *arkode_mem)
 {
@@ -1791,12 +1795,12 @@ CAMLprim value sunml_arkode_ark_get_res_weights(value varkode_mem, value vresws)
 {
     CAMLparam2(varkode_mem, vresws);
 
-    N_Vector resws_nv = NVEC_VAL(vresws);
-
 #if 400 <= SUNDIALS_LIB_VERSION
+    N_Vector resws_nv = NVEC_VAL(vresws);
     int flag = ARKStepGetResWeights(ARKODE_MEM_FROM_ML(varkode_mem), resws_nv);
     CHECK_FLAG("ARKStepGetResWeights", flag);
 #elif 300 <= SUNDIALS_LIB_VERSION
+    N_Vector resws_nv = NVEC_VAL(vresws);
     int flag = ARKodeGetResWeights(ARKODE_MEM_FROM_ML(varkode_mem), resws_nv);
     CHECK_FLAG("ARKodeGetResWeights", flag);
 #else
@@ -2251,9 +2255,9 @@ CAMLprim value sunml_arkode_ark_get_current_butcher_tables(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
     CAMLlocal3(vobti, vobte, vr);
-    int flag;
 
 #if 400 <= SUNDIALS_LIB_VERSION
+    int flag;
     ARKodeButcherTable bti, bte;
     flag = ARKStepGetCurrentButcherTables(ARKODE_MEM_FROM_ML(varkode_mem),
 					  &bti, &bte);
@@ -2291,18 +2295,18 @@ CAMLprim value sunml_arkode_ark_get_current_butcher_tables(value varkode_mem)
 	caml_raise_out_of_memory();
     }
 
-    flag = ARKodeGetCurrentButcherTables(ARKODE_MEM_FROM_ML(varkode_mem),
-					 &s, &q, &p,
-					 Ai, Ae,
-					 REAL_ARRAY(vci), REAL_ARRAY(vce),
-					 REAL_ARRAY(vbi), REAL_ARRAY(vbe),
-					 REAL_ARRAY(vdi), REAL_ARRAY(vde));
+    ARKodeGetCurrentButcherTables(ARKODE_MEM_FROM_ML(varkode_mem),
+				  &s, &q, &p,
+				  Ai, Ae,
+				  REAL_ARRAY(vci), REAL_ARRAY(vce),
+				  REAL_ARRAY(vbi), REAL_ARRAY(vbe),
+				  REAL_ARRAY(vdi), REAL_ARRAY(vde));
     // No need to check flag: can only fail if arkode_mem == NULL
     // (must not risk an exception before freeing Ai and Ae)
 
     // NB: translate to column-major from row-major
-    ai = ARRAY2_ACOLS(vai);
-    ae = ARRAY2_ACOLS(vae);
+    ai = ARRAY2_DATA(vai);
+    ae = ARRAY2_DATA(vae);
     for (i=0; i < ARK_S_MAX; i++) {
 	for (j=0; j < ARK_S_MAX; j++) {
 	    ARK_A(ai,j,i) = ARK_A(Ai,i,j);
@@ -2315,7 +2319,7 @@ CAMLprim value sunml_arkode_ark_get_current_butcher_tables(value varkode_mem)
     vbti = caml_alloc_tuple(RECORD_ARKODE_BUTCHER_TABLE_SIZE);
     Store_field(vbti, RECORD_ARKODE_BUTCHER_TABLE_METHOD_ORDER, Val_int(q));
     Store_field(vbti, RECORD_ARKODE_BUTCHER_TABLE_EMBEDDING_ORDER, Val_int(p));
-    Store_field(vbti, RECORD_ARKODE_BUTCHER_TABLE_STAGES, Val_int(stages));
+    Store_field(vbti, RECORD_ARKODE_BUTCHER_TABLE_STAGES, Val_int(s));
     Store_field(vbti, RECORD_ARKODE_BUTCHER_TABLE_STAGE_VALUES, vai);
     Store_field(vbti, RECORD_ARKODE_BUTCHER_TABLE_STAGE_TIMES, vci);
     Store_field(vbti, RECORD_ARKODE_BUTCHER_TABLE_COEFFICIENTS, vbi);
@@ -2325,7 +2329,7 @@ CAMLprim value sunml_arkode_ark_get_current_butcher_tables(value varkode_mem)
     vbte = caml_alloc_tuple(RECORD_ARKODE_BUTCHER_TABLE_SIZE);
     Store_field(vbte, RECORD_ARKODE_BUTCHER_TABLE_METHOD_ORDER, Val_int(q));
     Store_field(vbte, RECORD_ARKODE_BUTCHER_TABLE_EMBEDDING_ORDER, Val_int(p));
-    Store_field(vbte, RECORD_ARKODE_BUTCHER_TABLE_STAGES, Val_int(stages));
+    Store_field(vbte, RECORD_ARKODE_BUTCHER_TABLE_STAGES, Val_int(s));
     Store_field(vbte, RECORD_ARKODE_BUTCHER_TABLE_STAGE_VALUES, vae);
     Store_field(vbte, RECORD_ARKODE_BUTCHER_TABLE_STAGE_TIMES, vce);
     Store_field(vbte, RECORD_ARKODE_BUTCHER_TABLE_COEFFICIENTS, vbe);
@@ -2357,13 +2361,13 @@ CAMLprim value sunml_arkode_ark_get_current_butcher_tables(value varkode_mem)
 	caml_raise_out_of_memory();
     }
 
-    flag = ARKodeGetCurrentButcherTables(ARKODE_MEM_FROM_ML(varkode_mem),
-					 &s, &q, &p,
-					 Ai, Ae,
-					 REAL_ARRAY(vci),
-					 REAL_ARRAY(vbi),
-					 REAL_ARRAY(vdi));
-    // No need to check flag: can only fail if arkode_mem == NULL
+    ARKodeGetCurrentButcherTables(ARKODE_MEM_FROM_ML(varkode_mem),
+				  &s, &q, &p,
+				  Ai, Ae,
+				  REAL_ARRAY(vci),
+				  REAL_ARRAY(vbi),
+				  REAL_ARRAY(vdi));
+    // No need to check return flag: can only fail if arkode_mem == NULL
     // (must not risk an exception before freeing Ai and Ae)
 
     // NB: translate to column-major from row-major
@@ -2571,7 +2575,8 @@ CAMLprim value sunml_arkode_ark_set_tables(value varkode_mem,
 #else // SUNDIALS_LIB_VERSION < 400
     CAMLlocal4(vbi, vbe, vbembedi, vbembede);
     realtype *Ai = NULL, *Ae = NULL;
-    int s, p, q;
+    realtype *ai, *ae;
+    int s, p, q, i, j;
 
     if ((vobi != Val_none) && (vobe != Val_none)) {
 	vbi = Some_val(vobi);
@@ -2591,8 +2596,8 @@ CAMLprim value sunml_arkode_ark_set_tables(value varkode_mem,
 	    free(Ai);
 	    caml_raise_out_of_memory();
 	}
-	ai = ARRAY2_ACOLS(Field(vbi, RECORD_ARKODE_BUTCHER_TABLE_STAGE_VALUES));
-	ae = ARRAY2_ACOLS(Field(vbe, RECORD_ARKODE_BUTCHER_TABLE_STAGE_VALUES));
+	ai = ARRAY2_DATA(Field(vbi, RECORD_ARKODE_BUTCHER_TABLE_STAGE_VALUES));
+	ae = ARRAY2_DATA(Field(vbe, RECORD_ARKODE_BUTCHER_TABLE_STAGE_VALUES));
 	for (i=0; i < s; i++) {
 	    for (j=0; j < s; j++) {
 		ARK_A(Ai,j,i) = ARK_A(ai,i,j);
@@ -2602,7 +2607,7 @@ CAMLprim value sunml_arkode_ark_set_tables(value varkode_mem,
 
 #if 270 <= SUNDIALS_LIB_VERSION
 	flag = ARKodeSetARKTables(ARKODE_MEM_FROM_ML(varkode_mem),
-		s, q, p
+		s, q, p,
 		REAL_ARRAY(Field(vbi, RECORD_ARKODE_BUTCHER_TABLE_STAGE_TIMES)),
 		REAL_ARRAY(Field(vbe, RECORD_ARKODE_BUTCHER_TABLE_STAGE_TIMES)),
 		Ai, Ae,
@@ -2623,13 +2628,14 @@ CAMLprim value sunml_arkode_ark_set_tables(value varkode_mem,
 	CHECK_FLAG("ARKodeSetARKTables", flag);
 
     } else if ((vobi != Val_none) && (vobe == Val_none)) {
-	vtbi= Some_val(vobi);
+	vbi= Some_val(vobi);
 	vbembedi = Field(vbi, RECORD_ARKODE_BUTCHER_TABLE_BEMBED);
+	s = Int_val(Field(vbi, RECORD_ARKODE_BUTCHER_TABLE_STAGES));
 
 	// NB: translate to row-major from column-major
 	Ai = calloc(s * s, sizeof(realtype));
 	if (Ai == NULL) caml_raise_out_of_memory();
-	ai = ARRAY2_ACOLS(Field(vbi, RECORD_ARKODE_BUTCHER_TABLE_STAGE_VALUES));
+	ai = ARRAY2_DATA(Field(vbi, RECORD_ARKODE_BUTCHER_TABLE_STAGE_VALUES));
 	for (i=0; i < s; i++) {
 	    for (j=0; j < s; j++) {
 		ARK_A(Ai,j,i) = ARK_A(ai,i,j);
@@ -2650,11 +2656,12 @@ CAMLprim value sunml_arkode_ark_set_tables(value varkode_mem,
     } else if ((vobi == Val_none) && (vobe != Val_none)) {
 	vbe = Some_val(vobe);
 	vbembede = Field(vbe, RECORD_ARKODE_BUTCHER_TABLE_BEMBED);
+	s = Int_val(Field(vbi, RECORD_ARKODE_BUTCHER_TABLE_STAGES));
 
 	// NB: translate to row-major from column-major
 	Ae = calloc(s * s, sizeof(realtype));
 	if (Ae == NULL) caml_raise_out_of_memory();
-	ae = ARRAY2_ACOLS(Field(vbe, RECORD_ARKODE_BUTCHER_TABLE_STAGE_VALUES));
+	ae = ARRAY2_DATA(Field(vbe, RECORD_ARKODE_BUTCHER_TABLE_STAGE_VALUES));
 	for (i=0; i < s; i++) {
 	    for (j=0; j < s; j++) {
 		ARK_A(Ae,j,i) = ARK_A(ae,i,j);

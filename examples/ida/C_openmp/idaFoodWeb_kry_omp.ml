@@ -427,7 +427,7 @@ let set_initial_profiles webdata c c' id =
 
 let idaspgmr =
   match Config.sundials_version with
-  | 2,_,_ -> "IDASpgmr,   Spgmr parameters"
+  | 2,_,_ -> "IDASpgmr,  Spgmr parameters"
   | 3,_,_ -> "SUNSPGMR,"
   | _,_,_ -> "SUNLinSol_SPGMR,"
 

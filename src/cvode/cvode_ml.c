@@ -1006,8 +1006,10 @@ void sunml_cvode_check_flag(const char *call, int flag, void *cvode_mem)
 	case CV_RTFUNC_FAIL:
 	    caml_raise_constant(CVODE_EXN(RootFuncFailure));
 
+#if SUNDIALS_LIB_VERSION >= 320
 	case CV_CONSTR_FAIL:
 	    caml_raise_constant(CVODE_EXN(ConstraintFailure));
+#endif
 
 	case CV_BAD_K:
 	    caml_raise_constant(CVODE_EXN(BadK));
