@@ -241,8 +241,8 @@ module Dls = struct (* {{{ *)
     | Some m -> m
     | None -> failwith "a direct linear solver is required"
 
-  let solver ?jac (LSI.(LS ({ rawptr; solver; matrix } as hls)) as ls)
-             session nv =
+  let solver ?jac ls session nv =
+    let LSI.LS ({ rawptr; solver; matrix } as hls) = ls in
     let m = assert_matrix matrix in
     set_ls_callbacks ?jac solver m session;
     if in_compat_mode2 then make_compat (jac <> None) solver m session

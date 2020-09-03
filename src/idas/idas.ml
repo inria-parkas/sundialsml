@@ -1060,8 +1060,8 @@ module Adjoint = struct (* {{{ *)
       | Some m -> m
       | None -> failwith "a direct linear solver is required"
 
-    let solver ?jac LSI.(LS ({ rawptr; solver; matrix } as hls) as ls)
-               bs nv =
+    let solver ?jac ls bs nv =
+      let LSI.LS ({ rawptr; solver; matrix } as hls) = ls in
       let session = tosession bs in
       let parent, which = parent_and_which bs in
       let matrix = assert_matrix matrix in

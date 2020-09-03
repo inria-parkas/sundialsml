@@ -508,8 +508,8 @@ module ARKStep = struct (* {{{ *)
       | Some m -> m
       | None -> failwith "a direct linear solver is required"
 
-    let solver ?jac (LSI.(LS ({ rawptr; solver; matrix } as hls)) as ls)
-               session nv =
+    let solver ?jac ls session nv =
+    let LSI.LS ({ rawptr; solver; matrix } as hls) = ls in
     let matrix = assert_matrix matrix in
       set_ls_callbacks ?jac solver matrix session;
       if in_compat_mode2
