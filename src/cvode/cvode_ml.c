@@ -51,7 +51,9 @@
 #include <cvodes/cvodes_sptfqmr.h>
 #endif
 
+#if SUNDIALS_LIB_VERSION < 410
 #include <cvodes/cvodes_impl.h>
+#endif
 
 #if SUNDIALS_LIB_VERSION < 300 && defined SUNDIALS_ML_LAPACK
 #include <cvodes/cvodes_lapack.h>
@@ -66,7 +68,9 @@
 #include <cvode/cvode_diag.h>
 #include <cvode/cvode_bandpre.h>
 
+#if SUNDIALS_LIB_VERSION < 410
 #include <cvode/cvode_impl.h>
+#endif
 
 #if   400 <= SUNDIALS_LIB_VERSION
 #include <cvode/cvode_ls.h>

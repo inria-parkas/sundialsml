@@ -1952,6 +1952,12 @@ module ARKStep = struct (* {{{ *)
   external get_num_g_evals                : ('a, 'k) session -> int
       = "sunml_arkode_ark_get_num_g_evals"
 
+  external write_parameters : ('d, 'k) session -> Logfile.t -> unit
+      = "sunml_arkode_ark_write_parameters"
+
+  external write_butcher : ('d, 'k) session -> Logfile.t -> unit
+      = "sunml_arkode_ark_write_butcher"
+
 end (* }}} *)
 
 module ERKStep = struct (* {{{ *)
@@ -2305,6 +2311,12 @@ module ERKStep = struct (* {{{ *)
   external get_num_g_evals                : ('a, 'k) session -> int
       = "sunml_arkode_erk_get_num_g_evals"
 
+  external write_parameters : ('d, 'k) session -> Logfile.t -> unit
+      = "sunml_arkode_erk_write_parameters"
+
+  external write_butcher : ('d, 'k) session -> Logfile.t -> unit
+      = "sunml_arkode_erk_write_butcher"
+
 end (* }}} *)
 
 module MRIStep = struct (* {{{ *)
@@ -2537,6 +2549,12 @@ module MRIStep = struct (* {{{ *)
 
   external get_num_g_evals                : ('a, 'k) session -> int
       = "sunml_arkode_mri_get_num_g_evals"
+
+  external write_parameters : ('d, 'k) session -> Logfile.t -> unit
+      = "sunml_arkode_mri_write_parameters"
+
+  external write_butcher : ('d, 'k) session -> Logfile.t -> unit
+      = "sunml_arkode_mri_write_butcher"
 
 end (* }}} *)
 
