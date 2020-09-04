@@ -63,7 +63,7 @@ type nvector_id =
     @since 2.9.0 *)
 val get_id : ('data, 'kind) t -> nvector_id
 
-(** {2: Generic vector operations}
+(** {2:genvec Generic vector operations}
 
     @cvode <node7> Description of the NVECTOR module. *)
 

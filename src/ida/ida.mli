@@ -478,7 +478,7 @@ type 'd rootsfn = float -> 'd -> 'd -> RealArray.t -> unit
     If an [nlsolver] is not specified, then the
     {{!Sundials_NonlinearSolver.Newton}Newton} module is used by default.
     The [nlsolver] must be of type
-    {{!Sundials_NonlinearSolver.nonlinear_solver_Type}RootFind}, otherwise an
+    {{!Sundials_NonlinearSolver.nonlinear_solver_type}RootFind}, otherwise an
     {!IllInput} exception is raised.
 
     @ida <node5#sss:idainit>       IDACreate/IDAInit

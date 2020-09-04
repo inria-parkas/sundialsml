@@ -1508,7 +1508,7 @@ module Adjoint : sig (* {{{ *)
       If an [nlsolver] is not specified, then the
       {{!Sundials_NonlinearSolver.Newton}Newton} module is used by default.
       The [nlsolver] must be of type
-      {{!Sundials_NonlinearSolver.nonlinear_solver_Type}RootFind}, otherwise an
+      {{!Sundials_NonlinearSolver.nonlinear_solver_type}RootFind}, otherwise an
       {!Ida.IllInput} exception is raised.
 
       @idas <node7#sss:idainitb> IDACreateB

@@ -198,12 +198,10 @@ that use parallel nvectors—see {!Cvode_bbd}, {!Cvodes_bbd}, {!Ida_bbd},
 
 Using a linear solver requires three steps:
 {ol
-    {- Create a generic instance of
-    {{!Sundials_LinearSolver.Direct.linear_solver}LinearSolver.Direct.linear_solver} or
-    {{!Sundials_LinearSolver.Iterative.linear_solver}LinearSolver.Iterative.linear_solver}}.
+    {- Create a generic instance of {{!Sundials_LinearSolver.t}LinearSolver.t}}.
     {- Use it to instantiate a solver-specific instance, e.g.,
-	{!Cvode.session_linear_solver} or
-	{!Cvodes.Adjoint.session_linear_solver}.}
+	{!Cvode.linear_solver} or
+	{!Cvodes.Adjoint.linear_solver}.}
     {- Pass the solver-specific instance to appropriate [init] or [reinit]
 	functions, e.g., {!Cvode.init} or {!Ida.reinit},
 	to create or configure a session.}
@@ -213,13 +211,12 @@ Any given generic instance, and hence a solver-specific instance, of a
 linear solver can only be associated with one solver session.
 
 Custom linear solvers can be created by providing a set of operations to
-either {{!Sundials_LinearSolver.Direct.Custom.make}LinearSolver.Direct.Custom.make}
-or {{!Sundials_LinearSolver.Iterative.Custom.make}LinearSolver.Iterative.Custom.make}.
+either {{!Sundials_LinearSolver.Custom.make_dls}LinearSolver.Custom.make_dls}
+or {{!Sundials_LinearSolver.Custom.make}LinearSolver.Custom.make}.
 
 {2:api API Reference}
 
 {!modules: Sundials}
-{!modules: Sundials_Matrix Sundials_LinearSolver}
 {!modules: Nvector Nvector_serial Nvector_parallel
 	   Nvector_pthreads Nvector_openmp
 	   Nvector_custom Nvector_array}

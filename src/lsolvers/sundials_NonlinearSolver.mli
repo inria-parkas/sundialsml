@@ -388,7 +388,7 @@ module Custom : sig (* {{{ *)
 
       Writing custom nonlinear solvers for use with some forward sensitivity
       methods requires the "internal" senswrapper type.
-      Any attempt to use {!('d, 'k) Senswrapper.t}s outside of the call to
+      Any attempt to use {!Senswrapper.t}s outside of the call to
       setup or solve that provides them will result in an {!IncorrectUse}
       exception. They must only be used to extract the underlying data with
       {!Senswrapper.data} or as arguments for lsetup_fn, lsolve_fn,

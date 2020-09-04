@@ -1,8 +1,8 @@
 include ../src/variables.mk
 
 doc: html/index.html
-	for f in cvode_skel.ml ida_skel.ml kinsol_skel.ml; do	\
-	    cp ../examples/ocaml/skeletons/$$f html/;	\
+	for f in $(shell ls ../examples/ocaml/skeletons/*_skel.ml); do	\
+	    cp $$f html/;	\
 	done
 
 DOCHTML_PP=$(CPP) $(ML_CPPFLAGS)

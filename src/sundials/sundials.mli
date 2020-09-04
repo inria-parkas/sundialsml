@@ -11,7 +11,8 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(** Generic definitions, arrays, and utility functions.
+(** Generic definitions, arrays, matrices, linear solvers, nonlinear solvers,
+    and utility functions.
 
  @version VERSION()
  @author Timothy Bourke (Inria/ENS)

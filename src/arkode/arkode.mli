@@ -32,10 +32,10 @@
 
     The interface is structured as follows.
     {ol
-      {- {{:#generic}Generic constants and types}
-      {- The ARKStep time-stepping module}
-      {- The ERKStep time-stepping module}
-      {- The MRIStep time-stepping module}
+      {- {{:#generic}Generic constants and types}}
+      {- {{:#MODULEARKStep}The ARKStep time-stepping module}}
+      {- {{:#MODULEERKStep}The ERKStep time-stepping module}}
+      {- {{:#MODULEMRIStep}The MRIStep time-stepping module}}
       {- {{:#exceptions}Exceptions}}}
 
     @version VERSION()
@@ -57,9 +57,14 @@ open Sundials
     @noarkode <node> MRIStepEvolve *)
 type solver_result =
   | Success             (** The solution was advanced. {cconst ARK_SUCCESS} *)
-  | RootsFound          (** A root was found. See {!get_root_info}.
+  | RootsFound          (** A root was found. See {!ARKStep.get_root_info},
+                            {!ERKStep.get_root_info}, or
+                            {!MRIStep.get_root_info}.
                             {cconst ARK_ROOT_RETURN} *)
-  | StopTimeReached     (** The stop time was reached. See {!set_stop_time}.
+  | StopTimeReached     (** The stop time was reached. See
+                            {!ARKStep.set_stop_time},
+                            {!ERKStep.set_stop_time},
+                            or {!MRIStep.set_stop_time}.
                             {cconst ARK_TSTOP_RETURN} *)
 
 (** Summaries of integrator statistics. *)
@@ -76,7 +81,7 @@ type step_stats = {
       (** Current internal time reached by the solver. *)
   }
 
-(** {3:arkode-tol Tolerances} *)
+(** {3:arkodetol Tolerances} *)
 
 (** Functions that set the multiplicative error weights for use in the weighted
     RMS norm. The call [efun y ewt] takes the dependent variable vector [y] and
@@ -97,7 +102,7 @@ type ('data, 'kind) tolerance =
 (** A default relative tolerance of 1.0e-4 and absolute tolerance of 1.0e-9. *)
 val default_tolerances : ('data, 'kind) tolerance
 
-(** {3:arkode-roots Roots} *)
+(** {3:arkoderoots Roots} *)
 
 (** Called by the solver to calculate the values of root functions. These
     ‘zero-crossings’ are used to detect significant events. The function is
@@ -115,7 +120,7 @@ type 'd rootsfn = float -> 'd -> RealArray.t -> unit
 (** A convenience value for signalling that there are no roots to monitor. *)
 val no_roots : (int * 'd rootsfn)
 
-(** {3:arkode-adapt Adaptivity} *)
+(** {3:arkodeadapt Adaptivity} *)
 
 type adaptivity_args = {
     h1 : float;  (** the current step size, {% $t_m - t_{m-1}$%}. *)
@@ -139,7 +144,8 @@ type adaptivity_args = {
     maximum value where the error estimates remain below 1.
 
     This function should focus on accuracy-based time step estimation; for
-    stability based time steps, {!set_stability_fn} should be used.
+    stability based time steps, {!ARKStep.set_stability_fn} and
+    {!ERKStep.set_stability_fn} should be used.
 
     @noarkode <node> ARKAdaptFn *)
 type 'd adaptivity_fn = float -> 'd -> adaptivity_args -> float
@@ -175,7 +181,7 @@ type 'd adaptivity_method =
   | AdaptivityFn of 'd adaptivity_fn
         (** A custom time-step adaptivity function. *)
 
-(** {3:arkode-callbacks Callback functions} *)
+(** {3:arkodecallbacks Callback functions} *)
 
 (** Right-hand side functions for calculating ODE derivatives. They are passed
     three arguments:
@@ -227,34 +233,35 @@ module ButcherTable : sig (* {{{ *)
 
   (** A butcher table.
 
-      $\begin{array}{ c|c}
-        c & A \\ \hline
-        q & b \\
-        p & \tilde{b}
-       \end{array}$
+      {% $\begin{array}{ c|c}
+          c & A \\ \hline
+          q & b \\
+          p & \tilde{b}
+         \end{array}$ %}
 
       Instantiated according to [stages]. For example, when [stages = 3]:
-      $\begin{array}{ c|ccc}
-        c_1 & A_{1,1} & A_{1,2} & A_{1,3} \\
-        c_2 & A_{2,1} & A_{2,2} & A_{2,3} \\
-        c_3 & A_{3,1} & A_{3,2} & A_{3,3} \\ \hline
-        q   & b_1     & b_2     & b_3 \\
-        p   & \widetilde{b_1} & \widetilde{b_2} & \widetilde{b_3}
-       \end{array}$
+        {% $\begin{array}{ c|ccc}
+            c_1 & A_{1,1} & A_{1,2} & A_{1,3} \\
+            c_2 & A_{2,1} & A_{2,2} & A_{2,3} \\
+            c_3 & A_{3,1} & A_{3,2} & A_{3,3} \\ \hline
+            q   & b_1     & b_2     & b_3 \\
+            p   & \widetilde{b_1} & \widetilde{b_2} & \widetilde{b_3}
+            \end{array}$ %}
 
       @noarkode <node> ARKodeButcherTable *)
   type t = {
-      method_order : int;          (** Method order of accuracy ($q$). *)
-      embedding_order : int;       (** Embedding order of accuracy ($p$). *)
-      stages : int;                (** Number of stages ($s$). *)
-      stage_values : Sundials.RealArray2.t;
-        (** Matrix ([stages * stages]) of coefficients ($A$) *)
+      method_order : int;          (** Method order of accuracy ({% $q$ %}). *)
+      embedding_order : int;       (** Embedding order of accuracy ({% $p$ %}). *)
+      stages : int;                (** Number of stages ({% $s$ %}). *)
+      stage_values : Sundials.RealArray2.t; (** Matrix ([stages * stages])
+                                                of coefficients ({% $A$ %}) *)
       stage_times : RealArray.t;   (** Array (of length [stages]) of
-                                       stage times ($c$). *)
+                                       stage times ({% $c$ %}). *)
       coefficients : RealArray.t;  (** Array (of length [stages]) of
-                                       solution coefficients ($b$). *)
+                                       solution coefficients ({% $b$ %}). *)
       bembed : RealArray.t option; (** Optional array (of length [stages]) of
-                                       embedding coefficients ($\tilde{b}$). *)
+                                       embedding coefficients
+                                       ({% $\tilde{b}$ %}). *)
     }
 
   (** Explicit Butcher tables
@@ -346,7 +353,7 @@ module ButcherTable : sig (* {{{ *)
       The logfile, if given, is used to print results.
 
       @noarkode <node> ARKodeButcherTable_CheckOrder
-      @raises ButcherTableCheckFailed Table values are higher than measured ones
+      @raise ButcherTableCheckFailed Table values are higher than measured ones
       @since 4.0.0 *)
   val check_order : ?outfile:Logfile.t -> t -> int * int option * bool
 
@@ -389,7 +396,7 @@ module ARKStep : sig (* {{{ *)
   (** A session with the ARKStep time-stepping solver.
 
       An example session with Arkode ({openfile arkode_ark_skel.ml}): {[
-  #include "../../examples/ocaml/skeletons/arkode_ark_skel.ml"
+#include "../../examples/ocaml/skeletons/arkode_ark_skel.ml"
       ]}
 
       @noarkode <node> Skeleton of main program *)
@@ -472,7 +479,7 @@ module ARKStep : sig (* {{{ *)
         ('m, RealArray.t, 'kind, [>`Dls]) LinearSolver.t ->
       'kind serial_linear_solver
 
-    (** {3:ark-dls-stats Solver statistics} *)
+    (** {3:arkdlsstats Solver statistics} *)
 
     (** Returns the sizes of the real and integer workspaces used by a direct
         linear solver.
@@ -503,7 +510,7 @@ module ARKStep : sig (* {{{ *)
   module Spils : sig (* {{{ *)
     include module type of Sundials_LinearSolver.Iterative
 
-    (** {3:ark-spils-precond Preconditioners} *)
+    (** {3:arkspilsprecond Preconditioners} *)
 
     (** Arguments passed to the preconditioner solver function.
 
@@ -649,7 +656,7 @@ module ARKStep : sig (* {{{ *)
       val get_num_rhs_evals : 'k serial_session -> int
     end (* }}} *)
 
-    (** {3:ark-spils-lsolvers Solvers} *)
+    (** {3:arkspilslsolvers Solvers} *)
 
     (** Callback functions that preprocess or evaluate Jacobian-related data
         needed by the jac_times_vec_fn. In the call [jac_times_setup_fn arg],
@@ -699,7 +706,7 @@ module ARKStep : sig (* {{{ *)
       -> ('d, 'k) preconditioner
       -> ('d, 'k) linear_solver
 
-    (** {3:ark-spils-set Solver parameters} *)
+    (** {3:arkspilsset Solver parameters} *)
 
     (** Sets the maximum number of time steps to wait before recomputation of
         the Jacobian or recommendation to update the preconditioner. If the
@@ -716,7 +723,7 @@ module ARKStep : sig (* {{{ *)
         @noarkode <node> ARKStepSetEpsLin *)
     val set_eps_lin : ('d, 'k) session -> float -> unit
 
-    (** {3:ark-spils-stats Solver statistics} *)
+    (** {3:arkspilsstats Solver statistics} *)
 
     (** Returns the sizes of the real and integer workspaces used by the spils
         linear solver.
@@ -767,7 +774,7 @@ module ARKStep : sig (* {{{ *)
         @noarkode <node> ARKStepGetNumLinRhsEvals *)
     val get_num_lin_rhs_evals    : ('d, 'k) session -> int
 
-    (** {3:ark-spils-lowlevel Low-level solver manipulation}
+    (** {3:arkspilslowlevel Low-level solver manipulation}
 
         The {!init} and {!reinit} functions are the preferred way to set or
         change preconditioner functions. These low-level functions are
@@ -817,7 +824,7 @@ module ARKStep : sig (* {{{ *)
     type 'kind serial_solver = (Nvector_serial.data, 'kind) solver
                                constraint 'kind = [>Nvector_serial.kind]
 
-    (** {3:ark-dlsmass Direct mass matrix solvers} *)
+    (** {3:arkdlsmass Direct mass matrix solvers} *)
     module Dls : sig (* {{{ *)
       include module type of Sundials_LinearSolver.Direct
 
@@ -857,7 +864,7 @@ module ARKStep : sig (* {{{ *)
         -> ('m, RealArray.t, 'kind, [>`Dls]) LinearSolver.t
         -> 'kind serial_solver
 
-      (** {3:ark-dlsmass-stats Solver statistics} *)
+      (** {3:arkdlsmassstats Solver statistics} *)
 
       (** Returns the sizes of the real and integer workspaces used by a
           direct linear mass matrix solver.
@@ -892,11 +899,11 @@ module ARKStep : sig (* {{{ *)
 
     end (* }}} *)
 
-    (** {3:ark-spilsmass Iterative mass matrix solvers} *)
+    (** {3:arkspilsmass Iterative mass matrix solvers} *)
     module Spils : sig (* {{{ *)
       include module type of Sundials_LinearSolver.Iterative
 
-      (** {3:ark-spilsmass-precond Preconditioners} *)
+      (** {3:arkspilsmassprecond Preconditioners} *)
 
       (** Arguments passed to the mass matrix preconditioner solver function.
 
@@ -975,7 +982,7 @@ module ARKStep : sig (* {{{ *)
         -> 'd prec_solve_fn
         -> ('d, 'k) preconditioner
 
-      (** {3:ark-spilsmass-lsolvers Solvers} *)
+      (** {3:arkspilsmasslsolvers Solvers} *)
 
       (** Callback functions that preprocess or evaluate Jacobian-related
           data needed by the mass_times_vec_fn. The argument gives the
@@ -1028,7 +1035,7 @@ module ARKStep : sig (* {{{ *)
         -> ('d, 'k) preconditioner
         -> ('d, 'k) solver
 
-      (** {3:ark-spilsmass-set Solver parameters} *)
+      (** {3:arkspilsmassset Solver parameters} *)
 
       (** Sets the factor by which the Krylov linear solver's convergence
           test constant is reduced from the Newton iteration test constant.
@@ -1037,7 +1044,7 @@ module ARKStep : sig (* {{{ *)
           @noarkode <node> ARKStepSetMassEpsLin *)
       val set_eps_lin : ('d, 'k) session -> float -> unit
 
-      (** {3:ark-spilsmass-stats Solver statistics} *)
+      (** {3:arkspilsmassstats Solver statistics} *)
 
       (** Returns the sizes of the real and integer workspaces used by the
           spils linear solver.
@@ -1082,7 +1089,7 @@ module ARKStep : sig (* {{{ *)
           @noarkode <node> ARKStepGetNumMassPrecSolves *)
       val get_num_prec_solves  : ('d, 'k) session -> int
 
-      (** {3:ark-spilsmass-lowlevel Low-level solver manipulation}
+      (** {3:arkspilsmasslowlevel Low-level solver manipulation}
 
           The {!init} and {!reinit} functions are the preferred way to set or
           change preconditioner functions. These low-level functions are
@@ -1170,7 +1177,7 @@ module ARKStep : sig (* {{{ *)
   val explicit : 'data rhsfn -> ('data, 'kind) problem
 
   (** Additive Runge-Kutta (ARK) solution of multi-rate problem. The arguments
-      are as described under {!implict} and {!explicit}. *)
+      are as described under {!implicit} and {!explicit}. *)
   val imex :
     ?nlsolver : ('data, 'kind,
                   (('data, 'kind) session) Sundials_NonlinearSolver.integrator)
@@ -1354,7 +1361,7 @@ module ARKStep : sig (* {{{ *)
 
   (** {2:set Modifying the solver (optional input functions)} *)
 
-  (** {3:ark-set Optional inputs for ARKStep} *)
+  (** {3:arkset Optional inputs for ARKStep} *)
 
   (** Sets the integration tolerances.
 
@@ -1469,7 +1476,7 @@ module ARKStep : sig (* {{{ *)
       @noarkode <node> ARKStepSetStopTime *)
   val set_stop_time : ('d, 'k) session -> float -> unit
 
-  (** {3:ark-setivp Optional inputs for IVP method selection} *)
+  (** {3:arksetivp Optional inputs for IVP method selection} *)
 
   (** Enables both the implicit and explicit portions of a problem.
 
@@ -1539,10 +1546,10 @@ module ARKStep : sig (* {{{ *)
   (** Use specific built-in Butcher tables for an explicit integration of the
       problem.
 
-      The {{!erk_table}Fehlberg_13_7_8} method is not available prior to
-      Sundials 2.7.0.
-      The {{!erk_table}Knoth_Wolke_3_3} method is not available prior to
-      Sundials 4.0.0.
+      The {{!ButcherTable.erk_table}Fehlberg_13_7_8} method is not available
+      prior to Sundials 2.7.0.
+      The {{!ButcherTable.erk_table}Knoth_Wolke_3_3} method is not available
+      prior to Sundials 4.0.0.
 
       @raise IllInput If $f_E$ is not already specified.
       @noarkode <node> ARKStepSetTables
@@ -1557,7 +1564,7 @@ module ARKStep : sig (* {{{ *)
       @noarkode <node> ARKStepSetImplicit *)
   val set_dirk_table_num : ('d, 'k) session -> ButcherTable.dirk_table -> unit
 
-  (** {3:ark-adapt Optional inputs for time step adaptivity} *)
+  (** {3:arkadapt Optional inputs for time step adaptivity} *)
 
   (** Specifies the method and associated parameters used for time step
       adaptivity.
@@ -1638,7 +1645,7 @@ module ARKStep : sig (* {{{ *)
       @noarkode <node> ARKStepSetStabilityFn *)
   val clear_stability_fn : ('d, 'k) session -> unit
 
-  (** {3:ark-setimplicit Optional inputs for implicit stage solves} *)
+  (** {3:arksetimplicit Optional inputs for implicit stage solves} *)
 
   (** Solve the implicit portion of the problem using the accelerated
       fixed-point solver instead of the modified Newton iteration. The integer
@@ -1887,7 +1894,7 @@ module ARKStep : sig (* {{{ *)
       @noarkode <node> ARKStepGetStepStats *)
   val print_step_stats  : ('d, 'k) session -> out_channel -> unit
 
-  (** {3:ark-getimplicit Implicit solver optional output functions} *)
+  (** {3:arkgetimplicit Implicit solver optional output functions} *)
 
   (** Returns the number of calls made to the linear solver's setup function.
 
@@ -1969,7 +1976,7 @@ module ERKStep : sig (* {{{ *)
   (** A session with the ERKStep time-stepping solver.
 
       An example session with Arkode ({openfile arkode_erk_skel.ml}): {[
-  #include "../../examples/ocaml/skeletons/arkode_erk_skel.ml"
+#include "../../examples/ocaml/skeletons/arkode_erk_skel.ml"
       ]}
 
       @noarkode <node> Skeleton of main program *)
@@ -2097,7 +2104,7 @@ module ERKStep : sig (* {{{ *)
 
   (** {2:set Modifying the solver (optional input functions)} *)
 
-  (** {3:erk-set Optional inputs for ERKStep} *)
+  (** {3:erkset Optional inputs for ERKStep} *)
 
   (** Sets the integration tolerances.
 
@@ -2196,7 +2203,7 @@ module ERKStep : sig (* {{{ *)
       @noarkode <node> ERKStepSetStopTime *)
   val set_stop_time : ('d, 'k) session -> float -> unit
 
-  (** {3:erk-setivp Optional inputs for IVP method selection} *)
+  (** {3:erksetivp Optional inputs for IVP method selection} *)
 
   (** Specifies a customized Butcher table.
 
@@ -2211,7 +2218,7 @@ module ERKStep : sig (* {{{ *)
       @noarkode <node> ERKStepSetTableNum *)
   val set_table_num : ('d, 'k) session -> ButcherTable.erk_table -> unit
 
-  (** {3:erk-setadap Optional inputs for time step adaptivity} *)
+  (** {3:erksetadap Optional inputs for time step adaptivity} *)
 
   (** Specifies the method and associated parameters used for time step
       adaptivity.
@@ -2468,7 +2475,7 @@ module MRIStep : sig (* {{{ *)
   (** A session with the MRIStep time-stepping solver.
 
       An example session with Arkode ({openfile arkode_mri_skel.ml}): {[
-  #include "../../examples/ocaml/skeletons/arkode_mri_skel.ml"
+#include "../../examples/ocaml/skeletons/arkode_mri_skel.ml"
       ]}
 
       @noarkode <node> Skeleton of main program *)
@@ -2596,7 +2603,7 @@ module MRIStep : sig (* {{{ *)
 
   (** {2:set Modifying the solver (optional input functions)} *)
 
-  (** {3:mri-set Optional inputs for MRIStep} *)
+  (** {3:mriset Optional inputs for MRIStep} *)
 
   (** Resets all optional input parameters to their default values. Neither
       the problem-defining functions nor the root-finding functions are
@@ -2669,7 +2676,7 @@ module MRIStep : sig (* {{{ *)
       @noarkode <node> MRIStepSetStopTime *)
   val set_stop_time : ('d, 'k) session -> float -> unit
 
-  (** {3:mri-setivp Optional inputs for IVP method selection} *)
+  (** {3:mrisetivp Optional inputs for IVP method selection} *)
 
   (** Specifies customized Butcher tables.
 
@@ -2690,7 +2697,7 @@ module MRIStep : sig (* {{{ *)
       -> fast:ButcherTable.erk_table
       -> unit
 
-  (** {3:mri-setadap Optional inputs for time step adaptivity} *)
+  (** {3:mrisetadap Optional inputs for time step adaptivity} *)
 
   (** Set a post processing step function.
 
@@ -2797,7 +2804,8 @@ exception IllInput
 exception TooClose
 
 (** The requested time could not be reached in [mxstep] internal steps.
-    See {!set_max_num_steps}
+    See {!ARKStep.set_max_num_steps}, {!ERKStep.set_max_num_steps},
+    or {!MRIStep.set_max_num_steps}.
 
     @noarkode <node> ARK_TOO_MUCH_WORK *)
 exception TooMuchWork
@@ -2815,13 +2823,15 @@ exception TooMuchAccuracy
 exception InnerStepFail of exn option
 
 (** Too many error test failures within a step or at the minimum step size.
-    See {!set_max_err_test_fails} and {!set_min_step}.
+    See {!ARKStep.set_max_err_test_fails} or {!ERKStep.set_max_err_test_fails},
+    and {!ARKStep.set_min_step} or {!ERKStep.set_min_step}.
 
     @noarkode <node> ARK_ERR_FAILURE *)
 exception ErrFailure
 
 (** Too many convergence test failures within a step or at the minimum step
-    size. See {!set_max_conv_fails} and {!set_min_step}.
+    size. See {!ARKStep.set_max_conv_fails}, and {!ARKStep.set_min_step} or
+    {!ERKStep.set_min_step}.
 
     @noarkode <node> ARK_CONV_FAILURE *)
 exception ConvergenceFailure
@@ -2948,12 +2958,14 @@ exception RootFuncFailure
     @noarkode <node> ARK_POSTPROCESS_FAIL *)
 exception PostprocStepFailure
 
-(** Raised by {!get_dky} for invalid order values.
+(** Raised by {!ARKStep.get_dky}, {!ERKStep.get_dky}, and
+    {!MRIStep.get_dky} for invalid order values.
 
     @noarkode <node> ARKStepGetDky (ARK_BAD_K) *)
 exception BadK
 
-(** Raised by {!get_dky} for invalid time values.
+(** Raised by {!ARKStep.get_dky}, {!ERKStep.get_dky}, and
+    {!MRIStep.get_dky} for invalid time values.
 
     @noarkode <node> ARKStepGetDky (ARK_BAD_T) *)
 exception BadT
