@@ -156,7 +156,7 @@ CAMLprim value sunml_nvec_get_id(value vx)
 {
     CAMLparam1(vx);
     CAMLlocal1(vr);
-#if SUNDIALS_LIB_VERSION >= 290
+#if 290 <= SUNDIALS_LIB_VERSION
     N_Vector_ID id;
 
     id = N_VGetVectorID(NVEC_VAL(vx));
@@ -186,9 +186,11 @@ CAMLprim value sunml_nvec_get_id(value vx)
 	case SUNDIALS_NVEC_RAJA:
 	    vr = Val_int(VARIANT_NVECTOR_ID_TAG_RAJA);
 	    break;
+#if 400 <= SUNDIALS_LIB_VERSION
 	case SUNDIALS_NVEC_OPENMPDEV:
 	    vr = Val_int(VARIANT_NVECTOR_ID_TAG_OPENMPDEV);
 	    break;
+#endif
 	case SUNDIALS_NVEC_CUSTOM:
 	default:
 	    vr = Val_int(VARIANT_NVECTOR_ID_TAG_CUSTOM);

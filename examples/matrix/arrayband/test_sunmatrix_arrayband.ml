@@ -29,6 +29,11 @@ module Matrix = Sundials.Matrix
 let printf = Format.printf
 let (+=) r x = r := !r + x
 
+let compat3 =
+  match Sundials.Config.sundials_version with
+  | 3,_,_ -> true
+  | _ -> false
+
 module ArrayBand_tests =
 struct
   type k = Matrix.custom
@@ -188,7 +193,11 @@ let main () =
 
   fails += Test.test_sunmatscaleaddi a i 0;
   fails += Test.test_sunmatmatvec a x y 0;
-  fails += Test.test_sunmatspace ~cheat_leniw:(5,5007) a 0;
+  if compat3 then
+    fails += Test.test_sunmatspace ~cheat_leniw:(5,5007)
+                                   ~cheat_lenrw:(1505000,1005000) a 0
+  else
+    fails += Test.test_sunmatspace ~cheat_leniw:(5,5007) a 0;
 
   (* Print result *)
   if !fails <> 0 then begin

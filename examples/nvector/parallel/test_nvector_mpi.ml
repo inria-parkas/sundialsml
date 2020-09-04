@@ -283,7 +283,9 @@ let main () =
   fails += Test.test_n_vdotprod x y local_length global_length myid;
   fails += Test.test_n_vmaxnorm x local_length myid;
   fails += Test.test_n_vwrmsnorm x y local_length myid;
-  fails += Test.test_n_vwrmsnormmask x y z local_length global_length myid;
+  if Test_nvector.compat_ge400
+  then fails += Test.test_n_vwrmsnormmask x y z local_length global_length myid
+  else fails += Test.test_n_vwrmsnormmask_lt400 x y z local_length global_length myid;
   fails += Test.test_n_vmin x local_length myid;
   fails += Test.test_n_vwl2norm x y local_length global_length myid;
   fails += Test.test_n_vl1norm x local_length global_length myid;
@@ -349,7 +351,8 @@ let main () =
       printf "FAIL: NVector module failed %d tests \n%s\n" !fails
         (if Test_nvector.compat_ge400 then "" else " ")
     else
-      printf "SUCCESS: NVector module passed all tests \n%s\n"
+      printf "SUCCESS: NVector module passed all tests%s\n%s\n"
+        (if Test_nvector.compat_ge400 then " " else ", Proc 0 ")
         (if Test_nvector.compat_ge400 then "" else " ")
   end;
   match Mpi.(allreduce_int (!fails) Max comm) with

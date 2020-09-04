@@ -774,7 +774,7 @@ let reinit session ?nlsolver ?lsolver ?roots t0 y0 =
   (match lsolver with
    | None -> ()
    | Some linsolv -> linsolv session y0);
-  if in_compat_mode2_3 then
+  (if in_compat_mode2_3 then
     match nlsolver with
     | None -> ()
     | Some { NLSI.solver = NLSI.FixedPointSolver _ } -> c_set_functional session
@@ -787,7 +787,7 @@ let reinit session ?nlsolver ?lsolver ?roots t0 y0 =
         NLSI.attach nls;
         session.nls_solver <- Some nls;
         c_set_nonlinear_solver session nlcptr
-    | _ -> ();
+    | _ -> ());
   (match roots with
    | None -> ()
    | Some roots -> root_init session roots)

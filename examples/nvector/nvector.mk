@@ -21,9 +21,9 @@ include ../../examples.mk
 
 # use local copies to avoid problems with make -j
 test_nvector.ml: ../test_nvector.ml
-	cp $< $@
+	cp $< $@; chmod ugo-w $@
 test_nvector_ml.c: ../test_nvector_ml.c
-	cp $< $@
+	cp $< $@; chmod ugo-w $@
 
 test_nvector.cmo: test_nvector.ml
 	$(OCAMLC) $(OCAMLFLAGS) -c $(SUBDIRS:%=-I $(SRC)/%) -o $@ $<

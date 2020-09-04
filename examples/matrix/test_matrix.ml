@@ -370,7 +370,7 @@ let test_sunmatmatvec a x y myid =
 (* ----------------------------------------------------------------------
  * SUNMatSpace Test
  * --------------------------------------------------------------------*)
-let test_sunmatspace ?cheat_leniw a myid =
+let test_sunmatspace ?cheat_leniw ?cheat_lenrw a myid =
   try
     let start_time = get_time () in
     let lenrw, leniw = try Matrix.space a with _ -> begin
@@ -389,6 +389,11 @@ let test_sunmatspace ?cheat_leniw a myid =
         match cheat_leniw with
         | Some (actual, expected) when leniw = actual -> expected
         | _ -> leniw
+      in
+      let lenrw =
+        match cheat_lenrw with
+        | Some (actual, expected) when lenrw = actual -> expected
+        | _ -> lenrw
       in
       printf "    PASSED test -- SUNMatSpace, lenrw = %d, leniw = %d@\n"
         lenrw leniw;

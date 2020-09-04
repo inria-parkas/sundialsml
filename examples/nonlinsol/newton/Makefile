@@ -8,6 +8,6 @@ SRCROOT=../../..
 SUBDIR=nonlinsol/newton
 C_SUBDIR=sunnonlinsol/newton
 
-EXAMPLES = test_sunnonlinsol_newton.ml
+EXAMPLES = $(if $(AT_LEAST_4_0_0), test_sunnonlinsol_newton.ml)
 
 include ../nonlinsol.mk

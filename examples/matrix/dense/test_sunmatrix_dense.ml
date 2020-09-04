@@ -29,6 +29,12 @@ module Matrix = Sundials.Matrix
 let printf = Format.printf
 let (+=) r x = r := !r + x
 
+let compat2_3 =
+  match Sundials.Config.sundials_version with
+  | 2,_,_ -> true
+  | 3,_,_ -> true
+  | _ -> false
+
 module Dense_tests =
 struct
   type k = Matrix.standard
@@ -166,7 +172,8 @@ let main () =
   fails += Test.test_sunmatclone a 0;
   fails += Test.test_sunmatcopy a 0;
   fails += Test.test_sunmatzero a 0;
-  (* fails += Test.test_sunmatscaleadd a i 0; *)
+  if compat2_3 then
+    fails += Test.test_sunmatscaleadd a i 0;
   if square then
     fails += Test.test_sunmatscaleaddi a i 0;
   fails += Test.test_sunmatmatvec a x y 0;

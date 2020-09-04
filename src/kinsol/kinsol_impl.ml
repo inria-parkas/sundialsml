@@ -171,7 +171,8 @@ let ls_check_direct session =
     match session.ls_callbacks with
     | DlsDenseCallback _ | DlsBandCallback _
     | SlsKluCallback _
-    | SlsSuperlumtCallback _ -> ()
+    | SlsSuperlumtCallback _
+    | DirectCustomCallback _ -> ()
     | _ -> raise LinearSolver.InvalidLinearSolver
 
 let ls_check_spils session =

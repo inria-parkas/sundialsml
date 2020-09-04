@@ -519,7 +519,7 @@ let ls_check_direct session =
     | BDlsBandCallback _ | BDlsBandCallbackSens _
     | SlsKluCallback _ | BSlsKluCallback _ | BSlsKluCallbackSens _
     | SlsSuperlumtCallback _ | BSlsSuperlumtCallback _
-    | BSlsSuperlumtCallbackSens _ -> ()
+    | BSlsSuperlumtCallbackSens _ | DirectCustomCallback _ -> ()
     | _ -> raise LinearSolver.InvalidLinearSolver
 
 let ls_check_spils session =
