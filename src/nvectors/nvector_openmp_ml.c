@@ -677,7 +677,8 @@ CAMLprim value sunml_nvec_openmp_n_vlinearcombinationvectorarray(value vac,
 #if 400 <= SUNDIALS_LIB_VERSION
     realtype *ac = REAL_ARRAY(vac);
     N_Vector *az;
-    int nvecz = sunml_arrays_of_nvectors(&az, 1, vaz);
+    int nvecz __attribute__((unused))
+	= sunml_arrays_of_nvectors(&az, 1, vaz);
     N_Vector **aax;
     int nvec, nsum;
     sunml_arrays_of_nvectors2(&nsum, &nvec, &aax, 1, vaax);
