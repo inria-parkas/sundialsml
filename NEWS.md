@@ -1,5 +1,15 @@
-Sundials/ML 4.1.0p0 (August 2020)
----------------------------------
+Sundials/ML 5.3.0p0 (September 2020)
+------------------------------------
+Sundials/ML v5.3.0p0 adds support for v5.x of the Sundials Suite of
+numerical solvers.
+
+Notes:
+* Changes to the callback interfaces NonlinearSolver.{lsetupfn, lsolvefn} 
+  and the name (and use) of the second argument of the function 
+  NonlinearSolver.solve.
+
+Sundials/ML 4.1.0p0 (September 2020)
+------------------------------------
 Sundials/ML v4.1.0p0 adds support for v4.x of the Sundials Suite of
 numerical solvers.
 

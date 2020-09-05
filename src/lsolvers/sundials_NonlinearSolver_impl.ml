@@ -51,9 +51,9 @@ type 'a integrator = Integrator of 'a
 
 type ('d, 's) sysfn = 'd -> 'd -> 's -> unit
 
-type ('d, 's) lsetupfn = 'd -> 'd -> bool -> 's -> bool
+type ('d, 's) lsetupfn = bool -> 's -> bool
 
-type ('d, 's) lsolvefn = 'd -> 'd -> 's -> unit
+type ('d, 's) lsolvefn = 'd -> 's -> unit
 
 (* Used in sundials_nonlinearsolver_ml.c: nlsolver_convtest_tag *)
 type convtest =
@@ -146,9 +146,9 @@ let get_type (type d k s) ({ rawptr; solver } : (d, k, s) nonlinear_solver) =
 
 let empty_sysfn _ _ _ =
   Sundials_impl.crash "Internal error: nls_sysn called\n"
-let empty_lsetupfn _ _ _ _ =
+let empty_lsetupfn _ _ =
   Sundials_impl.crash "Internal error: nls_lsetupfn called\n"
-let empty_lsolvefn _ _ _ =
+let empty_lsolvefn _ _ =
   Sundials_impl.crash "Internal error: nls_lsolvefn called\n"
 let empty_convtestfn _ _ _ _ =
   Sundials_impl.crash "Internal error: nls_convtestfn called\n"
