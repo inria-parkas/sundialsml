@@ -4529,6 +4529,34 @@ CAMLprim value sunml_arkode_ark_get_num_mass_prec_solves(value varkode_mem)
     CAMLreturn(Val_long(r));
 }
 
+CAMLprim value sunml_arkode_ark_write_parameters(value varkode_mem, value vlog)
+{
+    CAMLparam2(varkode_mem, vlog);
+#if 410 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepWriteParameters(ARKODE_MEM_FROM_ML(varkode_mem),
+				      ML_CFILE(vlog));
+    CHECK_FLAG("ARKStepWriteParameters", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim value sunml_arkode_ark_write_butcher(value varkode_mem, value vlog)
+{
+    CAMLparam2(varkode_mem, vlog);
+#if 410 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepWriteButcher(ARKODE_MEM_FROM_ML(varkode_mem),
+				   ML_CFILE(vlog));
+    CHECK_FLAG("ARKStepWriteButcher", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(Val_unit);
+}
+
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * ERKStep basic interface
  */
@@ -5592,6 +5620,34 @@ CAMLprim value sunml_arkode_erk_set_no_inactive_root_warn(value varkode_mem)
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_arkode_erk_write_parameters(value varkode_mem, value vlog)
+{
+    CAMLparam2(varkode_mem, vlog);
+#if 410 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepWriteParameters(ARKODE_MEM_FROM_ML(varkode_mem),
+				      ML_CFILE(vlog));
+    CHECK_FLAG("ERKStepWriteParameters", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_write_butcher(value varkode_mem, value vlog)
+{
+    CAMLparam2(varkode_mem, vlog);
+#if 410 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepWriteButcher(ARKODE_MEM_FROM_ML(varkode_mem),
+				   ML_CFILE(vlog));
+    CHECK_FLAG("ERKStepWriteButcher", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(Val_unit);
+}
+
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * MRIStep basic interface
  */
@@ -6176,5 +6232,33 @@ CAMLprim value sunml_arkode_mri_set_no_inactive_root_warn(value varkode_mem)
 #endif
 
     CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_mri_write_parameters(value varkode_mem, value vlog)
+{
+    CAMLparam2(varkode_mem, vlog);
+#if 410 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepWriteParameters(ARKODE_MEM_FROM_ML(varkode_mem),
+				      ML_CFILE(vlog));
+    CHECK_FLAG("MRIStepWriteParameters", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim value sunml_arkode_mri_write_butcher(value varkode_mem, value vlog)
+{
+    CAMLparam2(varkode_mem, vlog);
+#if 410 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepWriteButcher(ARKODE_MEM_FROM_ML(varkode_mem),
+				   ML_CFILE(vlog));
+    CHECK_FLAG("MRIStepWriteButcher", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(Val_unit);
 }
 

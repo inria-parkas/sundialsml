@@ -31,7 +31,10 @@
 #include <kinsol/kinsol_direct.h>
 #include <kinsol/kinsol_spils.h>
 #endif
+
+#if SUNDIALS_LIB_VERSION < 410
 #include <kinsol/kinsol_impl.h>
+#endif
 
 #if SUNDIALS_LIB_VERSION < 300
 #include <kinsol/kinsol_dense.h>
@@ -780,7 +783,7 @@ CAMLprim value sunml_kinsol_solve(value vdata, value vu, value vstrategy,
     CAMLreturn (Val_int (result));
 }
 
-static value sunml_kinsol_last_lin_exception(KINMem kin_mem)
+static value sunml_kinsol_last_lin_exception(void *kin_mem)
 {
 #if 400 <= SUNDIALS_LIB_VERSION
     long int lsflag;

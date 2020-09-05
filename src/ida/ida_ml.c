@@ -25,7 +25,9 @@
 /* IDAS (with sensitivity) */
 
 #include <idas/idas.h>
+#if SUNDIALS_LIB_VERSION < 410
 #include <idas/idas_impl.h>
+#endif
 
 /* linear solvers */
 #if   400 <= SUNDIALS_LIB_VERSION
@@ -48,7 +50,9 @@
 #else  /* IDA (without sensitivity) */
 
 #include <ida/ida.h>
+#if SUNDIALS_LIB_VERSION < 410
 #include <ida/ida_impl.h>
+#endif
 
 /* linear solvers */
 #if   400 <= SUNDIALS_LIB_VERSION
@@ -1104,18 +1108,19 @@ void sunml_ida_check_flag(const char *call, int flag, void *ida_mem)
     case IDA_BAD_T:
 	caml_raise_constant(IDA_EXN(BadT));
 
-#if SUNDIALS_LIB_VERSION >= 400
+#if 400 <= SUNDIALS_LIB_VERSION
     case IDA_NLS_INIT_FAIL:
 	caml_raise_constant(IDA_EXN(NonlinearInitFailure));
 
     case IDA_NLS_SETUP_FAIL:
 	caml_raise_constant(IDA_EXN(NonlinearSetupFailure));
 
-    case IDA_NLS_SETUP_RECVR:
-	caml_raise_constant(IDA_EXN(NonlinearSetupRecoverable));
-
     case IDA_VECTOROP_ERR:
 	caml_raise_constant(IDA_EXN(VectorOpErr));
+#endif
+#if 400 <= SUNDIALS_LIB_VERSION && SUNDIALS_LIB_VERSION < 410
+    case IDA_NLS_SETUP_RECVR:
+	caml_raise_constant(IDA_EXN(NonlinearSetupRecoverable));
 #endif
 
     default:

@@ -1956,6 +1956,18 @@ module ARKStep : sig (* {{{ *)
       @noarkode <node> ARKStepGetNumGEvals *)
   val get_num_g_evals : ('d, 'k) session -> int
 
+  (** Outputs all the solver parameters to the given file.
+
+      @since 4.1.0
+      @noarkode <node> ARKStepWriteParameters *)
+  val write_parameters : ('d, 'k) session -> Logfile.t -> unit
+
+  (** Outputs the current butcher table to the given file.
+
+      @since 4.1.0
+      @noarkode <node> ARKStepWriteButcher *)
+  val write_butcher : ('d, 'k) session -> Logfile.t -> unit
+
 end (* }}} *)
 
 (** ERKStep Time-Stepping Module for nonstiff initial value problems.
@@ -2455,6 +2467,18 @@ module ERKStep : sig (* {{{ *)
       @noarkode <node> ERKStepGetNumGEvals *)
   val get_num_g_evals : ('d, 'k) session -> int
 
+  (** Outputs all the solver parameters to the given file.
+
+      @since 4.1.0
+      @noarkode <node> ERKStepWriteParameters *)
+  val write_parameters : ('d, 'k) session -> Logfile.t -> unit
+
+  (** Outputs the current butcher table to the given file.
+
+      @since 4.1.0
+      @noarkode <node> ERKStepWriteButcher *)
+  val write_butcher : ('d, 'k) session -> Logfile.t -> unit
+
 end (* }}} *)
 
 (** MRIStep Time-Stepping Module for two-rate initial value problems.
@@ -2784,6 +2808,18 @@ module MRIStep : sig (* {{{ *)
 
       @noarkode <node> MRIStepGetNumGEvals *)
   val get_num_g_evals : ('d, 'k) session -> int
+
+  (** Outputs all the solver parameters to the given file.
+
+      @since 4.1.0
+      @noarkode <node> MRIStepWriteParameters *)
+  val write_parameters : ('d, 'k) session -> Logfile.t -> unit
+
+  (** Outputs the current butcher table to the given file.
+
+      @since 4.1.0
+      @noarkode <node> MRIStepWriteButcher *)
+  val write_butcher : ('d, 'k) session -> Logfile.t -> unit
 
 end (* }}} *)
 
