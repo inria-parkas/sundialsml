@@ -106,19 +106,26 @@ val setup :
 
 (** Solves a nonlinear system.
     The call [solve ls ~y0 ~y ~w tol callLSetup] solves the
-    nonlinear system {% $F(y) = 0$ %} or {% $G(y) = y$ %}, given
-    an initial iterate [y0] (which must not be modified), a solution
-    error-weight vector [w] used for computing weighted error norms,
-    the requested solution tolerance in the weighted root-mean-squared norm
-    [tol], and a flag [callLSetup] indicating whether the integrator
-    recommends calling the setup function.
+    nonlinear system {% $F(y) = 0$ %} or {% $G(y) = y$ %}, given the following
+    arguments.
+
+    - [y0], a predicted value for the new solution state (which must not be
+      modified),
+    - [ycor], on input, an initial guess for the correction to the predicted
+      states, and on output, the final correction to the predicted state,
+    - [w], a solution error-weight vector used for computing weighted error
+      norms,
+    - [tol], the requested solution tolerance in the weighted
+      root-mean-squared norm, and,
+    - [callLSetup], a flag indicating whether the integrator recommends
+      calling the setup function.
 
     @nocvode <node> SUNNonlinSolSolve *)
 val solve :
   ('d, 'k, user) t
-  -> y0:('d, 'k) Nvector.t
-  ->  y:('d, 'k) Nvector.t
-  ->  w:('d, 'k) Nvector.t
+  ->  y0:('d, 'k) Nvector.t
+  -> ycor:('d, 'k) Nvector.t
+  ->   w:('d, 'k) Nvector.t
   -> float
   -> bool
   -> unit
@@ -150,23 +157,17 @@ val set_sys_fn : ('d, 'k, user) t -> ('d, user) sysfn -> unit
     of the nonlinear residual function {% $F(y) = 0$ %}. For iterative
     linear solvers, calls a preconditioner setup function.
 
-    The call [jcur = lsetupfn y f jbad mem] has as arguments
-
-    - [y], the state vector where the system should be set up,
-    - [f], the value of the nonlinear system at [y],
-    - [jbad], indicates if the solver believes that {% $A$ %} has gone stale,
-       and
-    - [mem], a token passed by the function provider.
-
-    A true return value ([jcur]) signals that the Jacobian {% $A$ %} has been
-    updated.
+    The call [jcur = lsetupfn jbad mem] has as arguments [jbad], which
+    indicates if the solver believes that {% $A$ %} has gone stale, and [mem],
+    a token passed by the function provider. A true return value ([jcur])
+    signals that the Jacobian {% $A$ %} has been updated.
 
     This function raises {!exception:Sundials.RecoverableFailure} to
     indicate a recoverable failure. Other exceptions signal unrecoverable
     failures.
 
     @nocvode <node> SUNNonlinSolLSetupFn *)
-type ('data, 's) lsetupfn = 'data -> 'data -> bool -> 's -> bool
+type ('data, 's) lsetupfn = bool -> 's -> bool
 
 (** Specify a linear solver setup callback.
 
@@ -178,9 +179,8 @@ val set_lsetup_fn : ('d, 'k, user) t -> ('d, user) lsetupfn -> unit
     {% $A = \frac{\partial F}{\partial y}$ %} is the linearization of the
     nonlinear residual function {% $F(y)= 0$ %}.
 
-    The call [lsolvefn y b mem] has as arguments
+    The call [lsolvefn b mem] has as arguments
 
-    - [y], the input vector containing the current nonlinear iteration;
     - [b], on input: the right-hand-side vector for the linear solve,
            set on output to the solution {% $x$ %}; and,
     - [mem], a token passed by the function provider.
@@ -190,7 +190,7 @@ val set_lsetup_fn : ('d, 'k, user) t -> ('d, user) lsetupfn -> unit
     failures.
 
     @nocvode <node> SUNNonlinSolLSolveFn *)
-type ('data, 's) lsolvefn = 'data -> 'data -> 's -> unit
+type ('data, 's) lsolvefn = 'data -> 's -> unit
 
 (** Specify a linear solver callback.
 

@@ -83,12 +83,12 @@ let setup { rawptr; solver } ~y =
   | FixedPointSolver _ | NewtonSolver
       -> c_setup rawptr y                                    (* O/Cnls *)
 
-let solve { rawptr; solver } ~y0 ~y ~w tol callLSetup =
+let solve { rawptr; solver } ~y0 ~ycor ~w tol callLSetup =
   check_compat ();
   match solver with
-  | CustomSolver { solve = f } -> f y0 y w tol callLSetup () (* O/Onls *)
+  | CustomSolver { solve = f } -> f y0 ycor w tol callLSetup () (* O/Onls *)
   | FixedPointSolver _ | NewtonSolver
-      -> c_solve rawptr (y0, y, w, tol, callLSetup)          (* O/Cnls *)
+      -> c_solve rawptr (y0, ycor, w, tol, callLSetup)          (* O/Cnls *)
 
 (* - - - OCaml callback configuration - - - *)
 
@@ -104,8 +104,7 @@ let set_sys_fn { rawptr; solver; callbacks } cbf =
 let set_lsetup_fn { rawptr; solver; callbacks } cbf =
   check_compat ();
   match (solver : ('d, 'k, user) solver) with
-  | CustomSolver { set_lsetup_fn = Some set }                (* O/Onls *)
-      -> set (fun y f -> Nvector.(cbf (unwrap y) (unwrap f)))
+  | CustomSolver { set_lsetup_fn = Some set } -> set cbf     (* O/Onls *)
   | CustomSolver { set_lsetup_fn = None } -> ()
   | FixedPointSolver _ | NewtonSolver                        (* O/Cnls *)
       -> callbacks.lsetupfn <- cbf;
@@ -115,7 +114,7 @@ let set_lsolve_fn { rawptr; solver; callbacks } cbf =
   check_compat ();
   match (solver : ('d, 'k, user) solver) with
   | CustomSolver { set_lsolve_fn = Some set }                (* O/Onls *)
-      -> set (fun y b -> Nvector.(cbf (unwrap y) (unwrap b)))
+      -> set (fun b -> Nvector.(cbf (unwrap b)))
   | CustomSolver { set_lsolve_fn = None } -> ()
   | FixedPointSolver _ | NewtonSolver                        (* O/Cnls *)
       -> callbacks.lsolvefn <- cbf;
@@ -187,11 +186,11 @@ external c_call_sys_fn : (('d, 'k) Nvector.t, 's) c_sysfn
   = "sunml_nlsolver_call_sys_fn"
 
 external c_call_lsetup_fn : (('d, 'k) Nvector.t, 's) c_lsetupfn
-              -> ('d, 'k) Nvector.t -> ('d, 'k) Nvector.t -> bool -> 's -> bool
+              -> bool -> 's -> bool
   = "sunml_nlsolver_call_lsetup_fn"
 
 external c_call_lsolve_fn : (('d, 'k) Nvector.t, 's) c_lsolvefn
-              -> ('d, 'k) Nvector.t -> ('d, 'k) Nvector.t -> 's -> unit
+              -> ('d, 'k) Nvector.t -> 's -> unit
   = "sunml_nlsolver_call_lsolve_fn"
 
 external c_call_convtest_fn' :
@@ -213,12 +212,11 @@ external c_call_sys_fn_sens : (('d, 'k) Senswrapper.t, 's) c_sysfn
   = "sunml_nlsolver_call_sys_fn_sens"
 
 external c_call_lsetup_fn_sens : (('d, 'k) Senswrapper.t, 's) c_lsetupfn
-              -> ('d, 'k) Senswrapper.t -> ('d, 'k) Senswrapper.t
               -> bool -> 's -> bool
   = "sunml_nlsolver_call_lsetup_fn_sens"
 
 external c_call_lsolve_fn_sens : (('d, 'k) Senswrapper.t, 's) c_lsolvefn
-              -> ('d, 'k) Senswrapper.t -> ('d, 'k) Senswrapper.t -> 's -> unit
+              -> ('d, 'k) Senswrapper.t -> 's -> unit
   = "sunml_nlsolver_call_lsolve_fn_sens"
 
 external c_call_convtest_fn_sens' :

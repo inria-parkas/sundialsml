@@ -385,22 +385,24 @@ static int sys_callback(N_Vector y, N_Vector F, void* mem)
 #endif
 
 #if 400 <= SUNDIALS_LIB_VERSION
+#if 500 <= SUNDIALS_LIB_VERSION
+static int lsetup_callback(booleantype jbad, booleantype* jcur, void* mem)
+#else
 static int lsetup_callback(N_Vector y, N_Vector F, booleantype jbad,
 			   booleantype* jcur, void* mem)
+#endif
 {
     CAMLparam0();
-    CAMLlocalN(args, 4);
+    CAMLlocalN(args, 2);
     CAMLlocal1(callbacks);
 
-    args[0] = NVEC_BACKLINK(y);
-    args[1] = NVEC_BACKLINK(F);
-    args[2] = Val_bool(jbad);
-    args[3] = Val_unit;
+    args[0] = Val_bool(jbad);
+    args[1] = Val_unit;
     callbacks = *((value *)mem);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callbackN_exn (
-	Field(callbacks, RECORD_NLSOLVER_CALLBACKS_LSETUPFN), 4, args);
+	Field(callbacks, RECORD_NLSOLVER_CALLBACKS_LSETUPFN), 2, args);
 
     /* Update jcur; leave it unchanged if an error occurred. */
     if (!Is_exception_result (r)) {
@@ -414,20 +416,23 @@ static int lsetup_callback(N_Vector y, N_Vector F, booleantype jbad,
 #endif
 
 #if 400 <= SUNDIALS_LIB_VERSION
+#if 500 <= SUNDIALS_LIB_VERSION
+static int lsolve_callback(N_Vector b, void* mem)
+#else
 static int lsolve_callback(N_Vector y, N_Vector b, void* mem)
+#endif
 {
     CAMLparam0();
-    CAMLlocalN(args, 3);
+    CAMLlocalN(args, 2);
     CAMLlocal1(callbacks);
 
-    args[0] = NVEC_BACKLINK(y);
-    args[1] = NVEC_BACKLINK(b);
-    args[2] = Val_unit;
+    args[0] = NVEC_BACKLINK(b);
+    args[1] = Val_unit;
     callbacks = *((value *)mem);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callbackN_exn (
-	Field(callbacks, RECORD_NLSOLVER_CALLBACKS_LSOLVEFN), 3, args);
+	Field(callbacks, RECORD_NLSOLVER_CALLBACKS_LSOLVEFN), 2, args);
 
     CAMLreturnT(int, CHECK_NLS_EXCEPTION (r, UNRECOVERABLE));
 }
@@ -453,9 +458,14 @@ static int convtest_callback(SUNNonlinearSolver nls, N_Vector y, N_Vector del,
 	 only way this value can be used is in a later call to a sysfn
 	 retrieved via FixedPoint/Newton.get_sys_fn; the original value is
 	 recovered at that point
+	 (This is true in Sundials >= 500 since all internal calls to
+	  SUNNonlinSolSetConvTestFn pass a pointer to the integrator data
+	  structure.)
 
-	-For O/Cnls, mem is already a value* (it points to a callback record).
-	 There is thus no need to wrap it again, but we have no way to
+	-For O/Cnls, mem is NULL in Sundials >=500 (see
+	 sunml_nlsolver_set_convtest_fn), and otherwise a pointer to the
+	 integrator data structure.
+	 There is thus no need to wrap it, but we have no way to
 	 distinguish the two cases at this point. In this case, the given
 	 value (of type "user") cannot be manipulated in any way from OCaml,
 	 so wrapping it again is not problematic (although it is slightly
@@ -532,7 +542,11 @@ CAMLprim value sunml_nlsolver_set_convtest_fn(value vnls)
 #if SUNDIALS_LIB_VERSION >= 400
     SUNNonlinearSolver nls = NLSOLVER_VAL(vnls);
 
+#if SUNDIALS_LIB_VERSION >= 500
+    int flag = SUNNonlinSolSetConvTestFn(nls, convtest_callback, NULL);
+#else
     int flag = SUNNonlinSolSetConvTestFn(nls, convtest_callback);
+#endif
     NLS_CHECK_FLAG("SUNNonlinSolSetConvTestFn", flag);
 #endif
     CAMLreturn (Val_unit);
@@ -632,18 +646,20 @@ CAMLprim value sunml_nlsolver_call_sys_fn_sens(value vsysfn, value vy,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_nlsolver_call_lsetup_fn(value vlsetupfn, value vy,
-					     value vF, value vjbad, value vmem)
+CAMLprim value sunml_nlsolver_call_lsetup_fn(value vlsetupfn,
+					     value vjbad, value vmem)
 {
-    CAMLparam5(vlsetupfn, vy, vF, vjbad, vmem);
+    CAMLparam3(vlsetupfn, vjbad, vmem);
 #if SUNDIALS_LIB_VERSION >= 400
     SUNNonlinSolLSetupFn lsetupfn = LSETUPFN_VAL(vlsetupfn);
-    N_Vector y = NVEC_VAL(vy);
-    N_Vector f = NVEC_VAL(vF);
     void *mem = NLMEM_VAL(vmem);
     int jcur = 0;
 
-    int flag = (*lsetupfn)(y, f, Bool_val(vjbad), &jcur, mem);
+#if SUNDIALS_LIB_VERSION >= 500
+    int flag = (*lsetupfn)(Bool_val(vjbad), &jcur, mem);
+#else
+    int flag = (*lsetupfn)(NULL, NULL, Bool_val(vjbad), &jcur, mem);
+#endif
     NLS_CHECK_FLAG("SUNNonlinSolLSetupFn", flag);
 
     CAMLreturn (Val_bool(jcur));
@@ -651,23 +667,20 @@ CAMLprim value sunml_nlsolver_call_lsetup_fn(value vlsetupfn, value vy,
     CAMLreturn (Val_bool(0));
 }
 
-CAMLprim value sunml_nlsolver_call_lsetup_fn_sens(value vlsetupfn, value vy,
-					          value vF, value vjbad, value vmem)
+CAMLprim value sunml_nlsolver_call_lsetup_fn_sens(value vlsetupfn,
+					          value vjbad, value vmem)
 {
-    CAMLparam5(vlsetupfn, vy, vF, vjbad, vmem);
+    CAMLparam3(vlsetupfn, vjbad, vmem);
 #if SUNDIALS_LIB_VERSION >= 400
     SUNNonlinSolLSetupFn lsetupfn = LSETUPFN_VAL(vlsetupfn);
-    N_Vector y = SENSWRAPPER(vy);
-    N_Vector f = SENSWRAPPER(vF);
     void *mem = NLMEM_VAL(vmem);
     int jcur = 0;
 
-#if SUNDIALS_ML_SAFE == 1
-    if ((y == NULL) || (f == NULL))
-	caml_raise_constant(NLSOLVER_EXN(IncorrectUse));
+#if SUNDIALS_LIB_VERSION >= 500
+    int flag = (*lsetupfn)(Bool_val(vjbad), &jcur, mem);
+#else
+    int flag = (*lsetupfn)(NULL, NULL, Bool_val(vjbad), &jcur, mem);
 #endif
-
-    int flag = (*lsetupfn)(y, f, Bool_val(vjbad), &jcur, mem);
     NLS_CHECK_FLAG("SUNNonlinSolLSetupFn (sens)", flag);
 
     CAMLreturn (Val_bool(jcur));
@@ -675,38 +688,43 @@ CAMLprim value sunml_nlsolver_call_lsetup_fn_sens(value vlsetupfn, value vy,
     CAMLreturn (Val_bool(0));
 }
 
-CAMLprim value sunml_nlsolver_call_lsolve_fn(value vlsolvefn, value vy,
+CAMLprim value sunml_nlsolver_call_lsolve_fn(value vlsolvefn,
 					     value vb, value vmem)
 {
-    CAMLparam4(vlsolvefn, vy, vb, vmem);
+    CAMLparam3(vlsolvefn, vb, vmem);
 #if SUNDIALS_LIB_VERSION >= 400
     SUNNonlinSolLSolveFn lsolvefn = LSOLVEFN_VAL(vlsolvefn);
-    N_Vector y = NVEC_VAL(vy);
     N_Vector b = NVEC_VAL(vb);
     void *mem = NLMEM_VAL(vmem);
 
-    int flag = (*lsolvefn)(y, b, mem);
+#if SUNDIALS_LIB_VERSION >= 500
+    int flag = (*lsolvefn)(b, mem);
+#else
+    int flag = (*lsolvefn)(NULL, b, mem);
+#endif
     NLS_CHECK_FLAG("SUNNonlinSolLSolveFn", flag);
 #endif
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_nlsolver_call_lsolve_fn_sens(value vlsolvefn, value vy,
+CAMLprim value sunml_nlsolver_call_lsolve_fn_sens(value vlsolvefn,
 						  value vb, value vmem)
 {
-    CAMLparam4(vlsolvefn, vy, vb, vmem);
+    CAMLparam3(vlsolvefn, vb, vmem);
 #if SUNDIALS_LIB_VERSION >= 400
     SUNNonlinSolLSolveFn lsolvefn = LSOLVEFN_VAL(vlsolvefn);
-    N_Vector y = SENSWRAPPER(vy);
     N_Vector b = SENSWRAPPER(vb);
     void *mem = NLMEM_VAL(vmem);
 
 #if SUNDIALS_ML_SAFE == 1
-    if ((y == NULL) || (b == NULL))
-	caml_raise_constant(NLSOLVER_EXN(IncorrectUse));
+    if (b == NULL) caml_raise_constant(NLSOLVER_EXN(IncorrectUse));
 #endif
 
-    int flag = (*lsolvefn)(y, b, mem);
+#if SUNDIALS_LIB_VERSION >= 500
+    int flag = (*lsolvefn)(b, mem);
+#else
+    int flag = (*lsolvefn)(NULL, b, mem);
+#endif
     NLS_CHECK_FLAG("SUNNonlinSolLSolveFn (sens)", flag);
 #endif
     CAMLreturn (Val_unit);
@@ -1154,7 +1172,8 @@ static int callml_custom_setlsolvefn_sens(SUNNonlinearSolver nls,
 }
 
 static int callml_custom_setconvtestfn(SUNNonlinearSolver nls,
-				       SUNNonlinSolConvTestFn convtestfn)
+				       SUNNonlinSolConvTestFn convtestfn,
+				       void *cdata)
 {
     CAMLparam0();
     CAMLlocal2(vconvtestfn, vnls);
@@ -1175,7 +1194,8 @@ static int callml_custom_setconvtestfn(SUNNonlinearSolver nls,
 }
 
 static int callml_custom_setconvtestfn_sens(SUNNonlinearSolver nls,
-				            SUNNonlinSolConvTestFn convtestfn)
+				            SUNNonlinSolConvTestFn convtestfn,
+					    void *cdata)
 {
     CAMLparam0();
     CAMLlocal2(vconvtestfn, vnls);
