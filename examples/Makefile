@@ -57,10 +57,13 @@ GEN_SUBDIRS=$(foreach m,cvode cvodes ida idas kinsol,			\
 ALL_SUBDIRS=$(call GEN_SUBDIRS,all)  # All subdirectories
 SUBDIRS=$(call GEN_SUBDIRS)          # Just the enabled ones.
 
-# Nvector and Matrix examples are unsuitable for performance comparisons, so
-# filter them out unless PERF_FORCE_NVECTORS/PERF_FORCE_MATRICES are nonempty.
-SUBDIRS_MAT=$(if $(PERF_FORCE_MATRICES),$(SUBDIRS),\
-		 $(filter-out matrix/%,$(SUBDIRS)))
+# Nvector, Matrix, and Nonlinear solver examples are unsuitable for
+# performance comparisons, so filter them out unless
+# PERF_FORCE_NONLINSOL/PERF_FORCE_NVECTORS/PERF_FORCE_MATRICES are nonempty.
+SUBDIRS_NONLINSOL=$(if $(PERF_FORCE_MATRICES),$(SUBDIRS),\
+		 $(filter-out nonlinsol/%,$(SUBDIRS)))
+SUBDIRS_MAT=$(if $(PERF_FORCE_MATRICES),$(SUBDIRS_NONLINSOL),\
+		 $(filter-out matrix/%,$(SUBDIRS_NONLINSOL)))
 PERF_SUBDIRS=$(if $(PERF_FORCE_NVECTORS),$(SUBDIRS_MAT),\
 		  $(filter-out nvector/%,$(SUBDIRS_MAT)))
 

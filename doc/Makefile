@@ -68,11 +68,32 @@ html:
 	mkdir $@
 
 C_TITLE=C ($(CC) $(filter-out -I% -DNDEBUG=1,$(CFLAGS)))
-NATIVE_TITLE='OCaml ($(OCAML_VERSION)) native code performance over $(C_TITLE)'
+NATIVE_TITLE=OCaml ($(OCAML_VERSION)) native code performance over $(C_TITLE)
+CONFIDENCE=$(shell ../examples/utils/crunchperf --conf ../examples/perf-intv.opt.log)
 
 html/perf.opt.png: ../examples/perf.opt.log
-	TITLE=$(NATIVE_TITLE) \
+	TITLE="$(NATIVE_TITLE)" \
 	    TERMINAL='png noenhanced'		\
+	    FONT=FreeSans,16			\
+	    SIZE=2000,1200			\
+	    BMARGIN=1600			\
+	    DOTSIZE=1.5 DOTTYPE=7		\
+	    OUTPUT=$@ ../examples/utils/plot.sh $<
+
+html/perf-intv.opt.png: ../examples/perf-intv.opt.log
+	TITLE="$(NATIVE_TITLE), $(CONFIDENCE)% confidence" \
+	    STYLE=interval			\
+	    TERMINAL='png noenhanced'		\
+	    FONT=FreeSans,16			\
+	    SIZE=2000,1200			\
+	    BMARGIN=1600			\
+	    DOTSIZE=1.5 DOTTYPE=7		\
+	    OUTPUT=$@ ../examples/utils/plot.sh $<
+
+html/perf-intv.opt.pdf: ../examples/perf-intv.opt.log
+	TITLE="$(NATIVE_TITLE), $(CONFIDENCE)% confidence" \
+	    STYLE=interval			\
+	    TERMINAL='pdf noenhanced'		\
 	    FONT=FreeSans,16			\
 	    SIZE=2000,1200			\
 	    BMARGIN=1600			\

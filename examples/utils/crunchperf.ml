@@ -339,7 +339,7 @@ let u_test ?(side="<>") xs ys =
     with Not_found -> "octave-cli"
   and script =
     Printf.sprintf
-      "[p,_] = u_test(%s, %s, \"%s\"); disp(p)"
+      "pkg load statistics; [p,_] = u_test(%s, %s, \"%s\"); disp(p)"
       (string_of_float_array ~sep:"," xs)
       (string_of_float_array ~sep:"," ys)
       side
@@ -381,7 +381,7 @@ let u_test ?(side="<>") xs ys =
   let octave_path = find_octave_path ()
   and script =
     Printf.sprintf
-      "[p,_] = u_test(%s, %s, \"%s\"); disp(p)"
+      "pkg load statistics; [p,_] = u_test(%s, %s, \"%s\"); disp(p)"
       (string_of_float_array ~sep:"," xs)
       (string_of_float_array ~sep:"," ys)
       side

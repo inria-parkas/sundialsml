@@ -4,6 +4,7 @@ arkode/C_serial/*.txt
 arkode/C_openmp/*.txt
 */*/*.sundials.c
 */*/*.sundials
+*/*/*.cache
 utils/perf
 utils/crunchperf
 perf.opt.*
