@@ -1,0 +1,8 @@
+# This directory will be populated by docs when you do "make doc".  This
+# .gitignore file is here so that git tracks this directory (which is important
+# because "make doc" fails if this directory is missing), and also so that the
+# generated docs do not show up in the list of untracked files.
+
+html/*.html
+html/*.ml
+html/*.patch

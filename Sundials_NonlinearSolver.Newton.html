@@ -1,0 +1,105 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Sundials_NonlinearSolver.Senswrapper.html">
+<link rel="next" href="Sundials_NonlinearSolver.FixedPoint.html">
+<link rel="Up" href="Sundials_NonlinearSolver.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials_Index" rel="Chapter" href="Sundials_Index.html">
+<link title="Sundials_Config" rel="Chapter" href="Sundials_Config.html">
+<link title="Sundials_RealArray" rel="Chapter" href="Sundials_RealArray.html">
+<link title="Sundials_RealArray2" rel="Chapter" href="Sundials_RealArray2.html">
+<link title="Sundials_LintArray" rel="Chapter" href="Sundials_LintArray.html">
+<link title="Sundials_Logfile" rel="Chapter" href="Sundials_Logfile.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Sundials_Matrix" rel="Chapter" href="Sundials_Matrix.html">
+<link title="Sundials_LinearSolver" rel="Chapter" href="Sundials_LinearSolver.html">
+<link title="Sundials_NonlinearSolver" rel="Chapter" href="Sundials_NonlinearSolver.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Arkode" rel="Chapter" href="Arkode.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Arkode_bbd" rel="Chapter" href="Arkode_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Nvector_openmp" rel="Chapter" href="Nvector_openmp.html"><title>Sundials/ML 4.1.0p0 : Sundials_NonlinearSolver.Newton</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Sundials_NonlinearSolver.Senswrapper.html" title="Sundials_NonlinearSolver.Senswrapper">Previous</a>
+&nbsp;<a class="up" href="Sundials_NonlinearSolver.html" title="Sundials_NonlinearSolver">Up</a>
+&nbsp;<a class="post" href="Sundials_NonlinearSolver.FixedPoint.html" title="Sundials_NonlinearSolver.FixedPoint">Next</a>
+</div>
+<h1>Module <a href="type_Sundials_NonlinearSolver.Newton.html">Sundials_NonlinearSolver.Newton</a></h1>
+
+<pre><span id="MODULENewton"><span class="keyword">module</span> Newton</span>: <code class="code"><span class="keyword">sig</span></code> <a href="Sundials_NonlinearSolver.Newton.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+<div class="info-desc">
+<p>Generic nonlinear solver based on Newton's method.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>The SUNNonlinearSolver_Newton implementation</div></ul>
+</div>
+<hr width="100%">
+
+<pre><span id="VALmake"><span class="keyword">val</span> make</span> : <code class="type">('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> ('d, 'k, 's) <a href="Sundials_NonlinearSolver.html#TYPEt">Sundials_NonlinearSolver.t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Creates a nonlinear solver based on Newton's method.
+      Solves nonlinear systems of the form $F(y) = 0$ .</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNNonlinSol_Newton</div></ul>
+</div>
+
+<pre><span id="VALmake_sens"><span class="keyword">val</span> make_sens</span> : <code class="type">int -><br>       ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -><br>       (('d, 'k) <a href="Sundials_NonlinearSolver.Senswrapper.html#TYPEt">Sundials_NonlinearSolver.Senswrapper.t</a>, 'k,<br>        'a <a href="Sundials_NonlinearSolver.html#TYPEintegrator">Sundials_NonlinearSolver.integrator</a>)<br>       <a href="Sundials_NonlinearSolver.html#TYPEt">Sundials_NonlinearSolver.t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Creates a nonlinear solver based on Newton's method for
+      sensitivity-enabled integrators.
+      Solves nonlinear systems of the form $F(y) = 0$ .</p>
+
+<p>In the call <code class="code">make_sens&nbsp;count&nbsp;y</code>,</p>
+
+<ul>
+<li><code class="code">count</code> is the number of vectors in the nonlinear problem,
+        if there are $N_s$  sensitivities, then <code class="code">count</code> should be
+        $N_s + 1$  if using a simultaneous corrector
+        or $N_s$  if using a staggered corrector; and,</li>
+<li><code class="code">y</code> is a template for cloning vectors.</li>
+</ul>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNNonlinSol_NewtonSens</div></ul>
+</div>
+
+<pre><span id="VALget_sys_fn"><span class="keyword">val</span> get_sys_fn</span> : <code class="type">('d, 'k, 's) <a href="Sundials_NonlinearSolver.html#TYPEt">Sundials_NonlinearSolver.t</a> -><br>       (('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a>, 's) <a href="Sundials_NonlinearSolver.html#TYPEsysfn">Sundials_NonlinearSolver.sysfn</a> option</code></pre><div class="info ">
+<div class="info-desc">
+<p>Returns the residual function that defines the nonlinear system.</p>
+
+<p>Raises <code class="code"><span class="constructor">Invalid_argument</span></code> if called on a nonlinear solver that was not
+      created by this module.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNNonlinSolGetSysFn_Newton</div></ul>
+</div>
+</body></html>

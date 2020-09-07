@@ -1,0 +1,160 @@
+<html><head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials_Index" rel="Chapter" href="Sundials_Index.html">
+<link title="Sundials_Config" rel="Chapter" href="Sundials_Config.html">
+<link title="Sundials_RealArray" rel="Chapter" href="Sundials_RealArray.html">
+<link title="Sundials_RealArray2" rel="Chapter" href="Sundials_RealArray2.html">
+<link title="Sundials_LintArray" rel="Chapter" href="Sundials_LintArray.html">
+<link title="Sundials_Logfile" rel="Chapter" href="Sundials_Logfile.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Sundials_Matrix" rel="Chapter" href="Sundials_Matrix.html">
+<link title="Sundials_LinearSolver" rel="Chapter" href="Sundials_LinearSolver.html">
+<link title="Sundials_NonlinearSolver" rel="Chapter" href="Sundials_NonlinearSolver.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Arkode" rel="Chapter" href="Arkode.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Arkode_bbd" rel="Chapter" href="Arkode_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Nvector_openmp" rel="Chapter" href="Nvector_openmp.html"><title>Sundials/ML 4.1.0p0 : Arkode.ERKStep</title>
+</head>
+<body>
+<code class="code"><span class="keyword">sig</span><br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;session&nbsp;=&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k,&nbsp;<span class="constructor">Arkode_impl</span>.erkstep)&nbsp;<span class="constructor">Arkode_impl</span>.session<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;init&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode</span>.tolerance&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?order:int&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">'</span>data&nbsp;<span class="constructor">Arkode</span>.rhsfn&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?roots:int&nbsp;*&nbsp;<span class="keywordsign">'</span>data&nbsp;<span class="constructor">Arkode</span>.rootsfn&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>data,&nbsp;<span class="keywordsign">'</span>kind)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;solve_normal&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;*&nbsp;<span class="constructor">Arkode</span>.solver_result<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;solve_one_step&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;*&nbsp;<span class="constructor">Arkode</span>.solver_result<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_dky&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;reinit&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?order:int&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?roots:int&nbsp;*&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.rootsfn&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;resize&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?resize_nvec:<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.resize_fn&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.tolerance&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_tolerances&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.tolerance&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_defaults&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_dense_order&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_diagnostics&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">Logfile</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;clear_diagnostics&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_error_file&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">Logfile</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_err_handler_fn&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Sundials</span>.<span class="constructor">Util</span>.error_details&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;clear_err_handler_fn&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_init_step&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_fixed_step&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;option&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_max_hnil_warns&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_max_num_steps&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_max_err_test_fails&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_min_step&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_max_step&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_stop_time&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_table&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ButcherTable</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_table_num&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ButcherTable</span>.erk_table&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_adaptivity_method&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.adaptivity_method&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_cfl_fraction&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_error_bias&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_fixed_step_bounds&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_max_efail_growth&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_max_first_growth&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_max_growth&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_safety_factor&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_small_num_efails&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_stability_fn&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.stability_fn&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;clear_stability_fn&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_postprocess_step_fn&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>d&nbsp;<span class="constructor">Arkode</span>.postprocess_step_fn&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;clear_postprocess_step_fn&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_work_space&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;*&nbsp;int<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_steps&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_exp_steps&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_acc_steps&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_step_attempts&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_rhs_evals&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_err_test_fails&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_last_step&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_current_step&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_actual_init_step&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_current_time&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_current_butcher_table&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ButcherTable</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_tol_scale_factor&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_err_weights&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_est_local_errors&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Nvector</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;timestepper_stats&nbsp;=&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;exp_steps&nbsp;:&nbsp;int;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;acc_steps&nbsp;:&nbsp;int;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;step_attempts&nbsp;:&nbsp;int;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;num_nf_evals&nbsp;:&nbsp;int;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;num_err_test_fails&nbsp;:&nbsp;int;<br>
+&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_timestepper_stats&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.timestepper_stats<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_step_stats&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Arkode</span>.step_stats<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;print_timestepper_stats&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Stdlib</span>.out_channel&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;print_step_stats&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Stdlib</span>.out_channel&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_root_direction&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">RootDirs</span>.d&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_all_root_directions&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">RootDirs</span>.d&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_no_inactive_root_warn&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_roots&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_root_info&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">Roots</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_num_g_evals&nbsp;:&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;write_parameters&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">Logfile</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;write_butcher&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>d,&nbsp;<span class="keywordsign">'</span>k)&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.session&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">Logfile</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+<span class="keyword">end</span></code></body></html>

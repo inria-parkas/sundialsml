@@ -1,0 +1,426 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Sundials.LinearSolver.html">
+<link rel="next" href="Sundials.Logfile.html">
+<link rel="Up" href="Sundials.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials_Index" rel="Chapter" href="Sundials_Index.html">
+<link title="Sundials_Config" rel="Chapter" href="Sundials_Config.html">
+<link title="Sundials_RealArray" rel="Chapter" href="Sundials_RealArray.html">
+<link title="Sundials_RealArray2" rel="Chapter" href="Sundials_RealArray2.html">
+<link title="Sundials_LintArray" rel="Chapter" href="Sundials_LintArray.html">
+<link title="Sundials_Logfile" rel="Chapter" href="Sundials_Logfile.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Sundials_Matrix" rel="Chapter" href="Sundials_Matrix.html">
+<link title="Sundials_LinearSolver" rel="Chapter" href="Sundials_LinearSolver.html">
+<link title="Sundials_NonlinearSolver" rel="Chapter" href="Sundials_NonlinearSolver.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Arkode" rel="Chapter" href="Arkode.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Arkode_bbd" rel="Chapter" href="Arkode_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Nvector_openmp" rel="Chapter" href="Nvector_openmp.html"><link title="Core functions" rel="Section" href="#nlscore">
+<link title="Set functions" rel="Section" href="#nlsset">
+<link title="Get functions" rel="Section" href="#nlsget">
+<link title="Nonlinear Solver Implementations" rel="Section" href="#nlsolvers">
+<link title="Exceptions" rel="Section" href="#exceptions">
+<title>Sundials/ML 4.1.0p0 : Sundials.NonlinearSolver</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Sundials.LinearSolver.html" title="Sundials.LinearSolver">Previous</a>
+&nbsp;<a class="up" href="Sundials.html" title="Sundials">Up</a>
+&nbsp;<a class="post" href="Sundials.Logfile.html" title="Sundials.Logfile">Next</a>
+</div>
+<h1>Module <a href="type_Sundials.NonlinearSolver.html">Sundials.NonlinearSolver</a></h1>
+
+<pre><span id="MODULENonlinearSolver"><span class="keyword">module</span> NonlinearSolver</span>: <code class="type"><a href="Sundials_NonlinearSolver.html">Sundials_NonlinearSolver</a></code></pre><hr width="100%">
+
+<pre><span id="TYPEt"><span class="keyword">type</span> <code class="type">('data, 'kind, 's)</code> t</span> = <code class="type">('data, 'kind, 's) Sundials_NonlinearSolver_impl.nonlinear_solver</code> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>A generic nonlinear solver.
+    The type variables specify the <a href="Nvector.html#TYPEnvector"><code class="code"><span class="constructor">Nvector</span>.nvector</code></a> data (<code class="code"><span class="keywordsign">'</span>data</code>) and
+    kind (<code class="code"><span class="keywordsign">'</span>kind</code>), and the type (<code class="code"><span class="keywordsign">'</span>s</code>) of session data to be passed
+    into the nonlinear solver and through to callbacks.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>Description of the SUNNonlinearSolver module</div><div class="sundials"><span class="seesundials">See sundials: </span>SUNNonlinearSolver</div></ul>
+</div>
+
+
+<pre><span id="TYPEuser"><span class="keyword">type</span> <code class="type"></code>user</span> = <code class="type">Sundials_NonlinearSolver_impl.user</code> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>Signifies a nonlinear solver used from an OCaml application.
+    Used as a <code class="code"><span class="keywordsign">'</span>s</code> argument to <a href="Sundials_NonlinearSolver.html#TYPEt"><code class="code"><span class="constructor">Sundials_NonlinearSolver</span>.t</code></a> to signal an internal
+    calling convention for <a href="Sundials_NonlinearSolver.html#TYPEsysfn"><code class="code"><span class="constructor">Sundials_NonlinearSolver</span>.sysfn</code></a>, <a href="Sundials_NonlinearSolver.html#TYPElsetupfn"><code class="code"><span class="constructor">Sundials_NonlinearSolver</span>.lsetupfn</code></a>, and <a href="Sundials_NonlinearSolver.html#TYPElsolvefn"><code class="code"><span class="constructor">Sundials_NonlinearSolver</span>.lsolvefn</code></a>, which
+    are OCaml functions. Only such nonlinear solvers can be invoked
+    directly from user code (in OCaml) to initialize, setup, and solve
+    a problem. The <a href="Sundials_NonlinearSolver.html#TYPEconvtestfn"><code class="code"><span class="constructor">Sundials_NonlinearSolver</span>.convtestfn</code></a> may always be overridden.</p>
+</div>
+</div>
+
+
+<pre><span id="TYPEintegrator"><span class="keyword">type</span> <code class="type">'a</code> integrator</span> = <code class="type">'a Sundials_NonlinearSolver_impl.integrator</code> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>Signifies a nonlinear solver used from a Sundials integrator.
+    Used as a <code class="code"><span class="keywordsign">'</span>s</code> argument to <a href="Sundials_NonlinearSolver.html#TYPEt"><code class="code"><span class="constructor">Sundials_NonlinearSolver</span>.t</code></a> to signal that
+    direct calls are made to <a href="Sundials_NonlinearSolver.html#TYPEsysfn"><code class="code"><span class="constructor">Sundials_NonlinearSolver</span>.sysfn</code></a>, <a href="Sundials_NonlinearSolver.html#TYPElsetupfn"><code class="code"><span class="constructor">Sundials_NonlinearSolver</span>.lsetupfn</code></a>, and <a href="Sundials_NonlinearSolver.html#TYPElsolvefn"><code class="code"><span class="constructor">Sundials_NonlinearSolver</span>.lsolvefn</code></a>, which
+    are C functions. Such nonlinear solvers cannot be reinvoked from OCaml.
+    The <code class="code"><span class="keywordsign">'</span>a</code> argument specifies the integrator; a nonlinear solver used for
+    one integrator cannot be reused with another.</p>
+</div>
+</div>
+
+
+<pre><span id="MODULESenswrapper"><span class="keyword">module</span> <a href="Sundials_NonlinearSolver.Senswrapper.html">Senswrapper</a></span>: <code class="code"><span class="keyword">sig</span></code> <a href="Sundials_NonlinearSolver.Senswrapper.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+<p>A limited interface to arrays of <a href="Nvector.html#TYPEnvector"><code class="code"><span class="constructor">Nvector</span>.nvector</code></a>s sometimes required
+    to apply nonlinear solvers to sensitivity problems.</p>
+
+</div>
+<h3 id="nlscore">Core functions</h3>
+<pre><code><span id="TYPEnonlinear_solver_type"><span class="keyword">type</span> <code class="type"></code>nonlinear_solver_type</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTnonlinear_solver_type.RootFind"><span class="constructor">RootFind</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Solves $F(y) = 0$</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTnonlinear_solver_type.FixedPoint"><span class="constructor">FixedPoint</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Solves $G(y) = y$</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info ">
+<div class="info-desc">
+<p>The problem specification expected by a nonlinear solver.</p>
+</div>
+</div>
+
+
+<pre><span id="VALget_type"><span class="keyword">val</span> get_type</span> : <code class="type">('d, 'k, 's) <a href="Sundials_NonlinearSolver.html#TYPEt">t</a> -><br>       <a href="Sundials_NonlinearSolver.html#TYPEnonlinear_solver_type">nonlinear_solver_type</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Returns the type of a nonlinear solver.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNNonlinSolGetType</div></ul>
+</div>
+
+<pre><span id="VALinit"><span class="keyword">val</span> init</span> : <code class="type">('d, 'k, 's) <a href="Sundials_NonlinearSolver.html#TYPEt">t</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Initializes a nonlinear solver.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNNonlinSolInitialize</div></ul>
+</div>
+
+<pre><span id="VALsetup"><span class="keyword">val</span> setup</span> : <code class="type">('d, 'k, <a href="Sundials_NonlinearSolver.html#TYPEuser">user</a>) <a href="Sundials_NonlinearSolver.html#TYPEt">t</a> -><br>       y:('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Setup a nonlinear solver with an initial iteration value.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNNonlinSolSetup</div></ul>
+</div>
+
+<pre><span id="VALsolve"><span class="keyword">val</span> solve</span> : <code class="type">('d, 'k, <a href="Sundials_NonlinearSolver.html#TYPEuser">user</a>) <a href="Sundials_NonlinearSolver.html#TYPEt">t</a> -><br>       y0:('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -><br>       y:('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> w:('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> float -> bool -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Solves a nonlinear system.
+    The call <code class="code">solve&nbsp;ls&nbsp;~y0&nbsp;~y&nbsp;~w&nbsp;tol&nbsp;callLSetup</code> solves the
+    nonlinear system $F(y) = 0$  or $G(y) = y$ , given
+    an initial iterate <code class="code">y0</code> (which must not be modified), a solution
+    error-weight vector <code class="code">w</code> used for computing weighted error norms,
+    the requested solution tolerance in the weighted root-mean-squared norm
+    <code class="code">tol</code>, and a flag <code class="code">callLSetup</code> indicating whether the integrator
+    recommends calling the setup function.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNNonlinSolSolve</div></ul>
+</div>
+<h3 id="nlsset">Set functions</h3>
+<pre><span id="TYPEsysfn"><span class="keyword">type</span> <code class="type">('data, 's)</code> sysfn</span> = <code class="type">'data -> 'data -> 's -> unit</code> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>A function <code class="code">sysfn&nbsp;y&nbsp;fg&nbsp;mem</code> to evaluate the nonlinear system
+    $F(y)$  (for <a href="Sundials_NonlinearSolver.html#TYPEt">RootFind</a>)
+    or $G(y)$  (for <a href="Sundials_NonlinearSolver.html#TYPEt">FixedPoint</a>).
+    The contents of <code class="code">y</code> must not be modified.</p>
+
+<p>This function raises <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a> to
+    indicate a recoverable failure. Other exceptions signal unrecoverable
+    failures.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNNonlinSolSysFn</div></ul>
+</div>
+
+
+<pre><span id="VALset_sys_fn"><span class="keyword">val</span> set_sys_fn</span> : <code class="type">('d, 'k, <a href="Sundials_NonlinearSolver.html#TYPEuser">user</a>) <a href="Sundials_NonlinearSolver.html#TYPEt">t</a> -><br>       ('d, <a href="Sundials_NonlinearSolver.html#TYPEuser">user</a>) <a href="Sundials_NonlinearSolver.html#TYPEsysfn">sysfn</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Specify a system function callback.
+    The system function specifies the problem, either $F(y)$  or
+    $G(y)$ .</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNNonlinSolSetSysFn</div></ul>
+</div>
+
+<pre><span id="TYPElsetupfn"><span class="keyword">type</span> <code class="type">('data, 's)</code> lsetupfn</span> = <code class="type">'data -> 'data -> bool -> 's -> bool</code> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>A function to setup linear solves.
+    For direct linear solvers, sets up the system $Ax = b$ 
+    where $A = \frac{\partial F}{\partial y}$  is the linearization
+    of the nonlinear residual function $F(y) = 0$ . For iterative
+    linear solvers, calls a preconditioner setup function.</p>
+
+<p>The call <code class="code">jcur&nbsp;=&nbsp;lsetupfn&nbsp;y&nbsp;f&nbsp;jbad&nbsp;mem</code> has as arguments</p>
+
+<ul>
+<li><code class="code">y</code>, the state vector where the system should be set up,</li>
+<li><code class="code">f</code>, the value of the nonlinear system at <code class="code">y</code>,</li>
+<li><code class="code">jbad</code>, indicates if the solver believes that $A$  has gone stale,
+       and</li>
+<li><code class="code">mem</code>, a token passed by the function provider.</li>
+</ul>
+<p>A true return value (<code class="code">jcur</code>) signals that the Jacobian $A$  has been
+    updated.</p>
+
+<p>This function raises <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a> to
+    indicate a recoverable failure. Other exceptions signal unrecoverable
+    failures.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNNonlinSolLSetupFn</div></ul>
+</div>
+
+
+<pre><span id="VALset_lsetup_fn"><span class="keyword">val</span> set_lsetup_fn</span> : <code class="type">('d, 'k, <a href="Sundials_NonlinearSolver.html#TYPEuser">user</a>) <a href="Sundials_NonlinearSolver.html#TYPEt">t</a> -><br>       ('d, <a href="Sundials_NonlinearSolver.html#TYPEuser">user</a>) <a href="Sundials_NonlinearSolver.html#TYPElsetupfn">lsetupfn</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Specify a linear solver setup callback.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNNonlinSolSetLSetupFn</div></ul>
+</div>
+
+<pre><span id="TYPElsolvefn"><span class="keyword">type</span> <code class="type">('data, 's)</code> lsolvefn</span> = <code class="type">'data -> 'data -> 's -> unit</code> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>A function to solve linear systems.
+    Solves the system $Ax = b$  where
+    $A = \frac{\partial F}{\partial y}$  is the linearization of the
+    nonlinear residual function $F(y)= 0$ .</p>
+
+<p>The call <code class="code">lsolvefn&nbsp;y&nbsp;b&nbsp;mem</code> has as arguments</p>
+
+<ul>
+<li><code class="code">y</code>, the input vector containing the current nonlinear iteration;</li>
+<li><code class="code">b</code>, on input: the right-hand-side vector for the linear solve,
+           set on output to the solution $x$ ; and,</li>
+<li><code class="code">mem</code>, a token passed by the function provider.</li>
+</ul>
+<p>This function raises <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a> to
+    indicate a recoverable failure. Other exceptions signal unrecoverable
+    failures.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNNonlinSolLSolveFn</div></ul>
+</div>
+
+
+<pre><span id="VALset_lsolve_fn"><span class="keyword">val</span> set_lsolve_fn</span> : <code class="type">('d, 'k, <a href="Sundials_NonlinearSolver.html#TYPEuser">user</a>) <a href="Sundials_NonlinearSolver.html#TYPEt">t</a> -><br>       ('d, <a href="Sundials_NonlinearSolver.html#TYPEuser">user</a>) <a href="Sundials_NonlinearSolver.html#TYPElsolvefn">lsolvefn</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Specify a linear solver callback.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNNonlinSolSetLSolveFn</div></ul>
+</div>
+
+<pre><code><span id="TYPEconvtest"><span class="keyword">type</span> <code class="type"></code>convtest</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTconvtest.Success"><span class="constructor">Success</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Converged (<code class="code"><span class="constructor">SUN_NLS_SUCCESS</span></code>)</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTconvtest.Continue"><span class="constructor">Continue</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Not converged, keep iterating (<code class="code"><span class="constructor">SUN_NLS_CONTINUE</span></code>)</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTconvtest.Recover"><span class="constructor">Recover</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Appears to diverge, try to recover (<code class="code"><span class="constructor">SUN_NLS_CONV_RECVR</span></code>)</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info ">
+<div class="info-desc">
+<p>Values returned by convergence tests.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNNonlinSolConvTestFn</div></ul>
+</div>
+
+
+<pre><span id="TYPEconvtestfn"><span class="keyword">type</span> <code class="type">('data, 's)</code> convtestfn</span> = <code class="type">'data -> 'data -> float -> 'data -> 's -> <a href="Sundials_NonlinearSolver.html#TYPEconvtest">convtest</a></code> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>A function providing an integrator-specific convergence test.
+    The call <code class="code">convtestfn&nbsp;y&nbsp;del&nbsp;tol&nbsp;ewt&nbsp;mem</code> has as arguments</p>
+
+<ul>
+<li><code class="code">y</code>, the current nonlinear iterate,</li>
+<li><code class="code">del</code>, the difference between current and prior nonlinear iterates,</li>
+<li><code class="code">tol</code>, the nonlinear solver tolerance (in a weighted root-mean-squared
+             norm with the given error-weight vector),</li>
+<li><code class="code">ewt</code>, the error-weight vector used in computing weighted norms, and,</li>
+<li><code class="code">mem</code>, a token passed by the function provider.</li>
+</ul>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNNonlinSolConvTestFn</div></ul>
+</div>
+
+
+<pre><span id="VALset_convtest_fn"><span class="keyword">val</span> set_convtest_fn</span> : <code class="type">('d, 'k, 's) <a href="Sundials_NonlinearSolver.html#TYPEt">t</a> -><br>       ('d, 's) <a href="Sundials_NonlinearSolver.html#TYPEconvtestfn">convtestfn</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Specify a convergence test callback for the nonlinear solver iteration.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNNonlinSolSetConvTestFn</div></ul>
+</div>
+
+<pre><span id="VALset_max_iters"><span class="keyword">val</span> set_max_iters</span> : <code class="type">('d, 'k, 's) <a href="Sundials_NonlinearSolver.html#TYPEt">t</a> -> int -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Sets the maximum number of nonlinear solver iterations.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNNonlinSolSetMaxIters</div></ul>
+</div>
+<h3 id="nlsget">Get functions</h3>
+<pre><span id="VALget_num_iters"><span class="keyword">val</span> get_num_iters</span> : <code class="type">('d, 'k, 's) <a href="Sundials_NonlinearSolver.html#TYPEt">t</a> -> int</code></pre><div class="info ">
+<div class="info-desc">
+<p>Returns the total number of nonlinear solver iterations.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNNonlinSolGetNumIters</div></ul>
+</div>
+
+<pre><span id="VALget_cur_iter"><span class="keyword">val</span> get_cur_iter</span> : <code class="type">('d, 'k, 's) <a href="Sundials_NonlinearSolver.html#TYPEt">t</a> -> int</code></pre><div class="info ">
+<div class="info-desc">
+<p>Returns the iteration index of the current nonlinear solve.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNNonlinSolGetCurIter</div></ul>
+</div>
+
+<pre><span id="VALget_num_conv_fails"><span class="keyword">val</span> get_num_conv_fails</span> : <code class="type">('d, 'k, 's) <a href="Sundials_NonlinearSolver.html#TYPEt">t</a> -> int</code></pre><div class="info ">
+<div class="info-desc">
+<p>Returns the total number of nonlinear solver convergence failures.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>SUNNonlinSolGetNumConvFails</div></ul>
+</div>
+<h3 id="nlsolvers">Nonlinear Solver Implementations</h3>
+<pre><span id="MODULENewton"><span class="keyword">module</span> <a href="Sundials_NonlinearSolver.Newton.html">Newton</a></span>: <code class="code"><span class="keyword">sig</span></code> <a href="Sundials_NonlinearSolver.Newton.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+<p>Generic nonlinear solver based on Newton's method.</p>
+
+</div>
+
+<pre><span id="MODULEFixedPoint"><span class="keyword">module</span> <a href="Sundials_NonlinearSolver.FixedPoint.html">FixedPoint</a></span>: <code class="code"><span class="keyword">sig</span></code> <a href="Sundials_NonlinearSolver.FixedPoint.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+<p>Generic nonlinear solver for fixed-point (functional) iteration with
+    optional Anderson acceleration.</p>
+
+</div>
+
+<pre><span id="MODULECustom"><span class="keyword">module</span> <a href="Sundials_NonlinearSolver.Custom.html">Custom</a></span>: <code class="code"><span class="keyword">sig</span></code> <a href="Sundials_NonlinearSolver.Custom.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+<p>Custom nonlinear solvers.</p>
+
+</div>
+<h3 id="exceptions">Exceptions</h3>
+<pre><span id="EXCEPTIONVectorOpError"><span class="keyword">exception</span> VectorOpError</span></pre>
+<div class="info ">
+<div class="info-desc">
+<p>An error occurred in a vector operation.
+    <span class="cconst">(SUN_NLS_VECTOROP_ERR)</span></p>
+</div>
+</div>
+
+<pre><span id="EXCEPTIONIncorrectUse"><span class="keyword">exception</span> IncorrectUse</span></pre>
+<div class="info ">
+<div class="info-desc">
+<p>Raised when a nonlinear solver is used incorrectly.
+    For example, calling <a href="Sundials_NonlinearSolver.html#VALsolve"><code class="code"><span class="constructor">Sundials_NonlinearSolver</span>.solve</code></a> without having first called <a href="Sundials_NonlinearSolver.html#VALset_sys_fn"><code class="code"><span class="constructor">Sundials_NonlinearSolver</span>.set_sys_fn</code></a>
+    (<code class="code"><span class="constructor">SUN_NLS_MEM_NULL</span></code>).</p>
+</div>
+</div>
+
+<pre><span id="EXCEPTIONNonlinearSolverInUse"><span class="keyword">exception</span> NonlinearSolverInUse</span></pre>
+<div class="info ">
+<div class="info-desc">
+<p>Raised on an attempt to associate a nonlinear solver instance with more
+    than one session.</p>
+</div>
+</div>
+</body></html>

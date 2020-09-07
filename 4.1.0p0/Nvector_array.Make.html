@@ -1,0 +1,161 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="Start" href="index.html">
+<link rel="Up" href="Nvector_array.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials_Index" rel="Chapter" href="Sundials_Index.html">
+<link title="Sundials_Config" rel="Chapter" href="Sundials_Config.html">
+<link title="Sundials_RealArray" rel="Chapter" href="Sundials_RealArray.html">
+<link title="Sundials_RealArray2" rel="Chapter" href="Sundials_RealArray2.html">
+<link title="Sundials_LintArray" rel="Chapter" href="Sundials_LintArray.html">
+<link title="Sundials_Logfile" rel="Chapter" href="Sundials_Logfile.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Sundials_Matrix" rel="Chapter" href="Sundials_Matrix.html">
+<link title="Sundials_LinearSolver" rel="Chapter" href="Sundials_LinearSolver.html">
+<link title="Sundials_NonlinearSolver" rel="Chapter" href="Sundials_NonlinearSolver.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Arkode" rel="Chapter" href="Arkode.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Arkode_bbd" rel="Chapter" href="Arkode_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Nvector_openmp" rel="Chapter" href="Nvector_openmp.html"><title>Sundials/ML 4.1.0p0 : Nvector_array.Make</title>
+</head>
+<body>
+<div class="navbar">&nbsp;<a class="up" href="Nvector_array.html" title="Nvector_array">Up</a>
+&nbsp;</div>
+<h1>Functor <a href="type_Nvector_array.Make.html">Nvector_array.Make</a></h1>
+
+<pre><span id="MODULEMake"><span class="keyword">module</span> Make</span> <code class="code">(</code><code class="code"><span class="constructor">A</span></code><code class="code">&nbsp;:&nbsp;</code><code class="code"><span class="keyword">sig</span></code></pre><div class="sig_block">
+<pre><span id="TYPEdata"><span class="keyword">type</span> <code class="type"></code>data</span> </pre>
+
+
+<pre><span id="VALget"><span class="keyword">val</span> get</span> : <code class="type">data -> int -> float</code></pre>
+<pre><span id="VALset"><span class="keyword">val</span> set</span> : <code class="type">data -> int -> float -> unit</code></pre>
+<pre><span id="VALfill"><span class="keyword">val</span> fill</span> : <code class="type">data -> float -> unit</code></pre>
+<pre><span id="VALmake"><span class="keyword">val</span> make</span> : <code class="type">int -> float -> data</code></pre>
+<pre><span id="VALclone"><span class="keyword">val</span> clone</span> : <code class="type">data -> data</code></pre>
+<pre><span id="VALlength"><span class="keyword">val</span> length</span> : <code class="type">data -> int</code></pre></div><pre><code class="code"><span class="keyword">end</span></code><code class="code">)&nbsp;</code>: <code class="type"><a href="Nvector_array.ARRAY_NVECTOR.html">ARRAY_NVECTOR</a></code><code class="type">  with type data = A.data</code></pre><div class="info module top">
+<div class="info-desc">
+<p>Produce a custom nvector from basic operations on
+    an underlying array.</p>
+</div>
+</div>
+<table border="0" cellpadding="3" width="100%">
+<tr>
+<td align="left" valign="top" width="1%%"><b>Parameters: </b></td>
+<td>
+<table class="paramstable">
+<tr>
+<td align="center" valign="top" width="15%">
+<code>A</code></td>
+<td align="center" valign="top">:</td>
+<td><code class="type">sig
+      type data
+      val get       : data -> int -> float
+      val set       : data -> int -> float -> unit
+      val fill      : data -> float -> unit
+      val make      : int -> float -> data
+      val clone     : data -> data
+      val length    : data -> int
+    end</code>
+</table>
+</td>
+</tr>
+</table>
+<hr width="100%">
+
+<pre><span id="TYPEdata"><span class="keyword">type</span> <code class="type"></code>data</span> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>Type of the underlying array.</p>
+</div>
+</div>
+
+
+<pre><span id="TYPEkind"><span class="keyword">type</span> <code class="type"></code>kind</span> = <code class="type"><a href="Nvector_custom.html#TYPEkind">Nvector_custom.kind</a></code> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>Array nvectors are custom nvectors.</p>
+</div>
+</div>
+
+
+<pre><span id="TYPEt"><span class="keyword">type</span> <code class="type"></code>t</span> = <code class="type"><a href="Nvector_array.ARRAY_NVECTOR.html#TYPEdata">data</a> <a href="Nvector_custom.html#TYPEt">Nvector_custom.t</a></code> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>An alias for the nvector type.</p>
+</div>
+</div>
+
+
+<pre><span id="VALarray_nvec_ops"><span class="keyword">val</span> array_nvec_ops</span> : <code class="type"><a href="Nvector_array.ARRAY_NVECTOR.html#TYPEdata">data</a> <a href="Nvector_custom.html#TYPEnvector_ops">Nvector_custom.nvector_ops</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>The set of nvector operations on an array.</p>
+</div>
+</div>
+
+<pre><span id="VALmake"><span class="keyword">val</span> make</span> : <code class="type">int -> float -> <a href="Nvector_array.ARRAY_NVECTOR.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">make&nbsp;n&nbsp;x</code> creates an nvector containing an array
+        of <code class="code">n</code> elements, each of which is equal to <code class="code">x</code>.</p>
+</div>
+</div>
+
+<pre><span id="VALwrap"><span class="keyword">val</span> wrap</span> : <code class="type">?with_fused_ops:bool -><br>       <a href="Nvector_array.ARRAY_NVECTOR.html#TYPEdata">data</a> -> <a href="Nvector_array.ARRAY_NVECTOR.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Lifts an array to an nvector.</p>
+</div>
+</div>
+
+<pre><span id="VALunwrap"><span class="keyword">val</span> unwrap</span> : <code class="type"><a href="Nvector_array.ARRAY_NVECTOR.html#TYPEt">t</a> -> <a href="Nvector_array.ARRAY_NVECTOR.html#TYPEdata">data</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Returns the array underlying an nvector.</p>
+</div>
+</div>
+
+<pre><span id="VALenable"><span class="keyword">val</span> enable</span> : <code class="type">?with_fused_ops:bool -><br>       ?with_linear_combination:bool -><br>       ?with_scale_add_multi:bool -><br>       ?with_dot_prod_multi:bool -><br>       ?with_linear_sum_vector_array:bool -><br>       ?with_scale_vector_array:bool -><br>       ?with_const_vector_array:bool -><br>       ?with_wrms_norm_vector_array:bool -><br>       ?with_wrms_norm_mask_vector_array:bool -><br>       ?with_scale_add_multi_vector_array:bool -><br>       ?with_linear_combination_vector_array:bool -><br>       <a href="Nvector_array.ARRAY_NVECTOR.html#TYPEt">t</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Selectively enable or disable fused and array operations.
+        The <code class="code">with_fused_ops</code> argument enables or disables all such operations.</p>
+</div>
+<ul class="info-attributes">
+<li><b>Since</b> 4.0.0</li>
+<div class="raisedexceptions"><span class="raises">Raises</span> <code>Config.NotImplementedBySundialsVersion</code> Fused and array operations not available.</div>
+<div class="sundials cvode"><span class="seesundials">See sundials: </span>N_VEnableFusedOps_Serial</div><div class="sundials cvode"><span class="seesundials">See sundials: </span>N_VEnableLinearCombination_Serial</div><div class="sundials cvode"><span class="seesundials">See sundials: </span>N_VEnableScaleAddMulti_Serial</div><div class="sundials cvode"><span class="seesundials">See sundials: </span>N_VEnableDotProdMulti_Serial</div><div class="sundials cvode"><span class="seesundials">See sundials: </span>N_VEnableLinearSumVectorArray_Serial</div><div class="sundials cvode"><span class="seesundials">See sundials: </span>N_VEnableScaleVectorArray_Serial</div><div class="sundials cvode"><span class="seesundials">See sundials: </span>N_VEnableConstVectorArray_Serial</div><div class="sundials cvode"><span class="seesundials">See sundials: </span>N_VEnableWrmsNormVectorArray_Serial</div><div class="sundials cvode"><span class="seesundials">See sundials: </span>N_VEnableWrmsNormMaskVectorArray_Serial</div><div class="sundials cvode"><span class="seesundials">See sundials: </span>N_VEnableScaleAddMultiVectorArray_Serial</div><div class="sundials cvode"><span class="seesundials">See sundials: </span>N_VEnableLinearCombinationVectorArray_Serial</div></ul>
+</div>
+
+<pre><span id="MODULEOps"><span class="keyword">module</span> <a href="Nvector_array.ARRAY_NVECTOR.Ops.html">Ops</a></span>: <code class="type"><a href="Nvector.NVECTOR_OPS.html">Nvector.NVECTOR_OPS</a></code><code class="type">  with type t = t</code></pre><div class="info">
+<p>Standard operations over array nvectors.</p>
+
+</div>
+
+<pre><span id="MODULEDataOps"><span class="keyword">module</span> <a href="Nvector_array.ARRAY_NVECTOR.DataOps.html">DataOps</a></span>: <code class="type"><a href="Nvector.NVECTOR_OPS.html">Nvector.NVECTOR_OPS</a></code><code class="type">  with type t = data</code></pre><div class="info">
+<p>Standard operations over the underlying array.</p>
+
+</div>
+</body></html>

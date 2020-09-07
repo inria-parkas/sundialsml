@@ -1,0 +1,629 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="Start" href="index.html">
+<link rel="next" href="Arkode.ARKStep.html">
+<link rel="Up" href="Arkode.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials_Index" rel="Chapter" href="Sundials_Index.html">
+<link title="Sundials_Config" rel="Chapter" href="Sundials_Config.html">
+<link title="Sundials_RealArray" rel="Chapter" href="Sundials_RealArray.html">
+<link title="Sundials_RealArray2" rel="Chapter" href="Sundials_RealArray2.html">
+<link title="Sundials_LintArray" rel="Chapter" href="Sundials_LintArray.html">
+<link title="Sundials_Logfile" rel="Chapter" href="Sundials_Logfile.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Sundials_Matrix" rel="Chapter" href="Sundials_Matrix.html">
+<link title="Sundials_LinearSolver" rel="Chapter" href="Sundials_LinearSolver.html">
+<link title="Sundials_NonlinearSolver" rel="Chapter" href="Sundials_NonlinearSolver.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Arkode" rel="Chapter" href="Arkode.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Arkode_bbd" rel="Chapter" href="Arkode_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Nvector_openmp" rel="Chapter" href="Nvector_openmp.html"><title>Sundials/ML 4.1.0p0 : Arkode.ButcherTable</title>
+</head>
+<body>
+<div class="navbar">&nbsp;<a class="up" href="Arkode.html" title="Arkode">Up</a>
+&nbsp;<a class="post" href="Arkode.ARKStep.html" title="Arkode.ARKStep">Next</a>
+</div>
+<h1>Module <a href="type_Arkode.ButcherTable.html">Arkode.ButcherTable</a></h1>
+
+<pre><span id="MODULEButcherTable"><span class="keyword">module</span> ButcherTable</span>: <code class="code"><span class="keyword">sig</span></code> <a href="Arkode.ButcherTable.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+<div class="info-desc">
+<p>Butcher tables</p>
+</div>
+</div>
+<hr width="100%">
+
+<pre><code><span id="TYPEt"><span class="keyword">type</span> <code class="type"></code>t</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.method_order">method_order</span>&nbsp;: <code class="type">int</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Method order of accuracy ($q$ ).</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.embedding_order">embedding_order</span>&nbsp;: <code class="type">int</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Embedding order of accuracy ($p$ ).</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.stages">stages</span>&nbsp;: <code class="type">int</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Number of stages ($s$ ).</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.stage_values">stage_values</span>&nbsp;: <code class="type">Sundials.RealArray2.t</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Matrix (<code class="code">stages&nbsp;*&nbsp;stages</code>)
+                                                of coefficients ($A$ )</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.stage_times">stage_times</span>&nbsp;: <code class="type">Sundials.RealArray.t</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Array (of length <code class="code">stages</code>) of
+                                       stage times ($c$ ).</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.coefficients">coefficients</span>&nbsp;: <code class="type">Sundials.RealArray.t</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Array (of length <code class="code">stages</code>) of
+                                       solution coefficients ($b$ ).</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.bembed">bembed</span>&nbsp;: <code class="type">Sundials.RealArray.t option</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Optional array (of length <code class="code">stages</code>) of
+                                       embedding coefficients
+                                       ($\tilde{b}$ ).</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+<code>}</code>
+
+<div class="info ">
+<div class="info-desc">
+<p>A butcher table.</p>
+
+<p>$\begin{array}{ c|c}
+          c & A \\ \hline
+          q & b \          p & \tilde{b}
+         \end{array}$</p>
+
+<p>Instantiated according to <code class="code">stages</code>. For example, when <code class="code">stages&nbsp;=&nbsp;3</code>:
+        $\begin{array}{ c|ccc}
+            c_1 & A_{1,1} & A_{1,2} & A_{1,3} \            c_2 & A_{2,1} & A_{2,2} & A_{2,3} \            c_3 & A_{3,1} & A_{3,2} & A_{3,3} \\ \hline
+            q   & b_1     & b_2     & b_3 \            p   & \widetilde{b_1} & \widetilde{b_2} & \widetilde{b_3}
+            \end{array}$</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeButcherTable</div></ul>
+</div>
+
+
+<pre><code><span id="TYPEerk_table"><span class="keyword">type</span> <code class="type"></code>erk_table</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTerk_table.HeunEuler_2_1_2"><span class="constructor">HeunEuler_2_1_2</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Default 2nd order explicit method.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTerk_table.BogackiShampine_4_2_3"><span class="constructor">BogackiShampine_4_2_3</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Default 3rd order explicit method.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTerk_table.ARK_4_2_3_Explicit"><span class="constructor">ARK_4_2_3_Explicit</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Explicit portion of default 3rd order additive
+                                method.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTerk_table.Zonneveld_5_3_4"><span class="constructor">Zonneveld_5_3_4</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Default 4th order explicit method.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTerk_table.ARK_6_3_4_Explicit"><span class="constructor">ARK_6_3_4_Explicit</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Explicit portion of default 3rd order additive
+                                method.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTerk_table.SayfyAburub_6_3_4"><span class="constructor">SayfyAburub_6_3_4</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>From Sayfy and Aburub 2002.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTerk_table.CashKarp_6_4_5"><span class="constructor">CashKarp_6_4_5</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Default 5th order explicit method.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTerk_table.Fehlberg_6_4_5"><span class="constructor">Fehlberg_6_4_5</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>From Fehlberg 1969.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTerk_table.DormandPrince_7_4_5"><span class="constructor">DormandPrince_7_4_5</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>From Dormand Prince 1980.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTerk_table.ARK_8_4_5_Explicit"><span class="constructor">ARK_8_4_5_Explicit</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Explicit portion of default 5th order additive
+                                method.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTerk_table.Verner_8_5_6"><span class="constructor">Verner_8_5_6</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Default 6th order explicit method.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTerk_table.Fehlberg_13_7_8"><span class="constructor">Fehlberg_13_7_8</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Default 8th order explicit method.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTerk_table.Knoth_Wolke_3_3"><span class="constructor">Knoth_Wolke_3_3</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Default 3rd order slow and fast method
+                                (Sundials &gt;= 4.0.0).</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info ">
+<div class="info-desc">
+<p>Explicit Butcher tables</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>Explicit Butcher tables</div></ul>
+</div>
+
+
+<pre><code><span id="TYPEdirk_table"><span class="keyword">type</span> <code class="type"></code>dirk_table</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTdirk_table.SDIRK_2_1_2"><span class="constructor">SDIRK_2_1_2</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Default 2nd order implicit method.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTdirk_table.Billington_3_2_3"><span class="constructor">Billington_3_2_3</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>From Billington 1983.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTdirk_table.TRBDF2_3_2_3"><span class="constructor">TRBDF2_3_2_3</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>From Billington 1985.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTdirk_table.Kvaerno_4_2_3"><span class="constructor">Kvaerno_4_2_3</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>From Kvaerno 2004.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTdirk_table.ARK_4_2_3_Implicit"><span class="constructor">ARK_4_2_3_Implicit</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Default 3rd order implicit method and the
+                                implicit portion of the default 3rd order
+                                additive method.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTdirk_table.Cash_5_2_4"><span class="constructor">Cash_5_2_4</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>From Cash 1979.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTdirk_table.Cash_5_3_4"><span class="constructor">Cash_5_3_4</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>From Cash 1979.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTdirk_table.SDIRK_5_3_4"><span class="constructor">SDIRK_5_3_4</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Default 4th order implicit method.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTdirk_table.Kvaerno_5_3_4"><span class="constructor">Kvaerno_5_3_4</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>From Kvaerno 2004.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTdirk_table.ARK_6_3_4_Implicit"><span class="constructor">ARK_6_3_4_Implicit</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Implicit portion of the default 4th order
+                                additive method.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTdirk_table.Kvaerno_7_4_5"><span class="constructor">Kvaerno_7_4_5</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>From Kvaerno 2004.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTdirk_table.ARK_8_4_5_Implicit"><span class="constructor">ARK_8_4_5_Implicit</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Default 5th order method and the implicit
+                                portion of the default 5th order additive
+                                method.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info ">
+<div class="info-desc">
+<p>Implicit Butcher tables</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>Implicit Butcher tables</div></ul>
+</div>
+
+
+<pre><code><span id="TYPEark_table"><span class="keyword">type</span> <code class="type"></code>ark_table</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTark_table.ARK_4_2_3"><span class="constructor">ARK_4_2_3</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>3rd-order pair combining
+                                BogackiShampine_4_2_3 and ARK_4_2_3_Implicit.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTark_table.ARK_6_3_4"><span class="constructor">ARK_6_3_4</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>4th-order pair combining
+                                ARK_6_3_4_Explicit and ARK_6_3_4_Implicit.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTark_table.ARK_8_4_5"><span class="constructor">ARK_8_4_5</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>5th-order pair combining
+                                ARK_8_4_5_Explicit and ARK_8_4_5_Implicit.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info ">
+<div class="info-desc">
+<p>Additive Butcher tables</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>Additive Butcher tables</div></ul>
+</div>
+
+
+<pre><span id="VALload_erk"><span class="keyword">val</span> load_erk</span> : <code class="type"><a href="Arkode.ButcherTable.html#TYPEerk_table">erk_table</a> -> <a href="Arkode.ButcherTable.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Retrieves an explicit Butcher table.</p>
+</div>
+<ul class="info-attributes">
+<li><b>Since</b> 4.0.0</li>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeButcherTable_LoadERK</div></ul>
+</div>
+
+<pre><span id="VALload_dirk"><span class="keyword">val</span> load_dirk</span> : <code class="type"><a href="Arkode.ButcherTable.html#TYPEdirk_table">dirk_table</a> -> <a href="Arkode.ButcherTable.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Retrieves a diagonally-implicit Butcher table.</p>
+</div>
+<ul class="info-attributes">
+<li><b>Since</b> 4.0.0</li>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeButcherTable_LoadDIRK</div></ul>
+</div>
+
+<pre><span id="VALwrite"><span class="keyword">val</span> write</span> : <code class="type"><a href="Arkode.ButcherTable.html#TYPEt">t</a> -> Sundials.Logfile.t -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Writes a Butcher table to a file.</p>
+</div>
+<ul class="info-attributes">
+<li><b>Since</b> 4.0.0</li>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeButcherTable_Write</div></ul>
+</div>
+
+<pre><span id="EXCEPTIONButcherTableCheckFailed"><span class="keyword">exception</span> ButcherTableCheckFailed</span></pre>
+<div class="info ">
+<div class="info-desc">
+<p>Indicates that a check on the analytic order of accuracy failed.</p>
+</div>
+</div>
+
+<pre><span id="VALcheck_order"><span class="keyword">val</span> check_order</span> : <code class="type">?outfile:Sundials.Logfile.t -><br>       <a href="Arkode.ButcherTable.html#TYPEt">t</a> -> int * int option * bool</code></pre><div class="info ">
+<div class="info-desc">
+<p>Determines the analytic order of accuracy for a Butcher table.
+      The analytic (necessary) conditions are checked up to order 6. For
+      orders greater than 6, the Butcher simplifying (sufficient) assumptions
+      are used. In the call, <code class="code">(q,&nbsp;p,&nbsp;warn)&nbsp;=&nbsp;check_order&nbsp;bt</code>,</p>
+<ul>
+<li><code class="code">q</code> is the measured order of accuracy,</li>
+<li><code class="code">p</code> is the measured order of accuracy for the embedding if applicable,</li>
+<li><code class="code">warn</code> is true if the table values are lower than the measured values,
+        or the measured values reach the maximum order possible with this
+        function and the values of <code class="code">q</code> and <code class="code">p</code> in the provided table are higher.</li>
+</ul>
+<p>The logfile, if given, is used to print results.</p>
+</div>
+<ul class="info-attributes">
+<li><b>Since</b> 4.0.0</li>
+<div class="raisedexceptions"><span class="raises">Raises</span> <code>ButcherTableCheckFailed</code> Table values are higher than measured ones</div>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeButcherTable_CheckOrder</div></ul>
+</div>
+
+<pre><span id="VALcheck_ark_order"><span class="keyword">val</span> check_ark_order</span> : <code class="type">?outfile:Sundials.Logfile.t -><br>       <a href="Arkode.ButcherTable.html#TYPEt">t</a> -> <a href="Arkode.ButcherTable.html#TYPEt">t</a> -> int * int option * bool</code></pre><div class="info ">
+<div class="info-desc">
+<p>Determines the analytic order of accuracy for a pair of Butcher tables.
+      The analytic (necessary) conditions are checked up to order 6. For
+      orders greater than 6, the Butcher simplifying (sufficient) assumptions
+      are used. In the call, <code class="code">(q,&nbsp;p,&nbsp;warn)&nbsp;=&nbsp;check_order&nbsp;b1&nbsp;b2</code>,</p>
+<ul>
+<li><code class="code">q</code> is the measured order of accuracy,</li>
+<li><code class="code">p</code> is the measured order of accuracy for the embedding if applicable,</li>
+<li><code class="code">warn</code> is true if the table values are lower than the measured values,
+        or the measured values reach the maximum order possible with this
+        function and the values of <code class="code">q</code> and <code class="code">p</code> in the provided table are higher.</li>
+</ul>
+<p>The logfile, if given, is used to print results.</p>
+</div>
+<ul class="info-attributes">
+<li><b>Since</b> 4.0.0</li>
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKodeButcherTable_CheckARKOrder</div></ul>
+</div>
+</body></html>

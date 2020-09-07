@@ -1,0 +1,94 @@
+<html><head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials_Index" rel="Chapter" href="Sundials_Index.html">
+<link title="Sundials_Config" rel="Chapter" href="Sundials_Config.html">
+<link title="Sundials_RealArray" rel="Chapter" href="Sundials_RealArray.html">
+<link title="Sundials_RealArray2" rel="Chapter" href="Sundials_RealArray2.html">
+<link title="Sundials_LintArray" rel="Chapter" href="Sundials_LintArray.html">
+<link title="Sundials_Logfile" rel="Chapter" href="Sundials_Logfile.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Sundials_Matrix" rel="Chapter" href="Sundials_Matrix.html">
+<link title="Sundials_LinearSolver" rel="Chapter" href="Sundials_LinearSolver.html">
+<link title="Sundials_NonlinearSolver" rel="Chapter" href="Sundials_NonlinearSolver.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Arkode" rel="Chapter" href="Arkode.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Arkode_bbd" rel="Chapter" href="Arkode_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Nvector_openmp" rel="Chapter" href="Nvector_openmp.html"><title>Sundials/ML 4.1.0p0 : Arkode.ButcherTable</title>
+</head>
+<body>
+<code class="code"><span class="keyword">sig</span><br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;t&nbsp;=&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;method_order&nbsp;:&nbsp;int;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;embedding_order&nbsp;:&nbsp;int;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;stages&nbsp;:&nbsp;int;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;stage_values&nbsp;:&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">RealArray2</span>.t;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;stage_times&nbsp;:&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.t;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;coefficients&nbsp;:&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.t;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;bembed&nbsp;:&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.t&nbsp;option;<br>
+&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;erk_table&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">HeunEuler_2_1_2</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">BogackiShampine_4_2_3</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">ARK_4_2_3_Explicit</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Zonneveld_5_3_4</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">ARK_6_3_4_Explicit</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">SayfyAburub_6_3_4</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">CashKarp_6_4_5</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Fehlberg_6_4_5</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">DormandPrince_7_4_5</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">ARK_8_4_5_Explicit</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Verner_8_5_6</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Fehlberg_13_7_8</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Knoth_Wolke_3_3</span><br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;dirk_table&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">SDIRK_2_1_2</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Billington_3_2_3</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">TRBDF2_3_2_3</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Kvaerno_4_2_3</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">ARK_4_2_3_Implicit</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Cash_5_2_4</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Cash_5_3_4</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">SDIRK_5_3_4</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Kvaerno_5_3_4</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">ARK_6_3_4_Implicit</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Kvaerno_7_4_5</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">ARK_8_4_5_Implicit</span><br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;ark_table&nbsp;=&nbsp;<span class="constructor">ARK_4_2_3</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">ARK_6_3_4</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">ARK_8_4_5</span><br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;load_erk&nbsp;:&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ButcherTable</span>.erk_table&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ButcherTable</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;load_dirk&nbsp;:&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ButcherTable</span>.dirk_table&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ButcherTable</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;write&nbsp;:&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ButcherTable</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Sundials</span>.<span class="constructor">Logfile</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">exception</span>&nbsp;<span class="constructor">ButcherTableCheckFailed</span><br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;check_order&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?outfile:<span class="constructor">Sundials</span>.<span class="constructor">Logfile</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ButcherTable</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;*&nbsp;int&nbsp;option&nbsp;*&nbsp;bool<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;check_ark_order&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?outfile:<span class="constructor">Sundials</span>.<span class="constructor">Logfile</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ButcherTable</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Arkode</span>.<span class="constructor">ButcherTable</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;*&nbsp;int&nbsp;option&nbsp;*&nbsp;bool<br>
+<span class="keyword">end</span></code></body></html>

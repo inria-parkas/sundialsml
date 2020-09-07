@@ -1,0 +1,506 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Arkode.ERKStep.html">
+<link rel="Up" href="Arkode.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials_Index" rel="Chapter" href="Sundials_Index.html">
+<link title="Sundials_Config" rel="Chapter" href="Sundials_Config.html">
+<link title="Sundials_RealArray" rel="Chapter" href="Sundials_RealArray.html">
+<link title="Sundials_RealArray2" rel="Chapter" href="Sundials_RealArray2.html">
+<link title="Sundials_LintArray" rel="Chapter" href="Sundials_LintArray.html">
+<link title="Sundials_Logfile" rel="Chapter" href="Sundials_Logfile.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Sundials_Matrix" rel="Chapter" href="Sundials_Matrix.html">
+<link title="Sundials_LinearSolver" rel="Chapter" href="Sundials_LinearSolver.html">
+<link title="Sundials_NonlinearSolver" rel="Chapter" href="Sundials_NonlinearSolver.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Arkode" rel="Chapter" href="Arkode.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Arkode_bbd" rel="Chapter" href="Arkode_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Nvector_openmp" rel="Chapter" href="Nvector_openmp.html"><link title="Solver initialization and use" rel="Section" href="#solver">
+<link title="Modifying the solver (optional input functions)" rel="Section" href="#set">
+<link title="Querying the solver (optional output functions)" rel="Section" href="#get">
+<link title="Additional root-finding functions" rel="Section" href="#roots">
+<link title="Optional inputs for MRIStep" rel="Subsection" href="#mriset">
+<link title="Optional inputs for IVP method selection" rel="Subsection" href="#mrisetivp">
+<link title="Optional inputs for time step adaptivity" rel="Subsection" href="#mrisetadap">
+<title>Sundials/ML 4.1.0p0 : Arkode.MRIStep</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Arkode.ERKStep.html" title="Arkode.ERKStep">Previous</a>
+&nbsp;<a class="up" href="Arkode.html" title="Arkode">Up</a>
+&nbsp;</div>
+<h1>Module <a href="type_Arkode.MRIStep.html">Arkode.MRIStep</a></h1>
+
+<pre><span id="MODULEMRIStep"><span class="keyword">module</span> MRIStep</span>: <code class="code"><span class="keyword">sig</span></code> <a href="Arkode.MRIStep.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+<div class="info-desc">
+<p>MRIStep Time-Stepping Module for two-rate initial value problems.</p>
+
+<p>This module solves problems of the form
+    $\dot{y} = f_s(t, y) + f_f(t, y)$, $y(t_0) = y_0$.</p>
+
+<p>Its interface is structured as follows.</p>
+<OL>
+<li><a href="#solver">Solver initialization and use</a></li>
+<li><a href="#set">Modifying the solver</a></li>
+<li><a href="#get">Querying the solver</a></li>
+<li><a href="#roots">Additional root finding functions</a></li>
+</OL>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>Using MRIStep for C and C++ Applications</div></ul>
+</div>
+<hr width="100%">
+
+<pre><span id="TYPEsession"><span class="keyword">type</span> <code class="type">('d, 'k)</code> session</span> = <code class="type">('d, 'k, mristep) session</code> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>A session with the MRIStep time-stepping solver.</p>
+
+<p>An example session with Arkode (<a href="arkode_mri_skel.ml">arkode_mri_skel.ml</a>):</p>
+<pre class="codepre"><code class="code"><span class="keyword">open</span> <span class="constructor">Sundials</span>
+
+<span class="comment">(* 1. Define right-hand-side functions. *)</span>
+<span class="keyword">let</span> fs t y yd = yd.{0} &lt;- y.{1}
+<span class="keyword">let</span> ff t y yd = yd.{1} &lt;- -9.81
+
+<span class="comment">(* 2. Optionally define a root function. *)</span>
+<span class="keyword">let</span> g t y gout = gout.{0} &lt;- 1.0 -. y.{0}
+
+<span class="comment">(* 3. Set vector of initial values.
+      The length of this vector determines the problem size. *)</span>
+<span class="keyword">let</span> yd = <span class="constructor">RealArray</span>.of_list [ 10.0; 0.0 ]
+<span class="keyword">let</span> y = <span class="constructor">Nvector_serial</span>.wrap yd
+
+<span class="comment">(* 4. Create and initialize a solver session. *)</span>
+<span class="keyword">let</span> s = <span class="constructor">Arkode</span>.<span class="constructor">MRIStep</span>.(init ~slow:fs ~fast:ff ~roots:(1, g) 0.0 y);;
+
+<span class="comment">(* 5. Set optional inputs, e.g.,
+      call [set_*] functions to change solver parameters. *)</span>
+<span class="constructor">Arkode</span>.<span class="constructor">MRIStep</span>.set_stop_time s 10.0;;
+<span class="constructor">Arkode</span>.<span class="constructor">MRIStep</span>.set_all_root_directions s <span class="constructor">RootDirs</span>.<span class="constructor">Increasing</span>;;
+
+<span class="comment">(* 6. Advance the solution in time,
+      by repeatedly calling [solve_normal] or [solve_one_step]. *)</span>
+<span class="keyword">let</span> <span class="keyword">rec</span> go (t, r) =
+  <span class="constructor">Printf</span>.printf <span class="string">"% .10e\t% .10e\t% .10e\n"</span> t yd.{0} yd.{1};
+  <span class="keyword">match</span> r <span class="keyword">with</span>
+  <span class="keywordsign">|</span> <span class="constructor">Arkode</span>.<span class="constructor">Success</span> <span class="keywordsign">-&gt;</span> go (<span class="constructor">Arkode</span>.<span class="constructor">MRIStep</span>.solve_normal s (t +. 0.5) y)
+  <span class="keywordsign">|</span> <span class="constructor">Arkode</span>.<span class="constructor">RootsFound</span> <span class="keywordsign">-&gt;</span> <span class="keyword">begin</span>
+        yd.{1} &lt;- -0.8 *. yd.{1};
+        <span class="constructor">Arkode</span>.<span class="constructor">MRIStep</span>.reinit s t y;
+        go (t, <span class="constructor">Arkode</span>.<span class="constructor">Success</span>)
+      <span class="keyword">end</span>
+  <span class="keywordsign">|</span> <span class="constructor">Arkode</span>.<span class="constructor">StopTimeReached</span> <span class="keywordsign">-&gt;</span> ();;
+
+<span class="constructor">Printf</span>.printf <span class="string">"time\ty\ty'\n"</span>;;
+go (0.0, <span class="constructor">Arkode</span>.<span class="constructor">Success</span>);;
+
+<span class="comment">(* 7. Get optional outputs,
+      call the [get_*] functions to examine solver statistics. *)</span>
+<span class="keyword">let</span> ns = <span class="constructor">Arkode</span>.<span class="constructor">MRIStep</span>.get_num_steps s
+      </code></pre></div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>Skeleton of main program</div></ul>
+</div>
+
+<h3 id="solver">Solver initialization and use</h3>
+<pre><span id="VALinit"><span class="keyword">val</span> init</span> : <code class="type">slow:'data <a href="Arkode.html#TYPErhsfn">Arkode.rhsfn</a> -><br>       fast:'data <a href="Arkode.html#TYPErhsfn">Arkode.rhsfn</a> -><br>       ?hslow:float -><br>       ?hfast:float -><br>       ?roots:int * 'data <a href="Arkode.html#TYPErootsfn">Arkode.rootsfn</a> -><br>       float -> ('data, 'kind) <a href="Nvector.html#TYPEt">Nvector.t</a> -> ('data, 'kind) <a href="Arkode.MRIStep.html#TYPEsession">session</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Creates and initializes a session with the solver. The call</p>
+<pre class="codepre"><code class="code">init ~slow:f_s ~fast:f_f ~hslow:h_s ~hfast:h_f ~roots:(nroots, g) t0 y0</code></pre><p>has as arguments:</p>
+<ul>
+<li><code class="code">f_s</code>,    the slow portion of the right-hand side function,</li>
+<li><code class="code">f_f</code>,    the fast portion of the right-hand side function,</li>
+<li><code class="code">h_s</code>,    the slow step size,</li>
+<li><code class="code">h_f</code>,    the fast step size,</li>
+<li><code class="code">nroots</code>, the number of root functions,</li>
+<li><code class="code">g</code>,      the root function (<code class="code">(nroots,&nbsp;g)</code> defaults to <a href="Arkode.html#VALno_roots"><code class="code"><span class="constructor">Arkode</span>.no_roots</code></a>),</li>
+<li><code class="code">t0</code>,     the initial value of the independent variable, and</li>
+<li><code class="code">y0</code>,     a vector of initial values that also determines the number
+                  of equations.</li>
+</ul>
+<p>This function does everything necessary to initialize a session, i.e.,
+      it makes the calls referenced below. The <a href="Arkode.MRIStep.html#VALsolve_normal"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">MRIStep</span>.solve_normal</code></a> and
+      <a href="Arkode.MRIStep.html#VALsolve_one_step"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">MRIStep</span>.solve_one_step</code></a> functions may be called directly.</p>
+
+<p>If <code class="code">h_s</code> does not evenly divide the time interval between the stages
+      of the slow method, then the actual value used for the fast steps will
+      be slightly smaller than <code class="code">h_f</code> to ensure
+      $(c_i^s - c_{i-1}^s)h_s/h_f$  is an integer value. Specifically,
+      the fast step for the ith slow stage will be
+      $h = \frac{(c_i^s - c_{i-1}^s)h_s}
+                   {\left\lceil (c_i^s - c_{i-1}^s)h_s/h_f \right\rceil}$ .</p>
+
+<p>If fixed step sizes and a stop time are used, then the fixed step size
+      will be used for all steps except the final step, which may be shorter.
+      To resume use of the previous fixed step size, another call to
+      <a href="Arkode.MRIStep.html#VALset_fixed_step"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">MRIStep</span>.set_fixed_step</code></a> is required before calling either <a href="Arkode.MRIStep.html#VALsolve_normal"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">MRIStep</span>.solve_normal</code></a> or
+      <a href="Arkode.MRIStep.html#VALsolve_one_step"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">MRIStep</span>.solve_one_step</code></a>.</p>
+</div>
+<ul class="info-attributes">
+<li><b>Since</b> 4.0.0</li>
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepCreate</div><div class="sundials"><span class="seesundials">See sundials: </span>MRIStepRootInit</div><div class="sundials"><span class="seesundials">See sundials: </span>MRIStepSetFixedStep</div></ul>
+</div>
+
+<pre><span id="VALsolve_normal"><span class="keyword">val</span> solve_normal</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.html#TYPEsession">session</a> -><br>       float -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> float * <a href="Arkode.html#TYPEsolver_result">Arkode.solver_result</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Integrates an ODE system over an interval. The call
+      <code class="code">tret,&nbsp;r&nbsp;=&nbsp;solve_normal&nbsp;s&nbsp;tout&nbsp;yout</code> has as arguments</p>
+<ul>
+<li><code class="code">s</code>, a solver session,</li>
+<li><code class="code">tout</code>, the next time at which a solution is desired, and,</li>
+<li><code class="code">yout</code>, a vector to store the computed solution.</li>
+</ul>
+<p>It returns <code class="code">tret</code>, the time reached by the solver, which will be equal to
+      <code class="code">tout</code> if no errors occur, and, <code class="code">r</code>, a <a href="Arkode.html#TYPEsolver_result"><code class="code"><span class="constructor">Arkode</span>.solver_result</code></a>.</p>
+</div>
+<ul class="info-attributes">
+<div class="raisedexceptions"><span class="raises">Raises</span><ul><li><code>IllInput</code> Missing or illegal solver inputs.</li>
+<li><code>TooMuchWork</code> The requested time could not be reached in <code class="code">mxstep</code> internal steps.</li>
+<li><code>VectorOpErr</code> A vector operation error occurred</li>
+<li><code>InnerStepFail</code> The inner stepper had an unrecoverable error</li>
+</ul></div>
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepEvolve (ARK_NORMAL)</div></ul>
+</div>
+
+<pre><span id="VALsolve_one_step"><span class="keyword">val</span> solve_one_step</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.html#TYPEsession">session</a> -><br>       float -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> float * <a href="Arkode.html#TYPEsolver_result">Arkode.solver_result</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Like <a href="Arkode.MRIStep.html#VALsolve_normal"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">MRIStep</span>.solve_normal</code></a> but returns after one internal solver step.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepEvolve (ARK_ONE_STEP)</div></ul>
+</div>
+
+<pre><span id="VALget_dky"><span class="keyword">val</span> get_dky</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.html#TYPEsession">session</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> float -> int -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Returns the interpolated solution or derivatives.
+      <code class="code">get_dky&nbsp;s&nbsp;dky&nbsp;t&nbsp;k</code> computes the <code class="code">k</code>th derivative of the function
+      at time <code class="code">t</code>, i.e.,
+      $\frac{d^\mathtt{k}}{\mathit{dt}^\mathtt{k}}y(\mathtt{t})$,
+      and stores it in <code class="code">dky</code>. The arguments must satisfy
+      $t_n - h_n \leq \mathtt{t} \leq t_n$—where $t_n$
+      denotes <a href="Arkode.MRIStep.html#VALget_current_time"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">MRIStep</span>.get_current_time</code></a> and $h_n$ denotes <a href="Arkode.MRIStep.html#VALget_last_step"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">MRIStep</span>.get_last_step</code></a>,—
+      and $0 \leq \mathtt{k} \leq 3$.</p>
+
+<p>This function may only be called after a successful return from either
+      <a href="Arkode.MRIStep.html#VALsolve_normal"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">MRIStep</span>.solve_normal</code></a> or <a href="Arkode.MRIStep.html#VALsolve_one_step"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">MRIStep</span>.solve_one_step</code></a>.</p>
+</div>
+<ul class="info-attributes">
+<div class="raisedexceptions"><span class="raises">Raises</span><ul><li><code>BadT</code> <code class="code">t</code> is not in the interval $[t_n - h_n, t_n]$.</li>
+<li><code>BadK</code> <code class="code">k</code> is not in the range {0, 1, ..., dord}.</li>
+</ul></div>
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepGetDky</div></ul>
+</div>
+
+<pre><span id="VALreinit"><span class="keyword">val</span> reinit</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.html#TYPEsession">session</a> -><br>       ?roots:int * 'd <a href="Arkode.html#TYPErootsfn">Arkode.rootsfn</a> -> float -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Reinitializes the solver with new parameters and state values. The
+      values of the independent variable, i.e., the simulation time, and the
+      state variables must be given. If given, <code class="code">roots</code> specifies a new root
+      finding function. The new problem must have the same size as the
+      previous one.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepReInit</div><div class="sundials"><span class="seesundials">See sundials: </span>MRIStepRootInit</div></ul>
+</div>
+
+<pre><span id="VALresize"><span class="keyword">val</span> resize</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.html#TYPEsession">session</a> -><br>       ?resize_nvec:'d <a href="Arkode.html#TYPEresize_fn">Arkode.resize_fn</a> -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> float -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Change the number of equations and unknowns between integrator steps.
+      The call
+      <code class="code">resize&nbsp;s&nbsp;~resize_nvec:rfn&nbsp;ynew&nbsp;t0</code>
+      has as arguments:</p>
+<ul>
+<li><code class="code">s</code>, the solver session to resize,</li>
+<li><code class="code">rfn</code>, a resize function that transforms nvectors in place-otherwise
+               they are simply destroyed and recloned,</li>
+<li><code class="code">ynew</code>, the newly-sized solution vector with the value $y(t_0)$, and</li>
+<li><code class="code">t0</code>, the current value of the independent variable $t_0$.</li>
+</ul>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepResize</div></ul>
+</div>
+<h3 id="set">Modifying the solver (optional input functions)</h3><h4 id="mriset">Optional inputs for MRIStep</h4>
+<pre><span id="VALset_defaults"><span class="keyword">val</span> set_defaults</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.html#TYPEsession">session</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Resets all optional input parameters to their default values. Neither
+      the problem-defining functions nor the root-finding functions are
+      changed.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepSetDefaults</div></ul>
+</div>
+
+<pre><span id="VALset_dense_order"><span class="keyword">val</span> set_dense_order</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.html#TYPEsession">session</a> -> int -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Specifies the order of accuracy for the polynomial interpolant used for
+      dense output.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepSetDenseOrder</div></ul>
+</div>
+
+<pre><span id="VALset_diagnostics"><span class="keyword">val</span> set_diagnostics</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.html#TYPEsession">session</a> -> Sundials.Logfile.t -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Write step adaptivity and solver diagnostics to the given file.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepSetDiagnostics</div></ul>
+</div>
+
+<pre><span id="VALclear_diagnostics"><span class="keyword">val</span> clear_diagnostics</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.html#TYPEsession">session</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Do not write step adaptivity or solver diagnostics of a file.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepSetDiagnostics</div></ul>
+</div>
+
+<pre><span id="VALset_error_file"><span class="keyword">val</span> set_error_file</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.html#TYPEsession">session</a> -> Sundials.Logfile.t -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Configure the default error handler to write messages to a file.
+      By default it writes to Logfile.stderr.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepSetErrFile</div></ul>
+</div>
+
+<pre><span id="VALset_err_handler_fn"><span class="keyword">val</span> set_err_handler_fn</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.html#TYPEsession">session</a> -><br>       (<a href="Sundials.Util.html#TYPEerror_details">Sundials.Util.error_details</a> -> unit) -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Specifies a custom function for handling error messages.
+      The handler must not fail: any exceptions are trapped and discarded.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepSetErrHandlerFn</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKErrHandlerFn</div></ul>
+</div>
+
+<pre><span id="VALclear_err_handler_fn"><span class="keyword">val</span> clear_err_handler_fn</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.html#TYPEsession">session</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Restores the default error handling function.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepSetErrHandlerFn</div></ul>
+</div>
+
+<pre><span id="VALset_fixed_step"><span class="keyword">val</span> set_fixed_step</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.html#TYPEsession">session</a> -><br>       ?hslow:float -> ?hfast:float -> unit -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Disables time step adaptivity and fix the step size for all internal
+      steps. See the notes under <a href="Arkode.MRIStep.html#VALinit"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">MRIStep</span>.init</code></a>.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepSetFixedStep</div></ul>
+</div>
+
+<pre><span id="VALset_max_hnil_warns"><span class="keyword">val</span> set_max_hnil_warns</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.html#TYPEsession">session</a> -> int -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Specifies the maximum number of messages warning that <code class="code">t&nbsp;+&nbsp;h&nbsp;=&nbsp;t</code> on
+      the next internal step.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepSetMaxHnilWarns</div></ul>
+</div>
+
+<pre><span id="VALset_max_num_steps"><span class="keyword">val</span> set_max_num_steps</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.html#TYPEsession">session</a> -> int -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Specifies the maximum number of steps taken in attempting to reach
+      a given output time.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepSetMaxNumSteps</div></ul>
+</div>
+
+<pre><span id="VALset_stop_time"><span class="keyword">val</span> set_stop_time</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.html#TYPEsession">session</a> -> float -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Limits the value of the independent variable <code class="code">t</code> when solving.
+      By default no stop time is imposed.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepSetStopTime</div></ul>
+</div>
+<h4 id="mrisetivp">Optional inputs for IVP method selection</h4>
+<pre><span id="VALset_tables"><span class="keyword">val</span> set_tables</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.html#TYPEsession">session</a> -><br>       global_method_order:int -><br>       slow:<a href="Arkode.ButcherTable.html#TYPEt">Arkode.ButcherTable.t</a> -> fast:<a href="Arkode.ButcherTable.html#TYPEt">Arkode.ButcherTable.t</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Specifies customized Butcher tables.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepSetTables</div></ul>
+</div>
+
+<pre><span id="VALset_table_nums"><span class="keyword">val</span> set_table_nums</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.html#TYPEsession">session</a> -><br>       slow:<a href="Arkode.ButcherTable.html#TYPEerk_table">Arkode.ButcherTable.erk_table</a> -><br>       fast:<a href="Arkode.ButcherTable.html#TYPEerk_table">Arkode.ButcherTable.erk_table</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Use a specific built-in Butcher tables for integration.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepSetTableNum</div></ul>
+</div>
+<h4 id="mrisetadap">Optional inputs for time step adaptivity</h4>
+<pre><span id="VALset_postprocess_step_fn"><span class="keyword">val</span> set_postprocess_step_fn</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.html#TYPEsession">session</a> -> 'd <a href="Arkode.html#TYPEpostprocess_step_fn">Arkode.postprocess_step_fn</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Set a post processing step function.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>MRISetPostprocessStepFn</div></ul>
+</div>
+
+<pre><span id="VALclear_postprocess_step_fn"><span class="keyword">val</span> clear_postprocess_step_fn</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.html#TYPEsession">session</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Clear the post processing step function.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>MRISetPostprocessStepFn</div></ul>
+</div>
+<h3 id="get">Querying the solver (optional output functions)</h3>
+<pre><span id="VALget_work_space"><span class="keyword">val</span> get_work_space</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.html#TYPEsession">session</a> -> int * int</code></pre><div class="info ">
+<div class="info-desc">
+<p>Returns the real and integer workspace sizes.</p>
+</div>
+<ul class="info-attributes">
+<li><b>Returns</b> (<code class="code">real_size</code>, <code class="code">integer_size</code>)</li>
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepGetWorkSpace</div></ul>
+</div>
+
+<pre><span id="VALget_num_steps"><span class="keyword">val</span> get_num_steps</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.html#TYPEsession">session</a> -> int * int</code></pre><div class="info ">
+<div class="info-desc">
+<p>Returns the cumulative number of internal steps taken by the solver.
+      The call <code class="code">slow,&nbsp;fast&nbsp;=&nbsp;get_num_steps</code> returns the number of slow and
+      fast internal steps taken by the solver.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepGetNumSteps</div></ul>
+</div>
+
+<pre><span id="VALget_last_step"><span class="keyword">val</span> get_last_step</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.html#TYPEsession">session</a> -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p>Returns the integration step size taken on the last successful internal
+      step.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepGetLastStep</div></ul>
+</div>
+
+<pre><span id="VALget_num_rhs_evals"><span class="keyword">val</span> get_num_rhs_evals</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.html#TYPEsession">session</a> -> int * int</code></pre><div class="info ">
+<div class="info-desc">
+<p>Returns the number of calls to the right-hand side functions.
+      The call <code class="code">slow,&nbsp;fast&nbsp;=&nbsp;get_num_rhs_evals</code> returns the number of calls to
+      the slow and fast right-hand-side functions.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepGetNumRhsEvals</div></ul>
+</div>
+
+<pre><span id="VALget_current_time"><span class="keyword">val</span> get_current_time</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.html#TYPEsession">session</a> -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p>Returns the the current internal time reached by the solver.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepGetCurrentTime</div></ul>
+</div>
+
+<pre><span id="VALget_current_butcher_tables"><span class="keyword">val</span> get_current_butcher_tables</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.html#TYPEsession">session</a> -><br>       <a href="Arkode.ButcherTable.html#TYPEt">Arkode.ButcherTable.t</a> * <a href="Arkode.ButcherTable.html#TYPEt">Arkode.ButcherTable.t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Returns the Butcher tables in use by the solver.
+      The call <code class="code">slow,&nbsp;fast&nbsp;=&nbsp;get_current_butcher_tables&nbsp;s</code> returns the slow
+      and fast butcher tables.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepGetCurrentButcherTables</div></ul>
+</div>
+<h3 id="roots">Additional root-finding functions</h3>
+<pre><span id="VALset_root_direction"><span class="keyword">val</span> set_root_direction</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.html#TYPEsession">session</a> -> <a href="Sundials.RootDirs.html#TYPEd">Sundials.RootDirs.d</a> array -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">set_root_direction&nbsp;s&nbsp;dir</code> specifies the direction of zero-crossings to
+      be located and returned. <code class="code">dir</code> may contain one entry for each root
+      function.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepSetRootDirection</div></ul>
+</div>
+
+<pre><span id="VALset_all_root_directions"><span class="keyword">val</span> set_all_root_directions</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.html#TYPEsession">session</a> -> <a href="Sundials.RootDirs.html#TYPEd">Sundials.RootDirs.d</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Like <a href="Arkode.MRIStep.html#VALset_root_direction"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">MRIStep</span>.set_root_direction</code></a> but specifies a single direction for all root
+      functions.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepSetRootDirection</div></ul>
+</div>
+
+<pre><span id="VALset_no_inactive_root_warn"><span class="keyword">val</span> set_no_inactive_root_warn</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.html#TYPEsession">session</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Disables issuing a warning if some root function appears to be
+      identically zero at the beginning of the integration.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepSetNoInactiveRootWarn</div></ul>
+</div>
+
+<pre><span id="VALget_num_roots"><span class="keyword">val</span> get_num_roots</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.html#TYPEsession">session</a> -> int</code></pre><div class="info ">
+<div class="info-desc">
+<p>Returns the number of root functions.</p>
+</div>
+</div>
+
+<pre><span id="VALget_root_info"><span class="keyword">val</span> get_root_info</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.html#TYPEsession">session</a> -> <a href="Sundials.Roots.html#TYPEt">Sundials.Roots.t</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Fills an array showing which functions were found to have a root.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepGetRootInfo</div></ul>
+</div>
+
+<pre><span id="VALget_num_g_evals"><span class="keyword">val</span> get_num_g_evals</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.html#TYPEsession">session</a> -> int</code></pre><div class="info ">
+<div class="info-desc">
+<p>Returns the cumulative number of calls made to the user-supplied root
+      function g.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepGetNumGEvals</div></ul>
+</div>
+
+<pre><span id="VALwrite_parameters"><span class="keyword">val</span> write_parameters</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.html#TYPEsession">session</a> -> Sundials.Logfile.t -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Outputs all the solver parameters to the given file.</p>
+</div>
+<ul class="info-attributes">
+<li><b>Since</b> 4.1.0</li>
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepWriteParameters</div></ul>
+</div>
+
+<pre><span id="VALwrite_butcher"><span class="keyword">val</span> write_butcher</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.html#TYPEsession">session</a> -> Sundials.Logfile.t -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Outputs the current butcher table to the given file.</p>
+</div>
+<ul class="info-attributes">
+<li><b>Since</b> 4.1.0</li>
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepWriteButcher</div></ul>
+</div>
+</body></html>
