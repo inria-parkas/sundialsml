@@ -40,6 +40,7 @@ exception ConvergenceFailure
 exception LinearInitFailure
 exception LinearSetupFailure of exn option
 exception LinearSolveFailure of exn option
+exception NonlinearSolverFailure
 exception NonlinearInitFailure
 exception NonlinearSetupFailure
 exception NonlinearSetupRecoverable
@@ -502,6 +503,9 @@ module Spils = struct (* {{{ *)
     if in_compat_mode2_3 then ls_check_spils s;
     set_eps_lin s epsl
 
+  external set_linear_solution_scaling : ('d, 'k) session -> bool -> unit
+      = "sunml_ida_set_linear_solution_scaling"
+
   external set_increment_factor   : ('a, 'k) session -> float -> unit
       = "sunml_ida_set_increment_factor"
 
@@ -883,6 +887,23 @@ external get_nonlin_solv_stats          : ('a, 'k) session -> int * int
 
 external get_num_g_evals                : ('a, 'k) session -> int
     = "sunml_ida_get_num_g_evals"
+
+external get_current_cj : ('d, 'k) session -> float
+    = "sunml_ida_get_current_cj"
+external get_current_y  : ('d, 'k) session -> 'd
+    = "sunml_ida_get_current_y"
+external get_current_yp : ('d, 'k) session -> 'd
+    = "sunml_ida_get_current_yp"
+
+external c_compute_y
+    : ('d, 'k) session -> ('d, 'k) Nvector.t -> ('d, 'k) Nvector.t -> unit
+    = "sunml_ida_compute_y"
+let compute_y s ~ycor ~y = c_compute_y s ycor y
+
+external c_compute_yp
+    : ('d, 'k) session -> ('d, 'k) Nvector.t -> ('d, 'k) Nvector.t -> unit
+    = "sunml_ida_compute_yp"
+let compute_yp s ~ycor ~yp = c_compute_yp s ycor yp
 
 external c_set_constraints : ('a,'k) session -> ('a,'k) Nvector.t -> unit
   = "sunml_ida_set_constraints"

@@ -1230,6 +1230,16 @@ CAMLprim value sunml_kinsol_set_print_level(value vkin_mem, value vplvl)
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_kinsol_set_damping_aa(value vkin_mem, value vbeta)
+{
+    CAMLparam2(vkin_mem, vbeta);
+
+    int flag = KINSetDampingAA(KINSOL_MEM_FROM_ML(vkin_mem), Double_val(vbeta));
+    CHECK_FLAG("KINSetDampingAA", flag);
+
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value sunml_kinsol_set_num_max_iters(value vkin_mem, value vmxiter)
 {
     CAMLparam2(vkin_mem, vmxiter);

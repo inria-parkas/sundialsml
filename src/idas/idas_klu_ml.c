@@ -111,9 +111,9 @@ static int jacfn_withsens( /* IDASlsSparseJacFnB */
 
     int ns = Int_val(Field(bsensext, RECORD_IDAS_BWD_SESSION_NUMSENSITIVITIES));
     args[1] = IDAS_BSENSARRAY1_FROM_EXT(bsensext);
-    sunml_idas_wrap_to_nvector_table(ns, args[1], ys);
+    sunml_nvectors_into_array(ns, args[1], ys);
     args[2] = IDAS_BSENSARRAY2_FROM_EXT(bsensext);
-    sunml_idas_wrap_to_nvector_table(ns, args[2], yps);
+    sunml_nvectors_into_array(ns, args[2], yps);
 
     smat = Field(cb, 1);
     if (smat == Val_none) {

@@ -55,4 +55,5 @@ structures) or inefficient.
 * Unsupported nvector modules: CUDA, Hypre ParVector, PETSC, RAJA, and 
   Trilinos (if you provide the required OCaml interface, we'll add the 
   nvector).
+* No support for fused kernels.
 

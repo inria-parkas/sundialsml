@@ -37,6 +37,7 @@
       {- {{:#set}Modifying the solver}}
       {- {{:#get}Querying the solver}}
       {- {{:#roots}Additional root finding functions}}
+      {- {{:#nls}Advanced nonlinear solver functions}}
       {- {{:#exceptions}Exceptions}}}
 
     @version VERSION()
@@ -292,6 +293,15 @@ module Spils : sig (* {{{ *)
 
       @ida <node5> IDASetEpsLin *)
   val set_eps_lin : ('d, 'k) session -> float -> unit
+
+  (** Enables or disables scaling of the linear system solution to account
+      for a change in {% $\gamma$ %} in the linear system.
+      Linear solution scaling is enabled by default when a matrix-based
+      linear solver is attached.
+
+      @since 5.2.0
+      @noida <node5> IDASetLinearSolutionScaling *)
+  val set_linear_solution_scaling : ('d, 'k) session -> bool -> unit
 
   (** Sets the increment factor ([dqincfac]) to use in the difference-quotient
       approximation.
@@ -991,6 +1001,46 @@ val get_root_info : ('d, 'k) session -> Roots.t -> unit
     @ida <node5#sss:optout_root> IDAGetNumGEvals *)
 val get_num_g_evals : ('d, 'k) session -> int
 
+(** {2:nls Advanced nonlinear solver functions}
+
+    These advanced functions may be useful for writing customized nonlinear
+    solver routines. *)
+
+(** Returns the scalar {% $c_j$ %}, which is proportional to the inverse of
+    the step size.
+
+    @since 5.0.0
+    @noida <node5> IDAGetCurrentCj *)
+val get_current_cj : ('d, 'k) session -> float
+
+(** Returns the current {% $y$ %} vector. This vector provides direct access
+    to the data within the integrator.
+
+    @since 5.0.0
+    @noida <node5> IDAGetCurrentY *)
+val get_current_y : ('d, 'k) session -> 'd
+
+(** Returns the current {% $\dot{y}$ %} vector. This vector provides direct
+    access to the data within the integrator.
+
+    @since 5.0.0
+    @noida <node5> IDAGetCurrentYp *)
+val get_current_yp : ('d, 'k) session -> 'd
+
+(** Computes the current {% $y$ %} vector from a correction vector.
+
+    @since 5.0.0
+    @noida <node5> IDAComputeY *)
+val compute_y
+  : ('d, 'k) session -> ycor:('d, 'k) Nvector.t -> y:('d, 'k) Nvector.t -> unit
+
+(** Computes the current {% $\dot{y}$ %} vector from a correction vector.
+
+    @since 5.0.0
+    @noida <node5> IDAComputeYp *)
+val compute_yp
+  : ('d, 'k) session -> ycor:('d, 'k) Nvector.t -> yp:('d, 'k) Nvector.t -> unit
+
 (** {2:exceptions Exceptions} *)
 
 (** Raised on missing or illegal solver inputs. Also raised if an element
@@ -1054,6 +1104,12 @@ exception LinearSetupFailure of exn option
     @noida <node> IDAGetLastLinFlag
     @ida <node5#sss:idasolve> IDA_LSOLVE_FAIL *)
 exception LinearSolveFailure of exn option
+
+(** The nonlinear solver failed in a general way.
+
+    @since 5.0.0
+    @nocvode <node5#sss:cvode> CV_NLS_FAIL *)
+exception NonlinearSolverFailure
 
 (** Nonlinear solver initialization failed.
 

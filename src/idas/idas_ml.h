@@ -60,7 +60,6 @@
 
 void sunml_idas_check_flag(const char *call, int flag, void *ida_mem);
 
-void sunml_idas_wrap_to_nvector_table(int n, value vy, N_Vector *y);
 value sunml_idas_make_jac_arg(realtype t, N_Vector y, N_Vector yp,
                         N_Vector yb, N_Vector ypb, N_Vector resb,
                         realtype coef, value tmp);

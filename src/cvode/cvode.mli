@@ -383,6 +383,15 @@ module Spils : sig (* {{{ *)
       @since 4.0.0 *)
   val set_max_steps_between_jac : ('d, 'k) session -> int -> unit
 
+  (** Enables or disables scaling of the linear system solution to account
+      for a change in {% $\gamma$ %} in the linear system.
+      Linear solution scaling is enabled by default when a matrix-based
+      linear solver is attached.
+
+      @since 5.2.0
+      @nocvode <node5> CVodeSetLinearSolutionScaling *)
+  val set_linear_solution_scaling : ('d, 'k) session -> bool -> unit
+
   (** Sets the factor by which the Krylov linear solver's convergence test
       constant is reduced from the Newton iteration test constant.
       This factor must be >= 0; passing 0 specifies the default (0.05).
@@ -543,8 +552,34 @@ type 'd rhsfn = float -> 'd -> 'd -> unit
     @cvode <node5#ss:rootFn> cvRootFn *)
 type 'd rootsfn = float -> 'd -> RealArray.t -> unit
 
+(** A function to compute the projection of the solution and, if enabled, the
+    error on the constraint manifold.
+
+    Such functions take the following arguments:
+    - [t], the independent variable,
+    - [ycur], the dependent variable vector,
+    - [corr], the correction to the dependent variable vector so that
+              {% $y(t) + c$ %} satisifies the constraint equation,
+    - [eps], the tolerance to use in the nonlinear stopping test when
+             solving the nonlinear contrained least-squares problem, and
+    - [err], the current error estimate on input, if error projection is
+             enabled (the default), and updated to the projected error for
+             output.
+
+    Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+    Any other exception is treated as an unrecoverable error. The integrator
+    will, in most cases, try to correct and reattempt the step.
+
+    The solve should stop when the WRMS norm of the current iterate update is
+    less than [eps]. The projection routine can access the error weight vector
+    with {!get_err_weights}.
+
+    @since 5.3.0
+    @nocvode <node> CVProjFn *)
+type 'd proj_fn = float -> 'd -> 'd -> float -> 'd -> unit
+
 (** Creates and initializes a session with the solver. The call
-    {[init lmm tol ~nlsolver ~lsolver f ~roots:(nroots, g) t0 y0]} has
+    {[init lmm tol ~nlsolver ~lsolver f ~roots:(nroots, g) ~projfn t0 y0]} has
     as arguments:
     - [lmm],      the linear multistep method (see {!lmm}),
     - [tol],      the integration tolerances,
@@ -553,6 +588,8 @@ type 'd rootsfn = float -> 'd -> RealArray.t -> unit
     - [f],        the ODE right-hand side function,
     - [nroots],   the number of root functions,
     - [g],        the root function ([(nroots, g)] defaults to {!no_roots}),
+    - [projfn],   enables projection onto the constraint manifold using the
+                  given function after each time step,
     - [t0],       the initial value of the independent variable, and,
     - [y0],       a vector of initial values that also determines the number
                   of equations.
@@ -569,6 +606,9 @@ type 'd rootsfn = float -> 'd -> RealArray.t -> unit
     {!IllInput} for Sundials < 4.0.0) exception on the first call to
     {!solve_normal} or {!solve_one_step}.
 
+    The projection feature is only supported for Sundials >= 5.3.0 and the
+    {{!lmm}BDF} method.
+
     @cvode <node5#sss:cvodemalloc>   CVodeCreate/CVodeInit
     @cvode <node5#ss:cvrootinit>     CVodeRootInit
     @cvode <node>                    CVodeSetLinearSolver
@@ -576,7 +616,8 @@ type 'd rootsfn = float -> 'd -> RealArray.t -> unit
     @cvode <node5#sss:cvtolerances>  CVodeSStolerances
     @cvode <node5#sss:cvtolerances>  CVodeSVtolerances
     @cvode <node5#sss:cvtolerances>  CVodeWFtolerances
-    @cvode <node5#ss:ewtsetFn>       CVEwtFn *)
+    @cvode <node5#ss:ewtsetFn>       CVEwtFn
+    @nocvode <node> CVodeSetProjFn *)
 val init :
     lmm
     -> ('data, 'kind) tolerance
@@ -587,6 +628,7 @@ val init :
     -> ?lsolver  : ('data, 'kind) linear_solver
     -> 'data rhsfn
     -> ?roots:(int * 'data rootsfn)
+    -> ?projfn:'data proj_fn
     -> float
     -> ('data, 'kind) Nvector.t
     -> ('data, 'kind) session
@@ -662,6 +704,10 @@ val get_dky : ('d, 'k) session -> ('d, 'k) Nvector.t -> float -> int -> unit
     solver, [lsolver] specifies a linear solver, and [roots] specifies a
     new root finding function; both default to unchanged.
 
+    If the new problem does not have a constraint equation, but the old one
+    did, then {!set_proj_frequency} must a zero argument to disable
+    projection.
+
     @cvode <node5#sss:cvreinit> CVodeReInit
     @cvode <node>               CVodeSetLinearSolver
     @cvode <node>               CVodeSetNonlinearSolver *)
@@ -703,6 +749,36 @@ val set_err_handler_fn : ('d, 'k) session -> (Util.error_details -> unit) -> uni
 
     @cvode <node5#sss:optin_main> CVodeSetErrHandlerFn *)
 val clear_err_handler_fn : ('d, 'k) session -> unit
+
+(** Specifies a function to be called after the given number of successful
+    steps.
+
+    The solver solution may be read by the monitoring function, but it should
+    not be changed.
+
+    This function requires that the underlying library was explicitly built
+    with support for monitoring (see {!Sundials.Config.monitoring_enabled}).
+
+    @since 5.3.0
+    @raise NotImplementedBySundialsVersion if not provided by the underlying library
+    @cvode <node5> CVodeSetMonitorFn
+    @cvode <node5> CVodeSetMonitorFrequency *)
+val set_monitor_fn
+  : ('d, 'k) session -> int -> (('d, 'k) session -> unit) -> unit
+
+(** Sets the number of successful steps between calls to the monitoring
+    function.
+
+    @since 5.3.0
+    @raise NotImplementedBySundialsVersion if not provided by the underlying library
+    @cvode <node5> CVodeSetMonitorFrequency *)
+val set_monitor_frequency : ('d, 'k) session -> int -> unit
+
+(** Turns monitoring off.
+
+    @since 5.3.0
+    @cvode <node5> CVodeSetMonitorFn *)
+val clear_monitor_fn : ('d, 'k) session -> unit
 
 (** Specifies the maximum order of the linear multistep method.
 
@@ -784,6 +860,45 @@ val set_constraints : ('d, 'k) session -> ('d, 'k) Nvector.t -> unit
     @nocvode <node> CVodeSetConstraints *)
 val clear_constraints : ('d, 'k) session -> unit
 
+(** Enables or disables projection of the error estimate by the projection
+    function.
+
+    @since 5.3.0
+    @nocvode <node> CVodeSetProjErrEst *)
+val set_proj_err_est : ('d, 'k) session -> bool -> unit
+
+(** Set the frequency with which the projection is performed. The default is
+    1, that is, every time step. A value of 0 disables projection and a value
+    less than zero restores the default.
+
+    @since 5.3.0
+    @nocvode <node> CVodeSetProjFrequency *)
+val set_proj_frequency : ('d, 'k) session -> int -> unit
+
+(** Set the maximum number of projection failures in a step attempt before an
+    unrecoverable error is returned. The default is 10. A value less than 1
+    restores the default.
+
+    @since 5.3.0
+    @nocvode <node> CVodeSetMaxNumProjFails *)
+val set_max_num_proj_fails : ('d, 'k) session -> int -> unit
+
+(** Set the tolerance for the nonlinear-constrained least-squares problem
+    solved by the projection function. The default is 0.1. A value less than
+    or equal to zero restores the default.
+
+    @since 5.3.0
+    @nocvode <node> CVodeSetEpsProj *)
+val set_eps_proj : ('d, 'k) session -> float -> unit
+
+(** Sets the time-step reduction factor to apply on a projection function
+    failure. The default is 0.25. A value less than or equal to 1, or greater
+    than 1 restores the default.
+
+    @since 5.3.0
+    @nocvode <node> CVodeSetProjFailEta *)
+val set_proj_fail_eta : ('d, 'k) session -> float -> unit
+
 (** {2:get Querying the solver (optional output functions)} *)
 
 (** Returns the real and integer workspace sizes.
@@ -821,6 +936,21 @@ val get_last_order          : ('d, 'k) session -> int
 
     @cvode <node5#sss:optout_main> CVodeGetCurrentOrder *)
 val get_current_order       : ('d, 'k) session -> int
+
+(** Returns the current state vector. This vector provides direct access to
+    the data within the integrator.
+
+    @since 5.0.0
+    @nocvode <node> CVodeGetCurrentState *)
+val get_current_state : ('d, 'k) session -> 'd
+
+(** Returns the current value of {% $\gamma$ %}.
+    This scalar appears in the internal Newton equation,
+    {% $M = I - \gamma J$ %}.
+
+    @since 5.0.0
+    @nocvode <node> CVodeGetCurrentGamma *)
+val get_current_gamma : ('d, 'k) session -> float
 
 (** Returns the integration step size taken on the last internal step.
 
@@ -900,6 +1030,35 @@ val get_integrator_stats    : ('d, 'k) session -> integrator_stats
     @cvode <node5#sss:optout_main> CVodeGetIntegratorStats *)
 val print_integrator_stats  : ('d, 'k) session -> out_channel -> unit
 
+(** Summaries of linear solver statistics. *)
+type linear_solver_stats = {
+    jac_evals : int;
+      (** Number of calls made by a linear solver to the Jacobian
+          approximation function. *)
+    lin_rhs_evals : int;
+      (** Number of calls to the right-hand side callback due to
+          the finite difference Jacobian approximation. *)
+    lin_iters : int;
+      (** The cumulative number of linear iterations. *)
+    lin_conv_fails : int;
+      (** The cumulative number of linear convergence failures. *)
+    prec_evals : int;
+      (** The cumulative number of calls to the setup function. *)
+    prec_solves : int;
+      (** The cumulative number of calls to the solve function. *)
+    jtsetup_evals : int;
+      (** The cumulative number of calls to the Jacobian-vector
+          setup function. *)
+    jtimes_evals : int;
+      (** The cumulative number of calls to the Jacobian-vector function. *)
+  }
+
+(** Returns linear solver statistics as a group.
+
+    @since 5.3.0
+    @cvode <node5> CVodeGetLinSolveStats *)
+val get_linear_solver_stats : ('d, 'k) session -> linear_solver_stats
+
 (** Returns the number of nonlinear (functional or Newton) iterations performed.
 
     @cvode <node5#sss:optout_main> CVodeGetNumNonlinSolvIters *)
@@ -950,6 +1109,15 @@ val get_root_info : ('d, 'k) session -> Roots.t -> unit
 
     @cvode <node5#sss:optout_root> CVodeGetNumGEvals *)
 val get_num_g_evals : ('d, 'k) session -> int
+
+(** Returns the current total number of projection evaluations.
+
+    @cvode <node5> CVodeGetNumProjEvals *)
+val get_num_proj_evals : ('d, 'k) session -> int
+
+(** Returns the current total number of projection evaluation failures.
+    @cvode <node5> CVodeGetNumProjFails *)
+val get_num_proj_fails : ('d, 'k) session -> int
 
 (** {2:exceptions Exceptions} *)
 
@@ -1022,6 +1190,12 @@ exception LinearSetupFailure of exn option
     @cvode <node5#sss:cvode> CV_LSOLVE_FAIL *)
 exception LinearSolveFailure of exn option
 
+(** The nonlinear solver failed in a general way.
+
+    @since 5.0.0
+    @nocvode <node5#sss:cvode> CV_NLS_FAIL *)
+exception NonlinearSolverFailure
+
 (** Nonlinear solver initialization failed.
 
     @nocvode <node5#sss:cvode> CV_NLS_INIT_FAIL *)
@@ -1079,4 +1253,24 @@ exception BadT
 
     @nocvode <node> CV_VECTOROP_ERR *)
 exception VectorOpErr
+
+(** The projection function failed.
+
+    @since 5.0.0
+    @cvode <node5> CV_PROJFUNC_FAIL *)
+exception ProjFuncFailure
+
+(** The projection function failed repeatedly.
+
+    @since 5.0.0
+    @cvode <node5> CV_REPTD_PROJFUNC_ERR *)
+exception RepeatedProjFuncError
+
+(** The project functionality is not enabled. A projection function must be
+    given in the call to {!init} and the last call to {!set_proj_frequency}
+    must not have set the frequency to zero.
+
+    @since 5.0.0
+    @cvode <node5> CV_PROJ_MEM_NULL *)
+exception ProjectionNotEnabled
 

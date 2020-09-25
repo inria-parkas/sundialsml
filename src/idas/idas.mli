@@ -773,6 +773,40 @@ module Sensitivity : sig (* {{{ *)
       @return ([nniters], [nncfails]) *)
   val get_nonlin_solv_stats : ('d, 'k) Ida.session -> int * int
 
+  (** Returns the current sensitivity vector array. Its elements provide
+      direct access to the data within the integrator.
+
+      @since 5.0.0
+      @noidas <node5> IDAGetCurrentYSens *)
+  val get_current_y_sens : ('d, 'k) session -> 'd array
+
+  (** Returns the derivative of the current sensitivity vector array. Its
+      elements provide direct access to the data within the integrator.
+
+      @since 5.0.0
+      @noidas <node5> IDAGetCurrentYpSens *)
+  val get_current_yp_sens : ('d, 'k) session -> 'd array
+
+  (** Computes the sensitiviites from a correction vector.
+
+      @since 5.0.0
+      @noidas <node5> IDAComputeYSens *)
+  val compute_y_sens
+    : ('d, 'k) session
+      -> ycor:('d, 'k) Nvector.t array
+      -> y:('d, 'k) Nvector.t array
+      -> unit
+
+  (** Computes the sensitivity derivatives from a correction vector.
+
+      @since 5.0.0
+      @noidas <node5> IDAComputeYpSens *)
+  val compute_yp_sens
+    : ('d, 'k) session
+      -> ycor:('d, 'k) Nvector.t array
+      -> yp:('d, 'k) Nvector.t array
+      -> unit
+
   (** {2:exceptions Exceptions} *)
 
   (** Sensitivity analysis was not initialized.
@@ -1298,6 +1332,15 @@ module Adjoint : sig (* {{{ *)
 
         @idas <node7#SECTION00729400000000000000> IDASetEpsLinB *)
     val set_eps_lin : ('d, 'k) bsession -> float -> unit
+
+    (** Enables or disables scaling of the linear system solution to account
+        for a change in {% $\gamma$ %} in the linear system. Linear solution
+        scaling is enabled by default when a matrix-based linear solver is
+        attached.
+
+        @since 5.2.0
+        @noidas <node5> IDASetLinearSolutionScalingB *)
+    val set_linear_solution_scaling : ('d, 'k) bsession -> bool -> unit
 
     (** Sets the increment factor ([dqincfac]) to use in the difference-quotient
         approximation for the backward problem.

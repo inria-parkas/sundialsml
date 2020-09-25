@@ -1122,6 +1122,10 @@ void sunml_ida_check_flag(const char *call, int flag, void *ida_mem)
     case IDA_NLS_SETUP_RECVR:
 	caml_raise_constant(IDA_EXN(NonlinearSetupRecoverable));
 #endif
+#if 500 <= SUNDIALS_LIB_VERSION
+	case IDA_NLS_FAIL:
+	    caml_raise_constant(IDA_EXN(NonlinearFailure));
+#endif
 
     default:
 	/* e.g. IDA_MEM_NULL, IDA_MEM_FAIL */
@@ -1740,6 +1744,22 @@ CAMLprim value sunml_ida_set_eps_lin(value vida_mem, value eplifac)
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_ida_set_linear_solution_scaling(value vida_mem,
+						     value vonoff)
+{
+    CAMLparam2(vida_mem, vonoff);
+
+#if 520 <= SUNDIALS_LIB_VERSION
+    int flag = IDASetLinearSolutionScaling(IDA_MEM_FROM_ML(vida_mem),
+					   Bool_val(vonoff));
+    CHECK_FLAG("IDASetLinearSolutionScaling", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value sunml_ida_set_increment_factor(value vida_mem, value dqincfac)
 {
     CAMLparam2(vida_mem, dqincfac);
@@ -1833,6 +1853,87 @@ CAMLprim value sunml_ida_get_num_g_evals(value vida_mem)
     CAMLreturn(Val_long(r));
 }
 
+
+CAMLprim value sunml_ida_get_current_cj(value vida_mem)
+{
+    CAMLparam1(vida_mem);
+    realtype cj;
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    int flag = IDAGetCurrentCj(IDA_MEM_FROM_ML(vida_mem), &cj);
+    CHECK_FLAG("IDAGetCurrentCj", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(caml_copy_double(cj));
+}
+
+CAMLprim value sunml_ida_get_current_y(value vida_mem)
+{
+    CAMLparam1(vida_mem);
+    CAMLlocal1(vnv);
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    N_Vector nv;
+    int flag = IDAGetCurrentY(IDA_MEM_FROM_ML(vida_mem), &nv);
+    CHECK_FLAG("IDAGetCurrentY", flag);
+
+    vnv = NVEC_BACKLINK(nv);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(vnv);
+}
+
+CAMLprim value sunml_ida_get_current_yp(value vida_mem)
+{
+    CAMLparam1(vida_mem);
+    CAMLlocal1(vnv);
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    N_Vector nv;
+    int flag = IDAGetCurrentYp(IDA_MEM_FROM_ML(vida_mem), &nv);
+    CHECK_FLAG("IDAGetCurrentYp", flag);
+
+    vnv = NVEC_BACKLINK(nv);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(vnv);
+}
+
+CAMLprim value sunml_ida_compute_y (value vida_mem, value vycor, value vy)
+{
+    CAMLparam3(vida_mem, vycor, vy);
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    int flag = IDAComputeY (IDA_MEM_FROM_ML(vida_mem),
+			    NVEC_VAL(vycor), NVEC_VAL(vy));
+    CHECK_FLAG("IDAComputeY", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_ida_compute_yp (value vida_mem, value vycor, value vyp)
+{
+    CAMLparam3(vida_mem, vycor, vyp);
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    int flag = IDAComputeYp (IDA_MEM_FROM_ML(vida_mem),
+			     NVEC_VAL(vycor), NVEC_VAL(vyp));
+    CHECK_FLAG("IDAComputeYp", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
 
 CAMLprim value sunml_ida_dls_get_work_space(value vida_mem)
 {

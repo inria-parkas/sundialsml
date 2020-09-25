@@ -344,6 +344,7 @@ type 'a rhsfn = float -> 'a -> 'a -> unit
 type 'a rootsfn = float -> 'a -> RealArray.t -> unit
 type error_handler = Util.error_details -> unit
 type 'a error_weight_fun = 'a -> 'a -> unit
+type 'd proj_fn = float -> 'd -> 'd -> float -> 'd -> unit
 
 (* Session: here comes the big blob.  These mutually recursive types
    cannot be handed out separately to modules without menial
@@ -367,6 +368,9 @@ type ('a, 'kind) session = {
   mutable rootsfn      : 'a rootsfn;
   mutable errh         : error_handler;
   mutable errw         : 'a error_weight_fun;
+
+  mutable projfn       : 'a proj_fn;
+  mutable monitorfn    : ('a, 'kind) session -> unit;
 
   mutable ls_solver    : LSI.held_linear_solver;
   mutable ls_callbacks : ('a, 'kind) linsolv_callbacks;
@@ -621,6 +625,10 @@ let dummy_errh _ =
   Sundials_impl.crash "Internal error: dummy_errh called\n"
 let dummy_errw _ _ =
   Sundials_impl.crash "Internal error: dummy_errw called\n"
+let dummy_projfn _ _ _ _ _ =
+  Sundials_impl.crash "Internal error: dummy_projfn called\n"
+let dummy_monitorfn _ =
+  Sundials_impl.crash "Internal error: dummy_monitorfn called\n"
 let dummy_brhsfn_no_sens _ _ =
   Sundials_impl.crash "Internal error: dummy_brhsfn_no_sens called\n"
 let dummy_brhsfn_with_sens _ _ _ =
