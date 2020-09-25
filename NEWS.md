@@ -4,6 +4,8 @@ Sundials/ML v5.3.0p0 adds support for v5.x of the Sundials Suite of
 numerical solvers.
 
 Notes:
+* Reworking of the Arkode.MRIStep interface, which now requires the 
+  underlying library to be v5.x or above.
 * Changes to the callback interfaces NonlinearSolver.{lsetupfn, lsolvefn} 
   and the name (and use) of the second argument of the function 
   NonlinearSolver.solve.
