@@ -25,6 +25,13 @@ let in_compat_mode2_3 =
   | 3,_,_ -> true
   | _ -> false
 
+let sundials_lt500 =
+  match Config.sundials_version with
+  | 2,_,_ -> true
+  | 3,_,_ -> true
+  | 4,_,_ -> true
+  | _ -> false
+
 (*
  * NB: The order of variant constructors and record fields is important!
  *     If these types are changed or augmented, the corresponding declarations
@@ -114,6 +121,8 @@ module ButcherTable = struct (* {{{ *)
     | Verner_8_5_6
     | Fehlberg_13_7_8     (* >= 2.7.0 *)
     | Knoth_Wolke_3_3     (* >= 4.0.0 *)
+    | ARK_7_3_4_Explicit  (* >= 5.0.0 *)
+    | ARK_8_4_5b_Explicit (* >= 5.0.0 *)
 
   type dirk_table =
     | SDIRK_2_1_2
@@ -128,6 +137,8 @@ module ButcherTable = struct (* {{{ *)
     | ARK_6_3_4_Implicit
     | Kvaerno_7_4_5
     | ARK_8_4_5_Implicit
+    | ARK_7_3_4_Implicit
+    | ARK_8_4_5b_Implicit
 
   type ark_table =
     | ARK_4_2_3
@@ -149,8 +160,8 @@ module ButcherTable = struct (* {{{ *)
        | DormandPrince_7_4_5   -> 8
        | ARK_8_4_5_Explicit    -> 9
        | Verner_8_5_6          -> 10
-       | Fehlberg_13_7_8       -> raise Config.NotImplementedBySundialsVersion
-       | Knoth_Wolke_3_3       -> raise Config.NotImplementedBySundialsVersion)
+       | Fehlberg_13_7_8
+       | _                     -> raise Config.NotImplementedBySundialsVersion)
     | 2,7,_ | 3,_,_ ->
       (match v with
        | HeunEuler_2_1_2       -> 0
@@ -165,7 +176,23 @@ module ButcherTable = struct (* {{{ *)
        | ARK_8_4_5_Explicit    -> 9
        | Verner_8_5_6          -> 10
        | Fehlberg_13_7_8       -> 11
-       | Knoth_Wolke_3_3       -> raise Config.NotImplementedBySundialsVersion)
+       | _                     -> raise Config.NotImplementedBySundialsVersion)
+    | 4,_,_ ->
+      (match v with
+       | HeunEuler_2_1_2       -> 0
+       | BogackiShampine_4_2_3 -> 1
+       | ARK_4_2_3_Explicit    -> 2
+       | Zonneveld_5_3_4       -> 3
+       | ARK_6_3_4_Explicit    -> 4
+       | SayfyAburub_6_3_4     -> 5
+       | CashKarp_6_4_5        -> 6
+       | Fehlberg_6_4_5        -> 7
+       | DormandPrince_7_4_5   -> 8
+       | ARK_8_4_5_Explicit    -> 9
+       | Verner_8_5_6          -> 10
+       | Fehlberg_13_7_8       -> 11
+       | Knoth_Wolke_3_3       -> 12
+       | _                     -> raise Config.NotImplementedBySundialsVersion)
     | _ ->
       (match v with
        | HeunEuler_2_1_2       -> 0
@@ -180,7 +207,9 @@ module ButcherTable = struct (* {{{ *)
        | ARK_8_4_5_Explicit    -> 9
        | Verner_8_5_6          -> 10
        | Fehlberg_13_7_8       -> 11
-       | Knoth_Wolke_3_3       -> 12)
+       | Knoth_Wolke_3_3       -> 12
+       | ARK_7_3_4_Explicit    -> 13
+       | ARK_8_4_5b_Explicit   -> 14)
 
   let int_of_dirk_table v =
     match Config.sundials_version with
@@ -197,7 +226,8 @@ module ButcherTable = struct (* {{{ *)
        | Kvaerno_5_3_4      -> 19
        | ARK_6_3_4_Implicit -> 20
        | Kvaerno_7_4_5      -> 21
-       | ARK_8_4_5_Implicit -> 22)
+       | ARK_8_4_5_Implicit -> 22
+       | _                  -> raise Config.NotImplementedBySundialsVersion)
     | 2,7,_ | 3,_,_ ->
       (match v with
        | SDIRK_2_1_2        -> 12
@@ -211,7 +241,23 @@ module ButcherTable = struct (* {{{ *)
        | Kvaerno_5_3_4      -> 20
        | ARK_6_3_4_Implicit -> 21
        | Kvaerno_7_4_5      -> 22
-       | ARK_8_4_5_Implicit -> 23)
+       | ARK_8_4_5_Implicit -> 23
+       | _                  -> raise Config.NotImplementedBySundialsVersion)
+    | 4,_,_ ->
+      (match v with
+       | SDIRK_2_1_2        -> 100
+       | Billington_3_2_3   -> 101
+       | TRBDF2_3_2_3       -> 102
+       | Kvaerno_4_2_3      -> 103
+       | ARK_4_2_3_Implicit -> 104
+       | Cash_5_2_4         -> 105
+       | Cash_5_3_4         -> 106
+       | SDIRK_5_3_4        -> 107
+       | Kvaerno_5_3_4      -> 108
+       | ARK_6_3_4_Implicit -> 109
+       | Kvaerno_7_4_5      -> 110
+       | ARK_8_4_5_Implicit -> 111
+       | _                  -> raise Config.NotImplementedBySundialsVersion)
     | _ ->
       (match v with
        | SDIRK_2_1_2        -> 100
@@ -225,7 +271,9 @@ module ButcherTable = struct (* {{{ *)
        | Kvaerno_5_3_4      -> 108
        | ARK_6_3_4_Implicit -> 109
        | Kvaerno_7_4_5      -> 110
-       | ARK_8_4_5_Implicit -> 111)
+       | ARK_8_4_5_Implicit -> 111
+       | ARK_7_3_4_Implicit -> 112
+       | ARK_8_4_5b_Implicit -> 113)
 
   let ints_of_ark_table v =
     match v with
@@ -266,6 +314,11 @@ module ButcherTable = struct (* {{{ *)
   let check_ark_order ?outfile = c_check_ark_order outfile
 
 end (* }}} *)
+
+(* must correspond with the static table ark_interpolant_types in arkode_ml.c *)
+type interpolant_type =
+    Hermite
+  | Lagrange
 
 type ('a, 'k) tolerance =
   | SStolerances of float * float
@@ -762,6 +815,9 @@ module ARKStep = struct (* {{{ *)
       if in_compat_mode2_3 then ls_check_spils s;
       set_max_steps_between_jac s maxsteps
 
+    external set_linear_solution_scaling : ('d, 'k) session -> bool -> unit
+      = "sunml_arkode_ark_set_linear_solution_scaling"
+
     external set_eps_lin            : ('a, 'k) session -> float -> unit
       = "sunml_arkode_ark_set_eps_lin"
 
@@ -1120,6 +1176,9 @@ module ARKStep = struct (* {{{ *)
       let get_num_setups s =
         mass_check_direct s;
         c_get_num_mass_setups s
+
+      external get_num_mult_setups : 'k serial_session -> int
+        = "sunml_arkode_ark_get_num_mass_mult_setups"
 
       external c_get_num_mass_solves
         : 'k serial_session -> int
@@ -1497,6 +1556,10 @@ module ARKStep = struct (* {{{ *)
             stabfn       = dummy_stabfn;
             resizefn     = dummy_resizefn;
             poststepfn   = dummy_poststepfn;
+            stagepredictfn = dummy_stagepredictfn;
+            preinnerfn   = dummy_preinnerfn;
+            postinnerfn  = dummy_postinnerfn;
+            preinnerarray = empty_preinnerarray ();
 
             linsolver      = None;
             ls_solver      = LSI.NoHLS;
@@ -1508,6 +1571,8 @@ module ARKStep = struct (* {{{ *)
             mass_precfns   = NoMassPrecFns;
 
             nls_solver     = None;
+
+            inner_session  = None;
           } in
     Gc.finalise session_finalize session;
     Weak.set weakref 0 (Some session);
@@ -1700,6 +1765,12 @@ module ARKStep = struct (* {{{ *)
   external get_current_time       : ('a, 'k) session -> float
       = "sunml_arkode_ark_get_current_time"
 
+  external get_current_state : ('d, 'k) session -> 'd
+      = "sunml_arkode_ark_get_current_state"
+
+  external get_current_gamma : ('d, 'k) session -> float
+      = "sunml_arkode_ark_get_current_gamma"
+
   let print_timestepper_stats s oc =
     let stats = get_timestepper_stats s
     in
@@ -1826,11 +1897,29 @@ module ARKStep = struct (* {{{ *)
     | BootstrapPredictor
     | MinimumCorrectionPredictor
 
+  type 'd stage_predict_fn  = 'd Arkode_impl.Global.stage_predict_fn
+
   external set_predictor_method : ('d, 'k) session -> predictor_method -> unit
       = "sunml_arkode_ark_set_predictor_method"
 
+  external c_set_stage_predict_fn
+      : ('d, 'k) session -> bool -> unit
+      = "sunml_arkode_ark_set_stage_predict_fn"
+
+  let set_stage_predict_fn s fn =
+    s.stagepredictfn <- fn;
+    c_set_stage_predict_fn s true
+
+  let clear_stage_predict_fn s =
+    c_set_stage_predict_fn s false;
+    s.stagepredictfn <- dummy_stagepredictfn
+
   external set_defaults           : ('a, 'k) session -> unit
       = "sunml_arkode_ark_set_defaults"
+  external set_interpolant_type : ('d, 'k) session -> interpolant_type -> unit
+      = "sunml_arkode_ark_set_interpolant_type"
+  external set_interpolant_degree : ('d, 'k) session -> int -> unit
+      = "sunml_arkode_ark_set_interpolant_degree"
   external set_dense_order        : ('a, 'k) session -> int -> unit
       = "sunml_arkode_ark_set_dense_order"
   external set_max_num_steps      : ('a, 'k) session -> int -> unit
@@ -1843,6 +1932,8 @@ module ARKStep = struct (* {{{ *)
       = "sunml_arkode_ark_set_fixed_step"
   let set_fixed_step s ohf =
     c_set_fixed_step s (match ohf with None -> 0.0 | Some v -> v)
+  external set_max_num_constr_fails : ('a, 'k) session -> int -> unit
+      = "sunml_arkode_ark_set_max_num_constr_fails"
   external set_min_step           : ('a, 'k) session -> float -> unit
       = "sunml_arkode_ark_set_min_step"
   external set_max_step           : ('a, 'k) session -> float -> unit
@@ -1859,6 +1950,8 @@ module ARKStep = struct (* {{{ *)
       = "sunml_arkode_ark_set_max_conv_fails"
   external set_nonlin_conv_coef   : ('a, 'k) session -> float -> unit
       = "sunml_arkode_ark_set_nonlin_conv_coef"
+  external set_constraints      : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
+      = "sunml_arkode_ark_set_constraints"
   external set_nonlin_crdown      : ('a, 'k) session -> float -> unit
       = "sunml_arkode_ark_set_nonlin_crdown"
   external set_nonlin_rdiv        : ('a, 'k) session -> float -> unit
@@ -1881,6 +1974,8 @@ module ARKStep = struct (* {{{ *)
       = "sunml_arkode_ark_set_max_first_growth"
   external set_max_growth         : ('a, 'k) session -> float -> unit
       = "sunml_arkode_ark_set_max_growth"
+  external set_min_reduction      : ('a, 'k) session -> float -> unit
+      = "sunml_arkode_ark_set_min_reduction"
   external set_safety_factor      : ('a, 'k) session -> float -> unit
       = "sunml_arkode_ark_set_safety_factor"
   external set_small_num_efails   : ('a, 'k) session -> float -> unit
@@ -1894,8 +1989,8 @@ module ARKStep = struct (* {{{ *)
     c_set_postprocess_step_fn s true
 
   let clear_postprocess_step_fn s =
-    s.poststepfn <- dummy_poststepfn;
-    c_set_postprocess_step_fn s false
+    c_set_postprocess_step_fn s false;
+    s.poststepfn <- dummy_poststepfn
 
   external c_set_root_direction   : ('a, 'k) session -> RootDirs.t -> unit
       = "sunml_arkode_ark_set_root_direction"
@@ -1951,6 +2046,9 @@ module ARKStep = struct (* {{{ *)
 
   external get_num_g_evals                : ('a, 'k) session -> int
       = "sunml_arkode_ark_get_num_g_evals"
+
+  external get_num_constr_fails           : ('a, 'k) session -> int
+      = "sunml_arkode_ark_get_num_constr_fails"
 
   external write_parameters : ('d, 'k) session -> Logfile.t -> unit
       = "sunml_arkode_ark_write_parameters"
@@ -2034,6 +2132,10 @@ module ERKStep = struct (* {{{ *)
             stabfn       = dummy_stabfn;
             resizefn     = dummy_resizefn;
             poststepfn   = dummy_poststepfn;
+            stagepredictfn = dummy_stagepredictfn;
+            preinnerfn   = dummy_preinnerfn;
+            postinnerfn  = dummy_postinnerfn;
+            preinnerarray = empty_preinnerarray ();
 
             linsolver      = None;
             ls_solver      = LSI.NoHLS;
@@ -2045,6 +2147,8 @@ module ERKStep = struct (* {{{ *)
             mass_precfns   = NoMassPrecFns;
 
             nls_solver     = None;
+
+            inner_session  = None;
           } in
     Gc.finalise session_finalize session;
     Weak.set weakref 0 (Some session);
@@ -2172,6 +2276,12 @@ module ERKStep = struct (* {{{ *)
   external clear_diagnostics : ('a, 'k) session -> unit
       = "sunml_arkode_erk_clear_diagnostics"
 
+  external set_interpolant_type : ('d, 'k) session -> interpolant_type -> unit
+      = "sunml_arkode_erk_set_interpolant_type"
+
+  external set_interpolant_degree : ('d, 'k) session -> int -> unit
+      = "sunml_arkode_erk_set_interpolant_degree"
+
   external set_error_file : ('a, 'k) session -> Logfile.t -> unit
       = "sunml_arkode_erk_set_error_file"
 
@@ -2231,6 +2341,8 @@ module ERKStep = struct (* {{{ *)
       = "sunml_arkode_erk_set_fixed_step"
   let set_fixed_step s ohf =
     c_set_fixed_step s (match ohf with None -> 0.0 | Some v -> v)
+  external set_max_num_constr_fails : ('a, 'k) session -> int -> unit
+      = "sunml_arkode_erk_set_max_num_constr_fails"
   external set_init_step          : ('a, 'k) session -> float -> unit
       = "sunml_arkode_erk_set_init_step"
   external set_max_hnil_warns     : ('a, 'k) session -> int -> unit
@@ -2257,10 +2369,14 @@ module ERKStep = struct (* {{{ *)
       = "sunml_arkode_erk_set_max_first_growth"
   external set_max_growth         : ('a, 'k) session -> float -> unit
       = "sunml_arkode_erk_set_max_growth"
+  external set_min_reduction      : ('a, 'k) session -> float -> unit
+      = "sunml_arkode_erk_set_min_reduction"
   external set_safety_factor      : ('a, 'k) session -> float -> unit
       = "sunml_arkode_erk_set_safety_factor"
   external set_small_num_efails   : ('a, 'k) session -> float -> unit
       = "sunml_arkode_erk_set_small_num_efails"
+  external set_constraints      : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
+      = "sunml_arkode_erk_set_constraints"
 
   external c_set_postprocess_step_fn : ('a, 'k) session -> bool -> unit
       = "sunml_arkode_erk_set_postprocess_step_fn"
@@ -2311,6 +2427,9 @@ module ERKStep = struct (* {{{ *)
   external get_num_g_evals                : ('a, 'k) session -> int
       = "sunml_arkode_erk_get_num_g_evals"
 
+  external get_num_constr_fails           : ('a, 'k) session -> int
+      = "sunml_arkode_erk_get_num_constr_fails"
+
   external write_parameters : ('d, 'k) session -> Logfile.t -> unit
       = "sunml_arkode_erk_write_parameters"
 
@@ -2335,26 +2454,25 @@ module MRIStep = struct (* {{{ *)
   external session_finalize : ('a, 'k) session -> unit
       = "sunml_arkode_mri_session_finalize"
 
-  external c_set_fixed_step : ('a, 'k) session -> float -> float -> unit
+  external c_set_fixed_step : ('a, 'k) session -> float -> unit
       = "sunml_arkode_mri_set_fixed_step"
-  let set_fixed_step s ?hslow ?hfast () =
-    c_set_fixed_step s (match hslow with None -> 0.0 | Some v -> v)
-                       (match hfast with None -> 0.0 | Some v -> v)
 
   external c_init :
     ('a, 'k) session Weak.t
+    -> ('a, 'k) ARKStep.session
     -> ('a, 'k) nvector (* y_0 *)
     -> float            (* t_0 *)
     -> (mristep arkode_mem * c_weak_ref)
     = "sunml_arkode_mri_init"
 
-  let init ~slow ~fast ?hslow ?hfast ?(roots=no_roots) t0 y0 =
+  let init fasts slow hslow ?(roots=no_roots) t0 y0 =
+    if sundials_lt500 then raise Config.NotImplementedBySundialsVersion;
     let (nroots, roots) = roots in
     let checkvec = Nvector.check y0 in
     if Sundials_configuration.safe && nroots < 0 then
       raise (Invalid_argument "number of root functions is negative");
     let weakref = Weak.create 1 in
-    let arkode_mem, backref = c_init weakref y0 t0 in
+    let arkode_mem, backref = c_init weakref fasts y0 t0 in
     (* arkode_mem and backref have to be immediately captured in a session and
        associated with the finalizer before we do anything else.  *)
     let session = {
@@ -2368,7 +2486,7 @@ module MRIStep = struct (* {{{ *)
 
             problem      = ExplicitOnly;
             rhsfn1       = slow;
-            rhsfn2       = fast;
+            rhsfn2       = dummy_rhsfn2;
 
             rootsfn      = roots;
             errh         = dummy_errh;
@@ -2379,6 +2497,10 @@ module MRIStep = struct (* {{{ *)
             stabfn       = dummy_stabfn;
             resizefn     = dummy_resizefn;
             poststepfn   = dummy_poststepfn;
+            stagepredictfn = dummy_stagepredictfn;
+            preinnerfn   = dummy_preinnerfn;
+            postinnerfn  = dummy_postinnerfn;
+            preinnerarray = empty_preinnerarray ();
 
             linsolver      = None;
             ls_solver      = LSI.NoHLS;
@@ -2390,14 +2512,15 @@ module MRIStep = struct (* {{{ *)
             mass_precfns   = NoMassPrecFns;
 
             nls_solver     = None;
+
+            inner_session  = Some fasts.arkode;
           } in
     Gc.finalise session_finalize session;
     Weak.set weakref 0 (Some session);
     (* Now the session is safe to use.  If any of the following fails and raises
        an exception, the GC will take care of freeing arkode_mem and backref.  *)
     if nroots > 0 then c_root_init session nroots;
-    if hslow <> None || hfast <> None
-      then set_fixed_step session ?hslow ?hfast ();
+    c_set_fixed_step session hslow;
     session
 
   let get_num_roots { nroots } = nroots
@@ -2451,10 +2574,10 @@ module MRIStep = struct (* {{{ *)
   external get_work_space         : ('a, 'k) session -> int * int
       = "sunml_arkode_mri_get_work_space"
 
-  external get_num_steps          : ('a, 'k) session -> int * int
+  external get_num_steps          : ('a, 'k) session -> int
       = "sunml_arkode_mri_get_num_steps"
 
-  external get_num_rhs_evals      : ('a, 'k) session -> int * int
+  external get_num_rhs_evals      : ('a, 'k) session -> int
       = "sunml_arkode_mri_get_num_rhs_evals"
 
   external get_last_step          : ('a, 'k) session -> float
@@ -2486,32 +2609,30 @@ module MRIStep = struct (* {{{ *)
     s.errh <- dummy_errh;
     clear_err_handler_fn s
 
-  external c_set_tables
-    : ('d, 'k) session
-      -> int
-      -> ButcherTable.t option (* slow *)
-      -> ButcherTable.t option (* fast *)
-      -> unit
-    = "sunml_arkode_mri_set_tables"
+  external set_fixed_step : ('d, 'k) session -> float -> unit
+      = "sunml_arkode_mri_set_fixed_step"
 
-  let set_tables s ~global_method_order ~slow ~fast =
-    c_set_tables s global_method_order (Some slow) (Some fast)
+  external c_set_table
+    : ('d, 'k) session -> int -> ButcherTable.t option -> unit
+    = "sunml_arkode_mri_set_table"
 
-  external c_set_table_nums
-    : ('d, 'k) session
-      -> int (* slow *)
-      -> int (* fast *)
-      -> unit
-      = "sunml_arkode_mri_set_table_nums"
+  let set_table s q bt =
+    c_set_table s q (Some bt)
 
-  let set_table_nums s ~slow ~fast =
-    c_set_table_nums s (ButcherTable.int_of_erk_table slow)
-                       (ButcherTable.int_of_erk_table fast)
+  external c_set_table_num : ('d, 'k) session -> int -> unit
+      = "sunml_arkode_mri_set_table_num"
+
+  let set_table_num s tn =
+    c_set_table_num s (ButcherTable.int_of_erk_table tn)
 
   external set_defaults           : ('a, 'k) session -> unit
       = "sunml_arkode_mri_set_defaults"
-  external set_dense_order        : ('a, 'k) session -> int -> unit
-      = "sunml_arkode_mri_set_dense_order"
+
+  external set_interpolant_type : ('d, 'k) session -> interpolant_type -> unit
+      = "sunml_arkode_mri_set_interpolant_type"
+
+  external set_interpolant_degree : ('d, 'k) session -> int -> unit
+      = "sunml_arkode_mri_set_interpolant_degree"
 
   external set_max_hnil_warns     : ('a, 'k) session -> int -> unit
       = "sunml_arkode_mri_set_max_hnil_warns"
@@ -2519,6 +2640,31 @@ module MRIStep = struct (* {{{ *)
       = "sunml_arkode_mri_set_max_num_steps"
   external set_stop_time          : ('a, 'k) session -> float -> unit
       = "sunml_arkode_mri_set_stop_time"
+
+  type 'd pre_inner_fn  = 'd Arkode_impl.Global.pre_inner_fn
+  type 'd post_inner_fn = 'd Arkode_impl.Global.post_inner_fn
+
+  external c_set_pre_inner_fn : ('a, 'k) session -> bool -> unit
+      = "sunml_arkode_mri_set_pre_inner_fn"
+
+  external c_set_post_inner_fn : ('a, 'k) session -> bool -> unit
+      = "sunml_arkode_mri_set_post_inner_fn"
+
+  let set_pre_inner_fn s f =
+    s.preinnerfn <- f;
+    c_set_pre_inner_fn s true
+
+  let clear_pre_inner_fn s =
+    c_set_pre_inner_fn s false;
+    s.preinnerfn <- dummy_preinnerfn
+
+  let set_post_inner_fn s f =
+    s.postinnerfn <- f;
+    c_set_post_inner_fn s true
+
+  let clear_post_inner_fn s =
+    c_set_post_inner_fn s false;
+    s.postinnerfn <- dummy_postinnerfn
 
   external c_set_postprocess_step_fn : ('a, 'k) session -> bool -> unit
       = "sunml_arkode_mri_set_postprocess_step_fn"
@@ -2543,9 +2689,11 @@ module MRIStep = struct (* {{{ *)
   external set_no_inactive_root_warn      : ('a, 'k) session -> unit
       = "sunml_arkode_mri_set_no_inactive_root_warn"
 
-  external get_current_butcher_tables
-      : ('d, 'k) session -> ButcherTable.t * ButcherTable.t
-      = "sunml_arkode_mri_get_current_butcher_tables"
+  external get_current_butcher_table : ('d, 'k) session -> ButcherTable.t
+      = "sunml_arkode_mri_get_current_butcher_table"
+
+  external get_current_state : ('d, 'k) session -> 'd
+      = "sunml_arkode_mri_get_current_state"
 
   external get_num_g_evals                : ('a, 'k) session -> int
       = "sunml_arkode_mri_get_num_g_evals"

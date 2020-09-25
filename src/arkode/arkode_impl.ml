@@ -216,6 +216,9 @@ module Global = struct
   type 'd stability_fn = float -> 'd -> float
   type 'd resize_fn = 'd -> 'd -> unit
   type 'd postprocess_step_fn = float -> 'd -> unit
+  type 'd stage_predict_fn = float -> 'd -> unit
+  type 'd pre_inner_fn = float -> 'd array -> unit
+  type 'd post_inner_fn = float -> 'd -> unit
 end
 
 open Global
@@ -242,7 +245,7 @@ type ('a, 'kind, 'step) session = {
 
   mutable problem      : problem_type; (* ARK only *)
   mutable rhsfn1       : 'a rhsfn;  (* ARK: implicit; ERK: f; MRI: slow *)
-  mutable rhsfn2       : 'a rhsfn;  (* ARK: explicit; ERK: unused; MRI: fast *)
+  mutable rhsfn2       : 'a rhsfn;  (* ARK: explicit; ERK: unused; MRI: unused *)
 
   mutable rootsfn      : 'a rootsfn;
   mutable errh         : error_handler;
@@ -253,6 +256,10 @@ type ('a, 'kind, 'step) session = {
   mutable stabfn       : 'a stability_fn;
   mutable resizefn     : 'a resize_fn;
   mutable poststepfn   : 'a postprocess_step_fn;
+  mutable stagepredictfn : 'a stage_predict_fn (* ARK only *);
+  mutable preinnerfn   : 'a pre_inner_fn;  (* MRI only *)
+  mutable postinnerfn  : 'a post_inner_fn; (* MRI only *)
+  mutable preinnerarray : 'a array;        (* MRI only *)
 
   (* ARK only *)
   mutable linsolver      : ('a, 'kind) linear_solver option;
@@ -269,6 +276,9 @@ type ('a, 'kind, 'step) session = {
   mutable nls_solver     : ('a, 'kind, (('a, 'kind, arkstep) session)
                              NLSI.integrator)
                            NLSI.nonlinear_solver option;
+
+  (* MRI only *)
+  mutable inner_session  : arkstep arkode_mem option;
 }
 
 and problem_type =
@@ -471,6 +481,8 @@ let read_weak_ref x : ('a, 'kind, 'step) session =
   | Some y -> y
   | None -> raise (Failure "Internal error: weak reference is dead")
 
+let empty_preinnerarray () = Array.init 0 (fun _ -> assert false)
+
 (* Dummy callbacks.  These dummies getting called indicates a fatal
    bug.  Rather than raise an exception (which may or may not get
    propagated properly depending on the context), we immediately abort
@@ -495,4 +507,10 @@ let dummy_resizefn _ _ =
   Sundials_impl.crash "Internal error: dummy_resizefn called\n"
 let dummy_poststepfn _ _ =
   Sundials_impl.crash "Internal error: dummy_poststepfn called\n"
+let dummy_stagepredictfn _ _ =
+  Sundials_impl.crash "Internal error: dummy_stagepredictfn called\n"
+let dummy_preinnerfn _ _ =
+  Sundials_impl.crash "Internal error: dummy_preinnerfn called\n"
+let dummy_postinnerfn _ _ =
+  Sundials_impl.crash "Internal error: dummy_postinnerfn called\n"
 

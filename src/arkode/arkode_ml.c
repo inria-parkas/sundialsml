@@ -61,6 +61,12 @@
 #include <stdio.h>
 #define MAX_ERRMSG_LEN 256
 
+// must correspond with the constructors of Arkode.interpolant_type
+static int ark_interpolant_types[] = {
+    ARK_INTERP_HERMITE,
+    ARK_INTERP_LAGRANGE,
+};
+
 CAMLprim value sunml_arkode_init_module (value exns)
 {
     CAMLparam1 (exns);
@@ -211,6 +217,74 @@ static int roots(realtype t, N_Vector y, realtype *gout, void *user_data)
 
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, UNRECOVERABLE));
 }
+
+#if 500 <= SUNDIALS_LIB_VERSION
+static int preinnerfn(realtype t, N_Vector *f, int num_vecs, void *user_data)
+{
+    CAMLparam0();
+    CAMLlocal1(session);
+    CAMLlocalN(args, 2);
+
+    WEAK_DEREF (session, *(value*)user_data);
+
+    args[0] = caml_copy_double(t);
+    args[1] = Field(session, RECORD_ARKODE_SESSION_PREINNERARRAY);
+
+    if (Wosize_val(args[1]) != num_vecs) {
+	args[1] = caml_alloc_tuple(num_vecs);
+    }
+    sunml_nvectors_into_array(num_vecs, args[1], f);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn(Field(session,
+				    RECORD_ARKODE_SESSION_PREINNERFN),
+				 2, args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
+}
+#endif
+
+#if 500 <= SUNDIALS_LIB_VERSION
+static int postinnerfn(realtype t, N_Vector y, void *user_data)
+{
+    CAMLparam0();
+    CAMLlocal1(session);
+    CAMLlocalN(args, 2);
+
+    WEAK_DEREF (session, *(value*)user_data);
+
+    args[0] = caml_copy_double(t);
+    args[1] = NVEC_BACKLINK(y);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn(Field(session,
+				    RECORD_ARKODE_SESSION_POSTINNERFN),
+				 2, args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
+}
+#endif
+
+#if 500 <= SUNDIALS_LIB_VERSION
+static int stagepredictfn(realtype t, N_Vector zpred, void *user_data)
+{
+    CAMLparam0();
+    CAMLlocal1(session);
+    CAMLlocalN(args, 2);
+
+    WEAK_DEREF (session, *(value*)user_data);
+
+    args[0] = caml_copy_double(t);
+    args[1] = NVEC_BACKLINK(zpred);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn(Field(session,
+				    RECORD_ARKODE_SESSION_STAGEPREDICTFN),
+				 2, args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
+}
+#endif
 
 static int errw(N_Vector y, N_Vector ewt, void *user_data)
 {
@@ -1967,6 +2041,39 @@ CAMLprim value sunml_arkode_ark_get_root_info(value vdata, value roots)
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_arkode_ark_get_current_state(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    CAMLlocal1(vnv);
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    N_Vector nv;
+    int flag = ARKStepGetCurrentState(ARKODE_MEM_FROM_ML(varkode_mem), &nv);
+    CHECK_FLAG("ARKStepGetCurrentState", flag);
+
+    vnv = NVEC_BACKLINK(nv);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(vnv);
+}
+
+CAMLprim value sunml_arkode_ark_get_current_gamma(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    double gamma;
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepGetCurrentGamma(ARKODE_MEM_FROM_ML(varkode_mem), &gamma);
+    CHECK_FLAG("ARKStepGetCurrentGamma", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(caml_copy_double(gamma));
+}
+
 CAMLprim value sunml_arkode_ark_get_timestepper_stats(value vdata)
 {
     CAMLparam1(vdata);
@@ -3364,6 +3471,22 @@ CAMLprim value sunml_arkode_ark_set_max_conv_fails(value varkode_mem, value maxn
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_arkode_ark_set_stage_predict_fn(value varkode_mem,
+						     value vset)
+{
+    CAMLparam2(varkode_mem, vset);
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepSetStagePredictFn(ARKODE_MEM_FROM_ML(varkode_mem),
+				    Bool_val(vset) ? stagepredictfn : NULL);
+    CHECK_FLAG("ARKStepSetStagePredictFn", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value sunml_arkode_ark_set_nonlin_conv_coef(value varkode_mem, value nlscoef)
 {
     CAMLparam2(varkode_mem, nlscoef);
@@ -3376,6 +3499,21 @@ CAMLprim value sunml_arkode_ark_set_nonlin_conv_coef(value varkode_mem, value nl
     int flag = ARKodeSetNonlinConvCoef(ARKODE_MEM_FROM_ML(varkode_mem),
 				       Double_val(nlscoef));
     CHECK_FLAG("ARKodeSetNonlinConvCoef", flag);
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_ark_set_constraints(value varkode_mem, value vnv)
+{
+    CAMLparam2(varkode_mem, vnv);
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepSetConstraints(ARKODE_MEM_FROM_ML(varkode_mem),
+				     NVEC_VAL(vnv));
+    CHECK_FLAG("ARKStepSetConstraints", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
 
     CAMLreturn (Val_unit);
@@ -3445,23 +3583,6 @@ CAMLprim value sunml_arkode_ark_set_delta_gamma_max(value varkode_mem, value var
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_arkode_ark_set_dense_order(value varkode_mem, value varg)
-{
-    CAMLparam2(varkode_mem, varg);
-
-#if 400 <= SUNDIALS_LIB_VERSION
-    int flag = ARKStepSetDenseOrder(ARKODE_MEM_FROM_ML(varkode_mem),
-				   Int_val(varg));
-    CHECK_FLAG("ARKStepSetDenseOrder", flag);
-#else
-    int flag = ARKodeSetDenseOrder(ARKODE_MEM_FROM_ML(varkode_mem),
-				   Int_val(varg));
-    CHECK_FLAG("ARKodeSetDenseOrder", flag);
-#endif
-
-    CAMLreturn (Val_unit);
-}
-
 CAMLprim value sunml_arkode_ark_set_error_bias(value varkode_mem, value varg)
 {
     CAMLparam2(varkode_mem, varg);
@@ -3491,6 +3612,22 @@ CAMLprim value sunml_arkode_ark_set_fixed_step(value varkode_mem, value varg)
     int flag = ARKodeSetFixedStep(ARKODE_MEM_FROM_ML(varkode_mem),
 				  Double_val(varg));
     CHECK_FLAG("ARKodeSetFixedStep", flag);
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_ark_set_max_num_constr_fails(value varkode_mem, 
+							 value vmaxfails)
+{
+    CAMLparam2(varkode_mem, vmaxfails);
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepSetMaxNumConstrFails(ARKODE_MEM_FROM_ML(varkode_mem),
+					   Int_val(vmaxfails));
+    CHECK_FLAG("ARKStepSetMaxNumConstrFails", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
 
     CAMLreturn (Val_unit);
@@ -3582,6 +3719,21 @@ CAMLprim value sunml_arkode_ark_set_max_growth(value varkode_mem, value varg)
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_arkode_ark_set_min_reduction(value varkode_mem, value varg)
+{
+    CAMLparam2(varkode_mem, varg);
+
+#if 530 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepSetMinReduction(ARKODE_MEM_FROM_ML(varkode_mem),
+				      Double_val(varg));
+    CHECK_FLAG("ARKStepSetMinReduction", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value sunml_arkode_ark_set_max_steps_between_lset(value varkode_mem,
 						           value varg)
 {
@@ -3664,6 +3816,38 @@ CAMLprim value sunml_arkode_ark_set_order(value varkode_mem, value varg)
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_arkode_ark_set_interpolant_type(value varkode_mem,
+						     value vinterptype)
+{
+    CAMLparam2(varkode_mem, vinterptype);
+
+#if 520 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepSetInterpolantType(ARKODE_MEM_FROM_ML(varkode_mem),
+		ark_interpolant_types[Int_val(vinterptype)]);
+    CHECK_FLAG("ARKStepSetInterpolantType", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_ark_set_interpolant_degree(value varkode_mem,
+						       value vinterpdegree)
+{
+    CAMLparam2(varkode_mem, vinterpdegree);
+
+#if 520 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepSetInterpolantDegree(ARKODE_MEM_FROM_ML(varkode_mem),
+					   Int_val(vinterpdegree));
+    CHECK_FLAG("ARKStepSetInterpolantDegree", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value sunml_arkode_ark_set_safety_factor(value varkode_mem, value varg)
 {
     CAMLparam2(varkode_mem, varg);
@@ -3733,6 +3917,22 @@ CAMLprim value sunml_arkode_ark_set_max_steps_between_jac(value varkode_mem,
     int flag = ARKStepSetMaxStepsBetweenJac(ARKODE_MEM_FROM_ML(varkode_mem),
 					    Long_val(vmaxsteps));
     CHECK_LS_FLAG("ARKStepSetMaxStepsBetweenJac", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_ark_set_linear_solution_scaling(value varkode_mem,
+							    value vonoff)
+{
+    CAMLparam2(varkode_mem, vonoff);
+
+#if 520 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepSetLinearSolutionScaling(ARKODE_MEM_FROM_ML(varkode_mem),
+					       Bool_val(vonoff));
+    CHECK_FLAG("ARKStepSetLinearSolutionScaling", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
@@ -3915,6 +4115,21 @@ CAMLprim value sunml_arkode_ark_get_num_g_evals(value varkode_mem)
     CAMLreturn(Val_long(r));
 }
 
+CAMLprim value sunml_arkode_ark_get_num_constr_fails(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+
+    long int r;
+#if 500 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepGetNumConstrFails(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    CHECK_FLAG("ARKStepGetNumConstrFails", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(Val_long(r));
+}
+
 CAMLprim value sunml_arkode_ark_get_lin_work_space(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
@@ -3992,6 +4207,21 @@ CAMLprim value sunml_arkode_ark_get_num_mass_setups(value varkode_mem)
 #elif 300 <= SUNDIALS_LIB_VERSION
     int flag = ARKDlsGetNumMassSetups(ARKODE_MEM_FROM_ML(varkode_mem), &r);
     CHECK_FLAG("ARKDlsGetNumMassSetups", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(Val_long(r));
+}
+
+CAMLprim value sunml_arkode_ark_get_num_mass_mult_setups(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+
+    long int r;
+#if 500 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepGetNumMassMultSetups(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    CHECK_FLAG("ARKStepGetNumMassMultSetups", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
@@ -5231,20 +5461,6 @@ CAMLprim value sunml_arkode_erk_set_defaults(value varkode_mem)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_arkode_erk_set_dense_order(value varkode_mem, value varg)
-{
-    CAMLparam2(varkode_mem, varg);
-
-#if 400 <= SUNDIALS_LIB_VERSION
-    int flag = ERKStepSetDenseOrder(ARKODE_MEM_FROM_ML(varkode_mem),
-				   Int_val(varg));
-    CHECK_FLAG("ERKStepSetDenseOrder", flag);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-
-    CAMLreturn (Val_unit);
-}
 
 CAMLprim value sunml_arkode_erk_set_diagnostics(value vdata, value vfile)
 {
@@ -5323,6 +5539,22 @@ CAMLprim value sunml_arkode_erk_set_fixed_step(value varkode_mem, value varg)
     int flag = ERKStepSetFixedStep(ARKODE_MEM_FROM_ML(varkode_mem),
 				  Double_val(varg));
     CHECK_FLAG("ERKStepSetFixedStep", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_set_max_num_constr_fails(value varkode_mem, 
+							 value vmaxfails)
+{
+    CAMLparam2(varkode_mem, vmaxfails);
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetMaxNumConstrFails(ARKODE_MEM_FROM_ML(varkode_mem),
+					   Int_val(vmaxfails));
+    CHECK_FLAG("ERKStepSetMaxNumConstrFails", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
@@ -5528,6 +5760,21 @@ CAMLprim value sunml_arkode_erk_set_max_growth(value varkode_mem, value varg)
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_arkode_erk_set_min_reduction(value varkode_mem, value varg)
+{
+    CAMLparam2(varkode_mem, varg);
+
+#if 530 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetMinReduction(ARKODE_MEM_FROM_ML(varkode_mem),
+				      Double_val(varg));
+    CHECK_FLAG("ERKStepSetMinReduction", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value sunml_arkode_erk_set_safety_factor(value varkode_mem, value varg)
 {
     CAMLparam2(varkode_mem, varg);
@@ -5572,6 +5819,38 @@ CAMLprim value sunml_arkode_erk_set_order(value varkode_mem, value varg)
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_arkode_erk_set_interpolant_type(value varkode_mem,
+						     value vinterptype)
+{
+    CAMLparam2(varkode_mem, vinterptype);
+
+#if 520 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetInterpolantType(ARKODE_MEM_FROM_ML(varkode_mem),
+		ark_interpolant_types[Int_val(vinterptype)]);
+    CHECK_FLAG("ERKStepSetInterpolantType", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_set_interpolant_degree(value varkode_mem,
+						       value vinterpdegree)
+{
+    CAMLparam2(varkode_mem, vinterpdegree);
+
+#if 520 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetInterpolantDegree(ARKODE_MEM_FROM_ML(varkode_mem),
+					   Int_val(vinterpdegree));
+    CHECK_FLAG("ERKStepSetInterpolantDegree", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value sunml_arkode_erk_get_root_info(value vdata, value roots)
 {
     CAMLparam2(vdata, roots);
@@ -5604,6 +5883,36 @@ CAMLprim value sunml_arkode_erk_get_num_g_evals(value varkode_mem)
 #endif
 
     CAMLreturn(Val_long(r));
+}
+
+CAMLprim value sunml_arkode_erk_get_num_constr_fails(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+
+    long int r;
+#if 500 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepGetNumConstrFails(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    CHECK_FLAG("ERKStepGetNumConstrFails", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(Val_long(r));
+}
+
+CAMLprim value sunml_arkode_erk_set_constraints(value varkode_mem, value vnv)
+{
+    CAMLparam2(varkode_mem, vnv);
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetConstraints(ARKODE_MEM_FROM_ML(varkode_mem),
+				     NVEC_VAL(vnv));
+    CHECK_FLAG("ERKStepSetConstraints", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value sunml_arkode_erk_set_no_inactive_root_warn(value varkode_mem)
@@ -5653,15 +5962,17 @@ CAMLprim value sunml_arkode_erk_write_butcher(value varkode_mem, value vlog)
  */
 
 /* MRIStepCreate() */
-CAMLprim value sunml_arkode_mri_init(value weakref, value y0, value t0)
+CAMLprim value sunml_arkode_mri_init(value weakref, value vinner,
+				     value y0, value t0)
 {
-    CAMLparam3(weakref, y0, t0);
+    CAMLparam4(weakref, vinner, y0, t0);
     CAMLlocal2(r, varkode_mem);
-#if 400 <= SUNDIALS_LIB_VERSION
+#if 500 <= SUNDIALS_LIB_VERSION
     value *backref;
 
-    void *arkode_mem = MRIStepCreate(rhsfn1, rhsfn2,
-				     Double_val(t0), NVEC_VAL(y0));
+    void *arkode_mem = MRIStepCreate(rhsfn1, Double_val(t0), NVEC_VAL(y0),
+				     MRISTEP_ARKSTEP,
+				     ARKODE_MEM_FROM_ML(vinner));
 
     if (arkode_mem == NULL)
 	caml_failwith("MRIStepCreate returned NULL");
@@ -5705,9 +6016,9 @@ CAMLprim value sunml_arkode_mri_root_init (value vdata, value vnroots)
 CAMLprim value sunml_arkode_mri_reinit(value vdata, value t0, value y0)
 {
     CAMLparam3(vdata, t0, y0);
-#if 400 <= SUNDIALS_LIB_VERSION
+#if 500 <= SUNDIALS_LIB_VERSION
     int flag = MRIStepReInit(ARKODE_MEM_FROM_ML(vdata),
-			     rhsfn1, rhsfn2, Double_val(t0), NVEC_VAL(y0));
+			     rhsfn1, Double_val(t0), NVEC_VAL(y0));
     CHECK_FLAG("MRIStepReInit", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -5851,54 +6162,46 @@ CAMLprim value sunml_arkode_mri_resize(value varkode_mem,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_arkode_mri_get_current_butcher_tables(value varkode_mem)
+CAMLprim value sunml_arkode_mri_get_current_butcher_table(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
     CAMLlocal1(vr);
-#if 400 <= SUNDIALS_LIB_VERSION
-    ARKodeButcherTable btslow;
-    ARKodeButcherTable btfast;
+#if 500 <= SUNDIALS_LIB_VERSION
+    ARKodeButcherTable bt;
     int flag = MRIStepGetCurrentButcherTables(ARKODE_MEM_FROM_ML(varkode_mem),
-					      &btslow, &btfast);
+					      &bt);
     CHECK_FLAG("MRIStepGetCurrentButcherTables", flag);
 
-    vr = caml_alloc_tuple(2);
-    Store_field(vr, 0, val_butcher_table(btslow));
-    Store_field(vr, 1, val_butcher_table(btfast));
+    vr = val_butcher_table(bt);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn(vr);
 }
 
-CAMLprim value sunml_arkode_mri_set_tables(value varkode_mem,
-					   value vq,
-					   value voslow, value vofast)
+CAMLprim value sunml_arkode_mri_set_table(value varkode_mem,
+					  value vq, value vobt)
 {
-    CAMLparam3(varkode_mem, voslow, vofast);
-#if 400 <= SUNDIALS_LIB_VERSION
-    ARKodeButcherTable btslow = butcher_table_val(voslow);
-    ARKodeButcherTable btfast = butcher_table_val(vofast);
+    CAMLparam3(varkode_mem, vq, vobt);
+#if 500 <= SUNDIALS_LIB_VERSION
+    ARKodeButcherTable bt = butcher_table_val(vobt);
 
-    int flag = MRIStepSetTables(ARKODE_MEM_FROM_ML(varkode_mem),
-				   Int_val(vq), btslow, btfast);
-    CHECK_FLAG("MRIStepSetTables", flag);
+    int flag = MRIStepSetTable(ARKODE_MEM_FROM_ML(varkode_mem),
+			       Int_val(vq), bt);
+    CHECK_FLAG("MRIStepSetTable", flag);
 
-    if (btslow != NULL) ARKodeButcherTable_Free(btslow);
-    if (btfast != NULL) ARKodeButcherTable_Free(btfast);
+    if (bt != NULL) ARKodeButcherTable_Free(bt);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_arkode_mri_set_table_nums(value varkode_mem,
-					       value vslow, value vfast)
+CAMLprim value sunml_arkode_mri_set_table_num(value varkode_mem, value vt)
 {
-    CAMLparam3(varkode_mem, vslow, vfast);
-#if 400 <= SUNDIALS_LIB_VERSION
-    int flag = MRIStepSetTableNum(ARKODE_MEM_FROM_ML(varkode_mem),
-				  Int_val(vslow), Int_val(vfast));
+    CAMLparam2(varkode_mem, vt);
+#if 500 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepSetTableNum(ARKODE_MEM_FROM_ML(varkode_mem), Int_val(vt));
     CHECK_FLAG("MRIStepSetTableNum", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -5957,15 +6260,13 @@ CAMLprim value sunml_arkode_mri_get_num_steps(value varkode_mem)
     CAMLparam1(varkode_mem);
     CAMLlocal1(vr);
 
-#if 400 <= SUNDIALS_LIB_VERSION
-    long int slow, fast;
+#if 500 <= SUNDIALS_LIB_VERSION
+    long int ns;
 
-    int flag = MRIStepGetNumSteps(ARKODE_MEM_FROM_ML(varkode_mem), &slow, &fast);
+    int flag = MRIStepGetNumSteps(ARKODE_MEM_FROM_ML(varkode_mem), &ns);
     CHECK_FLAG("MRIStepGetNumSteps", flag);
 
-    vr = caml_alloc_tuple(2);
-    Store_field(vr, 0, Val_long(slow));
-    Store_field(vr, 1, Val_long(fast));
+    vr = Val_long(ns);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
@@ -5993,16 +6294,13 @@ CAMLprim value sunml_arkode_mri_get_num_rhs_evals(value varkode_mem)
     CAMLparam1(varkode_mem);
     CAMLlocal1(vr);
 
-#if 400 <= SUNDIALS_LIB_VERSION
-    long int slow, fast;
+#if 500 <= SUNDIALS_LIB_VERSION
+    long int ne;
 
-    int flag = MRIStepGetNumRhsEvals(ARKODE_MEM_FROM_ML(varkode_mem),
-				     &slow, &fast);
+    int flag = MRIStepGetNumRhsEvals(ARKODE_MEM_FROM_ML(varkode_mem), &ne);
     CHECK_FLAG("MRIStepGetNumRhsEvals", flag);
 
-    vr = caml_alloc_tuple(2);
-    Store_field(vr, 0, Val_long(slow));
-    Store_field(vr, 1, Val_long(fast));
+    vr = Val_long(ne);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
@@ -6026,14 +6324,31 @@ CAMLprim value sunml_arkode_mri_set_defaults(value varkode_mem)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_arkode_mri_set_dense_order(value varkode_mem, value varg)
+CAMLprim value sunml_arkode_mri_set_interpolant_type(value varkode_mem,
+						     value vinterptype)
 {
-    CAMLparam2(varkode_mem, varg);
+    CAMLparam2(varkode_mem, vinterptype);
 
-#if 400 <= SUNDIALS_LIB_VERSION
-    int flag = MRIStepSetDenseOrder(ARKODE_MEM_FROM_ML(varkode_mem),
-				   Int_val(varg));
-    CHECK_FLAG("MRIStepSetDenseOrder", flag);
+#if 520 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepSetInterpolantType(ARKODE_MEM_FROM_ML(varkode_mem),
+		ark_interpolant_types[Int_val(vinterptype)]);
+    CHECK_FLAG("MRIStepSetInterpolantType", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_mri_set_interpolant_degree(value varkode_mem,
+						       value vinterpdegree)
+{
+    CAMLparam2(varkode_mem, vinterpdegree);
+
+#if 520 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepSetInterpolantDegree(ARKODE_MEM_FROM_ML(varkode_mem),
+					   Int_val(vinterpdegree));
+    CHECK_FLAG("MRIStepSetInterpolantDegree", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
@@ -6110,14 +6425,13 @@ CAMLprim value sunml_arkode_mri_clear_err_handler_fn(value vdata)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_arkode_mri_set_fixed_step(value varkode_mem,
-					       value vslow, value vfast)
+CAMLprim value sunml_arkode_mri_set_fixed_step(value varkode_mem, value vslow)
 {
-    CAMLparam3(varkode_mem, vslow, vfast);
+    CAMLparam2(varkode_mem, vslow);
 
-#if 400 <= SUNDIALS_LIB_VERSION
+#if 500 <= SUNDIALS_LIB_VERSION
     int flag = MRIStepSetFixedStep(ARKODE_MEM_FROM_ML(varkode_mem),
-				   Double_val(vslow), Double_val(vfast));
+				   Double_val(vslow));
     CHECK_FLAG("MRIStepSetFixedStep", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -6164,6 +6478,36 @@ CAMLprim value sunml_arkode_mri_set_stop_time(value varkode_mem, value tstop)
     int flag = MRIStepSetStopTime(ARKODE_MEM_FROM_ML(varkode_mem),
 				  Double_val(tstop));
     CHECK_FLAG("MRIStepSetStopTime", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_mri_set_pre_inner_fn(value varkode_mem, value vset)
+{
+    CAMLparam2(varkode_mem, vset);
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepSetPreInnerFn(ARKODE_MEM_FROM_ML(varkode_mem),
+				    Bool_val(vset) ? preinnerfn : NULL);
+    CHECK_FLAG("MRIStepSetPreInnerFn", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_mri_set_post_inner_fn(value varkode_mem, value vset)
+{
+    CAMLparam2(varkode_mem, vset);
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepSetPostInnerFn(ARKODE_MEM_FROM_ML(varkode_mem),
+			 	     Bool_val(vset) ? postinnerfn : NULL);
+    CHECK_FLAG("MRIStepSetPostInnerFn", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
@@ -6218,6 +6562,24 @@ CAMLprim value sunml_arkode_mri_get_num_g_evals(value varkode_mem)
 #endif
 
     CAMLreturn(Val_long(r));
+}
+
+CAMLprim value sunml_arkode_mri_get_current_state(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    CAMLlocal1(vnv);
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    N_Vector nv;
+    int flag = MRIStepGetCurrentState(ARKODE_MEM_FROM_ML(varkode_mem), &nv);
+    CHECK_FLAG("MRIStepGetCurrentState", flag);
+
+    vnv = NVEC_BACKLINK(nv);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(vnv);
 }
 
 CAMLprim value sunml_arkode_mri_set_no_inactive_root_warn(value varkode_mem)
