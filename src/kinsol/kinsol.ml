@@ -527,6 +527,9 @@ let clear_info_handler_fn s =
 external set_print_level : ('a, 'k) session -> print_level -> unit
     = "sunml_kinsol_set_print_level"
 
+external set_damping_aa : ('a, 'k) session -> float -> unit
+    = "sunml_kinsol_set_damping_aa"
+
 external set_num_max_iters : ('a, 'k) session -> int -> unit
     = "sunml_kinsol_set_num_max_iters"
 

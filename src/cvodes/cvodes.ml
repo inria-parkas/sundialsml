@@ -470,6 +470,15 @@ module Sensitivity = struct (* {{{ *)
           "sensitivity vectors");
     c_get_num_stgr_nonlin_solv_conv_fails s r
 
+  external c_get_current_state_sens : ('d, 'k) session -> int -> 'd array
+      = "sunml_cvodes_get_current_state_sens"
+
+  let get_current_state_sens s =
+    c_get_current_state_sens s (num_sensitivities s)
+
+  external get_current_sens_solve_index : ('d, 'k) session -> int
+      = "sunml_cvodes_get_current_sens_solve_index"
+
   module Quadrature =
     struct
       include QuadratureTypes
@@ -1291,6 +1300,14 @@ module Adjoint = struct (* {{{ *)
       if in_compat_mode2_3 then ls_check_spils (tosession bs);
       set_eps_lin parent which epsl
 
+    external c_set_linear_solution_scaling
+      : ('d, 'k) session -> int -> bool -> unit
+      = "sunml_cvodes_adj_set_linear_solution_scaling"
+
+    let set_linear_solution_scaling bs onoff =
+      let parent, which = parent_and_which bs in
+      c_set_linear_solution_scaling parent which onoff
+
     let set_max_steps_between_jac bs =
       Cvode.Spils.set_max_steps_between_jac (tosession bs)
 
@@ -1405,6 +1422,8 @@ module Adjoint = struct (* {{{ *)
             rootsfn      = dummy_rootsfn;
             errh         = dummy_errh;
             errw         = dummy_errw;
+            projfn       = dummy_projfn;
+            monitorfn    = dummy_monitorfn;
             ls_solver    = LSI.NoHLS;
             ls_callbacks = NoCallbacks;
             ls_precfns   = NoPrecFns;

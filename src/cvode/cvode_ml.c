@@ -164,6 +164,48 @@ CAMLprim value sunml_cvode_clear_err_handler_fn(value vdata)
     CAMLreturn (Val_unit);
 }
 
+#if defined SUNDIALS_BUILD_WITH_MONITORING && !SUNDIALSML_WITHSENS
+int monitorfn(void *cvode_mem, void *user_data)
+{
+    CAMLparam0();
+    CAMLlocal1(session);
+
+    WEAK_DEREF (session, *(value*)user_data);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback_exn(Field(session, RECORD_CVODE_SESSION_MONITORFN),
+				session);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
+}
+#endif
+
+CAMLprim value sunml_cvode_set_monitor_fn(value vdata, value vset)
+{
+    CAMLparam2(vdata, vset);
+#if defined SUNDIALS_BUILD_WITH_MONITORING && !SUNDIALSML_WITHSENS
+    int flag = CVodeSetMonitorFn(CVODE_MEM_FROM_ML(vdata),
+				 Bool_val(vset) ? monitorfn : NULL);
+    CHECK_FLAG("CVodeSetMonitorFn", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_cvode_set_monitor_frequency(value vdata, value vfreq)
+{
+    CAMLparam2(vdata, vfreq);
+#if defined SUNDIALS_BUILD_WITH_MONITORING && !SUNDIALSML_WITHSENS
+    int flag = CVodeSetMonitorFrequency(CVODE_MEM_FROM_ML(vdata),
+					Int_val(vfreq));
+    CHECK_FLAG("CVodeSetMonitorFrequency", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
 int sunml_cvode_translate_exception (value session, value exn,
 			       recoverability recoverable)
 {
@@ -502,7 +544,7 @@ static int jactimesfn(N_Vector v,
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
-#if SUNDIALS_LIB_VERSION >= 300
+#if 300 <= SUNDIALS_LIB_VERSION
 static int jacsetupfn(realtype t,
 		      N_Vector y,
 		      N_Vector fy,
@@ -520,6 +562,30 @@ static int jacsetupfn(realtype t,
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback_exn(cb, arg);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
+}
+#endif
+
+#if 530 <= SUNDIALS_LIB_VERSION && !SUNDIALSML_WITHSENS
+int projfn(realtype t, N_Vector ycur, N_Vector corr,
+           realtype epsProj, N_Vector err, void *user_data)
+{
+    CAMLparam0();
+    CAMLlocal1(session);
+    CAMLlocalN(args, 5);
+
+    WEAK_DEREF (session, *(value*)user_data);
+
+    args[0] = caml_copy_double(t);
+    args[1] = NVEC_BACKLINK(ycur);
+    args[2] = NVEC_BACKLINK(corr);
+    args[3] = caml_copy_double(epsProj);
+    args[4] = NVEC_BACKLINK(err);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn(Field(session, RECORD_CVODE_SESSION_PROJFN),
+				 5, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -773,7 +839,7 @@ CAMLprim value sunml_cvode_init(value weakref, value lmm, value iter, value init
 	break;
     }
 
-#if SUNDIALS_LIB_VERSION >= 400
+#if 400 <= SUNDIALS_LIB_VERSION
     void *cvode_mem = CVodeCreate(lmm_c);
 #else
     void *cvode_mem = CVodeCreate(lmm_c,
@@ -1010,7 +1076,7 @@ void sunml_cvode_check_flag(const char *call, int flag, void *cvode_mem)
 	case CV_RTFUNC_FAIL:
 	    caml_raise_constant(CVODE_EXN(RootFuncFailure));
 
-#if SUNDIALS_LIB_VERSION >= 320
+#if 320 <= SUNDIALS_LIB_VERSION
 	case CV_CONSTR_FAIL:
 	    caml_raise_constant(CVODE_EXN(ConstraintFailure));
 #endif
@@ -1021,7 +1087,7 @@ void sunml_cvode_check_flag(const char *call, int flag, void *cvode_mem)
 	case CV_BAD_T:
 	    caml_raise_constant(CVODE_EXN(BadT));
 
-#if SUNDIALS_LIB_VERSION >= 400
+#if 400 <= SUNDIALS_LIB_VERSION
 	case CV_NLS_INIT_FAIL:
 	    caml_raise_constant(CVODE_EXN(NonlinearInitFailure));
 
@@ -1030,6 +1096,20 @@ void sunml_cvode_check_flag(const char *call, int flag, void *cvode_mem)
 
 	case CV_VECTOROP_ERR:
 	    caml_raise_constant(CVODE_EXN(VectorOpErr));
+#endif
+#if 500 <= SUNDIALS_LIB_VERSION
+	case CV_NLS_FAIL:
+	    caml_raise_constant(CVODE_EXN(NonlinearFailure));
+#endif
+#if 530 <= SUNDIALS_LIB_VERSION && !SUNDIALSML_WITHSENS
+	case CV_PROJFUNC_FAIL:
+	    caml_raise_constant(CVODE_EXN(ProjFuncFailure));
+
+	case CV_REPTD_PROJFUNC_ERR:
+	    caml_raise_constant(CVODE_EXN(RepeatedProjFuncError));
+
+	case CV_PROJ_MEM_NULL:
+	    caml_raise_constant(CVODE_EXN(ProjectionNotEnabled));
 #endif
 
 	default:
@@ -1040,7 +1120,7 @@ void sunml_cvode_check_flag(const char *call, int flag, void *cvode_mem)
     }
 }
 
-#if SUNDIALS_LIB_VERSION >= 400
+#if 400 <= SUNDIALS_LIB_VERSION
 void sunml_cvode_check_ls_flag(const char *call, int flag)
 {
     static char exmsg[MAX_ERRMSG_LEN] = "";
@@ -1079,7 +1159,7 @@ void sunml_cvode_check_dls_flag(const char *call, int flag)
 	case CVDLS_MEM_FAIL:
 	    caml_raise_out_of_memory();
 
-#if SUNDIALS_LIB_VERSION >= 300
+#if 300 <= SUNDIALS_LIB_VERSION
 	case CVDLS_SUNMAT_FAIL:
 #endif
 	case CVDLS_JACFUNC_UNRECVR:
@@ -1105,7 +1185,7 @@ void sunml_cvode_check_spils_flag(const char *call, int flag)
 	case CVSPILS_MEM_FAIL:
 	    caml_raise_out_of_memory();
 
-#if SUNDIALS_LIB_VERSION >= 300
+#if 300 <= SUNDIALS_LIB_VERSION
 	case CVSPILS_SUNLS_FAIL:
 #endif
 	default:
@@ -1207,6 +1287,57 @@ CAMLprim value sunml_cvode_get_integrator_stats(value vdata)
     Store_field(r, RECORD_CVODE_INTEGRATOR_STATS_NEXT_STEP_SIZE, caml_copy_double(hcur));
     Store_field(r, RECORD_CVODE_INTEGRATOR_STATS_INTERNAL_TIME, caml_copy_double(tcur));
 
+    CAMLreturn(r);
+}
+
+CAMLprim value sunml_cvode_get_linear_solver_stats(value vdata)
+{
+    CAMLparam1(vdata);
+    CAMLlocal1(r);
+#if 530 <= SUNDIALS_LIB_VERSION && !SUNDIALSML_WITHSENS
+
+    int flag;
+
+    long int njevals;
+    long int nfevalsLS;
+    long int nliters;
+    long int nlcfails;
+    long int npevals;
+    long int npsolves;
+    long int njtsetup;
+    long int njtimes;
+
+    flag = CVodeGetLinSolveStats(CVODE_MEM_FROM_ML(vdata),
+				 &njevals,
+				 &nfevalsLS,
+				 &nliters,
+				 &nlcfails,
+				 &npevals,
+				 &npsolves,
+				 &njtsetup,
+				 &njtimes); 
+    CHECK_FLAG("CVodeGetLinSolveStats", flag);
+
+    r = caml_alloc_tuple(RECORD_CVODE_LINEAR_SOLVER_STATS_SIZE);
+    Store_field(r, RECORD_CVODE_LINEAR_SOLVER_STATS_JAC_EVALS,
+		   Val_long(njevals));
+    Store_field(r, RECORD_CVODE_LINEAR_SOLVER_STATS_LIN_RHS_EVALS,
+		   Val_long(nfevalsLS));
+    Store_field(r, RECORD_CVODE_LINEAR_SOLVER_STATS_LIN_ITERS,
+		   Val_long(nliters));
+    Store_field(r, RECORD_CVODE_LINEAR_SOLVER_STATS_LIN_CONV_FAILS,
+		   Val_long(nlcfails));
+    Store_field(r, RECORD_CVODE_LINEAR_SOLVER_STATS_PREC_EVALS,
+		   Val_long(npevals));
+    Store_field(r, RECORD_CVODE_LINEAR_SOLVER_STATS_PREC_SOLVES,
+		   Val_long(npsolves));
+    Store_field(r, RECORD_CVODE_LINEAR_SOLVER_STATS_JTSETUP_EVALS,
+		   Val_long(njtsetup));
+    Store_field(r, RECORD_CVODE_LINEAR_SOLVER_STATS_JTIMES_EVALS,
+		   Val_long(njtimes));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn(r);
 }
 
@@ -1386,6 +1517,39 @@ CAMLprim value sunml_cvode_get_current_order(value vcvode_mem)
     CHECK_FLAG("CVodeGetCurrentOrder", flag);
 
     CAMLreturn(Val_int(v));
+}
+
+CAMLprim value sunml_cvode_get_current_state(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+    CAMLlocal1(vnv);
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    N_Vector nv;
+    int flag = CVodeGetCurrentState(CVODE_MEM_FROM_ML(vcvode_mem), &nv);
+    CHECK_FLAG("CVodeGetCurrentState", flag);
+
+    vnv = NVEC_BACKLINK(nv);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(vnv);
+}
+
+CAMLprim value sunml_cvode_get_current_gamma(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+    double gamma;
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    int flag = CVodeGetCurrentGamma(CVODE_MEM_FROM_ML(vcvode_mem), &gamma);
+    CHECK_FLAG("CVodeGetCurrentGamma", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(caml_copy_double(gamma));
 }
 
 CAMLprim value sunml_cvode_get_actual_init_step(value vcvode_mem)
@@ -1574,7 +1738,7 @@ CAMLprim value sunml_cvode_set_nonlin_conv_coef(value vcvode_mem, value nlscoef)
 CAMLprim value sunml_cvode_set_constraints (value vcvode_mem, value vconstraints)
 {
     CAMLparam2(vcvode_mem, vconstraints);
-#if SUNDIALS_LIB_VERSION >= 320
+#if 320 <= SUNDIALS_LIB_VERSION
     int flag;
 
     N_Vector constraints = NVEC_VAL (vconstraints);
@@ -1587,11 +1751,96 @@ CAMLprim value sunml_cvode_set_constraints (value vcvode_mem, value vconstraints
 CAMLprim value sunml_cvode_clear_constraints (value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
-#if SUNDIALS_LIB_VERSION >= 320
+#if 320 <= SUNDIALS_LIB_VERSION
     int flag;
 
     flag = CVodeSetConstraints (CVODE_MEM_FROM_ML (vcvode_mem), NULL);
     CHECK_FLAG ("CVodeSetConstraints", flag);
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_cvode_set_proj_fn(value vcvode_mem, value varg)
+{
+    CAMLparam2(vcvode_mem, varg);
+#if 530 <= SUNDIALS_LIB_VERSION && !SUNDIALSML_WITHSENS
+    int flag;
+
+    flag = CVodeSetProjFn(CVODE_MEM_FROM_ML (vcvode_mem), projfn);
+    CHECK_FLAG ("CVodeSetProjFn", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_cvode_set_proj_err_est(value vcvode_mem, value vonoff)
+{
+    CAMLparam2(vcvode_mem, vonoff);
+#if 530 <= SUNDIALS_LIB_VERSION && !SUNDIALSML_WITHSENS
+    int flag;
+
+    flag = CVodeSetProjErrEst(CVODE_MEM_FROM_ML (vcvode_mem), Bool_val(vonoff));
+    CHECK_FLAG ("CVodeSetProjErrEst", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_cvode_set_proj_frequency(value vcvode_mem, value vfreq)
+{
+    CAMLparam2(vcvode_mem, vfreq);
+#if 530 <= SUNDIALS_LIB_VERSION && !SUNDIALSML_WITHSENS
+    int flag;
+
+    flag = CVodeSetProjFrequency(CVODE_MEM_FROM_ML (vcvode_mem), Int_val(vfreq));
+    CHECK_FLAG ("CVodeSetProjFrequency", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_cvode_set_max_num_proj_fails(value vcvode_mem, value vmfails)
+{
+    CAMLparam2(vcvode_mem, vmfails);
+#if 530 <= SUNDIALS_LIB_VERSION && !SUNDIALSML_WITHSENS
+    int flag;
+
+    flag = CVodeSetMaxNumProjFails(CVODE_MEM_FROM_ML (vcvode_mem),
+				   Int_val(vmfails));
+    CHECK_FLAG ("CVodeSetMaxNumProjFails", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_cvode_set_eps_proj(value vcvode_mem, value veps)
+{
+    CAMLparam2(vcvode_mem, veps);
+#if 530 <= SUNDIALS_LIB_VERSION && !SUNDIALSML_WITHSENS
+    int flag;
+
+    flag = CVodeSetEpsProj(CVODE_MEM_FROM_ML (vcvode_mem), Double_val(veps));
+    CHECK_FLAG ("CVodeSetEpsProj", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_cvode_set_proj_fail_eta(value vcvode_mem, value veps)
+{
+    CAMLparam2(vcvode_mem, veps);
+#if 530 <= SUNDIALS_LIB_VERSION && !SUNDIALSML_WITHSENS
+    int flag;
+
+    flag = CVodeSetProjFailEta(CVODE_MEM_FROM_ML (vcvode_mem), Double_val(veps));
+    CHECK_FLAG ("CVodeSetProjFailEta", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn (Val_unit);
 }
@@ -1629,6 +1878,22 @@ CAMLprim value sunml_cvode_set_max_steps_between_jac(value vcvode_mem,
     int flag = CVodeSetMaxStepsBetweenJac(CVODE_MEM_FROM_ML(vcvode_mem),
 					  Long_val(vmaxsteps));
     CHECK_LS_FLAG("CVodeSetMaxStepsBetweenJac", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_cvode_set_linear_solution_scaling(value vcvode_mem,
+						       value vonoff)
+{
+    CAMLparam2(vcvode_mem, vonoff);
+
+#if 520 <= SUNDIALS_LIB_VERSION
+    int flag = CVodeSetLinearSolutionScaling(CVODE_MEM_FROM_ML(vcvode_mem),
+					     Bool_val(vonoff));
+    CHECK_FLAG("CVodeSetLinearSolutionScaling", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
@@ -1735,6 +2000,36 @@ CAMLprim value sunml_cvode_get_num_g_evals(value vcvode_mem)
     CHECK_FLAG("CVodeGetNumGEvals", flag);
 
     CAMLreturn(Val_long(r));
+}
+
+CAMLprim value sunml_cvode_get_num_proj_evals(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+    long int nproj;
+#if 530 <= SUNDIALS_LIB_VERSION && !SUNDIALSML_WITHSENS
+    int flag;
+
+    flag = CVodeGetNumProjEvals(CVODE_MEM_FROM_ML (vcvode_mem), &nproj);
+    CHECK_FLAG ("CVodeGetNumProjEvals", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(Val_long(nproj));
+}
+
+CAMLprim value sunml_cvode_get_num_proj_fails(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+    long int npfails;
+#if 530 <= SUNDIALS_LIB_VERSION && !SUNDIALSML_WITHSENS
+    int flag;
+
+    flag = CVodeGetNumProjFails(CVODE_MEM_FROM_ML (vcvode_mem), &npfails);
+    CHECK_FLAG ("CVodeGetNumProjFails", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(Val_long(npfails));
 }
 
 CAMLprim value sunml_cvode_dls_get_work_space(value vcvode_mem)

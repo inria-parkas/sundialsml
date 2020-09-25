@@ -41,6 +41,7 @@ exception ConvergenceFailure
 exception LinearInitFailure
 exception LinearSetupFailure of exn option
 exception LinearSolveFailure of exn option
+exception NonlinearSolverFailure
 exception NonlinearInitFailure
 exception NonlinearSetupFailure
 exception RhsFuncFailure
@@ -56,12 +57,17 @@ exception BadT
 
 exception VectorOpErr
 
+exception ProjFuncFailure
+exception RepeatedProjFuncError
+exception ProjectionNotEnabled
+
 let no_roots = (0, dummy_rootsfn)
 
 type lmm =
   | Adams
   | BDF
 
+(* synchronized with cvode_ml.h: cvode_integrator_stats_index *)
 type integrator_stats = {
     num_steps : int;
     num_rhs_evals : int;
@@ -73,6 +79,18 @@ type integrator_stats = {
     last_step : float;
     current_step : float;
     current_time : float
+  }
+
+(* synchronized with cvode_ml.h: cvode_linear_solver_stats_index *)
+type linear_solver_stats = {
+    jac_evals : int;
+    lin_rhs_evals : int;
+    lin_iters : int;
+    lin_conv_fails : int;
+    prec_evals : int;
+    prec_solves : int;
+    jtsetup_evals : int;
+    jtimes_evals : int;
   }
 
 external c_root_init : ('a, 'k) session -> int -> unit
@@ -517,6 +535,9 @@ module Spils = struct (* {{{ *)
     if in_compat_mode2_3 then ls_check_spils s;
     set_max_steps_between_jac s maxsteps
 
+  external set_linear_solution_scaling : ('d, 'k) session -> bool -> unit
+    = "sunml_cvode_set_linear_solution_scaling"
+
   external set_eps_lin            : ('a, 'k) session -> float -> unit
       = "sunml_cvode_set_eps_lin"
 
@@ -698,9 +719,13 @@ external c_init
       -> float -> (cvode_mem * c_weak_ref)
     = "sunml_cvode_init"
 
+external c_set_proj_fn : ('d, 'k) session -> unit
+    = "sunml_cvode_set_proj_fn"
+
 let init lmm tol ?(nlsolver : ('data, 'kind,
             (('data, 'kind) session) Sundials_NonlinearSolver.integrator)
-           Sundials_NonlinearSolver.t option) ?lsolver f ?(roots=no_roots) t0 y0 =
+           Sundials_NonlinearSolver.t option) ?lsolver f ?(roots=no_roots)
+           ?projfn t0 y0 =
   let (nroots, roots) = roots in
   let checkvec = Nvector.check y0 in
   if Sundials_configuration.safe && nroots < 0
@@ -709,6 +734,10 @@ let init lmm tol ?(nlsolver : ('data, 'kind,
   let iter = match nlsolver with
              | None -> true
              | Some { NLSI.solver = s } -> s = NLSI.NewtonSolver
+  in
+  let hasprojfn, projfn = match projfn with
+                          | None -> false, dummy_projfn
+                          | Some f -> true, f
   in
   let cvode_mem, backref = c_init weakref lmm iter y0 t0 in
   (* cvode_mem and backref have to be immediately captured in a session and
@@ -725,6 +754,9 @@ let init lmm tol ?(nlsolver : ('data, 'kind,
           rootsfn      = roots;
           errh         = dummy_errh;
           errw         = dummy_errw;
+
+          projfn       = projfn;
+          monitorfn    = dummy_monitorfn;
 
           ls_solver    = LSI.NoHLS;
           ls_callbacks = NoCallbacks;
@@ -751,6 +783,7 @@ let init lmm tol ?(nlsolver : ('data, 'kind,
        session.nls_solver <- Some nls;
        c_set_nonlinear_solver session nlcptr
    | _ -> ());
+  if hasprojfn then c_set_proj_fn session;
   session
 
 let get_num_roots { nroots } = nroots
@@ -827,6 +860,9 @@ let get_dky s y =
 external get_integrator_stats : ('a, 'k) session -> integrator_stats
     = "sunml_cvode_get_integrator_stats"
 
+external get_linear_solver_stats : ('a, 'k) session -> linear_solver_stats
+    = "sunml_cvode_get_linear_solver_stats"
+
 external get_work_space         : ('a, 'k) session -> int * int
     = "sunml_cvode_get_work_space"
 
@@ -847,6 +883,12 @@ external get_last_order         : ('a, 'k) session -> int
 
 external get_current_order      : ('a, 'k) session -> int
     = "sunml_cvode_get_current_order"
+
+external get_current_state : ('d, 'k) session -> 'd
+    = "sunml_cvode_get_current_state"
+
+external get_current_gamma : ('d, 'k) session -> float
+    = "sunml_cvode_get_current_gamma"
 
 external get_actual_init_step   : ('a, 'k) session -> float
     = "sunml_cvode_get_actual_init_step"
@@ -891,6 +933,30 @@ let clear_err_handler_fn s =
   s.errh <- dummy_errh;
   clear_err_handler_fn s
 
+external c_set_monitor_fn : ('a, 'k) session -> bool -> unit
+    = "sunml_cvode_set_monitor_fn"
+
+external c_set_monitor_frequency : ('a, 'k) session -> int -> unit
+    = "sunml_cvode_set_monitor_frequency"
+
+let set_monitor_fn s freq monitorfn =
+  if Sundials_configuration.monitoring_enabled then begin
+    s.monitorfn <- monitorfn;
+    c_set_monitor_fn s true;
+    c_set_monitor_frequency s freq
+  end else raise Config.NotImplementedBySundialsVersion
+
+let set_monitor_frequency s freq =
+  if Sundials_configuration.monitoring_enabled
+  then c_set_monitor_frequency s freq
+  else raise Config.NotImplementedBySundialsVersion
+
+let clear_monitor_fn s =
+  if Sundials_configuration.monitoring_enabled then begin
+    c_set_monitor_fn s false;
+    s.monitorfn <- dummy_monitorfn
+  end
+
 external set_max_ord            : ('a, 'k) session -> int -> unit
     = "sunml_cvode_set_max_ord"
 external set_max_num_steps      : ('a, 'k) session -> int -> unit
@@ -934,6 +1000,27 @@ let clear_constraints s =
    | 2,_,_ | 3,1,_ -> raise Config.NotImplementedBySundialsVersion
    | _ -> ());
   c_clear_constraints s
+
+external set_proj_err_est : ('d, 'k) session -> bool -> unit
+    = "sunml_cvode_set_proj_err_est"
+
+external set_proj_frequency : ('d, 'k) session -> int -> unit
+    = "sunml_cvode_set_proj_frequency"
+
+external set_max_num_proj_fails : ('d, 'k) session -> int -> unit
+    = "sunml_cvode_set_max_num_proj_fails"
+
+external set_eps_proj : ('d, 'k) session -> float -> unit
+    = "sunml_cvode_set_eps_proj"
+
+external set_proj_fail_eta : ('d, 'k) session -> float -> unit
+    = "sunml_cvode_set_proj_fail_eta"
+
+external get_num_proj_evals : ('d, 'k) session -> int
+    = "sunml_cvode_get_num_proj_evals"
+
+external get_num_proj_fails : ('d, 'k) session -> int
+    = "sunml_cvode_get_num_proj_fails"
 
 external set_root_direction'   : ('a, 'k) session -> RootDirs.t -> unit
     = "sunml_cvode_set_root_direction"
@@ -997,6 +1084,7 @@ let _ =
       LinearInitFailure;
       LinearSetupFailure None;
       LinearSolveFailure None;
+      NonlinearSolverFailure;
       NonlinearInitFailure;
       NonlinearSetupFailure;
       RhsFuncFailure;
@@ -1008,4 +1096,7 @@ let _ =
       BadK;
       BadT;
       VectorOpErr;
+      ProjFuncFailure;
+      RepeatedProjFuncError;
+      ProjectionNotEnabled;
     |]

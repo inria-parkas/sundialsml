@@ -810,6 +810,20 @@ module Sensitivity : sig (* {{{ *)
   val get_num_stgr_nonlin_solv_conv_fails : ('d, 'k) Cvode.session
                                             -> LintArray.t -> unit
 
+  (** Returns the current sensitivity state vector array. The vectors in the
+      returned array provide direct access to the data within the integrator.
+
+      @since 5.0.0
+      @cvodes <node> CVodeGetCurrentStateSens *)
+  val get_current_state_sens : ('d, 'k) session -> 'd array
+
+  (** Returns the index of the current sensitivity solve when using
+      the {{!sens_method}Staggered1} method.
+
+      @since 5.0.0
+      @cvodes <node> CVodeGetCurrentSensSolveIndex *)
+  val get_current_sens_solve_index : ('d, 'k) session -> int
+
   (** {2:exceptions Exceptions} *)
 
   (** Sensitivity analysis was not initialized.
@@ -1453,6 +1467,15 @@ module Adjoint : sig (* {{{ *)
 
         @cvodes <node7#SECTION00728400000000000000> CVodeSetEpsLinB *)
     val set_eps_lin : ('d, 'k) bsession -> float -> unit
+
+    (** Enables or disables scaling of the linear system solution to account
+        for a change in {% $\gamma$ %} in the linear system. Linear solution
+        scaling is enabled by default when a matrix-based linear solver is
+        attached.
+
+        @since 5.2.0
+        @cvodes <node5> CVodeSetLinearSolutionScalingB *)
+    val set_linear_solution_scaling : ('d, 'k) bsession -> bool -> unit
 
     (** {3:stats Solver statistics} *)
 

@@ -863,7 +863,8 @@ if [ $sundials -ge 260 ]; then
     case "${sundials_info}" in
 	1) ;;
 	0) unset libm ;;
-	*) error="${error}\n\terror interpreting sundials_config.h" ;;
+	*) error="${error}\n\terror interpreting sundials_config.h"
+	   error="${error} (SUNDIALS_USE_GENERIC_MATH)" ;;
     esac
 fi
 
@@ -936,7 +937,8 @@ if [ $sundials -gt 0 ]; then
     case "${sundials_info}" in
 	1) lapack_lib=${LAPACKLIB} ;;
 	0) unset lapack_lib ;;
-	*) error="${error}\n\terror interpreting sundials_config.h" ;;
+	*) error="${error}\n\terror interpreting sundials_config.h"
+	   error="${error} (SUNDIALS_BLAS_LAPACK)" ;;
     esac
 fi
 
@@ -951,6 +953,25 @@ else
 	lsolver_libs="${lsolver_libs} -lsundials_sunlinsollapackband"
 	lsolver_libs="${lsolver_libs} -lsundials_sunlinsollapackdense"
     fi
+fi
+
+# Check for monitoring support
+monitoring_enabled=
+if [ ${sundials} -ge 500 ]; then
+    include="\"sundials/sundials_config.h\""
+    query="#ifdef SUNDIALS_BUILD_WITH_MONITORING\\n1\\n#else\\n0\\n#endif\\n"
+    monitoring_enabled=$(printf "#include %s\\n%b" "${include}" "${query}" \
+			| "${CPP}" ${cppflags} ${Isundials_inc_path} \
+			    -P 2>>${logfile} \
+			| grep -v ^$)
+    case "${monitoring_enabled}" in
+	1) ;;
+	0) ;;
+	*) error="${error}\\n\\terror interpreting sundials_config.h"
+	   error="${error} (SUNDIALS_BUILD_WITH_MONITORING)" ;;
+    esac
+else
+    monitoring_enabled=0
 fi
 
 # Check for SUPERLUMT and KLU
@@ -1487,6 +1508,11 @@ if [ "x${lapack_enabled}" = x ]; then
     echo "let lapack_enabled = false" >> src/sundials/sundials_configuration.ml
 else
     echo "let lapack_enabled = true"  >> src/sundials/sundials_configuration.ml
+fi
+if [ "x${monitoring_enabled}" = x1 ]; then
+    echo "let monitoring_enabled = true" >> src/sundials/sundials_configuration.ml
+else
+    echo "let monitoring_enabled = false"  >> src/sundials/sundials_configuration.ml
 fi
 if [ "x${ocamlmpi_enabled}" = x ]; then
     echo "let mpi_enabled = false" >> src/sundials/sundials_configuration.ml

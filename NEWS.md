@@ -9,6 +9,7 @@ Notes:
 * Changes to the callback interfaces NonlinearSolver.{lsetupfn, lsolvefn} 
   and the name (and use) of the second argument of the function 
   NonlinearSolver.solve.
+* Support for most new 5.x features in Cvode, Cvodes, Ida, Idas, and Kinsol.
 
 Sundials/ML 4.1.0p0 (September 2020)
 ------------------------------------

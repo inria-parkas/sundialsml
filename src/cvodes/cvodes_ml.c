@@ -75,18 +75,6 @@ CAMLprim value sunml_cvodes_alloc_nvector_array(value vn)
     CAMLreturn(r);
 }
 
-// NB: Normally, we should worry about relinquishing the elements of vy
-// after we are finished using them (so as not to block the GC), but we
-// instead make the assumption that these elements come from 'within'
-// Sundials and thus that they would anyway not be GC-ed.
-void sunml_cvodes_wrap_to_nvector_table(int n, value vy, N_Vector *y)
-{
-    int i;
-    for (i = 0; i < n; ++i) {
-	Store_field(vy, i, NVEC_BACKLINK(y[i]));
-    }
-}
-
 static value make_double_tmp(N_Vector tmp1, N_Vector tmp2)
 {
     CAMLparam0();
@@ -138,9 +126,8 @@ static int sensrhsfn(int ns, realtype t, N_Vector y, N_Vector ydot,
     Store_field (args, RECORD_CVODES_SENSRHSFN_ARGS_TMP,
 		 make_double_tmp (tmp1, tmp2));
 
-    sunml_cvodes_wrap_to_nvector_table(ns, CVODES_SENSARRAY1_FROM_EXT(sensext), ys);
-    sunml_cvodes_wrap_to_nvector_table(ns,
-	    CVODES_SENSARRAY2_FROM_EXT(sensext), ysdot);
+    sunml_nvectors_into_array(ns, CVODES_SENSARRAY1_FROM_EXT(sensext), ys);
+    sunml_nvectors_into_array(ns, CVODES_SENSARRAY2_FROM_EXT(sensext), ysdot);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback3_exn(CVODES_SENSRHSFN_FROM_EXT(sensext),
@@ -200,9 +187,8 @@ static int quadsensrhsfn(int ns, realtype t, N_Vector y, N_Vector *ys,
     Store_field (args, RECORD_CVODES_QUADSENSRHSFN_ARGS_TMP,
 		 make_double_tmp (tmp1, tmp2));
 
-    sunml_cvodes_wrap_to_nvector_table(ns, CVODES_SENSARRAY1_FROM_EXT(sensext), ys);
-    sunml_cvodes_wrap_to_nvector_table(ns,
-	    CVODES_SENSARRAY2_FROM_EXT(sensext), yqsdot);
+    sunml_nvectors_into_array(ns, CVODES_SENSARRAY1_FROM_EXT(sensext), ys);
+    sunml_nvectors_into_array(ns, CVODES_SENSARRAY2_FROM_EXT(sensext), yqsdot);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback2_exn(CVODES_QUADSENSRHSFN_FROM_EXT(sensext), args,
@@ -248,7 +234,7 @@ static int brhsfn_sens(realtype t, N_Vector y, N_Vector *ys, N_Vector yb,
     Store_field (args, RECORD_CVODES_ADJ_BRHSFN_ARGS_Y, NVEC_BACKLINK (y));
     Store_field (args, RECORD_CVODES_ADJ_BRHSFN_ARGS_YB, NVEC_BACKLINK (yb));
 
-    sunml_cvodes_wrap_to_nvector_table(ns, CVODES_BSENSARRAY_FROM_EXT(sensext), ys);
+    sunml_nvectors_into_array(ns, CVODES_BSENSARRAY_FROM_EXT(sensext), ys);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback3_exn(CVODES_BRHSFN_SENS_FROM_EXT(sensext),
@@ -300,7 +286,7 @@ static int bquadrhsfn_sens(realtype t, N_Vector y, N_Vector *ys, N_Vector yb,
     Store_field (args, RECORD_CVODES_ADJ_BQUADRHSFN_ARGS_YB,
 		 NVEC_BACKLINK (yb));
 
-    sunml_cvodes_wrap_to_nvector_table(ns, CVODES_BSENSARRAY_FROM_EXT(sensext), ys);
+    sunml_nvectors_into_array(ns, CVODES_BSENSARRAY_FROM_EXT(sensext), ys);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback3_exn (CVODES_BQUADRHSFN_SENS_FROM_EXT(sensext),
@@ -415,7 +401,7 @@ static int bprecsolvefn_withsens(
 
     ns = Int_val(Field(bsensext, RECORD_CVODES_BWD_SESSION_NUMSENSITIVITIES));
     args[2] = CVODES_BSENSARRAY_FROM_EXT(bsensext);
-    sunml_cvodes_wrap_to_nvector_table(ns, args[2], yS);
+    sunml_nvectors_into_array(ns, args[2], yS);
 
     args[3] = NVEC_BACKLINK(zvecb);
 
@@ -504,7 +490,7 @@ static int bprecsetupfn_withsens(
 
     ns = Int_val(Field(bsensext, RECORD_CVODES_BWD_SESSION_NUMSENSITIVITIES));
     args[1] = CVODES_BSENSARRAY_FROM_EXT(bsensext);
-    sunml_cvodes_wrap_to_nvector_table(ns, args[1], yS);
+    sunml_nvectors_into_array(ns, args[1], yS);
 
     args[2] = Val_bool(jokb);
     args[3] = caml_copy_double(gammab);
@@ -572,7 +558,7 @@ static int bjacsetupfn_withsens(
 
     ns = Int_val(Field(bsensext, RECORD_CVODES_BWD_SESSION_NUMSENSITIVITIES));
     args[1] = CVODES_BSENSARRAY_FROM_EXT(bsensext);
-    sunml_cvodes_wrap_to_nvector_table(ns, args[1], yS);
+    sunml_nvectors_into_array(ns, args[1], yS);
 
     cb = CVODE_LS_CALLBACKS_FROM_ML (session);
     cb = Field (cb, 0);
@@ -640,7 +626,7 @@ static int bjactimesfn_withsens(
 
     ns = Int_val(Field(bsensext, RECORD_CVODES_BWD_SESSION_NUMSENSITIVITIES));
     args[1] = CVODES_BSENSARRAY_FROM_EXT(bsensext);
-    sunml_cvodes_wrap_to_nvector_table(ns, args[1], yS);
+    sunml_nvectors_into_array(ns, args[1], yS);
 
     args[2] = NVEC_BACKLINK(vb);
     args[3] = NVEC_BACKLINK(Jvb);
@@ -716,7 +702,7 @@ static int bjacfn_withsens(
 
     ns = Int_val(Field(bsensext, RECORD_CVODES_BWD_SESSION_NUMSENSITIVITIES));
     args[1] = CVODES_BSENSARRAY_FROM_EXT(bsensext);
-    sunml_cvodes_wrap_to_nvector_table(ns, args[1], ys);
+    sunml_nvectors_into_array(ns, args[1], ys);
 
     args[2] = MAT_BACKLINK(jacb);
 
@@ -800,7 +786,7 @@ static int bjacfn_withsens(
 
     ns = Int_val(Field(bsensext, RECORD_CVODES_BWD_SESSION_NUMSENSITIVITIES));
     args[1] = CVODES_BSENSARRAY_FROM_EXT(bsensext);
-    sunml_cvodes_wrap_to_nvector_table(ns, args[1], ys);
+    sunml_nvectors_into_array(ns, args[1], ys);
 
     args[2] = Some_val(dmat);
 
@@ -889,7 +875,7 @@ static int bbandjacfn_withsens(
 
     ns = Int_val(Field(bsensext, RECORD_CVODES_BWD_SESSION_NUMSENSITIVITIES));
     args[1] = CVODES_BSENSARRAY_FROM_EXT(bsensext);
-    sunml_cvodes_wrap_to_nvector_table(ns, args[2], ys);
+    sunml_nvectors_into_array(ns, args[2], ys);
 
     args[2] = Some_val(bmat);
 
@@ -2398,6 +2384,44 @@ CAMLprim value sunml_cvodes_sens_get_num_stgr_nonlin_solv_conv_fails(value vdata
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_cvodes_get_current_state_sens(value vdata, value vns)
+{
+    CAMLparam2(vdata, vns);
+    CAMLlocal1(r);
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    N_Vector *yS;
+
+    int flag = CVodeGetCurrentStateSens(CVODE_MEM_FROM_ML(vdata), &yS);
+    SCHECK_FLAG("CVodeGetCurrentStateSens", flag);
+
+    r = sunml_wrap_to_nvector_table(Int_val(vns), yS);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (r);
+}
+
+CAMLprim value sunml_cvodes_get_current_sens_solve_index(value vdata)
+{
+    CAMLparam1(vdata);
+    CAMLlocal1(r);
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    int index;
+
+    int flag = CVodeGetCurrentSensSolveIndex(CVODE_MEM_FROM_ML(vdata), &index);
+    SCHECK_FLAG("CVodeGetCurrentSensSolveIndex", flag);
+
+    r = Val_int(index);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (r);
+}
+
 /* sensitivity/quadrature interface */
 
 CAMLprim value sunml_cvodes_quadsens_set_err_con(value vdata, value verrconq)
@@ -2814,6 +2838,24 @@ CAMLprim value sunml_cvodes_adj_set_eps_lin(value vparent, value vwhich,
     int flag = CVSpilsSetEpsLinB(CVODE_MEM_FROM_ML(vparent), Int_val(vwhich),
 				 Double_val(eplifac));
     SCHECK_FLAG("CVSpilsSetEpsLinB", flag);
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_cvodes_adj_set_linear_solution_scaling(value vparent,
+							    value vwhich,
+							    value vonoff)
+{
+    CAMLparam3(vparent, vwhich, vonoff);
+
+#if 520 <= SUNDIALS_LIB_VERSION
+    int flag = CVodeSetLinearSolutionScalingB(CVODE_MEM_FROM_ML(vparent),
+					      Int_val(vwhich),
+					      Bool_val(vonoff));
+    SCHECK_FLAG("CVodeSetLinearSolutionScalingB", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
 
     CAMLreturn (Val_unit);

@@ -21,6 +21,7 @@ let klu_enabled = Sundials_configuration.klu_enabled
 let superlumt_enabled = Sundials_configuration.superlumt_enabled
 let nvecpthreads_enabled = Sundials_configuration.nvecpthreads_enabled
 let nvecopenmp_enabled = Sundials_configuration.nvecopenmp_enabled
+let monitoring_enabled = Sundials_configuration.monitoring_enabled
 
 (* Let C code know about some of the values in this module, and obtain
    a few parameters from the C side.  *)

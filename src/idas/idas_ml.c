@@ -76,18 +76,6 @@ CAMLprim value sunml_idas_alloc_nvector_array(value vn)
     CAMLreturn(r);
 }
 
-// NB: Normally, we should worry about relinquishing the elements of vy
-// after we are finished using them (so as not to block the GC), but we
-// instead make the assumption that these elements come from 'within'
-// Sundials and thus that they would anyway not be GC-ed.
-void sunml_idas_wrap_to_nvector_table(int n, value vy, N_Vector *y)
-{
-    int i;
-    for (i = 0; i < n; ++i) {
-	Store_field(vy, i, NVEC_BACKLINK(y[i]));
-    }
-}
-
 void sunml_idas_check_flag(const char *call, int flag, void *ida_mem)
 {
     static char exmsg[MAX_ERRMSG_LEN] = "";
@@ -257,7 +245,7 @@ static int quadrhsfn(realtype t, N_Vector y, N_Vector yp, N_Vector rhsQ,
     sensext = IDA_SENSEXT_FROM_ML (session);
 
     // the data payloads inside args[2] and args[3] are only valid during
-    // this call, afterward that memory goes back to cvode. These bigarrays
+    // this call, afterward that memory goes back to ida. These bigarrays
     // must not be retained by closure_quadrhsfn! If it wants a permanent
     // copy, then it has to make it manually.
 
@@ -292,14 +280,14 @@ static int sensresfn(int Ns, realtype t,
 		 NVEC_BACKLINK(resval));
     Store_field (args, RECORD_IDAS_SENSRESFN_ARGS_SENS,
 	         IDAS_SENSARRAY1_FROM_EXT(sensext));
-    sunml_idas_wrap_to_nvector_table (Ns, IDAS_SENSARRAY1_FROM_EXT(sensext), yS);
+    sunml_nvectors_into_array (Ns, IDAS_SENSARRAY1_FROM_EXT(sensext), yS);
     Store_field (args, RECORD_IDAS_SENSRESFN_ARGS_SENSP,
 	         IDAS_SENSARRAY2_FROM_EXT(sensext));
-    sunml_idas_wrap_to_nvector_table (Ns, IDAS_SENSARRAY2_FROM_EXT(sensext), ypS);
+    sunml_nvectors_into_array (Ns, IDAS_SENSARRAY2_FROM_EXT(sensext), ypS);
     Store_field (args, RECORD_IDAS_SENSRESFN_ARGS_TMP,
 		 sunml_ida_make_triple_tmp (tmp1, tmp2, tmp3));
 
-    sunml_idas_wrap_to_nvector_table (Ns, IDAS_SENSARRAY3_FROM_EXT(sensext), resvalS);
+    sunml_nvectors_into_array (Ns, IDAS_SENSARRAY3_FROM_EXT(sensext), resvalS);
 
     value r = caml_callback2_exn (IDAS_SENSRESFN_FROM_EXT(sensext), args,
 				  IDAS_SENSARRAY3_FROM_EXT(sensext));
@@ -326,17 +314,16 @@ static int quadsensrhsfn(int ns, realtype t, N_Vector yy, N_Vector yp,
 		 NVEC_BACKLINK (yy));
     Store_field (args, RECORD_IDAS_QUADSENSRHSFN_ARGS_YP,
 		 NVEC_BACKLINK (yp));
-    sunml_idas_wrap_to_nvector_table (ns, IDAS_SENSARRAY1_FROM_EXT(sensext), yyS);
+    sunml_nvectors_into_array (ns, IDAS_SENSARRAY1_FROM_EXT(sensext), yyS);
     Store_field (args, RECORD_IDAS_QUADSENSRHSFN_ARGS_SENS,
 		 IDAS_SENSARRAY1_FROM_EXT(sensext));
-    sunml_idas_wrap_to_nvector_table (ns, IDAS_SENSARRAY2_FROM_EXT(sensext), ypS);
+    sunml_nvectors_into_array (ns, IDAS_SENSARRAY2_FROM_EXT(sensext), ypS);
     Store_field (args, RECORD_IDAS_QUADSENSRHSFN_ARGS_SENSP,
 		 IDAS_SENSARRAY2_FROM_EXT(sensext));
     Store_field (args, RECORD_IDAS_QUADSENSRHSFN_ARGS_TMP,
 		 sunml_ida_make_triple_tmp (tmp1, tmp2, tmp3));
 
-    sunml_idas_wrap_to_nvector_table (ns,
-	    IDAS_SENSARRAY3_FROM_EXT(sensext), rhsvalQS);
+    sunml_nvectors_into_array (ns, IDAS_SENSARRAY3_FROM_EXT(sensext), rhsvalQS);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback2_exn(IDAS_QUADSENSRHSFN_FROM_EXT(sensext),
@@ -390,8 +377,8 @@ static int bresfn_sens(realtype t, N_Vector y, N_Vector yp,
     Store_field (args, RECORD_IDAS_ADJ_BRESFN_ARGS_YB, NVEC_BACKLINK (yB));
     Store_field (args, RECORD_IDAS_ADJ_BRESFN_ARGS_YBP, NVEC_BACKLINK (ypB));
 
-    sunml_idas_wrap_to_nvector_table (ns, IDAS_BSENSARRAY1_FROM_EXT (bsensext), yS);
-    sunml_idas_wrap_to_nvector_table (ns, IDAS_BSENSARRAY2_FROM_EXT (bsensext), ypS);
+    sunml_nvectors_into_array (ns, IDAS_BSENSARRAY1_FROM_EXT (bsensext), yS);
+    sunml_nvectors_into_array (ns, IDAS_BSENSARRAY2_FROM_EXT (bsensext), ypS);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback_exn (IDAS_BRESFN_SENS_FROM_EXT(bsensext), args);
@@ -467,8 +454,8 @@ static int bprecsetupfn_sens(realtype t,
     args[0] = sunml_idas_make_jac_arg(t, yy, yp, yB, ypB, resvalB, cjB, Val_unit);
     args[1] = IDAS_BSENSARRAY1_FROM_EXT (bsensext);
     args[2] = IDAS_BSENSARRAY2_FROM_EXT (bsensext);
-    sunml_idas_wrap_to_nvector_table (ns, args[1], yyS);
-    sunml_idas_wrap_to_nvector_table (ns, args[2], ypS);
+    sunml_nvectors_into_array (ns, args[1], yyS);
+    sunml_nvectors_into_array (ns, args[2], ypS);
 
     cb = IDA_LS_PRECFNS_FROM_ML (session);
     cb = Field (cb, 0);
@@ -552,8 +539,8 @@ static int bprecsolvefn_sens(realtype t,
     ns = Int_val(Field(bsensext, RECORD_IDAS_BWD_SESSION_NUMSENSITIVITIES));
     args[1] = IDAS_BSENSARRAY1_FROM_EXT (bsensext);
     args[2] = IDAS_BSENSARRAY2_FROM_EXT (bsensext);
-    sunml_idas_wrap_to_nvector_table (ns, args[1], yyS);
-    sunml_idas_wrap_to_nvector_table (ns, args[2], ypS);
+    sunml_nvectors_into_array (ns, args[1], yyS);
+    sunml_nvectors_into_array (ns, args[2], ypS);
 
     args[3] = NVEC_BACKLINK (rvecB);
     args[4] = NVEC_BACKLINK (zvecB);
@@ -620,8 +607,8 @@ static int bjacsetupfn_sens(realtype t,
     ns = Int_val(Field(bsensext, RECORD_IDAS_BWD_SESSION_NUMSENSITIVITIES));
     args[1] = IDAS_BSENSARRAY1_FROM_EXT (bsensext);
     args[2] = IDAS_BSENSARRAY2_FROM_EXT (bsensext);
-    sunml_idas_wrap_to_nvector_table (ns, args[1], yyS);
-    sunml_idas_wrap_to_nvector_table (ns, args[2], ypS);
+    sunml_nvectors_into_array (ns, args[1], yyS);
+    sunml_nvectors_into_array (ns, args[2], ypS);
 
     cb = IDA_LS_CALLBACKS_FROM_ML (session);
     cb = Field (cb, 0);
@@ -697,8 +684,8 @@ static int bjactimesfn_sens(realtype t,
     ns = Int_val(Field(bsensext, RECORD_IDAS_BWD_SESSION_NUMSENSITIVITIES));
     args[1] = IDAS_BSENSARRAY1_FROM_EXT (bsensext);
     args[2] = IDAS_BSENSARRAY2_FROM_EXT (bsensext);
-    sunml_idas_wrap_to_nvector_table (ns, args[1], yyS);
-    sunml_idas_wrap_to_nvector_table (ns, args[2], ypS);
+    sunml_nvectors_into_array (ns, args[1], yyS);
+    sunml_nvectors_into_array (ns, args[2], ypS);
 
     args[3] = NVEC_BACKLINK(vB);
     args[4] = NVEC_BACKLINK(JvB);
@@ -779,8 +766,8 @@ static int bjacfn_withsens(realtype t,
     ns = Int_val(Field(bsensext, RECORD_IDAS_BWD_SESSION_NUMSENSITIVITIES));
     args[1] = IDAS_BSENSARRAY1_FROM_EXT (bsensext);
     args[2] = IDAS_BSENSARRAY2_FROM_EXT (bsensext);
-    sunml_idas_wrap_to_nvector_table (ns, args[1], yS);
-    sunml_idas_wrap_to_nvector_table (ns, args[2], ypS);
+    sunml_nvectors_into_array (ns, args[1], yS);
+    sunml_nvectors_into_array (ns, args[2], ypS);
 
     args[3] = MAT_BACKLINK(JacB);
 
@@ -869,8 +856,8 @@ static int bjacfn_withsens(long int NeqB,
     ns = Int_val(Field(bsensext, RECORD_IDAS_BWD_SESSION_NUMSENSITIVITIES));
     args[1] = IDAS_BSENSARRAY1_FROM_EXT (bsensext);
     args[2] = IDAS_BSENSARRAY2_FROM_EXT (bsensext);
-    sunml_idas_wrap_to_nvector_table (ns, args[1], yS);
-    sunml_idas_wrap_to_nvector_table (ns, args[2], ypS);
+    sunml_nvectors_into_array (ns, args[1], yS);
+    sunml_nvectors_into_array (ns, args[2], ypS);
 
     args[3] = Some_val(dmat);
 
@@ -963,8 +950,8 @@ static int bbandjacfn_withsens(long int NeqB,
     ns = Int_val(Field(bsensext, RECORD_IDAS_BWD_SESSION_NUMSENSITIVITIES));
     args[1] = IDAS_BSENSARRAY1_FROM_EXT (bsensext);
     args[2] = IDAS_BSENSARRAY2_FROM_EXT (bsensext);
-    sunml_idas_wrap_to_nvector_table (ns, args[2], yS);
-    sunml_idas_wrap_to_nvector_table (ns, args[3], ypS);
+    sunml_nvectors_into_array (ns, args[2], yS);
+    sunml_nvectors_into_array (ns, args[3], ypS);
 
     args[3] = Some_val(bmat);
 
@@ -1022,8 +1009,8 @@ static int bquadrhsfn_sens(realtype t, N_Vector y, N_Vector yp,
     Store_field (args, RECORD_IDAS_ADJ_BQUADRHSFN_ARGS_YBP,
 		 NVEC_BACKLINK (ypB));
 
-    sunml_idas_wrap_to_nvector_table (ns, IDAS_BSENSARRAY1_FROM_EXT (sensext), yS);
-    sunml_idas_wrap_to_nvector_table (ns, IDAS_BSENSARRAY2_FROM_EXT (sensext), ypS);
+    sunml_nvectors_into_array (ns, IDAS_BSENSARRAY1_FROM_EXT (sensext), yS);
+    sunml_nvectors_into_array (ns, IDAS_BSENSARRAY2_FROM_EXT (sensext), ypS);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback_exn (IDAS_BQUADRHSFN_SENS_FROM_EXT(sensext), args);
@@ -1198,7 +1185,7 @@ CAMLprim value sunml_idas_set_nonlinear_solver_sim(value vida_mem,
     SUNNonlinearSolver nlsolv = NLSOLVER_VAL(vnlsolv);
 
     int flag = IDASetNonlinearSolverSensSim(ida_mem, nlsolv);
-    CHECK_FLAG ("IDASetNonlinearSolverSensSim", flag);
+    SCHECK_FLAG ("IDASetNonlinearSolverSensSim", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
@@ -1214,7 +1201,7 @@ CAMLprim value sunml_idas_set_nonlinear_solver_stg(value vida_mem,
     SUNNonlinearSolver nlsolv = NLSOLVER_VAL(vnlsolv);
 
     int flag = IDASetNonlinearSolverSensStg(ida_mem, nlsolv);
-    CHECK_FLAG ("IDASetNonlinearSolverSensStg", flag);
+    SCHECK_FLAG ("IDASetNonlinearSolverSensStg", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
@@ -1661,6 +1648,83 @@ CAMLprim value sunml_idas_sens_get_nonlin_solv_stats(value vdata)
     CAMLreturn(r);
 }
 
+CAMLprim value sunml_idas_sens_get_current_y_sens(value vdata, value vns)
+{
+    CAMLparam2(vdata, vns);
+    CAMLlocal1(r);
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    N_Vector *yyS;
+
+    int flag = IDAGetCurrentYSens(IDA_MEM_FROM_ML(vdata), &yyS);
+    SCHECK_FLAG("IDAGetCurrentYSens", flag);
+
+    r = sunml_wrap_to_nvector_table(Int_val(vns), yyS);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (r);
+}
+
+CAMLprim value sunml_idas_sens_get_current_yp_sens(value vdata, value vns)
+{
+    CAMLparam2(vdata, vns);
+    CAMLlocal1(r);
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    N_Vector *ypS;
+
+    int flag = IDAGetCurrentYpSens(IDA_MEM_FROM_ML(vdata), &ypS);
+    SCHECK_FLAG("IDAGetCurrentYpSens", flag);
+
+    r = sunml_wrap_to_nvector_table(Int_val(vns), ypS);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (r);
+}
+
+CAMLprim value sunml_idas_sens_compute_y_sens (value vida_mem,
+					       value vycors, value vys)
+{
+    CAMLparam3(vida_mem, vycors, vys);
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    N_Vector *ycors = sunml_nvector_array_alloc(vycors);
+    N_Vector *ys = sunml_nvector_array_alloc(vys);
+
+    int flag = IDAComputeYSens (IDA_MEM_FROM_ML(vida_mem), ycors, ys);
+    sunml_nvector_array_free(ycors); 
+    sunml_nvector_array_free(ys); 
+    SCHECK_FLAG("IDAComputeYSens", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_idas_sens_compute_yp_sens (value vida_mem,
+						value vycors, value vyps)
+{
+    CAMLparam3(vida_mem, vycors, vyps);
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    N_Vector *ycors = sunml_nvector_array_alloc(vycors);
+    N_Vector *yps = sunml_nvector_array_alloc(vyps);
+
+    int flag = IDAComputeYpSens (IDA_MEM_FROM_ML(vida_mem), ycors, yps);
+    sunml_nvector_array_free(ycors); 
+    sunml_nvector_array_free(yps); 
+    SCHECK_FLAG("IDAComputeYpSens", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
 
 /* sensitivity/quadrature interface */
 
@@ -2100,6 +2164,24 @@ CAMLprim value sunml_idas_adj_set_eps_lin(value vparent, value vwhich,
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_idas_adj_set_linear_solution_scaling(value vparent,
+							  value vwhich,
+					                  value vonoff)
+{
+    CAMLparam3(vparent, vwhich, vonoff);
+
+#if 520 <= SUNDIALS_LIB_VERSION
+    int flag = IDASetLinearSolutionScalingB(IDA_MEM_FROM_ML(vparent),
+					    Int_val(vwhich),
+					    Bool_val(vonoff));
+    SCHECK_FLAG("IDASetLinearSolutionScalingB", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value sunml_idas_adj_set_increment_factor(value vparent, value vwhich,
 						   value dqincfac)
 {
@@ -2457,7 +2539,7 @@ CAMLprim value sunml_idas_adj_set_linear_solver (value vparent_which,
     int flag;
 
     flag = IDASetLinearSolverB(ida_mem, which, lsolv, jmat);
-    CHECK_FLAG ("IDASetLinearSolverB", flag);
+    SCHECK_FLAG ("IDASetLinearSolverB", flag);
 
     if (Bool_val (vusesens)) {
 	flag = IDASetJacFnBS(ida_mem, which,
@@ -2487,7 +2569,7 @@ CAMLprim value sunml_idas_adj_dls_set_linear_solver (value vparent_which,
     int flag;
 
     flag = IDADlsSetLinearSolverB(ida_mem, which, lsolv, jmat);
-    CHECK_FLAG ("IDADlsSetLinearSolverB", flag);
+    SCHECK_FLAG ("IDADlsSetLinearSolverB", flag);
 
     if (Bool_val (vusesens)) {
 	flag = IDADlsSetJacFnBS(ida_mem, which,
@@ -2515,7 +2597,7 @@ CAMLprim value sunml_idas_adj_spils_set_linear_solver (value vparent, value vwhi
     int flag;
 
     flag = IDASpilsSetLinearSolverB(ida_mem, which, lsolv);
-    CHECK_FLAG ("IDASpilsSetLinearSolverB", flag);
+    SCHECK_FLAG ("IDASpilsSetLinearSolverB", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif

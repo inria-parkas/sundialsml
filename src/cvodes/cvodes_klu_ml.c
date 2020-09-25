@@ -105,7 +105,7 @@ static int jacfn_withsens( /* CVSlsSparseJacFnBS */
 
     ns = Int_val(Field(bsensext, RECORD_CVODES_BWD_SESSION_NUMSENSITIVITIES));
     args[1] = CVODES_BSENSARRAY_FROM_EXT(bsensext);
-    sunml_cvodes_wrap_to_nvector_table(ns, args[1], ys);
+    sunml_nvectors_into_array(ns, args[1], ys);
 
     smat = Field(cb, 1);
     if (smat == Val_none) {

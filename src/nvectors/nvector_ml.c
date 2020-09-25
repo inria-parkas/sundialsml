@@ -903,12 +903,20 @@ static realtype callml_vminquotient(N_Vector num, N_Vector denom)
     CAMLreturnT(realtype, Double_val(r));
 }
 
+void sunml_nvectors_into_array(int n, value vy, N_Vector *y)
+{
+    int i;
+    for (i = 0; i < n; ++i) {
+	Store_field(vy, i, NVEC_BACKLINK(y[i]));
+    }
+}
+
 // NB: Normally, we should worry about relinquishing the elements of vy
 // after we are finished using them (so as not to block the GC), but we
 // instead make the assumption that these elements come from 'within'
 // Sundials and thus that they would anyway not be GC-ed.
 #if 400 <= SUNDIALS_LIB_VERSION
-static value wrap_to_nvector_table(int n, N_Vector *y)
+value sunml_wrap_to_nvector_table(int n, N_Vector *y)
 {
     CAMLparam0();
     CAMLlocal1(vy);
@@ -925,7 +933,7 @@ static value wrap_to_nvector_table(int n, N_Vector *y)
 #endif
 
 #if 400 <= SUNDIALS_LIB_VERSION
-static value wrap_to_nvector_tables(int n1, int n2, N_Vector **yy)
+value sunml_wrap_to_nvector_tables(int n1, int n2, N_Vector **yy)
 {
     CAMLparam0();
     CAMLlocal1(vyy);
@@ -934,7 +942,7 @@ static value wrap_to_nvector_tables(int n1, int n2, N_Vector **yy)
     vyy = caml_alloc_tuple(n1);
 
     for (i = 0; i < n1; ++i) {
-	Store_field(vyy, i, wrap_to_nvector_table(n2, yy[i]));
+	Store_field(vyy, i, sunml_wrap_to_nvector_table(n2, yy[i]));
     }
 
     CAMLreturn (vyy);
@@ -951,7 +959,7 @@ static int callml_vlinearcombination(int nvec, realtype* c,
     intnat n = nvec;
 
     mlop = GET_SOME_OP(z, NVECTOR_OPS_NVLINEARCOMBINATION);
-    vv = wrap_to_nvector_table(nvec, V);
+    vv = sunml_wrap_to_nvector_table(nvec, V);
     vc = caml_ba_alloc(BIGARRAY_FLOAT, 1, c, &n);
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -977,8 +985,8 @@ static int callml_vscaleaddmulti(int nvec, realtype* a,
     mlop = GET_SOME_OP(x, NVECTOR_OPS_NVSCALEADDMULTI);
     args[0] = caml_ba_alloc(BIGARRAY_FLOAT, 1, a, &n);
     args[1] = NVEC_BACKLINK(x);
-    args[2] = wrap_to_nvector_table(nvec, Y);
-    args[3] = wrap_to_nvector_table(nvec, Z);
+    args[2] = sunml_wrap_to_nvector_table(nvec, Y);
+    args[3] = sunml_wrap_to_nvector_table(nvec, Z);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callbackN_exn (mlop, 4, args);
@@ -1000,7 +1008,7 @@ static int callml_vdotprodmulti(int nvec, N_Vector x, N_Vector *Y,
     intnat n = nvec;
 
     mlop = GET_SOME_OP(x, NVECTOR_OPS_NVDOTPRODMULTI);
-    vy = wrap_to_nvector_table(nvec, Y);
+    vy = sunml_wrap_to_nvector_table(nvec, Y);
     vdotprods = caml_ba_alloc(BIGARRAY_FLOAT, 1, dotprods, &n);
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -1028,10 +1036,10 @@ static int callml_vlinearsumvectorarray(int nvec, realtype a, N_Vector* X,
 
     mlop = GET_SOME_OP(X[0], NVECTOR_OPS_NVLINEARSUMVECTORARRAY);
     args[0] = caml_copy_double(a);
-    args[1] = wrap_to_nvector_table(nvec, X);
+    args[1] = sunml_wrap_to_nvector_table(nvec, X);
     args[2] = caml_copy_double(b);
-    args[3] = wrap_to_nvector_table(nvec, Y);
-    args[4] = wrap_to_nvector_table(nvec, Z);
+    args[3] = sunml_wrap_to_nvector_table(nvec, Y);
+    args[4] = sunml_wrap_to_nvector_table(nvec, Z);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callbackN_exn (mlop, 5, args);
@@ -1055,8 +1063,8 @@ static int callml_vscalevectorarray(int nvec, realtype* c, N_Vector* X, N_Vector
 
     mlop = GET_SOME_OP(X[0], NVECTOR_OPS_NVSCALEVECTORARRAY);
     vc = caml_ba_alloc(BIGARRAY_FLOAT, 1, c, &n);
-    vx = wrap_to_nvector_table(nvec, X);
-    vz = wrap_to_nvector_table(nvec, Z);
+    vx = sunml_wrap_to_nvector_table(nvec, X);
+    vz = sunml_wrap_to_nvector_table(nvec, Z);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback3_exn (mlop, vc, vx, vz);
@@ -1079,7 +1087,7 @@ static int callml_vconstvectorarray(int nvec, realtype c, N_Vector* Z)
 
     mlop = GET_SOME_OP(Z[0], NVECTOR_OPS_NVCONSTVECTORARRAY);
     vc = caml_copy_double(c);
-    vz = wrap_to_nvector_table(nvec, Z);
+    vz = sunml_wrap_to_nvector_table(nvec, Z);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback2_exn (mlop, vc, vz);
@@ -1103,8 +1111,8 @@ static int callml_vwrmsnormvectorarray(int nvec, N_Vector* X,
     if (nvec <= 0) CAMLreturnT(int, 1);
 
     mlop = GET_SOME_OP(X[0], NVECTOR_OPS_NVWRMSNORMVECTORARRAY);
-    vx = wrap_to_nvector_table(nvec, X);
-    vw = wrap_to_nvector_table(nvec, W);
+    vx = sunml_wrap_to_nvector_table(nvec, X);
+    vw = sunml_wrap_to_nvector_table(nvec, W);
     vnrm = caml_ba_alloc(BIGARRAY_FLOAT, 1, nrm, &n);
 
     /* NB: Don't trigger GC while processing this return value!  */
@@ -1130,8 +1138,8 @@ static int callml_vwrmsnormmaskvectorarray(int nvec, N_Vector* X, N_Vector* W,
     if (nvec <= 0) CAMLreturnT(int, 1);
 
     mlop = GET_SOME_OP(X[0], NVECTOR_OPS_NVWRMSNORMMASKVECTORARRAY);
-    args[0] = wrap_to_nvector_table(nvec, X);
-    args[1] = wrap_to_nvector_table(nvec, W);
+    args[0] = sunml_wrap_to_nvector_table(nvec, X);
+    args[1] = sunml_wrap_to_nvector_table(nvec, W);
     args[2] = NVEC_BACKLINK(id);
     args[3] = caml_ba_alloc(BIGARRAY_FLOAT, 1, nrm, &n);
 
@@ -1160,9 +1168,9 @@ static int callml_vscaleaddmultivectorarray(int nvec, int nsum, realtype* a,
 
     mlop = GET_SOME_OP(X[0], NVECTOR_OPS_NVSCALEADDMULTIVECTORARRAY);
     args[0] = caml_ba_alloc(BIGARRAY_FLOAT, 1, a, &n);
-    args[1] = wrap_to_nvector_table(nvec, X);
-    args[2] = wrap_to_nvector_tables(nsum, nvec, Y);
-    args[3] = wrap_to_nvector_tables(nsum, nvec, Z);
+    args[1] = sunml_wrap_to_nvector_table(nvec, X);
+    args[2] = sunml_wrap_to_nvector_tables(nsum, nvec, Y);
+    args[3] = sunml_wrap_to_nvector_tables(nsum, nvec, Z);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callbackN_exn (mlop, 4, args);
@@ -1187,8 +1195,8 @@ static int callml_vlinearcombinationvectorarray(int nvec, int nsum, realtype* c,
 
     mlop = GET_SOME_OP(Z[0], NVECTOR_OPS_NVLINEARCOMBINATIONVECTORARRAY);
     vc = caml_ba_alloc(BIGARRAY_FLOAT, 1, c, &n2);
-    vxx = wrap_to_nvector_tables(nsum, nvec, X);
-    vz = wrap_to_nvector_table(nvec, Z);
+    vxx = sunml_wrap_to_nvector_tables(nsum, nvec, X);
+    vz = sunml_wrap_to_nvector_table(nvec, Z);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback3_exn (mlop, vc, vxx, vz);

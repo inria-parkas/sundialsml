@@ -219,6 +219,10 @@ CAMLprim value sunml_alloc_caml_nvec(N_Vector nv, void (*finalizer)(value));
 void sunml_free_cnvec(N_Vector nv);
 CAMLprim void sunml_finalize_caml_nvec(value vnv);
 
+void sunml_nvectors_into_array(int n, value vy, N_Vector *y);
+value sunml_wrap_to_nvector_table(int n, N_Vector *y);
+value sunml_wrap_to_nvector_tables(int n1, int n2, N_Vector **yy);
+
 #if 400 <= SUNDIALS_LIB_VERSION
 int sunml_arrays_of_nvectors(N_Vector *r[], int n, ...);
 void sunml_arrays_of_nvectors2(int* nrows, int *ncols, N_Vector **vv[], int n, ...);

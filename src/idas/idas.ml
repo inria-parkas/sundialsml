@@ -469,6 +469,32 @@ module Sensitivity = struct (* {{{ *)
   external get_nonlin_solv_stats : ('a, 'k) session -> int * int
     = "sunml_idas_sens_get_nonlin_solv_stats"
 
+  external c_get_current_y_sens  : ('d, 'k) session -> int -> 'd array
+      = "sunml_idas_sens_get_current_y_sens"
+  let get_current_y_sens s =
+    c_get_current_y_sens s (num_sensitivities s)
+
+  external c_get_current_yp_sens : ('d, 'k) session -> int -> 'd array
+      = "sunml_idas_sens_get_current_yp_sens"
+  let get_current_yp_sens s =
+    c_get_current_yp_sens s (num_sensitivities s)
+
+  external c_compute_y_sens
+      : ('d, 'k) session
+        -> ('d, 'k) Nvector.t array
+        -> ('d, 'k) Nvector.t array
+        -> unit
+      = "sunml_idas_sens_compute_y_sens"
+  let compute_y_sens s ~ycor ~y = c_compute_y_sens s ycor y
+
+  external c_compute_yp_sens
+      : ('d, 'k) session
+        -> ('d, 'k) Nvector.t array
+        -> ('d, 'k) Nvector.t array
+        -> unit
+      = "sunml_idas_sens_compute_yp_sens"
+  let compute_yp_sens s ~ycor ~yp = c_compute_yp_sens s ycor yp
+
   module Quadrature = struct (* {{{ *)
     include QuadratureTypes
 
@@ -1332,6 +1358,14 @@ module Adjoint = struct (* {{{ *)
       if in_compat_mode2_3 then ls_check_spils (tosession bs);
       let parent, which = parent_and_which bs in
       set_eps_lin parent which epsl
+
+    external c_set_linear_solution_scaling
+        : ('d, 'k) session -> int -> bool -> unit
+        = "sunml_idas_adj_set_linear_solution_scaling"
+
+    let set_linear_solution_scaling bs onoff =
+      let parent, which = parent_and_which bs in
+      c_set_linear_solution_scaling parent which onoff
 
     external set_increment_factor : ('a, 'k) session -> int -> float -> unit
         = "sunml_idas_adj_set_increment_factor"

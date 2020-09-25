@@ -648,6 +648,13 @@ type print_level =
     @kinsol <node5#ss:optin_main> KINSetPrintLevel *)
 val set_print_level : ('d, 'k) session -> print_level -> unit
 
+(** Set the Anderson acceleration damping parameter. Valid values are
+    {% $0 < \mathit{beta} \leq 1.0$ %}. Values greater than or equal to 1
+    disable damping.
+
+    @kinsol <node5> KINSetDampingAA *)
+val set_damping_aa : ('d, 'k) session -> float -> unit
+
 (** {2:get Querying the solver (optional output functions)} *)
 
 (** Returns the sizes of the real and integer workspaces.
