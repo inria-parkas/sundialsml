@@ -84,7 +84,7 @@ endef
 
 OCAML_VERSION = @ocaml_version@
 OCAMLC ?= @ocamlc@
-OCAMLFLAGS += -annot -no-alias-deps @ocamlflags@
+OCAMLFLAGS += -no-alias-deps @ocamlflags@
 OCAML_INCLUDE := $(shell $(OCAMLC) -where)
 OCAML_ALL_LIBLINK = $(strip $(call common, $(CVODE_LDFLAGS) $(CVODES_LDFLAGS) \
 		    			   $(ARKODE_LDFLAGS)		      \
