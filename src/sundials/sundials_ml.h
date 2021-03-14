@@ -86,7 +86,7 @@ value sundials_ml_weak_get (value ar, value n);
     dest = Field (dest, 0);                                     \
   } while (0)
 
-#if OCAML_VERSION > 41200
+#if OCAML_VERSION < 41200
 #define Val_none (Val_int(0))
 #define Some_val(v) (Field((v), 0))
 #endif
