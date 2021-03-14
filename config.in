@@ -112,7 +112,7 @@ DOCDIR = @docdir@
 INSTALL_DOCS = @install_docs@
 
 OCAMLOPT ?= @ocamlopt@
-OCAMLOPTFLAGS += @ocamloptflags@
+OCAMLOPTFLAGS += -no-alias-deps @ocamloptflags@
 
 OCAMLDEP ?= @ocamldep@
 OCAMLDOC ?= @ocamldoc@
