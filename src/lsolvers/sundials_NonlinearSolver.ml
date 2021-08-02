@@ -381,7 +381,7 @@ module Custom = struct (* {{{ *)
 
   let make ?init ?setup ?set_lsetup_fn ?set_lsolve_fn ?set_convtest_fn
            ?set_max_iters ?get_num_iters ?get_cur_iter ?get_num_conv_fails
-           ~nls_type ~solve ~set_sys_fn =
+           ~nls_type ~solve ~set_sys_fn () =
     check_compat ();
     let ops = {
       nls_type           = nls_type;
@@ -412,7 +412,7 @@ module Custom = struct (* {{{ *)
   let make_sens
                 ?init ?setup ?set_lsetup_fn ?set_lsolve_fn ?set_convtest_fn
                 ?set_max_iters ?get_num_iters ?get_cur_iter ?get_num_conv_fails
-                ~nls_type ~solve ~set_sys_fn =
+                ~nls_type ~solve ~set_sys_fn () =
     check_compat ();
     let ops = ({
       nls_type           = nls_type;

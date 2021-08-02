@@ -379,6 +379,7 @@ module Custom : sig (* {{{ *)
                               -> ('d, 'k) Nvector.t
                               -> float -> bool -> 's -> unit)
     -> set_sys_fn          : ((('d, 'k) Nvector.t, 's) sysfn -> unit)
+    -> unit
     -> ('d, 'k, 's) t
 
   (** Create a nonlinear solver from a set of callback functions for
@@ -410,6 +411,7 @@ module Custom : sig (* {{{ *)
                               -> ('d, 'k) Senswrapper.t
                               -> float -> bool -> 'a integrator -> unit)
     -> set_sys_fn          : ((('d, 'k) Senswrapper.t, 'a integrator) sysfn -> unit)
+    -> unit
     -> (('d, 'k) Senswrapper.t, 'k, 'a integrator) t
 
 end (* }}} *)
