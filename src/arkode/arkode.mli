@@ -751,15 +751,25 @@ module ARKStep : sig (* {{{ *)
     (** Create an Arkode-specific linear solver from a generic iterative
         linear solver.
 
+        The [jac_times_rhs] argument specifies an alternative right-hand-side
+        function for use in the internal Jacobian-vector product difference
+        quotient approximation. It is incorrect to specify both this argument
+        and [jac_times_vec].
+
         NB: a [jac_times_setup_fn] is not supported in
             {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
 
+        NB: a [jac_times_rhs] function is not supported in
+            {{!Sundials_Config.sundials_version}Config.sundials_version} < 5.3.0.
+
         @since 3.0.0
         @noarkode <node> ARKStepSetLinearSolver
-        @noarkode <node> ARKStepSetJacTimes *)
+        @noarkode <node> ARKStepSetJacTimes
+        @noarkode <node> ARKStepSetJacTimesRhsFn *)
     val solver :
       ('m, 'd, 'k, [>`Iter]) LinearSolver.t
       -> ?jac_times_vec:'d jac_times_setup_fn option * 'd jac_times_vec_fn
+      -> ?jac_times_rhs:'d rhsfn
       -> ('d, 'k) preconditioner
       -> ('d, 'k) linear_solver
 

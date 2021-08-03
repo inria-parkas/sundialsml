@@ -32,6 +32,15 @@ let sundials_lt500 =
   | 4,_,_ -> true
   | _ -> false
 
+let sundials_lt530 =
+  match Config.sundials_version with
+  | 2,_,_ -> true
+  | 3,_,_ -> true
+  | 4,_,_ -> true
+  | 5,1,_ -> true
+  | 5,2,_ -> true
+  | _ -> false
+
 (*
  * NB: The order of variant constructors and record fields is important!
  *     If these types are changed or augmented, the corresponding declarations
@@ -435,6 +444,9 @@ module Spils = struct (* {{{ *)
   external c_set_jac_times : ('a, 'k) session -> bool -> bool -> unit
     = "sunml_cvode_set_jac_times"
 
+  external c_set_jac_times_rhsfn : ('a, 'k) session -> bool -> unit
+    = "sunml_cvode_set_jac_times_rhsfn"
+
   external c_set_preconditioner
     : ('a, 'k) session -> bool -> unit
     = "sunml_cvode_set_preconditioner"
@@ -494,17 +506,23 @@ module Spils = struct (* {{{ *)
 
   let solver (type s)
       (LSI.(LS ({ rawptr; solver; compat } as hls)) as ls)
-      ?jac_times_vec (prec_type, set_prec) session nv =
+      ?jac_times_vec ?jac_times_rhs (prec_type, set_prec) session nv =
     let jac_times_setup, jac_times_vec =
-      match jac_times_vec with None -> None, None
-                             | Some (ojts, jtv) -> ojts, Some jtv in
+      match jac_times_vec with
+      | None -> None, None
+      | Some _ when jac_times_rhs <> None ->
+          invalid_arg "cannot pass both jac_times_vec and jac_times_rhs"
+      | Some (ojts, jtv) -> ojts, Some jtv
+    in
+    if sundials_lt530 && jac_times_rhs <> None
+      then raise Config.NotImplementedBySundialsVersion;
     if in_compat_mode2 then begin
       if jac_times_setup <> None then
         raise Config.NotImplementedBySundialsVersion;
       make_compat compat prec_type solver session;
       session.ls_solver <- LSI.HLS hls;
       set_prec session nv;
-      session.ls_callbacks <- SpilsCallback (jac_times_vec, None);
+      session.ls_callbacks <- SpilsCallback1 (jac_times_vec, None);
       if jac_times_vec <> None then c_set_jac_times session true false
     end else
       if in_compat_mode2_3 then c_spils_set_linear_solver session rawptr
@@ -513,30 +531,40 @@ module Spils = struct (* {{{ *)
       session.ls_solver <- LSI.HLS hls;
       LSI.(impl_set_prec_type rawptr solver prec_type false);
       set_prec session nv;
-      session.ls_callbacks <- SpilsCallback (jac_times_vec, jac_times_setup);
-      if jac_times_setup <> None || jac_times_vec <> None then
-        c_set_jac_times session (jac_times_setup <> None)
-                                (jac_times_vec <> None)
+      match jac_times_rhs with
+      | Some jtrhsfn -> begin
+          session.ls_callbacks <- SpilsCallback2 jtrhsfn;
+          c_set_jac_times_rhsfn session true
+        end
+      | None -> begin
+          session.ls_callbacks <-
+            SpilsCallback1 (jac_times_vec, jac_times_setup);
+          if jac_times_setup <> None || jac_times_vec <> None then
+            c_set_jac_times session (jac_times_setup <> None)
+                                    (jac_times_vec <> None)
+        end
 
+  (* Drop this function? *)
   let set_jac_times s ?jac_times_setup f =
     if in_compat_mode2 && jac_times_setup <> None then
         raise Config.NotImplementedBySundialsVersion;
     match s.ls_callbacks with
-    | SpilsCallback _ ->
+    | SpilsCallback1 _ ->
         c_set_jac_times s (jac_times_setup <> None) true;
-        s.ls_callbacks <- SpilsCallback (Some f, jac_times_setup)
+        s.ls_callbacks <- SpilsCallback1 (Some f, jac_times_setup)
     | _ -> raise LinearSolver.InvalidLinearSolver
 
+  (* Drop this function? *)
   let clear_jac_times s =
     match s.ls_callbacks with
-    | SpilsCallback _ ->
+    | SpilsCallback1 _ ->
         c_set_jac_times s false false;
-        s.ls_callbacks <- SpilsCallback (None, None)
+        s.ls_callbacks <- SpilsCallback1 (None, None)
     | _ -> raise LinearSolver.InvalidLinearSolver
 
   let set_preconditioner s ?setup solve =
     match s.ls_callbacks with
-    | SpilsCallback _ ->
+    | SpilsCallback1 _ | SpilsCallback2 _ ->
         c_set_preconditioner s (setup <> None);
         s.ls_precfns <- PrecFns { prec_setup_fn = setup;
                                   prec_solve_fn = solve }

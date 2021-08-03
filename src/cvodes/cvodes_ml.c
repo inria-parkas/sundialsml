@@ -983,6 +983,28 @@ static int blinsysfn_withsens(
 }
 #endif
 
+#if 530 <= SUNDIALS_LIB_VERSION
+static int bjactimesrhsfn(realtype t, N_Vector y, N_Vector ydot, void *user_data)
+{
+    CAMLparam0();
+    CAMLlocal2(session, cb);
+    CAMLlocalN(args, 3);
+
+    WEAK_DEREF (session, *(value*)user_data);
+    cb = CVODE_LS_CALLBACKS_FROM_ML(session);
+    cb = Field (cb, 0);
+
+    args[0] = caml_copy_double(t);
+    args[1] = NVEC_BACKLINK(y);
+    args[2] = NVEC_BACKLINK(ydot);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn(cb, 3, args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
+}
+#endif
+
 /* quadrature interface */
 
 CAMLprim value sunml_cvodes_quad_init(value vdata, value vq0)
@@ -1511,6 +1533,24 @@ CAMLprim value sunml_cvodes_adj_spils_set_banded_preconditioner(value vparent,
     int flag = CVBandPrecInitB(mem, which, Index_val(vneqs),
 			       Index_val(vmupper), Index_val(vmlower));
     SCHECK_FLAG ("CVBandPrecInitB", flag);
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_cvodes_adj_set_jac_times_rhsfn(value vparent,
+						    value vwhich,
+						    value vhas_rhsfn)
+{
+    CAMLparam3(vparent, vwhich, vhas_rhsfn);
+#if 530 <= SUNDIALS_LIB_VERSION
+    void *mem = CVODE_MEM_FROM_ML(vparent);
+    int which = Int_val(vwhich);
+    CVRhsFn rhsfn = Bool_val (vhas_rhsfn) ? bjactimesrhsfn : NULL;
+
+    int flag = CVodeSetJacTimesRhsFnB(mem, which, rhsfn);
+    CHECK_LS_FLAG("CVodeSetJacTimesRhsFnB", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 

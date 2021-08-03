@@ -610,6 +610,28 @@ static int jacsetupfn(realtype t,
 }
 #endif
 
+#if 530 <= SUNDIALS_LIB_VERSION
+static int jactimesrhsfn(realtype t, N_Vector y, N_Vector ydot, void *user_data)
+{
+    CAMLparam0();
+    CAMLlocal2(session, cb);
+    CAMLlocalN(args, 3);
+
+    WEAK_DEREF (session, *(value*)user_data);
+    cb = CVODE_LS_CALLBACKS_FROM_ML(session);
+    cb = Field (cb, 0);
+
+    args[0] = caml_copy_double(t);
+    args[1] = NVEC_BACKLINK(y);
+    args[2] = NVEC_BACKLINK(ydot);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn(cb, 3, args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
+}
+#endif
+
 #if 530 <= SUNDIALS_LIB_VERSION && !SUNDIALSML_WITHSENS
 int projfn(realtype t, N_Vector ycur, N_Vector corr,
            realtype epsProj, N_Vector err, void *user_data)
@@ -836,6 +858,20 @@ CAMLprim value sunml_cvode_set_jac_times(value vdata, value vhas_setup,
     CVSpilsJacTimesVecFn times = Bool_val (vhas_times) ? jactimesfn : NULL;
     int flag = CVSpilsSetJacTimesVecFn(CVODE_MEM_FROM_ML(vdata), times);
     CHECK_SPILS_FLAG("CVSpilsSetJacTimesVecFn", flag);
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_cvode_set_jac_times_rhsfn(value vdata, value vhas_rhsfn)
+{
+    CAMLparam2(vdata, vhas_rhsfn);
+#if 530 <= SUNDIALS_LIB_VERSION
+    CVRhsFn rhsfn = Bool_val (vhas_rhsfn) ? jactimesrhsfn : NULL;
+
+    int flag = CVodeSetJacTimesRhsFn(CVODE_MEM_FROM_ML(vdata), rhsfn);
+    CHECK_LS_FLAG("CVodeSetJacTimesRhsFn", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn (Val_unit);
 }

@@ -376,6 +376,8 @@ type error_handler = Util.error_details -> unit
 type 'a error_weight_fun = 'a -> 'a -> unit
 type 'd proj_fn = float -> 'd -> 'd -> float -> 'd -> unit
 
+let no_rhsfn = fun _ _ _ -> Sundials_impl.crash "no rhsfn"
+
 (* Session: here comes the big blob.  These mutually recursive types
    cannot be handed out separately to modules without menial
    repetition, so we'll just have them all here, at the top of the
@@ -490,12 +492,17 @@ and ('a, 'kind) linsolv_callbacks =
       -> ('a, 'kind) linsolv_callbacks
 
   (* Spils *)
-  | SpilsCallback of 'a SpilsTypes'.jac_times_vec_fn option
+  | SpilsCallback1 of 'a SpilsTypes'.jac_times_vec_fn option
                      * 'a SpilsTypes'.jac_times_setup_fn option
-  | BSpilsCallback
+  | SpilsCallback2 of 'a rhsfn
+
+  | BSpilsCallbackJTRhsfn of 'a rhsfn
+
+  | BSpilsCallbackNoSens
       of 'a AdjointTypes'.SpilsTypes'.jac_times_vec_fn_no_sens option
          * 'a AdjointTypes'.SpilsTypes'.jac_times_setup_fn_no_sens option
-  | BSpilsCallbackSens
+
+  | BSpilsCallbackWithSens
       of 'a AdjointTypes'.SpilsTypes'.jac_times_vec_fn_with_sens option
          * 'a AdjointTypes'.SpilsTypes'.jac_times_setup_fn_with_sens option
 
@@ -579,7 +586,9 @@ let ls_check_direct session =
 let ls_check_spils session =
   if Sundials_configuration.safe then
     match session.ls_callbacks with
-    | SpilsCallback _ | BSpilsCallback _ | BSpilsCallbackSens _ -> ()
+    | SpilsCallback1 _ | SpilsCallback2 _
+    | BSpilsCallbackJTRhsfn _
+    | BSpilsCallbackNoSens _ | BSpilsCallbackWithSens _ -> ()
     | _ -> raise LinearSolver.InvalidLinearSolver
 
 let ls_check_spils_band session =
