@@ -234,6 +234,11 @@ void sunml_nlsolver_check_flag(const char *call, int flag)
 	case SUN_NLS_MEM_FAIL:
 	    caml_raise_out_of_memory();
 
+#if 500 <= SUNDIALS_LIB_VERSION
+	case SUN_NLS_EXT_FAIL:
+	    caml_raise_constant(NLSOLVER_EXN(ExtFail));
+#endif
+
 	default:
 	    if (flag > 0) {
 		caml_raise_constant(SUNDIALS_EXN(RecoverableFailure));

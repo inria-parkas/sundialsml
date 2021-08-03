@@ -91,6 +91,7 @@ enum nlsolver_type {
 enum nlsolver_exn_index {
     NLSOLVER_EXN_VectorOpError,
     NLSOLVER_EXN_IncorrectUse,
+    NLSOLVER_EXN_ExtFail,
     NLSOLVER_EXN_SET_SIZE
 };
 
