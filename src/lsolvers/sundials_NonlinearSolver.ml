@@ -15,6 +15,14 @@ open Sundials
 
 include Sundials_NonlinearSolver_impl
 
+let sundials_lt510 =
+  match Config.sundials_version with
+  | 2,_,_ -> true
+  | 3,_,_ -> true
+  | 4,_,_ -> true
+  | 5,0,_ -> true
+  | _ -> false
+
 type ('data, 'kind, 's) t
     = ('data, 'kind, 's) Sundials_NonlinearSolver_impl.nonlinear_solver
 
@@ -297,6 +305,9 @@ module FixedPoint = struct (* {{{ *)
     : ('d, 'k, 's) cptr -> (('d, 'k) Nvector.t, 's) c_sysfn option
     = "sunml_nlsolver_fixedpoint_get_sys_fn"
 
+  external c_set_damping : ('d, 'k, 's) cptr -> float -> unit
+    = "sunml_nlsolver_fixedpoint_set_damping"
+
   let make ?(acceleration_vectors=0) y =
     let callbacks = empty_callbacks () in
     {
@@ -325,6 +336,9 @@ module FixedPoint = struct (* {{{ *)
     match c_get_sys_fn rawptr with
     | None -> None
     | Some f -> Some (c_call_sys_fn f)
+
+  let set_damping { rawptr; _ } beta =
+    c_set_damping rawptr beta
 
 end (* }}} *)
 

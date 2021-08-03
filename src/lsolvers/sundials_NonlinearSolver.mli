@@ -323,6 +323,13 @@ module FixedPoint : sig (* {{{ *)
       @nocvode <node> SUNNonlinSolGetSysFn_FixedPoint *)
   val get_sys_fn : ('d, 'k, 's) t -> (('d, 'k) Nvector.t, 's) sysfn option
 
+  (** Sets the damping parameter {% $\beta$ %} to use with Anderson
+      acceleration. Damping is disabled by default {% $\beta = 1.0$ %}.
+
+      @nocvode <node> SUNNonlinSolSetDamping_FixedPoint
+      @since 5.1.0 *)
+  val set_damping : ('d, 'k, 's) t -> float -> unit
+
 end (* }}} *)
 
 (** Custom nonlinear solvers.

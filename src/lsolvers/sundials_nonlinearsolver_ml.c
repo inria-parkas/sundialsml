@@ -927,6 +927,21 @@ CAMLprim value sunml_nlsolver_fixedpoint_make_sens(value vcount, value vy,
 #endif
 }
 
+CAMLprim value sunml_nlsolver_fixedpoint_set_damping(value vnls, value vbeta)
+{
+    CAMLparam2(vnls, vbeta);
+
+#if SUNDIALS_LIB_VERSION >= 510
+    int flag = SUNNonlinSolSetDamping_FixedPoint(NLSOLVER_VAL(vnls),
+						 Double_val(vbeta));
+    NLS_CHECK_FLAG("SUNNonlinSolSetDamping_FixedPoint", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value sunml_nlsolver_fixedpoint_get_sys_fn(value vnls)
 {
     CAMLparam1(vnls);
