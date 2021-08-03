@@ -753,6 +753,28 @@ static int jacsetupfn(realtype t,
 }
 #endif
 
+#if 530 <= SUNDIALS_LIB_VERSION
+static int jactimesrhsfn(realtype t, N_Vector y, N_Vector ydot, void *user_data)
+{
+    CAMLparam0();
+    CAMLlocal2(session, cb);
+    CAMLlocalN(args, 3);
+
+    WEAK_DEREF (session, *(value*)user_data);
+    cb = ARKODE_LS_CALLBACKS_FROM_ML(session);
+    cb = Field (cb, 0);
+
+    args[0] = caml_copy_double(t);
+    args[1] = NVEC_BACKLINK(y);
+    args[2] = NVEC_BACKLINK(ydot);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn(cb, 3, args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
+}
+#endif
+
 /* Dense and Band can only be used with serial NVectors.  */
 CAMLprim value sunml_arkode_dls_dense (value varkode_mem,
 				       value vneqs,
@@ -961,6 +983,21 @@ CAMLprim value sunml_arkode_ark_set_jac_times(value vdata, value vhas_setup,
     ARKSpilsJacTimesVecFn jac = Bool_val (vhas_times) ? jactimesfn : NULL;
     int flag = ARKSpilsSetJacTimesVecFn(ARKODE_MEM_FROM_ML(vdata), jac);
     CHECK_FLAG("ARKSpilsSetJacTimesVecFn", flag);
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_ark_set_jac_times_rhsfn(value vdata,
+						    value vhas_rhsfn)
+{
+    CAMLparam2(vdata, vhas_rhsfn);
+#if 530 <= SUNDIALS_LIB_VERSION
+    ARKRhsFn rhsfn = Bool_val (vhas_rhsfn) ? jactimesrhsfn : NULL;
+
+    int flag = ARKStepSetJacTimesRhsFn(ARKODE_MEM_FROM_ML(vdata), rhsfn);
+    CHECK_LS_FLAG("ARKStepSetJacTimesRhsFn", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn (Val_unit);
 }

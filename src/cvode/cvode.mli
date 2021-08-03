@@ -90,6 +90,22 @@ type ('t, 'd) jacobian_arg = ('t, 'd) Cvode_impl.jacobian_arg =
     jac_tmp : 't            (** Workspace data. *)
   }
 
+(** Right-hand side functions for calculating ODE derivatives. They are passed
+    three arguments:
+    - [t], the value of the independent variable, i.e., the simulation time,
+    - [y], the vector of dependent-variable values, i.e., $y(t)$, and,
+    - [y'], a vector for storing the value of $f(t, y)$.
+
+    Within the function, raising a {!Sundials.RecoverableFailure} exception
+    indicates a recoverable error. Any other exception is treated as an
+    unrecoverable error.
+
+    {warning [y] and [y'] should not be accessed after the function
+             returns.}
+
+    @cvode <node5#ss:rhsFn> CVRhsFn *)
+type 'd rhsfn = float -> 'd -> 'd -> unit
+
 (** Diagonal approximation of Jacobians by difference quotients. *)
 module Diag : sig (* {{{ *)
   (** A linear solver based on Jacobian approximation by difference
@@ -394,14 +410,24 @@ module Spils : sig (* {{{ *)
   (** Create a Cvode-specific linear solver from a generic iterative
       linear solver.
 
-      NB: a [jac_times_setup_fn] is not supported in
+      The [jac_times_rhs] argument specifies an alternative right-hand-side
+      function for use in the internal Jacobian-vector product difference
+      quotient approximation. It is incorrect to specify both this argument
+      and [jac_times_vec].
+
+      NB: a [jac_times_vec] function is not supported in
           {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
 
+      NB: a [jac_times_rhs] function is not supported in
+          {{!Sundials_Config.sundials_version}Config.sundials_version} < 5.3.0.
+
       @nocvode <node> CVodeSetLinearSolver
-      @nocvode <node> CVodeSetJacTimes *)
+      @nocvode <node> CVodeSetJacTimes
+      @nocvode <node> CVodeSetJacTimesRhsFn *)
   val solver :
     ('m, 'd, 'k, [>`Iter]) LinearSolver.t
     -> ?jac_times_vec:'d jac_times_setup_fn option * 'd jac_times_vec_fn
+    -> ?jac_times_rhs:'d rhsfn
     -> ('d, 'k) preconditioner
     -> ('d, 'k) linear_solver
 
@@ -554,22 +580,6 @@ val default_tolerances : ('data, 'kind) tolerance
 type lmm =
   | Adams   (** Adams-Moulton formulas (non-stiff systems). *)
   | BDF     (** Backward Differentiation Formulas (stiff systems). *)
-
-(** Right-hand side functions for calculating ODE derivatives. They are passed
-    three arguments:
-    - [t], the value of the independent variable, i.e., the simulation time,
-    - [y], the vector of dependent-variable values, i.e., $y(t)$, and,
-    - [y'], a vector for storing the value of $f(t, y)$.
-
-    Within the function, raising a {!Sundials.RecoverableFailure} exception
-    indicates a recoverable error. Any other exception is treated as an
-    unrecoverable error.
-
-    {warning [y] and [y'] should not be accessed after the function
-             returns.}
-
-    @cvode <node5#ss:rhsFn> CVRhsFn *)
-type 'd rhsfn = float -> 'd -> 'd -> unit
 
 (** Called by the solver to calculate the values of root functions. These
     ‘zero-crossings’ are used to detect significant events. The function is

@@ -350,8 +350,9 @@ and ('a, 'kind) linsolv_callbacks =
         -> ('a, 'kind) linsolv_callbacks
 
   (* Spils *)
-  | SpilsCallback of 'a SpilsTypes'.jac_times_vec_fn option
-                     * 'a SpilsTypes'.jac_times_setup_fn option
+  | SpilsCallback1 of 'a SpilsTypes'.jac_times_vec_fn option
+                      * 'a SpilsTypes'.jac_times_setup_fn option
+  | SpilsCallback2 of 'a rhsfn
 
 and 'a linsolv_precfns =
   | NoPrecFns
@@ -410,7 +411,7 @@ let ls_check_direct session =
 let ls_check_spils session =
   if Sundials_configuration.safe then
     match session.ls_callbacks with
-    | SpilsCallback _ -> ()
+    | SpilsCallback1 _ | SpilsCallback2 _ -> ()
     | _ -> raise LinearSolver.InvalidLinearSolver
 
 let ls_check_spils_band session =
