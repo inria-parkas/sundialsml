@@ -487,6 +487,38 @@ module ARKStep : sig (* {{{ *)
     type 'm jac_fn = (RealArray.t triple, RealArray.t) jacobian_arg
                      -> 'm -> unit
 
+  (** Function to compute the linear system matrix {% $A = M - \gamma J$ %}
+      or an approximation of it. Offers an alternative to evaluating the
+      Jacobian of the right-hand-side function.
+
+      In addition to those shared with the Jacobian function, the arguments of
+      this function are
+      - [a], storage for the computed linear system matrix,
+      - [m], the current mass matrix if {% $M \neq I$ %},
+      - [jok], indicates whether the Jacobian-related data needs to be
+               updated, and
+      - [gamma], the scalar in the formula above.
+
+      The function should return true only if the Jacobian data was
+      recomputed.
+
+      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Any other exception is treated as an unrecoverable error.
+
+      {warning Neither the Jacobian argument elements nor the matrices
+               [a] and [m] should be accessed after the function has
+               returned.}
+
+      @since 5.0.0
+      @nocvode <node> ARKLsLinSysFn *)
+  type 'm linsys_fn =
+    (RealArray.t triple, RealArray.t) jacobian_arg
+    -> 'm
+    -> 'm option
+    -> bool
+    -> float
+    -> bool
+
     (** Create an Arkode-specific linear solver from a Jacobian approximation
         function and a generic direct linear solver.
         The Jacobian approximation function is optional for dense and banded
@@ -495,10 +527,12 @@ module ARKStep : sig (* {{{ *)
         is raised).
 
         @noarkode <node> ARKStepSetLinearSolver
-        @noarkode <node> ARKStepSetJacFn *)
+        @noarkode <node> ARKStepSetJacFn
+        @noarkode <node> ARKStepSetLinSysFn *)
     val solver :
       ?jac:'m jac_fn ->
-        ('m, RealArray.t, 'kind, [>`Dls]) LinearSolver.t ->
+      ?linsys:'m linsys_fn ->
+      ('m, RealArray.t, 'kind, [>`Dls]) LinearSolver.t ->
       'kind serial_linear_solver
 
     (** {3:arkdlsstats Solver statistics} *)

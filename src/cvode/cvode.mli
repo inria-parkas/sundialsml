@@ -136,21 +136,53 @@ module Dls : sig (* {{{ *)
       {warning Neither the elements of [arg] nor the matrix [jm] should
                be accessed after the function has returned.}
 
-      @nocvode <node> CVodeSetJacFn *)
+      @nocvode <node> CVLsJacFn *)
   type 'm jac_fn =
     (RealArray.t triple, RealArray.t) jacobian_arg -> 'm -> unit
 
+  (** Function to compute the linear system matrix {% $M = I - \gamma J$ %}
+      or an approximation of it. Offers an alternative to evaluating the
+      Jacobian of the right-hand-side function.
+
+      In addition to those shared with the Jacobian function, the arguments of
+      this function are
+      - [m], storage for the computed linear system matrix,
+      - [jok], indicates whether the Jacobian-related data needs to be
+               updated, and
+      - [gamma], the scalar in the formula above.
+
+      The function should return true only if the Jacobian data was
+      recomputed.
+
+      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Any other exception is treated as an unrecoverable error.
+
+      {warning Neither the Jacobian argument elements nor the matrix [m]
+               should be accessed after the function has returned.}
+
+      @since 5.0.0
+      @nocvode <node> CVLsLinSysFn *)
+  type 'm linsys_fn =
+    (RealArray.t triple, RealArray.t) jacobian_arg -> 'm -> bool -> float -> bool
+
   (** Create a Cvode-specific linear solver from a Jacobian approximation
       function and generic direct linear solver.
+
       The Jacobian approximation function is optional for dense and banded
       solvers (if not given an internal difference quotient approximation is
       used), but must be provided for other solvers (or [Invalid_argument]
       is raised).
 
+      The [linsys] argument allows to override the standard linear system
+      function that calls [jac] to compute {% $M$ %}. This feature is only
+      available in Sundials >= 5.0.0.
+
       @nocvode <node> CVodeSetLinearSolver
-      @nocvode <node> CVodeSetJacFn *)
+      @nocvode <node> CVodeSetJacFn
+      @nocvode <node> CVodeSetLinSysFn *)
   val solver :
     ?jac:'m jac_fn ->
+    ?linsys:'m linsys_fn ->
     ('m, RealArray.t, 'kind, [>`Dls]) LinearSolver.t ->
     'kind serial_linear_solver
 

@@ -25,6 +25,13 @@ let in_compat_mode2_3 =
   | 3,_,_ -> true
   | _ -> false
 
+let sundials_lt500 =
+  match Config.sundials_version with
+  | 2,_,_ -> true
+  | 3,_,_ -> true
+  | 4,_,_ -> true
+  | _ -> false
+
 external c_alloc_nvector_array : int -> 'a array
     = "sunml_cvodes_alloc_nvector_array"
 
@@ -928,68 +935,69 @@ module Adjoint = struct (* {{{ *)
     | _ -> assert false
 
     let set_ls_callbacks (type mk m nd nk) (type tag)
-          ?(jac : m jac_fn option)
+          ?(jac : m jac_fn option) ?(linsys : m linsys_fn option)
           (solver_data : (m, nd, nk, tag) LSI.solver_data)
           (mat : (mk, m, nd, nk) Matrix.t) session =
       let none = (None : m option) in
+      let ls = match linsys with None -> no_linsysfn | Some f -> f in
       begin match solver_data with
       | LSI.Dense ->
           session.ls_callbacks <- (match jac with
             | None ->
-                BDlsDenseCallback { jacfn = no_callback; jmat = none }
+                BDlsDenseCallback ({ jacfn = no_callback; jmat = none }, ls)
             | Some (NoSens f) ->
-                BDlsDenseCallback { jacfn = f; jmat = none }
+                BDlsDenseCallback ({ jacfn = f; jmat = none }, ls)
             | Some (WithSens f) ->
-                BDlsDenseCallbackSens { jacfn_sens = f; jmat = none })
+                BDlsDenseCallbackSens ({ jacfn_sens = f; jmat = none }, ls))
       | LSI.LapackDense ->
           session.ls_callbacks <- (match jac with
             | None ->
-                BDlsDenseCallback { jacfn = no_callback; jmat = none }
+                BDlsDenseCallback ({ jacfn = no_callback; jmat = none }, ls)
             | Some (NoSens f) ->
-                BDlsDenseCallback { jacfn = f; jmat = none }
+                BDlsDenseCallback ({ jacfn = f; jmat = none }, ls)
             | Some (WithSens f) ->
-                BDlsDenseCallbackSens { jacfn_sens = f; jmat = none })
+                BDlsDenseCallbackSens ({ jacfn_sens = f; jmat = none }, ls))
       | LSI.Band ->
           session.ls_callbacks <- (match jac with
             | None ->
-                BDlsBandCallback { jacfn = no_callback; jmat = none }
+                BDlsBandCallback ({ jacfn = no_callback; jmat = none }, ls)
             | Some (NoSens f) ->
-                BDlsBandCallback { jacfn = f; jmat = none }
+                BDlsBandCallback ({ jacfn = f; jmat = none }, ls)
             | Some (WithSens f) ->
-                BDlsBandCallbackSens { jacfn_sens = f; jmat = none })
+                BDlsBandCallbackSens ({ jacfn_sens = f; jmat = none }, ls))
       | LSI.LapackBand ->
           session.ls_callbacks <- (match jac with
             | None ->
-                BDlsBandCallback { jacfn = no_callback; jmat = none }
+                BDlsBandCallback ({ jacfn = no_callback; jmat = none }, ls)
             | Some (NoSens f) ->
-                BDlsBandCallback { jacfn = f; jmat = none }
+                BDlsBandCallback ({ jacfn = f; jmat = none }, ls)
             | Some (WithSens f) ->
-                BDlsBandCallbackSens { jacfn_sens = f; jmat = none })
+                BDlsBandCallbackSens ({ jacfn_sens = f; jmat = none }, ls))
       | LSI.Klu _ ->
           session.ls_callbacks <- (match jac with
             | None -> invalid_arg "Klu requires Jacobian function";
             | Some (NoSens f) ->
-                BSlsKluCallback { jacfn = f; jmat = none }
+                BSlsKluCallback ({ jacfn = f; jmat = none }, ls)
             | Some (WithSens f) ->
-                BSlsKluCallbackSens { jacfn_sens = f; jmat = none })
+                BSlsKluCallbackSens ({ jacfn_sens = f; jmat = none }, ls))
       | LSI.Superlumt _ ->
           session.ls_callbacks <- (match jac with
             | None -> invalid_arg "Superlumt requires Jacobian function";
             | Some (NoSens f) ->
-                BSlsSuperlumtCallback { jacfn = f; jmat = none }
+                BSlsSuperlumtCallback ({ jacfn = f; jmat = none }, ls)
             | Some (WithSens f) ->
-                BSlsSuperlumtCallbackSens { jacfn_sens = f; jmat = none })
+                BSlsSuperlumtCallbackSens ({ jacfn_sens = f; jmat = none }, ls))
       | LSI.Custom _ ->
           session.ls_callbacks <- (match jac with
             | None ->
                 (match Matrix.get_id mat with
                  | Matrix.Dense | Matrix.Band -> ()
                  | _ -> invalid_arg "A Jacobian function is required");
-                BDirectCustomCallback { jacfn = no_callback; jmat = none }
+                BDirectCustomCallback ({ jacfn = no_callback; jmat = none }, ls)
             | Some (NoSens f) ->
-                BDirectCustomCallback { jacfn = f; jmat = none }
+                BDirectCustomCallback ({ jacfn = f; jmat = none }, ls)
             | Some (WithSens f) ->
-                BDirectCustomCallbackSens { jacfn_sens = f; jmat = none })
+                BDirectCustomCallbackSens ({ jacfn_sens = f; jmat = none }, ls))
       | _ -> assert false
       end;
       session.ls_precfns <- NoPrecFns
@@ -1009,8 +1017,8 @@ module Adjoint = struct (* {{{ *)
       : ('d, 'k) session * int
         -> ('m, 'd, 'k) LSI.cptr
         -> ('mk, 'm, 'd, 'k) Matrix.t option
-        -> bool
-        -> bool
+        -> bool * bool
+        -> bool * bool
         -> unit
       = "sunml_cvodes_adj_set_linear_solver"
 
@@ -1018,20 +1026,27 @@ module Adjoint = struct (* {{{ *)
       | Some m -> m
       | None -> failwith "a direct linear solver is required"
 
-    let solver ?jac ls bs nv =
+    let solver ?jac ?linsys ls bs nv =
       let LSI.LS ({ rawptr; solver; matrix } as hls) = ls in
       let session = tosession bs in
       let parent, which = parent_and_which bs in
       let matrix = assert_matrix matrix in
-      let use_sens = match jac with Some (WithSens _) -> true | _ -> false in
-      set_ls_callbacks ?jac solver matrix session;
+      if sundials_lt500 && linsys <> None
+        then raise Config.NotImplementedBySundialsVersion;
+      let jac_with_sens =
+        match jac with Some (WithSens _) -> true | _ -> false in
+      let linsys_with_sens =
+        match linsys with Some (LWithSens _) -> true | _ -> false in
+      set_ls_callbacks ?jac ?linsys solver matrix session;
       if in_compat_mode2
-        then make_compat (jac <> None) use_sens solver matrix bs
+        then make_compat (jac <> None) jac_with_sens solver matrix bs
       else if in_compat_mode2_3
         then c_dls_set_linear_solver (parent, which) rawptr matrix
-                                                     (jac <> None) use_sens
+                                                     (jac <> None)
+                                                     jac_with_sens
       else c_set_linear_solver (parent, which) rawptr (Some matrix)
-                                                     (jac <> None) use_sens;
+                                               (jac <> None, jac_with_sens)
+                                               (linsys <> None, linsys_with_sens);
       LSI.attach ls;
       session.ls_solver <- LSI.HLS hls
 
@@ -1039,28 +1054,28 @@ module Adjoint = struct (* {{{ *)
     let invalidate_callback s =
       if in_compat_mode2 then
         match s.ls_callbacks with
-        | BDlsDenseCallback ({ jmat = Some d } as cb) ->
+        | BDlsDenseCallback ({ jmat = Some d } as cb, _) ->
             Matrix.Dense.invalidate d;
             cb.jmat <- None
-        | BDlsDenseCallbackSens ({ jmat = Some d } as cb) ->
+        | BDlsDenseCallbackSens ({ jmat = Some d } as cb, _) ->
             Matrix.Dense.invalidate d;
             cb.jmat <- None
-        | BDlsBandCallback  ({ jmat = Some d } as cb) ->
+        | BDlsBandCallback  ({ jmat = Some d } as cb, _) ->
             Matrix.Band.invalidate d;
             cb.jmat <- None
-        | BDlsBandCallbackSens  ({ jmat = Some d } as cb) ->
+        | BDlsBandCallbackSens  ({ jmat = Some d } as cb, _) ->
             Matrix.Band.invalidate d;
             cb.jmat <- None
-        | BSlsKluCallback ({ jmat = Some d } as cb) ->
+        | BSlsKluCallback ({ jmat = Some d } as cb, _) ->
             Matrix.Sparse.invalidate d;
             cb.jmat <- None
-        | BSlsKluCallbackSens ({ jmat = Some d } as cb) ->
+        | BSlsKluCallbackSens ({ jmat = Some d } as cb, _) ->
             Matrix.Sparse.invalidate d;
             cb.jmat <- None
-        | BSlsSuperlumtCallback ({ jmat = Some d } as cb) ->
+        | BSlsSuperlumtCallback ({ jmat = Some d } as cb, _) ->
             Matrix.Sparse.invalidate d;
             cb.jmat <- None
-        | BSlsSuperlumtCallbackSens ({ jmat = Some d } as cb) ->
+        | BSlsSuperlumtCallbackSens ({ jmat = Some d } as cb, _) ->
             Matrix.Sparse.invalidate d;
             cb.jmat <- None
         | _ -> ()
@@ -1136,8 +1151,8 @@ module Adjoint = struct (* {{{ *)
       : ('d, 'k) session * int
         -> ('m, 'd, 'k) LSI.cptr
         -> ('mk, 'm, 'd, 'k) Matrix.t option
-        -> bool
-        -> bool
+        -> bool * bool
+        -> bool * bool
         -> unit
       = "sunml_cvodes_adj_set_linear_solver"
 
@@ -1226,7 +1241,8 @@ module Adjoint = struct (* {{{ *)
              session.ls_callbacks <- BSpilsCallbackSens (None, None))
       end else
         if in_compat_mode2_3 then c_spils_set_linear_solver parent which rawptr
-        else c_set_linear_solver (parent, which) rawptr None false false;
+        else c_set_linear_solver (parent, which) rawptr None (false, false)
+                                                             (false, false);
         LSI.attach ls;
         session.ls_solver <- LSI.HLS hls;
         LSI.(impl_set_prec_type rawptr solver prec_type false);

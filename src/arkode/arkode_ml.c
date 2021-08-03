@@ -562,6 +562,51 @@ static int bandjacfn(long int N,
 
 #endif
 
+#if 500 <= SUNDIALS_LIB_VERSION
+static int linsysfn(
+	realtype t,
+	N_Vector y,
+	N_Vector fy,
+	SUNMatrix A,
+	SUNMatrix M,
+	booleantype jok,
+	booleantype *jcur,
+	realtype gamma,
+	void *user_data,
+	N_Vector tmp1,
+	N_Vector tmp2,
+	N_Vector tmp3)
+{
+    CAMLparam0();
+    CAMLlocalN (args, 5);
+    CAMLlocal2(session, cb);
+
+    WEAK_DEREF (session, *(value*)user_data);
+
+    cb = ARKODE_LS_CALLBACKS_FROM_ML(session);
+    cb = Field (cb, 1);
+
+    args[0] = sunml_arkode_make_jac_arg (t, y, fy,
+				  sunml_arkode_make_triple_tmp (tmp1, tmp2, tmp3));
+    args[1] = MAT_BACKLINK(A);
+    args[2] = M == NULL ? Val_none : Some_val(MAT_BACKLINK(M));
+    args[3] = Val_bool(jok);
+    args[4] = caml_copy_double(gamma);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (cb, 5, args);
+
+    /* Update jcur; leave it unchanged if an error occurred.  */
+    if (!Is_exception_result (r)) {
+	*jcur = Bool_val (r);
+	CAMLreturnT(int, 0);
+    }
+    r = Extract_exception (r);
+
+    CAMLreturnT(int, sunml_arkode_translate_exception (session, r, RECOVERABLE));
+}
+#endif
+
 static int precsetupfn(realtype t,
 		       N_Vector y,
 		       N_Vector fy,
@@ -801,9 +846,10 @@ CAMLprim value sunml_arkode_dls_lapack_band (value varkode_mem, value vneqs,
 CAMLprim value sunml_arkode_ark_set_linear_solver (value varkode_mem,
 						   value vlsolv,
 						   value vojmat,
-						   value vhasjac)
+						   value vhasjac,
+						   value vhaslsf)
 {
-    CAMLparam4(varkode_mem, vlsolv, vojmat, vhasjac);
+    CAMLparam5(varkode_mem, vlsolv, vojmat, vhasjac, vhaslsf);
 #if 400 <= SUNDIALS_LIB_VERSION
     void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
     SUNLinearSolver lsolv = LSOLVER_VAL(vlsolv);
@@ -814,6 +860,14 @@ CAMLprim value sunml_arkode_ark_set_linear_solver (value varkode_mem,
     CHECK_LS_FLAG ("ARKStepSetLinearSolver", flag);
     flag = ARKStepSetJacFn(arkode_mem, Bool_val(vhasjac) ? jacfn : NULL);
     CHECK_LS_FLAG("ARKStepSetJacFn", flag);
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    if (Bool_val(vhaslsf)) {
+	ARKStepSetLinSysFn(arkode_mem, linsysfn);
+	CHECK_LS_FLAG("ARKStepSetLinSysFn", flag);
+    }
+#endif
+
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif

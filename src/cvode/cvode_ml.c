@@ -418,6 +418,49 @@ static int bandjacfn(
 }
 #endif
 
+#if 500 <= SUNDIALS_LIB_VERSION
+static int linsysfn(
+	realtype t,
+	N_Vector y,
+	N_Vector fy,
+	SUNMatrix M,
+	booleantype jok,
+	booleantype *jcur,
+	realtype gamma,
+	void *user_data,
+	N_Vector tmp1,
+	N_Vector tmp2,
+	N_Vector tmp3)
+{
+    CAMLparam0();
+    CAMLlocalN (args, 4);
+    CAMLlocal2(session, cb);
+
+    WEAK_DEREF (session, *(value*)user_data);
+
+    cb = CVODE_LS_CALLBACKS_FROM_ML(session);
+    cb = Field (cb, 1);
+
+    args[0] = sunml_cvode_make_jac_arg (t, y, fy,
+				  sunml_cvode_make_triple_tmp (tmp1, tmp2, tmp3));
+    args[1] = MAT_BACKLINK(M);
+    args[2] = Val_bool(jok);
+    args[3] = caml_copy_double(gamma);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (cb, 4, args);
+
+    /* Update jcur; leave it unchanged if an error occurred.  */
+    if (!Is_exception_result (r)) {
+	*jcur = Bool_val (r);
+	CAMLreturnT(int, 0);
+    }
+    r = Extract_exception (r);
+
+    CAMLreturnT(int, sunml_cvode_translate_exception (session, r, RECOVERABLE));
+}
+#endif
+
 static int precsetupfn(realtype t,
 		       N_Vector y,
 		       N_Vector fy,
@@ -679,9 +722,10 @@ CAMLprim value sunml_cvode_dls_lapack_band (value vcvode_mem, value vneqs,
 }
 
 CAMLprim value sunml_cvode_set_linear_solver (value vcvode_mem, value vlsolv,
-					      value vojmat, value vhasjac)
+					      value vojmat, value vhasjac,
+					      value vhaslsf)
 {
-    CAMLparam4(vcvode_mem, vlsolv, vojmat, vhasjac);
+    CAMLparam5(vcvode_mem, vlsolv, vojmat, vhasjac, vhaslsf);
 #if 400 <= SUNDIALS_LIB_VERSION
     void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
     SUNLinearSolver lsolv = LSOLVER_VAL(vlsolv);
@@ -692,6 +736,14 @@ CAMLprim value sunml_cvode_set_linear_solver (value vcvode_mem, value vlsolv,
     CHECK_LS_FLAG ("CVodeSetLinearSolver", flag);
     flag = CVodeSetJacFn(cvode_mem, Bool_val(vhasjac) ? jacfn : NULL);
     CHECK_LS_FLAG("CVodeSetJacFn", flag);
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    if (Bool_val(vhaslsf)) {
+	CVodeSetLinSysFn(cvode_mem, linsysfn);
+	CHECK_LS_FLAG("CVodeSetLinSysFn", flag);
+    }
+#endif
+
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
