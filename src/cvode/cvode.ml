@@ -37,6 +37,7 @@ let sundials_lt530 =
   | 2,_,_ -> true
   | 3,_,_ -> true
   | 4,_,_ -> true
+  | 5,0,_ -> true
   | 5,1,_ -> true
   | 5,2,_ -> true
   | _ -> false
