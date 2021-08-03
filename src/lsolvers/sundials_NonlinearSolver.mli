@@ -427,6 +427,9 @@ exception VectorOpError
     ([SUN_NLS_MEM_NULL]). *)
 exception IncorrectUse
 
+(** Raised if an external library call fails. *)
+exception ExtFail
+
 (** Raised on an attempt to associate a nonlinear solver instance with more
     than one session. *)
 exception NonlinearSolverInUse

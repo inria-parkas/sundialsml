@@ -452,5 +452,6 @@ let _ =
     [|
       VectorOpError;
       IncorrectUse;
+      ExtFail;
     |]
 

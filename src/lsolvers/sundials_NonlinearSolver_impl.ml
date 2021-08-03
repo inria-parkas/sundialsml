@@ -27,6 +27,7 @@ let e = Sundials.RecoverableFailure
 
 exception VectorOpError
 exception IncorrectUse
+exception ExtFail
 exception NonlinearSolverInUse
 
 module Senswrapper = struct (* {{{ *)
