@@ -888,6 +888,101 @@ static int bbandjacfn_withsens(
 
 #endif
 
+#if 500 <= SUNDIALS_LIB_VERSION
+static int blinsysfn_nosens(
+    realtype t,
+    N_Vector y,
+    N_Vector yb,
+    N_Vector fyb,
+    SUNMatrix jacb,
+    booleantype jokb,
+    booleantype *jcurb,
+    realtype gammab,
+    void *user_data,
+    N_Vector tmp1b,
+    N_Vector tmp2b,
+    N_Vector tmp3b)
+{
+    CAMLparam0();
+    CAMLlocalN(args, 4);
+    CAMLlocal2(session, cb);
+
+    WEAK_DEREF (session, *(value*)user_data);
+    cb = CVODE_LS_CALLBACKS_FROM_ML(session);
+    cb = Field (cb, 1); // second in pair
+
+    args[0] = sunml_cvodes_make_jac_arg(t, y, yb, fyb,
+		sunml_cvode_make_triple_tmp(tmp1b, tmp2b, tmp3b));
+    args[1] = MAT_BACKLINK(jacb);
+    args[2] = Val_bool(jokb);
+    args[3] = caml_copy_double(gammab);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (Field(cb, 0), // linsys_fn -> no/with_sens
+				  4, args);
+
+    /* Update jcur; leave it unchanged if an error occurred.  */
+    if (!Is_exception_result (r)) {
+	*jcurb = Bool_val (r);
+	CAMLreturnT(int, 0);
+    }
+    r = Extract_exception (r);
+
+    CAMLreturnT(int, sunml_cvode_translate_exception (session, r, RECOVERABLE));
+}
+
+static int blinsysfn_withsens(
+    realtype t,
+    N_Vector y,
+    N_Vector *ys,
+    N_Vector yb,
+    N_Vector fyb,
+    SUNMatrix jacb,
+    booleantype jokb,
+    booleantype *jcurb,
+    realtype gammab,
+    void *user_data,
+    N_Vector tmp1b,
+    N_Vector tmp2b,
+    N_Vector tmp3b)
+{
+    CAMLparam0();
+    CAMLlocalN(args, 5);
+    CAMLlocal3(session, bsensext, cb);
+    int ns;
+
+    WEAK_DEREF (session, *(value*)user_data);
+    bsensext = CVODE_SENSEXT_FROM_ML(session);
+
+    cb = CVODE_LS_CALLBACKS_FROM_ML(session);
+    cb = Field (cb, 1); // second in pair
+
+    args[0] = sunml_cvodes_make_jac_arg(t, y, yb, fyb,
+		sunml_cvode_make_triple_tmp(tmp1b, tmp2b, tmp3b));
+
+    ns = Int_val(Field(bsensext, RECORD_CVODES_BWD_SESSION_NUMSENSITIVITIES));
+    args[1] = CVODES_BSENSARRAY_FROM_EXT(bsensext);
+    sunml_nvectors_into_array(ns, args[1], ys);
+
+    args[2] = MAT_BACKLINK(jacb);
+    args[3] = Val_bool(jokb);
+    args[4] = caml_copy_double(gammab);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (Field(cb, 0), // linsys_fn -> no/with_sens
+				  5, args);
+
+    /* Update jcur; leave it unchanged if an error occurred.  */
+    if (!Is_exception_result (r)) {
+	*jcurb = Bool_val (r);
+	CAMLreturnT(int, 0);
+    }
+    r = Extract_exception (r);
+
+    CAMLreturnT(int, sunml_cvode_translate_exception (session, r, RECOVERABLE));
+}
+#endif
+
 /* quadrature interface */
 
 CAMLprim value sunml_cvodes_quad_init(value vdata, value vq0)
@@ -1630,10 +1725,18 @@ CAMLprim value sunml_cvodes_adj_dls_lapack_band (value vparent_which, value vsiz
 }
 
 CAMLprim value sunml_cvodes_adj_set_linear_solver (value vparent_which,
-		    value vlsolv, value vojmat, value vhasjac, value vusesens)
+		    value vlsolv, value vojmat, value vjac, value vlsf)
 {
-    CAMLparam5(vparent_which, vlsolv, vojmat, vhasjac, vusesens);
+    CAMLparam5(vparent_which, vlsolv, vojmat, vjac, vlsf);
 #if 400 <= SUNDIALS_LIB_VERSION
+    CAMLlocal4(vhasjac, vjacsens, vhaslsf, vlsfsens);
+
+    vhasjac = Field(vjac, 0);
+    vjacsens = Field(vjac, 1);
+
+    vhaslsf = Field(vlsf, 0);
+    vlsfsens = Field(vlsf, 1);
+
     void *cvode_mem = CVODE_MEM_FROM_ML (Field(vparent_which, 0));
     int which = Int_val(Field(vparent_which, 1));
     SUNLinearSolver lsolv = LSOLVER_VAL(vlsolv);
@@ -1641,17 +1744,30 @@ CAMLprim value sunml_cvodes_adj_set_linear_solver (value vparent_which,
     int flag;
 
     flag = CVodeSetLinearSolverB(cvode_mem, which, lsolv, jmat);
-    CHECK_FLAG ("CVodeSetLinearSolverB", flag);
+    CHECK_LS_FLAG ("CVodeSetLinearSolverB", flag);
 
-    if (Bool_val (vusesens)) {
+    if (Bool_val (vjacsens)) {
 	flag = CVodeSetJacFnBS(cvode_mem, which,
 			       Bool_val (vhasjac) ? bjacfn_withsens : NULL);
-	SCHECK_FLAG("CVodeSetJacFnBS", flag);
+	CHECK_LS_FLAG("CVodeSetJacFnBS", flag);
     } else {
 	flag = CVodeSetJacFnB(cvode_mem, which,
 			       Bool_val (vhasjac) ? bjacfn_nosens : NULL);
-	SCHECK_FLAG("CVodeSetJacFnB", flag);
+	CHECK_LS_FLAG("CVodeSetJacFnB", flag);
     }
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    if (Bool_val (vhaslsf)) {
+	if (Bool_val (vlsfsens)) {
+	    CVodeSetLinSysFnBS(cvode_mem, which, blinsysfn_withsens);
+	    CHECK_LS_FLAG("CVodeSetLinSysFnBS", flag);
+	} else {
+	    CVodeSetLinSysFnB(cvode_mem, which, blinsysfn_nosens);
+	    CHECK_LS_FLAG("CVodeSetLinSysFnB", flag);
+	}
+    }
+#endif
+
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif

@@ -1072,18 +1072,81 @@ module Adjoint : sig (* {{{ *)
       | WithSens of 'm jac_fn_with_sens
         (** Depends on forward sensitivities. *)
 
+    (** Function to compute the linear system matrix or an approximation to it
+        without forward sensitivities. See {!linsys_fn} for details.
+
+        @since 5.0.0
+        @nocvode <node> CVLsLinSysFnB *)
+    type 'm linsys_fn_no_sens =
+      (RealArray.t triple, RealArray.t) jacobian_arg
+      -> 'm
+      -> bool
+      -> float
+      -> bool
+
+    (** Function to compute the linear system matrix or an approximation to it
+        with forward sensitivities. See {!linsys_fn} for details.
+
+        @since 5.0.0
+        @nocvode <node> CVLsLinSysFnBS *)
+    type 'm linsys_fn_with_sens =
+      (RealArray.t triple, RealArray.t) jacobian_arg
+      -> RealArray.t array
+      -> 'm
+      -> bool
+      -> float
+      -> bool
+
+    (** Function to compute the linear system matrix
+        {% $M_B = I - \gamma_B J_B$ %}
+        or an approximation of it for the backward problem. Offers an
+        alternative to evaluating the Jacobian of the right-hand-side function.
+
+        In addition to those shared with the Jacobian function, the arguments of
+        this function are
+        - [m], storage for the computed linear system matrix,
+        - [jok], indicates whether the Jacobian-related data needs to be
+                 updated, and
+        - [gammab], the scalar in the formula above.
+
+        The function should return true only if the Jacobian data was
+        recomputed.
+
+        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+        Any other exception is treated as an unrecoverable error.
+
+        {warning Neither the Jacobian argument elements nor the matrix [m]
+                 should be accessed after the function has returned.}
+
+        @since 5.0.0
+        @nocvodes <node> CVLsLinSysFnB
+        @nocvodes <node> CVLsLinSysFnBS *)
+    type 'm linsys_fn =
+        LNoSens of 'm linsys_fn_no_sens
+        (** Does not depend on forward sensitivities. *)
+      | LWithSens of 'm linsys_fn_with_sens
+        (** Depends on forward sensitivities. *)
+
     (** Create a Cvodes-specific linear solver from a a Jacobian approximation
         function and a generic direct linear solver.
+
         The Jacobian approximation function is optional for dense and banded
         solvers (if not given an internal difference quotient approximation is
         used), but must be provided for other solvers (or [Invalid_argument]
         is raised).
 
+        The [linsys] argument allows to override the standard linear system
+        function that calls [jac] to compute {% $M_B$ %}. This feature is only
+        available in Sundials >= 5.0.0.
+
         @nocvode <node> CVodeSetLinearSolverB
         @nocvode <node> CVodeSetJacFnB
-        @nocvode <node> CVodeSetJacFnBS *)
+        @nocvode <node> CVodeSetJacFnBS
+        @nocvode <node> CVodeSetLinSysFnB
+        @nocvode <node> CVodeSetLinSysFnBS *)
     val solver :
       ?jac:'m jac_fn ->
+      ?linsys:'m linsys_fn ->
       ('m, RealArray.t, 'kind, 't) LinearSolver.t ->
       'kind serial_linear_solver
 

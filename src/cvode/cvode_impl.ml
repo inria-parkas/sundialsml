@@ -75,7 +75,13 @@ module DirectTypes = struct
       mutable jmat : 'm option (* Not used in Sundials >= 3.0.0 *)
     }
 
+  type 'm linsys_fn =
+    (RealArray.t triple, RealArray.t) jacobian_arg -> 'm -> bool -> float -> bool
+
   let no_callback = fun _ _ -> Sundials_impl.crash "no direct callback"
+
+  let no_linsysfn = fun _ _ _ _ ->
+    Sundials_impl.crash "no linear system function callback"
 end
 
 module SpilsCommonTypes = struct
@@ -260,6 +266,30 @@ module AdjointTypes' = struct
         jacfn_sens : 'm jac_fn_with_sens;
         mutable jmat : 'm option
       }
+
+    type 'm linsys_fn_no_sens =
+      (RealArray.t triple, RealArray.t) jacobian_arg
+      -> 'm
+      -> bool
+      -> float
+      -> bool
+
+    type 'm linsys_fn_with_sens =
+      (RealArray.t triple, RealArray.t) jacobian_arg
+      -> RealArray.t array
+      -> 'm
+      -> bool
+      -> float
+      -> bool
+
+    type 'm linsys_fn =
+        LNoSens of 'm linsys_fn_no_sens
+      | LWithSens of 'm linsys_fn_with_sens
+
+    let no_linsysfn =
+      LNoSens (fun _ _ _ _ ->
+        Sundials_impl.crash "no linear system function no sens callback")
+
   end
 
   (* Ditto. *)
@@ -386,8 +416,12 @@ type ('a, 'kind) session = {
          this type can be greatly simplified since we would no longer
          need to distinguish between different "direct" linear solvers.
 
-   Note: The first field must always hold the callback closure
+   Note: The first field must always hold the Jacobian callback closure
          (it is accessed as Field(cb, 0) from cvode_ml.c.
+         The second field must always hold the linear system callback closure
+         (it is accessed as Field(cb, 1) from cvode_ml.c.
+         This organization is used, despite the fact that the two callbacks
+         are never used simultaneously, for simplicity.
 *)
 and ('a, 'kind) linsolv_callbacks =
   | NoCallbacks
@@ -397,46 +431,62 @@ and ('a, 'kind) linsolv_callbacks =
 
   (* Dls *)
   | DlsDenseCallback of Matrix.Dense.t DirectTypes.jac_callback
+                        * Matrix.Dense.t DirectTypes.linsys_fn
   | DlsBandCallback of Matrix.Band.t  DirectTypes.jac_callback
+                        * Matrix.Band.t DirectTypes.linsys_fn
 
   | BDlsDenseCallback
       of Matrix.Dense.t AdjointTypes'.DirectTypes.jac_callback_no_sens
+         * Matrix.Dense.t AdjointTypes'.DirectTypes.linsys_fn
   | BDlsDenseCallbackSens
       of Matrix.Dense.t AdjointTypes'.DirectTypes.jac_callback_with_sens
+         * Matrix.Dense.t AdjointTypes'.DirectTypes.linsys_fn
   | BDlsBandCallback
       of Matrix.Band.t AdjointTypes'.DirectTypes.jac_callback_no_sens
+         * Matrix.Band.t AdjointTypes'.DirectTypes.linsys_fn
   | BDlsBandCallbackSens
       of Matrix.Band.t AdjointTypes'.DirectTypes.jac_callback_with_sens
+         * Matrix.Band.t AdjointTypes'.DirectTypes.linsys_fn
 
   (* Sls *)
   | SlsKluCallback
       : ('s Matrix.Sparse.t) DirectTypes.jac_callback
+        * ('s Matrix.Sparse.t) DirectTypes.linsys_fn
         -> ('a, 'kind) linsolv_callbacks
   | BSlsKluCallback
       : ('s Matrix.Sparse.t) AdjointTypes'.DirectTypes.jac_callback_no_sens
+         * ('s Matrix.Sparse.t) AdjointTypes'.DirectTypes.linsys_fn
         -> ('a, 'kind) linsolv_callbacks
   | BSlsKluCallbackSens
       : ('s Matrix.Sparse.t) AdjointTypes'.DirectTypes.jac_callback_with_sens
+         * ('s Matrix.Sparse.t) AdjointTypes'.DirectTypes.linsys_fn
         -> ('a, 'kind) linsolv_callbacks
 
   | SlsSuperlumtCallback
       : ('s Matrix.Sparse.t) DirectTypes.jac_callback
+        * ('s Matrix.Sparse.t) DirectTypes.linsys_fn
         -> ('a, 'kind) linsolv_callbacks
   | BSlsSuperlumtCallback
       : ('s Matrix.Sparse.t) AdjointTypes'.DirectTypes.jac_callback_no_sens
+         * ('s Matrix.Sparse.t) AdjointTypes'.DirectTypes.linsys_fn
         -> ('a, 'kind) linsolv_callbacks
   | BSlsSuperlumtCallbackSens
       : ('s Matrix.Sparse.t) AdjointTypes'.DirectTypes.jac_callback_with_sens
+         * ('s Matrix.Sparse.t) AdjointTypes'.DirectTypes.linsys_fn
         -> ('a, 'kind) linsolv_callbacks
 
   (* Custom *)
   | DirectCustomCallback
-      : 'm DirectTypes.jac_callback -> ('a, 'kind) linsolv_callbacks
+      : 'm DirectTypes.jac_callback
+        * 'm DirectTypes.linsys_fn
+        -> ('a, 'kind) linsolv_callbacks
   | BDirectCustomCallback
       : 'm AdjointTypes'.DirectTypes.jac_callback_no_sens
+         * 'm AdjointTypes'.DirectTypes.linsys_fn
       -> ('a, 'kind) linsolv_callbacks
   | BDirectCustomCallbackSens
       : 'm AdjointTypes'.DirectTypes.jac_callback_with_sens
+         * 'm AdjointTypes'.DirectTypes.linsys_fn
       -> ('a, 'kind) linsolv_callbacks
 
   (* Spils *)

@@ -66,7 +66,18 @@ module DirectTypes = struct
       mutable jmat : 'm option (* Not used in Sundials >= 3.0.0 *)
     }
 
+  type 'm linsys_fn =
+    (RealArray.t triple, RealArray.t) jacobian_arg
+    -> 'm
+    -> 'm option
+    -> bool
+    -> float
+    -> bool
+
   let no_callback = fun _ _ -> Sundials_impl.crash "no direct callback"
+
+  let no_linsysfn = fun _ _ _ _ _ ->
+    Sundials_impl.crash "no linear system function callback"
 
 end
 
@@ -317,20 +328,26 @@ and ('a, 'kind) linsolv_callbacks =
   (* Dls *)
   | DlsDenseCallback
       of Matrix.Dense.t DirectTypes.jac_callback
+         * Matrix.Dense.t DirectTypes.linsys_fn
   | DlsBandCallback
       of Matrix.Band.t  DirectTypes.jac_callback
+         * Matrix.Band.t DirectTypes.linsys_fn
 
   (* Sls *)
   | SlsKluCallback
       : ('s Matrix.Sparse.t) DirectTypes.jac_callback
+        * ('s Matrix.Sparse.t) DirectTypes.linsys_fn
         -> ('a, 'kind) linsolv_callbacks
   | SlsSuperlumtCallback
       : ('s Matrix.Sparse.t) DirectTypes.jac_callback
+        * ('s Matrix.Sparse.t) DirectTypes.linsys_fn
         -> ('a, 'kind) linsolv_callbacks
 
   (* Custom *)
-  | DirectCustomCallback :
-      'm DirectTypes.jac_callback -> ('a, 'kind) linsolv_callbacks
+  | DirectCustomCallback
+      : 'm DirectTypes.jac_callback
+        * 'm DirectTypes.linsys_fn
+        -> ('a, 'kind) linsolv_callbacks
 
   (* Spils *)
   | SpilsCallback of 'a SpilsTypes'.jac_times_vec_fn option

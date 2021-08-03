@@ -513,28 +513,30 @@ module ARKStep = struct (* {{{ *)
       | _ -> if jac = None then invalid_arg "A Jacobian function is required"
 
     let set_ls_callbacks (type m) (type tag)
-          ?jac (solver_data : (m, 'nd, 'nk, tag) LSI.solver_data)
+          ?jac ?(linsys : m linsys_fn option)
+          (solver_data : (m, 'nd, 'nk, tag) LSI.solver_data)
           (mat : ('mk, m, 'nd, 'nk) Matrix.t) session =
       let cb = { jacfn = (match jac with None -> no_callback | Some f -> f);
                  jmat  = (None : m option) } in
+      let ls = match linsys with None -> DirectTypes.no_linsysfn | Some f -> f in
       begin match solver_data with
       | LSI.Dense ->
-          session.ls_callbacks <- DlsDenseCallback cb
+          session.ls_callbacks <- DlsDenseCallback (cb, ls)
       | LSI.LapackDense ->
-          session.ls_callbacks <- DlsDenseCallback cb
+          session.ls_callbacks <- DlsDenseCallback (cb, ls)
       | LSI.Band ->
-          session.ls_callbacks <- DlsBandCallback cb
+          session.ls_callbacks <- DlsBandCallback (cb, ls)
       | LSI.LapackBand ->
-          session.ls_callbacks <- DlsBandCallback cb
+          session.ls_callbacks <- DlsBandCallback (cb, ls)
       | LSI.Klu _ ->
           if jac = None then invalid_arg "Klu requires Jacobian function";
-          session.ls_callbacks <- SlsKluCallback cb
+          session.ls_callbacks <- SlsKluCallback (cb, ls)
       | LSI.Superlumt _ ->
           if jac = None then invalid_arg "Superlumt requires Jacobian function";
-          session.ls_callbacks <- SlsSuperlumtCallback cb
+          session.ls_callbacks <- SlsSuperlumtCallback (cb, ls)
       | LSI.Custom _ ->
           check_dqjac jac mat;
-          session.ls_callbacks <- DirectCustomCallback cb
+          session.ls_callbacks <- DirectCustomCallback (cb, ls)
       | _ -> assert false
       end;
       session.ls_precfns <- NoPrecFns
@@ -554,6 +556,7 @@ module ARKStep = struct (* {{{ *)
         -> ('m, 'd, 'k) LSI.cptr
         -> ('mk, 'm, 'd, 'k) Matrix.t option
         -> bool
+        -> bool
         -> unit
       = "sunml_arkode_ark_set_linear_solver"
 
@@ -561,15 +564,18 @@ module ARKStep = struct (* {{{ *)
       | Some m -> m
       | None -> failwith "a direct linear solver is required"
 
-    let solver ?jac ls session nv =
-    let LSI.LS ({ rawptr; solver; matrix } as hls) = ls in
-    let matrix = assert_matrix matrix in
-      set_ls_callbacks ?jac solver matrix session;
+    let solver ?jac ?linsys ls session nv =
+      let LSI.LS ({ rawptr; solver; matrix } as hls) = ls in
+      let matrix = assert_matrix matrix in
+      if sundials_lt500 && linsys <> None
+        then raise Config.NotImplementedBySundialsVersion;
+      set_ls_callbacks ?jac ?linsys solver matrix session;
       if in_compat_mode2
          then make_compat (jac <> None) solver matrix session
       else if in_compat_mode2_3
            then c_dls_set_linear_solver session rawptr matrix (jac <> None)
-      else c_set_linear_solver session rawptr (Some matrix) (jac <> None);
+      else c_set_linear_solver session rawptr (Some matrix) (jac <> None)
+                                                            (linsys <> None);
       LSI.attach ls;
       session.ls_solver <- LSI.HLS hls
 
@@ -577,16 +583,16 @@ module ARKStep = struct (* {{{ *)
     let invalidate_callback session =
       if in_compat_mode2 then
         match session.ls_callbacks with
-        | DlsDenseCallback ({ jmat = Some d } as cb) ->
+        | DlsDenseCallback ({ jmat = Some d } as cb, _) ->
             Matrix.Dense.invalidate d;
             cb.jmat <- None
-        | DlsBandCallback  ({ jmat = Some d } as cb) ->
+        | DlsBandCallback  ({ jmat = Some d } as cb, _) ->
             Matrix.Band.invalidate d;
             cb.jmat <- None
-        | SlsKluCallback ({ jmat = Some d } as cb) ->
+        | SlsKluCallback ({ jmat = Some d } as cb, _) ->
             Matrix.Sparse.invalidate d;
             cb.jmat <- None
-        | SlsSuperlumtCallback ({ jmat = Some d } as cb) ->
+        | SlsSuperlumtCallback ({ jmat = Some d } as cb, _) ->
             Matrix.Sparse.invalidate d;
             cb.jmat <- None
         | _ -> ()
@@ -708,6 +714,7 @@ module ARKStep = struct (* {{{ *)
         -> ('m, 'd, 'k) LSI.cptr
         -> ('mk, 'm, 'd, 'k) Matrix.t option
         -> bool
+        -> bool
         -> unit
       = "sunml_arkode_ark_set_linear_solver"
 
@@ -774,7 +781,7 @@ module ARKStep = struct (* {{{ *)
         if jac_times_vec <> None then c_set_jac_times session true false
       end else
         if in_compat_mode2_3 then c_spils_set_linear_solver session rawptr
-        else c_set_linear_solver session rawptr None false;
+        else c_set_linear_solver session rawptr None false false;
         LSI.attach ls;
         session.ls_solver <- LSI.HLS hls;
         LSI.(impl_set_prec_type rawptr solver prec_type false);
