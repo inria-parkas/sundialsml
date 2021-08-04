@@ -57,6 +57,10 @@ type 'd nvector_ops = { (* {{{ *)
       [lrw] is the number of realtype words and [liw] is the number of
       integer words . *)
 
+  n_vgetlength       : 'd -> int;
+  (** Returns the number of "active" entries. This value is cumulative
+      across all processes in a parallel environment. *)
+
   n_vlinearsum       : float -> 'd -> float -> 'd -> 'd -> unit;
   (** [n_vlinearsum a x b y z] calculates [z = ax + by]. *)
 

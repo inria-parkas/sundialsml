@@ -64,6 +64,7 @@ module type NVECTOR_OPS =
     val n_vminquotient  : t -> t -> float
 
     val n_vspace        : t -> int * int
+    val n_vgetlength    : t -> int
 
     val n_vlinearcombination
       : Sundials.RealArray.t -> t array -> t -> unit

@@ -84,7 +84,7 @@ CAMLprim value sunml_nvec_wrap_pthreads(value nthreads,
     ops->nvcloneempty      = NULL;
     /* This is registered but only ever called for C-allocated clones. */
     ops->nvdestroy         = sunml_free_cnvec;
-#if SUNDIALS_LIB_VERSION >= 270
+#if 270 <= SUNDIALS_LIB_VERSION
     ops->nvgetvectorid	   = N_VGetVectorID_Pthreads;
 #endif
 
@@ -111,7 +111,7 @@ CAMLprim value sunml_nvec_wrap_pthreads(value nthreads,
     ops->nvconstrmask      = N_VConstrMask_Pthreads;
     ops->nvminquotient     = N_VMinQuotient_Pthreads;
 
-#if SUNDIALS_LIB_VERSION >= 400
+#if 400 <= SUNDIALS_LIB_VERSION
     /* fused vector operations (optional, NULL means disabled by default) */
     ops->nvlinearcombination = NULL;
     ops->nvscaleaddmulti     = NULL;
@@ -125,6 +125,11 @@ CAMLprim value sunml_nvec_wrap_pthreads(value nthreads,
     ops->nvwrmsnormmaskvectorarray      = NULL;
     ops->nvscaleaddmultivectorarray     = NULL;
     ops->nvlinearcombinationvectorarray = NULL;
+#endif
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    ops->nvgetlength			= N_VGetLength_Pthreads;
+    ops->nvgetcommunicator		= NULL;
 #endif
 
     /* Create content */
@@ -422,6 +427,18 @@ CAMLprim value sunml_nvec_pthreads_n_vspace(value vx)
     Store_field(r, 0, Val_index(lrw));
     Store_field(r, 1, Val_index(liw));
 
+    CAMLreturn(r);
+}
+
+CAMLprim value sunml_nvec_pthreads_n_vgetlength(value vx)
+{
+    CAMLparam1(vx);
+    CAMLlocal1(r);
+#if 500 <= SUNDIALS_LIB_VERSION
+    r = Val_int(N_VGetLength_Pthreads(NVEC_VAL(vx)));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn(r);
 }
 

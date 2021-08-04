@@ -177,6 +177,9 @@ module Ops = struct (* {{{ *)
   external n_vspace  : t -> int * int
     = "sunml_nvec_par_n_vspace"
 
+  external n_vgetlength  : t -> int
+    = "sunml_nvec_par_n_vgetlength"
+
   external n_vlinearcombination : RealArray.t -> t array -> t -> unit
     = "sunml_nvec_par_n_vlinearcombination"
 
@@ -418,6 +421,8 @@ module MakeOps =
       done
 
     let n_vspace (_, ng, comm) = (ng, 2 * Mpi.comm_size comm)
+
+    let n_vgetlength (_, ng, _) = ng
 
     (* fused and array operations *)
 
@@ -1023,6 +1028,8 @@ module DataOps =
       done
 
     let n_vspace (_, ng, comm) = (ng, 2 * Mpi.comm_size comm)
+
+    let n_vgetlength (_, ng, _) = ng
 
     (* fused and array operations *)
 

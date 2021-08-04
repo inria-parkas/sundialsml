@@ -13,10 +13,12 @@
 type kind
 type 'a t = ('a, kind) Nvector.t
 
+(* Must match with nvector_ml.h:nvector_ops_tag *)
 type 'a nvector_ops = { (* {{{ *)
   n_vcheck           : 'a -> 'a -> bool;
   n_vclone           : 'a -> 'a;
   n_vspace           : ('a -> (int * int)) option;
+  n_vgetlength       : 'a -> int;
   n_vlinearsum       : float -> 'a -> float -> 'a -> 'a -> unit;
   n_vconst           : float -> 'a -> unit;
   n_vprod            : 'a -> 'a -> 'a -> unit;
@@ -143,6 +145,7 @@ let add_tracing msg ops =
       n_vcheck           = n_vcheck;
       n_vclone           = n_vclone;
       n_vspace           = n_vspace;
+      n_vgetlength       = n_vgetlength;
       n_vlinearsum       = n_vlinearsum;
       n_vconst           = n_vconst;
       n_vprod            = n_vprod;
@@ -189,6 +192,7 @@ let add_tracing msg ops =
   and tr_nvclone a = pr "nvclone"; n_vclone a
   (* ... {{{ *)
   and tr_nvspace = fo n_vspace (fun f -> fun a -> (pr "nvspace"; f a))
+  and tr_nvgetlength a = pr "nvgetlength"; n_vgetlength a
   and tr_nvlinearsum a x b y z = pr "nvlinearsum"; n_vlinearsum a x b y z
   and tr_nvconst c z = pr "nvconst"; n_vconst c z
   and tr_nvprod x y z = pr "nvprod"; n_vprod x y z
@@ -251,6 +255,7 @@ let add_tracing msg ops =
       n_vcheck           = tr_nvcheck;
       n_vclone           = tr_nvclone;
       n_vspace           = tr_nvspace;
+      n_vgetlength       = tr_nvgetlength;
       n_vlinearsum       = tr_nvlinearsum;
       n_vconst           = tr_nvconst;
       n_vprod            = tr_nvprod;
@@ -349,6 +354,8 @@ module MakeOps = functor (A : sig
         match A.ops.n_vspace with
         | None -> (fun x -> raise OperationNotSupported)
         | Some f -> (fun x -> f (uv x))
+
+      let n_vgetlength a = A.ops.n_vgetlength (uv a)
 
       let n_vlinearcombination =
         match A.ops.n_vlinearcombination with
@@ -455,6 +462,8 @@ module MakeOps = functor (A : sig
         match A.ops.n_vspace with
         | None -> (fun x -> raise OperationNotSupported)
         | Some f -> f
+
+      let n_vgetlength = A.ops.n_vgetlength
 
       let n_vlinearcombination =
         match A.ops.n_vlinearcombination with
