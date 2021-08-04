@@ -128,8 +128,18 @@ CAMLprim value sunml_nvec_wrap_pthreads(value nthreads,
 #endif
 
 #if 500 <= SUNDIALS_LIB_VERSION
-    ops->nvgetlength			= N_VGetLength_Pthreads;
-    ops->nvgetcommunicator		= NULL;
+    ops->nvgetlength	    = N_VGetLength_Pthreads;
+    ops->nvgetcommunicator  = NULL;
+
+    ops->nvdotprodlocal     = N_VDotProd_Pthreads;
+    ops->nvmaxnormlocal     = N_VMaxNorm_Pthreads;
+    ops->nvminlocal         = N_VMin_Pthreads;
+    ops->nvl1normlocal      = N_VL1Norm_Pthreads;
+    ops->nvinvtestlocal     = N_VInvTest_Pthreads;
+    ops->nvconstrmasklocal  = N_VConstrMask_Pthreads;
+    ops->nvminquotientlocal = N_VMinQuotient_Pthreads;
+    ops->nvwsqrsumlocal     = N_VWSqrSumLocal_Pthreads;
+    ops->nvwsqrsummasklocal = N_VWSqrSumMaskLocal_Pthreads;
 #endif
 
     /* Create content */
@@ -685,6 +695,56 @@ CAMLprim value sunml_nvec_pthreads_n_vlinearcombinationvectorarray(value vac,
     CAMLreturn(Val_unit);
 }
 
+/** Reduce operations for pthreads nvectors */
+
+CAMLprim value sunml_nvec_pthreads_n_vwsqrsumlocal(value vx, value vw)
+{
+    CAMLparam2(vx, vw);
+    realtype r;
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    N_Vector x = NVEC_VAL(vx);
+    N_Vector w = NVEC_VAL(vw);
+
+#if SUNDIALS_ML_SAFE == 1
+    if (NV_LENGTH_PT(w) != NV_LENGTH_PT(x))
+	caml_invalid_argument("Nvector_pthreads.n_vwsqrsumlocal");
+#endif
+
+    r = N_VWSqrSumLocal_Pthreads(x, w);
+
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(caml_copy_double(r));
+}
+
+CAMLprim value sunml_nvec_pthreads_n_vwsqrsummasklocal(value vx, value vw,
+						       value vid)
+{
+    CAMLparam3(vx, vw, vid);
+    realtype r;
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    N_Vector x = NVEC_VAL(vx);
+    N_Vector w = NVEC_VAL(vw);
+    N_Vector id = NVEC_VAL(vid);
+
+#if SUNDIALS_ML_SAFE == 1
+    if (NV_LENGTH_PT(w) != NV_LENGTH_PT(x)
+	    || NV_LENGTH_PT(id) != NV_LENGTH_PT(x))
+	caml_invalid_argument("Nvector_pthreads.n_vwsqrsummasklocal");
+#endif
+
+    r = N_VWSqrSumMaskLocal_Pthreads(x, w, id);
+
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(caml_copy_double(r));
+}
 
 /** Selectively activate fused and array operations for serial nvectors */
 

@@ -87,6 +87,18 @@ module type NVECTOR_OPS =
       : Sundials.RealArray.t -> t array -> t array array -> t array array -> unit
     val n_vlinearcombinationvectorarray
       : Sundials.RealArray.t -> t array array -> t array -> unit
+
+    module Local : sig
+      val n_vdotprod     : t -> t -> float
+      val n_vmaxnorm     : t -> float
+      val n_vmin         : t -> float
+      val n_vl1norm      : t -> float
+      val n_vinvtest     : t -> t -> bool
+      val n_vconstrmask  : t -> t -> t -> bool
+      val n_vminquotient : t -> t -> float
+      val n_vwsqrsum     : t -> t -> float
+      val n_vwsqrsummask : t -> t -> t -> float
+    end
   end
 
 module type NVECTOR =

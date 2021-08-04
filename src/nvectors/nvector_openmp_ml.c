@@ -154,8 +154,18 @@ CAMLprim value sunml_nvec_wrap_openmp(value nthreads,
 #endif
 
 #if 500 <= SUNDIALS_LIB_VERSION
-    ops->nvgetlength			= N_VGetLength_OpenMP;
-    ops->nvgetcommunicator		= NULL;
+    ops->nvgetlength	    = N_VGetLength_OpenMP;
+    ops->nvgetcommunicator  = NULL;
+
+    ops->nvdotprodlocal     = N_VDotProd_OpenMP;
+    ops->nvmaxnormlocal     = N_VMaxNorm_OpenMP;
+    ops->nvminlocal         = N_VMin_OpenMP;
+    ops->nvl1normlocal      = N_VL1Norm_OpenMP;
+    ops->nvinvtestlocal     = N_VInvTest_OpenMP;
+    ops->nvconstrmasklocal  = N_VConstrMask_OpenMP;
+    ops->nvminquotientlocal = N_VMinQuotient_OpenMP;
+    ops->nvwsqrsumlocal     = N_VWSqrSumLocal_OpenMP;
+    ops->nvwsqrsummasklocal = N_VWSqrSumMaskLocal_OpenMP;
 #endif
 
     /* Create content */
@@ -716,6 +726,55 @@ CAMLprim value sunml_nvec_openmp_n_vlinearcombinationvectorarray(value vac,
     CAMLreturn(Val_unit);
 }
 
+/** Reduce operations for openmp nvectors */
+
+CAMLprim value sunml_nvec_openmp_n_vwsqrsumlocal(value vx, value vw)
+{
+    CAMLparam2(vx, vw);
+    realtype r;
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    N_Vector x = NVEC_VAL(vx);
+    N_Vector w = NVEC_VAL(vw);
+
+#if SUNDIALS_ML_SAFE == 1
+    if (NV_LENGTH_OMP(w) != NV_LENGTH_OMP(x))
+	caml_invalid_argument("Nvector_openmp.n_vwsqrsumlocal");
+#endif
+
+    r = N_VWSqrSumLocal_OpenMP(x, w);
+
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(caml_copy_double(r));
+}
+
+CAMLprim value sunml_nvec_openmp_n_vwsqrsummasklocal(value vx, value vw, value vid)
+{
+    CAMLparam3(vx, vw, vid);
+    realtype r;
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    N_Vector x = NVEC_VAL(vx);
+    N_Vector w = NVEC_VAL(vw);
+    N_Vector id = NVEC_VAL(vid);
+
+#if SUNDIALS_ML_SAFE == 1
+    if (NV_LENGTH_OMP(w) != NV_LENGTH_OMP(x)
+	    || NV_LENGTH_OMP(id) != NV_LENGTH_OMP(x))
+	caml_invalid_argument("Nvector_openmp.n_vwsqrsummasklocal");
+#endif
+
+    r = N_VWSqrSumMaskLocal_OpenMP(x, w, id);
+
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(caml_copy_double(r));
+}
 
 /** Selectively activate fused and array operations for serial nvectors */
 
