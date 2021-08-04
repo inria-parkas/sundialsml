@@ -159,6 +159,8 @@ module Custom = struct (* {{{ *)
 
     get_res_id : unit -> ('data, 'kind) Nvector.t;
 
+    get_last_flag : unit -> int;
+
     get_work_space : unit -> int * int;
 
     set_prec_type : Iterative.preconditioning_type -> unit;
@@ -172,6 +174,7 @@ module Custom = struct (* {{{ *)
     has_get_num_iters       : bool;
     has_get_res_norm        : bool;
     has_get_res_id          : bool;
+    has_get_last_flag       : bool;
     has_get_work_space      : bool;
   }
 

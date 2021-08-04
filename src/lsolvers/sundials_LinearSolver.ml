@@ -514,6 +514,8 @@ module Custom = struct (* {{{ *)
 
       get_res_id : ('lsolver -> ('data, 'kind) Nvector.t) option;
 
+      get_last_flag : ('lsolver -> int) option;
+
       get_work_space : ('lsolver -> int * int) option;
 
       set_prec_type
@@ -566,6 +568,7 @@ module Custom = struct (* {{{ *)
              get_num_iters = fget_num_iters;
              get_res_norm = fget_res_norm;
              get_res_id = fget_res_id;
+             get_last_flag = fget_last_flag;
              get_work_space = fget_work_space;
              set_prec_type = fset_prec_type } ldata mat =
     (match Config.sundials_version with
@@ -583,6 +586,7 @@ module Custom = struct (* {{{ *)
         get_num_iters = mapu "get_num_iters" fget_num_iters ldata;
         get_res_norm = mapu "get_res_norm" fget_res_norm ldata;
         get_res_id = mapu "get_res_id" fget_res_id ldata;
+        get_last_flag = mapu "get_last_flag" fget_last_flag ldata;
         get_work_space = mapu "get_work_space" fget_work_space ldata;
         (* set_prec_type is only every called from OCaml and never from C. *)
         set_prec_type = mapignore fset_prec_type ldata;
@@ -594,6 +598,7 @@ module Custom = struct (* {{{ *)
           has_get_num_iters       = fget_num_iters <> None;
           has_get_res_norm        = fget_res_norm <> None;
           has_get_res_id          = fget_res_id <> None;
+          has_get_last_flag       = fget_last_flag <> None;
           has_get_work_space      = fget_work_space <> None;
        })
     in
@@ -645,6 +650,8 @@ module Custom = struct (* {{{ *)
           failwith "internal error: Direct.Custom.get_res_norm");
         get_res_id = (fun _ ->
           failwith "internal error: Direct.Custom.get_res_id");
+        get_last_flag = (fun _ ->
+          failwith "internal error: Direct.Custom.get_last_flag");
         get_work_space = (match fgws with
           | Some f -> (fun _ -> f ldata)
           | None -> (fun () -> (0, 0)));
@@ -657,6 +664,7 @@ module Custom = struct (* {{{ *)
           has_get_num_iters       = false;
           has_get_res_norm        = false;
           has_get_res_id          = false;
+          has_get_last_flag       = false;
           has_get_work_space      = fgws <> None;
        })
     in
@@ -747,6 +755,11 @@ external c_res_id : ('m, 'd, 'k) cptr -> 'd
   = "sunml_lsolver_res_id"
 
 let get_res_id (LS { rawptr }) = c_res_id rawptr
+
+external c_last_flag : ('m, 'd, 'k) cptr -> int
+  = "sunml_lsolver_last_flag"
+
+let get_last_flag (LS { rawptr }) = c_last_flag rawptr
 
 external c_space : ('m, 'd, 'k) cptr -> int * int
   = "sunml_lsolver_space"
