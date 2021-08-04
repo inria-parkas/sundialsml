@@ -2266,6 +2266,9 @@ static void csmat_clone_ops(SUNMatrix dst, SUNMatrix src)
     ops->copy      = src->ops->copy;
     ops->scaleadd  = src->ops->scaleadd;
     ops->scaleaddi = src->ops->scaleaddi;
+#if 500 <= SUNDIALS_LIB_VERSION
+    ops->matvecsetup = src->ops->matvecsetup;
+#endif
     ops->matvec    = src->ops->matvec;
     ops->space     = src->ops->space;
 }
@@ -2332,14 +2335,16 @@ static int csmat_custom_zero(SUNMatrix A);
 static int csmat_custom_copy(SUNMatrix A, SUNMatrix B);
 static int csmat_custom_scale_add(realtype c, SUNMatrix A, SUNMatrix B);
 static int csmat_custom_scale_addi(realtype c, SUNMatrix A);
+static int csmat_custom_matvecsetup(SUNMatrix A);
 static int csmat_custom_matvec(SUNMatrix A, N_Vector x, N_Vector y);
 static int csmat_custom_space(SUNMatrix A, long int *lenrw, long int *leniw);
 
 #endif
 
-CAMLprim value sunml_matrix_wrap(value vid, value vcontent, value vpayload)
+CAMLprim value sunml_matrix_wrap(value vid, value vcontent, value vpayload,
+				 value vhasmatvecsetup)
 {
-    CAMLparam3(vid, vcontent, vpayload);
+    CAMLparam4(vid, vcontent, vpayload, vhasmatvecsetup);
     CAMLlocal1(vr);
 
 #if SUNDIALS_LIB_VERSION >= 300
@@ -2364,6 +2369,9 @@ CAMLprim value sunml_matrix_wrap(value vid, value vcontent, value vpayload)
 	smat->ops->copy        = SUNMatCopy_Dense;
 	smat->ops->scaleadd    = SUNMatScaleAdd_Dense;
 	smat->ops->scaleaddi   = SUNMatScaleAddI_Dense;
+#if 500 <= SUNDIALS_LIB_VERSION
+	smat->ops->matvecsetup = NULL;
+#endif
 	smat->ops->matvec      = SUNMatMatvec_Dense;
 	smat->ops->space       = SUNMatSpace_Dense;
 	break;
@@ -2376,6 +2384,9 @@ CAMLprim value sunml_matrix_wrap(value vid, value vcontent, value vpayload)
 	smat->ops->copy        = csmat_band_copy;         // ours
 	smat->ops->scaleadd    = csmat_band_scale_add;    // ours
 	smat->ops->scaleaddi   = SUNMatScaleAddI_Band;
+#if 500 <= SUNDIALS_LIB_VERSION
+	smat->ops->matvecsetup = NULL;
+#endif
 	smat->ops->matvec      = SUNMatMatvec_Band;
 	smat->ops->space       = SUNMatSpace_Band;
 	break;
@@ -2388,6 +2399,9 @@ CAMLprim value sunml_matrix_wrap(value vid, value vcontent, value vpayload)
 	smat->ops->copy        = csmat_sparse_copy;	 // ours
 	smat->ops->scaleadd    = csmat_sparse_scale_add;  // ours
 	smat->ops->scaleaddi   = csmat_sparse_scale_addi; // ours
+#if 500 <= SUNDIALS_LIB_VERSION
+	smat->ops->matvecsetup = NULL;
+#endif
 	smat->ops->matvec      = SUNMatMatvec_Sparse;
 	smat->ops->space       = SUNMatSpace_Sparse;
 	break;
@@ -2404,6 +2418,11 @@ CAMLprim value sunml_matrix_wrap(value vid, value vcontent, value vpayload)
 	smat->ops->scaleadd    = csmat_custom_scale_add;
 	smat->ops->scaleaddi   = csmat_custom_scale_addi;
 	smat->ops->matvec      = csmat_custom_matvec;
+#if 500 <= SUNDIALS_LIB_VERSION
+	smat->ops->matvecsetup =
+	    Bool_val(vhasmatvecsetup) ? csmat_custom_matvecsetup
+				      : NULL;
+#endif
 	smat->ops->space       = csmat_custom_space;
 	break;
     }
@@ -2508,6 +2527,23 @@ static int csmat_custom_scale_addi(realtype c, SUNMatrix A)
     CAMLreturnT(int, 0);
 }
 
+#if 500 <= SUNDIALS_LIB_VERSION
+static int csmat_custom_matvecsetup(SUNMatrix A)
+{
+    CAMLparam0();
+    CAMLlocal2(mlop, r);
+    mlop = Some_val (GET_OP(A, RECORD_MAT_MATRIXOPS_MATVEC_SETUP));
+
+    r = caml_callback_exn(mlop, MAT_BACKLINK(A));
+    if (Is_exception_result (r)) {
+	r = Extract_exception(r);
+	CAMLreturnT(int, 1);
+    }
+
+    CAMLreturnT(int, 0);
+}
+#endif
+
 static int csmat_custom_matvec(SUNMatrix A, N_Vector x, N_Vector y)
 {
     CAMLparam0();
@@ -2561,6 +2597,22 @@ CAMLprim void sunml_matrix_scale_addi(value vc, value va)
 #if SUNDIALS_LIB_VERSION >= 300
     if (SUNMatScaleAddI(Double_val(vc), MAT_VAL(va)))
 	caml_failwith("SUNMatScaleAddI");
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn0;
+}
+
+CAMLprim void sunml_matrix_matvecsetup(value va)
+{
+    CAMLparam1(va);
+#if 500 <= SUNDIALS_LIB_VERSION
+    SUNMatrix A = MAT_VAL(va);
+
+    if (A->ops->matvecsetup) {
+	if (SUNMatMatvecSetup(A))
+	    caml_failwith("SUNMatMatvecsetup");
+    }
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
