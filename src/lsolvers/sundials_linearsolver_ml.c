@@ -1202,11 +1202,20 @@ CAMLprim value sunml_lsolver_make_custom(value vlstype, value vlsid,
 
     /* Attach operations */
     ops->gettype           = callml_get_type;
+
 #if 500 <= SUNDIALS_LIB_VERSION
     ops->getid		   = callml_custom_get_id;
-#endif
+    ops->initialize        =
+	Bool_val(Field(vhasops, RECORD_LSOLVER_HASOPS_INIT))
+	? callml_custom_initialize : NULL;
+    ops->setup             =
+	Bool_val(Field(vhasops, RECORD_LSOLVER_HASOPS_SETUP))
+	? callml_custom_setup : NULL;
+#else
     ops->initialize	   = callml_custom_initialize;
     ops->setup             = callml_custom_setup;
+#endif
+
     ops->solve             = callml_custom_solve;
     ops->lastflag          = NULL;
     ops->free              = callml_custom_free;

@@ -187,6 +187,8 @@ module Custom = struct (* {{{ *)
 
   (* The fields and their order must match linearSolver_ml.h:lsolver_hasops_index *)
   type has_ops = {
+    has_init                : bool;
+    has_setup               : bool;
     has_set_atimes          : bool;
     has_set_preconditioner  : bool;
     has_set_scaling_vectors : bool;
