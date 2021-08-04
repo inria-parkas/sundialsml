@@ -81,6 +81,16 @@ val global_length : t -> int
 (** Returns the communicator used for the parallel nvector. *)
 val communicator : t -> Mpi.communicator
 
+(** Return the communicator associated with any nvector.
+
+    @raise Nvector.IncompatibleNvector The nvector has no communicator.
+    @nocvode <node> N_VGetCommunicator
+    @since 5.0.0 *)
+val get_communicator : ('d, 'k) Nvector.t -> Mpi.communicator
+
+(** Hides an MPI communicator for use in custom nvector functions. *)
+val hide_communicator : Mpi.communicator -> Nvector_custom.communicator
+
 (** Selectively enable or disable fused and array operations.
     The [with_fused_ops] argument enables or disables all such operations.
 

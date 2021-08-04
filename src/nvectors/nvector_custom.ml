@@ -13,6 +13,8 @@
 type kind
 type 'a t = ('a, kind) Nvector.t
 
+type communicator
+
 (* Must match with nvector_ml.h:nvector_ops_tag *)
 type 'a nvector_ops = { (* {{{ *)
   n_vcheck           : 'a -> 'a -> bool;
@@ -40,6 +42,8 @@ type 'a nvector_ops = { (* {{{ *)
   n_vwrmsnormmask    : ('a -> 'a -> 'a -> float) option;
   n_vconstrmask      : ('a -> 'a -> 'a -> bool) option;
   n_vminquotient     : ('a -> 'a -> float) option;
+
+  n_vgetcommunicator : ('a -> communicator) option;
 
   n_vlinearcombination :
     (Sundials.RealArray.t -> 'a array -> 'a -> unit) option;
@@ -179,6 +183,8 @@ let add_tracing msg ops =
       n_vconstrmask      = n_vconstrmask;
       n_vminquotient     = n_vminquotient;
 
+      n_vgetcommunicator = n_vgetcommunicator;
+
       n_vlinearcombination            = n_vlinearcombination;
       n_vscaleaddmulti                = n_vscaleaddmulti;
       n_vdotprodmulti                 = n_vdotprodmulti;
@@ -237,6 +243,9 @@ let add_tracing msg ops =
     fo n_vconstrmask (fun f -> fun c x m -> pr "nvconstrmask"; f c x m)
   and tr_nvminquotient =
     fo n_vminquotient (fun f -> fun n d -> pr "nvminquotient"; f n d)
+
+  and tr_nvgetcommunicator =
+    fo n_vgetcommunicator (fun f -> fun x -> pr "nvgetcommunicator"; f x)
 
   and tr_nvlinearcombination =
     fo n_vlinearcombination
@@ -317,6 +326,8 @@ let add_tracing msg ops =
       n_vwrmsnormmask    = tr_nvwrmsnormmask;
       n_vconstrmask      = tr_nvconstrmask;
       n_vminquotient     = tr_nvminquotient;
+
+      n_vgetcommunicator = tr_nvgetcommunicator;
 
       n_vlinearcombination            = tr_nvlinearcombination;
       n_vscaleaddmulti                = tr_nvscaleaddmulti;

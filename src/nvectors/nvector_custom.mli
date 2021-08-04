@@ -26,6 +26,10 @@ type kind
 (** The type scheme of custom nvectors. *)
 type 'd t = ('d, kind) Nvector.t
 
+(** Represents an MPI communicator without introducing any unwanted
+    dependencies on MPI. See {!Nvector_parallel.hide_communicator}. *)
+type communicator
+
 (** The set of operations required to define an nvector. Some operations
     are optional; default values are either provided by the OCaml interface
     or the Sundials library.
@@ -129,6 +133,9 @@ type 'd nvector_ops = { (* {{{ *)
   (** [n_vminquotient num denom] returns the minimum of [num(i) / denom(i)].
       Zero [denom] elements are skipped. If no such quotients are found,
       then {{!Sundials_Config.big_real}Config.big_real} is returned. *)
+
+  n_vgetcommunicator : ('d -> communicator) option;
+  (** Returns the MPI communicator associated with an nvector. *)
 
   (* optional fused vector operations *)
 

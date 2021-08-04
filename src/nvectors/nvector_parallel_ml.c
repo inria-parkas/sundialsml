@@ -27,6 +27,7 @@
 
 /* Must correspond with camlmpi.h */
 #define Comm_val(comm) (*((MPI_Comm *) &Field(comm, 1)))
+extern value caml_mpi_alloc_comm(MPI_Comm c);
 
 /** Parallel nvectors * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
@@ -475,6 +476,26 @@ CAMLprim value sunml_nvec_par_n_vgetlength(value vx)
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn(r);
+}
+
+CAMLprim value sunml_nvec_par_n_vgetcommunicator(value vx)
+{
+    CAMLparam1(vx);
+    CAMLlocal2(vr, vc);
+#if 500 <= SUNDIALS_LIB_VERSION
+    MPI_Comm *comm = (MPI_Comm *)N_VGetCommunicator(NVEC_VAL(vx));
+
+    if (comm) {
+	vc = caml_mpi_alloc_comm(*comm);
+	Store_some(vr, vc);
+    } else {
+	vr = Val_none;
+    }
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(vr);
 }
 
 /* fused vector operations */
