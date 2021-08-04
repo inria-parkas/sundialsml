@@ -192,6 +192,24 @@ module Ops = struct
   external n_vlinearcombinationvectorarray
     : RealArray.t -> t array array -> t array -> unit
     = "sunml_nvec_ser_n_vlinearcombinationvectorarray"
+
+  module Local = struct
+    let n_vdotprod     = n_vdotprod
+    let n_vmaxnorm     = n_vmaxnorm
+    let n_vmin         = n_vmin
+    let n_vl1norm      = n_vl1norm
+    let n_vinvtest     = n_vinvtest
+    let n_vconstrmask  = n_vconstrmask
+    let n_vminquotient = n_vminquotient
+
+    external n_vwsqrsum
+      : t -> t -> float
+      = "sunml_nvec_ser_n_vwsqrsumlocal"
+
+    external n_vwsqrsummask
+      : t -> t -> t -> float
+      = "sunml_nvec_ser_n_vwsqrsummasklocal"
+  end
 end
 
 (* (* Too slow! *)
@@ -745,5 +763,31 @@ module DataOps =
               done
             done
 
+    module Local = struct
+      let n_vdotprod     = n_vdotprod
+      let n_vmaxnorm     = n_vmaxnorm
+      let n_vmin         = n_vmin
+      let n_vl1norm      = n_vl1norm
+      let n_vinvtest     = n_vinvtest
+      let n_vconstrmask  = n_vconstrmask
+      let n_vminquotient = n_vminquotient
+
+      let n_vwsqrsum (x : t) (w : t) =
+        let a = ref 0.0 in
+        let lx = A.dim x in
+        for i = 0 to lx - 1 do
+          a := !a +. (A.get x i *. A.get w i *. A.get x i *. A.get w i)
+        done;
+        !a
+
+      let n_vwsqrsummask (x : t) (w : t) (id : t) =
+        let a = ref 0.0 in
+        let lx = A.dim x in
+        for i = 0 to lx - 1 do
+          if A.get id i > 0.0 then
+            a := !a +. (A.get x i *. A.get w i *. A.get x i *. A.get w i)
+        done;
+        !a
+    end
   end
 

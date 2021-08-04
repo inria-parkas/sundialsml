@@ -61,6 +61,17 @@ type 'a nvector_ops = { (* {{{ *)
       unit) option;
   n_vlinearcombinationvectorarray :
     (Sundials.RealArray.t -> 'a array array -> 'a array -> unit) option;
+
+  n_vdotprod_local      : ('a -> 'a -> float) option;
+  n_vmaxnorm_local      : ('a -> float) option;
+  n_vmin_local          : ('a -> float) option;
+  n_vl1norm_local       : ('a -> float) option;
+  n_vinvtest_local      : ('a -> 'a -> bool) option;
+  n_vconstrmask_local   : ('a -> 'a -> 'a -> bool) option;
+  n_vminquotient_local  : ('a -> 'a -> float) option;
+  n_vwsqrsum_local      : ('a -> 'a -> float) option;
+  n_vwsqrsummask_local  : ('a -> 'a -> 'a -> float) option;
+
 } (* }}} *)
 
 exception OperationNotSupported
@@ -179,6 +190,16 @@ let add_tracing msg ops =
       n_vwrmsnormmaskvectorarray      = n_vwrmsnormmaskvectorarray;
       n_vscaleaddmultivectorarray     = n_vscaleaddmultivectorarray;
       n_vlinearcombinationvectorarray = n_vlinearcombinationvectorarray;
+
+      n_vdotprod_local     = n_vdotprod_local;
+      n_vmaxnorm_local     = n_vmaxnorm_local;
+      n_vmin_local         = n_vmin_local;
+      n_vl1norm_local      = n_vl1norm_local;
+      n_vinvtest_local     = n_vinvtest_local;
+      n_vconstrmask_local  = n_vconstrmask_local;
+      n_vminquotient_local = n_vminquotient_local;
+      n_vwsqrsum_local     = n_vwsqrsum_local;
+      n_vwsqrsummask_local = n_vwsqrsummask_local;
     } = ops (* }}} *)
   in
   let fo f f' = match f with None -> None | Some f -> Some (f' f) in
@@ -248,6 +269,25 @@ let add_tracing msg ops =
   and tr_nvlinearcombinationvectorarray =
     fo n_vlinearcombinationvectorarray
     (fun f -> fun c xx z -> pr "nvlinearcombinationvectorarray"; f c xx z)
+
+  and tr_nvdotprod_local     =
+    fo n_vdotprod_local (fun f -> fun x t -> pr "nvdotprod_local"; f x t)
+  and tr_nvmaxnorm_local     =
+    fo n_vmaxnorm_local (fun f -> fun x -> pr "nvmaxnorm_local"; f x)
+  and tr_nvmin_local         =
+    fo n_vmin_local (fun f -> fun x -> pr "nvmin_local"; f x)
+  and tr_nvl1norm_local      =
+    fo n_vl1norm_local (fun f -> fun x -> pr "nvl1norm_local"; f x)
+  and tr_nvinvtest_local     =
+    fo n_vinvtest_local (fun f -> fun x z -> pr "nvinvtest_local"; f x z)
+  and tr_nvconstrmask_local  =
+    fo n_vconstrmask_local (fun f -> fun c x m -> pr "nvconstrmask_local"; f c x m)
+  and tr_nvminquotient_local =
+    fo n_vminquotient_local (fun f -> fun n d -> pr "nvminquotient_local"; f n d)
+  and tr_nvwsqrsum_local     =
+    fo n_vwsqrsum_local (fun f -> fun x w -> pr "nvwsqrsum_local"; f x w)
+  and tr_nvwsqrsummask_local =
+    fo n_vwsqrsummask_local (fun f -> fun x w id -> pr "nvwsqrsummask_local"; f x w id)
   (* }}} *)
   in
   {
@@ -289,6 +329,16 @@ let add_tracing msg ops =
       n_vwrmsnormmaskvectorarray      = tr_nvwrmsnormmaskvectorarray;
       n_vscaleaddmultivectorarray     = tr_nvscaleaddmultivectorarray;
       n_vlinearcombinationvectorarray = tr_nvlinearcombinationvectorarray;
+
+      n_vdotprod_local     = tr_nvdotprod_local;
+      n_vmaxnorm_local     = tr_nvmaxnorm_local;
+      n_vmin_local         = tr_nvmin_local;
+      n_vl1norm_local      = tr_nvl1norm_local;
+      n_vinvtest_local     = tr_nvinvtest_local;
+      n_vconstrmask_local  = tr_nvconstrmask_local;
+      n_vminquotient_local = tr_nvminquotient_local;
+      n_vwsqrsum_local     = tr_nvwsqrsum_local;
+      n_vwsqrsummask_local = tr_nvwsqrsummask_local;
       (* }}} *)
   }
 
@@ -412,6 +462,53 @@ module MakeOps = functor (A : sig
         | None -> (fun c xx z -> raise OperationNotSupported)
         | Some f -> (fun c xx z -> f c (Array.map (Array.map uv) xx)
                                        (Array.map uv z))
+
+      module Local = struct
+        let n_vdotprod =
+          match A.ops.n_vdotprod_local with
+          | None -> (fun _ _ -> raise OperationNotSupported)
+          | Some f -> (fun x t -> f (uv x) (uv t))
+
+        let n_vmaxnorm =
+          match A.ops.n_vmaxnorm_local with
+          | None -> (fun _ -> raise OperationNotSupported)
+          | Some f -> (fun x -> f (uv x))
+
+        let n_vmin =
+          match A.ops.n_vmin_local with
+          | None -> (fun _ -> raise OperationNotSupported)
+          | Some f -> (fun x -> f (uv x))
+
+        let n_vl1norm =
+          match A.ops.n_vl1norm_local with
+          | None -> (fun _ -> raise OperationNotSupported)
+          | Some f -> (fun x -> f (uv x))
+
+        let n_vinvtest =
+          match A.ops.n_vinvtest_local with
+          | None -> (fun _ _ -> raise OperationNotSupported)
+          | Some f -> (fun x z -> f (uv x) (uv z))
+
+        let n_vconstrmask =
+          match A.ops.n_vconstrmask_local with
+          | None -> (fun _ _ _ -> raise OperationNotSupported)
+          | Some f -> (fun c x m -> f (uv c) (uv x) (uv m))
+
+        let n_vminquotient =
+          match A.ops.n_vminquotient_local with
+          | None -> (fun _ _ -> raise OperationNotSupported)
+          | Some f -> (fun n d -> f (uv n) (uv d))
+
+        let n_vwsqrsum =
+          match A.ops.n_vwsqrsum_local with
+          | None -> (fun _ _ -> raise OperationNotSupported)
+          | Some f -> (fun x w -> f (uv x) (uv w))
+
+        let n_vwsqrsummask =
+          match A.ops.n_vwsqrsummask_local with
+          | None -> (fun _ _ _ -> raise OperationNotSupported)
+          | Some f -> (fun x w id -> f (uv x) (uv w) (uv id))
+      end
     end (* }}} *)
 
     module DataOps = struct (* {{{ *)
@@ -514,6 +611,53 @@ module MakeOps = functor (A : sig
         match A.ops.n_vlinearcombinationvectorarray with
         | None -> (fun c xx z -> raise OperationNotSupported)
         | Some f -> f
+
+      module Local = struct
+        let n_vdotprod =
+          match A.ops.n_vdotprod_local with
+          | None -> (fun _ _ -> raise OperationNotSupported)
+          | Some f -> f
+
+        let n_vmaxnorm =
+          match A.ops.n_vmaxnorm_local with
+          | None -> (fun _ -> raise OperationNotSupported)
+          | Some f -> f
+
+        let n_vmin =
+          match A.ops.n_vmin_local with
+          | None -> (fun _ -> raise OperationNotSupported)
+          | Some f -> f
+
+        let n_vl1norm =
+          match A.ops.n_vl1norm_local with
+          | None -> (fun _ -> raise OperationNotSupported)
+          | Some f -> f
+
+        let n_vinvtest =
+          match A.ops.n_vinvtest_local with
+          | None -> (fun _ _ -> raise OperationNotSupported)
+          | Some f -> f
+
+        let n_vconstrmask =
+          match A.ops.n_vconstrmask_local with
+          | None -> (fun _ _ _ -> raise OperationNotSupported)
+          | Some f -> f
+
+        let n_vminquotient =
+          match A.ops.n_vminquotient_local with
+          | None -> (fun _ _ -> raise OperationNotSupported)
+          | Some f -> f
+
+        let n_vwsqrsum =
+          match A.ops.n_vwsqrsum_local with
+          | None -> (fun _ _ -> raise OperationNotSupported)
+          | Some f -> f
+
+        let n_vwsqrsummask =
+          match A.ops.n_vwsqrsummask_local with
+          | None -> (fun _ _ _ -> raise OperationNotSupported)
+          | Some f -> f
+      end
     end (* }}} *)
   end
 

@@ -338,8 +338,18 @@ CAMLprim value sunml_nvec_wrap_serial(value payload, value checkfn)
 #endif
 
 #if 500 <= SUNDIALS_LIB_VERSION
-    ops->nvgetlength			= N_VGetLength_Serial;
-    ops->nvgetcommunicator		= NULL;
+    ops->nvgetlength	    = N_VGetLength_Serial;
+    ops->nvgetcommunicator  = NULL;
+
+    ops->nvdotprodlocal     = N_VDotProd_Serial;
+    ops->nvmaxnormlocal     = N_VMaxNorm_Serial;
+    ops->nvminlocal         = N_VMin_Serial;
+    ops->nvl1normlocal      = N_VL1Norm_Serial;
+    ops->nvinvtestlocal     = N_VInvTest_Serial;
+    ops->nvconstrmasklocal  = N_VConstrMask_Serial;
+    ops->nvminquotientlocal = N_VMinQuotient_Serial;
+    ops->nvwsqrsumlocal     = N_VWSqrSumLocal_Serial;
+    ops->nvwsqrsummasklocal = N_VWSqrSumMaskLocal_Serial;
 #endif
 
     /* Create content */
@@ -436,6 +446,19 @@ static int callml_vlinearcombinationvectorarray(int nvec, int nsum, realtype* c,
 						N_Vector** X, N_Vector* Z);
 #endif
 
+/* Custom vector reduction operators */
+#if 500 <= SUNDIALS_LIB_VERSION
+static realtype callml_vdotprodlocal(N_Vector x, N_Vector t);
+static realtype callml_vmaxnormlocal(N_Vector x);
+static realtype callml_vminlocal(N_Vector x);
+static realtype callml_vl1normlocal(N_Vector x);
+static booleantype callml_vinvtestlocal(N_Vector x, N_Vector z);
+static booleantype callml_vconstrmasklocal(N_Vector c, N_Vector x, N_Vector m);
+static realtype callml_vminquotientlocal(N_Vector n, N_Vector d);
+static realtype callml_vwsqrsumlocal(N_Vector x, N_Vector w);
+static realtype callml_vwsqrsummasklocal(N_Vector x, N_Vector w, N_Vector id);
+#endif
+
 /* Creation from OCaml. */
 CAMLprim value sunml_nvec_wrap_custom(value mlops, value payload, value checkfn)
 {
@@ -517,8 +540,44 @@ CAMLprim value sunml_nvec_wrap_custom(value mlops, value payload, value checkfn)
 #endif
 
 #if 500 <= SUNDIALS_LIB_VERSION
-    ops->nvgetlength			= callml_vgetlength;
-    ops->nvgetcommunicator		= NULL;
+    ops->nvgetlength	    = callml_vgetlength;
+    ops->nvgetcommunicator  = NULL;
+
+    ops->nvdotprodlocal     = NULL;
+    if (HAS_OP(mlops, NVECTOR_OPS_NVDOTPROD_LOCAL))
+	ops->nvdotprodlocal = callml_vdotprodlocal;
+
+    ops->nvmaxnormlocal     = NULL;
+    if (HAS_OP(mlops, NVECTOR_OPS_NVMAXNORM_LOCAL))
+	ops->nvmaxnormlocal = callml_vmaxnormlocal;
+
+    ops->nvminlocal         = NULL;
+    if (HAS_OP(mlops, NVECTOR_OPS_NVMIN_LOCAL))
+	ops->nvminlocal = callml_vminlocal;
+
+    ops->nvl1normlocal      = NULL;
+    if (HAS_OP(mlops, NVECTOR_OPS_NVL1NORM_LOCAL))
+	ops->nvl1normlocal = callml_vl1normlocal;
+
+    ops->nvinvtestlocal     = NULL;
+    if (HAS_OP(mlops, NVECTOR_OPS_NVINVTEST_LOCAL))
+	ops->nvinvtestlocal = callml_vinvtestlocal;
+
+    ops->nvconstrmasklocal  = NULL;
+    if (HAS_OP(mlops, NVECTOR_OPS_NVCONSTRMASK_LOCAL))
+	ops->nvconstrmasklocal = callml_vconstrmasklocal;
+
+    ops->nvminquotientlocal = NULL;
+    if (HAS_OP(mlops, NVECTOR_OPS_NVMINQUOTIENT_LOCAL))
+	ops->nvminquotientlocal = callml_vminquotientlocal;
+
+    ops->nvwsqrsumlocal     = NULL;
+    if (HAS_OP(mlops, NVECTOR_OPS_NVWSQRSUM_LOCAL))
+	ops->nvwsqrsumlocal = callml_vwsqrsumlocal;
+
+    ops->nvwsqrsummasklocal = NULL;
+    if (HAS_OP(mlops, NVECTOR_OPS_NVWSQRSUMMASK_LOCAL))
+	ops->nvwsqrsummasklocal = callml_vwsqrsummasklocal;
 #endif
 
     /* Create content */
@@ -1248,6 +1307,163 @@ static int callml_vlinearcombinationvectorarray(int nvec, int nsum, realtype* c,
 }
 #endif
 
+#if 500 <= SUNDIALS_LIB_VERSION
+static realtype callml_vdotprodlocal(N_Vector x, N_Vector t)
+{
+    CAMLparam0();
+    CAMLlocal1(mlop);
+    mlop = GET_SOME_OP(x, NVECTOR_OPS_NVDOTPROD_LOCAL);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback2_exn (mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(t));
+    if (Is_exception_result (r))
+	sunml_warn_discarded_exn (Extract_exception (r),
+					"user-defined n_vdotprodlocal");
+
+    CAMLreturnT(realtype, Double_val(r));
+}
+#endif
+
+#if 500 <= SUNDIALS_LIB_VERSION
+static realtype callml_vmaxnormlocal(N_Vector x)
+{
+    CAMLparam0();
+    CAMLlocal1(mlop);
+    mlop = GET_SOME_OP(x, NVECTOR_OPS_NVMAXNORM_LOCAL);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback_exn (mlop, NVEC_BACKLINK(x));
+    if (Is_exception_result (r))
+	sunml_warn_discarded_exn (Extract_exception (r),
+					"user-defined n_vmaxnormlocal");
+
+    CAMLreturnT(realtype, Double_val(r));
+}
+#endif
+
+#if 500 <= SUNDIALS_LIB_VERSION
+static realtype callml_vminlocal(N_Vector x)
+{
+    CAMLparam0();
+    CAMLlocal1(mlop);
+    mlop = GET_SOME_OP(x, NVECTOR_OPS_NVMIN_LOCAL);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback_exn (mlop, NVEC_BACKLINK(x));
+    if (Is_exception_result (r))
+	sunml_warn_discarded_exn (Extract_exception (r),
+					"user-defined n_vminlocal");
+
+    CAMLreturnT(realtype, Double_val(r));
+}
+#endif
+
+#if 500 <= SUNDIALS_LIB_VERSION
+static realtype callml_vl1normlocal(N_Vector x)
+{
+    CAMLparam0();
+    CAMLlocal1(mlop);
+    mlop = GET_SOME_OP(x, NVECTOR_OPS_NVL1NORM_LOCAL);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback_exn (mlop, NVEC_BACKLINK(x));
+    if (Is_exception_result (r))
+	sunml_warn_discarded_exn (Extract_exception (r),
+					"user-defined n_vl1normlocal");
+
+    CAMLreturnT(realtype, Double_val(r));
+}
+#endif
+
+#if 500 <= SUNDIALS_LIB_VERSION
+static booleantype callml_vinvtestlocal(N_Vector x, N_Vector z)
+{
+    CAMLparam0();
+    CAMLlocal1(mlop);
+    mlop = GET_SOME_OP(x, NVECTOR_OPS_NVINVTEST_LOCAL);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback2_exn (mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(z));
+    if (Is_exception_result (r))
+	sunml_warn_discarded_exn (Extract_exception (r),
+					"user-defined n_vinvtestlocal");
+
+    CAMLreturnT(booleantype, Bool_val(r));
+}
+#endif
+
+#if 500 <= SUNDIALS_LIB_VERSION
+static booleantype callml_vconstrmasklocal(N_Vector c, N_Vector x, N_Vector m)
+{
+    CAMLparam0();
+    CAMLlocal1(mlop);
+    mlop = GET_SOME_OP(x, NVECTOR_OPS_NVCONSTRMASK_LOCAL);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback3_exn (mlop, NVEC_BACKLINK(c),
+					NVEC_BACKLINK(x),
+					NVEC_BACKLINK(m));
+    if (Is_exception_result (r))
+	sunml_warn_discarded_exn (Extract_exception (r),
+					"user-defined n_vconstrmasklocal");
+
+    CAMLreturnT(booleantype, Bool_val(r));
+}
+#endif
+
+#if 500 <= SUNDIALS_LIB_VERSION
+static realtype callml_vminquotientlocal(N_Vector n, N_Vector d)
+{
+    CAMLparam0();
+    CAMLlocal1(mlop);
+    mlop = GET_SOME_OP(n, NVECTOR_OPS_NVMINQUOTIENT_LOCAL);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback2_exn (mlop, NVEC_BACKLINK(n), NVEC_BACKLINK(d));
+    if (Is_exception_result (r))
+	sunml_warn_discarded_exn (Extract_exception (r),
+					"user-defined n_vminquotientlocal");
+
+    CAMLreturnT(realtype, Bool_val(r));
+}
+#endif
+
+#if 500 <= SUNDIALS_LIB_VERSION
+static realtype callml_vwsqrsumlocal(N_Vector x, N_Vector w)
+{
+    CAMLparam0();
+    CAMLlocal1(mlop);
+    mlop = GET_SOME_OP(x, NVECTOR_OPS_NVWSQRSUM_LOCAL);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback2_exn (mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(w));
+    if (Is_exception_result (r))
+	sunml_warn_discarded_exn (Extract_exception (r),
+					"user-defined n_vwsqrsumlocal");
+
+    CAMLreturnT(realtype, Bool_val(r));
+}
+#endif
+
+#if 500 <= SUNDIALS_LIB_VERSION
+static realtype callml_vwsqrsummasklocal(N_Vector x, N_Vector w, N_Vector id)
+{
+    CAMLparam0();
+    CAMLlocal1(mlop);
+    mlop = GET_SOME_OP(x, NVECTOR_OPS_NVWSQRSUMMASK_LOCAL);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback3_exn (mlop, NVEC_BACKLINK(x),
+					NVEC_BACKLINK(w),
+					NVEC_BACKLINK(id));
+    if (Is_exception_result (r))
+	sunml_warn_discarded_exn (Extract_exception (r),
+					"user-defined n_vwsqrsummasklocal");
+
+    CAMLreturnT(realtype, Bool_val(r));
+}
+#endif
+
 /** Interface to underlying serial nvector functions */
 
 CAMLprim value sunml_nvec_ser_n_vlinearsum(value va, value vx, value vb, value vy,
@@ -1525,6 +1741,18 @@ CAMLprim value sunml_nvec_ser_n_vspace(value vx)
 }
 
 CAMLprim value sunml_nvec_ser_n_vgetlength(value vx)
+{
+    CAMLparam1(vx);
+    CAMLlocal1(r);
+#if 500 <= SUNDIALS_LIB_VERSION
+    r = Val_int(N_VGetLength_Serial(NVEC_VAL(vx)));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(r);
+}
+
+CAMLprim value sunml_nvec_ser_n_vwsqrsum(value vx)
 {
     CAMLparam1(vx);
     CAMLlocal1(r);
@@ -1921,6 +2149,54 @@ CAMLprim value sunml_nvec_ser_n_vlinearcombinationvectorarray(value vac,
     CAMLreturn(Val_unit);
 }
 
+/** Reduce operations for serial nvectors */
+
+CAMLprim value sunml_nvec_ser_n_vwsqrsumlocal(value vx, value vw)
+{
+    CAMLparam2(vx, vw);
+    realtype r;
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    N_Vector x = NVEC_VAL(vx);
+    N_Vector w = NVEC_VAL(vw);
+
+#if SUNDIALS_ML_SAFE == 1
+    if (NV_LENGTH_S(w) != NV_LENGTH_S(x))
+	caml_invalid_argument("Nvector_serial.n_vwsqrsumlocal");
+#endif
+
+    r = N_VWSqrSumLocal_Serial(x, w);
+
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(caml_copy_double(r));
+}
+
+CAMLprim value sunml_nvec_ser_n_vwsqrsummasklocal(value vx, value vw, value vid)
+{
+    CAMLparam3(vx, vw, vid);
+    realtype r;
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    N_Vector x = NVEC_VAL(vx);
+    N_Vector w = NVEC_VAL(vw);
+    N_Vector id = NVEC_VAL(vid);
+
+#if SUNDIALS_ML_SAFE == 1
+    if (NV_LENGTH_S(w) != NV_LENGTH_S(x) || NV_LENGTH_S(id) != NV_LENGTH_S(x))
+	caml_invalid_argument("Nvector_serial.n_vwsqrsummasklocal");
+#endif
+
+    r = N_VWSqrSumMaskLocal_Serial(x, w, id);
+
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(caml_copy_double(r));
+}
 
 /** Selectively activate fused and array operations for serial nvectors */
 

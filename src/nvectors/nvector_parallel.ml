@@ -216,6 +216,45 @@ module Ops = struct (* {{{ *)
   external n_vlinearcombinationvectorarray
     : RealArray.t -> t array array -> t array -> unit
     = "sunml_nvec_par_n_vlinearcombinationvectorarray"
+
+  module Local = struct
+
+    external n_vdotprod
+      : t -> t -> float
+      = "sunml_nvec_par_n_vdotprodlocal"
+
+    external n_vmaxnorm
+      : t -> float
+      = "sunml_nvec_par_n_vmaxnormlocal"
+
+    external n_vmin
+      : t -> float
+      = "sunml_nvec_par_n_vminlocal"
+
+    external n_vl1norm
+      : t -> float
+      = "sunml_nvec_par_n_vl1normlocal"
+
+    external n_vinvtest
+      : t -> t -> bool
+      = "sunml_nvec_par_n_vinvtestlocal"
+
+    external n_vconstrmask
+      : t -> t -> t -> bool
+      = "sunml_nvec_par_n_vconstrmasklocal"
+
+    external n_vminquotient
+      : t -> t -> float
+      = "sunml_nvec_par_n_vminquotientlocal"
+
+    external n_vwsqrsum
+      : t -> t -> float
+      = "sunml_nvec_par_n_vwsqrsumlocallocal"
+
+    external n_vwsqrsummask
+      : t -> t -> t -> float
+      = "sunml_nvec_par_n_vwsqrsummasklocal"
+  end
 end (* }}} *)
 
 module MakeOps =
@@ -813,6 +852,33 @@ module MakeOps =
                 done
               done
             done
+
+    module Local = struct
+      let n_vdotprod     = n_vdotprod
+      let n_vmaxnorm     = n_vmaxnorm
+      let n_vmin         = n_vmin
+      let n_vl1norm      = n_vl1norm
+      let n_vinvtest     = n_vinvtest
+      let n_vconstrmask  = n_vconstrmask
+      let n_vminquotient = n_vminquotient
+
+      let n_vwsqrsum (x, _, _) (w, _, _) =
+        let a = ref 0.0 in
+        let lx = A.length x in
+        for i = 0 to lx - 1 do
+          a := !a +. (A.get x i *. A.get w i *. A.get x i *. A.get w i)
+        done;
+        !a
+
+      let n_vwsqrsummask (x, _, _) (w, _, _) (id, _, _) =
+        let a = ref 0.0 in
+        let lx = A.length x in
+        for i = 0 to lx - 1 do
+          if A.get id i > 0.0 then
+            a := !a +. (A.get x i *. A.get w i *. A.get x i *. A.get w i)
+        done;
+        !a
+    end
   end (* }}} *)
 
 (* (* Too slow *)
@@ -1421,6 +1487,32 @@ module DataOps =
               done
             done
 
+    module Local = struct
+      let n_vdotprod     = n_vdotprod
+      let n_vmaxnorm     = n_vmaxnorm
+      let n_vmin         = n_vmin
+      let n_vl1norm      = n_vl1norm
+      let n_vinvtest     = n_vinvtest
+      let n_vconstrmask  = n_vconstrmask
+      let n_vminquotient = n_vminquotient
+
+      let n_vwsqrsum ((x : d), _, _) ((w : d), _, _) =
+        let a = ref 0.0 in
+        let lx = A.dim x in
+        for i = 0 to lx - 1 do
+          a := !a +. (A.get x i *. A.get w i *. A.get x i *. A.get w i)
+        done;
+        !a
+
+      let n_vwsqrsummask ((x : d), _, _) ((w : d), _, _) ((id : d), _, _) =
+        let a = ref 0.0 in
+        let lx = A.dim x in
+        for i = 0 to lx - 1 do
+          if A.get id i > 0.0 then
+            a := !a +. (A.get x i *. A.get w i *. A.get x i *. A.get w i)
+        done;
+        !a
+    end
   end (* }}} *)
 
 

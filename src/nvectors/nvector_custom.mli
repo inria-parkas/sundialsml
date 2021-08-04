@@ -197,6 +197,37 @@ type 'd nvector_ops = { (* {{{ *)
       [z(k)(i) = c(0)*x(0)(k)(i) + ... + c(ns)*x(ns)(k)(i)] where [k] ranges
       over the array elements, [ns] is the number of arrays in [xx], and
       [i] ranges over the nvector elements. *)
+
+  (* optional reduction operations *)
+
+  n_vdotprod_local      : ('d -> 'd -> float) option;
+  (** Perform {!n_vvdotprod} on task-local elements. *)
+
+  n_vmaxnorm_local      : ('d -> float) option;
+  (** Perform {!n_vmaxnorm} on task-local elements. *)
+
+  n_vmin_local          : ('d -> float) option;
+  (** Returns the smallest task-local element. *)
+
+  n_vl1norm_local       : ('d -> float) option;
+  (** Perform {!n_vl1norm} on task-local elements. *)
+
+  n_vinvtest_local      : ('d -> 'd -> bool) option;
+  (** Perform {!n_vinvtest} on task-local elements. *)
+
+  n_vconstrmask_local   : ('d -> 'd -> 'd -> bool) option;
+  (** Perform {!n_vconstrmask} on task-local elements. *)
+
+  n_vminquotient_local  : ('d -> 'd -> float) option;
+  (** Perform {!n_vminquotient} on task-local elements. *)
+
+  n_vwsqrsum_local      : ('d -> 'd -> float) option;
+  (** [n_vwsqrsum x w] calculates the weighted squared sum of [x] with
+      weight vector [w]. *)
+
+  n_vwsqrsummask_local  : ('d -> 'd -> 'd -> float) option;
+  (** [n_vwsqrsummask x w id] calculates the weighted squared sum of [x]
+      with weight vector [w] for the elements where [id] is positive. *)
 } (* }}} *)
 
 (** Instantiation of custom nvectors.

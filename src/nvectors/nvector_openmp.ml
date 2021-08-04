@@ -194,5 +194,23 @@ module Ops = struct
   external n_vlinearcombinationvectorarray
     : RealArray.t -> t array array -> t array -> unit
     = "sunml_nvec_openmp_n_vlinearcombinationvectorarray"
+
+  module Local = struct
+    let n_vdotprod     = n_vdotprod
+    let n_vmaxnorm     = n_vmaxnorm
+    let n_vmin         = n_vmin
+    let n_vl1norm      = n_vl1norm
+    let n_vinvtest     = n_vinvtest
+    let n_vconstrmask  = n_vconstrmask
+    let n_vminquotient = n_vminquotient
+
+    external n_vwsqrsum
+      : t -> t -> float
+      = "sunml_nvec_openmp_n_vwsqrsumlocal"
+
+    external n_vwsqrsummask
+      : t -> t -> t -> float
+      = "sunml_nvec_openmp_n_vwsqrsummasklocal"
+  end
 end
 

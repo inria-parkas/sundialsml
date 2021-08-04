@@ -605,6 +605,34 @@ module Make =
                   done
                 done
               done
+
+      module Local = struct
+        let n_vdotprod     = n_vdotprod
+        let n_vmaxnorm     = n_vmaxnorm
+        let n_vmin         = n_vmin
+        let n_vl1norm      = n_vl1norm
+        let n_vinvtest     = n_vinvtest
+        let n_vconstrmask  = n_vconstrmask
+        let n_vminquotient = n_vminquotient
+
+        let n_vwsqrsum x w =
+          let a = ref 0.0 in
+          let lx = A.length x in
+          for i = 0 to lx - 1 do
+            a := !a +. (A.get x i *. A.get w i *. A.get x i *. A.get w i)
+          done;
+          !a
+
+        let n_vwsqrsummask x w id =
+          let a = ref 0.0 in
+          let lx = A.length x in
+          for i = 0 to lx - 1 do
+            if A.get id i > 0.0 then
+              a := !a +. (A.get x i *. A.get w i *. A.get x i *. A.get w i)
+          done;
+          !a
+      end
+
     end (* }}} *)
 
     let array_nvec_ops = { (* {{{ *)
@@ -654,6 +682,33 @@ module Make =
             = Some DataOps.n_vscaleaddmultivectorarray;
           Nvector_custom.n_vlinearcombinationvectorarray
             = Some DataOps.n_vlinearcombinationvectorarray;
+
+          Nvector_custom.n_vdotprod_local
+            = Some DataOps.Local.n_vdotprod;
+
+          Nvector_custom.n_vmaxnorm_local
+            = Some DataOps.Local.n_vmaxnorm;
+
+          Nvector_custom.n_vmin_local
+            = Some DataOps.Local.n_vmin;
+
+          Nvector_custom.n_vl1norm_local
+            = Some DataOps.Local.n_vl1norm;
+
+          Nvector_custom.n_vinvtest_local
+            = Some DataOps.Local.n_vinvtest;
+
+          Nvector_custom.n_vconstrmask_local
+            = Some DataOps.Local.n_vconstrmask;
+
+          Nvector_custom.n_vminquotient_local
+            = Some DataOps.Local.n_vminquotient;
+
+          Nvector_custom.n_vwsqrsum_local
+            = Some DataOps.Local.n_vwsqrsum;
+
+          Nvector_custom.n_vwsqrsummask_local
+            = Some DataOps.Local.n_vwsqrsummask;
     } (* }}} *)
 
     let make n e = Nvector_custom.make_wrap array_nvec_ops (A.make n e)
@@ -738,6 +793,21 @@ module Make =
         = DataOps.n_vlinearcombinationvectorarray c
                                             (Array.map (Array.map unwrap) xx)
                                             (Array.map unwrap z)
+
+      module Local = struct
+        let n_vdotprod     = n_vdotprod
+        let n_vmaxnorm     = n_vmaxnorm
+        let n_vmin         = n_vmin
+        let n_vl1norm      = n_vl1norm
+        let n_vinvtest     = n_vinvtest
+        let n_vconstrmask  = n_vconstrmask
+        let n_vminquotient = n_vminquotient
+
+        let n_vwsqrsum x w = DataOps.Local.n_vwsqrsum (unwrap x) (unwrap w)
+
+        let n_vwsqrsummask x w id =
+          DataOps.Local.n_vwsqrsummask (unwrap x) (unwrap w) (unwrap id)
+      end
     end (* }}} *)
   end (* }}} *)
 
@@ -1329,6 +1399,33 @@ module Array =
                   done
                 done
               done
+
+      module Local = struct
+        let n_vdotprod     = n_vdotprod
+        let n_vmaxnorm     = n_vmaxnorm
+        let n_vmin         = n_vmin
+        let n_vl1norm      = n_vl1norm
+        let n_vinvtest     = n_vinvtest
+        let n_vconstrmask  = n_vconstrmask
+        let n_vminquotient = n_vminquotient
+
+        let n_vwsqrsum x w =
+          let a = ref 0.0 in
+          let lx = A.length x in
+          for i = 0 to lx - 1 do
+            a := !a +. (A.get x i *. A.get w i *. A.get x i *. A.get w i)
+          done;
+          !a
+
+        let n_vwsqrsummask x w id =
+          let a = ref 0.0 in
+          let lx = A.length x in
+          for i = 0 to lx - 1 do
+            if A.get id i > 0.0 then
+              a := !a +. (A.get x i *. A.get w i *. A.get x i *. A.get w i)
+          done;
+          !a
+      end
     end (* }}} *)
 
     let array_nvec_ops = { (* {{{ *)
@@ -1377,6 +1474,33 @@ module Array =
             = Some DataOps.n_vscaleaddmultivectorarray;
           Nvector_custom.n_vlinearcombinationvectorarray
             = Some DataOps.n_vlinearcombinationvectorarray;
+
+          Nvector_custom.n_vdotprod_local
+            = Some DataOps.Local.n_vdotprod;
+
+          Nvector_custom.n_vmaxnorm_local
+            = Some DataOps.Local.n_vmaxnorm;
+
+          Nvector_custom.n_vmin_local
+            = Some DataOps.Local.n_vmin;
+
+          Nvector_custom.n_vl1norm_local
+            = Some DataOps.Local.n_vl1norm;
+
+          Nvector_custom.n_vinvtest_local
+            = Some DataOps.Local.n_vinvtest;
+
+          Nvector_custom.n_vconstrmask_local
+            = Some DataOps.Local.n_vconstrmask;
+
+          Nvector_custom.n_vminquotient_local
+            = Some DataOps.Local.n_vminquotient;
+
+          Nvector_custom.n_vwsqrsum_local
+            = Some DataOps.Local.n_vwsqrsum;
+
+          Nvector_custom.n_vwsqrsummask_local
+            = Some DataOps.Local.n_vwsqrsummask;
     } (* }}} *)
 
     let make n e =
@@ -1462,6 +1586,21 @@ module Array =
         = DataOps.n_vlinearcombinationvectorarray c
                                             (Array.map (Array.map unwrap) xx)
                                             (Array.map unwrap z)
+
+      module Local = struct
+        let n_vdotprod     = n_vdotprod
+        let n_vmaxnorm     = n_vmaxnorm
+        let n_vmin         = n_vmin
+        let n_vl1norm      = n_vl1norm
+        let n_vinvtest     = n_vinvtest
+        let n_vconstrmask  = n_vconstrmask
+        let n_vminquotient = n_vminquotient
+
+        let n_vwsqrsum x w = DataOps.Local.n_vwsqrsum (unwrap x) (unwrap w)
+
+        let n_vwsqrsummask x w id =
+          DataOps.Local.n_vwsqrsummask (unwrap x) (unwrap w) (unwrap id)
+      end
     end (* }}} *)
   end
 
