@@ -125,7 +125,9 @@ enum lsolver_ocaml_callbacks_index {
 
 // values must match LinearSolver_impl.Custom.has_ops type
 enum lsolver_hasops_index {
-    RECORD_LSOLVER_HASOPS_SET_ATIMES = 0,
+    RECORD_LSOLVER_HASOPS_INIT = 0,
+    RECORD_LSOLVER_HASOPS_SETUP,
+    RECORD_LSOLVER_HASOPS_SET_ATIMES,
     RECORD_LSOLVER_HASOPS_SET_PRECONDITIONER,
     RECORD_LSOLVER_HASOPS_SET_SCALING_VECTORS,
     RECORD_LSOLVER_HASOPS_GET_NUM_ITERS,

@@ -535,10 +535,10 @@ module Custom : sig (* {{{ *)
       (** Identifies the linear solver. This value should normally be set
           to {{!linear_solver_id}Custom}. *)
 
-      init : 'lsolver -> unit;
+      init : ('lsolver -> unit) option;
       (** Performs linear solver initalization. *)
 
-      setup : 'lsolver -> 'matrix -> unit;
+      setup : ('lsolver -> 'matrix -> unit) option;
       (** Performs linear solver setup. *)
 
       solve : 'lsolver -> 'matrix -> 'data -> 'data -> float -> unit;
@@ -630,10 +630,10 @@ module Custom : sig (* {{{ *)
       {!exception:Sundials.RecoverableFailure} indicates a generic
       recoverable failure. *)
   type ('matrix, 'data, 'kind, 'lsolver) dls_ops = {
-      init : 'lsolver -> unit;
+      init : ('lsolver -> unit) option;
       (** Performs linear solver initalization. *)
 
-      setup : 'lsolver -> 'matrix -> unit;
+      setup : ('lsolver -> 'matrix -> unit) option;
       (** Performs linear solver setup based on an updated matrix. *)
 
       solve : 'lsolver -> 'matrix -> 'data -> 'data -> float -> unit;

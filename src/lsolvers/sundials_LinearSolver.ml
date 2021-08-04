@@ -506,9 +506,9 @@ module Custom = struct (* {{{ *)
       solver_type : linear_solver_type;
       solver_id   : linear_solver_id;
 
-      init : 'lsolver -> unit;
+      init : ('lsolver -> unit) option;
 
-      setup : 'lsolver -> 'matrix -> unit;
+      setup : ('lsolver -> 'matrix -> unit) option;
 
       solve : 'lsolver -> 'matrix -> 'data -> 'data -> float -> unit;
 
@@ -592,8 +592,12 @@ module Custom = struct (* {{{ *)
      | 2,_,_ -> raise Config.NotImplementedBySundialsVersion;
      | _ -> ());
     let ops = LSI.Custom.({
-        init = (fun () -> finit ldata);
-        setup = fsetup ldata;
+        init = (match finit with
+                | None -> (fun () -> ())
+                | Some f -> (fun () -> f ldata));
+        setup = (match fsetup with
+                 | None -> (fun _ -> ())
+                 | Some f -> f ldata);
         solve = fsolve ldata;
         set_atimes = wrap_set_atimes fset_atimes ldata;
         set_preconditioner =
@@ -610,6 +614,8 @@ module Custom = struct (* {{{ *)
         set_prec_type = mapignore fset_prec_type ldata;
       }) in
     let only_ops = LSI.Custom.({
+          has_init                = finit <> None;
+          has_setup               = fsetup <> None;
           has_set_atimes          = fset_atimes <> None;
           has_set_preconditioner  = fset_preconditioner <> None;
           has_set_scaling_vectors = fset_scaling_vectors <> None;
@@ -638,9 +644,9 @@ module Custom = struct (* {{{ *)
                            inferred by the type system. *)
 
   type ('matrix, 'data, 'kind, 'lsolver) dls_ops = {
-      init : 'lsolver -> unit;
+      init : ('lsolver -> unit) option;
 
-      setup : 'lsolver -> 'matrix -> unit;
+      setup : ('lsolver -> 'matrix -> unit) option;
 
       solve : 'lsolver -> 'matrix -> 'data -> 'data -> float -> unit;
 
@@ -653,8 +659,12 @@ module Custom = struct (* {{{ *)
      | 2,_,_ -> raise Config.NotImplementedBySundialsVersion;
      | _ -> ());
     let ops = LSI.Custom.({
-        init = (fun () -> fi ldata);
-        setup = fs0 ldata;
+        init = (match fi with
+                | None -> (fun () -> ())
+                | Some f -> (fun () -> f ldata));
+        setup = (match fs0 with
+                 | None -> (fun _ -> ())
+                 | Some f -> f ldata);
         solve = fs ldata;
         set_atimes = (fun _ ->
           failwith "internal error: Direct.Custom.set_atimes");
@@ -677,6 +687,8 @@ module Custom = struct (* {{{ *)
         set_prec_type = (fun _ -> ());
       }) in
     let only_ops = LSI.Custom.({
+          has_init                = fi <> None;
+          has_setup               = fs0 <> None;
           has_set_atimes          = false;
           has_set_preconditioner  = false;
           has_set_scaling_vectors = false;
