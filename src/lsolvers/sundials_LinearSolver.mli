@@ -572,6 +572,9 @@ module Custom : sig (* {{{ *)
           performing any iterations (i.e., either the initial guess or the
           preconditioner is sufficiently accurate). *)
 
+      get_last_flag : ('lsolver -> int) option;
+      (** Use to indicate the last error encountered by the linear solver. *)
+
       get_work_space : ('lsolver -> int * int) option;
       (** Return the storage requirements for the linear solver.
           The result [(lrw, liw)] gives the number of words used for
@@ -726,6 +729,12 @@ val get_res_id : ('m, 'd, 'k, 't) t -> 'd
 
     @nocvode <node> SUNLinSolGetType *)
 val get_type : ('m, 'd, 'k, 't) t -> linear_solver_type
+
+(** Returns an indication of the last error encountered by a linear solver.
+
+    @nocvode <node> SUNLinSolGetType
+    @since 5.0.0 *)
+val get_last_flag : ('m, 'd, 'k, 't) t -> int
 
 (** The storage requirements of the linear solver.
     The result [(lrw, liw)] gives the number of words used for

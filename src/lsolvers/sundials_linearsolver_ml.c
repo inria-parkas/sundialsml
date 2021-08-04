@@ -1020,6 +1020,23 @@ static N_Vector callml_custom_resid(SUNLinearSolver ls)
     CAMLreturnT(N_Vector, NVEC_VAL(r));
 }
 
+#if 500 <= SUNDIALS_LIB_VERSION
+static sunindextype callml_custom_lastflag(SUNLinearSolver ls)
+{
+    CAMLparam0();
+    CAMLlocal1(r);
+
+    r = caml_callback_exn(GET_OP(ls, GET_LAST_FLAG), Val_unit);
+    if (Is_exception_result (r)) {
+	sunml_warn_discarded_exn (Extract_exception (r),
+					"user-defined last flag handler");
+	CAMLreturnT(int, 0);
+    }
+
+    CAMLreturnT(int, Int_val(r));
+}
+#endif
+
 static int callml_custom_space(SUNLinearSolver ls,
 			       long int *lenrwLS, long int *leniwLS)
 {
@@ -1135,6 +1152,11 @@ CAMLprim value sunml_lsolver_make_custom(value vlstype,
     ops->resid             =
 	Bool_val(Field(vhasops, RECORD_LSOLVER_HASOPS_GET_RES_ID))
 	? callml_custom_resid : NULL;
+#if 500 <= SUNDIALS_LIB_VERSION
+    ops->lastflag          =
+	Bool_val(Field(vhasops, RECORD_LSOLVER_HASOPS_GET_LAST_FLAG))
+	? callml_custom_lastflag : NULL;
+#endif
     ops->space             =
 	Bool_val(Field(vhasops, RECORD_LSOLVER_HASOPS_GET_WORK_SPACE))
 	? callml_custom_space : NULL;
@@ -1561,6 +1583,18 @@ CAMLprim value sunml_lsolver_res_id(value vcptr)
 #if 300 <= SUNDIALS_LIB_VERSION
     N_Vector resid = SUNLinSolResid(LSOLVER_VAL(vcptr));
     r = NVEC_BACKLINK(resid);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(r);
+}
+
+CAMLprim value sunml_lsolver_last_flag(value vcptr)
+{
+    CAMLparam1(vcptr);
+    CAMLlocal1(r);
+#if 500 <= SUNDIALS_LIB_VERSION
+    r = Val_int(SUNLinSolLastFlag(LSOLVER_VAL(vcptr)));
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
