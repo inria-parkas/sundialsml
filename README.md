@@ -55,7 +55,12 @@ structures) or inefficient.
 * Unsupported nvector modules: CUDA, Hypre ParVector, PETSC, RAJA, and 
   Trilinos (if you provide the required OCaml interface, we'll add the 
   nvector).
+* No support for CUDA (including SUNMATRIX_CUSPARSE and 
+  SUNLinearSolver_cuSolverSp_batchQR linear solver).
 * No support for fused kernels.
 * No support for the SUNLinSol_KLUGetSymbolic, SUNLinSol_KLUGetNumeric,
   and SUNLinSol_KLUGetCommon functions (patches welcome).
+* No support for SUNMatrix_SLUNRloc and SUNLinearSolver_SuperLUDIST (if you 
+  provide a solid OCaml interface to SuperLU_DIST, we'll add support for 
+  this matrix type and linear solver).
 
