@@ -54,6 +54,22 @@ type linear_solver_type =
   | Iterative       (** Computes an inexact approximation without a matrix. *)
   | MatrixIterative (** Computes an inexact approximation using a matrix. *)
 
+(** The identifier of a linear solver. *)
+type linear_solver_id =
+  | Band               (* {cconst SUNLINEARSOLVER_BAND} *)
+  | Dense              (* {cconst SUNLINEARSOLVER_DENSE} *)
+  | Klu                (* {cconst SUNLINEARSOLVER_KLU} *)
+  | LapackBand         (* {cconst SUNLINEARSOLVER_LAPACKBAND} *)
+  | LapackDense        (* {cconst SUNLINEARSOLVER_LAPACKDENSE} *)
+  | Pcg                (* {cconst SUNLINEARSOLVER_PCG} *)
+  | Spbcgs             (* {cconst SUNLINEARSOLVER_SPBCGS} *)
+  | Spfgmr             (* {cconst SUNLINEARSOLVER_SPFGMR} *)
+  | Spgmr              (* {cconst SUNLINEARSOLVER_SPGMR} *)
+  | Sptfqmr            (* {cconst SUNLINEARSOLVER_SPTFQMR} *)
+  | Superludist        (* {cconst SUNLINEARSOLVER_SUPERLUDIST} *)
+  | Superlumt          (* {cconst SUNLINEARSOLVER_SUPERLUMT} *)
+  | Custom             (* {cconst SUNLINEARSOLVER_CUSTOM} *)
+
 (** {3:callbacks Callback Routines} *)
 
 (** A function [atimesfn v z] computes the action of the system
@@ -515,6 +531,10 @@ module Custom : sig (* {{{ *)
       (** Broadly classifies the operations provided by a linear solver and
           its operating principle. *)
 
+      solver_id : linear_solver_id;
+      (** Identifies the linear solver. This value should normally be set
+          to {{!linear_solver_id}Custom}. *)
+
       init : 'lsolver -> unit;
       (** Performs linear solver initalization. *)
 
@@ -730,9 +750,15 @@ val get_res_id : ('m, 'd, 'k, 't) t -> 'd
     @nocvode <node> SUNLinSolGetType *)
 val get_type : ('m, 'd, 'k, 't) t -> linear_solver_type
 
+(** Returns the identifier of the linear solver.
+
+    @nocvode <node> SUNLinSolGetID
+    @since 5.0.0 *)
+val get_id : ('m, 'd, 'k, 't) t -> linear_solver_id
+
 (** Returns an indication of the last error encountered by a linear solver.
 
-    @nocvode <node> SUNLinSolGetType
+    @nocvode <node> SUNLinSolGetLastFlag
     @since 5.0.0 *)
 val get_last_flag : ('m, 'd, 'k, 't) t -> int
 

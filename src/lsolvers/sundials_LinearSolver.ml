@@ -54,6 +54,21 @@ type linear_solver_type = LSI.linear_solver_type =
   | Iterative
   | MatrixIterative
 
+type linear_solver_id = LSI.linear_solver_id =
+  | Band
+  | Dense
+  | Klu
+  | LapackBand
+  | LapackDense
+  | Pcg
+  | Spbcgs
+  | Spfgmr
+  | Spgmr
+  | Sptfqmr
+  | Superludist
+  | Superlumt
+  | Custom
+
 module Direct = struct (* {{{ *)
 
   external c_dense
@@ -489,6 +504,7 @@ module Custom = struct (* {{{ *)
 
   type ('matrix, 'data, 'kind, 'lsolver) ops = {
       solver_type : linear_solver_type;
+      solver_id   : linear_solver_id;
 
       init : 'lsolver -> unit;
 
@@ -559,6 +575,7 @@ module Custom = struct (* {{{ *)
     | Some f -> fun () -> f x
 
   let make { solver_type = stype;
+             solver_id = sid;
              init = finit;
              setup = fsetup;
              solve = fsolve;
@@ -583,6 +600,7 @@ module Custom = struct (* {{{ *)
           wrap_set_preconditioner fset_preconditioner ldata;
         set_scaling_vectors =
           mapo "set_scaling_vectors" fset_scaling_vectors ldata;
+        get_id = (fun () -> sid);
         get_num_iters = mapu "get_num_iters" fget_num_iters ldata;
         get_res_norm = mapu "get_res_norm" fget_res_norm ldata;
         get_res_id = mapu "get_res_id" fget_res_id ldata;
@@ -644,6 +662,7 @@ module Custom = struct (* {{{ *)
           failwith "internal error: Direct.Custom.set_preconditioner");
         set_scaling_vectors = (fun _ _ ->
           failwith "internal error: Direct.Custom.set_scaling_vectors");
+        get_id = (fun () -> Custom);
         get_num_iters = (fun _ ->
           failwith "internal error: Direct.Custom.get_num_iters");
         get_res_norm = (fun _ ->
@@ -684,6 +703,11 @@ external c_get_type : ('m, 'd, 'k) cptr -> linear_solver_type
   = "sunml_lsolver_get_type"
 
 let get_type (LS { rawptr }) = c_get_type rawptr
+
+external c_get_id : ('m, 'd, 'k) cptr -> linear_solver_id
+  = "sunml_lsolver_get_id"
+
+let get_id (LS { rawptr }) = c_get_id rawptr
 
 external c_set_atimes
   : ('m, 'd, 'k) cptr

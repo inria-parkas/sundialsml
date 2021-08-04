@@ -975,6 +975,79 @@ static int callml_custom_solve(SUNLinearSolver ls, SUNMatrix A, N_Vector x,
     CAMLreturnT(int, CHECK_EXCEPTION_SUCCESS(r));
 }
 
+#if 500 <= SUNDIALS_LIB_VERSION
+static SUNLinearSolver_ID callml_custom_get_id(SUNLinearSolver ls)
+{
+    CAMLparam0();
+    CAMLlocal1(r);
+    SUNLinearSolver_ID id;
+
+    r = caml_callback_exn(GET_OP(ls, GET_ID), Val_unit);
+    if (Is_exception_result (r)) {
+	sunml_warn_discarded_exn (Extract_exception (r),
+					"user-defined get id handler");
+	id = SUNLINEARSOLVER_CUSTOM;
+    } else {
+	switch (Int_val(r)) {
+	case VARIANT_LSOLVER_ID_BAND:
+	    id = SUNLINEARSOLVER_BAND;
+	    break;
+
+	case VARIANT_LSOLVER_ID_DENSE:
+	    id = SUNLINEARSOLVER_DENSE;
+	    break;
+
+	case VARIANT_LSOLVER_ID_KLU:
+	    id = SUNLINEARSOLVER_KLU;
+	    break;
+
+	case VARIANT_LSOLVER_ID_LAPACKBAND:
+	    id = SUNLINEARSOLVER_LAPACKBAND;
+	    break;
+
+	case VARIANT_LSOLVER_ID_LAPACKDENSE:
+	    id = SUNLINEARSOLVER_LAPACKDENSE;
+	    break;
+
+	case VARIANT_LSOLVER_ID_PCG:
+	    id = SUNLINEARSOLVER_PCG;
+	    break;
+
+	case VARIANT_LSOLVER_ID_SPBCGS:
+	    id = SUNLINEARSOLVER_SPBCGS;
+	    break;
+
+	case VARIANT_LSOLVER_ID_SPFGMR:
+	    id = SUNLINEARSOLVER_SPFGMR;
+	    break;
+
+	case VARIANT_LSOLVER_ID_SPGMR:
+	    id = SUNLINEARSOLVER_SPGMR;
+	    break;
+
+	case VARIANT_LSOLVER_ID_SPTFQMR:
+	    id = SUNLINEARSOLVER_SPTFQMR;
+	    break;
+
+	case VARIANT_LSOLVER_ID_SUPERLUDIST:
+	    id = SUNLINEARSOLVER_SUPERLUDIST;
+	    break;
+
+	case VARIANT_LSOLVER_ID_SUPERLUMT:
+	    id = SUNLINEARSOLVER_SUPERLUMT;
+	    break;
+
+	case VARIANT_LSOLVER_ID_CUSTOM:
+	default:
+	    id = SUNLINEARSOLVER_CUSTOM;
+	    break;
+	}
+    }
+
+    CAMLreturnT(SUNLinearSolver_ID, id);
+}
+#endif
+
 static int callml_custom_numiters(SUNLinearSolver ls)
 {
     CAMLparam0();
@@ -1091,10 +1164,10 @@ CAMLprim value sunml_lsolver_call_psolve(value vcptr, value vr, value vz,
 }
 #endif
 
-CAMLprim value sunml_lsolver_make_custom(value vlstype,
+CAMLprim value sunml_lsolver_make_custom(value vlstype, value vlsid,
 					 value vops, value vhasops)
 {
-    CAMLparam3(vlstype, vops, vhasops);
+    CAMLparam4(vlstype, vlsid, vops, vhasops);
 #if 300 <= SUNDIALS_LIB_VERSION
     SUNLinearSolver ls;
     SUNLinearSolver_Ops ops;
@@ -1129,6 +1202,9 @@ CAMLprim value sunml_lsolver_make_custom(value vlstype,
 
     /* Attach operations */
     ops->gettype           = callml_get_type;
+#if 500 <= SUNDIALS_LIB_VERSION
+    ops->getid		   = callml_custom_get_id;
+#endif
     ops->initialize	   = callml_custom_initialize;
     ops->setup             = callml_custom_setup;
     ops->solve             = callml_custom_solve;
@@ -1468,6 +1544,85 @@ CAMLprim value sunml_lsolver_get_type(value vcptr)
     CAMLlocal1(r);
 #if 300 <= SUNDIALS_LIB_VERSION
     r = Val_int(SUNLinSolGetType(LSOLVER_VAL(vcptr)));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(r);
+}
+
+CAMLprim value sunml_lsolver_get_id(value vcptr)
+{
+    CAMLparam1(vcptr);
+    CAMLlocal1(r);
+#if 500 <= SUNDIALS_LIB_VERSION
+    SUNLinearSolver_ID id = SUNLinSolGetID(LSOLVER_VAL(vcptr));
+    enum lsolver_linear_solver_id_tag result;
+    static char exmsg[MAX_ERRMSG_LEN] = "";
+
+    switch(id) {
+	case SUNLINEARSOLVER_BAND:
+            result = VARIANT_LSOLVER_ID_BAND;
+            break;
+
+	case SUNLINEARSOLVER_DENSE:
+            result = VARIANT_LSOLVER_ID_DENSE;
+            break;
+
+	case SUNLINEARSOLVER_KLU:
+            result = VARIANT_LSOLVER_ID_KLU;
+            break;
+
+	case SUNLINEARSOLVER_LAPACKBAND:
+            result = VARIANT_LSOLVER_ID_LAPACKBAND;
+            break;
+
+	case SUNLINEARSOLVER_LAPACKDENSE:
+            result = VARIANT_LSOLVER_ID_LAPACKDENSE;
+            break;
+
+	case SUNLINEARSOLVER_PCG:
+            result = VARIANT_LSOLVER_ID_PCG;
+            break;
+
+	case SUNLINEARSOLVER_SPBCGS:
+            result = VARIANT_LSOLVER_ID_SPBCGS;
+            break;
+
+	case SUNLINEARSOLVER_SPFGMR:
+            result = VARIANT_LSOLVER_ID_SPFGMR;
+            break;
+
+	case SUNLINEARSOLVER_SPGMR:
+            result = VARIANT_LSOLVER_ID_SPGMR;
+            break;
+
+	case SUNLINEARSOLVER_SPTFQMR:
+            result = VARIANT_LSOLVER_ID_SPTFQMR;
+            break;
+
+	case SUNLINEARSOLVER_SUPERLUDIST:
+            result = VARIANT_LSOLVER_ID_SUPERLUDIST;
+            break;
+
+	case SUNLINEARSOLVER_SUPERLUMT:
+            result = VARIANT_LSOLVER_ID_SUPERLUMT;
+            break;
+
+	case SUNLINEARSOLVER_CUSTOM:
+            result = VARIANT_LSOLVER_ID_CUSTOM;
+            break;
+
+	case SUNLINEARSOLVER_CUSOLVERSP_BATCHQR:
+	    snprintf(exmsg, MAX_ERRMSG_LEN,
+		"get_id: SUNLINEARSOLVER_CUSOLVERSP_BATCHQR is not supported");
+	    caml_failwith(exmsg);
+
+	default:
+	    snprintf(exmsg, MAX_ERRMSG_LEN, "get_id: unknown id (%d)", id);
+	    caml_failwith(exmsg);
+    }
+
+    r = Val_int(result);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
