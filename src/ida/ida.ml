@@ -12,18 +12,7 @@
 open Sundials
 include Ida_impl
 
-(* "Simulate" Linear Solvers in Sundials < 3.0.0 *)
-let in_compat_mode2 =
-  match Config.sundials_version with
-  | 2,_,_ -> true
-  | _ -> false
-
-(* "Simulate" Nonlinear Solvers in Sundials < 4.0.0 *)
-let in_compat_mode2_3 =
-  match Config.sundials_version with
-  | 2,_,_ -> true
-  | 3,_,_ -> true
-  | _ -> false
+open Sundials_impl.Versions
 
 (*
  * NB: The order of variant constructors and record fields is important!

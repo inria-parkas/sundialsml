@@ -12,35 +12,7 @@
 open Sundials
 include Cvode_impl
 
-(* "Simulate" Linear Solvers in Sundials < 3.0.0 *)
-let in_compat_mode2 =
-  match Config.sundials_version with
-  | 2,_,_ -> true
-  | _ -> false
-
-(* "Simulate" Linear Solvers in Sundials < 4.0.0 *)
-let in_compat_mode2_3 =
-  match Config.sundials_version with
-  | 2,_,_ -> true
-  | 3,_,_ -> true
-  | _ -> false
-
-let sundials_lt500 =
-  match Config.sundials_version with
-  | 2,_,_ -> true
-  | 3,_,_ -> true
-  | 4,_,_ -> true
-  | _ -> false
-
-let sundials_lt530 =
-  match Config.sundials_version with
-  | 2,_,_ -> true
-  | 3,_,_ -> true
-  | 4,_,_ -> true
-  | 5,0,_ -> true
-  | 5,1,_ -> true
-  | 5,2,_ -> true
-  | _ -> false
+open Sundials_impl.Versions
 
 external c_alloc_nvector_array : int -> 'a array
     = "sunml_cvodes_alloc_nvector_array"

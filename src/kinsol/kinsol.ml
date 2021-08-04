@@ -13,17 +13,7 @@
 open Sundials
 include Kinsol_impl
 
-(* "Simulate" Linear Solvers in Sundials < 3.0.0 *)
-let in_compat_mode2 =
-  match Config.sundials_version with
-  | 2,_,_ -> true
-  | _ -> false
-
-let in_compat_mode2_3 =
-  match Config.sundials_version with
-  | 2,_,_ -> true
-  | 3,_,_ -> true
-  | _ -> false
+open Sundials_impl.Versions
 
 exception IllInput                       (* KIN_ILL_INPUT *)
 exception LineSearchNonConvergence       (* KIN_LINESEARCH_NONCONV *)
