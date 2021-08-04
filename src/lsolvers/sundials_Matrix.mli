@@ -50,6 +50,9 @@ type ('m, 'd) matrix_ops = { (* {{{ *)
   m_scale_addi : float -> 'm -> unit;
   (** [m_scale_addi c a] calculates $a = ca + I$. *)
 
+  m_matvec_setup : ('m -> unit) option;
+  (** Performs any setup necessary to perform a matrix-vector product. *)
+
   m_matvec    : 'm -> 'd -> 'd -> unit;
   (** [m_matvec a x y] calculates $y = ax$. *)
 
@@ -1085,6 +1088,12 @@ val scale_add : float -> ('k, 'm, 'nd, 'nk) t -> ('k, 'm, 'nd, 'nk) t -> unit
 
     @nocvode <node> SUNMatScaleAddI *)
 val scale_addi : float -> ('k, 'm, 'nd, 'nk) t -> unit
+
+(** Perform any setup required before a matrix-vector product.
+
+    @nocvode <node> SUNMatMatvecSetup
+    @since 5.0.0 *)
+val matvec_setup : ('k, 'm, 'nd, 'nk) t -> unit
 
 (** The call [matvec a x y] computes the matrix-vector product $y = Ax$.
 

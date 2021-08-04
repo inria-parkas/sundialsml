@@ -22,6 +22,13 @@ let check_valid =
   | 2,_,_ -> Sundials_configuration.safe
   | _ -> false
 
+let sundials_lt500 =
+  match Config.sundials_version with
+  | 2,_,_ -> true
+  | 3,_,_ -> true
+  | 4,_,_ -> true
+  | _ -> false
+
 (* Must correspond with matrix_ml.h:mat_matrix_content_index *)
 type ('data, 'cptr) matrix_content = {
   mutable payload : 'data;
@@ -34,19 +41,21 @@ type 'k serial_nvector
 
 (* Must correspond with matrix_ml.h:mat_matrix_ops_index *)
 type ('m, 'd) matrix_ops = {
-  m_clone      : 'm -> 'm;
+  m_clone        : 'm -> 'm;
 
-  m_zero       : 'm -> unit;
+  m_zero         : 'm -> unit;
 
-  m_copy       : 'm -> 'm -> unit;
+  m_copy         : 'm -> 'm -> unit;
 
-  m_scale_add  : float -> 'm -> 'm -> unit;
+  m_scale_add    : float -> 'm -> 'm -> unit;
 
-  m_scale_addi : float -> 'm -> unit;
+  m_scale_addi   : float -> 'm -> unit;
 
-  m_matvec     : 'm -> 'd -> 'd -> unit;
+  m_matvec_setup : ('m -> unit) option;
 
-  m_space      : 'm -> int * int;
+  m_matvec       : 'm -> 'd -> 'd -> unit;
+
+  m_space        : 'm -> int * int;
 }
 
 module Dense = struct (* {{{ *)
@@ -215,6 +224,8 @@ module Dense = struct (* {{{ *)
     m_scale_add  = scale_add;
 
     m_scale_addi = scale_addi;
+
+    m_matvec_setup = None;
 
     m_matvec     = (fun { rawptr; valid } x y ->
                       if check_valid && not valid then raise Invalidated;
@@ -402,6 +413,8 @@ module Band = struct (* {{{ *)
     m_scale_add  = scale_add;
 
     m_scale_addi = scale_addi;
+
+    m_matvec_setup = None;
 
     m_matvec     = (fun { rawptr; valid } x y ->
                       if check_valid && not valid then raise Invalidated;
@@ -743,6 +756,8 @@ module Sparse = struct (* {{{ *)
 
     m_scale_addi = scale_addi;
 
+    m_matvec_setup = None;
+
     m_matvec     = (fun { rawptr; valid } x y ->
                       if check_valid && not valid then raise Invalidated;
                       c_matvec rawptr x y);
@@ -846,6 +861,8 @@ module ArrayDense = struct (* {{{ *)
     m_scale_add  = scale_add;
 
     m_scale_addi = scale_addi;
+
+    m_matvec_setup = None;
 
     m_matvec     = matvec;
 
@@ -1023,6 +1040,8 @@ module ArrayBand = struct (* {{{ *)
 
     m_scale_addi = scale_addi;
 
+    m_matvec_setup = None;
+
     m_matvec     = matvec;
 
     m_space      = space;
@@ -1065,12 +1084,12 @@ type 'nk arraydense = (custom, ArrayDense.t, RealArray.t, 'nk) t
 
 type 'nk arrayband = (custom, ArrayBand.t, RealArray.t, 'nk) t
 
-external c_wrap : ('k, 'm, 'nd, 'nk) id -> 'content_cptr -> 'm -> cmat
+external c_wrap : ('k, 'm, 'nd, 'nk) id -> 'content_cptr -> 'm -> bool -> cmat
   = "sunml_matrix_wrap"
 
 let wrap_dense (data : Dense.t) = {
     payload = data;
-    rawptr  = c_wrap Dense data.rawptr data;
+    rawptr  = c_wrap Dense data.rawptr data false;
     id      = Dense;
     mat_ops = Dense.ops;
   }
@@ -1081,7 +1100,7 @@ let dense ?m ?(i=0.0) n =
 
 let wrap_band (data : Band.t) = {
     payload = data;
-    rawptr  = c_wrap Band data.rawptr data;
+    rawptr  = c_wrap Band data.rawptr data false;
     id      = Band;
     mat_ops = Band.ops;
   }
@@ -1097,7 +1116,7 @@ let wrap_sparse (data : 'f Sparse.t) =
    | _ -> ());
   {
     payload = data;
-    rawptr  = c_wrap Sparse data.rawptr data;
+    rawptr  = c_wrap Sparse data.rawptr data false;
     id      = Sparse;
     mat_ops = Sparse.ops;
   }
@@ -1114,14 +1133,14 @@ let sparse_csr ?m ?nnz n =
 
 let wrap_custom ops data = {
     payload = data;
-    rawptr  = c_wrap Custom ops data;
+    rawptr  = c_wrap Custom ops data (ops.m_matvec_setup <> None);
     id      = Custom;
     mat_ops = ops;
   }
 
 let wrap_arraydense data = {
     payload = data;
-    rawptr  = c_wrap ArrayDense ArrayDense.ops data;
+    rawptr  = c_wrap ArrayDense ArrayDense.ops data false;
     id      = ArrayDense;
     mat_ops = ArrayDense.ops;
   }
@@ -1132,7 +1151,7 @@ let arraydense ?m ?(i=0.0) n =
 
 let wrap_arrayband data = {
     payload = data;
-    rawptr  = c_wrap ArrayBand ArrayBand.ops data;
+    rawptr  = c_wrap ArrayBand ArrayBand.ops data false;
     id      = ArrayBand;
     mat_ops = ArrayBand.ops;
   }
@@ -1170,6 +1189,13 @@ let scale_addi c ({ payload = a; mat_ops = { m_scale_addi } } as m) =
   match Config.sundials_version with
   | 2,_,_ -> m_scale_addi c a
   | _ -> c_scale_addi c m
+
+external c_matvecsetup : ('k, 'm, 'nd, 'nk) t -> unit
+  = "sunml_matrix_matvecsetup"
+
+let matvec_setup ({ payload = a; _ } as m) =
+  if sundials_lt500 then raise Config.NotImplementedBySundialsVersion;
+  c_matvecsetup m
 
 external c_matvec
   : ('k, 'm, 'nd, 'nk) t -> ('nd, 'nk) Nvector.t -> ('nd, 'nk) Nvector.t -> unit
