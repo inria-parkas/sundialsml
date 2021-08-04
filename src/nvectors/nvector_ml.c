@@ -86,12 +86,16 @@ void sunml_finalize_caml_nvec (value vnv)
 
 void sunml_clone_cnvec_ops(N_Vector dst, N_Vector src)
 {
+#if 500 <= SUNDIALS_LIB_VERSION
+    N_VCopyOps(src, dst); // argument order change is intentional
+
+#else
     N_Vector_Ops ops = (N_Vector_Ops) dst->ops;
 
     ops->nvclone           = src->ops->nvclone;
     ops->nvcloneempty      = src->ops->nvcloneempty;
     ops->nvdestroy         = src->ops->nvdestroy;
-#if SUNDIALS_LIB_VERSION >= 270
+#if 270 <= SUNDIALS_LIB_VERSION
     ops->nvgetvectorid	   = src->ops->nvgetvectorid;
 #endif
     ops->nvspace           = src->ops->nvspace;
@@ -116,7 +120,7 @@ void sunml_clone_cnvec_ops(N_Vector dst, N_Vector src)
     ops->nvinvtest         = src->ops->nvinvtest;
     ops->nvconstrmask      = src->ops->nvconstrmask;
     ops->nvminquotient     = src->ops->nvminquotient;
-#if SUNDIALS_LIB_VERSION >= 400
+#if 400 <= SUNDIALS_LIB_VERSION
     /* fused vector operations */
     ops->nvlinearcombination = src->ops->nvlinearcombination;
     ops->nvscaleaddmulti     = src->ops->nvscaleaddmulti;
@@ -130,6 +134,8 @@ void sunml_clone_cnvec_ops(N_Vector dst, N_Vector src)
     ops->nvwrmsnormmaskvectorarray      = src->ops->nvwrmsnormmaskvectorarray;
     ops->nvscaleaddmultivectorarray     = src->ops->nvscaleaddmultivectorarray;
     ops->nvlinearcombinationvectorarray = src->ops->nvlinearcombinationvectorarray;
+#endif
+
 #endif
 }
 
@@ -288,7 +294,7 @@ CAMLprim value sunml_nvec_wrap_serial(value payload, value checkfn)
     ops->nvcloneempty      = clone_empty_serial;	    /* ours */
     /* This is registered but only ever called for C-allocated clones. */
     ops->nvdestroy         = sunml_free_cnvec;
-#if SUNDIALS_LIB_VERSION >= 270
+#if 270 <= SUNDIALS_LIB_VERSION
     ops->nvgetvectorid	   = N_VGetVectorID_Serial;
 #endif
 
@@ -315,7 +321,7 @@ CAMLprim value sunml_nvec_wrap_serial(value payload, value checkfn)
     ops->nvconstrmask      = N_VConstrMask_Serial;
     ops->nvminquotient     = N_VMinQuotient_Serial;
 
-#if SUNDIALS_LIB_VERSION >= 400
+#if 400 <= SUNDIALS_LIB_VERSION
     /* fused vector operations (optional, NULL means disabled by default) */
     ops->nvlinearcombination = NULL;
     ops->nvscaleaddmulti     = NULL;
@@ -329,6 +335,11 @@ CAMLprim value sunml_nvec_wrap_serial(value payload, value checkfn)
     ops->nvwrmsnormmaskvectorarray      = NULL;
     ops->nvscaleaddmultivectorarray     = NULL;
     ops->nvlinearcombinationvectorarray = NULL;
+#endif
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    ops->nvgetlength			= N_VGetLength_Serial;
+    ops->nvgetcommunicator		= NULL;
 #endif
 
     /* Create content */
@@ -376,6 +387,7 @@ static N_Vector_ID getvectorid_custom(N_Vector v)
 // Custom operations
 static N_Vector callml_vclone(N_Vector w);
 static void callml_vspace(N_Vector v, sundials_ml_index *lrw, sundials_ml_index *liw);
+static sunindextype callml_vgetlength(N_Vector v);
 static void callml_vlinearsum(realtype a, N_Vector x, realtype b, N_Vector y, N_Vector z);
 static void callml_vconst(realtype c, N_Vector z);
 static void callml_vprod(N_Vector x, N_Vector y, N_Vector z);
@@ -442,7 +454,7 @@ CAMLprim value sunml_nvec_wrap_custom(value mlops, value payload, value checkfn)
     ops->nvclone           = callml_vclone;
     ops->nvcloneempty      = NULL;
     ops->nvdestroy         = free_custom_cnvec;
-#if SUNDIALS_LIB_VERSION >= 270
+#if 270 <= SUNDIALS_LIB_VERSION
     ops->nvgetvectorid	   = getvectorid_custom;
 #endif
 
@@ -488,7 +500,7 @@ CAMLprim value sunml_nvec_wrap_custom(value mlops, value payload, value checkfn)
     if (HAS_OP(mlops, NVECTOR_OPS_NVMINQUOTIENT))
 	ops->nvminquotient = callml_vminquotient;
 
-#if SUNDIALS_LIB_VERSION >= 400
+#if 400 <= SUNDIALS_LIB_VERSION
     /* fused vector operations (optional, NULL means disabled by default) */
     ops->nvlinearcombination = NULL;
     ops->nvscaleaddmulti     = NULL;
@@ -502,6 +514,11 @@ CAMLprim value sunml_nvec_wrap_custom(value mlops, value payload, value checkfn)
     ops->nvwrmsnormmaskvectorarray      = NULL;
     ops->nvscaleaddmultivectorarray     = NULL;
     ops->nvlinearcombinationvectorarray = NULL;
+#endif
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    ops->nvgetlength			= callml_vgetlength;
+    ops->nvgetcommunicator		= NULL;
 #endif
 
     /* Create content */
@@ -575,6 +592,28 @@ static void callml_vspace(N_Vector v, sundials_ml_index *lrw, sundials_ml_index 
 
     CAMLreturn0;
 }
+
+#if 500 <= SUNDIALS_LIB_VERSION
+static sunindextype callml_vgetlength(N_Vector v)
+{
+    CAMLparam0();
+    CAMLlocal1(mlop);
+    mlop = GET_OP(v, NVECTOR_OPS_NVGETLENGTH);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback_exn (mlop, NVEC_BACKLINK(v));
+    if (Is_exception_result (r)) {
+	sunml_warn_discarded_exn (Extract_exception (r),
+					"user-defined n_vgetlength");
+	fputs ("Sundials/ML has no sensible value to return to Sundials, "
+	       "and incorrect values risk memory corruption.  Abort.", stderr);
+	fflush (stderr);
+	abort ();
+    }
+
+    CAMLreturnT(sunindextype, Int_val(r));
+}
+#endif
 
 static void callml_vlinearsum(realtype a, N_Vector x, realtype b, N_Vector y, N_Vector z)
 {
@@ -1482,6 +1521,18 @@ CAMLprim value sunml_nvec_ser_n_vspace(value vx)
     Store_field(r, 0, Val_index(lrw));
     Store_field(r, 1, Val_index(liw));
 
+    CAMLreturn(r);
+}
+
+CAMLprim value sunml_nvec_ser_n_vgetlength(value vx)
+{
+    CAMLparam1(vx);
+    CAMLlocal1(r);
+#if 500 <= SUNDIALS_LIB_VERSION
+    r = Val_int(N_VGetLength_Serial(NVEC_VAL(vx)));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn(r);
 }
 

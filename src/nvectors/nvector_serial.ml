@@ -153,6 +153,9 @@ module Ops = struct
   external n_vspace  : t -> int * int
     = "sunml_nvec_ser_n_vspace"
 
+  external n_vgetlength : t -> int
+    = "sunml_nvec_ser_n_vgetlength"
+
   external n_vlinearcombination : RealArray.t -> t array -> t -> unit
     = "sunml_nvec_ser_n_vlinearcombination"
 
@@ -399,6 +402,8 @@ module DataOps =
       done
 
     let n_vspace (x : t) = (A.dim x, 1)
+
+    let n_vgetlength (x : t) = A.dim x
 
     (* fused and array operations *)
 

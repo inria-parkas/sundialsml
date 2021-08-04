@@ -155,6 +155,9 @@ module Ops = struct
   external n_vspace  : t -> int * int
     = "sunml_nvec_pthreads_n_vspace"
 
+  external n_vgetlength : t -> int
+    = "sunml_nvec_pthreads_n_vgetlength"
+
   external n_vlinearcombination : RealArray.t -> t array -> t -> unit
     = "sunml_nvec_pthreads_n_vlinearcombination"
 

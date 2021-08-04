@@ -252,6 +252,8 @@ module Make =
 
       let n_vspace x = (A.length x, 1)
 
+      let n_vgetlength x = A.length x
+
       (* fused and array operations *)
 
       let n_vlinearcombination (ca : RealArray.t) (xa : A.data array) (z : A.data) =
@@ -609,6 +611,7 @@ module Make =
           Nvector_custom.n_vcheck        = checkfn;
           Nvector_custom.n_vclone        = DataOps.n_vclone;
           Nvector_custom.n_vspace        = Some DataOps.n_vspace;
+          Nvector_custom.n_vgetlength    = DataOps.n_vgetlength;
           Nvector_custom.n_vlinearsum    = DataOps.n_vlinearsum;
           Nvector_custom.n_vconst        = DataOps.n_vconst;
           Nvector_custom.n_vprod         = DataOps.n_vprod;
@@ -692,6 +695,7 @@ module Make =
             = DataOps.n_vconstrmask (unwrap c) (unwrap x) (unwrap m)
       let n_vminquotient n d = DataOps.n_vminquotient (unwrap n) (unwrap d)
       let n_vspace x = DataOps.n_vspace (unwrap x)
+      let n_vgetlength x = DataOps.n_vgetlength (unwrap x)
 
       let n_vlinearcombination c x z
         = DataOps.n_vlinearcombination c (Array.map unwrap x) (unwrap z)
@@ -952,6 +956,8 @@ module Array =
         done
 
       let n_vspace (x : float array) = (A.length x, 1)
+
+      let n_vgetlength (x : float array) = A.length x
 
       (* fused and array operations *)
 
@@ -1329,6 +1335,7 @@ module Array =
           Nvector_custom.n_vcheck        = checkfn;
           Nvector_custom.n_vclone        = DataOps.n_vclone;
           Nvector_custom.n_vspace        = Some DataOps.n_vspace;
+          Nvector_custom.n_vgetlength    = DataOps.n_vgetlength;
           Nvector_custom.n_vlinearsum    = DataOps.n_vlinearsum;
           Nvector_custom.n_vconst        = DataOps.n_vconst;
           Nvector_custom.n_vprod         = DataOps.n_vprod;
@@ -1412,6 +1419,7 @@ module Array =
             = DataOps.n_vconstrmask (unwrap c) (unwrap x) (unwrap m)
       let n_vminquotient n d = DataOps.n_vminquotient (unwrap n) (unwrap d)
       let n_vspace x = DataOps.n_vspace (unwrap x)
+      let n_vgetlength x = DataOps.n_vgetlength (unwrap x)
 
       let n_vlinearcombination c x z
         = DataOps.n_vlinearcombination c (Array.map unwrap x) (unwrap z)

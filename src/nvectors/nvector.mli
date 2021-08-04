@@ -148,6 +148,12 @@ module type NVECTOR_OPS =
         integer words [liw] required to store [c]. *)
     val n_vspace : t -> int * int
 
+    (** Returns the number of "active" entries. This value is cumulative
+        across all processes in a parallel environment.
+
+       @since 5.0.0 *)
+    val n_vgetlength : t -> int
+
     (* Fused and array operations *)
 
     (** [n_vlinearcombination c x z] calculates
