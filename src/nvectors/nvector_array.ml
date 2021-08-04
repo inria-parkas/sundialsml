@@ -661,6 +661,8 @@ module Make =
           Nvector_custom.n_vconstrmask   = Some DataOps.n_vconstrmask;
           Nvector_custom.n_vminquotient  = Some DataOps.n_vminquotient;
 
+          Nvector_custom.n_vgetcommunicator = None;
+
           Nvector_custom.n_vlinearcombination
             = Some DataOps.n_vlinearcombination;
           Nvector_custom.n_vscaleaddmulti
@@ -1453,6 +1455,8 @@ module Array =
           Nvector_custom.n_vwrmsnormmask = Some DataOps.n_vwrmsnormmask;
           Nvector_custom.n_vconstrmask   = Some DataOps.n_vconstrmask;
           Nvector_custom.n_vminquotient  = Some DataOps.n_vminquotient;
+
+          Nvector_custom.n_vgetcommunicator = None;
 
           Nvector_custom.n_vlinearcombination
             = Some DataOps.n_vlinearcombination;

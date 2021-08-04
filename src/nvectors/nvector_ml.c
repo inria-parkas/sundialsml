@@ -418,6 +418,10 @@ static booleantype callml_vinvtest(N_Vector x, N_Vector z);
 static booleantype callml_vconstrmask(N_Vector c, N_Vector x, N_Vector m);
 static realtype callml_vminquotient(N_Vector num, N_Vector denom);
 
+#if 500 <= SUNDIALS_LIB_VERSION
+static void *callml_vgetcommunicator(N_Vector x);
+#endif
+
 /* Custom fused vector operations */
 #if 400 <= SUNDIALS_LIB_VERSION
 static int callml_vlinearcombination(int nvec, realtype* c,
@@ -541,7 +545,10 @@ CAMLprim value sunml_nvec_wrap_custom(value mlops, value payload, value checkfn)
 
 #if 500 <= SUNDIALS_LIB_VERSION
     ops->nvgetlength	    = callml_vgetlength;
+
     ops->nvgetcommunicator  = NULL;
+    if (HAS_OP(mlops, NVECTOR_OPS_NVGETCOMMUNICATOR))
+	ops->nvgetcommunicator = callml_vgetcommunicator;
 
     ops->nvdotprodlocal     = NULL;
     if (HAS_OP(mlops, NVECTOR_OPS_NVDOTPROD_LOCAL))
@@ -1304,6 +1311,26 @@ static int callml_vlinearcombinationvectorarray(int nvec, int nsum, realtype* c,
 	CAMLreturnT(int, 0);
     }
     CAMLreturnT(int, 1);
+}
+#endif
+
+#if 500 <= SUNDIALS_LIB_VERSION
+/* Must correspond with camlmpi.h after replacing MPI_Comm* by void* */
+#define Comm_val_addr(comm) ((void *) &Field(comm, 1))
+
+static void *callml_vgetcommunicator(N_Vector x)
+{
+    CAMLparam0();
+    CAMLlocal1(mlop);
+    mlop = GET_SOME_OP(x, NVECTOR_OPS_NVGETCOMMUNICATOR);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback_exn (mlop, NVEC_BACKLINK(x));
+    if (Is_exception_result (r))
+	sunml_warn_discarded_exn (Extract_exception (r),
+					"user-defined n_vgetcommunicator");
+
+    CAMLreturnT(void *, Comm_val_addr(r));
 }
 #endif
 
