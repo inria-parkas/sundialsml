@@ -24,10 +24,27 @@ let e = Sundials.RecoverableFailure
    be opaque outside of Sundials/ML, we simply do not install the
    lsolver_impl.cmi file. *)
 
+(* Must correspond with sundials_linearSolver_ml.h:lsolver_solver_type *)
 type linear_solver_type =
   | Direct
   | Iterative
   | MatrixIterative
+
+(* Must correspond with sundials_linearSolver_ml.h:lsolver_solver_id_tag *)
+type linear_solver_id =
+  | Band
+  | Dense
+  | Klu
+  | LapackBand
+  | LapackDense
+  | Pcg
+  | Spbcgs
+  | Spfgmr
+  | Spgmr
+  | Sptfqmr
+  | Superludist
+  | Superlumt
+  | Custom
 
 module Klu = struct (* {{{ *)
 
@@ -152,6 +169,8 @@ module Custom = struct (* {{{ *)
       ('data, 'kind) precond_with_data -> bool -> bool -> unit;
 
     set_scaling_vectors : 'data option -> 'data option -> unit;
+
+    get_id : unit -> linear_solver_id;
 
     get_num_iters : unit -> int;
 
