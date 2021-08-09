@@ -243,6 +243,13 @@ type 'd nvector_ops = { (* {{{ *)
     into ['d] nvectors which can be passed to a solver. *)
 val make_wrap  : 'd nvector_ops -> ?with_fused_ops:bool -> 'd -> 'd t
 
+(** Clone a custom nvector. The new nvectors payload may be specified
+    explicitly, otherwise the src payload is cloned.
+
+    Any fused and array operations enabled in the source nvector will also be
+    enabled in the cloned one. *)
+val clone : ?payload:'d -> 'd t -> 'd t
+
 (** Add tracing to custom operations.
     [add_tracing p ops] modifies a set of {!nvector_ops} so that
     a message, prefixed by [p], is printed each time an operation

@@ -668,6 +668,41 @@ CAMLprim value sunml_nvec_wrap_custom(value mlops, value payload, value checkfn)
     CAMLreturn(vcnvec);
 }
 
+CAMLprim value sunml_nvec_clone_custom(value vodata, value vsrc)
+{
+    CAMLparam1(vsrc);
+    CAMLlocal3(vsrcpayload, vdstpayload, vdst);
+    N_Vector src = NVEC_VAL(vsrc);
+    N_Vector dst;
+
+    if (vodata == Val_none) { // clone the payload
+	vsrcpayload = NVEC_BACKLINK(src);
+
+	/* NB: Don't trigger GC while processing this return value!  */
+	value r = caml_callback_exn (GET_OP(src, NVECTOR_OPS_NVCLONE), vsrcpayload);
+	if (Is_exception_result(r)) caml_raise(Extract_exception(r));
+	vdstpayload = r;
+    } else {
+	vdstpayload = Some_val(vodata);
+    }
+
+    /* Create vector */
+    dst = sunml_alloc_cnvec(0, vdstpayload);
+    if (dst == NULL) caml_raise_out_of_memory();
+    sunml_clone_cnvec_ops(dst, src);
+
+    /* Link to the custom operations table from the source nvector */
+    dst->content = src->content;
+    caml_register_generational_global_root((value *)&CNVEC_OP_TABLE(dst));
+
+    vdst = caml_alloc_tuple(3);
+    Store_field(vdst, 0, vdstpayload);
+    Store_field(vdst, 1, sunml_alloc_caml_nvec(dst, finalize_custom_caml_nvec));
+    Store_field(vdst, 2, Field(vsrc, 2));
+
+    CAMLreturn(vdst);
+}
+
 /* Creation from Sundials/C. */
 N_Vector callml_vclone(N_Vector w)
 {
