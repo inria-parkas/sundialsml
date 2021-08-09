@@ -49,6 +49,9 @@ module RealArray2 = Sundials_RealArray2
 (** Vectors of integers (one-dimensional bigarrays). *)
 module LintArray = Sundials_LintArray
 
+(** Read-only polymorphic arrays. *)
+module ROArray = Sundials_ROArray
+
 (** {2:roots Arrays of roots (zero-crossings)} *)
 
 (** Vectors of root (zero-crossing) statuses. *)

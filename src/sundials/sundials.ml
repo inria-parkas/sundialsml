@@ -148,6 +148,8 @@ end (* }}} *)
 
 module LintArray = Sundials_LintArray
 
+module ROArray = Sundials_ROArray
+
 module Roots = struct (* {{{ *)
   open Bigarray
   type t = (int32, int32_elt, c_layout) Array1.t
