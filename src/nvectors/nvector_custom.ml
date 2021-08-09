@@ -107,6 +107,11 @@ external c_enablelinearcombinationvectorarray_custom : ('d, 'k) Nvector.t -> boo
 external c_make_wrap : 'a nvector_ops -> 'a -> ('a t -> bool) -> 'a t
     = "sunml_nvec_wrap_custom"
 
+external c_clone : 'a option -> 'a t -> 'a t
+    = "sunml_nvec_clone_custom"
+
+let clone ?payload nv = c_clone payload nv
+
 let do_enable f nv v =
   match v with
   | None -> ()
