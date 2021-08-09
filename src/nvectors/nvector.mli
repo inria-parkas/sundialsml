@@ -56,6 +56,10 @@ type nvector_id =
   | CUDA
   | RAJA
   | OpenMPdev
+  | Trilinos
+  | ManyVector
+  | MpiManyVector
+  | MpiPlusX
   | Custom
 
 (** Returns the vector type identifier.

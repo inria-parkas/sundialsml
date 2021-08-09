@@ -32,6 +32,10 @@ type nvector_id =
   | CUDA
   | RAJA
   | OpenMPdev
+  | Trilinos
+  | ManyVector
+  | MpiManyVector
+  | MpiPlusX
   | Custom
 
 external get_id : ('data, 'kind) t -> nvector_id
