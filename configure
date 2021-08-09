@@ -245,7 +245,7 @@ if [ x"${SUNDIALS_LIBRARY_DIR}" != x ]; then
 fi
 if [ x"${SUNDIALS_INCLUDE_DIR}" != x ]; then
     sundials_inc_path="${SUNDIALS_INCLUDE_DIR%/}"
-    Isundials_inc_path="-I${sundials_inc_path}"
+    Isundials_inc_path="-isystem ${sundials_inc_path}"
 fi
 if [ x"${SUNDIALS_DIR}" != x ]; then
     if [ "x${sundials_lib_path}" = x ]; then
@@ -254,7 +254,7 @@ if [ x"${SUNDIALS_DIR}" != x ]; then
     fi
     if [ "x${sundials_inc_path}" = x ]; then
 	sundials_inc_path="${SUNDIALS_DIR%/}/include/"
-	Isundials_inc_path="-I${sundials_inc_path}"
+	Isundials_inc_path="-isystem ${sundials_inc_path}"
     fi
     if [ x"${SUNDIALS_EXAMPLES_DIR}" = x ]; then
 	SUNDIALS_EXAMPLES_DIR="${SUNDIALS_DIR%/}/examples/"
@@ -286,10 +286,10 @@ if [ x"${SUPERLUMT_DIR}" != x ]; then
 fi
 if [ x"${SUPERLUMT_INCLUDE_DIR}" != x ]; then
     superlumt_inc_path="${SUPERLUMT_INCLUDE_DIR%/}"
-    Isuperlumt_inc_path="-I${superlumt_inc_path}"
+    Isuperlumt_inc_path="-isystem ${superlumt_inc_path}"
 elif [ "${distribution}" = centos ]; then
     superlumt_inc_path="/usr/include/SuperLUMT/"
-    Isuperlumt_inc_path="-I${superlumt_inc_path}"
+    Isuperlumt_inc_path="-isystem ${superlumt_inc_path}"
 fi
 if [ x"${SUPERLUMT_LIBRARY_DIR}" != x ]; then
     superlumt_lib_path="${SUPERLUMT_LIBRARY_DIR%/}"
@@ -297,10 +297,10 @@ if [ x"${SUPERLUMT_LIBRARY_DIR}" != x ]; then
 fi
 if [ x"${KLU_INCLUDE_DIR}" != x ]; then
     klu_inc_path="${KLU_INCLUDE_DIR%/}"
-    Iklu_inc_path="-I${klu_inc_path}"
+    Iklu_inc_path="-isystem ${klu_inc_path}"
 elif [ "${distribution}" = debian ] || [ "${distribution}" = centos ]; then
     klu_inc_path="/usr/include/suitesparse/"
-    Iklu_inc_path="-I${klu_inc_path}"
+    Iklu_inc_path="-isystem ${klu_inc_path}"
 fi
 if [ x"${KLU_LIBRARY_DIR}" != x ]; then
     klu_lib_path="${KLU_LIBRARY_DIR%/}"
@@ -358,7 +358,7 @@ if [ "x${prefix}" = x ]; then
 	    fi
 	    if [ "x${sundials_inc_path}" = x ]; then
 		sundials_inc_path="${prefix}include/"
-		Isundials_inc_path="-I${sundials_inc_path}"
+		Isundials_inc_path="isystem I${sundials_inc_path}"
 	    fi
 	    if [ "x${superlumt_lib_path}" = x ]; then
 		superlumt_lib_path="${prefix}lib/"
@@ -695,8 +695,8 @@ else
 fi
 
 
-cppflags="${cppflags} ${Isundials_inc_path} -I${ocaml_path}"
-cflags="${cflags} -I${ocaml_path}"
+cppflags="${cppflags} ${Isundials_inc_path} -isystem ${ocaml_path}"
+cflags="${cflags} -isystem ${ocaml_path}"
 
 include="<caml/mlvalues.h>"
 query="SIZEOF_INT,SIZEOF_LONG,SIZEOF_PTR"
