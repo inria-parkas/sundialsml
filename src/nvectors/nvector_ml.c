@@ -197,6 +197,20 @@ CAMLprim value sunml_nvec_get_id(value vx)
 	    vr = Val_int(VARIANT_NVECTOR_ID_TAG_OPENMPDEV);
 	    break;
 #endif
+#if 500 <= SUNDIALS_LIB_VERSION
+	case SUNDIALS_NVEC_TRILINOS:
+	    vr = Val_int(VARIANT_NVECTOR_ID_TAG_TRILINOS);
+	    break;
+	case SUNDIALS_NVEC_MANYVECTOR:
+	    vr = Val_int(VARIANT_NVECTOR_ID_TAG_MANYVECTOR);
+	    break;
+	case SUNDIALS_NVEC_MPIMANYVECTOR:
+	    vr = Val_int(VARIANT_NVECTOR_ID_TAG_MPIMANYVECTOR);
+	    break;
+	case SUNDIALS_NVEC_MPIPLUSX:
+	    vr = Val_int(VARIANT_NVECTOR_ID_TAG_MPIPLUSX);
+	    break;
+#endif
 	case SUNDIALS_NVEC_CUSTOM:
 	default:
 	    vr = Val_int(VARIANT_NVECTOR_ID_TAG_CUSTOM);
