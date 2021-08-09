@@ -107,5 +107,10 @@ let sundials_lt530 =
   | 5,2,_ -> true
   | _ -> false
 
+let has_nvector_get_id =
+  match Sundials_configuration.sundials_version with
+  | 2,n,_ -> n >= 9
+  | _ -> true
+
 end
 

@@ -7,41 +7,41 @@ type t = (data, kind) Nvector.t
 type 'k any = (data, [>kind] as 'k) Nvector.t
 
 (* Selectively enable and disable fused and array operations *)
-external c_enablefusedops_serial                           : t -> bool -> unit
+external c_enablefusedops_serial                     : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_ser_enablefusedops"
-external c_enablelinearcombination_serial                  : t -> bool -> unit
+external c_enablelinearcombination_serial            : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_ser_enablelinearcombination"
-external c_enablescaleaddmulti_serial                      : t -> bool -> unit
+external c_enablescaleaddmulti_serial                : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_ser_enablescaleaddmulti"
-external c_enabledotprodmulti_serial                       : t -> bool -> unit
+external c_enabledotprodmulti_serial                 : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_ser_enabledotprodmulti"
-external c_enablelinearsumvectorarray_serial               : t -> bool -> unit
+external c_enablelinearsumvectorarray_serial         : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_ser_enablelinearsumvectorarray"
-external c_enablescalevectorarray_serial                   : t -> bool -> unit
+external c_enablescalevectorarray_serial             : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_ser_enablescalevectorarray"
-external c_enableconstvectorarray_serial                   : t -> bool -> unit
+external c_enableconstvectorarray_serial             : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_ser_enableconstvectorarray"
-external c_enablewrmsnormvectorarray_serial                : t -> bool -> unit
+external c_enablewrmsnormvectorarray_serial          : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_ser_enablewrmsnormvectorarray"
-external c_enablewrmsnormmaskvectorarray_serial            : t -> bool -> unit
+external c_enablewrmsnormmaskvectorarray_serial      : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_ser_enablewrmsnormmaskvectorarray"
-external c_enablescaleaddmultivectorarray_serial           : t -> bool -> unit
+external c_enablescaleaddmultivectorarray_serial     : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_ser_enablescaleaddmultivectorarray"
-external c_enablelinearcombinationvectorarray_serial       : t -> bool -> unit
+external c_enablelinearcombinationvectorarray_serial : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_ser_enablelinearcombinationvectorarray"
 
-external c_wrap : RealArray.t -> (RealArray.t -> bool) -> t
+let unwrap = Nvector.unwrap
+
+external c_wrap : RealArray.t -> (t -> bool) -> t
   = "sunml_nvec_wrap_serial"
 
 let wrap ?(with_fused_ops=false) v =
   let len = RealArray.length v in
-  let nv = c_wrap v (fun v' -> len = RealArray.length v') in
+  let nv = c_wrap v (fun nv' -> len = RealArray.length (unwrap nv')) in
   if with_fused_ops then c_enablefusedops_serial nv true;
   nv
 
 let make ?with_fused_ops n iv = wrap ?with_fused_ops (RealArray.make n iv)
-
-let unwrap = Nvector.unwrap
 
 let pp fmt v = RealArray.pp fmt (unwrap v)
 
@@ -86,7 +86,91 @@ let enable
     do_enable c_enablelinearcombinationvectorarray_serial nv
               with_linear_combination_vector_array
 
-module Ops = struct
+module Any = struct (* {{{ *)
+
+  external c_any_wrap
+    : extension_constructor -> RealArray.t -> (Nvector.any -> bool) -> Nvector.any
+    = "sunml_nvec_anywrap_serial"
+
+  let wrap
+      ?(with_fused_ops=false)
+      ?(with_linear_combination=false)
+      ?(with_scale_add_multi=false)
+      ?(with_dot_prod_multi=false)
+      ?(with_linear_sum_vector_array=false)
+      ?(with_scale_vector_array=false)
+      ?(with_const_vector_array=false)
+      ?(with_wrms_norm_vector_array=false)
+      ?(with_wrms_norm_mask_vector_array=false)
+      ?(with_scale_add_multi_vector_array=false)
+      ?(with_linear_combination_vector_array=false)
+      v
+    =
+      if not Sundials_impl.Versions.has_nvector_get_id
+        then raise Config.NotImplementedBySundialsVersion;
+      let len = RealArray.length v in
+      let check nv' =
+        match unwrap nv' with
+        | Nvector.RA ra ->
+            len = RealArray.length ra && Nvector.get_id nv' = Nvector.Serial
+        | _ -> false
+      in
+      let nv = c_any_wrap [%extension_constructor Nvector.RA] v check in
+      if with_fused_ops
+        then c_enablefusedops_serial nv true;
+      if with_fused_ops
+        then c_enablefusedops_serial nv true;
+      if with_linear_combination
+        then c_enablelinearcombination_serial nv true;
+      if with_scale_add_multi
+        then c_enablescaleaddmulti_serial nv true;
+      if with_dot_prod_multi
+        then c_enabledotprodmulti_serial nv true;
+      if with_linear_sum_vector_array
+        then c_enablelinearsumvectorarray_serial nv true;
+      if with_scale_vector_array
+        then c_enablescalevectorarray_serial nv true;
+      if with_const_vector_array
+        then c_enableconstvectorarray_serial nv true;
+      if with_wrms_norm_vector_array
+        then c_enablewrmsnormvectorarray_serial nv true;
+      if with_wrms_norm_mask_vector_array
+        then c_enablewrmsnormmaskvectorarray_serial nv true;
+      if with_scale_add_multi_vector_array
+        then c_enablescaleaddmultivectorarray_serial nv true;
+      if with_linear_combination_vector_array
+        then c_enablelinearcombinationvectorarray_serial nv true;
+      nv
+
+  let make
+      ?with_fused_ops
+      ?with_linear_combination
+      ?with_scale_add_multi
+      ?with_dot_prod_multi
+      ?with_linear_sum_vector_array
+      ?with_scale_vector_array
+      ?with_const_vector_array
+      ?with_wrms_norm_vector_array
+      ?with_wrms_norm_mask_vector_array
+      ?with_scale_add_multi_vector_array
+      ?with_linear_combination_vector_array
+      n iv
+    = wrap ?with_fused_ops
+           ?with_linear_combination
+           ?with_scale_add_multi
+           ?with_dot_prod_multi
+           ?with_linear_sum_vector_array
+           ?with_scale_vector_array
+           ?with_const_vector_array
+           ?with_wrms_norm_vector_array
+           ?with_wrms_norm_mask_vector_array
+           ?with_scale_add_multi_vector_array
+           ?with_linear_combination_vector_array
+           (RealArray.make n iv)
+
+end (* }}} *)
+
+module Ops = struct (* {{{ *)
   type t = (RealArray.t, kind) Nvector.t
 
   let n_vclone nv =
@@ -210,7 +294,7 @@ module Ops = struct
       : t -> t -> t -> float
       = "sunml_nvec_ser_n_vwsqrsummasklocal"
   end
-end
+end (* }}} *)
 
 (* (* Too slow! *)
 module ArrayOps = Nvector_array.MakeOps (struct
@@ -228,7 +312,7 @@ module DataOps = ArrayOps.DataOps
 *)
 
 module DataOps =
-  struct
+  struct (* {{{ *)
 
     module A = Bigarray.Array1
     type t = RealArray.t
@@ -789,5 +873,5 @@ module DataOps =
         done;
         !a
     end
-  end
+  end (* }}} *)
 
