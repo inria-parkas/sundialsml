@@ -1,4 +1,5 @@
 arkode/arkode.cmo : \
+    sundials/sundials_impl.cmo \
     sundials/sundials_configuration.cmo \
     sundials/sundials_RealArray2.cmi \
     sundials/sundials_RealArray.cmi \
@@ -13,6 +14,7 @@ arkode/arkode.cmo : \
     arkode/arkode_impl.cmo \
     arkode/arkode.cmi
 arkode/arkode.cmx : \
+    sundials/sundials_impl.cmx \
     sundials/sundials_configuration.cmx \
     sundials/sundials_RealArray2.cmx \
     sundials/sundials_RealArray.cmx \
@@ -82,6 +84,7 @@ arkode/arkode_impl.cmx : \
     nvectors/nvector_serial.cmx \
     nvectors/nvector.cmx
 cvode/cvode.cmo : \
+    sundials/sundials_impl.cmo \
     sundials/sundials_configuration.cmo \
     sundials/sundials_RealArray.cmi \
     lsolvers/sundials_NonlinearSolver.cmi \
@@ -95,6 +98,7 @@ cvode/cvode.cmo : \
     cvode/cvode_impl.cmo \
     cvode/cvode.cmi
 cvode/cvode.cmx : \
+    sundials/sundials_impl.cmx \
     sundials/sundials_configuration.cmx \
     sundials/sundials_RealArray.cmx \
     lsolvers/sundials_NonlinearSolver.cmx \
@@ -162,6 +166,7 @@ cvode/cvode_impl.cmx : \
     nvectors/nvector_serial.cmx \
     nvectors/nvector.cmx
 cvodes/cvodes.cmo : \
+    sundials/sundials_impl.cmo \
     sundials/sundials_configuration.cmo \
     sundials/sundials_RealArray.cmi \
     lsolvers/sundials_Matrix.cmi \
@@ -175,6 +180,7 @@ cvodes/cvodes.cmo : \
     cvode/cvode.cmi \
     cvodes/cvodes.cmi
 cvodes/cvodes.cmx : \
+    sundials/sundials_impl.cmx \
     sundials/sundials_configuration.cmx \
     sundials/sundials_RealArray.cmx \
     lsolvers/sundials_Matrix.cmx \
@@ -221,6 +227,7 @@ cvodes/cvodes_bbd.cmi : \
     cvodes/cvodes.cmi \
     cvode/cvode_bbd.cmi
 ida/ida.cmo : \
+    sundials/sundials_impl.cmo \
     sundials/sundials_configuration.cmo \
     lsolvers/sundials_Matrix.cmi \
     sundials/sundials_Logfile.cmi \
@@ -232,6 +239,7 @@ ida/ida.cmo : \
     ida/ida_impl.cmo \
     ida/ida.cmi
 ida/ida.cmx : \
+    sundials/sundials_impl.cmx \
     sundials/sundials_configuration.cmx \
     lsolvers/sundials_Matrix.cmx \
     sundials/sundials_Logfile.cmx \
@@ -295,6 +303,7 @@ ida/ida_impl.cmx : \
     nvectors/nvector_serial.cmx \
     nvectors/nvector.cmx
 idas/idas.cmo : \
+    sundials/sundials_impl.cmo \
     sundials/sundials_configuration.cmo \
     sundials/sundials_RealArray.cmi \
     lsolvers/sundials_Matrix.cmi \
@@ -307,6 +316,7 @@ idas/idas.cmo : \
     ida/ida.cmi \
     idas/idas.cmi
 idas/idas.cmx : \
+    sundials/sundials_impl.cmx \
     sundials/sundials_configuration.cmx \
     sundials/sundials_RealArray.cmx \
     lsolvers/sundials_Matrix.cmx \
@@ -351,6 +361,7 @@ idas/idas_bbd.cmi : \
     idas/idas.cmi \
     ida/ida_bbd.cmi
 kinsol/kinsol.cmo : \
+    sundials/sundials_impl.cmo \
     sundials/sundials_configuration.cmo \
     sundials/sundials_RealArray.cmi \
     lsolvers/sundials_Matrix.cmi \
@@ -363,6 +374,7 @@ kinsol/kinsol.cmo : \
     kinsol/kinsol_impl.cmo \
     kinsol/kinsol.cmi
 kinsol/kinsol.cmx : \
+    sundials/sundials_impl.cmx \
     sundials/sundials_configuration.cmx \
     sundials/sundials_RealArray.cmx \
     lsolvers/sundials_Matrix.cmx \
@@ -427,6 +439,7 @@ lsolvers/matrix_top.cmo : \
 lsolvers/matrix_top.cmx : \
     sundials/sundials_top.cmx
 lsolvers/sundials_LinearSolver.cmo : \
+    sundials/sundials_impl.cmo \
     sundials/sundials_configuration.cmo \
     sundials/sundials_RealArray2.cmi \
     sundials/sundials_RealArray.cmi \
@@ -438,6 +451,7 @@ lsolvers/sundials_LinearSolver.cmo : \
     nvectors/nvector.cmi \
     lsolvers/sundials_LinearSolver.cmi
 lsolvers/sundials_LinearSolver.cmx : \
+    sundials/sundials_impl.cmx \
     sundials/sundials_configuration.cmx \
     sundials/sundials_RealArray2.cmx \
     sundials/sundials_RealArray.cmx \
@@ -457,10 +471,12 @@ lsolvers/sundials_LinearSolver.cmi : \
     nvectors/nvector_serial.cmi \
     nvectors/nvector.cmi
 lsolvers/sundials_LinearSolver_impl.cmo : \
+    sundials/sundials_impl.cmo \
     lsolvers/sundials_Matrix.cmi \
     sundials/sundials.cmi \
     nvectors/nvector.cmi
 lsolvers/sundials_LinearSolver_impl.cmx : \
+    sundials/sundials_impl.cmx \
     lsolvers/sundials_Matrix.cmx \
     sundials/sundials.cmx \
     nvectors/nvector.cmx
@@ -522,10 +538,12 @@ lsolvers/sundials_NonlinearSolver_impl.cmx : \
     sundials/sundials.cmx \
     nvectors/nvector.cmx
 nvectors/nvector.cmo : \
+    sundials/sundials_configuration.cmo \
     sundials/sundials_RealArray.cmi \
     sundials/sundials.cmi \
     nvectors/nvector.cmi
 nvectors/nvector.cmx : \
+    sundials/sundials_configuration.cmx \
     sundials/sundials_RealArray.cmx \
     sundials/sundials.cmx \
     nvectors/nvector.cmi
@@ -550,12 +568,16 @@ nvectors/nvector_array.cmi : \
     nvectors/nvector_custom.cmi \
     nvectors/nvector.cmi
 nvectors/nvector_custom.cmo : \
+    sundials/sundials_impl.cmo \
     sundials/sundials_RealArray.cmi \
+    sundials/sundials_Config.cmi \
     sundials/sundials.cmi \
     nvectors/nvector.cmi \
     nvectors/nvector_custom.cmi
 nvectors/nvector_custom.cmx : \
+    sundials/sundials_impl.cmx \
     sundials/sundials_RealArray.cmx \
+    sundials/sundials_Config.cmx \
     sundials/sundials.cmx \
     nvectors/nvector.cmx \
     nvectors/nvector_custom.cmi
@@ -564,13 +586,17 @@ nvectors/nvector_custom.cmi : \
     sundials/sundials.cmi \
     nvectors/nvector.cmi
 nvectors/nvector_openmp.cmo : \
+    sundials/sundials_impl.cmo \
     sundials/sundials_RealArray.cmi \
+    sundials/sundials_Config.cmi \
     sundials/sundials.cmi \
     nvectors/nvector_serial.cmi \
     nvectors/nvector.cmi \
     nvectors/nvector_openmp.cmi
 nvectors/nvector_openmp.cmx : \
+    sundials/sundials_impl.cmx \
     sundials/sundials_RealArray.cmx \
+    sundials/sundials_Config.cmx \
     sundials/sundials.cmx \
     nvectors/nvector_serial.cmx \
     nvectors/nvector.cmx \
@@ -585,33 +611,42 @@ nvectors/nvector_openmp_top.cmo : \
 nvectors/nvector_openmp_top.cmx : \
     sundials/sundials_top.cmx
 nvectors/nvector_parallel.cmo : \
+    sundials/sundials_impl.cmo \
     sundials/sundials_RealArray.cmi \
     sundials/sundials_Config.cmi \
     sundials/sundials.cmi \
+    nvectors/nvector_custom.cmi \
     nvectors/nvector.cmi \
     nvectors/nvector_parallel.cmi
 nvectors/nvector_parallel.cmx : \
+    sundials/sundials_impl.cmx \
     sundials/sundials_RealArray.cmx \
     sundials/sundials_Config.cmx \
     sundials/sundials.cmx \
+    nvectors/nvector_custom.cmx \
     nvectors/nvector.cmx \
     nvectors/nvector_parallel.cmi
 nvectors/nvector_parallel.cmi : \
     sundials/sundials_RealArray.cmi \
     sundials/sundials.cmi \
+    nvectors/nvector_custom.cmi \
     nvectors/nvector.cmi
 nvectors/nvector_parallel_top.cmo : \
     sundials/sundials_top.cmi
 nvectors/nvector_parallel_top.cmx : \
     sundials/sundials_top.cmx
 nvectors/nvector_pthreads.cmo : \
+    sundials/sundials_impl.cmo \
     sundials/sundials_RealArray.cmi \
+    sundials/sundials_Config.cmi \
     sundials/sundials.cmi \
     nvectors/nvector_serial.cmi \
     nvectors/nvector.cmi \
     nvectors/nvector_pthreads.cmi
 nvectors/nvector_pthreads.cmx : \
+    sundials/sundials_impl.cmx \
     sundials/sundials_RealArray.cmx \
+    sundials/sundials_Config.cmx \
     sundials/sundials.cmx \
     nvectors/nvector_serial.cmx \
     nvectors/nvector.cmx \
@@ -626,12 +661,14 @@ nvectors/nvector_pthreads_top.cmo : \
 nvectors/nvector_pthreads_top.cmx : \
     sundials/sundials_top.cmx
 nvectors/nvector_serial.cmo : \
+    sundials/sundials_impl.cmo \
     sundials/sundials_RealArray.cmi \
     sundials/sundials_Config.cmi \
     sundials/sundials.cmi \
     nvectors/nvector.cmi \
     nvectors/nvector_serial.cmi
 nvectors/nvector_serial.cmx : \
+    sundials/sundials_impl.cmx \
     sundials/sundials_RealArray.cmx \
     sundials/sundials_Config.cmx \
     sundials/sundials.cmx \
@@ -667,6 +704,11 @@ sundials/sundials_Logfile.cmo : \
 sundials/sundials_Logfile.cmx : \
     sundials/sundials_Logfile.cmi
 sundials/sundials_Logfile.cmi :
+sundials/sundials_ROArray.cmo : \
+    sundials/sundials_ROArray.cmi
+sundials/sundials_ROArray.cmx : \
+    sundials/sundials_ROArray.cmi
+sundials/sundials_ROArray.cmi :
 sundials/sundials_RealArray.cmo : \
     sundials/sundials_configuration.cmo \
     sundials/sundials_RealArray.cmi
@@ -683,15 +725,15 @@ sundials/sundials_RealArray2.cmi : \
     sundials/sundials.cmi
 sundials/sundials_configuration.cmo :
 sundials/sundials_configuration.cmx :
-sundials/sundials_impl.cmo :
-sundials/sundials_impl.cmx :
+sundials/sundials_impl.cmo : \
+    sundials/sundials_configuration.cmo
+sundials/sundials_impl.cmx : \
+    sundials/sundials_configuration.cmx
 sundials/sundials_top.cmo : \
     sundials/sundials_top.cmi
 sundials/sundials_top.cmx : \
     sundials/sundials_top.cmi
 sundials/sundials_top.cmi :
-sundials/sundials_top_findlib.cmo :
-sundials/sundials_top_findlib.cmx :
 sundials/sundials.cmo : \
     sundials/sundials_configuration.cmo \
     sundials/sundials_Config.cmi \
@@ -701,352 +743,49 @@ sundials/sundials.cmx : \
     sundials/sundials_Config.cmx \
     sundials/sundials.cmi
 sundials/sundials.cmi :
-arkode_bbd_ml.o: arkode/arkode_bbd_ml.c \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/compatibility.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/m.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/s.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/misc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.tbl \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/alloc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/memory.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/callback.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/custom.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/fail.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/bigarray.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_config.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_types.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nvector.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/arkode/arkode.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/arkode/arkode_butcher.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/arkode/arkode_bbdpre.h \
- arkode/../sundials/sundials_ml.h arkode/../sundials/../config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/version.h arkode/arkode_ml.h \
+arkode_bbd_ml.o: arkode/arkode_bbd_ml.c arkode/../sundials/sundials_ml.h \
+ arkode/../sundials/../config.h arkode/arkode_ml.h \
  arkode/../nvectors/nvector_ml.h \
  arkode/../nvectors/../sundials/sundials_ml.h
-arkode_klu_ml.o: arkode/arkode_klu_ml.c \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/compatibility.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/m.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/s.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/misc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.tbl \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/alloc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/memory.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/callback.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/custom.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/fail.h \
- arkode/../sundials/sundials_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_types.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_config.h \
- arkode/../sundials/../config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/version.h arkode/arkode_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nvector.h \
- arkode/../lsolvers/sundials_matrix_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_matrix.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/arkode/arkode.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/arkode/arkode_butcher.h
+arkode_klu_ml.o: arkode/arkode_klu_ml.c arkode/../sundials/sundials_ml.h \
+ arkode/../sundials/../config.h arkode/arkode_ml.h \
+ arkode/../lsolvers/sundials_matrix_ml.h
 arkode_ml.o: arkode/arkode_ml.c arkode/../config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/version.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/alloc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/compatibility.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/misc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/m.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/s.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.tbl \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/memory.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/callback.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/custom.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/fail.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/bigarray.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/arkode/arkode.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nvector.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_types.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_config.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/arkode/arkode_butcher.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/arkode/arkode_arkstep.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_linearsolver.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_iterative.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_matrix.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nonlinearsolver.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/arkode/arkode_ls.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_direct.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/arkode/arkode_butcher_erk.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/arkode/arkode_butcher_dirk.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/arkode/arkode_erkstep.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/arkode/arkode_mristep.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/arkode/arkode_bandpre.h \
  arkode/../lsolvers/sundials_matrix_ml.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
  arkode/../lsolvers/sundials_linearsolver_ml.h \
  arkode/../lsolvers/sundials_nonlinearsolver_ml.h \
  arkode/../sundials/sundials_ml.h arkode/../sundials/../config.h \
  arkode/arkode_ml.h arkode/../nvectors/nvector_ml.h \
  arkode/../nvectors/../sundials/sundials_ml.h
 arkode_superlumt_ml.o: arkode/arkode_superlumt_ml.c \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/compatibility.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/m.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/s.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/misc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.tbl \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/alloc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/memory.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/callback.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/custom.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/fail.h \
- arkode/../sundials/sundials_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_types.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_config.h \
- arkode/../sundials/../config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/version.h arkode/arkode_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nvector.h \
- arkode/../lsolvers/sundials_matrix_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_matrix.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/arkode/arkode.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/arkode/arkode_butcher.h
-cvode_bbd_ml.o: cvode/cvode_bbd_ml.c \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/compatibility.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/m.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/s.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/misc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.tbl \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/alloc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/memory.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/callback.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/custom.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/fail.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/bigarray.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_config.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_types.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nvector.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/cvode/cvode.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nonlinearsolver.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/cvode/cvode_ls.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_direct.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_iterative.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_linearsolver.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_matrix.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/cvode/cvode_bbdpre.h \
- cvode/../sundials/sundials_ml.h cvode/../sundials/../config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/version.h cvode/cvode_ml.h \
+ arkode/../sundials/sundials_ml.h arkode/../sundials/../config.h \
+ arkode/arkode_ml.h arkode/../lsolvers/sundials_matrix_ml.h
+cvode_bbd_ml.o: cvode/cvode_bbd_ml.c cvode/../sundials/sundials_ml.h \
+ cvode/../sundials/../config.h cvode/cvode_ml.h \
  cvode/../nvectors/nvector_ml.h \
  cvode/../nvectors/../sundials/sundials_ml.h
-cvode_klu_ml.o: cvode/cvode_klu_ml.c \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/compatibility.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/m.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/s.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/misc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.tbl \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/alloc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/memory.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/callback.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/custom.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/fail.h \
- cvode/../sundials/sundials_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_types.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_config.h \
- cvode/../sundials/../config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/version.h cvode/cvode_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nvector.h \
- cvode/../lsolvers/sundials_matrix_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_matrix.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/cvode/cvode.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nonlinearsolver.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/cvode/cvode_ls.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_direct.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_iterative.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_linearsolver.h
+cvode_klu_ml.o: cvode/cvode_klu_ml.c cvode/../sundials/sundials_ml.h \
+ cvode/../sundials/../config.h cvode/cvode_ml.h \
+ cvode/../lsolvers/sundials_matrix_ml.h
 cvode_ml.o: cvode/cvode_ml.c cvode/../config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/version.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/alloc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/compatibility.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/misc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/m.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/s.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.tbl \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/memory.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/callback.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/custom.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/fail.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/bigarray.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/cvode/cvode.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nvector.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_types.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_config.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nonlinearsolver.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/cvode/cvode_ls.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_direct.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_iterative.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_linearsolver.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_matrix.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/cvode/cvode_diag.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/cvode/cvode_bandpre.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/cvode/cvode_impl.h \
  cvode/../lsolvers/sundials_matrix_ml.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
  cvode/../lsolvers/sundials_linearsolver_ml.h \
  cvode/../lsolvers/sundials_nonlinearsolver_ml.h cvode/cvode_ml.h \
  cvode/../nvectors/nvector_ml.h \
  cvode/../nvectors/../sundials/sundials_ml.h \
  cvode/../nvectors/../sundials/../config.h
 cvode_superlumt_ml.o: cvode/cvode_superlumt_ml.c \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/compatibility.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/m.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/s.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/misc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.tbl \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/alloc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/memory.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/callback.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/custom.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/fail.h \
- cvode/../sundials/sundials_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_types.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_config.h \
- cvode/../sundials/../config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/version.h cvode/cvode_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nvector.h \
- cvode/../lsolvers/sundials_matrix_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_matrix.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/cvode/cvode.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nonlinearsolver.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/cvode/cvode_ls.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_direct.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_iterative.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_linearsolver.h
-cvodes_bbd_ml.o: cvodes/cvodes_bbd_ml.c \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/cvodes/cvodes.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nvector.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_types.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_config.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nonlinearsolver.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/cvodes/cvodes_ls.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_direct.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_iterative.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_linearsolver.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_matrix.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_band.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/cvodes/cvodes_bbdpre.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/compatibility.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/m.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/s.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/misc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.tbl \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/alloc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/memory.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/callback.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/custom.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/fail.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/bigarray.h \
- cvodes/../sundials/sundials_ml.h cvodes/../sundials/../config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/version.h \
- cvodes/../cvode/cvode_ml.h cvodes/cvodes_ml.h \
- cvodes/../nvectors/nvector_ml.h \
+ cvode/../sundials/sundials_ml.h cvode/../sundials/../config.h \
+ cvode/cvode_ml.h cvode/../lsolvers/sundials_matrix_ml.h
+cvodes_bbd_ml.o: cvodes/cvodes_bbd_ml.c cvodes/../sundials/sundials_ml.h \
+ cvodes/../sundials/../config.h cvodes/../cvode/cvode_ml.h \
+ cvodes/cvodes_ml.h cvodes/../nvectors/nvector_ml.h \
  cvodes/../nvectors/../sundials/sundials_ml.h
-cvodes_klu_ml.o: cvodes/cvodes_klu_ml.c \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/compatibility.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/m.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/s.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/misc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.tbl \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/alloc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/memory.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/callback.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/custom.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/fail.h \
- cvodes/../sundials/sundials_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_types.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_config.h \
- cvodes/../sundials/../config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/version.h \
- cvodes/../cvode/cvode_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nvector.h \
- cvodes/cvodes_ml.h cvodes/../lsolvers/sundials_matrix_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_matrix.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/cvodes/cvodes.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nonlinearsolver.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/cvodes/cvodes_ls.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_direct.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_iterative.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_linearsolver.h
+cvodes_klu_ml.o: cvodes/cvodes_klu_ml.c cvodes/../sundials/sundials_ml.h \
+ cvodes/../sundials/../config.h cvodes/../cvode/cvode_ml.h \
+ cvodes/cvodes_ml.h cvodes/../lsolvers/sundials_matrix_ml.h
 cvodes_ml.o: cvodes/cvodes_ml.c cvodes/../config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/version.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/cvodes/cvodes.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nvector.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_types.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_config.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nonlinearsolver.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/cvodes/cvodes_ls.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_direct.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_iterative.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_linearsolver.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_matrix.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_band.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/alloc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/compatibility.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/misc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/m.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/s.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.tbl \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/memory.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/callback.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/custom.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/fail.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/bigarray.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/cvodes/cvodes_diag.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/cvodes/cvodes_bandpre.h \
  cvodes/../lsolvers/sundials_matrix_ml.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
  cvodes/../lsolvers/sundials_linearsolver_ml.h \
  cvodes/../lsolvers/sundials_nonlinearsolver_ml.h \
  cvodes/../sundials/sundials_ml.h cvodes/../sundials/../config.h \
@@ -1054,254 +793,33 @@ cvodes_ml.o: cvodes/cvodes_ml.c cvodes/../config.h \
  cvodes/../nvectors/nvector_ml.h \
  cvodes/../nvectors/../sundials/sundials_ml.h
 cvodes_superlumt_ml.o: cvodes/cvodes_superlumt_ml.c \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/compatibility.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/m.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/s.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/misc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.tbl \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/alloc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/memory.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/callback.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/custom.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/fail.h \
- cvodes/../sundials/sundials_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_types.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_config.h \
- cvodes/../sundials/../config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/version.h \
- cvodes/../cvode/cvode_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nvector.h \
- cvodes/cvodes_ml.h cvodes/../lsolvers/sundials_matrix_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_matrix.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/cvodes/cvodes.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nonlinearsolver.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/cvodes/cvodes_ls.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_direct.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_iterative.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_linearsolver.h
-ida_bbd_ml.o: ida/ida_bbd_ml.c \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/compatibility.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/m.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/s.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/misc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.tbl \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/alloc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/memory.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/callback.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/custom.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/fail.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/bigarray.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_config.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_types.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nvector.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/idas/idas.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nonlinearsolver.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/idas/idas_ls.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_direct.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_iterative.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_linearsolver.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_matrix.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/idas/idas_bbdpre.h \
- ida/../sundials/sundials_ml.h ida/../sundials/../config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/version.h ida/ida_ml.h \
- ida/../nvectors/nvector_ml.h ida/../nvectors/../sundials/sundials_ml.h
-ida_klu_ml.o: ida/ida_klu_ml.c \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/compatibility.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/m.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/s.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/misc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.tbl \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/alloc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/memory.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/callback.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/custom.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/fail.h \
- ida/../sundials/sundials_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_types.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_config.h \
- ida/../sundials/../config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/version.h ida/ida_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nvector.h \
- ida/../lsolvers/sundials_matrix_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_matrix.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/ida/ida.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nonlinearsolver.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/ida/ida_ls.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_direct.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_iterative.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_linearsolver.h
-ida_ml.o: ida/ida_ml.c ida/../config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/version.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/memory.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/compatibility.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/m.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/s.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/misc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.tbl \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/fail.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/alloc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/callback.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/bigarray.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/ida/ida.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nvector.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_types.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_config.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nonlinearsolver.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/ida/ida_ls.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_direct.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_iterative.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_linearsolver.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_matrix.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/ida/ida_impl.h \
- ida/ida_ml.h /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
+ cvodes/../sundials/sundials_ml.h cvodes/../sundials/../config.h \
+ cvodes/../cvode/cvode_ml.h cvodes/cvodes_ml.h \
+ cvodes/../lsolvers/sundials_matrix_ml.h
+ida_bbd_ml.o: ida/ida_bbd_ml.c ida/../sundials/sundials_ml.h \
+ ida/../sundials/../config.h ida/ida_ml.h ida/../nvectors/nvector_ml.h \
+ ida/../nvectors/../sundials/sundials_ml.h
+ida_klu_ml.o: ida/ida_klu_ml.c ida/../sundials/sundials_ml.h \
+ ida/../sundials/../config.h ida/ida_ml.h \
+ ida/../lsolvers/sundials_matrix_ml.h
+ida_ml.o: ida/ida_ml.c ida/../config.h ida/ida_ml.h \
  ida/../sundials/sundials_ml.h ida/../sundials/../config.h \
  ida/../nvectors/nvector_ml.h ida/../nvectors/../sundials/sundials_ml.h \
  ida/../lsolvers/sundials_matrix_ml.h \
  ida/../lsolvers/sundials_nonlinearsolver_ml.h \
  ida/../lsolvers/sundials_linearsolver_ml.h
-ida_superlumt_ml.o: ida/ida_superlumt_ml.c \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/compatibility.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/m.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/s.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/misc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.tbl \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/alloc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/memory.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/callback.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/custom.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/fail.h \
- ida/../sundials/sundials_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_types.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_config.h \
- ida/../sundials/../config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/version.h ida/ida_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nvector.h \
- ida/../lsolvers/sundials_matrix_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_matrix.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/ida/ida.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nonlinearsolver.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/ida/ida_ls.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_direct.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_iterative.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_linearsolver.h
-idas_bbd_ml.o: idas/idas_bbd_ml.c \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/idas/idas.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nvector.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_types.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_config.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nonlinearsolver.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/idas/idas_ls.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_direct.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_iterative.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_linearsolver.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_matrix.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_band.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/idas/idas_bbdpre.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/compatibility.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/m.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/s.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/misc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.tbl \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/alloc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/memory.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/callback.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/custom.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/fail.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/bigarray.h \
- idas/../sundials/sundials_ml.h idas/../sundials/../config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/version.h idas/../ida/ida_ml.h \
+ida_superlumt_ml.o: ida/ida_superlumt_ml.c ida/../sundials/sundials_ml.h \
+ ida/../sundials/../config.h ida/ida_ml.h \
+ ida/../lsolvers/sundials_matrix_ml.h
+idas_bbd_ml.o: idas/idas_bbd_ml.c idas/../sundials/sundials_ml.h \
+ idas/../sundials/../config.h idas/../ida/ida_ml.h \
  idas/../ida/../sundials/sundials_ml.h idas/idas_ml.h \
  idas/../nvectors/nvector_ml.h idas/../nvectors/../sundials/sundials_ml.h
-idas_klu_ml.o: idas/idas_klu_ml.c \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/compatibility.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/m.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/s.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/misc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.tbl \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/alloc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/memory.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/callback.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/custom.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/fail.h \
- idas/../sundials/sundials_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_types.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_config.h \
- idas/../sundials/../config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/version.h idas/../ida/ida_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nvector.h \
+idas_klu_ml.o: idas/idas_klu_ml.c idas/../sundials/sundials_ml.h \
+ idas/../sundials/../config.h idas/../ida/ida_ml.h \
  idas/../ida/../sundials/sundials_ml.h idas/idas_ml.h \
- idas/../lsolvers/sundials_matrix_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_matrix.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/idas/idas.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nonlinearsolver.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/idas/idas_ls.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_direct.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_iterative.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_linearsolver.h
-idas_ml.o: idas/idas_ml.c idas/../config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/version.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/idas/idas.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nvector.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_types.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_config.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nonlinearsolver.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/idas/idas_ls.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_direct.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_iterative.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_linearsolver.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_matrix.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_band.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/alloc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/compatibility.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/misc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/m.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/s.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.tbl \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/memory.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/callback.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/custom.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/fail.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/bigarray.h \
- idas/../ida/ida_ml.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
+ idas/../lsolvers/sundials_matrix_ml.h
+idas_ml.o: idas/idas_ml.c idas/../config.h idas/../ida/ida_ml.h \
  idas/../ida/../sundials/sundials_ml.h \
  idas/../ida/../sundials/../config.h idas/idas_ml.h \
  idas/../sundials/sundials_ml.h idas/../nvectors/nvector_ml.h \
@@ -1310,411 +828,61 @@ idas_ml.o: idas/idas_ml.c idas/../config.h \
  idas/../lsolvers/sundials_nonlinearsolver_ml.h \
  idas/../lsolvers/sundials_matrix_ml.h
 idas_superlumt_ml.o: idas/idas_superlumt_ml.c \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/compatibility.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/m.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/s.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/misc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.tbl \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/alloc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/memory.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/callback.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/custom.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/fail.h \
- idas/../sundials/sundials_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_types.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_config.h \
- idas/../sundials/../config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/version.h idas/../ida/ida_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nvector.h \
- idas/../ida/../sundials/sundials_ml.h idas/idas_ml.h \
- idas/../lsolvers/sundials_matrix_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_matrix.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/idas/idas.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nonlinearsolver.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/idas/idas_ls.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_direct.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_iterative.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_linearsolver.h
-kinsol_bbd_ml.o: kinsol/kinsol_bbd_ml.c \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/compatibility.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/m.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/s.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/misc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.tbl \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/alloc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/memory.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/callback.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/custom.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/fail.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/bigarray.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_config.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_types.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nvector.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/kinsol/kinsol.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/kinsol/kinsol_ls.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_direct.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_iterative.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_linearsolver.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_matrix.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/kinsol/kinsol_bbdpre.h \
- kinsol/kinsol_ml.h kinsol/../sundials/sundials_ml.h \
- kinsol/../sundials/../config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/version.h \
+ idas/../sundials/sundials_ml.h idas/../sundials/../config.h \
+ idas/../ida/ida_ml.h idas/../ida/../sundials/sundials_ml.h \
+ idas/idas_ml.h idas/../lsolvers/sundials_matrix_ml.h
+kinsol_bbd_ml.o: kinsol/kinsol_bbd_ml.c kinsol/kinsol_ml.h \
+ kinsol/../sundials/sundials_ml.h kinsol/../sundials/../config.h \
  kinsol/../nvectors/nvector_ml.h \
  kinsol/../nvectors/../sundials/sundials_ml.h
-kinsol_klu_ml.o: kinsol/kinsol_klu_ml.c \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/compatibility.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/m.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/s.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/misc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.tbl \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/alloc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/memory.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/callback.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/custom.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/fail.h \
- kinsol/../sundials/sundials_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_types.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_config.h \
- kinsol/../sundials/../config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/version.h \
- kinsol/../lsolvers/sundials_matrix_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_matrix.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nvector.h \
+kinsol_klu_ml.o: kinsol/kinsol_klu_ml.c kinsol/../sundials/sundials_ml.h \
+ kinsol/../sundials/../config.h kinsol/../lsolvers/sundials_matrix_ml.h \
  kinsol/../lsolvers/sundials_linearsolver_ml.h kinsol/kinsol_ml.h \
  kinsol/../nvectors/nvector_ml.h \
- kinsol/../nvectors/../sundials/sundials_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/kinsol/kinsol.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/kinsol/kinsol_ls.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_direct.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_iterative.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_linearsolver.h
+ kinsol/../nvectors/../sundials/sundials_ml.h
 kinsol_ml.o: kinsol/kinsol_ml.c kinsol/../config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/version.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/kinsol/kinsol.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nvector.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_types.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_config.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/kinsol/kinsol_ls.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_direct.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_iterative.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_linearsolver.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_matrix.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_band.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/alloc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/compatibility.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/misc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/m.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/s.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.tbl \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/memory.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/callback.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/custom.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/fail.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/bigarray.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/kinsol/kinsol_impl.h \
  kinsol/../lsolvers/sundials_linearsolver_ml.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
  kinsol/../lsolvers/sundials_matrix_ml.h kinsol/kinsol_ml.h \
  kinsol/../sundials/sundials_ml.h kinsol/../sundials/../config.h \
  kinsol/../nvectors/nvector_ml.h \
  kinsol/../nvectors/../sundials/sundials_ml.h
 kinsol_superlumt_ml.o: kinsol/kinsol_superlumt_ml.c \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/compatibility.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/m.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/s.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/misc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.tbl \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/alloc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/memory.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/callback.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/custom.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/fail.h \
- kinsol/../sundials/sundials_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_types.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_config.h \
- kinsol/../sundials/../config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/version.h \
- kinsol/../lsolvers/sundials_matrix_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_matrix.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nvector.h \
- kinsol/kinsol_ml.h kinsol/../nvectors/nvector_ml.h \
- kinsol/../nvectors/../sundials/sundials_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/kinsol/kinsol.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/kinsol/kinsol_ls.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_direct.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_iterative.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_linearsolver.h
+ kinsol/../sundials/sundials_ml.h kinsol/../sundials/../config.h \
+ kinsol/../lsolvers/sundials_matrix_ml.h kinsol/kinsol_ml.h \
+ kinsol/../nvectors/nvector_ml.h \
+ kinsol/../nvectors/../sundials/sundials_ml.h
 sundials_linearsolver_ml.o: lsolvers/sundials_linearsolver_ml.c \
- lsolvers/../config.h /home/tbourke/.opam/4.10.0/lib/ocaml/caml/version.h \
- lsolvers/../sundials/sundials_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_types.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/compatibility.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/m.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/s.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/misc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.tbl \
+ lsolvers/../config.h lsolvers/../sundials/sundials_ml.h \
  lsolvers/../sundials/../config.h lsolvers/../nvectors/nvector_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nvector.h \
  lsolvers/../nvectors/../sundials/sundials_ml.h \
  lsolvers/../lsolvers/sundials_linearsolver_ml.h \
- lsolvers/../lsolvers/sundials_matrix_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_matrix.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_linearsolver.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_iterative.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sunlinsol/sunlinsol_band.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_band.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_direct.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sunmatrix/sunmatrix_band.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sunlinsol/sunlinsol_dense.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_dense.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sunmatrix/sunmatrix_dense.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sunlinsol/sunlinsol_pcg.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_pcg.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sunlinsol/sunlinsol_spbcgs.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_spbcgs.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sunlinsol/sunlinsol_spfgmr.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_spfgmr.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sunlinsol/sunlinsol_spgmr.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_spgmr.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sunlinsol/sunlinsol_sptfqmr.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_sptfqmr.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sunlinsol/sunlinsol_klu.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sunmatrix/sunmatrix_sparse.h \
- /usr/include/suitesparse/klu.h /usr/include/suitesparse/amd.h \
- /usr/include/suitesparse/SuiteSparse_config.h \
- /usr/include/suitesparse/colamd.h /usr/include/suitesparse/btf.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sunlinsol/sunlinsol_superlumt.h \
- /home/tbourke/Downloads/software/SuperLU_MT_3.1/SRC/slu_mt_ddefs.h \
- /home/tbourke/Downloads/software/SuperLU_MT_3.1/SRC/slu_mt_machines.h \
- /home/tbourke/Downloads/software/SuperLU_MT_3.1/SRC/slu_mt_Cnames.h \
- /home/tbourke/Downloads/software/SuperLU_MT_3.1/SRC/supermatrix.h \
- /home/tbourke/Downloads/software/SuperLU_MT_3.1/SRC/slu_mt_util.h \
- /home/tbourke/Downloads/software/SuperLU_MT_3.1/SRC/pxgstrf_synch.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/nvector/nvector_serial.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_math.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/alloc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/memory.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/callback.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/custom.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/fail.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/bigarray.h
+ lsolvers/../lsolvers/sundials_matrix_ml.h
 sundials_matrix_ml.o: lsolvers/sundials_matrix_ml.c lsolvers/../config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/version.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_matrix.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_types.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_config.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nvector.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sunmatrix/sunmatrix_dense.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sunmatrix/sunmatrix_band.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sunmatrix/sunmatrix_sparse.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_dense.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_direct.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_band.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_math.h \
- lsolvers/../sundials/sundials_ml.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/compatibility.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/m.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/s.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/misc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.tbl \
- lsolvers/../sundials/../config.h lsolvers/../nvectors/nvector_ml.h \
+ lsolvers/../sundials/sundials_ml.h lsolvers/../sundials/../config.h \
+ lsolvers/../nvectors/nvector_ml.h \
  lsolvers/../nvectors/../sundials/sundials_ml.h \
- lsolvers/../lsolvers/sundials_matrix_ml.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/alloc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/memory.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/callback.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/custom.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/fail.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/bigarray.h
+ lsolvers/../lsolvers/sundials_matrix_ml.h
 sundials_nonlinearsolver_ml.o: lsolvers/sundials_nonlinearsolver_ml.c \
- lsolvers/../config.h /home/tbourke/.opam/4.10.0/lib/ocaml/caml/version.h \
- lsolvers/../sundials/sundials_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_types.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/compatibility.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/m.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/s.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/misc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.tbl \
+ lsolvers/../config.h lsolvers/../sundials/sundials_ml.h \
  lsolvers/../sundials/../config.h lsolvers/../nvectors/nvector_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nvector.h \
  lsolvers/../nvectors/../sundials/sundials_ml.h \
- lsolvers/../lsolvers/sundials_nonlinearsolver_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nonlinearsolver.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sunnonlinsol/sunnonlinsol_fixedpoint.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sunnonlinsol/sunnonlinsol_newton.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/alloc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/memory.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/callback.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/custom.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/fail.h
+ lsolvers/../lsolvers/sundials_nonlinearsolver_ml.h
 nvector_ml.o: nvectors/nvector_ml.c nvectors/../nvectors/nvector_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nvector.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_types.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/compatibility.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/m.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/s.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/misc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.tbl \
  nvectors/../nvectors/../sundials/sundials_ml.h \
  nvectors/../nvectors/../sundials/../config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/version.h \
- nvectors/../sundials/sundials_ml.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/alloc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/memory.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/callback.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/custom.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/fail.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/bigarray.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/nvector/nvector_serial.h
+ nvectors/../sundials/sundials_ml.h
 nvector_openmp_ml.o: nvectors/nvector_openmp_ml.c \
- nvectors/../sundials/sundials_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_types.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/compatibility.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/m.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/s.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/misc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.tbl \
- nvectors/../sundials/../config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/version.h \
+ nvectors/../sundials/sundials_ml.h nvectors/../sundials/../config.h \
  nvectors/../nvectors/nvector_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nvector.h \
  nvectors/../nvectors/../sundials/sundials_ml.h \
- nvectors/../nvectors/nvector_openmp_ml.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/alloc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/memory.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/callback.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/custom.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/fail.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/bigarray.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/nvector/nvector_openmp.h
+ nvectors/../nvectors/nvector_openmp_ml.h
 nvector_parallel_ml.o: nvectors/nvector_parallel_ml.c \
- nvectors/../sundials/sundials_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_types.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/compatibility.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/m.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/s.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/misc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.tbl \
- nvectors/../sundials/../config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/version.h \
+ nvectors/../sundials/sundials_ml.h nvectors/../sundials/../config.h \
  nvectors/../nvectors/nvector_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nvector.h \
  nvectors/../nvectors/../sundials/sundials_ml.h \
- nvectors/../nvectors/nvector_parallel_ml.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/alloc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/memory.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/callback.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/custom.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/fail.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/bigarray.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/nvector/nvector_parallel.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_mpi_types.h
+ nvectors/../nvectors/nvector_parallel_ml.h
 nvector_pthreads_ml.o: nvectors/nvector_pthreads_ml.c \
- nvectors/../sundials/sundials_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_types.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/compatibility.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/m.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/s.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/misc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.tbl \
- nvectors/../sundials/../config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/version.h \
- nvectors/nvector_ml.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_nvector.h \
- nvectors/nvector_pthreads_ml.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/alloc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/memory.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/callback.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/custom.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/fail.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/bigarray.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/nvector/nvector_pthreads.h
-sundials_ml.o: sundials/sundials_ml.c \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_config.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_types.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_band.h \
- /home/tbourke/Downloads/software/sundials-4.0.2-install/include/sundials/sundials_direct.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/compatibility.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/m.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/s.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/misc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/mlvalues.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain_state.tbl \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/gc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/fail.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/memory.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/domain.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/alloc.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/callback.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/bigarray.h \
- sundials/sundials_ml.h sundials/../config.h \
- /home/tbourke/.opam/4.10.0/lib/ocaml/caml/version.h
+ nvectors/../sundials/sundials_ml.h nvectors/../sundials/../config.h \
+ nvectors/nvector_ml.h nvectors/nvector_pthreads_ml.h
+sundials_ml.o: sundials/sundials_ml.c sundials/sundials_ml.h \
+ sundials/../config.h
