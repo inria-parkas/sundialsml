@@ -254,17 +254,6 @@ val add_tracing     : string -> 'd nvector_ops -> 'd nvector_ops
     The [with_fused_ops] argument enables or disables all such operations.
 
     @since 4.0.0
-    @cvode <node5> N_VEnableFusedOps_Serial
-    @cvode <node5> N_VEnableLinearCombination_Serial
-    @cvode <node5> N_VEnableScaleAddMulti_Serial
-    @cvode <node5> N_VEnableDotProdMulti_Serial
-    @cvode <node5> N_VEnableLinearSumVectorArray_Serial
-    @cvode <node5> N_VEnableScaleVectorArray_Serial
-    @cvode <node5> N_VEnableConstVectorArray_Serial
-    @cvode <node5> N_VEnableWrmsNormVectorArray_Serial
-    @cvode <node5> N_VEnableWrmsNormMaskVectorArray_Serial
-    @cvode <node5> N_VEnableScaleAddMultiVectorArray_Serial
-    @cvode <node5> N_VEnableLinearCombinationVectorArray_Serial
     @raise OperationNotSupported The requested functionality has not been provided.
     @raise Config.NotImplementedBySundialsVersion Fused and array operations not available. *)
 val enable :
@@ -291,4 +280,52 @@ module MakeOps : functor (A : sig
     val ops : data nvector_ops
   end) -> Nvector.NVECTOR with type data = A.data
                            and type kind = kind
+
+(** {2:genvec Generic nvector interface}
+
+    Create custom nvectors using the generic nvector interface where the
+    payload is wrapped with a constructor from {!Nvector.gdata}. *)
+module Any : sig (* {{{ *)
+
+  (** Adapt a set of nvector operations so that they work with a payload of
+      type {!Nvector.gdata}. It is better to manually implement the fused and
+      array operations to avoid the creation of intermediate arrays.
+
+      The [project] function should raise {!Nvector.BadGenericType} if applied
+      to the wrong constructor. *)
+  val convert_ops :
+       inject:('d -> Nvector.gdata)
+    -> project:(Nvector.gdata -> 'd)
+    -> 'd nvector_ops
+    -> Nvector.gdata nvector_ops
+
+  (** Instantiation of custom nvectors.
+      [make_wrap ops] takes set a set of operations on the data
+      type {!Nvector.gdata} and yields a function for lifting values of
+      type {!Nvector.gdata} into generic nvectors which can be passed to
+      a solver.
+
+      The optional arguments permit to enable fused and array operations for
+      a given nvector (they are disabled by default).
+
+      @raise Config.NotImplementedBySundialsVersion Fused and array operations not available.
+      @since 2.9.0 *)
+  val make_wrap :
+       Nvector.gdata nvector_ops
+    -> inject:('d -> Nvector.gdata)
+    -> ?with_fused_ops                       : bool
+    -> ?with_linear_combination              : bool
+    -> ?with_scale_add_multi                 : bool
+    -> ?with_dot_prod_multi                  : bool
+    -> ?with_linear_sum_vector_array         : bool
+    -> ?with_scale_vector_array              : bool
+    -> ?with_const_vector_array              : bool
+    -> ?with_wrms_norm_vector_array          : bool
+    -> ?with_wrms_norm_mask_vector_array     : bool
+    -> ?with_scale_add_multi_vector_array    : bool
+    -> ?with_linear_combination_vector_array : bool
+    -> 'd
+    -> Nvector.any
+
+end (* }}} *)
 

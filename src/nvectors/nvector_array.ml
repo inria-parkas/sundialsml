@@ -13,7 +13,7 @@
 open Sundials
 
 module type ARRAY_NVECTOR =
-  sig
+  sig (* {{{ *)
     type data
     type kind = Nvector_custom.kind
     type t = data Nvector_custom.t
@@ -38,20 +38,42 @@ module type ARRAY_NVECTOR =
       -> t
       -> unit
 
+    module Any : sig
+
+      type Nvector.gdata += Arr of data
+
+      val wrap :
+           ?with_fused_ops                       : bool
+        -> ?with_linear_combination              : bool
+        -> ?with_scale_add_multi                 : bool
+        -> ?with_dot_prod_multi                  : bool
+        -> ?with_linear_sum_vector_array         : bool
+        -> ?with_scale_vector_array              : bool
+        -> ?with_const_vector_array              : bool
+        -> ?with_wrms_norm_vector_array          : bool
+        -> ?with_wrms_norm_mask_vector_array     : bool
+        -> ?with_scale_add_multi_vector_array    : bool
+        -> ?with_linear_combination_vector_array : bool
+        -> data
+        -> Nvector.any
+    end
+
     module Ops : Nvector.NVECTOR_OPS with type t = t
     module DataOps : Nvector.NVECTOR_OPS with type t = data
-  end
+  end (* }}} *)
+
+module type ArrayOps = sig
+  type data
+  val get       : data -> int -> float
+  val set       : data -> int -> float -> unit
+  val fill      : data -> float -> unit
+  val make      : int -> float -> data
+  val clone     : data -> data
+  val length    : data -> int
+end
 
 module Make =
-  functor (A : sig
-      type data
-      val get       : data -> int -> float
-      val set       : data -> int -> float -> unit
-      val fill      : data -> float -> unit
-      val make      : int -> float -> data
-      val clone     : data -> data
-      val length    : data -> int
-    end) ->
+  functor (A : ArrayOps) ->
   struct (* {{{ *)
     type data = A.data
     type kind = Nvector_custom.kind
@@ -663,12 +685,9 @@ module Make =
 
           Nvector_custom.n_vgetcommunicator = None;
 
-          Nvector_custom.n_vlinearcombination
-            = Some DataOps.n_vlinearcombination;
-          Nvector_custom.n_vscaleaddmulti
-            = Some DataOps.n_vscaleaddmulti;
-          Nvector_custom.n_vdotprodmulti
-            = Some DataOps.n_vdotprodmulti;
+          Nvector_custom.n_vlinearcombination = Some DataOps.n_vlinearcombination;
+          Nvector_custom.n_vscaleaddmulti = Some DataOps.n_vscaleaddmulti;
+          Nvector_custom.n_vdotprodmulti = Some DataOps.n_vdotprodmulti;
 
           Nvector_custom.n_vlinearsumvectorarray
             = Some DataOps.n_vlinearsumvectorarray;
@@ -685,32 +704,15 @@ module Make =
           Nvector_custom.n_vlinearcombinationvectorarray
             = Some DataOps.n_vlinearcombinationvectorarray;
 
-          Nvector_custom.n_vdotprod_local
-            = Some DataOps.Local.n_vdotprod;
-
-          Nvector_custom.n_vmaxnorm_local
-            = Some DataOps.Local.n_vmaxnorm;
-
-          Nvector_custom.n_vmin_local
-            = Some DataOps.Local.n_vmin;
-
-          Nvector_custom.n_vl1norm_local
-            = Some DataOps.Local.n_vl1norm;
-
-          Nvector_custom.n_vinvtest_local
-            = Some DataOps.Local.n_vinvtest;
-
-          Nvector_custom.n_vconstrmask_local
-            = Some DataOps.Local.n_vconstrmask;
-
-          Nvector_custom.n_vminquotient_local
-            = Some DataOps.Local.n_vminquotient;
-
-          Nvector_custom.n_vwsqrsum_local
-            = Some DataOps.Local.n_vwsqrsum;
-
-          Nvector_custom.n_vwsqrsummask_local
-            = Some DataOps.Local.n_vwsqrsummask;
+          Nvector_custom.n_vdotprod_local = Some DataOps.Local.n_vdotprod;
+          Nvector_custom.n_vmaxnorm_local = Some DataOps.Local.n_vmaxnorm;
+          Nvector_custom.n_vmin_local = Some DataOps.Local.n_vmin;
+          Nvector_custom.n_vl1norm_local = Some DataOps.Local.n_vl1norm;
+          Nvector_custom.n_vinvtest_local = Some DataOps.Local.n_vinvtest;
+          Nvector_custom.n_vconstrmask_local = Some DataOps.Local.n_vconstrmask;
+          Nvector_custom.n_vminquotient_local = Some DataOps.Local.n_vminquotient;
+          Nvector_custom.n_vwsqrsum_local = Some DataOps.Local.n_vwsqrsum;
+          Nvector_custom.n_vwsqrsummask_local = Some DataOps.Local.n_vwsqrsummask;
     } (* }}} *)
 
     let make n e = Nvector_custom.make_wrap array_nvec_ops (A.make n e)
@@ -721,6 +723,19 @@ module Make =
     let unwrap = Nvector.unwrap
 
     let enable = Nvector_custom.enable
+
+    module Any = struct (* {{{ *)
+
+      type Nvector.gdata += Arr of data
+
+      let wrap =
+        let inject x = Arr x in
+        let project = function Arr x -> x | _ -> raise Nvector.BadGenericType in
+        let ops = Nvector_custom.Any.convert_ops ~inject ~project array_nvec_ops in
+        (* TODO: override array ops? *)
+        Nvector_custom.Any.make_wrap ops ~inject
+
+    end (* }}} *)
 
     module Ops = struct (* {{{ *)
       type t = A.data Nvector_custom.t
@@ -826,7 +841,7 @@ module SlowerArray = Make (
 *)
 
 module Array =
-  struct
+  struct (* {{{ *)
     type data = float array
     type kind = Nvector_custom.kind
     type t = data Nvector_custom.t
@@ -1517,6 +1532,19 @@ module Array =
 
     let unwrap = Nvector.unwrap
 
+    module Any = struct (* {{{ *)
+
+      type Nvector.gdata += Arr of data
+
+      let wrap =
+        let inject x = Arr x in
+        let project = function Arr x -> x | _ -> raise Nvector.BadGenericType in
+        let ops = Nvector_custom.Any.convert_ops ~inject ~project array_nvec_ops in
+        (* TODO: override array ops? *)
+        Nvector_custom.Any.make_wrap ops ~inject
+
+    end (* }}} *)
+
     module Ops = struct (* {{{ *)
       type t = float array Nvector_custom.t
 
@@ -1606,7 +1634,7 @@ module Array =
           DataOps.Local.n_vwsqrsummask (unwrap x) (unwrap w) (unwrap id)
       end
     end (* }}} *)
-  end
+  end (* }}} *)
 
 include Array
 

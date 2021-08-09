@@ -244,6 +244,46 @@ static N_Vector clone_serial(N_Vector w)
     CAMLreturnT(N_Vector, v);
 }
 
+/* Clone an "any" nvector by unwrapping and wrapping the RA payload. */
+/* Adapted from sundials-2.5.0/src/nvec_ser/nvector_serial.c:
+   N_VCloneEmpty_Serial */
+static N_Vector clone_any_serial(N_Vector w)
+{
+    CAMLparam0();
+    CAMLlocal4(v_wrapped, v_payload, w_wrapped, w_payload);
+
+    N_Vector v;
+    N_VectorContent_Serial content;
+
+    if (w == NULL) CAMLreturnT(N_Vector, NULL);
+    w_wrapped = NVEC_BACKLINK(w);
+    w_payload = Field(w_wrapped, 1);
+
+    struct caml_ba_array *w_ba = Caml_ba_array_val(w_payload);
+
+    /* Create vector (we need not copy the data) */
+    v_payload = caml_ba_alloc(w_ba->flags, w_ba->num_dims, NULL, w_ba->dim);
+
+    v_wrapped = caml_alloc_tuple(2);
+    Store_field(v_wrapped, 0, Field(w_wrapped, 0)); // RA constructor
+    Store_field(v_wrapped, 1, v_payload);
+
+    v = sunml_alloc_cnvec(sizeof(struct _N_VectorContent_Serial), v_wrapped);
+    if (v == NULL) CAMLreturnT (N_Vector, NULL);
+
+    content = (N_VectorContent_Serial) v->content;
+
+    /* Create vector operation structure */
+    sunml_clone_cnvec_ops(v, w);
+
+    /* Create content */
+    content->length   = NV_LENGTH_S(w);
+    content->own_data = 0;
+    content->data     = Caml_ba_data_val(v_payload);
+
+    CAMLreturnT(N_Vector, v);
+}
+
 /*
  * N_VCloneEmpty is used in Sundials as a "light-weight" way to wrap
  * array data for use in calculations with N_Vectors. At the time of
@@ -363,6 +403,35 @@ CAMLprim value sunml_nvec_wrap_serial(value payload, value checkfn)
     Store_field(vnvec, 2, checkfn);
 
     CAMLreturn(vnvec);
+}
+
+/* The "any"-version of a serial nvector is created by modifying the
+   standard one in two ways:
+   1. The payload field is wrapped in the RA constructor.
+   2. The nvclone operation is overridden to implement the wrapping operation
+      (the current clone_empty_serial does not manipulate the backlink). */
+CAMLprim value sunml_nvec_anywrap_serial(value extconstr,
+					 value payload, value checkfn)
+{
+    CAMLparam3(extconstr, payload, checkfn);
+    CAMLlocal2(vnv, vwrapped);
+    N_Vector nv;
+    N_Vector_Ops ops;
+
+    vnv = sunml_nvec_wrap_serial(payload, checkfn);
+    nv = NVEC_VAL(vnv);
+    ops = (N_Vector_Ops) nv->ops;
+
+    ops->nvclone = clone_any_serial;
+
+    vwrapped = caml_alloc_tuple(2);
+    Store_field(vwrapped, 0, extconstr);
+    Store_field(vwrapped, 1, NVEC_BACKLINK(nv));
+
+    Store_field(vnv, 0, vwrapped);
+    NVEC_BACKLINK(nv) = vwrapped;
+
+    CAMLreturn(vnv);
 }
 
 /** Custom nvectors * * * * * * * * * * * * * * * * * * * * * * * * * * */

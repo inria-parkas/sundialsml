@@ -77,6 +77,51 @@ static N_Vector clone_parallel(N_Vector w)
     CAMLreturnT(N_Vector, v);
 }
 
+/* Clone an "any" nvector by unwrapping and wrapping the RA payload. */
+/* Adapted from sundials-2.5.0/src/nvec_par/nvector_parallel.c:
+   N_VCloneEmpty_Parallel */
+static N_Vector clone_any_parallel(N_Vector w)
+{
+    CAMLparam0();
+    CAMLlocal4(v_wrapped, v_payload, w_wrapped, w_payload);
+
+    N_Vector v;
+    N_VectorContent_Parallel content;
+
+    if (w == NULL) CAMLreturnT (N_Vector, NULL);
+    w_wrapped = NVEC_BACKLINK(w);
+    w_payload = Field(w_wrapped, 1);
+
+    struct caml_ba_array *w_ba = Caml_ba_array_val(Field(w_payload, 0));
+
+    /* Create vector (we need not copy the data) */
+    v_payload = caml_alloc_tuple(3);
+    Store_field(v_payload, 0,
+		caml_ba_alloc(w_ba->flags, w_ba->num_dims, NULL, w_ba->dim));
+    Store_field(v_payload, 1, Field(w_payload, 1));
+    Store_field(v_payload, 2, Field(w_payload, 2));
+
+    v_wrapped = caml_alloc_tuple(2);
+    Store_field(v_wrapped, 0, Field(w_wrapped, 0)); // Par constructor
+    Store_field(v_wrapped, 1, v_payload);
+    
+    v = sunml_alloc_cnvec(sizeof(struct _N_VectorContent_Parallel), v_wrapped);
+    if (v == NULL) CAMLreturnT (N_Vector, NULL);
+    content = (N_VectorContent_Parallel) v->content;
+
+    /* Create vector operation structure */
+    sunml_clone_cnvec_ops(v, w);
+
+    /* Attach lengths and communicator */
+    content->local_length  = NV_LOCLENGTH_P(w);
+    content->global_length = NV_GLOBLENGTH_P(w);
+    content->comm          = NV_COMM_P(w);
+    content->own_data      = 0;
+    content->data          = Caml_ba_data_val(Field(v_payload, 0));
+
+    CAMLreturnT(N_Vector, v);
+}
+
 /* Adapted from sundials-2.5.0/src/nvec_par/nvector_parallel.c:
    N_VNewEmpty_Parallel */
 CAMLprim value sunml_nvec_wrap_parallel(value payload, value checkfn)
@@ -187,6 +232,35 @@ CAMLprim value sunml_nvec_wrap_parallel(value payload, value checkfn)
     Store_field(vnvec, 2, checkfn);
 
     CAMLreturn(vnvec);
+}
+
+/* The "any"-version of a parallel nvector is created by modifying the
+   standard one in two ways:
+   1. The payload field is wrapped in the Par constructor.
+   2. The nvclone operation is overridden to implement the wrapping operation
+      (the current clone_empty_parallel does not manipulate the backlink). */
+CAMLprim value sunml_nvec_anywrap_parallel(value extconstr,
+					   value payload, value checkfn)
+{
+    CAMLparam3(extconstr, payload, checkfn);
+    CAMLlocal2(vnv, vwrapped);
+    N_Vector nv;
+    N_Vector_Ops ops;
+
+    vnv = sunml_nvec_wrap_parallel(payload, checkfn);
+    nv = NVEC_VAL(vnv);
+    ops = (N_Vector_Ops) nv->ops;
+
+    ops->nvclone = clone_any_parallel;
+
+    vwrapped = caml_alloc_tuple(2);
+    Store_field(vwrapped, 0, extconstr);
+    Store_field(vwrapped, 1, NVEC_BACKLINK(nv));
+
+    Store_field(vnv, 0, vwrapped);
+    NVEC_BACKLINK(nv) = vwrapped;
+
+    CAMLreturn(vnv);
 }
 
 CAMLprim value sunml_nvec_par_n_vlinearsum(value va, value vx, value vb, value vy,

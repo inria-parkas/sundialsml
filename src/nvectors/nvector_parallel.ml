@@ -4,40 +4,43 @@ type kind
 type data = RealArray.t * int * Mpi.communicator
 type t = (data, kind) Nvector.t
 
+type Nvector.gdata += Par of data
+
 exception IncorrectGlobalSize
 
-external c_wrap : (RealArray.t * int * Mpi.communicator)
-                  -> (RealArray.t * int * Mpi.communicator -> bool)
-                  -> t
+external c_wrap : (RealArray.t * int * Mpi.communicator) -> (t -> bool) -> t
   = "sunml_nvec_wrap_parallel"
 
 (* Selectively enable and disable fused and array operations *)
-external c_enablefusedops_parallel                          : t -> bool -> unit
+external c_enablefusedops_parallel                     : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_par_enablefusedops"
-external c_enablelinearcombination_parallel                 : t -> bool -> unit
+external c_enablelinearcombination_parallel            : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_par_enablelinearcombination"
-external c_enablescaleaddmulti_parallel                     : t -> bool -> unit
+external c_enablescaleaddmulti_parallel                : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_par_enablescaleaddmulti"
-external c_enabledotprodmulti_parallel                      : t -> bool -> unit
+external c_enabledotprodmulti_parallel                 : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_par_enabledotprodmulti"
-external c_enablelinearsumvectorarray_parallel              : t -> bool -> unit
+external c_enablelinearsumvectorarray_parallel         : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_par_enablelinearsumvectorarray"
-external c_enablescalevectorarray_parallel                  : t -> bool -> unit
+external c_enablescalevectorarray_parallel             : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_par_enablescalevectorarray"
-external c_enableconstvectorarray_parallel                  : t -> bool -> unit
+external c_enableconstvectorarray_parallel             : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_par_enableconstvectorarray"
-external c_enablewrmsnormvectorarray_parallel               : t -> bool -> unit
+external c_enablewrmsnormvectorarray_parallel          : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_par_enablewrmsnormvectorarray"
-external c_enablewrmsnormmaskvectorarray_parallel           : t -> bool -> unit
+external c_enablewrmsnormmaskvectorarray_parallel      : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_par_enablewrmsnormmaskvectorarray"
-external c_enablescaleaddmultivectorarray_parallel          : t -> bool -> unit
+external c_enablescaleaddmultivectorarray_parallel     : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_par_enablescaleaddmultivectorarray"
-external c_enablelinearcombinationvectorarray_parallel      : t -> bool -> unit
+external c_enablelinearcombinationvectorarray_parallel : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_par_enablelinearcombinationvectorarray"
+
+let unwrap = Nvector.unwrap
 
 let wrap ?(with_fused_ops=false) ((nl, ng, comm) as v) =
   let nl_len = RealArray.length nl in
-  let check (nl', ng', comm') =
+  let check nv =
+    let (nl', ng', comm') = unwrap nv in
     (nl_len = RealArray.length nl') && (ng <= ng') && (comm == comm')
   in
   let nv = c_wrap v check in
@@ -50,8 +53,6 @@ let make ?with_fused_ops nl ng comm iv =
 let clone nv =
   let loc, glen, comm = Nvector.unwrap nv in
   wrap (RealArray.copy loc, glen, comm)
-
-let unwrap = Nvector.unwrap
 
 let pp fmt nv =
   let data, _, _ = Nvector.unwrap nv in
@@ -123,6 +124,91 @@ let enable
 external hide_communicator
   : Mpi.communicator -> Nvector_custom.communicator
   = "%identity"
+
+module Any = struct (* {{{ *)
+
+  external c_any_wrap
+    : extension_constructor -> data -> (Nvector.any -> bool) -> Nvector.any
+    = "sunml_nvec_anywrap_parallel"
+
+  let wrap
+      ?(with_fused_ops=false)
+      ?(with_linear_combination=false)
+      ?(with_scale_add_multi=false)
+      ?(with_dot_prod_multi=false)
+      ?(with_linear_sum_vector_array=false)
+      ?(with_scale_vector_array=false)
+      ?(with_const_vector_array=false)
+      ?(with_wrms_norm_vector_array=false)
+      ?(with_wrms_norm_mask_vector_array=false)
+      ?(with_scale_add_multi_vector_array=false)
+      ?(with_linear_combination_vector_array=false)
+      ((nl, ng, comm) as v)
+    =
+      if not Sundials_impl.Versions.has_nvector_get_id
+        then raise Config.NotImplementedBySundialsVersion;
+      let len = RealArray.length nl in
+      let check nv' =
+        match unwrap nv' with
+        | Par (nl', ng', comm') ->
+            (len = RealArray.length nl') && (ng <= ng') && (comm == comm')
+            && (Nvector.get_id nv' = Nvector.Parallel)
+        | _ -> false
+      in
+      let nv = c_any_wrap [%extension_constructor Par] v check in
+      if with_fused_ops
+        then c_enablefusedops_parallel nv true;
+      if with_fused_ops
+        then c_enablefusedops_parallel nv true;
+      if with_linear_combination
+        then c_enablelinearcombination_parallel nv true;
+      if with_scale_add_multi
+        then c_enablescaleaddmulti_parallel nv true;
+      if with_dot_prod_multi
+        then c_enabledotprodmulti_parallel nv true;
+      if with_linear_sum_vector_array
+        then c_enablelinearsumvectorarray_parallel nv true;
+      if with_scale_vector_array
+        then c_enablescalevectorarray_parallel nv true;
+      if with_const_vector_array
+        then c_enableconstvectorarray_parallel nv true;
+      if with_wrms_norm_vector_array
+        then c_enablewrmsnormvectorarray_parallel nv true;
+      if with_wrms_norm_mask_vector_array
+        then c_enablewrmsnormmaskvectorarray_parallel nv true;
+      if with_scale_add_multi_vector_array
+        then c_enablescaleaddmultivectorarray_parallel nv true;
+      if with_linear_combination_vector_array
+        then c_enablelinearcombinationvectorarray_parallel nv true;
+      nv
+
+  let make
+      ?with_fused_ops
+      ?with_linear_combination
+      ?with_scale_add_multi
+      ?with_dot_prod_multi
+      ?with_linear_sum_vector_array
+      ?with_scale_vector_array
+      ?with_const_vector_array
+      ?with_wrms_norm_vector_array
+      ?with_wrms_norm_mask_vector_array
+      ?with_scale_add_multi_vector_array
+      ?with_linear_combination_vector_array
+      nl ng comm iv
+    = wrap ?with_fused_ops
+           ?with_linear_combination
+           ?with_scale_add_multi
+           ?with_dot_prod_multi
+           ?with_linear_sum_vector_array
+           ?with_scale_vector_array
+           ?with_const_vector_array
+           ?with_wrms_norm_vector_array
+           ?with_wrms_norm_mask_vector_array
+           ?with_scale_add_multi_vector_array
+           ?with_linear_combination_vector_array
+           (RealArray.make nl iv, ng, comm)
+
+end (* }}} *)
 
 module Ops = struct (* {{{ *)
   type t = (data, kind) Nvector.t

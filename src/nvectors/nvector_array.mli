@@ -76,6 +76,36 @@ module type ARRAY_NVECTOR =
       -> t
       -> unit
 
+    (* A generic nvector interface for an arbitrary array type. *)
+    module Any : sig (* {{{ *)
+
+      (** Generic wrapper for {!data}. *)
+      type Nvector.gdata += Arr of data
+
+      (** Lifts an array to a generic nvector.
+
+          The optional arguments permit to enable fused and array operations for
+          a given nvector (they are disabled by default).
+
+          @raise Config.NotImplementedBySundialsVersion Fused and array operations not available.
+          @since 2.9.0 *)
+      val wrap :
+           ?with_fused_ops                       : bool
+        -> ?with_linear_combination              : bool
+        -> ?with_scale_add_multi                 : bool
+        -> ?with_dot_prod_multi                  : bool
+        -> ?with_linear_sum_vector_array         : bool
+        -> ?with_scale_vector_array              : bool
+        -> ?with_const_vector_array              : bool
+        -> ?with_wrms_norm_vector_array          : bool
+        -> ?with_wrms_norm_mask_vector_array     : bool
+        -> ?with_scale_add_multi_vector_array    : bool
+        -> ?with_linear_combination_vector_array : bool
+        -> data
+        -> Nvector.any
+
+    end (* }}} *)
+
     (** Standard operations over array nvectors. *)
     module Ops : Nvector.NVECTOR_OPS with type t = t
 
@@ -83,17 +113,19 @@ module type ARRAY_NVECTOR =
     module DataOps : Nvector.NVECTOR_OPS with type t = data
   end
 
+module type ArrayOps = sig
+  type data
+  val get       : data -> int -> float
+  val set       : data -> int -> float -> unit
+  val fill      : data -> float -> unit
+  val make      : int -> float -> data
+  val clone     : data -> data
+  val length    : data -> int
+end
+
 (** Produce a custom nvector from basic operations on
     an underlying array. *)
-module Make : functor (A : sig
-      type data
-      val get       : data -> int -> float
-      val set       : data -> int -> float -> unit
-      val fill      : data -> float -> unit
-      val make      : int -> float -> data
-      val clone     : data -> data
-      val length    : data -> int
-    end) -> ARRAY_NVECTOR with type data = A.data
+module Make : functor (A : ArrayOps) -> ARRAY_NVECTOR with type data = A.data
 
 (** Nvector on {{:OCAML_DOC_ROOT(Array.html)} Array}s of [float]s. *)
 include ARRAY_NVECTOR with type data = float array

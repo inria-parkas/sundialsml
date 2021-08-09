@@ -63,7 +63,46 @@ type nvector_id =
     @since 2.9.0 *)
 val get_id : ('data, 'kind) t -> nvector_id
 
-(** {2:genvec Generic vector operations}
+(** {2:genvec Generic nvectors}
+
+    The two arguments of the standard nvector type encode, respectively, the
+    type of the data payload that is manipulated from OCaml and the type of
+    the underlying implementation. This encoding has two advantages. First,
+    callback functions have direct access to the data payload. Second,
+    incorrect combinations of nvectors can be rejected at compile time
+    (although dynamic checks are still required on payload dimensions). There
+    are two main disadvantages to this encoding. First, type signatures and
+    error messages become more complicated. Second, it is not possible to form
+    lists or arrays of heterogeneous nvectors, despite the object-oriented
+    style of the underlying implementation.
+
+    Generic nvectors are an alternative interface that inverses the advantages
+    and disadvantages of standard nvectors. The data payload is now accessed
+    through a constructor that otherwise hides the underlying type. Since all
+    such nvectors have the same values for the two type arguments, they can be
+    stored together in lists and arrays regardless of their underlying
+    payloads and implementations. The price to pay is additional run-time
+    checks and the fact that certain errors can no longer be detected
+    statically. *)
+
+(** Represents generic nvector data. This type is extensible so that other
+    nvector modules can support the generic form. *)
+type gdata = ..
+
+(** The wrapper for {{!Sundials.RealArray.t}RealArray}s. *)
+type gdata += RA of Sundials.RealArray.t
+
+(** Represents an nvector whose data must be accessed through a constructor
+    in {!gdata}. *)
+type gkind
+
+(** The type of a generic nvector. *)
+type any = (gdata, gkind) t
+
+(** A {!gdata} value did not have the expected wrapper. *)
+exception BadGenericType
+
+(** {2:vecops Vector operations}
 
     @cvode <node7> Description of the NVECTOR module. *)
 

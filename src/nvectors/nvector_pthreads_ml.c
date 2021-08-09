@@ -59,6 +59,47 @@ static N_Vector clone_pthreads(N_Vector w)
     CAMLreturnT(N_Vector, v);
 }
 
+/* Clone an "any" nvector by unwrapping and wrapping the RA payload. */
+/* Adapted from sundials-2.6.1/src/nvec_pthreads/nvector_pthreads.c:
+   N_VCloneEmpty_Pthreads */
+static N_Vector clone_any_pthreads(N_Vector w)
+{
+    CAMLparam0();
+    CAMLlocal4(v_wrapped, v_payload, w_wrapped, w_payload);
+
+    N_Vector v;
+    N_VectorContent_Pthreads content;
+
+    if (w == NULL) CAMLreturnT(N_Vector, NULL);
+    w_wrapped = NVEC_BACKLINK(w);
+    w_payload = Field(w_wrapped, 1);
+
+    struct caml_ba_array *w_ba = Caml_ba_array_val(w_payload);
+
+    /* Create vector (we need not copy the data) */
+    v_payload = caml_ba_alloc(w_ba->flags, w_ba->num_dims, NULL, w_ba->dim);
+
+    v_wrapped = caml_alloc_tuple(2);
+    Store_field(v_wrapped, 0, Field(w_wrapped, 0)); // RA constructor
+    Store_field(v_wrapped, 1, v_payload);
+
+    v = sunml_alloc_cnvec(sizeof(struct _N_VectorContent_Pthreads), v_wrapped);
+    if (v == NULL) CAMLreturnT (N_Vector, NULL);
+
+    content = (N_VectorContent_Pthreads) v->content;
+
+    /* Create vector operation structure */
+    sunml_clone_cnvec_ops(v, w);
+
+    /* Create content */
+    content->length   = NV_LENGTH_PT(w);
+    content->num_threads = NV_NUM_THREADS_PT(w);
+    content->own_data = 0;
+    content->data     = Caml_ba_data_val(v_payload);
+
+    CAMLreturnT(N_Vector, v);
+}
+
 /* Creation from OCaml.  */
 /* Adapted from sundials-2.6.1/src/nvec_pthreads/nvector_pthreads.c:
    N_VNewEmpty_Pthreads */
@@ -154,6 +195,35 @@ CAMLprim value sunml_nvec_wrap_pthreads(value nthreads,
     Store_field(vnvec, 2, checkfn);
 
     CAMLreturn(vnvec);
+}
+
+/* The "any"-version of a pthreads nvector is created by modifying the
+   standard one in two ways:
+   1. The payload field is wrapped in the RA constructor.
+   2. The nvclone operation is overridden to implement the wrapping operation
+      (the current clone_empty_pthreads does not manipulate the backlink). */
+CAMLprim value sunml_nvec_anywrap_pthreads(value extconstr,
+			       value nthreads, value payload, value checkfn)
+{
+    CAMLparam4(extconstr, nthreads, payload, checkfn);
+    CAMLlocal2(vnv, vwrapped);
+    N_Vector nv;
+    N_Vector_Ops ops;
+
+    vnv = sunml_nvec_wrap_pthreads(nthreads, payload, checkfn);
+    nv = NVEC_VAL(vnv);
+    ops = (N_Vector_Ops) nv->ops;
+
+    ops->nvclone = clone_any_pthreads;
+
+    vwrapped = caml_alloc_tuple(2);
+    Store_field(vwrapped, 0, extconstr);
+    Store_field(vwrapped, 1, NVEC_BACKLINK(nv));
+
+    Store_field(vnv, 0, vwrapped);
+    NVEC_BACKLINK(nv) = vwrapped;
+
+    CAMLreturn(vnv);
 }
 
 CAMLprim value sunml_nvec_pthreads_num_threads(value va)

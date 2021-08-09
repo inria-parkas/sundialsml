@@ -32,6 +32,9 @@ type kind
 (** The type of parallel nvectors. *)
 type t = (data, kind) Nvector.t
 
+(** A generic data wrapper for {!data}. *)
+type Nvector.gdata += Par of data
+
 (** Raised by make if the given global length is not consistent with the sum of
     local lengths across all parallel instances. *)
 exception IncorrectGlobalSize
@@ -140,4 +143,83 @@ module Ops : Nvector.NVECTOR_OPS with type t = t
 
 (** Nvector operations on {!data} implemented in OCaml. *)
 module DataOps : Nvector.NVECTOR_OPS with type t = data
+
+(** {2:genvec Generic nvector interface}
+
+    Create parallel nvectors using the generic nvector interface where the
+    payload is wrapped with the {{!Nvector.gdata}Par} constructor. *)
+module Any : sig (* {{{ *)
+
+  (** [make nl ng c iv] creates a new parallel nvector with [nl] local elements,
+      that is part of a global array with [ng] elements. The local elements are
+      initialized to [iv], and communications occur on [c].
+
+      The optional argument enables the fused and array operations for a given
+      nvector (they are disabled by default).
+
+      @cvode <node5> N_VEnableFusedOps_Parallel
+      @cvode <node5> N_VEnableLinearCombination_Parallel
+      @cvode <node5> N_VEnableScaleAddMulti_Parallel
+      @cvode <node5> N_VEnableDotProdMulti_Parallel
+      @cvode <node5> N_VEnableLinearSumVectorArray_Parallel
+      @cvode <node5> N_VEnableScaleVectorArray_Parallel
+      @cvode <node5> N_VEnableConstVectorArray_Parallel
+      @cvode <node5> N_VEnableWrmsNormVectorArray_Parallel
+      @cvode <node5> N_VEnableWrmsNormMaskVectorArray_Parallel
+      @cvode <node5> N_VEnableScaleAddMultiVectorArray_Parallel
+      @cvode <node5> N_VEnableLinearCombinationVectorArray_Parallel
+      @raise Config.NotImplementedBySundialsVersion Fused and array operations not available.
+      @since 2.9.0 *)
+  val make :
+       ?with_fused_ops                       : bool
+    -> ?with_linear_combination              : bool
+    -> ?with_scale_add_multi                 : bool
+    -> ?with_dot_prod_multi                  : bool
+    -> ?with_linear_sum_vector_array         : bool
+    -> ?with_scale_vector_array              : bool
+    -> ?with_const_vector_array              : bool
+    -> ?with_wrms_norm_vector_array          : bool
+    -> ?with_wrms_norm_mask_vector_array     : bool
+    -> ?with_scale_add_multi_vector_array    : bool
+    -> ?with_linear_combination_vector_array : bool
+    -> int
+    -> int
+    -> Mpi.communicator
+    -> float
+    -> Nvector.any
+
+  (** [wrap a] creates a new parallel nvector from [a].
+
+      The optional arguments permit to enable all the fused and array operations
+      for a given nvector (they are disabled by default).
+
+      @cvode <node5> N_VEnableFusedOps_Parallel
+      @cvode <node5> N_VEnableLinearCombination_Parallel
+      @cvode <node5> N_VEnableScaleAddMulti_Parallel
+      @cvode <node5> N_VEnableDotProdMulti_Parallel
+      @cvode <node5> N_VEnableLinearSumVectorArray_Parallel
+      @cvode <node5> N_VEnableScaleVectorArray_Parallel
+      @cvode <node5> N_VEnableConstVectorArray_Parallel
+      @cvode <node5> N_VEnableWrmsNormVectorArray_Parallel
+      @cvode <node5> N_VEnableWrmsNormMaskVectorArray_Parallel
+      @cvode <node5> N_VEnableScaleAddMultiVectorArray_Parallel
+      @cvode <node5> N_VEnableLinearCombinationVectorArray_Parallel
+      @raise Config.NotImplementedBySundialsVersion Fused and array operations not available.
+      @since 2.9.0 *)
+  val wrap :
+       ?with_fused_ops                       : bool
+    -> ?with_linear_combination              : bool
+    -> ?with_scale_add_multi                 : bool
+    -> ?with_dot_prod_multi                  : bool
+    -> ?with_linear_sum_vector_array         : bool
+    -> ?with_scale_vector_array              : bool
+    -> ?with_const_vector_array              : bool
+    -> ?with_wrms_norm_vector_array          : bool
+    -> ?with_wrms_norm_mask_vector_array     : bool
+    -> ?with_scale_add_multi_vector_array    : bool
+    -> ?with_linear_combination_vector_array : bool
+    -> data
+    -> Nvector.any
+
+end (* }}} *)
 

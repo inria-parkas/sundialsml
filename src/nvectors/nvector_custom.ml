@@ -81,30 +81,30 @@ type 'a nvector_ops = { (* {{{ *)
 exception OperationNotSupported
 
 (* Selectively enable and disable fused and array operations *)
-external c_enablefusedops_custom                       : 'd t -> bool -> bool
+external c_enablefusedops_custom                     : ('d, 'k) Nvector.t -> bool -> bool
   = "sunml_nvec_custom_enablefusedops"
-external c_enablelinearcombination_custom              : 'd t -> bool -> bool
+external c_enablelinearcombination_custom            : ('d, 'k) Nvector.t -> bool -> bool
   = "sunml_nvec_custom_enablelinearcombination"
-external c_enablescaleaddmulti_custom                  : 'd t -> bool -> bool
+external c_enablescaleaddmulti_custom                : ('d, 'k) Nvector.t -> bool -> bool
   = "sunml_nvec_custom_enablescaleaddmulti"
-external c_enabledotprodmulti_custom                   : 'd t -> bool -> bool
+external c_enabledotprodmulti_custom                 : ('d, 'k) Nvector.t -> bool -> bool
   = "sunml_nvec_custom_enabledotprodmulti"
-external c_enablelinearsumvectorarray_custom           : 'd t -> bool -> bool
+external c_enablelinearsumvectorarray_custom         : ('d, 'k) Nvector.t -> bool -> bool
   = "sunml_nvec_custom_enablelinearsumvectorarray"
-external c_enablescalevectorarray_custom               : 'd t -> bool -> bool
+external c_enablescalevectorarray_custom             : ('d, 'k) Nvector.t -> bool -> bool
   = "sunml_nvec_custom_enablescalevectorarray"
-external c_enableconstvectorarray_custom               : 'd t -> bool -> bool
+external c_enableconstvectorarray_custom             : ('d, 'k) Nvector.t -> bool -> bool
   = "sunml_nvec_custom_enableconstvectorarray"
-external c_enablewrmsnormvectorarray_custom            : 'd t -> bool -> bool
+external c_enablewrmsnormvectorarray_custom          : ('d, 'k) Nvector.t -> bool -> bool
   = "sunml_nvec_custom_enablewrmsnormvectorarray"
-external c_enablewrmsnormmaskvectorarray_custom        : 'd t -> bool -> bool
+external c_enablewrmsnormmaskvectorarray_custom      : ('d, 'k) Nvector.t -> bool -> bool
   = "sunml_nvec_custom_enablewrmsnormmaskvectorarray"
-external c_enablescaleaddmultivectorarray_custom       : 'd t -> bool -> bool
+external c_enablescaleaddmultivectorarray_custom     : ('d, 'k) Nvector.t -> bool -> bool
   = "sunml_nvec_custom_enablescaleaddmultivectorarray"
-external c_enablelinearcombinationvectorarray_custom   : 'd t -> bool -> bool
+external c_enablelinearcombinationvectorarray_custom : ('d, 'k) Nvector.t -> bool -> bool
   = "sunml_nvec_custom_enablelinearcombinationvectorarray"
 
-external c_make_wrap : 'a nvector_ops -> 'a -> ('a -> bool) -> 'a t
+external c_make_wrap : 'a nvector_ops -> 'a -> ('a t -> bool) -> 'a t
     = "sunml_nvec_wrap_custom"
 
 let do_enable f nv v =
@@ -148,8 +148,10 @@ let enable
     do_enable c_enablelinearcombinationvectorarray_custom nv
               with_linear_combination_vector_array
 
+let uv = Nvector.unwrap
+
 let make_wrap ops ?(with_fused_ops=false) v =
-  let nv = c_make_wrap ops v (ops.n_vcheck v) in
+  let nv = c_make_wrap ops v (fun nv' -> ops.n_vcheck v (uv nv')) in
   if with_fused_ops && not (c_enablefusedops_custom nv true)
     then raise OperationNotSupported;
   nv
@@ -352,8 +354,6 @@ let add_tracing msg ops =
       n_vwsqrsummask_local = tr_nvwsqrsummask_local;
       (* }}} *)
   }
-
-let uv = Nvector.unwrap
 
 module MakeOps = functor (A : sig
     type data
@@ -671,4 +671,192 @@ module MakeOps = functor (A : sig
       end
     end (* }}} *)
   end
+
+module Any = struct (* {{{ *)
+
+  let convert_ops (type d)
+        ~(inject:d -> Nvector.gdata)
+        ~(project:Nvector.gdata -> d) ops
+    =
+    let { (* {{{ *)
+        n_vcheck;
+        n_vclone;
+        n_vspace;
+        n_vgetlength;
+        n_vlinearsum;
+        n_vconst;
+        n_vprod;
+        n_vdiv;
+        n_vscale;
+        n_vabs;
+        n_vinv;
+        n_vaddconst;
+        n_vmaxnorm;
+        n_vwrmsnorm;
+        n_vmin;
+
+        n_vdotprod;
+        n_vcompare;
+        n_vinvtest;
+
+        n_vwl2norm;
+        n_vl1norm;
+        n_vwrmsnormmask;
+        n_vconstrmask;
+        n_vminquotient;
+
+        n_vgetcommunicator;
+
+        n_vlinearcombination;
+        n_vscaleaddmulti;
+        n_vdotprodmulti;
+
+        n_vlinearsumvectorarray;
+        n_vscalevectorarray;
+        n_vconstvectorarray;
+        n_vwrmsnormvectorarray;
+        n_vwrmsnormmaskvectorarray;
+        n_vscaleaddmultivectorarray;
+        n_vlinearcombinationvectorarray;
+
+        n_vdotprod_local;
+        n_vmaxnorm_local;
+        n_vmin_local;
+        n_vl1norm_local;
+        n_vinvtest_local;
+        n_vconstrmask_local;
+        n_vminquotient_local;
+        n_vwsqrsum_local;
+        n_vwsqrsummask_local;
+      } = ops (* }}} *)
+    in
+    let projecta = Array.map project in
+    let projectaa = Array.map (Array.map project) in
+    let single f = (fun v1 -> f (project v1)) in
+    let double f = (fun v1 v2 -> f (project v1) (project v2)) in
+    let triple f = (fun v1 v2 v3 -> f (project v1) (project v2) (project v3)) in
+    let lifto f f' = match f with None -> None | Some f -> Some (f' f) in
+    {
+        (* {{{ *)
+        n_vcheck        = double n_vcheck;
+        n_vclone        = (fun v -> inject (n_vclone (project v)));
+        n_vspace        = Option.map single n_vspace;
+        n_vgetlength    = single n_vgetlength;
+        n_vlinearsum    = (fun c1 v1 c2 v2 vr -> n_vlinearsum c1 (project v1)
+                                                              c2 (project v2)
+                                                              (project vr));
+        n_vconst        = (fun c v -> n_vconst c (project v));
+        n_vprod         = triple n_vprod;
+        n_vdiv          = triple n_vdiv;
+        n_vscale        = (fun c v1 vr -> n_vscale c (project v1) (project vr));
+        n_vabs          = double n_vabs;
+        n_vinv          = double n_vinv;
+        n_vaddconst     = (fun v1 c vr -> n_vaddconst (project v1) c (project vr));
+        n_vmaxnorm      = single n_vmaxnorm;
+        n_vwrmsnorm     = double n_vwrmsnorm;
+        n_vmin          = single n_vmin;
+
+        n_vdotprod      = double n_vdotprod;
+        n_vcompare      = (fun c vx vr -> n_vcompare c (project vx) (project vr));
+        n_vinvtest      = double n_vinvtest;
+
+        n_vwl2norm      = lifto n_vwl2norm double;
+        n_vl1norm       = lifto n_vl1norm single;
+        n_vwrmsnormmask = lifto n_vwrmsnormmask triple;
+        n_vconstrmask   = lifto n_vconstrmask triple;
+        n_vminquotient  = lifto n_vminquotient double;
+
+        n_vgetcommunicator = lifto n_vgetcommunicator single;
+
+        n_vlinearcombination = lifto n_vlinearcombination
+          (fun f a vxs vr -> f a (projecta vxs) (project vr));
+        n_vscaleaddmulti = lifto n_vscaleaddmulti
+          (fun f a vx vxs vrs -> f a (project vx) (projecta vxs) (projecta vrs));
+        n_vdotprodmulti = lifto n_vdotprodmulti
+          (fun f vx vxs r -> f (project vx) (projecta vxs) r);
+
+        n_vlinearsumvectorarray = lifto n_vlinearsumvectorarray
+          (fun f c1 vxs1 c2 vxs2 vrs -> f c1 (projecta vxs1)
+                                          c2 (projecta vxs2)
+                                             (projecta vrs));
+        n_vscalevectorarray = lifto n_vscalevectorarray
+          (fun f a vxs vrs -> f a (projecta vxs) (projecta vrs));
+        n_vconstvectorarray = lifto n_vconstvectorarray
+          (fun f c vrs -> f c (projecta vrs));
+        n_vwrmsnormvectorarray = lifto n_vwrmsnormvectorarray
+          (fun f vxs vys rs -> f (projecta vxs) (projecta vys) rs);
+        n_vwrmsnormmaskvectorarray = lifto n_vwrmsnormmaskvectorarray
+          (fun f vxs vys vz ra -> f (projecta vxs) (projecta vys) (project vz) ra);
+        n_vscaleaddmultivectorarray = lifto n_vscaleaddmultivectorarray
+          (fun f a vxs vyss vrss -> f a (projecta vxs) (projectaa vyss) (projectaa vrss));
+        n_vlinearcombinationvectorarray = lifto n_vlinearcombinationvectorarray
+          (fun f a vxss vrs -> f a (projectaa vxss) (projecta vrs));
+
+        n_vdotprod_local     = lifto n_vdotprod_local double;
+        n_vmaxnorm_local     = lifto n_vmaxnorm_local single;
+        n_vmin_local         = lifto n_vmin_local single;
+        n_vl1norm_local      = lifto n_vl1norm_local single;
+        n_vinvtest_local     = lifto n_vinvtest_local double;
+        n_vconstrmask_local  = lifto n_vconstrmask_local triple;
+        n_vminquotient_local = lifto n_vminquotient_local double;
+        n_vwsqrsum_local     = lifto n_vwsqrsum_local double;
+        n_vwsqrsummask_local = lifto n_vwsqrsummask_local triple;
+        (* }}} *)
+    }
+
+  (* Same underlying call as c_make_wrap but with types declared differently. *)
+  external c_make_any_wrap
+    : Nvector.gdata nvector_ops -> Nvector.gdata -> (Nvector.any -> bool) -> Nvector.any
+    = "sunml_nvec_wrap_custom"
+
+  let do_enable f nv v = if not (f nv v) then raise OperationNotSupported
+
+  let make_wrap ops ~inject
+      ?(with_fused_ops=false)
+      ?(with_linear_combination=false)
+      ?(with_scale_add_multi=false)
+      ?(with_dot_prod_multi=false)
+      ?(with_linear_sum_vector_array=false)
+      ?(with_scale_vector_array=false)
+      ?(with_const_vector_array=false)
+      ?(with_wrms_norm_vector_array=false)
+      ?(with_wrms_norm_mask_vector_array=false)
+      ?(with_scale_add_multi_vector_array=false)
+      ?(with_linear_combination_vector_array=false)
+      rv
+    =
+      if not Sundials_impl.Versions.has_nvector_get_id
+        then raise Sundials.Config.NotImplementedBySundialsVersion;
+      let v = inject rv in
+      let check nv' =
+        ops.n_vcheck v (uv nv') && Nvector.get_id nv' = Nvector.Custom
+      in
+      let nv = c_make_any_wrap ops v check in
+      do_enable c_enablefusedops_custom nv
+                with_fused_ops;
+      do_enable c_enablefusedops_custom nv
+                with_fused_ops;
+      do_enable c_enablelinearcombination_custom nv
+                with_linear_combination;
+      do_enable c_enablescaleaddmulti_custom nv
+                with_scale_add_multi;
+      do_enable c_enabledotprodmulti_custom nv
+                with_dot_prod_multi;
+      do_enable c_enablelinearsumvectorarray_custom nv
+                with_linear_sum_vector_array;
+      do_enable c_enablescalevectorarray_custom nv
+                with_scale_vector_array;
+      do_enable c_enableconstvectorarray_custom nv
+                with_const_vector_array;
+      do_enable c_enablewrmsnormvectorarray_custom nv
+                with_wrms_norm_vector_array;
+      do_enable c_enablewrmsnormmaskvectorarray_custom nv
+                with_wrms_norm_mask_vector_array;
+      do_enable c_enablescaleaddmultivectorarray_custom nv
+                with_scale_add_multi_vector_array;
+      do_enable c_enablelinearcombinationvectorarray_custom nv
+                with_linear_combination_vector_array;
+      nv
+
+end (* }}} *)
 

@@ -97,3 +97,82 @@ val enable :
 (** Underlying nvector operations on OpenMP nvectors. *)
 module Ops : Nvector.NVECTOR_OPS with type t = t
 
+(** {2:genvec Generic nvector interface}
+
+    Create OpenMP nvectors using the generic nvector interface where the
+    payload is wrapped with the {{!Nvector.gdata}RA} constructor. *)
+module Any : sig (* {{{ *)
+
+  (** [make nthreads n iv] creates a new OpenMP nvector with [nthreads]
+      threads and [n] elements inialized to [iv].
+
+      The optional arguments permit to enable all the fused and array operations
+      for a given nvector (they are disabled by default).
+
+      @cvode <node5> N_VEnableFusedOps_OpenMP
+      @cvode <node5> N_VEnableLinearCombination_OpenMP
+      @cvode <node5> N_VEnableScaleAddMulti_OpenMP
+      @cvode <node5> N_VEnableDotProdMulti_OpenMP
+      @cvode <node5> N_VEnableLinearSumVectorArray_OpenMP
+      @cvode <node5> N_VEnableScaleVectorArray_OpenMP
+      @cvode <node5> N_VEnableConstVectorArray_OpenMP
+      @cvode <node5> N_VEnableWrmsNormVectorArray_OpenMP
+      @cvode <node5> N_VEnableWrmsNormMaskVectorArray_OpenMP
+      @cvode <node5> N_VEnableScaleAddMultiVectorArray_OpenMP
+      @cvode <node5> N_VEnableLinearCombinationVectorArray_OpenMP
+      @raise Config.NotImplementedBySundialsVersion Fused and array operations not available.
+      @since 2.9.0 *)
+  val make :
+       ?with_fused_ops                       : bool
+    -> ?with_linear_combination              : bool
+    -> ?with_scale_add_multi                 : bool
+    -> ?with_dot_prod_multi                  : bool
+    -> ?with_linear_sum_vector_array         : bool
+    -> ?with_scale_vector_array              : bool
+    -> ?with_const_vector_array              : bool
+    -> ?with_wrms_norm_vector_array          : bool
+    -> ?with_wrms_norm_mask_vector_array     : bool
+    -> ?with_scale_add_multi_vector_array    : bool
+    -> ?with_linear_combination_vector_array : bool
+    -> int
+    -> int
+    -> float
+    -> Nvector.any
+
+  (** [wrap nthreads a] creates a new OpenMP nvector with [nthreads] threads
+      over the elements of [a].
+
+      The optional arguments permit to enable all the fused and array operations
+      for a given nvector (they are disabled by default).
+
+      @cvode <node5> N_VEnableFusedOps_OpenMP
+      @cvode <node5> N_VEnableLinearCombination_OpenMP
+      @cvode <node5> N_VEnableScaleAddMulti_OpenMP
+      @cvode <node5> N_VEnableDotProdMulti_OpenMP
+      @cvode <node5> N_VEnableLinearSumVectorArray_OpenMP
+      @cvode <node5> N_VEnableScaleVectorArray_OpenMP
+      @cvode <node5> N_VEnableConstVectorArray_OpenMP
+      @cvode <node5> N_VEnableWrmsNormVectorArray_OpenMP
+      @cvode <node5> N_VEnableWrmsNormMaskVectorArray_OpenMP
+      @cvode <node5> N_VEnableScaleAddMultiVectorArray_OpenMP
+      @cvode <node5> N_VEnableLinearCombinationVectorArray_OpenMP
+      @raise Config.NotImplementedBySundialsVersion Fused and array operations not available.
+      @since 2.9.0 *)
+  val wrap :
+       ?with_fused_ops                       : bool
+    -> ?with_linear_combination              : bool
+    -> ?with_scale_add_multi                 : bool
+    -> ?with_dot_prod_multi                  : bool
+    -> ?with_linear_sum_vector_array         : bool
+    -> ?with_scale_vector_array              : bool
+    -> ?with_const_vector_array              : bool
+    -> ?with_wrms_norm_vector_array          : bool
+    -> ?with_wrms_norm_mask_vector_array     : bool
+    -> ?with_scale_add_multi_vector_array    : bool
+    -> ?with_linear_combination_vector_array : bool
+    -> int
+    -> RealArray.t
+    -> Nvector.any
+
+end (* }}} *)
+

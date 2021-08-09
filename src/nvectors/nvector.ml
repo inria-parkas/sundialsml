@@ -11,16 +11,16 @@
 (***********************************************************************)
 
 type cnvec
-type ('data, 'kind) nvector = 'data * cnvec * ('data -> bool)
+type ('data, 'kind) nvector =
+  NV of 'data * cnvec * (('data, 'kind) nvector -> bool)
 and ('data, 'kind) t = ('data, 'kind) nvector
 
-let unwrap (payload, _, _) = payload
+let unwrap (NV (payload, _, _)) = payload
 
 exception IncompatibleNvector
 
-let check (_, _, checkfn) = (function (payload, _, _) ->
-                              if not (checkfn payload) then
-                                raise IncompatibleNvector)
+let check (NV (_, _, checkfn)) nv2 =
+  if not (checkfn nv2) then raise IncompatibleNvector
 
 type nvector_id =
     Serial
@@ -36,6 +36,12 @@ type nvector_id =
 
 external get_id : ('data, 'kind) t -> nvector_id
   = "sunml_nvec_get_id"
+
+type gdata = ..
+type gdata += RA of Sundials.RealArray.t
+type gkind
+type any = (gdata, gkind) t
+exception BadGenericType
 
 module type NVECTOR_OPS =
   sig

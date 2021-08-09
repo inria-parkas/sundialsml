@@ -4,40 +4,39 @@ type kind = [`Pthreads|Nvector_serial.kind]
 type t = (data, kind) Nvector.t
 
 (* Selectively enable and disable fused and array operations *)
-external c_enablefusedops_pthreads                        : t -> bool -> unit
+external c_enablefusedops_pthreads                     : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_pthreads_enablefusedops"
-external c_enablelinearcombination_pthreads               : t -> bool -> unit
+external c_enablelinearcombination_pthreads            : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_pthreads_enablelinearcombination"
-external c_enablescaleaddmulti_pthreads                   : t -> bool -> unit
+external c_enablescaleaddmulti_pthreads                : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_pthreads_enablescaleaddmulti"
-external c_enabledotprodmulti_pthreads                    : t -> bool -> unit
+external c_enabledotprodmulti_pthreads                 : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_pthreads_enabledotprodmulti"
-external c_enablelinearsumvectorarray_pthreads            : t -> bool -> unit
+external c_enablelinearsumvectorarray_pthreads         : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_pthreads_enablelinearsumvectorarray"
-external c_enablescalevectorarray_pthreads                : t -> bool -> unit
+external c_enablescalevectorarray_pthreads             : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_pthreads_enablescalevectorarray"
-external c_enableconstvectorarray_pthreads                : t -> bool -> unit
+external c_enableconstvectorarray_pthreads             : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_pthreads_enableconstvectorarray"
-external c_enablewrmsnormvectorarray_pthreads             : t -> bool -> unit
+external c_enablewrmsnormvectorarray_pthreads          : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_pthreads_enablewrmsnormvectorarray"
-external c_enablewrmsnormmaskvectorarray_pthreads         : t -> bool -> unit
+external c_enablewrmsnormmaskvectorarray_pthreads      : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_pthreads_enablewrmsnormmaskvectorarray"
-external c_enablescaleaddmultivectorarray_pthreads        : t -> bool -> unit
+external c_enablescaleaddmultivectorarray_pthreads     : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_pthreads_enablescaleaddmultivectorarray"
-external c_enablelinearcombinationvectorarray_pthreads    : t -> bool -> unit
+external c_enablelinearcombinationvectorarray_pthreads : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_pthreads_enablelinearcombinationvectorarray"
 
-external c_wrap : int -> RealArray.t
-                    -> (RealArray.t -> bool) -> t
+let unwrap = Nvector.unwrap
+
+external c_wrap : int -> RealArray.t -> (t -> bool) -> t
   = "sunml_nvec_wrap_pthreads"
 
 let wrap ?(with_fused_ops=false) nthreads v =
   let len = RealArray.length v in
-  let nv = c_wrap nthreads v (fun v' -> len = RealArray.length v') in
+  let nv = c_wrap nthreads v (fun nv' -> len = RealArray.length (unwrap nv')) in
   if with_fused_ops then c_enablefusedops_pthreads nv true;
   nv
-
-let unwrap = Nvector.unwrap
 
 let pp fmt v = RealArray.pp fmt (unwrap v)
 
@@ -88,7 +87,91 @@ let enable
     do_enable c_enablelinearcombinationvectorarray_pthreads nv
               with_linear_combination_vector_array
 
-module Ops = struct
+module Any = struct (* {{{ *)
+
+  external c_any_wrap
+    : extension_constructor -> int -> RealArray.t -> (Nvector.any -> bool) -> Nvector.any
+    = "sunml_nvec_anywrap_pthreads"
+
+  let wrap
+      ?(with_fused_ops=false)
+      ?(with_linear_combination=false)
+      ?(with_scale_add_multi=false)
+      ?(with_dot_prod_multi=false)
+      ?(with_linear_sum_vector_array=false)
+      ?(with_scale_vector_array=false)
+      ?(with_const_vector_array=false)
+      ?(with_wrms_norm_vector_array=false)
+      ?(with_wrms_norm_mask_vector_array=false)
+      ?(with_scale_add_multi_vector_array=false)
+      ?(with_linear_combination_vector_array=false)
+      nthreads v
+    =
+      if not Sundials_impl.Versions.has_nvector_get_id
+        then raise Config.NotImplementedBySundialsVersion;
+      let len = RealArray.length v in
+      let check nv =
+        match unwrap nv with
+        | Nvector.RA ra ->
+            len = RealArray.length ra && Nvector.get_id nv = Nvector.Pthreads
+        | _ -> false
+      in
+      let nv = c_any_wrap [%extension_constructor Nvector.RA] nthreads v check in
+      if with_fused_ops
+        then c_enablefusedops_pthreads nv true;
+      if with_fused_ops
+        then c_enablefusedops_pthreads nv true;
+      if with_linear_combination
+        then c_enablelinearcombination_pthreads nv true;
+      if with_scale_add_multi
+        then c_enablescaleaddmulti_pthreads nv true;
+      if with_dot_prod_multi
+        then c_enabledotprodmulti_pthreads nv true;
+      if with_linear_sum_vector_array
+        then c_enablelinearsumvectorarray_pthreads nv true;
+      if with_scale_vector_array
+        then c_enablescalevectorarray_pthreads nv true;
+      if with_const_vector_array
+        then c_enableconstvectorarray_pthreads nv true;
+      if with_wrms_norm_vector_array
+        then c_enablewrmsnormvectorarray_pthreads nv true;
+      if with_wrms_norm_mask_vector_array
+        then c_enablewrmsnormmaskvectorarray_pthreads nv true;
+      if with_scale_add_multi_vector_array
+        then c_enablescaleaddmultivectorarray_pthreads nv true;
+      if with_linear_combination_vector_array
+        then c_enablelinearcombinationvectorarray_pthreads nv true;
+      nv
+
+  let make
+      ?with_fused_ops
+      ?with_linear_combination
+      ?with_scale_add_multi
+      ?with_dot_prod_multi
+      ?with_linear_sum_vector_array
+      ?with_scale_vector_array
+      ?with_const_vector_array
+      ?with_wrms_norm_vector_array
+      ?with_wrms_norm_mask_vector_array
+      ?with_scale_add_multi_vector_array
+      ?with_linear_combination_vector_array
+      nthreads n iv
+    = wrap ?with_fused_ops
+           ?with_linear_combination
+           ?with_scale_add_multi
+           ?with_dot_prod_multi
+           ?with_linear_sum_vector_array
+           ?with_scale_vector_array
+           ?with_const_vector_array
+           ?with_wrms_norm_vector_array
+           ?with_wrms_norm_mask_vector_array
+           ?with_scale_add_multi_vector_array
+           ?with_linear_combination_vector_array
+           nthreads (RealArray.make n iv)
+
+end (* }}} *)
+
+module Ops = struct (* {{{ *)
   type t = (RealArray.t, kind) Nvector.t
 
   let n_vclone nv =
@@ -212,5 +295,5 @@ module Ops = struct
       : t -> t -> t -> float
       = "sunml_nvec_pthreads_n_vwsqrsummasklocal"
   end
-end
+end (* }}} *)
 

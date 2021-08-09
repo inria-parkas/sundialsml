@@ -97,3 +97,82 @@ val enable :
 (** Underlyling nvector operations on Pthreads nvectors. *)
 module Ops : Nvector.NVECTOR_OPS with type t = t
 
+(** {2:genvec Generic nvector interface}
+
+    Create Pthreads nvectors using the generic nvector interface where the
+    payload is wrapped with the {{!Nvector.gdata}RA} constructor. *)
+module Any : sig (* {{{ *)
+
+  (** [make nthreads n iv] creates a new Pthreads nvector with [nthreads]
+      threads and [n] elements inialized to [iv].
+
+      The optional argument enables the fused and array operations for a given
+      nvector (they are disabled by default).
+
+      @cvode <node5> N_VEnableFusedOps_Pthreads
+      @cvode <node5> N_VEnableLinearCombination_Pthreads
+      @cvode <node5> N_VEnableScaleAddMulti_Pthreads
+      @cvode <node5> N_VEnableDotProdMulti_Pthreads
+      @cvode <node5> N_VEnableLinearSumVectorArray_Pthreads
+      @cvode <node5> N_VEnableScaleVectorArray_Pthreads
+      @cvode <node5> N_VEnableConstVectorArray_Pthreads
+      @cvode <node5> N_VEnableWrmsNormVectorArray_Pthreads
+      @cvode <node5> N_VEnableWrmsNormMaskVectorArray_Pthreads
+      @cvode <node5> N_VEnableScaleAddMultiVectorArray_Pthreads
+      @cvode <node5> N_VEnableLinearCombinationVectorArray_Pthreads
+      @raise Config.NotImplementedBySundialsVersion Fused and array operations not available.
+      @since 2.9.0 *)
+  val make :
+       ?with_fused_ops                       : bool
+    -> ?with_linear_combination              : bool
+    -> ?with_scale_add_multi                 : bool
+    -> ?with_dot_prod_multi                  : bool
+    -> ?with_linear_sum_vector_array         : bool
+    -> ?with_scale_vector_array              : bool
+    -> ?with_const_vector_array              : bool
+    -> ?with_wrms_norm_vector_array          : bool
+    -> ?with_wrms_norm_mask_vector_array     : bool
+    -> ?with_scale_add_multi_vector_array    : bool
+    -> ?with_linear_combination_vector_array : bool
+    -> int
+    -> int
+    -> float
+    -> Nvector.any
+
+  (** [wrap nthreads a] creates a new Pthreads nvector with [nthreads] threads
+      over the elements of [a].
+
+      The optional arguments permit to enable all the fused and array operations
+      for a given nvector (they are disabled by default).
+
+      @cvode <node5> N_VEnableFusedOps_Pthreads
+      @cvode <node5> N_VEnableLinearCombination_Pthreads
+      @cvode <node5> N_VEnableScaleAddMulti_Pthreads
+      @cvode <node5> N_VEnableDotProdMulti_Pthreads
+      @cvode <node5> N_VEnableLinearSumVectorArray_Pthreads
+      @cvode <node5> N_VEnableScaleVectorArray_Pthreads
+      @cvode <node5> N_VEnableConstVectorArray_Pthreads
+      @cvode <node5> N_VEnableWrmsNormVectorArray_Pthreads
+      @cvode <node5> N_VEnableWrmsNormMaskVectorArray_Pthreads
+      @cvode <node5> N_VEnableScaleAddMultiVectorArray_Pthreads
+      @cvode <node5> N_VEnableLinearCombinationVectorArray_Pthreads
+      @raise Config.NotImplementedBySundialsVersion Fused and array operations not available.
+      @since 2.9.0 *)
+  val wrap :
+       ?with_fused_ops                       : bool
+    -> ?with_linear_combination              : bool
+    -> ?with_scale_add_multi                 : bool
+    -> ?with_dot_prod_multi                  : bool
+    -> ?with_linear_sum_vector_array         : bool
+    -> ?with_scale_vector_array              : bool
+    -> ?with_const_vector_array              : bool
+    -> ?with_wrms_norm_vector_array          : bool
+    -> ?with_wrms_norm_mask_vector_array     : bool
+    -> ?with_scale_add_multi_vector_array    : bool
+    -> ?with_linear_combination_vector_array : bool
+    -> int
+    -> RealArray.t
+    -> Nvector.any
+
+end (* }}} *)
+
