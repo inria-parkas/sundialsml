@@ -36,6 +36,7 @@ MLOBJ_MAIN =	sundials/sundials_configuration.cmo	\
 		sundials/sundials_RealArray.cmo		\
 		sundials/sundials_RealArray2.cmo	\
 		sundials/sundials_LintArray.cmo		\
+		sundials/sundials_ROArray.cmo		\
 		sundials/sundials_Logfile.cmo		\
 	     	sundials/sundials.cmo			\
 		nvectors/nvector.cmo			\
