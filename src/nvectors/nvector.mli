@@ -67,6 +67,56 @@ type nvector_id =
     @since 2.9.0 *)
 val get_id : ('data, 'kind) t -> nvector_id
 
+(** {2:hasops Test vector operations}
+
+    These functions test whether an nvector is equipped with a given
+    operation. *)
+(* {{{ *)
+
+external has_n_vlinearcombination            : ('d, 'k) t -> bool
+    = "sunml_nvec_has_n_vlinearcombination" [@@noalloc]
+external has_n_vscaleaddmulti                : ('d, 'k) t -> bool
+    = "sunml_nvec_has_n_vscaleaddmulti" [@@noalloc]
+external has_n_vdotprodmulti                 : ('d, 'k) t -> bool
+    = "sunml_nvec_has_n_vdotprodmulti" [@@noalloc]
+external has_n_vlinearsumvectorarray         : ('d, 'k) t -> bool
+    = "sunml_nvec_has_n_vlinearsumvectorarray" [@@noalloc]
+external has_n_vscalevectorarray             : ('d, 'k) t -> bool
+    = "sunml_nvec_has_n_vscalevectorarray" [@@noalloc]
+external has_n_vconstvectorarray             : ('d, 'k) t -> bool
+    = "sunml_nvec_has_n_vconstvectorarray" [@@noalloc]
+external has_n_vwrmsnormvectorarray          : ('d, 'k) t -> bool
+    = "sunml_nvec_has_n_vwrmsnormvectorarray" [@@noalloc]
+external has_n_vwrmsnormmaskvectorarray      : ('d, 'k) t -> bool
+    = "sunml_nvec_has_n_vwrmsnormmaskvectorarray" [@@noalloc]
+external has_n_vscaleaddmultivectorarray     : ('d, 'k) t -> bool
+    = "sunml_nvec_has_n_vscaleaddmultivectorarray" [@@noalloc]
+external has_n_vlinearcombinationvectorarray : ('d, 'k) t -> bool
+    = "sunml_nvec_has_n_vlinearcombinationvectorarray" [@@noalloc]
+
+module Local : sig
+  external has_n_vdotprod      : ('d, 'k) t -> bool
+    = "sunml_nvec_has_n_vdotprodlocal" [@@noalloc]
+  external has_n_vmaxnorm      : ('d, 'k) t -> bool
+    = "sunml_nvec_has_n_vmaxnormlocal" [@@noalloc]
+  external has_n_vmin          : ('d, 'k) t -> bool
+    = "sunml_nvec_has_n_vminlocal" [@@noalloc]
+  external has_n_vl1norm       : ('d, 'k) t -> bool
+    = "sunml_nvec_has_n_vl1normlocal" [@@noalloc]
+  external has_n_vinvtest      : ('d, 'k) t -> bool
+    = "sunml_nvec_has_n_vinvtestlocal" [@@noalloc]
+  external has_n_vconstrmask   : ('d, 'k) t -> bool
+    = "sunml_nvec_has_n_vconstrmasklocal" [@@noalloc]
+  external has_n_vminquotient  : ('d, 'k) t -> bool
+    = "sunml_nvec_has_n_vminquotientlocal" [@@noalloc]
+  external has_n_vwsqrsum      : ('d, 'k) t -> bool
+    = "sunml_nvec_has_n_vwsqrsumlocal" [@@noalloc]
+  external has_n_vwsqrsummask  : ('d, 'k) t -> bool
+    = "sunml_nvec_has_n_vwsqrsummasklocal" [@@noalloc]
+end
+
+(* }}} *)
+
 (** {2:vecops Vector operations}
 
     @cvode <node7> Description of the NVECTOR module. *)
@@ -364,6 +414,52 @@ type gkind
 
 (** The type of a generic nvector. *)
 type any = (gdata, gkind) t
+
+module Any : sig (* {{{ *)
+  type t = any
+
+  external has_n_vlinearcombination            : t -> bool
+      = "sunml_nvec_has_n_vlinearcombination" [@@noalloc]
+  external has_n_vscaleaddmulti                : t -> bool
+      = "sunml_nvec_has_n_vscaleaddmulti" [@@noalloc]
+  external has_n_vdotprodmulti                 : t -> bool
+      = "sunml_nvec_has_n_vdotprodmulti" [@@noalloc]
+  external has_n_vlinearsumvectorarray         : t -> bool
+      = "sunml_nvec_has_n_vlinearsumvectorarray" [@@noalloc]
+  external has_n_vscalevectorarray             : t -> bool
+      = "sunml_nvec_has_n_vscalevectorarray" [@@noalloc]
+  external has_n_vconstvectorarray             : t -> bool
+      = "sunml_nvec_has_n_vconstvectorarray" [@@noalloc]
+  external has_n_vwrmsnormvectorarray          : t -> bool
+      = "sunml_nvec_has_n_vwrmsnormvectorarray" [@@noalloc]
+  external has_n_vwrmsnormmaskvectorarray      : t -> bool
+      = "sunml_nvec_has_n_vwrmsnormmaskvectorarray" [@@noalloc]
+  external has_n_vscaleaddmultivectorarray     : t -> bool
+      = "sunml_nvec_has_n_vscaleaddmultivectorarray" [@@noalloc]
+  external has_n_vlinearcombinationvectorarray : t -> bool
+      = "sunml_nvec_has_n_vlinearcombinationvectorarray" [@@noalloc]
+
+  module Local : sig
+    external has_n_vdotprod      : t -> bool
+      = "sunml_nvec_has_n_vdotprodlocal" [@@noalloc]
+    external has_n_vmaxnorm      : t -> bool
+      = "sunml_nvec_has_n_vmaxnormlocal" [@@noalloc]
+    external has_n_vmin          : t -> bool
+      = "sunml_nvec_has_n_vminlocal" [@@noalloc]
+    external has_n_vl1norm       : t -> bool
+      = "sunml_nvec_has_n_vl1normlocal" [@@noalloc]
+    external has_n_vinvtest      : t -> bool
+      = "sunml_nvec_has_n_vinvtestlocal" [@@noalloc]
+    external has_n_vconstrmask   : t -> bool
+      = "sunml_nvec_has_n_vconstrmasklocal" [@@noalloc]
+    external has_n_vminquotient  : t -> bool
+      = "sunml_nvec_has_n_vminquotientlocal" [@@noalloc]
+    external has_n_vwsqrsum      : t -> bool
+      = "sunml_nvec_has_n_vwsqrsumlocal" [@@noalloc]
+    external has_n_vwsqrsummask  : t -> bool
+      = "sunml_nvec_has_n_vwsqrsummasklocal" [@@noalloc]
+  end
+end (* }}} *)
 
 (** A {!gdata} value did not have the expected wrapper. *)
 exception BadGenericType
