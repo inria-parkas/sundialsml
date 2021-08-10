@@ -349,7 +349,7 @@ static bool matrix_band_realloc(sundials_ml_index n, sundials_ml_index mu,
 
     // Reconfigure the OCaml-side
     // very slight chance of raising an exception and messing things up
-    // caml_alloc_shr_no_raise is not available in OCaml 4.02.3
+    // no caml_alloc_shr_no_track_noexc in OCaml 4.03.0
     // https://caml.inria.fr/mantis/view.php?id=7572
     vnewdims = caml_alloc_tuple(RECORD_MAT_BANDDIMENSIONS_SIZE);
     Store_field(vnewdims, RECORD_MAT_BANDDIMENSIONS_N,   Val_index(n));
@@ -1310,7 +1310,7 @@ static bool matrix_sparse_resize(value va, sundials_ml_smat_index nnz,
 
     // very slight chance of raising an out of memory exception and messing
     // things up badly
-    // caml_alloc_shr_no_raise is not available in OCaml 4.02.3
+    // no caml_alloc_shr_no_track_noexc in OCaml 4.03.0
     // https://caml.inria.fr/mantis/view.php?id=7572
     vnewpayload = caml_alloc_tuple(RECORD_MAT_SPARSEDATA_SIZE);
     Store_field(vnewpayload, RECORD_MAT_SPARSEDATA_IDXVALS, vidxvals);

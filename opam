@@ -52,4 +52,4 @@ depexts: [
     [["osx" "homebrew"] ["homebrew/science/sundials"]]
     [["osx" "macports"] ["sundials"]]
 ]
-available: [ ocaml-version >= "4.02.3" ]
+available: [ ocaml-version >= "4.03.0" ]

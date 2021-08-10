@@ -3,6 +3,8 @@ Sundials/ML 5.3.0p0 (September 2020)
 Sundials/ML v5.3.0p0 adds support for v5.x of the Sundials Suite of
 numerical solvers.
 
+OCaml 4.03.0 or greater is now required and optionally OCamlMPI 1.05.
+
 Notes:
 * Reworking of the Arkode.MRIStep interface, which now requires the 
   underlying library to be v5.x or above.
