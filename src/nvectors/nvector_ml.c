@@ -35,16 +35,14 @@ N_Vector sunml_alloc_cnvec(size_t content_size, value backlink)
     N_Vector nv;
 
     /* Alloc memory in C heap */
-    nv = (N_Vector)malloc(sizeof(struct cnvec));
+    nv = (N_Vector)calloc(1, sizeof(struct cnvec));
     if (nv == NULL) return NULL;
 
-    nv->ops = NULL;
-    nv->ops = (N_Vector_Ops) malloc(sizeof(struct _generic_N_Vector_Ops));
+    nv->ops = (N_Vector_Ops) calloc(1, sizeof(struct _generic_N_Vector_Ops));
     if (nv->ops == NULL) { free(nv); return(NULL); }
 
-    nv->content = NULL;
     if (content_size != 0) {
-	nv->content = (void *) malloc(content_size);
+	nv->content = (void *) calloc(1, content_size);
 	if (nv->content == NULL) { free(nv->ops); free(nv); return(NULL); }
     }
 
