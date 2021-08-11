@@ -325,9 +325,10 @@ static N_Vector clone_empty_serial(N_Vector w)
 /* Creation from OCaml.  */
 /* Adapted from sundials-2.5.0/src/nvec_ser/nvector_serial.c:
    N_VNewEmpty_Serial */
-CAMLprim value sunml_nvec_wrap_serial(value payload, value checkfn)
+CAMLprim value sunml_nvec_wrap_serial(value payload,
+				      value checkfn, value clonefn)
 {
-    CAMLparam2(payload, checkfn);
+    CAMLparam3(payload, checkfn, clonefn);
     CAMLlocal1(vnvec);
 
     N_Vector nv;
@@ -409,10 +410,12 @@ CAMLprim value sunml_nvec_wrap_serial(value payload, value checkfn)
     content->own_data = 0;
     content->data     = Caml_ba_data_val(payload);
 
-    vnvec = caml_alloc_tuple(3);
-    Store_field(vnvec, 0, payload);
-    Store_field(vnvec, 1, sunml_alloc_caml_nvec(nv, sunml_finalize_caml_nvec));
-    Store_field(vnvec, 2, checkfn);
+    vnvec = NVEC_ALLOC();
+    Store_field(vnvec, NVEC_PAYLOAD, payload);
+    Store_field(vnvec, NVEC_CPTR,
+		sunml_alloc_caml_nvec(nv, sunml_finalize_caml_nvec));
+    Store_field(vnvec, NVEC_CHECK, checkfn);
+    Store_field(vnvec, NVEC_CLONE, clonefn);
 
     CAMLreturn(vnvec);
 }
@@ -423,14 +426,15 @@ CAMLprim value sunml_nvec_wrap_serial(value payload, value checkfn)
    2. The nvclone operation is overridden to implement the wrapping operation
       (the current clone_empty_serial does not manipulate the backlink). */
 CAMLprim value sunml_nvec_anywrap_serial(value extconstr,
-					 value payload, value checkfn)
+					 value payload,
+					 value checkfn, value clonefn)
 {
-    CAMLparam3(extconstr, payload, checkfn);
+    CAMLparam4(extconstr, payload, checkfn, clonefn);
     CAMLlocal2(vnv, vwrapped);
     N_Vector nv;
     N_Vector_Ops ops;
 
-    vnv = sunml_nvec_wrap_serial(payload, checkfn);
+    vnv = sunml_nvec_wrap_serial(payload, checkfn, clonefn);
     nv = NVEC_VAL(vnv);
     ops = (N_Vector_Ops) nv->ops;
 
@@ -545,9 +549,10 @@ static realtype callml_vwsqrsummasklocal(N_Vector x, N_Vector w, N_Vector id);
 #endif
 
 /* Creation from OCaml. */
-CAMLprim value sunml_nvec_wrap_custom(value mlops, value payload, value checkfn)
+CAMLprim value sunml_nvec_wrap_custom(value mlops, value payload,
+				      value checkfn, value clonefn)
 {
-    CAMLparam3(mlops, payload, checkfn);
+    CAMLparam4(mlops, payload, checkfn, clonefn);
     CAMLlocal1(vcnvec);
 
     N_Vector nv;
@@ -672,47 +677,14 @@ CAMLprim value sunml_nvec_wrap_custom(value mlops, value payload, value checkfn)
     nv->content = (void *)mlops;
     caml_register_generational_global_root((value *)&CNVEC_OP_TABLE(nv));
 
-    vcnvec = caml_alloc_tuple(3);
-    Store_field(vcnvec, 0, payload);
-    Store_field(vcnvec, 1, sunml_alloc_caml_nvec(nv, finalize_custom_caml_nvec));
-    Store_field(vcnvec, 2, checkfn);
+    vcnvec = NVEC_ALLOC();
+    Store_field(vcnvec, NVEC_PAYLOAD, payload);
+    Store_field(vcnvec, NVEC_CPTR,
+		sunml_alloc_caml_nvec(nv, finalize_custom_caml_nvec));
+    Store_field(vcnvec, NVEC_CHECK, checkfn);
+    Store_field(vcnvec, NVEC_CLONE, clonefn);
 
     CAMLreturn(vcnvec);
-}
-
-CAMLprim value sunml_nvec_clone_custom(value vodata, value vsrc)
-{
-    CAMLparam1(vsrc);
-    CAMLlocal3(vsrcpayload, vdstpayload, vdst);
-    N_Vector src = NVEC_VAL(vsrc);
-    N_Vector dst;
-
-    if (vodata == Val_none) { // clone the payload
-	vsrcpayload = NVEC_BACKLINK(src);
-
-	/* NB: Don't trigger GC while processing this return value!  */
-	value r = caml_callback_exn (GET_OP(src, NVECTOR_OPS_NVCLONE), vsrcpayload);
-	if (Is_exception_result(r)) caml_raise(Extract_exception(r));
-	vdstpayload = r;
-    } else {
-	vdstpayload = Some_val(vodata);
-    }
-
-    /* Create vector */
-    dst = sunml_alloc_cnvec(0, vdstpayload);
-    if (dst == NULL) caml_raise_out_of_memory();
-    sunml_clone_cnvec_ops(dst, src);
-
-    /* Link to the custom operations table from the source nvector */
-    dst->content = src->content;
-    caml_register_generational_global_root((value *)&CNVEC_OP_TABLE(dst));
-
-    vdst = caml_alloc_tuple(3);
-    Store_field(vdst, 0, vdstpayload);
-    Store_field(vdst, 1, sunml_alloc_caml_nvec(dst, finalize_custom_caml_nvec));
-    Store_field(vdst, 2, Field(vsrc, 2));
-
-    CAMLreturn(vdst);
 }
 
 /* Creation from Sundials/C. */

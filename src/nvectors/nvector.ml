@@ -12,15 +12,21 @@
 
 type cnvec
 type ('data, 'kind) nvector =
-  NV of 'data * cnvec * (('data, 'kind) nvector -> bool)
+  NV of { payload: 'data;
+          cptr: cnvec;
+          check: (('data, 'kind) nvector -> bool);
+          clone: ('data, 'kind) t -> ('data, 'kind) t;
+        }
 and ('data, 'kind) t = ('data, 'kind) nvector
 
-let unwrap (NV (payload, _, _)) = payload
+let unwrap (NV { payload; _ }) = payload
 
 exception IncompatibleNvector
 
-let check (NV (_, _, checkfn)) nv2 =
-  if not (checkfn nv2) then raise IncompatibleNvector
+let check (NV { check; _ }) nv2 =
+  if not (check nv2) then raise IncompatibleNvector
+
+let clone (NV { clone; _ } as nv) = clone nv
 
 type nvector_id =
     Serial
@@ -234,7 +240,7 @@ end (* }}} *)
 module Ops = struct (* {{{ *)
   type t = any
 
-  let n_vclone = invalid_arg "generic nvectors cannot be cloned"
+  let n_vclone = clone
 
   external c_n_vlinearsum    : float -> t -> float -> t -> t -> unit
     = "sunml_nvec_any_n_vlinearsum"

@@ -229,6 +229,17 @@ struct cnvec {
 #define NVEC_CVAL(v) (*(N_Vector *)Data_custom_val(v))
 #define NVEC_VAL(v) (NVEC_CVAL(Field(v, 1)))
 
+enum nv_index {
+  NVEC_PAYLOAD = 0,
+  NVEC_CPTR,
+  NVEC_CHECK,
+  NVEC_CLONE,
+  NVEC_SIZE, /* This has to come last. */
+};
+
+#define NVEC_TAG 0
+#define NVEC_ALLOC() (caml_alloc(NVEC_SIZE, NVEC_TAG))
+
 // Internal functions
 N_Vector sunml_alloc_cnvec(size_t content_size, value backlink);
 void sunml_clone_cnvec_ops(N_Vector dst, N_Vector src);

@@ -130,9 +130,10 @@ static N_Vector clone_empty_openmp(N_Vector w)
 /* Adapted from sundials-2.6.1/src/nvec_openmp/nvector_openmp.c:
    N_VNewEmpty_OpenMP */
 CAMLprim value sunml_nvec_wrap_openmp(value nthreads,
-				   value payload, value checkfn)
+				      value payload,
+				      value checkfn, value clonefn)
 {
-    CAMLparam3(nthreads, payload, checkfn);
+    CAMLparam4(nthreads, payload, checkfn, clonefn);
     CAMLlocal1(vnvec);
 
     N_Vector nv;
@@ -215,10 +216,12 @@ CAMLprim value sunml_nvec_wrap_openmp(value nthreads,
     content->own_data    = 0;
     content->data        = Caml_ba_data_val(payload);
 
-    vnvec = caml_alloc_tuple(3);
-    Store_field(vnvec, 0, payload);
-    Store_field(vnvec, 1, sunml_alloc_caml_nvec(nv, sunml_finalize_caml_nvec));
-    Store_field(vnvec, 2, checkfn);
+    vnvec = NVEC_ALLOC();
+    Store_field(vnvec, NVEC_PAYLOAD, payload);
+    Store_field(vnvec, NVEC_CPTR,
+		sunml_alloc_caml_nvec(nv, sunml_finalize_caml_nvec));
+    Store_field(vnvec, NVEC_CHECK, checkfn);
+    Store_field(vnvec, NVEC_CLONE, clonefn);
 
     CAMLreturn(vnvec);
 }
@@ -230,14 +233,15 @@ CAMLprim value sunml_nvec_wrap_openmp(value nthreads,
       (the current clone_empty_serial does not manipulate the backlink). */
 CAMLprim value sunml_nvec_anywrap_openmp(value extconstr,
 					 value nthreads,
-					 value payload, value checkfn)
+					 value payload,
+					 value checkfn, value clonefn)
 {
-    CAMLparam4(extconstr, nthreads, payload, checkfn);
+    CAMLparam5(extconstr, nthreads, payload, checkfn, clonefn);
     CAMLlocal2(vnv, vwrapped);
     N_Vector nv;
     N_Vector_Ops ops;
 
-    vnv = sunml_nvec_wrap_openmp(nthreads, payload, checkfn);
+    vnv = sunml_nvec_wrap_openmp(nthreads, payload, checkfn, clonefn);
     nv = NVEC_VAL(vnv);
     ops = (N_Vector_Ops) nv->ops;
 

@@ -124,9 +124,10 @@ static N_Vector clone_any_parallel(N_Vector w)
 
 /* Adapted from sundials-2.5.0/src/nvec_par/nvector_parallel.c:
    N_VNewEmpty_Parallel */
-CAMLprim value sunml_nvec_wrap_parallel(value payload, value checkfn)
+CAMLprim value sunml_nvec_wrap_parallel(value payload,
+					value checkfn, value clonefn)
 {
-    CAMLparam2(payload, checkfn);
+    CAMLparam3(payload, checkfn, clonefn);
     CAMLlocal2(vnvec, vlocalba);
 
     N_Vector nv;
@@ -226,10 +227,12 @@ CAMLprim value sunml_nvec_wrap_parallel(value payload, value checkfn)
     content->own_data      = 0;
     content->data          = Caml_ba_data_val(vlocalba);
 
-    vnvec = caml_alloc_tuple(3);
-    Store_field(vnvec, 0, payload);
-    Store_field(vnvec, 1, sunml_alloc_caml_nvec(nv, sunml_finalize_caml_nvec));
-    Store_field(vnvec, 2, checkfn);
+    vnvec = NVEC_ALLOC();
+    Store_field(vnvec, NVEC_PAYLOAD, payload);
+    Store_field(vnvec, NVEC_CPTR,
+		sunml_alloc_caml_nvec(nv, sunml_finalize_caml_nvec));
+    Store_field(vnvec, NVEC_CHECK, checkfn);
+    Store_field(vnvec, NVEC_CLONE, clonefn);
 
     CAMLreturn(vnvec);
 }
@@ -240,14 +243,15 @@ CAMLprim value sunml_nvec_wrap_parallel(value payload, value checkfn)
    2. The nvclone operation is overridden to implement the wrapping operation
       (the current clone_empty_parallel does not manipulate the backlink). */
 CAMLprim value sunml_nvec_anywrap_parallel(value extconstr,
-					   value payload, value checkfn)
+					   value payload,
+					   value checkfn, value clonefn)
 {
-    CAMLparam3(extconstr, payload, checkfn);
+    CAMLparam4(extconstr, payload, checkfn, clonefn);
     CAMLlocal2(vnv, vwrapped);
     N_Vector nv;
     N_Vector_Ops ops;
 
-    vnv = sunml_nvec_wrap_parallel(payload, checkfn);
+    vnv = sunml_nvec_wrap_parallel(payload, checkfn, clonefn);
     nv = NVEC_VAL(vnv);
     ops = (N_Vector_Ops) nv->ops;
 
