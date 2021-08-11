@@ -799,7 +799,7 @@ module Make =
 
       (* Cloning in this way ensures that the enabled status of fused and
          array operations is the same in the clone nvector. *)
-      let n_vclone x = Nvector_custom.clone x
+      let n_vclone x = Nvector.clone x
     end
 
   end (* }}} *)
@@ -1581,7 +1581,7 @@ module Array =
 
       (* Cloning in this way ensures that the enabled status of fused and
          array operations is the same in the clone nvector. *)
-      let n_vclone x = Nvector_custom.clone x
+      let n_vclone x = Nvector.clone x
     end
 
   end (* }}} *)

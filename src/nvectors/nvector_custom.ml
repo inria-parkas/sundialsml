@@ -104,13 +104,9 @@ external c_enablescaleaddmultivectorarray_custom     : ('d, 'k) Nvector.t -> boo
 external c_enablelinearcombinationvectorarray_custom : ('d, 'k) Nvector.t -> bool -> bool
   = "sunml_nvec_custom_enablelinearcombinationvectorarray"
 
-external c_make_wrap : 'a nvector_ops -> 'a -> ('a t -> bool) -> 'a t
+external c_make_wrap
+    : 'a nvector_ops -> 'a -> ('a t -> bool) -> ('t -> 't) -> 'a t
     = "sunml_nvec_wrap_custom"
-
-external c_clone : 'a option -> 'a t -> 'a t
-    = "sunml_nvec_clone_custom"
-
-let clone ?payload nv = c_clone payload nv
 
 let do_enable f nv v =
   match v with
@@ -155,11 +151,36 @@ let enable
 
 let uv = Nvector.unwrap
 
-let make_wrap ops ?(with_fused_ops=false) v =
-  let nv = c_make_wrap ops v (fun nv' -> ops.n_vcheck v (uv nv')) in
+let rec make_wrap ops ?(with_fused_ops=false) v =
+  let check nv' = ops.n_vcheck v (uv nv') in
+  let nv = c_make_wrap ops v check (clone ops) in
   if with_fused_ops && not (c_enablefusedops_custom nv true)
     then raise OperationNotSupported;
   nv
+
+and clone ops nv =
+  let nv' = make_wrap ops (ops.n_vclone (uv nv)) in
+  ignore (c_enablelinearcombination_custom nv'
+            (Nvector.has_n_vlinearcombination nv));
+  ignore (c_enablescaleaddmulti_custom nv'
+            (Nvector.has_n_vscaleaddmulti nv));
+  ignore (c_enabledotprodmulti_custom nv'
+            (Nvector.has_n_vdotprodmulti nv));
+  ignore (c_enablelinearsumvectorarray_custom nv'
+            (Nvector.has_n_vlinearsumvectorarray nv));
+  ignore (c_enablescalevectorarray_custom nv'
+            (Nvector.has_n_vscalevectorarray nv));
+  ignore (c_enableconstvectorarray_custom nv'
+            (Nvector.has_n_vconstvectorarray nv));
+  ignore (c_enablewrmsnormvectorarray_custom nv'
+            (Nvector.has_n_vwrmsnormvectorarray nv));
+  ignore (c_enablewrmsnormmaskvectorarray_custom nv'
+            (Nvector.has_n_vwrmsnormmaskvectorarray nv));
+  ignore (c_enablescaleaddmultivectorarray_custom nv'
+            (Nvector.has_n_vscaleaddmultivectorarray nv));
+  ignore (c_enablelinearcombinationvectorarray_custom nv'
+            (Nvector.has_n_vlinearcombinationvectorarray nv));
+  nv'
 
 let add_tracing msg ops =
   let pr s = print_string msg; print_endline s in
@@ -811,12 +832,16 @@ module Any = struct (* {{{ *)
 
   (* Same underlying call as c_make_wrap but with types declared differently. *)
   external c_make_any_wrap
-    : Nvector.gdata nvector_ops -> Nvector.gdata -> (Nvector.any -> bool) -> Nvector.any
+    : Nvector.gdata nvector_ops
+      -> Nvector.gdata
+      -> (Nvector.any -> bool)
+      -> (Nvector.any -> Nvector.any)
+      -> Nvector.any
     = "sunml_nvec_wrap_custom"
 
   let do_enable f nv v = if not (f nv v) then raise OperationNotSupported
 
-  let make_wrap ops ~inject
+  let rec make_wrap_injected ops
       ?(with_fused_ops=false)
       ?(with_linear_combination=false)
       ?(with_scale_add_multi=false)
@@ -828,15 +853,9 @@ module Any = struct (* {{{ *)
       ?(with_wrms_norm_mask_vector_array=false)
       ?(with_scale_add_multi_vector_array=false)
       ?(with_linear_combination_vector_array=false)
-      rv
+      check v
     =
-      if not Sundials_impl.Versions.has_nvector_get_id
-        then raise Sundials.Config.NotImplementedBySundialsVersion;
-      let v = inject rv in
-      let check nv' =
-        ops.n_vcheck v (uv nv') && Nvector.get_id nv' = Nvector.Custom
-      in
-      let nv = c_make_any_wrap ops v check in
+      let nv = c_make_any_wrap ops v check (clone ops check) in
       do_enable c_enablefusedops_custom nv
                 with_fused_ops;
       do_enable c_enablefusedops_custom nv
@@ -862,6 +881,64 @@ module Any = struct (* {{{ *)
       do_enable c_enablelinearcombinationvectorarray_custom nv
                 with_linear_combination_vector_array;
       nv
+
+  and make_wrap ops ~inject
+      ?(with_fused_ops=false)
+      ?(with_linear_combination=false)
+      ?(with_scale_add_multi=false)
+      ?(with_dot_prod_multi=false)
+      ?(with_linear_sum_vector_array=false)
+      ?(with_scale_vector_array=false)
+      ?(with_const_vector_array=false)
+      ?(with_wrms_norm_vector_array=false)
+      ?(with_wrms_norm_mask_vector_array=false)
+      ?(with_scale_add_multi_vector_array=false)
+      ?(with_linear_combination_vector_array=false)
+      rv
+    =
+      if not Sundials_impl.Versions.has_nvector_get_id
+        then raise Sundials.Config.NotImplementedBySundialsVersion;
+      let v = inject rv in
+      let check nv' =
+        ops.n_vcheck v (uv nv') && Nvector.get_id nv' = Nvector.Custom
+      in
+      make_wrap_injected ops
+        ~with_fused_ops
+        ~with_linear_combination
+        ~with_scale_add_multi
+        ~with_dot_prod_multi
+        ~with_linear_sum_vector_array
+        ~with_scale_vector_array
+        ~with_const_vector_array
+        ~with_wrms_norm_vector_array
+        ~with_wrms_norm_mask_vector_array
+        ~with_scale_add_multi_vector_array
+        ~with_linear_combination_vector_array
+        check v
+
+  and clone ops check nv =
+    let nv' = make_wrap_injected ops check (ops.n_vclone (uv nv)) in
+    ignore (c_enablelinearcombination_custom nv'
+              (Nvector.has_n_vlinearcombination nv));
+    ignore (c_enablescaleaddmulti_custom nv'
+              (Nvector.has_n_vscaleaddmulti nv));
+    ignore (c_enabledotprodmulti_custom nv'
+              (Nvector.has_n_vdotprodmulti nv));
+    ignore (c_enablelinearsumvectorarray_custom nv'
+              (Nvector.has_n_vlinearsumvectorarray nv));
+    ignore (c_enablescalevectorarray_custom nv'
+              (Nvector.has_n_vscalevectorarray nv));
+    ignore (c_enableconstvectorarray_custom nv'
+              (Nvector.has_n_vconstvectorarray nv));
+    ignore (c_enablewrmsnormvectorarray_custom nv'
+              (Nvector.has_n_vwrmsnormvectorarray nv));
+    ignore (c_enablewrmsnormmaskvectorarray_custom nv'
+              (Nvector.has_n_vwrmsnormmaskvectorarray nv));
+    ignore (c_enablescaleaddmultivectorarray_custom nv'
+              (Nvector.has_n_vscaleaddmultivectorarray nv));
+    ignore (c_enablelinearcombinationvectorarray_custom nv'
+              (Nvector.has_n_vlinearcombinationvectorarray nv));
+    nv'
 
 end (* }}} *)
 

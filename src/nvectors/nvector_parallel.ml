@@ -8,7 +8,8 @@ type Nvector.gdata += Par of data
 
 exception IncorrectGlobalSize
 
-external c_wrap : (RealArray.t * int * Mpi.communicator) -> (t -> bool) -> t
+external c_wrap
+  : (RealArray.t * int * Mpi.communicator) -> (t -> bool) -> (t -> t) -> t
   = "sunml_nvec_wrap_parallel"
 
 (* Selectively enable and disable fused and array operations *)
@@ -37,15 +38,41 @@ external c_enablelinearcombinationvectorarray_parallel : ('d, 'k) Nvector.t -> b
 
 let unwrap = Nvector.unwrap
 
-let wrap ?(with_fused_ops=false) ((nl, ng, comm) as v) =
+let copydata (a, ng, comm) = (RealArray.copy a, ng, comm)
+
+let rec wrap ?(with_fused_ops=false) ((nl, ng, comm) as v) =
   let nl_len = RealArray.length nl in
   let check nv =
     let (nl', ng', comm') = unwrap nv in
     (nl_len = RealArray.length nl') && (ng <= ng') && (comm == comm')
   in
-  let nv = c_wrap v check in
+  let nv = c_wrap v check clone in
   if with_fused_ops then c_enablefusedops_parallel nv true;
   nv
+
+and clone nv =
+  let nv' = wrap (copydata (unwrap nv)) in
+  c_enablelinearcombination_parallel nv'
+    (Nvector.has_n_vlinearcombination nv);
+  c_enablescaleaddmulti_parallel nv'
+    (Nvector.has_n_vscaleaddmulti nv);
+  c_enabledotprodmulti_parallel nv'
+    (Nvector.has_n_vdotprodmulti nv);
+  c_enablelinearsumvectorarray_parallel nv'
+    (Nvector.has_n_vlinearsumvectorarray nv);
+  c_enablescalevectorarray_parallel nv'
+    (Nvector.has_n_vscalevectorarray nv);
+  c_enableconstvectorarray_parallel nv'
+    (Nvector.has_n_vconstvectorarray nv);
+  c_enablewrmsnormvectorarray_parallel nv'
+    (Nvector.has_n_vwrmsnormvectorarray nv);
+  c_enablewrmsnormmaskvectorarray_parallel nv'
+    (Nvector.has_n_vwrmsnormmaskvectorarray nv);
+  c_enablescaleaddmultivectorarray_parallel nv'
+    (Nvector.has_n_vscaleaddmultivectorarray nv);
+  c_enablelinearcombinationvectorarray_parallel nv'
+    (Nvector.has_n_vlinearcombinationvectorarray nv);
+  nv'
 
 let make ?with_fused_ops nl ng comm iv =
   wrap ?with_fused_ops (RealArray.make nl iv, ng, comm)
@@ -128,10 +155,14 @@ external hide_communicator
 module Any = struct (* {{{ *)
 
   external c_any_wrap
-    : extension_constructor -> data -> (Nvector.any -> bool) -> Nvector.any
+    : extension_constructor
+      -> data
+      -> (Nvector.any -> bool)
+      -> (Nvector.any -> Nvector.any)
+      -> Nvector.any
     = "sunml_nvec_anywrap_parallel"
 
-  let wrap
+  let rec wrap
       ?(with_fused_ops=false)
       ?(with_linear_combination=false)
       ?(with_scale_add_multi=false)
@@ -155,7 +186,7 @@ module Any = struct (* {{{ *)
             && (Nvector.get_id nv' = Nvector.Parallel)
         | _ -> false
       in
-      let nv = c_any_wrap [%extension_constructor Par] v check in
+      let nv = c_any_wrap [%extension_constructor Par] v check clone in
       if with_fused_ops
         then c_enablefusedops_parallel nv true;
       if with_fused_ops
@@ -181,6 +212,34 @@ module Any = struct (* {{{ *)
       if with_linear_combination_vector_array
         then c_enablelinearcombinationvectorarray_parallel nv true;
       nv
+
+  and clone nv =
+    let v = match unwrap nv with
+            | Par v -> v
+            | _ -> assert false
+    in
+    let nv' = wrap (copydata v) in
+    c_enablelinearcombination_parallel nv'
+      (Nvector.has_n_vlinearcombination nv);
+    c_enablescaleaddmulti_parallel nv'
+      (Nvector.has_n_vscaleaddmulti nv);
+    c_enabledotprodmulti_parallel nv'
+      (Nvector.has_n_vdotprodmulti nv);
+    c_enablelinearsumvectorarray_parallel nv'
+      (Nvector.has_n_vlinearsumvectorarray nv);
+    c_enablescalevectorarray_parallel nv'
+      (Nvector.has_n_vscalevectorarray nv);
+    c_enableconstvectorarray_parallel nv'
+      (Nvector.has_n_vconstvectorarray nv);
+    c_enablewrmsnormvectorarray_parallel nv'
+      (Nvector.has_n_vwrmsnormvectorarray nv);
+    c_enablewrmsnormmaskvectorarray_parallel nv'
+      (Nvector.has_n_vwrmsnormmaskvectorarray nv);
+    c_enablescaleaddmultivectorarray_parallel nv'
+      (Nvector.has_n_vscaleaddmultivectorarray nv);
+    c_enablelinearcombinationvectorarray_parallel nv'
+      (Nvector.has_n_vlinearcombinationvectorarray nv);
+    nv'
 
   let make
       ?with_fused_ops

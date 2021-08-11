@@ -29,14 +29,39 @@ external c_enablelinearcombinationvectorarray_openmp : ('d, 'k) Nvector.t -> boo
 
 let unwrap = Nvector.unwrap
 
-external c_wrap : int -> RealArray.t -> (t -> bool) -> t
+external c_wrap : int -> RealArray.t -> (t -> bool) -> (t -> t) -> t
   = "sunml_nvec_wrap_openmp"
 
-let wrap ?(with_fused_ops=false) nthreads v =
+let rec wrap ?(with_fused_ops=false) nthreads v =
   let len = RealArray.length v in
-  let nv = c_wrap nthreads v (fun nv' -> len = RealArray.length (unwrap nv')) in
+  let check nv' = (len = RealArray.length (unwrap nv')) in
+  let nv = c_wrap nthreads v check (clone nthreads) in
   if with_fused_ops then c_enablefusedops_openmp nv true;
   nv
+
+and clone nthreads nv =
+  let nv' = wrap nthreads (RealArray.copy (unwrap nv)) in
+  c_enablelinearcombination_openmp nv'
+    (Nvector.has_n_vlinearcombination nv);
+  c_enablescaleaddmulti_openmp nv'
+    (Nvector.has_n_vscaleaddmulti nv);
+  c_enabledotprodmulti_openmp nv'
+    (Nvector.has_n_vdotprodmulti nv);
+  c_enablelinearsumvectorarray_openmp nv'
+    (Nvector.has_n_vlinearsumvectorarray nv);
+  c_enablescalevectorarray_openmp nv'
+    (Nvector.has_n_vscalevectorarray nv);
+  c_enableconstvectorarray_openmp nv'
+    (Nvector.has_n_vconstvectorarray nv);
+  c_enablewrmsnormvectorarray_openmp nv'
+    (Nvector.has_n_vwrmsnormvectorarray nv);
+  c_enablewrmsnormmaskvectorarray_openmp nv'
+    (Nvector.has_n_vwrmsnormmaskvectorarray nv);
+  c_enablescaleaddmultivectorarray_openmp nv'
+    (Nvector.has_n_vscaleaddmultivectorarray nv);
+  c_enablelinearcombinationvectorarray_openmp nv'
+    (Nvector.has_n_vlinearcombinationvectorarray nv);
+  nv'
 
 let pp fmt v = RealArray.pp fmt (unwrap v)
 
@@ -90,10 +115,15 @@ let enable
 module Any = struct (* {{{ *)
 
   external c_any_wrap
-    : extension_constructor -> int -> RealArray.t -> (Nvector.any -> bool) -> Nvector.any
+    : extension_constructor
+      -> int
+      -> RealArray.t
+      -> (Nvector.any -> bool)
+      -> (Nvector.any -> Nvector.any)
+      -> Nvector.any
     = "sunml_nvec_anywrap_openmp"
 
-  let wrap
+  let rec wrap
       ?(with_fused_ops=false)
       ?(with_linear_combination=false)
       ?(with_scale_add_multi=false)
@@ -116,7 +146,10 @@ module Any = struct (* {{{ *)
             len = RealArray.length ra && Nvector.get_id nv = Nvector.OpenMP
         | _ -> false
       in
-      let nv = c_any_wrap [%extension_constructor Nvector.RA] nthreads v check in
+      let nv = c_any_wrap [%extension_constructor Nvector.RA]
+                          nthreads v
+                          check (clone nthreads)
+      in
       if with_fused_ops
         then c_enablefusedops_openmp nv true;
       if with_fused_ops
@@ -142,6 +175,34 @@ module Any = struct (* {{{ *)
       if with_linear_combination_vector_array
         then c_enablelinearcombinationvectorarray_openmp nv true;
       nv
+
+  and clone nthreads nv =
+    let v = match unwrap nv with
+            | Nvector.RA v -> v
+            | _ -> assert false
+    in
+    let nv' = wrap nthreads (RealArray.copy v) in
+    c_enablelinearcombination_openmp nv'
+      (Nvector.has_n_vlinearcombination nv);
+    c_enablescaleaddmulti_openmp nv'
+      (Nvector.has_n_vscaleaddmulti nv);
+    c_enabledotprodmulti_openmp nv'
+      (Nvector.has_n_vdotprodmulti nv);
+    c_enablelinearsumvectorarray_openmp nv'
+      (Nvector.has_n_vlinearsumvectorarray nv);
+    c_enablescalevectorarray_openmp nv'
+      (Nvector.has_n_vscalevectorarray nv);
+    c_enableconstvectorarray_openmp nv'
+      (Nvector.has_n_vconstvectorarray nv);
+    c_enablewrmsnormvectorarray_openmp nv'
+      (Nvector.has_n_vwrmsnormvectorarray nv);
+    c_enablewrmsnormmaskvectorarray_openmp nv'
+      (Nvector.has_n_vwrmsnormmaskvectorarray nv);
+    c_enablescaleaddmultivectorarray_openmp nv'
+      (Nvector.has_n_vscaleaddmultivectorarray nv);
+    c_enablelinearcombinationvectorarray_openmp nv'
+      (Nvector.has_n_vlinearcombinationvectorarray nv);
+    nv'
 
   let make
       ?with_fused_ops

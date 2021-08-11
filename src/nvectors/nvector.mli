@@ -45,6 +45,10 @@ exception IncompatibleNvector
     @raise IncompatibleNvector The vectors are not compatible. *)
 val check : ('data, 'kind) t -> ('data, 'kind) t -> unit
 
+(** Clone an nvector. Cloning duplicates the payload and preserves the
+    status of fused and array operations. *)
+val clone : ('data, 'kind) t -> ('data, 'kind) t
+
 (** Vector type identifiers. *)
 type nvector_id =
     Serial
@@ -459,14 +463,12 @@ module Any : sig (* {{{ *)
     external has_n_vwsqrsummask  : t -> bool
       = "sunml_nvec_has_n_vwsqrsummasklocal" [@@noalloc]
   end
+
 end (* }}} *)
 
 (** A {!gdata} value did not have the expected wrapper. *)
 exception BadGenericType
 
-(** Operations on generic nvectors. Note that generic nvectors cannot be
-    cloned from OCaml.
-
-    @raise Invalid_argument If {!Ops.nv_clone} is called. *)
+(** Operations on generic nvectors. *)
 module Ops : NVECTOR_OPS with type t = any
 
