@@ -469,6 +469,9 @@ end (* }}} *)
 (** A {!gdata} value did not have the expected wrapper. *)
 exception BadGenericType
 
+(** The requested operation is not provided by the given nvector. *)
+exception OperationNotProvided
+
 (** Operations on generic nvectors. *)
 module Ops : NVECTOR_OPS with type t = any
 
