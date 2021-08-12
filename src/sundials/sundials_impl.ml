@@ -90,6 +90,12 @@ let in_compat_mode2_3 =
   | 3,_,_ -> true
   | _ -> false
 
+let sundials_lt400 =
+  match Sundials_configuration.sundials_version with
+  | 2,_,_ -> true
+  | 3,_,_ -> true
+  | _ -> false
+
 let sundials_lt500 =
   match Sundials_configuration.sundials_version with
   | 2,_,_ -> true
