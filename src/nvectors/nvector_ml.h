@@ -225,10 +225,6 @@ struct cnvec {
 // Return the OCaml version of the nvector payload
 #define NVEC_BACKLINK(nvec) (((struct cnvec *)nvec)->backlink)
 
-// NVEC_VAL turns an caml-nvec into a c-nvec
-#define NVEC_CVAL(v) (*(N_Vector *)Data_custom_val(v))
-#define NVEC_VAL(v) (NVEC_CVAL(Field(v, 1)))
-
 enum nv_index {
   NVEC_PAYLOAD = 0,
   NVEC_CPTR,
@@ -236,6 +232,10 @@ enum nv_index {
   NVEC_CLONE,
   NVEC_SIZE, /* This has to come last. */
 };
+
+// NVEC_VAL turns an caml-nvec into a c-nvec
+#define NVEC_CVAL(v) (*(N_Vector *)Data_custom_val(v))
+#define NVEC_VAL(v) (NVEC_CVAL(Field(v, NVEC_CPTR)))
 
 #define NVEC_TAG 0
 #define NVEC_ALLOC() (caml_alloc(NVEC_SIZE, NVEC_TAG))
