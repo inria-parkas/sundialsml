@@ -28,6 +28,8 @@ let check (NV { check; _ }) nv2 =
 
 let clone (NV { clone; _ } as nv) = clone nv
 
+let _ = Callback.register "Nvector.clone" clone
+
 type nvector_id =
     Serial
   | Parallel
@@ -243,31 +245,63 @@ module Ops = struct (* {{{ *)
   let n_vclone = clone
 
   external c_n_vlinearsum    : float -> t -> float -> t -> t -> unit
-    = "sunml_nvec_any_n_vlinearsum"
+    = "sunml_nvec_any_n_vlinearsum" [@@noalloc]
+
+  let n_vlinearsum a (x : t) b (y : t) (z : t) =
+    if Sundials_configuration.safe then (check x y; check x z);
+    c_n_vlinearsum a x b y z
 
   external n_vconst          : float -> t -> unit
-    = "sunml_nvec_any_n_vconst"
+    = "sunml_nvec_any_n_vconst" [@@noalloc]
 
   external c_n_vprod         : t -> t -> t -> unit
-    = "sunml_nvec_any_n_vprod"
+    = "sunml_nvec_any_n_vprod" [@@noalloc]
+
+  let n_vprod (x : t) (y : t) (z : t) =
+    if Sundials_configuration.safe then (check x y; check x z);
+    c_n_vprod x y z
 
   external c_n_vdiv          : t -> t -> t -> unit
-    = "sunml_nvec_any_n_vdiv"
+    = "sunml_nvec_any_n_vdiv" [@@noalloc]
+
+  let n_vdiv (x : t) (y : t) (z : t) =
+    if Sundials_configuration.safe then (check x y; check x z);
+    c_n_vdiv x y z
 
   external c_n_vscale        : float -> t -> t -> unit
-    = "sunml_nvec_any_n_vscale"
+    = "sunml_nvec_any_n_vscale" [@@noalloc]
+
+  let n_vscale c (x : t) (z : t) =
+    if Sundials_configuration.safe then check x z;
+    c_n_vscale c x z
 
   external c_n_vabs          : t -> t -> unit
-    = "sunml_nvec_any_n_vabs"
+    = "sunml_nvec_any_n_vabs" [@@noalloc]
+
+  let n_vabs (x : t) (z : t) =
+    if Sundials_configuration.safe then check x z;
+    c_n_vabs x z
 
   external c_n_vinv          : t -> t -> unit
-    = "sunml_nvec_any_n_vinv"
+    = "sunml_nvec_any_n_vinv" [@@noalloc]
+
+  let n_vinv (x : t) (z : t) =
+    if Sundials_configuration.safe then check x z;
+    c_n_vinv x z
 
   external c_n_vaddconst     : t -> float -> t -> unit
-    = "sunml_nvec_any_n_vaddconst"
+    = "sunml_nvec_any_n_vaddconst" [@@noalloc]
+
+  let n_vaddconst (x : t) b (z : t) =
+    if Sundials_configuration.safe then check x z;
+    c_n_vaddconst x b z
 
   external c_n_vdotprod      : t -> t -> float
     = "sunml_nvec_any_n_vdotprod"
+
+  let n_vdotprod (x : t) (y : t) =
+    if Sundials_configuration.safe then check x y;
+    c_n_vdotprod x y
 
   external n_vmaxnorm        : t -> float
     = "sunml_nvec_any_n_vmaxnorm"
@@ -275,8 +309,16 @@ module Ops = struct (* {{{ *)
   external c_n_vwrmsnorm     : t -> t -> float
     = "sunml_nvec_any_n_vwrmsnorm"
 
+  let n_vwrmsnorm (x : t) (w : t) =
+    if Sundials_configuration.safe then check x w;
+    c_n_vwrmsnorm x w
+
   external c_n_vwrmsnormmask : t -> t -> t -> float
     = "sunml_nvec_any_n_vwrmsnormmask"
+
+  let n_vwrmsnormmask (x : t) (w : t) (id : t) =
+    if Sundials_configuration.safe then (check x w; check x id);
+    c_n_vwrmsnormmask x w id
 
   external n_vmin            : t -> float
     = "sunml_nvec_any_n_vmin"
@@ -284,23 +326,43 @@ module Ops = struct (* {{{ *)
   external c_n_vwl2norm      : t -> t -> float
     = "sunml_nvec_any_n_vwl2norm"
 
+  let n_vwl2norm (x : t) (w : t) =
+    if Sundials_configuration.safe then check x w;
+    c_n_vwl2norm x w
+
   external n_vl1norm         : t -> float
     = "sunml_nvec_any_n_vl1norm"
 
   external c_n_vcompare      : float -> t -> t -> unit
-    = "sunml_nvec_any_n_vcompare"
+    = "sunml_nvec_any_n_vcompare" [@@noalloc]
+
+  let n_vcompare c (x : t) (z : t) =
+    if Sundials_configuration.safe then check x z;
+    c_n_vcompare c x z
 
   external c_n_vinvtest      : t -> t -> bool
-    = "sunml_nvec_any_n_vinvtest"
+    = "sunml_nvec_any_n_vinvtest" [@@noalloc]
+
+  let n_vinvtest (x : t) (z : t) =
+    if Sundials_configuration.safe then check x z;
+    c_n_vinvtest x z
 
   external c_n_vconstrmask   : t -> t -> t -> bool
-    = "sunml_nvec_any_n_vconstrmask"
+    = "sunml_nvec_any_n_vconstrmask" [@@noalloc]
+
+  let n_vconstrmask (c : t) (x : t) (m : t) =
+    if Sundials_configuration.safe then (check c x; check c m);
+    c_n_vconstrmask c x m
 
   external c_n_vminquotient  : t -> t -> float
     = "sunml_nvec_any_n_vminquotient"
 
+  let n_vminquotient (n : t) (d : t) =
+    if Sundials_configuration.safe then check n d;
+    c_n_vminquotient n d
+
   external n_vspace  : t -> int * int
-    = "sunml_nvec_any_n_vspace"
+    = "sunml_nvec_any_n_vspace" [@@noalloc]
 
   external n_vgetlength : t -> int
     = "sunml_nvec_any_n_vgetlength"
@@ -309,116 +371,40 @@ module Ops = struct (* {{{ *)
     : Sundials.RealArray.t -> t array -> t -> unit
     = "sunml_nvec_any_n_vlinearcombination"
 
+  let n_vlinearcombination ca (xa : t array) (z : t) =
+    if Sundials_impl.Versions.sundials_lt400
+      then raise Sundials.Config.NotImplementedBySundialsVersion;
+    if Sundials_configuration.safe then Array.iter (check z) xa;
+    c_n_vlinearcombination ca xa z
+
   external c_n_vscaleaddmulti
     : Sundials.RealArray.t -> t -> t array -> t array -> unit
     = "sunml_nvec_any_n_vscaleaddmulti"
+
+  let n_vscaleaddmulti aa (x : t) (ya : t array) (za : t array) =
+    if Sundials_impl.Versions.sundials_lt400
+      then raise Sundials.Config.NotImplementedBySundialsVersion;
+    if Sundials_configuration.safe then
+      (Array.iter (check x) ya; Array.iter (check x) za);
+    c_n_vscaleaddmulti aa x ya za
 
   external c_n_vdotprodmulti
     : t -> t array -> Sundials.RealArray.t -> unit
     = "sunml_nvec_any_n_vdotprodmulti"
 
+  let n_vdotprodmulti (x : t) (ya : t array) dp =
+    if Sundials_impl.Versions.sundials_lt400
+      then raise Sundials.Config.NotImplementedBySundialsVersion;
+    if Sundials_configuration.safe then Array.iter (check x) ya;
+    c_n_vdotprodmulti x ya dp
+
   external c_n_vlinearsumvectorarray
     : float -> t array -> float -> t array -> t array -> unit
     = "sunml_nvec_any_n_vlinearsumvectorarray"
 
-  external c_n_vscalevectorarray
-    : Sundials.RealArray.t -> t array -> t array -> unit
-    = "sunml_nvec_any_n_vscalevectorarray"
-
-  external c_n_vconstvectorarray
-    : float -> t array -> unit
-    = "sunml_nvec_any_n_vconstvectorarray"
-
-  external c_n_vwrmsnormvectorarray
-    : t array -> t array -> Sundials.RealArray.t -> unit
-    = "sunml_nvec_any_n_vwrmsnormvectorarray"
-
-  external c_n_vwrmsnormmaskvectorarray
-    : t array -> t array -> t -> Sundials.RealArray.t -> unit
-    = "sunml_nvec_any_n_vwrmsnormmaskvectorarray"
-
-  external c_n_vscaleaddmultivectorarray
-    : Sundials.RealArray.t -> t array -> t array array -> t array array -> unit
-    = "sunml_nvec_any_n_vscaleaddmultivectorarray"
-
-  external c_n_vlinearcombinationvectorarray
-    : Sundials.RealArray.t -> t array array -> t array -> unit
-    = "sunml_nvec_any_n_vlinearcombinationvectorarray"
-
-  let n_vlinearsum a (x : t) b (y : t) (z : t) =
-    if Sundials_configuration.safe then (check x y; check x z);
-    c_n_vlinearsum a x b y z
-
-  let n_vscale c (x : t) (z : t) =
-    if Sundials_configuration.safe then check x z;
-    c_n_vscale c x z
-
-  let n_vaddconst (x : t) b (z : t) =
-    if Sundials_configuration.safe then check x z;
-    c_n_vaddconst x b z
-
-  let n_vwrmsnorm (x : t) (w : t) =
-    if Sundials_configuration.safe then check x w;
-    c_n_vwrmsnorm x w
-
-  let n_vwrmsnormmask (x : t) (w : t) (id : t) =
-    if Sundials_configuration.safe then (check x w; check x id);
-    c_n_vwrmsnormmask x w id
-
-  let n_vdotprod (x : t) (y : t) =
-    if Sundials_configuration.safe then check x y;
-    c_n_vdotprod x y
-
-  let n_vcompare c (x : t) (z : t) =
-    if Sundials_configuration.safe then check x z;
-    c_n_vcompare c x z
-
-  let n_vinvtest (x : t) (z : t) =
-    if Sundials_configuration.safe then check x z;
-    c_n_vinvtest x z
-
-  let n_vwl2norm (x : t) (w : t) =
-    if Sundials_configuration.safe then check x w;
-    c_n_vwl2norm x w
-
-  let n_vconstrmask (c : t) (x : t) (m : t) =
-    if Sundials_configuration.safe then (check c x; check c m);
-    c_n_vconstrmask c x m
-
-  let n_vminquotient (n : t) (d : t) =
-    if Sundials_configuration.safe then check n d;
-    c_n_vminquotient n d
-
-  let n_vprod (x : t) (y : t) (z : t) =
-    if Sundials_configuration.safe then (check x y; check x z);
-    c_n_vprod x y z
-
-  let n_vdiv (x : t) (y : t) (z : t) =
-    if Sundials_configuration.safe then (check x y; check x z);
-    c_n_vdiv x y z
-
-  let n_vabs (x : t) (z : t) =
-    if Sundials_configuration.safe then check x z;
-    c_n_vabs x z
-
-  let n_vinv (x : t) (z : t) =
-    if Sundials_configuration.safe then check x z;
-    c_n_vinv x z
-
-  let n_vlinearcombination ca (xa : t array) (z : t) =
-    if Sundials_configuration.safe then Array.iter (check z) xa;
-    c_n_vlinearcombination ca xa z
-
-  let n_vscaleaddmulti aa (x : t) (ya : t array) (za : t array) =
-    if Sundials_configuration.safe then
-      (Array.iter (check x) ya; Array.iter (check x) za);
-    c_n_vscaleaddmulti aa x ya za
-
-  let n_vdotprodmulti (x : t) (ya : t array) dp =
-    if Sundials_configuration.safe then Array.iter (check x) ya;
-    c_n_vdotprodmulti x ya dp
-
   let n_vlinearsumvectorarray a (xa : t array) b (ya : t array) (za : t array) =
+    if Sundials_impl.Versions.sundials_lt400
+      then raise Sundials.Config.NotImplementedBySundialsVersion;
     if Sundials_configuration.safe
     then (let x = Array.get xa 0 in
           Array.iter (check x) xa;
@@ -426,34 +412,64 @@ module Ops = struct (* {{{ *)
           Array.iter (check x) za);
     c_n_vlinearsumvectorarray a xa b ya za
 
+  external c_n_vscalevectorarray
+    : Sundials.RealArray.t -> t array -> t array -> unit
+    = "sunml_nvec_any_n_vscalevectorarray"
+
   let n_vscalevectorarray c (xa : t array) (za : t array) =
+    if Sundials_impl.Versions.sundials_lt400
+      then raise Sundials.Config.NotImplementedBySundialsVersion;
     if Sundials_configuration.safe
     then (let x = Array.get xa 0 in
           Array.iter (check x) xa;
           Array.iter (check x) za);
     c_n_vscalevectorarray c xa za
 
+  external c_n_vconstvectorarray
+    : float -> t array -> unit
+    = "sunml_nvec_any_n_vconstvectorarray"
+
   let n_vconstvectorarray c (za : t array) =
+    if Sundials_impl.Versions.sundials_lt400
+      then raise Sundials.Config.NotImplementedBySundialsVersion;
     if Sundials_configuration.safe
     then (let z = Array.get za 0 in
           Array.iter (check z) za);
     c_n_vconstvectorarray c za
 
+  external c_n_vwrmsnormvectorarray
+    : t array -> t array -> Sundials.RealArray.t -> unit
+    = "sunml_nvec_any_n_vwrmsnormvectorarray"
+
   let n_vwrmsnormvectorarray (xa : t array) (wa : t array) nrm =
+    if Sundials_impl.Versions.sundials_lt400
+      then raise Sundials.Config.NotImplementedBySundialsVersion;
     if Sundials_configuration.safe
     then (let x = Array.get xa 0 in
           Array.iter (check x) xa;
           Array.iter (check x) wa);
     c_n_vwrmsnormvectorarray xa wa nrm
 
+  external c_n_vwrmsnormmaskvectorarray
+    : t array -> t array -> t -> Sundials.RealArray.t -> unit
+    = "sunml_nvec_any_n_vwrmsnormmaskvectorarray"
+
   let n_vwrmsnormmaskvectorarray (xa : t array) (wa : t array) (id : t) nrm =
+    if Sundials_impl.Versions.sundials_lt400
+      then raise Sundials.Config.NotImplementedBySundialsVersion;
     if Sundials_configuration.safe
     then (Array.iter (check id) xa;
           Array.iter (check id) wa);
     c_n_vwrmsnormmaskvectorarray xa wa id nrm
 
+  external c_n_vscaleaddmultivectorarray
+    : Sundials.RealArray.t -> t array -> t array array -> t array array -> unit
+    = "sunml_nvec_any_n_vscaleaddmultivectorarray"
+
   let n_vscaleaddmultivectorarray ra (xa : t array) (yaa : t array array)
                                      (zaa : t array array) =
+    if Sundials_impl.Versions.sundials_lt400
+      then raise Sundials.Config.NotImplementedBySundialsVersion;
     if Sundials_configuration.safe
     then (let x = Array.get xa 0 in
           Array.iter (check x) xa;
@@ -461,7 +477,13 @@ module Ops = struct (* {{{ *)
           Array.iter (Array.iter (check x)) zaa);
     c_n_vscaleaddmultivectorarray ra xa yaa zaa
 
+  external c_n_vlinearcombinationvectorarray
+    : Sundials.RealArray.t -> t array array -> t array -> unit
+    = "sunml_nvec_any_n_vlinearcombinationvectorarray"
+
   let n_vlinearcombinationvectorarray ca (xaa : t array array) (za : t array) =
+    if Sundials_impl.Versions.sundials_lt400
+      then raise Sundials.Config.NotImplementedBySundialsVersion;
     if Sundials_configuration.safe
     then (let z = Array.get za 0 in
           Array.iter (check z) za;
