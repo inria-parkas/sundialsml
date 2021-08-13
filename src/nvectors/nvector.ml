@@ -377,8 +377,7 @@ module Ops = struct (* {{{ *)
     if Sundials_impl.Versions.sundials_lt400
       then raise Sundials.Config.NotImplementedBySundialsVersion;
     if Sundials_configuration.safe then Array.iter (check z) xa;
-    if Any.has_n_vlinearcombination z then c_n_vlinearcombination ca xa z
-    else raise OperationNotProvided
+    c_n_vlinearcombination ca xa z
 
   external c_n_vscaleaddmulti
     : Sundials.RealArray.t -> t -> t array -> t array -> unit
@@ -389,8 +388,7 @@ module Ops = struct (* {{{ *)
       then raise Sundials.Config.NotImplementedBySundialsVersion;
     if Sundials_configuration.safe then
       (Array.iter (check x) ya; Array.iter (check x) za);
-    if Any.has_n_vscaleaddmulti x then c_n_vscaleaddmulti aa x ya za
-    else raise OperationNotProvided
+    c_n_vscaleaddmulti aa x ya za
 
   external c_n_vdotprodmulti
     : t -> t array -> Sundials.RealArray.t -> unit
@@ -400,8 +398,7 @@ module Ops = struct (* {{{ *)
     if Sundials_impl.Versions.sundials_lt400
       then raise Sundials.Config.NotImplementedBySundialsVersion;
     if Sundials_configuration.safe then Array.iter (check x) ya;
-    if Any.has_n_vdotprodmulti x then c_n_vdotprodmulti x ya dp
-    else raise OperationNotProvided
+    c_n_vdotprodmulti x ya dp
 
   external c_n_vlinearsumvectorarray
     : float -> t array -> float -> t array -> t array -> unit
@@ -415,9 +412,7 @@ module Ops = struct (* {{{ *)
     then (Array.iter (check xa0) xa;
           Array.iter (check xa0) ya;
           Array.iter (check xa0) za);
-    if Any.has_n_vlinearsumvectorarray xa0
-    then c_n_vlinearsumvectorarray a xa b ya za
-    else raise OperationNotProvided
+    c_n_vlinearsumvectorarray a xa b ya za
 
   external c_n_vscalevectorarray
     : Sundials.RealArray.t -> t array -> t array -> unit
@@ -430,8 +425,7 @@ module Ops = struct (* {{{ *)
     if Sundials_configuration.safe
     then (Array.iter (check xa0) xa;
           Array.iter (check xa0) za);
-    if Any.has_n_vscalevectorarray xa0 then c_n_vscalevectorarray c xa za
-    else raise OperationNotProvided
+    c_n_vscalevectorarray c xa za
 
   external c_n_vconstvectorarray
     : float -> t array -> unit
@@ -443,8 +437,7 @@ module Ops = struct (* {{{ *)
     let za0 = Array.get za 0 in
     if Sundials_configuration.safe
     then Array.iter (check za0) za;
-    if Any.has_n_vconstvectorarray za0 then c_n_vconstvectorarray c za
-    else raise OperationNotProvided
+    c_n_vconstvectorarray c za
 
   external c_n_vwrmsnormvectorarray
     : t array -> t array -> Sundials.RealArray.t -> unit
@@ -457,9 +450,7 @@ module Ops = struct (* {{{ *)
     if Sundials_configuration.safe
     then (Array.iter (check xa0) xa;
           Array.iter (check xa0) wa);
-    if Any.has_n_vwrmsnormvectorarray xa0
-    then c_n_vwrmsnormvectorarray xa wa nrm
-    else raise OperationNotProvided
+    c_n_vwrmsnormvectorarray xa wa nrm
 
   external c_n_vwrmsnormmaskvectorarray
     : t array -> t array -> t -> Sundials.RealArray.t -> unit
@@ -471,9 +462,7 @@ module Ops = struct (* {{{ *)
     if Sundials_configuration.safe
     then (Array.iter (check id) xa;
           Array.iter (check id) wa);
-    if Any.has_n_vwrmsnormmaskvectorarray id
-    then c_n_vwrmsnormmaskvectorarray xa wa id nrm
-    else raise OperationNotProvided
+    c_n_vwrmsnormmaskvectorarray xa wa id nrm
 
   external c_n_vscaleaddmultivectorarray
     : Sundials.RealArray.t -> t array -> t array array -> t array array -> unit
@@ -488,9 +477,7 @@ module Ops = struct (* {{{ *)
     then (Array.iter (check xa0) xa;
           Array.iter (Array.iter (check xa0)) yaa;
           Array.iter (Array.iter (check xa0)) zaa);
-    if Any.has_n_vscaleaddmultivectorarray xa0
-    then c_n_vscaleaddmultivectorarray ra xa yaa zaa
-    else raise OperationNotProvided
+    c_n_vscaleaddmultivectorarray ra xa yaa zaa
 
   external c_n_vlinearcombinationvectorarray
     : Sundials.RealArray.t -> t array array -> t array -> unit
@@ -503,9 +490,7 @@ module Ops = struct (* {{{ *)
     if Sundials_configuration.safe
     then (Array.iter (check za0) za;
           Array.iter (Array.iter (check za0)) xaa);
-    if Any.has_n_vlinearcombinationvectorarray za0
-    then c_n_vlinearcombinationvectorarray ca xaa za
-    else raise OperationNotProvided
+    c_n_vlinearcombinationvectorarray ca xaa za
 
   module Local = struct
 
