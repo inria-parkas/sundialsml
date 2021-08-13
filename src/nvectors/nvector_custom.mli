@@ -271,9 +271,6 @@ val enable :
   -> 'd t
   -> unit
 
-(** Thrown for operations not provided to {!MakeOps} *)
-exception OperationNotSupported
-
 (** Turn a set of {!nvector_ops} into an nvector module. *)
 module MakeOps : functor (A : sig
     type data

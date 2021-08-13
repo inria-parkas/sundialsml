@@ -78,8 +78,6 @@ type 'a nvector_ops = { (* {{{ *)
 
 } (* }}} *)
 
-exception OperationNotSupported
-
 (* Selectively enable and disable fused and array operations *)
 external c_enablefusedops_custom                     : ('d, 'k) Nvector.t -> bool -> bool
   = "sunml_nvec_custom_enablefusedops"
@@ -111,7 +109,7 @@ external c_make_wrap
 let do_enable f nv v =
   match v with
   | None -> ()
-  | Some v -> if not (f nv v) then raise OperationNotSupported
+  | Some v -> if not (f nv v) then raise Nvector.OperationNotProvided
 
 let enable
    ?with_fused_ops
@@ -155,7 +153,7 @@ let rec make_wrap ops ?(with_fused_ops=false) v =
   let check nv' = ops.n_vcheck v (uv nv') in
   let nv = c_make_wrap ops v check (clone ops) in
   if with_fused_ops && not (c_enablefusedops_custom nv true)
-    then raise OperationNotSupported;
+    then raise Nvector.OperationNotProvided;
   nv
 
 and clone ops nv =
@@ -414,136 +412,136 @@ module MakeOps = functor (A : sig
 
       let n_vwl2norm =
         match A.ops.n_vwl2norm with
-        | None -> (fun x w -> raise OperationNotSupported)
+        | None -> (fun x w -> raise Nvector.OperationNotProvided)
         | Some f -> (fun x w -> f (uv x) (uv w))
 
       let n_vl1norm =
         match A.ops.n_vl1norm with
-        | None -> (fun x -> raise OperationNotSupported)
+        | None -> (fun x -> raise Nvector.OperationNotProvided)
         | Some f -> (fun x -> f (uv x))
 
       let n_vwrmsnormmask =
         match A.ops.n_vwrmsnormmask with
-        | None -> (fun x w id -> raise OperationNotSupported)
+        | None -> (fun x w id -> raise Nvector.OperationNotProvided)
         | Some f -> (fun x w id -> f (uv x) (uv w) (uv id))
 
       let n_vconstrmask =
         match A.ops.n_vconstrmask with
-        | None -> (fun c x m -> raise OperationNotSupported)
+        | None -> (fun c x m -> raise Nvector.OperationNotProvided)
         | Some f -> (fun c x m -> f (uv c) (uv x) (uv m))
 
       let n_vminquotient =
         match A.ops.n_vminquotient with
-        | None -> (fun num denom -> raise OperationNotSupported)
+        | None -> (fun num denom -> raise Nvector.OperationNotProvided)
         | Some f -> (fun num denom -> f (uv num) (uv denom))
 
       let n_vspace =
         match A.ops.n_vspace with
-        | None -> (fun x -> raise OperationNotSupported)
+        | None -> (fun x -> raise Nvector.OperationNotProvided)
         | Some f -> (fun x -> f (uv x))
 
       let n_vgetlength a = A.ops.n_vgetlength (uv a)
 
       let n_vlinearcombination =
         match A.ops.n_vlinearcombination with
-        | None -> (fun c x z -> raise OperationNotSupported)
+        | None -> (fun c x z -> raise Nvector.OperationNotProvided)
         | Some f -> (fun c x z -> f c (Array.map uv x) (uv z))
 
       let n_vscaleaddmulti =
         match A.ops.n_vscaleaddmulti with
-        | None -> (fun c x y z -> raise OperationNotSupported)
+        | None -> (fun c x y z -> raise Nvector.OperationNotProvided)
         | Some f ->
             (fun c x y z -> f c (uv x) (Array.map uv y) (Array.map uv z))
 
       let n_vdotprodmulti =
         match A.ops.n_vdotprodmulti with
-        | None -> (fun x y d -> raise OperationNotSupported)
+        | None -> (fun x y d -> raise Nvector.OperationNotProvided)
         | Some f -> (fun x y d -> f (uv x) (Array.map uv y) d)
 
       let n_vlinearsumvectorarray =
         match A.ops.n_vlinearsumvectorarray with
-        | None -> (fun a x b y z -> raise OperationNotSupported)
+        | None -> (fun a x b y z -> raise Nvector.OperationNotProvided)
         | Some f -> (fun a x b y z -> f a (Array.map uv x) b (Array.map uv y)
                                           (Array.map uv z))
 
       let n_vscalevectorarray =
         match A.ops.n_vscalevectorarray with
-        | None -> (fun c x z -> raise OperationNotSupported)
+        | None -> (fun c x z -> raise Nvector.OperationNotProvided)
         | Some f -> (fun c x z -> f c (Array.map uv x) (Array.map uv z))
 
       let n_vconstvectorarray =
         match A.ops.n_vconstvectorarray with
-        | None -> (fun c x -> raise OperationNotSupported)
+        | None -> (fun c x -> raise Nvector.OperationNotProvided)
         | Some f -> (fun c x -> f c (Array.map uv x))
 
       let n_vwrmsnormvectorarray =
         match A.ops.n_vwrmsnormvectorarray with
-        | None -> (fun x w m -> raise OperationNotSupported)
+        | None -> (fun x w m -> raise Nvector.OperationNotProvided)
         | Some f -> (fun x w m -> f (Array.map uv x) (Array.map uv w) m)
 
       let n_vwrmsnormmaskvectorarray =
         match A.ops.n_vwrmsnormmaskvectorarray with
-        | None -> (fun x w id m -> raise OperationNotSupported)
+        | None -> (fun x w id m -> raise Nvector.OperationNotProvided)
         | Some f -> (fun x w id m -> f (Array.map uv x) (Array.map uv w)
                                        (uv id) m)
 
       let n_vscaleaddmultivectorarray =
         match A.ops.n_vscaleaddmultivectorarray with
-        | None -> (fun a x yy zz -> raise OperationNotSupported)
+        | None -> (fun a x yy zz -> raise Nvector.OperationNotProvided)
         | Some f -> (fun a x yy zz -> f a (Array.map uv x)
                                         (Array.map (Array.map uv) yy)
                                         (Array.map (Array.map uv) zz))
 
       let n_vlinearcombinationvectorarray =
         match A.ops.n_vlinearcombinationvectorarray with
-        | None -> (fun c xx z -> raise OperationNotSupported)
+        | None -> (fun c xx z -> raise Nvector.OperationNotProvided)
         | Some f -> (fun c xx z -> f c (Array.map (Array.map uv) xx)
                                        (Array.map uv z))
 
       module Local = struct
         let n_vdotprod =
           match A.ops.n_vdotprod_local with
-          | None -> (fun _ _ -> raise OperationNotSupported)
+          | None -> (fun _ _ -> raise Nvector.OperationNotProvided)
           | Some f -> (fun x t -> f (uv x) (uv t))
 
         let n_vmaxnorm =
           match A.ops.n_vmaxnorm_local with
-          | None -> (fun _ -> raise OperationNotSupported)
+          | None -> (fun _ -> raise Nvector.OperationNotProvided)
           | Some f -> (fun x -> f (uv x))
 
         let n_vmin =
           match A.ops.n_vmin_local with
-          | None -> (fun _ -> raise OperationNotSupported)
+          | None -> (fun _ -> raise Nvector.OperationNotProvided)
           | Some f -> (fun x -> f (uv x))
 
         let n_vl1norm =
           match A.ops.n_vl1norm_local with
-          | None -> (fun _ -> raise OperationNotSupported)
+          | None -> (fun _ -> raise Nvector.OperationNotProvided)
           | Some f -> (fun x -> f (uv x))
 
         let n_vinvtest =
           match A.ops.n_vinvtest_local with
-          | None -> (fun _ _ -> raise OperationNotSupported)
+          | None -> (fun _ _ -> raise Nvector.OperationNotProvided)
           | Some f -> (fun x z -> f (uv x) (uv z))
 
         let n_vconstrmask =
           match A.ops.n_vconstrmask_local with
-          | None -> (fun _ _ _ -> raise OperationNotSupported)
+          | None -> (fun _ _ _ -> raise Nvector.OperationNotProvided)
           | Some f -> (fun c x m -> f (uv c) (uv x) (uv m))
 
         let n_vminquotient =
           match A.ops.n_vminquotient_local with
-          | None -> (fun _ _ -> raise OperationNotSupported)
+          | None -> (fun _ _ -> raise Nvector.OperationNotProvided)
           | Some f -> (fun n d -> f (uv n) (uv d))
 
         let n_vwsqrsum =
           match A.ops.n_vwsqrsum_local with
-          | None -> (fun _ _ -> raise OperationNotSupported)
+          | None -> (fun _ _ -> raise Nvector.OperationNotProvided)
           | Some f -> (fun x w -> f (uv x) (uv w))
 
         let n_vwsqrsummask =
           match A.ops.n_vwsqrsummask_local with
-          | None -> (fun _ _ _ -> raise OperationNotSupported)
+          | None -> (fun _ _ _ -> raise Nvector.OperationNotProvided)
           | Some f -> (fun x w id -> f (uv x) (uv w) (uv id))
       end
     end (* }}} *)
@@ -569,130 +567,130 @@ module MakeOps = functor (A : sig
 
       let n_vwl2norm =
         match A.ops.n_vwl2norm with
-        | None -> (fun x w -> raise OperationNotSupported)
+        | None -> (fun x w -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
       let n_vl1norm =
         match A.ops.n_vl1norm with
-        | None -> (fun x -> raise OperationNotSupported)
+        | None -> (fun x -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
       let n_vwrmsnormmask =
         match A.ops.n_vwrmsnormmask with
-        | None -> (fun x w id -> raise OperationNotSupported)
+        | None -> (fun x w id -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
       let n_vconstrmask =
         match A.ops.n_vconstrmask with
-        | None -> (fun c x m -> raise OperationNotSupported)
+        | None -> (fun c x m -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
       let n_vminquotient =
         match A.ops.n_vminquotient with
-        | None -> (fun num denom -> raise OperationNotSupported)
+        | None -> (fun num denom -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
       let n_vspace =
         match A.ops.n_vspace with
-        | None -> (fun x -> raise OperationNotSupported)
+        | None -> (fun x -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
       let n_vgetlength = A.ops.n_vgetlength
 
       let n_vlinearcombination =
         match A.ops.n_vlinearcombination with
-        | None -> (fun c x z -> raise OperationNotSupported)
+        | None -> (fun c x z -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
       let n_vscaleaddmulti =
         match A.ops.n_vscaleaddmulti with
-        | None -> (fun c x y z -> raise OperationNotSupported)
+        | None -> (fun c x y z -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
       let n_vdotprodmulti =
         match A.ops.n_vdotprodmulti with
-        | None -> (fun x y d -> raise OperationNotSupported)
+        | None -> (fun x y d -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
       let n_vlinearsumvectorarray =
         match A.ops.n_vlinearsumvectorarray with
-        | None -> (fun a x b y z -> raise OperationNotSupported)
+        | None -> (fun a x b y z -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
       let n_vscalevectorarray =
         match A.ops.n_vscalevectorarray with
-        | None -> (fun c x z -> raise OperationNotSupported)
+        | None -> (fun c x z -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
       let n_vconstvectorarray =
         match A.ops.n_vconstvectorarray with
-        | None -> (fun c x -> raise OperationNotSupported)
+        | None -> (fun c x -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
       let n_vwrmsnormvectorarray =
         match A.ops.n_vwrmsnormvectorarray with
-        | None -> (fun x w m -> raise OperationNotSupported)
+        | None -> (fun x w m -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
       let n_vwrmsnormmaskvectorarray =
         match A.ops.n_vwrmsnormmaskvectorarray with
-        | None -> (fun x w id m -> raise OperationNotSupported)
+        | None -> (fun x w id m -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
       let n_vscaleaddmultivectorarray =
         match A.ops.n_vscaleaddmultivectorarray with
-        | None -> (fun a x yy zz -> raise OperationNotSupported)
+        | None -> (fun a x yy zz -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
       let n_vlinearcombinationvectorarray =
         match A.ops.n_vlinearcombinationvectorarray with
-        | None -> (fun c xx z -> raise OperationNotSupported)
+        | None -> (fun c xx z -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
       module Local = struct
         let n_vdotprod =
           match A.ops.n_vdotprod_local with
-          | None -> (fun _ _ -> raise OperationNotSupported)
+          | None -> (fun _ _ -> raise Nvector.OperationNotProvided)
           | Some f -> f
 
         let n_vmaxnorm =
           match A.ops.n_vmaxnorm_local with
-          | None -> (fun _ -> raise OperationNotSupported)
+          | None -> (fun _ -> raise Nvector.OperationNotProvided)
           | Some f -> f
 
         let n_vmin =
           match A.ops.n_vmin_local with
-          | None -> (fun _ -> raise OperationNotSupported)
+          | None -> (fun _ -> raise Nvector.OperationNotProvided)
           | Some f -> f
 
         let n_vl1norm =
           match A.ops.n_vl1norm_local with
-          | None -> (fun _ -> raise OperationNotSupported)
+          | None -> (fun _ -> raise Nvector.OperationNotProvided)
           | Some f -> f
 
         let n_vinvtest =
           match A.ops.n_vinvtest_local with
-          | None -> (fun _ _ -> raise OperationNotSupported)
+          | None -> (fun _ _ -> raise Nvector.OperationNotProvided)
           | Some f -> f
 
         let n_vconstrmask =
           match A.ops.n_vconstrmask_local with
-          | None -> (fun _ _ _ -> raise OperationNotSupported)
+          | None -> (fun _ _ _ -> raise Nvector.OperationNotProvided)
           | Some f -> f
 
         let n_vminquotient =
           match A.ops.n_vminquotient_local with
-          | None -> (fun _ _ -> raise OperationNotSupported)
+          | None -> (fun _ _ -> raise Nvector.OperationNotProvided)
           | Some f -> f
 
         let n_vwsqrsum =
           match A.ops.n_vwsqrsum_local with
-          | None -> (fun _ _ -> raise OperationNotSupported)
+          | None -> (fun _ _ -> raise Nvector.OperationNotProvided)
           | Some f -> f
 
         let n_vwsqrsummask =
           match A.ops.n_vwsqrsummask_local with
-          | None -> (fun _ _ _ -> raise OperationNotSupported)
+          | None -> (fun _ _ _ -> raise Nvector.OperationNotProvided)
           | Some f -> f
       end
     end (* }}} *)
@@ -839,7 +837,7 @@ module Any = struct (* {{{ *)
       -> Nvector.any
     = "sunml_nvec_wrap_custom"
 
-  let do_enable f nv v = if not (f nv v) then raise OperationNotSupported
+  let do_enable f nv v = if not (f nv v) then raise Nvector.OperationNotProvided
 
   let rec make_wrap_injected ops
       ?(with_fused_ops=false)
