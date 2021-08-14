@@ -117,6 +117,16 @@ $(filter-out sundials/sundials.cmi,$(MLOBJ_AFTER_SUNDIALS:.cmo=.cmi)) : \
 $(COBJ_COMMON): %.o: %.c
 	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
 
+nvectors/nvector_many_ml.o: nvectors/nvector_many_ml.c \
+		sundials/sundials_ml.h nvectors/nvector_ml.h
+	$(CC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) -o $@ -c $<
+
+nvectors/nvector_mpimany_ml.o: nvectors/nvector_many_ml.c \
+		sundials/sundials_ml.h nvectors/nvector_ml.h
+	$(MPICC) -I $(OCAML_INCLUDE) $(CVODE_CFLAGS) \
+	    -DMANYVECTOR_BUILD_WITH_MPI \
+	    -o $@ -c $<
+
 nvectors/nvector_parallel_ml.o: nvectors/nvector_parallel_ml.c \
 		sundials/sundials_ml.h nvectors/nvector_ml.h \
 		nvectors/nvector_parallel_ml.h
@@ -352,6 +362,8 @@ depend: .depend
 	$(OCAMLDEP) $(foreach d,$(SUBDIRS),-I $d) \
 	    -as-map sundials/sundials.mli sundials/sundials.ml >> .depend
 	$(CC) -MM $(CPPFLAGS) */*.c >> .depend
+	$(CC) -MM $(CPPFLAGS) -MT nvectors/nvector_mpimany_ml.o \
+	    -DNVECTOR_BUILD_WITH_MPI nvectors/nvector_many_ml.c >> .depend
 
 clean:
 	-@$(RM) -f $(ALL_MLOBJ) $(ALL_MLOBJ:.cmo=.cmx) $(ALL_MLOBJ:.cmo=.o)

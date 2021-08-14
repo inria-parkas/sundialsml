@@ -538,13 +538,17 @@ lsolvers/sundials_NonlinearSolver_impl.cmx : \
     sundials/sundials.cmx \
     nvectors/nvector.cmx
 nvectors/nvector.cmo : \
+    sundials/sundials_impl.cmo \
     sundials/sundials_configuration.cmo \
     sundials/sundials_RealArray.cmi \
+    sundials/sundials_Config.cmi \
     sundials/sundials.cmi \
     nvectors/nvector.cmi
 nvectors/nvector.cmx : \
+    sundials/sundials_impl.cmx \
     sundials/sundials_configuration.cmx \
     sundials/sundials_RealArray.cmx \
+    sundials/sundials_Config.cmx \
     sundials/sundials.cmx \
     nvectors/nvector.cmi
 nvectors/nvector.cmi : \
@@ -583,6 +587,52 @@ nvectors/nvector_custom.cmx : \
     nvectors/nvector_custom.cmi
 nvectors/nvector_custom.cmi : \
     sundials/sundials_RealArray.cmi \
+    sundials/sundials.cmi \
+    nvectors/nvector.cmi
+nvectors/nvector_many.cmo : \
+    sundials/sundials_impl.cmo \
+    sundials/sundials_configuration.cmo \
+    sundials/sundials_RealArray.cmi \
+    sundials/sundials_ROArray.cmi \
+    sundials/sundials_Config.cmi \
+    sundials/sundials.cmi \
+    nvectors/nvector.cmi \
+    nvectors/nvector_many.cmi
+nvectors/nvector_many.cmx : \
+    sundials/sundials_impl.cmx \
+    sundials/sundials_configuration.cmx \
+    sundials/sundials_RealArray.cmx \
+    sundials/sundials_ROArray.cmx \
+    sundials/sundials_Config.cmx \
+    sundials/sundials.cmx \
+    nvectors/nvector.cmx \
+    nvectors/nvector_many.cmi
+nvectors/nvector_many.cmi : \
+    sundials/sundials_ROArray.cmi \
+    sundials/sundials.cmi \
+    nvectors/nvector.cmi
+nvectors/nvector_mpimany.cmo : \
+    sundials/sundials_impl.cmo \
+    sundials/sundials_configuration.cmo \
+    sundials/sundials_RealArray.cmi \
+    sundials/sundials_ROArray.cmi \
+    sundials/sundials_Config.cmi \
+    sundials/sundials.cmi \
+    nvectors/nvector_parallel.cmi \
+    nvectors/nvector.cmi \
+    nvectors/nvector_mpimany.cmi
+nvectors/nvector_mpimany.cmx : \
+    sundials/sundials_impl.cmx \
+    sundials/sundials_configuration.cmx \
+    sundials/sundials_RealArray.cmx \
+    sundials/sundials_ROArray.cmx \
+    sundials/sundials_Config.cmx \
+    sundials/sundials.cmx \
+    nvectors/nvector_parallel.cmx \
+    nvectors/nvector.cmx \
+    nvectors/nvector_mpimany.cmi
+nvectors/nvector_mpimany.cmi : \
+    sundials/sundials_ROArray.cmi \
     sundials/sundials.cmi \
     nvectors/nvector.cmi
 nvectors/nvector_openmp.cmo : \
@@ -662,6 +712,7 @@ nvectors/nvector_pthreads_top.cmx : \
     sundials/sundials_top.cmx
 nvectors/nvector_serial.cmo : \
     sundials/sundials_impl.cmo \
+    sundials/sundials_configuration.cmo \
     sundials/sundials_RealArray.cmi \
     sundials/sundials_Config.cmi \
     sundials/sundials.cmi \
@@ -669,6 +720,7 @@ nvectors/nvector_serial.cmo : \
     nvectors/nvector_serial.cmi
 nvectors/nvector_serial.cmx : \
     sundials/sundials_impl.cmx \
+    sundials/sundials_configuration.cmx \
     sundials/sundials_RealArray.cmx \
     sundials/sundials_Config.cmx \
     sundials/sundials.cmx \
@@ -867,6 +919,11 @@ sundials_nonlinearsolver_ml.o: lsolvers/sundials_nonlinearsolver_ml.c \
  lsolvers/../sundials/../config.h lsolvers/../nvectors/nvector_ml.h \
  lsolvers/../nvectors/../sundials/sundials_ml.h \
  lsolvers/../lsolvers/sundials_nonlinearsolver_ml.h
+nvector_many_ml.o: nvectors/nvector_many_ml.c \
+ nvectors/../nvectors/nvector_ml.h \
+ nvectors/../nvectors/../sundials/sundials_ml.h \
+ nvectors/../nvectors/../sundials/../config.h \
+ nvectors/../sundials/sundials_ml.h
 nvector_ml.o: nvectors/nvector_ml.c nvectors/../nvectors/nvector_ml.h \
  nvectors/../nvectors/../sundials/sundials_ml.h \
  nvectors/../nvectors/../sundials/../config.h \
@@ -886,3 +943,8 @@ nvector_pthreads_ml.o: nvectors/nvector_pthreads_ml.c \
  nvectors/nvector_ml.h nvectors/nvector_pthreads_ml.h
 sundials_ml.o: sundials/sundials_ml.c sundials/sundials_ml.h \
  sundials/../config.h
+nvectors/nvector_mpimany_ml.o: nvectors/nvector_many_ml.c \
+ nvectors/../nvectors/nvector_ml.h \
+ nvectors/../nvectors/../sundials/sundials_ml.h \
+ nvectors/../nvectors/../sundials/../config.h \
+ nvectors/../sundials/sundials_ml.h

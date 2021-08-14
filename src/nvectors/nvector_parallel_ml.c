@@ -29,6 +29,19 @@
 #define Comm_val(comm) (*((MPI_Comm *) &Field(comm, 1)))
 extern value caml_mpi_alloc_comm(MPI_Comm c);
 
+/** MPI Utility functions */
+
+// @@noalloc
+CAMLprim value sunml_nvector_parallel_compare_comms(value v1, value v2)
+{
+    CAMLparam2(v1, v2);
+
+    int res;
+    MPI_Comm_compare(Comm_val(v1), Comm_val(v2), &res);
+
+    CAMLreturn(Val_bool((res == MPI_IDENT) || (res == MPI_CONGRUENT)));
+}
+
 /** Parallel nvectors * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 CAMLprim value sunml_nvector_parallel_init_module (value exns)
