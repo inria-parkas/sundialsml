@@ -86,10 +86,9 @@ val communicator : t -> Mpi.communicator
 
 (** Return the communicator associated with any nvector.
 
-    @raise Nvector.IncompatibleNvector The nvector has no communicator.
     @nocvode <node> N_VGetCommunicator
     @since 5.0.0 *)
-val get_communicator : ('d, 'k) Nvector.t -> Mpi.communicator
+val get_communicator : ('d, 'k) Nvector.t -> Mpi.communicator option
 
 (** Hides an MPI communicator for use in custom nvector functions. *)
 val hide_communicator : Mpi.communicator -> Nvector_custom.communicator
