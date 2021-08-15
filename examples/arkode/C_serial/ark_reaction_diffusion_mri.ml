@@ -167,7 +167,7 @@ let main () =
   printf "        t      ||u||_rms\n";
   printf "   -------------------------\n";
   printf "  %10.6f  %10.6f\n" t0
-    (sqrt((Nvector_serial.Ops.n_vdotprod y y)/.float n));
+    (sqrt((Nvector_serial.Ops.dotprod y y)/.float n));
 
   let dTout = (tf-.t0)/.(float nt) in
   let rec loop iout tout =
@@ -178,7 +178,7 @@ let main () =
 
       (* print solution stats and output results to disk *)
       printf "  %10.6f  %10.6f\n" t
-        (sqrt((Nvector_serial.Ops.n_vdotprod y y)/.float n));
+        (sqrt((Nvector_serial.Ops.dotprod y y)/.float n));
 
       for i=0 to n-1 do
         fprintf ufid " %.16e" data.{i}

@@ -38,8 +38,8 @@ open Sundials
 module Dls = Ida.Dls
 
 let printf = Printf.printf
-let vmax_norm = Nvector_serial.DataOps.n_vmaxnorm
-let vscale = Nvector_serial.DataOps.n_vscale
+let vmax_norm = Nvector_serial.DataOps.maxnorm
+let vscale = Nvector_serial.DataOps.scale
 
 (* Problem Constants *)
 let nout = 11

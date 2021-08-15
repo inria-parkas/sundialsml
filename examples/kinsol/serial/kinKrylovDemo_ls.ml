@@ -91,7 +91,7 @@ open Bigarray
 let printf = Printf.printf
 let subarray = Array1.sub
 let unwrap = RealArray2.unwrap
-let nvwl2norm = Nvector_serial.DataOps.n_vwl2norm
+let nvwl2norm = Nvector_serial.DataOps.wl2norm
 
 let ith v i = v.{i - 1}
 let set_ith v i e = v.{i - 1} <- e

@@ -35,8 +35,8 @@ module Adjoint = Idas.Adjoint
 
 let printf = Printf.printf
 
-let nvconst = Nvector_serial.DataOps.n_vconst
-let nvscale = Nvector_serial.DataOps.n_vscale
+let nvconst = Nvector_serial.DataOps.const
+let nvscale = Nvector_serial.DataOps.scale
 
 (* Problem Constants *)
 let neq = 6

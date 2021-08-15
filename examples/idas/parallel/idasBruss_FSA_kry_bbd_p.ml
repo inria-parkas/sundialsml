@@ -584,7 +584,7 @@ let set_initial_profiles data uv uvp id resid =
   let uvdata,_,_ = uv in
   let iddata,_,_ = id in
 
-  n_vconst 0. uv;
+  const 0. uv;
 
   (* Loop over grid, load uv values and id values. *)
   for jy = 0 to mysub-1 do
@@ -597,7 +597,7 @@ let set_initial_profiles data uv uvp id resid =
     done
   done;
 
-  n_vconst one id;
+  const one id;
 
   if jysub = 0 then begin
     for ix = 0 to mxsub-1 do
@@ -653,9 +653,9 @@ let set_initial_profiles data uv uvp id resid =
   end;
 
   (* Derivative found by calling the residual function with uvp = 0. *)
-  n_vconst zero uvp;
+  const zero uvp;
   res data zero uv uvp resid;
-  n_vscale (-.one) resid uvp
+  scale (-.one) resid uvp
 
 (* Print first lines of output (problem description)
  * and table headerr *)

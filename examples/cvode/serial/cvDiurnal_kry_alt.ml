@@ -115,24 +115,24 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
       | PrecBoth  ->  true, true
     in
     (* Set vtemp and V[0] to initial (unscaled) residual r_0 = b - A*x_0 *)
-    if n_vdotprod x x = 0.
-    then (n_vscale 1. b vtemp)
+    if dotprod x x = 0.
+    then (scale 1. b vtemp)
     else (atimes x vtemp;
-          n_vlinearsum 1. b (-1.) vtemp vtemp);
-    n_vscale 1. vtemp v.(0);
+          linearsum 1. b (-1.) vtemp vtemp);
+    scale 1. vtemp v.(0);
 
     (* Apply left preconditioner and left scaling to V[0] = r_0 *)
     if preOnLeft
     then (psolve v.(0) vtemp delta true)
-    else (n_vscale 1. v.(0) vtemp);
+    else (scale 1. v.(0) vtemp);
 
     (match s1 with
-    | Some s1 -> n_vprod s1 vtemp v.(0)
-    | None    -> n_vscale 1. vtemp v.(0));
+    | Some s1 -> prod s1 vtemp v.(0)
+    | None    -> scale 1. vtemp v.(0));
 
     (* Set r_norm = beta to L2 norm of v.(0) = s1 P1_inv r_0, and
        return if small  *)
-    let beta = sqrt(n_vdotprod v.(0) v.(0)) in
+    let beta = sqrt(dotprod v.(0) v.(0)) in
     r_norm := beta;
     lsolver.resnorm <- beta;
     if !r_norm > delta then begin
@@ -140,7 +140,7 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
       let rho = ref beta in
 
       (* Set xcor = 0 *)
-      n_vconst 0. xcor;
+      const 0. xcor;
 
       (* Begin outer iterations: up to (max_restarts + 1) attempts *)
       let rec outer_loop ntries =
@@ -149,7 +149,7 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
              product.  Normalize the initial vector v.(0) *)
           RealArray2.fill hes 0.;
 
-          n_vscale (1. /. !r_norm) v.(0) v.(0);
+          scale (1. /. !r_norm) v.(0) v.(0);
 
           (* Inner loop: generate Krylov sequence and Arnoldi basis *)
           let rotation_product = ref 1. in
@@ -163,11 +163,11 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
 
               (*   Apply right scaling: vtemp = s2_inv v.(l) *)
               (match s2 with
-               | Some s2 -> n_vdiv v.(l) s2 vtemp
-               | None    -> n_vscale 1. v.(l) vtemp);
+               | Some s2 -> div v.(l) s2 vtemp
+               | None    -> scale 1. v.(l) vtemp);
 
               (*   Apply right preconditioner: vtemp = P2_inv s2_inv v.(l) *)
-              if preOnRight then (n_vscale 1. vtemp v.(l_plus_1);
+              if preOnRight then (scale 1. vtemp v.(l_plus_1);
                                   psolve v.(l_plus_1) vtemp delta false);
 
               (* Apply A: v.(l+1) = A P2_inv s2_inv v.(l) *)
@@ -176,12 +176,12 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
               (* Apply left preconditioning: vtemp = P1_inv A P2_inv s2_inv v.(l) *)
               if preOnLeft
               then psolve v.(l_plus_1) vtemp delta true
-              else n_vscale 1. v.(l_plus_1) vtemp;
+              else scale 1. v.(l_plus_1) vtemp;
 
               (* Apply left scaling: v.(l+1) = s1 P1_inv A P2_inv s2_inv v.(l) *)
               (match s1 with
-               | Some s1 -> n_vprod s1 vtemp v.(l_plus_1)
-               | None    -> n_vscale 1. vtemp v.(l_plus_1));
+               | Some s1 -> prod s1 vtemp v.(l_plus_1)
+               | None    -> scale 1. vtemp v.(l_plus_1));
 
               (*  Orthogonalize v.(l+1) against previous v.(i): v.(l+1) = w_tilde *)
               RealArray2.set hes l l_plus_1
@@ -201,7 +201,7 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
 
               if !rho > delta then begin
                 (* Normalize v.(l+1) with norm value from the Gram-Schmidt routine *)
-                n_vscale (1. /. RealArray2.get hes l l_plus_1)
+                scale (1. /. RealArray2.get hes l l_plus_1)
                          v.(l_plus_1) v.(l_plus_1);
 
                 inner_loop (l + 1)
@@ -223,19 +223,19 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
 
           (*   Add correction vector V_l y to xcor *)
           for k = 0 to krydim - 1 do
-            n_vlinearsum yg.{k} v.(k) 1. xcor xcor
+            linearsum yg.{k} v.(k) 1. xcor xcor
           done;
 
           (* If converged, construct the final solution vector x and return *)
           if converged then begin
             (* Apply right scaling and right precond.: vtemp = P2_inv s2_inv xcor *)
-            (match s2 with Some s2 -> n_vdiv xcor s2 xcor | None -> ());
+            (match s2 with Some s2 -> div xcor s2 xcor | None -> ());
             if preOnRight
             then psolve xcor vtemp delta false
-            else n_vscale 1. xcor vtemp;
+            else scale 1. xcor vtemp;
 
             (* Add vtemp to initial x to get final solution x, and return *)
-            n_vlinearsum 1. x 1. vtemp x
+            linearsum 1. x 1. vtemp x
           end
           (* Not yet converged; if allowed, prepare for restart *)
           else if ntries < max_restarts then begin
@@ -255,9 +255,9 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
             r_norm := abs_float !r_norm;
 
             (* Multiply yg by V_(krydim+1) to get last residual vector; restart *)
-            n_vscale yg.{0} v.(0) v.(0);
+            scale yg.{0} v.(0) v.(0);
             for k = 1 to krydim do
-              n_vlinearsum yg.{k} v.(k) 1. v.(0) v.(0)
+              linearsum yg.{k} v.(k) 1. v.(0) v.(0)
             done;
 
             outer_loop (ntries + 1)
@@ -268,12 +268,12 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
              and return x anyway.  Otherwise return failure flag. *)
           if !rho < beta then begin
             (* Apply right scaling and right precond.: vtemp = P2_inv s2_inv xcor *)
-            (match s2 with Some s2 -> n_vdiv xcor s2 xcor | None -> ());
+            (match s2 with Some s2 -> div xcor s2 xcor | None -> ());
             if preOnRight then psolve xcor vtemp delta false
-            else n_vscale 1. xcor vtemp;
+            else scale 1. xcor vtemp;
 
             (* Add vtemp to initial x to get final solution x, and return *)
-            n_vlinearsum 1. x 1. vtemp x;
+            linearsum 1. x 1. vtemp x;
             raise LinearSolver.ResReduced
           end
           else raise LinearSolver.ConvFailure
@@ -301,7 +301,7 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
     lsolver.s2 <- mapo NV.wrap s2
 
   let get_workspace lsolver =
-    let lrw1, liw1 = NV.Ops.n_vspace lsolver.vtemp in
+    let lrw1, liw1 = NV.Ops.space lsolver.vtemp in
     let maxl = lsolver.maxl in
     ((if compat2_3 then lrw1*(maxl + 5) + maxl*(maxl + 4) + 1
                    else lrw1*(maxl + 5) + maxl*(maxl + 5) + 2),
@@ -344,10 +344,10 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
         s1           = None;
         s2           = None;
 
-        xcor         = NV.Ops.n_vclone nv_y;
-        vtemp        = NV.Ops.n_vclone nv_y;
-        vtemps       = Array.init (maxl + 1) (fun _ -> NV.Ops.n_vclone nv_y);
-        v            = Array.init (maxl + 1) (fun _ -> NV.Ops.n_vclone nv_y);
+        xcor         = NV.Ops.clone nv_y;
+        vtemp        = NV.Ops.clone nv_y;
+        vtemps       = Array.init (maxl + 1) (fun _ -> NV.Ops.clone nv_y);
+        v            = Array.init (maxl + 1) (fun _ -> NV.Ops.clone nv_y);
         hes          = RealArray2.create maxl (maxl + 1);
         givens       = RealArray.create (2 * maxl);
         yg           = RealArray.create (maxl + 1);

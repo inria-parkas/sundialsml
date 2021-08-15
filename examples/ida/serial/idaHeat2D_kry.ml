@@ -41,9 +41,9 @@ let mgrid = 10
 let neq   = mgrid*mgrid
 
 (* Shorthands *)
-let nvscale = Nvector_serial.DataOps.n_vscale
-let nvprod = Nvector_serial.DataOps.n_vprod
-let nvmaxnorm = Nvector_serial.DataOps.n_vmaxnorm
+let nvscale = Nvector_serial.DataOps.scale
+let nvprod = Nvector_serial.DataOps.prod
+let nvmaxnorm = Nvector_serial.DataOps.maxnorm
 let printf = Printf.printf
 
 (* User data *)

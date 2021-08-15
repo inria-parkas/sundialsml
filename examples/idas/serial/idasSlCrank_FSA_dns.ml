@@ -39,7 +39,7 @@ let printf = Printf.printf
 let unwrap = Nvector.unwrap
 let wrap = Nvector_serial.wrap
 
-let nvconst = Nvector_serial.DataOps.n_vconst
+let nvconst = Nvector_serial.DataOps.const
 
 (* Problem Constants *)
 

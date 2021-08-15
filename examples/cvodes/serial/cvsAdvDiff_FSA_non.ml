@@ -51,7 +51,7 @@ module Sens = Cvodes.Sensitivity
 let unwrap = Nvector.unwrap
 
 let printf = Printf.printf
-let vmax_norm = Nvector_serial.Ops.n_vmaxnorm
+let vmax_norm = Nvector_serial.Ops.maxnorm
 
 (* Problem Constants *)
 

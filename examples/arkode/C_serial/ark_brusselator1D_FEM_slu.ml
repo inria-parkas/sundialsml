@@ -66,7 +66,7 @@ module ARKStep = Arkode.ARKStep
 let printf = Printf.printf
 let fprintf = Printf.fprintf
 let unwrap = Nvector_serial.unwrap
-let n_vwl2norm = Nvector_serial.Ops.n_vwl2norm
+let wl2norm = Nvector_serial.Ops.wl2norm
 
 (* accessor macros between (x,v) location and 1D NVector array *)
 (* [variables are grouped according to spatial location] *)
@@ -965,11 +965,11 @@ let main () =
        let t, _ = ARKStep.solve_normal arkode_mem !tout y in
 
        (* access/print solution statistics *)
-       let u = n_vwl2norm y umask in
+       let u = wl2norm y umask in
        let u = sqrt(u*.u/. float n_mesh) in
-       let v = n_vwl2norm y vmask in
+       let v = wl2norm y vmask in
        let v = sqrt(v*.v/. float n_mesh) in
-       let w = n_vwl2norm y wmask in
+       let w = wl2norm y wmask in
        let w = sqrt(w*.w/. float n_mesh) in
        printf "  %10.6f  %10.6f  %10.6f  %10.6f\n" t u v w;
        (* successful solve: update output time *)

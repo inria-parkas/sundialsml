@@ -30,8 +30,8 @@ open Sundials
 module DM = Matrix.ArrayDense
 
 let printf = Printf.printf
-let nvwl2norm = Nvector_serial.DataOps.n_vwl2norm
-let nvdotprod = Nvector_serial.DataOps.n_vdotprod
+let nvwl2norm = Nvector_serial.DataOps.wl2norm
+let nvdotprod = Nvector_serial.DataOps.dotprod
 
 let unwrap = RealArray2.unwrap
 

@@ -42,25 +42,25 @@ let rec wrap ?(with_fused_ops=false) nthreads v =
 and clone nthreads nv =
   let nv' = wrap nthreads (RealArray.copy (unwrap nv)) in
   c_enablelinearcombination_openmp nv'
-    (Nvector.has_n_vlinearcombination nv);
+    (Nvector.has_linearcombination nv);
   c_enablescaleaddmulti_openmp nv'
-    (Nvector.has_n_vscaleaddmulti nv);
+    (Nvector.has_scaleaddmulti nv);
   c_enabledotprodmulti_openmp nv'
-    (Nvector.has_n_vdotprodmulti nv);
+    (Nvector.has_dotprodmulti nv);
   c_enablelinearsumvectorarray_openmp nv'
-    (Nvector.has_n_vlinearsumvectorarray nv);
+    (Nvector.has_linearsumvectorarray nv);
   c_enablescalevectorarray_openmp nv'
-    (Nvector.has_n_vscalevectorarray nv);
+    (Nvector.has_scalevectorarray nv);
   c_enableconstvectorarray_openmp nv'
-    (Nvector.has_n_vconstvectorarray nv);
+    (Nvector.has_constvectorarray nv);
   c_enablewrmsnormvectorarray_openmp nv'
-    (Nvector.has_n_vwrmsnormvectorarray nv);
+    (Nvector.has_wrmsnormvectorarray nv);
   c_enablewrmsnormmaskvectorarray_openmp nv'
-    (Nvector.has_n_vwrmsnormmaskvectorarray nv);
+    (Nvector.has_wrmsnormmaskvectorarray nv);
   c_enablescaleaddmultivectorarray_openmp nv'
-    (Nvector.has_n_vscaleaddmultivectorarray nv);
+    (Nvector.has_scaleaddmultivectorarray nv);
   c_enablelinearcombinationvectorarray_openmp nv'
-    (Nvector.has_n_vlinearcombinationvectorarray nv);
+    (Nvector.has_linearcombinationvectorarray nv);
   nv'
 
 let pp fmt v = RealArray.pp fmt (unwrap v)
@@ -183,25 +183,25 @@ module Any = struct (* {{{ *)
     in
     let nv' = wrap nthreads (RealArray.copy v) in
     c_enablelinearcombination_openmp nv'
-      (Nvector.has_n_vlinearcombination nv);
+      (Nvector.has_linearcombination nv);
     c_enablescaleaddmulti_openmp nv'
-      (Nvector.has_n_vscaleaddmulti nv);
+      (Nvector.has_scaleaddmulti nv);
     c_enabledotprodmulti_openmp nv'
-      (Nvector.has_n_vdotprodmulti nv);
+      (Nvector.has_dotprodmulti nv);
     c_enablelinearsumvectorarray_openmp nv'
-      (Nvector.has_n_vlinearsumvectorarray nv);
+      (Nvector.has_linearsumvectorarray nv);
     c_enablescalevectorarray_openmp nv'
-      (Nvector.has_n_vscalevectorarray nv);
+      (Nvector.has_scalevectorarray nv);
     c_enableconstvectorarray_openmp nv'
-      (Nvector.has_n_vconstvectorarray nv);
+      (Nvector.has_constvectorarray nv);
     c_enablewrmsnormvectorarray_openmp nv'
-      (Nvector.has_n_vwrmsnormvectorarray nv);
+      (Nvector.has_wrmsnormvectorarray nv);
     c_enablewrmsnormmaskvectorarray_openmp nv'
-      (Nvector.has_n_vwrmsnormmaskvectorarray nv);
+      (Nvector.has_wrmsnormmaskvectorarray nv);
     c_enablescaleaddmultivectorarray_openmp nv'
-      (Nvector.has_n_vscaleaddmultivectorarray nv);
+      (Nvector.has_scaleaddmultivectorarray nv);
     c_enablelinearcombinationvectorarray_openmp nv'
-      (Nvector.has_n_vlinearcombinationvectorarray nv);
+      (Nvector.has_linearcombinationvectorarray nv);
     nv'
 
   let make
@@ -235,126 +235,126 @@ end (* }}} *)
 module Ops = struct (* {{{ *)
   type t = (RealArray.t, kind) Nvector.t
 
-  let n_vclone nv =
+  let clone nv =
     let data = Nvector.unwrap nv in
     wrap (num_threads nv) (RealArray.copy data)
 
-  external n_vlinearsum    : float -> t -> float -> t -> t -> unit
-    = "sunml_nvec_openmp_n_vlinearsum"
+  external linearsum    : float -> t -> float -> t -> t -> unit
+    = "sunml_nvec_openmp_linearsum"
 
-  external n_vconst        : float -> t -> unit
-    = "sunml_nvec_openmp_n_vconst"
+  external const        : float -> t -> unit
+    = "sunml_nvec_openmp_const"
 
-  external n_vprod         : t -> t -> t -> unit
-    = "sunml_nvec_openmp_n_vprod"
+  external prod         : t -> t -> t -> unit
+    = "sunml_nvec_openmp_prod"
 
-  external n_vdiv          : t -> t -> t -> unit
-    = "sunml_nvec_openmp_n_vdiv"
+  external div          : t -> t -> t -> unit
+    = "sunml_nvec_openmp_div"
 
-  external n_vscale        : float -> t -> t -> unit
-    = "sunml_nvec_openmp_n_vscale"
+  external scale        : float -> t -> t -> unit
+    = "sunml_nvec_openmp_scale"
 
-  external n_vabs          : t -> t -> unit
-    = "sunml_nvec_openmp_n_vabs"
+  external abs          : t -> t -> unit
+    = "sunml_nvec_openmp_abs"
 
-  external n_vinv          : t -> t -> unit
-    = "sunml_nvec_openmp_n_vinv"
+  external inv          : t -> t -> unit
+    = "sunml_nvec_openmp_inv"
 
-  external n_vaddconst     : t -> float -> t -> unit
-    = "sunml_nvec_openmp_n_vaddconst"
+  external addconst     : t -> float -> t -> unit
+    = "sunml_nvec_openmp_addconst"
 
-  external n_vdotprod      : t -> t -> float
-    = "sunml_nvec_openmp_n_vdotprod"
+  external dotprod      : t -> t -> float
+    = "sunml_nvec_openmp_dotprod"
 
-  external n_vmaxnorm      : t -> float
-    = "sunml_nvec_openmp_n_vmaxnorm"
+  external maxnorm      : t -> float
+    = "sunml_nvec_openmp_maxnorm"
 
-  external n_vwrmsnorm     : t -> t -> float
-    = "sunml_nvec_openmp_n_vwrmsnorm"
+  external wrmsnorm     : t -> t -> float
+    = "sunml_nvec_openmp_wrmsnorm"
 
-  external n_vwrmsnormmask : t -> t -> t -> float
-    = "sunml_nvec_openmp_n_vwrmsnormmask"
+  external wrmsnormmask : t -> t -> t -> float
+    = "sunml_nvec_openmp_wrmsnormmask"
 
-  external n_vmin          : t -> float
-    = "sunml_nvec_openmp_n_vmin"
+  external min          : t -> float
+    = "sunml_nvec_openmp_min"
 
-  external n_vwl2norm      : t -> t -> float
-    = "sunml_nvec_openmp_n_vwl2norm"
+  external wl2norm      : t -> t -> float
+    = "sunml_nvec_openmp_wl2norm"
 
-  external n_vl1norm       : t -> float
-    = "sunml_nvec_openmp_n_vl1norm"
+  external l1norm       : t -> float
+    = "sunml_nvec_openmp_l1norm"
 
-  external n_vcompare      : float -> t -> t -> unit
-    = "sunml_nvec_openmp_n_vcompare"
+  external compare      : float -> t -> t -> unit
+    = "sunml_nvec_openmp_compare"
 
-  external n_vinvtest      : t -> t -> bool
-    = "sunml_nvec_openmp_n_vinvtest"
+  external invtest      : t -> t -> bool
+    = "sunml_nvec_openmp_invtest"
 
-  external n_vconstrmask   : t -> t -> t -> bool
-    = "sunml_nvec_openmp_n_vconstrmask"
+  external constrmask   : t -> t -> t -> bool
+    = "sunml_nvec_openmp_constrmask"
 
-  external n_vminquotient  : t -> t -> float
-    = "sunml_nvec_openmp_n_vminquotient"
+  external minquotient  : t -> t -> float
+    = "sunml_nvec_openmp_minquotient"
 
-  external n_vspace  : t -> int * int
-    = "sunml_nvec_openmp_n_vspace"
+  external space  : t -> int * int
+    = "sunml_nvec_openmp_space"
 
-  external n_vgetlength  : t -> int
-    = "sunml_nvec_openmp_n_vgetlength"
+  external getlength  : t -> int
+    = "sunml_nvec_openmp_getlength"
 
-  external n_vlinearcombination : RealArray.t -> t array -> t -> unit
-    = "sunml_nvec_openmp_n_vlinearcombination"
+  external linearcombination : RealArray.t -> t array -> t -> unit
+    = "sunml_nvec_openmp_linearcombination"
 
-  external n_vscaleaddmulti : RealArray.t -> t -> t array -> t array -> unit
-    = "sunml_nvec_openmp_n_vscaleaddmulti"
+  external scaleaddmulti : RealArray.t -> t -> t array -> t array -> unit
+    = "sunml_nvec_openmp_scaleaddmulti"
 
-  external n_vdotprodmulti : t -> t array -> RealArray.t -> unit
-    = "sunml_nvec_openmp_n_vdotprodmulti"
+  external dotprodmulti : t -> t array -> RealArray.t -> unit
+    = "sunml_nvec_openmp_dotprodmulti"
 
-  external n_vlinearsumvectorarray
+  external linearsumvectorarray
     : float -> t array -> float -> t array -> t array -> unit
-    = "sunml_nvec_openmp_n_vlinearsumvectorarray"
+    = "sunml_nvec_openmp_linearsumvectorarray"
 
-  external n_vscalevectorarray
+  external scalevectorarray
     : RealArray.t -> t array -> t array -> unit
-    = "sunml_nvec_openmp_n_vscalevectorarray"
+    = "sunml_nvec_openmp_scalevectorarray"
 
-  external n_vconstvectorarray
+  external constvectorarray
     : float -> t array -> unit
-    = "sunml_nvec_openmp_n_vconstvectorarray"
+    = "sunml_nvec_openmp_constvectorarray"
 
-  external n_vwrmsnormvectorarray
+  external wrmsnormvectorarray
     : t array -> t array -> RealArray.t -> unit
-    = "sunml_nvec_openmp_n_vwrmsnormvectorarray"
+    = "sunml_nvec_openmp_wrmsnormvectorarray"
 
-  external n_vwrmsnormmaskvectorarray
+  external wrmsnormmaskvectorarray
     : t array -> t array -> t -> RealArray.t -> unit
-    = "sunml_nvec_openmp_n_vwrmsnormmaskvectorarray"
+    = "sunml_nvec_openmp_wrmsnormmaskvectorarray"
 
-  external n_vscaleaddmultivectorarray
+  external scaleaddmultivectorarray
     : RealArray.t -> t array -> t array array -> t array array -> unit
-    = "sunml_nvec_openmp_n_vscaleaddmultivectorarray"
+    = "sunml_nvec_openmp_scaleaddmultivectorarray"
 
-  external n_vlinearcombinationvectorarray
+  external linearcombinationvectorarray
     : RealArray.t -> t array array -> t array -> unit
-    = "sunml_nvec_openmp_n_vlinearcombinationvectorarray"
+    = "sunml_nvec_openmp_linearcombinationvectorarray"
 
   module Local = struct
-    let n_vdotprod     = n_vdotprod
-    let n_vmaxnorm     = n_vmaxnorm
-    let n_vmin         = n_vmin
-    let n_vl1norm      = n_vl1norm
-    let n_vinvtest     = n_vinvtest
-    let n_vconstrmask  = n_vconstrmask
-    let n_vminquotient = n_vminquotient
+    let dotprod     = dotprod
+    let maxnorm     = maxnorm
+    let min         = min
+    let l1norm      = l1norm
+    let invtest     = invtest
+    let constrmask  = constrmask
+    let minquotient = minquotient
 
-    external n_vwsqrsum
+    external wsqrsum
       : t -> t -> float
-      = "sunml_nvec_openmp_n_vwsqrsumlocal"
+      = "sunml_nvec_openmp_wsqrsumlocal"
 
-    external n_vwsqrsummask
+    external wsqrsummask
       : t -> t -> t -> float
-      = "sunml_nvec_openmp_n_vwsqrsummasklocal"
+      = "sunml_nvec_openmp_wsqrsummasklocal"
   end
 end (* }}} *)
 

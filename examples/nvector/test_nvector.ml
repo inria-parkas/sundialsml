@@ -70,42 +70,42 @@ module type TEST = sig (* {{{ *)
 
   val set_timing : bool -> bool -> unit
   val test_n_vgetvectorid : t -> Nvector.nvector_id -> int -> int
-  val test_n_vclonevectorarray         : int -> t -> 'a -> int -> int
-  val test_n_vcloneemptyvectorarray    : int -> t -> int -> int
-  val test_n_vcloneempty               : t -> int -> int
-  val test_n_vclone                    : t -> int -> int -> int
+  val test_clonevectorarray         : int -> t -> 'a -> int -> int
+  val test_cloneemptyvectorarray    : int -> t -> int -> int
+  val test_cloneempty               : t -> int -> int
+  val test_clone                    : t -> int -> int -> int
   val test_n_vgetarraypointer          : t -> int -> int -> int
   val test_n_vsetarraypointer          : t -> int -> int -> int
-  val test_n_vlinearsum                : t -> t -> t -> int -> int -> int
-  val test_n_vconst                    : t -> int -> int -> int
-  val test_n_vprod                     : t -> t -> t -> int -> int -> int
-  val test_n_vdiv                      : t -> t -> t -> int -> int -> int
-  val test_n_vscale                    : t -> t -> int -> int -> int
-  val test_n_vabs                      : t -> t -> int -> int -> int
-  val test_n_vinv                      : t -> t -> int -> int -> int
-  val test_n_vaddconst                 : t -> t -> int -> int -> int
-  val test_n_vdotprod                  : t -> t -> int -> int -> int -> int
-  val test_n_vmaxnorm                  : t -> int -> int -> int
-  val test_n_vwrmsnorm                 : t -> t -> int -> int -> int
-  val test_n_vwrmsnormmask             : t -> t -> t -> int -> int -> int -> int
-  val test_n_vwrmsnormmask_lt400       : t -> t -> t -> int -> 'a -> int -> int
-  val test_n_vmin                      : t -> int -> int -> int
-  val test_n_vwl2norm                  : t -> t -> int -> int -> int -> int
-  val test_n_vl1norm                   : t -> int -> int -> int -> int
-  val test_n_vcompare                  : t -> t -> int -> int -> int
-  val test_n_vinvtest                  : t -> t -> int -> int -> int
-  val test_n_vconstrmask               : t -> t -> t -> int -> int -> int
-  val test_n_vminquotient              : t -> t -> int -> int -> int
-  val test_n_vlinearcombination        : t -> int -> int -> int
-  val test_n_vscaleaddmulti            : t -> int -> int -> int
-  val test_n_vdotprodmulti             : t -> 'a -> int -> int -> int
-  val test_n_vlinearsumvectorarray     : t -> int -> int -> int
-  val test_n_vscalevectorarray         : t -> int -> int -> int
-  val test_n_vconstvectorarray         : t -> int -> int -> int
-  val test_n_vwrmsnormvectorarray      : t -> 'a -> int -> int
-  val test_n_vwrmsnormmaskvectorarray  : t -> int -> int -> int -> int
-  val test_n_vscaleaddmultivectorarray : t -> int -> int -> int
-  val test_n_vlinearcombinationvectorarray : t -> int -> int -> int
+  val test_linearsum                : t -> t -> t -> int -> int -> int
+  val test_const                    : t -> int -> int -> int
+  val test_prod                     : t -> t -> t -> int -> int -> int
+  val test_div                      : t -> t -> t -> int -> int -> int
+  val test_scale                    : t -> t -> int -> int -> int
+  val test_abs                      : t -> t -> int -> int -> int
+  val test_inv                      : t -> t -> int -> int -> int
+  val test_addconst                 : t -> t -> int -> int -> int
+  val test_dotprod                  : t -> t -> int -> int -> int -> int
+  val test_maxnorm                  : t -> int -> int -> int
+  val test_wrmsnorm                 : t -> t -> int -> int -> int
+  val test_wrmsnormmask             : t -> t -> t -> int -> int -> int -> int
+  val test_wrmsnormmask_lt400       : t -> t -> t -> int -> 'a -> int -> int
+  val test_min                      : t -> int -> int -> int
+  val test_wl2norm                  : t -> t -> int -> int -> int -> int
+  val test_l1norm                   : t -> int -> int -> int -> int
+  val test_compare                  : t -> t -> int -> int -> int
+  val test_invtest                  : t -> t -> int -> int -> int
+  val test_constrmask               : t -> t -> t -> int -> int -> int
+  val test_minquotient              : t -> t -> int -> int -> int
+  val test_linearcombination        : t -> int -> int -> int
+  val test_scaleaddmulti            : t -> int -> int -> int
+  val test_dotprodmulti             : t -> 'a -> int -> int -> int
+  val test_linearsumvectorarray     : t -> int -> int -> int
+  val test_scalevectorarray         : t -> int -> int -> int
+  val test_constvectorarray         : t -> int -> int -> int
+  val test_wrmsnormvectorarray      : t -> 'a -> int -> int
+  val test_wrmsnormmaskvectorarray  : t -> int -> int -> int -> int
+  val test_scaleaddmultivectorarray : t -> int -> int -> int
+  val test_linearcombinationvectorarray : t -> int -> int -> int
 end (* }}} *)
 
 module Test (Nvector_ops : NVECTOR_OPS_EXT) : TEST with type t = Nvector_ops.t =
@@ -209,10 +209,10 @@ let test_n_vgetvectorid x id myid =
  *
  * NOTE: This routine depends on N_VConst to check vector data.
  * --------------------------------------------------------------------*)
-let test_n_vclonevectorarray count w local_length myid =
+let test_clonevectorarray count w local_length myid =
   (* clone array of vectors *)
   let start_time = get_time () in
-  let _ = Array.init count (fun _ -> Nvector_ops.n_vclone w) in
+  let _ = Array.init count (fun _ -> Nvector_ops.clone w) in
   let stop_time = get_time () in
 
   (* check array of vectors *)
@@ -228,10 +228,10 @@ let test_n_vclonevectorarray count w local_length myid =
 (* ----------------------------------------------------------------------
  * N_VCloneVectorArrayEmpty Test
  * --------------------------------------------------------------------*)
-let test_n_vcloneemptyvectorarray count w myid =
+let test_cloneemptyvectorarray count w myid =
   (* clone empty array *)
   let start_time = get_time () in
-  let _ = Array.init count (fun _ -> Nvector_ops.n_vclone w) in
+  let _ = Array.init count (fun _ -> Nvector_ops.clone w) in
   let stop_time = get_time () in
 
   (* check array of vectors *)
@@ -248,10 +248,10 @@ let test_n_vcloneemptyvectorarray count w myid =
 (* ----------------------------------------------------------------------
  * N_VCloneEmpty Test
  * --------------------------------------------------------------------*)
-let test_n_vcloneempty w myid =
+let test_cloneempty w myid =
   (* clone empty vector *)
   let start_time = get_time () in
-  let _ = Nvector_ops.n_vclone w in
+  let _ = Nvector_ops.clone w in
   let stop_time = get_time () in
 
   (* check vector *)
@@ -269,10 +269,10 @@ let test_n_vcloneempty w myid =
  *
  * NOTE: This routine depends on N_VConst to check vector data.
  * --------------------------------------------------------------------*)
-let test_n_vclone w local_length myid =
+let test_clone w local_length myid =
   (* clone vector *)
   let start_time = get_time () in
-  let x = Nvector_ops.n_vclone w in
+  let x = Nvector_ops.clone w in
   let stop_time = get_time () in
 
   (* check cloned vector *)
@@ -280,7 +280,7 @@ let test_n_vclone w local_length myid =
   (* check cloned vector data *)
   let _ = Nvector_ops.n_vgetarray x in
 
-  Nvector_ops.n_vconst one x;
+  Nvector_ops.const one x;
   if not (check_ans one x local_length) then (
     printf ">>> FAILED test -- N_VClone Proc %d \n" myid;
     printf "    Failed N_VConst check \n \n";
@@ -306,7 +306,7 @@ let test_n_vgetarraypointer w local_length myid =
   let stop_time = get_time () in
 
   (* check vector data *)
-  Nvector_ops.n_vconst neg_half w;
+  Nvector_ops.const neg_half w;
   try
     for i=0 to local_length-1 do
       if not (fneq (Nvector_ops.get wdata i) neg_half) then raise Exit
@@ -333,7 +333,7 @@ let test_n_vsetarraypointer w local_length myid =
      clone w, throw that away, and get the storage for w.  *)
 
   (* create vector data *)
-  let _ = Nvector_ops.n_vclone w in
+  let _ = Nvector_ops.clone w in
 
   (* attach data to vector *)
   let start_time = get_time () in
@@ -341,7 +341,7 @@ let test_n_vsetarraypointer w local_length myid =
   let stop_time = get_time () in
 
   (* check vector data *)
-  Nvector_ops.n_vconst neg_half w;
+  Nvector_ops.const neg_half w;
   try
     for i=0 to local_length-1 do
       if not (fneq (Nvector_ops.get wdata i) neg_half) then raise Exit
@@ -360,7 +360,7 @@ let test_n_vsetarraypointer w local_length myid =
 (* ----------------------------------------------------------------------
  * N_VLinearSum Tests
  * --------------------------------------------------------------------*)
-let test_n_vlinearsum x y z local_length myid =
+let test_linearsum x y z local_length myid =
   let fails = ref 0 in
 
   let xdata = Nvector_ops.n_vgetarray x
@@ -377,7 +377,7 @@ let test_n_vlinearsum x y z local_length myid =
   done;
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearsum one x one y y;
+  Nvector_ops.linearsum one x one y y;
   let stop_time = get_time () in
 
   (* y should be vector of -1 *)
@@ -399,7 +399,7 @@ let test_n_vlinearsum x y z local_length myid =
   done;
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearsum neg_one x one y y;
+  Nvector_ops.linearsum neg_one x one y y;
   let stop_time = get_time () in
 
   (* y should be vector of +1 *)
@@ -422,7 +422,7 @@ let test_n_vlinearsum x y z local_length myid =
   done;
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearsum half x one y y;
+  Nvector_ops.linearsum half x one y y;
   let stop_time = get_time () in
 
   (* y should be vector of -1 *)
@@ -444,7 +444,7 @@ let test_n_vlinearsum x y z local_length myid =
   done;
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearsum one x one y x;
+  Nvector_ops.linearsum one x one y x;
   let stop_time = get_time () in
 
   (* y should be vector of +1 *)
@@ -466,7 +466,7 @@ let test_n_vlinearsum x y z local_length myid =
   done;
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearsum one x neg_one y x;
+  Nvector_ops.linearsum one x neg_one y x;
   let stop_time = get_time () in
 
   (* y should be vector of -1 *)
@@ -488,7 +488,7 @@ let test_n_vlinearsum x y z local_length myid =
   done;
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearsum one x two y x;
+  Nvector_ops.linearsum one x two y x;
   let stop_time = get_time () in
 
   (* x should be vector of +1 *)
@@ -511,7 +511,7 @@ let test_n_vlinearsum x y z local_length myid =
   done;
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearsum one x one y z;
+  Nvector_ops.linearsum one x one y z;
   let stop_time = get_time () in
 
   (* z should be vector of -1 *)
@@ -534,7 +534,7 @@ let test_n_vlinearsum x y z local_length myid =
   done;
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearsum one x neg_one y z;
+  Nvector_ops.linearsum one x neg_one y z;
   let stop_time = get_time () in
 
   (* z should be vector of +1 *)
@@ -557,7 +557,7 @@ let test_n_vlinearsum x y z local_length myid =
   done;
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearsum neg_one x one y z;
+  Nvector_ops.linearsum neg_one x one y z;
   let stop_time = get_time () in
 
   (* z should be vector of -1 *)
@@ -580,7 +580,7 @@ let test_n_vlinearsum x y z local_length myid =
   done;
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearsum one x two y z;
+  Nvector_ops.linearsum one x two y z;
   let stop_time = get_time () in
 
   (* z should be vector of +1 *)
@@ -603,7 +603,7 @@ let test_n_vlinearsum x y z local_length myid =
   done;
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearsum two x one y z;
+  Nvector_ops.linearsum two x one y z;
   let stop_time = get_time () in
 
   (* z should be vector of -1 *)
@@ -626,7 +626,7 @@ let test_n_vlinearsum x y z local_length myid =
   done;
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearsum neg_one x two y z;
+  Nvector_ops.linearsum neg_one x two y z;
   let stop_time = get_time () in
 
   (* z should be vector of +1 *)
@@ -649,7 +649,7 @@ let test_n_vlinearsum x y z local_length myid =
   done;
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearsum two x neg_one y z;
+  Nvector_ops.linearsum two x neg_one y z;
   let stop_time = get_time () in
 
   (* z should be vector of -1 *)
@@ -672,7 +672,7 @@ let test_n_vlinearsum x y z local_length myid =
   done;
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearsum two x two y z;
+  Nvector_ops.linearsum two x two y z;
   let stop_time = get_time () in
 
   (* z should be vector of +1 *)
@@ -695,7 +695,7 @@ let test_n_vlinearsum x y z local_length myid =
   done;
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearsum two x neg_two y z;
+  Nvector_ops.linearsum two x neg_two y z;
   let stop_time = get_time () in
 
   (* z should be vector of -1 *)
@@ -718,7 +718,7 @@ let test_n_vlinearsum x y z local_length myid =
   done;
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearsum two x half y z;
+  Nvector_ops.linearsum two x half y z;
   let stop_time = get_time () in
 
   (* z should be vector of +1 *)
@@ -736,7 +736,7 @@ let test_n_vlinearsum x y z local_length myid =
 (* ----------------------------------------------------------------------
  * N_VConst Test
  * --------------------------------------------------------------------*)
-let test_n_vconst x local_length myid =
+let test_const x local_length myid =
   let fails = ref 0 in
 
   let xdata = Nvector_ops.n_vgetarray x in
@@ -747,7 +747,7 @@ let test_n_vconst x local_length myid =
   done;
 
   let start_time = get_time () in
-  Nvector_ops.n_vconst one x;
+  Nvector_ops.const one x;
   let stop_time = get_time () in
 
   (* x should be vector of +1 *)
@@ -766,7 +766,7 @@ let test_n_vconst x local_length myid =
 (* ----------------------------------------------------------------------
  * N_VProd Test
  * --------------------------------------------------------------------*)
-let test_n_vprod x y z local_length myid =
+let test_prod x y z local_length myid =
   let fails = ref 0 in
 
   let xdata = Nvector_ops.n_vgetarray x
@@ -782,7 +782,7 @@ let test_n_vprod x y z local_length myid =
   done;
 
   let start_time = get_time () in
-  Nvector_ops.n_vprod x y z;
+  Nvector_ops.prod x y z;
   let stop_time = get_time () in
 
   (* z should be vector of -1 *)
@@ -801,7 +801,7 @@ let test_n_vprod x y z local_length myid =
 (* ----------------------------------------------------------------------
  * N_VDiv Test
  * --------------------------------------------------------------------*)
-let test_n_vdiv x y z local_length myid =
+let test_div x y z local_length myid =
   let fails = ref 0 in
 
   let xdata = Nvector_ops.n_vgetarray x in
@@ -816,7 +816,7 @@ let test_n_vdiv x y z local_length myid =
   done;
 
   let start_time = get_time () in
-  Nvector_ops.n_vdiv x y z;
+  Nvector_ops.div x y z;
   let stop_time = get_time () in
 
   (* z should be vector of +1/2 *)
@@ -835,7 +835,7 @@ let test_n_vdiv x y z local_length myid =
 (* ----------------------------------------------------------------------
  * N_VScale Tests
  * --------------------------------------------------------------------*)
-let test_n_vscale x z local_length myid =
+let test_scale x z local_length myid =
   let fails = ref 0 in
 
   let xdata = Nvector_ops.n_vgetarray x in
@@ -849,7 +849,7 @@ let test_n_vscale x z local_length myid =
   done;
 
   let start_time = get_time () in
-  Nvector_ops.n_vscale two x x;
+  Nvector_ops.scale two x x;
   let stop_time = get_time () in
 
   (* x should be vector of +1 *)
@@ -871,7 +871,7 @@ let test_n_vscale x z local_length myid =
   done;
 
   let start_time = get_time () in
-  Nvector_ops.n_vscale one x z;
+  Nvector_ops.scale one x z;
   let stop_time = get_time () in
 
   (* z should be vector of -1 *)
@@ -893,7 +893,7 @@ let test_n_vscale x z local_length myid =
   done;
 
   let start_time = get_time () in
-  Nvector_ops.n_vscale neg_one x z;
+  Nvector_ops.scale neg_one x z;
   let stop_time = get_time () in
 
   (* z should be vector of +1 *)
@@ -915,7 +915,7 @@ let test_n_vscale x z local_length myid =
   done;
 
   let start_time = get_time () in
-  Nvector_ops.n_vscale two x z;
+  Nvector_ops.scale two x z;
   let stop_time = get_time () in
 
   (* z should be vector of -1 *)
@@ -934,7 +934,7 @@ let test_n_vscale x z local_length myid =
 (* ----------------------------------------------------------------------
  * N_VAbs Test
  * --------------------------------------------------------------------*)
-let test_n_vabs x z local_length myid =
+let test_abs x z local_length myid =
   let fails = ref 0 in
 
   let xdata = Nvector_ops.n_vgetarray x in
@@ -947,7 +947,7 @@ let test_n_vabs x z local_length myid =
   done;
 
   let start_time = get_time () in
-  Nvector_ops.n_vabs x z;
+  Nvector_ops.abs x z;
   let stop_time = get_time () in
 
   (* z should be vector of +1 *)
@@ -966,7 +966,7 @@ let test_n_vabs x z local_length myid =
 (* ----------------------------------------------------------------------
  * N_VInv Test
  * --------------------------------------------------------------------*)
-let test_n_vinv x z local_length myid =
+let test_inv x z local_length myid =
   let fails = ref 0 in
 
   let xdata = Nvector_ops.n_vgetarray x in
@@ -979,7 +979,7 @@ let test_n_vinv x z local_length myid =
   done;
 
   let start_time = get_time () in
-  Nvector_ops.n_vinv x z;
+  Nvector_ops.inv x z;
   let stop_time = get_time () in
 
   (* z should be vector of +1/2 *)
@@ -998,7 +998,7 @@ let test_n_vinv x z local_length myid =
 (* ----------------------------------------------------------------------
  * N_VAddConst Test
  * --------------------------------------------------------------------*)
-let test_n_vaddconst x z local_length myid =
+let test_addconst x z local_length myid =
   let fails = ref 0 in
 
   let xdata = Nvector_ops.n_vgetarray x in
@@ -1011,7 +1011,7 @@ let test_n_vaddconst x z local_length myid =
   done;
 
   let start_time = get_time () in
-  Nvector_ops.n_vaddconst x neg_two z;
+  Nvector_ops.addconst x neg_two z;
   let stop_time = get_time () in
 
   (* z should be vector of -1 *)
@@ -1030,7 +1030,7 @@ let test_n_vaddconst x z local_length myid =
 (* ----------------------------------------------------------------------
  * N_VDotProd Test
  * --------------------------------------------------------------------*)
-let test_n_vdotprod x y local_length global_length myid =
+let test_dotprod x y local_length global_length myid =
   let fails = ref 0 in
 
   let xdata = Nvector_ops.n_vgetarray x in
@@ -1043,7 +1043,7 @@ let test_n_vdotprod x y local_length global_length myid =
   done;
 
   let start_time = get_time () in
-  let ans = Nvector_ops.n_vdotprod x y in
+  let ans = Nvector_ops.dotprod x y in
   let stop_time = get_time () in
 
   (* ans should equal global vector length *)
@@ -1062,7 +1062,7 @@ let test_n_vdotprod x y local_length global_length myid =
 (* ----------------------------------------------------------------------
  * N_VMaxNorm Test
  * --------------------------------------------------------------------*)
-let test_n_vmaxnorm x local_length myid =
+let test_maxnorm x local_length myid =
   let fails = ref 0 in
 
   let xdata = Nvector_ops.n_vgetarray x in
@@ -1074,7 +1074,7 @@ let test_n_vmaxnorm x local_length myid =
   Nvector_ops.set xdata (local_length-1) neg_two;
 
   let start_time = get_time () in
-  let ans = Nvector_ops.n_vmaxnorm x in
+  let ans = Nvector_ops.maxnorm x in
   let stop_time = get_time () in
 
   (* ans should equal 2 *)
@@ -1093,7 +1093,7 @@ let test_n_vmaxnorm x local_length myid =
 (* ----------------------------------------------------------------------
  * N_VWrmsNorm Test
  * --------------------------------------------------------------------*)
-let test_n_vwrmsnorm x w local_length myid =
+let test_wrmsnorm x w local_length myid =
   let fails = ref 0 in
 
   let xdata = Nvector_ops.n_vgetarray x in
@@ -1106,7 +1106,7 @@ let test_n_vwrmsnorm x w local_length myid =
   done;
 
   let start_time = get_time () in
-  let ans = Nvector_ops.n_vwrmsnorm x w in
+  let ans = Nvector_ops.wrmsnorm x w in
   let stop_time = get_time () in
 
   (* ans should equal 1/4 *)
@@ -1125,7 +1125,7 @@ let test_n_vwrmsnorm x w local_length myid =
 (* ----------------------------------------------------------------------
  * N_VWrmsNormMask Test
  * --------------------------------------------------------------------*)
-let test_n_vwrmsnormmask x w id local_length global_length myid =
+let test_wrmsnormmask x w id local_length global_length myid =
   let fails = ref 0 in
 
   let xdata = Nvector_ops.n_vgetarray x in
@@ -1144,7 +1144,7 @@ let test_n_vwrmsnormmask x w id local_length global_length myid =
   if myid = 0 then Nvector_ops.set id_data (local_length-1) zero;
 
   let start_time = get_time () in
-  let ans = Nvector_ops.n_vwrmsnormmask x w id in
+  let ans = Nvector_ops.wrmsnormmask x w id in
   let stop_time = get_time () in
 
   (* ans equals 1/4 (same as wrms norm) *)
@@ -1158,7 +1158,7 @@ let test_n_vwrmsnormmask x w id local_length global_length myid =
   print_time "N_VWrmsNormMask" (stop_time -. start_time);
   !fails
 
-let test_n_vwrmsnormmask_lt400 x w id local_length global_length myid =
+let test_wrmsnormmask_lt400 x w id local_length global_length myid =
   let fails = ref 0 in
 
   let xdata = Nvector_ops.n_vgetarray x in
@@ -1175,7 +1175,7 @@ let test_n_vwrmsnormmask_lt400 x w id local_length global_length myid =
   done;
 
   let start_time = get_time () in
-  let ans = Nvector_ops.n_vwrmsnormmask x w id in
+  let ans = Nvector_ops.wrmsnormmask x w id in
   let stop_time = get_time () in
 
   (* ans equals 1/4 (same as wrms norm) *)
@@ -1198,7 +1198,7 @@ let test_n_vwrmsnormmask_lt400 x w id local_length global_length myid =
   done;
 
   let start_time = get_time () in
-  let ans = Nvector_ops.n_vwrmsnormmask x w id in
+  let ans = Nvector_ops.wrmsnormmask x w id in
   let stop_time = get_time () in
 
   (* ans equals 0 (skips all elements) *)
@@ -1216,7 +1216,7 @@ let test_n_vwrmsnormmask_lt400 x w id local_length global_length myid =
 (* ----------------------------------------------------------------------
  * N_VMin Test
  * --------------------------------------------------------------------*)
-let test_n_vmin x local_length myid =
+let test_min x local_length myid =
   let fails = ref 0 in
 
   let xdata = Nvector_ops.n_vgetarray x in
@@ -1228,7 +1228,7 @@ let test_n_vmin x local_length myid =
   Nvector_ops.set xdata (local_length-1) neg_one;
 
   let start_time = get_time () in
-  let ans = Nvector_ops.n_vmin x in
+  let ans = Nvector_ops.min x in
   let stop_time = get_time () in
 
   (* ans should equal -1 *)
@@ -1247,7 +1247,7 @@ let test_n_vmin x local_length myid =
 (* ----------------------------------------------------------------------
  * N_VWL2Norm Test
  * --------------------------------------------------------------------*)
-let test_n_vwl2norm x w local_length global_length myid =
+let test_wl2norm x w local_length global_length myid =
   let fails = ref 0 in
 
   let xdata = Nvector_ops.n_vgetarray x in
@@ -1260,7 +1260,7 @@ let test_n_vwl2norm x w local_length global_length myid =
   done;
 
   let start_time = get_time () in
-  let ans = Nvector_ops.n_vwl2norm x w in
+  let ans = Nvector_ops.wl2norm x w in
   let stop_time = get_time () in
 
   (* ans should equal 1/4 * sqrt(global_length) *)
@@ -1281,7 +1281,7 @@ let test_n_vwl2norm x w local_length global_length myid =
 (* ----------------------------------------------------------------------
  * N_VL1Norm Test
  * --------------------------------------------------------------------*)
-let test_n_vl1norm x local_length global_length myid =
+let test_l1norm x local_length global_length myid =
   let fails = ref 0 in
 
   let xdata = Nvector_ops.n_vgetarray x in
@@ -1292,7 +1292,7 @@ let test_n_vl1norm x local_length global_length myid =
   done;
 
   let start_time = get_time () in
-  let ans = Nvector_ops.n_vl1norm x in
+  let ans = Nvector_ops.l1norm x in
   let stop_time = get_time () in
 
   (* ans should equal global_length *)
@@ -1311,7 +1311,7 @@ let test_n_vl1norm x local_length global_length myid =
 (* ----------------------------------------------------------------------
  * N_VCompare
  * --------------------------------------------------------------------*)
-let test_n_vcompare x z local_length myid =
+let test_compare x z local_length myid =
   let fails = ref 0
   and failure = ref 0
   in
@@ -1344,7 +1344,7 @@ let test_n_vcompare x z local_length myid =
   done;
 
   let start_time = get_time () in
-  Nvector_ops.n_vcompare one x z;
+  Nvector_ops.compare one x z;
   let stop_time = get_time () in
 
   (* check return vector *)
@@ -1380,7 +1380,7 @@ let test_n_vcompare x z local_length myid =
 (* ----------------------------------------------------------------------
  * N_VInvTest
  * --------------------------------------------------------------------*)
-let test_n_vinvtest x z local_length myid =
+let test_invtest x z local_length myid =
   let fails = ref 0
   and failure = ref 0
   in
@@ -1402,7 +1402,7 @@ let test_n_vinvtest x z local_length myid =
   done;
 
   let start_time = get_time () in
-  let test = Nvector_ops.n_vinvtest x z in
+  let test = Nvector_ops.invtest x z in
   let stop_time = get_time () in
 
   (* z should be vector of +2 *)
@@ -1431,7 +1431,7 @@ let test_n_vinvtest x z local_length myid =
   done;
 
   let start_time = get_time () in
-  let test = Nvector_ops.n_vinvtest x z in
+  let test = Nvector_ops.invtest x z in
   let stop_time = get_time () in
 
   (* check return vector *)
@@ -1460,7 +1460,7 @@ let test_n_vinvtest x z local_length myid =
 (* ----------------------------------------------------------------------
  * N_VConstrMask
  * --------------------------------------------------------------------*)
-let test_n_vconstrmask c x m local_length myid =
+let test_constrmask c x m local_length myid =
   let fails = ref 0
   and failure = ref 0
   in
@@ -1520,7 +1520,7 @@ let test_n_vconstrmask c x m local_length myid =
   done;
 
   let start_time = get_time () in
-  let test = Nvector_ops.n_vconstrmask c x m in
+  let test = Nvector_ops.constrmask c x m in
   let stop_time = get_time () in
 
   (* m should be vector of 0 *)
@@ -1572,7 +1572,7 @@ let test_n_vconstrmask c x m local_length myid =
   done;
 
   let start_time = get_time () in
-  let test = Nvector_ops.n_vconstrmask c x m in
+  let test = Nvector_ops.constrmask c x m in
   let stop_time = get_time () in
 
   (* check mask vector *)
@@ -1601,7 +1601,7 @@ let test_n_vconstrmask c x m local_length myid =
 (* ----------------------------------------------------------------------
  * N_VMinQuotient Test
  * --------------------------------------------------------------------*)
-let test_n_vminquotient num denom local_length myid =
+let test_minquotient num denom local_length myid =
   let fails = ref 0 in
 
   let num_data = Nvector_ops.n_vgetarray num in
@@ -1617,7 +1617,7 @@ let test_n_vminquotient num denom local_length myid =
   Nvector_ops.set num_data (local_length-1) one;
 
   let start_time = get_time () in
-  let ans = Nvector_ops.n_vminquotient num denom in
+  let ans = Nvector_ops.minquotient num denom in
   let stop_time = get_time () in
 
   (* ans should equal 1/2 *)
@@ -1639,7 +1639,7 @@ let test_n_vminquotient num denom local_length myid =
   done;
 
   let start_time = get_time () in
-  let ans = Nvector_ops.n_vminquotient num denom in
+  let ans = Nvector_ops.minquotient num denom in
   let stop_time = get_time () in
 
   (* ans should equal big_real *)
@@ -1657,12 +1657,12 @@ let test_n_vminquotient num denom local_length myid =
 (* ----------------------------------------------------------------------
  * N_VLinearCombination Test
  * --------------------------------------------------------------------*)
-let test_n_vlinearcombination x local_length myid =
+let test_linearcombination x local_length myid =
   let fails = ref 0 in
 
   (* create vectors for testing *)
   (* set vectors in vector array *)
-  let v = Array.init 3 (fun _ -> Nvector_ops.n_vclone x) in
+  let v = Array.init 3 (fun _ -> Nvector_ops.clone x) in
   let v_len1, v_len2, v_len3 = Array.sub v 0 1, Array.sub v 0 2, v in
   let y1, y2, y3 = v.(0), v.(1), v.(2) in
 
@@ -1670,11 +1670,11 @@ let test_n_vlinearcombination x local_length myid =
   let c = RealArray.make 3 zero in
 
   (* Case 1a: v.(0) = a v.(0), N_VScale *)
-  Nvector_ops.n_vconst two y1; (* fill vector data *)
+  Nvector_ops.const two y1; (* fill vector data *)
   c.{0} <- half; (* set scaling factors *)
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearcombination c v_len1 y1;
+  Nvector_ops.linearcombination c v_len1 y1;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -1691,12 +1691,12 @@ let test_n_vlinearcombination x local_length myid =
   (* Case 1b: X = a v.(0), N_VScale *)
 
   (* fill vector data and scaling factors *)
-  Nvector_ops.n_vconst two y1;
+  Nvector_ops.const two y1;
   c.{0} <- half;
-  Nvector_ops.n_vconst zero x;
+  Nvector_ops.const zero x;
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearcombination c v_len1 x;
+  Nvector_ops.linearcombination c v_len1 x;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -1711,13 +1711,13 @@ let test_n_vlinearcombination x local_length myid =
     (Nvector_ops.max_time x (stop_time -. start_time));
 
   (* Case 2a: v.(0) = a v.(0) + b v.(1), N_VLinearSum *)
-  Nvector_ops.n_vconst neg_two y1; (* fill vector data *)
-  Nvector_ops.n_vconst one y2;
+  Nvector_ops.const neg_two y1; (* fill vector data *)
+  Nvector_ops.const one y2;
   c.{0} <- half;                    (* set scaling factors *)
   c.{1} <- two;
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearcombination c v_len2 y1;
+  Nvector_ops.linearcombination c v_len2 y1;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -1732,15 +1732,15 @@ let test_n_vlinearcombination x local_length myid =
     (Nvector_ops.max_time x (stop_time -. start_time));
 
   (* Case 2b: X = a v.(0) + b v.(1), N_VLinearSum *)
-  Nvector_ops.n_vconst one y1;      (* fill vector data and scaling factors *)
-  Nvector_ops.n_vconst neg_two y2;
+  Nvector_ops.const one y1;      (* fill vector data and scaling factors *)
+  Nvector_ops.const neg_two y2;
   c.{0} <- two;
   c.{1} <- half;
 
-  Nvector_ops.n_vconst zero x;
+  Nvector_ops.const zero x;
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearcombination c v_len2 x;
+  Nvector_ops.linearcombination c v_len2 x;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -1755,15 +1755,15 @@ let test_n_vlinearcombination x local_length myid =
     (Nvector_ops.max_time x (stop_time -. start_time));
 
   (* Case 3a: v.(0) = v.(0) + b v.(1) + c v.(2) *)
-  Nvector_ops.n_vconst two y1;        (* fill vector data *)
-  Nvector_ops.n_vconst neg_two y2;
-  Nvector_ops.n_vconst neg_one y3;
+  Nvector_ops.const two y1;        (* fill vector data *)
+  Nvector_ops.const neg_two y2;
+  Nvector_ops.const neg_one y3;
   c.{0} <- one;                        (* set scaling factors *)
   c.{1} <- half;
   c.{2} <- neg_two;
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearcombination c v_len3 y1;
+  Nvector_ops.linearcombination c v_len3 y1;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -1778,15 +1778,15 @@ let test_n_vlinearcombination x local_length myid =
     (Nvector_ops.max_time x (stop_time -. start_time));
 
   (* Case 3b: v.(0) = a v.(0) + b v.(1) + c v.(2) *)
-  Nvector_ops.n_vconst one y1;        (* fill vector data *)
-  Nvector_ops.n_vconst neg_two y2;
-  Nvector_ops.n_vconst neg_one y3;
+  Nvector_ops.const one y1;        (* fill vector data *)
+  Nvector_ops.const neg_two y2;
+  Nvector_ops.const neg_one y3;
   c.{0} <- two;                        (* set scaling factors *)
   c.{1} <- half;
   c.{2} <- neg_one;
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearcombination c v_len3 y1;
+  Nvector_ops.linearcombination c v_len3 y1;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -1801,17 +1801,17 @@ let test_n_vlinearcombination x local_length myid =
     (Nvector_ops.max_time x (stop_time -. start_time));
 
   (* Case 3c: X = a v.(0) + b v.(1) + c v.(2) *)
-  Nvector_ops.n_vconst one y1;    (* fill vector data and set scaling factors *)
-  Nvector_ops.n_vconst neg_two y2;
-  Nvector_ops.n_vconst neg_one y3;
+  Nvector_ops.const one y1;    (* fill vector data and set scaling factors *)
+  Nvector_ops.const neg_two y2;
+  Nvector_ops.const neg_one y3;
   c.{0} <- two;
   c.{1} <- half;
   c.{2} <- neg_one;
 
-  Nvector_ops.n_vconst zero x;
+  Nvector_ops.const zero x;
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearcombination c v_len3 x;
+  Nvector_ops.linearcombination c v_len3 x;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -1830,24 +1830,24 @@ let test_n_vlinearcombination x local_length myid =
 (* ----------------------------------------------------------------------
  * N_VScaleaddmulti Test
  * --------------------------------------------------------------------*)
-let test_n_vscaleaddmulti x local_length myid =
+let test_scaleaddmulti x local_length myid =
   let fails = ref 0 in
 
   let avals = RealArray.make 3 zero
-  and z = Array.init 3 (fun _ -> Nvector_ops.n_vclone x)
-  and v = Array.init 3 (fun _ -> Nvector_ops.n_vclone x)
+  and z = Array.init 3 (fun _ -> Nvector_ops.clone x)
+  and v = Array.init 3 (fun _ -> Nvector_ops.clone x)
   in
   let v_len1, v_len2, v_len3 = Array.sub v 0 1, Array.sub v 0 2, v
   and z_len1 = Array.sub z 0 1
   in
 
   (* Case 1a: v.(0) = a.(0) x + v.(0), N_VLinearSum *)
-  Nvector_ops.n_vconst one x;           (* fill vector data *)
-  Nvector_ops.n_vconst neg_one v.(0);
+  Nvector_ops.const one x;           (* fill vector data *)
+  Nvector_ops.const neg_one v.(0);
   avals.{0} <- two;                     (* set scaling factors *)
 
   let start_time = get_time () in
-  Nvector_ops.n_vscaleaddmulti avals x v_len1 v_len1;
+  Nvector_ops.scaleaddmulti avals x v_len1 v_len1;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -1864,14 +1864,14 @@ let test_n_vscaleaddmulti x local_length myid =
   (* Case 1b: z.(0) = a.(0) x + v.(0), N_VLinearSum *)
 
   (* fill vector data and set scaling factors *)
-  Nvector_ops.n_vconst one x;
-  Nvector_ops.n_vconst neg_one v.(0);
+  Nvector_ops.const one x;
+  Nvector_ops.const neg_one v.(0);
   avals.{0} <- two;
 
-  Nvector_ops.n_vconst zero z.(0);
+  Nvector_ops.const zero z.(0);
 
   let start_time = get_time () in
-  Nvector_ops.n_vscaleaddmulti avals x v_len1 z_len1;
+  Nvector_ops.scaleaddmulti avals x v_len1 z_len1;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -1886,16 +1886,16 @@ let test_n_vscaleaddmulti x local_length myid =
     (Nvector_ops.max_time x (stop_time -. start_time));
 
   (* Case 2a: v.(i) = a.(i) x + v.(i), N_VScaleAddMulti *)
-  Nvector_ops.n_vconst one x;             (* fill vector data *)
-  Nvector_ops.n_vconst neg_two v.(0);
-  Nvector_ops.n_vconst two v.(1);
-  Nvector_ops.n_vconst neg_one v.(2);
+  Nvector_ops.const one x;             (* fill vector data *)
+  Nvector_ops.const neg_two v.(0);
+  Nvector_ops.const two v.(1);
+  Nvector_ops.const neg_one v.(2);
   avals.{0} <- one;                        (* set scaling factors *)
   avals.{1} <- neg_two;
   avals.{2} <- two;
 
   let start_time = get_time () in
-  Nvector_ops.n_vscaleaddmulti avals x v_len3 v_len3;
+  Nvector_ops.scaleaddmulti avals x v_len3 v_len3;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -1915,20 +1915,20 @@ let test_n_vscaleaddmulti x local_length myid =
   (* Case 2b: z.(i) = a.(i) x + v.(i), N_VScaleAddMulti *)
 
   (* fill vector data and set scaling factors *)
-  Nvector_ops.n_vconst one x;
-  Nvector_ops.n_vconst neg_two v.(0);
-  Nvector_ops.n_vconst two v.(1);
-  Nvector_ops.n_vconst neg_one v.(2);
+  Nvector_ops.const one x;
+  Nvector_ops.const neg_two v.(0);
+  Nvector_ops.const two v.(1);
+  Nvector_ops.const neg_one v.(2);
   avals.{0} <- one;
   avals.{1} <- neg_two;
   avals.{2} <- two;
 
-  Nvector_ops.n_vconst two z.(0);
-  Nvector_ops.n_vconst two z.(1);
-  Nvector_ops.n_vconst two z.(2);
+  Nvector_ops.const two z.(0);
+  Nvector_ops.const two z.(1);
+  Nvector_ops.const two z.(2);
 
   let start_time = get_time () in
-  Nvector_ops.n_vscaleaddmulti avals x v_len3 z;
+  Nvector_ops.scaleaddmulti avals x v_len3 z;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -1950,23 +1950,23 @@ let test_n_vscaleaddmulti x local_length myid =
 (* ----------------------------------------------------------------------
  * N_VDotProdMulti Test
  * --------------------------------------------------------------------*)
-let test_n_vdotprodmulti x local_length global_length myid =
+let test_dotprodmulti x local_length global_length myid =
   let fails = ref 0
   and dotprods = RealArray.make 3 zero
   in
 
   (* create vectors for testing *)
-  let v = Array.init 3 (fun _ -> Nvector_ops.n_vclone x) in
+  let v = Array.init 3 (fun _ -> Nvector_ops.clone x) in
   let v_len1, v_len2, v_len3 = Array.sub v 0 1, Array.sub v 0 2, v in
 
   (* Case 1: d.(0) = z . v.(0), N_VDotProd *)
 
   (* fill vector data *)
-  Nvector_ops.n_vconst two x;
-  Nvector_ops.n_vconst half v.(0);
+  Nvector_ops.const two x;
+  Nvector_ops.const half v.(0);
 
   let start_time = get_time () in
-  Nvector_ops.n_vdotprodmulti x v_len1 dotprods;
+  Nvector_ops.dotprodmulti x v_len1 dotprods;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -1983,13 +1983,13 @@ let test_n_vdotprodmulti x local_length global_length myid =
   (* Case 2: d.(i) = z . v.(i), N_VDotProd *)
 
   (* fill vector data *)
-  Nvector_ops.n_vconst two x;
-  Nvector_ops.n_vconst neg_half v.(0);
-  Nvector_ops.n_vconst half v.(1);
-  Nvector_ops.n_vconst one v.(2);
+  Nvector_ops.const two x;
+  Nvector_ops.const neg_half v.(0);
+  Nvector_ops.const half v.(1);
+  Nvector_ops.const one v.(2);
 
   let start_time = get_time () in
-  Nvector_ops.n_vdotprodmulti x v_len3 dotprods;
+  Nvector_ops.dotprodmulti x v_len3 dotprods;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -2011,25 +2011,25 @@ let test_n_vdotprodmulti x local_length global_length myid =
 (* ----------------------------------------------------------------------
  * N_VLinearSumVectorArray Test
  * --------------------------------------------------------------------*)
-let test_n_vlinearsumvectorarray v local_length myid =
+let test_linearsumvectorarray v local_length myid =
   let fails = ref 0 in
 
   (* create vectors for testing *)
-  let x = Array.init 3 (fun _ -> Nvector_ops.n_vclone v) in
-  let y = Array.init 3 (fun _ -> Nvector_ops.n_vclone v) in
-  let z = Array.init 3 (fun _ -> Nvector_ops.n_vclone v) in
+  let x = Array.init 3 (fun _ -> Nvector_ops.clone v) in
+  let y = Array.init 3 (fun _ -> Nvector_ops.clone v) in
+  let z = Array.init 3 (fun _ -> Nvector_ops.clone v) in
   let x_len1, y_len1, z_len1 = Array.sub x 0 1, Array.sub y 0 1, Array.sub z 0 1
   in
 
   (* Case 0: z.(0) = a x.(0) + b y.(0), N_VLinearSum *)
 
   (* fill vector data *)
-  Nvector_ops.n_vconst neg_half x.(0);
-  Nvector_ops.n_vconst two y.(0);
-  Nvector_ops.n_vconst two z.(0);
+  Nvector_ops.const neg_half x.(0);
+  Nvector_ops.const two y.(0);
+  Nvector_ops.const two z.(0);
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearsumvectorarray two x_len1 half y_len1 z_len1;
+  Nvector_ops.linearsumvectorarray two x_len1 half y_len1 z_len1;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -2046,17 +2046,17 @@ let test_n_vlinearsumvectorarray v local_length myid =
   (* Case 1a: y.(i) = x.(i) + y.(i), (VaxpyVectorArray Case 1) *)
 
   (* fill vector data *)
-  Nvector_ops.n_vconst neg_two x.(0);
-  Nvector_ops.n_vconst one y.(0);
+  Nvector_ops.const neg_two x.(0);
+  Nvector_ops.const one y.(0);
 
-  Nvector_ops.n_vconst two x.(1);
-  Nvector_ops.n_vconst neg_two y.(1);
+  Nvector_ops.const two x.(1);
+  Nvector_ops.const neg_two y.(1);
 
-  Nvector_ops.n_vconst two x.(2);
-  Nvector_ops.n_vconst neg_one y.(2);
+  Nvector_ops.const two x.(2);
+  Nvector_ops.const neg_one y.(2);
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearsumvectorarray one x one y y;
+  Nvector_ops.linearsumvectorarray one x one y y;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -2076,17 +2076,17 @@ let test_n_vlinearsumvectorarray v local_length myid =
   (* Case 1b: y = -x + y, (VaxpyVectorArray Case 2) *)
 
   (* fill vector data *)
-  Nvector_ops.n_vconst two x.(0);
-  Nvector_ops.n_vconst one y.(0);
+  Nvector_ops.const two x.(0);
+  Nvector_ops.const one y.(0);
 
-  Nvector_ops.n_vconst neg_two x.(1);
-  Nvector_ops.n_vconst neg_two y.(1);
+  Nvector_ops.const neg_two x.(1);
+  Nvector_ops.const neg_two y.(1);
 
-  Nvector_ops.n_vconst neg_two x.(2);
-  Nvector_ops.n_vconst neg_one y.(2);
+  Nvector_ops.const neg_two x.(2);
+  Nvector_ops.const neg_one y.(2);
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearsumvectorarray neg_one x one y y;
+  Nvector_ops.linearsumvectorarray neg_one x one y y;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -2106,17 +2106,17 @@ let test_n_vlinearsumvectorarray v local_length myid =
   (* Case 1c: y = ax + y, (VaxpyVectorArray Case 3) *)
 
   (* fill vector data *)
-  Nvector_ops.n_vconst two x.(0);
-  Nvector_ops.n_vconst neg_two y.(0);
+  Nvector_ops.const two x.(0);
+  Nvector_ops.const neg_two y.(0);
 
-  Nvector_ops.n_vconst two x.(1);
-  Nvector_ops.n_vconst neg_one y.(1);
+  Nvector_ops.const two x.(1);
+  Nvector_ops.const neg_one y.(1);
 
-  Nvector_ops.n_vconst neg_two x.(2);
-  Nvector_ops.n_vconst two y.(2);
+  Nvector_ops.const neg_two x.(2);
+  Nvector_ops.const two y.(2);
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearsumvectorarray half x one y y;
+  Nvector_ops.linearsumvectorarray half x one y y;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -2136,17 +2136,17 @@ let test_n_vlinearsumvectorarray v local_length myid =
   (* Case 2a: x = x + y, (VaxpyVectorArray Case 1) *)
 
   (* fill vector data *)
-  Nvector_ops.n_vconst neg_two x.(0);
-  Nvector_ops.n_vconst one y.(0);
+  Nvector_ops.const neg_two x.(0);
+  Nvector_ops.const one y.(0);
 
-  Nvector_ops.n_vconst two x.(1);
-  Nvector_ops.n_vconst neg_two y.(1);
+  Nvector_ops.const two x.(1);
+  Nvector_ops.const neg_two y.(1);
 
-  Nvector_ops.n_vconst two x.(2);
-  Nvector_ops.n_vconst neg_one y.(2);
+  Nvector_ops.const two x.(2);
+  Nvector_ops.const neg_one y.(2);
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearsumvectorarray one x one y x;
+  Nvector_ops.linearsumvectorarray one x one y x;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -2166,17 +2166,17 @@ let test_n_vlinearsumvectorarray v local_length myid =
   (* Case 2b: x = x - y, (VaxpyVectorArray Case 2) *)
 
   (* fill vector data *)
-  Nvector_ops.n_vconst one x.(0);
-  Nvector_ops.n_vconst two y.(0);
+  Nvector_ops.const one x.(0);
+  Nvector_ops.const two y.(0);
 
-  Nvector_ops.n_vconst neg_two x.(1);
-  Nvector_ops.n_vconst neg_two y.(1);
+  Nvector_ops.const neg_two x.(1);
+  Nvector_ops.const neg_two y.(1);
 
-  Nvector_ops.n_vconst neg_one x.(2);
-  Nvector_ops.n_vconst neg_two y.(2);
+  Nvector_ops.const neg_one x.(2);
+  Nvector_ops.const neg_two y.(2);
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearsumvectorarray one x neg_one y x;
+  Nvector_ops.linearsumvectorarray one x neg_one y x;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -2196,17 +2196,17 @@ let test_n_vlinearsumvectorarray v local_length myid =
   (* Case 2c: x = x + by, (VaxpyVectorArray Case 3) *)
 
   (* fill vector data *)
-  Nvector_ops.n_vconst neg_two x.(0);
-  Nvector_ops.n_vconst two y.(0);
+  Nvector_ops.const neg_two x.(0);
+  Nvector_ops.const two y.(0);
 
-  Nvector_ops.n_vconst neg_one x.(1);
-  Nvector_ops.n_vconst two y.(1);
+  Nvector_ops.const neg_one x.(1);
+  Nvector_ops.const two y.(1);
 
-  Nvector_ops.n_vconst two x.(2);
-  Nvector_ops.n_vconst neg_two y.(2);
+  Nvector_ops.const two x.(2);
+  Nvector_ops.const neg_two y.(2);
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearsumvectorarray one x half y x;
+  Nvector_ops.linearsumvectorarray one x half y x;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -2226,20 +2226,20 @@ let test_n_vlinearsumvectorarray v local_length myid =
   (* Case 3: z = x + y, (VSumVectorArray) *)
 
   (* fill vector data *)
-  Nvector_ops.n_vconst neg_two x.(0);
-  Nvector_ops.n_vconst one y.(0);
-  Nvector_ops.n_vconst two z.(0);
+  Nvector_ops.const neg_two x.(0);
+  Nvector_ops.const one y.(0);
+  Nvector_ops.const two z.(0);
 
-  Nvector_ops.n_vconst neg_one x.(1);
-  Nvector_ops.n_vconst one y.(1);
-  Nvector_ops.n_vconst two z.(0);
+  Nvector_ops.const neg_one x.(1);
+  Nvector_ops.const one y.(1);
+  Nvector_ops.const two z.(0);
 
-  Nvector_ops.n_vconst two x.(2);
-  Nvector_ops.n_vconst neg_one y.(2);
-  Nvector_ops.n_vconst two z.(0);
+  Nvector_ops.const two x.(2);
+  Nvector_ops.const neg_one y.(2);
+  Nvector_ops.const two z.(0);
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearsumvectorarray one x one y z;
+  Nvector_ops.linearsumvectorarray one x one y z;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -2259,20 +2259,20 @@ let test_n_vlinearsumvectorarray v local_length myid =
   (* Case 4a: z = x - y, (VDiffVectorArray) *)
 
   (* fill vector data *)
-  Nvector_ops.n_vconst neg_two x.(0);
-  Nvector_ops.n_vconst neg_one y.(0);
-  Nvector_ops.n_vconst two z.(0);
+  Nvector_ops.const neg_two x.(0);
+  Nvector_ops.const neg_one y.(0);
+  Nvector_ops.const two z.(0);
 
-  Nvector_ops.n_vconst neg_one x.(1);
-  Nvector_ops.n_vconst neg_one y.(1);
-  Nvector_ops.n_vconst two z.(0);
+  Nvector_ops.const neg_one x.(1);
+  Nvector_ops.const neg_one y.(1);
+  Nvector_ops.const two z.(0);
 
-  Nvector_ops.n_vconst two x.(2);
-  Nvector_ops.n_vconst one y.(2);
-  Nvector_ops.n_vconst two z.(0);
+  Nvector_ops.const two x.(2);
+  Nvector_ops.const one y.(2);
+  Nvector_ops.const two z.(0);
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearsumvectorarray one x neg_one y z;
+  Nvector_ops.linearsumvectorarray one x neg_one y z;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -2292,20 +2292,20 @@ let test_n_vlinearsumvectorarray v local_length myid =
   (* Case 4b: z = -x + y, (VDiffVectorArray) *)
 
   (* fill vector data *)
-  Nvector_ops.n_vconst two x.(0);
-  Nvector_ops.n_vconst one y.(0);
-  Nvector_ops.n_vconst two z.(0);
+  Nvector_ops.const two x.(0);
+  Nvector_ops.const one y.(0);
+  Nvector_ops.const two z.(0);
 
-  Nvector_ops.n_vconst neg_one x.(1);
-  Nvector_ops.n_vconst neg_one y.(1);
-  Nvector_ops.n_vconst two z.(0);
+  Nvector_ops.const neg_one x.(1);
+  Nvector_ops.const neg_one y.(1);
+  Nvector_ops.const two z.(0);
 
-  Nvector_ops.n_vconst neg_two x.(2);
-  Nvector_ops.n_vconst neg_one y.(2);
-  Nvector_ops.n_vconst two z.(0);
+  Nvector_ops.const neg_two x.(2);
+  Nvector_ops.const neg_one y.(2);
+  Nvector_ops.const two z.(0);
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearsumvectorarray neg_one x one y z;
+  Nvector_ops.linearsumvectorarray neg_one x one y z;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -2325,20 +2325,20 @@ let test_n_vlinearsumvectorarray v local_length myid =
   (* Case 5a: z = x + by, (VLin1VectorArray) *)
 
   (* fill vector data *)
-  Nvector_ops.n_vconst neg_two x.(0);
-  Nvector_ops.n_vconst two y.(0);
-  Nvector_ops.n_vconst two z.(0);
+  Nvector_ops.const neg_two x.(0);
+  Nvector_ops.const two y.(0);
+  Nvector_ops.const two z.(0);
 
-  Nvector_ops.n_vconst one x.(1);
-  Nvector_ops.n_vconst neg_two y.(1);
-  Nvector_ops.n_vconst two z.(0);
+  Nvector_ops.const one x.(1);
+  Nvector_ops.const neg_two y.(1);
+  Nvector_ops.const two z.(0);
 
-  Nvector_ops.n_vconst half x.(2);
-  Nvector_ops.n_vconst one y.(2);
-  Nvector_ops.n_vconst two z.(0);
+  Nvector_ops.const half x.(2);
+  Nvector_ops.const one y.(2);
+  Nvector_ops.const two z.(0);
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearsumvectorarray one x half y z;
+  Nvector_ops.linearsumvectorarray one x half y z;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -2358,20 +2358,20 @@ let test_n_vlinearsumvectorarray v local_length myid =
   (* Case 5b: z = ax + y, (VLin1VectorArray) *)
 
   (* fill vector data *)
-  Nvector_ops.n_vconst neg_two x.(0);
-  Nvector_ops.n_vconst neg_two y.(0);
-  Nvector_ops.n_vconst two z.(0);
+  Nvector_ops.const neg_two x.(0);
+  Nvector_ops.const neg_two y.(0);
+  Nvector_ops.const two z.(0);
 
-  Nvector_ops.n_vconst one x.(1);
-  Nvector_ops.n_vconst half y.(1);
-  Nvector_ops.n_vconst two z.(0);
+  Nvector_ops.const one x.(1);
+  Nvector_ops.const half y.(1);
+  Nvector_ops.const two z.(0);
 
-  Nvector_ops.n_vconst two x.(2);
-  Nvector_ops.n_vconst two y.(2);
-  Nvector_ops.n_vconst two z.(0);
+  Nvector_ops.const two x.(2);
+  Nvector_ops.const two y.(2);
+  Nvector_ops.const two z.(0);
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearsumvectorarray neg_half x one y z;
+  Nvector_ops.linearsumvectorarray neg_half x one y z;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -2391,20 +2391,20 @@ let test_n_vlinearsumvectorarray v local_length myid =
   (* Case 6a: z = -x + by, (VLin2VectorArray) *)
 
   (* fill vector data *)
-  Nvector_ops.n_vconst half x.(0);
-  Nvector_ops.n_vconst neg_one y.(0);
-  Nvector_ops.n_vconst two z.(0);
+  Nvector_ops.const half x.(0);
+  Nvector_ops.const neg_one y.(0);
+  Nvector_ops.const two z.(0);
 
-  Nvector_ops.n_vconst one x.(1);
-  Nvector_ops.n_vconst two y.(1);
-  Nvector_ops.n_vconst two z.(0);
+  Nvector_ops.const one x.(1);
+  Nvector_ops.const two y.(1);
+  Nvector_ops.const two z.(0);
 
-  Nvector_ops.n_vconst neg_two x.(2);
-  Nvector_ops.n_vconst neg_two y.(2);
-  Nvector_ops.n_vconst two z.(0);
+  Nvector_ops.const neg_two x.(2);
+  Nvector_ops.const neg_two y.(2);
+  Nvector_ops.const two z.(0);
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearsumvectorarray neg_one x half y z;
+  Nvector_ops.linearsumvectorarray neg_one x half y z;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -2424,20 +2424,20 @@ let test_n_vlinearsumvectorarray v local_length myid =
   (* Case 6b: z = ax - y, (VLin2VectorArray) *)
 
   (* fill vector data *)
-  Nvector_ops.n_vconst half x.(0);
-  Nvector_ops.n_vconst two y.(0);
-  Nvector_ops.n_vconst two z.(0);
+  Nvector_ops.const half x.(0);
+  Nvector_ops.const two y.(0);
+  Nvector_ops.const two z.(0);
 
-  Nvector_ops.n_vconst one x.(1);
-  Nvector_ops.n_vconst two y.(1);
-  Nvector_ops.n_vconst two z.(0);
+  Nvector_ops.const one x.(1);
+  Nvector_ops.const two y.(1);
+  Nvector_ops.const two z.(0);
 
-  Nvector_ops.n_vconst neg_half x.(2);
-  Nvector_ops.n_vconst neg_two y.(2);
-  Nvector_ops.n_vconst two z.(0);
+  Nvector_ops.const neg_half x.(2);
+  Nvector_ops.const neg_two y.(2);
+  Nvector_ops.const two z.(0);
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearsumvectorarray two x neg_one y z;
+  Nvector_ops.linearsumvectorarray two x neg_one y z;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -2457,20 +2457,20 @@ let test_n_vlinearsumvectorarray v local_length myid =
   (* Case 7: z = a(x + y), (VScaleSumVectorArray) *)
 
   (* fill vector data *)
-  Nvector_ops.n_vconst neg_one x.(0);
-  Nvector_ops.n_vconst half y.(0);
-  Nvector_ops.n_vconst two z.(0);
+  Nvector_ops.const neg_one x.(0);
+  Nvector_ops.const half y.(0);
+  Nvector_ops.const two z.(0);
 
-  Nvector_ops.n_vconst one x.(1);
-  Nvector_ops.n_vconst half y.(1);
-  Nvector_ops.n_vconst two z.(0);
+  Nvector_ops.const one x.(1);
+  Nvector_ops.const half y.(1);
+  Nvector_ops.const two z.(0);
 
-  Nvector_ops.n_vconst one x.(2);
-  Nvector_ops.n_vconst neg_half y.(2);
-  Nvector_ops.n_vconst two z.(0);
+  Nvector_ops.const one x.(2);
+  Nvector_ops.const neg_half y.(2);
+  Nvector_ops.const two z.(0);
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearsumvectorarray two x two y z;
+  Nvector_ops.linearsumvectorarray two x two y z;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -2490,20 +2490,20 @@ let test_n_vlinearsumvectorarray v local_length myid =
   (* Case 8: z = a(x - y), (VScaleDiffVectorArray) *)
 
   (* fill vector data *)
-  Nvector_ops.n_vconst half x.(0);
-  Nvector_ops.n_vconst one y.(0);
-  Nvector_ops.n_vconst two z.(0);
+  Nvector_ops.const half x.(0);
+  Nvector_ops.const one y.(0);
+  Nvector_ops.const two z.(0);
 
-  Nvector_ops.n_vconst two x.(1);
-  Nvector_ops.n_vconst half y.(1);
-  Nvector_ops.n_vconst two z.(0);
+  Nvector_ops.const two x.(1);
+  Nvector_ops.const half y.(1);
+  Nvector_ops.const two z.(0);
 
-  Nvector_ops.n_vconst neg_half x.(2);
-  Nvector_ops.n_vconst neg_one y.(2);
-  Nvector_ops.n_vconst two z.(0);
+  Nvector_ops.const neg_half x.(2);
+  Nvector_ops.const neg_one y.(2);
+  Nvector_ops.const two z.(0);
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearsumvectorarray two x neg_two y z;
+  Nvector_ops.linearsumvectorarray two x neg_two y z;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -2523,17 +2523,17 @@ let test_n_vlinearsumvectorarray v local_length myid =
   (* Case 9: z = ax + by, All Other Cases *)
 
   (* fill vector data *)
-  Nvector_ops.n_vconst neg_half x.(0);
-  Nvector_ops.n_vconst two y.(0);
+  Nvector_ops.const neg_half x.(0);
+  Nvector_ops.const two y.(0);
 
-  Nvector_ops.n_vconst one x.(1);
-  Nvector_ops.n_vconst neg_two y.(1);
+  Nvector_ops.const one x.(1);
+  Nvector_ops.const neg_two y.(1);
 
-  Nvector_ops.n_vconst half x.(2);
-  Nvector_ops.n_vconst two y.(2);
+  Nvector_ops.const half x.(2);
+  Nvector_ops.const two y.(2);
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearsumvectorarray two x half y z;
+  Nvector_ops.linearsumvectorarray two x half y z;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -2555,23 +2555,23 @@ let test_n_vlinearsumvectorarray v local_length myid =
 (* ----------------------------------------------------------------------
  * N_VScaleVectorArray Test
  * --------------------------------------------------------------------*)
-let test_n_vscalevectorarray x local_length myid =
+let test_scalevectorarray x local_length myid =
   let fails = ref 0 in
 
   (* create vectors for testing *)
   let c = RealArray.make 3 0.0
-  and y = Array.init 3 (fun _ -> Nvector_ops.n_vclone x)
-  and z = Array.init 3 (fun _ -> Nvector_ops.n_vclone x) in
+  and y = Array.init 3 (fun _ -> Nvector_ops.clone x)
+  and z = Array.init 3 (fun _ -> Nvector_ops.clone x) in
   let y_len1, z_len1 = Array.sub y 0 1, Array.sub z 0 1 in
 
   (* Case 1a: y.(0) = c.{0} y.(0), N_VScale *)
 
   (* fill vector data *)
-  Nvector_ops.n_vconst half y.(0);
+  Nvector_ops.const half y.(0);
   c.{0} <- two;
 
   let start_time = get_time () in
-  Nvector_ops.n_vscalevectorarray c y_len1 y_len1;
+  Nvector_ops.scalevectorarray c y_len1 y_len1;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -2588,11 +2588,11 @@ let test_n_vscalevectorarray x local_length myid =
   (* Case 1b: z.(0) = c.{0} y.(0), N_VScale *)
 
   (* fill vector data *)
-  Nvector_ops.n_vconst half y.(0);
+  Nvector_ops.const half y.(0);
   c.{0} <- two;
 
   let start_time = get_time () in
-  Nvector_ops.n_vscalevectorarray c y_len1 z_len1;
+  Nvector_ops.scalevectorarray c y_len1 z_len1;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -2609,16 +2609,16 @@ let test_n_vscalevectorarray x local_length myid =
   (* Case 2a: y.(i) = c.{i} y.(i) *)
 
   (* fill vector data *)
-  Nvector_ops.n_vconst half y.(0);
-  Nvector_ops.n_vconst neg_two y.(1);
-  Nvector_ops.n_vconst neg_one y.(2);
+  Nvector_ops.const half y.(0);
+  Nvector_ops.const neg_two y.(1);
+  Nvector_ops.const neg_one y.(2);
 
   c.{0} <- two;
   c.{1} <- half;
   c.{2} <- neg_two;
 
   let start_time = get_time () in
-  Nvector_ops.n_vscalevectorarray c y y;
+  Nvector_ops.scalevectorarray c y y;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -2638,16 +2638,16 @@ let test_n_vscalevectorarray x local_length myid =
   (* Case 2b: z.(i) = c.{i} y.(i) *)
 
   (* fill vector data *)
-  Nvector_ops.n_vconst half y.(0);
-  Nvector_ops.n_vconst neg_two y.(1);
-  Nvector_ops.n_vconst neg_one y.(2);
+  Nvector_ops.const half y.(0);
+  Nvector_ops.const neg_two y.(1);
+  Nvector_ops.const neg_one y.(2);
 
   c.{0} <- two;
   c.{1} <- half;
   c.{2} <- neg_two;
 
   let start_time = get_time () in
-  Nvector_ops.n_vscalevectorarray c y z;
+  Nvector_ops.scalevectorarray c y z;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -2669,20 +2669,20 @@ let test_n_vscalevectorarray x local_length myid =
 (* ----------------------------------------------------------------------
  * N_VConstVectorArray Test
  * --------------------------------------------------------------------*)
-let test_n_vconstvectorarray x local_length myid =
+let test_constvectorarray x local_length myid =
   let fails = ref 0 in
 
   (* create vectors for testing *)
-  let z = Array.init 3 (fun _ -> Nvector_ops.n_vclone x) in
+  let z = Array.init 3 (fun _ -> Nvector_ops.clone x) in
   let z_len1 = Array.sub z 0 1 in
 
   (* Case 1a: z.(0) = c, N_VConst *)
 
   (* fill vector data *)
-  Nvector_ops.n_vconst zero z.(0);
+  Nvector_ops.const zero z.(0);
 
   let start_time = get_time () in
-  Nvector_ops.n_vconstvectorarray one z_len1;
+  Nvector_ops.constvectorarray one z_len1;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -2699,12 +2699,12 @@ let test_n_vconstvectorarray x local_length myid =
   (* Case 1b: z.(i) = c *)
 
   (* fill vector data *)
-  Nvector_ops.n_vconst zero z.(0);
-  Nvector_ops.n_vconst zero z.(1);
-  Nvector_ops.n_vconst zero z.(2);
+  Nvector_ops.const zero z.(0);
+  Nvector_ops.const zero z.(1);
+  Nvector_ops.const zero z.(2);
 
   let start_time = get_time () in
-  Nvector_ops.n_vconstvectorarray one z;
+  Nvector_ops.constvectorarray one z;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -2726,24 +2726,24 @@ let test_n_vconstvectorarray x local_length myid =
 (* ----------------------------------------------------------------------
  * N_VWrmsNormVectorArray Test
  * --------------------------------------------------------------------*)
-let test_n_vwrmsnormvectorarray x local_length myid =
+let test_wrmsnormvectorarray x local_length myid =
   let fails = ref 0 in
 
   (* create vectors for testing *)
   let nrm = RealArray.make 3 neg_one
-  and w = Array.init 3 (fun _ -> Nvector_ops.n_vclone x)
-  and z = Array.init 3 (fun _ -> Nvector_ops.n_vclone x)
+  and w = Array.init 3 (fun _ -> Nvector_ops.clone x)
+  and z = Array.init 3 (fun _ -> Nvector_ops.clone x)
   in
   let w_len1, z_len1 = Array.sub w 0 1, Array.sub z 0 1 in
 
   (* Case 1a: nrm.(0) = ||z.(0)||, N_VWrmsNorm *)
 
   (* fill vector data *)
-  Nvector_ops.n_vconst neg_half z.(0);
-  Nvector_ops.n_vconst half w.(0);
+  Nvector_ops.const neg_half z.(0);
+  Nvector_ops.const half w.(0);
 
   let start_time = get_time () in
-  Nvector_ops.n_vwrmsnormvectorarray z_len1 w_len1 nrm;
+  Nvector_ops.wrmsnormvectorarray z_len1 w_len1 nrm;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -2760,18 +2760,18 @@ let test_n_vwrmsnormvectorarray x local_length myid =
   (* Case 1b: nrm.(i) = ||z.(i)|| *)
 
   (* fill vector data *)
-  Nvector_ops.n_vconst neg_half   z.(0);
-  Nvector_ops.n_vconst (two*.two) z.(1);
-  Nvector_ops.n_vconst half       z.(2);
+  Nvector_ops.const neg_half   z.(0);
+  Nvector_ops.const (two*.two) z.(1);
+  Nvector_ops.const half       z.(2);
 
-  Nvector_ops.n_vconst half         w.(0);
-  Nvector_ops.n_vconst (half*.half) w.(1);
-  Nvector_ops.n_vconst one          w.(2);
+  Nvector_ops.const half         w.(0);
+  Nvector_ops.const (half*.half) w.(1);
+  Nvector_ops.const one          w.(2);
 
   RealArray.fill nrm neg_one;
 
   let start_time = get_time () in
-  Nvector_ops.n_vwrmsnormvectorarray z w nrm;
+  Nvector_ops.wrmsnormvectorarray z w nrm;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -2793,7 +2793,7 @@ let test_n_vwrmsnormvectorarray x local_length myid =
 (* ----------------------------------------------------------------------
  * N_VWrmsNormMaskVectorArray Test
  * --------------------------------------------------------------------*)
-let test_n_vwrmsnormmaskvectorarray x local_length global_length myid =
+let test_wrmsnormmaskvectorarray x local_length global_length myid =
   let fails = ref 0 in
   let xdata = Nvector_ops.n_vgetarray x in
 
@@ -2802,22 +2802,22 @@ let test_n_vwrmsnormmaskvectorarray x local_length global_length myid =
 
   (* create vectors for testing *)
   let nrm = RealArray.make 3 neg_one
-  and w = Array.init 3 (fun _ -> Nvector_ops.n_vclone x)
-  and z = Array.init 3 (fun _ -> Nvector_ops.n_vclone x) in
+  and w = Array.init 3 (fun _ -> Nvector_ops.clone x)
+  and z = Array.init 3 (fun _ -> Nvector_ops.clone x) in
   let w_len1, z_len1 = Array.sub w 0 1, Array.sub z 0 1 in
 
   (* Case 1: nrm.(0) = ||z.(0)|| *)
 
   (* fill vector data *)
-  Nvector_ops.n_vconst neg_half z.(0);
-  Nvector_ops.n_vconst half w.(0);
+  Nvector_ops.const neg_half z.(0);
+  Nvector_ops.const half w.(0);
 
   (* use all elements except one *)
-  Nvector_ops.n_vconst one x;
+  Nvector_ops.const one x;
   if myid = 0 then Nvector_ops.set xdata (local_length - 1) zero;
 
   let start_time = get_time () in
-  Nvector_ops.n_vwrmsnormmaskvectorarray z_len1 w_len1 x nrm;
+  Nvector_ops.wrmsnormmaskvectorarray z_len1 w_len1 x nrm;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -2834,22 +2834,22 @@ let test_n_vwrmsnormmaskvectorarray x local_length global_length myid =
   (* Case 2: nrm.(i) = ||z.(i)|| *)
 
   (* fill vector data *)
-  Nvector_ops.n_vconst neg_half   z.(0);
-  Nvector_ops.n_vconst (two*.two) z.(1);
-  Nvector_ops.n_vconst half       z.(2);
+  Nvector_ops.const neg_half   z.(0);
+  Nvector_ops.const (two*.two) z.(1);
+  Nvector_ops.const half       z.(2);
 
-  Nvector_ops.n_vconst half         w.(0);
-  Nvector_ops.n_vconst (half*.half) w.(1);
-  Nvector_ops.n_vconst one          w.(2);
+  Nvector_ops.const half         w.(0);
+  Nvector_ops.const (half*.half) w.(1);
+  Nvector_ops.const one          w.(2);
 
   (* use all elements except one *)
-  Nvector_ops.n_vconst one x;
+  Nvector_ops.const one x;
   if myid = 0 then Nvector_ops.set xdata (local_length - 1) zero;
 
   RealArray.fill nrm neg_one;
 
   let start_time = get_time () in
-  Nvector_ops.n_vwrmsnormmaskvectorarray z w x nrm;
+  Nvector_ops.wrmsnormmaskvectorarray z w x nrm;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -2871,14 +2871,14 @@ let test_n_vwrmsnormmaskvectorarray x local_length global_length myid =
 (* ----------------------------------------------------------------------
  * N_VScaleAddMultiVectorArray Test
  * --------------------------------------------------------------------*)
-let test_n_vscaleaddmultivectorarray v local_length myid =
+let test_scaleaddmultivectorarray v local_length myid =
   let fails = ref 0 in
 
   (* create vectors for testing *)
   let a = RealArray.make 3 zero
-  and x = Array.init 3 (fun _ -> Nvector_ops.n_vclone v)
-  and y = Array.init 3 (fun _ -> Array.init 3 (fun _ -> Nvector_ops.n_vclone v))
-  and z = Array.init 3 (fun _ -> Array.init 3 (fun _ -> Nvector_ops.n_vclone v))
+  and x = Array.init 3 (fun _ -> Nvector_ops.clone v)
+  and y = Array.init 3 (fun _ -> Array.init 3 (fun _ -> Nvector_ops.clone v))
+  and z = Array.init 3 (fun _ -> Array.init 3 (fun _ -> Nvector_ops.clone v))
   in
   let x_len1 = Array.sub x 0 1
   and y_len1_1 = Array.init 1 (fun i -> Array.sub y.(i) 0 1)
@@ -2895,11 +2895,11 @@ let test_n_vscaleaddmultivectorarray v local_length myid =
   (* fill scaling and vector data *)
   a.{0} <- two;
 
-  Nvector_ops.n_vconst one x.(0);
-  Nvector_ops.n_vconst neg_one y.(0).(0);
+  Nvector_ops.const one x.(0);
+  Nvector_ops.const neg_one y.(0).(0);
 
   let start_time = get_time () in
-  Nvector_ops.n_vscaleaddmultivectorarray a x_len1 y_len1_1 y_len1_1;
+  Nvector_ops.scaleaddmultivectorarray a x_len1 y_len1_1 y_len1_1;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -2919,12 +2919,12 @@ let test_n_vscaleaddmultivectorarray v local_length myid =
   (* fill scaling and vector data *)
   a.{0} <- two;
 
-  Nvector_ops.n_vconst one     x.(0);
-  Nvector_ops.n_vconst neg_one y.(0).(0);
-  Nvector_ops.n_vconst zero    z.(0).(0);
+  Nvector_ops.const one     x.(0);
+  Nvector_ops.const neg_one y.(0).(0);
+  Nvector_ops.const zero    z.(0).(0);
 
   let start_time = get_time () in
-  Nvector_ops.n_vscaleaddmultivectorarray a x_len1 y_len1_1 z_len1_1;
+  Nvector_ops.scaleaddmultivectorarray a x_len1 y_len1_1 z_len1_1;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -2946,14 +2946,14 @@ let test_n_vscaleaddmultivectorarray v local_length myid =
   a.{1} <- neg_two;
   a.{2} <- two;
 
-  Nvector_ops.n_vconst one x.(0);
+  Nvector_ops.const one x.(0);
 
-  Nvector_ops.n_vconst neg_two y.(0).(0);
-  Nvector_ops.n_vconst two     y.(1).(0);
-  Nvector_ops.n_vconst neg_one y.(2).(0);
+  Nvector_ops.const neg_two y.(0).(0);
+  Nvector_ops.const two     y.(1).(0);
+  Nvector_ops.const neg_one y.(2).(0);
 
   let start_time = get_time () in
-  Nvector_ops.n_vscaleaddmultivectorarray a x_len1 y_len3_1 y_len3_1;
+  Nvector_ops.scaleaddmultivectorarray a x_len1 y_len3_1 y_len3_1;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -2978,18 +2978,18 @@ let test_n_vscaleaddmultivectorarray v local_length myid =
   a.{1} <- neg_two;
   a.{2} <- two;
 
-  Nvector_ops.n_vconst one x.(0);
+  Nvector_ops.const one x.(0);
 
-  Nvector_ops.n_vconst neg_two y.(0).(0);
-  Nvector_ops.n_vconst two     y.(1).(0);
-  Nvector_ops.n_vconst neg_one y.(2).(0);
+  Nvector_ops.const neg_two y.(0).(0);
+  Nvector_ops.const two     y.(1).(0);
+  Nvector_ops.const neg_one y.(2).(0);
 
-  Nvector_ops.n_vconst zero z.(0).(0);
-  Nvector_ops.n_vconst one  z.(1).(0);
-  Nvector_ops.n_vconst two  z.(2).(0);
+  Nvector_ops.const zero z.(0).(0);
+  Nvector_ops.const one  z.(1).(0);
+  Nvector_ops.const two  z.(2).(0);
 
   let start_time = get_time () in
-  Nvector_ops.n_vscaleaddmultivectorarray a x_len1 y_len3_1 z_len3_1;
+  Nvector_ops.scaleaddmultivectorarray a x_len1 y_len3_1 z_len3_1;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -3012,16 +3012,16 @@ let test_n_vscaleaddmultivectorarray v local_length myid =
   (* fill scaling and vector data *)
   a.{0} <- two;
 
-  Nvector_ops.n_vconst half    x.(0);
-  Nvector_ops.n_vconst neg_one x.(1);
-  Nvector_ops.n_vconst one     x.(2);
+  Nvector_ops.const half    x.(0);
+  Nvector_ops.const neg_one x.(1);
+  Nvector_ops.const one     x.(2);
 
-  Nvector_ops.n_vconst neg_two y.(0).(0);
-  Nvector_ops.n_vconst two     y.(0).(1);
-  Nvector_ops.n_vconst neg_one y.(0).(2);
+  Nvector_ops.const neg_two y.(0).(0);
+  Nvector_ops.const two     y.(0).(1);
+  Nvector_ops.const neg_one y.(0).(2);
 
   let start_time = get_time () in
-  Nvector_ops.n_vscaleaddmultivectorarray a x y_len1_3 y_len1_3;
+  Nvector_ops.scaleaddmultivectorarray a x y_len1_3 y_len1_3;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -3044,20 +3044,20 @@ let test_n_vscaleaddmultivectorarray v local_length myid =
   (* fill scaling and vector data *)
   a.{0} <- two;
 
-  Nvector_ops.n_vconst half    x.(0);
-  Nvector_ops.n_vconst neg_one x.(1);
-  Nvector_ops.n_vconst one     x.(2);
+  Nvector_ops.const half    x.(0);
+  Nvector_ops.const neg_one x.(1);
+  Nvector_ops.const one     x.(2);
 
-  Nvector_ops.n_vconst neg_two y.(0).(0);
-  Nvector_ops.n_vconst two     y.(0).(1);
-  Nvector_ops.n_vconst neg_one y.(0).(2);
+  Nvector_ops.const neg_two y.(0).(0);
+  Nvector_ops.const two     y.(0).(1);
+  Nvector_ops.const neg_one y.(0).(2);
 
-  Nvector_ops.n_vconst two z.(0).(0);
-  Nvector_ops.n_vconst two z.(0).(1);
-  Nvector_ops.n_vconst two z.(0).(2);
+  Nvector_ops.const two z.(0).(0);
+  Nvector_ops.const two z.(0).(1);
+  Nvector_ops.const two z.(0).(2);
 
   let start_time = get_time () in
-  Nvector_ops.n_vscaleaddmultivectorarray a x y_len1_3 z_len1_3;
+  Nvector_ops.scaleaddmultivectorarray a x y_len1_3 z_len1_3;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -3082,23 +3082,23 @@ let test_n_vscaleaddmultivectorarray v local_length myid =
   a.{1} <- one;
   a.{2} <- neg_two;
 
-  Nvector_ops.n_vconst half     x.(0);
-  Nvector_ops.n_vconst neg_two  y.(0).(0);
-  Nvector_ops.n_vconst neg_half y.(1).(0);
-  Nvector_ops.n_vconst two      y.(2).(0);
+  Nvector_ops.const half     x.(0);
+  Nvector_ops.const neg_two  y.(0).(0);
+  Nvector_ops.const neg_half y.(1).(0);
+  Nvector_ops.const two      y.(2).(0);
 
-  Nvector_ops.n_vconst one     x.(1);
-  Nvector_ops.n_vconst neg_one y.(0).(1);
-  Nvector_ops.n_vconst neg_two y.(1).(1);
-  Nvector_ops.n_vconst two     y.(2).(1);
+  Nvector_ops.const one     x.(1);
+  Nvector_ops.const neg_one y.(0).(1);
+  Nvector_ops.const neg_two y.(1).(1);
+  Nvector_ops.const two     y.(2).(1);
 
-  Nvector_ops.n_vconst neg_two        x.(2);
-  Nvector_ops.n_vconst two            y.(0).(2);
-  Nvector_ops.n_vconst (two*.two)     y.(1).(2);
-  Nvector_ops.n_vconst (neg_two*.two) y.(2).(2);
+  Nvector_ops.const neg_two        x.(2);
+  Nvector_ops.const two            y.(0).(2);
+  Nvector_ops.const (two*.two)     y.(1).(2);
+  Nvector_ops.const (neg_two*.two) y.(2).(2);
 
   let start_time = get_time () in
-  Nvector_ops.n_vscaleaddmultivectorarray a x y y;
+  Nvector_ops.scaleaddmultivectorarray a x y y;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -3133,38 +3133,38 @@ let test_n_vscaleaddmultivectorarray v local_length myid =
   a.{1} <- one;
   a.{2} <- neg_two;
 
-  Nvector_ops.n_vconst half     x.(0);
+  Nvector_ops.const half     x.(0);
 
-  Nvector_ops.n_vconst neg_two  y.(0).(0);
-  Nvector_ops.n_vconst neg_half y.(1).(0);
-  Nvector_ops.n_vconst two      y.(2).(0);
+  Nvector_ops.const neg_two  y.(0).(0);
+  Nvector_ops.const neg_half y.(1).(0);
+  Nvector_ops.const two      y.(2).(0);
 
-  Nvector_ops.n_vconst half z.(0).(0);
-  Nvector_ops.n_vconst half z.(1).(0);
-  Nvector_ops.n_vconst half z.(2).(0);
+  Nvector_ops.const half z.(0).(0);
+  Nvector_ops.const half z.(1).(0);
+  Nvector_ops.const half z.(2).(0);
 
-  Nvector_ops.n_vconst one x.(1);
+  Nvector_ops.const one x.(1);
 
-  Nvector_ops.n_vconst neg_one y.(0).(1);
-  Nvector_ops.n_vconst neg_two y.(1).(1);
-  Nvector_ops.n_vconst two     y.(2).(1);
+  Nvector_ops.const neg_one y.(0).(1);
+  Nvector_ops.const neg_two y.(1).(1);
+  Nvector_ops.const two     y.(2).(1);
 
-  Nvector_ops.n_vconst half z.(0).(1);
-  Nvector_ops.n_vconst half z.(1).(1);
-  Nvector_ops.n_vconst half z.(2).(1);
+  Nvector_ops.const half z.(0).(1);
+  Nvector_ops.const half z.(1).(1);
+  Nvector_ops.const half z.(2).(1);
 
-  Nvector_ops.n_vconst neg_two x.(2);
+  Nvector_ops.const neg_two x.(2);
 
-  Nvector_ops.n_vconst two            y.(0).(2);
-  Nvector_ops.n_vconst (two*.two)     y.(1).(2);
-  Nvector_ops.n_vconst (neg_two*.two) y.(2).(2);
+  Nvector_ops.const two            y.(0).(2);
+  Nvector_ops.const (two*.two)     y.(1).(2);
+  Nvector_ops.const (neg_two*.two) y.(2).(2);
 
-  Nvector_ops.n_vconst half z.(0).(2);
-  Nvector_ops.n_vconst half z.(1).(2);
-  Nvector_ops.n_vconst half z.(2).(2);
+  Nvector_ops.const half z.(0).(2);
+  Nvector_ops.const half z.(1).(2);
+  Nvector_ops.const half z.(2).(2);
 
   let start_time = get_time () in
-  Nvector_ops.n_vscaleaddmultivectorarray a x y z;
+  Nvector_ops.scaleaddmultivectorarray a x y z;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -3196,13 +3196,13 @@ let test_n_vscaleaddmultivectorarray v local_length myid =
 (* ----------------------------------------------------------------------
  * N_VLinearCombinationVectorArray Test
  * --------------------------------------------------------------------*)
-let test_n_vlinearcombinationvectorarray v local_length myid =
+let test_linearcombinationvectorarray v local_length myid =
   let fails = ref 0 in
 
   (* create vectors for testing *)
   let c = RealArray.make 3 zero
-  and z = Array.init 3 (fun _ -> Nvector_ops.n_vclone v)
-  and x = Array.init 3 (fun _ -> Array.init 3 (fun _ -> Nvector_ops.n_vclone v))
+  and z = Array.init 3 (fun _ -> Nvector_ops.clone v)
+  and x = Array.init 3 (fun _ -> Array.init 3 (fun _ -> Nvector_ops.clone v))
   in
   let x_len1_1 = Array.init 1 (fun i -> Array.sub x.(i) 0 1)
   and x_len1_3 = Array.sub x 0 1
@@ -3215,11 +3215,11 @@ let test_n_vlinearcombinationvectorarray v local_length myid =
      x.(0).(0) = c.{0} x.(0).(0) *)
 
   (* fill vector data and scaling factor *)
-  Nvector_ops.n_vconst half x.(0).(0);
+  Nvector_ops.const half x.(0).(0);
   c.{0} <- two;
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearcombinationvectorarray c x_len1_1 x.(0);
+  Nvector_ops.linearcombinationvectorarray c x_len1_1 x.(0);
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -3237,12 +3237,12 @@ let test_n_vlinearcombinationvectorarray v local_length myid =
      z.(0) = c.{0} x.(0).(0) *)
 
   (* fill vector data and scaling factor *)
-  Nvector_ops.n_vconst half x.(0).(0);
-  Nvector_ops.n_vconst zero z.(0);
+  Nvector_ops.const half x.(0).(0);
+  Nvector_ops.const zero z.(0);
   c.{0} <- two;
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearcombinationvectorarray c x_len1_3 z;
+  Nvector_ops.linearcombinationvectorarray c x_len1_3 z;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -3260,14 +3260,14 @@ let test_n_vlinearcombinationvectorarray v local_length myid =
      x.(0).(0) = c.{0} x.(0).(0) + c.{1} x.(1).(0) *)
 
   (* fill vector data and scaling factor *)
-  Nvector_ops.n_vconst half    x.(0).(0);
-  Nvector_ops.n_vconst neg_one x.(1).(0);
+  Nvector_ops.const half    x.(0).(0);
+  Nvector_ops.const neg_one x.(1).(0);
 
   c.{0} <- two;
   c.{1} <- neg_one;
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearcombinationvectorarray c x_len2_1 x.(0);
+  Nvector_ops.linearcombinationvectorarray c x_len2_1 x.(0);
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -3285,16 +3285,16 @@ let test_n_vlinearcombinationvectorarray v local_length myid =
      z.(0) = c.{0} x.(0).(0) + c.{1} x.(1).(0) *)
 
   (* fill vector data and scaling factor *)
-  Nvector_ops.n_vconst half    x.(0).(0);
-  Nvector_ops.n_vconst neg_one x.(1).(0);
+  Nvector_ops.const half    x.(0).(0);
+  Nvector_ops.const neg_one x.(1).(0);
 
   c.{0} <- two;
   c.{1} <- neg_one;
 
-  Nvector_ops.n_vconst zero z.(0);
+  Nvector_ops.const zero z.(0);
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearcombinationvectorarray c x_len2_1 z;
+  Nvector_ops.linearcombinationvectorarray c x_len2_1 z;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -3312,9 +3312,9 @@ let test_n_vlinearcombinationvectorarray v local_length myid =
      x.(0).(0) = c.{0} x.(0).(0) + c.{1} x.(1).(0) + c.{2} x.(2).(0) *)
 
   (* fill vector data *)
-  Nvector_ops.n_vconst one x.(0).(0);
-  Nvector_ops.n_vconst neg_two x.(1).(0);
-  Nvector_ops.n_vconst neg_one x.(2).(0);
+  Nvector_ops.const one x.(0).(0);
+  Nvector_ops.const neg_two x.(1).(0);
+  Nvector_ops.const neg_one x.(2).(0);
 
   (* set scaling factors *)
   c.{0} <- two;
@@ -3322,7 +3322,7 @@ let test_n_vlinearcombinationvectorarray v local_length myid =
   c.{2} <- neg_one;
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearcombinationvectorarray c x_len3_1 x.(0);
+  Nvector_ops.linearcombinationvectorarray c x_len3_1 x.(0);
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -3340,9 +3340,9 @@ let test_n_vlinearcombinationvectorarray v local_length myid =
      z.(0) = c.{0} x.(0).(0) + c.{1} x.(1).(0) + c.{2} x.(2).(0) *)
 
   (* fill vector data *)
-  Nvector_ops.n_vconst one x.(0).(0);
-  Nvector_ops.n_vconst neg_two x.(1).(0);
-  Nvector_ops.n_vconst neg_one x.(2).(0);
+  Nvector_ops.const one x.(0).(0);
+  Nvector_ops.const neg_two x.(1).(0);
+  Nvector_ops.const neg_one x.(2).(0);
 
   (* set scaling factors *)
   c.{0} <- two;
@@ -3350,7 +3350,7 @@ let test_n_vlinearcombinationvectorarray v local_length myid =
   c.{2} <- neg_one;
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearcombinationvectorarray c x_len3_1 z;
+  Nvector_ops.linearcombinationvectorarray c x_len3_1 z;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -3368,14 +3368,14 @@ let test_n_vlinearcombinationvectorarray v local_length myid =
      x.(0).(i) = c.{0} x.(0).(i) *)
 
   (* fill vector data and set scaling factors *)
-  Nvector_ops.n_vconst neg_two x.(0).(0);
-  Nvector_ops.n_vconst neg_one x.(0).(1);
-  Nvector_ops.n_vconst two     x.(0).(2);
+  Nvector_ops.const neg_two x.(0).(0);
+  Nvector_ops.const neg_one x.(0).(1);
+  Nvector_ops.const two     x.(0).(2);
 
   c.{0} <- half;
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearcombinationvectorarray c x_len1_3 x.(0);
+  Nvector_ops.linearcombinationvectorarray c x_len1_3 x.(0);
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -3396,18 +3396,18 @@ let test_n_vlinearcombinationvectorarray v local_length myid =
      z.(i) = c.{0} x.(0).(i) *)
 
   (* fill vector data and set scaling factors *)
-  Nvector_ops.n_vconst neg_two x.(0).(0);
-  Nvector_ops.n_vconst neg_one x.(0).(1);
-  Nvector_ops.n_vconst two     x.(0).(2);
+  Nvector_ops.const neg_two x.(0).(0);
+  Nvector_ops.const neg_one x.(0).(1);
+  Nvector_ops.const two     x.(0).(2);
 
   c.{0} <- half;
 
-  Nvector_ops.n_vconst zero z.(0);
-  Nvector_ops.n_vconst zero z.(1);
-  Nvector_ops.n_vconst zero z.(2);
+  Nvector_ops.const zero z.(0);
+  Nvector_ops.const zero z.(1);
+  Nvector_ops.const zero z.(2);
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearcombinationvectorarray c x_len1_3 z;
+  Nvector_ops.linearcombinationvectorarray c x_len1_3 z;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -3428,20 +3428,20 @@ let test_n_vlinearcombinationvectorarray v local_length myid =
      x.(0).(i) = c.{0} x.(0).(i) + c.{1} x.(1).(i) *)
 
   (* fill vector data and set scaling factors *)
-  Nvector_ops.n_vconst neg_two x.(0).(0);
-  Nvector_ops.n_vconst two x.(1).(0);
+  Nvector_ops.const neg_two x.(0).(0);
+  Nvector_ops.const two x.(1).(0);
 
-  Nvector_ops.n_vconst two x.(0).(1);
-  Nvector_ops.n_vconst half x.(1).(1);
+  Nvector_ops.const two x.(0).(1);
+  Nvector_ops.const half x.(1).(1);
 
-  Nvector_ops.n_vconst zero x.(0).(2);
-  Nvector_ops.n_vconst half x.(1).(2);
+  Nvector_ops.const zero x.(0).(2);
+  Nvector_ops.const half x.(1).(2);
 
   c.{0} <- half;
   c.{1} <- two;
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearcombinationvectorarray c x_len2_3 x.(0);
+  Nvector_ops.linearcombinationvectorarray c x_len2_3 x.(0);
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -3462,24 +3462,24 @@ let test_n_vlinearcombinationvectorarray v local_length myid =
      z.(0) = c.{0} x.(0).(i) + c.{1} x.(1).(i) *)
 
   (* fill vector data and set scaling factors *)
-  Nvector_ops.n_vconst neg_two x.(0).(0);
-  Nvector_ops.n_vconst two     x.(1).(0);
+  Nvector_ops.const neg_two x.(0).(0);
+  Nvector_ops.const two     x.(1).(0);
 
-  Nvector_ops.n_vconst two  x.(0).(1);
-  Nvector_ops.n_vconst half x.(1).(1);
+  Nvector_ops.const two  x.(0).(1);
+  Nvector_ops.const half x.(1).(1);
 
-  Nvector_ops.n_vconst zero x.(0).(2);
-  Nvector_ops.n_vconst half x.(1).(2);
+  Nvector_ops.const zero x.(0).(2);
+  Nvector_ops.const half x.(1).(2);
 
   c.{0} <- half;
   c.{1} <- two;
 
-  Nvector_ops.n_vconst zero z.(0);
-  Nvector_ops.n_vconst zero z.(1);
-  Nvector_ops.n_vconst zero z.(2);
+  Nvector_ops.const zero z.(0);
+  Nvector_ops.const zero z.(1);
+  Nvector_ops.const zero z.(2);
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearcombinationvectorarray c x_len2_3 z;
+  Nvector_ops.linearcombinationvectorarray c x_len2_3 z;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -3500,24 +3500,24 @@ let test_n_vlinearcombinationvectorarray v local_length myid =
      x.(0).(i) += c.{1} x.(1).(i) + c.{2} x.(2).(i) *)
 
   (* fill vector data and set scaling factors *)
-  Nvector_ops.n_vconst two     x.(0).(0);
-  Nvector_ops.n_vconst neg_two x.(1).(0);
-  Nvector_ops.n_vconst neg_one x.(2).(0);
+  Nvector_ops.const two     x.(0).(0);
+  Nvector_ops.const neg_two x.(1).(0);
+  Nvector_ops.const neg_one x.(2).(0);
 
-  Nvector_ops.n_vconst one x.(0).(1);
-  Nvector_ops.n_vconst two x.(1).(1);
-  Nvector_ops.n_vconst one x.(2).(1);
+  Nvector_ops.const one x.(0).(1);
+  Nvector_ops.const two x.(1).(1);
+  Nvector_ops.const one x.(2).(1);
 
-  Nvector_ops.n_vconst neg_one x.(0).(2);
-  Nvector_ops.n_vconst two     x.(1).(2);
-  Nvector_ops.n_vconst two     x.(2).(2);
+  Nvector_ops.const neg_one x.(0).(2);
+  Nvector_ops.const two     x.(1).(2);
+  Nvector_ops.const two     x.(2).(2);
 
   c.{0} <- one;
   c.{1} <- neg_half;
   c.{2} <- neg_one;
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearcombinationvectorarray c x x.(0);
+  Nvector_ops.linearcombinationvectorarray c x x.(0);
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -3538,24 +3538,24 @@ let test_n_vlinearcombinationvectorarray v local_length myid =
      x.(0).(i) = c.{0} x.(0).(i) + c.{1} x.(1).(i) + c.{2} x.(2).(i) *)
 
   (* fill vector data and set scaling factors *)
-  Nvector_ops.n_vconst one x.(0).(0);
-  Nvector_ops.n_vconst neg_two x.(1).(0);
-  Nvector_ops.n_vconst neg_one x.(2).(0);
+  Nvector_ops.const one x.(0).(0);
+  Nvector_ops.const neg_two x.(1).(0);
+  Nvector_ops.const neg_one x.(2).(0);
 
-  Nvector_ops.n_vconst neg_one x.(0).(1);
-  Nvector_ops.n_vconst two x.(1).(1);
-  Nvector_ops.n_vconst one x.(2).(1);
+  Nvector_ops.const neg_one x.(0).(1);
+  Nvector_ops.const two x.(1).(1);
+  Nvector_ops.const one x.(2).(1);
 
-  Nvector_ops.n_vconst half x.(0).(2);
-  Nvector_ops.n_vconst two x.(1).(2);
-  Nvector_ops.n_vconst one x.(2).(2);
+  Nvector_ops.const half x.(0).(2);
+  Nvector_ops.const two x.(1).(2);
+  Nvector_ops.const one x.(2).(2);
 
   c.{0} <- two;
   c.{1} <- half;
   c.{2} <- neg_one;
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearcombinationvectorarray c x x.(0);
+  Nvector_ops.linearcombinationvectorarray c x x.(0);
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -3576,28 +3576,28 @@ let test_n_vlinearcombinationvectorarray v local_length myid =
      z.(i) = c.{0} x.(0).(i) + c.{1} x.(1).(i) + c.{2} x.(2).(i) *)
 
   (* fill vector data and set scaling factors *)
-  Nvector_ops.n_vconst one     x.(0).(0);
-  Nvector_ops.n_vconst neg_two x.(1).(0);
-  Nvector_ops.n_vconst neg_one x.(2).(0);
+  Nvector_ops.const one     x.(0).(0);
+  Nvector_ops.const neg_two x.(1).(0);
+  Nvector_ops.const neg_one x.(2).(0);
 
-  Nvector_ops.n_vconst neg_one x.(0).(1);
-  Nvector_ops.n_vconst two     x.(1).(1);
-  Nvector_ops.n_vconst one     x.(2).(1);
+  Nvector_ops.const neg_one x.(0).(1);
+  Nvector_ops.const two     x.(1).(1);
+  Nvector_ops.const one     x.(2).(1);
 
-  Nvector_ops.n_vconst half x.(0).(2);
-  Nvector_ops.n_vconst two  x.(1).(2);
-  Nvector_ops.n_vconst one  x.(2).(2);
+  Nvector_ops.const half x.(0).(2);
+  Nvector_ops.const two  x.(1).(2);
+  Nvector_ops.const one  x.(2).(2);
 
   c.{0} <- two;
   c.{1} <- half;
   c.{2} <- neg_one;
 
-  Nvector_ops.n_vconst zero z.(0);
-  Nvector_ops.n_vconst zero z.(1);
-  Nvector_ops.n_vconst zero z.(2);
+  Nvector_ops.const zero z.(0);
+  Nvector_ops.const zero z.(1);
+  Nvector_ops.const zero z.(2);
 
   let start_time = get_time () in
-  Nvector_ops.n_vlinearcombinationvectorarray c x z;
+  Nvector_ops.linearcombinationvectorarray c x z;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 

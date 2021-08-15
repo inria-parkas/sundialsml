@@ -38,9 +38,9 @@
 
 open Sundials
 
-let nvscale = Nvector_serial.DataOps.n_vscale
-and nvprod = Nvector_serial.DataOps.n_vprod
-and nvmaxnorm = Nvector_serial.DataOps.n_vmaxnorm
+let nvscale = Nvector_serial.DataOps.scale
+and nvprod = Nvector_serial.DataOps.prod
+and nvmaxnorm = Nvector_serial.DataOps.maxnorm
 
 (* Problem Constants *)
 let nout  = 11

@@ -53,25 +53,25 @@ let rec wrap ?(with_fused_ops=false) ((nl, ng, comm) as v) =
 and clone nv =
   let nv' = wrap (copydata (unwrap nv)) in
   c_enablelinearcombination_parallel nv'
-    (Nvector.has_n_vlinearcombination nv);
+    (Nvector.has_linearcombination nv);
   c_enablescaleaddmulti_parallel nv'
-    (Nvector.has_n_vscaleaddmulti nv);
+    (Nvector.has_scaleaddmulti nv);
   c_enabledotprodmulti_parallel nv'
-    (Nvector.has_n_vdotprodmulti nv);
+    (Nvector.has_dotprodmulti nv);
   c_enablelinearsumvectorarray_parallel nv'
-    (Nvector.has_n_vlinearsumvectorarray nv);
+    (Nvector.has_linearsumvectorarray nv);
   c_enablescalevectorarray_parallel nv'
-    (Nvector.has_n_vscalevectorarray nv);
+    (Nvector.has_scalevectorarray nv);
   c_enableconstvectorarray_parallel nv'
-    (Nvector.has_n_vconstvectorarray nv);
+    (Nvector.has_constvectorarray nv);
   c_enablewrmsnormvectorarray_parallel nv'
-    (Nvector.has_n_vwrmsnormvectorarray nv);
+    (Nvector.has_wrmsnormvectorarray nv);
   c_enablewrmsnormmaskvectorarray_parallel nv'
-    (Nvector.has_n_vwrmsnormmaskvectorarray nv);
+    (Nvector.has_wrmsnormmaskvectorarray nv);
   c_enablescaleaddmultivectorarray_parallel nv'
-    (Nvector.has_n_vscaleaddmultivectorarray nv);
+    (Nvector.has_scaleaddmultivectorarray nv);
   c_enablelinearcombinationvectorarray_parallel nv'
-    (Nvector.has_n_vlinearcombinationvectorarray nv);
+    (Nvector.has_linearcombinationvectorarray nv);
   nv'
 
 let make ?with_fused_ops nl ng comm iv =
@@ -215,25 +215,25 @@ module Any = struct (* {{{ *)
     in
     let nv' = wrap (copydata v) in
     c_enablelinearcombination_parallel nv'
-      (Nvector.has_n_vlinearcombination nv);
+      (Nvector.has_linearcombination nv);
     c_enablescaleaddmulti_parallel nv'
-      (Nvector.has_n_vscaleaddmulti nv);
+      (Nvector.has_scaleaddmulti nv);
     c_enabledotprodmulti_parallel nv'
-      (Nvector.has_n_vdotprodmulti nv);
+      (Nvector.has_dotprodmulti nv);
     c_enablelinearsumvectorarray_parallel nv'
-      (Nvector.has_n_vlinearsumvectorarray nv);
+      (Nvector.has_linearsumvectorarray nv);
     c_enablescalevectorarray_parallel nv'
-      (Nvector.has_n_vscalevectorarray nv);
+      (Nvector.has_scalevectorarray nv);
     c_enableconstvectorarray_parallel nv'
-      (Nvector.has_n_vconstvectorarray nv);
+      (Nvector.has_constvectorarray nv);
     c_enablewrmsnormvectorarray_parallel nv'
-      (Nvector.has_n_vwrmsnormvectorarray nv);
+      (Nvector.has_wrmsnormvectorarray nv);
     c_enablewrmsnormmaskvectorarray_parallel nv'
-      (Nvector.has_n_vwrmsnormmaskvectorarray nv);
+      (Nvector.has_wrmsnormmaskvectorarray nv);
     c_enablescaleaddmultivectorarray_parallel nv'
-      (Nvector.has_n_vscaleaddmultivectorarray nv);
+      (Nvector.has_scaleaddmultivectorarray nv);
     c_enablelinearcombinationvectorarray_parallel nv'
-      (Nvector.has_n_vlinearcombinationvectorarray nv);
+      (Nvector.has_linearcombinationvectorarray nv);
     nv'
 
   let make
@@ -267,145 +267,145 @@ end (* }}} *)
 module Ops = struct (* {{{ *)
   type t = (data, kind) Nvector.t
 
-  let n_vclone = clone
+  let clone = clone
 
-  external n_vlinearsum    : float -> t -> float -> t -> t -> unit
-    = "sunml_nvec_par_n_vlinearsum"
+  external linearsum    : float -> t -> float -> t -> t -> unit
+    = "sunml_nvec_par_linearsum"
 
-  external n_vconst        : float -> t -> unit
-    = "sunml_nvec_par_n_vconst"
+  external const        : float -> t -> unit
+    = "sunml_nvec_par_const"
 
-  external n_vprod         : t -> t -> t -> unit
-    = "sunml_nvec_par_n_vprod"
+  external prod         : t -> t -> t -> unit
+    = "sunml_nvec_par_prod"
 
-  external n_vdiv          : t -> t -> t -> unit
-    = "sunml_nvec_par_n_vdiv"
+  external div          : t -> t -> t -> unit
+    = "sunml_nvec_par_div"
 
-  external n_vscale        : float -> t -> t -> unit
-    = "sunml_nvec_par_n_vscale"
+  external scale        : float -> t -> t -> unit
+    = "sunml_nvec_par_scale"
 
-  external n_vabs          : t -> t -> unit
-    = "sunml_nvec_par_n_vabs"
+  external abs          : t -> t -> unit
+    = "sunml_nvec_par_abs"
 
-  external n_vinv          : t -> t -> unit
-    = "sunml_nvec_par_n_vinv"
+  external inv          : t -> t -> unit
+    = "sunml_nvec_par_inv"
 
-  external n_vaddconst     : t -> float -> t -> unit
-    = "sunml_nvec_par_n_vaddconst"
+  external addconst     : t -> float -> t -> unit
+    = "sunml_nvec_par_addconst"
 
-  external n_vdotprod      : t -> t -> float
-    = "sunml_nvec_par_n_vdotprod"
+  external dotprod      : t -> t -> float
+    = "sunml_nvec_par_dotprod"
 
-  external n_vmaxnorm      : t -> float
-    = "sunml_nvec_par_n_vmaxnorm"
+  external maxnorm      : t -> float
+    = "sunml_nvec_par_maxnorm"
 
-  external n_vwrmsnorm     : t -> t -> float
-    = "sunml_nvec_par_n_vwrmsnorm"
+  external wrmsnorm     : t -> t -> float
+    = "sunml_nvec_par_wrmsnorm"
 
-  external n_vwrmsnormmask : t -> t -> t -> float
-    = "sunml_nvec_par_n_vwrmsnormmask"
+  external wrmsnormmask : t -> t -> t -> float
+    = "sunml_nvec_par_wrmsnormmask"
 
-  external n_vmin          : t -> float
-    = "sunml_nvec_par_n_vmin"
+  external min          : t -> float
+    = "sunml_nvec_par_min"
 
-  external n_vwl2norm      : t -> t -> float
-    = "sunml_nvec_par_n_vwl2norm"
+  external wl2norm      : t -> t -> float
+    = "sunml_nvec_par_wl2norm"
 
-  external n_vl1norm       : t -> float
-    = "sunml_nvec_par_n_vl1norm"
+  external l1norm       : t -> float
+    = "sunml_nvec_par_l1norm"
 
-  external n_vcompare      : float -> t -> t -> unit
-    = "sunml_nvec_par_n_vcompare"
+  external compare      : float -> t -> t -> unit
+    = "sunml_nvec_par_compare"
 
-  external n_vinvtest      : t -> t -> bool
-    = "sunml_nvec_par_n_vinvtest"
+  external invtest      : t -> t -> bool
+    = "sunml_nvec_par_invtest"
 
-  external n_vconstrmask   : t -> t -> t -> bool
-    = "sunml_nvec_par_n_vconstrmask"
+  external constrmask   : t -> t -> t -> bool
+    = "sunml_nvec_par_constrmask"
 
-  external n_vminquotient  : t -> t -> float
-    = "sunml_nvec_par_n_vminquotient"
+  external minquotient  : t -> t -> float
+    = "sunml_nvec_par_minquotient"
 
-  external n_vspace  : t -> int * int
-    = "sunml_nvec_par_n_vspace"
+  external space  : t -> int * int
+    = "sunml_nvec_par_space"
 
-  external n_vgetlength  : t -> int
-    = "sunml_nvec_par_n_vgetlength"
+  external getlength  : t -> int
+    = "sunml_nvec_par_getlength"
 
-  external n_vlinearcombination : RealArray.t -> t array -> t -> unit
-    = "sunml_nvec_par_n_vlinearcombination"
+  external linearcombination : RealArray.t -> t array -> t -> unit
+    = "sunml_nvec_par_linearcombination"
 
-  external n_vscaleaddmulti : RealArray.t -> t -> t array -> t array -> unit
-    = "sunml_nvec_par_n_vscaleaddmulti"
+  external scaleaddmulti : RealArray.t -> t -> t array -> t array -> unit
+    = "sunml_nvec_par_scaleaddmulti"
 
-  external n_vdotprodmulti : t -> t array -> RealArray.t -> unit
-    = "sunml_nvec_par_n_vdotprodmulti"
+  external dotprodmulti : t -> t array -> RealArray.t -> unit
+    = "sunml_nvec_par_dotprodmulti"
 
-  external n_vlinearsumvectorarray
+  external linearsumvectorarray
     : float -> t array -> float -> t array -> t array -> unit
-    = "sunml_nvec_par_n_vlinearsumvectorarray"
+    = "sunml_nvec_par_linearsumvectorarray"
 
-  external n_vscalevectorarray
+  external scalevectorarray
     : RealArray.t -> t array -> t array -> unit
-    = "sunml_nvec_par_n_vscalevectorarray"
+    = "sunml_nvec_par_scalevectorarray"
 
-  external n_vconstvectorarray
+  external constvectorarray
     : float -> t array -> unit
-    = "sunml_nvec_par_n_vconstvectorarray"
+    = "sunml_nvec_par_constvectorarray"
 
-  external n_vwrmsnormvectorarray
+  external wrmsnormvectorarray
     : t array -> t array -> RealArray.t -> unit
-    = "sunml_nvec_par_n_vwrmsnormvectorarray"
+    = "sunml_nvec_par_wrmsnormvectorarray"
 
-  external n_vwrmsnormmaskvectorarray
+  external wrmsnormmaskvectorarray
     : t array -> t array -> t -> RealArray.t -> unit
-    = "sunml_nvec_par_n_vwrmsnormmaskvectorarray"
+    = "sunml_nvec_par_wrmsnormmaskvectorarray"
 
-  external n_vscaleaddmultivectorarray
+  external scaleaddmultivectorarray
     : RealArray.t -> t array -> t array array -> t array array -> unit
-    = "sunml_nvec_par_n_vscaleaddmultivectorarray"
+    = "sunml_nvec_par_scaleaddmultivectorarray"
 
-  external n_vlinearcombinationvectorarray
+  external linearcombinationvectorarray
     : RealArray.t -> t array array -> t array -> unit
-    = "sunml_nvec_par_n_vlinearcombinationvectorarray"
+    = "sunml_nvec_par_linearcombinationvectorarray"
 
   module Local = struct
 
-    external n_vdotprod
+    external dotprod
       : t -> t -> float
-      = "sunml_nvec_par_n_vdotprodlocal"
+      = "sunml_nvec_par_dotprodlocal"
 
-    external n_vmaxnorm
+    external maxnorm
       : t -> float
-      = "sunml_nvec_par_n_vmaxnormlocal"
+      = "sunml_nvec_par_maxnormlocal"
 
-    external n_vmin
+    external min
       : t -> float
-      = "sunml_nvec_par_n_vminlocal"
+      = "sunml_nvec_par_minlocal"
 
-    external n_vl1norm
+    external l1norm
       : t -> float
-      = "sunml_nvec_par_n_vl1normlocal"
+      = "sunml_nvec_par_l1normlocal"
 
-    external n_vinvtest
+    external invtest
       : t -> t -> bool
-      = "sunml_nvec_par_n_vinvtestlocal"
+      = "sunml_nvec_par_invtestlocal"
 
-    external n_vconstrmask
+    external constrmask
       : t -> t -> t -> bool
-      = "sunml_nvec_par_n_vconstrmasklocal"
+      = "sunml_nvec_par_constrmasklocal"
 
-    external n_vminquotient
+    external minquotient
       : t -> t -> float
-      = "sunml_nvec_par_n_vminquotientlocal"
+      = "sunml_nvec_par_minquotientlocal"
 
-    external n_vwsqrsum
+    external wsqrsum
       : t -> t -> float
-      = "sunml_nvec_par_n_vwsqrsumlocallocal"
+      = "sunml_nvec_par_wsqrsumlocallocal"
 
-    external n_vwsqrsummask
+    external wsqrsummask
       : t -> t -> t -> float
-      = "sunml_nvec_par_n_vwsqrsummasklocal"
+      = "sunml_nvec_par_wsqrsummasklocal"
   end
 end (* }}} *)
 
@@ -422,8 +422,10 @@ module MakeOps =
   struct (* {{{ *)
     type t = A.local_data * int * Mpi.communicator
 
-    (* let n_vclone (d, gl, comm) = (A.clone d, gl, comm) *)
-    let n_vclone (d, gl, comm) = (A.clone d, gl, comm)
+    (* let clone (d, gl, comm) = (A.clone d, gl, comm) *)
+    let clone (d, gl, comm) = (A.clone d, gl, comm)
+
+    let floatmin (x : float) (y : float) = min x y
 
     let arr_vaxpy a x y =
       if a = 1.0 then
@@ -439,7 +441,7 @@ module MakeOps =
           A.set y i (A.get y i +. a *. A.get x i)
         done
 
-    let n_vlinearsum a (x, _, _) b (y, _, _) (z, _, _) =
+    let linearsum a (x, _, _) b (y, _, _) (z, _, _) =
       if b = 1.0 && z == y then
         arr_vaxpy a x y
       else if a = 1.0 && z == x then
@@ -476,9 +478,9 @@ module MakeOps =
           A.set z i (a *. A.get x i +. b *. A.get y i)
         done
 
-    let n_vconst c (a, _, _) = A.fill a c
+    let const c (a, _, _) = A.fill a c
 
-    let n_vscale c (x, _, _) (z, _, _) =
+    let scale c (x, _, _) (z, _, _) =
       if c = 1.0 then
         for i = 0 to A.length x - 1 do
           A.set z i (A.get x i)
@@ -492,12 +494,12 @@ module MakeOps =
           A.set z i (c *. A.get x i)
         done
 
-    let n_vaddconst (x, _, _) b (z, _, _) =
+    let addconst (x, _, _) b (z, _, _) =
       for i = 0 to A.length x - 1 do
         A.set z i (A.get x i +. b)
       done
 
-    let n_vmaxnorm (x, _, comm) =
+    let maxnorm (x, _, comm) =
       let lmax = ref 0.0 in
       for i = 0 to A.length x - 1 do
         let ax = abs_float (A.get x i) in
@@ -505,7 +507,7 @@ module MakeOps =
       done;
       Mpi.allreduce_float !lmax Mpi.Max comm
 
-    let n_vwrmsnorm (x, n_global, comm) (w, _, _) =
+    let wrmsnorm (x, n_global, comm) (w, _, _) =
       let lsum = ref 0.0 in
       for i = 0 to A.length x - 1 do
         lsum := !lsum
@@ -514,7 +516,7 @@ module MakeOps =
       let gsum = Mpi.allreduce_float !lsum Mpi.Sum comm in
       sqrt (gsum /. float n_global)
 
-    let n_vwrmsnormmask (x, n_global, comm) (w, _, _) (id, _, _) =
+    let wrmsnormmask (x, n_global, comm) (w, _, _) (id, _, _) =
       let lsum = ref 0.0 in
       for i = 0 to A.length x - 1 do
         if A.get id i > 0.0 then
@@ -523,7 +525,7 @@ module MakeOps =
       let gsum = Mpi.allreduce_float !lsum Mpi.Sum comm in
       sqrt (gsum /. float n_global)
 
-    let n_vmin (x, _, comm) =
+    let min (x, _, comm) =
       let lmin = ref max_float in
       for i = 0 to A.length x - 1 do
         let xv = A.get x i in
@@ -531,19 +533,19 @@ module MakeOps =
       done;
       Mpi.allreduce_float !lmin Mpi.Min comm
 
-    let n_vdotprod (x, _, comm) (y, _, _) =
+    let dotprod (x, _, comm) (y, _, _) =
       let lsum = ref 0.0 in
       for i = 0 to A.length x - 1 do
         lsum := !lsum +. (A.get x i *. A.get y i)
       done;
       Mpi.allreduce_float !lsum Mpi.Sum comm
 
-    let n_vcompare c (x, _, _) (z, _, _) =
+    let compare c (x, _, _) (z, _, _) =
       for i = 0 to A.length x - 1 do
         A.set z i (if abs_float (A.get x i) >= c then 1.0 else 0.0)
       done
 
-    let n_vinvtest (x, _, comm) (z, _, _) =
+    let invtest (x, _, comm) (z, _, _) =
       let lval = ref 1 in
       for i = 0 to A.length x - 1 do
         if A.get x i = 0.0 then lval := 0
@@ -551,7 +553,7 @@ module MakeOps =
       done;
       (Mpi.allreduce_int !lval Mpi.Min comm <> 0)
 
-    let n_vwl2norm (x, _, comm) (w, _, _) =
+    let wl2norm (x, _, comm) (w, _, _) =
       let lsum = ref 0.0 in
       for i = 0 to A.length x - 1 do
         lsum := !lsum +. (A.get x i *. A.get w i *. A.get x i *. A.get w i)
@@ -559,14 +561,14 @@ module MakeOps =
       let gsum = Mpi.allreduce_float !lsum Mpi.Sum comm in
       sqrt gsum
 
-    let n_vl1norm (x, _, comm) =
+    let l1norm (x, _, comm) =
       let lsum = ref 0.0 in
       for i = 0 to A.length x - 1 do
         lsum := !lsum +. abs_float (A.get x i)
       done;
       Mpi.allreduce_float !lsum Mpi.Sum comm
 
-    let n_vconstrmask (c, _, _) (x, _, comm) (m, _, _) =
+    let constrmask (c, _, _) (x, _, comm) (m, _, _) =
       let test = ref 1.0 in
       let check b = if b then 0.0 else (test := 0.0; 1.0) in
       let f c x =
@@ -583,44 +585,44 @@ module MakeOps =
       done;
       (Mpi.allreduce_float !test Mpi.Min comm = 1.0)
 
-    let n_vminquotient (num, _, comm) (denom, _, _) =
+    let minquotient (num, _, comm) (denom, _, _) =
       let lmin = ref Config.big_real in
       for i = 0 to A.length num - 1 do
         if (A.get denom i) <> 0.0 then
-          lmin := min !lmin (A.get num i /. A.get denom i)
+          lmin := floatmin !lmin (A.get num i /. A.get denom i)
       done;
       Mpi.allreduce_float !lmin Mpi.Min comm
 
-    let n_vprod (x, _, _) (y, _, _) (z, _, _) =
+    let prod (x, _, _) (y, _, _) (z, _, _) =
       for i = 0 to A.length x - 1 do
         A.set z i (A.get x i *. A.get y i)
       done
 
-    let n_vdiv (x, _, _) (y, _, _) (z, _, _) =
+    let div (x, _, _) (y, _, _) (z, _, _) =
       for i = 0 to A.length x - 1 do
         A.set z i (A.get x i /. A.get y i)
       done
 
-    let n_vabs (x, _, _) (z, _, _) =
+    let abs (x, _, _) (z, _, _) =
       for i = 0 to A.length x - 1 do
         A.set z i (abs_float (A.get x i))
       done
 
-    let n_vinv (x, _, _) (z, _, _) =
+    let inv (x, _, _) (z, _, _) =
       for i = 0 to A.length x - 1 do
         A.set z i (1.0 /. (A.get x i))
       done
 
-    let n_vspace (_, ng, comm) = (ng, 2 * Mpi.comm_size comm)
+    let space (_, ng, comm) = (ng, 2 * Mpi.comm_size comm)
 
-    let n_vgetlength (_, ng, _) = ng
+    let getlength (_, ng, _) = ng
 
     (* fused and array operations *)
 
-    let n_vlinearcombination (ca : RealArray.t) (xa : t array) (z : t) =
+    let linearcombination (ca : RealArray.t) (xa : t array) (z : t) =
       let nvec = Array.length xa in
-      if nvec = 1 then n_vscale ca.{0} xa.(0) z
-      else if nvec = 2 then n_vlinearsum ca.{0} xa.(0) ca.{1} xa.(1) z
+      if nvec = 1 then scale ca.{0} xa.(0) z
+      else if nvec = 2 then linearsum ca.{0} xa.(0) ca.{1} xa.(1) z
       else
         let zd, _, _ = z in
         let n = A.length zd in
@@ -650,9 +652,9 @@ module MakeOps =
           done
         end
 
-    let n_vscaleaddmulti (aa : RealArray.t) (x : t) (ya : t array) (za : t array) =
+    let scaleaddmulti (aa : RealArray.t) (x : t) (ya : t array) (za : t array) =
       let nvec = Array.length ya in
-      if nvec = 1 then n_vlinearsum aa.{0} x 1.0 ya.(0) za.(0)
+      if nvec = 1 then linearsum aa.{0} x 1.0 ya.(0) za.(0)
       else
         let xd, _, _ = x in
         let n = A.length xd in
@@ -671,9 +673,9 @@ module MakeOps =
             done
           done
 
-    let n_vdotprodmulti (x : t) (ya : t array) (dp : RealArray.t) =
+    let dotprodmulti (x : t) (ya : t array) (dp : RealArray.t) =
       let nvec = Array.length ya in
-      if nvec = 1 then dp.{0} <- n_vdotprod x ya.(0)
+      if nvec = 1 then dp.{0} <- dotprod x ya.(0)
       else
         let xd, _, comm = x in
         let n = A.length xd in
@@ -794,9 +796,9 @@ module MakeOps =
         done
       done
 
-    let n_vlinearsumvectorarray a (xa : t array) b (ya : t array) (za : t array) =
+    let linearsumvectorarray a (xa : t array) b (ya : t array) (za : t array) =
       let nvec = Array.length ya in
-      if nvec = 1 then n_vlinearsum a xa.(0) b ya.(0) za.(0)
+      if nvec = 1 then linearsum a xa.(0) b ya.(0) za.(0)
       else if b =  1.0 && (za == ya) then arr_vaxpy_array a xa ya
       else if a =  1.0 && (za == xa) then arr_vaxpy_array a ya xa
       else if a =  1.0 && b =  1.0 then v_sumvectorarray xa ya za
@@ -820,9 +822,9 @@ module MakeOps =
           done
         done
 
-    let n_vscalevectorarray (c : RealArray.t) (xa : t array) (za : t array) =
+    let scalevectorarray (c : RealArray.t) (xa : t array) (za : t array) =
       let nvec = Array.length xa in
-      if nvec = 1 then n_vscale c.{0} xa.(0) za.(0)
+      if nvec = 1 then scale c.{0} xa.(0) za.(0)
       else
         let xad, _, _ = xa.(0) in
         let n = A.length xad in
@@ -843,9 +845,9 @@ module MakeOps =
             done
           done
 
-    let n_vconstvectorarray c (za : t array) =
+    let constvectorarray c (za : t array) =
       let nvec = Array.length za in
-      if nvec = 1 then n_vconst c za.(0)
+      if nvec = 1 then const c za.(0)
       else
         let zad, _, _ = za.(0) in
         let n = A.length zad in
@@ -856,9 +858,9 @@ module MakeOps =
           done
         done
 
-    let n_vwrmsnormvectorarray (xa : t array) (wa : t array) (nrm : RealArray.t) =
+    let wrmsnormvectorarray (xa : t array) (wa : t array) (nrm : RealArray.t) =
       let nvec = Array.length xa in
-      if nvec = 1 then nrm.{0} <- n_vwrmsnorm xa.(0) wa.(0)
+      if nvec = 1 then nrm.{0} <- wrmsnorm xa.(0) wa.(0)
       else
         let xad, ng, comm = xa.(0) in
         let nl = A.length xad in
@@ -878,10 +880,10 @@ module MakeOps =
           nrm.{i} <- sqrt (nrm.{i}/.nf)
         done
 
-    let n_vwrmsnormmaskvectorarray (xa : t array) (wa : t array) (id : t)
+    let wrmsnormmaskvectorarray (xa : t array) (wa : t array) (id : t)
                                    (nrm : RealArray.t) =
       let nvec = Array.length xa in
-      if nvec = 1 then nrm.{0} <- n_vwrmsnormmask xa.(0) wa.(0) id
+      if nvec = 1 then nrm.{0} <- wrmsnormmask xa.(0) wa.(0) id
       else
         let xad, ng, comm = xa.(0) in
         let idd, _, _ = id in
@@ -904,18 +906,18 @@ module MakeOps =
           nrm.{i} <- sqrt (nrm.{i}/.nf)
         done
 
-    let n_vscaleaddmultivectorarray (ra : RealArray.t) (xa : t array)
+    let scaleaddmultivectorarray (ra : RealArray.t) (xa : t array)
                                     (yaa : t array array) (zaa : t array array) =
       let nsum = Array.length yaa in
       let nvec = Array.length yaa.(0) in
       if nvec = 1 then begin
-        if nsum = 1 then n_vlinearsum ra.{0} xa.(0) 1.0 yaa.(0).(0) zaa.(0).(0)
+        if nsum = 1 then linearsum ra.{0} xa.(0) 1.0 yaa.(0).(0) zaa.(0).(0)
         else
           let yya = Array.init nsum (fun j -> yaa.(j).(0)) in
           let zza = Array.init nsum (fun j -> zaa.(j).(0)) in
-          n_vscaleaddmulti ra xa.(0) yya zza
+          scaleaddmulti ra xa.(0) yya zza
       end
-      else if nsum = 1 then n_vlinearsumvectorarray ra.{0} xa 1.0 yaa.(0) zaa.(0)
+      else if nsum = 1 then linearsumvectorarray ra.{0} xa 1.0 yaa.(0) zaa.(0)
       else
         let xad, _, _ = xa.(0) in
         let n = A.length xad in
@@ -942,24 +944,24 @@ module MakeOps =
             done
           done
 
-    let n_vlinearcombinationvectorarray (ca : RealArray.t) (xaa : t array array)
+    let linearcombinationvectorarray (ca : RealArray.t) (xaa : t array array)
                                         (za : t array) =
       let nsum = Array.length xaa in
       let nvec = Array.length xaa.(0) in
       if nvec = 1 then begin
-        if nsum = 1 then n_vscale ca.{0} xaa.(0).(0) za.(0)
+        if nsum = 1 then scale ca.{0} xaa.(0).(0) za.(0)
         else if nsum = 2
-             then n_vlinearsum ca.{0} xaa.(0).(0) ca.{1} xaa.(1).(0) za.(0)
+             then linearsum ca.{0} xaa.(0).(0) ca.{1} xaa.(1).(0) za.(0)
         else
           let ya = Array.init nsum (fun i -> xaa.(i).(0)) in
-          n_vlinearcombination ca ya za.(0)
+          linearcombination ca ya za.(0)
       end
       else
         if nsum = 1 then
           let ctmp = RealArray.make nvec ca.{0} in
-          n_vscalevectorarray ctmp xaa.(0) za
+          scalevectorarray ctmp xaa.(0) za
         else if nsum = 2 then
-          n_vlinearsumvectorarray ca.{0} xaa.(0) ca.{1} xaa.(1) za
+          linearsumvectorarray ca.{0} xaa.(0) ca.{1} xaa.(1) za
         else
           let zad, _, _ = za.(0) in
           let n = A.length zad in
@@ -1006,15 +1008,15 @@ module MakeOps =
             done
 
     module Local = struct
-      let n_vdotprod     = n_vdotprod
-      let n_vmaxnorm     = n_vmaxnorm
-      let n_vmin         = n_vmin
-      let n_vl1norm      = n_vl1norm
-      let n_vinvtest     = n_vinvtest
-      let n_vconstrmask  = n_vconstrmask
-      let n_vminquotient = n_vminquotient
+      let dotprod     = dotprod
+      let maxnorm     = maxnorm
+      let min         = min
+      let l1norm      = l1norm
+      let invtest     = invtest
+      let constrmask  = constrmask
+      let minquotient = minquotient
 
-      let n_vwsqrsum (x, _, _) (w, _, _) =
+      let wsqrsum (x, _, _) (w, _, _) =
         let a = ref 0.0 in
         let lx = A.length x in
         for i = 0 to lx - 1 do
@@ -1022,7 +1024,7 @@ module MakeOps =
         done;
         !a
 
-      let n_vwsqrsummask (x, _, _) (w, _, _) (id, _, _) =
+      let wsqrsummask (x, _, _) (w, _, _) (id, _, _) =
         let a = ref 0.0 in
         let lx = A.length x in
         for i = 0 to lx - 1 do
@@ -1054,10 +1056,12 @@ module DataOps =
     let make      = RealArray.make
     let clone     = RealArray.copy
 
+    let floatmin (x : float) (y : float) = min x y
+
     type t = RealArray.t * int * Mpi.communicator
     type d = RealArray.t
 
-    let n_vclone (d, gl, comm) = (clone d, gl, comm)
+    let clone (d, gl, comm) = (clone d, gl, comm)
 
     let arr_vaxpy a (x : d) (y : d) =
       if a = 1.0 then
@@ -1073,7 +1077,7 @@ module DataOps =
           A.set y i (A.get y i +. a *. A.get x i)
         done
 
-    let n_vlinearsum a ((x : d), _, _) b ((y : d), _, _) ((z : d), _, _) =
+    let linearsum a ((x : d), _, _) b ((y : d), _, _) ((z : d), _, _) =
       if b = 1.0 && z == y then
         arr_vaxpy a x y
       else if a = 1.0 && z == x then
@@ -1110,9 +1114,9 @@ module DataOps =
           A.set z i (a *. A.get x i +. b *. A.get y i)
         done
 
-    let n_vconst c ((a : d), _, _) = A.fill a c
+    let const c ((a : d), _, _) = A.fill a c
 
-    let n_vscale c ((x : d), _, _) ((z : d), _, _) =
+    let scale c ((x : d), _, _) ((z : d), _, _) =
       if c = 1.0 then
         for i = 0 to A.dim x - 1 do
           A.set z i (A.get x i)
@@ -1126,12 +1130,12 @@ module DataOps =
           A.set z i (c *. A.get x i)
         done
 
-    let n_vaddconst ((x : d), _, _) b ((z : d), _, _) =
+    let addconst ((x : d), _, _) b ((z : d), _, _) =
       for i = 0 to A.dim x - 1 do
         A.set z i (A.get x i +. b)
       done
 
-    let n_vmaxnorm ((x : d), _, comm) =
+    let maxnorm ((x : d), _, comm) =
       let lmax = ref 0.0 in
       for i = 0 to A.dim x - 1 do
         let ax = abs_float (A.get x i) in
@@ -1139,7 +1143,7 @@ module DataOps =
       done;
       Mpi.allreduce_float !lmax Mpi.Max comm
 
-    let n_vwrmsnorm ((x : d), n_global, comm) ((w : d), _, _) =
+    let wrmsnorm ((x : d), n_global, comm) ((w : d), _, _) =
       let lsum = ref 0.0 in
       for i = 0 to A.dim x - 1 do
         lsum := !lsum
@@ -1148,7 +1152,7 @@ module DataOps =
       let gsum = Mpi.allreduce_float !lsum Mpi.Sum comm in
       sqrt (gsum /. float n_global)
 
-    let n_vwrmsnormmask ((x : d), n_global, comm) ((w : d), _, _) ((id : d), _, _) =
+    let wrmsnormmask ((x : d), n_global, comm) ((w : d), _, _) ((id : d), _, _) =
       let lsum = ref 0.0 in
       for i = 0 to A.dim x - 1 do
         if A.get id i > 0.0 then
@@ -1157,7 +1161,7 @@ module DataOps =
       let gsum = Mpi.allreduce_float !lsum Mpi.Sum comm in
       sqrt (gsum /. float n_global)
 
-    let n_vmin ((x : d), _, comm) =
+    let min ((x : d), _, comm) =
       let lmin = ref max_float in
       for i = 0 to A.dim x - 1 do
         let xv = A.get x i in
@@ -1165,19 +1169,19 @@ module DataOps =
       done;
       Mpi.allreduce_float !lmin Mpi.Min comm
 
-    let n_vdotprod ((x : d), _, comm) ((y : d), _, _) =
+    let dotprod ((x : d), _, comm) ((y : d), _, _) =
       let lsum = ref 0.0 in
       for i = 0 to A.dim x - 1 do
         lsum := !lsum +. (A.get x i *. A.get y i)
       done;
       Mpi.allreduce_float !lsum Mpi.Sum comm
 
-    let n_vcompare c ((x : d), _, _) ((z : d), _, _) =
+    let compare c ((x : d), _, _) ((z : d), _, _) =
       for i = 0 to A.dim x - 1 do
         A.set z i (if abs_float (A.get x i) >= c then 1.0 else 0.0)
       done
 
-    let n_vinvtest ((x : d), _, comm) ((z : d), _, _) =
+    let invtest ((x : d), _, comm) ((z : d), _, _) =
       let lval = ref 1 in
       for i = 0 to A.dim x - 1 do
         if A.get x i = 0.0 then lval := 0
@@ -1185,7 +1189,7 @@ module DataOps =
       done;
       (Mpi.allreduce_int !lval Mpi.Min comm <> 0)
 
-    let n_vwl2norm ((x : d), _, comm) ((w : d), _, _) =
+    let wl2norm ((x : d), _, comm) ((w : d), _, _) =
       let lsum = ref 0.0 in
       for i = 0 to A.dim x - 1 do
         lsum := !lsum +. (A.get x i *. A.get w i *. A.get x i *. A.get w i)
@@ -1193,14 +1197,14 @@ module DataOps =
       let gsum = Mpi.allreduce_float !lsum Mpi.Sum comm in
       sqrt gsum
 
-    let n_vl1norm ((x : d), _, comm) =
+    let l1norm ((x : d), _, comm) =
       let lsum = ref 0.0 in
       for i = 0 to A.dim x - 1 do
         lsum := !lsum +. abs_float (A.get x i)
       done;
       Mpi.allreduce_float !lsum Mpi.Sum comm
 
-    let n_vconstrmask ((c : d), _, _) ((x : d), _, comm) ((m : d), _, _) =
+    let constrmask ((c : d), _, _) ((x : d), _, comm) ((m : d), _, _) =
       let test = ref 1.0 in
       let check b = if b then 0.0 else (test := 0.0; 1.0) in
       let f c x =
@@ -1217,44 +1221,44 @@ module DataOps =
       done;
       (Mpi.allreduce_float !test Mpi.Min comm = 1.0)
 
-    let n_vminquotient ((num : d), _, comm) ((denom : d), _, _) =
+    let minquotient ((num : d), _, comm) ((denom : d), _, _) =
       let lmin = ref Config.big_real in
       for i = 0 to A.dim num - 1 do
         if (A.get denom i) <> 0.0 then
-          lmin := min !lmin (A.get num i /. A.get denom i)
+          lmin := floatmin !lmin (A.get num i /. A.get denom i)
       done;
       Mpi.allreduce_float !lmin Mpi.Min comm
 
-    let n_vprod ((x : d), _, _) ((y : d), _, _) ((z : d), _, _) =
+    let prod ((x : d), _, _) ((y : d), _, _) ((z : d), _, _) =
       for i = 0 to A.dim x - 1 do
         A.set z i (A.get x i *. A.get y i)
       done
 
-    let n_vdiv ((x : d), _, _) ((y : d), _, _) ((z : d), _, _) =
+    let div ((x : d), _, _) ((y : d), _, _) ((z : d), _, _) =
       for i = 0 to A.dim x - 1 do
         A.set z i (A.get x i /. A.get y i)
       done
 
-    let n_vabs ((x : d), _, _) ((z : d), _, _) =
+    let abs ((x : d), _, _) ((z : d), _, _) =
       for i = 0 to A.dim x - 1 do
         A.set z i (abs_float (A.get x i))
       done
 
-    let n_vinv ((x : d), _, _) ((z : d), _, _) =
+    let inv ((x : d), _, _) ((z : d), _, _) =
       for i = 0 to A.dim x - 1 do
         A.set z i (1.0 /. (A.get x i))
       done
 
-    let n_vspace (_, ng, comm) = (ng, 2 * Mpi.comm_size comm)
+    let space (_, ng, comm) = (ng, 2 * Mpi.comm_size comm)
 
-    let n_vgetlength (_, ng, _) = ng
+    let getlength (_, ng, _) = ng
 
     (* fused and array operations *)
 
-    let n_vlinearcombination (ca : RealArray.t) (xa : t array) (z : t) =
+    let linearcombination (ca : RealArray.t) (xa : t array) (z : t) =
       let nvec = Array.length xa in
-      if nvec = 1 then n_vscale ca.{0} xa.(0) z
-      else if nvec = 2 then n_vlinearsum ca.{0} xa.(0) ca.{1} xa.(1) z
+      if nvec = 1 then scale ca.{0} xa.(0) z
+      else if nvec = 2 then linearsum ca.{0} xa.(0) ca.{1} xa.(1) z
       else
         let zd, _, _ = z in
         let n = RealArray.length zd in
@@ -1284,9 +1288,9 @@ module DataOps =
           done
         end
 
-    let n_vscaleaddmulti (aa : RealArray.t) (x : t) (ya : t array) (za : t array) =
+    let scaleaddmulti (aa : RealArray.t) (x : t) (ya : t array) (za : t array) =
       let nvec = Array.length ya in
-      if nvec = 1 then n_vlinearsum aa.{0} x 1.0 ya.(0) za.(0)
+      if nvec = 1 then linearsum aa.{0} x 1.0 ya.(0) za.(0)
       else
         let xd, _, _ = x in
         let n = RealArray.length xd in
@@ -1305,9 +1309,9 @@ module DataOps =
             done
           done
 
-    let n_vdotprodmulti (x : t) (ya : t array) (dp : RealArray.t) =
+    let dotprodmulti (x : t) (ya : t array) (dp : RealArray.t) =
       let nvec = Array.length ya in
-      if nvec = 1 then dp.{0} <- n_vdotprod x ya.(0)
+      if nvec = 1 then dp.{0} <- dotprod x ya.(0)
       else
         let xd, _, comm = x in
         let n = RealArray.length xd in
@@ -1428,9 +1432,9 @@ module DataOps =
         done
       done
 
-    let n_vlinearsumvectorarray a (xa : t array) b (ya : t array) (za : t array) =
+    let linearsumvectorarray a (xa : t array) b (ya : t array) (za : t array) =
       let nvec = Array.length ya in
-      if nvec = 1 then n_vlinearsum a xa.(0) b ya.(0) za.(0)
+      if nvec = 1 then linearsum a xa.(0) b ya.(0) za.(0)
       else if b =  1.0 && (za == ya) then arr_vaxpy_array a xa ya
       else if a =  1.0 && (za == xa) then arr_vaxpy_array a ya xa
       else if a =  1.0 && b =  1.0 then v_sumvectorarray xa ya za
@@ -1454,9 +1458,9 @@ module DataOps =
           done
         done
 
-    let n_vscalevectorarray (c : RealArray.t) (xa : t array) (za : t array) =
+    let scalevectorarray (c : RealArray.t) (xa : t array) (za : t array) =
       let nvec = Array.length xa in
-      if nvec = 1 then n_vscale c.{0} xa.(0) za.(0)
+      if nvec = 1 then scale c.{0} xa.(0) za.(0)
       else
         let xad, _, _ = xa.(0) in
         let n = A.dim xad in
@@ -1477,9 +1481,9 @@ module DataOps =
             done
           done
 
-    let n_vconstvectorarray c (za : t array) =
+    let constvectorarray c (za : t array) =
       let nvec = Array.length za in
-      if nvec = 1 then n_vconst c za.(0)
+      if nvec = 1 then const c za.(0)
       else
         let zad, _, _ = za.(0) in
         let n = A.dim zad in
@@ -1490,9 +1494,9 @@ module DataOps =
           done
         done
 
-    let n_vwrmsnormvectorarray (xa : t array) (wa : t array) (nrm : RealArray.t) =
+    let wrmsnormvectorarray (xa : t array) (wa : t array) (nrm : RealArray.t) =
       let nvec = Array.length xa in
-      if nvec = 1 then nrm.{0} <- n_vwrmsnorm xa.(0) wa.(0)
+      if nvec = 1 then nrm.{0} <- wrmsnorm xa.(0) wa.(0)
       else
         let xad, ng, comm = xa.(0) in
         let nl = A.dim xad in
@@ -1512,10 +1516,10 @@ module DataOps =
           nrm.{i} <- sqrt (nrm.{i}/.nf)
         done
 
-    let n_vwrmsnormmaskvectorarray (xa : t array) (wa : t array) (id : t)
+    let wrmsnormmaskvectorarray (xa : t array) (wa : t array) (id : t)
                                    (nrm : RealArray.t) =
       let nvec = Array.length xa in
-      if nvec = 1 then nrm.{0} <- n_vwrmsnormmask xa.(0) wa.(0) id
+      if nvec = 1 then nrm.{0} <- wrmsnormmask xa.(0) wa.(0) id
       else
         let xad, ng, comm = xa.(0) in
         let idd, _, _ = id in
@@ -1538,18 +1542,18 @@ module DataOps =
           nrm.{i} <- sqrt (nrm.{i}/.nf)
         done
 
-    let n_vscaleaddmultivectorarray (ra : RealArray.t) (xa : t array)
+    let scaleaddmultivectorarray (ra : RealArray.t) (xa : t array)
                                     (yaa : t array array) (zaa : t array array) =
       let nsum = Array.length yaa in
       let nvec = Array.length yaa.(0) in
       if nvec = 1 then begin
-        if nsum = 1 then n_vlinearsum ra.{0} xa.(0) 1.0 yaa.(0).(0) zaa.(0).(0)
+        if nsum = 1 then linearsum ra.{0} xa.(0) 1.0 yaa.(0).(0) zaa.(0).(0)
         else
           let yya = Array.init nsum (fun j -> yaa.(j).(0)) in
           let zza = Array.init nsum (fun j -> zaa.(j).(0)) in
-          n_vscaleaddmulti ra xa.(0) yya zza
+          scaleaddmulti ra xa.(0) yya zza
       end
-      else if nsum = 1 then n_vlinearsumvectorarray ra.{0} xa 1.0 yaa.(0) zaa.(0)
+      else if nsum = 1 then linearsumvectorarray ra.{0} xa 1.0 yaa.(0) zaa.(0)
       else
         let xad, _, _ = xa.(0) in
         let n = A.dim xad in
@@ -1576,24 +1580,24 @@ module DataOps =
             done
           done
 
-    let n_vlinearcombinationvectorarray (ca : RealArray.t) (xaa : t array array)
+    let linearcombinationvectorarray (ca : RealArray.t) (xaa : t array array)
                                         (za : t array) =
       let nsum = Array.length xaa in
       let nvec = Array.length xaa.(0) in
       if nvec = 1 then begin
-        if nsum = 1 then n_vscale ca.{0} xaa.(0).(0) za.(0)
+        if nsum = 1 then scale ca.{0} xaa.(0).(0) za.(0)
         else if nsum = 2
-             then n_vlinearsum ca.{0} xaa.(0).(0) ca.{1} xaa.(1).(0) za.(0)
+             then linearsum ca.{0} xaa.(0).(0) ca.{1} xaa.(1).(0) za.(0)
         else
           let ya = Array.init nsum (fun i -> xaa.(i).(0)) in
-          n_vlinearcombination ca ya za.(0)
+          linearcombination ca ya za.(0)
       end
       else
         if nsum = 1 then
           let ctmp = RealArray.make nvec ca.{0} in
-          n_vscalevectorarray ctmp xaa.(0) za
+          scalevectorarray ctmp xaa.(0) za
         else if nsum = 2 then
-          n_vlinearsumvectorarray ca.{0} xaa.(0) ca.{1} xaa.(1) za
+          linearsumvectorarray ca.{0} xaa.(0) ca.{1} xaa.(1) za
         else
           let zad, _, _ = za.(0) in
           let n = A.dim zad in
@@ -1640,15 +1644,15 @@ module DataOps =
             done
 
     module Local = struct
-      let n_vdotprod     = n_vdotprod
-      let n_vmaxnorm     = n_vmaxnorm
-      let n_vmin         = n_vmin
-      let n_vl1norm      = n_vl1norm
-      let n_vinvtest     = n_vinvtest
-      let n_vconstrmask  = n_vconstrmask
-      let n_vminquotient = n_vminquotient
+      let dotprod     = dotprod
+      let maxnorm     = maxnorm
+      let min         = min
+      let l1norm      = l1norm
+      let invtest     = invtest
+      let constrmask  = constrmask
+      let minquotient = minquotient
 
-      let n_vwsqrsum ((x : d), _, _) ((w : d), _, _) =
+      let wsqrsum ((x : d), _, _) ((w : d), _, _) =
         let a = ref 0.0 in
         let lx = A.dim x in
         for i = 0 to lx - 1 do
@@ -1656,7 +1660,7 @@ module DataOps =
         done;
         !a
 
-      let n_vwsqrsummask ((x : d), _, _) ((w : d), _, _) ((id : d), _, _) =
+      let wsqrsummask ((x : d), _, _) ((w : d), _, _) ((id : d), _, _) =
         let a = ref 0.0 in
         let lx = A.dim x in
         for i = 0 to lx - 1 do

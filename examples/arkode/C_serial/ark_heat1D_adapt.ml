@@ -44,7 +44,7 @@ module ARKStep = Arkode.ARKStep
 
 let printf = Printf.printf
 let fprintf = Printf.fprintf
-let n_vdotprod = Nvector_serial.Ops.n_vdotprod
+let dotprod = Nvector_serial.Ops.dotprod
 
 exception IllegalMeshCreated
 
@@ -267,7 +267,7 @@ let main () =
   printf "  iout          dt_old                 dt_new               ||u||_rms       N   NNI  NLI\n";
   printf " %s\n" border;
   printf " %4d  %19.15e  %19.15e  %19.15e  %d   %2d  %3d\n"
-         0 0.0 0.0 (sqrt(n_vdotprod y y /. float udata.n)) udata.n 0 0;
+         0 0.0 0.0 (sqrt(dotprod y y /. float udata.n)) udata.n 0 0;
   let rec loop t newdt y iout nni_tot nli_tot =
     if t >= tf then iout, nni_tot, nli_tot
     else begin
@@ -287,7 +287,7 @@ let main () =
       (* print current solution stats *)
       printf " %4d  %19.15e  %19.15e  %19.15e  %d   %2d  %3d\n"
              (iout + 1) olddt newdt
-             (sqrt(n_vdotprod y y /. float udata.n))
+             (sqrt(dotprod y y /. float udata.n))
              udata.n nni nli;
 
       (* output results and current mesh to disk *)

@@ -34,8 +34,8 @@ module Sens = Cvodes.Sensitivity
 module Densemat = Matrix.Dense
 let unwrap = Nvector.unwrap
 
-let n_vclone = Nvector_serial.Ops.n_vclone
-let n_vconst = Nvector_serial.Ops.n_vconst
+let clone = Nvector_serial.Ops.clone
+let const = Nvector_serial.Ops.const
 
 let printf = Printf.printf
 
@@ -265,7 +265,7 @@ let main () =
   let pbar = Sundials.RealArray.copy data.p in
   let plist = Array.init ns (fun is -> is) in
 
-  let yS0 = Array.init ns (fun _ -> let v = n_vclone y in n_vconst 0.0 v; v) in
+  let yS0 = Array.init ns (fun _ -> let v = clone y in const 0.0 v; v) in
 
   let fSdata = Sens.OneByOne (Some (fS data)) in
 

@@ -44,7 +44,7 @@ module ARKStep = Arkode.ARKStep
 
 let printf = Printf.printf
 let fprintf = Printf.fprintf
-let n_vdotprod = Nvector_serial.Ops.n_vdotprod
+let dotprod = Nvector_serial.Ops.dotprod
 
 let sundials_270_or_later =
   match Config.sundials_version with
@@ -160,14 +160,14 @@ let main () =
   let tout  = ref (t0+.dTout) in
   printf "        t      ||u||_rms\n";
   printf "   -------------------------\n";
-  printf "  %10.6f  %10.6f\n" t0 (sqrt((n_vdotprod y y)/.float mesh_n));
+  printf "  %10.6f  %10.6f\n" t0 (sqrt((dotprod y y)/.float mesh_n));
   (try
      for iout=0 to nt-1 do
 
        (* call integrator *)
        let t, _ = ARKStep.solve_normal arkode_mem !tout y in
        (* print solution stats *)
-       printf "  %10.6f  %10.6f\n" t (sqrt((n_vdotprod y y)/.float mesh_n));
+       printf "  %10.6f  %10.6f\n" t (sqrt((dotprod y y)/.float mesh_n));
        (* successful solve: update output time *)
        tout := !tout +. dTout;
        if !tout > tf then tout := tf;

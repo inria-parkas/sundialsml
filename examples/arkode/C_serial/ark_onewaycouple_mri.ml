@@ -86,9 +86,9 @@ let ans t (ytrue : Nvector_serial.t) =
 (* function to compute the max error in the solution *)
 let err (y : Nvector_serial.t) (ytrue : Nvector_serial.t) =
   (* compute the error and store it in ytrue *)
-  Nvector_serial.Ops.n_vlinearsum 1.0 y (-.1.0) ytrue ytrue;
+  Nvector_serial.Ops.linearsum 1.0 y (-.1.0) ytrue ytrue;
   (* compute the max norm of the error *)
-  Nvector_serial.Ops.n_vmaxnorm ytrue
+  Nvector_serial.Ops.maxnorm ytrue
 
 let main () =
   (* general problem parameters *)
@@ -119,7 +119,7 @@ let main () =
   let y = Nvector_serial.wrap ydata in (* Create serial vector for solution *)
 
   (* Create serial vector for the analytic solution *)
-  let ytrue = Nvector_serial.Ops.n_vclone y in
+  let ytrue = Nvector_serial.Ops.clone y in
 
   (* Call MRIStepCreate to initialize the MRI timestepper module and
      specify the right-hand side functions in y'=fs(t,y)+ff(t,y),

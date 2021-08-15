@@ -42,9 +42,9 @@ open Sundials
 let fprintf = Printf.fprintf
 let printf = Printf.printf
 
-let vconst = Nvector_parallel.DataOps.n_vconst
-let vscale = Nvector_parallel.DataOps.n_vscale
-let vmaxnorm = Nvector_parallel.Ops.n_vmaxnorm
+let vconst = Nvector_parallel.DataOps.const
+let vscale = Nvector_parallel.DataOps.scale
+let vmaxnorm = Nvector_parallel.Ops.maxnorm
 
 let slice = Bigarray.Array1.sub
 let unwrap = Nvector.unwrap
@@ -551,7 +551,7 @@ let main () =
   (* Initialize the uu, up, id, and constraints profiles. *)
 
   set_initial_profile data (unwrap uu) (unwrap up) (unwrap id) (unwrap res);
-  Ops.n_vconst one constraints;
+  Ops.const one constraints;
 
   let t0 = zero and t1 = 0.01 in
 

@@ -50,8 +50,8 @@ module AdjQuad = Adjoint.Quadrature
 
 let printf = Printf.printf
 
-let nvconst = Nvector_serial.DataOps.n_vconst
-let nvscale = Nvector_serial.DataOps.n_vscale
+let nvconst = Nvector_serial.DataOps.const
+let nvscale = Nvector_serial.DataOps.scale
 
 let wrap = Nvector_serial.wrap
 let unwrap = Nvector.unwrap

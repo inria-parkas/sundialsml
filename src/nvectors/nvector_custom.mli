@@ -52,85 +52,85 @@ type 'd nvector_ops = { (* {{{ *)
   n_vcheck           : 'd -> 'd ->  bool;
   (** Returns [true] if the vectors are compatible. See {!Nvector.check}. *)
 
-  n_vclone           : 'd -> 'd;
+  clone           : 'd -> 'd;
   (** Creates a new, distinct vector from an existing one without
       necessarily copying the contents of the original vector. *)
 
-  n_vspace           : ('d -> int * int) option;
+  space           : ('d -> int * int) option;
   (** Returns storage requirements for one nvector [(lrw, liw)], where
       [lrw] is the number of realtype words and [liw] is the number of
       integer words . *)
 
-  n_vgetlength       : 'd -> int;
+  getlength       : 'd -> int;
   (** Returns the number of "active" entries. This value is cumulative
       across all processes in a parallel environment. *)
 
-  n_vlinearsum       : float -> 'd -> float -> 'd -> 'd -> unit;
-  (** [n_vlinearsum a x b y z] calculates [z = ax + by]. *)
+  linearsum       : float -> 'd -> float -> 'd -> 'd -> unit;
+  (** [linearsum a x b y z] calculates [z = ax + by]. *)
 
-  n_vconst           : float -> 'd -> unit;
-  (** [n_vconst c z] sets all of [z] to [c]. *)
+  const           : float -> 'd -> unit;
+  (** [const c z] sets all of [z] to [c]. *)
 
-  n_vprod            : 'd -> 'd -> 'd -> unit;
-  (** [n_vprod x y z] calculates [z = x * y] (pointwise). *)
+  prod            : 'd -> 'd -> 'd -> unit;
+  (** [prod x y z] calculates [z = x * y] (pointwise). *)
 
-  n_vdiv             : 'd -> 'd -> 'd -> unit;
-  (** [n_vdiv x y z] calculates [z = x / y] (pointwise). *)
+  div             : 'd -> 'd -> 'd -> unit;
+  (** [div x y z] calculates [z = x / y] (pointwise). *)
 
-  n_vscale           : float -> 'd -> 'd -> unit;
-  (** [n_vscale c x z] calculates [z = c *. x]. *)
+  scale           : float -> 'd -> 'd -> unit;
+  (** [scale c x z] calculates [z = c *. x]. *)
 
-  n_vabs             : 'd -> 'd -> unit;
-  (** [n_vabs x z] calculates [z = abs(x)]. *)
+  abs             : 'd -> 'd -> unit;
+  (** [abs x z] calculates [z = abs(x)]. *)
 
-  n_vinv             : 'd -> 'd -> unit;
-  (** [n_vinv x z] calculates [z = 1/x] (pointwise). *)
+  inv             : 'd -> 'd -> unit;
+  (** [inv x z] calculates [z = 1/x] (pointwise). *)
 
-  n_vaddconst        : 'd -> float -> 'd -> unit;
-  (** [n_vaddconst x b z] calculates [z = x + b]. *)
+  addconst        : 'd -> float -> 'd -> unit;
+  (** [addconst x b z] calculates [z = x + b]. *)
 
-  n_vmaxnorm         : 'd -> float;
-  (** [n_vmaxnorm x] returns the maximum absolute value in x. *)
+  maxnorm         : 'd -> float;
+  (** [maxnorm x] returns the maximum absolute value in x. *)
 
-  n_vwrmsnorm        : 'd -> 'd -> float;
-  (** [n_vwrmsnorm x w] returns the weighted root-mean-square norm of [x]
+  wrmsnorm        : 'd -> 'd -> float;
+  (** [wrmsnorm x w] returns the weighted root-mean-square norm of [x]
       with weight vector [w]. *)
 
-  n_vmin             : 'd -> float;
-  (** [n_vmin x] returns the smallest element in [x]. *)
+  min             : 'd -> float;
+  (** [min x] returns the smallest element in [x]. *)
 
-  n_vdotprod         : 'd -> 'd -> float;
-  (** [n_vdotprod x y] returns the dot product of [x] and [y]. *)
+  dotprod         : 'd -> 'd -> float;
+  (** [dotprod x y] returns the dot product of [x] and [y]. *)
 
-  n_vcompare         : float -> 'd -> 'd -> unit;
-  (** [n_vcompare c x z] calculates [z(i) = if abs x(i) >= c then 1 else 0]. *)
+  compare         : float -> 'd -> 'd -> unit;
+  (** [compare c x z] calculates [z(i) = if abs x(i) >= c then 1 else 0]. *)
 
-  n_vinvtest         : 'd -> 'd -> bool;
-  (** [n_vinvtest x z] calculates [z(i) = 1 / x(i)] with prior testing for
+  invtest         : 'd -> 'd -> bool;
+  (** [invtest x z] calculates [z(i) = 1 / x(i)] with prior testing for
       zero values. This routine must return [true] if all components of [x] are
       nonzero (successful inversion) and [false] otherwise (not all elements
       inverted). *)
 
-  n_vwl2norm         : ('d -> 'd -> float) option;
-  (** [m = n_vwl2norm x w] returns the weighted Euclidean l_2 norm of [x]
+  wl2norm         : ('d -> 'd -> float) option;
+  (** [m = wl2norm x w] returns the weighted Euclidean l_2 norm of [x]
       with weight vector [w], i.e.,
       {% $m = \sqrt{\sum_{i=0}^{n-1}(\mathtt{x}_i\mathtt{w}_i)}$ %}. *)
 
-  n_vl1norm          : ('d -> float) option;
-    (** [n_vl1norm x] returns the l1 norm of [x], i.e.,
+  l1norm          : ('d -> float) option;
+    (** [l1norm x] returns the l1 norm of [x], i.e.,
          {% $\sum_{i=0}^{n-1}\lvert\mathtt{x}_i\rvert$ %}. *)
 
-  n_vwrmsnormmask    : ('d -> 'd -> 'd -> float) option;
-  (** [n_vmaxnormmask x w id] returns the weighted root-mean-square norm
+  wrmsnormmask    : ('d -> 'd -> 'd -> float) option;
+  (** [maxnormmask x w id] returns the weighted root-mean-square norm
       of [x] using only elements where the corresponding [id] is non-zero. *)
 
-  n_vconstrmask      : ('d -> 'd -> 'd -> bool) option;
-  (** [n_vconstrmask c x m] calculates [m(i) = Pi x(i)] returning the
+  constrmask      : ('d -> 'd -> 'd -> bool) option;
+  (** [constrmask c x m] calculates [m(i) = Pi x(i)] returning the
       conjunction. The value of [Pi] depends on [c(i)]: [2: x(i) > 0],
       [1: x(i) >= 0], [0: true], [-1: x(i) <= 0], and [-2: x(i) < 0]. *)
 
-  n_vminquotient     : ('d -> 'd -> float) option;
-  (** [n_vminquotient num denom] returns the minimum of [num(i) / denom(i)].
+  minquotient     : ('d -> 'd -> float) option;
+  (** [minquotient num denom] returns the minimum of [num(i) / denom(i)].
       Zero [denom] elements are skipped. If no such quotients are found,
       then {{!Sundials_Config.big_real}Config.big_real} is returned. *)
 
@@ -139,101 +139,101 @@ type 'd nvector_ops = { (* {{{ *)
 
   (* optional fused vector operations *)
 
-  n_vlinearcombination :
+  linearcombination :
     (Sundials.RealArray.t -> 'd array -> 'd -> unit) option;
-  (** [n_vlinearcombination c x z] calculates
+  (** [linearcombination c x z] calculates
       [z(i) = c(0)*x(0)(i) + ... + c(nv-1)*x(nv-1)(i)] for the [nv] elements
       of [c] and [x], where [i] ranges over the nvector elements. *)
 
-  n_vscaleaddmulti :
+  scaleaddmulti :
     (Sundials.RealArray.t -> 'd -> 'd array -> 'd array -> unit) option;
-  (** [n_vscaleaddmulti c x y z] calculates
+  (** [scaleaddmulti c x y z] calculates
       [z(j)(i) = c(j)*x(i) + y(j)(i)], where [j] ranges over the array
       elements, and [i] ranges over the nvector elements. *)
 
-  n_vdotprodmulti :
+  dotprodmulti :
     ('d -> 'd array -> Sundials.RealArray.t -> unit) option;
-  (** [n_vdotprodmulti x y d] calculates
+  (** [dotprodmulti x y d] calculates
       [d(j) = x(0)*y(j)(0) + ... + x(n-1)*y(j)(n-1)] for the [n] elements in
       the nvectors and where [j] ranges over the array elements. *)
 
   (* vector array operations *)
 
-  n_vlinearsumvectorarray :
+  linearsumvectorarray :
     (float -> 'd array -> float -> 'd array -> 'd array -> unit) option;
-  (** [n_vlinearsumvectorarray a x b y z] calculates
+  (** [linearsumvectorarray a x b y z] calculates
       [z(j)(i) = a*x(j)(i) + b*y(j)(i)], where [j] ranges over the array
       elements and [i] ranges over the nvector elements. *)
 
-  n_vscalevectorarray :
+  scalevectorarray :
     (Sundials.RealArray.t -> 'd array -> 'd array -> unit) option;
-  (** [n_vscalevectorarray c x z] calculates [z(j)(i) = c(j)*x(j)(i)],
+  (** [scalevectorarray c x z] calculates [z(j)(i) = c(j)*x(j)(i)],
       where [j] ranges over the array elements and [i] ranges over the nvector
       elements. *)
 
-  n_vconstvectorarray :
+  constvectorarray :
     (float -> 'd array -> unit) option;
-  (** [n_vconstvectorarray c x] sets [z(j)(i) = c],
+  (** [constvectorarray c x] sets [z(j)(i) = c],
       where [j] ranges over the array elements and [i] ranges over the
       nvector elements. *)
 
-  n_vwrmsnormvectorarray :
+  wrmsnormvectorarray :
     ('d array -> 'd array -> Sundials.RealArray.t -> unit) option;
-  (** [n_vwrmsnormvectorarray x w m] calculates
+  (** [wrmsnormvectorarray x w m] calculates
       [m(j) = sqrt(((x(j)(0)*w(j)(0))^2 + ... + (x(j)(n-1)*w(j)(n-1))^2)/n)]
       for the [n] elements in the nvectors and where [j] ranges over the array
       elements. *)
 
-  n_vwrmsnormmaskvectorarray :
+  wrmsnormmaskvectorarray :
     ('d array -> 'd array -> 'd -> Sundials.RealArray.t -> unit) option;
-  (** [n_vwrmsnormvectorarray x w id m] calculates
+  (** [wrmsnormvectorarray x w id m] calculates
       [m(j) = sqrt(((x(j)(0)*w(j)(0)*H(id(o)))^2 + ... + (x(j)(n-1)*w(j)(n-1)*H(id(n-1))^2)/n)]
       for the [n] elements in the nvectors, where [j] ranges over the array
       elements, and where [H(x) = if x > 0 then 1. else 0]. *)
 
-  n_vscaleaddmultivectorarray :
+  scaleaddmultivectorarray :
     (Sundials.RealArray.t -> 'd array -> 'd array array -> 'd array array ->
       unit) option;
-  (** [n_vscaleaddmultivectorarray a x yy zz] calculates
+  (** [scaleaddmultivectorarray a x yy zz] calculates
       [zz(j)(k)(i) = a(k)*x(k)(i) + yy(j)(k)(i)] where [j] and [k] range over
       the arrays and [i] ranges over the nvector elements. *)
 
-  n_vlinearcombinationvectorarray :
+  linearcombinationvectorarray :
     (Sundials.RealArray.t -> 'd array array -> 'd array -> unit) option;
-  (** [n_vlinearcombinationvectorarray c xx z] calculates
+  (** [linearcombinationvectorarray c xx z] calculates
       [z(k)(i) = c(0)*x(0)(k)(i) + ... + c(ns)*x(ns)(k)(i)] where [k] ranges
       over the array elements, [ns] is the number of arrays in [xx], and
       [i] ranges over the nvector elements. *)
 
   (* optional reduction operations *)
 
-  n_vdotprod_local      : ('d -> 'd -> float) option;
+  dotprod_local      : ('d -> 'd -> float) option;
   (** Perform {!n_vvdotprod} on task-local elements. *)
 
-  n_vmaxnorm_local      : ('d -> float) option;
-  (** Perform {!n_vmaxnorm} on task-local elements. *)
+  maxnorm_local      : ('d -> float) option;
+  (** Perform {!maxnorm} on task-local elements. *)
 
-  n_vmin_local          : ('d -> float) option;
+  min_local          : ('d -> float) option;
   (** Returns the smallest task-local element. *)
 
-  n_vl1norm_local       : ('d -> float) option;
-  (** Perform {!n_vl1norm} on task-local elements. *)
+  l1norm_local       : ('d -> float) option;
+  (** Perform {!l1norm} on task-local elements. *)
 
-  n_vinvtest_local      : ('d -> 'd -> bool) option;
-  (** Perform {!n_vinvtest} on task-local elements. *)
+  invtest_local      : ('d -> 'd -> bool) option;
+  (** Perform {!invtest} on task-local elements. *)
 
-  n_vconstrmask_local   : ('d -> 'd -> 'd -> bool) option;
-  (** Perform {!n_vconstrmask} on task-local elements. *)
+  constrmask_local   : ('d -> 'd -> 'd -> bool) option;
+  (** Perform {!constrmask} on task-local elements. *)
 
-  n_vminquotient_local  : ('d -> 'd -> float) option;
-  (** Perform {!n_vminquotient} on task-local elements. *)
+  minquotient_local  : ('d -> 'd -> float) option;
+  (** Perform {!minquotient} on task-local elements. *)
 
-  n_vwsqrsum_local      : ('d -> 'd -> float) option;
-  (** [n_vwsqrsum x w] calculates the weighted squared sum of [x] with
+  wsqrsum_local      : ('d -> 'd -> float) option;
+  (** [wsqrsum x w] calculates the weighted squared sum of [x] with
       weight vector [w]. *)
 
-  n_vwsqrsummask_local  : ('d -> 'd -> 'd -> float) option;
-  (** [n_vwsqrsummask x w id] calculates the weighted squared sum of [x]
+  wsqrsummask_local  : ('d -> 'd -> 'd -> float) option;
+  (** [wsqrsummask x w id] calculates the weighted squared sum of [x]
       with weight vector [w] for the elements where [id] is positive. *)
 } (* }}} *)
 

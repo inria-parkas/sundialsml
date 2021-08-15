@@ -87,12 +87,12 @@ let lsetup imem y f jbad _ =
 (* Proxy for integrator lsolve function *)
 let lsolve imem y b _ =
   LS.solve imem.ls imem.a imem.x (Nvector_serial.wrap b) zero;
-  NVOps.n_vscale one (Nvector_serial.unwrap imem.x) b
+  NVOps.scale one (Nvector_serial.unwrap imem.x) b
 
 (* Proxy for integrator convergence test function *)
 let conv_test imem y del tol ewt _ =
   (* compute the norm of the correction *)
-  let delnrm = NVOps.n_vwrmsnorm del ewt in
+  let delnrm = NVOps.wrmsnorm del ewt in
   if delnrm <= tol then NLS.Success else NLS.Continue
 
 (* -----------------------------------------------------------------------------
@@ -115,7 +115,7 @@ let main () =
   (* create vector *)
   let x = Nvector_serial.make neq 0.0 in
   let y0 = Nvector_serial.wrap (RealArray.of_array [| half; half; half |]) in
-  let y = Nvector_serial.Ops.n_vclone x in
+  let y = Nvector_serial.Ops.clone x in
   let ydata = Nvector_serial.unwrap y in
   (* set weights *)
   let w = Nvector_serial.make neq one in
