@@ -22,7 +22,7 @@ open Sundials
 
 (** The data in underlying nvectors is exposed as an array of wrapped values
     together with the sum of their lengths and an MPI communicator. *)
-type data = Nvector.any ROArray.t * int * Mpi.communicator option
+type data = Nvector.any ROArray.t * int * Mpi.communicator
 
 (** Represents the internal layout of an mpimany-vector nvector. *)
 type kind
@@ -39,7 +39,8 @@ type Nvector.gdata += MpiMany of data
     communicator explicitly is useful if none of the array elements has
     one.
 
-    @since 5.0.0 *)
+    @since 5.0.0
+    @raises Invalid_arg if an mpi communicator is not specified or found. *)
 val wrap : ?comm:Mpi.communicator -> Nvector.any ROArray.t -> t
 
 (** Aliases {!Nvector.unwrap}. *)
@@ -54,7 +55,7 @@ val num_subvectors : t -> int
 (** Returns the communicator used for the nvector.
     See also: {!Nvector_parallel.get_communicator} and
     {!Nvector_parallel.hide_communicator}. *)
-val communicator : t -> Mpi.communicator option
+val communicator : t -> Mpi.communicator
 
 (** Underlying nvector operations on mpimany-vector nvectors. *)
 module Ops : Nvector.NVECTOR_OPS with type t = t
@@ -74,7 +75,8 @@ module Any : sig
       communicator explicitly is useful if none of the array elements has
       one.
 
-      @since 5.0.0 *)
+      @since 5.0.0
+      @raises Invalid_arg if an mpi communicator is not specified or found. *)
   val wrap : ?comm:Mpi.communicator -> Nvector.any ROArray.t -> Nvector.any
 
 end
