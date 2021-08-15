@@ -22,7 +22,11 @@ type t = (data, kind) Nvector.t
 
 type Nvector.gdata += Many of data
 
-external c_wrap : data -> (t -> bool) -> (t -> t) -> t
+external c_wrap
+  : data
+    -> (t -> bool)
+    -> (t -> t)
+    -> t
   = "sunml_nvec_wrap_many"
 
 let unwrap = Nvector.unwrap

@@ -14,82 +14,52 @@
 open Sundials
 
 (* Accessed directly from nvector_many_ml.c. *)
-type data = Nvector.any ROArray.t * Mpi.communicator * int
+type data = Nvector.any * Mpi.communicator
 
 type kind
 
 type t = (data, kind) Nvector.t
 
-type Nvector.gdata += MpiMany of data
+type Nvector.gdata += MpiPlusX of data
 
 external c_wrap
-  : data
+  : Nvector.any * Mpi.communicator * int
     -> (t -> bool)
     -> (t -> t)
     -> t
-  = "sunml_nvec_wrap_mpimany"
+  = "sunml_nvec_wrap_mpiplusx"
 
 let unwrap = Nvector.unwrap
-
-let rec wrap_withlen ((nvs, _, _) as payload) =
-  let check nv' =
-    let nvs', _, _ = unwrap nv' in
-    try ROArray.iter2 Nvector.check nvs nvs'; true
-    with Nvector.IncompatibleNvector -> false
-  in
-  c_wrap payload check clone
-
-and clone nv =
-  let nvs, gl, comm = unwrap nv in
-  wrap_withlen (ROArray.map Nvector.clone nvs, gl, comm)
 
 let subvector_mpi_rank nv =
   match Nvector_parallel.get_communicator nv with
   | None -> 0
   | Some comm -> Mpi.comm_rank comm
 
-let sumlens nvs comm =
-  let f sum nv =
-    if subvector_mpi_rank nv = 0 then sum + Nvector.Ops.n_vgetlength nv
-    else sum
+let sumlens comm nv =
+  let local_length =
+    if subvector_mpi_rank nv = 0 then Nvector.Ops.n_vgetlength nv else 0
   in
-  let local_length = ROArray.fold_left f 0 nvs in
   Mpi.(allreduce_int local_length Sum comm)
+
+let rec wrap comm nv =
+  if Sundials_impl.Versions.sundials_lt500
+    then raise Config.NotImplementedBySundialsVersion;
+  let check mnv' =
+    let nv', _ = unwrap mnv' in
+    try Nvector.check nv nv'; true
+    with Nvector.IncompatibleNvector -> false
+  in
+  c_wrap (nv, comm, sumlens comm nv) check clone
+
+and clone mnv =
+  let nv, comm = unwrap mnv in
+  wrap comm (Nvector.clone nv)
 
 external c_ident_or_congruent : Mpi.communicator -> Mpi.communicator -> bool
   = "sunml_nvector_parallel_compare_comms" [@@noalloc]
 
-let check_comms ocomm nvs =
-  let f ocomm nv =
-    match Nvector_parallel.get_communicator nv with
-    | None -> ocomm
-    | Some comm' ->
-        (match ocomm with
-         | None -> Some comm'
-         | Some comm when c_ident_or_congruent comm comm' -> ocomm
-         | _ -> invalid_arg "communicators are not the same")
-  in
-  match ROArray.fold_left f ocomm nvs with
-  | None -> invalid_arg "communicator not found or specified"
-  | Some comm -> comm
-
-let wrap ?comm nvs =
-  if Sundials_impl.Versions.sundials_lt500
-    then raise Config.NotImplementedBySundialsVersion;
-  let comm = check_comms comm nvs in
-  wrap_withlen (nvs, comm, sumlens nvs comm)
-
-let length nv =
-  let _, _, glen = unwrap nv in
-  glen
-
-let num_subvectors nv =
-  let nvs, _, _ = unwrap nv in
-  ROArray.length nvs
-
-let communicator nv =
-  let _, comm, _ = Nvector.unwrap nv in
-  comm
+let communicator nv = snd (Nvector.unwrap nv)
 
 module Ops : Nvector.NVECTOR_OPS with type t = t =
 struct (* {{{ *)
@@ -97,6 +67,9 @@ struct (* {{{ *)
   let check = Nvector.check
 
   let n_vclone = Nvector.clone
+
+  (* The underlying representation is a ManyVector with one element, so we
+     just use its routines directly. *)
 
   external c_n_vlinearsum    : float -> t -> float -> t -> t -> unit
     = "sunml_nvec_mpimany_n_vlinearsum" [@@noalloc]
@@ -365,154 +338,111 @@ struct (* {{{ *)
 
   type t = data
 
-  let n_vclone (nvecs, gl, comm) =
-    (ROArray.map Nvector.clone nvecs, gl, comm)
+  let n_vclone (nv, comm) = (Nvector.clone nv, comm)
 
   module Local = struct
 
-    let n_vdotprod ((x, _, _) : t) ((y, _, _) : t) =
-      let f sum xi yi =
-        if Nvector.Local.has_n_vdotprod xi
-        then sum +. Nvector.Ops.Local.n_vdotprod xi yi
-        else
-          let contrib = Nvector.Ops.n_vdotprod xi yi in
-          let rank = subvector_mpi_rank xi in
-          if rank < 0 then 0.
-          else if rank = 0 then sum +. contrib
-          else sum
-      in
-      ROArray.fold_left2 f 0. x y
+    let n_vdotprod ((x, _) : t) ((y, _) : t) =
+      if Nvector.Local.has_n_vdotprod x
+      then Nvector.Ops.Local.n_vdotprod x y
+      else
+        let contrib = Nvector.Ops.n_vdotprod x y in
+        let rank = subvector_mpi_rank x in
+        if rank = 0 then contrib else 0.
 
-    let n_vmaxnorm ((x, _, _) : t) =
-      let f max xi =
-        let maxl =
-          if Nvector.Any.Local.has_n_vmaxnorm xi
-          then Nvector.Ops.Local.n_vmaxnorm xi
-          else Nvector.Ops.n_vmaxnorm xi
-        in
-        Float.max max maxl
-      in
-      ROArray.fold_left f 0. x
+    let n_vmaxnorm ((x, _) : t) =
+      if Nvector.Any.Local.has_n_vmaxnorm x
+      then Nvector.Ops.Local.n_vmaxnorm x
+      else Nvector.Ops.n_vmaxnorm x
 
-    let n_vmin ((x, _, _) : t) =
-      let f min xi =
-        let minl =
-          if Nvector.Any.Local.has_n_vmin xi
-          then Nvector.Ops.Local.n_vmin xi
-          else Nvector.Ops.n_vmin xi
-        in
-        Float.min min minl
-      in
-      ROArray.fold_left f max_float x
+    let n_vmin ((x, _) : t) =
+      if Nvector.Any.Local.has_n_vmin x
+      then Nvector.Ops.Local.n_vmin x
+      else Nvector.Ops.n_vmin x
 
-    let n_vl1norm ((x, _, _) : t) =
-      let f sum xi =
-        if Nvector.Local.has_n_vl1norm xi
-        then sum +. Nvector.Ops.Local.n_vl1norm xi
-        else
-          let contrib = Nvector.Ops.n_vl1norm xi in
-          let rank = subvector_mpi_rank xi in
-          if rank < 0 then 0.
-          else if rank = 0 then sum +. contrib
-          else sum
-      in
-      ROArray.fold_left f 0. x
+    let n_vl1norm ((x, _) : t) =
+      if Nvector.Local.has_n_vl1norm x
+      then Nvector.Ops.Local.n_vl1norm x
+      else
+        let contrib = Nvector.Ops.n_vl1norm x in
+        let rank = subvector_mpi_rank x in
+        if rank = 0 then contrib else 0.
 
-    let n_vinvtest ((x, _, _) : t) ((z, _, _) : t) =
-      let f v xi zi =
-        v && (if Nvector.Any.Local.has_n_vinvtest xi
-              then Nvector.Ops.Local.n_vinvtest xi zi
-              else Nvector.Ops.n_vinvtest xi zi)
-      in
-      ROArray.fold_left2 f true x z
+    let n_vinvtest ((x, _) : t) ((z, _) : t) =
+      if Nvector.Any.Local.has_n_vinvtest x
+      then Nvector.Ops.Local.n_vinvtest x z
+      else Nvector.Ops.n_vinvtest x z
 
-    let n_vconstrmask ((c, _, _) : t) ((x, _, _) : t) ((m, _, _) : t) =
-      let f v ci xi mi =
-        v && (if Nvector.Any.Local.has_n_vconstrmask ci
-              then Nvector.Ops.Local.n_vconstrmask ci xi mi
-              else Nvector.Ops.n_vconstrmask ci xi mi)
-      in
-      ROArray.fold_left3 f true c x m
+    let n_vconstrmask ((c, _) : t) ((x, _) : t) ((m, _) : t) =
+      if Nvector.Any.Local.has_n_vconstrmask c
+      then Nvector.Ops.Local.n_vconstrmask c x m
+      else Nvector.Ops.n_vconstrmask c x m
 
-    let n_vminquotient ((n, _, _) : t) ((d, _, _) : t) =
-      let f min ni di =
-        let minl =
-          if Nvector.Any.Local.has_n_vminquotient ni
-          then Nvector.Ops.Local.n_vminquotient ni di
-          else Nvector.Ops.n_vminquotient ni di
-        in
-        Float.min min minl
-      in
-      ROArray.fold_left2 f max_float n d
+    let n_vminquotient ((n, _) : t) ((d, _) : t) =
+      if Nvector.Any.Local.has_n_vminquotient n
+      then Nvector.Ops.Local.n_vminquotient n d
+      else Nvector.Ops.n_vminquotient n d
 
-    let n_vwsqrsum ((x, _, _) : t) ((w, _, _) : t) =
-      let f sum xi wi =
-        if Nvector.Local.has_n_vwsqrsum xi
-        then sum +. Nvector.Ops.Local.n_vwsqrsum xi wi
-        else
-          let contrib = Nvector.Ops.n_vwrmsnorm xi wi in
-          let rank = subvector_mpi_rank xi in
-          if rank < 0 then 0.
-          else if rank = 0 then
-            sum +. (contrib *. contrib *. float (Nvector.Ops.n_vgetlength xi))
-          else sum
-      in
-      ROArray.fold_left2 f 0. x w
+    let n_vwsqrsum ((x, _) : t) ((w, _) : t) =
+      if Nvector.Local.has_n_vwsqrsum x
+      then Nvector.Ops.Local.n_vwsqrsum x w
+      else
+        let contrib = Nvector.Ops.n_vwrmsnorm x w in
+        let rank = subvector_mpi_rank x in
+        if rank = 0
+        then contrib *. contrib *. float (Nvector.Ops.n_vgetlength x)
+        else 0.
 
-    let n_vwsqrsummask ((x, _, _) : t) ((w, _, _) : t) ((id, _, _) : t) =
-      let f sum xi wi idi =
-        if Nvector.Local.has_n_vwsqrsummask xi
-        then sum +. Nvector.Ops.Local.n_vwsqrsummask xi wi idi
-        else
-          let contrib = Nvector.Ops.n_vwrmsnormmask xi wi idi in
-          let rank = subvector_mpi_rank xi in
-          if rank < 0 then 0.
-          else if rank = 0 then
-            sum +. (contrib *. contrib *. float (Nvector.Ops.n_vgetlength xi))
-          else sum
-      in
-      ROArray.fold_left3 f 0. x w id
+    let n_vwsqrsummask ((x, _) : t) ((w, _) : t) ((id, _) : t) =
+      if Nvector.Local.has_n_vwsqrsummask x
+      then Nvector.Ops.Local.n_vwsqrsummask x w id
+      else
+        let contrib = Nvector.Ops.n_vwrmsnormmask x w id in
+        let rank = subvector_mpi_rank x in
+        if rank = 0
+        then contrib *. contrib *. float (Nvector.Ops.n_vgetlength x)
+        else 0.
   end
 
-  let n_vlinearsum a ((x, _, _) : t) b ((y, _, _) : t) ((z, _, _) : t) =
-    ROArray.iter3 (fun xi yi zi -> Nvector.Ops.n_vlinearsum a xi b yi zi) x y z
+  let n_vlinearsum a ((x, _) : t) b ((y, _) : t) ((z, _) : t) =
+    Nvector.Ops.n_vlinearsum a x b y z
 
-  let n_vconst c ((z, _, _) : t) =
-    ROArray.iter (fun zi -> Nvector.Ops.n_vconst c zi) z
+  let n_vconst c ((z, _) : t) = Nvector.Ops.n_vconst c z
 
-  let n_vscale c ((x, _, _) : t) ((z, _, _) : t) =
-    ROArray.iter2 (fun xi zi -> Nvector.Ops.n_vscale c xi zi) x z
+  let n_vscale c ((x, _) : t) ((z, _) : t) = Nvector.Ops.n_vscale c x z
 
-  let n_vaddconst ((x, _, _) : t) b ((z, _, _) : t) =
-    ROArray.iter2 (fun xi zi -> Nvector.Ops.n_vaddconst xi b zi) x z
+  let n_vaddconst ((x, _) : t) b ((z, _) : t) = Nvector.Ops.n_vaddconst x b z
 
-  let n_vmaxnorm ((x, comm, _) as xv : t) =
+  let n_vmaxnorm ((x, comm) as xv : t) =
     let lmax = Local.n_vmaxnorm xv in
     Mpi.(allreduce_float lmax Max comm)
 
-  let n_vwrmsnorm ((_, _, gx) as xv : t) ((_, _, gw) as wv : t) =
-    if gx <> gw then raise Nvector.IncompatibleNvector;
-    let gsum = Local.n_vwsqrsum xv wv in
-    sqrt (gsum /. float gx)
+  let n_vgetlength ((x, comm) : t) = sumlens comm x
 
-  let n_vwrmsnormmask ((_, _, gx) as xv : t) ((_, _, gw) as wv : t)
-                      ((_, _, gid) as idv : t) =
-    if gx <> gw || gx <> gid then raise Nvector.IncompatibleNvector;
-    let gsum = Local.n_vwsqrsummask xv wv idv in
-    sqrt (gsum /. float gx)
+  let n_vwrmsnorm (x : t) (w : t) =
+    let lx = n_vgetlength x in
+    if lx <> n_vgetlength w then raise Nvector.IncompatibleNvector;
+    let gsum = Local.n_vwsqrsum x w in
+    sqrt (gsum /. float lx)
 
-  let n_vmin ((x, comm, _) as xv : t) =
+  let n_vwrmsnormmask (x : t) (w : t) (id : t) =
+    let lx = n_vgetlength x in
+    if lx <> n_vgetlength w || lx <> n_vgetlength id
+    then raise Nvector.IncompatibleNvector;
+    let gsum = Local.n_vwsqrsummask x w id in
+    sqrt (gsum /. float lx)
+
+  let n_vmin ((x, comm) as xv : t) =
     let lmin = Local.n_vmin xv in
     Mpi.(allreduce_float lmin Min comm)
 
-  let n_vdotprod ((x, comm, _) as xv : t) (yv : t) =
+  let n_vdotprod ((x, comm) as xv : t) (yv : t) =
     let lsum = Local.n_vdotprod xv yv in
     Mpi.(allreduce_float lsum Sum comm)
 
-  let n_vcompare c ((x, _, _) : t) ((z, _, _) : t) =
-    ROArray.iter2 (fun xi zi -> Nvector.Ops.n_vcompare c xi zi) x z
+  let n_vcompare c ((x, _) : t) ((z, _) : t) = Nvector.Ops.n_vcompare c x z
 
-  let n_vinvtest ((x, comm, _) as xv : t) (zv : t) =
+  let n_vinvtest ((x, comm) as xv : t) (zv : t) =
     let v = if Local.n_vinvtest xv zv then 1. else 0. in
     Mpi.(allreduce_float v Min comm) <> 0.
 
@@ -520,123 +450,54 @@ struct (* {{{ *)
     let gsum = Local.n_vwsqrsum xv wv in
     sqrt (gsum)
 
-  let n_vl1norm ((x, comm, _) as xv : t) =
+  let n_vl1norm ((x, comm) as xv : t) =
     let lsum = Local.n_vl1norm xv in
     Mpi.(allreduce_float lsum Sum comm)
 
-  let n_vconstrmask (cv : t) ((x, comm, _) as xv : t) (mv : t) =
+  let n_vconstrmask (cv : t) ((x, comm) as xv : t) (mv : t) =
     let v = if Local.n_vconstrmask cv xv mv then 1. else 0. in
     Mpi.(allreduce_float v Min comm) <> 0.
 
-  let n_vminquotient ((n, comm, _) as nv : t) (dv : t) =
+  let n_vminquotient ((n, comm) as nv : t) (dv : t) =
     let lmin = Local.n_vminquotient nv dv in
     Mpi.(allreduce_float lmin Min comm)
 
-  let n_vprod ((x, _, _) : t) ((y, _, _) : t) ((z, _, _) : t) =
-    ROArray.iter3 (fun xi yi zi -> Nvector.Ops.n_vprod xi yi zi) x y z
+  let n_vprod ((x, _) : t) ((y, _) : t) ((z, _) : t) = Nvector.Ops.n_vprod x y z
 
-  let n_vdiv ((x, _, _) : t) ((y, _, _) : t) ((z, _, _) : t) =
-    ROArray.iter3 (fun xi yi zi -> Nvector.Ops.n_vdiv xi yi zi) x y z
+  let n_vdiv ((x, _) : t) ((y, _) : t) ((z, _) : t) = Nvector.Ops.n_vdiv x y z
 
-  let n_vabs ((x, _, _) : t) ((z, _, _) : t) =
-    ROArray.iter2 (fun xi zi -> Nvector.Ops.n_vabs xi zi) x z
+  let n_vabs ((x, _) : t) ((z, _) : t) = Nvector.Ops.n_vabs x z
 
-  let n_vinv ((x, _, _) : t) ((z, _, _) : t) =
-    ROArray.iter2 (fun xi zi -> Nvector.Ops.n_vinv xi zi) x z
+  let n_vinv ((x, _) : t) ((z, _) : t) = Nvector.Ops.n_vinv x z
 
-  let n_vspace ((x, _, _) : t) =
-    let f (lrw, liw) xi =
-      let lrwi, liwi = Nvector.Ops.n_vspace xi in
-      (lrw + lrwi, liw + liwi)
-    in
-    ROArray.fold_left f (0, 0) x
-
-  let n_vgetlength ((_, _, gx) : t) = gx
+  let n_vspace ((x, _) : t) = Nvector.Ops.n_vspace x
 
   (* fused and array operations *)
 
-  let pnvs (nvs, _, _) = nvs
+  let pnvs (nv, _) = nv
 
-  let n_vlinearcombination (ca : RealArray.t) (xa : t array) ((z, _, _) : t) =
+  let n_vlinearcombination (ca : RealArray.t) (xa : t array) ((z, _) : t) =
     let xdata = Array.map pnvs xa in
-    let xsub = Array.map (fun xd -> ROArray.get xd 0) xdata in
-    let f i zi =
-      Array.iteri (fun j xd -> xsub.(j) <- ROArray.get xd i) xdata;
-      Nvector.Ops.n_vlinearcombination ca xsub zi
-    in
-    ROArray.iteri f z
+    Nvector.Ops.n_vlinearcombination ca xdata z
 
-  let n_vscaleaddmulti (aa : RealArray.t) ((x, _, _) : t)
+  let n_vscaleaddmulti (aa : RealArray.t) ((x, _) : t)
                                           (ya : t array) (za : t array) =
-    let ydata = Array.map pnvs ya in
-    let ylen = Array.length ydata in
-    let zdata = Array.map pnvs za in
-    let zlen = Array.length zdata in
-    if ylen <> zlen
-      then invalid_arg "n_vscaleaddmulti: arrays must have the same length";
-    let ysub = Array.map (fun yd -> ROArray.get yd 0) ydata in
-    let zsub = Array.map (fun zd -> ROArray.get zd 0) zdata in
-    let f i xi =
-      for j = 0 to ylen - 1 do
-        ysub.(j) <- ROArray.get ydata.(j) i;
-        zsub.(j) <- ROArray.get zdata.(j) i
-      done;
-      Nvector.Ops.n_vscaleaddmulti aa xi ysub zsub
-    in
-    ROArray.iteri f x
+    Nvector.Ops.n_vscaleaddmulti aa x (Array.map pnvs ya) (Array.map pnvs za)
 
   let n_vdotprodmulti (x : t) (ya : t array) (dp : RealArray.t) =
     let f i yi = dp.{i} <- n_vdotprod x yi in
     Array.iteri f ya
 
   let n_vlinearsumvectorarray a (xa : t array) b (ya : t array) (za : t array) =
-    let xdata = Array.map pnvs xa in
-    let xlen = Array.length xdata in
-    let ydata = Array.map pnvs ya in
-    let ylen = Array.length ydata in
-    let zdata = Array.map pnvs za in
-    let zlen = Array.length zdata in
-    if xlen <> ylen || xlen <> zlen
-      then invalid_arg "n_vlinearsumvectorarray: arrays must have the same length";
-    let xsub = Array.map (fun xd -> ROArray.get xd 0) xdata in
-    let ysub = Array.map (fun yd -> ROArray.get yd 0) ydata in
-    let zsub = Array.map (fun zd -> ROArray.get zd 0) zdata in
-    for i = 0 to ROArray.length xdata.(0) - 1 do
-      for j = 0 to xlen - 1 do
-        xsub.(j) <- ROArray.get xdata.(j) i;
-        ysub.(j) <- ROArray.get ydata.(j) i;
-        zsub.(j) <- ROArray.get zdata.(j) i
-      done;
-      Nvector.Ops.n_vlinearsumvectorarray a xsub b ysub zsub
-    done
+    Nvector.Ops.n_vlinearsumvectorarray a (Array.map pnvs xa)
+                                        b (Array.map pnvs ya)
+                                        (Array.map pnvs za)
 
   let n_vscalevectorarray (c : RealArray.t) (xa : t array) (za : t array) =
-    let xdata = Array.map pnvs xa in
-    let xlen = Array.length xdata in
-    let zdata = Array.map pnvs za in
-    let zlen = Array.length zdata in
-    if xlen <> zlen
-      then invalid_arg "n_vscalevectorarray: arrays must have the same length";
-    let xsub = Array.map (fun xd -> ROArray.get xd 0) xdata in
-    let zsub = Array.map (fun zd -> ROArray.get zd 0) zdata in
-    for i = 0 to ROArray.length xdata.(0) - 1 do
-      for j = 0 to xlen - 1 do
-        xsub.(j) <- ROArray.get xdata.(j) i;
-        zsub.(j) <- ROArray.get zdata.(j) i
-      done;
-      Nvector.Ops.n_vscalevectorarray c xsub zsub
-    done
+    Nvector.Ops.n_vscalevectorarray c (Array.map pnvs xa) (Array.map pnvs za)
 
   let n_vconstvectorarray c (za : t array) =
-    let zdata = Array.map pnvs za in
-    let zlen = Array.length zdata in
-    let zsub = Array.map (fun zd -> ROArray.get zd 0) zdata in
-    for i = 0 to ROArray.length zdata.(0) - 1 do
-      for j = 0 to zlen - 1 do
-        zsub.(j) <- ROArray.get zdata.(j) i
-      done;
-      Nvector.Ops.n_vconstvectorarray c zsub
-    done
+    Nvector.Ops.n_vconstvectorarray c (Array.map pnvs za)
 
   let n_vwrmsnormvectorarray (xa : t array) (wa : t array) (nrm : RealArray.t) =
     let xlen = Array.length xa in
@@ -644,8 +505,8 @@ struct (* {{{ *)
     if xlen <> wlen || xlen <> RealArray.length nrm
       then invalid_arg "n_vwrmsnormvectorarray: arrays must have the same length";
     for i = 0 to xlen - 1 do
-      let _, _, glen = xa.(i) in
-      nrm.{i} <- sqrt (Local.n_vwsqrsum xa.(i) wa.(i) /. float glen)
+      let len = n_vgetlength xa.(i) in
+      nrm.{i} <- sqrt (Local.n_vwsqrsum xa.(i) wa.(i) /. float len)
     done
 
   let n_vwrmsnormmaskvectorarray (xa : t array) (wa : t array) (id : t)
@@ -655,8 +516,8 @@ struct (* {{{ *)
     if xlen <> wlen || xlen <> RealArray.length nrm
       then invalid_arg "n_vwrmsnormvectorarray: arrays must have the same length";
     for i = 0 to xlen - 1 do
-      let _, _, glen = xa.(i) in
-      nrm.{i} <- sqrt (Local.n_vwsqrsummask xa.(i) wa.(i) id /. float glen)
+      let len = n_vgetlength xa.(i) in
+      nrm.{i} <- sqrt (Local.n_vwsqrsummask xa.(i) wa.(i) id /. float len)
     done
 
   let n_vscaleaddmultivectorarray (ra : RealArray.t) (xa : t array)
@@ -673,38 +534,34 @@ module Any = struct (* {{{ *)
 
   external c_any_wrap
     : extension_constructor
-      -> data
+      -> Nvector.any * Mpi.communicator * int
       -> (Nvector.any -> bool)
       -> (Nvector.any -> Nvector.any)
       -> Nvector.any
     = "sunml_nvec_anywrap_mpimany"
 
-  let rec wrap_with_len ((nvs, _, _) as payload) =
+  let rec wrap comm nv =
     if Sundials_impl.Versions.sundials_lt500
       then raise Config.NotImplementedBySundialsVersion;
-    let check nv' =
-      match unwrap nv' with
-      | MpiMany (nvs', _, _) ->
+    let check mnv' =
+      match unwrap mnv' with
+      | MpiPlusX (nv', _) ->
           (try
-             ROArray.iter2 Nvector.check nvs nvs';
-             Nvector.get_id nv' = Nvector.MpiManyVector
+             Nvector.check nv nv';
+             Nvector.get_id nv' = Nvector.MpiPlusX
            with Nvector.IncompatibleNvector -> false)
       | _ -> false
     in
-    c_any_wrap [%extension_constructor MpiMany] payload check clone
+    c_any_wrap [%extension_constructor MpiPlusX]
+               (nv, comm, sumlens comm nv)
+               check clone
 
-  and clone nv =
-    let nvs, gl, comm = match unwrap nv with
-                        | MpiMany v -> v
-                        | _ -> assert false
+  and clone mnv =
+    let nv, comm = match unwrap mnv with
+                   | MpiPlusX v -> v
+                   | _ -> assert false
     in
-    wrap_with_len (ROArray.map Nvector.clone nvs, gl, comm)
-
-  let wrap ?comm nvs =
-    if Sundials_impl.Versions.sundials_lt500
-      then raise Config.NotImplementedBySundialsVersion;
-    let comm = check_comms comm nvs in
-    wrap_with_len (nvs, comm, sumlens nvs comm)
+    wrap comm (Nvector.clone nv)
 
 end (* }}} *)
 

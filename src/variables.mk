@@ -105,6 +105,7 @@ COBJ_MPI =	nvectors/nvector_parallel_ml$(XO)	\
 		idas/idas_bbd_ml$(XO)
 MLOBJ_MPI =	nvectors/nvector_parallel.cmo	\
 		nvectors/nvector_mpimany.cmo	\
+		nvectors/nvector_mpiplusx.cmo	\
 		kinsol/kinsol_bbd.cmo		\
 		$(ARKODE_MLOBJ_BBD)		\
 		cvode/cvode_bbd.cmo		\

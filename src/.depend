@@ -635,6 +635,27 @@ nvectors/nvector_mpimany.cmi : \
     sundials/sundials_ROArray.cmi \
     sundials/sundials.cmi \
     nvectors/nvector.cmi
+nvectors/nvector_mpiplusx.cmo : \
+    sundials/sundials_impl.cmo \
+    sundials/sundials_configuration.cmo \
+    sundials/sundials_RealArray.cmi \
+    sundials/sundials_Config.cmi \
+    sundials/sundials.cmi \
+    nvectors/nvector_parallel.cmi \
+    nvectors/nvector.cmi \
+    nvectors/nvector_mpiplusx.cmi
+nvectors/nvector_mpiplusx.cmx : \
+    sundials/sundials_impl.cmx \
+    sundials/sundials_configuration.cmx \
+    sundials/sundials_RealArray.cmx \
+    sundials/sundials_Config.cmx \
+    sundials/sundials.cmx \
+    nvectors/nvector_parallel.cmx \
+    nvectors/nvector.cmx \
+    nvectors/nvector_mpiplusx.cmi
+nvectors/nvector_mpiplusx.cmi : \
+    sundials/sundials.cmi \
+    nvectors/nvector.cmi
 nvectors/nvector_openmp.cmo : \
     sundials/sundials_impl.cmo \
     sundials/sundials_RealArray.cmi \
