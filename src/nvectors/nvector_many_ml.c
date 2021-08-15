@@ -27,6 +27,7 @@
 /* Macro to handle separate MPI-aware/unaware installations */
 #ifdef MANYVECTOR_BUILD_WITH_MPI
 #include <nvector/nvector_mpimanyvector.h>
+#include <nvector/nvector_mpiplusx.h>
 
 #define MVAPPEND(fun) fun##_MPIManyVector
 #define SUNML_NVEC(fun) sunml_nvec_##fun##_mpimany
@@ -51,6 +52,8 @@
 enum do_clone_mode {
     CLONE_NORMAL,
     CLONE_ANY,
+    CLONE_X_NORMAL, // MPIPLUSX
+    CLONE_X_ANY,    // MPIPLUSX
 };
 
 static void free_cnvec_many(N_Vector nv)
@@ -119,51 +122,90 @@ static N_Vector do_clone_many(N_Vector src, enum do_clone_mode clonemode)
     sunml_clone_cnvec_ops(dst, src);
 
     /* Duplicate the source array and the nvectors that it contains. */
-    if (clonemode == CLONE_ANY) {
+    switch (clonemode) {
+    case CLONE_ANY:
+    case CLONE_X_ANY:
 	srcwrapped = NVEC_BACKLINK(src);
 	srcpayload = Field(srcwrapped, 1); // field 0 of extensible variant
-    } else {
+	break;
+    
+    case CLONE_NORMAL:
+    case CLONE_X_NORMAL:
+    default:
 	srcpayload = NVEC_BACKLINK(src);
+	break;
     }
     srcarray = Field(srcpayload, 0);
-    dstarray = caml_alloc_tuple(Wosize_val(srcarray));
-
 #ifdef MANYVECTOR_BUILD_WITH_MPI
-    vcomm = Field(srcpayload, 2);
+    vcomm = Field(srcpayload, 1);
 #endif
 
-    /* Clone vectors into the subvector array */
-    for (i=0; i < dstcontent->num_subvectors; i++) {
-	/* NB: Don't trigger GC while processing this return value!  */
-	value r = caml_callback_exn(*pnvector_clone, Field(srcarray, i));
+    switch (clonemode) {
+    case CLONE_NORMAL:
+    case CLONE_ANY:
+	dstarray = caml_alloc_tuple(Wosize_val(srcarray));
+
+	/* Clone vectors into the subvector array */
+	for (i=0; i < dstcontent->num_subvectors; i++) {
+	    /* NB: Don't trigger GC while processing this return value!  */
+	    value r = caml_callback_exn(*pnvector_clone, Field(srcarray, i));
+	    if (Is_exception_result (r)) {
+		sunml_free_cnvec(dst);
+		free(dst_subvec_array);
+		sunml_warn_discarded_exn (Extract_exception (r),
+						"many vector n_vclone");
+		CAMLreturnT (N_Vector, NULL);
+	    }
+
+	    dstcontent->subvec_array[i] = NVEC_VAL(r);
+	    Store_field(dstarray, i, r);
+	}
+	break;
+
+    case CLONE_X_NORMAL:
+    case CLONE_X_ANY:
+    default: {
+	/* Clone vectors into the subvector array */
+	value r = caml_callback_exn(*pnvector_clone, srcarray);
 	if (Is_exception_result (r)) {
 	    sunml_free_cnvec(dst);
 	    free(dst_subvec_array);
 	    sunml_warn_discarded_exn (Extract_exception (r),
-					    "many vector n_vclone");
+					    "mpiplusx vector n_vclone");
 	    CAMLreturnT (N_Vector, NULL);
 	}
-
-	dstcontent->subvec_array[i] = NVEC_VAL(r);
-	Store_field(dstarray, i, r);
+	dstarray = r;
+	dstcontent->subvec_array[0] = NVEC_VAL(r);
+	break; }
     }
 
     /* Set the OCaml payload of the new nvector. */
+#ifdef MANYVECTOR_BUILD_WITH_MPI
+    dstpayload = caml_alloc_tuple(3);
+    Store_field(dstpayload, 0, dstarray);
+    Store_field(dstpayload, 1, vcomm);
+    Store_field(dstpayload, 2, Field(srcpayload, 2));
+#else
     dstpayload = caml_alloc_tuple(2);
     Store_field(dstpayload, 0, dstarray);
     Store_field(dstpayload, 1, Field(srcpayload, 1));
-#ifdef MANYVECTOR_BUILD_WITH_MPI
-    Store_field(dstpayload, 2, vcomm);
 #endif
 
-    if (clonemode == CLONE_ANY) {
+    switch (clonemode) {
+    case CLONE_ANY:
+    case CLONE_X_ANY:
 	dstwrapped = caml_alloc_tuple(2);
 	Store_field(dstwrapped, 0, Field(srcwrapped, 0)); // Many constructor
 	Store_field(dstwrapped, 1, dstpayload);
 
 	NVEC_BACKLINK(dst) = dstwrapped;
-    } else {
+	break;
+
+    case CLONE_NORMAL:
+    case CLONE_X_NORMAL:
+    default:
 	NVEC_BACKLINK(dst) = dstpayload;
+	break;
     }
 
     CAMLreturnT(N_Vector, dst);
@@ -179,6 +221,19 @@ static N_Vector clone_any_many(N_Vector src)
 {
     return do_clone_many(src, CLONE_ANY);
 }
+
+#ifdef MANYVECTOR_BUILD_WITH_MPI
+static N_Vector clone_mpiplusx(N_Vector src)
+{
+    return do_clone_many(src, CLONE_X_NORMAL);
+}
+
+/* Clone an "any" nvector by unwrapping and wrapping the MpiPlusX payload. */
+static N_Vector clone_any_mpiplusx(N_Vector src)
+{
+    return do_clone_many(src, CLONE_X_ANY);
+}
+#endif
 
 /*
  * N_VCloneEmpty is used in Sundials as a "light-weight" way to wrap
@@ -210,11 +265,13 @@ static N_Vector clone_empty_many(N_Vector w)
 /* Creation from OCaml.  */
 /* Adapted from sundials-5.7.0/src/nvector/manyvector/nvector_manyvector.c:
    ManyVectorClone */
-CAMLprim value SUNML_NVEC(wrap)(value payload, value checkfn, value clonefn)
+#if 500 <= SUNDIALS_LIB_VERSION
+static value do_wrap(value payload,
+		     value checkfn, value clonefn,
+		     booleantype mpiplusx)
 {
     CAMLparam3(payload, checkfn, clonefn);
     CAMLlocal3(vnvec, vnvs, vglen);
-#if 500 <= SUNDIALS_LIB_VERSION
 #ifdef MANYVECTOR_BUILD_WITH_MPI
     CAMLlocal1(vcomm);
 #endif
@@ -231,34 +288,59 @@ CAMLprim value SUNML_NVEC(wrap)(value payload, value checkfn, value clonefn)
     content = (MVAPPEND(N_VectorContent)) nv->content;
 
     /* Create C-side array and mirror OCaml array */
+#ifdef MANYVECTOR_BUILD_WITH_MPI
+    vnvs = Field(payload, 0);
+    vcomm = Field(payload, 1);
+    vglen = Field(payload, 2);
+
+    if (mpiplusx) {
+	payload = caml_alloc_tuple(2);
+	Store_field(payload, 0, vnvs);
+	Store_field(payload, 1, vcomm);
+    }
+#else
     vnvs = Field(payload, 0);
     vglen = Field(payload, 1);
-#ifdef MANYVECTOR_BUILD_WITH_MPI
-    vcomm = Field(payload, 2);
 #endif
-    num_subvectors = Wosize_val(vnvs);
+    num_subvectors = (mpiplusx ? 1 : Wosize_val(vnvs));
     subvec_array = calloc(num_subvectors, sizeof(N_Vector));
     if (subvec_array == NULL) caml_raise_out_of_memory();
-    for (i = 0; i < num_subvectors; ++i) {
-	subvec_array[i] = NVEC_VAL(Field(vnvs, i));
+    if (mpiplusx) {
+	subvec_array[0] = NVEC_VAL(vnvs);
+    } else {
+	for (i = 0; i < num_subvectors; ++i) {
+	    subvec_array[i] = NVEC_VAL(Field(vnvs, i));
+	}
     }
 
     /* Create vector operation structure */
-    ops->nvclone           = clone_many;		    /* ours */
     ops->nvcloneempty      = clone_empty_many;		    /* ours */
     /* This is registered but only ever called for C-allocated clones. */
     ops->nvdestroy         = free_cnvec_many;		    /* ours */
 
-    ops->nvgetvectorid	   = MVAPPEND(N_VGetVectorID);	    /* theirs */
     ops->nvspace           = MVAPPEND(N_VSpace);
 #ifdef MANYVECTOR_BUILD_WITH_MPI
+    ops->nvclone           = mpiplusx			    /* ours */
+				? clone_mpiplusx
+				: clone_many;
+    ops->nvgetvectorid	   = mpiplusx
+				? N_VGetVectorID_MPIPlusX
+				: MVAPPEND(N_VGetVectorID); /* theirs */
     ops->nvgetcommunicator = N_VGetCommunicator_MPIManyVector;
+    ops->nvgetarraypointer = mpiplusx
+				? N_VGetArrayPointer_MPIPlusX
+				: NULL;
+    ops->nvsetarraypointer = mpiplusx
+				? N_VSetArrayPointer_MPIPlusX
+				: NULL;
 #else
+    ops->nvclone           = clone_many;		    /* ours */
+    ops->nvgetvectorid	   = MVAPPEND(N_VGetVectorID);	    /* theirs */
     ops->nvgetcommunicator = NULL;
-#endif
-    ops->nvgetlength	   = MVAPPEND(N_VGetLength);
     ops->nvgetarraypointer = NULL;
     ops->nvsetarraypointer = NULL;
+#endif
+    ops->nvgetlength	   = MVAPPEND(N_VGetLength);
     ops->nvlinearsum       = MVAPPEND(N_VLinearSum);
     ops->nvconst           = MVAPPEND(N_VConst);
     ops->nvprod            = MVAPPEND(N_VProd);
@@ -327,29 +409,57 @@ CAMLprim value SUNML_NVEC(wrap)(value payload, value checkfn, value clonefn)
     Store_field(vnvec, NVEC_CHECK, checkfn);
     Store_field(vnvec, NVEC_CLONE, clonefn);
 
-#endif
     CAMLreturn(vnvec);
 }
+#endif
+
+CAMLprim value SUNML_NVEC(wrap)(value payload, value checkfn, value clonefn)
+{
+#if 500 <= SUNDIALS_LIB_VERSION
+    return do_wrap(payload, checkfn, clonefn, SUNFALSE);
+#else
+    return Val_unit;
+#endif
+}
+
+#ifdef MANYVECTOR_BUILD_WITH_MPI
+CAMLprim value sunml_nvec_wrap_mpiplusx(value payload,
+					value checkfn, value clonefn)
+{
+#if 500 <= SUNDIALS_LIB_VERSION
+    return do_wrap(payload, checkfn, clonefn, SUNTRUE);
+#else
+    return Val_unit;
+#endif
+}
+#endif
 
 /* The "any"-version of a many-vector nvector is created by modifying the
    standard one in two ways:
    1. The payload field is wrapped in the RA constructor.
    2. The nvclone operation is overridden to implement the wrapping operation
       (the current clone_empty_many does not manipulate the backlink). */
-CAMLprim value SUNML_NVEC(anywrap)(value extconstr, value payload,
-			           value checkfn, value clonefn)
+#if 500 <= SUNDIALS_LIB_VERSION
+static value do_anywrap(value extconstr, value payload,
+			value checkfn, value clonefn,
+			booleantype mpiplusx)
 {
     CAMLparam4(extconstr, payload, checkfn, clonefn);
     CAMLlocal2(vnv, vwrapped);
-#if 500 <= SUNDIALS_LIB_VERSION
     N_Vector nv;
     N_Vector_Ops ops;
 
-    vnv = SUNML_NVEC(wrap)(payload, checkfn, clonefn);
+    vnv = do_wrap(payload, checkfn, clonefn, mpiplusx);
     nv = NVEC_VAL(vnv);
     ops = (N_Vector_Ops) nv->ops;
 
+#ifdef MANYVECTOR_BUILD_WITH_MPI
+    ops->nvclone = mpiplusx
+		    ? clone_any_mpiplusx
+		    : clone_any_many;
+#else
     ops->nvclone = clone_any_many;
+#endif
 
     vwrapped = caml_alloc_tuple(2);
     Store_field(vwrapped, 0, extconstr);
@@ -358,9 +468,31 @@ CAMLprim value SUNML_NVEC(anywrap)(value extconstr, value payload,
     Store_field(vnv, 0, vwrapped);
     NVEC_BACKLINK(nv) = vwrapped;
 
-#endif
     CAMLreturn(vnv);
 }
+#endif
+
+CAMLprim value SUNML_NVEC(anywrap)(value extconstr, value payload,
+			           value checkfn, value clonefn)
+{
+#if 500 <= SUNDIALS_LIB_VERSION
+    return do_anywrap(extconstr, payload, checkfn, clonefn, SUNFALSE);
+#else
+    return Val_unit;
+#endif
+}
+
+#ifdef MANYVECTOR_BUILD_WITH_MPI
+CAMLprim value sunml_nvec_anywrap_mpiplusx(value extconstr, value payload,
+					   value checkfn, value clonefn)
+{
+#if 500 <= SUNDIALS_LIB_VERSION
+    return do_anywrap(extconstr, payload, checkfn, clonefn, SUNTRUE);
+#else
+    return Val_unit;
+#endif
+}
+#endif
 
 /* * * * Operations * * * */
 

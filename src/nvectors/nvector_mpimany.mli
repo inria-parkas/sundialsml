@@ -21,8 +21,8 @@
 open Sundials
 
 (** The data in underlying nvectors is exposed as an array of wrapped values
-    together with the sum of their lengths and an MPI communicator. *)
-type data = Nvector.any ROArray.t * int * Mpi.communicator
+    together with an MPI communicator and the sum of their lengths. *)
+type data = Nvector.any ROArray.t * Mpi.communicator * int
 
 (** Represents the internal layout of an mpimany-vector nvector. *)
 type kind
