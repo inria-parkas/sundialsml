@@ -11,7 +11,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(** The standard many-vector nvectors of Sundials.
+(** The standard mpimany-vector nvectors of Sundials.
 
     @version VERSION()
     @author Timothy Bourke (Inria/ENS)
@@ -35,10 +35,12 @@ type Nvector.gdata += MpiMany of data
 
 (** Creates a mpimany-vector nvector from an array of generic nvectors.
     The parallel array elements must all use the same communicator which
-    becomes the communicator of the resulting nvector.
+    becomes the communicator of the resulting nvector. Specifying the
+    communicator explicitly is useful if none of the array elements has
+    one.
 
     @since 5.0.0 *)
-val wrap : Nvector.any ROArray.t -> t
+val wrap : ?comm:Mpi.communicator -> Nvector.any ROArray.t -> t
 
 (** Aliases {!Nvector.unwrap}. *)
 val unwrap : t -> data
@@ -68,10 +70,12 @@ module Any : sig
 
   (** Creates a generic nvector from an array of generic nvectors.
       The parallel array elements must all use the same communicator which
-      becomes the communicator of the resulting nvector.
+      becomes the communicator of the resulting nvector. Specifying the
+      communicator explicitly is useful if none of the array elements has
+      one.
 
       @since 5.0.0 *)
-  val wrap : Nvector.any ROArray.t -> Nvector.any
+  val wrap : ?comm:Mpi.communicator -> Nvector.any ROArray.t -> Nvector.any
 
 end
 

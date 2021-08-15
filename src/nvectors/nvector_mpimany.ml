@@ -67,12 +67,12 @@ let check_comms =
          | Some comm when c_ident_or_congruent comm comm' -> ocomm
          | _ -> invalid_arg "communicators are not the same")
   in
-  ROArray.fold_left f None
+  ROArray.fold_left f
 
-let wrap nvs =
+let wrap ?comm nvs =
   if Sundials_impl.Versions.sundials_lt500
     then raise Config.NotImplementedBySundialsVersion;
-  let ocomm = check_comms nvs in
+  let ocomm = check_comms comm nvs in
   wrap_withlen (nvs, sumlens nvs ocomm, ocomm)
 
 let length nv =
@@ -356,7 +356,6 @@ struct (* {{{ *)
   end
 end (* }}} *)
 
-(* TODO: Rework for MPIMANY *)
 module DataOps : Nvector.NVECTOR_OPS with type t = data =
 struct (* {{{ *)
 
@@ -711,10 +710,10 @@ module Any = struct (* {{{ *)
     in
     wrap_with_len (ROArray.map Nvector.clone nvs, gl, comm)
 
-  let wrap nvs =
+  let wrap ?comm nvs =
     if Sundials_impl.Versions.sundials_lt500
       then raise Config.NotImplementedBySundialsVersion;
-    let ocomm = check_comms nvs in
+    let ocomm = check_comms comm nvs in
     wrap_with_len (nvs, sumlens nvs ocomm, ocomm)
 
 end (* }}} *)
