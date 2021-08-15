@@ -14,7 +14,7 @@
 open Sundials
 
 (* Accessed directly from nvector_many_ml.c. *)
-type data = Nvector.any ROArray.t * int * Mpi.communicator option
+type data = Nvector.any ROArray.t * int * Mpi.communicator
 
 type kind
 
@@ -36,28 +36,26 @@ let rec wrap_withlen ((nvs, _, _) as payload) =
   c_wrap payload check clone
 
 and clone nv =
-  let nvs, gl, ocomm = unwrap nv in
-  wrap_withlen (ROArray.map Nvector.clone nvs, gl, ocomm)
+  let nvs, gl, comm = unwrap nv in
+  wrap_withlen (ROArray.map Nvector.clone nvs, gl, comm)
 
 let subvector_mpi_rank nv =
   match Nvector_parallel.get_communicator nv with
   | None -> 0
   | Some comm -> Mpi.comm_rank comm
 
-let sumlens nvs ocomm =
+let sumlens nvs comm =
   let f sum nv =
     if subvector_mpi_rank nv = 0 then sum + Nvector.Ops.n_vgetlength nv
     else sum
   in
   let local_length = ROArray.fold_left f 0 nvs in
-  match ocomm with
-  | None -> local_length
-  | Some comm -> Mpi.(allreduce_int local_length Sum comm)
+  Mpi.(allreduce_int local_length Sum comm)
 
 external c_ident_or_congruent : Mpi.communicator -> Mpi.communicator -> bool
   = "sunml_nvector_parallel_compare_comms" [@@noalloc]
 
-let check_comms =
+let check_comms ocomm nvs =
   let f ocomm nv =
     match Nvector_parallel.get_communicator nv with
     | None -> ocomm
@@ -67,13 +65,15 @@ let check_comms =
          | Some comm when c_ident_or_congruent comm comm' -> ocomm
          | _ -> invalid_arg "communicators are not the same")
   in
-  ROArray.fold_left f
+  match ROArray.fold_left f ocomm nvs with
+  | None -> invalid_arg "communicator not found or specified"
+  | Some comm -> comm
 
 let wrap ?comm nvs =
   if Sundials_impl.Versions.sundials_lt500
     then raise Config.NotImplementedBySundialsVersion;
-  let ocomm = check_comms comm nvs in
-  wrap_withlen (nvs, sumlens nvs ocomm, ocomm)
+  let comm = check_comms comm nvs in
+  wrap_withlen (nvs, sumlens nvs comm, comm)
 
 let length nv =
   let _, glen, _ = unwrap nv in
@@ -482,11 +482,9 @@ struct (* {{{ *)
   let n_vaddconst ((x, _, _) : t) b ((z, _, _) : t) =
     ROArray.iter2 (fun xi zi -> Nvector.Ops.n_vaddconst xi b zi) x z
 
-  let n_vmaxnorm ((x, _, ocomm) as xv : t) =
+  let n_vmaxnorm ((x, _, comm) as xv : t) =
     let lmax = Local.n_vmaxnorm xv in
-    match ocomm with
-    | None -> lmax
-    | Some comm -> Mpi.(allreduce_float lmax Max comm)
+    Mpi.(allreduce_float lmax Max comm)
 
   let n_vwrmsnorm ((_, gx, _) as xv : t) ((_, gw, _) as wv : t) =
     if gx <> gw then raise Nvector.IncompatibleNvector;
@@ -499,48 +497,36 @@ struct (* {{{ *)
     let gsum = Local.n_vwsqrsummask xv wv idv in
     sqrt (gsum /. float gx)
 
-  let n_vmin ((x, _, ocomm) as xv : t) =
+  let n_vmin ((x, _, comm) as xv : t) =
     let lmin = Local.n_vmin xv in
-    match ocomm with
-    | None -> lmin
-    | Some comm -> Mpi.(allreduce_float lmin Min comm)
+    Mpi.(allreduce_float lmin Min comm)
 
-  let n_vdotprod ((x, _, ocomm) as xv : t) (yv : t) =
+  let n_vdotprod ((x, _, comm) as xv : t) (yv : t) =
     let lsum = Local.n_vdotprod xv yv in
-    match ocomm with
-    | None -> lsum
-    | Some comm -> Mpi.(allreduce_float lsum Sum comm)
+    Mpi.(allreduce_float lsum Sum comm)
 
   let n_vcompare c ((x, _, _) : t) ((z, _, _) : t) =
     ROArray.iter2 (fun xi zi -> Nvector.Ops.n_vcompare c xi zi) x z
 
-  let n_vinvtest ((x, _, ocomm) as xv : t) (zv : t) =
+  let n_vinvtest ((x, _, comm) as xv : t) (zv : t) =
     let v = if Local.n_vinvtest xv zv then 1. else 0. in
-    match ocomm with
-    | None -> v <> 0.
-    | Some comm -> Mpi.(allreduce_float v Min comm) <> 0.
+    Mpi.(allreduce_float v Min comm) <> 0.
 
   let n_vwl2norm (xv : t) (wv : t) =
     let gsum = Local.n_vwsqrsum xv wv in
     sqrt (gsum)
 
-  let n_vl1norm ((x, _, ocomm) as xv : t) =
+  let n_vl1norm ((x, _, comm) as xv : t) =
     let lsum = Local.n_vl1norm xv in
-    match ocomm with
-    | None -> lsum
-    | Some comm -> Mpi.(allreduce_float lsum Sum comm)
+    Mpi.(allreduce_float lsum Sum comm)
 
-  let n_vconstrmask (cv : t) ((x, _, ocomm) as xv : t) (mv : t) =
+  let n_vconstrmask (cv : t) ((x, _, comm) as xv : t) (mv : t) =
     let v = if Local.n_vconstrmask cv xv mv then 1. else 0. in
-    match ocomm with
-    | None -> v <> 0.
-    | Some comm -> Mpi.(allreduce_float v Min comm) <> 0.
+    Mpi.(allreduce_float v Min comm) <> 0.
 
-  let n_vminquotient ((n, _, ocomm) as nv : t) (dv : t) =
+  let n_vminquotient ((n, _, comm) as nv : t) (dv : t) =
     let lmin = Local.n_vminquotient nv dv in
-    match ocomm with
-    | None -> lmin
-    | Some comm -> Mpi.(allreduce_float lmin Min comm)
+    Mpi.(allreduce_float lmin Min comm)
 
   let n_vprod ((x, _, _) : t) ((y, _, _) : t) ((z, _, _) : t) =
     ROArray.iter3 (fun xi yi zi -> Nvector.Ops.n_vprod xi yi zi) x y z
@@ -713,8 +699,8 @@ module Any = struct (* {{{ *)
   let wrap ?comm nvs =
     if Sundials_impl.Versions.sundials_lt500
       then raise Config.NotImplementedBySundialsVersion;
-    let ocomm = check_comms comm nvs in
-    wrap_with_len (nvs, sumlens nvs ocomm, ocomm)
+    let comm = check_comms comm nvs in
+    wrap_with_len (nvs, sumlens nvs comm, comm)
 
 end (* }}} *)
 

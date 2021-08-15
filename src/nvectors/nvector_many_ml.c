@@ -85,7 +85,7 @@ static N_Vector do_clone_many(N_Vector src, enum do_clone_mode clonemode)
     CAMLlocal4(dstpayload, dstarray, srcpayload, srcarray);
     CAMLlocal2(dstwrapped, srcwrapped);
 #ifdef MANYVECTOR_BUILD_WITH_MPI
-    CAMLlocal1(vocomm);
+    CAMLlocal1(vcomm);
 #endif
     static const value *pnvector_clone = NULL;
     sunindextype i;
@@ -129,12 +129,7 @@ static N_Vector do_clone_many(N_Vector src, enum do_clone_mode clonemode)
     dstarray = caml_alloc_tuple(Wosize_val(srcarray));
 
 #ifdef MANYVECTOR_BUILD_WITH_MPI
-    vocomm = Field(srcpayload, 2);
-    if (vocomm == Val_none) {
-	dstcontent->comm = MPI_COMM_NULL;
-    } else {
-	dstcontent->comm = Comm_val(vocomm);
-    }
+    vcomm = Field(srcpayload, 2);
 #endif
 
     /* Clone vectors into the subvector array */
@@ -158,7 +153,7 @@ static N_Vector do_clone_many(N_Vector src, enum do_clone_mode clonemode)
     Store_field(dstpayload, 0, dstarray);
     Store_field(dstpayload, 1, Field(srcpayload, 1));
 #ifdef MANYVECTOR_BUILD_WITH_MPI
-    Store_field(dstpayload, 2, vocomm);
+    Store_field(dstpayload, 2, vcomm);
 #endif
 
     if (clonemode == CLONE_ANY) {
@@ -221,7 +216,7 @@ CAMLprim value SUNML_NVEC(wrap)(value payload, value checkfn, value clonefn)
     CAMLlocal3(vnvec, vnvs, vglen);
 #if 500 <= SUNDIALS_LIB_VERSION
 #ifdef MANYVECTOR_BUILD_WITH_MPI
-    CAMLlocal1(vocomm);
+    CAMLlocal1(vcomm);
 #endif
     N_Vector nv;
     N_Vector_Ops ops;
@@ -239,7 +234,7 @@ CAMLprim value SUNML_NVEC(wrap)(value payload, value checkfn, value clonefn)
     vnvs = Field(payload, 0);
     vglen = Field(payload, 1);
 #ifdef MANYVECTOR_BUILD_WITH_MPI
-    vocomm = Field(payload, 2);
+    vcomm = Field(payload, 2);
 #endif
     num_subvectors = Wosize_val(vnvs);
     subvec_array = calloc(num_subvectors, sizeof(N_Vector));
@@ -322,11 +317,7 @@ CAMLprim value SUNML_NVEC(wrap)(value payload, value checkfn, value clonefn)
     content->subvec_array = subvec_array;
     content->global_length = Int_val(vglen);
 #ifdef MANYVECTOR_BUILD_WITH_MPI
-    if (vocomm == Val_none) {
-	content->comm = MPI_COMM_NULL;
-    } else {
-	content->comm = Comm_val(Some_val(vocomm));
-    }
+    content->comm = Comm_val(vcomm);
 #endif
 
     vnvec = NVEC_ALLOC();
