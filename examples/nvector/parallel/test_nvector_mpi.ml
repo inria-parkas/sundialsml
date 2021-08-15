@@ -48,47 +48,47 @@ module Custom_parallel1 =
             Sundials.RealArray.(length x = length y)
             && (xg <= yg) && (xc == yc)
           );
-      Nvector_custom.n_vclone        = Nvector_parallel.DataOps.n_vclone;
-      Nvector_custom.n_vspace        = Some Nvector_parallel.DataOps.n_vspace;
-      Nvector_custom.n_vlinearsum    = Nvector_parallel.DataOps.n_vlinearsum;
-      Nvector_custom.n_vconst        = Nvector_parallel.DataOps.n_vconst;
-      Nvector_custom.n_vprod         = Nvector_parallel.DataOps.n_vprod;
-      Nvector_custom.n_vdiv          = Nvector_parallel.DataOps.n_vdiv;
-      Nvector_custom.n_vscale        = Nvector_parallel.DataOps.n_vscale;
-      Nvector_custom.n_vabs          = Nvector_parallel.DataOps.n_vabs;
-      Nvector_custom.n_vinv          = Nvector_parallel.DataOps.n_vinv;
-      Nvector_custom.n_vaddconst     = Nvector_parallel.DataOps.n_vaddconst;
-      Nvector_custom.n_vmaxnorm      = Nvector_parallel.DataOps.n_vmaxnorm;
-      Nvector_custom.n_vwrmsnorm     = Nvector_parallel.DataOps.n_vwrmsnorm;
-      Nvector_custom.n_vmin          = Nvector_parallel.DataOps.n_vmin;
-      Nvector_custom.n_vdotprod      = Nvector_parallel.DataOps.n_vdotprod;
-      Nvector_custom.n_vcompare      = Nvector_parallel.DataOps.n_vcompare;
-      Nvector_custom.n_vinvtest      = Nvector_parallel.DataOps.n_vinvtest;
-      Nvector_custom.n_vwl2norm      = Some Nvector_parallel.DataOps.n_vwl2norm;
-      Nvector_custom.n_vl1norm       = Some Nvector_parallel.DataOps.n_vl1norm;
-      Nvector_custom.n_vwrmsnormmask = Some Nvector_parallel.DataOps.n_vwrmsnormmask;
-      Nvector_custom.n_vconstrmask   = Some Nvector_parallel.DataOps.n_vconstrmask;
-      Nvector_custom.n_vminquotient  = Some Nvector_parallel.DataOps.n_vminquotient;
-      Nvector_custom.n_vlinearcombination
-        = Some Nvector_parallel.DataOps.n_vlinearcombination;
-      Nvector_custom.n_vscaleaddmulti
-        = Some Nvector_parallel.DataOps.n_vscaleaddmulti;
-      Nvector_custom.n_vdotprodmulti
-        = Some Nvector_parallel.DataOps.n_vdotprodmulti;
-      Nvector_custom.n_vlinearsumvectorarray
-        = Some Nvector_parallel.DataOps.n_vlinearsumvectorarray;
-      Nvector_custom.n_vscalevectorarray
-        = Some Nvector_parallel.DataOps.n_vscalevectorarray;
-      Nvector_custom.n_vconstvectorarray
-        = Some Nvector_parallel.DataOps.n_vconstvectorarray;
-      Nvector_custom.n_vwrmsnormvectorarray
-        = Some Nvector_parallel.DataOps.n_vwrmsnormvectorarray;
-      Nvector_custom.n_vwrmsnormmaskvectorarray
-        = Some Nvector_parallel.DataOps.n_vwrmsnormmaskvectorarray;
-      Nvector_custom.n_vscaleaddmultivectorarray
-        = Some Nvector_parallel.DataOps.n_vscaleaddmultivectorarray;
-      Nvector_custom.n_vlinearcombinationvectorarray
-        = Some Nvector_parallel.DataOps.n_vlinearcombinationvectorarray;
+      Nvector_custom.clone        = Nvector_parallel.DataOps.clone;
+      Nvector_custom.space        = Some Nvector_parallel.DataOps.space;
+      Nvector_custom.linearsum    = Nvector_parallel.DataOps.linearsum;
+      Nvector_custom.const        = Nvector_parallel.DataOps.const;
+      Nvector_custom.prod         = Nvector_parallel.DataOps.prod;
+      Nvector_custom.div          = Nvector_parallel.DataOps.div;
+      Nvector_custom.scale        = Nvector_parallel.DataOps.scale;
+      Nvector_custom.abs          = Nvector_parallel.DataOps.abs;
+      Nvector_custom.inv          = Nvector_parallel.DataOps.inv;
+      Nvector_custom.addconst     = Nvector_parallel.DataOps.addconst;
+      Nvector_custom.maxnorm      = Nvector_parallel.DataOps.maxnorm;
+      Nvector_custom.wrmsnorm     = Nvector_parallel.DataOps.wrmsnorm;
+      Nvector_custom.min          = Nvector_parallel.DataOps.min;
+      Nvector_custom.dotprod      = Nvector_parallel.DataOps.dotprod;
+      Nvector_custom.compare      = Nvector_parallel.DataOps.compare;
+      Nvector_custom.invtest      = Nvector_parallel.DataOps.invtest;
+      Nvector_custom.wl2norm      = Some Nvector_parallel.DataOps.wl2norm;
+      Nvector_custom.l1norm       = Some Nvector_parallel.DataOps.l1norm;
+      Nvector_custom.wrmsnormmask = Some Nvector_parallel.DataOps.wrmsnormmask;
+      Nvector_custom.constrmask   = Some Nvector_parallel.DataOps.constrmask;
+      Nvector_custom.minquotient  = Some Nvector_parallel.DataOps.minquotient;
+      Nvector_custom.linearcombination
+        = Some Nvector_parallel.DataOps.linearcombination;
+      Nvector_custom.scaleaddmulti
+        = Some Nvector_parallel.DataOps.scaleaddmulti;
+      Nvector_custom.dotprodmulti
+        = Some Nvector_parallel.DataOps.dotprodmulti;
+      Nvector_custom.linearsumvectorarray
+        = Some Nvector_parallel.DataOps.linearsumvectorarray;
+      Nvector_custom.scalevectorarray
+        = Some Nvector_parallel.DataOps.scalevectorarray;
+      Nvector_custom.constvectorarray
+        = Some Nvector_parallel.DataOps.constvectorarray;
+      Nvector_custom.wrmsnormvectorarray
+        = Some Nvector_parallel.DataOps.wrmsnormvectorarray;
+      Nvector_custom.wrmsnormmaskvectorarray
+        = Some Nvector_parallel.DataOps.wrmsnormmaskvectorarray;
+      Nvector_custom.scaleaddmultivectorarray
+        = Some Nvector_parallel.DataOps.scaleaddmultivectorarray;
+      Nvector_custom.linearcombinationvectorarray
+        = Some Nvector_parallel.DataOps.linearcombinationvectorarray;
     } (* }}} *)
   end)
 
@@ -112,42 +112,42 @@ module Custom_parallel2 =
             Sundials.RealArray.(length x = length y)
             && (xg <= yg) && (xc == yc)
           );
-      Nvector_custom.n_vclone        = DataOps.n_vclone;
-      Nvector_custom.n_vspace        = Some DataOps.n_vspace;
-      Nvector_custom.n_vlinearsum    = DataOps.n_vlinearsum;
-      Nvector_custom.n_vconst        = DataOps.n_vconst;
-      Nvector_custom.n_vprod         = DataOps.n_vprod;
-      Nvector_custom.n_vdiv          = DataOps.n_vdiv;
-      Nvector_custom.n_vscale        = DataOps.n_vscale;
-      Nvector_custom.n_vabs          = DataOps.n_vabs;
-      Nvector_custom.n_vinv          = DataOps.n_vinv;
-      Nvector_custom.n_vaddconst     = DataOps.n_vaddconst;
-      Nvector_custom.n_vmaxnorm      = DataOps.n_vmaxnorm;
-      Nvector_custom.n_vwrmsnorm     = DataOps.n_vwrmsnorm;
-      Nvector_custom.n_vmin          = DataOps.n_vmin;
-      Nvector_custom.n_vdotprod      = DataOps.n_vdotprod;
-      Nvector_custom.n_vcompare      = DataOps.n_vcompare;
-      Nvector_custom.n_vinvtest      = DataOps.n_vinvtest;
-      Nvector_custom.n_vwl2norm      = Some DataOps.n_vwl2norm;
-      Nvector_custom.n_vl1norm       = Some DataOps.n_vl1norm;
-      Nvector_custom.n_vwrmsnormmask = Some DataOps.n_vwrmsnormmask;
-      Nvector_custom.n_vconstrmask   = Some DataOps.n_vconstrmask;
-      Nvector_custom.n_vminquotient  = Some DataOps.n_vminquotient;
-      Nvector_custom.n_vlinearcombination = Some DataOps.n_vlinearcombination;
-      Nvector_custom.n_vscaleaddmulti = Some DataOps.n_vscaleaddmulti;
-      Nvector_custom.n_vdotprodmulti = Some DataOps.n_vdotprodmulti;
-      Nvector_custom.n_vlinearsumvectorarray
-        = Some DataOps.n_vlinearsumvectorarray;
-      Nvector_custom.n_vscalevectorarray = Some DataOps.n_vscalevectorarray;
-      Nvector_custom.n_vconstvectorarray = Some DataOps.n_vconstvectorarray;
-      Nvector_custom.n_vwrmsnormvectorarray
-        = Some DataOps.n_vwrmsnormvectorarray;
-      Nvector_custom.n_vwrmsnormmaskvectorarray
-        = Some DataOps.n_vwrmsnormmaskvectorarray;
-      Nvector_custom.n_vscaleaddmultivectorarray
-        = Some DataOps.n_vscaleaddmultivectorarray;
-      Nvector_custom.n_vlinearcombinationvectorarray
-        = Some DataOps.n_vlinearcombinationvectorarray;
+      Nvector_custom.clone        = DataOps.clone;
+      Nvector_custom.space        = Some DataOps.space;
+      Nvector_custom.linearsum    = DataOps.linearsum;
+      Nvector_custom.const        = DataOps.const;
+      Nvector_custom.prod         = DataOps.prod;
+      Nvector_custom.div          = DataOps.div;
+      Nvector_custom.scale        = DataOps.scale;
+      Nvector_custom.abs          = DataOps.abs;
+      Nvector_custom.inv          = DataOps.inv;
+      Nvector_custom.addconst     = DataOps.addconst;
+      Nvector_custom.maxnorm      = DataOps.maxnorm;
+      Nvector_custom.wrmsnorm     = DataOps.wrmsnorm;
+      Nvector_custom.min          = DataOps.min;
+      Nvector_custom.dotprod      = DataOps.dotprod;
+      Nvector_custom.compare      = DataOps.compare;
+      Nvector_custom.invtest      = DataOps.invtest;
+      Nvector_custom.wl2norm      = Some DataOps.wl2norm;
+      Nvector_custom.l1norm       = Some DataOps.l1norm;
+      Nvector_custom.wrmsnormmask = Some DataOps.wrmsnormmask;
+      Nvector_custom.constrmask   = Some DataOps.constrmask;
+      Nvector_custom.minquotient  = Some DataOps.minquotient;
+      Nvector_custom.linearcombination = Some DataOps.linearcombination;
+      Nvector_custom.scaleaddmulti = Some DataOps.scaleaddmulti;
+      Nvector_custom.dotprodmulti = Some DataOps.dotprodmulti;
+      Nvector_custom.linearsumvectorarray
+        = Some DataOps.linearsumvectorarray;
+      Nvector_custom.scalevectorarray = Some DataOps.scalevectorarray;
+      Nvector_custom.constvectorarray = Some DataOps.constvectorarray;
+      Nvector_custom.wrmsnormvectorarray
+        = Some DataOps.wrmsnormvectorarray;
+      Nvector_custom.wrmsnormmaskvectorarray
+        = Some DataOps.wrmsnormmaskvectorarray;
+      Nvector_custom.scaleaddmultivectorarray
+        = Some DataOps.scaleaddmultivectorarray;
+      Nvector_custom.linearcombinationvectorarray
+        = Some DataOps.linearcombinationvectorarray;
     } (* }}} *)
   end)
 
@@ -248,10 +248,10 @@ let main () =
   (* NVector Test *)
   if Test_nvector.compat_ge400 then begin
     fails += Test.test_n_vgetvectorid x Test.id myid;
-    fails += Test.test_n_vcloneempty x myid;
-    fails += Test.test_n_vclone x local_length myid;
-    fails += Test.test_n_vcloneemptyvectorarray 5 x myid;
-    fails += Test.test_n_vclonevectorarray 5 x local_length myid
+    fails += Test.test_cloneempty x myid;
+    fails += Test.test_clone x local_length myid;
+    fails += Test.test_cloneemptyvectorarray 5 x myid;
+    fails += Test.test_clonevectorarray 5 x local_length myid
   end;
 
   (* Test setting/getting array data *)
@@ -268,36 +268,36 @@ let main () =
   then printf "\nTesting standard vector operations:\n\n";
 
   if Test_nvector.compat_ge400 then begin
-    fails += Test.test_n_vconst x local_length myid;
-    fails += Test.test_n_vlinearsum x y z local_length myid;
+    fails += Test.test_const x local_length myid;
+    fails += Test.test_linearsum x y z local_length myid;
   end else begin
-    fails += Test.test_n_vlinearsum x y z local_length myid;
-    fails += Test.test_n_vconst x local_length myid;
+    fails += Test.test_linearsum x y z local_length myid;
+    fails += Test.test_const x local_length myid;
   end;
-  fails += Test.test_n_vprod x y z local_length myid;
-  fails += Test.test_n_vdiv x y z local_length myid;
-  fails += Test.test_n_vscale x z local_length myid;
-  fails += Test.test_n_vabs x z local_length myid;
-  fails += Test.test_n_vinv x z local_length myid;
-  fails += Test.test_n_vaddconst x z local_length myid;
-  fails += Test.test_n_vdotprod x y local_length global_length myid;
-  fails += Test.test_n_vmaxnorm x local_length myid;
-  fails += Test.test_n_vwrmsnorm x y local_length myid;
+  fails += Test.test_prod x y z local_length myid;
+  fails += Test.test_div x y z local_length myid;
+  fails += Test.test_scale x z local_length myid;
+  fails += Test.test_abs x z local_length myid;
+  fails += Test.test_inv x z local_length myid;
+  fails += Test.test_addconst x z local_length myid;
+  fails += Test.test_dotprod x y local_length global_length myid;
+  fails += Test.test_maxnorm x local_length myid;
+  fails += Test.test_wrmsnorm x y local_length myid;
   if Test_nvector.compat_ge400
-  then fails += Test.test_n_vwrmsnormmask x y z local_length global_length myid
-  else fails += Test.test_n_vwrmsnormmask_lt400 x y z local_length global_length myid;
-  fails += Test.test_n_vmin x local_length myid;
-  fails += Test.test_n_vwl2norm x y local_length global_length myid;
-  fails += Test.test_n_vl1norm x local_length global_length myid;
-  fails += Test.test_n_vcompare x z local_length myid;
-  fails += Test.test_n_vinvtest x z local_length myid;
-  fails += Test.test_n_vconstrmask x y z local_length myid;
-  fails += Test.test_n_vminquotient x y local_length myid;
+  then fails += Test.test_wrmsnormmask x y z local_length global_length myid
+  else fails += Test.test_wrmsnormmask_lt400 x y z local_length global_length myid;
+  fails += Test.test_min x local_length myid;
+  fails += Test.test_wl2norm x y local_length global_length myid;
+  fails += Test.test_l1norm x local_length global_length myid;
+  fails += Test.test_compare x z local_length myid;
+  fails += Test.test_invtest x z local_length myid;
+  fails += Test.test_constrmask x y z local_length myid;
+  fails += Test.test_minquotient x y local_length myid;
   if not Test_nvector.compat_ge400 then begin
-    fails += Test.test_n_vclonevectorarray 5 x local_length myid;
-    fails += Test.test_n_vcloneemptyvectorarray 5 x myid;
-    fails += Test.test_n_vcloneempty x myid;
-    fails += Test.test_n_vclone x local_length myid;
+    fails += Test.test_clonevectorarray 5 x local_length myid;
+    fails += Test.test_cloneemptyvectorarray 5 x myid;
+    fails += Test.test_cloneempty x myid;
+    fails += Test.test_clone x local_length myid;
   end;
 
   if Test_nvector.compat_ge400 then begin
@@ -309,18 +309,18 @@ let main () =
     let u = Test.make ~with_fused_ops:false local_length 0.0 in
 
     (* fused operations *)
-    fails += Test.test_n_vlinearcombination u local_length myid;
-    fails += Test.test_n_vscaleaddmulti u local_length myid;
-    fails += Test.test_n_vdotprodmulti u local_length global_length myid;
+    fails += Test.test_linearcombination u local_length myid;
+    fails += Test.test_scaleaddmulti u local_length myid;
+    fails += Test.test_dotprodmulti u local_length global_length myid;
 
     (* vector array operations *)
-    fails += Test.test_n_vlinearsumvectorarray u local_length myid;
-    fails += Test.test_n_vscalevectorarray u local_length myid;
-    fails += Test.test_n_vconstvectorarray u local_length myid;
-    fails += Test.test_n_vwrmsnormvectorarray u local_length myid;
-    fails += Test.test_n_vwrmsnormmaskvectorarray u local_length global_length myid;
-    fails += Test.test_n_vscaleaddmultivectorarray u local_length myid;
-    fails += Test.test_n_vlinearcombinationvectorarray u local_length myid
+    fails += Test.test_linearsumvectorarray u local_length myid;
+    fails += Test.test_scalevectorarray u local_length myid;
+    fails += Test.test_constvectorarray u local_length myid;
+    fails += Test.test_wrmsnormvectorarray u local_length myid;
+    fails += Test.test_wrmsnormmaskvectorarray u local_length global_length myid;
+    fails += Test.test_scaleaddmultivectorarray u local_length myid;
+    fails += Test.test_linearcombinationvectorarray u local_length myid
   end;
 
   if Test_nvector.compat_ge400 then begin
@@ -331,18 +331,18 @@ let main () =
     let u = Test.make ~with_fused_ops:false local_length 0.0 in
 
     (* fused operations *)
-    fails += Test.test_n_vlinearcombination u local_length myid;
-    fails += Test.test_n_vscaleaddmulti u local_length myid;
-    fails += Test.test_n_vdotprodmulti u local_length global_length myid;
+    fails += Test.test_linearcombination u local_length myid;
+    fails += Test.test_scaleaddmulti u local_length myid;
+    fails += Test.test_dotprodmulti u local_length global_length myid;
 
     (* vector array operations *)
-    fails += Test.test_n_vlinearsumvectorarray u local_length myid;
-    fails += Test.test_n_vscalevectorarray u local_length myid;
-    fails += Test.test_n_vconstvectorarray u local_length myid;
-    fails += Test.test_n_vwrmsnormvectorarray u local_length myid;
-    fails += Test.test_n_vwrmsnormmaskvectorarray u local_length global_length myid;
-    fails += Test.test_n_vscaleaddmultivectorarray u local_length myid;
-    fails += Test.test_n_vlinearcombinationvectorarray u local_length myid
+    fails += Test.test_linearsumvectorarray u local_length myid;
+    fails += Test.test_scalevectorarray u local_length myid;
+    fails += Test.test_constvectorarray u local_length myid;
+    fails += Test.test_wrmsnormvectorarray u local_length myid;
+    fails += Test.test_wrmsnormmaskvectorarray u local_length global_length myid;
+    fails += Test.test_scaleaddmultivectorarray u local_length myid;
+    fails += Test.test_linearcombinationvectorarray u local_length myid
   end;
 
   (* Print result *)

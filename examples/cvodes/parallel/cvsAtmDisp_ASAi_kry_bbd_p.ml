@@ -27,8 +27,8 @@ let fprintf = Printf.fprintf
 let sqr x = x *. x
 let local_array = Nvector_parallel.local_array
 
-let n_vdotprod = Nvector.DataOps.n_vdotprod
-let n_vscale = Nvector.DataOps.n_vscale
+let dotprod = Nvector.DataOps.dotprod
+let scale = Nvector.DataOps.scale
 
 (*
  *------------------------------------------------------------------
@@ -896,7 +896,7 @@ let f data t y ydot =
  *)
 
 let fQ data t y ((dqdata : RealArray.t), _, _) =
-  dqdata.{0} <- (n_vdotprod y y) *. 0.5 *. data.dOmega
+  dqdata.{0} <- (dotprod y y) *. 0.5 *. data.dOmega
 
 (*
  *------------------------------------------------------------------
@@ -998,7 +998,7 @@ let fB data args yBdot =
  *------------------------------------------------------------------
  *)
 
-let fQB dataB { QuadAdj.yb = yB } qBdot = n_vscale (-.dataB.dOmega) yB qBdot
+let fQB dataB { QuadAdj.yb = yB } qBdot = scale (-.dataB.dOmega) yB qBdot
 
 (*
  *------------------------------------------------------------------

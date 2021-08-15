@@ -98,7 +98,7 @@ let slice = Array1.sub
 let unwrap = RealArray2.unwrap
 
 let sqr x = x *. x
-let nvwl2norm = Nvector.DataOps.n_vwl2norm
+let nvwl2norm = Nvector.DataOps.wl2norm
 
 (* Problem Constants *)
 

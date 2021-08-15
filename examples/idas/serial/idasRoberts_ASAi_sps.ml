@@ -63,8 +63,8 @@ module VarId = Ida.VarId
 
 let printf = Printf.printf
 
-let nvconst = Nvector_serial.DataOps.n_vconst
-let nvscale = Nvector_serial.DataOps.n_vscale
+let nvconst = Nvector_serial.DataOps.const
+let nvscale = Nvector_serial.DataOps.scale
 
 let unwrap = Nvector.unwrap
 let wrap = Nvector_serial.wrap

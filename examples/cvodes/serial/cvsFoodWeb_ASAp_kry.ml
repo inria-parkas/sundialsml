@@ -85,8 +85,8 @@ module Densemat = Matrix.ArrayDense
 open Bigarray
 let unwrap = Nvector.unwrap
 
-let nvwrmsnorm = Nvector_serial.DataOps.n_vwrmsnorm
-let nvlinearsum = Nvector_serial.DataOps.n_vlinearsum
+let nvwrmsnorm = Nvector_serial.DataOps.wrmsnorm
+let nvlinearsum = Nvector_serial.DataOps.linearsum
 
 let printf = Printf.printf
 let sqr x = x *. x

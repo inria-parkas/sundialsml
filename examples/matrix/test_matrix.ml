@@ -328,8 +328,8 @@ let test_sunmatmatvec a x y myid =
          with _ ->
            printf ">>> FAILED test -- SUNMatScaleAddI failed on Proc %d @\n" myid;
            raise Exit);
-        let z = NV.n_vclone y in
-        let w = NV.n_vclone y in
+        let z = NV.clone y in
+        let w = NV.clone y in
 
         let start_time = get_time () in
         (try Matrix.matvec b x z
@@ -337,11 +337,11 @@ let test_sunmatmatvec a x y myid =
             printf ">>> FAILED test -- SUNMatMatvec failed on Proc %d @\n" myid;
             raise Exit);
         let stop_time = get_time () in
-        NV.n_vlinearsum 3.0 y 1.0 x w;
+        NV.linearsum 3.0 y 1.0 x w;
         M.check_vector w z tol, start_time, stop_time
       end
       else begin
-        let z = NV.n_vclone y in
+        let z = NV.clone y in
 
         let start_time = get_time () in
         (try Matrix.matvec a x z

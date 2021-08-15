@@ -704,7 +704,7 @@ N_Vector callml_vclone(N_Vector w)
 
     if (Is_exception_result (r)) {
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vclone");
+					"user-defined clone");
 	CAMLreturnT (N_Vector, NULL);
     }
     v_payload = r;
@@ -734,7 +734,7 @@ static void callml_vspace(N_Vector v, sundials_ml_index *lrw, sundials_ml_index 
     value r = caml_callback_exn (mlop, NVEC_BACKLINK(v));
     if (Is_exception_result (r)) {
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vspace");
+					"user-defined space");
 	fputs ("Sundials/ML has no sensible value to return to Sundials, "
 	       "and incorrect values risk memory corruption.  Abort.", stderr);
 	fflush (stderr);
@@ -758,7 +758,7 @@ static sunindextype callml_vgetlength(N_Vector v)
     value r = caml_callback_exn (mlop, NVEC_BACKLINK(v));
     if (Is_exception_result (r)) {
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vgetlength");
+					"user-defined getlength");
 	fputs ("Sundials/ML has no sensible value to return to Sundials, "
 	       "and incorrect values risk memory corruption.  Abort.", stderr);
 	fflush (stderr);
@@ -787,7 +787,7 @@ static void callml_vlinearsum(realtype a, N_Vector x, realtype b, N_Vector y, N_
     value r = caml_callbackN_exn (mlop, 5, args);
     if (Is_exception_result (r)) {
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vlinearsum");
+					"user-defined linearsum");
     }
 
     CAMLreturn0;
@@ -805,7 +805,7 @@ static void callml_vconst(realtype c, N_Vector z)
 				 vc, NVEC_BACKLINK(z));
     if (Is_exception_result (r))
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vconst");
+					"user-defined const");
 
     CAMLreturn0;
 }
@@ -821,7 +821,7 @@ static void callml_vprod(N_Vector x, N_Vector y, N_Vector z)
 				  NVEC_BACKLINK(y), NVEC_BACKLINK(z));
     if (Is_exception_result (r))
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vprod");
+					"user-defined prod");
 
     CAMLreturn0;
 }
@@ -837,7 +837,7 @@ static void callml_vdiv(N_Vector x, N_Vector y, N_Vector z)
 				 NVEC_BACKLINK(y), NVEC_BACKLINK(z));
     if (Is_exception_result (r))
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vdiv");
+					"user-defined div");
 
     CAMLreturn0;
 }
@@ -854,7 +854,7 @@ static void callml_vscale(realtype c, N_Vector x, N_Vector z)
 				 NVEC_BACKLINK(x), NVEC_BACKLINK(z));
     if (Is_exception_result (r))
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vscale");
+					"user-defined scale");
 
     CAMLreturn0;
 }
@@ -869,7 +869,7 @@ static void callml_vabs(N_Vector x, N_Vector z)
     value r = caml_callback2_exn (mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(z));
     if (Is_exception_result (r))
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vabs");
+					"user-defined abs");
 
     CAMLreturn0;
 }
@@ -884,7 +884,7 @@ static void callml_vinv(N_Vector x, N_Vector z)
     value r = caml_callback2_exn(mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(z));
     if (Is_exception_result (r))
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vinv");
+					"user-defined inv");
 
     CAMLreturn0;
 }
@@ -901,7 +901,7 @@ static void callml_vaddconst(N_Vector x, realtype b, N_Vector z)
 				  NVEC_BACKLINK(x), vb, NVEC_BACKLINK(z));
     if (Is_exception_result (r))
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vaddconst");
+					"user-defined addconst");
 
     CAMLreturn0;
 }
@@ -916,7 +916,7 @@ static realtype callml_vdotprod(N_Vector x, N_Vector y)
     value r = caml_callback2_exn (mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(y));
     if (Is_exception_result (r)) {
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vdotprod");
+					"user-defined dotprod");
 	CAMLreturnT(realtype, nan(""));
     }
 
@@ -933,7 +933,7 @@ static realtype callml_vmaxnorm(N_Vector x)
     value r = caml_callback_exn (mlop, NVEC_BACKLINK(x));
     if (Is_exception_result (r)) {
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vmaxnorm");
+					"user-defined maxnorm");
 	CAMLreturnT(realtype, nan(""));
     }
 
@@ -950,7 +950,7 @@ static realtype callml_vwrmsnorm(N_Vector x, N_Vector w)
     value r = caml_callback2_exn (mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(w));
     if (Is_exception_result (r)) {
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vwrmsnorm");
+					"user-defined wrmsnorm");
 	CAMLreturnT(realtype, nan(""));
     }
 
@@ -968,7 +968,7 @@ static realtype callml_vwrmsnormmask(N_Vector x, N_Vector w, N_Vector id)
 				  NVEC_BACKLINK(w), NVEC_BACKLINK(id));
     if (Is_exception_result (r)) {
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vwrmsnormmask");
+					"user-defined wrmsnormmask");
 	CAMLreturnT(realtype, nan(""));
     }
 
@@ -985,7 +985,7 @@ static realtype callml_vmin(N_Vector x)
     value r = caml_callback_exn (mlop, NVEC_BACKLINK(x));
     if (Is_exception_result (r)) {
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vmin");
+					"user-defined min");
 	CAMLreturnT(realtype, nan(""));
     }
 
@@ -1002,7 +1002,7 @@ static realtype callml_vwl2norm(N_Vector x, N_Vector w)
     value r = caml_callback2_exn (mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(w));
     if (Is_exception_result (r)) {
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vwl2norm");
+					"user-defined wl2norm");
 	CAMLreturnT(realtype, nan(""));
     }
 
@@ -1019,7 +1019,7 @@ static realtype callml_vl1norm(N_Vector x)
     value r = caml_callback_exn (mlop, NVEC_BACKLINK(x));
     if (Is_exception_result (r)) {
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vl1norm");
+					"user-defined l1norm");
 	CAMLreturnT(realtype, nan(""));
     }
 
@@ -1038,7 +1038,7 @@ static void callml_vcompare(realtype c, N_Vector x, N_Vector z)
 				  NVEC_BACKLINK(x), NVEC_BACKLINK(z));
     if (Is_exception_result (r))
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vcompare");
+					"user-defined compare");
 
     CAMLreturn0;
 }
@@ -1053,7 +1053,7 @@ static booleantype callml_vinvtest(N_Vector x, N_Vector z)
     value r = caml_callback2_exn (mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(z));
     if (Is_exception_result (r)) {
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vinvtest");
+					"user-defined invtest");
 	CAMLreturnT(booleantype, 0);
     }
 
@@ -1071,7 +1071,7 @@ static booleantype callml_vconstrmask(N_Vector c, N_Vector x, N_Vector m)
 				  NVEC_BACKLINK(x), NVEC_BACKLINK(m));
     if (Is_exception_result (r)) {
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vconstrmask");
+					"user-defined constrmask");
 	CAMLreturnT(booleantype, 0);
     }
 
@@ -1089,7 +1089,7 @@ static realtype callml_vminquotient(N_Vector num, N_Vector denom)
 				  NVEC_BACKLINK(denom));
     if (Is_exception_result (r)) {
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vminquotient");
+					"user-defined minquotient");
 	CAMLreturnT(realtype, nan(""));
     }
 
@@ -1159,7 +1159,7 @@ static int callml_vlinearcombination(int nvec, realtype* c,
     value r = caml_callback3_exn (mlop, vc, vv, NVEC_BACKLINK(z));
     if (Is_exception_result (r)) {
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vlinearcombination");
+					"user-defined linearcombination");
 	CAMLreturnT(int, 0);
     }
     CAMLreturnT(int, 1);
@@ -1185,7 +1185,7 @@ static int callml_vscaleaddmulti(int nvec, realtype* a,
     value r = caml_callbackN_exn (mlop, 4, args);
     if (Is_exception_result (r)) {
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vscaleaddmulti");
+					"user-defined scaleaddmulti");
 	CAMLreturnT(int, 0);
     }
     CAMLreturnT(int, 1);
@@ -1208,7 +1208,7 @@ static int callml_vdotprodmulti(int nvec, N_Vector x, N_Vector *Y,
     value r = caml_callback3_exn (mlop, NVEC_BACKLINK(x), vy, vdotprods);
     if (Is_exception_result (r)) {
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vdotprodmulti");
+					"user-defined dotprodmulti");
 	CAMLreturnT(int, 0);
     }
     CAMLreturnT(int, 1);
@@ -1238,7 +1238,7 @@ static int callml_vlinearsumvectorarray(int nvec, realtype a, N_Vector* X,
     value r = caml_callbackN_exn (mlop, 5, args);
     if (Is_exception_result (r)) {
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vlinearsumvectorarray");
+					"user-defined linearsumvectorarray");
 	CAMLreturnT(int, 0);
     }
     CAMLreturnT(int, 1);
@@ -1263,7 +1263,7 @@ static int callml_vscalevectorarray(int nvec, realtype* c, N_Vector* X, N_Vector
     value r = caml_callback3_exn (mlop, vc, vx, vz);
     if (Is_exception_result (r)) {
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vscalevectorarray");
+					"user-defined scalevectorarray");
 	CAMLreturnT(int, 0);
     }
     CAMLreturnT(int, 1);
@@ -1286,7 +1286,7 @@ static int callml_vconstvectorarray(int nvec, realtype c, N_Vector* Z)
     value r = caml_callback2_exn (mlop, vc, vz);
     if (Is_exception_result (r)) {
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vconstvectorarray");
+					"user-defined constvectorarray");
 	CAMLreturnT(int, 0);
     }
     CAMLreturnT(int, 1);
@@ -1312,7 +1312,7 @@ static int callml_vwrmsnormvectorarray(int nvec, N_Vector* X,
     value r = caml_callback3_exn (mlop, vx, vw, vnrm);
     if (Is_exception_result (r)) {
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vwrmsnormvectorarray");
+					"user-defined wrmsnormvectorarray");
 	CAMLreturnT(int, 0);
     }
     CAMLreturnT(int, 1);
@@ -1340,7 +1340,7 @@ static int callml_vwrmsnormmaskvectorarray(int nvec, N_Vector* X, N_Vector* W,
     value r = caml_callbackN_exn (mlop, 4, args);
     if (Is_exception_result (r)) {
 	sunml_warn_discarded_exn (Extract_exception (r),
-				    "user-defined n_vwrmsnormmaskvectorarray");
+				    "user-defined wrmsnormmaskvectorarray");
 	CAMLreturnT(int, 0);
     }
     CAMLreturnT(int, 1);
@@ -1369,7 +1369,7 @@ static int callml_vscaleaddmultivectorarray(int nvec, int nsum, realtype* a,
     value r = caml_callbackN_exn (mlop, 4, args);
     if (Is_exception_result (r)) {
 	sunml_warn_discarded_exn (Extract_exception (r),
-				    "user-defined n_vscaleaddmultivectorarray");
+				    "user-defined scaleaddmultivectorarray");
 	CAMLreturnT(int, 0);
     }
     CAMLreturnT(int, 1);
@@ -1395,7 +1395,7 @@ static int callml_vlinearcombinationvectorarray(int nvec, int nsum, realtype* c,
     value r = caml_callback3_exn (mlop, vc, vxx, vz);
     if (Is_exception_result (r)) {
 	sunml_warn_discarded_exn (Extract_exception (r),
-			    "user-defined n_vlinearcombinationvectorarray");
+			    "user-defined linearcombinationvectorarray");
 	CAMLreturnT(int, 0);
     }
     CAMLreturnT(int, 1);
@@ -1433,7 +1433,7 @@ static realtype callml_vdotprodlocal(N_Vector x, N_Vector t)
     value r = caml_callback2_exn (mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(t));
     if (Is_exception_result (r))
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vdotprodlocal");
+					"user-defined dotprodlocal");
 
     CAMLreturnT(realtype, Double_val(r));
 }
@@ -1450,7 +1450,7 @@ static realtype callml_vmaxnormlocal(N_Vector x)
     value r = caml_callback_exn (mlop, NVEC_BACKLINK(x));
     if (Is_exception_result (r))
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vmaxnormlocal");
+					"user-defined maxnormlocal");
 
     CAMLreturnT(realtype, Double_val(r));
 }
@@ -1467,7 +1467,7 @@ static realtype callml_vminlocal(N_Vector x)
     value r = caml_callback_exn (mlop, NVEC_BACKLINK(x));
     if (Is_exception_result (r))
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vminlocal");
+					"user-defined minlocal");
 
     CAMLreturnT(realtype, Double_val(r));
 }
@@ -1484,7 +1484,7 @@ static realtype callml_vl1normlocal(N_Vector x)
     value r = caml_callback_exn (mlop, NVEC_BACKLINK(x));
     if (Is_exception_result (r))
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vl1normlocal");
+					"user-defined l1normlocal");
 
     CAMLreturnT(realtype, Double_val(r));
 }
@@ -1501,7 +1501,7 @@ static booleantype callml_vinvtestlocal(N_Vector x, N_Vector z)
     value r = caml_callback2_exn (mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(z));
     if (Is_exception_result (r))
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vinvtestlocal");
+					"user-defined invtestlocal");
 
     CAMLreturnT(booleantype, Bool_val(r));
 }
@@ -1520,7 +1520,7 @@ static booleantype callml_vconstrmasklocal(N_Vector c, N_Vector x, N_Vector m)
 					NVEC_BACKLINK(m));
     if (Is_exception_result (r))
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vconstrmasklocal");
+					"user-defined constrmasklocal");
 
     CAMLreturnT(booleantype, Bool_val(r));
 }
@@ -1537,7 +1537,7 @@ static realtype callml_vminquotientlocal(N_Vector n, N_Vector d)
     value r = caml_callback2_exn (mlop, NVEC_BACKLINK(n), NVEC_BACKLINK(d));
     if (Is_exception_result (r))
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vminquotientlocal");
+					"user-defined minquotientlocal");
 
     CAMLreturnT(realtype, Bool_val(r));
 }
@@ -1554,7 +1554,7 @@ static realtype callml_vwsqrsumlocal(N_Vector x, N_Vector w)
     value r = caml_callback2_exn (mlop, NVEC_BACKLINK(x), NVEC_BACKLINK(w));
     if (Is_exception_result (r))
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vwsqrsumlocal");
+					"user-defined wsqrsumlocal");
 
     CAMLreturnT(realtype, Bool_val(r));
 }
@@ -1573,7 +1573,7 @@ static realtype callml_vwsqrsummasklocal(N_Vector x, N_Vector w, N_Vector id)
 					NVEC_BACKLINK(id));
     if (Is_exception_result (r))
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vwsqrsummasklocal");
+					"user-defined wsqrsummasklocal");
 
     CAMLreturnT(realtype, Bool_val(r));
 }
@@ -1581,7 +1581,7 @@ static realtype callml_vwsqrsummasklocal(N_Vector x, N_Vector w, N_Vector id)
 
 /** Interface to underlying serial nvector functions */
 
-CAMLprim value sunml_nvec_ser_n_vlinearsum(value va, value vx, value vb,
+CAMLprim value sunml_nvec_ser_linearsum(value va, value vx, value vb,
 					   value vy, value vz)
 {
     CAMLparam5(va, vx, vb, vy, vz);
@@ -1591,77 +1591,77 @@ CAMLprim value sunml_nvec_ser_n_vlinearsum(value va, value vx, value vb,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_nvec_ser_n_vconst(value vc, value vz)
+CAMLprim value sunml_nvec_ser_const(value vc, value vz)
 {
     CAMLparam2(vc, vz);
     N_VConst_Serial(Double_val(vc), NVEC_VAL(vz));
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_nvec_ser_n_vprod(value vx, value vy, value vz)
+CAMLprim value sunml_nvec_ser_prod(value vx, value vy, value vz)
 {
     CAMLparam3(vx, vy, vz);
     N_VProd_Serial(NVEC_VAL(vx), NVEC_VAL(vy), NVEC_VAL(vz));
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_nvec_ser_n_vdiv(value vx, value vy, value vz)
+CAMLprim value sunml_nvec_ser_div(value vx, value vy, value vz)
 {
     CAMLparam3(vx, vy, vz);
     N_VDiv_Serial(NVEC_VAL(vx), NVEC_VAL(vy), NVEC_VAL(vz));
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_nvec_ser_n_vscale(value vc, value vx, value vz)
+CAMLprim value sunml_nvec_ser_scale(value vc, value vx, value vz)
 {
     CAMLparam3(vc, vx, vz);
     N_VScale_Serial(Double_val(vc), NVEC_VAL(vx), NVEC_VAL(vz));
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_nvec_ser_n_vabs(value vx, value vz)
+CAMLprim value sunml_nvec_ser_abs(value vx, value vz)
 {
     CAMLparam2(vx, vz);
     N_VAbs_Serial(NVEC_VAL(vx), NVEC_VAL(vz));
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_nvec_ser_n_vinv(value vx, value vz)
+CAMLprim value sunml_nvec_ser_inv(value vx, value vz)
 {
     CAMLparam2(vx, vz);
     N_VInv_Serial(NVEC_VAL(vx), NVEC_VAL(vz));
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_nvec_ser_n_vaddconst(value vx, value vb, value vz)
+CAMLprim value sunml_nvec_ser_addconst(value vx, value vb, value vz)
 {
     CAMLparam3(vx, vb, vz);
     N_VAddConst_Serial(NVEC_VAL(vx), Double_val(vb), NVEC_VAL(vz));
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_nvec_ser_n_vdotprod(value vx, value vy)
+CAMLprim value sunml_nvec_ser_dotprod(value vx, value vy)
 {
     CAMLparam2(vx, vy);
     realtype r = N_VDotProd_Serial(NVEC_VAL(vx), NVEC_VAL(vy));
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_ser_n_vmaxnorm(value vx)
+CAMLprim value sunml_nvec_ser_maxnorm(value vx)
 {
     CAMLparam1(vx);
     realtype r = N_VMaxNorm_Serial(NVEC_VAL(vx));
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_ser_n_vwrmsnorm(value vx, value vw)
+CAMLprim value sunml_nvec_ser_wrmsnorm(value vx, value vw)
 {
     CAMLparam2(vx, vw);
     realtype r = N_VWrmsNorm_Serial(NVEC_VAL(vx), NVEC_VAL(vw));
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_ser_n_vwrmsnormmask(value vx, value vw, value vid)
+CAMLprim value sunml_nvec_ser_wrmsnormmask(value vx, value vw, value vid)
 {
     CAMLparam3(vx, vw, vid);
     realtype r = N_VWrmsNormMask_Serial(NVEC_VAL(vx), NVEC_VAL(vw),
@@ -1669,42 +1669,42 @@ CAMLprim value sunml_nvec_ser_n_vwrmsnormmask(value vx, value vw, value vid)
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_ser_n_vmin(value vx)
+CAMLprim value sunml_nvec_ser_min(value vx)
 {
     CAMLparam1(vx);
     realtype r = N_VMin_Serial(NVEC_VAL(vx));
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_ser_n_vwl2norm(value vx, value vw)
+CAMLprim value sunml_nvec_ser_wl2norm(value vx, value vw)
 {
     CAMLparam2(vx, vw);
     realtype r = N_VWL2Norm_Serial(NVEC_VAL(vx), NVEC_VAL(vw));
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_ser_n_vl1norm(value vx)
+CAMLprim value sunml_nvec_ser_l1norm(value vx)
 {
     CAMLparam1(vx);
     realtype r = N_VL1Norm_Serial(NVEC_VAL(vx));
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_ser_n_vcompare(value vc, value vx, value vz)
+CAMLprim value sunml_nvec_ser_compare(value vc, value vx, value vz)
 {
     CAMLparam3(vc, vx, vz);
     N_VCompare_Serial(Double_val(vc), NVEC_VAL(vx), NVEC_VAL(vz));
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_nvec_ser_n_vinvtest(value vx, value vz)
+CAMLprim value sunml_nvec_ser_invtest(value vx, value vz)
 {
     CAMLparam2(vx, vz);
     booleantype r = N_VInvTest_Serial(NVEC_VAL(vx), NVEC_VAL(vz));
     CAMLreturn(Val_bool(r));
 }
 
-CAMLprim value sunml_nvec_ser_n_vconstrmask(value vc, value vx, value vm)
+CAMLprim value sunml_nvec_ser_constrmask(value vc, value vx, value vm)
 {
     CAMLparam3(vc, vx, vm);
     booleantype r = N_VConstrMask_Serial(NVEC_VAL(vc),
@@ -1713,14 +1713,14 @@ CAMLprim value sunml_nvec_ser_n_vconstrmask(value vc, value vx, value vm)
     CAMLreturn(Val_bool(r));
 }
 
-CAMLprim value sunml_nvec_ser_n_vminquotient(value vnum, value vdenom)
+CAMLprim value sunml_nvec_ser_minquotient(value vnum, value vdenom)
 {
     CAMLparam2(vnum, vdenom);
     realtype r = N_VMinQuotient_Serial(NVEC_VAL(vnum), NVEC_VAL(vdenom));
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_ser_n_vspace(value vx)
+CAMLprim value sunml_nvec_ser_space(value vx)
 {
     CAMLparam1(vx);
     CAMLlocal1(r);
@@ -1735,7 +1735,7 @@ CAMLprim value sunml_nvec_ser_n_vspace(value vx)
     CAMLreturn(r);
 }
 
-CAMLprim value sunml_nvec_ser_n_vgetlength(value vx)
+CAMLprim value sunml_nvec_ser_getlength(value vx)
 {
     CAMLparam1(vx);
     CAMLlocal1(r);
@@ -1892,7 +1892,7 @@ error:
 }
 #endif
 
-CAMLprim value sunml_nvec_ser_n_vlinearcombination(value vac, value vax,
+CAMLprim value sunml_nvec_ser_linearcombination(value vac, value vax,
 						   value vz)
 {
     CAMLparam3(vac, vax, vz);
@@ -1909,7 +1909,7 @@ CAMLprim value sunml_nvec_ser_n_vlinearcombination(value vac, value vax,
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value sunml_nvec_ser_n_vscaleaddmulti(value vac, value vx, value vay,
+CAMLprim value sunml_nvec_ser_scaleaddmulti(value vac, value vx, value vay,
 					       value vaz)
 {
     CAMLparam4(vac, vx, vay, vaz);
@@ -1926,7 +1926,7 @@ CAMLprim value sunml_nvec_ser_n_vscaleaddmulti(value vac, value vx, value vay,
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value sunml_nvec_ser_n_vdotprodmulti(value vx, value vay, value vad)
+CAMLprim value sunml_nvec_ser_dotprodmulti(value vx, value vay, value vad)
 {
     CAMLparam3(vx, vay, vad);
 #if 400 <= SUNDIALS_LIB_VERSION
@@ -1945,7 +1945,7 @@ CAMLprim value sunml_nvec_ser_n_vdotprodmulti(value vx, value vay, value vad)
 
 /* vector array operations */
 
-CAMLprim value sunml_nvec_ser_n_vlinearsumvectorarray(value va, value vax,
+CAMLprim value sunml_nvec_ser_linearsumvectorarray(value va, value vax,
 						      value vb, value vay,
 						      value vaz)
 {
@@ -1962,7 +1962,7 @@ CAMLprim value sunml_nvec_ser_n_vlinearsumvectorarray(value va, value vax,
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value sunml_nvec_ser_n_vscalevectorarray(value vac, value vax,
+CAMLprim value sunml_nvec_ser_scalevectorarray(value vac, value vax,
 						  value vaz)
 {
     CAMLparam3(vac, vax, vaz);
@@ -1978,7 +1978,7 @@ CAMLprim value sunml_nvec_ser_n_vscalevectorarray(value vac, value vax,
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value sunml_nvec_ser_n_vconstvectorarray(value vc, value vaz)
+CAMLprim value sunml_nvec_ser_constvectorarray(value vc, value vaz)
 {
     CAMLparam2(vc, vaz);
 #if 400 <= SUNDIALS_LIB_VERSION
@@ -1992,7 +1992,7 @@ CAMLprim value sunml_nvec_ser_n_vconstvectorarray(value vc, value vaz)
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value sunml_nvec_ser_n_vwrmsnormvectorarray(value vax, value vaw,
+CAMLprim value sunml_nvec_ser_wrmsnormvectorarray(value vax, value vaw,
 						     value van)
 {
     CAMLparam3(vax, vaw, van);
@@ -2008,7 +2008,7 @@ CAMLprim value sunml_nvec_ser_n_vwrmsnormvectorarray(value vax, value vaw,
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value sunml_nvec_ser_n_vwrmsnormmaskvectorarray(value vax,
+CAMLprim value sunml_nvec_ser_wrmsnormmaskvectorarray(value vax,
 						value vaw, value vi, value van)
 {
     CAMLparam4(vax, vaw, vi, van);
@@ -2025,7 +2025,7 @@ CAMLprim value sunml_nvec_ser_n_vwrmsnormmaskvectorarray(value vax,
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value sunml_nvec_ser_n_vscaleaddmultivectorarray(value vaa,
+CAMLprim value sunml_nvec_ser_scaleaddmultivectorarray(value vaa,
 					    value vax, value vaay, value vaaz)
 {
     CAMLparam4(vaa, vax, vaay, vaaz);
@@ -2046,7 +2046,7 @@ CAMLprim value sunml_nvec_ser_n_vscaleaddmultivectorarray(value vaa,
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value sunml_nvec_ser_n_vlinearcombinationvectorarray(value vac,
+CAMLprim value sunml_nvec_ser_linearcombinationvectorarray(value vac,
 							value vaax, value vaz)
 {
     CAMLparam3(vac, vaax, vaz);
@@ -2068,7 +2068,7 @@ CAMLprim value sunml_nvec_ser_n_vlinearcombinationvectorarray(value vac,
 
 /** Reduce operations for serial nvectors */
 
-CAMLprim value sunml_nvec_ser_n_vwsqrsumlocal(value vx, value vw)
+CAMLprim value sunml_nvec_ser_wsqrsumlocal(value vx, value vw)
 {
     CAMLparam2(vx, vw);
     realtype r;
@@ -2079,7 +2079,7 @@ CAMLprim value sunml_nvec_ser_n_vwsqrsumlocal(value vx, value vw)
 
 #if SUNDIALS_ML_SAFE == 1
     if (NV_LENGTH_S(w) != NV_LENGTH_S(x))
-	caml_invalid_argument("Nvector_serial.n_vwsqrsumlocal");
+	caml_invalid_argument("Nvector_serial.wsqrsumlocal");
 #endif
 
     r = N_VWSqrSumLocal_Serial(x, w);
@@ -2091,7 +2091,7 @@ CAMLprim value sunml_nvec_ser_n_vwsqrsumlocal(value vx, value vw)
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_ser_n_vwsqrsummasklocal(value vx, value vw, value vid)
+CAMLprim value sunml_nvec_ser_wsqrsummasklocal(value vx, value vw, value vid)
 {
     CAMLparam3(vx, vw, vid);
     realtype r;
@@ -2103,7 +2103,7 @@ CAMLprim value sunml_nvec_ser_n_vwsqrsummasklocal(value vx, value vw, value vid)
 
 #if SUNDIALS_ML_SAFE == 1
     if (NV_LENGTH_S(w) != NV_LENGTH_S(x) || NV_LENGTH_S(id) != NV_LENGTH_S(x))
-	caml_invalid_argument("Nvector_serial.n_vwsqrsummasklocal");
+	caml_invalid_argument("Nvector_serial.wsqrsummasklocal");
 #endif
 
     r = N_VWSqrSumMaskLocal_Serial(x, w, id);
@@ -2505,7 +2505,7 @@ CAMLprim value sunml_nvec_custom_enablelinearcombinationvectorarray(value vx, va
 
 /** Interface to underlying generic nvector functions */
 
-CAMLprim value sunml_nvec_any_n_vlinearsum(value va, value vx, value vb,
+CAMLprim value sunml_nvec_any_linearsum(value va, value vx, value vb,
 					   value vy, value vz)
 {
     CAMLparam5(va, vx, vb, vy, vz);
@@ -2517,14 +2517,14 @@ CAMLprim value sunml_nvec_any_n_vlinearsum(value va, value vx, value vb,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_nvec_any_n_vconst(value vc, value vz)
+CAMLprim value sunml_nvec_any_const(value vc, value vz)
 {
     CAMLparam2(vc, vz);
     N_VConst(Double_val(vc), NVEC_VAL(vz));
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_nvec_any_n_vprod(value vx, value vy, value vz)
+CAMLprim value sunml_nvec_any_prod(value vx, value vy, value vz)
 {
     CAMLparam3(vx, vy, vz);
     N_Vector x = NVEC_VAL(vx);
@@ -2535,7 +2535,7 @@ CAMLprim value sunml_nvec_any_n_vprod(value vx, value vy, value vz)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_nvec_any_n_vdiv(value vx, value vy, value vz)
+CAMLprim value sunml_nvec_any_div(value vx, value vy, value vz)
 {
     CAMLparam3(vx, vy, vz);
     N_Vector x = NVEC_VAL(vx);
@@ -2546,7 +2546,7 @@ CAMLprim value sunml_nvec_any_n_vdiv(value vx, value vy, value vz)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_nvec_any_n_vscale(value vc, value vx, value vz)
+CAMLprim value sunml_nvec_any_scale(value vc, value vx, value vz)
 {
     CAMLparam3(vc, vx, vz);
     N_Vector x = NVEC_VAL(vx);
@@ -2556,7 +2556,7 @@ CAMLprim value sunml_nvec_any_n_vscale(value vc, value vx, value vz)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_nvec_any_n_vabs(value vx, value vz)
+CAMLprim value sunml_nvec_any_abs(value vx, value vz)
 {
     CAMLparam2(vx, vz);
     N_Vector x = NVEC_VAL(vx);
@@ -2566,7 +2566,7 @@ CAMLprim value sunml_nvec_any_n_vabs(value vx, value vz)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_nvec_any_n_vinv(value vx, value vz)
+CAMLprim value sunml_nvec_any_inv(value vx, value vz)
 {
     CAMLparam2(vx, vz);
     N_Vector x = NVEC_VAL(vx);
@@ -2576,7 +2576,7 @@ CAMLprim value sunml_nvec_any_n_vinv(value vx, value vz)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_nvec_any_n_vaddconst(value vx, value vb, value vz)
+CAMLprim value sunml_nvec_any_addconst(value vx, value vb, value vz)
 {
     CAMLparam3(vx, vb, vz);
     N_Vector x = NVEC_VAL(vx);
@@ -2586,7 +2586,7 @@ CAMLprim value sunml_nvec_any_n_vaddconst(value vx, value vb, value vz)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_nvec_any_n_vdotprod(value vx, value vy)
+CAMLprim value sunml_nvec_any_dotprod(value vx, value vy)
 {
     CAMLparam2(vx, vy);
     N_Vector x = NVEC_VAL(vx);
@@ -2596,14 +2596,14 @@ CAMLprim value sunml_nvec_any_n_vdotprod(value vx, value vy)
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_any_n_vmaxnorm(value vx)
+CAMLprim value sunml_nvec_any_maxnorm(value vx)
 {
     CAMLparam1(vx);
     realtype r = N_VMaxNorm(NVEC_VAL(vx));
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_any_n_vwrmsnorm(value vx, value vw)
+CAMLprim value sunml_nvec_any_wrmsnorm(value vx, value vw)
 {
     CAMLparam2(vx, vw);
     N_Vector x = NVEC_VAL(vx);
@@ -2613,7 +2613,7 @@ CAMLprim value sunml_nvec_any_n_vwrmsnorm(value vx, value vw)
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_any_n_vwrmsnormmask(value vx, value vw, value vid)
+CAMLprim value sunml_nvec_any_wrmsnormmask(value vx, value vw, value vid)
 {
     CAMLparam3(vx, vw, vid);
     N_Vector x = NVEC_VAL(vx);
@@ -2624,14 +2624,14 @@ CAMLprim value sunml_nvec_any_n_vwrmsnormmask(value vx, value vw, value vid)
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_any_n_vmin(value vx)
+CAMLprim value sunml_nvec_any_min(value vx)
 {
     CAMLparam1(vx);
     realtype r = N_VMin(NVEC_VAL(vx));
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_any_n_vwl2norm(value vx, value vw)
+CAMLprim value sunml_nvec_any_wl2norm(value vx, value vw)
 {
     CAMLparam2(vx, vw);
     N_Vector x = NVEC_VAL(vx);
@@ -2641,14 +2641,14 @@ CAMLprim value sunml_nvec_any_n_vwl2norm(value vx, value vw)
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_any_n_vl1norm(value vx)
+CAMLprim value sunml_nvec_any_l1norm(value vx)
 {
     CAMLparam1(vx);
     realtype r = N_VL1Norm(NVEC_VAL(vx));
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_any_n_vcompare(value vc, value vx, value vz)
+CAMLprim value sunml_nvec_any_compare(value vc, value vx, value vz)
 {
     CAMLparam3(vc, vx, vz);
     N_Vector x = NVEC_VAL(vx);
@@ -2658,7 +2658,7 @@ CAMLprim value sunml_nvec_any_n_vcompare(value vc, value vx, value vz)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_nvec_any_n_vinvtest(value vx, value vz)
+CAMLprim value sunml_nvec_any_invtest(value vx, value vz)
 {
     CAMLparam2(vx, vz);
     N_Vector x = NVEC_VAL(vx);
@@ -2668,7 +2668,7 @@ CAMLprim value sunml_nvec_any_n_vinvtest(value vx, value vz)
     CAMLreturn(Val_bool(r));
 }
 
-CAMLprim value sunml_nvec_any_n_vconstrmask(value vc, value vx, value vm)
+CAMLprim value sunml_nvec_any_constrmask(value vc, value vx, value vm)
 {
     CAMLparam3(vc, vx, vm);
     N_Vector c = NVEC_VAL(vc);
@@ -2679,7 +2679,7 @@ CAMLprim value sunml_nvec_any_n_vconstrmask(value vc, value vx, value vm)
     CAMLreturn(Val_bool(r));
 }
 
-CAMLprim value sunml_nvec_any_n_vminquotient(value vnum, value vdenom)
+CAMLprim value sunml_nvec_any_minquotient(value vnum, value vdenom)
 {
     CAMLparam2(vnum, vdenom);
     N_Vector num = NVEC_VAL(vnum);
@@ -2689,7 +2689,7 @@ CAMLprim value sunml_nvec_any_n_vminquotient(value vnum, value vdenom)
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_any_n_vspace(value vx)
+CAMLprim value sunml_nvec_any_space(value vx)
 {
     CAMLparam1(vx);
     CAMLlocal1(r);
@@ -2704,7 +2704,7 @@ CAMLprim value sunml_nvec_any_n_vspace(value vx)
     CAMLreturn(r);
 }
 
-CAMLprim value sunml_nvec_any_n_vgetlength(value vx)
+CAMLprim value sunml_nvec_any_getlength(value vx)
 {
     CAMLparam1(vx);
     CAMLlocal1(r);
@@ -2716,7 +2716,7 @@ CAMLprim value sunml_nvec_any_n_vgetlength(value vx)
     CAMLreturn(r);
 }
 
-CAMLprim value sunml_nvec_any_n_vlinearcombination(value vac, value vax,
+CAMLprim value sunml_nvec_any_linearcombination(value vac, value vax,
 						   value vz)
 {
     CAMLparam3(vac, vax, vz);
@@ -2733,7 +2733,7 @@ CAMLprim value sunml_nvec_any_n_vlinearcombination(value vac, value vax,
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value sunml_nvec_any_n_vscaleaddmulti(value vac, value vx, value vay,
+CAMLprim value sunml_nvec_any_scaleaddmulti(value vac, value vx, value vay,
 					       value vaz)
 {
     CAMLparam4(vac, vx, vay, vaz);
@@ -2750,7 +2750,7 @@ CAMLprim value sunml_nvec_any_n_vscaleaddmulti(value vac, value vx, value vay,
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value sunml_nvec_any_n_vdotprodmulti(value vx, value vay, value vad)
+CAMLprim value sunml_nvec_any_dotprodmulti(value vx, value vay, value vad)
 {
     CAMLparam3(vx, vay, vad);
 #if 400 <= SUNDIALS_LIB_VERSION
@@ -2766,7 +2766,7 @@ CAMLprim value sunml_nvec_any_n_vdotprodmulti(value vx, value vay, value vad)
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value sunml_nvec_any_n_vlinearsumvectorarray(value va, value vax,
+CAMLprim value sunml_nvec_any_linearsumvectorarray(value va, value vax,
 						      value vb, value vay,
 						      value vaz)
 {
@@ -2783,7 +2783,7 @@ CAMLprim value sunml_nvec_any_n_vlinearsumvectorarray(value va, value vax,
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value sunml_nvec_any_n_vscalevectorarray(value vac, value vax,
+CAMLprim value sunml_nvec_any_scalevectorarray(value vac, value vax,
 						  value vaz)
 {
     CAMLparam3(vac, vax, vaz);
@@ -2799,7 +2799,7 @@ CAMLprim value sunml_nvec_any_n_vscalevectorarray(value vac, value vax,
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value sunml_nvec_any_n_vconstvectorarray(value vc, value vaz)
+CAMLprim value sunml_nvec_any_constvectorarray(value vc, value vaz)
 {
     CAMLparam2(vc, vaz);
 #if 400 <= SUNDIALS_LIB_VERSION
@@ -2813,7 +2813,7 @@ CAMLprim value sunml_nvec_any_n_vconstvectorarray(value vc, value vaz)
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value sunml_nvec_any_n_vwrmsnormvectorarray(value vax, value vaw,
+CAMLprim value sunml_nvec_any_wrmsnormvectorarray(value vax, value vaw,
 						     value van)
 {
     CAMLparam3(vax, vaw, van);
@@ -2829,7 +2829,7 @@ CAMLprim value sunml_nvec_any_n_vwrmsnormvectorarray(value vax, value vaw,
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value sunml_nvec_any_n_vwrmsnormmaskvectorarray(value vax, value vaw,
+CAMLprim value sunml_nvec_any_wrmsnormmaskvectorarray(value vax, value vaw,
 							 value vi, value van)
 {
     CAMLparam4(vax, vaw, vi, van);
@@ -2846,7 +2846,7 @@ CAMLprim value sunml_nvec_any_n_vwrmsnormmaskvectorarray(value vax, value vaw,
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value sunml_nvec_any_n_vscaleaddmultivectorarray(value vaa, value vax,
+CAMLprim value sunml_nvec_any_scaleaddmultivectorarray(value vaa, value vax,
 							  value vaay, value vaaz)
 {
     CAMLparam4(vaa, vax, vaay, vaaz);
@@ -2867,7 +2867,7 @@ CAMLprim value sunml_nvec_any_n_vscaleaddmultivectorarray(value vaa, value vax,
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value sunml_nvec_any_n_vlinearcombinationvectorarray(value vac,
+CAMLprim value sunml_nvec_any_linearcombinationvectorarray(value vac,
 							      value vaax,
 							      value vaz)
 {
@@ -2888,7 +2888,7 @@ CAMLprim value sunml_nvec_any_n_vlinearcombinationvectorarray(value vac,
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value sunml_nvec_any_n_vdotprodlocal(value vx, value vw)
+CAMLprim value sunml_nvec_any_dotprodlocal(value vx, value vw)
 {
     CAMLparam2(vx, vw);
     realtype r;
@@ -2902,7 +2902,7 @@ CAMLprim value sunml_nvec_any_n_vdotprodlocal(value vx, value vw)
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_any_n_vmaxnormlocal(value vx)
+CAMLprim value sunml_nvec_any_maxnormlocal(value vx)
 {
     CAMLparam1(vx);
     realtype r;
@@ -2916,7 +2916,7 @@ CAMLprim value sunml_nvec_any_n_vmaxnormlocal(value vx)
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_any_n_vminlocal(value vx)
+CAMLprim value sunml_nvec_any_minlocal(value vx)
 {
     CAMLparam1(vx);
     realtype r;
@@ -2930,7 +2930,7 @@ CAMLprim value sunml_nvec_any_n_vminlocal(value vx)
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_any_n_vl1normlocal(value vx)
+CAMLprim value sunml_nvec_any_l1normlocal(value vx)
 {
     CAMLparam1(vx);
     realtype r;
@@ -2944,7 +2944,7 @@ CAMLprim value sunml_nvec_any_n_vl1normlocal(value vx)
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_any_n_vinvtestlocal(value vx, value vz)
+CAMLprim value sunml_nvec_any_invtestlocal(value vx, value vz)
 {
     CAMLparam2(vx, vz);
     booleantype r;
@@ -2958,7 +2958,7 @@ CAMLprim value sunml_nvec_any_n_vinvtestlocal(value vx, value vz)
     CAMLreturn(Val_bool(r));
 }
 
-CAMLprim value sunml_nvec_any_n_vconstrmasklocal(value vc, value vx, value vm)
+CAMLprim value sunml_nvec_any_constrmasklocal(value vc, value vx, value vm)
 {
     CAMLparam3(vc, vx, vm);
 
@@ -2971,7 +2971,7 @@ CAMLprim value sunml_nvec_any_n_vconstrmasklocal(value vc, value vx, value vm)
     CAMLreturn(Val_bool(r));
 }
 
-CAMLprim value sunml_nvec_any_n_vminquotientlocal(value vn, value vd)
+CAMLprim value sunml_nvec_any_minquotientlocal(value vn, value vd)
 {
     CAMLparam2(vn, vd);
     booleantype r;
@@ -2985,7 +2985,7 @@ CAMLprim value sunml_nvec_any_n_vminquotientlocal(value vn, value vd)
     CAMLreturn(Val_bool(r));
 }
 
-CAMLprim value sunml_nvec_any_n_vwsqrsumlocal(value vx, value vw)
+CAMLprim value sunml_nvec_any_wsqrsumlocal(value vx, value vw)
 {
     CAMLparam2(vx, vw);
     realtype r;
@@ -2999,7 +2999,7 @@ CAMLprim value sunml_nvec_any_n_vwsqrsumlocal(value vx, value vw)
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_any_n_vwsqrsummasklocal(value vx, value vw, value vid)
+CAMLprim value sunml_nvec_any_wsqrsummasklocal(value vx, value vw, value vid)
 {
     CAMLparam3(vx, vw, vid);
     realtype r;
@@ -3015,7 +3015,7 @@ CAMLprim value sunml_nvec_any_n_vwsqrsummasklocal(value vx, value vw, value vid)
 
 /** Test for nvector features */
 
-CAMLprim value sunml_nvec_has_n_vlinearcombination(value vx)
+CAMLprim value sunml_nvec_has_linearcombination(value vx)
 {
     CAMLparam1(vx);
     N_Vector x = NVEC_VAL(vx);
@@ -3028,7 +3028,7 @@ CAMLprim value sunml_nvec_has_n_vlinearcombination(value vx)
     CAMLreturn(Val_bool(r));
 }
 
-CAMLprim value sunml_nvec_has_n_vscaleaddmulti(value vx)
+CAMLprim value sunml_nvec_has_scaleaddmulti(value vx)
 {
     CAMLparam1(vx);
     N_Vector x = NVEC_VAL(vx);
@@ -3041,7 +3041,7 @@ CAMLprim value sunml_nvec_has_n_vscaleaddmulti(value vx)
     CAMLreturn(Val_bool(r));
 }
 
-CAMLprim value sunml_nvec_has_n_vdotprodmulti(value vx)
+CAMLprim value sunml_nvec_has_dotprodmulti(value vx)
 {
     CAMLparam1(vx);
     N_Vector x = NVEC_VAL(vx);
@@ -3054,7 +3054,7 @@ CAMLprim value sunml_nvec_has_n_vdotprodmulti(value vx)
     CAMLreturn(Val_bool(r));
 }
 
-CAMLprim value sunml_nvec_has_n_vlinearsumvectorarray(value vx)
+CAMLprim value sunml_nvec_has_linearsumvectorarray(value vx)
 {
     CAMLparam1(vx);
     N_Vector x = NVEC_VAL(vx);
@@ -3067,7 +3067,7 @@ CAMLprim value sunml_nvec_has_n_vlinearsumvectorarray(value vx)
     CAMLreturn(Val_bool(r));
 }
 
-CAMLprim value sunml_nvec_has_n_vscalevectorarray(value vx)
+CAMLprim value sunml_nvec_has_scalevectorarray(value vx)
 {
     CAMLparam1(vx);
     N_Vector x = NVEC_VAL(vx);
@@ -3080,7 +3080,7 @@ CAMLprim value sunml_nvec_has_n_vscalevectorarray(value vx)
     CAMLreturn(Val_bool(r));
 }
 
-CAMLprim value sunml_nvec_has_n_vconstvectorarray(value vx)
+CAMLprim value sunml_nvec_has_constvectorarray(value vx)
 {
     CAMLparam1(vx);
     N_Vector x = NVEC_VAL(vx);
@@ -3093,7 +3093,7 @@ CAMLprim value sunml_nvec_has_n_vconstvectorarray(value vx)
     CAMLreturn(Val_bool(r));
 }
 
-CAMLprim value sunml_nvec_has_n_vwrmsnormvectorarray(value vx)
+CAMLprim value sunml_nvec_has_wrmsnormvectorarray(value vx)
 {
     CAMLparam1(vx);
     N_Vector x = NVEC_VAL(vx);
@@ -3106,7 +3106,7 @@ CAMLprim value sunml_nvec_has_n_vwrmsnormvectorarray(value vx)
     CAMLreturn(Val_bool(r));
 }
 
-CAMLprim value sunml_nvec_has_n_vwrmsnormmaskvectorarray(value vx)
+CAMLprim value sunml_nvec_has_wrmsnormmaskvectorarray(value vx)
 {
     CAMLparam1(vx);
     N_Vector x = NVEC_VAL(vx);
@@ -3119,7 +3119,7 @@ CAMLprim value sunml_nvec_has_n_vwrmsnormmaskvectorarray(value vx)
     CAMLreturn(Val_bool(r));
 }
 
-CAMLprim value sunml_nvec_has_n_vscaleaddmultivectorarray(value vx)
+CAMLprim value sunml_nvec_has_scaleaddmultivectorarray(value vx)
 {
     CAMLparam1(vx);
     N_Vector x = NVEC_VAL(vx);
@@ -3132,7 +3132,7 @@ CAMLprim value sunml_nvec_has_n_vscaleaddmultivectorarray(value vx)
     CAMLreturn(Val_bool(r));
 }
 
-CAMLprim value sunml_nvec_has_n_vlinearcombinationvectorarray(value vx)
+CAMLprim value sunml_nvec_has_linearcombinationvectorarray(value vx)
 {
     CAMLparam1(vx);
     N_Vector x = NVEC_VAL(vx);
@@ -3145,7 +3145,7 @@ CAMLprim value sunml_nvec_has_n_vlinearcombinationvectorarray(value vx)
     CAMLreturn(Val_bool(r));
 }
 
-CAMLprim value sunml_nvec_has_n_vdotprodlocal(value vx)
+CAMLprim value sunml_nvec_has_dotprodlocal(value vx)
 {
     CAMLparam1(vx);
     N_Vector x = NVEC_VAL(vx);
@@ -3158,7 +3158,7 @@ CAMLprim value sunml_nvec_has_n_vdotprodlocal(value vx)
     CAMLreturn(Val_bool(r));
 }
 
-CAMLprim value sunml_nvec_has_n_vmaxnormlocal(value vx)
+CAMLprim value sunml_nvec_has_maxnormlocal(value vx)
 {
     CAMLparam1(vx);
     N_Vector x = NVEC_VAL(vx);
@@ -3171,7 +3171,7 @@ CAMLprim value sunml_nvec_has_n_vmaxnormlocal(value vx)
     CAMLreturn(Val_bool(r));
 }
 
-CAMLprim value sunml_nvec_has_n_vminlocal(value vx)
+CAMLprim value sunml_nvec_has_minlocal(value vx)
 {
     CAMLparam1(vx);
     N_Vector x = NVEC_VAL(vx);
@@ -3184,7 +3184,7 @@ CAMLprim value sunml_nvec_has_n_vminlocal(value vx)
     CAMLreturn(Val_bool(r));
 }
 
-CAMLprim value sunml_nvec_has_n_vl1normlocal(value vx)
+CAMLprim value sunml_nvec_has_l1normlocal(value vx)
 {
     CAMLparam1(vx);
     N_Vector x = NVEC_VAL(vx);
@@ -3197,7 +3197,7 @@ CAMLprim value sunml_nvec_has_n_vl1normlocal(value vx)
     CAMLreturn(Val_bool(r));
 }
 
-CAMLprim value sunml_nvec_has_n_vinvtestlocal(value vx)
+CAMLprim value sunml_nvec_has_invtestlocal(value vx)
 {
     CAMLparam1(vx);
     N_Vector x = NVEC_VAL(vx);
@@ -3210,7 +3210,7 @@ CAMLprim value sunml_nvec_has_n_vinvtestlocal(value vx)
     CAMLreturn(Val_bool(r));
 }
 
-CAMLprim value sunml_nvec_has_n_vconstrmasklocal(value vx)
+CAMLprim value sunml_nvec_has_constrmasklocal(value vx)
 {
     CAMLparam1(vx);
     N_Vector x = NVEC_VAL(vx);
@@ -3223,7 +3223,7 @@ CAMLprim value sunml_nvec_has_n_vconstrmasklocal(value vx)
     CAMLreturn(Val_bool(r));
 }
 
-CAMLprim value sunml_nvec_has_n_vminquotientlocal(value vx)
+CAMLprim value sunml_nvec_has_minquotientlocal(value vx)
 {
     CAMLparam1(vx);
     N_Vector x = NVEC_VAL(vx);
@@ -3236,7 +3236,7 @@ CAMLprim value sunml_nvec_has_n_vminquotientlocal(value vx)
     CAMLreturn(Val_bool(r));
 }
 
-CAMLprim value sunml_nvec_has_n_vwsqrsumlocal(value vx)
+CAMLprim value sunml_nvec_has_wsqrsumlocal(value vx)
 {
     CAMLparam1(vx);
     N_Vector x = NVEC_VAL(vx);
@@ -3249,7 +3249,7 @@ CAMLprim value sunml_nvec_has_n_vwsqrsumlocal(value vx)
     CAMLreturn(Val_bool(r));
 }
 
-CAMLprim value sunml_nvec_has_n_vwsqrsummasklocal(value vx)
+CAMLprim value sunml_nvec_has_wsqrsummasklocal(value vx)
 {
     CAMLparam1(vx);
     N_Vector x = NVEC_VAL(vx);

@@ -85,45 +85,45 @@ let main () =
   (* NVector Tests *)
   if Test_nvector.compat_ge400 then begin
     fails += Test.test_n_vgetvectorid x Nvector.Pthreads 0;
-    fails += Test.test_n_vcloneempty x 0;
-    fails += Test.test_n_vclone x length 0;
-    fails += Test.test_n_vcloneemptyvectorarray 5 x 0;
-    fails += Test.test_n_vclonevectorarray 5 x length 0
+    fails += Test.test_cloneempty x 0;
+    fails += Test.test_clone x length 0;
+    fails += Test.test_cloneemptyvectorarray 5 x 0;
+    fails += Test.test_clonevectorarray 5 x length 0
   end;
   fails += Test.test_n_vsetarraypointer w length 0;
   fails += Test.test_n_vgetarraypointer x length 0;
   if Test_nvector.compat_ge400 then begin
     printf "\nTesting standard vector operations:\n\n";
-    fails += Test.test_n_vconst x length 0
+    fails += Test.test_const x length 0
   end;
-  fails += Test.test_n_vlinearsum x y z length 0;
+  fails += Test.test_linearsum x y z length 0;
   if not Test_nvector.compat_ge400 then begin
-    fails += Test.test_n_vconst x length 0
+    fails += Test.test_const x length 0
   end;
-  fails += Test.test_n_vprod x y z length 0;
-  fails += Test.test_n_vdiv x y z length 0;
-  fails += Test.test_n_vscale x z length 0;
-  fails += Test.test_n_vabs x z length 0;
-  fails += Test.test_n_vinv x z length 0;
-  fails += Test.test_n_vaddconst x z length 0;
-  fails += Test.test_n_vdotprod x y length length 0;
-  fails += Test.test_n_vmaxnorm x length 0;
-  fails += Test.test_n_vwrmsnorm x y length 0;
+  fails += Test.test_prod x y z length 0;
+  fails += Test.test_div x y z length 0;
+  fails += Test.test_scale x z length 0;
+  fails += Test.test_abs x z length 0;
+  fails += Test.test_inv x z length 0;
+  fails += Test.test_addconst x z length 0;
+  fails += Test.test_dotprod x y length length 0;
+  fails += Test.test_maxnorm x length 0;
+  fails += Test.test_wrmsnorm x y length 0;
   if Test_nvector.compat_ge400
-  then fails += Test.test_n_vwrmsnormmask x y z length length 0
-  else fails += Test.test_n_vwrmsnormmask_lt400 x y z length length 0;
-  fails += Test.test_n_vmin x length 0;
-  fails += Test.test_n_vwl2norm x y length length 0;
-  fails += Test.test_n_vl1norm x length length 0;
-  fails += Test.test_n_vcompare x z length 0;
-  fails += Test.test_n_vinvtest x z length 0;
-  fails += Test.test_n_vconstrmask x y z length 0;
-  fails += Test.test_n_vminquotient x y length 0;
+  then fails += Test.test_wrmsnormmask x y z length length 0
+  else fails += Test.test_wrmsnormmask_lt400 x y z length length 0;
+  fails += Test.test_min x length 0;
+  fails += Test.test_wl2norm x y length length 0;
+  fails += Test.test_l1norm x length length 0;
+  fails += Test.test_compare x z length 0;
+  fails += Test.test_invtest x z length 0;
+  fails += Test.test_constrmask x y z length 0;
+  fails += Test.test_minquotient x y length 0;
   if not Test_nvector.compat_ge400 then begin
-    fails += Test.test_n_vclonevectorarray 5 x length 0;
-    fails += Test.test_n_vcloneemptyvectorarray 5 x 0;
-    fails += Test.test_n_vcloneempty x 0;
-    fails += Test.test_n_vclone x length 0;
+    fails += Test.test_clonevectorarray 5 x length 0;
+    fails += Test.test_cloneemptyvectorarray 5 x 0;
+    fails += Test.test_cloneempty x 0;
+    fails += Test.test_clone x length 0;
   end;
 
   if Test_nvector.compat_ge400 then begin
@@ -133,18 +133,18 @@ let main () =
     let u = Nvector_pthreads.make ~with_fused_ops:false nthreads length 0.0 in
 
     (* fused operations *)
-    fails += Test.test_n_vlinearcombination u length 0;
-    fails += Test.test_n_vscaleaddmulti u length 0;
-    fails += Test.test_n_vdotprodmulti u length length 0;
+    fails += Test.test_linearcombination u length 0;
+    fails += Test.test_scaleaddmulti u length 0;
+    fails += Test.test_dotprodmulti u length length 0;
 
     (* vector array operations *)
-    fails += Test.test_n_vlinearsumvectorarray u length 0;
-    fails += Test.test_n_vscalevectorarray u length 0;
-    fails += Test.test_n_vconstvectorarray u length 0;
-    fails += Test.test_n_vwrmsnormvectorarray u length 0;
-    fails += Test.test_n_vwrmsnormmaskvectorarray u length length 0;
-    fails += Test.test_n_vscaleaddmultivectorarray u length 0;
-    fails += Test.test_n_vlinearcombinationvectorarray u length 0
+    fails += Test.test_linearsumvectorarray u length 0;
+    fails += Test.test_scalevectorarray u length 0;
+    fails += Test.test_constvectorarray u length 0;
+    fails += Test.test_wrmsnormvectorarray u length 0;
+    fails += Test.test_wrmsnormmaskvectorarray u length length 0;
+    fails += Test.test_scaleaddmultivectorarray u length 0;
+    fails += Test.test_linearcombinationvectorarray u length 0
   end;
 
   if Test_nvector.compat_ge400 then begin
@@ -154,18 +154,18 @@ let main () =
     let u = Nvector_pthreads.make ~with_fused_ops:true nthreads length 0.0 in
 
     (* fused operations *)
-    fails += Test.test_n_vlinearcombination u length 0;
-    fails += Test.test_n_vscaleaddmulti u length 0;
-    fails += Test.test_n_vdotprodmulti u length length 0;
+    fails += Test.test_linearcombination u length 0;
+    fails += Test.test_scaleaddmulti u length 0;
+    fails += Test.test_dotprodmulti u length length 0;
 
     (* vector array operations *)
-    fails += Test.test_n_vlinearsumvectorarray u length 0;
-    fails += Test.test_n_vscalevectorarray u length 0;
-    fails += Test.test_n_vconstvectorarray u length 0;
-    fails += Test.test_n_vwrmsnormvectorarray u length 0;
-    fails += Test.test_n_vwrmsnormmaskvectorarray u length length 0;
-    fails += Test.test_n_vscaleaddmultivectorarray u length 0;
-    fails += Test.test_n_vlinearcombinationvectorarray u length 0
+    fails += Test.test_linearsumvectorarray u length 0;
+    fails += Test.test_scalevectorarray u length 0;
+    fails += Test.test_constvectorarray u length 0;
+    fails += Test.test_wrmsnormvectorarray u length 0;
+    fails += Test.test_wrmsnormmaskvectorarray u length length 0;
+    fails += Test.test_scaleaddmultivectorarray u length 0;
+    fails += Test.test_linearcombinationvectorarray u length 0
   end;
 
   (* Free vectors *)

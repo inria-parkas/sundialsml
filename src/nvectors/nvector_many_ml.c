@@ -153,7 +153,7 @@ static N_Vector do_clone_many(N_Vector src, enum do_clone_mode clonemode)
 		sunml_free_cnvec(dst);
 		free(dst_subvec_array);
 		sunml_warn_discarded_exn (Extract_exception (r),
-						"many vector n_vclone");
+						"many vector clone");
 		CAMLreturnT (N_Vector, NULL);
 	    }
 
@@ -171,7 +171,7 @@ static N_Vector do_clone_many(N_Vector src, enum do_clone_mode clonemode)
 	    sunml_free_cnvec(dst);
 	    free(dst_subvec_array);
 	    sunml_warn_discarded_exn (Extract_exception (r),
-					    "mpiplusx vector n_vclone");
+					    "mpiplusx vector clone");
 	    CAMLreturnT (N_Vector, NULL);
 	}
 	dstarray = r;
@@ -496,7 +496,7 @@ CAMLprim value sunml_nvec_anywrap_mpiplusx(value extconstr, value payload,
 
 /* * * * Operations * * * */
 
-CAMLprim value SUNML_NVEC_OP(n_vlinearsum)(value va, value vx, value vb,
+CAMLprim value SUNML_NVEC_OP(linearsum)(value va, value vx, value vb,
 					   value vy, value vz)
 {
     CAMLparam5(va, vx, vb, vy, vz);
@@ -508,7 +508,7 @@ CAMLprim value SUNML_NVEC_OP(n_vlinearsum)(value va, value vx, value vb,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value SUNML_NVEC_OP(n_vconst)(value vc, value vz)
+CAMLprim value SUNML_NVEC_OP(const)(value vc, value vz)
 {
     CAMLparam2(vc, vz);
 #if 500 <= SUNDIALS_LIB_VERSION
@@ -517,7 +517,7 @@ CAMLprim value SUNML_NVEC_OP(n_vconst)(value vc, value vz)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value SUNML_NVEC_OP(n_vprod)(value vx, value vy, value vz)
+CAMLprim value SUNML_NVEC_OP(prod)(value vx, value vy, value vz)
 {
     CAMLparam3(vx, vy, vz);
 #if 500 <= SUNDIALS_LIB_VERSION
@@ -526,7 +526,7 @@ CAMLprim value SUNML_NVEC_OP(n_vprod)(value vx, value vy, value vz)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value SUNML_NVEC_OP(n_vdiv)(value vx, value vy, value vz)
+CAMLprim value SUNML_NVEC_OP(div)(value vx, value vy, value vz)
 {
     CAMLparam3(vx, vy, vz);
 #if 500 <= SUNDIALS_LIB_VERSION
@@ -535,7 +535,7 @@ CAMLprim value SUNML_NVEC_OP(n_vdiv)(value vx, value vy, value vz)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value SUNML_NVEC_OP(n_vscale)(value vc, value vx, value vz)
+CAMLprim value SUNML_NVEC_OP(scale)(value vc, value vx, value vz)
 {
     CAMLparam3(vc, vx, vz);
 #if 500 <= SUNDIALS_LIB_VERSION
@@ -544,7 +544,7 @@ CAMLprim value SUNML_NVEC_OP(n_vscale)(value vc, value vx, value vz)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value SUNML_NVEC_OP(n_vabs)(value vx, value vz)
+CAMLprim value SUNML_NVEC_OP(abs)(value vx, value vz)
 {
     CAMLparam2(vx, vz);
 #if 500 <= SUNDIALS_LIB_VERSION
@@ -553,7 +553,7 @@ CAMLprim value SUNML_NVEC_OP(n_vabs)(value vx, value vz)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value SUNML_NVEC_OP(n_vinv)(value vx, value vz)
+CAMLprim value SUNML_NVEC_OP(inv)(value vx, value vz)
 {
     CAMLparam2(vx, vz);
 #if 500 <= SUNDIALS_LIB_VERSION
@@ -562,7 +562,7 @@ CAMLprim value SUNML_NVEC_OP(n_vinv)(value vx, value vz)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value SUNML_NVEC_OP(n_vaddconst)(value vx, value vb, value vz)
+CAMLprim value SUNML_NVEC_OP(addconst)(value vx, value vb, value vz)
 {
     CAMLparam3(vx, vb, vz);
 #if 500 <= SUNDIALS_LIB_VERSION
@@ -571,7 +571,7 @@ CAMLprim value SUNML_NVEC_OP(n_vaddconst)(value vx, value vb, value vz)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value SUNML_NVEC_OP(n_vwrmsnorm)(value vx, value vw)
+CAMLprim value SUNML_NVEC_OP(wrmsnorm)(value vx, value vw)
 {
     CAMLparam2(vx, vw);
 #if 500 <= SUNDIALS_LIB_VERSION
@@ -582,7 +582,7 @@ CAMLprim value SUNML_NVEC_OP(n_vwrmsnorm)(value vx, value vw)
 #endif
 }
 
-CAMLprim value SUNML_NVEC_OP(n_vwrmsnormmask)(value vx, value vw, value vid)
+CAMLprim value SUNML_NVEC_OP(wrmsnormmask)(value vx, value vw, value vid)
 {
     CAMLparam3(vx, vw, vid);
 #if 500 <= SUNDIALS_LIB_VERSION
@@ -595,7 +595,7 @@ CAMLprim value SUNML_NVEC_OP(n_vwrmsnormmask)(value vx, value vw, value vid)
 }
 
 #ifdef MANYVECTOR_BUILD_WITH_MPI
-CAMLprim value SUNML_NVEC_OP(n_vdotprod)(value vx, value vy)
+CAMLprim value SUNML_NVEC_OP(dotprod)(value vx, value vy)
 {
     CAMLparam2(vx, vy);
 #if 500 <= SUNDIALS_LIB_VERSION
@@ -606,7 +606,7 @@ CAMLprim value SUNML_NVEC_OP(n_vdotprod)(value vx, value vy)
 #endif
 }
 
-CAMLprim value SUNML_NVEC_OP(n_vmaxnorm)(value vx)
+CAMLprim value SUNML_NVEC_OP(maxnorm)(value vx)
 {
     CAMLparam1(vx);
 #if 500 <= SUNDIALS_LIB_VERSION
@@ -617,7 +617,7 @@ CAMLprim value SUNML_NVEC_OP(n_vmaxnorm)(value vx)
 #endif
 }
 
-CAMLprim value SUNML_NVEC_OP(n_vmin)(value vx)
+CAMLprim value SUNML_NVEC_OP(min)(value vx)
 {
     CAMLparam1(vx);
 #if 500 <= SUNDIALS_LIB_VERSION
@@ -629,7 +629,7 @@ CAMLprim value SUNML_NVEC_OP(n_vmin)(value vx)
 }
 #endif
 
-CAMLprim value SUNML_NVEC_OP(n_vwl2norm)(value vx, value vw)
+CAMLprim value SUNML_NVEC_OP(wl2norm)(value vx, value vw)
 {
     CAMLparam2(vx, vw);
 #if 500 <= SUNDIALS_LIB_VERSION
@@ -641,7 +641,7 @@ CAMLprim value SUNML_NVEC_OP(n_vwl2norm)(value vx, value vw)
 }
 
 #ifdef MANYVECTOR_BUILD_WITH_MPI
-CAMLprim value SUNML_NVEC_OP(n_vl1norm)(value vx)
+CAMLprim value SUNML_NVEC_OP(l1norm)(value vx)
 {
     CAMLparam1(vx);
 #if 500 <= SUNDIALS_LIB_VERSION
@@ -653,7 +653,7 @@ CAMLprim value SUNML_NVEC_OP(n_vl1norm)(value vx)
 }
 #endif
 
-CAMLprim value SUNML_NVEC_OP(n_vcompare)(value vc, value vx, value vz)
+CAMLprim value SUNML_NVEC_OP(compare)(value vc, value vx, value vz)
 {
     CAMLparam3(vc, vx, vz);
 #if 500 <= SUNDIALS_LIB_VERSION
@@ -663,7 +663,7 @@ CAMLprim value SUNML_NVEC_OP(n_vcompare)(value vc, value vx, value vz)
 }
 
 #ifdef MANYVECTOR_BUILD_WITH_MPI
-CAMLprim value SUNML_NVEC_OP(n_vinvtest)(value vx, value vz)
+CAMLprim value SUNML_NVEC_OP(invtest)(value vx, value vz)
 {
     CAMLparam2(vx, vz);
 #if 500 <= SUNDIALS_LIB_VERSION
@@ -676,7 +676,7 @@ CAMLprim value SUNML_NVEC_OP(n_vinvtest)(value vx, value vz)
 #endif
 
 #ifdef MANYVECTOR_BUILD_WITH_MPI
-CAMLprim value SUNML_NVEC_OP(n_vconstrmask)(value vc, value vx, value vm)
+CAMLprim value SUNML_NVEC_OP(constrmask)(value vc, value vx, value vm)
 {
     CAMLparam3(vc, vx, vm);
 #if 500 <= SUNDIALS_LIB_VERSION
@@ -690,7 +690,7 @@ CAMLprim value SUNML_NVEC_OP(n_vconstrmask)(value vc, value vx, value vm)
 #endif
 
 #ifdef MANYVECTOR_BUILD_WITH_MPI
-CAMLprim value SUNML_NVEC_OP(n_vminquotient)(value vnum, value vdenom)
+CAMLprim value SUNML_NVEC_OP(minquotient)(value vnum, value vdenom)
 {
     CAMLparam2(vnum, vdenom);
 #if 500 <= SUNDIALS_LIB_VERSION
@@ -702,7 +702,7 @@ CAMLprim value SUNML_NVEC_OP(n_vminquotient)(value vnum, value vdenom)
 }
 #endif
 
-CAMLprim value SUNML_NVEC_OP(n_vspace)(value vx)
+CAMLprim value SUNML_NVEC_OP(space)(value vx)
 {
     CAMLparam1(vx);
 #if 500 <= SUNDIALS_LIB_VERSION
@@ -721,7 +721,7 @@ CAMLprim value SUNML_NVEC_OP(n_vspace)(value vx)
 #endif
 }
 
-CAMLprim value SUNML_NVEC_OP(n_vgetlength)(value vx)
+CAMLprim value SUNML_NVEC_OP(getlength)(value vx)
 {
     CAMLparam1(vx);
 #if 500 <= SUNDIALS_LIB_VERSION
@@ -733,7 +733,7 @@ CAMLprim value SUNML_NVEC_OP(n_vgetlength)(value vx)
 #endif
 }
 
-CAMLprim value SUNML_NVEC_OP(n_vlinearcombination)(value vac, value vax,
+CAMLprim value SUNML_NVEC_OP(linearcombination)(value vac, value vax,
 						   value vz)
 {
     CAMLparam3(vac, vax, vz);
@@ -750,7 +750,7 @@ CAMLprim value SUNML_NVEC_OP(n_vlinearcombination)(value vac, value vax,
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value SUNML_NVEC_OP(n_vscaleaddmulti)(value vac, value vx, value vay,
+CAMLprim value SUNML_NVEC_OP(scaleaddmulti)(value vac, value vx, value vay,
 					       value vaz)
 {
     CAMLparam4(vac, vx, vay, vaz);
@@ -767,7 +767,7 @@ CAMLprim value SUNML_NVEC_OP(n_vscaleaddmulti)(value vac, value vx, value vay,
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value SUNML_NVEC_OP(n_vdotprodmulti)(value vx, value vay, value vad)
+CAMLprim value SUNML_NVEC_OP(dotprodmulti)(value vx, value vay, value vad)
 {
     CAMLparam3(vx, vay, vad);
 #if 500 <= SUNDIALS_LIB_VERSION
@@ -783,7 +783,7 @@ CAMLprim value SUNML_NVEC_OP(n_vdotprodmulti)(value vx, value vay, value vad)
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value SUNML_NVEC_OP(n_vlinearsumvectorarray)(value va, value vax,
+CAMLprim value SUNML_NVEC_OP(linearsumvectorarray)(value va, value vax,
 						      value vb, value vay,
 						      value vaz)
 {
@@ -800,7 +800,7 @@ CAMLprim value SUNML_NVEC_OP(n_vlinearsumvectorarray)(value va, value vax,
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value SUNML_NVEC_OP(n_vscalevectorarray)(value vac, value vax,
+CAMLprim value SUNML_NVEC_OP(scalevectorarray)(value vac, value vax,
 						  value vaz)
 {
     CAMLparam3(vac, vax, vaz);
@@ -816,7 +816,7 @@ CAMLprim value SUNML_NVEC_OP(n_vscalevectorarray)(value vac, value vax,
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value SUNML_NVEC_OP(n_vconstvectorarray)(value vc, value vaz)
+CAMLprim value SUNML_NVEC_OP(constvectorarray)(value vc, value vaz)
 {
     CAMLparam2(vc, vaz);
 #if 500 <= SUNDIALS_LIB_VERSION
@@ -830,7 +830,7 @@ CAMLprim value SUNML_NVEC_OP(n_vconstvectorarray)(value vc, value vaz)
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value SUNML_NVEC_OP(n_vwrmsnormvectorarray)(value vax, value vaw,
+CAMLprim value SUNML_NVEC_OP(wrmsnormvectorarray)(value vax, value vaw,
 						     value van)
 {
     CAMLparam3(vax, vaw, van);
@@ -846,7 +846,7 @@ CAMLprim value SUNML_NVEC_OP(n_vwrmsnormvectorarray)(value vax, value vaw,
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value SUNML_NVEC_OP(n_vwrmsnormmaskvectorarray)(value vax, value vaw,
+CAMLprim value SUNML_NVEC_OP(wrmsnormmaskvectorarray)(value vax, value vaw,
 							 value vi, value van)
 {
     CAMLparam4(vax, vaw, vi, van);
@@ -863,14 +863,14 @@ CAMLprim value SUNML_NVEC_OP(n_vwrmsnormmaskvectorarray)(value vax, value vaw,
     CAMLreturn(Val_unit);
 }
 
-/* CAMLprim value SUNML_NVEC_OP(n_vscaleaddmultivectorarray)(value vaa, value vax,
+/* CAMLprim value SUNML_NVEC_OP(scaleaddmultivectorarray)(value vaa, value vax,
    							  value vaay, value vaaz) */
 
-/* CAMLprim value SUNML_NVEC_OP(n_vlinearcombinationvectorarray)(value vac,
+/* CAMLprim value SUNML_NVEC_OP(linearcombinationvectorarray)(value vac,
    							      value vaax,
    							      value vaz) */
 
-CAMLprim value SUNML_NVEC_OP(n_vdotprodlocal)(value vx, value vw)
+CAMLprim value SUNML_NVEC_OP(dotprodlocal)(value vx, value vw)
 {
     CAMLparam2(vx, vw);
 #if 500 <= SUNDIALS_LIB_VERSION
@@ -881,7 +881,7 @@ CAMLprim value SUNML_NVEC_OP(n_vdotprodlocal)(value vx, value vw)
 #endif
 }
 
-CAMLprim value SUNML_NVEC_OP(n_vmaxnormlocal)(value vx)
+CAMLprim value SUNML_NVEC_OP(maxnormlocal)(value vx)
 {
     CAMLparam1(vx);
 #if 500 <= SUNDIALS_LIB_VERSION
@@ -892,7 +892,7 @@ CAMLprim value SUNML_NVEC_OP(n_vmaxnormlocal)(value vx)
 #endif
 }
 
-CAMLprim value SUNML_NVEC_OP(n_vminlocal)(value vx)
+CAMLprim value SUNML_NVEC_OP(minlocal)(value vx)
 {
     CAMLparam1(vx);
 #if 500 <= SUNDIALS_LIB_VERSION
@@ -903,7 +903,7 @@ CAMLprim value SUNML_NVEC_OP(n_vminlocal)(value vx)
 #endif
 }
 
-CAMLprim value SUNML_NVEC_OP(n_vl1normlocal)(value vx)
+CAMLprim value SUNML_NVEC_OP(l1normlocal)(value vx)
 {
     CAMLparam1(vx);
 #if 500 <= SUNDIALS_LIB_VERSION
@@ -914,7 +914,7 @@ CAMLprim value SUNML_NVEC_OP(n_vl1normlocal)(value vx)
 #endif
 }
 
-CAMLprim value SUNML_NVEC_OP(n_vinvtestlocal)(value vx, value vz)
+CAMLprim value SUNML_NVEC_OP(invtestlocal)(value vx, value vz)
 {
     CAMLparam2(vx, vz);
 #if 500 <= SUNDIALS_LIB_VERSION
@@ -925,7 +925,7 @@ CAMLprim value SUNML_NVEC_OP(n_vinvtestlocal)(value vx, value vz)
 #endif
 }
 
-CAMLprim value SUNML_NVEC_OP(n_vconstrmasklocal)(value vc, value vx, value vm)
+CAMLprim value SUNML_NVEC_OP(constrmasklocal)(value vc, value vx, value vm)
 {
     CAMLparam3(vc, vx, vm);
 #if 500 <= SUNDIALS_LIB_VERSION
@@ -937,7 +937,7 @@ CAMLprim value SUNML_NVEC_OP(n_vconstrmasklocal)(value vc, value vx, value vm)
 #endif
 }
 
-CAMLprim value SUNML_NVEC_OP(n_vminquotientlocal)(value vn, value vd)
+CAMLprim value SUNML_NVEC_OP(minquotientlocal)(value vn, value vd)
 {
     CAMLparam2(vn, vd);
 #if 500 <= SUNDIALS_LIB_VERSION
@@ -948,7 +948,7 @@ CAMLprim value SUNML_NVEC_OP(n_vminquotientlocal)(value vn, value vd)
 #endif
 }
 
-CAMLprim value SUNML_NVEC_OP(n_vwsqrsumlocal)(value vx, value vw)
+CAMLprim value SUNML_NVEC_OP(wsqrsumlocal)(value vx, value vw)
 {
     CAMLparam2(vx, vw);
 #if 500 <= SUNDIALS_LIB_VERSION
@@ -959,7 +959,7 @@ CAMLprim value SUNML_NVEC_OP(n_vwsqrsumlocal)(value vx, value vw)
 #endif
 }
 
-CAMLprim value SUNML_NVEC_OP(n_vwsqrsummasklocal)(value vx, value vw, value vid)
+CAMLprim value SUNML_NVEC_OP(wsqrsummasklocal)(value vx, value vw, value vid)
 {
     CAMLparam3(vx, vw, vid);
 #if 500 <= SUNDIALS_LIB_VERSION

@@ -13,6 +13,11 @@ Notes:
   NonlinearSolver.solve.
 * Support for most new 5.x features in Cvode, Cvodes, Ida, Idas, and Kinsol.
 
+Compatibility
+* The naming scheme for nvector operations has changed. Operations no longer 
+  commence with the three characters `n_v`. For instance, `n_vdiv` becomes 
+  simply `div`.
+
 Sundials/ML 4.1.0p0 (September 2020)
 ------------------------------------
 Sundials/ML v4.1.0p0 adds support for v4.x of the Sundials Suite of

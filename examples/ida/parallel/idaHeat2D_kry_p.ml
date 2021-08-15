@@ -41,9 +41,9 @@ open Sundials
 let fprintf = Printf.fprintf
 let printf = Printf.printf
 
-let vconst = Nvector_parallel.DataOps.n_vconst
-let vscale = Nvector_parallel.DataOps.n_vscale
-let vprod = Nvector_parallel.DataOps.n_vprod
+let vconst = Nvector_parallel.DataOps.const
+let vscale = Nvector_parallel.DataOps.scale
+let vprod = Nvector_parallel.DataOps.prod
 
 let slice = Bigarray.Array1.sub
 let unwrap = Nvector.unwrap
@@ -519,7 +519,7 @@ let print_header neq rtol atol =
  *)
 
 let print_output id mem t uu =
-  let umax = Nvector_parallel.Ops.n_vmaxnorm uu in
+  let umax = Nvector_parallel.Ops.maxnorm uu in
 
   if id = 0 then begin
 
@@ -597,7 +597,7 @@ let main () =
 
   (* Set constraints to all 1's for nonnegative solution values. *)
 
-  Ops.n_vconst one constraints;
+  Ops.const one constraints;
 
   let t0 = zero and t1 = 0.01 in
 

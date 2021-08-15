@@ -18,63 +18,63 @@ type communicator
 (* Must match with nvector_ml.h:nvector_ops_tag *)
 type 'a nvector_ops = { (* {{{ *)
   n_vcheck           : 'a -> 'a -> bool;
-  n_vclone           : 'a -> 'a;
-  n_vspace           : ('a -> (int * int)) option;
-  n_vgetlength       : 'a -> int;
-  n_vlinearsum       : float -> 'a -> float -> 'a -> 'a -> unit;
-  n_vconst           : float -> 'a -> unit;
-  n_vprod            : 'a -> 'a -> 'a -> unit;
-  n_vdiv             : 'a -> 'a -> 'a -> unit;
-  n_vscale           : float -> 'a -> 'a -> unit;
-  n_vabs             : 'a -> 'a -> unit;
-  n_vinv             : 'a -> 'a -> unit;
-  n_vaddconst        : 'a -> float -> 'a -> unit;
-  n_vmaxnorm         : 'a -> float;
-  n_vwrmsnorm        : 'a -> 'a -> float;
-  n_vmin             : 'a -> float;
+  clone           : 'a -> 'a;
+  space           : ('a -> (int * int)) option;
+  getlength       : 'a -> int;
+  linearsum       : float -> 'a -> float -> 'a -> 'a -> unit;
+  const           : float -> 'a -> unit;
+  prod            : 'a -> 'a -> 'a -> unit;
+  div             : 'a -> 'a -> 'a -> unit;
+  scale           : float -> 'a -> 'a -> unit;
+  abs             : 'a -> 'a -> unit;
+  inv             : 'a -> 'a -> unit;
+  addconst        : 'a -> float -> 'a -> unit;
+  maxnorm         : 'a -> float;
+  wrmsnorm        : 'a -> 'a -> float;
+  min             : 'a -> float;
 
-  n_vdotprod         : 'a -> 'a -> float;
-  n_vcompare         : float -> 'a -> 'a -> unit;
-  n_vinvtest         : 'a -> 'a -> bool;
+  dotprod         : 'a -> 'a -> float;
+  compare         : float -> 'a -> 'a -> unit;
+  invtest         : 'a -> 'a -> bool;
 
-  n_vwl2norm         : ('a -> 'a -> float) option;
-  n_vl1norm          : ('a -> float) option;
-  n_vwrmsnormmask    : ('a -> 'a -> 'a -> float) option;
-  n_vconstrmask      : ('a -> 'a -> 'a -> bool) option;
-  n_vminquotient     : ('a -> 'a -> float) option;
+  wl2norm         : ('a -> 'a -> float) option;
+  l1norm          : ('a -> float) option;
+  wrmsnormmask    : ('a -> 'a -> 'a -> float) option;
+  constrmask      : ('a -> 'a -> 'a -> bool) option;
+  minquotient     : ('a -> 'a -> float) option;
 
   n_vgetcommunicator : ('a -> communicator) option;
 
-  n_vlinearcombination :
+  linearcombination :
     (Sundials.RealArray.t -> 'a array -> 'a -> unit) option;
-  n_vscaleaddmulti :
+  scaleaddmulti :
     (Sundials.RealArray.t -> 'a -> 'a array -> 'a array -> unit) option;
-  n_vdotprodmulti : ('a -> 'a array -> Sundials.RealArray.t -> unit) option;
+  dotprodmulti : ('a -> 'a array -> Sundials.RealArray.t -> unit) option;
 
-  n_vlinearsumvectorarray :
+  linearsumvectorarray :
     (float -> 'a array -> float -> 'a array -> 'a array -> unit) option;
-  n_vscalevectorarray :
+  scalevectorarray :
     (Sundials.RealArray.t -> 'a array -> 'a array -> unit) option;
-  n_vconstvectorarray : (float -> 'a array -> unit) option;
-  n_vwrmsnormvectorarray :
+  constvectorarray : (float -> 'a array -> unit) option;
+  wrmsnormvectorarray :
     ('a array -> 'a array -> Sundials.RealArray.t -> unit) option;
-  n_vwrmsnormmaskvectorarray :
+  wrmsnormmaskvectorarray :
     ('a array -> 'a array -> 'a -> Sundials.RealArray.t -> unit) option;
-  n_vscaleaddmultivectorarray :
+  scaleaddmultivectorarray :
     (Sundials.RealArray.t -> 'a array -> 'a array array -> 'a array array ->
       unit) option;
-  n_vlinearcombinationvectorarray :
+  linearcombinationvectorarray :
     (Sundials.RealArray.t -> 'a array array -> 'a array -> unit) option;
 
-  n_vdotprod_local      : ('a -> 'a -> float) option;
-  n_vmaxnorm_local      : ('a -> float) option;
-  n_vmin_local          : ('a -> float) option;
-  n_vl1norm_local       : ('a -> float) option;
-  n_vinvtest_local      : ('a -> 'a -> bool) option;
-  n_vconstrmask_local   : ('a -> 'a -> 'a -> bool) option;
-  n_vminquotient_local  : ('a -> 'a -> float) option;
-  n_vwsqrsum_local      : ('a -> 'a -> float) option;
-  n_vwsqrsummask_local  : ('a -> 'a -> 'a -> float) option;
+  dotprod_local      : ('a -> 'a -> float) option;
+  maxnorm_local      : ('a -> float) option;
+  min_local          : ('a -> float) option;
+  l1norm_local       : ('a -> float) option;
+  invtest_local      : ('a -> 'a -> bool) option;
+  constrmask_local   : ('a -> 'a -> 'a -> bool) option;
+  minquotient_local  : ('a -> 'a -> float) option;
+  wsqrsum_local      : ('a -> 'a -> float) option;
+  wsqrsummask_local  : ('a -> 'a -> 'a -> float) option;
 
 } (* }}} *)
 
@@ -157,81 +157,81 @@ let rec make_wrap ops ?(with_fused_ops=false) v =
   nv
 
 and clone ops nv =
-  let nv' = make_wrap ops (ops.n_vclone (uv nv)) in
+  let nv' = make_wrap ops (ops.clone (uv nv)) in
   ignore (c_enablelinearcombination_custom nv'
-            (Nvector.has_n_vlinearcombination nv));
+            (Nvector.has_linearcombination nv));
   ignore (c_enablescaleaddmulti_custom nv'
-            (Nvector.has_n_vscaleaddmulti nv));
+            (Nvector.has_scaleaddmulti nv));
   ignore (c_enabledotprodmulti_custom nv'
-            (Nvector.has_n_vdotprodmulti nv));
+            (Nvector.has_dotprodmulti nv));
   ignore (c_enablelinearsumvectorarray_custom nv'
-            (Nvector.has_n_vlinearsumvectorarray nv));
+            (Nvector.has_linearsumvectorarray nv));
   ignore (c_enablescalevectorarray_custom nv'
-            (Nvector.has_n_vscalevectorarray nv));
+            (Nvector.has_scalevectorarray nv));
   ignore (c_enableconstvectorarray_custom nv'
-            (Nvector.has_n_vconstvectorarray nv));
+            (Nvector.has_constvectorarray nv));
   ignore (c_enablewrmsnormvectorarray_custom nv'
-            (Nvector.has_n_vwrmsnormvectorarray nv));
+            (Nvector.has_wrmsnormvectorarray nv));
   ignore (c_enablewrmsnormmaskvectorarray_custom nv'
-            (Nvector.has_n_vwrmsnormmaskvectorarray nv));
+            (Nvector.has_wrmsnormmaskvectorarray nv));
   ignore (c_enablescaleaddmultivectorarray_custom nv'
-            (Nvector.has_n_vscaleaddmultivectorarray nv));
+            (Nvector.has_scaleaddmultivectorarray nv));
   ignore (c_enablelinearcombinationvectorarray_custom nv'
-            (Nvector.has_n_vlinearcombinationvectorarray nv));
+            (Nvector.has_linearcombinationvectorarray nv));
   nv'
 
 let add_tracing msg ops =
   let pr s = print_string msg; print_endline s in
   let { (* {{{ *)
       n_vcheck           = n_vcheck;
-      n_vclone           = n_vclone;
-      n_vspace           = n_vspace;
-      n_vgetlength       = n_vgetlength;
-      n_vlinearsum       = n_vlinearsum;
-      n_vconst           = n_vconst;
-      n_vprod            = n_vprod;
-      n_vdiv             = n_vdiv;
-      n_vscale           = n_vscale;
-      n_vabs             = n_vabs;
-      n_vinv             = n_vinv;
-      n_vaddconst        = n_vaddconst;
-      n_vmaxnorm         = n_vmaxnorm;
-      n_vwrmsnorm        = n_vwrmsnorm;
-      n_vmin             = n_vmin;
+      clone           = clone;
+      space           = space;
+      getlength       = getlength;
+      linearsum       = linearsum;
+      const           = const;
+      prod            = prod;
+      div             = div;
+      scale           = scale;
+      abs             = abs;
+      inv             = inv;
+      addconst        = addconst;
+      maxnorm         = maxnorm;
+      wrmsnorm        = wrmsnorm;
+      min             = min;
 
-      n_vdotprod         = n_vdotprod;
-      n_vcompare         = n_vcompare;
-      n_vinvtest         = n_vinvtest;
+      dotprod         = dotprod;
+      compare         = compare;
+      invtest         = invtest;
 
-      n_vwl2norm         = n_vwl2norm;
-      n_vl1norm          = n_vl1norm;
-      n_vwrmsnormmask    = n_vwrmsnormmask;
-      n_vconstrmask      = n_vconstrmask;
-      n_vminquotient     = n_vminquotient;
+      wl2norm         = wl2norm;
+      l1norm          = l1norm;
+      wrmsnormmask    = wrmsnormmask;
+      constrmask      = constrmask;
+      minquotient     = minquotient;
 
       n_vgetcommunicator = n_vgetcommunicator;
 
-      n_vlinearcombination            = n_vlinearcombination;
-      n_vscaleaddmulti                = n_vscaleaddmulti;
-      n_vdotprodmulti                 = n_vdotprodmulti;
+      linearcombination            = linearcombination;
+      scaleaddmulti                = scaleaddmulti;
+      dotprodmulti                 = dotprodmulti;
 
-      n_vlinearsumvectorarray         = n_vlinearsumvectorarray;
-      n_vscalevectorarray             = n_vscalevectorarray;
-      n_vconstvectorarray             = n_vconstvectorarray;
-      n_vwrmsnormvectorarray          = n_vwrmsnormvectorarray;
-      n_vwrmsnormmaskvectorarray      = n_vwrmsnormmaskvectorarray;
-      n_vscaleaddmultivectorarray     = n_vscaleaddmultivectorarray;
-      n_vlinearcombinationvectorarray = n_vlinearcombinationvectorarray;
+      linearsumvectorarray         = linearsumvectorarray;
+      scalevectorarray             = scalevectorarray;
+      constvectorarray             = constvectorarray;
+      wrmsnormvectorarray          = wrmsnormvectorarray;
+      wrmsnormmaskvectorarray      = wrmsnormmaskvectorarray;
+      scaleaddmultivectorarray     = scaleaddmultivectorarray;
+      linearcombinationvectorarray = linearcombinationvectorarray;
 
-      n_vdotprod_local     = n_vdotprod_local;
-      n_vmaxnorm_local     = n_vmaxnorm_local;
-      n_vmin_local         = n_vmin_local;
-      n_vl1norm_local      = n_vl1norm_local;
-      n_vinvtest_local     = n_vinvtest_local;
-      n_vconstrmask_local  = n_vconstrmask_local;
-      n_vminquotient_local = n_vminquotient_local;
-      n_vwsqrsum_local     = n_vwsqrsum_local;
-      n_vwsqrsummask_local = n_vwsqrsummask_local;
+      dotprod_local     = dotprod_local;
+      maxnorm_local     = maxnorm_local;
+      min_local         = min_local;
+      l1norm_local      = l1norm_local;
+      invtest_local     = invtest_local;
+      constrmask_local  = constrmask_local;
+      minquotient_local = minquotient_local;
+      wsqrsum_local     = wsqrsum_local;
+      wsqrsummask_local = wsqrsummask_local;
     } = ops (* }}} *)
   in
   let fo f f' = match f with None -> None | Some f -> Some (f' f) in
@@ -242,140 +242,140 @@ let add_tracing msg ops =
     function y ->
       pr "nvcheck-check";
       check y
-  and tr_nvclone a = pr "nvclone"; n_vclone a
+  and tr_nvclone a = pr "nvclone"; clone a
   (* ... {{{ *)
-  and tr_nvspace = fo n_vspace (fun f -> fun a -> (pr "nvspace"; f a))
-  and tr_nvgetlength a = pr "nvgetlength"; n_vgetlength a
-  and tr_nvlinearsum a x b y z = pr "nvlinearsum"; n_vlinearsum a x b y z
-  and tr_nvconst c z = pr "nvconst"; n_vconst c z
-  and tr_nvprod x y z = pr "nvprod"; n_vprod x y z
-  and tr_nvdiv x y z = pr "nvdiv"; n_vdiv x y z
-  and tr_nvscale c x z = pr "nvscale"; n_vscale c x z
-  and tr_nvabs x z = pr "nvabs"; n_vabs x z
-  and tr_nvinv x z = pr "nvinv"; n_vinv x z
-  and tr_nvaddconst x b z = pr "nvaddconst"; n_vaddconst x b z
-  and tr_nvmaxnorm x = pr "nvmaxnorm"; n_vmaxnorm x
-  and tr_nvwrmsnorm x w = pr "nvwrmsnorm"; n_vwrmsnorm x w
-  and tr_nvmin x = pr "nvmin"; n_vmin x
-  and tr_nvdotprod x y = pr "nvdotprod"; n_vdotprod x y
-  and tr_nvcompare c x z = pr "nvcompare"; n_vcompare c x z
-  and tr_nvinvtest x z = pr "nvinvtest"; n_vinvtest x z
+  and tr_nvspace = fo space (fun f -> fun a -> (pr "nvspace"; f a))
+  and tr_nvgetlength a = pr "nvgetlength"; getlength a
+  and tr_nvlinearsum a x b y z = pr "nvlinearsum"; linearsum a x b y z
+  and tr_nvconst c z = pr "nvconst"; const c z
+  and tr_nvprod x y z = pr "nvprod"; prod x y z
+  and tr_nvdiv x y z = pr "nvdiv"; div x y z
+  and tr_nvscale c x z = pr "nvscale"; scale c x z
+  and tr_nvabs x z = pr "nvabs"; abs x z
+  and tr_nvinv x z = pr "nvinv"; inv x z
+  and tr_nvaddconst x b z = pr "nvaddconst"; addconst x b z
+  and tr_nvmaxnorm x = pr "nvmaxnorm"; maxnorm x
+  and tr_nvwrmsnorm x w = pr "nvwrmsnorm"; wrmsnorm x w
+  and tr_nvmin x = pr "nvmin"; min x
+  and tr_nvdotprod x y = pr "nvdotprod"; dotprod x y
+  and tr_nvcompare c x z = pr "nvcompare"; compare c x z
+  and tr_nvinvtest x z = pr "nvinvtest"; invtest x z
 
-  and tr_nvwl2norm = fo n_vwl2norm (fun f -> fun x w -> pr "nvwl2norm"; f x w)
-  and tr_nvl1norm = fo n_vl1norm (fun f -> fun x -> pr "nvl1norm"; f x)
+  and tr_nvwl2norm = fo wl2norm (fun f -> fun x w -> pr "nvwl2norm"; f x w)
+  and tr_nvl1norm = fo l1norm (fun f -> fun x -> pr "nvl1norm"; f x)
   and tr_nvwrmsnormmask =
-    fo n_vwrmsnormmask (fun f -> fun x w id -> pr "nvwrmsnormmask"; f x w id)
+    fo wrmsnormmask (fun f -> fun x w id -> pr "nvwrmsnormmask"; f x w id)
   and tr_nvconstrmask =
-    fo n_vconstrmask (fun f -> fun c x m -> pr "nvconstrmask"; f c x m)
+    fo constrmask (fun f -> fun c x m -> pr "nvconstrmask"; f c x m)
   and tr_nvminquotient =
-    fo n_vminquotient (fun f -> fun n d -> pr "nvminquotient"; f n d)
+    fo minquotient (fun f -> fun n d -> pr "nvminquotient"; f n d)
 
   and tr_nvgetcommunicator =
     fo n_vgetcommunicator (fun f -> fun x -> pr "nvgetcommunicator"; f x)
 
   and tr_nvlinearcombination =
-    fo n_vlinearcombination
+    fo linearcombination
     (fun f -> fun c x z -> pr "nvlinearcombination"; f c x z)
   and tr_nvscaleaddmulti =
-    fo n_vscaleaddmulti
+    fo scaleaddmulti
     (fun f -> fun c x y z -> pr "nvscaleaddmulti"; f c x y z)
   and tr_nvdotprodmulti =
-    fo n_vdotprodmulti
+    fo dotprodmulti
     (fun f -> fun x y d -> pr "nvdotprodmulti"; f x y d)
 
   and tr_nvlinearsumvectorarray =
-    fo n_vlinearsumvectorarray
+    fo linearsumvectorarray
     (fun f -> fun a x b y z -> pr "nvlinearsumvectorarray"; f a x b y z)
   and tr_nvscalevectorarray =
-    fo n_vscalevectorarray
+    fo scalevectorarray
     (fun f -> fun c x z -> pr "nvscalevectorarray"; f c x z)
   and tr_nvconstvectorarray =
-    fo n_vconstvectorarray
+    fo constvectorarray
     (fun f -> fun c x -> pr "nvconstvectorarray"; f c x)
   and tr_nvwrmsnormvectorarray =
-    fo n_vwrmsnormvectorarray
+    fo wrmsnormvectorarray
     (fun f -> fun x w m -> pr "nvwrmsnormvectorarray"; f x w m)
   and tr_nvwrmsnormmaskvectorarray =
-    fo n_vwrmsnormmaskvectorarray
+    fo wrmsnormmaskvectorarray
     (fun f -> fun x w m -> pr "nvwrmsnormmaskvectorarray"; f x w m)
   and tr_nvscaleaddmultivectorarray =
-    fo n_vscaleaddmultivectorarray
+    fo scaleaddmultivectorarray
     (fun f -> fun a x yy zz -> pr "nvscaleaddmultivectorarray"; f a x yy zz)
   and tr_nvlinearcombinationvectorarray =
-    fo n_vlinearcombinationvectorarray
+    fo linearcombinationvectorarray
     (fun f -> fun c xx z -> pr "nvlinearcombinationvectorarray"; f c xx z)
 
   and tr_nvdotprod_local     =
-    fo n_vdotprod_local (fun f -> fun x t -> pr "nvdotprod_local"; f x t)
+    fo dotprod_local (fun f -> fun x t -> pr "nvdotprod_local"; f x t)
   and tr_nvmaxnorm_local     =
-    fo n_vmaxnorm_local (fun f -> fun x -> pr "nvmaxnorm_local"; f x)
+    fo maxnorm_local (fun f -> fun x -> pr "nvmaxnorm_local"; f x)
   and tr_nvmin_local         =
-    fo n_vmin_local (fun f -> fun x -> pr "nvmin_local"; f x)
+    fo min_local (fun f -> fun x -> pr "nvmin_local"; f x)
   and tr_nvl1norm_local      =
-    fo n_vl1norm_local (fun f -> fun x -> pr "nvl1norm_local"; f x)
+    fo l1norm_local (fun f -> fun x -> pr "nvl1norm_local"; f x)
   and tr_nvinvtest_local     =
-    fo n_vinvtest_local (fun f -> fun x z -> pr "nvinvtest_local"; f x z)
+    fo invtest_local (fun f -> fun x z -> pr "nvinvtest_local"; f x z)
   and tr_nvconstrmask_local  =
-    fo n_vconstrmask_local (fun f -> fun c x m -> pr "nvconstrmask_local"; f c x m)
+    fo constrmask_local (fun f -> fun c x m -> pr "nvconstrmask_local"; f c x m)
   and tr_nvminquotient_local =
-    fo n_vminquotient_local (fun f -> fun n d -> pr "nvminquotient_local"; f n d)
+    fo minquotient_local (fun f -> fun n d -> pr "nvminquotient_local"; f n d)
   and tr_nvwsqrsum_local     =
-    fo n_vwsqrsum_local (fun f -> fun x w -> pr "nvwsqrsum_local"; f x w)
+    fo wsqrsum_local (fun f -> fun x w -> pr "nvwsqrsum_local"; f x w)
   and tr_nvwsqrsummask_local =
-    fo n_vwsqrsummask_local (fun f -> fun x w id -> pr "nvwsqrsummask_local"; f x w id)
+    fo wsqrsummask_local (fun f -> fun x w id -> pr "nvwsqrsummask_local"; f x w id)
   (* }}} *)
   in
   {
       (* {{{ *)
       n_vcheck           = tr_nvcheck;
-      n_vclone           = tr_nvclone;
-      n_vspace           = tr_nvspace;
-      n_vgetlength       = tr_nvgetlength;
-      n_vlinearsum       = tr_nvlinearsum;
-      n_vconst           = tr_nvconst;
-      n_vprod            = tr_nvprod;
-      n_vdiv             = tr_nvdiv;
-      n_vscale           = tr_nvscale;
-      n_vabs             = tr_nvabs;
-      n_vinv             = tr_nvinv;
-      n_vaddconst        = tr_nvaddconst;
-      n_vmaxnorm         = tr_nvmaxnorm;
-      n_vwrmsnorm        = tr_nvwrmsnorm;
-      n_vmin             = tr_nvmin;
+      clone           = tr_nvclone;
+      space           = tr_nvspace;
+      getlength       = tr_nvgetlength;
+      linearsum       = tr_nvlinearsum;
+      const           = tr_nvconst;
+      prod            = tr_nvprod;
+      div             = tr_nvdiv;
+      scale           = tr_nvscale;
+      abs             = tr_nvabs;
+      inv             = tr_nvinv;
+      addconst        = tr_nvaddconst;
+      maxnorm         = tr_nvmaxnorm;
+      wrmsnorm        = tr_nvwrmsnorm;
+      min             = tr_nvmin;
 
-      n_vdotprod         = tr_nvdotprod;
-      n_vcompare         = tr_nvcompare;
-      n_vinvtest         = tr_nvinvtest;
+      dotprod         = tr_nvdotprod;
+      compare         = tr_nvcompare;
+      invtest         = tr_nvinvtest;
 
-      n_vwl2norm         = tr_nvwl2norm;
-      n_vl1norm          = tr_nvl1norm;
-      n_vwrmsnormmask    = tr_nvwrmsnormmask;
-      n_vconstrmask      = tr_nvconstrmask;
-      n_vminquotient     = tr_nvminquotient;
+      wl2norm         = tr_nvwl2norm;
+      l1norm          = tr_nvl1norm;
+      wrmsnormmask    = tr_nvwrmsnormmask;
+      constrmask      = tr_nvconstrmask;
+      minquotient     = tr_nvminquotient;
 
       n_vgetcommunicator = tr_nvgetcommunicator;
 
-      n_vlinearcombination            = tr_nvlinearcombination;
-      n_vscaleaddmulti                = tr_nvscaleaddmulti;
-      n_vdotprodmulti                 = tr_nvdotprodmulti;
+      linearcombination            = tr_nvlinearcombination;
+      scaleaddmulti                = tr_nvscaleaddmulti;
+      dotprodmulti                 = tr_nvdotprodmulti;
 
-      n_vlinearsumvectorarray         = tr_nvlinearsumvectorarray;
-      n_vscalevectorarray             = tr_nvscalevectorarray;
-      n_vconstvectorarray             = tr_nvconstvectorarray;
-      n_vwrmsnormvectorarray          = tr_nvwrmsnormvectorarray;
-      n_vwrmsnormmaskvectorarray      = tr_nvwrmsnormmaskvectorarray;
-      n_vscaleaddmultivectorarray     = tr_nvscaleaddmultivectorarray;
-      n_vlinearcombinationvectorarray = tr_nvlinearcombinationvectorarray;
+      linearsumvectorarray         = tr_nvlinearsumvectorarray;
+      scalevectorarray             = tr_nvscalevectorarray;
+      constvectorarray             = tr_nvconstvectorarray;
+      wrmsnormvectorarray          = tr_nvwrmsnormvectorarray;
+      wrmsnormmaskvectorarray      = tr_nvwrmsnormmaskvectorarray;
+      scaleaddmultivectorarray     = tr_nvscaleaddmultivectorarray;
+      linearcombinationvectorarray = tr_nvlinearcombinationvectorarray;
 
-      n_vdotprod_local     = tr_nvdotprod_local;
-      n_vmaxnorm_local     = tr_nvmaxnorm_local;
-      n_vmin_local         = tr_nvmin_local;
-      n_vl1norm_local      = tr_nvl1norm_local;
-      n_vinvtest_local     = tr_nvinvtest_local;
-      n_vconstrmask_local  = tr_nvconstrmask_local;
-      n_vminquotient_local = tr_nvminquotient_local;
-      n_vwsqrsum_local     = tr_nvwsqrsum_local;
-      n_vwsqrsummask_local = tr_nvwsqrsummask_local;
+      dotprod_local     = tr_nvdotprod_local;
+      maxnorm_local     = tr_nvmaxnorm_local;
+      min_local         = tr_nvmin_local;
+      l1norm_local      = tr_nvl1norm_local;
+      invtest_local     = tr_nvinvtest_local;
+      constrmask_local  = tr_nvconstrmask_local;
+      minquotient_local = tr_nvminquotient_local;
+      wsqrsum_local     = tr_nvwsqrsum_local;
+      wsqrsummask_local = tr_nvwsqrsummask_local;
       (* }}} *)
   }
 
@@ -394,153 +394,153 @@ module MakeOps = functor (A : sig
     module Ops = struct (* {{{ *)
       type t = (data, kind) Nvector.t
 
-      let n_vclone n = wrap (A.ops.n_vclone (uv n))
-      let n_vlinearsum a x b y z = A.ops.n_vlinearsum a (uv x) b (uv y) (uv z)
-      let n_vconst c z = A.ops.n_vconst c (uv z)
-      let n_vprod x y z = A.ops.n_vprod (uv x) (uv y) (uv z)
-      let n_vdiv x y z = A.ops.n_vdiv (uv x) (uv y) (uv z)
-      let n_vscale c x z = A.ops.n_vscale c (uv x) (uv z)
-      let n_vabs x z = A.ops.n_vabs (uv x) (uv z)
-      let n_vinv x z = A.ops.n_vinv (uv x) (uv z)
-      let n_vaddconst x b z = A.ops.n_vaddconst (uv x) b (uv z)
-      let n_vdotprod x y = A.ops.n_vdotprod (uv x) (uv y)
-      let n_vmaxnorm x = A.ops.n_vmaxnorm (uv x)
-      let n_vwrmsnorm x w = A.ops.n_vwrmsnorm (uv x) (uv w)
-      let n_vmin x = A.ops.n_vmin (uv x)
-      let n_vcompare c x z = A.ops.n_vcompare c (uv x) (uv z)
-      let n_vinvtest x z = A.ops.n_vinvtest (uv x) (uv z)
+      let clone n = wrap (A.ops.clone (uv n))
+      let linearsum a x b y z = A.ops.linearsum a (uv x) b (uv y) (uv z)
+      let const c z = A.ops.const c (uv z)
+      let prod x y z = A.ops.prod (uv x) (uv y) (uv z)
+      let div x y z = A.ops.div (uv x) (uv y) (uv z)
+      let scale c x z = A.ops.scale c (uv x) (uv z)
+      let abs x z = A.ops.abs (uv x) (uv z)
+      let inv x z = A.ops.inv (uv x) (uv z)
+      let addconst x b z = A.ops.addconst (uv x) b (uv z)
+      let dotprod x y = A.ops.dotprod (uv x) (uv y)
+      let maxnorm x = A.ops.maxnorm (uv x)
+      let wrmsnorm x w = A.ops.wrmsnorm (uv x) (uv w)
+      let min x = A.ops.min (uv x)
+      let compare c x z = A.ops.compare c (uv x) (uv z)
+      let invtest x z = A.ops.invtest (uv x) (uv z)
 
-      let n_vwl2norm =
-        match A.ops.n_vwl2norm with
+      let wl2norm =
+        match A.ops.wl2norm with
         | None -> (fun x w -> raise Nvector.OperationNotProvided)
         | Some f -> (fun x w -> f (uv x) (uv w))
 
-      let n_vl1norm =
-        match A.ops.n_vl1norm with
+      let l1norm =
+        match A.ops.l1norm with
         | None -> (fun x -> raise Nvector.OperationNotProvided)
         | Some f -> (fun x -> f (uv x))
 
-      let n_vwrmsnormmask =
-        match A.ops.n_vwrmsnormmask with
+      let wrmsnormmask =
+        match A.ops.wrmsnormmask with
         | None -> (fun x w id -> raise Nvector.OperationNotProvided)
         | Some f -> (fun x w id -> f (uv x) (uv w) (uv id))
 
-      let n_vconstrmask =
-        match A.ops.n_vconstrmask with
+      let constrmask =
+        match A.ops.constrmask with
         | None -> (fun c x m -> raise Nvector.OperationNotProvided)
         | Some f -> (fun c x m -> f (uv c) (uv x) (uv m))
 
-      let n_vminquotient =
-        match A.ops.n_vminquotient with
+      let minquotient =
+        match A.ops.minquotient with
         | None -> (fun num denom -> raise Nvector.OperationNotProvided)
         | Some f -> (fun num denom -> f (uv num) (uv denom))
 
-      let n_vspace =
-        match A.ops.n_vspace with
+      let space =
+        match A.ops.space with
         | None -> (fun x -> raise Nvector.OperationNotProvided)
         | Some f -> (fun x -> f (uv x))
 
-      let n_vgetlength a = A.ops.n_vgetlength (uv a)
+      let getlength a = A.ops.getlength (uv a)
 
-      let n_vlinearcombination =
-        match A.ops.n_vlinearcombination with
+      let linearcombination =
+        match A.ops.linearcombination with
         | None -> (fun c x z -> raise Nvector.OperationNotProvided)
         | Some f -> (fun c x z -> f c (Array.map uv x) (uv z))
 
-      let n_vscaleaddmulti =
-        match A.ops.n_vscaleaddmulti with
+      let scaleaddmulti =
+        match A.ops.scaleaddmulti with
         | None -> (fun c x y z -> raise Nvector.OperationNotProvided)
         | Some f ->
             (fun c x y z -> f c (uv x) (Array.map uv y) (Array.map uv z))
 
-      let n_vdotprodmulti =
-        match A.ops.n_vdotprodmulti with
+      let dotprodmulti =
+        match A.ops.dotprodmulti with
         | None -> (fun x y d -> raise Nvector.OperationNotProvided)
         | Some f -> (fun x y d -> f (uv x) (Array.map uv y) d)
 
-      let n_vlinearsumvectorarray =
-        match A.ops.n_vlinearsumvectorarray with
+      let linearsumvectorarray =
+        match A.ops.linearsumvectorarray with
         | None -> (fun a x b y z -> raise Nvector.OperationNotProvided)
         | Some f -> (fun a x b y z -> f a (Array.map uv x) b (Array.map uv y)
                                           (Array.map uv z))
 
-      let n_vscalevectorarray =
-        match A.ops.n_vscalevectorarray with
+      let scalevectorarray =
+        match A.ops.scalevectorarray with
         | None -> (fun c x z -> raise Nvector.OperationNotProvided)
         | Some f -> (fun c x z -> f c (Array.map uv x) (Array.map uv z))
 
-      let n_vconstvectorarray =
-        match A.ops.n_vconstvectorarray with
+      let constvectorarray =
+        match A.ops.constvectorarray with
         | None -> (fun c x -> raise Nvector.OperationNotProvided)
         | Some f -> (fun c x -> f c (Array.map uv x))
 
-      let n_vwrmsnormvectorarray =
-        match A.ops.n_vwrmsnormvectorarray with
+      let wrmsnormvectorarray =
+        match A.ops.wrmsnormvectorarray with
         | None -> (fun x w m -> raise Nvector.OperationNotProvided)
         | Some f -> (fun x w m -> f (Array.map uv x) (Array.map uv w) m)
 
-      let n_vwrmsnormmaskvectorarray =
-        match A.ops.n_vwrmsnormmaskvectorarray with
+      let wrmsnormmaskvectorarray =
+        match A.ops.wrmsnormmaskvectorarray with
         | None -> (fun x w id m -> raise Nvector.OperationNotProvided)
         | Some f -> (fun x w id m -> f (Array.map uv x) (Array.map uv w)
                                        (uv id) m)
 
-      let n_vscaleaddmultivectorarray =
-        match A.ops.n_vscaleaddmultivectorarray with
+      let scaleaddmultivectorarray =
+        match A.ops.scaleaddmultivectorarray with
         | None -> (fun a x yy zz -> raise Nvector.OperationNotProvided)
         | Some f -> (fun a x yy zz -> f a (Array.map uv x)
                                         (Array.map (Array.map uv) yy)
                                         (Array.map (Array.map uv) zz))
 
-      let n_vlinearcombinationvectorarray =
-        match A.ops.n_vlinearcombinationvectorarray with
+      let linearcombinationvectorarray =
+        match A.ops.linearcombinationvectorarray with
         | None -> (fun c xx z -> raise Nvector.OperationNotProvided)
         | Some f -> (fun c xx z -> f c (Array.map (Array.map uv) xx)
                                        (Array.map uv z))
 
       module Local = struct
-        let n_vdotprod =
-          match A.ops.n_vdotprod_local with
+        let dotprod =
+          match A.ops.dotprod_local with
           | None -> (fun _ _ -> raise Nvector.OperationNotProvided)
           | Some f -> (fun x t -> f (uv x) (uv t))
 
-        let n_vmaxnorm =
-          match A.ops.n_vmaxnorm_local with
+        let maxnorm =
+          match A.ops.maxnorm_local with
           | None -> (fun _ -> raise Nvector.OperationNotProvided)
           | Some f -> (fun x -> f (uv x))
 
-        let n_vmin =
-          match A.ops.n_vmin_local with
+        let min =
+          match A.ops.min_local with
           | None -> (fun _ -> raise Nvector.OperationNotProvided)
           | Some f -> (fun x -> f (uv x))
 
-        let n_vl1norm =
-          match A.ops.n_vl1norm_local with
+        let l1norm =
+          match A.ops.l1norm_local with
           | None -> (fun _ -> raise Nvector.OperationNotProvided)
           | Some f -> (fun x -> f (uv x))
 
-        let n_vinvtest =
-          match A.ops.n_vinvtest_local with
+        let invtest =
+          match A.ops.invtest_local with
           | None -> (fun _ _ -> raise Nvector.OperationNotProvided)
           | Some f -> (fun x z -> f (uv x) (uv z))
 
-        let n_vconstrmask =
-          match A.ops.n_vconstrmask_local with
+        let constrmask =
+          match A.ops.constrmask_local with
           | None -> (fun _ _ _ -> raise Nvector.OperationNotProvided)
           | Some f -> (fun c x m -> f (uv c) (uv x) (uv m))
 
-        let n_vminquotient =
-          match A.ops.n_vminquotient_local with
+        let minquotient =
+          match A.ops.minquotient_local with
           | None -> (fun _ _ -> raise Nvector.OperationNotProvided)
           | Some f -> (fun n d -> f (uv n) (uv d))
 
-        let n_vwsqrsum =
-          match A.ops.n_vwsqrsum_local with
+        let wsqrsum =
+          match A.ops.wsqrsum_local with
           | None -> (fun _ _ -> raise Nvector.OperationNotProvided)
           | Some f -> (fun x w -> f (uv x) (uv w))
 
-        let n_vwsqrsummask =
-          match A.ops.n_vwsqrsummask_local with
+        let wsqrsummask =
+          match A.ops.wsqrsummask_local with
           | None -> (fun _ _ _ -> raise Nvector.OperationNotProvided)
           | Some f -> (fun x w id -> f (uv x) (uv w) (uv id))
       end
@@ -549,147 +549,147 @@ module MakeOps = functor (A : sig
     module DataOps = struct (* {{{ *)
       type t = data
 
-      let n_vclone        = A.ops.n_vclone
-      let n_vlinearsum    = A.ops.n_vlinearsum
-      let n_vconst        = A.ops.n_vconst
-      let n_vprod         = A.ops.n_vprod
-      let n_vdiv          = A.ops.n_vdiv
-      let n_vscale        = A.ops.n_vscale
-      let n_vabs          = A.ops.n_vabs
-      let n_vinv          = A.ops.n_vinv
-      let n_vaddconst     = A.ops.n_vaddconst
-      let n_vdotprod      = A.ops.n_vdotprod
-      let n_vmaxnorm      = A.ops.n_vmaxnorm
-      let n_vwrmsnorm     = A.ops.n_vwrmsnorm
-      let n_vmin          = A.ops.n_vmin
-      let n_vcompare      = A.ops.n_vcompare
-      let n_vinvtest      = A.ops.n_vinvtest
+      let clone        = A.ops.clone
+      let linearsum    = A.ops.linearsum
+      let const        = A.ops.const
+      let prod         = A.ops.prod
+      let div          = A.ops.div
+      let scale        = A.ops.scale
+      let abs          = A.ops.abs
+      let inv          = A.ops.inv
+      let addconst     = A.ops.addconst
+      let dotprod      = A.ops.dotprod
+      let maxnorm      = A.ops.maxnorm
+      let wrmsnorm     = A.ops.wrmsnorm
+      let min          = A.ops.min
+      let compare      = A.ops.compare
+      let invtest      = A.ops.invtest
 
-      let n_vwl2norm =
-        match A.ops.n_vwl2norm with
+      let wl2norm =
+        match A.ops.wl2norm with
         | None -> (fun x w -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
-      let n_vl1norm =
-        match A.ops.n_vl1norm with
+      let l1norm =
+        match A.ops.l1norm with
         | None -> (fun x -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
-      let n_vwrmsnormmask =
-        match A.ops.n_vwrmsnormmask with
+      let wrmsnormmask =
+        match A.ops.wrmsnormmask with
         | None -> (fun x w id -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
-      let n_vconstrmask =
-        match A.ops.n_vconstrmask with
+      let constrmask =
+        match A.ops.constrmask with
         | None -> (fun c x m -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
-      let n_vminquotient =
-        match A.ops.n_vminquotient with
+      let minquotient =
+        match A.ops.minquotient with
         | None -> (fun num denom -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
-      let n_vspace =
-        match A.ops.n_vspace with
+      let space =
+        match A.ops.space with
         | None -> (fun x -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
-      let n_vgetlength = A.ops.n_vgetlength
+      let getlength = A.ops.getlength
 
-      let n_vlinearcombination =
-        match A.ops.n_vlinearcombination with
+      let linearcombination =
+        match A.ops.linearcombination with
         | None -> (fun c x z -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
-      let n_vscaleaddmulti =
-        match A.ops.n_vscaleaddmulti with
+      let scaleaddmulti =
+        match A.ops.scaleaddmulti with
         | None -> (fun c x y z -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
-      let n_vdotprodmulti =
-        match A.ops.n_vdotprodmulti with
+      let dotprodmulti =
+        match A.ops.dotprodmulti with
         | None -> (fun x y d -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
-      let n_vlinearsumvectorarray =
-        match A.ops.n_vlinearsumvectorarray with
+      let linearsumvectorarray =
+        match A.ops.linearsumvectorarray with
         | None -> (fun a x b y z -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
-      let n_vscalevectorarray =
-        match A.ops.n_vscalevectorarray with
+      let scalevectorarray =
+        match A.ops.scalevectorarray with
         | None -> (fun c x z -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
-      let n_vconstvectorarray =
-        match A.ops.n_vconstvectorarray with
+      let constvectorarray =
+        match A.ops.constvectorarray with
         | None -> (fun c x -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
-      let n_vwrmsnormvectorarray =
-        match A.ops.n_vwrmsnormvectorarray with
+      let wrmsnormvectorarray =
+        match A.ops.wrmsnormvectorarray with
         | None -> (fun x w m -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
-      let n_vwrmsnormmaskvectorarray =
-        match A.ops.n_vwrmsnormmaskvectorarray with
+      let wrmsnormmaskvectorarray =
+        match A.ops.wrmsnormmaskvectorarray with
         | None -> (fun x w id m -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
-      let n_vscaleaddmultivectorarray =
-        match A.ops.n_vscaleaddmultivectorarray with
+      let scaleaddmultivectorarray =
+        match A.ops.scaleaddmultivectorarray with
         | None -> (fun a x yy zz -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
-      let n_vlinearcombinationvectorarray =
-        match A.ops.n_vlinearcombinationvectorarray with
+      let linearcombinationvectorarray =
+        match A.ops.linearcombinationvectorarray with
         | None -> (fun c xx z -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
       module Local = struct
-        let n_vdotprod =
-          match A.ops.n_vdotprod_local with
+        let dotprod =
+          match A.ops.dotprod_local with
           | None -> (fun _ _ -> raise Nvector.OperationNotProvided)
           | Some f -> f
 
-        let n_vmaxnorm =
-          match A.ops.n_vmaxnorm_local with
+        let maxnorm =
+          match A.ops.maxnorm_local with
           | None -> (fun _ -> raise Nvector.OperationNotProvided)
           | Some f -> f
 
-        let n_vmin =
-          match A.ops.n_vmin_local with
+        let min =
+          match A.ops.min_local with
           | None -> (fun _ -> raise Nvector.OperationNotProvided)
           | Some f -> f
 
-        let n_vl1norm =
-          match A.ops.n_vl1norm_local with
+        let l1norm =
+          match A.ops.l1norm_local with
           | None -> (fun _ -> raise Nvector.OperationNotProvided)
           | Some f -> f
 
-        let n_vinvtest =
-          match A.ops.n_vinvtest_local with
+        let invtest =
+          match A.ops.invtest_local with
           | None -> (fun _ _ -> raise Nvector.OperationNotProvided)
           | Some f -> f
 
-        let n_vconstrmask =
-          match A.ops.n_vconstrmask_local with
+        let constrmask =
+          match A.ops.constrmask_local with
           | None -> (fun _ _ _ -> raise Nvector.OperationNotProvided)
           | Some f -> f
 
-        let n_vminquotient =
-          match A.ops.n_vminquotient_local with
+        let minquotient =
+          match A.ops.minquotient_local with
           | None -> (fun _ _ -> raise Nvector.OperationNotProvided)
           | Some f -> f
 
-        let n_vwsqrsum =
-          match A.ops.n_vwsqrsum_local with
+        let wsqrsum =
+          match A.ops.wsqrsum_local with
           | None -> (fun _ _ -> raise Nvector.OperationNotProvided)
           | Some f -> f
 
-        let n_vwsqrsummask =
-          match A.ops.n_vwsqrsummask_local with
+        let wsqrsummask =
+          match A.ops.wsqrsummask_local with
           | None -> (fun _ _ _ -> raise Nvector.OperationNotProvided)
           | Some f -> f
       end
@@ -704,54 +704,54 @@ module Any = struct (* {{{ *)
     =
     let { (* {{{ *)
         n_vcheck;
-        n_vclone;
-        n_vspace;
-        n_vgetlength;
-        n_vlinearsum;
-        n_vconst;
-        n_vprod;
-        n_vdiv;
-        n_vscale;
-        n_vabs;
-        n_vinv;
-        n_vaddconst;
-        n_vmaxnorm;
-        n_vwrmsnorm;
-        n_vmin;
+        clone;
+        space;
+        getlength;
+        linearsum;
+        const;
+        prod;
+        div;
+        scale;
+        abs;
+        inv;
+        addconst;
+        maxnorm;
+        wrmsnorm;
+        min;
 
-        n_vdotprod;
-        n_vcompare;
-        n_vinvtest;
+        dotprod;
+        compare;
+        invtest;
 
-        n_vwl2norm;
-        n_vl1norm;
-        n_vwrmsnormmask;
-        n_vconstrmask;
-        n_vminquotient;
+        wl2norm;
+        l1norm;
+        wrmsnormmask;
+        constrmask;
+        minquotient;
 
         n_vgetcommunicator;
 
-        n_vlinearcombination;
-        n_vscaleaddmulti;
-        n_vdotprodmulti;
+        linearcombination;
+        scaleaddmulti;
+        dotprodmulti;
 
-        n_vlinearsumvectorarray;
-        n_vscalevectorarray;
-        n_vconstvectorarray;
-        n_vwrmsnormvectorarray;
-        n_vwrmsnormmaskvectorarray;
-        n_vscaleaddmultivectorarray;
-        n_vlinearcombinationvectorarray;
+        linearsumvectorarray;
+        scalevectorarray;
+        constvectorarray;
+        wrmsnormvectorarray;
+        wrmsnormmaskvectorarray;
+        scaleaddmultivectorarray;
+        linearcombinationvectorarray;
 
-        n_vdotprod_local;
-        n_vmaxnorm_local;
-        n_vmin_local;
-        n_vl1norm_local;
-        n_vinvtest_local;
-        n_vconstrmask_local;
-        n_vminquotient_local;
-        n_vwsqrsum_local;
-        n_vwsqrsummask_local;
+        dotprod_local;
+        maxnorm_local;
+        min_local;
+        l1norm_local;
+        invtest_local;
+        constrmask_local;
+        minquotient_local;
+        wsqrsum_local;
+        wsqrsummask_local;
       } = ops (* }}} *)
     in
     let projecta = Array.map project in
@@ -763,68 +763,68 @@ module Any = struct (* {{{ *)
     {
         (* {{{ *)
         n_vcheck        = double n_vcheck;
-        n_vclone        = (fun v -> inject (n_vclone (project v)));
-        n_vspace        = Option.map single n_vspace;
-        n_vgetlength    = single n_vgetlength;
-        n_vlinearsum    = (fun c1 v1 c2 v2 vr -> n_vlinearsum c1 (project v1)
+        clone        = (fun v -> inject (clone (project v)));
+        space        = Option.map single space;
+        getlength    = single getlength;
+        linearsum    = (fun c1 v1 c2 v2 vr -> linearsum c1 (project v1)
                                                               c2 (project v2)
                                                               (project vr));
-        n_vconst        = (fun c v -> n_vconst c (project v));
-        n_vprod         = triple n_vprod;
-        n_vdiv          = triple n_vdiv;
-        n_vscale        = (fun c v1 vr -> n_vscale c (project v1) (project vr));
-        n_vabs          = double n_vabs;
-        n_vinv          = double n_vinv;
-        n_vaddconst     = (fun v1 c vr -> n_vaddconst (project v1) c (project vr));
-        n_vmaxnorm      = single n_vmaxnorm;
-        n_vwrmsnorm     = double n_vwrmsnorm;
-        n_vmin          = single n_vmin;
+        const        = (fun c v -> const c (project v));
+        prod         = triple prod;
+        div          = triple div;
+        scale        = (fun c v1 vr -> scale c (project v1) (project vr));
+        abs          = double abs;
+        inv          = double inv;
+        addconst     = (fun v1 c vr -> addconst (project v1) c (project vr));
+        maxnorm      = single maxnorm;
+        wrmsnorm     = double wrmsnorm;
+        min          = single min;
 
-        n_vdotprod      = double n_vdotprod;
-        n_vcompare      = (fun c vx vr -> n_vcompare c (project vx) (project vr));
-        n_vinvtest      = double n_vinvtest;
+        dotprod      = double dotprod;
+        compare      = (fun c vx vr -> compare c (project vx) (project vr));
+        invtest      = double invtest;
 
-        n_vwl2norm      = lifto n_vwl2norm double;
-        n_vl1norm       = lifto n_vl1norm single;
-        n_vwrmsnormmask = lifto n_vwrmsnormmask triple;
-        n_vconstrmask   = lifto n_vconstrmask triple;
-        n_vminquotient  = lifto n_vminquotient double;
+        wl2norm      = lifto wl2norm double;
+        l1norm       = lifto l1norm single;
+        wrmsnormmask = lifto wrmsnormmask triple;
+        constrmask   = lifto constrmask triple;
+        minquotient  = lifto minquotient double;
 
         n_vgetcommunicator = lifto n_vgetcommunicator single;
 
-        n_vlinearcombination = lifto n_vlinearcombination
+        linearcombination = lifto linearcombination
           (fun f a vxs vr -> f a (projecta vxs) (project vr));
-        n_vscaleaddmulti = lifto n_vscaleaddmulti
+        scaleaddmulti = lifto scaleaddmulti
           (fun f a vx vxs vrs -> f a (project vx) (projecta vxs) (projecta vrs));
-        n_vdotprodmulti = lifto n_vdotprodmulti
+        dotprodmulti = lifto dotprodmulti
           (fun f vx vxs r -> f (project vx) (projecta vxs) r);
 
-        n_vlinearsumvectorarray = lifto n_vlinearsumvectorarray
+        linearsumvectorarray = lifto linearsumvectorarray
           (fun f c1 vxs1 c2 vxs2 vrs -> f c1 (projecta vxs1)
                                           c2 (projecta vxs2)
                                              (projecta vrs));
-        n_vscalevectorarray = lifto n_vscalevectorarray
+        scalevectorarray = lifto scalevectorarray
           (fun f a vxs vrs -> f a (projecta vxs) (projecta vrs));
-        n_vconstvectorarray = lifto n_vconstvectorarray
+        constvectorarray = lifto constvectorarray
           (fun f c vrs -> f c (projecta vrs));
-        n_vwrmsnormvectorarray = lifto n_vwrmsnormvectorarray
+        wrmsnormvectorarray = lifto wrmsnormvectorarray
           (fun f vxs vys rs -> f (projecta vxs) (projecta vys) rs);
-        n_vwrmsnormmaskvectorarray = lifto n_vwrmsnormmaskvectorarray
+        wrmsnormmaskvectorarray = lifto wrmsnormmaskvectorarray
           (fun f vxs vys vz ra -> f (projecta vxs) (projecta vys) (project vz) ra);
-        n_vscaleaddmultivectorarray = lifto n_vscaleaddmultivectorarray
+        scaleaddmultivectorarray = lifto scaleaddmultivectorarray
           (fun f a vxs vyss vrss -> f a (projecta vxs) (projectaa vyss) (projectaa vrss));
-        n_vlinearcombinationvectorarray = lifto n_vlinearcombinationvectorarray
+        linearcombinationvectorarray = lifto linearcombinationvectorarray
           (fun f a vxss vrs -> f a (projectaa vxss) (projecta vrs));
 
-        n_vdotprod_local     = lifto n_vdotprod_local double;
-        n_vmaxnorm_local     = lifto n_vmaxnorm_local single;
-        n_vmin_local         = lifto n_vmin_local single;
-        n_vl1norm_local      = lifto n_vl1norm_local single;
-        n_vinvtest_local     = lifto n_vinvtest_local double;
-        n_vconstrmask_local  = lifto n_vconstrmask_local triple;
-        n_vminquotient_local = lifto n_vminquotient_local double;
-        n_vwsqrsum_local     = lifto n_vwsqrsum_local double;
-        n_vwsqrsummask_local = lifto n_vwsqrsummask_local triple;
+        dotprod_local     = lifto dotprod_local double;
+        maxnorm_local     = lifto maxnorm_local single;
+        min_local         = lifto min_local single;
+        l1norm_local      = lifto l1norm_local single;
+        invtest_local     = lifto invtest_local double;
+        constrmask_local  = lifto constrmask_local triple;
+        minquotient_local = lifto minquotient_local double;
+        wsqrsum_local     = lifto wsqrsum_local double;
+        wsqrsummask_local = lifto wsqrsummask_local triple;
         (* }}} *)
     }
 
@@ -915,27 +915,27 @@ module Any = struct (* {{{ *)
         check v
 
   and clone ops check nv =
-    let nv' = make_wrap_injected ops check (ops.n_vclone (uv nv)) in
+    let nv' = make_wrap_injected ops check (ops.clone (uv nv)) in
     ignore (c_enablelinearcombination_custom nv'
-              (Nvector.has_n_vlinearcombination nv));
+              (Nvector.has_linearcombination nv));
     ignore (c_enablescaleaddmulti_custom nv'
-              (Nvector.has_n_vscaleaddmulti nv));
+              (Nvector.has_scaleaddmulti nv));
     ignore (c_enabledotprodmulti_custom nv'
-              (Nvector.has_n_vdotprodmulti nv));
+              (Nvector.has_dotprodmulti nv));
     ignore (c_enablelinearsumvectorarray_custom nv'
-              (Nvector.has_n_vlinearsumvectorarray nv));
+              (Nvector.has_linearsumvectorarray nv));
     ignore (c_enablescalevectorarray_custom nv'
-              (Nvector.has_n_vscalevectorarray nv));
+              (Nvector.has_scalevectorarray nv));
     ignore (c_enableconstvectorarray_custom nv'
-              (Nvector.has_n_vconstvectorarray nv));
+              (Nvector.has_constvectorarray nv));
     ignore (c_enablewrmsnormvectorarray_custom nv'
-              (Nvector.has_n_vwrmsnormvectorarray nv));
+              (Nvector.has_wrmsnormvectorarray nv));
     ignore (c_enablewrmsnormmaskvectorarray_custom nv'
-              (Nvector.has_n_vwrmsnormmaskvectorarray nv));
+              (Nvector.has_wrmsnormmaskvectorarray nv));
     ignore (c_enablescaleaddmultivectorarray_custom nv'
-              (Nvector.has_n_vscaleaddmultivectorarray nv));
+              (Nvector.has_scaleaddmultivectorarray nv));
     ignore (c_enablelinearcombinationvectorarray_custom nv'
-              (Nvector.has_n_vlinearcombinationvectorarray nv));
+              (Nvector.has_linearcombinationvectorarray nv));
     nv'
 
 end (* }}} *)

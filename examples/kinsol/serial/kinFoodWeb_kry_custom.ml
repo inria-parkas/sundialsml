@@ -89,7 +89,7 @@ let printf = Printf.printf
 let matrix_unwrap = RealArray2.unwrap
 let wrap = Nvector_array.wrap
 let unwrap = RealArray2.unwrap
-let nvwl2norm = Nvector_array.DataOps.n_vwl2norm
+let nvwl2norm = Nvector_array.DataOps.wl2norm
 
 (* Problem Constants *)
 

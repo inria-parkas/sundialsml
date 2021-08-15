@@ -395,7 +395,7 @@ let check_satisfaction =
     residual t vars vars' res;
     if !check_consistency then
       begin
-        let norm = Nvector_serial.DataOps.n_vmaxnorm res in
+        let norm = Nvector_serial.DataOps.maxnorm res in
         if norm > 1e-5 then
           raise (Failure
                    (Printf.sprintf "initial residue too large: t = %g, ||res||=%g\nvars  = %s\nvars' = %s\nres   = %s\n"

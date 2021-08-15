@@ -280,7 +280,7 @@ CAMLprim value sunml_nvec_anywrap_parallel(value extconstr,
     CAMLreturn(vnv);
 }
 
-CAMLprim value sunml_nvec_par_n_vlinearsum(value va, value vx, value vb, value vy,
+CAMLprim value sunml_nvec_par_linearsum(value va, value vx, value vb, value vy,
 					value vz)
 {
     CAMLparam5(va, vx, vb, vy, vz);
@@ -291,21 +291,21 @@ CAMLprim value sunml_nvec_par_n_vlinearsum(value va, value vx, value vb, value v
 #if SUNDIALS_ML_SAFE == 1
     if (NV_LOCLENGTH_P(y) != NV_LOCLENGTH_P(x)
 	    || NV_LOCLENGTH_P(z) != NV_LOCLENGTH_P(x))
-	caml_invalid_argument("Nvector_parallel.n_vlinearsum");
+	caml_invalid_argument("Nvector_parallel.linearsum");
 #endif
 
     N_VLinearSum_Parallel(Double_val(va), x, Double_val(vb), y, z);
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_nvec_par_n_vconst(value vc, value vz)
+CAMLprim value sunml_nvec_par_const(value vc, value vz)
 {
     CAMLparam2(vc, vz);
     N_VConst_Parallel(Double_val(vc), NVEC_VAL(vz));
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_nvec_par_n_vprod(value vx, value vy, value vz)
+CAMLprim value sunml_nvec_par_prod(value vx, value vy, value vz)
 {
     CAMLparam3(vx, vy, vz);
     N_Vector x = NVEC_VAL(vx);
@@ -315,14 +315,14 @@ CAMLprim value sunml_nvec_par_n_vprod(value vx, value vy, value vz)
 #if SUNDIALS_ML_SAFE == 1
     if (NV_LOCLENGTH_P(y) != NV_LOCLENGTH_P(x)
 	    || NV_LOCLENGTH_P(z) != NV_LOCLENGTH_P(x))
-	caml_invalid_argument("Nvector_parallel.n_vprod");
+	caml_invalid_argument("Nvector_parallel.prod");
 #endif
 
     N_VProd_Parallel(x, y, z);
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_nvec_par_n_vdiv(value vx, value vy, value vz)
+CAMLprim value sunml_nvec_par_div(value vx, value vy, value vz)
 {
     CAMLparam3(vx, vy, vz);
     N_Vector x = NVEC_VAL(vx);
@@ -332,14 +332,14 @@ CAMLprim value sunml_nvec_par_n_vdiv(value vx, value vy, value vz)
 #if SUNDIALS_ML_SAFE == 1
     if (NV_LOCLENGTH_P(y) != NV_LOCLENGTH_P(x)
 	    || NV_LOCLENGTH_P(z) != NV_LOCLENGTH_P(x))
-	caml_invalid_argument("Nvector_parallel.n_vdiv");
+	caml_invalid_argument("Nvector_parallel.div");
 #endif
 
     N_VDiv_Parallel(x, y, z);
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_nvec_par_n_vscale(value vc, value vx, value vz)
+CAMLprim value sunml_nvec_par_scale(value vc, value vx, value vz)
 {
     CAMLparam3(vc, vx, vz);
     N_Vector x = NVEC_VAL(vx);
@@ -347,14 +347,14 @@ CAMLprim value sunml_nvec_par_n_vscale(value vc, value vx, value vz)
 
 #if SUNDIALS_ML_SAFE == 1
     if (NV_LOCLENGTH_P(z) != NV_LOCLENGTH_P(x))
-	caml_invalid_argument("Nvector_parallel.n_vscale");
+	caml_invalid_argument("Nvector_parallel.scale");
 #endif
 
     N_VScale_Parallel(Double_val(vc), x, z);
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_nvec_par_n_vabs(value vx, value vz)
+CAMLprim value sunml_nvec_par_abs(value vx, value vz)
 {
     CAMLparam2(vx, vz);
     N_Vector x = NVEC_VAL(vx);
@@ -362,14 +362,14 @@ CAMLprim value sunml_nvec_par_n_vabs(value vx, value vz)
 
 #if SUNDIALS_ML_SAFE == 1
     if (NV_LOCLENGTH_P(z) != NV_LOCLENGTH_P(x))
-	caml_invalid_argument("Nvector_parallel.n_vabs");
+	caml_invalid_argument("Nvector_parallel.abs");
 #endif
 
     N_VAbs_Parallel(x, z);
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_nvec_par_n_vinv(value vx, value vz)
+CAMLprim value sunml_nvec_par_inv(value vx, value vz)
 {
     CAMLparam2(vx, vz);
     N_Vector x = NVEC_VAL(vx);
@@ -377,14 +377,14 @@ CAMLprim value sunml_nvec_par_n_vinv(value vx, value vz)
 
 #if SUNDIALS_ML_SAFE == 1
     if (NV_LOCLENGTH_P(z) != NV_LOCLENGTH_P(x))
-	caml_invalid_argument("Nvector_parallel.n_vinv");
+	caml_invalid_argument("Nvector_parallel.inv");
 #endif
 
     N_VInv_Parallel(x, z);
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_nvec_par_n_vaddconst(value vx, value vb, value vz)
+CAMLprim value sunml_nvec_par_addconst(value vx, value vb, value vz)
 {
     CAMLparam3(vx, vb, vz);
     N_Vector x = NVEC_VAL(vx);
@@ -392,14 +392,14 @@ CAMLprim value sunml_nvec_par_n_vaddconst(value vx, value vb, value vz)
 
 #if SUNDIALS_ML_SAFE == 1
     if (NV_LOCLENGTH_P(z) != NV_LOCLENGTH_P(x))
-	caml_invalid_argument("Nvector_parallel.n_vaddconst");
+	caml_invalid_argument("Nvector_parallel.addconst");
 #endif
 
     N_VAddConst_Parallel(x, Double_val(vb), z);
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_nvec_par_n_vdotprod(value vx, value vy)
+CAMLprim value sunml_nvec_par_dotprod(value vx, value vy)
 {
     CAMLparam2(vx, vy);
     N_Vector x = NVEC_VAL(vx);
@@ -407,21 +407,21 @@ CAMLprim value sunml_nvec_par_n_vdotprod(value vx, value vy)
 
 #if SUNDIALS_ML_SAFE == 1
     if (NV_LOCLENGTH_P(y) != NV_LOCLENGTH_P(x))
-	caml_invalid_argument("Nvector_parallel.n_vdotprod");
+	caml_invalid_argument("Nvector_parallel.dotprod");
 #endif
 
     realtype r = N_VDotProd_Parallel(x, y);
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_par_n_vmaxnorm(value vx)
+CAMLprim value sunml_nvec_par_maxnorm(value vx)
 {
     CAMLparam1(vx);
     realtype r = N_VMaxNorm_Parallel(NVEC_VAL(vx));
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_par_n_vwrmsnorm(value vx, value vw)
+CAMLprim value sunml_nvec_par_wrmsnorm(value vx, value vw)
 {
     CAMLparam2(vx, vw);
     N_Vector x = NVEC_VAL(vx);
@@ -429,14 +429,14 @@ CAMLprim value sunml_nvec_par_n_vwrmsnorm(value vx, value vw)
 
 #if SUNDIALS_ML_SAFE == 1
     if (NV_LOCLENGTH_P(w) != NV_LOCLENGTH_P(x))
-	caml_invalid_argument("Nvector_parallel.n_vwrmsnorm");
+	caml_invalid_argument("Nvector_parallel.wrmsnorm");
 #endif
 
     realtype r = N_VWrmsNorm_Parallel(x, w);
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_par_n_vwrmsnormmask(value vx, value vw, value vid)
+CAMLprim value sunml_nvec_par_wrmsnormmask(value vx, value vw, value vid)
 {
     CAMLparam3(vx, vw, vid);
     N_Vector x = NVEC_VAL(vx);
@@ -446,20 +446,20 @@ CAMLprim value sunml_nvec_par_n_vwrmsnormmask(value vx, value vw, value vid)
 #if SUNDIALS_ML_SAFE == 1
     if (NV_LOCLENGTH_P(w) != NV_LOCLENGTH_P(x)
 	    || NV_LOCLENGTH_P(w) != NV_LOCLENGTH_P(id))
-	caml_invalid_argument("Nvector_parallel.n_vwrmsnormmask");
+	caml_invalid_argument("Nvector_parallel.wrmsnormmask");
 #endif
     realtype r = N_VWrmsNormMask_Parallel(x, w, id);
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_par_n_vmin(value vx)
+CAMLprim value sunml_nvec_par_min(value vx)
 {
     CAMLparam1(vx);
     realtype r = N_VMin_Parallel(NVEC_VAL(vx));
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_par_n_vwl2norm(value vx, value vw)
+CAMLprim value sunml_nvec_par_wl2norm(value vx, value vw)
 {
     CAMLparam2(vx, vw);
     N_Vector x = NVEC_VAL(vx);
@@ -467,21 +467,21 @@ CAMLprim value sunml_nvec_par_n_vwl2norm(value vx, value vw)
 
 #if SUNDIALS_ML_SAFE == 1
     if (NV_LOCLENGTH_P(w) != NV_LOCLENGTH_P(x))
-	caml_invalid_argument("Nvector_parallel.n_vwl2norm");
+	caml_invalid_argument("Nvector_parallel.wl2norm");
 #endif
 
     realtype r = N_VWL2Norm_Parallel(x, w);
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_par_n_vl1norm(value vx)
+CAMLprim value sunml_nvec_par_l1norm(value vx)
 {
     CAMLparam1(vx);
     realtype r = N_VL1Norm_Parallel(NVEC_VAL(vx));
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_par_n_vcompare(value vc, value vx, value vz)
+CAMLprim value sunml_nvec_par_compare(value vc, value vx, value vz)
 {
     CAMLparam3(vc, vx, vz);
     N_Vector x = NVEC_VAL(vx);
@@ -489,13 +489,13 @@ CAMLprim value sunml_nvec_par_n_vcompare(value vc, value vx, value vz)
 
 #if SUNDIALS_ML_SAFE == 1
     if (NV_LOCLENGTH_P(z) != NV_LOCLENGTH_P(x))
-	caml_invalid_argument("Nvector_parallel.n_vcompare");
+	caml_invalid_argument("Nvector_parallel.compare");
 #endif
     N_VCompare_Parallel(Double_val(vc), x, z);
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_nvec_par_n_vinvtest(value vx, value vz)
+CAMLprim value sunml_nvec_par_invtest(value vx, value vz)
 {
     CAMLparam2(vx, vz);
     N_Vector x = NVEC_VAL(vx);
@@ -503,14 +503,14 @@ CAMLprim value sunml_nvec_par_n_vinvtest(value vx, value vz)
 
 #if SUNDIALS_ML_SAFE == 1
     if (NV_LOCLENGTH_P(z) != NV_LOCLENGTH_P(x))
-	caml_invalid_argument("Nvector_parallel.n_vinvtest");
+	caml_invalid_argument("Nvector_parallel.invtest");
 #endif
 
     booleantype r = N_VInvTest_Parallel(x, z);
     CAMLreturn(Val_bool(r));
 }
 
-CAMLprim value sunml_nvec_par_n_vconstrmask(value vc, value vx, value vm)
+CAMLprim value sunml_nvec_par_constrmask(value vc, value vx, value vm)
 {
     CAMLparam3(vc, vx, vm);
     N_Vector c = NVEC_VAL(vc);
@@ -520,14 +520,14 @@ CAMLprim value sunml_nvec_par_n_vconstrmask(value vc, value vx, value vm)
 #if SUNDIALS_ML_SAFE == 1
     if (NV_LOCLENGTH_P(x) != NV_LOCLENGTH_P(c)
 	    || NV_LOCLENGTH_P(m) != NV_LOCLENGTH_P(x))
-	caml_invalid_argument("Nvector_parallel.n_vconstrmask");
+	caml_invalid_argument("Nvector_parallel.constrmask");
 #endif
 
     booleantype r = N_VConstrMask_Parallel(c, x, m);
     CAMLreturn(Val_bool(r));
 }
 
-CAMLprim value sunml_nvec_par_n_vminquotient(value vnum, value vdenom)
+CAMLprim value sunml_nvec_par_minquotient(value vnum, value vdenom)
 {
     CAMLparam2(vnum, vdenom);
     N_Vector num = NVEC_VAL(vnum);
@@ -535,14 +535,14 @@ CAMLprim value sunml_nvec_par_n_vminquotient(value vnum, value vdenom)
 
 #if SUNDIALS_ML_SAFE == 1
     if (NV_LOCLENGTH_P(num) != NV_LOCLENGTH_P(denom))
-	caml_invalid_argument("Nvector_parallel.n_vminquotient");
+	caml_invalid_argument("Nvector_parallel.minquotient");
 #endif
 
     realtype r = N_VMinQuotient_Parallel(num, denom);
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_par_n_vspace(value vx)
+CAMLprim value sunml_nvec_par_space(value vx)
 {
     CAMLparam1(vx);
     CAMLlocal1(r);
@@ -557,7 +557,7 @@ CAMLprim value sunml_nvec_par_n_vspace(value vx)
     CAMLreturn(r);
 }
 
-CAMLprim value sunml_nvec_par_n_vgetlength(value vx)
+CAMLprim value sunml_nvec_par_getlength(value vx)
 {
     CAMLparam1(vx);
     CAMLlocal1(r);
@@ -591,7 +591,7 @@ CAMLprim value sunml_nvec_par_n_vgetcommunicator(value vx)
 
 /* fused vector operations */
 
-CAMLprim value sunml_nvec_par_n_vlinearcombination(value vac, value vax,
+CAMLprim value sunml_nvec_par_linearcombination(value vac, value vax,
 						   value vz)
 {
     CAMLparam3(vac, vax, vz);
@@ -604,7 +604,7 @@ CAMLprim value sunml_nvec_par_n_vlinearcombination(value vac, value vax,
 #if SUNDIALS_ML_SAFE == 1
     if (!nvec || ARRAY1_LEN(vac) < nvec
 	    || NV_LOCLENGTH_P(ax[0]) != NV_LOCLENGTH_P(z))
-	caml_invalid_argument("Nvector_parallel.n_vlinearcombination");
+	caml_invalid_argument("Nvector_parallel.linearcombination");
 #endif
 
     N_VLinearCombination_Parallel(nvec, ac, ax, z);
@@ -615,7 +615,7 @@ CAMLprim value sunml_nvec_par_n_vlinearcombination(value vac, value vax,
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value sunml_nvec_par_n_vscaleaddmulti(value vac, value vx, value vay,
+CAMLprim value sunml_nvec_par_scaleaddmulti(value vac, value vx, value vay,
 					       value vaz)
 {
     CAMLparam4(vac, vx, vay, vaz);
@@ -628,7 +628,7 @@ CAMLprim value sunml_nvec_par_n_vscaleaddmulti(value vac, value vx, value vay,
 #if SUNDIALS_ML_SAFE == 1
     if (!nvec || ARRAY1_LEN(vac) < nvec
 	    || NV_LOCLENGTH_P(a[0][0]) != NV_LOCLENGTH_P(x))
-	caml_invalid_argument("Nvector_parallel.n_vscaleaddmulti");
+	caml_invalid_argument("Nvector_parallel.scaleaddmulti");
 #endif
 
     N_VScaleAddMulti_Parallel(nvec, ac, x, a[0], a[1]);
@@ -639,7 +639,7 @@ CAMLprim value sunml_nvec_par_n_vscaleaddmulti(value vac, value vx, value vay,
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value sunml_nvec_par_n_vdotprodmulti(value vx, value vay, value vad)
+CAMLprim value sunml_nvec_par_dotprodmulti(value vx, value vay, value vad)
 {
     CAMLparam3(vx, vay, vad);
 #if 400 <= SUNDIALS_LIB_VERSION
@@ -651,7 +651,7 @@ CAMLprim value sunml_nvec_par_n_vdotprodmulti(value vx, value vay, value vad)
 #if SUNDIALS_ML_SAFE == 1
     if (!nvec || ARRAY1_LEN(vad) < nvec
 		|| NV_LOCLENGTH_P(ay[0]) != NV_LOCLENGTH_P(x))
-	caml_invalid_argument("Nvector_parallel.n_vdotprodmulti");
+	caml_invalid_argument("Nvector_parallel.dotprodmulti");
 #endif
 
     N_VDotProdMulti_Parallel(nvec, x, ay, ad);
@@ -665,7 +665,7 @@ CAMLprim value sunml_nvec_par_n_vdotprodmulti(value vx, value vay, value vad)
 
 /* vector array operations */
 
-CAMLprim value sunml_nvec_par_n_vlinearsumvectorarray(value va, value vax,
+CAMLprim value sunml_nvec_par_linearsumvectorarray(value va, value vax,
 						      value vb, value vay,
 						      value vaz)
 {
@@ -675,7 +675,7 @@ CAMLprim value sunml_nvec_par_n_vlinearsumvectorarray(value va, value vax,
     int nvec = sunml_arrays_of_nvectors(a, 3, vax, vay, vaz);
 
 #if SUNDIALS_ML_SAFE == 1
-    if (!nvec) caml_invalid_argument("Nvector_parallel.n_vlinearsumvectorarray");
+    if (!nvec) caml_invalid_argument("Nvector_parallel.linearsumvectorarray");
 #endif
 
     N_VLinearSumVectorArray_Parallel(nvec, Double_val(va), a[0],
@@ -687,7 +687,7 @@ CAMLprim value sunml_nvec_par_n_vlinearsumvectorarray(value va, value vax,
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value sunml_nvec_par_n_vscalevectorarray(value vac, value vax,
+CAMLprim value sunml_nvec_par_scalevectorarray(value vac, value vax,
 						  value vaz)
 {
     CAMLparam3(vac, vax, vaz);
@@ -698,7 +698,7 @@ CAMLprim value sunml_nvec_par_n_vscalevectorarray(value vac, value vax,
 
 #if SUNDIALS_ML_SAFE == 1
     if (!nvec || ARRAY1_LEN(vac) < nvec)
-	caml_invalid_argument("Nvector_parallel.n_vscalevectorarray");
+	caml_invalid_argument("Nvector_parallel.scalevectorarray");
 #endif
 
     N_VScaleVectorArray_Parallel(nvec, ac, a[0], a[1]);
@@ -709,7 +709,7 @@ CAMLprim value sunml_nvec_par_n_vscalevectorarray(value vac, value vax,
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value sunml_nvec_par_n_vconstvectorarray(value vc, value vaz)
+CAMLprim value sunml_nvec_par_constvectorarray(value vc, value vaz)
 {
     CAMLparam2(vc, vaz);
 #if 400 <= SUNDIALS_LIB_VERSION
@@ -717,7 +717,7 @@ CAMLprim value sunml_nvec_par_n_vconstvectorarray(value vc, value vaz)
     int nvec = sunml_arrays_of_nvectors(&az, 1, vaz);
 
 #if SUNDIALS_ML_SAFE == 1
-    if (!nvec) caml_invalid_argument("Nvector_parallel.n_vconstvectorarray");
+    if (!nvec) caml_invalid_argument("Nvector_parallel.constvectorarray");
 #endif
 
     N_VConstVectorArray_Parallel(nvec, Double_val(vc), az);
@@ -728,7 +728,7 @@ CAMLprim value sunml_nvec_par_n_vconstvectorarray(value vc, value vaz)
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value sunml_nvec_par_n_vwrmsnormvectorarray(value vax, value vaw,
+CAMLprim value sunml_nvec_par_wrmsnormvectorarray(value vax, value vaw,
 						     value van)
 {
     CAMLparam3(vax, vaw, van);
@@ -739,7 +739,7 @@ CAMLprim value sunml_nvec_par_n_vwrmsnormvectorarray(value vax, value vaw,
 
 #if SUNDIALS_ML_SAFE == 1
     if (!nvec || ARRAY1_LEN(van) < nvec)
-	caml_invalid_argument("Nvector_parallel.n_vconstvectorarray");
+	caml_invalid_argument("Nvector_parallel.constvectorarray");
 #endif
 
     N_VWrmsNormVectorArray_Parallel(nvec, a[0], a[1], an);
@@ -750,7 +750,7 @@ CAMLprim value sunml_nvec_par_n_vwrmsnormvectorarray(value vax, value vaw,
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value sunml_nvec_par_n_vwrmsnormmaskvectorarray(value vax,
+CAMLprim value sunml_nvec_par_wrmsnormmaskvectorarray(value vax,
 						value vaw, value vi, value van)
 {
     CAMLparam4(vax, vaw, vi, van);
@@ -763,7 +763,7 @@ CAMLprim value sunml_nvec_par_n_vwrmsnormmaskvectorarray(value vax,
 #if SUNDIALS_ML_SAFE == 1
     if (!nvec || ARRAY1_LEN(van) < nvec
 		|| NV_LOCLENGTH_P(i) != NV_LOCLENGTH_P(a[0][0]))
-	caml_invalid_argument("Nvector_parallel.n_vconstvectorarray");
+	caml_invalid_argument("Nvector_parallel.constvectorarray");
 #endif
 
     N_VWrmsNormMaskVectorArray_Parallel(nvec, a[0], a[1], i, an);
@@ -774,7 +774,7 @@ CAMLprim value sunml_nvec_par_n_vwrmsnormmaskvectorarray(value vax,
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value sunml_nvec_par_n_vscaleaddmultivectorarray(value vaa,
+CAMLprim value sunml_nvec_par_scaleaddmultivectorarray(value vaa,
 					    value vax, value vaay, value vaaz)
 {
     CAMLparam4(vaa, vax, vaay, vaaz);
@@ -790,7 +790,7 @@ CAMLprim value sunml_nvec_par_n_vscaleaddmultivectorarray(value vaa,
     if (!nvec || !nsum || nvec2 != nvec || ARRAY1_LEN(vaa) < nsum) {
 	if (ax != NULL) free(ax);
 	if (*ayz != NULL) free(*ayz);
-	caml_invalid_argument("Nvector_parallel.n_vscaleaddmultivectorarray");
+	caml_invalid_argument("Nvector_parallel.scaleaddmultivectorarray");
     }
 #endif
 
@@ -803,7 +803,7 @@ CAMLprim value sunml_nvec_par_n_vscaleaddmultivectorarray(value vaa,
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value sunml_nvec_par_n_vlinearcombinationvectorarray(value vac,
+CAMLprim value sunml_nvec_par_linearcombinationvectorarray(value vac,
 							value vaax, value vaz)
 {
     CAMLparam3(vac, vaax, vaz);
@@ -820,7 +820,7 @@ CAMLprim value sunml_nvec_par_n_vlinearcombinationvectorarray(value vac,
     if (!nvecz || !nsum || nvec > nvecz || ARRAY1_LEN(vac) < nsum) {
 	if (az != NULL) free(az);
 	if (aax != NULL) free(aax);
-	caml_invalid_argument("Nvector_parallel.n_vlinearcombinationvectorarray");
+	caml_invalid_argument("Nvector_parallel.linearcombinationvectorarray");
     }
 #endif
 
@@ -834,7 +834,7 @@ CAMLprim value sunml_nvec_par_n_vlinearcombinationvectorarray(value vac,
 
 /** Reduce operations for parallel nvectors */
 
-CAMLprim value sunml_nvec_par_n_vdotprodlocal(value vx, value vy)
+CAMLprim value sunml_nvec_par_dotprodlocal(value vx, value vy)
 {
     CAMLparam2(vx, vy);
     realtype r;
@@ -845,7 +845,7 @@ CAMLprim value sunml_nvec_par_n_vdotprodlocal(value vx, value vy)
 
 #if SUNDIALS_ML_SAFE == 1
     if (NV_LOCLENGTH_P(y) != NV_LOCLENGTH_P(x))
-	caml_invalid_argument("Nvector_parallel.n_vdotprodlocal");
+	caml_invalid_argument("Nvector_parallel.dotprodlocal");
 #endif
 
     r = N_VDotProdLocal_Parallel(x, y);
@@ -857,7 +857,7 @@ CAMLprim value sunml_nvec_par_n_vdotprodlocal(value vx, value vy)
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_par_n_vmaxnormlocal(value vx)
+CAMLprim value sunml_nvec_par_maxnormlocal(value vx)
 {
     CAMLparam1(vx);
     realtype r;
@@ -873,7 +873,7 @@ CAMLprim value sunml_nvec_par_n_vmaxnormlocal(value vx)
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_par_n_vminlocal(value vx)
+CAMLprim value sunml_nvec_par_minlocal(value vx)
 {
     CAMLparam1(vx);
     realtype r;
@@ -889,7 +889,7 @@ CAMLprim value sunml_nvec_par_n_vminlocal(value vx)
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_par_n_vl1normlocal(value vx)
+CAMLprim value sunml_nvec_par_l1normlocal(value vx)
 {
     CAMLparam1(vx);
     realtype r;
@@ -905,7 +905,7 @@ CAMLprim value sunml_nvec_par_n_vl1normlocal(value vx)
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_par_n_vinvtestlocal(value vx, value vz)
+CAMLprim value sunml_nvec_par_invtestlocal(value vx, value vz)
 {
     CAMLparam2(vx, vz);
     booleantype r;
@@ -916,7 +916,7 @@ CAMLprim value sunml_nvec_par_n_vinvtestlocal(value vx, value vz)
 
 #if SUNDIALS_ML_SAFE == 1
     if (NV_LOCLENGTH_P(z) != NV_LOCLENGTH_P(x))
-	caml_invalid_argument("Nvector_parallel.n_vinvtestlocal");
+	caml_invalid_argument("Nvector_parallel.invtestlocal");
 #endif
 
     r = N_VInvTestLocal_Parallel(x, z);
@@ -928,7 +928,7 @@ CAMLprim value sunml_nvec_par_n_vinvtestlocal(value vx, value vz)
     CAMLreturn(Val_bool(r));
 }
 
-CAMLprim value sunml_nvec_par_n_vconstrmasklocal(value vc, value vx, value vm)
+CAMLprim value sunml_nvec_par_constrmasklocal(value vc, value vx, value vm)
 {
     CAMLparam3(vc, vx, vm);
     booleantype r;
@@ -941,7 +941,7 @@ CAMLprim value sunml_nvec_par_n_vconstrmasklocal(value vc, value vx, value vm)
 #if SUNDIALS_ML_SAFE == 1
     if (NV_LOCLENGTH_P(x) != NV_LOCLENGTH_P(c)
 	    || NV_LOCLENGTH_P(m) != NV_LOCLENGTH_P(c))
-	caml_invalid_argument("Nvector_parallel.n_vconstrmasklocal");
+	caml_invalid_argument("Nvector_parallel.constrmasklocal");
 #endif
 
     r = N_VConstrMaskLocal_Parallel(c, x, m);
@@ -953,7 +953,7 @@ CAMLprim value sunml_nvec_par_n_vconstrmasklocal(value vc, value vx, value vm)
     CAMLreturn(Val_bool(r));
 }
 
-CAMLprim value sunml_nvec_par_n_vminquotientlocal(value vn, value vd)
+CAMLprim value sunml_nvec_par_minquotientlocal(value vn, value vd)
 {
     CAMLparam2(vn, vd);
     realtype r;
@@ -964,7 +964,7 @@ CAMLprim value sunml_nvec_par_n_vminquotientlocal(value vn, value vd)
 
 #if SUNDIALS_ML_SAFE == 1
     if (NV_LOCLENGTH_P(n) != NV_LOCLENGTH_P(d))
-	caml_invalid_argument("Nvector_parallel.n_vminquotientlocal");
+	caml_invalid_argument("Nvector_parallel.minquotientlocal");
 #endif
 
     r = N_VMinQuotientLocal_Parallel(n, d);
@@ -976,7 +976,7 @@ CAMLprim value sunml_nvec_par_n_vminquotientlocal(value vn, value vd)
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_par_n_vwsqrsumlocal(value vx, value vw)
+CAMLprim value sunml_nvec_par_wsqrsumlocal(value vx, value vw)
 {
     CAMLparam2(vx, vw);
     realtype r;
@@ -987,7 +987,7 @@ CAMLprim value sunml_nvec_par_n_vwsqrsumlocal(value vx, value vw)
 
 #if SUNDIALS_ML_SAFE == 1
     if (NV_LOCLENGTH_P(w) != NV_LOCLENGTH_P(x))
-	caml_invalid_argument("Nvector_parallel.n_vwsqrsumlocal");
+	caml_invalid_argument("Nvector_parallel.wsqrsumlocal");
 #endif
 
     r = N_VWSqrSumLocal_Parallel(x, w);
@@ -999,7 +999,7 @@ CAMLprim value sunml_nvec_par_n_vwsqrsumlocal(value vx, value vw)
     CAMLreturn(caml_copy_double(r));
 }
 
-CAMLprim value sunml_nvec_par_n_vwsqrsummasklocal(value vx, value vw, value vid)
+CAMLprim value sunml_nvec_par_wsqrsummasklocal(value vx, value vw, value vid)
 {
     CAMLparam3(vx, vw, vid);
     realtype r;
@@ -1012,7 +1012,7 @@ CAMLprim value sunml_nvec_par_n_vwsqrsummasklocal(value vx, value vw, value vid)
 #if SUNDIALS_ML_SAFE == 1
     if (NV_LOCLENGTH_P(w) != NV_LOCLENGTH_P(x)
 	    || NV_LOCLENGTH_P(id) != NV_LOCLENGTH_P(x))
-	caml_invalid_argument("Nvector_parallel.n_vwsqrsummasklocal");
+	caml_invalid_argument("Nvector_parallel.wsqrsummasklocal");
 #endif
 
     r = N_VWSqrSumMaskLocal_Parallel(x, w, id);

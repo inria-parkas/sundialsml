@@ -103,7 +103,7 @@ open Bigarray
 
 let printf = Printf.printf
 let unwrap = Sundials.RealArray2.unwrap
-let nvwl2norm = Nvector_serial.DataOps.n_vwl2norm
+let nvwl2norm = Nvector_serial.DataOps.wl2norm
 
 (* Problem Constants *)
 

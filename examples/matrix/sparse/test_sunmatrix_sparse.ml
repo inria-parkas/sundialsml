@@ -143,8 +143,8 @@ let test_sunmatscaleadd2 check_vector a b x y z =
   try
     (* create clones for test *)
     let c = clone a in
-    let u = Nvector_serial.Ops.n_vclone y in
-    let v = Nvector_serial.Ops.n_vclone y in
+    let u = Nvector_serial.Ops.clone y in
+    let v = Nvector_serial.Ops.clone y in
 
     (* test 1: add A to B (output must be enlarged) *)
     (try Matrix.blit ~src:a ~dst:c
@@ -156,7 +156,7 @@ let test_sunmatscaleadd2 check_vector a b x y z =
     (try Matrix.matvec c x u
      with _ -> printf ">>> FAILED test -- SUNMatMatvec returned 1 \n";
                raise Exit);
-    Nvector_serial.Ops.n_vlinearsum 1. y 1. z v;  (* v = y+z *)
+    Nvector_serial.Ops.linearsum 1. y 1. z v;  (* v = y+z *)
     if not (check_vector u v tol)                 (* u ?= v *)
     then printf "    PASSED test -- SUNMatScaleAdd2 check 1 \n"
     else begin
@@ -192,7 +192,7 @@ let test_sunmatscaleadd2 check_vector a b x y z =
     (try Matrix.matvec d x u (* u = Cx = Ax+Bx *)
      with _ -> printf ">>> FAILED test -- SUNMatMatvec returned 1 @\n";
                raise Exit);
-    Nvector_serial.Ops.n_vlinearsum 1. y 1. z v; (* v = y+z *)
+    Nvector_serial.Ops.linearsum 1. y 1. z v; (* v = y+z *)
     if not (check_vector u v tol)                (* u ?= v *)
     then printf "    PASSED test -- SUNMatScaleAdd2 check 2 @\n"
     else begin
@@ -226,7 +226,7 @@ let test_sunmatscaleadd2 check_vector a b x y z =
     (try Matrix.matvec e x u (* u = Ex = -Ax *)
      with _ -> printf ">>> FAILED test -- SUNMatMatvec returned 1 @\n";
                raise Exit);
-    Nvector_serial.Ops.n_vlinearsum (-1.0) y 0.0 z v; (* v = -y *)
+    Nvector_serial.Ops.linearsum (-1.0) y 0.0 z v; (* v = -y *)
     if not (check_vector u v tol)                     (* v ?= u *)
     then printf "    PASSED test -- SUNMatScaleAdd2 check 3 @\n"
     else begin
@@ -266,8 +266,8 @@ let test_sunmatscaleaddi2 check_vector a x y =
   try
     (* create clones for test *)
     let b = clone a in
-    let z = Nvector_serial.Ops.n_vclone x in
-    let w = Nvector_serial.Ops.n_vclone x in
+    let z = Nvector_serial.Ops.clone x in
+    let w = Nvector_serial.Ops.clone x in
 
     (* test 1: add I to a matrix with insufficient storage *)
     (try Matrix.blit ~src:a ~dst:b
@@ -279,7 +279,7 @@ let test_sunmatscaleaddi2 check_vector a x y =
     (try Matrix.matvec b x z
      with _ -> printf ">>> FAILED test -- SUNMatMatvec returned 1 @\n";
                raise Exit);
-    Nvector_serial.Ops.n_vlinearsum 1. x (-1.0) y w;
+    Nvector_serial.Ops.linearsum 1. x (-1.0) y w;
     if not (check_vector z w tol)
     then printf "    PASSED test -- SUNMatScaleAddI2 check 1 @\n"
     else begin
@@ -310,7 +310,7 @@ let test_sunmatscaleaddi2 check_vector a x y =
     (try Matrix.matvec c x z (* u = Cx = Ax+Bx *)
      with _ -> printf ">>> FAILED test -- SUNMatMatvec returned 1 @\n";
                raise Exit);
-    Nvector_serial.Ops.n_vlinearsum 1. x (-1.0) y w;
+    Nvector_serial.Ops.linearsum 1. x (-1.0) y w;
     if not (check_vector z w tol)                 (* u ?= v *)
     then printf "    PASSED test -- SUNMatScaleAddI2 check 2 @\n"
     else begin

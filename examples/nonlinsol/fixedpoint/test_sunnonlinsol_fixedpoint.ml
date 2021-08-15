@@ -49,7 +49,7 @@ let y3 = -.pi/.six
 (* Proxy for integrator convergence test function *)
 let conv_test (y : RealArray.t) (del : RealArray.t) tol (ewt : RealArray.t) _ =
   (* compute the norm of the correction *)
-  if Nvector_serial.DataOps.n_vmaxnorm del <= tol
+  if Nvector_serial.DataOps.maxnorm del <= tol
   then NLS.Success else NLS.Continue
 
 (* -----------------------------------------------------------------------------
@@ -81,7 +81,7 @@ let main () =
   let x = Nvector_serial.make neq 0.0 in
   (* set initial guess *)
   let y0 = Nvector_serial.wrap (RealArray.of_array [| ptone; ptone; -.ptone |]) in
-  let y = Nvector_serial.Ops.n_vclone x in
+  let y = Nvector_serial.Ops.clone x in
   let ydata = Nvector_serial.unwrap y in
   (* set weights *)
   let w = Nvector_serial.make neq one in

@@ -42,8 +42,8 @@ open Sundials
 
 let unvec = Nvector.unwrap
 module Sens = Idas.Sensitivity
-let n_vclone = Nvector_parallel.Ops.n_vclone
-let n_vconst = Nvector_parallel.Ops.n_vconst
+let clone = Nvector_parallel.Ops.clone
+let const = Nvector_parallel.Ops.const
 
 let fprintf = Printf.fprintf
 let printf = Printf.printf
@@ -540,7 +540,7 @@ let print_header neq rtol atol mudq mukeep sensi_meth err_con =
  * Print integrator statistics and max-norm of solution
  *)
 let print_output id mem t uu sensi uuS =
-  let umax = Nvector_parallel.Ops.n_vmaxnorm uu in
+  let umax = Nvector_parallel.Ops.maxnorm uu in
 
   if id = 0 then begin
 
@@ -562,7 +562,7 @@ let print_output id mem t uu sensi uuS =
 
   if sensi then begin
     for is = 0 to ns-1 do
-      let umax = Nvector_parallel.Ops.n_vmaxnorm uuS.(is) in
+      let umax = Nvector_parallel.Ops.maxnorm uuS.(is) in
       if id == 0 then
         printf "       %13.5e\n" umax
     done
@@ -629,7 +629,7 @@ let main () =
   (* Initialize the uu, up, id, and constraints profiles. *)
 
   set_initial_profile data (unvec uu) (unvec up) (unvec id) (unvec res);
-  Ops.n_vconst one constraints;
+  Ops.const one constraints;
 
   let t0 = zero and t1 = 0.01 in
 
@@ -685,14 +685,14 @@ let main () =
          however, the derivatives upS may not and therefore we will have
          to call IDACalcIC to find them) *)
 
-      let uuS = Array.init ns (fun _ -> n_vclone uu) in
+      let uuS = Array.init ns (fun _ -> clone uu) in
       for is = 0 to ns-1 do
-        n_vconst zero uuS.(is)
+        const zero uuS.(is)
       done;
 
-      let upS = Array.init ns (fun _ -> n_vclone uu) in
+      let upS = Array.init ns (fun _ -> clone uu) in
       for is = 0 to ns-1 do
-        n_vconst zero upS.(is)
+        const zero upS.(is)
       done;
 
       (* Initialize FSA using the default internal sensitivity residual function

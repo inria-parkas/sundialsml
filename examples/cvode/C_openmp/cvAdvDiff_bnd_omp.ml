@@ -52,7 +52,7 @@ open Sundials
 let unwrap = Nvector.unwrap
 
 let printf = Printf.printf
-let vmax_norm = Nvector_openmp.Ops.n_vmaxnorm
+let vmax_norm = Nvector_openmp.Ops.maxnorm
 
 (* Header files with a description of contents used in cvbanx.c *)
 

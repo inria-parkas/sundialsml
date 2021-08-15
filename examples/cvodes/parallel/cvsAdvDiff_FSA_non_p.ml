@@ -59,7 +59,7 @@ let local_array = Nvector_parallel.local_array
 let printf = Printf.printf
 let eprintf = Printf.eprintf
 
-let vmax_norm = Nvector_parallel.Ops.n_vmaxnorm
+let vmax_norm = Nvector_parallel.Ops.maxnorm
 
 (* Problem Constants *)
 let xmax =  2.0   (* domain boundary           *)

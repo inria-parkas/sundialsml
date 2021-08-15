@@ -39,7 +39,7 @@ let local_array = Nvector_parallel.local_array
 
 let printf = Printf.printf
 
-let vmaxnorm = Nvector_parallel.Ops.n_vmaxnorm
+let vmaxnorm = Nvector_parallel.Ops.maxnorm
 
 (* Problem Constants *)
 

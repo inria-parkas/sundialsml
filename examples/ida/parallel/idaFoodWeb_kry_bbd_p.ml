@@ -103,8 +103,8 @@ open Sundials
 let fprintf = Printf.fprintf
 let printf = Printf.printf
 
-let vconst = Nvector_parallel.DataOps.n_vconst
-let vscale = Nvector_parallel.DataOps.n_vscale
+let vconst = Nvector_parallel.DataOps.const
+let vscale = Nvector_parallel.DataOps.scale
 
 let slice = Bigarray.Array1.sub
 
