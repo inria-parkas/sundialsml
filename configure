@@ -1161,6 +1161,36 @@ fi
 
 serial_nvec_libs=-lsundials_nvecserial
 
+# Check for nvector_manyvector installation
+nvecmanyvector_info='not available'
+nvecmanyvector_enabled=
+if [ $sundials -ge 500 ]; then
+    test_stem=__configure_test_file__nvecmanyvector
+    cat > $test_stem.c <<EOF
+#include <stdio.h>
+#include <nvector/nvector_serial.h>
+#include <nvector/nvector_manyvector.h>
+int main (int argc, char *argv[])
+{
+  N_Vector s1 = N_VNew_Serial(10);
+  (void)N_VNew_ManyVector (1, &s1);
+  return 0;
+}
+EOF
+    if ! $CC -o $test_stem$XX ${Isundials_inc_path} $test_stem.c \
+	 ${Lsundials_lib_path} -lsundials_nvecserial \
+	 -lsundials_nvecmanyvector ${libm} \
+       >>${logfile} 2>&1;
+    then
+	nvecmanyvector_info='not installed'
+    else
+	nvecmanyvector_info='installed'
+	nvecmanyvector_enabled=1
+	serial_nvec_libs="$serial_nvec_libs -lsundials_nvecmanyvector"
+    fi
+    ${debug_configure} || rm -f ./$test_stem.* ./$test_stem$XX
+fi
+
 # Check for nvector_pthread installation
 nvecpthreads_info='not available'
 nvecpthreads_enabled=
@@ -1342,6 +1372,7 @@ printf "  Sundials              ${sundials_version}${lapack_info}\n"  >> ${LOG}
 printf "    -parallel           ${sundialsmpi_info}\n"	              >> ${LOG}
 printf "    -nvector: pthreads  ${nvecpthreads_info}\n"	              >> ${LOG}
 printf "    -nvector: openmp    ${nvecopenmp_info}\n"                 >> ${LOG}
+printf "    -nvector: many      ${nvecmanyvector_info}\n"             >> ${LOG}
 printf "    -SuperLU_MT         ${superlumt_info}\n"	              >> ${LOG}
 printf "    -KLU                ${klu_info}\n"                        >> ${LOG}
 printf "    -examples           ${examples_info}\n"                   >> ${LOG}
