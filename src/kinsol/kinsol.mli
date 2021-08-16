@@ -81,6 +81,19 @@ type ('t, 'd) jacobian_arg = ('t, 'd) Kinsol_impl.jacobian_arg =
     jac_tmp : 't    (** Workspace data. *)
   }
 
+(** System function that defines nonlinear problem. The call
+    [sysfun u fval] must calculate $F(u)$ into [fval] using the current value
+    vector [u].
+
+     Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+     Any other exception is treated as an unrecoverable error.
+
+    {warning [u] and [fval] should not be accessed after the function
+             returns.}
+
+    @kinsol <node5#ss:sysFn>           KINSysFn *)
+type 'data sysfn = 'data -> 'data -> unit
+
 (** Direct Linear Solvers operating on dense, banded, and sparse matrices.
 
     @kinsol <node5#sss:optin_dls> Direct linear solvers optional input functions
@@ -251,14 +264,24 @@ module Spils : sig (* {{{ *)
   (** Create a Kinsol-specific linear solver from a generic iterative
       linear solver.
 
+      The [jac_times_sys] argument specifies an alternative system
+      function for use in the internal Jacobian-vector product difference
+      quotient approximation. It is incorrect to specify both this argument
+      and [jac_times_vec].
+
       NB: a [jac_times_setup_fn] is not supported in
           {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
 
+      NB: a [jac_times_sys] function is not supported in
+          {{!Sundials_Config.sundials_version}Config.sundials_version} < 5.3.0.
+
       @nokinsol <node> KINSetLinearSolver
-      @nokinsol <node> KINSetJacTimesVecFn *)
+      @nokinsol <node> KINSetJacTimesVecFn
+      @nokinsol <node> KINSetJacTimesVecSysFn *)
   val solver :
     ('m, 'd, 'k, [>`Iter]) LinearSolver.t
     -> ?jac_times_vec:'d jac_times_vec_fn
+    -> ?jac_times_sys:'d sysfn
     -> ('d, 'k) preconditioner
     -> ('d, 'k) linear_solver
 
@@ -336,19 +359,6 @@ module Spils : sig (* {{{ *)
 end (* }}} *)
 
 (** {2:solver Solver initialization and use} *)
-
-(** System function that defines nonlinear problem. The call
-    [sysfun u fval] must calculate $F(u)$ into [fval] using the current value
-    vector [u].
-
-     Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
-     Any other exception is treated as an unrecoverable error.
-
-    {warning [u] and [fval] should not be accessed after the function
-             returns.}
-
-    @kinsol <node5#ss:sysFn>           KINSysFn *)
-type 'data sysfn = 'data -> 'data -> unit
 
 (** Creates and initializes a session with the Kinsol solver. The call
     [init ~max_lin_iters:mli ~maa:maa ~linsolv:ls f tmpl] has as arguments:

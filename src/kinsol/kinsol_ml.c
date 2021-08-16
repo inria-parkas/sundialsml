@@ -441,6 +441,32 @@ static int jactimesfn(
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
+
+#if 530 <= SUNDIALS_LIB_VERSION
+static int jactimesvecsysfn(N_Vector uu, N_Vector val, void *user_data)
+{
+    CAMLparam0();
+    CAMLlocal4(vuu, vval, session, cb);
+
+    vuu = NVEC_BACKLINK(uu);
+    vval = NVEC_BACKLINK(val);
+
+    WEAK_DEREF (session, *(value*)user_data);
+    KINSOL_LS_CALLBACKS_FROM_ML(session);
+    cb = Field (cb, 0);
+
+    // The data payloads inside vuu and vval are only valid during this
+    // call, afterward that memory goes back to kinsol. These bigarrays must
+    // not be retained by closure_rhsfn! If it wants a permanent copy, then
+    // it has to make it manually.
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback2_exn(cb, vuu, vval);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
+}
+#endif
+
 /* Dense and Band can only be used with serial NVectors.  */
 CAMLprim value sunml_kinsol_dls_dense (value vkin_mem, value vset_jac)
 {
@@ -613,6 +639,20 @@ CAMLprim value sunml_kinsol_spils_set_jac_times_vec_fn(value vdata, value vset_j
     KINSpilsJacTimesVecFn jac = Bool_val (vset_jac) ? jactimesfn : NULL;
     int flag = KINSpilsSetJacTimesVecFn(KINSOL_MEM_FROM_ML(vdata), jac);
     CHECK_SPILS_FLAG("KINSpilsSetJacTimesVecFn", flag);
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_cvode_set_jac_times_vec_sys_fn(value vdata, value vhas_sysfn)
+{
+    CAMLparam2(vdata, vhas_sysfn);
+#if 530 <= SUNDIALS_LIB_VERSION
+    KINSysFn sysfn = Bool_val (vhas_sysfn) ? jactimesvecsysfn : NULL;
+
+    int flag = KINSetJacTimesVecSysFn(KINSOL_MEM_FROM_ML(vdata), sysfn);
+    CHECK_LS_FLAG("KINSetJacTimesVecSysFn", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn (Val_unit);
 }
