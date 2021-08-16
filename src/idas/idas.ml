@@ -1182,6 +1182,10 @@ module Adjoint = struct (* {{{ *)
       : ('a, 'k) session -> int -> bool -> bool -> unit
       = "sunml_idas_adj_spils_set_preconditioner"
 
+    external c_set_jac_times_resfn
+      : ('a, 'k) session -> int -> bool -> unit
+      = "sunml_idas_adj_set_jac_times_resfn"
+
     (* 4.0.0 <= Sundials *)
     external c_set_linear_solver
       : ('d, 'k) session * int
@@ -1251,9 +1255,13 @@ module Adjoint = struct (* {{{ *)
 
     let solver (type s)
           LSI.(LS ({ rawptr; solver; compat; } as lsolver) as ls)
-          ?jac_times_vec (prec_type, set_prec) bs nv =
+          ?jac_times_vec ?jac_times_res (prec_type, set_prec) bs nv =
       let session = tosession bs in
       let parent, which = parent_and_which bs in
+      if jac_times_vec <> None && jac_times_res <> None
+        then invalid_arg "cannot pass both jac_times_vec and jac_times_res";
+      if sundials_lt530 && jac_times_res <> None
+        then raise Config.NotImplementedBySundialsVersion;
       if in_compat_mode2 then begin
         match jac_times_vec with
         | Some (NoSens (Some _, _)) | Some (WithSens (Some _, _)) ->
@@ -1279,19 +1287,26 @@ module Adjoint = struct (* {{{ *)
         session.ls_solver <- LSI.HLS lsolver;
         LSI.(impl_set_prec_type rawptr solver prec_type false);
         set_prec bs parent which nv;
-        let has_setup, has_times, use_sens =
-          match jac_times_vec with
-          | Some (NoSens (ojs, jt)) ->
-              session.ls_callbacks <- BSpilsCallback (Some jt, ojs);
-              ojs <> None, true, false
-          | Some (WithSens (ojs, jt)) ->
-              session.ls_callbacks <- BSpilsCallbackSens (Some jt, ojs);
-              ojs <> None, true, true
-          | None ->
-              session.ls_callbacks <- BSpilsCallbackSens (None, None);
-              false, false, false
-        in
-        c_set_jac_times parent which has_setup has_times use_sens
+        match jac_times_res with
+        | Some jtresfn -> begin
+            session.ls_callbacks <- BSpilsCallbackJTRhsfn jtresfn;
+            c_set_jac_times_resfn parent which true
+          end
+        | None -> begin
+            let has_setup, has_times, use_sens =
+              match jac_times_vec with
+              | Some (NoSens (ojs, jt)) ->
+                  session.ls_callbacks <- BSpilsCallback (Some jt, ojs);
+                  ojs <> None, true, false
+              | Some (WithSens (ojs, jt)) ->
+                  session.ls_callbacks <- BSpilsCallbackSens (Some jt, ojs);
+                  ojs <> None, true, true
+              | None ->
+                  session.ls_callbacks <- BSpilsCallbackSens (None, None);
+                  false, false, false
+            in
+            c_set_jac_times parent which has_setup has_times use_sens
+          end
 
     let set_preconditioner bs ?setup solve =
       match (tosession bs).ls_callbacks with
