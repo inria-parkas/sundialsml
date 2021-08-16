@@ -12,28 +12,16 @@
 (***********************************************************************)
 
 open Sundials
+open Sundials_impl
 
 include Sundials_NonlinearSolver_impl
-
-let sundials_lt510 =
-  match Config.sundials_version with
-  | 2,_,_ -> true
-  | 3,_,_ -> true
-  | 4,_,_ -> true
-  | 5,0,_ -> true
-  | _ -> false
 
 type ('data, 'kind, 's) t
     = ('data, 'kind, 's) Sundials_NonlinearSolver_impl.nonlinear_solver
 
-(* "Simulate" Linear Solvers in Sundials < 4.0.0 *)
-let in_compat_mode =
-  match Config.sundials_version with
-  | 2,_,_ | 3,_,_ -> true
-  | _ -> false
-
 let check_compat () =
-  if in_compat_mode then raise Config.NotImplementedBySundialsVersion
+  if Versions.in_compat_mode2_3
+  then raise Config.NotImplementedBySundialsVersion
 
 external c_init : ('d, 'k, 's) cptr -> unit
   = "sunml_nlsolver_init"
@@ -71,6 +59,18 @@ external c_get_cur_iter  : ('d, 'k, 's) cptr -> int
 
 external c_get_num_conv_fails : ('d, 'k, 's) cptr -> int
   = "sunml_nlsolver_get_num_conv_fails"
+
+external c_set_info_file_fixedpoint : ('d, 'k, 's) cptr -> Logfile.t -> unit
+  = "sunml_nlsolver_set_info_file_fixedpoint"
+
+external c_set_info_file_newton : ('d, 'k, 's) cptr -> Logfile.t -> unit
+  = "sunml_nlsolver_set_info_file_newton"
+
+external c_set_print_level_fixedpoint : ('d, 'k, 's) cptr -> int -> unit
+  = "sunml_nlsolver_set_print_level_fixedpoint"
+
+external c_set_print_level_newton : ('d, 'k, 's) cptr -> int -> unit
+  = "sunml_nlsolver_set_print_level_newton"
 
 (* - - - OCaml invoking init/setup/solve - - - *)
 
@@ -152,6 +152,27 @@ let set_max_iters (type d k s) ({ rawptr; solver } : (d, k, s) t) i =
   | CustomSensSolver _ -> ()
   | FixedPointSolver _ | NewtonSolver
       -> c_set_max_iters rawptr i
+
+let set_info_file (type d k s) ({ rawptr; solver } : (d, k, s) t) file =
+  if Versions.sundials_lt530 then raise Config.NotImplementedBySundialsVersion;
+  match solver with
+  | CustomSolver     { set_info_file = Some f } -> f file
+  | CustomSensSolver { set_info_file = Some f } -> f file
+  | CustomSolver _ -> ()
+  | CustomSensSolver _ -> ()
+  | FixedPointSolver _ -> c_set_info_file_fixedpoint rawptr file
+  | NewtonSolver -> c_set_info_file_newton rawptr file
+
+let set_print_level (type d k s) ({ rawptr; solver } : (d, k, s) t) level =
+  if Versions.sundials_lt530 then raise Config.NotImplementedBySundialsVersion;
+  let level = if level then 1 else 0 in
+  match solver with
+  | CustomSolver     { set_print_level = Some f } -> f level
+  | CustomSensSolver { set_print_level = Some f } -> f level
+  | CustomSolver _ -> ()
+  | CustomSensSolver _ -> ()
+  | FixedPointSolver _ -> c_set_print_level_fixedpoint rawptr level
+  | NewtonSolver -> c_set_print_level_newton rawptr level
 
 let get_num_iters (type d k s) ({ rawptr; solver } : (d, k, s) t) =
   check_compat ();
@@ -394,22 +415,25 @@ module Custom = struct (* {{{ *)
   (* Create custom solvers from given functions *)
 
   let make ?init ?setup ?set_lsetup_fn ?set_lsolve_fn ?set_convtest_fn
-           ?set_max_iters ?get_num_iters ?get_cur_iter ?get_num_conv_fails
+           ?set_max_iters ?set_info_file ?set_print_level
+           ?get_num_iters ?get_cur_iter ?get_num_conv_fails
            ~nls_type ~solve ~set_sys_fn () =
     check_compat ();
     let ops = {
-      nls_type           = nls_type;
-      init               = init;
-      setup              = setup;
-      solve              = solve;
-      set_sys_fn         = set_sys_fn;
-      set_lsetup_fn      = set_lsetup_fn;
-      set_lsolve_fn      = set_lsolve_fn;
-      set_convtest_fn    = set_convtest_fn;
-      set_max_iters      = set_max_iters;
-      get_num_iters      = get_num_iters;
-      get_cur_iter       = get_cur_iter;
-      get_num_conv_fails = get_num_conv_fails;
+      nls_type;
+      init;
+      setup;
+      solve;
+      set_sys_fn;
+      set_lsetup_fn;
+      set_lsolve_fn;
+      set_convtest_fn;
+      set_max_iters;
+      set_info_file;
+      set_print_level;
+      get_num_iters;
+      get_cur_iter;
+      get_num_conv_fails;
     }
     in
     let callbacks = empty_callbacks () in
@@ -425,22 +449,25 @@ module Custom = struct (* {{{ *)
 
   let make_sens
                 ?init ?setup ?set_lsetup_fn ?set_lsolve_fn ?set_convtest_fn
-                ?set_max_iters ?get_num_iters ?get_cur_iter ?get_num_conv_fails
+                ?set_max_iters ?set_info_file ?set_print_level
+                ?get_num_iters ?get_cur_iter ?get_num_conv_fails
                 ~nls_type ~solve ~set_sys_fn () =
     check_compat ();
     let ops = ({
-      nls_type           = nls_type;
-      init               = init;
-      setup              = setup;
-      solve              = solve;
-      set_sys_fn         = set_sys_fn;
-      set_lsetup_fn      = set_lsetup_fn;
-      set_lsolve_fn      = set_lsolve_fn;
-      set_convtest_fn    = set_convtest_fn;
-      set_max_iters      = set_max_iters;
-      get_num_iters      = get_num_iters;
-      get_cur_iter       = get_cur_iter;
-      get_num_conv_fails = get_num_conv_fails;
+      nls_type;
+      init;
+      setup;
+      solve;
+      set_sys_fn;
+      set_lsetup_fn;
+      set_lsolve_fn;
+      set_convtest_fn;
+      set_max_iters;
+      set_info_file;
+      set_print_level;
+      get_num_iters;
+      get_cur_iter;
+      get_num_conv_fails;
     } : (('d, 'k) Senswrapper.t, 'a integrator) ops)
     in
     let callbacks = empty_callbacks () in

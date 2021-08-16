@@ -110,6 +110,8 @@ and ('nv, 's) ops = {
   set_lsolve_fn      : (('nv, 's) lsolvefn -> unit) option;
   set_convtest_fn    : (('nv, 's) convtestfn -> unit) option;
   set_max_iters      : (int -> unit) option;
+  set_info_file      : (Logfile.t -> unit) option;
+  set_print_level    : (int -> unit) option;
 
   get_num_iters      : (unit -> int) option;
   get_cur_iter       : (unit -> int) option;
