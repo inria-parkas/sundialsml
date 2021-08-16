@@ -11,6 +11,7 @@
 (***********************************************************************)
 
 open Sundials
+open Sundials_impl
 module LSI = Sundials_LinearSolver_impl
 
 include LSI
@@ -34,12 +35,6 @@ exception PackageFailure of bool
 exception IllegalPrecType
 exception InternalFailure of (string * int)
 exception ZeroInDiagonal of int
-
-(* "Simulate" Linear Solvers in Sundials < 3.0.0 *)
-let in_compat_mode =
-  match Config.sundials_version with
-  | 2,_,_ -> true
-  | _ -> false
 
 type ('mat, 'data, 'kind, 'tag) t = ('mat, 'data, 'kind, 'tag) linear_solver
 
@@ -155,7 +150,7 @@ module Direct = struct (* {{{ *)
       then raise Config.NotImplementedBySundialsVersion;
       let cptr = c_klu nvec mat in
       let info =
-        if in_compat_mode
+        if Versions.in_compat_mode2
         then let r = { (info()) with ordering = ordering } in
              r.set_ordering <- (fun o -> r.ordering <- Some o); r
         else info ()
@@ -177,7 +172,7 @@ module Direct = struct (* {{{ *)
       = "sunml_lsolver_klu_reinit"
 
     let reinit (LS { rawptr = cptr; solver }) mat ?nnz () =
-      if in_compat_mode then
+      if Versions.in_compat_mode2 then
         match solver with
         | Klu { reinit = f } ->
            let smat = Matrix.unwrap mat in
@@ -197,7 +192,7 @@ module Direct = struct (* {{{ *)
       = "sunml_lsolver_klu_set_ordering"
 
     let set_ordering (LS { rawptr = cptr; solver }) ordering =
-      if in_compat_mode then
+      if Versions.in_compat_mode2 then
         match solver with
         | Klu { set_ordering = f } -> f ordering
         | _ -> assert false
@@ -219,11 +214,11 @@ module Direct = struct (* {{{ *)
 
     let make ?ordering ~nthreads nvec mat =
       if not Config.superlumt_enabled
-         || (in_compat_mode && not Matrix.(Sparse.is_csc (unwrap mat)))
+         || (Versions.in_compat_mode2 && not Matrix.(Sparse.is_csc (unwrap mat)))
       then raise Config.NotImplementedBySundialsVersion;
       let cptr = c_superlumt nvec mat nthreads in
       let info =
-        if in_compat_mode
+        if Versions.in_compat_mode2
         then let r = { (info nthreads) with ordering = ordering } in
              r.set_ordering <- (fun o -> r.ordering <- Some o); r
         else info nthreads
@@ -245,7 +240,7 @@ module Direct = struct (* {{{ *)
       = "sunml_lsolver_superlumt_set_ordering"
 
     let set_ordering (LS { rawptr = cptr; solver }) ordering =
-      if in_compat_mode then
+      if Versions.in_compat_mode2 then
         match solver with
         | Superlumt { set_ordering = f } -> f ordering
         | _ -> assert false
@@ -282,21 +277,41 @@ module Iterative = struct (* {{{ *)
     = "sunml_lsolver_set_max_restarts"
 
   let set_maxl (LS { rawptr; solver; compat }) maxl =
-    if in_compat_mode then compat.set_maxl maxl
+    if Versions.in_compat_mode2 then compat.set_maxl maxl
     else c_set_maxl rawptr solver maxl
 
   let set_gs_type (LS { rawptr; solver; compat }) gs_type =
-    if in_compat_mode then compat.set_gs_type gs_type
+    if Versions.in_compat_mode2 then compat.set_gs_type gs_type
     else c_set_gs_type rawptr solver gs_type
 
   let set_max_restarts (LS { rawptr; solver; compat }) max_restarts =
-    if in_compat_mode then compat.set_max_restarts max_restarts
+    if Versions.in_compat_mode2 then compat.set_max_restarts max_restarts
     else c_set_max_restarts rawptr solver max_restarts
 
   let set_prec_type (LS { rawptr; solver; compat; check_prec_type }) prec_type =
     if not (check_prec_type prec_type) then raise IllegalPrecType;
-    if in_compat_mode then compat.set_prec_type prec_type
+    if Versions.in_compat_mode2 then compat.set_prec_type prec_type
     else impl_set_prec_type rawptr solver prec_type true
+
+  external c_set_info_file
+   : ('m, 'nd, 'nk) cptr
+     -> ('m, 'nd, 'nk, [> `Iter]) solver_data
+     -> Logfile.t
+     -> unit
+   = "sunml_lsolver_set_info_file"
+
+  let set_info_file (LS { rawptr; solver; _ }) file =
+    c_set_info_file rawptr solver file
+
+  external c_set_print_level
+   : ('m, 'nd, 'nk) cptr
+     -> ('m, 'nd, 'nk, [> `Iter]) solver_data
+     -> int
+     -> unit
+   = "sunml_lsolver_set_print_level"
+
+  let set_print_level (LS { rawptr; solver; _ }) level =
+    c_set_print_level rawptr solver (if level then 1 else 0)
 
   let default = function
     | Some x -> x
@@ -309,7 +324,7 @@ module Iterative = struct (* {{{ *)
     let maxl = default maxl in
     let cptr = c_spbcgs maxl nvec in
     let compat =
-      if in_compat_mode
+      if Versions.in_compat_mode2
       then let r = { info with maxl = maxl } in
            r.set_maxl <- (fun m -> r.maxl <- m);
            r
@@ -332,7 +347,7 @@ module Iterative = struct (* {{{ *)
     let maxl = default maxl in
     let cptr = c_spfgmr maxl nvec in
     let compat =
-      if in_compat_mode
+      if Versions.in_compat_mode2
       then begin
           let r = { info with maxl = maxl;
                               gs_type = gs_type;
@@ -369,7 +384,7 @@ module Iterative = struct (* {{{ *)
     let maxl = default maxl in
     let cptr = c_spgmr maxl nvec in
     let compat =
-      if in_compat_mode
+      if Versions.in_compat_mode2
       then begin
           let r = { info with maxl = maxl;
                               gs_type = gs_type;
@@ -406,7 +421,7 @@ module Iterative = struct (* {{{ *)
     let maxl = default maxl in
     let cptr = c_sptfqmr maxl nvec in
     let compat =
-      if in_compat_mode
+      if Versions.in_compat_mode2
       then let r = { info with maxl = maxl } in
            r.set_maxl <- (fun m -> r.maxl <- m);
            r
@@ -429,7 +444,7 @@ module Iterative = struct (* {{{ *)
     let maxl = default maxl in
     let cptr = c_pcg maxl nvec in
     let compat =
-      if in_compat_mode
+      if Versions.in_compat_mode2
       then let r = { info with maxl = maxl } in
            r.set_maxl <- (fun m -> r.maxl <- m); r
       else info

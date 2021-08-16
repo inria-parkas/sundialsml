@@ -1783,3 +1783,93 @@ CAMLprim value sunml_lsolver_space(value vcptr)
     CAMLreturn(r);
 }
 
+CAMLprim void sunml_lsolver_set_info_file(value vcptr, value vsolver,
+					  value vfile)
+{
+    CAMLparam3(vcptr, vsolver, vfile);
+#if 530 <= SUNDIALS_LIB_VERSION
+    SUNLinearSolver lsolv = LSOLVER_VAL(vcptr);
+    const char* interrmsg = "internal error in sunml_lsolver_set_info_file";
+    FILE *file = ML_CFILE(vfile);
+    int flag;
+
+    switch (Int_val(vsolver)) {
+    case VARIANT_LSOLVER_SOLVER_DATA_SPFGMR:
+	flag = SUNLinSolSetInfoFile_SPFGMR(lsolv, file);
+	CHECK_FLAG("SUNLinSolSetInfofile_SPFGMR", flag);
+	break;
+
+    case VARIANT_LSOLVER_SOLVER_DATA_SPGMR:
+	flag = SUNLinSolSetInfoFile_SPGMR(lsolv, file);
+	CHECK_FLAG("SUNLinSolSetInfofile_SPGMR", flag);
+	break;
+
+    case VARIANT_LSOLVER_SOLVER_DATA_SPBCGS:
+	flag = SUNLinSolSetInfoFile_SPBCGS(lsolv, file);
+	CHECK_FLAG("SUNLinSolSetInfofile_SPBCGS", flag);
+	break;
+
+    case VARIANT_LSOLVER_SOLVER_DATA_SPTFQMR:
+	flag = SUNLinSolSetInfoFile_SPTFQMR(lsolv, file);
+	CHECK_FLAG("SUNLinSolSetInfofile_SPTFQMR", flag);
+	break;
+
+    case VARIANT_LSOLVER_SOLVER_DATA_PCG:
+	flag = SUNLinSolSetInfoFile_PCG(lsolv, file);
+	CHECK_FLAG("SUNLinSolSetInfofile_PCG", flag);
+	break;
+
+    default:
+	caml_failwith(interrmsg);
+    }
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn0;
+}
+
+CAMLprim void sunml_lsolver_set_print_level(value vcptr, value vsolver,
+					    value vlevel)
+{
+    CAMLparam3(vcptr, vsolver, vlevel);
+#if 530 <= SUNDIALS_LIB_VERSION
+    SUNLinearSolver lsolv = LSOLVER_VAL(vcptr);
+    const char* interrmsg = "internal error in sunml_lsolver_set_print_level";
+    int level = Int_val(vlevel);
+    int flag;
+
+    switch (Int_val(vsolver)) {
+    case VARIANT_LSOLVER_SOLVER_DATA_SPFGMR:
+	flag = SUNLinSolSetPrintLevel_SPFGMR(lsolv, level);
+	CHECK_FLAG("SUNLinSolSetInfofile_SPFGMR", flag);
+	break;
+
+    case VARIANT_LSOLVER_SOLVER_DATA_SPGMR:
+	flag = SUNLinSolSetPrintLevel_SPGMR(lsolv, level);
+	CHECK_FLAG("SUNLinSolSetInfofile_SPGMR", flag);
+	break;
+
+    case VARIANT_LSOLVER_SOLVER_DATA_SPBCGS:
+	flag = SUNLinSolSetPrintLevel_SPBCGS(lsolv, level);
+	CHECK_FLAG("SUNLinSolSetInfofile_SPBCGS", flag);
+	break;
+
+    case VARIANT_LSOLVER_SOLVER_DATA_SPTFQMR:
+	flag = SUNLinSolSetPrintLevel_SPTFQMR(lsolv, level);
+	CHECK_FLAG("SUNLinSolSetInfofile_SPTFQMR", flag);
+	break;
+
+    case VARIANT_LSOLVER_SOLVER_DATA_PCG:
+	flag = SUNLinSolSetPrintLevel_PCG(lsolv, level);
+	CHECK_FLAG("SUNLinSolSetInfofile_PCG", flag);
+	break;
+
+    default:
+	caml_failwith(interrmsg);
+    }
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn0;
+}
+
