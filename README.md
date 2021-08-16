@@ -9,8 +9,20 @@ Sundials/ML is an interface to the Sundials suite of numerical solvers.
 collection of six numerical solvers:
 CVODE, CVODES, IDA, IDAS, ARKODE, and KINSOL.
 This interface provides access to all features of the underlying library 
-except the Hypre, PETSC, CUDA, RAJA, and OpenMPdev nvectors (since these 
-require other libraries that are not yet interfaced for OCaml).
+except those related to GPUs and external libraries which have no existing 
+OCaml support (see "Known Limitations" below).
+
+Sundials/ML is more than just a simple low-level wrapper around a subset of 
+the functions and data structures of Sundials. It exploits the type system 
+of OCaml to document the underlying library and prevent some utilization 
+errors. Additional dynamic checks detect and signal other problems in user 
+code. The module system of OCaml is exploited to structure the interface and 
+increase its convenience. Exceptions are used for detecting and handling 
+error conditions. Sundials/ML allows users to define nvectors, linear 
+solvers, and nonlinear solvers in OCaml. It provides access to and 
+reimplementations of nvector and matrix routines. The OCaml interface is 
+completely documented with references back to the Sundials library and 
+documentation.
 
 Installation
 ------------
