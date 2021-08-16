@@ -1154,9 +1154,11 @@ fi
 
 if [ "x${ocamlmpi_enabled}" = x ]; then
     ocamlmpi_path=''
+    parallel_nvec_libs=''
 else
     ocamlmpi_path="$ocamlmpi"
     ocamlmpi="${ocamlmpi} (compiler: $mpicc)"
+    parallel_nvec_libs=-lsundials_nvecparallel
 fi
 
 serial_nvec_libs=-lsundials_nvecserial
@@ -1187,6 +1189,41 @@ EOF
 	nvecmanyvector_info='installed'
 	nvecmanyvector_enabled=1
 	serial_nvec_libs="$serial_nvec_libs -lsundials_nvecmanyvector"
+    fi
+    ${debug_configure} || rm -f ./$test_stem.* ./$test_stem$XX
+fi
+
+# Check for nvector_mpimanyvector installation
+nvecmpimanyvector_info='not available'
+nvecmpimanyvector_enabled=
+if [ $sundials -ge 500 ] && [ ${ocamlmpi_enabled:-0} -eq 1 ]; then
+    test_stem=__configure_test_file__nvecmpimanyvector
+    test_cmd="$mpicc -o $test_stem$XX ${Isundials_inc_path} $test_stem.c \
+	 ${Lsundials_lib_path} \
+	 -lsundials_nvecserial -lsundials_nvecmpimanyvector \
+	 ${libm} ${blas_libs} ${lapack_lib}"
+    cat > $test_stem.c <<EOF
+/* $test_cmd */
+#include <stdio.h>
+#include <nvector/nvector_serial.h>
+#include <nvector/nvector_mpimanyvector.h>
+int main (int argc, char *argv[])
+{
+  N_Vector s1 = N_VNew_Serial(10);
+  (void)N_VNew_MPIManyVector (1, &s1);
+  return 0;
+}
+EOF
+    if ! eval "${test_cmd}" >>${logfile} 2>&1;
+    then
+	nvecmpimanyvector_info='not installed'
+	nvecmpiplusx_info='not installed'
+    else
+	nvecmpimanyvector_info='installed'
+	nvecmpiplusx_info='installed'
+	nvecmpimanyvector_enabled=1
+	nvecmpiplusx_enabled=1
+	parallel_nvec_libs="$parallel_nvec_libs -lsundials_nvecmpimanyvector"
     fi
     ${debug_configure} || rm -f ./$test_stem.* ./$test_stem$XX
 fi
@@ -1373,6 +1410,8 @@ printf "    -parallel           ${sundialsmpi_info}\n"	              >> ${LOG}
 printf "    -nvector: pthreads  ${nvecpthreads_info}\n"	              >> ${LOG}
 printf "    -nvector: openmp    ${nvecopenmp_info}\n"                 >> ${LOG}
 printf "    -nvector: many      ${nvecmanyvector_info}\n"             >> ${LOG}
+printf "    -nvector: mpimany   ${nvecmpimanyvector_info}\n"          >> ${LOG}
+printf "    -nvector: mpiplusx  ${nvecmpiplusx_info}\n"		      >> ${LOG}
 printf "    -SuperLU_MT         ${superlumt_info}\n"	              >> ${LOG}
 printf "    -KLU                ${klu_info}\n"                        >> ${LOG}
 printf "    -examples           ${examples_info}\n"                   >> ${LOG}
@@ -1477,6 +1516,7 @@ cat ${LOG}
 	 s#@nvecpthreads_enabled@#${nvecpthreads_enabled}#;
 	 s#@nvecopenmp_enabled@#${nvecopenmp_enabled}#;
 	 s#@serial_nvec_libs@#${serial_nvec_libs}#;
+	 s#@parallel_nvec_libs@#${parallel_nvec_libs}#;
 	 s#@sparse_libs@#${sparse_libs}#;
 	 s#@matrix_libs@#${matrix_libs}#;
 	 s#@lsolver_libs@#${lsolver_libs}#;
