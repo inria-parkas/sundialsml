@@ -25,10 +25,12 @@ COBJ_COMMON = sundials/sundials_ml$(XO)	\
 	      lsolvers/sundials_matrix_ml$(XO)	\
 	      lsolvers/sundials_linearsolver_ml$(XO)	\
 	      lsolvers/sundials_nonlinearsolver_ml$(XO)	\
-	      nvectors/nvector_ml$(XO) \
-	      nvectors/nvector_many_ml$(XO)
+	      nvectors/nvector_ml$(XO)
 
-COBJ_MAIN = $(COBJ_COMMON) kinsol/kinsol_ml$(XO) $(ARKODE_COBJ_MAIN)
+COBJ_MAIN = $(COBJ_COMMON) \
+		kinsol/kinsol_ml$(XO) \
+		$(ARKODE_COBJ_MAIN) \
+		nvectors/nvector_many_ml$(XO)
 
 MLOBJ_MAIN =	sundials/sundials_configuration.cmo	\
 		sundials/sundials_impl.cmo		\
