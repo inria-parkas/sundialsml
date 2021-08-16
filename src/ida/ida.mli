@@ -97,6 +97,24 @@ type ('t, 'd) jacobian_arg = ('t, 'd) Ida_impl.jacobian_arg =
     jac_tmp  : 't            (** Workspace data. *)
   }
 
+(** Residual functions that define a DAE problem. They are passed four
+ * arguments:
+    - [t], the value of the independent variable, i.e., the simulation time,
+    - [y], the vector of dependent-variable values, i.e., $y(t)$,
+    - [y'], the vector of dependent-variable derivatives, i.e.,
+            {% $\dot{y} = \frac{\mathrm{d}y}{\mathrm{d}t}$%}, and,
+    - [r] a vector for storing the residual value, {% $F(t, y, \dot{y})$%}.
+
+    Within the function, raising a {!Sundials.RecoverableFailure} exception
+    indicates a recoverable error. Any other exception is treated as an
+    unrecoverable error.
+
+    {warning [y], [y'], and [r] should not be accessed after the function
+             returns.}
+
+    @ida <node5#ss:resFn> IDAResFn *)
+type 'd resfn = float -> 'd -> 'd -> 'd -> unit
+
 (** Direct Linear Solvers operating on dense, banded and sparse matrices.
 
     @ida <node5#sss:optin_dls> Direct linear solvers optional input functions
@@ -274,14 +292,24 @@ module Spils : sig (* {{{ *)
   (** Create an Ida-specific linear solver from a generic iterative
       linear solver.
 
+      The [jac_times_res] argument specifies an alternative DAE residual
+      function for use in the internal Jacobian-vector product difference
+      quotient approximation. It is incorrect to specify both this argument
+      and [jac_times_vec].
+
       NB: a [jac_times_setup_fn] is not supported in
           {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
 
+      NB: a [jac_times_res] function is not supported in
+          {{!Sundials_Config.sundials_version}Config.sundials_version} < 5.3.0.
+
       @nocvode <node> IDASetLinearSolver
-      @nocvode <node> IDASetJacTimes *)
+      @nocvode <node> IDASetJacTimes
+      @nocvode <node> IDASetJacTimesResFn *)
   val solver :
     ('m, 'd, 'k, [>`Iter]) LinearSolver.t
     -> ?jac_times_vec:'d jac_times_setup_fn option * 'd jac_times_vec_fn
+    -> ?jac_times_res:'d resfn
     -> ('d, 'k) preconditioner
     -> ('d, 'k) linear_solver
 
@@ -430,24 +458,6 @@ type ('data, 'kind) tolerance =
 val default_tolerances : ('data, 'kind) tolerance
 
 (** {2:init Initialization} *)
-
-(** Residual functions that define a DAE problem. They are passed four
- * arguments:
-    - [t], the value of the independent variable, i.e., the simulation time,
-    - [y], the vector of dependent-variable values, i.e., $y(t)$,
-    - [y'], the vector of dependent-variable derivatives, i.e.,
-            {% $\dot{y} = \frac{\mathrm{d}y}{\mathrm{d}t}$%}, and,
-    - [r] a vector for storing the residual value, {% $F(t, y, \dot{y})$%}.
-
-    Within the function, raising a {!Sundials.RecoverableFailure} exception
-    indicates a recoverable error. Any other exception is treated as an
-    unrecoverable error.
-
-    {warning [y], [y'], and [r] should not be accessed after the function
-             returns.}
-
-    @ida <node5#ss:resFn> IDAResFn *)
-type 'd resfn = float -> 'd -> 'd -> 'd -> unit
 
 (** Called by the solver to calculate the values of root functions. These
     ‘zero-crossings’ are used to detect significant events. The function is

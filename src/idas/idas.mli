@@ -1312,15 +1312,25 @@ module Adjoint : sig (* {{{ *)
     (** Create a Idas-specific linear solver from a generic iterative
         linear solver.
 
+        The [jac_times_res] argument specifies an alternative DAE residual
+        function for use in the internal Jacobian-vector product difference
+        quotient approximation. It is incorrect to specify both this argument
+        and [jac_times_vec].
+
         NB: the [jac_times_setup] argument is not supported in
             {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
 
+        NB: a [jac_times_rhs] function is not supported in
+            {{!Sundials_Config.sundials_version}Config.sundials_version} < 5.3.0.
+
         @noidas <node> IDASetLinearSolverB
         @noidas <node> IDASetJacTimesVecFnB
-        @noidas <node> IDASetJacTimesVecFnBS *)
+        @noidas <node> IDASetJacTimesVecFnBS
+        @noidas <node> IDASetJacTimesResFnB *)
     val solver :
       ('m, 'd, 'k, 'f) LinearSolver.t
       -> ?jac_times_vec:'d jac_times_vec_fn
+      -> ?jac_times_res:'d Ida.resfn
       -> ('d, 'k) preconditioner
       -> ('d, 'k) linear_solver
 

@@ -1516,7 +1516,6 @@ module Adjoint : sig (* {{{ *)
         @nocvode <node> CVodeSetLinearSolverB
         @nocvode <node> CVodeSetJacTimesB
         @nocvode <node> CVodeSetJacTimesBS
-        @nocvode <node> CVodeSetJacTimesBS
         @nocvode <node> CVodeSetJacTimesRhsFnB *)
     val solver :
       ('m, 'd, 'k, 'f) LinearSolver.t

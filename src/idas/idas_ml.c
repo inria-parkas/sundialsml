@@ -1022,6 +1022,29 @@ static int bquadrhsfn_sens(realtype t, N_Vector y, N_Vector yp,
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
+#if 530 <= SUNDIALS_LIB_VERSION
+static int bjactimesresfn (realtype t, N_Vector y, N_Vector yp,
+			   N_Vector resval, void *user_data)
+{
+    CAMLparam0 ();
+    CAMLlocalN (args, 4);
+    CAMLlocal2 (session, cb);
+
+    args[0] = caml_copy_double(t);
+    args[1] = NVEC_BACKLINK (y);
+    args[2] = NVEC_BACKLINK (yp);
+    args[3] = NVEC_BACKLINK (resval);
+
+    WEAK_DEREF (session, *(value*)user_data);
+    cb = IDA_LS_CALLBACKS_FROM_ML(session);
+    cb = Field (cb, 0);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (cb, 4, args);
+
+    CAMLreturnT (int, CHECK_EXCEPTION (session, r, RECOVERABLE));
+}
+#endif
 
 /* quadrature interface */
 
@@ -2401,6 +2424,24 @@ CAMLprim value sunml_idas_adj_spils_set_jac_times(value vparent,
     }
 #endif
 
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_idas_adj_set_jac_times_resfn(value vparent,
+						  value vwhich,
+						  value vhas_resfn)
+{
+    CAMLparam3(vparent, vwhich, vhas_resfn);
+#if 530 <= SUNDIALS_LIB_VERSION
+    void *mem = IDA_MEM_FROM_ML(vparent);
+    int which = Int_val(vwhich);
+    IDAResFn resfn = Bool_val (vhas_resfn) ? bjactimesresfn : NULL;
+
+    int flag = IDASetJacTimesResFnB(mem, which, resfn);
+    CHECK_LS_FLAG("IDASetJacTimesResFnB", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 

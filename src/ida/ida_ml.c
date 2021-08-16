@@ -503,6 +503,30 @@ static int jacsetupfn(realtype t,
 }
 #endif
 
+#if 530 <= SUNDIALS_LIB_VERSION
+static int jactimesresfn (realtype t, N_Vector y, N_Vector yp,
+			  N_Vector resval, void *user_data)
+{
+    CAMLparam0 ();
+    CAMLlocalN (args, 4);
+    CAMLlocal2 (session, cb);
+
+    args[0] = caml_copy_double(t);
+    args[1] = NVEC_BACKLINK (y);
+    args[2] = NVEC_BACKLINK (yp);
+    args[3] = NVEC_BACKLINK (resval);
+
+    WEAK_DEREF (session, *(value*)user_data);
+    cb = IDA_LS_CALLBACKS_FROM_ML(session);
+    cb = Field (cb, 0);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (cb, 4, args);
+
+    CAMLreturnT (int, CHECK_EXCEPTION (session, r, RECOVERABLE));
+}
+#endif
+
 /* Dense and Band can only be used with serial NVectors.  */
 CAMLprim value sunml_ida_dls_dense (value vida_mem, value vneqs, value vset_jac)
 {
@@ -723,6 +747,20 @@ CAMLprim value sunml_ida_spils_sptfqmr (value vida_mem, value vmaxl)
 
     flag = IDASptfqmr (ida_mem, Int_val (vmaxl));
     CHECK_FLAG ("IDASptfqmr", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_ida_set_jac_times_rhsfn(value vdata, value vhas_resfn)
+{
+    CAMLparam2(vdata, vhas_resfn);
+#if 530 <= SUNDIALS_LIB_VERSION
+    IDAResFn resfn = Bool_val (vhas_resfn) ? jactimesresfn : NULL;
+
+    int flag = IDASetJacTimesResFn(IDA_MEM_FROM_ML(vdata), resfn);
+    CHECK_LS_FLAG("IDASetJacTimesResFn", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
