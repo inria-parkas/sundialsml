@@ -157,7 +157,8 @@ and ('a, 'kind) linsolv_callbacks =
   | DirectCustomCallback :
       'm DirectTypes.jac_callback -> ('a, 'kind) linsolv_callbacks
 
-  | SpilsCallback of 'a SpilsTypes'.jac_times_vec_fn option
+  | SpilsCallback1 of 'a SpilsTypes'.jac_times_vec_fn option
+  | SpilsCallback2 of 'a sysfn
 
 and 'a linsolv_precfns =
   | NoPrecFns
@@ -178,7 +179,7 @@ let ls_check_direct session =
 let ls_check_spils session =
   if Sundials_configuration.safe then
     match session.ls_callbacks with
-    | SpilsCallback _ -> ()
+    | SpilsCallback1 _ | SpilsCallback2 _ -> ()
     | _ -> raise LinearSolver.InvalidLinearSolver
 
 let ls_check_spils_bbd session =

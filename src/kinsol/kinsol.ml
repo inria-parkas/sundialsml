@@ -324,6 +324,9 @@ module Spils = struct (* {{{ *)
   external c_set_jac_times_vec_fn : ('a, 'k) session -> bool -> unit
     = "sunml_kinsol_spils_set_jac_times_vec_fn"
 
+  external c_set_jac_times_vec_sys_fn : ('a, 'k) session -> bool -> unit
+    = "sunml_kinsol_spils_set_jac_times_vec_sys_fn"
+
   external c_set_preconditioner
     : ('a, 'k) session -> bool -> unit
     = "sunml_kinsol_spils_set_preconditioner"
@@ -391,12 +394,16 @@ module Spils = struct (* {{{ *)
 
   let solver (type s)
         LSI.(LS ({ rawptr; solver; compat; } as hls) as ls)
-        ?jac_times_vec (prec_type, set_prec) session nv =
+        ?jac_times_vec ?jac_times_sys (prec_type, set_prec) session nv =
+     if jac_times_vec <> None && jac_times_sys <> None
+       then invalid_arg "cannot pass both jac_times_vec and jac_times_sys";
+     if sundials_lt530 && jac_times_sys <> None
+       then raise Config.NotImplementedBySundialsVersion;
     if in_compat_mode2 then begin
       make_compat compat prec_type solver session;
       session.ls_solver <- LSI.HLS hls;
       set_prec session nv;
-      session.ls_callbacks <- SpilsCallback jac_times_vec;
+      session.ls_callbacks <- SpilsCallback1 jac_times_vec;
       if jac_times_vec <> None then c_set_jac_times_vec_fn session true
     end else
       if in_compat_mode2_3 then c_spils_set_linear_solver session rawptr
@@ -405,26 +412,33 @@ module Spils = struct (* {{{ *)
       session.ls_solver <- LSI.HLS hls;
       LSI.(impl_set_prec_type rawptr solver prec_type false);
       set_prec session nv;
-      session.ls_callbacks <- SpilsCallback jac_times_vec;
-      if jac_times_vec <> None then c_set_jac_times_vec_fn session true
+      match jac_times_sys with
+      | Some jtsysfn -> begin
+          session.ls_callbacks <- SpilsCallback2 jtsysfn;
+          c_set_jac_times_vec_sys_fn session true
+        end
+      | None -> begin
+          session.ls_callbacks <- SpilsCallback1 jac_times_vec;
+          if jac_times_vec <> None then c_set_jac_times_vec_fn session true
+        end
 
   let set_jac_times s f =
     match s.ls_callbacks with
-    | SpilsCallback _ ->
+    | SpilsCallback1 _ ->
         c_set_jac_times_vec_fn s true;
-        s.ls_callbacks <- SpilsCallback (Some f)
+        s.ls_callbacks <- SpilsCallback1 (Some f)
     | _ -> raise LinearSolver.InvalidLinearSolver
 
   let clear_jac_times s =
     match s.ls_callbacks with
-    | SpilsCallback _ ->
+    | SpilsCallback1 _ ->
         c_set_jac_times_vec_fn s false;
-        s.ls_callbacks <- SpilsCallback None
+        s.ls_callbacks <- SpilsCallback1 None
     | _ -> raise LinearSolver.InvalidLinearSolver
 
   let set_preconditioner s ?setup solve =
     match s.ls_callbacks with
-    | SpilsCallback _ ->
+    | SpilsCallback1 _ | SpilsCallback2 _ ->
         c_set_preconditioner s (setup <> None);
         s.ls_precfns <- PrecFns { prec_setup_fn = setup;
                                   prec_solve_fn = solve }
