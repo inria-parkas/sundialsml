@@ -543,12 +543,15 @@ module Spils = struct (* {{{ *)
                                   prec_solve_fn = solve }
     | _ -> raise LinearSolver.InvalidLinearSolver
 
-  external set_max_steps_between_jac : ('a, 'k) session -> int -> unit
-      = "sunml_cvode_set_max_steps_between_jac"
+  external set_jac_eval_frequency : ('a, 'k) session -> int -> unit
+      = "sunml_cvode_set_jac_eval_frequency"
 
-  let set_max_steps_between_jac s maxsteps =
+  let set_jac_eval_frequency s maxsteps =
     if in_compat_mode2_3 then ls_check_spils s;
-    set_max_steps_between_jac s maxsteps
+    set_jac_eval_frequency s maxsteps
+
+  external set_lsetup_frequency   : ('a, 'k) session -> int -> unit
+      = "sunml_cvode_set_lsetup_frequency"
 
   external set_linear_solution_scaling : ('d, 'k) session -> bool -> unit
     = "sunml_cvode_set_linear_solution_scaling"

@@ -1957,15 +1957,34 @@ CAMLprim value sunml_cvode_spils_set_gs_type(value vcvode_mem, value vgstype)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_cvode_set_max_steps_between_jac(value vcvode_mem,
-						     value vmaxsteps)
+CAMLprim value sunml_cvode_set_jac_eval_frequency(value vcvode_mem,
+						  value vfreq)
 {
-    CAMLparam2(vcvode_mem, vmaxsteps);
+    CAMLparam2(vcvode_mem, vfreq);
 
-#if 400 <= SUNDIALS_LIB_VERSION
+#if 500 <= SUNDIALS_LIB_VERSION
+    int flag = CVodeSetJacEvalFrequency(CVODE_MEM_FROM_ML(vcvode_mem),
+					Long_val(vfreq));
+    CHECK_LS_FLAG("CVodeSetJacEvalFrequency", flag);
+#elif 400 <= SUNDIALS_LIB_VERSION
     int flag = CVodeSetMaxStepsBetweenJac(CVODE_MEM_FROM_ML(vcvode_mem),
-					  Long_val(vmaxsteps));
+					  Long_val(vfreq));
     CHECK_LS_FLAG("CVodeSetMaxStepsBetweenJac", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_cvode_set_lsetup_frequency(value vcvode_mem, value varg)
+{
+    CAMLparam2(vcvode_mem, varg);
+
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = CVodeSetLSetupFrequency(CVODE_MEM_FROM_ML(vcvode_mem),
+				       Int_val(varg));
+    CHECK_FLAG("CVodeSetLSetupFrequency", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif

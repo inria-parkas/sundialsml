@@ -435,11 +435,21 @@ module Spils : sig (* {{{ *)
 
   (** Sets the maximum number of time steps to wait before recomputation of
       the Jacobian or recommendation to update the preconditioner.
-      If the integer argument is less than 1, a default value of 50 is used.
+      If the integer argument is less than or equal to 0, a default value of
+      50 is used.
 
-      @nocvode <node5> CVodeSetMaxStepsBetweenJac
+      @nocvode <node5> CVodeSetJacEvalFrequency
       @since 4.0.0 *)
-  val set_max_steps_between_jac : ('d, 'k) session -> int -> unit
+  val set_jac_eval_frequency : ('d, 'k) session -> int -> unit
+
+  (** Specifies the frequency of calls to the linear solver setup routine.
+      Positive values specify the number of time steps between setup calls,
+      negative values force recomputation at each Newton step, and zero values
+      reset to the default (20).
+
+      @nocvode <node> CVodeSetLSetupFrequency
+      @since 5.4.0 *)
+  val set_lsetup_frequency : ('d, 'k) session -> int -> unit
 
   (** Enables or disables scaling of the linear system solution to account
       for a change in {% $\gamma$ %} in the linear system.

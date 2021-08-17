@@ -814,12 +814,12 @@ module ARKStep = struct (* {{{ *)
                                     prec_solve_fn = solve }
       | _ -> raise LinearSolver.InvalidLinearSolver
 
-    external set_max_steps_between_jac : ('a, 'k) session -> int -> unit
-        = "sunml_arkode_ark_set_max_steps_between_jac"
+    external set_jac_eval_frequency : ('a, 'k) session -> int -> unit
+        = "sunml_arkode_ark_set_jac_eval_frequency"
 
-    let set_max_steps_between_jac s maxsteps =
+    let set_jac_eval_frequency s maxsteps =
       if in_compat_mode2_3 then ls_check_spils s;
-      set_max_steps_between_jac s maxsteps
+      set_jac_eval_frequency s maxsteps
 
     external set_linear_solution_scaling : ('d, 'k) session -> bool -> unit
       = "sunml_arkode_ark_set_linear_solution_scaling"
@@ -1962,8 +1962,8 @@ module ARKStep = struct (* {{{ *)
       = "sunml_arkode_ark_set_nonlin_rdiv"
   external set_delta_gamma_max    : ('a, 'k) session -> float -> unit
       = "sunml_arkode_ark_set_delta_gamma_max"
-  external set_max_steps_between_lset : ('a, 'k) session -> int -> unit
-      = "sunml_arkode_ark_set_max_steps_between_lset"
+  external set_lsetup_frequency   : ('a, 'k) session -> int -> unit
+      = "sunml_arkode_ark_set_lsetup_frequency"
   external set_cfl_fraction       : ('a, 'k) session -> float -> unit
       = "sunml_arkode_ark_set_cfl_fraction"
   external set_error_bias         : ('a, 'k) session -> float -> unit
