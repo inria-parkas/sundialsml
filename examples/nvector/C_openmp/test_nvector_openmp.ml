@@ -26,7 +26,7 @@ struct
   include Nvector_openmp.Ops
   let get_id = Nvector.get_id
   type data = Sundials.RealArray.t
-  let n_vgetarray = Nvector_openmp.unwrap
+  let getarray = Nvector_openmp.unwrap
   let get = Sundials.RealArray.get
   let set = Sundials.RealArray.set
   let max_time x t = t
@@ -81,14 +81,14 @@ let main () =
 
   (* NVector Tests *)
   if Test_nvector.compat_ge400 then begin
-    fails += Test.test_n_vgetvectorid x Nvector.OpenMP 0;
+    fails += Test.test_getvectorid x Nvector.OpenMP 0;
     fails += Test.test_cloneempty x 0;
     fails += Test.test_clone x length 0;
     fails += Test.test_cloneemptyvectorarray 5 x 0;
     fails += Test.test_clonevectorarray 5 x length 0
   end;
-  fails += Test.test_n_vsetarraypointer w length 0;
-  fails += Test.test_n_vgetarraypointer x length 0;
+  fails += Test.test_setarraypointer w length 0;
+  fails += Test.test_getarraypointer x length 0;
   if Test_nvector.compat_ge400 then begin
     printf "\nTesting standard vector operations:\n\n";
     fails += Test.test_const x length 0
