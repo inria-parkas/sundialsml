@@ -678,7 +678,7 @@ val get_work_space : ('d, 'k) session -> int * int
     @kinsol <node5#ss:optout_main> KINGetNumFuncEvals *)
 val get_num_func_evals : ('d, 'k) session -> int
 
-(** Returns the number of nonlinear iterations.
+(** Returns the cumulative number of nonlinear iterations.
 
     @kinsol <node5#ss:optout_main> KINGetNumNonlinSolvIters *)
 val get_num_nonlin_solv_iters : ('d, 'k) session -> int

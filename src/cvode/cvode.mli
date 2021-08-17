@@ -1111,12 +1111,13 @@ type linear_solver_stats = {
     @cvode <node5> CVodeGetLinSolveStats *)
 val get_linear_solver_stats : ('d, 'k) session -> linear_solver_stats
 
-(** Returns the number of nonlinear (functional or Newton) iterations performed.
+(** Returns the cumulative number of nonlinear (functional or Newton)
+    iterations.
 
     @cvode <node5#sss:optout_main> CVodeGetNumNonlinSolvIters *)
 val get_num_nonlin_solv_iters : ('d, 'k) session -> int
 
-(** Returns the number of nonlinear convergence failures that have occurred.
+(** Returns the cumulative number of nonlinear convergence failures.
 
     @cvode <node5#sss:optout_main> CVodeGetNumNonlinSolvConvFails *)
 val get_num_nonlin_solv_conv_fails : ('d, 'k) session -> int
