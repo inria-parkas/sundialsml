@@ -4116,6 +4116,21 @@ CAMLprim value sunml_arkode_ark_set_eps_lin(value varkode_mem, value eplifac)
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_arkode_ark_set_ls_norm_factor(value varkode_mem, value vfac)
+{
+    CAMLparam2(varkode_mem, vfac);
+
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepSetLSNormFactor(ARKODE_MEM_FROM_ML(varkode_mem),
+				      Double_val(vfac));
+    CHECK_FLAG("ARKStepSetLSNormFactor", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value sunml_arkode_ark_set_mass_eps_lin(value varkode_mem, value eplifac)
 {
     CAMLparam2(varkode_mem, eplifac);
@@ -4128,6 +4143,22 @@ CAMLprim value sunml_arkode_ark_set_mass_eps_lin(value varkode_mem, value eplifa
     int flag = ARKSpilsSetMassEpsLin(ARKODE_MEM_FROM_ML(varkode_mem),
 				     Double_val(eplifac));
     CHECK_FLAG("ARKSpilsSetMassEpsLin", flag);
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_ark_set_mass_ls_norm_factor(value varkode_mem,
+							value vfac)
+{
+    CAMLparam2(varkode_mem, vfac);
+
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepSetMassLSNormFactor(ARKODE_MEM_FROM_ML(varkode_mem),
+				          Double_val(vfac));
+    CHECK_FLAG("ARKStepSetMassLSNormFactor", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
 
     CAMLreturn (Val_unit);

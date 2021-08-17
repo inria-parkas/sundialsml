@@ -800,6 +800,20 @@ module ARKStep : sig (* {{{ *)
         @noarkode <node> ARKStepSetEpsLin *)
     val set_eps_lin : ('d, 'k) session -> float -> unit
 
+    (** Sets the factor for converting from the integrator tolerance (WRMS
+        norm) to the linear solver tolerance (L2 norm). That is,
+        {% $\mathit{tol}_{\mathsf{L2}} =
+            \mathit{fact}\cdot\mathit{tol}_{\mathsf{WRMS}}$ %}.
+        The given value is used directly if it is greater than zero.
+        If it is zero (the default), then the square root of the state
+        vector length is used.
+        If it is less than zero, then the square root of the dot product of a
+        state vector full of ones with itself is used.
+
+        @since 5.4.0
+        @noarkode <node> ARKStepSetLSNormFactor *)
+    val set_ls_norm_factor : ('d, 'k) session -> float -> unit
+
     (** {3:arkspilsstats Solver statistics} *)
 
     (** Returns the sizes of the real and integer workspaces used by the spils
@@ -1123,6 +1137,20 @@ module ARKStep : sig (* {{{ *)
 
           @noarkode <node> ARKStepSetMassEpsLin *)
       val set_eps_lin : ('d, 'k) session -> float -> unit
+
+      (** Sets the factor for converting from the integrator tolerance (WRMS
+          norm) to the linear solver tolerance (L2 norm). That is,
+          {% $\mathit{tol}_{\mathsf{L2}} =
+              \mathit{fact}\cdot\mathit{tol}_{\mathsf{WRMS}}$ %}.
+          The given value is used directly if it is greater than zero.
+          If it is zero (the default), then the square root of the state
+          vector length is used.
+          If it is less than zero, then the square root of the dot product of a
+          state vector full of ones with itself is used.
+
+          @since 5.4.0
+          @noarkode <node> ARKStepSetMassLSNormFactor *)
+      val set_ls_norm_factor : ('d, 'k) session -> float -> unit
 
       (** {3:arkspilsmassstats Solver statistics} *)
 

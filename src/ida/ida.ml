@@ -510,6 +510,9 @@ module Spils = struct (* {{{ *)
     if in_compat_mode2_3 then ls_check_spils s;
     set_eps_lin s epsl
 
+  external set_ls_norm_factor : ('d, 'k) session -> float -> unit
+    = "sunml_ida_set_ls_norm_factor"
+
   external set_linear_solution_scaling : ('d, 'k) session -> bool -> unit
       = "sunml_ida_set_linear_solution_scaling"
 

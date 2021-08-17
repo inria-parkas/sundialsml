@@ -2072,6 +2072,21 @@ CAMLprim value sunml_cvode_set_eps_lin(value vcvode_mem, value eplifac)
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_cvode_set_ls_norm_factor(value vcvode_mem, value vfac)
+{
+    CAMLparam2(vcvode_mem, vfac);
+
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = CVodeSetLSNormFactor(CVODE_MEM_FROM_ML(vcvode_mem),
+				    Double_val(vfac));
+    CHECK_LS_FLAG("CVodeSetLSNormFactor", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value sunml_cvode_spils_set_maxl(value vcvode_mem, value maxl)
 {
     CAMLparam2(vcvode_mem, maxl);

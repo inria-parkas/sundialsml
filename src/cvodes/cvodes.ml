@@ -1360,6 +1360,13 @@ module Adjoint = struct (* {{{ *)
       if in_compat_mode2_3 then ls_check_spils (tosession bs);
       set_eps_lin parent which epsl
 
+    external set_ls_norm_factor : ('a, 'k) session -> int -> float -> unit
+        = "sunml_cvodes_adj_set_ls_norm_factor"
+
+    let set_ls_norm_factor bs fac =
+      let parent, which = parent_and_which bs in
+      set_ls_norm_factor parent which fac
+
     external c_set_linear_solution_scaling
       : ('d, 'k) session -> int -> bool -> unit
       = "sunml_cvodes_adj_set_linear_solution_scaling"
