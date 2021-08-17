@@ -1847,6 +1847,19 @@ CAMLprim value sunml_arkode_ark_reinit(value vdata, value t0, value y0)
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_arkode_ark_reset(value vdata, value vt, value vy)
+{
+    CAMLparam3(vdata, vt, vy);
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepReset(ARKODE_MEM_FROM_ML(vdata), Double_val(vt),
+			    NVEC_VAL(vy));
+    CHECK_FLAG("ARKStepReset", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
 static value ark_solver(value vdata, value nextt, value vy, int onestep)
 {
     CAMLparam3(vdata, nextt, vy);
@@ -5015,6 +5028,19 @@ CAMLprim value sunml_arkode_erk_reinit(value vdata, value t0, value y0)
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_arkode_erk_reset(value vdata, value vt, value vy)
+{
+    CAMLparam3(vdata, vt, vy);
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepReset(ARKODE_MEM_FROM_ML(vdata), Double_val(vt),
+			    NVEC_VAL(vy));
+    CHECK_FLAG("ERKStepReset", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
 static value erk_solver(value vdata, value nextt, value vy, int onestep)
 {
     CAMLparam3(vdata, nextt, vy);
@@ -6166,6 +6192,19 @@ CAMLprim value sunml_arkode_mri_reinit(value vdata, value t0, value y0)
     int flag = MRIStepReInit(ARKODE_MEM_FROM_ML(vdata),
 			     rhsfn1, Double_val(t0), NVEC_VAL(y0));
     CHECK_FLAG("MRIStepReInit", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_mri_reset(value vdata, value vt, value vy)
+{
+    CAMLparam3(vdata, vt, vy);
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepReset(ARKODE_MEM_FROM_ML(vdata), Double_val(vt),
+			    NVEC_VAL(vy));
+    CHECK_FLAG("MRIStepReset", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif

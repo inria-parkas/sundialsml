@@ -1398,6 +1398,14 @@ module ARKStep : sig (* {{{ *)
     -> ('d, 'k) Nvector.t
     -> unit
 
+  (** Resets the state to the given independent variable value and dependent
+      variable vector. All previously set options, internal counter values,
+      and step-size/error histories are retained.
+
+      @since 5.4.0
+      @noarkode <node> ARKStepReset *)
+  val reset : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
+
   (** Change the number of equations and unknowns between integrator steps.
       The call
       [resize s ~resize_nvec:rfn ~lsolver ~mass tol ~restol hscale ynew t0]
@@ -2307,6 +2315,14 @@ module ERKStep : sig (* {{{ *)
     -> ('d, 'k) Nvector.t
     -> unit
 
+  (** Resets the state to the given independent variable value and dependent
+      variable vector. All previously set options, internal counter values,
+      and step-size/error histories are retained.
+
+      @since 5.4.0
+      @noarkode <node> ERKStepReset *)
+  val reset : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
+
   (** Change the number of equations and unknowns between integrator steps.
       The call
       [resize s ~resize_nvec:rfn tol hscale ynew t0]
@@ -2864,6 +2880,14 @@ module MRIStep : sig (* {{{ *)
     -> float
     -> ('d, 'k) Nvector.t
     -> unit
+
+  (** Resets the state to the given independent variable value and dependent
+      variable vector. All previously set options, internal counter values,
+      and step-size/error histories are retained.
+
+      @since 5.4.0
+      @noarkode <node> MRIStepReset *)
+  val reset : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
 
   (** Change the number of equations and unknowns between integrator steps.
       The call

@@ -1615,6 +1615,9 @@ module ARKStep = struct (* {{{ *)
 
   let get_num_roots { nroots } = nroots
 
+  external reset : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
+      = "sunml_arkode_ark_reset"
+
   external c_reinit
       : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
       = "sunml_arkode_ark_reinit"
@@ -2191,6 +2194,9 @@ module ERKStep = struct (* {{{ *)
 
   let get_num_roots { nroots } = nroots
 
+  external reset : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
+      = "sunml_arkode_erk_reset"
+
   external c_reinit
       : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
       = "sunml_arkode_erk_reinit"
@@ -2551,6 +2557,9 @@ module MRIStep = struct (* {{{ *)
     session
 
   let get_num_roots { nroots } = nroots
+
+  external reset : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
+      = "sunml_arkode_mri_reset"
 
   external c_reinit
       : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
