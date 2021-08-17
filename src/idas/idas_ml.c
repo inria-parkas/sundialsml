@@ -2222,6 +2222,22 @@ CAMLprim value sunml_idas_adj_set_eps_lin(value vparent, value vwhich,
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_idas_adj_set_ls_norm_factor(value vparent, value vwhich,
+					         value vfac)
+{
+    CAMLparam3(vparent, vwhich, vfac);
+
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = IDASetLSNormFactorB(IDA_MEM_FROM_ML(vparent), Int_val(vwhich),
+			           Double_val(vfac));
+    SCHECK_FLAG("IDASetLSNormFactorB", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value sunml_idas_adj_set_linear_solution_scaling(value vparent,
 							  value vwhich,
 					                  value vonoff)

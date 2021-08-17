@@ -1380,6 +1380,13 @@ module Adjoint = struct (* {{{ *)
       let parent, which = parent_and_which bs in
       set_eps_lin parent which epsl
 
+    external set_ls_norm_factor : ('a, 'k) session -> int -> float -> unit
+        = "sunml_idas_adj_set_ls_norm_factor"
+
+    let set_ls_norm_factor bs fac =
+      let parent, which = parent_and_which bs in
+      set_ls_norm_factor parent which fac
+
     external c_set_linear_solution_scaling
         : ('d, 'k) session -> int -> bool -> unit
         = "sunml_idas_adj_set_linear_solution_scaling"

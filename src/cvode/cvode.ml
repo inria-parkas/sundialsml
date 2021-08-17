@@ -563,6 +563,9 @@ module Spils = struct (* {{{ *)
     if in_compat_mode2_3 then ls_check_spils s;
     set_eps_lin s epsl
 
+  external set_ls_norm_factor : ('d, 'k) session -> float -> unit
+      = "sunml_cvode_set_ls_norm_factor"
+
   external get_num_lin_iters      : ('a, 'k) session -> int
       = "sunml_cvode_get_num_lin_iters"
 

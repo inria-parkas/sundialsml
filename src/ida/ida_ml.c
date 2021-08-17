@@ -1782,6 +1782,20 @@ CAMLprim value sunml_ida_set_eps_lin(value vida_mem, value eplifac)
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_ida_set_ls_norm_factor(value vida_mem, value vfac)
+{
+    CAMLparam2(vida_mem, vfac);
+
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = IDASetLSNormFactor(IDA_MEM_FROM_ML(vida_mem), Double_val(vfac));
+    CHECK_LS_FLAG("IDASetLSNormFactor", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value sunml_ida_set_linear_solution_scaling(value vida_mem,
 						     value vonoff)
 {
