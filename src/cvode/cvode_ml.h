@@ -297,6 +297,17 @@ enum cvode_bandblock_bandwidths_index {
   RECORD_CVODE_BANDBLOCK_BANDWIDTHS_SIZE
 };
 
+enum cvode_nonlin_system_data_index {
+  RECORD_CVODE_NONLIN_SYSTEM_DATA_TN = 0,
+  RECORD_CVODE_NONLIN_SYSTEM_DATA_YPRED,
+  RECORD_CVODE_NONLIN_SYSTEM_DATA_YN,
+  RECORD_CVODE_NONLIN_SYSTEM_DATA_FN,
+  RECORD_CVODE_NONLIN_SYSTEM_DATA_GAMMA,
+  RECORD_CVODE_NONLIN_SYSTEM_DATA_RL1,
+  RECORD_CVODE_NONLIN_SYSTEM_DATA_ZN1,
+  RECORD_CVODE_NONLIN_SYSTEM_DATA_SIZE
+};
+
 /* This enum must list exceptions in the same order as the call to
  * c_register_exns in cvode.ml.  */
 enum cvode_exn_index {

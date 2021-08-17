@@ -1943,6 +1943,41 @@ CAMLprim value sunml_ida_get_current_yp(value vida_mem)
     CAMLreturn(vnv);
 }
 
+CAMLprim value sunml_ida_get_nonlin_system_data(value vida_mem)
+{
+    CAMLparam1(vida_mem);
+    CAMLlocal1(vnv);
+#if 540 <= SUNDIALS_LIB_VERSION
+    realtype tn, cj;
+    N_Vector yypred, yppred, yyn, ypn, res;
+    void *user_data;
+
+    int flag = IDAGetNonlinearSystemData(IDA_MEM_FROM_ML(vida_mem),
+		    &tn, &yypred, &yppred, &yyn, &ypn, &res, &cj, &user_data);
+    CHECK_FLAG("IDAGetNonlinearSystemData", flag);
+
+    vnv = caml_alloc_tuple(RECORD_IDA_NONLIN_SYSTEM_DATA_SIZE);
+    Store_field(vnv, RECORD_IDA_NONLIN_SYSTEM_DATA_TN,
+	    caml_copy_double(tn));
+    Store_field(vnv, RECORD_IDA_NONLIN_SYSTEM_DATA_YYPRED,
+	    NVEC_BACKLINK(yypred));
+    Store_field(vnv, RECORD_IDA_NONLIN_SYSTEM_DATA_YPPRED,
+	    NVEC_BACKLINK(yypred));
+    Store_field(vnv, RECORD_IDA_NONLIN_SYSTEM_DATA_YYN,
+	    NVEC_BACKLINK(yyn));
+    Store_field(vnv, RECORD_IDA_NONLIN_SYSTEM_DATA_YPN,
+	    NVEC_BACKLINK(ypn));
+    Store_field(vnv, RECORD_IDA_NONLIN_SYSTEM_DATA_RES,
+	    NVEC_BACKLINK(res));
+    Store_field(vnv, RECORD_IDA_NONLIN_SYSTEM_DATA_CJ,
+	    caml_copy_double(cj));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(vnv);
+}
+
 CAMLprim value sunml_ida_compute_y (value vida_mem, value vycor, value vy)
 {
     CAMLparam3(vida_mem, vycor, vy);

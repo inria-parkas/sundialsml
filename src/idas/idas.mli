@@ -787,6 +787,41 @@ module Sensitivity : sig (* {{{ *)
       @noidas <node5> IDAGetCurrentYpSens *)
   val get_current_yp_sens : ('d, 'k) session -> 'd array
 
+  (** Internal data required to construct the current nonlinear implicit
+      system within a nonlinear solver. *)
+  type 'd nonlin_system_data = {
+    tn      : float;
+      (** Independent variable value {% $t_n$ %}. *)
+    yyspred : 'd array;
+      (** Predicted value of {% $\mathit{yS}_{i,\mathit{pred}}$ %}
+          at {% $t_n$ %} for {% $i = 0,\ldots,N_s-1$ %}.
+          This data must not be changed. *)
+    ypspred : 'd array;
+      (** Predicted value of {% $\dot{y}S}_{i,\mathit{pred}}$ %}
+          at {% $t_n$ %} for {% $i = 0,\ldots,N_s-1$ %}.
+          This data must not be changed. *)
+    yysn    : 'd array;
+      (** The vector {% $\mathit{yS}_{i,n}$ %}. This data may not be current
+          and may need to be filled. *)
+    ypsn    : 'd array;
+      (** The vector {% $\dot{y}S_{i,n}$ %}. This data may not be current
+          and may need to be filled. *)
+    cj      : float;
+      (** The scalar {% $c_j$ %} which is proportional to the inverse of
+          the step size {% $\alpha$ %}. *)
+  }
+
+  (** Gives direct access to the internal data required to construct the
+      current nonlinear system within a nonlinear solver. This
+      function should be called inside the nonlinear system function.
+      The vectors [yysn] and [ypsn] are provided as additional workspace and
+      do not need to be filled in. They are only current after an evaluation
+      of the nonlinear system function.
+
+      @since 5.4.0
+      @noida <node> IDAGetNonlinearSystemData *)
+  val get_nonlin_system_data : ('d, 'k) session -> 'd nonlin_system_data
+
   (** Computes the sensitiviites from a correction vector.
 
       @since 5.0.0

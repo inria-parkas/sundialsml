@@ -1973,6 +1973,57 @@ module ARKStep : sig (* {{{ *)
       @noarkode <node> ARKStepGetCurrentState *)
   val get_current_state : ('d, 'k) session -> 'd
 
+  (** Internal data required to construct the current nonlinear implicit
+      system within a nonlinear solver. *)
+  type 'd nonlin_system_data = {
+    tcur  : float;
+      (** Independent variable value for slow stage {% $t^S_{n,i}$ %}. *)
+    zpred : 'd;
+      (** Predicted nonlinear solution {% $z_{\mathit{pred}}$ %}. This
+          data must not be changed. *)
+    zi    : 'd;
+      (** Stage vector {% $z_i$ %}. This data may not be current and may
+          need to be filled. *)
+    fi    : 'd;
+      (** Memory available for evaluating the slow right-hand side
+          {% $f^S(t^S_{n,i}, z_i)$ %}. This data may not be current and may
+          need to be filled. *)
+    gamma : float;
+      (** Current {% $\gamma$ %} for slow-stage calculation. *)
+    sdata : 'd;
+      (** Accumulated data from previous solution and stages
+          {% $\tilde{a}_i$ %}. This data must not be changed. *)
+  }
+
+  (** Gives direct access to the internal data required to construct the
+      current nonlinear implicit system within a nonlinear solver. This
+      function should be called inside the nonlinear system function.
+      If the nonlinear solver uses the [lsetup] or [lsolve] functions, then
+      the nonlinear solver system function must fill the [zi] and [fi]
+      vectors with, respectively, the current state and corresponding
+      evaluation of the right-hand-side function:
+      {% $z_i = z_{\mathit{pred}} + z_{\mathit{cor}}$ %} and
+      {% $F_i = f^S(t^S_{n,i}, z_i)$ %} where {% $z_{\mathit{cor}}$ %} is the
+      first argument of the nonlinear solver system function. Within a custom
+      linear solver, then the vectors [zi] and [fi] are only current after
+      an evaluation of the nonlinear system function.
+
+      @since 5.4.0
+      @noarkode <node> ARKStepGetNonlinearSystemData *)
+  val get_nonlin_system_data : ('d, 'k) session -> 'd nonlin_system_data
+
+  (** Computes the current stage state vector using the stored prediction and
+      the supplied correction from the nonlinear solver. The call
+      [compute_state s zcor z] computes {% $z_i(t) = z_{\mathit{pred}}
+      + z_{\mathit{cor}}$ %}.
+
+      @since 5.4.0
+      @noarkode <node> ARKStepComputeState *)
+  val compute_state : ('d, 'k) session
+                      -> ('d, 'k) Nvector.t
+                      -> ('d, 'k) Nvector.t
+                      -> unit
+
   (** Returns the current value of {% $\gamma$ %}.
       This scalar appears in the internal Newton equation, either
       {% $A = I - \gamma J$ %} or {% $A = M - \gamma J$ %}.
@@ -3033,6 +3084,58 @@ module MRIStep : sig (* {{{ *)
 
       @noarkode <node> MRIStepGetCurrentState *)
   val get_current_state : ('d, 'k) session -> 'd
+
+  (** Internal data required to construct the current nonlinear implicit
+      system within a nonlinear solver. *)
+  type 'd nonlin_system_data = {
+    tcur  : float;
+      (** Independent variable value for slow stage {% $t^S_{n,i}$ %}. *)
+    zpred : 'd;
+      (** Predicted nonlinear solution {% $z_{\mathit{pred}}$ %}. This
+          data must not be changed. *)
+    zi    : 'd;
+      (** Stage vector {% $z_i$ %}. This data may not be current and may
+          need to be filled. *)
+    fi    : 'd;
+      (** Memory available for evaluating the slow right-hand side
+          {% $f^S(t^S_{n,i}, z_i)$ %}. This data may not be current and may
+          need to be filled. *)
+    gamma : float;
+      (** Current {% $\gamma$ %} for slow-stage calculation. *)
+    sdata : 'd;
+      (** Accumulated data from previous solution and stages
+          {% $\tilde{a}_i$ %}. This data must not be changed. *)
+  }
+
+  (** Gives direct access to the internal data required to construct the
+      current nonlinear implicit system within a nonlinear solver. This
+      function should be called inside the nonlinear system function.
+      If the nonlinear solver uses the [lsetup] or [lsolve] functions, then
+      the nonlinear solver system function must fill the [zi] and [fi]
+      vectors with, respectively, the current state and corresponding
+      evaluation of the right-hand-side function:
+      {% $z_i = z_{\mathit{pred}} + z_{\mathit{cor}}$ %} and
+      {% $F_i = f^S(t^S_{n,i}, z_i)$ %} where {% $z_{\mathit{cor}}$ %} is the
+      first argument of the nonlinear solver system function. Within a custom
+      linear solver, then the vectors [zi] and [fi] are only current after
+      an evaluation of the nonlinear system function.
+
+      @since 5.4.0
+      @noarkode <node> MRIStepGetNonlinSystemData *)
+  val get_nonlin_system_data : ('d, 'k) session -> 'd nonlin_system_data
+
+  (** Computes the current stage state vector using the stored prediction and
+      the supplied correction from the nonlinear solver. The call
+      [compute_state s zcor z] computes {% $z_i(t) = z_{\mathit{pred}}
+      + z_{\mathit{cor}}$ %}.
+
+      @since 5.4.0
+      @noarkode <node> MRIStepComputeState *)
+  val compute_state : ('d, 'k) session
+                      -> ('d, 'k) Nvector.t
+                      -> ('d, 'k) Nvector.t
+                      -> unit
+
 
   (** {2:roots Additional root-finding functions} *)
 

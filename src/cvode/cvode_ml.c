@@ -1625,6 +1625,55 @@ CAMLprim value sunml_cvode_get_current_state(value vcvode_mem)
     CAMLreturn(vnv);
 }
 
+CAMLprim value sunml_cvode_get_nonlin_system_data(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+    CAMLlocal1(vnv);
+#if 540 <= SUNDIALS_LIB_VERSION
+    realtype tn, gamma, rl1;
+    N_Vector ypred, yn, fn, zn1;
+    void *user_data;
+
+    int flag = CVodeGetNonlinearSystemData(CVODE_MEM_FROM_ML(vcvode_mem),
+		    &tn, &ypred, &yn, &fn, &gamma, &rl1, &zn1, &user_data);
+    CHECK_FLAG("CVodeGetNonlinearSystemData", flag);
+
+    vnv = caml_alloc_tuple(RECORD_CVODE_NONLIN_SYSTEM_DATA_SIZE);
+    Store_field(vnv, RECORD_CVODE_NONLIN_SYSTEM_DATA_TN,
+	    caml_copy_double(tn));
+    Store_field(vnv, RECORD_CVODE_NONLIN_SYSTEM_DATA_YPRED,
+	    NVEC_BACKLINK(ypred));
+    Store_field(vnv, RECORD_CVODE_NONLIN_SYSTEM_DATA_YN,
+	    NVEC_BACKLINK(yn));
+    Store_field(vnv, RECORD_CVODE_NONLIN_SYSTEM_DATA_FN,
+	    NVEC_BACKLINK(fn));
+    Store_field(vnv, RECORD_CVODE_NONLIN_SYSTEM_DATA_GAMMA,
+	    caml_copy_double(gamma));
+    Store_field(vnv, RECORD_CVODE_NONLIN_SYSTEM_DATA_RL1,
+	    caml_copy_double(rl1));
+    Store_field(vnv, RECORD_CVODE_NONLIN_SYSTEM_DATA_ZN1,
+	    NVEC_BACKLINK(zn1));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(vnv);
+}
+
+CAMLprim value sunml_cvode_compute_state(value vcvode_mem,
+					 value vycor, value vyz)
+{
+    CAMLparam3(vcvode_mem, vycor, vyz);
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = CVodeComputeState(CVODE_MEM_FROM_ML(vcvode_mem),
+				 NVEC_VAL(vycor), NVEC_VAL(vyz));
+    CHECK_FLAG("CVodeComputeState", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn0;
+}
+
 CAMLprim value sunml_cvode_get_current_gamma(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);

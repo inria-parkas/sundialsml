@@ -2150,6 +2150,53 @@ CAMLprim value sunml_arkode_ark_get_current_state(value varkode_mem)
     CAMLreturn(vnv);
 }
 
+CAMLprim value sunml_arkode_ark_get_nonlin_system_data(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    CAMLlocal1(vnv);
+#if 540 <= SUNDIALS_LIB_VERSION
+    realtype tcur, gamma;
+    N_Vector zpred, zi, Fi, sdata;
+    void *user_data;
+
+    int flag = ARKStepGetNonlinearSystemData(ARKODE_MEM_FROM_ML(varkode_mem),
+		    &tcur, &zpred, &zi, &Fi, &gamma, &sdata, &user_data);
+    CHECK_FLAG("ARKStepGetNonlinearSystemData", flag);
+
+    vnv = caml_alloc_tuple(RECORD_ARKODE_NONLIN_SYSTEM_DATA_SIZE);
+    Store_field(vnv, RECORD_ARKODE_NONLIN_SYSTEM_DATA_TCUR,
+	    caml_copy_double(tcur));
+    Store_field(vnv, RECORD_ARKODE_NONLIN_SYSTEM_DATA_ZPRED,
+	    NVEC_BACKLINK(zpred));
+    Store_field(vnv, RECORD_ARKODE_NONLIN_SYSTEM_DATA_ZI,
+	    NVEC_BACKLINK(zi));
+    Store_field(vnv, RECORD_ARKODE_NONLIN_SYSTEM_DATA_FI,
+	    NVEC_BACKLINK(Fi));
+    Store_field(vnv, RECORD_ARKODE_NONLIN_SYSTEM_DATA_GAMMA,
+	    caml_copy_double(gamma));
+    Store_field(vnv, RECORD_ARKODE_NONLIN_SYSTEM_DATA_SDATA,
+	    NVEC_BACKLINK(sdata));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(vnv);
+}
+
+CAMLprim value sunml_arkode_ark_compute_state(value varkode_mem,
+					      value vzcor, value vz)
+{
+    CAMLparam3(varkode_mem, vzcor, vz);
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepComputeState(ARKODE_MEM_FROM_ML(varkode_mem),
+				   NVEC_VAL(vzcor), NVEC_VAL(vz));
+    CHECK_FLAG("ARKStepComputeState", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn0;
+}
+
 CAMLprim value sunml_arkode_ark_get_current_gamma(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
@@ -6679,6 +6726,53 @@ CAMLprim value sunml_arkode_mri_get_current_state(value varkode_mem)
 #endif
 
     CAMLreturn(vnv);
+}
+
+CAMLprim value sunml_arkode_mri_get_nonlin_system_data(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    CAMLlocal1(vnv);
+#if 540 <= SUNDIALS_LIB_VERSION
+    realtype tcur, gamma;
+    N_Vector zpred, zi, Fi, sdata;
+    void *user_data;
+
+    int flag = MRIStepGetNonlinearSystemData(ARKODE_MEM_FROM_ML(varkode_mem),
+		    &tcur, &zpred, &zi, &Fi, &gamma, &sdata, &user_data);
+    CHECK_FLAG("MRIStepGetNonlinearSystemData", flag);
+
+    vnv = caml_alloc_tuple(RECORD_ARKODE_NONLIN_SYSTEM_DATA_SIZE);
+    Store_field(vnv, RECORD_ARKODE_NONLIN_SYSTEM_DATA_TCUR,
+	    caml_copy_double(tcur));
+    Store_field(vnv, RECORD_ARKODE_NONLIN_SYSTEM_DATA_ZPRED,
+	    NVEC_BACKLINK(zpred));
+    Store_field(vnv, RECORD_ARKODE_NONLIN_SYSTEM_DATA_ZI,
+	    NVEC_BACKLINK(zi));
+    Store_field(vnv, RECORD_ARKODE_NONLIN_SYSTEM_DATA_FI,
+	    NVEC_BACKLINK(Fi));
+    Store_field(vnv, RECORD_ARKODE_NONLIN_SYSTEM_DATA_GAMMA,
+	    caml_copy_double(gamma));
+    Store_field(vnv, RECORD_ARKODE_NONLIN_SYSTEM_DATA_SDATA,
+	    NVEC_BACKLINK(sdata));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(vnv);
+}
+
+CAMLprim value sunml_arkode_mri_compute_state(value varkode_mem,
+					      value vzcor, value vz)
+{
+    CAMLparam3(varkode_mem, vzcor, vz);
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepComputeState(ARKODE_MEM_FROM_ML(varkode_mem),
+				   NVEC_VAL(vzcor), NVEC_VAL(vz));
+    CHECK_FLAG("MRIStepComputeState", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn0;
 }
 
 CAMLprim value sunml_arkode_mri_set_no_inactive_root_warn(value varkode_mem)

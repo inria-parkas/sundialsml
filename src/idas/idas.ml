@@ -468,6 +468,23 @@ module Sensitivity = struct (* {{{ *)
   let get_current_yp_sens s =
     c_get_current_yp_sens s (num_sensitivities s)
 
+  (* must correspond to idas_nonlin_system_data_index in idas_ml.h *)
+  type 'd nonlin_system_data = {
+    tn      : float;
+    yyspred : 'd array;
+    ypspred : 'd array;
+    yysn    : 'd array;
+    ypsn    : 'd array;
+    cj      : float;
+  }
+
+  external get_nonlin_system_data_sens
+      : ('d, 'k) session -> int -> 'd nonlin_system_data
+      = "sunml_idas_get_nonlin_system_data_sens"
+
+  let get_nonlin_system_data s =
+    get_nonlin_system_data_sens s (num_sensitivities s)
+
   external c_compute_y_sens
       : ('d, 'k) session
         -> ('d, 'k) Nvector.t array

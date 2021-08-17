@@ -996,6 +996,60 @@ val get_current_order       : ('d, 'k) session -> int
     @nocvode <node> CVodeGetCurrentState *)
 val get_current_state : ('d, 'k) session -> 'd
 
+(** Internal data required to construct the current nonlinear implicit
+    system within a nonlinear solver. *)
+type 'd nonlin_system_data = {
+  tn    : float;
+    (** Independent variable value {% $t_n$ %}. *)
+  ypred : 'd;
+    (** Predicted state vector {% $y_{\mathit{pred}}$ %} at {% $t_n$ %}. This
+        data must not be changed. *)
+  yn    : 'd;
+    (** State vector {% $y^n$ %}. This data may not be current and may
+        need to be filled. *)
+  fn    : 'd;
+    (** The right-hand side function evaluated at the current time and state,
+        {% $f(t_n, y^n)$ %}. * This data may not be current and may need to
+        be filled. *)
+  gamma : float;
+    (** Current value of {% $\gamma$ %}. *)
+  rl1   : float;
+      (** A scaling factor used to compute {% $\tilde{a}_n =
+          \mathtt{rl1}\cdot\mathtt{zn1}$ %}. *)
+  zn1   : 'd;
+      (** A vector used to compute {% $\tilde{a}_n =
+          \mathtt{rl1}\cdot\mathtt{zn1}$ %}. *)
+}
+
+(** Gives direct access to the internal data required to construct the
+    current nonlinear system within a nonlinear solver. This
+    function should be called inside the nonlinear system function.
+    If the nonlinear solver uses the [lsetup] or [lsolve] functions, then
+    the nonlinear solver system function must fill the [zi] and [fi]
+    vectors with, respectively, the current state and corresponding
+    evaluation of the right-hand-side function:
+    {% $y^n = y_{\mathit{pred}} + y_{\mathit{cor}}$ %} and
+    {% $f_n = f(t_n, y^n)$ %} where {% $y_{\mathit{cor}}$ %} is the
+    first argument of the nonlinear solver system function. Within a custom
+    linear solver, then the vectors [yn] and [fn] are only current after
+    an evaluation of the nonlinear system function.
+
+    @since 5.4.0
+    @nocvode <node> CVodeGetNonlinearSystemData *)
+val get_nonlin_system_data : ('d, 'k) session -> 'd nonlin_system_data
+
+(** Computes the current stage state vector using the stored prediction and
+    the supplied correction from the nonlinear solver. The call
+    [compute_state s ycor yn] computes {% $y^n = y_{\mathit{pred}}
+    + y_{\mathit{cor}}$ %}.
+
+    @since 5.4.0
+    @nocvode <node> CVodeComputeState *)
+val compute_state : ('d, 'k) session
+                    -> ('d, 'k) Nvector.t
+                    -> ('d, 'k) Nvector.t
+                    -> unit
+
 (** Returns the current value of {% $\gamma$ %}.
     This scalar appears in the internal Newton equation,
     {% $M = I - \gamma J$ %}.
