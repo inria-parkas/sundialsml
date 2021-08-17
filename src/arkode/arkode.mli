@@ -1466,13 +1466,6 @@ module ARKStep : sig (* {{{ *)
       @noarkode <node> ARKStepSetDefaults *)
   val set_defaults : ('d, 'k) session -> unit
 
-  (** Specifies the order of accuracy for the polynomial interpolant used for
-      dense output. The interpolant is used both for solution output values
-      and implicit method predictors.
-
-      @noarkode <node> ARKStepSetDenseOrder *)
-  val set_dense_order : ('d, 'k) session -> int -> unit
-
   (** Write step adaptivity and solver diagnostics to the given file.
 
       @noarkode <node> ARKStepSetDiagnostics *)
@@ -2304,12 +2297,6 @@ module ERKStep : sig (* {{{ *)
 
       @noarkode <node> ERKStepSetDefaults *)
   val set_defaults : ('d, 'k) session -> unit
-
-  (** Specifies the order of accuracy for the polynomial interpolant used for
-      dense output.
-
-      @noarkode <node> ERKStepSetDenseOrder *)
-  val set_dense_order : ('d, 'k) session -> int -> unit
 
   (** Write step adaptivity and solver diagnostics to the given file.
 

@@ -643,7 +643,7 @@ CAMLprim value sunml_kinsol_spils_set_jac_times_vec_fn(value vdata, value vset_j
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_cvode_set_jac_times_vec_sys_fn(value vdata, value vhas_sysfn)
+CAMLprim value sunml_kinsol_spils_set_jac_times_vec_sys_fn(value vdata, value vhas_sysfn)
 {
     CAMLparam2(vdata, vhas_sysfn);
 #if 530 <= SUNDIALS_LIB_VERSION
