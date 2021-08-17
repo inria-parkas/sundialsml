@@ -1,6 +1,6 @@
-Sundials/ML 5.3.0p0 (September 2020)
+Sundials/ML 5.4.0p0 (September 2021)
 ------------------------------------
-Sundials/ML v5.3.0p0 adds support for v5.x of the Sundials Suite of
+Sundials/ML v5.4.0p0 adds support for v5.x of the Sundials Suite of
 numerical solvers.
 
 OCaml 4.03.0 or greater is now required and optionally OCamlMPI 1.05.
@@ -11,7 +11,8 @@ Notes:
 * Changes to the callback interfaces NonlinearSolver.{lsetupfn, lsolvefn} 
   and the name (and use) of the second argument of the function 
   NonlinearSolver.solve.
-* Support for most new 5.x features in Cvode, Cvodes, Ida, Idas, and Kinsol.
+* Support for most new 5.x features in Cvode, Cvodes, Ida, Idas, and Kinsol
+  including the new ManyVector, MPIManyVector, and MPIPlusX nvectors.
 
 Compatibility
 * The naming scheme for nvector operations has changed. Operations no longer 
