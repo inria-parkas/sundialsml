@@ -150,12 +150,22 @@ static void finalize_lsolver(value vls)
     if (ls) SUNLinSolFree(ls);
 }
 
-static value alloc_lsolver(SUNLinearSolver ls)
+static void finalize_custom_lsolver(value vls)
+{
+    SUNLinearSolver ls = LSOLVER_VAL(vls);
+    if (ls) {
+	caml_remove_generational_global_root((void *)&(ls->content));
+	SUNLinSolFree(ls);
+    }
+}
+
+static value alloc_lsolver(SUNLinearSolver ls, int custom)
 {
     CAMLparam0();
     CAMLlocal1(vcptr);
 
-    vcptr = caml_alloc_final(1, &finalize_lsolver, 1, 20);
+    vcptr = caml_alloc_final(1,
+		custom ? &finalize_custom_lsolver : &finalize_lsolver, 1, 20);
     LSOLVER_VAL(vcptr) = ls;
 
     CAMLreturn(vcptr);
@@ -187,7 +197,7 @@ CAMLprim value sunml_lsolver_dense(value vnvec, value vdmat)
 	caml_raise_out_of_memory();
     }
 
-    CAMLreturn(alloc_lsolver(ls));
+    CAMLreturn(alloc_lsolver(ls, 0));
 #else
     CAMLreturn(Val_unit);
 #endif
@@ -214,7 +224,7 @@ CAMLprim value sunml_lsolver_lapack_dense(value vnvec, value vdmat)
 	caml_raise_out_of_memory();
     }
 
-    CAMLreturn(alloc_lsolver(ls));
+    CAMLreturn(alloc_lsolver(ls, 0));
 #else
     CAMLreturn(Val_unit);
 #endif
@@ -247,7 +257,7 @@ CAMLprim value sunml_lsolver_band(value vnvec, value vbmat)
 	caml_raise_out_of_memory();
     }
 
-    CAMLreturn(alloc_lsolver(ls));
+    CAMLreturn(alloc_lsolver(ls, 0));
 #else
     CAMLreturn(Val_unit);
 #endif
@@ -280,7 +290,7 @@ CAMLprim value sunml_lsolver_lapack_band(value vnvec, value vbmat)
 	caml_raise_out_of_memory();
     }
 
-    CAMLreturn(alloc_lsolver(ls));
+    CAMLreturn(alloc_lsolver(ls, 0));
 #else
     CAMLreturn(Val_unit);
 #endif
@@ -307,7 +317,7 @@ CAMLprim value sunml_lsolver_klu(value vnvec, value vsmat)
 	caml_raise_out_of_memory();
     }
 
-    CAMLreturn(alloc_lsolver(ls));
+    CAMLreturn(alloc_lsolver(ls, 0));
 #else
     CAMLreturn(Val_unit);
 #endif
@@ -365,7 +375,7 @@ CAMLprim value sunml_lsolver_superlumt(value vnvec, value vsmat, value vnthreads
 	caml_raise_out_of_memory();
     }
 
-    CAMLreturn(alloc_lsolver(ls));
+    CAMLreturn(alloc_lsolver(ls, 0));
 #else
     CAMLreturn(Val_unit);
 #endif
@@ -646,7 +656,7 @@ CAMLprim value sunml_lsolver_spbcgs(value vmaxl, value vnvec)
 #endif
     if (ls == NULL) caml_raise_out_of_memory();
 
-    CAMLreturn(alloc_lsolver(ls));
+    CAMLreturn(alloc_lsolver(ls, 0));
 #else
     CAMLreturn(Val_unit);
 #endif
@@ -664,7 +674,7 @@ CAMLprim value sunml_lsolver_spfgmr(value vmaxl, value vnvec)
 #endif
     if (ls == NULL) caml_raise_out_of_memory();
 
-    CAMLreturn(alloc_lsolver(ls));
+    CAMLreturn(alloc_lsolver(ls, 0));
 #else
     CAMLreturn(Val_unit);
 #endif
@@ -682,7 +692,7 @@ CAMLprim value sunml_lsolver_spgmr(value vmaxl, value vnvec)
 #endif
     if (ls == NULL) caml_raise_out_of_memory();
 
-    CAMLreturn(alloc_lsolver(ls));
+    CAMLreturn(alloc_lsolver(ls, 0));
 #else
     CAMLreturn(Val_unit);
 #endif
@@ -700,7 +710,7 @@ CAMLprim value sunml_lsolver_sptfqmr(value vmaxl, value vnvec)
 #endif
     if (ls == NULL) caml_raise_out_of_memory();
 
-    CAMLreturn(alloc_lsolver(ls));
+    CAMLreturn(alloc_lsolver(ls, 0));
 #else
     CAMLreturn(Val_unit);
 #endif
@@ -718,7 +728,7 @@ CAMLprim value sunml_lsolver_pcg(value vmaxl, value vnvec)
 #endif
     if (ls == NULL) caml_raise_out_of_memory();
 
-    CAMLreturn(alloc_lsolver(ls));
+    CAMLreturn(alloc_lsolver(ls, 0));
 #else
     CAMLreturn(Val_unit);
 #endif
@@ -1164,10 +1174,10 @@ CAMLprim value sunml_lsolver_call_psolve(value vcptr, value vr, value vz,
 }
 #endif
 
-CAMLprim value sunml_lsolver_make_custom(value vlstype, value vlsid,
+CAMLprim value sunml_lsolver_make_custom(value vlstype,
 					 value vops, value vhasops)
 {
-    CAMLparam4(vlstype, vlsid, vops, vhasops);
+    CAMLparam3(vlstype, vops, vhasops);
 #if 300 <= SUNDIALS_LIB_VERSION
     SUNLinearSolver ls;
     SUNLinearSolver_Ops ops;
@@ -1176,7 +1186,7 @@ CAMLprim value sunml_lsolver_make_custom(value vlstype, value vlsid,
     ls = (SUNLinearSolver)malloc(sizeof *ls);
     if (ls == NULL) caml_raise_out_of_memory();
 
-    ops = (SUNLinearSolver_Ops) malloc(
+    ops = (SUNLinearSolver_Ops) calloc(1,
 	    sizeof(struct _generic_SUNLinearSolver_Ops));
     if (ops == NULL) {
 	free(ls);
@@ -1250,7 +1260,7 @@ CAMLprim value sunml_lsolver_make_custom(value vlstype, value vlsid,
     ls->content = (void *)vops;
     caml_register_generational_global_root((void *)&(ls->content));
 
-    CAMLreturn(alloc_lsolver(ls));
+    CAMLreturn(alloc_lsolver(ls, 1));
 #else
     CAMLreturn(Val_unit);
 #endif
