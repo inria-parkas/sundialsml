@@ -2578,6 +2578,82 @@ CAMLprim value sunml_cvodes_get_current_sens_solve_index(value vdata)
     CAMLreturn (r);
 }
 
+CAMLprim value sunml_cvodes_get_nonlin_system_data_sens(value vcvode_mem,
+							value vns)
+{
+    CAMLparam2(vcvode_mem, vns);
+    CAMLlocal1(vnv);
+#if 540 <= SUNDIALS_LIB_VERSION
+    int ns = Int_val(vns);
+    realtype tn, gamma, rlS1;
+    N_Vector *ySpred, *ySn, *znS1;
+    void *user_data;
+
+    int flag = CVodeGetNonlinearSystemDataSens(CVODE_MEM_FROM_ML(vcvode_mem),
+		    &tn, &ySpred, &ySn, &gamma, &rlS1, &znS1, &user_data);
+    CHECK_FLAG("CVodeGetNonlinearSystemDataSens", flag);
+
+    vnv = caml_alloc_tuple(RECORD_CVODES_NONLIN_SYSTEM_DATA_SIZE);
+    Store_field(vnv, RECORD_CVODES_NONLIN_SYSTEM_DATA_TN,
+	    caml_copy_double(tn));
+    Store_field(vnv, RECORD_CVODES_NONLIN_SYSTEM_DATA_YSPRED,
+	    sunml_wrap_to_nvector_table(ns, ySpred));
+    Store_field(vnv, RECORD_CVODES_NONLIN_SYSTEM_DATA_YSN,
+	    sunml_wrap_to_nvector_table(ns, ySn));
+    Store_field(vnv, RECORD_CVODES_NONLIN_SYSTEM_DATA_GAMMA,
+	    caml_copy_double(gamma));
+    Store_field(vnv, RECORD_CVODES_NONLIN_SYSTEM_DATA_RLS1,
+	    caml_copy_double(rlS1));
+    Store_field(vnv, RECORD_CVODES_NONLIN_SYSTEM_DATA_ZNS1,
+	    sunml_wrap_to_nvector_table(ns, znS1));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(vnv);
+}
+
+CAMLprim value sunml_cvodes_compute_state_sens(value vcvode_mem,
+					       value vyscor, value vysz)
+{
+    CAMLparam3(vcvode_mem, vyscor, vysz);
+#if 540 <= SUNDIALS_LIB_VERSION
+    N_Vector *yscor, *ysz;
+    int flag;
+
+    yscor = sunml_nvector_array_alloc(vyscor);
+    if (yscor == NULL) caml_raise_out_of_memory();
+    ysz = sunml_nvector_array_alloc(vysz);
+    if (ysz == NULL) {
+	sunml_nvector_array_free(yscor);
+	caml_raise_out_of_memory();
+    }
+
+    flag = CVodeComputeStateSens(CVODE_MEM_FROM_ML(vcvode_mem), yscor, ysz);
+    sunml_nvector_array_free(yscor);
+    sunml_nvector_array_free(ysz);
+    CHECK_FLAG("CVodeComputeStateSens", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn0;
+}
+
+CAMLprim value sunml_cvodes_compute_state_sens1(value vcvode_mem, value vidx,
+						value vycor, value vyz)
+{
+    CAMLparam4(vcvode_mem, vidx, vycor, vyz);
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = CVodeComputeStateSens1(CVODE_MEM_FROM_ML(vcvode_mem),
+				      Int_val(vidx),
+				      NVEC_VAL(vycor), NVEC_VAL(vyz));
+    CHECK_FLAG("CVodeComputeStateSens1", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn0;
+}
+
 /* sensitivity/quadrature interface */
 
 CAMLprim value sunml_cvodes_quadsens_set_err_con(value vdata, value verrconq)

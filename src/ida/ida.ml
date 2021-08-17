@@ -902,6 +902,21 @@ external get_current_y  : ('d, 'k) session -> 'd
 external get_current_yp : ('d, 'k) session -> 'd
     = "sunml_ida_get_current_yp"
 
+(* must correspond to ida_nonlin_system_data_index in ida_ml.h *)
+type 'd nonlin_system_data = {
+  tn     : float;
+  yypred : 'd;
+  yppred : 'd;
+  yyn    : 'd;
+  ypn    : 'd;
+  res   : 'd;
+  cj    : float;
+}
+
+external get_nonlin_system_data
+  : ('d, 'k) session -> 'd nonlin_system_data
+  = "sunml_ida_get_nonlin_system_data"
+
 external c_compute_y
     : ('d, 'k) session -> ('d, 'k) Nvector.t -> ('d, 'k) Nvector.t -> unit
     = "sunml_ida_compute_y"

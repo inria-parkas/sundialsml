@@ -224,6 +224,16 @@ enum idas_adj_solve_arg_index {
     RECORD_IDAS_ADJ_SPILS_SOLVE_ARG_SIZE
 };
 
+enum idas_nonlin_system_data_index {
+  RECORD_IDAS_NONLIN_SYSTEM_DATA_TN = 0,
+  RECORD_IDAS_NONLIN_SYSTEM_DATA_YYSPRED,
+  RECORD_IDAS_NONLIN_SYSTEM_DATA_YPSPRED,
+  RECORD_IDAS_NONLIN_SYSTEM_DATA_YYSN,
+  RECORD_IDAS_NONLIN_SYSTEM_DATA_YPSN,
+  RECORD_IDAS_NONLIN_SYSTEM_DATA_CJ,
+  RECORD_IDAS_NONLIN_SYSTEM_DATA_SIZE
+};
+
 /* This enum must list exceptions in the same order as the call to
  * c_register_exns in idas.ml.  */
 enum idas_exn_index {

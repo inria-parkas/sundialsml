@@ -905,6 +905,32 @@ external get_current_order      : ('a, 'k) session -> int
 external get_current_state : ('d, 'k) session -> 'd
     = "sunml_cvode_get_current_state"
 
+(* must correspond to cvode_nonlin_system_data_index in cvode_ml.h *)
+type 'd nonlin_system_data = {
+  tn    : float;
+  ypred : 'd;
+  yn    : 'd;
+  fn    : 'd;
+  gamma : float;
+  rl1   : float;
+  zn1   : 'd;
+}
+
+external get_nonlin_system_data
+  : ('d, 'k) session -> 'd nonlin_system_data
+  = "sunml_cvode_get_nonlin_system_data"
+
+external compute_state
+  : ('d, 'k) session
+    -> ('d, 'k) Nvector.t
+    -> ('d, 'k) Nvector.t
+    -> unit
+  = "sunml_cvode_compute_state"
+
+let compute_state s ycor yn =
+  if Sundials_configuration.safe then (s.checkvec ycor; s.checkvec yn);
+  compute_state s ycor yn
+
 external get_current_gamma : ('d, 'k) session -> float
     = "sunml_cvode_get_current_gamma"
 

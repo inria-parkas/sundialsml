@@ -372,6 +372,16 @@ enum arkode_predictor_method_tag {
   VARIANT_ARKODE_PREDICTOR_METHOD_MINIMALCORRECTIONPREDICTOR = 5,
 };
 
+enum arkode_nonlin_system_data_index {
+  RECORD_ARKODE_NONLIN_SYSTEM_DATA_TCUR = 0,
+  RECORD_ARKODE_NONLIN_SYSTEM_DATA_ZPRED,
+  RECORD_ARKODE_NONLIN_SYSTEM_DATA_ZI,
+  RECORD_ARKODE_NONLIN_SYSTEM_DATA_FI,
+  RECORD_ARKODE_NONLIN_SYSTEM_DATA_GAMMA,
+  RECORD_ARKODE_NONLIN_SYSTEM_DATA_SDATA,
+  RECORD_ARKODE_NONLIN_SYSTEM_DATA_SIZE
+};
+
 /* This enum must list exceptions in the same order as the call to
  * c_register_exns in arkode.ml.  */
 enum arkode_exn_index {

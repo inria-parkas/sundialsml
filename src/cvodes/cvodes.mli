@@ -817,6 +817,69 @@ module Sensitivity : sig (* {{{ *)
       @cvodes <node> CVodeGetCurrentStateSens *)
   val get_current_state_sens : ('d, 'k) session -> 'd array
 
+  (** Internal data required to construct the current nonlinear implicit
+      system within a nonlinear solver. *)
+  type 'd nonlin_system_data = {
+    tn     : float;
+      (** Independent variable value {% $t_n$ %}. *)
+    yspred : 'd array;
+      (** Predicted state vectors {% $\mathit{yS}_{i,\mathit{pred}}$ %}
+          at {% $t_n$ %} for {%i = 0,\ldots,N_s-1%}. This data must not
+          be changed. *)
+    ysn    : 'd array;
+      (** State vectors {% $\mathit{yS}^n_i$ %}
+          for {%i = 0,\ldots,N_s-1%}.
+          This data may not be current and may need to be filled. *)
+    gamma  : float;
+      (** Current value of {% $\gamma$ %}. *)
+    rls1   : float;
+        (** A scaling factor used to compute {% $\tilde{a}_n =
+            \mathtt{rls1}\cdot\mathtt{zns1}$ %}. *)
+    zns1   : 'd array;
+        (** Vectors used to compute {% $\tilde{a}_n =
+            \mathtt{rl1}\cdot\mathtt{zn1}$ %}. *)
+  }
+
+  (** Gives direct access to the internal data required to construct the
+      current nonlinear system within a nonlinear solver. This
+      function should be called inside the nonlinear system function.
+      The vectors [ysn] are provided as additional workspace and do not need
+      to be filled in. They are only current after an evaluation of the
+      nonlinear system function.
+
+      @since 5.4.0
+      @nocvode <node> CVodeGetNonlinearSystemDataSens *)
+  val get_nonlin_system_data : ('d, 'k) session -> 'd nonlin_system_data
+
+  (** Computes the current sensitivity vector for all sensitivities using
+      the stored prediction and the supplied correction vectors from the
+      nonlinear solver. The call
+      [compute_state s i yscor ysn] computes
+      {% $\mathit{yS}^n = \mathit{yS}_{\mathit{pred}}
+                            + \mathit{yS}_{\mathit{cor}}$ %}.
+
+      @since 5.4.0
+      @nocvode <node> CVodeComputeStateSens *)
+  val compute_state : ('d, 'k) session
+                      -> ('d, 'k) Nvector.t array
+                      -> ('d, 'k) Nvector.t array
+                      -> unit
+
+  (** Computes the current sensitivity vector for the sensitivity at the given
+      index using the stored prediction and the supplied correction vector
+      from the nonlinear solver. The call
+      [compute_state s i yscor1 ysn1] computes
+      {% $\mathit{yS}^n_i = \mathit{yS}_{i,\mathit{pred}}
+                            + \mathit{yS}_{i,\mathit{cor}}$ %}.
+
+      @since 5.4.0
+      @nocvode <node> CVodeComputeStateSens1 *)
+  val compute_state1 : ('d, 'k) session
+                       -> int
+                       -> ('d, 'k) Nvector.t
+                       -> ('d, 'k) Nvector.t
+                       -> unit
+
   (** Returns the index of the current sensitivity solve when using
       the {{!sens_method}Staggered1} method.
 

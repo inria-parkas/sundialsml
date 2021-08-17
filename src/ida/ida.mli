@@ -1038,6 +1038,51 @@ val get_current_y : ('d, 'k) session -> 'd
     @noida <node5> IDAGetCurrentYp *)
 val get_current_yp : ('d, 'k) session -> 'd
 
+(** Internal data required to construct the current nonlinear implicit
+    system within a nonlinear solver. *)
+type 'd nonlin_system_data = {
+  tn     : float;
+    (** Independent variable value {% $t_n$ %}. *)
+  yypred : 'd;
+    (** Predicted value of {% $y_{\mathit{pred}}$ %} at {% $t_n$ %}. This
+        data must not be changed. *)
+  yppred : 'd;
+    (** Predicted value of {% $\dot{y}_{\mathit{pred}}$ %} at {% $t_n$ %}. This
+        data must not be changed. *)
+  yyn    : 'd;
+    (** The vector {% $y_n$ %}. This data may not be current and may
+        need to be filled. *)
+  ypn    : 'd;
+    (** The vector {% $\dot{y}_n$ %}. This data may not be current and may
+        need to be filled. *)
+  res   : 'd;
+    (** The residual function evaluated at the current time and state,
+        {% $F(t_n, y_n, \dot{y}_n)$ %}. * This data may not be current and
+        may need to be filled. *)
+  cj    : float;
+    (** The scalar {% $c_j$ %} which is proportional to the inverse of
+        the step size {% $\alpha$ %}. *)
+}
+
+(** Gives direct access to the internal data required to construct the
+    current nonlinear system within a nonlinear solver. This
+    function should be called inside the nonlinear system function.
+    If the nonlinear solver uses the [lsetup] or [lsolve] functions, then
+    the nonlinear solver system function must fill the [yyn], [ypn], and [res]
+    vectors with, respectively:
+    {% $\mathit{yyn} = y_{\mathit{pred}} + y_{\mathit{cor}}$ %},
+    {% $\mathit{ypn} = \dot{y}_{\mathit{pred}} + \alpha\dot{y}_{\mathit{cor}}$ %},
+    and
+    {% $\mathit{res} = F(t_n, y_n, \dot{y}_n)$ %} where
+    {% $y_{\mathit{cor}}$ %} is the
+    first argument of the nonlinear solver system function. Within a custom
+    linear solver, then the vectors [yyn, [ypn], and [res] are only current
+    after an evaluation of the nonlinear system function.
+
+    @since 5.4.0
+    @noida <node> IDAGetNonlinearSystemData *)
+val get_nonlin_system_data : ('d, 'k) session -> 'd nonlin_system_data
+
 (** Computes the current {% $y$ %} vector from a correction vector.
 
     @since 5.0.0

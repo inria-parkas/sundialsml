@@ -1709,6 +1709,41 @@ CAMLprim value sunml_idas_sens_get_current_yp_sens(value vdata, value vns)
     CAMLreturn (r);
 }
 
+CAMLprim value sunml_idas_get_nonlin_system_data_sens(value vida_mem,
+							value vns)
+{
+    CAMLparam2(vida_mem, vns);
+    CAMLlocal1(vnv);
+#if 540 <= SUNDIALS_LIB_VERSION
+    int ns = Int_val(vns);
+    realtype tn, cj;
+    N_Vector *yySpred, *ypSpred, *yySn, *ypSn;
+    void *user_data;
+
+    int flag = IDAGetNonlinearSystemDataSens(IDA_MEM_FROM_ML(vida_mem),
+		    &tn, &yySpred, &ypSpred, &yySn, &ypSn, &cj, &user_data);
+    CHECK_FLAG("IDAGetNonlinearSystemDataSens", flag);
+
+    vnv = caml_alloc_tuple(RECORD_IDAS_NONLIN_SYSTEM_DATA_SIZE);
+    Store_field(vnv, RECORD_IDAS_NONLIN_SYSTEM_DATA_TN,
+	    caml_copy_double(tn));
+    Store_field(vnv, RECORD_IDAS_NONLIN_SYSTEM_DATA_YYSPRED,
+	    sunml_wrap_to_nvector_table(ns, yySpred));
+    Store_field(vnv, RECORD_IDAS_NONLIN_SYSTEM_DATA_YPSPRED,
+	    sunml_wrap_to_nvector_table(ns, ypSpred));
+    Store_field(vnv, RECORD_IDAS_NONLIN_SYSTEM_DATA_YYSN,
+	    sunml_wrap_to_nvector_table(ns, yySn));
+    Store_field(vnv, RECORD_IDAS_NONLIN_SYSTEM_DATA_YPSN,
+	    sunml_wrap_to_nvector_table(ns, ypSn));
+    Store_field(vnv, RECORD_IDAS_NONLIN_SYSTEM_DATA_CJ,
+	    caml_copy_double(cj));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(vnv);
+}
+
 CAMLprim value sunml_idas_sens_compute_y_sens (value vida_mem,
 					       value vycors, value vys)
 {

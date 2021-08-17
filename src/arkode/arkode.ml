@@ -1774,6 +1774,31 @@ module ARKStep = struct (* {{{ *)
   external get_current_state : ('d, 'k) session -> 'd
       = "sunml_arkode_ark_get_current_state"
 
+  (* must correspond to arkode_nonlin_system_data_index in arkode_ml.h *)
+  type 'd nonlin_system_data = {
+    tcur  : float;
+    zpred : 'd;
+    zi    : 'd;
+    fi    : 'd;
+    gamma : float;
+    sdata : 'd;
+  }
+
+  external get_nonlin_system_data
+    : ('d, 'k) session -> 'd nonlin_system_data
+    = "sunml_arkode_ark_get_nonlin_system_data"
+
+  external compute_state
+    : ('d, 'k) session
+      -> ('d, 'k) Nvector.t
+      -> ('d, 'k) Nvector.t
+      -> unit
+    = "sunml_arkode_ark_compute_state"
+
+  let compute state s ycor yn =
+    if Sundials_configuration.safe then (s.checkvec ycor; s.checkvec yn);
+    compute_state s ycor yn
+
   external get_current_gamma : ('d, 'k) session -> float
       = "sunml_arkode_ark_get_current_gamma"
 
@@ -2696,6 +2721,27 @@ module MRIStep = struct (* {{{ *)
 
   external get_current_state : ('d, 'k) session -> 'd
       = "sunml_arkode_mri_get_current_state"
+
+  (* must correspond to arkode_nonlin_system_data_index in arkode_ml.h *)
+  type 'd nonlin_system_data = {
+    tcur  : float;
+    zpred : 'd;
+    zi    : 'd;
+    fi    : 'd;
+    gamma : float;
+    sdata : 'd;
+  }
+
+  external get_nonlin_system_data
+    : ('d, 'k) session -> 'd nonlin_system_data
+    = "sunml_arkode_mri_get_nonlin_system_data"
+
+  external compute_state
+    : ('d, 'k) session
+      -> ('d, 'k) Nvector.t
+      -> ('d, 'k) Nvector.t
+      -> unit
+    = "sunml_arkode_mri_compute_state"
 
   external get_num_g_evals                : ('a, 'k) session -> int
       = "sunml_arkode_mri_get_num_g_evals"

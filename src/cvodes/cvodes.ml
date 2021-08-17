@@ -468,6 +468,51 @@ module Sensitivity = struct (* {{{ *)
   external get_current_sens_solve_index : ('d, 'k) session -> int
       = "sunml_cvodes_get_current_sens_solve_index"
 
+  (* must correspond to cvodes_nonlin_system_data_index in cvodes_ml.h *)
+  type 'd nonlin_system_data = {
+    tn     : float;
+    yspred : 'd array;
+    ysn    : 'd array;
+    gamma  : float;
+    rls1   : float;
+    zns1   : 'd array;
+  }
+
+  external get_nonlin_system_data_sens
+      : ('d, 'k) session -> int -> 'd nonlin_system_data
+      = "sunml_cvodes_get_nonlin_system_data_sens"
+
+  let get_nonlin_system_data s =
+    get_nonlin_system_data_sens s (num_sensitivities s)
+
+  external compute_state_sens
+    : ('d, 'k) session
+      -> ('d, 'k) Nvector.t array
+      -> ('d, 'k) Nvector.t array
+      -> unit
+    = "sunml_cvodes_compute_state_sens"
+
+  let compute_state s yscor ysz =
+    if Sundials_configuration.safe then
+      (let ns = num_sensitivities s in
+       if Array.length yscor <> ns || Array.length ysz <> ns
+       then invalid_arg "compute_state: wrong number of vectors";
+       Array.iter s.checkvec yscor;
+       Array.iter s.checkvec ysz);
+    compute_state_sens s yscor ysz
+
+  external compute_state_sens1
+    : ('d, 'k) session
+      -> int
+      -> ('d, 'k) Nvector.t
+      -> ('d, 'k) Nvector.t
+      -> unit
+    = "sunml_cvodes_compute_state_sens1"
+
+  let compute_state1 s idx ycor yz =
+    if Sundials_configuration.safe then (s.checkvec ycor; s.checkvec yz);
+    compute_state_sens1 s idx ycor yz
+
   module Quadrature =
     struct
       include QuadratureTypes
