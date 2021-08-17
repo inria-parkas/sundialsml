@@ -395,7 +395,9 @@ let test_sunmatspace ?cheat_leniw ?cheat_lenrw a myid =
         | Some (actual, expected) when lenrw = actual -> expected
         | _ -> lenrw
       in
-      printf "    PASSED test -- SUNMatSpace, lenrw = %d, leniw = %d@\n"
+      printf "    PASSED test -- SUNMatSpace%s lenrw = %d, leniw = %d@\n"
+        (match Sundials.Config.sundials_version with
+         2,_,_ | 3,_,_ | 4,_,_ -> "," | _ -> "")
         lenrw leniw;
       print_time "    SUNMatSpace Time: %22.15e @\n @\n" (stop_time -. start_time);
     end;

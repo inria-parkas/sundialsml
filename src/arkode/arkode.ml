@@ -1926,8 +1926,6 @@ module ARKStep = struct (* {{{ *)
       = "sunml_arkode_ark_set_interpolant_type"
   external set_interpolant_degree : ('d, 'k) session -> int -> unit
       = "sunml_arkode_ark_set_interpolant_degree"
-  external set_dense_order        : ('a, 'k) session -> int -> unit
-      = "sunml_arkode_ark_set_dense_order"
   external set_max_num_steps      : ('a, 'k) session -> int -> unit
       = "sunml_arkode_ark_set_max_num_steps"
   external set_max_hnil_warns     : ('a, 'k) session -> int -> unit
@@ -2341,8 +2339,6 @@ module ERKStep = struct (* {{{ *)
 
   external set_defaults           : ('a, 'k) session -> unit
       = "sunml_arkode_erk_set_defaults"
-  external set_dense_order        : ('a, 'k) session -> int -> unit
-      = "sunml_arkode_erk_set_dense_order"
   external c_set_fixed_step       : ('a, 'k) session -> float -> unit
       = "sunml_arkode_erk_set_fixed_step"
   let set_fixed_step s ohf =

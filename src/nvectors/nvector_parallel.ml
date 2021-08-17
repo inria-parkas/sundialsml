@@ -401,7 +401,7 @@ module Ops = struct (* {{{ *)
 
     external wsqrsum
       : t -> t -> float
-      = "sunml_nvec_par_wsqrsumlocallocal"
+      = "sunml_nvec_par_wsqrsumlocal"
 
     external wsqrsummask
       : t -> t -> t -> float

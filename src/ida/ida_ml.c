@@ -753,7 +753,7 @@ CAMLprim value sunml_ida_spils_sptfqmr (value vida_mem, value vmaxl)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_ida_set_jac_times_rhsfn(value vdata, value vhas_resfn)
+CAMLprim value sunml_ida_set_jac_times_resfn(value vdata, value vhas_resfn)
 {
     CAMLparam2(vdata, vhas_resfn);
 #if 530 <= SUNDIALS_LIB_VERSION
