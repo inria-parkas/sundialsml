@@ -3,12 +3,15 @@
 {{:https://computation.llnl.gov/casc/sundials/main.html}Sundials} is a
 collection of six numeric solvers: CVODE,  CVODES, IDA, IDAS, ARKODE,
 and KINSOL {{:#refs}\[1\]}.
-It is written by Carol S. Woodward, Daniel R. Reynolds, Alan C. Hindmarsh,
-Slaven Peles, and Lawrence E. Banks at the {e Center for Applied Scientific
+It is written by Cody J. Balos, David J. Gardner, Alan C. Hindmarsh, Daniel
+R. Reynolds, and Carol S. Woodward at the {e Center for Applied Scientific
 Computing, Lawrence Livermore National Laboratory} with significant
-contributions from Radu Serban, and contributions from Peter N. Brown,
-Scott Cohen, Aaron Collier, Keith E. Grant, Steven L. Lee, Cosmin Petra,
-Dan Shumaker, and Allan G. Taylor.
+contributions from Radu Serban, and contributions from James Almgren-Bell,
+Lawrence E. Banks, Peter N. Brown, George Byrne, Rujeko Chinomona, Scott D.
+Cohen, Aaron Collier, Keith E. Grant, Steven L. Lee, Shelby L. Lockhart,
+John Loffeld, Daniel McGreer, Slaven Peles, Cosmin Petra, H. Hunter
+Schwartz, Jean M. Sexton, Dan Shumaker, Steve G. Smith, Allan G. Taylor,
+Hilari C. Tiedeman, Chris White, Ting Yan, and Ulrike M. Yang.
 
 This OCaml interface was written by {{:http://www.tbrk.org}Timothy Bourke}
 ({{:http://www.inria.fr}Inria}/{{:http://www.di.ens.fr/}ENS}),
@@ -17,11 +20,11 @@ This OCaml interface was written by {{:http://www.tbrk.org}Timothy Bourke}
 and
 {{:http://www.di.ens.fr/~pouzet/}Marc Pouzet}
 ({{:http://www.upmc.fr/}UPMC}/{{:http://www.di.ens.fr/}ENS}/{{:http://www.inria.fr/}Inria}).
-It provides an OCaml interface to Sundials version {b {var version}}.
-The only features missing are the Hypre ParVector, PETSC, CUDA, RAJA, and
-OpenMPdev nvector modules, the CUSPARSE and SLRUNRloc matrix types, the
-cuSolverSp_batchQR and SuperLU_DIST linear solvers, and the PETSCSNES
-nonlinear solver.
+It provides an OCaml interface to most features of Sundials
+version {b {var version}}.
+There is no support for nvectors based on CUDA, Hypre ParVector, PETSC,
+RAJA, Trilinos, HIP, or SYCLC; nor for linear solvers requiring CUDA,
+PETSCSNES, MAGMA, or SuperLU_DIST; nor for XBraid.
 These features require libraries that are not available
 in OCaml—{{:mailto:tim\@tbrk.org}contact us} if you need these.
 

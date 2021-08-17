@@ -74,15 +74,20 @@ OCaml library (e.g., some of the nvector modules) or whose implementation
 would be overly complicated (e.g., in terms of types or mixed C/OCaml data 
 structures) or inefficient.
 
-* Unsupported nvector modules: CUDA, Hypre ParVector, PETSC, RAJA, and 
-  Trilinos (if you provide the required OCaml interface, we'll add the 
-  nvector).
+* Unsupported nvector modules: CUDA, Hypre ParVector, PETSC, RAJA, Trilinos, 
+  HIP, and SYCLC. (If you provide the required OCaml interface and help with 
+  testing, we'll add then vector).
 * No support for CUDA (including SUNMATRIX_CUSPARSE and 
   SUNLinearSolver_cuSolverSp_batchQR linear solver).
+* No support for the MAGMA linear algebra library (if you provide the 
+  required OCaml interface, we'll add support).
 * No support for fused kernels.
 * No support for the SUNLinSol_KLUGetSymbolic, SUNLinSol_KLUGetNumeric,
   and SUNLinSol_KLUGetCommon functions (patches welcome).
 * No support for SUNMatrix_SLUNRloc and SUNLinearSolver_SuperLUDIST (if you 
   provide a solid OCaml interface to SuperLU_DIST, we'll add support for 
   this matrix type and linear solver).
+* No support for the XBraid library or the three associated NVector 
+  operations: N_VBufSize, N_VBufPack, and N_VBufUnpack.
+* No support for the N_VGetDeviceArrayPointer operation.
 
