@@ -61,8 +61,6 @@ let alternate_dense y a =
   let yd = Nvector_serial.unwrap y in
   if m <> RealArray.length yd then failwith "Matrix has wrong dimensions";
 
-  let linit s = ()
-  in
   let lsetup { pivots } a =
     let acols = Matrix.Dense.unwrap a in
     Matrix.ArrayDense.getrf (RealArray2.wrap acols) pivots
@@ -75,8 +73,8 @@ let alternate_dense y a =
   let lspace { n } = (0, 2 + n)
   in
   LinearSolver.Custom.make_dls {
-      init=linit;
-      setup=lsetup;
+      init=None;
+      setup=Some lsetup;
       solve=lsolve;
       space=Some lspace;
     } { n=m; pivots=LintArray.make m 0 } (Matrix.wrap_dense a)

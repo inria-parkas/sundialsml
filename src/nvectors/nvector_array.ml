@@ -687,7 +687,7 @@ module MakeOps = functor
       (fun wv2 -> l = A.length (uw wv2))
 
     let array_nvec_ops = { (* {{{ *)
-        Nvector_custom.n_vcheck        = checkfn;
+        Nvector_custom.check        = checkfn;
         Nvector_custom.clone        = clone;
         Nvector_custom.space        = Some space;
         Nvector_custom.getlength    = getlength;
@@ -712,7 +712,7 @@ module MakeOps = functor
         Nvector_custom.constrmask   = Some constrmask;
         Nvector_custom.minquotient  = Some minquotient;
 
-        Nvector_custom.n_vgetcommunicator = None;
+        Nvector_custom.getcommunicator = None;
 
         Nvector_custom.linearcombination = Some linearcombination;
         Nvector_custom.scaleaddmulti = Some scaleaddmulti;
@@ -1426,7 +1426,7 @@ module Array =
     end (* }}} *)
 
     let array_nvec_ops = { (* {{{ *)
-          Nvector_custom.n_vcheck        = checkfn;
+          Nvector_custom.check        = checkfn;
           Nvector_custom.clone        = DataOps.clone;
           Nvector_custom.space        = Some DataOps.space;
           Nvector_custom.getlength    = DataOps.getlength;
@@ -1451,7 +1451,7 @@ module Array =
           Nvector_custom.constrmask   = Some DataOps.constrmask;
           Nvector_custom.minquotient  = Some DataOps.minquotient;
 
-          Nvector_custom.n_vgetcommunicator = None;
+          Nvector_custom.getcommunicator = None;
 
           Nvector_custom.linearcombination
             = Some DataOps.linearcombination;

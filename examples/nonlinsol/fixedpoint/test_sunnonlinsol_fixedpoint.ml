@@ -99,7 +99,7 @@ let main () =
   NLS.set_max_iters nls maxit;
 
   (* solve the nonlinear system *)
-  NLS.solve nls ~y0 ~y ~w tol true;
+  NLS.solve nls ~y0 ~ycor:y ~w tol true;
 
   (* print the solution *)
   printf "Solution:\n";

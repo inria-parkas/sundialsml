@@ -28,7 +28,7 @@ struct
   include N.Ops
   let get_id = Nvector.get_id
   type data = Sundials.RealArray.t
-  let n_vgetarray nv = let d, _, _ = Nvector.unwrap nv in d
+  let getarray nv = let d, _, _ = Nvector.unwrap nv in d
   let get = Sundials.RealArray.get
   let set = Sundials.RealArray.set
   let max_time x t =
@@ -43,13 +43,15 @@ module Custom_parallel1 =
   Nvector_custom.MakeOps (struct
     type data = Nvector_parallel.data
     let ops = { (* {{{ *)
-      Nvector_custom.n_vcheck
+      Nvector_custom.check
         = (fun (x, xg, xc) (y, yg, yc) ->
             Sundials.RealArray.(length x = length y)
             && (xg <= yg) && (xc == yc)
           );
       Nvector_custom.clone        = Nvector_parallel.DataOps.clone;
       Nvector_custom.space        = Some Nvector_parallel.DataOps.space;
+      Nvector_custom.getlength    = Nvector_parallel.DataOps.getlength;
+      Nvector_custom.getcommunicator = None;
       Nvector_custom.linearsum    = Nvector_parallel.DataOps.linearsum;
       Nvector_custom.const        = Nvector_parallel.DataOps.const;
       Nvector_custom.prod         = Nvector_parallel.DataOps.prod;
@@ -89,6 +91,16 @@ module Custom_parallel1 =
         = Some Nvector_parallel.DataOps.scaleaddmultivectorarray;
       Nvector_custom.linearcombinationvectorarray
         = Some Nvector_parallel.DataOps.linearcombinationvectorarray;
+
+      Nvector_custom.dotprod_local     = Some Nvector_parallel.DataOps.Local.dotprod;
+      Nvector_custom.maxnorm_local     = Some Nvector_parallel.DataOps.Local.maxnorm;
+      Nvector_custom.min_local         = Some Nvector_parallel.DataOps.Local.min;
+      Nvector_custom.l1norm_local      = Some Nvector_parallel.DataOps.Local.l1norm;
+      Nvector_custom.invtest_local     = Some Nvector_parallel.DataOps.Local.invtest;
+      Nvector_custom.constrmask_local  = Some Nvector_parallel.DataOps.Local.constrmask;
+      Nvector_custom.minquotient_local = Some Nvector_parallel.DataOps.Local.minquotient;
+      Nvector_custom.wsqrsum_local     = Some Nvector_parallel.DataOps.Local.wsqrsum;
+      Nvector_custom.wsqrsummask_local = Some Nvector_parallel.DataOps.Local.wsqrsummask;
     } (* }}} *)
   end)
 
@@ -107,13 +119,15 @@ module Custom_parallel2 =
       let length = Sundials.RealArray.length
     end)
     let ops = { (* {{{ *)
-      Nvector_custom.n_vcheck
+      Nvector_custom.check
         = (fun (x, xg, xc) (y, yg, yc) ->
             Sundials.RealArray.(length x = length y)
             && (xg <= yg) && (xc == yc)
           );
       Nvector_custom.clone        = DataOps.clone;
       Nvector_custom.space        = Some DataOps.space;
+      Nvector_custom.getlength    = Nvector_parallel.DataOps.getlength;
+      Nvector_custom.getcommunicator = None;
       Nvector_custom.linearsum    = DataOps.linearsum;
       Nvector_custom.const        = DataOps.const;
       Nvector_custom.prod         = DataOps.prod;
@@ -148,6 +162,16 @@ module Custom_parallel2 =
         = Some DataOps.scaleaddmultivectorarray;
       Nvector_custom.linearcombinationvectorarray
         = Some DataOps.linearcombinationvectorarray;
+
+      Nvector_custom.dotprod_local     = Some Nvector_parallel.DataOps.Local.dotprod;
+      Nvector_custom.maxnorm_local     = Some Nvector_parallel.DataOps.Local.maxnorm;
+      Nvector_custom.min_local         = Some Nvector_parallel.DataOps.Local.min;
+      Nvector_custom.l1norm_local      = Some Nvector_parallel.DataOps.Local.l1norm;
+      Nvector_custom.invtest_local     = Some Nvector_parallel.DataOps.Local.invtest;
+      Nvector_custom.constrmask_local  = Some Nvector_parallel.DataOps.Local.constrmask;
+      Nvector_custom.minquotient_local = Some Nvector_parallel.DataOps.Local.minquotient;
+      Nvector_custom.wsqrsum_local     = Some Nvector_parallel.DataOps.Local.wsqrsum;
+      Nvector_custom.wsqrsummask_local = Some Nvector_parallel.DataOps.Local.wsqrsummask;
     } (* }}} *)
   end)
 
@@ -247,7 +271,7 @@ let main () =
 
   (* NVector Test *)
   if Test_nvector.compat_ge400 then begin
-    fails += Test.test_n_vgetvectorid x Test.id myid;
+    fails += Test.test_getvectorid x Test.id myid;
     fails += Test.test_cloneempty x myid;
     fails += Test.test_clone x local_length myid;
     fails += Test.test_cloneemptyvectorarray 5 x myid;
@@ -255,8 +279,8 @@ let main () =
   end;
 
   (* Test setting/getting array data *)
-  fails += Test.test_n_vsetarraypointer w local_length myid;
-  fails += Test.test_n_vgetarraypointer x local_length myid;
+  fails += Test.test_setarraypointer w local_length myid;
+  fails += Test.test_getarraypointer x local_length myid;
 
   (* Clone additional vectors for testing *)
   let y = Test.make local_length 0.0

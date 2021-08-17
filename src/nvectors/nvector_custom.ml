@@ -17,7 +17,7 @@ type communicator
 
 (* Must match with nvector_ml.h:nvector_ops_tag *)
 type 'a nvector_ops = { (* {{{ *)
-  n_vcheck           : 'a -> 'a -> bool;
+  check           : 'a -> 'a -> bool;
   clone           : 'a -> 'a;
   space           : ('a -> (int * int)) option;
   getlength       : 'a -> int;
@@ -43,7 +43,7 @@ type 'a nvector_ops = { (* {{{ *)
   constrmask      : ('a -> 'a -> 'a -> bool) option;
   minquotient     : ('a -> 'a -> float) option;
 
-  n_vgetcommunicator : ('a -> communicator) option;
+  getcommunicator : ('a -> communicator) option;
 
   linearcombination :
     (Sundials.RealArray.t -> 'a array -> 'a -> unit) option;
@@ -150,7 +150,7 @@ let enable
 let uv = Nvector.unwrap
 
 let rec make_wrap ops ?(with_fused_ops=false) v =
-  let check nv' = ops.n_vcheck v (uv nv') in
+  let check nv' = ops.check v (uv nv') in
   let nv = c_make_wrap ops v check (clone ops) in
   if with_fused_ops && not (c_enablefusedops_custom nv true)
     then raise Nvector.OperationNotProvided;
@@ -183,7 +183,7 @@ and clone ops nv =
 let add_tracing msg ops =
   let pr s = print_string msg; print_endline s in
   let { (* {{{ *)
-      n_vcheck           = n_vcheck;
+      check           = check;
       clone           = clone;
       space           = space;
       getlength       = getlength;
@@ -209,7 +209,7 @@ let add_tracing msg ops =
       constrmask      = constrmask;
       minquotient     = minquotient;
 
-      n_vgetcommunicator = n_vgetcommunicator;
+      getcommunicator = getcommunicator;
 
       linearcombination            = linearcombination;
       scaleaddmulti                = scaleaddmulti;
@@ -237,97 +237,97 @@ let add_tracing msg ops =
   let fo f f' = match f with None -> None | Some f -> Some (f' f) in
 
   let tr_nvcheck x =
-    pr "nvcheck-create";
-    let check = n_vcheck x in
+    pr "check-create";
+    let check = check x in
     function y ->
-      pr "nvcheck-check";
+      pr "check-check";
       check y
-  and tr_nvclone a = pr "nvclone"; clone a
+  and tr_nvclone a = pr "clone"; clone a
   (* ... {{{ *)
-  and tr_nvspace = fo space (fun f -> fun a -> (pr "nvspace"; f a))
-  and tr_nvgetlength a = pr "nvgetlength"; getlength a
-  and tr_nvlinearsum a x b y z = pr "nvlinearsum"; linearsum a x b y z
-  and tr_nvconst c z = pr "nvconst"; const c z
-  and tr_nvprod x y z = pr "nvprod"; prod x y z
-  and tr_nvdiv x y z = pr "nvdiv"; div x y z
-  and tr_nvscale c x z = pr "nvscale"; scale c x z
-  and tr_nvabs x z = pr "nvabs"; abs x z
-  and tr_nvinv x z = pr "nvinv"; inv x z
-  and tr_nvaddconst x b z = pr "nvaddconst"; addconst x b z
-  and tr_nvmaxnorm x = pr "nvmaxnorm"; maxnorm x
-  and tr_nvwrmsnorm x w = pr "nvwrmsnorm"; wrmsnorm x w
-  and tr_nvmin x = pr "nvmin"; min x
-  and tr_nvdotprod x y = pr "nvdotprod"; dotprod x y
-  and tr_nvcompare c x z = pr "nvcompare"; compare c x z
-  and tr_nvinvtest x z = pr "nvinvtest"; invtest x z
+  and tr_nvspace = fo space (fun f -> fun a -> (pr "space"; f a))
+  and tr_nvgetlength a = pr "getlength"; getlength a
+  and tr_nvlinearsum a x b y z = pr "linearsum"; linearsum a x b y z
+  and tr_nvconst c z = pr "const"; const c z
+  and tr_nvprod x y z = pr "prod"; prod x y z
+  and tr_nvdiv x y z = pr "div"; div x y z
+  and tr_nvscale c x z = pr "scale"; scale c x z
+  and tr_nvabs x z = pr "abs"; abs x z
+  and tr_nvinv x z = pr "inv"; inv x z
+  and tr_nvaddconst x b z = pr "addconst"; addconst x b z
+  and tr_nvmaxnorm x = pr "maxnorm"; maxnorm x
+  and tr_nvwrmsnorm x w = pr "wrmsnorm"; wrmsnorm x w
+  and tr_nvmin x = pr "min"; min x
+  and tr_nvdotprod x y = pr "dotprod"; dotprod x y
+  and tr_nvcompare c x z = pr "compare"; compare c x z
+  and tr_nvinvtest x z = pr "invtest"; invtest x z
 
-  and tr_nvwl2norm = fo wl2norm (fun f -> fun x w -> pr "nvwl2norm"; f x w)
-  and tr_nvl1norm = fo l1norm (fun f -> fun x -> pr "nvl1norm"; f x)
+  and tr_nvwl2norm = fo wl2norm (fun f -> fun x w -> pr "wl2norm"; f x w)
+  and tr_nvl1norm = fo l1norm (fun f -> fun x -> pr "l1norm"; f x)
   and tr_nvwrmsnormmask =
-    fo wrmsnormmask (fun f -> fun x w id -> pr "nvwrmsnormmask"; f x w id)
+    fo wrmsnormmask (fun f -> fun x w id -> pr "wrmsnormmask"; f x w id)
   and tr_nvconstrmask =
-    fo constrmask (fun f -> fun c x m -> pr "nvconstrmask"; f c x m)
+    fo constrmask (fun f -> fun c x m -> pr "constrmask"; f c x m)
   and tr_nvminquotient =
-    fo minquotient (fun f -> fun n d -> pr "nvminquotient"; f n d)
+    fo minquotient (fun f -> fun n d -> pr "minquotient"; f n d)
 
   and tr_nvgetcommunicator =
-    fo n_vgetcommunicator (fun f -> fun x -> pr "nvgetcommunicator"; f x)
+    fo getcommunicator (fun f -> fun x -> pr "getcommunicator"; f x)
 
   and tr_nvlinearcombination =
     fo linearcombination
-    (fun f -> fun c x z -> pr "nvlinearcombination"; f c x z)
+    (fun f -> fun c x z -> pr "linearcombination"; f c x z)
   and tr_nvscaleaddmulti =
     fo scaleaddmulti
-    (fun f -> fun c x y z -> pr "nvscaleaddmulti"; f c x y z)
+    (fun f -> fun c x y z -> pr "scaleaddmulti"; f c x y z)
   and tr_nvdotprodmulti =
     fo dotprodmulti
-    (fun f -> fun x y d -> pr "nvdotprodmulti"; f x y d)
+    (fun f -> fun x y d -> pr "dotprodmulti"; f x y d)
 
   and tr_nvlinearsumvectorarray =
     fo linearsumvectorarray
-    (fun f -> fun a x b y z -> pr "nvlinearsumvectorarray"; f a x b y z)
+    (fun f -> fun a x b y z -> pr "linearsumvectorarray"; f a x b y z)
   and tr_nvscalevectorarray =
     fo scalevectorarray
-    (fun f -> fun c x z -> pr "nvscalevectorarray"; f c x z)
+    (fun f -> fun c x z -> pr "scalevectorarray"; f c x z)
   and tr_nvconstvectorarray =
     fo constvectorarray
-    (fun f -> fun c x -> pr "nvconstvectorarray"; f c x)
+    (fun f -> fun c x -> pr "constvectorarray"; f c x)
   and tr_nvwrmsnormvectorarray =
     fo wrmsnormvectorarray
-    (fun f -> fun x w m -> pr "nvwrmsnormvectorarray"; f x w m)
+    (fun f -> fun x w m -> pr "wrmsnormvectorarray"; f x w m)
   and tr_nvwrmsnormmaskvectorarray =
     fo wrmsnormmaskvectorarray
-    (fun f -> fun x w m -> pr "nvwrmsnormmaskvectorarray"; f x w m)
+    (fun f -> fun x w m -> pr "wrmsnormmaskvectorarray"; f x w m)
   and tr_nvscaleaddmultivectorarray =
     fo scaleaddmultivectorarray
-    (fun f -> fun a x yy zz -> pr "nvscaleaddmultivectorarray"; f a x yy zz)
+    (fun f -> fun a x yy zz -> pr "scaleaddmultivectorarray"; f a x yy zz)
   and tr_nvlinearcombinationvectorarray =
     fo linearcombinationvectorarray
-    (fun f -> fun c xx z -> pr "nvlinearcombinationvectorarray"; f c xx z)
+    (fun f -> fun c xx z -> pr "linearcombinationvectorarray"; f c xx z)
 
   and tr_nvdotprod_local     =
-    fo dotprod_local (fun f -> fun x t -> pr "nvdotprod_local"; f x t)
+    fo dotprod_local (fun f -> fun x t -> pr "dotprod_local"; f x t)
   and tr_nvmaxnorm_local     =
-    fo maxnorm_local (fun f -> fun x -> pr "nvmaxnorm_local"; f x)
+    fo maxnorm_local (fun f -> fun x -> pr "maxnorm_local"; f x)
   and tr_nvmin_local         =
-    fo min_local (fun f -> fun x -> pr "nvmin_local"; f x)
+    fo min_local (fun f -> fun x -> pr "min_local"; f x)
   and tr_nvl1norm_local      =
-    fo l1norm_local (fun f -> fun x -> pr "nvl1norm_local"; f x)
+    fo l1norm_local (fun f -> fun x -> pr "l1norm_local"; f x)
   and tr_nvinvtest_local     =
-    fo invtest_local (fun f -> fun x z -> pr "nvinvtest_local"; f x z)
+    fo invtest_local (fun f -> fun x z -> pr "invtest_local"; f x z)
   and tr_nvconstrmask_local  =
-    fo constrmask_local (fun f -> fun c x m -> pr "nvconstrmask_local"; f c x m)
+    fo constrmask_local (fun f -> fun c x m -> pr "constrmask_local"; f c x m)
   and tr_nvminquotient_local =
-    fo minquotient_local (fun f -> fun n d -> pr "nvminquotient_local"; f n d)
+    fo minquotient_local (fun f -> fun n d -> pr "minquotient_local"; f n d)
   and tr_nvwsqrsum_local     =
-    fo wsqrsum_local (fun f -> fun x w -> pr "nvwsqrsum_local"; f x w)
+    fo wsqrsum_local (fun f -> fun x w -> pr "wsqrsum_local"; f x w)
   and tr_nvwsqrsummask_local =
-    fo wsqrsummask_local (fun f -> fun x w id -> pr "nvwsqrsummask_local"; f x w id)
+    fo wsqrsummask_local (fun f -> fun x w id -> pr "wsqrsummask_local"; f x w id)
   (* }}} *)
   in
   {
       (* {{{ *)
-      n_vcheck           = tr_nvcheck;
+      check           = tr_nvcheck;
       clone           = tr_nvclone;
       space           = tr_nvspace;
       getlength       = tr_nvgetlength;
@@ -353,7 +353,7 @@ let add_tracing msg ops =
       constrmask      = tr_nvconstrmask;
       minquotient     = tr_nvminquotient;
 
-      n_vgetcommunicator = tr_nvgetcommunicator;
+      getcommunicator = tr_nvgetcommunicator;
 
       linearcombination            = tr_nvlinearcombination;
       scaleaddmulti                = tr_nvscaleaddmulti;
@@ -703,7 +703,7 @@ module Any = struct (* {{{ *)
         ~(project:Nvector.gdata -> d) ops
     =
     let { (* {{{ *)
-        n_vcheck;
+        check;
         clone;
         space;
         getlength;
@@ -729,7 +729,7 @@ module Any = struct (* {{{ *)
         constrmask;
         minquotient;
 
-        n_vgetcommunicator;
+        getcommunicator;
 
         linearcombination;
         scaleaddmulti;
@@ -762,7 +762,7 @@ module Any = struct (* {{{ *)
     let lifto f f' = match f with None -> None | Some f -> Some (f' f) in
     {
         (* {{{ *)
-        n_vcheck        = double n_vcheck;
+        check        = double check;
         clone        = (fun v -> inject (clone (project v)));
         space        = Option.map single space;
         getlength    = single getlength;
@@ -790,7 +790,7 @@ module Any = struct (* {{{ *)
         constrmask   = lifto constrmask triple;
         minquotient  = lifto minquotient double;
 
-        n_vgetcommunicator = lifto n_vgetcommunicator single;
+        getcommunicator = lifto getcommunicator single;
 
         linearcombination = lifto linearcombination
           (fun f a vxs vr -> f a (projecta vxs) (project vr));
@@ -898,7 +898,7 @@ module Any = struct (* {{{ *)
         then raise Sundials.Config.NotImplementedBySundialsVersion;
       let v = inject rv in
       let check nv' =
-        ops.n_vcheck v (uv nv') && Nvector.get_id nv' = Nvector.Custom
+        ops.check v (uv nv') && Nvector.get_id nv' = Nvector.Custom
       in
       make_wrap_injected ops
         ~with_fused_ops

@@ -43,6 +43,7 @@
  * ----------------------------------------------------------------*)
 
 open Sundials
+module ARKStep = Arkode.ARKStep
 module MRIStep = Arkode.MRIStep
 
 let printf = Printf.printf
@@ -130,15 +131,26 @@ let main () =
   let y = Nvector_serial.make n 0. in (* Create serial vector for solution *)
   set_initial_condition udata y;
 
+  (* Initialize the fast integrator. Specify the fast right-hand side
+     function in y'=fs(t,y)+ff(t,y), the inital time T0, and the
+     initial dependent variable vector y. *)
+  let inner_arkode_mem = ARKStep.(init
+                                   (explicit (ff udata))
+                                   Arkode.default_tolerances
+                                   t0
+                                   y)
+  in
+  ARKStep.set_erk_table_num inner_arkode_mem
+    Arkode.ButcherTable.Knoth_Wolke_3_3;
+  ARKStep.set_fixed_step inner_arkode_mem (Some hf);
+
   (* Call MRIStepCreate to initialize the MRI timestepper module and
      specify the right-hand side function in y'=f(t,y), the inital time
      T0, and the initial dependent variable vector y.  Note: since this
      problem is fully implicit, we set f_E to NULL and f_I to f. *)
   (* Pass udata to user functions *)
   (* Specify slow and fast step sizes *)
-  let arkode_mem = MRIStep.(init ~slow:(fs udata) ~fast:(ff udata)
-                                 ~hslow:hs        ~hfast:hf
-                                 t0 y) in
+  let arkode_mem = MRIStep.(init inner_arkode_mem (fs udata) hs t0 y) in
   (* Increase max num steps  *)
   MRIStep.set_max_num_steps arkode_mem 10000;
 
@@ -193,9 +205,10 @@ let main () =
   printf "   -------------------------\n";
 
   (* Print some final statistics *)
-  let open MRIStep in
-  let nsts, nstf = get_num_steps arkode_mem in
-  let nfs, nff   = get_num_rhs_evals arkode_mem in
+  let nsts = MRIStep.get_num_steps arkode_mem in
+  let nfs = MRIStep.get_num_rhs_evals arkode_mem in
+  let nstf = ARKStep.get_num_steps inner_arkode_mem in
+  let nff, _ = ARKStep.get_num_rhs_evals inner_arkode_mem in
   printf "\nFinal Solver Statistics:\n";
   printf "   Steps: nsts = %d, nstf = %d\n" nsts nstf;
   printf "   Total RHS evals:  Fs = %d,  Ff = %d\n" nfs nff

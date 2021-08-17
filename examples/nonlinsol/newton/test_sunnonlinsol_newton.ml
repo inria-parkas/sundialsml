@@ -68,15 +68,20 @@ let jac t y j =
 
 (* Integrator memory structure *)
 type 'k integrator_mem_rec = {
-  x  : Nvector_serial.t;
-  a  : 'k Matrix.dense;
-  ls : (Matrix.Dense.t, 'k, [`Dls]) LS.serial_t;
+  y0   : Nvector_serial.t;
+  ycur : Nvector_serial.t;
+  ycor : Nvector_serial.t;
+  w    : Nvector_serial.t;
+
+  x    : Nvector_serial.t;
+  a    : 'k Matrix.dense;
+  ls   : (Matrix.Dense.t, 'k, [`Dls]) LS.serial_t;
 }
 
 (* Proxy for integrator lsetup function *)
-let lsetup imem y f jbad _ =
+let lsetup imem jbad _ =
   (* compute the Jacobian *)
-  jac zero y (Matrix.(Dense.unwrap (unwrap imem.a)));
+  jac zero (Nvector.unwrap imem.ycur) (Matrix.(Dense.unwrap (unwrap imem.a)));
 
   (* setup the linear solver *)
   LS.setup imem.ls imem.a;
@@ -85,7 +90,7 @@ let lsetup imem y f jbad _ =
   true
 
 (* Proxy for integrator lsolve function *)
-let lsolve imem y b _ =
+let lsolve imem b _ =
   LS.solve imem.ls imem.a imem.x (Nvector_serial.wrap b) zero;
   NVOps.scale one (Nvector_serial.unwrap imem.x) b
 
@@ -104,6 +109,9 @@ let conv_test imem y del tol ewt _ =
  *
  * ---------------------------------------------------------------------------*)
 let res imem y f _ =
+  (* update state based on current correction *)
+  Nvector_serial.Ops.linearsum one imem.y0 one imem.ycor imem.ycur;
+  (* compute the residual function *)
   f.{0} <- y.{0}*.y.{0} +. y.{1}*.y.{1} +. y.{2}*.y.{2} -. one;
   f.{1} <- two *. y.{0}*.y.{0} +. y.{1}*.y.{1} -. four *. y.{2};
   f.{2} <- three *. (y.{0}*.y.{0}) -. four *. y.{1} +. y.{2}*.y.{2}
@@ -115,8 +123,10 @@ let main () =
   (* create vector *)
   let x = Nvector_serial.make neq 0.0 in
   let y0 = Nvector_serial.wrap (RealArray.of_array [| half; half; half |]) in
-  let y = Nvector_serial.Ops.clone x in
-  let ydata = Nvector_serial.unwrap y in
+  let ycur = Nvector.clone y0 in
+  let ydata = Nvector_serial.unwrap ycur in
+  (* set initial guess for the state *)
+  let ycor = Nvector_serial.make neq zero in
   (* set weights *)
   let w = Nvector_serial.make neq one in
 
@@ -125,14 +135,14 @@ let main () =
 
   (* create dense linear solver *)
   (* initialize the linear solver *)
-  let ls = DLS.dense y a in
+  let ls = DLS.dense y0 a in
   LS.init ls;
 
   (* set integrator memory *)
-  let imem = { x; a; ls } in
+  let imem = { y0; ycur; ycor; w; x; a; ls } in
 
   (* create nonlinear solver *)
-  let nls = NLS.Newton.make y in
+  let nls = NLS.Newton.make y0 in
 
   (* set the nonlinear residual function *)
   NLS.set_sys_fn nls (res imem);
@@ -145,8 +155,11 @@ let main () =
   (* set the maximum number of nonlinear iterations *)
   NLS.set_max_iters nls maxit;
 
+  (* update the initial guess with the final correction *)
+  Nvector_serial.Ops.linearsum one y0 one ycor ycur;
+
   (* solve the nonlinear system *)
-  NLS.solve nls ~y0 ~y ~w tol true;
+  NLS.solve nls ~y0 ~ycor ~w tol true;
 
   (* print the solution *)
   printf "Solution:\n";
