@@ -569,7 +569,7 @@ CAMLprim value sunml_nvec_par_getlength(value vx)
     CAMLreturn(r);
 }
 
-CAMLprim value sunml_nvec_par_n_vgetcommunicator(value vx)
+CAMLprim value sunml_nvec_par_getcommunicator(value vx)
 {
     CAMLparam1(vx);
     CAMLlocal2(vr, vc);

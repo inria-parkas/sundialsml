@@ -29,7 +29,7 @@ module Nvector_serial_ops =
     include N.Ops
     let get_id = Nvector.get_id
     type data = Sundials.RealArray.t
-    let n_vgetarray = Nvector.unwrap
+    let getarray = Nvector.unwrap
     let get = Sundials.RealArray.get
     let set = Sundials.RealArray.set
     let max_time x t = t
@@ -42,7 +42,7 @@ module Nvector_array_ops =
     include N.Ops
     let get_id = Nvector.get_id
     type data = float array
-    let n_vgetarray = Nvector.unwrap
+    let getarray = Nvector.unwrap
     let get = Array.get
     let set = Array.set
     let max_time x t = t
@@ -54,10 +54,12 @@ module Custom_serial =
   Nvector_custom.MakeOps (struct
     type data = Sundials.RealArray.t
     let ops = { (* {{{ *)
-      Nvector_custom.n_vcheck
+      Nvector_custom.check
         = (fun x y -> Sundials.RealArray.(length x = length y));
       Nvector_custom.clone        = Nvector_serial.DataOps.clone;
       Nvector_custom.space        = Some Nvector_serial.DataOps.space;
+      Nvector_custom.getlength    = Nvector_serial.DataOps.getlength;
+      Nvector_custom.getcommunicator = None;
       Nvector_custom.linearsum    = Nvector_serial.DataOps.linearsum;
       Nvector_custom.const        = Nvector_serial.DataOps.const;
       Nvector_custom.prod         = Nvector_serial.DataOps.prod;
@@ -97,6 +99,16 @@ module Custom_serial =
         = Some Nvector_serial.DataOps.scaleaddmultivectorarray;
       Nvector_custom.linearcombinationvectorarray
         = Some Nvector_serial.DataOps.linearcombinationvectorarray;
+
+      Nvector_custom.dotprod_local     = Some Nvector_serial.DataOps.Local.dotprod;
+      Nvector_custom.maxnorm_local     = Some Nvector_serial.DataOps.Local.maxnorm;
+      Nvector_custom.min_local         = Some Nvector_serial.DataOps.Local.min;
+      Nvector_custom.l1norm_local      = Some Nvector_serial.DataOps.Local.l1norm;
+      Nvector_custom.invtest_local     = Some Nvector_serial.DataOps.Local.invtest;
+      Nvector_custom.constrmask_local  = Some Nvector_serial.DataOps.Local.constrmask;
+      Nvector_custom.minquotient_local = Some Nvector_serial.DataOps.Local.minquotient;
+      Nvector_custom.wsqrsum_local     = Some Nvector_serial.DataOps.Local.wsqrsum;
+      Nvector_custom.wsqrsummask_local = Some Nvector_serial.DataOps.Local.wsqrsummask;
     } (* }}} *)
   end)
 
@@ -105,10 +117,12 @@ module Custom_array1 =
   Nvector_custom.MakeOps (struct
     type data = float array
     let ops = { (* {{{ *)
-      Nvector_custom.n_vcheck
+      Nvector_custom.check
         = (fun x y -> Array.(length x = length y));
       Nvector_custom.clone        = Nvector_array.DataOps.clone;
       Nvector_custom.space        = Some Nvector_array.DataOps.space;
+      Nvector_custom.getlength    = Nvector_array.DataOps.getlength;
+      Nvector_custom.getcommunicator = None;
       Nvector_custom.linearsum    = Nvector_array.DataOps.linearsum;
       Nvector_custom.const        = Nvector_array.DataOps.const;
       Nvector_custom.prod         = Nvector_array.DataOps.prod;
@@ -148,6 +162,16 @@ module Custom_array1 =
         = Some Nvector_array.DataOps.scaleaddmultivectorarray;
       Nvector_custom.linearcombinationvectorarray
         = Some Nvector_array.DataOps.linearcombinationvectorarray;
+
+      Nvector_custom.dotprod_local     = Some Nvector_array.DataOps.Local.dotprod;
+      Nvector_custom.maxnorm_local     = Some Nvector_array.DataOps.Local.maxnorm;
+      Nvector_custom.min_local         = Some Nvector_array.DataOps.Local.min;
+      Nvector_custom.l1norm_local      = Some Nvector_array.DataOps.Local.l1norm;
+      Nvector_custom.invtest_local     = Some Nvector_array.DataOps.Local.invtest;
+      Nvector_custom.constrmask_local  = Some Nvector_array.DataOps.Local.constrmask;
+      Nvector_custom.minquotient_local = Some Nvector_array.DataOps.Local.minquotient;
+      Nvector_custom.wsqrsum_local     = Some Nvector_array.DataOps.Local.wsqrsum;
+      Nvector_custom.wsqrsummask_local = Some Nvector_array.DataOps.Local.wsqrsummask;
     } (* }}} *)
   end)
 
@@ -249,14 +273,14 @@ let main () =
 
   (* NVector Tests *)
   if Test_nvector.compat_ge400 then begin
-    fails += Test.test_n_vgetvectorid x Test.id 0;
+    fails += Test.test_getvectorid x Test.id 0;
     fails += Test.test_cloneempty x 0;
     fails += Test.test_clone x length 0;
     fails += Test.test_cloneemptyvectorarray 5 x 0;
     fails += Test.test_clonevectorarray 5 x length 0
   end;
-  fails += Test.test_n_vsetarraypointer w length 0;
-  fails += Test.test_n_vgetarraypointer x length 0;
+  fails += Test.test_setarraypointer w length 0;
+  fails += Test.test_getarraypointer x length 0;
   if Test_nvector.compat_ge400 then begin
     printf "\nTesting standard vector operations:\n\n";
     fails += Test.test_const x length 0

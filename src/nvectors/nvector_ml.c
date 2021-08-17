@@ -1416,7 +1416,7 @@ static void *callml_vgetcommunicator(N_Vector x)
     value r = caml_callback_exn (mlop, NVEC_BACKLINK(x));
     if (Is_exception_result (r))
 	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined n_vgetcommunicator");
+					"user-defined getcommunicator");
 
     CAMLreturnT(void *, Comm_val_addr(r));
 }

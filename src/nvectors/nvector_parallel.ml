@@ -100,7 +100,7 @@ let communicator nv =
   comm
 
 external get_communicator : ('d, 'k) Nvector.t -> Mpi.communicator option
-  = "sunml_nvec_par_n_vgetcommunicator"
+  = "sunml_nvec_par_getcommunicator"
 
 let do_enable f nv v =
   match v with

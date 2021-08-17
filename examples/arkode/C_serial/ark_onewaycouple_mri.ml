@@ -43,6 +43,7 @@
  * ----------------------------------------------------------------*)
 
 open Sundials
+module ARKStep = Arkode.ARKStep
 module MRIStep = Arkode.MRIStep
 
 let printf = Printf.printf
@@ -121,13 +122,24 @@ let main () =
   (* Create serial vector for the analytic solution *)
   let ytrue = Nvector_serial.Ops.clone y in
 
+  (* Initialize the fast integrator. Specify the fast right-hand side
+     function in y'=fs(t,y)+ff(t,y), the inital time T0, and the
+     initial dependent variable vector y. *)
+  let inner_arkode_mem = ARKStep.(init
+                                   (explicit ff)
+                                   Arkode.default_tolerances
+                                   t0
+                                   y)
+  in
+  ARKStep.set_erk_table_num inner_arkode_mem
+    Arkode.ButcherTable.Knoth_Wolke_3_3;
+  ARKStep.set_fixed_step inner_arkode_mem (Some hf);
+
   (* Call MRIStepCreate to initialize the MRI timestepper module and
      specify the right-hand side functions in y'=fs(t,y)+ff(t,y),
      the inital time T0, and the initial dependent variable vector y. *)
   (* Specify slow and fast step sizes *)
-  let arkode_mem = MRIStep.(init ~slow:fs  ~fast:ff
-                                 ~hslow:hs ~hfast:hf
-                                 t0 y) in
+  let arkode_mem = MRIStep.(init inner_arkode_mem fs hs t0 y) in
 
   (*
    * Integrate ODE
@@ -179,9 +191,10 @@ let main () =
    *)
 
   (* Print some final statistics *)
-  let open MRIStep in
-  let nsts, nstf = get_num_steps arkode_mem in
-  let nfs, nff   = get_num_rhs_evals arkode_mem in
+  let nsts = MRIStep.get_num_steps arkode_mem in
+  let nfs = MRIStep.get_num_rhs_evals arkode_mem in
+  let nstf = ARKStep.get_num_steps inner_arkode_mem in
+  let nff, _ = ARKStep.get_num_rhs_evals inner_arkode_mem in
   printf "\nFinal Solver Statistics:\n";
   printf "   Steps: nsts = %d, nstf = %d\n" nsts nstf;
   printf "   Total RHS evals:  Fs = %d,  Ff = %d\n" nfs nff

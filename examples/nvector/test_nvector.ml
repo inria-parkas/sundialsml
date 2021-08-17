@@ -53,8 +53,8 @@ let print_passed s =
 module type NVECTOR_OPS_EXT = sig
   include Nvector.NVECTOR_OPS
   type data
-  val get_id      : t -> Nvector.nvector_id
-  val n_vgetarray : t -> data
+  val get_id   : t -> Nvector.nvector_id
+  val getarray : t -> data
 
   val get : data -> int -> float
   val set : data -> int -> float -> unit
@@ -69,13 +69,13 @@ module type TEST = sig (* {{{ *)
   exception TestFailed of int
 
   val set_timing : bool -> bool -> unit
-  val test_n_vgetvectorid : t -> Nvector.nvector_id -> int -> int
+  val test_getvectorid : t -> Nvector.nvector_id -> int -> int
   val test_clonevectorarray         : int -> t -> 'a -> int -> int
   val test_cloneemptyvectorarray    : int -> t -> int -> int
   val test_cloneempty               : t -> int -> int
   val test_clone                    : t -> int -> int -> int
-  val test_n_vgetarraypointer          : t -> int -> int -> int
-  val test_n_vsetarraypointer          : t -> int -> int -> int
+  val test_getarraypointer          : t -> int -> int -> int
+  val test_setarraypointer          : t -> int -> int -> int
   val test_linearsum                : t -> t -> t -> int -> int -> int
   val test_const                    : t -> int -> int -> int
   val test_prod                     : t -> t -> t -> int -> int -> int
@@ -168,7 +168,7 @@ let set_timing b showres =
  * Check vector
  * --------------------------------------------------------------------*)
 let check_ans ans x local_length =
-  let xdata = Nvector_ops.n_vgetarray x in
+  let xdata = Nvector_ops.getarray x in
 
   (* check vector data *)
   try
@@ -193,7 +193,7 @@ let int_of_nvector_id = function
   | Nvector.OpenMPdev -> 8
   | Nvector.Custom    -> 9
 
-let test_n_vgetvectorid x id myid =
+let test_getvectorid x id myid =
   if Nvector_ops.get_id x <> id then (
     printf ">>> FAILED test -- N_VGetVectorID, Proc %d \n" myid;
     printf "    Unrecognized vector type %d \n \n"
@@ -278,7 +278,7 @@ let test_clone w local_length myid =
   (* check cloned vector *)
 
   (* check cloned vector data *)
-  let _ = Nvector_ops.n_vgetarray x in
+  let _ = Nvector_ops.getarray x in
 
   Nvector_ops.const one x;
   if not (check_ans one x local_length) then (
@@ -299,10 +299,10 @@ let test_clone w local_length myid =
  *
  * NOTE: This routine depends on N_VConst to check vector data.
  * --------------------------------------------------------------------*)
-let test_n_vgetarraypointer w local_length myid =
+let test_getarraypointer w local_length myid =
   (* get vector data *)
   let start_time = get_time () in
-  let wdata = Nvector_ops.n_vgetarray w in
+  let wdata = Nvector_ops.getarray w in
   let stop_time = get_time () in
 
   (* check vector data *)
@@ -327,7 +327,7 @@ let test_n_vgetarraypointer w local_length myid =
  *
  * NOTE: This routine depends on N_VConst to check vector data.
  * --------------------------------------------------------------------*)
-let test_n_vsetarraypointer w local_length myid =
+let test_setarraypointer w local_length myid =
   (* C version creates a buffer of the same length and sets that as
      the storage for w.  There's no counterpart in OCaml, so we instead
      clone w, throw that away, and get the storage for w.  *)
@@ -337,7 +337,7 @@ let test_n_vsetarraypointer w local_length myid =
 
   (* attach data to vector *)
   let start_time = get_time () in
-  let wdata = Nvector_ops.n_vgetarray w in
+  let wdata = Nvector_ops.getarray w in
   let stop_time = get_time () in
 
   (* check vector data *)
@@ -363,9 +363,9 @@ let test_n_vsetarraypointer w local_length myid =
 let test_linearsum x y z local_length myid =
   let fails = ref 0 in
 
-  let xdata = Nvector_ops.n_vgetarray x
-  and ydata = Nvector_ops.n_vgetarray y
-  and zdata = Nvector_ops.n_vgetarray z
+  let xdata = Nvector_ops.getarray x
+  and ydata = Nvector_ops.getarray y
+  and zdata = Nvector_ops.getarray z
   in
 
   (* Case 1a: y = x + y, (Vaxpy Case 1) *)
@@ -739,7 +739,7 @@ let test_linearsum x y z local_length myid =
 let test_const x local_length myid =
   let fails = ref 0 in
 
-  let xdata = Nvector_ops.n_vgetarray x in
+  let xdata = Nvector_ops.getarray x in
 
   (* fill vector data *)
   for i=0 to local_length-1 do
@@ -769,9 +769,9 @@ let test_const x local_length myid =
 let test_prod x y z local_length myid =
   let fails = ref 0 in
 
-  let xdata = Nvector_ops.n_vgetarray x
-  and ydata = Nvector_ops.n_vgetarray y
-  and zdata = Nvector_ops.n_vgetarray z
+  let xdata = Nvector_ops.getarray x
+  and ydata = Nvector_ops.getarray y
+  and zdata = Nvector_ops.getarray z
   in
 
   (* fill vector data *)
@@ -804,9 +804,9 @@ let test_prod x y z local_length myid =
 let test_div x y z local_length myid =
   let fails = ref 0 in
 
-  let xdata = Nvector_ops.n_vgetarray x in
-  let ydata = Nvector_ops.n_vgetarray y in
-  let zdata = Nvector_ops.n_vgetarray z in
+  let xdata = Nvector_ops.getarray x in
+  let ydata = Nvector_ops.getarray y in
+  let zdata = Nvector_ops.getarray z in
 
   (* fill vector data *)
   for i=0 to local_length-1 do
@@ -838,8 +838,8 @@ let test_div x y z local_length myid =
 let test_scale x z local_length myid =
   let fails = ref 0 in
 
-  let xdata = Nvector_ops.n_vgetarray x in
-  let zdata = Nvector_ops.n_vgetarray z in
+  let xdata = Nvector_ops.getarray x in
+  let zdata = Nvector_ops.getarray z in
 
   (* Case 1: x = cx, VScaleBy *)
 
@@ -937,8 +937,8 @@ let test_scale x z local_length myid =
 let test_abs x z local_length myid =
   let fails = ref 0 in
 
-  let xdata = Nvector_ops.n_vgetarray x in
-  let zdata = Nvector_ops.n_vgetarray z in
+  let xdata = Nvector_ops.getarray x in
+  let zdata = Nvector_ops.getarray z in
 
   (* fill vector data *)
   for i=0 to local_length-1 do
@@ -969,8 +969,8 @@ let test_abs x z local_length myid =
 let test_inv x z local_length myid =
   let fails = ref 0 in
 
-  let xdata = Nvector_ops.n_vgetarray x in
-  let zdata = Nvector_ops.n_vgetarray z in
+  let xdata = Nvector_ops.getarray x in
+  let zdata = Nvector_ops.getarray z in
 
   (* fill vector data *)
   for i=0 to local_length-1 do
@@ -1001,8 +1001,8 @@ let test_inv x z local_length myid =
 let test_addconst x z local_length myid =
   let fails = ref 0 in
 
-  let xdata = Nvector_ops.n_vgetarray x in
-  let zdata = Nvector_ops.n_vgetarray z in
+  let xdata = Nvector_ops.getarray x in
+  let zdata = Nvector_ops.getarray z in
 
   (* fill vector data *)
   for i=0 to local_length-1 do
@@ -1033,8 +1033,8 @@ let test_addconst x z local_length myid =
 let test_dotprod x y local_length global_length myid =
   let fails = ref 0 in
 
-  let xdata = Nvector_ops.n_vgetarray x in
-  let ydata = Nvector_ops.n_vgetarray y in
+  let xdata = Nvector_ops.getarray x in
+  let ydata = Nvector_ops.getarray y in
 
   (* fill vector data *)
   for i=0 to local_length-1 do
@@ -1065,7 +1065,7 @@ let test_dotprod x y local_length global_length myid =
 let test_maxnorm x local_length myid =
   let fails = ref 0 in
 
-  let xdata = Nvector_ops.n_vgetarray x in
+  let xdata = Nvector_ops.getarray x in
 
   (* fill vector data *)
   for i=0 to local_length-1 do
@@ -1096,8 +1096,8 @@ let test_maxnorm x local_length myid =
 let test_wrmsnorm x w local_length myid =
   let fails = ref 0 in
 
-  let xdata = Nvector_ops.n_vgetarray x in
-  let wdata = Nvector_ops.n_vgetarray w in
+  let xdata = Nvector_ops.getarray x in
+  let wdata = Nvector_ops.getarray w in
 
   (* fill vector data *)
   for i=0 to local_length-1 do
@@ -1128,9 +1128,9 @@ let test_wrmsnorm x w local_length myid =
 let test_wrmsnormmask x w id local_length global_length myid =
   let fails = ref 0 in
 
-  let xdata = Nvector_ops.n_vgetarray x in
-  let wdata = Nvector_ops.n_vgetarray w in
-  let id_data = Nvector_ops.n_vgetarray id in
+  let xdata = Nvector_ops.getarray x in
+  let wdata = Nvector_ops.getarray w in
+  let id_data = Nvector_ops.getarray id in
 
   (* factor used in checking solutions *)
   let fac = sqrt(float (global_length - 1) /. float global_length) in
@@ -1161,9 +1161,9 @@ let test_wrmsnormmask x w id local_length global_length myid =
 let test_wrmsnormmask_lt400 x w id local_length global_length myid =
   let fails = ref 0 in
 
-  let xdata = Nvector_ops.n_vgetarray x in
-  let wdata = Nvector_ops.n_vgetarray w in
-  let id_data = Nvector_ops.n_vgetarray id in
+  let xdata = Nvector_ops.getarray x in
+  let wdata = Nvector_ops.getarray w in
+  let id_data = Nvector_ops.getarray id in
 
   (* Case 1: use all elements, id = 1 *)
 
@@ -1219,7 +1219,7 @@ let test_wrmsnormmask_lt400 x w id local_length global_length myid =
 let test_min x local_length myid =
   let fails = ref 0 in
 
-  let xdata = Nvector_ops.n_vgetarray x in
+  let xdata = Nvector_ops.getarray x in
 
   (* fill vector data *)
   for i=0 to local_length-1 do
@@ -1250,8 +1250,8 @@ let test_min x local_length myid =
 let test_wl2norm x w local_length global_length myid =
   let fails = ref 0 in
 
-  let xdata = Nvector_ops.n_vgetarray x in
-  let wdata = Nvector_ops.n_vgetarray w in
+  let xdata = Nvector_ops.getarray x in
+  let wdata = Nvector_ops.getarray w in
 
   (* fill vector data *)
   for i=0 to local_length-1 do
@@ -1284,7 +1284,7 @@ let test_wl2norm x w local_length global_length myid =
 let test_l1norm x local_length global_length myid =
   let fails = ref 0 in
 
-  let xdata = Nvector_ops.n_vgetarray x in
+  let xdata = Nvector_ops.getarray x in
 
   (* fill vector data *)
   for i=0 to local_length-1 do
@@ -1321,8 +1321,8 @@ let test_compare x z local_length myid =
     raise (TestFailed (-1))
   );
 
-  let xdata = Nvector_ops.n_vgetarray x in
-  let zdata = Nvector_ops.n_vgetarray z in
+  let xdata = Nvector_ops.getarray x in
+  let zdata = Nvector_ops.getarray z in
 
   (* fill vector data *)
   for i=0 to local_length-1 do
@@ -1390,8 +1390,8 @@ let test_invtest x z local_length myid =
     raise (TestFailed (-1))
   );
 
-  let xdata = Nvector_ops.n_vgetarray x in
-  let zdata = Nvector_ops.n_vgetarray z in
+  let xdata = Nvector_ops.getarray x in
+  let zdata = Nvector_ops.getarray z in
 
   (* Case 1: All elements Nonzero, z[i] = 1/x[i], return True *)
 
@@ -1470,9 +1470,9 @@ let test_constrmask c x m local_length myid =
     raise (TestFailed (-1))
   );
 
-  let cdata = Nvector_ops.n_vgetarray c in
-  let xdata = Nvector_ops.n_vgetarray x in
-  let mdata = Nvector_ops.n_vgetarray m in
+  let cdata = Nvector_ops.getarray c in
+  let xdata = Nvector_ops.getarray x in
+  let mdata = Nvector_ops.getarray m in
 
   (* Case 1: Return True *)
 
@@ -1604,8 +1604,8 @@ let test_constrmask c x m local_length myid =
 let test_minquotient num denom local_length myid =
   let fails = ref 0 in
 
-  let num_data = Nvector_ops.n_vgetarray num in
-  let denom_data = Nvector_ops.n_vgetarray denom in
+  let num_data = Nvector_ops.getarray num in
+  let denom_data = Nvector_ops.getarray denom in
 
   (* Case 1: Pass *)
 
@@ -2795,7 +2795,7 @@ let test_wrmsnormvectorarray x local_length myid =
  * --------------------------------------------------------------------*)
 let test_wrmsnormmaskvectorarray x local_length global_length myid =
   let fails = ref 0 in
-  let xdata = Nvector_ops.n_vgetarray x in
+  let xdata = Nvector_ops.getarray x in
 
   (* factor used in checking solutions *)
   let fac = sqrt (float ((global_length - 1)/global_length)) in

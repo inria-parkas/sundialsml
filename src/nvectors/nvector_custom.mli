@@ -49,7 +49,7 @@ type communicator
 
     @cvode <node7#s:nvector> _generic_N_Vector_Ops *)
 type 'd nvector_ops = { (* {{{ *)
-  n_vcheck           : 'd -> 'd ->  bool;
+  check           : 'd -> 'd ->  bool;
   (** Returns [true] if the vectors are compatible. See {!Nvector.check}. *)
 
   clone           : 'd -> 'd;
@@ -134,7 +134,7 @@ type 'd nvector_ops = { (* {{{ *)
       Zero [denom] elements are skipped. If no such quotients are found,
       then {{!Sundials_Config.big_real}Config.big_real} is returned. *)
 
-  n_vgetcommunicator : ('d -> communicator) option;
+  getcommunicator : ('d -> communicator) option;
   (** Returns the MPI communicator associated with an nvector. *)
 
   (* optional fused vector operations *)
@@ -208,7 +208,7 @@ type 'd nvector_ops = { (* {{{ *)
   (* optional reduction operations *)
 
   dotprod_local      : ('d -> 'd -> float) option;
-  (** Perform {!n_vvdotprod} on task-local elements. *)
+  (** Perform {!vdotprod} on task-local elements. *)
 
   maxnorm_local      : ('d -> float) option;
   (** Perform {!maxnorm} on task-local elements. *)

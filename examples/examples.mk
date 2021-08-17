@@ -368,21 +368,27 @@ MODULE=$(word 1,$(subst /, ,$(SUBDIR)))
 
 ifeq ($(MODULE),cvode)
 EG_CFLAGS=$(CVODE_CFLAGS)
+EG_CFLAGS_MPI=
 EG_LDFLAGS=$(CVODE_LDFLAGS)
 else ifeq ($(MODULE),cvodes)
 EG_CFLAGS=$(CVODES_CFLAGS)
+EG_CFLAGS_MPI=
 EG_LDFLAGS=$(CVODES_LDFLAGS)
 else ifeq ($(MODULE),ida)
 EG_CFLAGS=$(IDA_CFLAGS)
+EG_CFLAGS_MPI=
 EG_LDFLAGS=$(IDA_LDFLAGS)
 else ifeq ($(MODULE),idas)
 EG_CFLAGS=$(IDAS_CFLAGS)
+EG_CFLAGS_MPI=
 EG_LDFLAGS=$(IDAS_LDFLAGS)
 else ifeq ($(MODULE),kinsol)
 EG_CFLAGS=$(KINSOL_CFLAGS)
+EG_CFLAGS_MPI=
 EG_LDFLAGS=$(KINSOL_LDFLAGS)
 else ifeq ($(MODULE),arkode)
 EG_CFLAGS=$(ARKODE_CFLAGS)
+EG_CFLAGS_MPI=
 EG_LDFLAGS=$(ARKODE_LDFLAGS)
 else ifeq ($(MODULE),nvector)
 # The test_nvector.{c,h} files live in examples/nvector in the source
@@ -392,12 +398,18 @@ EG_CFLAGS=$(CVODE_CFLAGS) -I $(EXAMPLESROOT)/nvector \
     `if test -f $(EXAMPLESROOT)/$(C_SUBDIR)/test_nvector.c; \
      then echo $(EXAMPLESROOT)/$(C_SUBDIR)/test_nvector.c; \
      else echo $(EXAMPLESROOT)/nvector/test_nvector.c; fi`
+EG_CFLAGS_MPI=\
+    `if test -f $(EXAMPLESROOT)/$(C_SUBDIR)/test_mpinvector.c; \
+     then echo $(EXAMPLESROOT)/$(C_SUBDIR)/test_mpinvector.c; \
+     else echo $(EXAMPLESROOT)/nvector/test_mpinvector.c; fi`
 EG_LDFLAGS=$(CVODE_LDFLAGS)
 else ifeq ($(MODULE),matrix)
 EG_CFLAGS=$(CVODE_CFLAGS) $(EXAMPLESROOT)/$(C_SUBDIR)/test_sunmatrix.c
+EG_CFLAGS_MPI=
 EG_LDFLAGS=$(CVODE_LDFLAGS)
 else ifeq ($(MODULE),nonlinsol)
 EG_CFLAGS=$(CVODE_CFLAGS)
+EG_CFLAGS_MPI=
 EG_LDFLAGS=$(CVODE_LDFLAGS)
 endif
 
@@ -419,8 +431,8 @@ $(SERIAL_EXAMPLES:.ml=.sundials): %.sundials: %.sundials.c $(SRCROOT)/config
 
 $(MPI_EXAMPLES:.ml=.sundials): %.sundials: %.sundials.c $(SRCROOT)/config
 	$(MPICC) -o $@ -I $(EXAMPLESROOT)/$(C_SUBDIR) \
-	    $(EG_CFLAGS) -DUSES_MPI=1 $< $(LIB_PATH) $(EG_LDFLAGS) \
-	    $(LAPACK_LIB) $(MPI_LIBLINK)
+	    $(EG_CFLAGS) $(EG_CFLAGS_MPI) -DUSES_MPI=1 $< \
+	    $(LIB_PATH) $(EG_LDFLAGS) $(LAPACK_LIB) $(MPI_LIBLINK)
 
 $(OPENMP_EXAMPLES:.ml=.sundials): %.sundials: %.sundials.c $(SRCROOT)/config
 	$(CC) $(CFLAGS_OPENMP) -o $@ -I $(EXAMPLESROOT)/$(C_SUBDIR) \

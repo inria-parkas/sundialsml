@@ -80,8 +80,6 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
     yg                   : RealArray.t;
   }
 
-  let init lsolver = ()
-
   let setup lsolver _ =
     match lsolver.psetup with
     | None -> ()
@@ -314,8 +312,9 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
     let open LS.Custom in
     {
       solver_type         = Iterative;
-      init                = init;
-      setup               = setup;
+      solver_id           = Spgmr;
+      init                = None;
+      setup               = Some setup;
       solve               = solve;
       set_atimes          = Some set_atimes;
       set_preconditioner  = Some set_preconditioner;
@@ -323,6 +322,7 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
       get_num_iters       = Some (fun ls -> ls.numiters);
       get_res_norm        = Some (fun ls -> ls.resnorm);
       get_res_id          = Some (fun ls -> ls.vtemp);
+      get_last_flag       = None;
       get_work_space      = Some get_workspace;
       set_prec_type       = Some set_prec_type;
     }
