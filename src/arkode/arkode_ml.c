@@ -3825,12 +3825,16 @@ CAMLprim value sunml_arkode_ark_set_min_reduction(value varkode_mem, value varg)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_arkode_ark_set_max_steps_between_lset(value varkode_mem,
-						           value varg)
+CAMLprim value sunml_arkode_ark_set_lsetup_frequency(value varkode_mem,
+						     value varg)
 {
     CAMLparam2(varkode_mem, varg);
 
-#if 400 <= SUNDIALS_LIB_VERSION
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepSetLSetupFrequency(ARKODE_MEM_FROM_ML(varkode_mem),
+				         Int_val(varg));
+    CHECK_FLAG("ARKStepSetLSetupFrequency", flag);
+#elif 400 <= SUNDIALS_LIB_VERSION
     int flag = ARKStepSetMaxStepsBetweenLSet(ARKODE_MEM_FROM_ML(varkode_mem),
 				             Int_val(varg));
     CHECK_FLAG("ARKStepSetMaxStepsBetweenLSet", flag);
@@ -3999,14 +4003,18 @@ CAMLprim value sunml_arkode_spils_set_mass_gs_type(value varkode_mem, value vgst
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_arkode_ark_set_max_steps_between_jac(value varkode_mem,
-						          value vmaxsteps)
+CAMLprim value sunml_arkode_ark_set_jac_eval_frequency(value varkode_mem,
+						       value vevalfreq)
 {
-    CAMLparam2(varkode_mem, vmaxsteps);
+    CAMLparam2(varkode_mem, vevalfreq);
 
-#if 400 <= SUNDIALS_LIB_VERSION
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepSetJacEvalFrequency(ARKODE_MEM_FROM_ML(varkode_mem),
+					  Long_val(vevalfreq));
+    CHECK_LS_FLAG("ARKStepSetJacEvalFrequency", flag);
+#elif 400 <= SUNDIALS_LIB_VERSION
     int flag = ARKStepSetMaxStepsBetweenJac(ARKODE_MEM_FROM_ML(varkode_mem),
-					    Long_val(vmaxsteps));
+					    Long_val(vevalfreq));
     CHECK_LS_FLAG("ARKStepSetMaxStepsBetweenJac", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));

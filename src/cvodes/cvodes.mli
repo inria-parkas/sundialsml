@@ -1528,11 +1528,21 @@ module Adjoint : sig (* {{{ *)
 
     (** Sets the maximum number of time steps to wait before recomputation of
         the Jacobian or recommendation to update the preconditioner.
-        If the integer argument is less than 1, a default value of 50 is used.
+        If the integer argument is less than or equal to 0, a default value
+        of 50 is used.
 
-        @nocvodes <node5> CVodeSetMaxStepsBetweenJac
+        @nocvodes <node5> CVodeSetJacEvalFrequency
         @since 4.0.0 *)
-    val set_max_steps_between_jac : ('d, 'k) bsession -> int -> unit
+    val set_jac_eval_frequency : ('d, 'k) bsession -> int -> unit
+
+    (** Specifies the frequency of calls to the linear solver setup routine.
+        Positive values specify the number of time steps between setup calls,
+        negative values force recomputation at each Newton step, and zero
+        values reset to the default (20).
+
+        @nocvode <node> CVodeSetLSetupFrequency
+        @since 5.4.0 *)
+    val set_lsetup_frequency : ('d, 'k) bsession -> int -> unit
 
     (** Sets the factor by which the Krylov linear solver's convergence test
         constant is reduced from the Newton iteration test constant.

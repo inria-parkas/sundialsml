@@ -1323,8 +1323,11 @@ module Adjoint = struct (* {{{ *)
       let parent, which = parent_and_which bs in
       c_set_linear_solution_scaling parent which onoff
 
-    let set_max_steps_between_jac bs =
-      Cvode.Spils.set_max_steps_between_jac (tosession bs)
+    let set_jac_eval_frequency bs =
+      Cvode.Spils.set_jac_eval_frequency (tosession bs)
+
+    let set_lsetup_frequency bs =
+      Cvode.Spils.set_lsetup_frequency (tosession bs)
 
     let get_work_space bs =
       Cvode.Spils.get_work_space (tosession bs)
