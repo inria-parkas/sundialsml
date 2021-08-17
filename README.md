@@ -24,6 +24,16 @@ reimplementations of nvector and matrix routines. The OCaml interface is
 completely documented with references back to the Sundials library and 
 documentation.
 
+Many programs just use a small subset of Sundials functions, e.g., a handful 
+of CVODE functions with serial nvectors, so Sundials/ML tries to isolate 
+OCaml programs from differences in the underlying library with support back 
+to Sundials 2.7.0. The idea is to program in OCaml to the most up-to-date 
+Sundials/ML interface (which evolves as Sundials does) but to be able to 
+install on platforms where an older version of Sundials is installed. 
+Functions are provided to query the version and features of the underlying 
+library and exceptions are raised if use of an unsupported feature is 
+attempted.
+
 Installation
 ------------
 See our [detailed notes](http://inria-parkas.github.io/sundialsml/#running), 
