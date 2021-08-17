@@ -775,13 +775,13 @@ module Sensitivity : sig (* {{{ *)
   val get_err_weights : ('d, 'k) Cvode.session
                           -> ('d, 'k) Nvector.t array -> unit
 
-  (** Returns the number of nonlinear iterations performed for sensitivity
-      calculations.
+  (** Returns the cumulative number of nonlinear iterations performed for
+      sensitivity calculations.
 
       @cvodes <node6#ss:sens_optional_output> CVodeGetSensNumNonlinSolvIters *)
   val get_num_nonlin_solv_iters : ('d, 'k) Cvode.session -> int
 
-  (** Returns the number of nonlinear convergence failures that have occurred
+  (** Returns the cumulative number of nonlinear convergence failures
       during sensitivity calculations.
 
       @cvodes <node6#ss:sens_optional_output> CVodeGetSensNumNonlinSolvConvFails *)
@@ -795,15 +795,15 @@ module Sensitivity : sig (* {{{ *)
       @return ([nniters], [nncfails]) *)
   val get_nonlin_solv_stats : ('d, 'k) Cvode.session -> int * int
 
-  (** Returns the number of nonlinear (functional or Newton) iterations
-      performed for each sensitivity equation separately in the [Staggered1]
+  (** Returns the cumulative number of nonlinear (functional or Newton)
+      iterations for each sensitivity equation separately in the [Staggered1]
       case.
 
       @cvodes <node6#ss:sens_optional_output> CVodeGetStgrSensNumNonlinSolvIters *)
   val get_num_stgr_nonlin_solv_iters : ('d, 'k) Cvode.session
                                        -> LintArray.t -> unit
 
-  (** Returns the number of nonlinear convergence failures that have occurred
+  (** Returns the cumulative number of nonlinear convergence failures
       for each sensitivity equation separately in the [Staggered1] case.
 
       @cvodes <node6#ss:sens_optional_output> CVodeGetStgrSensNumNonlinSolvConvFails *)
@@ -2178,14 +2178,14 @@ module Adjoint : sig (* {{{ *)
       @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
   val print_integrator_stats  : ('d, 'k) bsession -> out_channel -> unit
 
-  (** Returns the number of nonlinear (functional or Newton) iterations
-      performed.
+  (** Returns the cumulative number of nonlinear (functional or Newton)
+      iterations.
 
       @cvodes <node5#sss:optout_main> CVodeGetNumNonlinSolvIters
       @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
   val get_num_nonlin_solv_iters : ('d, 'k) bsession -> int
 
-  (** Returns the number of nonlinear convergence failures that have occurred.
+  (** Returns the cumulative number of nonlinear convergence failures.
 
       @cvodes <node5#sss:optout_main> CVodeGetNumNonlinSolvConvFails
       @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)

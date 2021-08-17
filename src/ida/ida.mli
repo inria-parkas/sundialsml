@@ -960,12 +960,13 @@ val get_integrator_stats    : ('d, 'k) session -> integrator_stats
 val print_integrator_stats  : ('d, 'k) session -> out_channel -> unit
 
 
-(** Returns the number of nonlinear (functional or Newton) iterations performed.
+(** Returns the cumulative number of nonlinear (functional or Newton)
+    iterations.
 
     @ida <node5#sss:optout_main> IDAGetNumNonlinSolvIters *)
 val get_num_nonlin_solv_iters : ('d, 'k) session -> int
 
-(** Returns the number of nonlinear convergence failures that have occurred.
+(** Returns the cumulative number of nonlinear convergence failures.
 
     @ida <node5#sss:optout_main> IDAGetNumNonlinSolvConvFails *)
 val get_num_nonlin_solv_conv_fails : ('d, 'k) session -> int

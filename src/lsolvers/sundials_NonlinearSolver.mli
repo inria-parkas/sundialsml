@@ -252,7 +252,7 @@ val set_print_level : ('d, 'k, 's) t -> bool -> unit
 
 (** {2:nlsget Get functions} *)
 
-(** Returns the total number of nonlinear solver iterations.
+(** Returns the number of nonlinear solver iterations in the most recent solve.
 
     @nocvode <node> SUNNonlinSolGetNumIters *)
 val get_num_iters : ('d, 'k, 's) t -> int
@@ -262,7 +262,8 @@ val get_num_iters : ('d, 'k, 's) t -> int
     @nocvode <node> SUNNonlinSolGetCurIter *)
 val get_cur_iter : ('d, 'k, 's) t -> int
 
-(** Returns the total number of nonlinear solver convergence failures.
+(** Returns the number of nonlinear solver convergence failures in the most
+    recent solve.
 
     @nocvode <node> SUNNonlinSolGetNumConvFails *)
 val get_num_conv_fails : ('d, 'k, 's) t -> int
@@ -386,11 +387,13 @@ module Custom : sig (* {{{ *)
       - [set_print_level]: sets the level of verbosity for informational
                            messages (0 = none).
 
-      - [get_num_iters]: returns the total number of iterations.
+      - [get_num_iters]: returns the number of iterations in the most recent
+                         solve.
 
       - [get_cur_iter]: returns the iteration index of the current solve. This function is required when using a convergence test provided by Sundials or one of the spils linear solvers.
 
-      - [get_num_conv_fails]: return the total number of convergence failures.
+      - [get_num_conv_fails]: return the number of convergence failures in the
+                              most recent solve.
 
       - [nls_type]: the type of problem solved.
 

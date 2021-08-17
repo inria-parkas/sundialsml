@@ -2059,14 +2059,14 @@ module ARKStep : sig (* {{{ *)
       @noarkode <node> ARKStepGetNumLinSolvSetups *)
   val get_num_lin_solv_setups : ('d, 'k) session -> int
 
-  (** Returns the number of nonlinear (functional or Newton) iterations
-      performed.
+  (** Returns the cumulative number of nonlinear (functional or Newton)
+      iterations.
 
       @raise NonlinearOperationError Nonlinear solver not configured
       @noarkode <node> ARKStepGetNumNonlinSolvIters *)
   val get_num_nonlin_solv_iters : ('d, 'k) session -> int
 
-  (** Returns the number of nonlinear convergence failures that have occurred.
+  (** Returns the cumulative number of nonlinear convergence failures.
 
       @noarkode <node> ARKStepGetNumNonlinSolvConvFails *)
   val get_num_nonlin_solv_conv_fails : ('d, 'k) session -> int

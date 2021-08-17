@@ -752,15 +752,15 @@ module Sensitivity : sig (* {{{ *)
   val get_err_weights : ('d, 'k) Ida.session
                           -> ('d, 'k) Nvector.t array -> unit
 
-  (** Returns the number of nonlinear iterations performed for sensitivity
+  (** Returns the cumulative number of nonlinear iterations for sensitivity
       calculations.
 
       @idas <node6#ss:sens_optional_output> IDAGetSensNumNonlinSolvIters *)
   val get_num_nonlin_solv_iters : ('d, 'k) Ida.session -> int
 
 
-  (** Returns the number of nonlinear convergence failures that have occurred
-      during sensitivity calculations.
+  (** Returns the cumulativ number of nonlinear convergence failures during
+      sensitivity calculations.
 
       @idas <node6#ss:sens_optional_output> IDAGetSensNumNonlinSolvConvFails *)
   val get_num_nonlin_solv_conv_fails : ('d, 'k) Ida.session -> int
@@ -2049,14 +2049,14 @@ module Adjoint : sig (* {{{ *)
       @idas <node7#ss:optional_output_b> IDAGetAdjIDABmem *)
   val print_integrator_stats : ('d, 'k) bsession -> out_channel -> unit
 
-  (** Returns the number of nonlinear (functional or Newton) iterations
-      performed.
+  (** Returns the cumulative number of nonlinear (functional or Newton)
+      iterations performed.
 
       @idas <node5#sss:optout_main> IDAGetNumNonlinSolvIters
       @idas <node7#ss:optional_output_b> IDAGetAdjIDABmem *)
   val get_num_nonlin_solv_iters : ('d, 'k) bsession -> int
 
-  (** Returns the number of nonlinear convergence failures that have occurred.
+  (** Returns the cumulative number of nonlinear convergence failures.
 
       @idas <node5#sss:optout_main> IDAGetNumNonlinSolvConvFails
       @idas <node7#ss:optional_output_b> IDAGetAdjIDABmem *)
