@@ -6378,23 +6378,6 @@ CAMLprim value sunml_arkode_mri_resize(value varkode_mem,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_arkode_mri_get_current_butcher_table(value varkode_mem)
-{
-    CAMLparam1(varkode_mem);
-    CAMLlocal1(vr);
-#if 500 <= SUNDIALS_LIB_VERSION
-    ARKodeButcherTable bt;
-    int flag = MRIStepGetCurrentButcherTables(ARKODE_MEM_FROM_ML(varkode_mem),
-					      &bt);
-    CHECK_FLAG("MRIStepGetCurrentButcherTables", flag);
-
-    vr = val_butcher_table(bt);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-    CAMLreturn(vr);
-}
-
 CAMLprim value sunml_arkode_mri_set_table(value varkode_mem,
 					  value vq, value vobt)
 {
@@ -6866,20 +6849,6 @@ CAMLprim value sunml_arkode_mri_write_parameters(value varkode_mem, value vlog)
     int flag = MRIStepWriteParameters(ARKODE_MEM_FROM_ML(varkode_mem),
 				      ML_CFILE(vlog));
     CHECK_FLAG("MRIStepWriteParameters", flag);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-
-    CAMLreturn(Val_unit);
-}
-
-CAMLprim value sunml_arkode_mri_write_butcher(value varkode_mem, value vlog)
-{
-    CAMLparam2(varkode_mem, vlog);
-#if 410 <= SUNDIALS_LIB_VERSION
-    int flag = MRIStepWriteButcher(ARKODE_MEM_FROM_ML(varkode_mem),
-				   ML_CFILE(vlog));
-    CHECK_FLAG("MRIStepWriteButcher", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif

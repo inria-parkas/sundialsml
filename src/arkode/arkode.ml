@@ -2731,9 +2731,6 @@ module MRIStep = struct (* {{{ *)
   external set_no_inactive_root_warn      : ('a, 'k) session -> unit
       = "sunml_arkode_mri_set_no_inactive_root_warn"
 
-  external get_current_butcher_table : ('d, 'k) session -> ButcherTable.t
-      = "sunml_arkode_mri_get_current_butcher_table"
-
   external get_current_state : ('d, 'k) session -> 'd
       = "sunml_arkode_mri_get_current_state"
 
@@ -2763,9 +2760,6 @@ module MRIStep = struct (* {{{ *)
 
   external write_parameters : ('d, 'k) session -> Logfile.t -> unit
       = "sunml_arkode_mri_write_parameters"
-
-  external write_butcher : ('d, 'k) session -> Logfile.t -> unit
-      = "sunml_arkode_mri_write_butcher"
 
 end (* }}} *)
 
