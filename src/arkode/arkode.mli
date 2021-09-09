@@ -3126,11 +3126,6 @@ module MRIStep : sig (* {{{ *)
       @noarkode <node> MRIStepGetCurrentTime *)
   val get_current_time        : ('d, 'k) session -> float
 
-  (** Returns the Butcher table in use by the outer (slow) method.
-
-      @noarkode <node> MRIStepGetCurrentButcherTables *)
-  val get_current_butcher_table : ('d, 'k) session -> ButcherTable.t
-
   (** Returns the current state vector. This vector provides direct access to
       the data within the integrator.
 
@@ -3228,11 +3223,6 @@ module MRIStep : sig (* {{{ *)
 
       @noarkode <node> MRIStepWriteParameters *)
   val write_parameters : ('d, 'k) session -> Logfile.t -> unit
-
-  (** Outputs the current butcher table to the given file.
-
-      @noarkode <node> MRIStepWriteButcher *)
-  val write_butcher : ('d, 'k) session -> Logfile.t -> unit
 
 end (* }}} *)
 
