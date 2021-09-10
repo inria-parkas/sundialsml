@@ -6425,6 +6425,285 @@ CAMLprim value sunml_arkode_mri_set_postprocess_step_fn(value varkode_mem,
     CAMLreturn (Val_unit);
 }
 
+/* MRIStep: StepCoupling */
+
+#define ML_MRI_COUPLING(v) (*(MRIStepCoupling *)Data_custom_val(v))
+
+#if 540 <= SUNDIALS_LIB_VERSION
+static void finalize_mri_coupling(value vcptr)
+{
+
+    MRIStepCoupling MRIC = ML_MRI_COUPLING(vcptr);
+    int i;
+
+    if (MRIC != NULL) {
+	for (i = 0; i < MRIC->nmat; i++) {
+	    free(MRIC->G[i]);
+	    MRIC->G[i] = NULL;
+	}
+	free(MRIC->G);
+	MRIC->G = NULL;
+	free(MRIC);
+    }
+}
+#endif
+
+CAMLprim value sunml_arkode_mri_coupling_make(value vargs)
+{
+    CAMLparam1(vargs);
+    CAMLlocal1(vcptr);
+#if 540 <= SUNDIALS_LIB_VERSION
+    CAMLlocal3(vg, vgi, vc);
+    int nmat, stages, q, p;
+    int i, j;
+    MRIStepCoupling MRIC;
+
+    nmat   = Int_val(Field(vargs, 0));
+    stages = Int_val(Field(vargs, 1));
+    q      = Int_val(Field(vargs, 2));
+    p      = Int_val(Field(vargs, 3));
+    vg     = Field(vargs, 4);
+    vc     = Field(vargs, 5);
+
+    // adapted from MRIStepCoupling_Alloc
+
+    MRIC = calloc(1, sizeof(*MRIC));
+    if (MRIC == NULL) caml_raise_out_of_memory();
+
+    MRIC->nmat = nmat;
+    MRIC->stages = stages;
+    MRIC->q = q;
+    MRIC->p = p;
+
+    MRIC->G = (realtype ***) calloc( nmat, sizeof(realtype**) );
+    if (MRIC->G == NULL) {
+	MRIStepCoupling_Free(MRIC);
+	caml_raise_out_of_memory();
+    }
+
+    // allocate arrays in C
+    for (i = 0; i < nmat; i++) {
+	MRIC->G[i] = (realtype **) calloc( stages, sizeof(realtype*) );
+	if (MRIC->G[i] == NULL) {
+	    MRIStepCoupling_Free(MRIC);
+	    caml_raise_out_of_memory();
+	}
+    }
+
+    // link nested elements to underlying big arrays
+    for (i = 0; i < nmat; i++) {
+	vgi = Field(vg, i);
+	for (j = 0; j < stages; j++) {
+	    MRIC->G[i][j] = REAL_ARRAY(Field(vgi, j));
+	}
+    }
+
+    MRIC->c = REAL_ARRAY(vc);
+
+    // Create a cptr wrapper
+    vcptr = caml_alloc_final(1, &finalize_mri_coupling, 1, 20);
+    ML_MRI_COUPLING(vcptr) = MRIC;
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(vcptr);
+}
+ 
+#if 540 <= SUNDIALS_LIB_VERSION
+// Create an MRIStep.Coupling.t from a C value (ownership transferred to OCaml)
+static value sunml_arkode_mri_coupling_wrap(MRIStepCoupling MRIC)
+{
+    CAMLparam0();
+    CAMLlocal5(vr, vcptr, vg, vgi, vc);
+    int i, j;
+
+    // wrap as bigarrays
+    vc = caml_ba_alloc_dims(BIGARRAY_FLOAT | CAML_BA_MANAGED, 1,
+			    MRIC->c, MRIC->stages);
+
+    vg = caml_alloc_tuple(MRIC->nmat);
+    for (i = 0; i < MRIC->nmat; i++) {
+	vgi = caml_alloc_tuple(MRIC->stages);	
+	Store_field(vg, i, vgi);
+	for (j = 0; j < MRIC->stages; j++) {
+	    Store_field(vgi, j,
+		caml_ba_alloc_dims(BIGARRAY_FLOAT | CAML_BA_MANAGED, 1,
+				   MRIC->G[i][j], MRIC->stages));
+	}
+    }
+
+    vcptr = caml_alloc_final(1, &finalize_mri_coupling, 1, 20);
+    ML_MRI_COUPLING(vcptr) = MRIC;
+
+    // create the record
+    vr = caml_alloc_tuple(RECORD_ARKODE_MRI_COUPLING_SIZE);
+    Store_field(vr, RECORD_ARKODE_MRI_COUPLING_CPTR, vcptr);
+    Store_field(vr, RECORD_ARKODE_MRI_COUPLING_NMAT, Val_int(MRIC->nmat));
+    Store_field(vr, RECORD_ARKODE_MRI_COUPLING_STAGES, Val_int(MRIC->stages));
+    Store_field(vr, RECORD_ARKODE_MRI_COUPLING_METHOD_ORDER, Val_int(MRIC->q));
+    Store_field(vr, RECORD_ARKODE_MRI_COUPLING_EMBEDDING, Val_int(MRIC->p));
+    Store_field(vr, RECORD_ARKODE_MRI_COUPLING_MATRICES, vg);
+    Store_field(vr, RECORD_ARKODE_MRI_COUPLING_ABSCISSAE, vc);
+
+    CAMLreturn(vr);
+}
+#endif
+
+CAMLprim value sunml_arkode_mri_coupling_load_table(value vtable)
+{
+    CAMLparam1(vtable);
+    CAMLlocal1(vr);
+#if 540 <= SUNDIALS_LIB_VERSION
+    int imethod;
+    MRIStepCoupling MRIC = NULL;
+
+    switch (Int_val(vtable)) {
+    case VARIANT_ARKODE_MRI_COUPLING_MIS_KW3:
+	imethod = MIS_KW3;
+	break;
+
+    case VARIANT_ARKODE_MRI_COUPLING_GARK_ERK45a:
+	imethod = MRI_GARK_ERK45a;
+	break;
+
+    case VARIANT_ARKODE_MRI_COUPLING_GARK_IRK21a:
+	imethod = MRI_GARK_IRK21a;
+	break;
+
+    case VARIANT_ARKODE_MRI_COUPLING_GARK_ESDIRK34a:
+	imethod = MRI_GARK_ESDIRK34a;
+	break;
+
+    default:
+	caml_invalid_argument("unexpected error in MRIStep.Coupling.load_table");
+    }
+
+    MRIC = MRIStepCoupling_LoadTable(imethod);
+    if (MRIC == NULL) caml_failwith("MRIStepCoupling_LoadTable");
+
+    vr = sunml_arkode_mri_coupling_wrap(MRIC);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(vr);
+}
+
+CAMLprim value sunml_arkode_mri_coupling_copy(value vt)
+{
+    CAMLparam1(vt);
+    CAMLlocal1(vr);
+#if 540 <= SUNDIALS_LIB_VERSION
+    MRIStepCoupling MRIC =
+	ML_MRI_COUPLING(Field(vt, RECORD_ARKODE_MRI_COUPLING_CPTR));
+
+    MRIC = MRIStepCoupling_Copy(MRIC);
+    if (MRIC == NULL) caml_failwith("MRIStepCoupling_Copy");
+
+    vr = sunml_arkode_mri_coupling_wrap(MRIC);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(vr);
+}
+
+CAMLprim value sunml_arkode_mri_coupling_mistomri(value vbt, value vq, value vp)
+{
+    CAMLparam3(vbt, vq, vp);
+    CAMLlocal1(vr);
+#if 540 <= SUNDIALS_LIB_VERSION
+    ARKodeButcherTable bt = butcher_table_val(vbt);
+
+    MRIStepCoupling MRIC = MRIStepCoupling_MIStoMRI(bt, Int_val(vq), Int_val(vp));
+    if (bt != NULL) ARKodeButcherTable_Free(bt);
+    if (MRIC == NULL) caml_failwith("MRIStepCoupling_MIStoMRI");
+
+    vr = sunml_arkode_mri_coupling_wrap(MRIC);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(vr);
+}
+
+CAMLprim value sunml_arkode_mri_coupling_space(value vt)
+{
+    CAMLparam1(vt);
+    CAMLlocal1(vr);
+#if 540 <= SUNDIALS_LIB_VERSION
+    sundials_ml_index liw, lrw;
+
+    MRIStepCoupling_Space(
+	ML_MRI_COUPLING(Field(vt, RECORD_ARKODE_MRI_COUPLING_CPTR)),
+	&liw, &lrw);
+
+    vr = caml_alloc_tuple(2);
+    Store_field(vr, 0, Val_index(lrw));
+    Store_field(vr, 1, Val_index(liw));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(vr);
+}
+
+CAMLprim value sunml_arkode_mri_coupling_write(value vt, value vlog)
+{
+    CAMLparam2(vt, vlog);
+#if 540 <= SUNDIALS_LIB_VERSION
+    MRIStepCoupling_Write(
+	ML_MRI_COUPLING(Field(vt, RECORD_ARKODE_MRI_COUPLING_CPTR)),
+	ML_CFILE(vlog));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim value sunml_arkode_mri_set_coupling(value varkode_mem, value vt)
+{
+    CAMLparam2(varkode_mem, vt);
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepSetCoupling(
+		 ARKODE_MEM_FROM_ML (varkode_mem),
+		 ML_MRI_COUPLING(Field(vt, RECORD_ARKODE_MRI_COUPLING_CPTR)));
+    CHECK_FLAG("MRIStepSetCoupling", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim value sunml_arkode_mri_get_current_coupling(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    CAMLlocal1(vr);
+#if 540 <= SUNDIALS_LIB_VERSION
+    MRIStepCoupling MRIC = NULL;
+
+    int flag = MRIStepGetCurrentCoupling(ARKODE_MEM_FROM_ML (varkode_mem), &MRIC);
+    CHECK_FLAG("MRIStepGetCurrentCoupling", flag);
+
+    MRIC = MRIStepCoupling_Copy(MRIC);
+    if (MRIC == NULL) caml_failwith("MRIStepCoupling_Copy");
+
+    vr = sunml_arkode_mri_coupling_wrap(MRIC);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(vr);
+}
+
+CAMLprim value sunml_arkode_mri_write_coupling(value varkode_mem, value vlog)
+{
+    CAMLparam2(varkode_mem, vlog);
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepWriteCoupling(ARKODE_MEM_FROM_ML (varkode_mem),
+				    ML_CFILE(vlog));
+    CHECK_FLAG("MRIStepWriteCoupling", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(Val_unit);
+}
+
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * Boiler plate definitions for MRIStep interface.
  */

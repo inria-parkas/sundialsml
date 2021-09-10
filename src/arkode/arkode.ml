@@ -2654,6 +2654,80 @@ module MRIStep = struct (* {{{ *)
   external set_fixed_step : ('d, 'k) session -> float -> unit
       = "sunml_arkode_mri_set_fixed_step"
 
+  module Coupling = struct (* {{{ *)
+
+    type cptr
+
+    (* Synchronized with arkode_mri_coupling_index in arkode_ml.h *)
+    type t = {
+      cptr              : cptr;
+      nmat              : int;
+      stages            : int;
+      method_order      : int;
+      embedding_order   : int;
+      coupling_matrices : RealArray.t array array;
+      abscissae          : RealArray.t;
+    }
+
+    let nmat { nmat; _ } = nmat
+    let stages { stages; _ } = stages
+    let method_order { method_order; _ } = method_order
+    let embedding_order { embedding_order; _ } = embedding_order
+    let coupling_matrices { coupling_matrices; _ } = coupling_matrices
+    let abscissae { abscissae; _ } = abscissae
+
+    external c_make
+      : int * int * int * int * RealArray.t array array * RealArray.t -> cptr
+      = "sunml_arkode_mri_step_coupling_make"
+
+    let make ~method_order ~embedding_order g c =
+      let nmat = Array.length g in
+      let stages = RealArray.length c in
+      if nmat < 1 || stages < 1 then invalid_arg "zero-length array";
+      let check ra = RealArray.length ra <> stages in
+      if Array.exists (fun gi -> Array.length gi <> stages
+                                 || Array.exists check gi) g
+        then invalid_arg "coupling matrice incompatible with abscissae";
+      {
+        cptr = c_make (nmat, stages, method_order, embedding_order, g, c);
+        nmat;
+        stages;
+        method_order;
+        embedding_order;
+        coupling_matrices = g;
+        abscissae = c;
+      }
+
+    (* Synchronized with arkode_mri_coupling_table_tag in arkode_ml.h *)
+    type coupling_table =
+      | MIS_KW3
+      | GARK_ERK45a
+      | GARK_IRK21a
+      | GARK_ESDIRK34a
+
+    external load_table : coupling_table -> t
+      = "sunml_arkode_mri_coupling_load_table"
+
+    external c_mis_to_mri : int -> int -> ButcherTable.t -> t
+      = "sunml_arkode_mri_coupling_mistomri"
+
+    let mis_to_mri ~method_order ~embedding_order bt =
+      c_mis_to_mri method_order embedding_order bt
+
+    external copy : t -> t
+      = "sunml_arkode_mri_coupling_copy"
+
+    external space : t -> int * int
+      = "sunml_arkode_mri_coupling_space"
+
+    external write : t -> Logfile.t -> unit
+      = "sunml_arkode_mri_coupling_write"
+
+  end (* }}} *)
+
+  external set_coupling : ('d, 'k) session -> Coupling.t -> unit
+    = "sunml_arkode_mri_set_coupling"
+
   external c_set_table
     : ('d, 'k) session -> int -> ButcherTable.t option -> unit
     = "sunml_arkode_mri_set_table"
@@ -2733,6 +2807,12 @@ module MRIStep = struct (* {{{ *)
 
   external get_current_state : ('d, 'k) session -> 'd
       = "sunml_arkode_mri_get_current_state"
+
+  external get_current_coupling : ('d, 'k) session -> Coupling.t
+    = "sunml_arkode_mri_get_current_coupling"
+
+  external write_coupling : ('d, 'k) session -> Logfile.t -> unit
+    = "sunml_arkode_mri_write_coupling"
 
   (* must correspond to arkode_nonlin_system_data_index in arkode_ml.h *)
   type 'd nonlin_system_data = {
