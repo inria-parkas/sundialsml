@@ -2496,6 +2496,23 @@ module MRIStep = struct (* {{{ *)
   external c_set_fixed_step : ('a, 'k) session -> float -> unit
       = "sunml_arkode_mri_set_fixed_step"
 
+  external sv_tolerances
+      : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
+      = "sunml_arkode_mri_sv_tolerances"
+  external ss_tolerances
+      : ('a, 'k) session -> float -> float -> unit
+      = "sunml_arkode_mri_ss_tolerances"
+  external wf_tolerances 
+      : ('a, 'k) session -> unit
+      = "sunml_arkode_mri_wf_tolerances"
+
+  let set_tolerances s tol =
+    match tol with
+    | SStolerances (rel, abs) -> (s.errw <- dummy_errw; ss_tolerances s rel abs)
+    | SVtolerances (rel, abs) -> (if Sundials_configuration.safe then s.checkvec abs;
+                                  s.errw <- dummy_errw; sv_tolerances s rel abs)
+    | WFtolerances ferrw -> (s.errw <- ferrw; wf_tolerances s)
+
   external c_init :
     ('a, 'k) session Weak.t
     -> ('a, 'k) ARKStep.session
@@ -2504,7 +2521,7 @@ module MRIStep = struct (* {{{ *)
     -> (mristep arkode_mem * c_weak_ref)
     = "sunml_arkode_mri_init"
 
-  let init fasts slow hslow ?(roots=no_roots) t0 y0 =
+  let init fasts slow tol ~slowstep ?(roots=no_roots) t0 y0 =
     if sundials_lt500 then raise Config.NotImplementedBySundialsVersion;
     let (nroots, roots) = roots in
     let checkvec = Nvector.check y0 in
@@ -2559,7 +2576,8 @@ module MRIStep = struct (* {{{ *)
     (* Now the session is safe to use.  If any of the following fails and raises
        an exception, the GC will take care of freeing arkode_mem and backref.  *)
     if nroots > 0 then c_root_init session nroots;
-    c_set_fixed_step session hslow;
+    c_set_fixed_step session slowstep;
+    set_tolerances session tol;
     session
 
   let get_num_roots { nroots } = nroots

@@ -2806,10 +2806,11 @@ module MRIStep : sig (* {{{ *)
   (** {2:solver Solver initialization and use} *)
 
   (** Creates and initializes a session with the solver. The call
-      {[init inner f_s h_s ~roots:(nroots, g) t0 y0]}
+      {[init inner f_s ~slowstep:h_s ~roots:(nroots, g) t0 y0]}
       has as arguments:
       - [inner],  a session to use for the (fast) inner integrator,
       - [f_s],    the slow portion of the right-hand side function,
+      - [tol],    the slow-step integration tolerances,
       - [h_s],    the slow step size,
       - [nroots], the number of root functions,
       - [g],      the root function ([(nroots, g)] defaults to {!no_roots}),
@@ -2842,11 +2843,15 @@ module MRIStep : sig (* {{{ *)
       @since 5.0.0
       @noarkode <node> MRIStepCreate
       @noarkode <node> MRIStepRootInit
-      @noarkode <node> MRIStepSetFixedStep *)
+      @noarkode <node> MRIStepSetFixedStep
+      @noarkode <node> MRIStepSStolerances
+      @noarkode <node> MRIStepSVtolerances
+      @noarkode <node> MRIStepWFtolerances *)
   val init :
         ('data, 'kind) ARKStep.session
       -> 'data rhsfn
-      -> float
+      -> ('data, 'kind) tolerance
+      -> slowstep:float
       -> ?roots:(int * 'data rootsfn)
       -> float
       -> ('data, 'kind) Nvector.t
