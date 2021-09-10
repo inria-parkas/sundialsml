@@ -1033,6 +1033,20 @@ CAMLprim value sunml_arkode_ark_wf_tolerances (value vdata)
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_arkode_mri_wf_tolerances (value vdata)
+{
+    CAMLparam1(vdata);
+ 
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepWFtolerances(ARKODE_MEM_FROM_ML(vdata), errw);
+    CHECK_FLAG("MRIStepWFtolerances", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value sunml_arkode_erk_wf_tolerances (value vdata)
 {
     CAMLparam1(vdata);
@@ -6336,6 +6350,41 @@ CAMLprim value sunml_arkode_mri_session_finalize(value vdata)
     }
 #endif
     return Val_unit;
+}
+
+CAMLprim value sunml_arkode_mri_ss_tolerances(value vdata, value reltol,
+					      value abstol)
+{
+    CAMLparam3(vdata, reltol, abstol);
+
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepSStolerances(ARKODE_MEM_FROM_ML(vdata),
+				   Double_val(reltol),
+				   Double_val(abstol));
+    CHECK_FLAG("MRIStepSStolerances", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_mri_sv_tolerances(value vdata, value reltol,
+					      value abstol)
+{
+    CAMLparam3(vdata, reltol, abstol);
+
+    N_Vector atol_nv = NVEC_VAL(abstol);
+
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepSVtolerances(ARKODE_MEM_FROM_ML(vdata),
+			 	   Double_val(reltol), atol_nv);
+    CHECK_FLAG("MRIStepSVtolerances", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value sunml_arkode_mri_set_root_direction(value vdata, value rootdirs)
