@@ -449,7 +449,7 @@ module ARKStep : sig (* {{{ *)
       @noarkode <node> ARKLsJacTimesVecFn
       @noarkode <node> ARKLsPrecSolveFn
       @noarkode <node> ARKLsPrecSetupFn *)
-  type ('t, 'd) jacobian_arg = ('t, 'd) Arkode_impl.jacobian_arg =
+  type ('t, 'd) jacobian_arg =
     {
       jac_t   : float;        (** The independent variable. *)
       jac_y   : 'd;           (** The dependent variable vector. *)
@@ -909,7 +909,7 @@ module ARKStep : sig (* {{{ *)
     (** Mass matrix solvers used by Arkode.
 
         @noarkode <node> Mass matrix solver specification functions *)
-    type ('data, 'kind) solver = ('data, 'kind) Arkode_impl.MassTypes.solver
+    type ('data, 'kind) solver
 
     (** Alias for mass matrix solvers that are restricted to serial nvectors. *)
     type 'kind serial_solver = (Nvector_serial.data, 'kind) solver
@@ -1051,8 +1051,7 @@ module ARKStep : sig (* {{{ *)
           @noarkode <node> ARKStepSetMassPreconditioner
           @noarkode <node> ARKLsMassPrecSetupFn
           @noarkode <node> ARKLsMassPrecSolveFn *)
-      type ('d, 'k) preconditioner =
-        ('d, 'k) Arkode_impl.MassTypes.Iterative'.preconditioner
+      type ('d, 'k) preconditioner
 
       (** No preconditioning.  *)
       val prec_none : ('d, 'k) preconditioner
