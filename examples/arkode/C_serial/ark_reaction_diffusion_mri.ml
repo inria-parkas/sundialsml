@@ -150,7 +150,8 @@ let main () =
      problem is fully implicit, we set f_E to NULL and f_I to f. *)
   (* Pass udata to user functions *)
   (* Specify slow and fast step sizes *)
-  let arkode_mem = MRIStep.(init inner_arkode_mem (fs udata) hs t0 y) in
+  let arkode_mem = MRIStep.(init inner_arkode_mem (fs udata)
+                              Arkode.default_tolerances ~slowstep:hs t0 y) in
   (* Increase max num steps  *)
   MRIStep.set_max_num_steps arkode_mem 10000;
 

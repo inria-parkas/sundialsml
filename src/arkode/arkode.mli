@@ -433,7 +433,7 @@ module ARKStep : sig (* {{{ *)
   (** Linear solvers used by Arkode.
 
       @noarkode <node> Linear Solver Specification Functions *)
-  type ('data, 'kind) linear_solver = ('data, 'kind) Arkode_impl.linear_solver
+  type ('data, 'kind) linear_solver
 
   (** Alias for linear solvers that are restricted to serial nvectors. *)
   type 'kind serial_linear_solver =
