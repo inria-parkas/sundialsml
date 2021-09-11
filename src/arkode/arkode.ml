@@ -2696,7 +2696,7 @@ module MRIStep = struct (* {{{ *)
 
     external c_make
       : int * int * int * int * RealArray.t array array * RealArray.t -> cptr
-      = "sunml_arkode_mri_step_coupling_make"
+      = "sunml_arkode_mri_coupling_make"
 
     let make ~method_order ~embedding_order g c =
       let nmat = Array.length g in

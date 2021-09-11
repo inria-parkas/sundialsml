@@ -108,7 +108,8 @@ let main () =
   (* Call MRIStepCreate to initialize the MRI timestepper module and
      specify the right-hand side functions in y'=fs(t,y)+ff(t,y),
      the inital time T0, and the initial dependent variable vector y. *)
-  let arkode_mem = MRIStep.(init inner_arkode_mem (fs rdata) hs t0 y) in
+  let arkode_mem = MRIStep.(init inner_arkode_mem (fs rdata)
+                              Arkode.default_tolerances ~slowstep:hs t0 y) in
 
   (* Open output stream for results, output comment line *)
   let ufid = open_out "ark_brusselator_mri_solution.txt" in
