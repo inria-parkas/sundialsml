@@ -95,11 +95,8 @@ let main () =
   (* Initialize the fast integrator. Specify the fast right-hand side
      function in y'=fs(t,y)+ff(t,y), the inital time T0, and the
      initial dependent variable vector y. *)
-  let inner_arkode_mem = ARKStep.(init
-                                   (explicit (ff rdata))
-                                   Arkode.default_tolerances
-                                   t0
-                                   y)
+  let inner_arkode_mem = ARKStep.(init (explicit (ff rdata))
+                                   default_tolerances t0 y)
   in
   ARKStep.set_erk_table_num inner_arkode_mem
     Arkode.ButcherTable.Knoth_Wolke_3_3;
@@ -108,8 +105,8 @@ let main () =
   (* Call MRIStepCreate to initialize the MRI timestepper module and
      specify the right-hand side functions in y'=fs(t,y)+ff(t,y),
      the inital time T0, and the initial dependent variable vector y. *)
-  let arkode_mem = MRIStep.(init inner_arkode_mem (fs rdata)
-                              Arkode.default_tolerances ~slowstep:hs t0 y) in
+  let arkode_mem = MRIStep.(init inner_arkode_mem default_tolerances
+                              (fs rdata) ~slowstep:hs t0 y) in
 
   (* Open output stream for results, output comment line *)
   let ufid = open_out "ark_brusselator_mri_solution.txt" in

@@ -10,7 +10,6 @@
 (*                                                                     *)
 (***********************************************************************)
 open Sundials
-include Arkode_impl.Global
 
 open Sundials_impl.Versions
 
@@ -52,29 +51,182 @@ exception BadT
 
 exception VectorOpErr
 
-let no_roots = (0, Arkode_impl.dummy_rootsfn)
+type arkstep = Arkode_impl.arkstep
+type erkstep = Arkode_impl.erkstep
+type mristep = Arkode_impl.mristep
 
-(* Synchronized with arkode_step_stats_index in arkode_ml.h *)
-type step_stats = {
-    num_steps           : int;
-    actual_init_step    : float;
-    last_step           : float;
-    current_step        : float;
-    current_time        : float
+module Common = struct (* {{{ *)
+
+  include Arkode_impl.Global
+
+  let no_roots = (0, Arkode_impl.dummy_rootsfn)
+
+  (* Synchronized with arkode_step_stats_index in arkode_ml.h *)
+  type step_stats = {
+      num_steps           : int;
+      actual_init_step    : float;
+      last_step           : float;
+      current_step        : float;
+      current_time        : float
+    }
+
+  let print_step_stats oc stats =
+    Printf.fprintf oc "num_steps = %d\n"           stats.num_steps;
+    Printf.fprintf oc "actual_init_step = %e\n"    stats.actual_init_step;
+    Printf.fprintf oc "last_step = %e\n"           stats.last_step;
+    Printf.fprintf oc "current_step = %e\n"        stats.current_step;
+    Printf.fprintf oc "current_time = %e\n"        stats.current_time
+
+  (* Synchronized with arkode_solver_result_tag in arkode_ml.h *)
+  type solver_result =
+    | Success             (** ARK_SUCCESS *)
+    | RootsFound          (** ARK_ROOT_RETURN *)
+    | StopTimeReached     (** ARK_TSTOP_RETURN *)
+
+  (* must correspond with the static table ark_interpolant_types in arkode_ml.c *)
+  type interpolant_type =
+      Hermite
+    | Lagrange
+
+  type linearity =
+    | Linear of bool
+    | Nonlinear
+
+  type ('a, 'k) tolerance =
+    | SStolerances of float * float
+    | SVtolerances of float * ('a, 'k) Nvector.nvector
+    | WFtolerances of 'a error_weight_fun
+
+  let default_tolerances = SStolerances (1.0e-4, 1.0e-9)
+
+  type predictor_method =
+    | TrivialPredictor
+    | MaximumOrderPredictor
+    | VariableOrderPredictor
+    | CutoffOrderPredictor
+    | BootstrapPredictor
+    | MinimumCorrectionPredictor
+
+  type adaptivity_params = {
+      ks : (float * float * float) option;
+      method_order : bool;
+    }
+
+  type 'd adaptivity_method =
+    | PIDcontroller of adaptivity_params
+    | PIcontroller of adaptivity_params
+    | Icontroller of adaptivity_params
+    | ExplicitGustafsson of adaptivity_params
+    | ImplicitGustafsson of adaptivity_params
+    | ImExGustafsson of adaptivity_params
+    | AdaptivityFn of 'd adaptivity_fn
+
+  (* must correspond to arkode_nonlin_system_data_index in arkode_ml.h *)
+  type 'd nonlin_system_data = {
+    tcur  : float;
+    zpred : 'd;
+    zi    : 'd;
+    fi    : 'd;
+    gamma : float;
+    sdata : 'd;
   }
 
-let print_step_stats oc stats =
-  Printf.fprintf oc "num_steps = %d\n"           stats.num_steps;
-  Printf.fprintf oc "actual_init_step = %e\n"    stats.actual_init_step;
-  Printf.fprintf oc "last_step = %e\n"           stats.last_step;
-  Printf.fprintf oc "current_step = %e\n"        stats.current_step;
-  Printf.fprintf oc "current_time = %e\n"        stats.current_time
+  type 'd triple = 'd * 'd * 'd
 
-(* Synchronized with arkode_solver_result_tag in arkode_ml.h *)
-type solver_result =
-  | Success             (** ARK_SUCCESS *)
-  | RootsFound          (** ARK_ROOT_RETURN *)
-  | StopTimeReached     (** ARK_TSTOP_RETURN *)
+  type ('t, 'd) jacobian_arg = ('t, 'd) Arkode_impl.jacobian_arg =
+    {
+      jac_t   : float;
+      jac_y   : 'd;
+      jac_fy  : 'd;
+      jac_tmp : 't;
+    }
+
+end (* }}} *)
+
+module Dls = struct
+  include Arkode_impl.DirectTypes
+end
+
+module Spils = struct
+  include Arkode_impl.SpilsTypes
+  module LSI = Sundials_LinearSolver_impl
+
+  module Banded = struct (* {{{ *)
+    (* These fields are accessed from arkode_ml.c *)
+    type bandrange = { mupper : int; mlower : int; }
+
+    external c_set_preconditioner
+      : ('a, 'k, 's) Arkode_impl.session -> int -> int -> int -> unit
+      = "sunml_arkode_set_banded_preconditioner"
+    (* Note: ARKBandPrecInit seems to be designed only to be called on
+       a fresh spils solver (i.e. right after ARKSpgmr, ARKSpbcg,
+       ARKSptfqmr, ARKSpfgmr, or ARKPcg).
+
+       As of Sundials 2.5.0, calling
+
+         ARKSpgmr -> ARKBandPrecInit -> ARKBandPrecInit
+
+       triggers a memory leak.  Calling ARKodeReInit does NOT help.
+       The only way to prevent leakage is to allocate a fresh spils
+       instance, thus:
+
+         ARKSpgmr -> ARKBandPrecInit -> ARKSpgmr -> ARKBandPrecInit.
+
+       If you call
+
+         ARKSpgmr -> ARKSpilsSetPreconditioner -> ARKBandPrecInit,
+
+       nothing grave happens, but the memory associated with
+       ARKBandPrecInit won't be freed until the spils solver is torn
+       down.  If you call BandPrecInit -> SetPreconditioner ->
+       BandPrecInit, you also get a memory leak.
+
+       (Perhaps set_preconditioner should be hidden too?  In that
+        case, we should somehow strip set_prec_type of the ability
+        to change PrecNone to anything else.)
+
+       set_jac_times_vec_fn, as well as similar functions for Dls
+       solvers, are kept because they accept NULL to remove the
+       callback.  This design clearly anticipates being called
+       multiple times on the same solver instance.  *)
+
+    let init_preconditioner bandrange session nv =
+      let n = RealArray.length (Nvector.unwrap nv) in
+      c_set_preconditioner session n bandrange.mupper bandrange.mlower;
+      session.ls_precfns <- BandedPrecFns
+
+    let prec_none =
+      LSI.Iterative.(PrecNone,
+                     fun session nv ->
+                            Arkode_impl.(session.ls_precfns <- BandedPrecFns))
+    let prec_left bandrange =
+      LSI.Iterative.(PrecLeft,  init_preconditioner bandrange)
+    let prec_right bandrange =
+      LSI.Iterative.(PrecRight, init_preconditioner bandrange)
+    let prec_both bandrange =
+      LSI.Iterative.(PrecBoth,  init_preconditioner bandrange)
+
+    type ('k, 's) serial_session =
+      (Nvector_serial.data, 'k, 's) Arkode_impl.session
+      constraint 'k = [>Nvector_serial.kind]
+      constraint 's = [<arkstep|mristep]
+
+    external get_work_space : ('k, 's) Arkode_impl.serial_session -> int * int
+      = "sunml_arkode_bandprec_get_work_space"
+
+    let get_work_space s =
+      Arkode_impl.ls_check_spils_band s;
+      get_work_space s
+
+    external get_num_rhs_evals : ('k, 's) Arkode_impl.serial_session -> int
+      = "sunml_arkode_bandprec_get_num_rhs_evals"
+
+    let get_num_rhs_evals s =
+      Arkode_impl.ls_check_spils_band s;
+      get_num_rhs_evals s
+  end (* }}} *)
+
+end
 
 module ButcherTable = struct (* {{{ *)
 
@@ -297,44 +449,20 @@ module ButcherTable = struct (* {{{ *)
 
 end (* }}} *)
 
-(* must correspond with the static table ark_interpolant_types in arkode_ml.c *)
-type interpolant_type =
-    Hermite
-  | Lagrange
-
-type ('a, 'k) tolerance =
-  | SStolerances of float * float
-  | SVtolerances of float * ('a, 'k) Nvector.nvector
-  | WFtolerances of 'a error_weight_fun
-
-let default_tolerances = SStolerances (1.0e-4, 1.0e-9)
-
-type adaptivity_params = {
-    ks : (float * float * float) option;
-    method_order : bool;
-  }
-
-type 'd adaptivity_method =
-  | PIDcontroller of adaptivity_params
-  | PIcontroller of adaptivity_params
-  | Icontroller of adaptivity_params
-  | ExplicitGustafsson of adaptivity_params
-  | ImplicitGustafsson of adaptivity_params
-  | ImExGustafsson of adaptivity_params
-  | AdaptivityFn of 'd adaptivity_fn
-
 module ARKStep = struct (* {{{ *)
-
   include Arkode_impl
+  include Common
 
-  type ('d, 'k) session = ('d, 'k, Arkode_impl.arkstep) Arkode_impl.session
+  type ('d, 'k) session = ('d, 'k, arkstep) Arkode_impl.session
 
   type 'k serial_session = (Nvector_serial.data, 'k) session
                            constraint 'k = [>Nvector_serial.kind]
 
-  type linearity =
-    | Linear of bool
-    | Nonlinear
+  type ('d, 'k) linear_solver = ('d, 'k, arkstep) lin_solver
+
+  type 'k serial_linear_solver =
+    (Nvector_serial.data, 'k) linear_solver
+    constraint 'k = [>Nvector_serial.kind]
 
   type ('d, 'k) implicit_problem = {
       irhsfn    : 'd rhsfn;
@@ -368,7 +496,7 @@ module ARKStep = struct (* {{{ *)
     session.rootsfn <- rootsfn
 
   module Dls = struct (* {{{ *)
-    include DirectTypes
+    include Dls
     include LinearSolver.Direct
 
     (* Sundials < 3.0.0 *)
@@ -618,7 +746,7 @@ module ARKStep = struct (* {{{ *)
   end (* }}} *)
 
   module Spils = struct (* {{{ *)
-    include SpilsTypes
+    include Spils
     include LinearSolver.Iterative
 
     (* Sundials < 3.0.0 *)
@@ -889,75 +1017,6 @@ module ARKStep = struct (* {{{ *)
     let get_num_lin_rhs_evals s =
       ls_check_spils s;
       get_num_lin_rhs_evals s
-
-    module Banded = struct (* {{{ *)
-      (* These fields are accessed from arkode_ml.c *)
-      type bandrange = { mupper : int; mlower : int; }
-
-      external c_set_preconditioner
-        : ('a, 'k) session -> int -> int -> int -> unit
-        = "sunml_arkode_set_banded_preconditioner"
-      (* Note: ARKBandPrecInit seems to be designed only to be called on
-         a fresh spils solver (i.e. right after ARKSpgmr, ARKSpbcg,
-         ARKSptfqmr, ARKSpfgmr, or ARKPcg).
-
-         As of Sundials 2.5.0, calling
-
-           ARKSpgmr -> ARKBandPrecInit -> ARKBandPrecInit
-
-         triggers a memory leak.  Calling ARKodeReInit does NOT help.
-         The only way to prevent leakage is to allocate a fresh spils
-         instance, thus:
-
-           ARKSpgmr -> ARKBandPrecInit -> ARKSpgmr -> ARKBandPrecInit.
-
-         If you call
-
-           ARKSpgmr -> ARKSpilsSetPreconditioner -> ARKBandPrecInit,
-
-         nothing grave happens, but the memory associated with
-         ARKBandPrecInit won't be freed until the spils solver is torn
-         down.  If you call BandPrecInit -> SetPreconditioner ->
-         BandPrecInit, you also get a memory leak.
-
-         (Perhaps set_preconditioner should be hidden too?  In that
-          case, we should somehow strip set_prec_type of the ability
-          to change PrecNone to anything else.)
-
-         set_jac_times_vec_fn, as well as similar functions for Dls
-         solvers, are kept because they accept NULL to remove the
-         callback.  This design clearly anticipates being called
-         multiple times on the same solver instance.  *)
-
-      let init_preconditioner bandrange session nv =
-        let n = RealArray.length (Nvector.unwrap nv) in
-        c_set_preconditioner session n bandrange.mupper bandrange.mlower;
-        session.ls_precfns <- BandedPrecFns
-
-      let prec_none =
-        LSI.Iterative.(PrecNone, fun session nv ->
-                                            session.ls_precfns <- BandedPrecFns)
-      let prec_left bandrange =
-        LSI.Iterative.(PrecLeft,  init_preconditioner bandrange)
-      let prec_right bandrange =
-        LSI.Iterative.(PrecRight, init_preconditioner bandrange)
-      let prec_both bandrange =
-        LSI.Iterative.(PrecBoth,  init_preconditioner bandrange)
-
-      external get_work_space : 'k serial_session -> int * int
-        = "sunml_arkode_bandprec_get_work_space"
-
-      let get_work_space s =
-        ls_check_spils_band s;
-        get_work_space s
-
-      external get_num_rhs_evals : 'k serial_session -> int
-        = "sunml_arkode_bandprec_get_num_rhs_evals"
-
-      let get_num_rhs_evals s =
-        ls_check_spils_band s;
-        get_num_rhs_evals s
-    end (* }}} *)
 
   end (* }}} *)
 
@@ -1531,9 +1590,8 @@ module ARKStep = struct (* {{{ *)
   let init prob tol ?restol ?order ?mass ?(roots=no_roots) t0 y0 =
     let (nroots, roots) = roots in
     let checkvec = Nvector.check y0 in
-    if Sundials_configuration.safe && nroots < 0 then
-      raise (Invalid_argument "number of root functions is negative");
-    let weakref = Weak.create 1 in
+    if Sundials_configuration.safe && nroots < 0
+      then invalid_arg "number of root functions is negative";
     let problem, fi, fe, nlsolver, lsolver, lin =
       match prob with
       | Implicit { irhsfn=fi; linearity=l; nlsolver=nls; lsolver=ls } ->
@@ -1543,6 +1601,7 @@ module ARKStep = struct (* {{{ *)
       | ImEx (fe, { irhsfn=fi; linearity=l; nlsolver=nls; lsolver=ls }) ->
           ImplicitAndExplicit, Some fi, Some fe, nls,  ls,   Some l
     in
+    let weakref = Weak.create 1 in
     let arkode_mem, backref = c_init weakref (fi <> None) (fe <> None) y0 t0 in
     (* arkode_mem and backref have to be immediately captured in a session and
        associated with the finalizer before we do anything else.  *)
@@ -1592,10 +1651,7 @@ module ARKStep = struct (* {{{ *)
        an exception, the GC will take care of freeing arkode_mem and backref.  *)
     if nroots > 0 then
       c_root_init session nroots;
-    (match lsolver with
-     | None -> ()
-     | Some ls -> session.linsolver <- Some ls;
-                  ls session y0);
+    set_tolerances session tol;
     if in_compat_mode2_3 then begin
       match nlsolver with
       | Some { NLSI.solver = NLSI.NewtonSolver } | None -> () (* the default *)
@@ -1610,10 +1666,13 @@ module ARKStep = struct (* {{{ *)
           c_set_nonlinear_solver session nlcptr
       | _ -> ()
     end;
+    (match lsolver with
+     | None -> ()
+     | Some ls -> session.linsolver <- Some ls;
+                  ls session y0);
     (match lin with
      | Some (Linear timedepend) -> set_linear session timedepend
      | _ -> ());
-    set_tolerances session tol;
     (match restol with Some rtol -> set_res_tolerance session rtol | None -> ());
     (match order with Some o -> c_set_order session o | None -> ());
     (match mass with Some msolver -> msolver session y0 | None -> ());
@@ -1783,16 +1842,6 @@ module ARKStep = struct (* {{{ *)
   external get_current_state : ('d, 'k) session -> 'd
       = "sunml_arkode_ark_get_current_state"
 
-  (* must correspond to arkode_nonlin_system_data_index in arkode_ml.h *)
-  type 'd nonlin_system_data = {
-    tcur  : float;
-    zpred : 'd;
-    zi    : 'd;
-    fi    : 'd;
-    gamma : float;
-    sdata : 'd;
-  }
-
   external get_nonlin_system_data
     : ('d, 'k) session -> 'd nonlin_system_data
     = "sunml_arkode_ark_get_nonlin_system_data"
@@ -1928,14 +1977,6 @@ module ARKStep = struct (* {{{ *)
   let clear_stability_fn s =
     s.stabfn <- dummy_stabfn;
     c_set_stability_fn s false
-
-  type predictor_method =
-    | TrivialPredictor
-    | MaximumOrderPredictor
-    | VariableOrderPredictor
-    | CutoffOrderPredictor
-    | BootstrapPredictor
-    | MinimumCorrectionPredictor
 
   type 'd stage_predict_fn  = 'd Arkode_impl.Global.stage_predict_fn
 
@@ -2097,10 +2138,10 @@ module ARKStep = struct (* {{{ *)
 end (* }}} *)
 
 module ERKStep = struct (* {{{ *)
-
   include Arkode_impl
+  include Common
 
-  type ('d, 'k) session = ('d, 'k, Arkode_impl.erkstep) Arkode_impl.session
+  type ('d, 'k) session = ('d, 'k, erkstep) Arkode_impl.session
 
   external c_root_init : ('a, 'k) session -> int -> unit
       = "sunml_arkode_erk_root_init"
@@ -2478,10 +2519,19 @@ module ERKStep = struct (* {{{ *)
 end (* }}} *)
 
 module MRIStep = struct (* {{{ *)
-
   include Arkode_impl
+  include Common
 
-  type ('d, 'k) session = ('d, 'k, Arkode_impl.mristep) Arkode_impl.session
+  type ('d, 'k) session = ('d, 'k, mristep) Arkode_impl.session
+
+  type 'k serial_session = (Nvector_serial.data, 'k) session
+                           constraint 'k = [>Nvector_serial.kind]
+
+  type ('d, 'k) linear_solver = ('d, 'k, mristep) lin_solver
+
+  type 'k serial_linear_solver =
+    (Nvector_serial.data, 'k) linear_solver
+    constraint 'k = [>Nvector_serial.kind]
 
   external c_root_init : ('a, 'k) session -> int -> unit
       = "sunml_arkode_mri_root_init"
@@ -2489,6 +2539,227 @@ module MRIStep = struct (* {{{ *)
   let root_init session (nroots, rootsfn) =
     c_root_init session nroots;
     session.rootsfn <- rootsfn
+
+  module Dls = struct (* {{{ *)
+    include Dls
+    include LinearSolver.Direct
+
+    let check_dqjac (type k m nd nk) jac (mat : (k,m,nd,nk) Matrix.t) =
+      let open Matrix in
+      match get_id mat with
+      | Dense | Band -> ()
+      | _ -> if jac = None then invalid_arg "A Jacobian function is required"
+
+    let set_ls_callbacks (type m) (type tag)
+          ?jac ?(linsys : m linsys_fn option)
+          (solver_data : (m, 'nd, 'nk, tag) LSI.solver_data)
+          (mat : ('mk, m, 'nd, 'nk) Matrix.t) session =
+      let cb = { jacfn = (match jac with None -> no_callback | Some f -> f);
+                 jmat  = (None : m option) } in
+      let ls = match linsys with None -> DirectTypes.no_linsysfn | Some f -> f in
+      begin match solver_data with
+      | LSI.Dense ->
+          session.ls_callbacks <- DlsDenseCallback (cb, ls)
+      | LSI.LapackDense ->
+          session.ls_callbacks <- DlsDenseCallback (cb, ls)
+      | LSI.Band ->
+          session.ls_callbacks <- DlsBandCallback (cb, ls)
+      | LSI.LapackBand ->
+          session.ls_callbacks <- DlsBandCallback (cb, ls)
+      | LSI.Klu _ ->
+          if jac = None then invalid_arg "Klu requires Jacobian function";
+          session.ls_callbacks <- SlsKluCallback (cb, ls)
+      | LSI.Superlumt _ ->
+          if jac = None then invalid_arg "Superlumt requires Jacobian function";
+          session.ls_callbacks <- SlsSuperlumtCallback (cb, ls)
+      | LSI.Custom _ ->
+          check_dqjac jac mat;
+          session.ls_callbacks <- DirectCustomCallback (cb, ls)
+      | _ -> assert false
+      end;
+      session.ls_precfns <- NoPrecFns
+
+    external c_set_linear_solver
+      : ('d, 'k) session
+        -> ('m, 'd, 'k) LSI.cptr
+        -> ('mk, 'm, 'd, 'k) Matrix.t option
+        -> bool
+        -> bool
+        -> unit
+      = "sunml_arkode_mri_set_linear_solver"
+
+    let assert_matrix = function
+      | Some m -> m
+      | None -> failwith "a direct linear solver is required"
+
+    let solver ?jac ?linsys ls session nv =
+      if sundials_lt540 then raise Config.NotImplementedBySundialsVersion;
+      let LSI.LS ({ rawptr; solver; matrix } as hls) = ls in
+      let matrix = assert_matrix matrix in
+      set_ls_callbacks ?jac ?linsys solver matrix session;
+      c_set_linear_solver session rawptr (Some matrix) (jac <> None)
+                                                       (linsys <> None);
+      LSI.attach ls;
+      session.ls_solver <- LSI.HLS hls
+
+    external get_work_space : 'k serial_session -> int * int
+      = "sunml_arkode_mri_get_lin_work_space"
+
+    external get_num_jac_evals : 'k serial_session -> int
+      = "sunml_arkode_mri_get_num_jac_evals"
+
+    external get_num_lin_rhs_evals : 'k serial_session -> int
+      = "sunml_arkode_mri_get_num_lin_rhs_evals"
+
+  end (* }}} *)
+
+  module Spils = struct (* {{{ *)
+    include Spils
+    include LinearSolver.Iterative
+
+    external c_set_jac_times : ('a, 'k) session -> bool -> bool -> unit
+      = "sunml_arkode_mri_set_jac_times"
+
+    external c_set_jac_times_rhsfn : ('a, 'k) session -> bool -> unit
+      = "sunml_arkode_mri_set_jac_times_rhsfn"
+
+    external c_set_preconditioner
+      : ('a, 'k) session -> bool -> unit
+      = "sunml_arkode_mri_set_preconditioner"
+
+    let init_preconditioner solve setup session nv =
+      c_set_preconditioner session (setup <> None);
+      session.ls_precfns <- PrecFns { prec_solve_fn = solve;
+                                      prec_setup_fn = setup }
+
+    let prec_none = LSI.Iterative.(PrecNone,
+                      fun session nv -> session.ls_precfns <- NoPrecFns)
+
+    let prec_left ?setup solve  = LSI.Iterative.(PrecLeft,
+                                              init_preconditioner solve setup)
+
+    let prec_right ?setup solve = LSI.Iterative.(PrecRight,
+                                              init_preconditioner solve setup)
+
+    let prec_both ?setup solve  = LSI.Iterative.(PrecBoth,
+                                              init_preconditioner solve setup)
+
+    external c_set_linear_solver
+      : ('d, 'k) session
+        -> ('m, 'd, 'k) LSI.cptr
+        -> ('mk, 'm, 'd, 'k) Matrix.t option
+        -> bool
+        -> bool
+        -> unit
+      = "sunml_arkode_ark_set_linear_solver"
+
+    let solver (type s)
+          (LSI.(LS ({ rawptr; solver; compat } as hls) as ls))
+          ?jac_times_vec ?jac_times_rhs (prec_type, set_prec) session nv =
+      if sundials_lt540 then raise Config.NotImplementedBySundialsVersion;
+      let jac_times_setup, jac_times_vec =
+        match jac_times_vec with
+        | None -> None, None
+        | Some _ when jac_times_rhs <> None ->
+            invalid_arg "cannot pass both jac_times_vec and jac_times_rhs"
+        | Some (ojts, jtv) -> ojts, Some jtv
+      in
+      c_set_linear_solver session rawptr None false false;
+      LSI.attach ls;
+      session.ls_solver <- LSI.HLS hls;
+      LSI.(impl_set_prec_type rawptr solver prec_type false);
+      set_prec session nv;
+      match jac_times_rhs with
+      | Some jtrhsfn -> begin
+          session.ls_callbacks <- SpilsCallback2 jtrhsfn;
+          c_set_jac_times_rhsfn session true
+        end
+      | None -> begin
+          session.ls_callbacks <-
+            SpilsCallback1 (jac_times_vec, jac_times_setup);
+          if jac_times_setup <> None || jac_times_vec <> None then
+            c_set_jac_times session (jac_times_setup <> None)
+                                    (jac_times_vec <> None)
+        end
+
+    let set_jac_times s ?jac_times_setup f =
+      if sundials_lt540 then raise Config.NotImplementedBySundialsVersion;
+      match s.ls_callbacks with
+      | SpilsCallback1 _ ->
+          c_set_jac_times s (jac_times_setup <> None) true;
+          s.ls_callbacks <- SpilsCallback1 (Some f, jac_times_setup)
+      | _ -> raise LinearSolver.InvalidLinearSolver
+
+    let clear_jac_times s =
+      if sundials_lt540 then raise Config.NotImplementedBySundialsVersion;
+      match s.ls_callbacks with
+      | SpilsCallback1 _ ->
+          c_set_jac_times s false false;
+          s.ls_callbacks <- SpilsCallback1 (None, None)
+      | _ -> raise LinearSolver.InvalidLinearSolver
+
+    let set_preconditioner s ?setup solve =
+      if sundials_lt540 then raise Config.NotImplementedBySundialsVersion;
+      match s.ls_callbacks with
+      | SpilsCallback1 _ | SpilsCallback2 _ ->
+          c_set_preconditioner s (setup <> None);
+          s.ls_precfns <- PrecFns { prec_setup_fn = setup;
+                                    prec_solve_fn = solve }
+      | _ -> raise LinearSolver.InvalidLinearSolver
+
+    external set_jac_eval_frequency : ('a, 'k) session -> int -> unit
+        = "sunml_arkode_mri_set_jac_eval_frequency"
+
+    external set_linear_solution_scaling : ('d, 'k) session -> bool -> unit
+      = "sunml_arkode_mri_set_linear_solution_scaling"
+
+    external set_eps_lin            : ('a, 'k) session -> float -> unit
+      = "sunml_arkode_mri_set_eps_lin"
+
+    external set_ls_norm_factor : ('d, 'k) session -> float -> unit
+      = "sunml_arkode_mri_set_ls_norm_factor"
+
+    external get_num_lin_iters      : ('a, 'k) session -> int
+      = "sunml_arkode_mri_get_num_lin_iters"
+
+    external get_num_lin_conv_fails : ('a, 'k) session -> int
+      = "sunml_arkode_mri_get_num_lin_conv_fails"
+
+    external get_work_space         : ('a, 'k) session -> int * int
+      = "sunml_arkode_mri_get_lin_work_space"
+
+    external get_num_prec_evals     : ('a, 'k) session -> int
+      = "sunml_arkode_mri_get_num_prec_evals"
+
+    external get_num_prec_solves    : ('a, 'k) session -> int
+      = "sunml_arkode_mri_get_num_prec_solves"
+
+    let get_num_prec_solves s =
+      ls_check_spils s;
+      get_num_prec_solves s
+
+    external get_num_jtsetup_evals   : ('a, 'k) session -> int
+      = "sunml_arkode_mri_get_num_jtsetup_evals"
+
+    let get_num_jtsetup_evals s =
+      ls_check_spils s;
+      get_num_jtsetup_evals s
+
+    external get_num_jtimes_evals   : ('a, 'k) session -> int
+      = "sunml_arkode_mri_get_num_jtimes_evals"
+
+    let get_num_jtimes_evals s =
+      ls_check_spils s;
+      get_num_jtimes_evals s
+
+    external get_num_lin_rhs_evals  : ('a, 'k) session -> int
+      = "sunml_arkode_mri_get_num_lin_rhs_evals"
+
+    let get_num_lin_rhs_evals s =
+      ls_check_spils s;
+      get_num_lin_rhs_evals s
+
+  end (* }}} *)
 
   external session_finalize : ('a, 'k) session -> unit
       = "sunml_arkode_mri_session_finalize"
@@ -2507,6 +2778,8 @@ module MRIStep = struct (* {{{ *)
       = "sunml_arkode_mri_wf_tolerances"
 
   let set_tolerances s tol =
+    if sundials_lt540 && tol <> default_tolerances
+      then raise Config.NotImplementedBySundialsVersion;
     match tol with
     | SStolerances (rel, abs) -> (s.errw <- dummy_errw; ss_tolerances s rel abs)
     | SVtolerances (rel, abs) -> (if Sundials_configuration.safe then s.checkvec abs;
@@ -2521,12 +2794,26 @@ module MRIStep = struct (* {{{ *)
     -> (mristep arkode_mem * c_weak_ref)
     = "sunml_arkode_mri_init"
 
-  let init fasts slow tol ~slowstep ?(roots=no_roots) t0 y0 =
+  (* 5.4.0 <= Sundials *)
+  external c_set_nonlinear_solver
+      : ('d, 'k) session
+        -> ('d, 'k, (('d, 'k) session) NLSI.integrator) NLSI.cptr
+        -> unit
+      = "sunml_arkode_mri_set_nonlinear_solver"
+
+  external set_linear : ('a, 'k) session -> bool -> unit
+    = "sunml_arkode_mri_set_linear"
+
+  let init fasts tol ?nlsolver ?lsolver ?linearity slow
+           ~slowstep ?(roots=no_roots) t0 y0 =
     if sundials_lt500 then raise Config.NotImplementedBySundialsVersion;
     let (nroots, roots) = roots in
     let checkvec = Nvector.check y0 in
-    if Sundials_configuration.safe && nroots < 0 then
-      raise (Invalid_argument "number of root functions is negative");
+    if Sundials_configuration.safe && nroots < 0
+      then raise Config.NotImplementedBySundialsVersion;
+    if sundials_lt540
+        && (nlsolver <> None || lsolver <> None || linearity <> None)
+      then invalid_arg "functions is negative";
     let weakref = Weak.create 1 in
     let arkode_mem, backref = c_init weakref fasts y0 t0 in
     (* arkode_mem and backref have to be immediately captured in a session and
@@ -2540,7 +2827,7 @@ module MRIStep = struct (* {{{ *)
 
             exn_temp     = None;
 
-            problem      = ExplicitOnly;
+            problem      = ExplicitOnly; (* ignored for MRIStep *)
             rhsfn1       = slow;
             rhsfn2       = dummy_rhsfn2;
 
@@ -2576,8 +2863,21 @@ module MRIStep = struct (* {{{ *)
     (* Now the session is safe to use.  If any of the following fails and raises
        an exception, the GC will take care of freeing arkode_mem and backref.  *)
     if nroots > 0 then c_root_init session nroots;
-    c_set_fixed_step session slowstep;
     set_tolerances session tol;
+    (match nlsolver with
+     | Some ({ NLSI.rawptr = nlcptr } as nls) ->
+         NLSI.attach nls;
+         session.nls_solver <- Some nls;
+         c_set_nonlinear_solver session nlcptr
+     | _ -> ());
+    (match lsolver with
+     | None -> ()
+     | Some ls -> session.linsolver <- Some ls;
+                  ls session y0);
+    (match linearity with
+     | Some (Linear timedepend) -> set_linear session timedepend
+     | _ -> ());
+    c_set_fixed_step session slowstep;
     session
 
   let get_num_roots { nroots } = nroots
@@ -2589,7 +2889,8 @@ module MRIStep = struct (* {{{ *)
       : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
       = "sunml_arkode_mri_reinit"
 
-  let reinit session ?roots t0 y0 =
+  (* TODO: nlsolver, lsolver *)
+  let reinit session ?nlsolver ?lsolver ?roots t0 y0 =
     if Sundials_configuration.safe then session.checkvec y0;
     c_reinit session t0 y0;
     (match roots with Some roots -> root_init session roots| None -> ())
@@ -2811,6 +3112,22 @@ module MRIStep = struct (* {{{ *)
     s.poststepfn <- dummy_poststepfn;
     c_set_postprocess_step_fn s false
 
+  external set_nonlinear : ('a, 'k) session -> unit
+    = "sunml_arkode_mri_set_nonlinear"
+
+  external c_set_stage_predict_fn
+      : ('d, 'k) session -> bool -> unit
+      = "sunml_arkode_mri_set_stage_predict_fn"
+
+  let set_stage_predict_fn s fn =
+    s.stagepredictfn <- fn;
+    c_set_stage_predict_fn s true
+
+  let clear_stage_predict_fn s =
+    c_set_stage_predict_fn s false;
+    s.stagepredictfn <- dummy_stagepredictfn
+
+
   external c_set_root_direction   : ('a, 'k) session -> RootDirs.t -> unit
       = "sunml_arkode_mri_set_root_direction"
 
@@ -2859,6 +3176,46 @@ module MRIStep = struct (* {{{ *)
   external write_parameters : ('d, 'k) session -> Logfile.t -> unit
       = "sunml_arkode_mri_write_parameters"
 
+  external set_nonlin_conv_coef   : ('a, 'k) session -> float -> unit
+      = "sunml_arkode_mri_set_nonlin_conv_coef"
+  external set_nonlin_crdown      : ('a, 'k) session -> float -> unit
+      = "sunml_arkode_mri_set_nonlin_crdown"
+  external set_nonlin_rdiv        : ('a, 'k) session -> float -> unit
+      = "sunml_arkode_mri_set_nonlin_rdiv"
+  external set_delta_gamma_max    : ('a, 'k) session -> float -> unit
+      = "sunml_arkode_mri_set_delta_gamma_max"
+  external set_lsetup_frequency   : ('a, 'k) session -> int -> unit
+      = "sunml_arkode_mri_set_lsetup_frequency"
+  external set_predictor_method : ('d, 'k) session -> predictor_method -> unit
+      = "sunml_arkode_mri_set_predictor_method"
+  external set_max_nonlin_iters   : ('a, 'k) session -> int -> unit
+      = "sunml_arkode_mri_set_max_nonlin_iters"
+
+  external get_current_gamma : ('d, 'k) session -> float
+      = "sunml_arkode_mri_get_current_gamma"
+
+  external get_tol_scale_factor           : ('a, 'k) session -> float
+      = "sunml_arkode_mri_get_tol_scale_factor"
+
+  external c_get_err_weights
+      : ('a, 'k) session -> ('a, 'k) nvector -> unit
+      = "sunml_arkode_mri_get_err_weights"
+
+  let get_err_weights s ew =
+    if Sundials_configuration.safe then s.checkvec ew;
+    c_get_err_weights s ew
+
+  external get_num_lin_solv_setups : ('a, 'k) session -> int
+      = "sunml_arkode_mri_get_num_lin_solv_setups"
+
+  external get_num_nonlin_solv_iters      : ('a, 'k) session -> int
+      = "sunml_arkode_mri_get_num_nonlin_solv_iters"
+
+  external get_num_nonlin_solv_conv_fails : ('a, 'k) session -> int
+      = "sunml_arkode_mri_get_num_nonlin_solv_conv_fails"
+
+  external get_nonlin_solv_stats          : ('a, 'k) session -> int * int
+      = "sunml_arkode_mri_get_nonlin_solv_stats"
 end (* }}} *)
 
 (* Let C code know about some of the values in this module.  *)

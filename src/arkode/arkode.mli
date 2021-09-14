@@ -45,198 +45,512 @@
 
 open Sundials
 
-(** {2:generic Generic constants and types}
+(** {2:generic Generic constants and types} *)
 
-    Types and values used by all time-stepping modules. *)
+(** Type argument representing the ARKStep time-stepping module. *)
+type arkstep = Arkode_impl.arkstep
 
-(** Values returned by the step functions. Failures are indicated by
-    exceptions.
+(** Type argument representing the ERKStep time-stepping module. *)
+type erkstep = Arkode_impl.erkstep
 
-    @noarkode <node> ARKStepEvolve
-    @noarkode <node> ERKStepEvolve
-    @noarkode <node> MRIStepEvolve *)
-type solver_result =
-  | Success             (** The solution was advanced. {cconst ARK_SUCCESS} *)
-  | RootsFound          (** A root was found. See {!ARKStep.get_root_info},
-                            {!ERKStep.get_root_info}, or
-                            {!MRIStep.get_root_info}.
-                            {cconst ARK_ROOT_RETURN} *)
-  | StopTimeReached     (** The stop time was reached. See
-                            {!ARKStep.set_stop_time},
-                            {!ERKStep.set_stop_time},
-                            or {!MRIStep.set_stop_time}.
-                            {cconst ARK_TSTOP_RETURN} *)
+(** Type argument representing the MRIStep time-stepping module. *)
+type mristep = Arkode_impl.mristep
 
-(** Summaries of integrator statistics. *)
-type step_stats = {
-    num_steps : int;
-      (** Cumulative number of internal solver steps. *)
-    actual_init_step : float;
-      (** Integration step sized used on the first step. *)
-    last_step : float;
-      (** Integration step size of the last internal step. *)
-    current_step : float;
-      (** Integration step size to attempt on the next internal step. *)
-    current_time : float
-      (** Current internal time reached by the solver. *)
+(** Common definitions that are included in each of the time-stepping
+    modules. *)
+module Common : sig (* {{{ *)
+
+  (** Values returned by the step functions. Failures are indicated by
+      exceptions.
+
+      @noarkode <node> ARKStepEvolve
+      @noarkode <node> ERKStepEvolve
+      @noarkode <node> MRIStepEvolve *)
+  type solver_result =
+    | Success             (** The solution was advanced. {cconst ARK_SUCCESS} *)
+    | RootsFound          (** A root was found. See {!ARKStep.get_root_info},
+                              {!ERKStep.get_root_info}, or
+                              {!MRIStep.get_root_info}.
+                              {cconst ARK_ROOT_RETURN} *)
+    | StopTimeReached     (** The stop time was reached. See
+                              {!ARKStep.set_stop_time},
+                              {!ERKStep.set_stop_time},
+                              or {!MRIStep.set_stop_time}.
+                              {cconst ARK_TSTOP_RETURN} *)
+
+  (** Summaries of integrator statistics. *)
+  type step_stats = {
+      num_steps : int;
+        (** Cumulative number of internal solver steps. *)
+      actual_init_step : float;
+        (** Integration step sized used on the first step. *)
+      last_step : float;
+        (** Integration step size of the last internal step. *)
+      current_step : float;
+        (** Integration step size to attempt on the next internal step. *)
+      current_time : float
+        (** Current internal time reached by the solver. *)
+    }
+
+  (** Used to specify the nterpolation method used for output values and
+      implicit method predictors. See, for example,
+      {!MRIStep.set_interpolation_type}. *)
+  type interpolant_type =
+      Hermite     (** Polynomial interpolants of Hermite form.
+                      {cconst ARK_INTERP_HERMITE} *)
+    | Lagrange    (** Polynomial interpolants of Lagrange form, for stiff
+                      problems.
+                      {cconst ARK_INTERP_LAGRANGE} *)
+
+  (** The linearity of the implicit portion of the problem. *)
+  type linearity =
+    | Linear of bool  (** Implicit portion is linear. Specifies whether
+                          $f_I(t, y)$ or the preconditioner is
+                          time-dependent. *)
+    | Nonlinear       (** Implicit portion is nonlinear. *)
+
+  (** {3:tol Tolerances} *)
+
+  (** Functions that set the multiplicative error weights for use in the weighted
+      RMS norm. The call [efun y ewt] takes the dependent variable vector [y] and
+      fills the error-weight vector [ewt] with positive values or raises
+      {!Sundials.NonPositiveEwt}. Other exceptions are eventually propagated, but
+      should be avoided ([efun] is not allowed to abort the solver). *)
+  type 'data error_weight_fun = 'data -> 'data -> unit
+
+  (** Tolerance specifications. *)
+  type ('data, 'kind) tolerance =
+    | SStolerances of float * float
+      (** [(rel, abs)] : scalar relative and absolute tolerances. *)
+    | SVtolerances of float * ('data, 'kind) Nvector.t
+      (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
+    | WFtolerances of 'data error_weight_fun
+      (** Set the multiplicative error weights for the weighted RMS norm. *)
+
+  (** A default relative tolerance of 1.0e-4 and absolute tolerance of 1.0e-9. *)
+  val default_tolerances : ('data, 'kind) tolerance
+
+  (** Method choices for predicting implicit solutions.
+
+      @noarkode <node> Implicit predictors *)
+  type predictor_method =
+    | TrivialPredictor        (** Piece-wise constant interpolant
+                                  {% $p_0(\tau) = y_{n-1}$%} %*)
+    | MaximumOrderPredictor   (** An interpolant {% $p_q(t)$%} of polynomial
+                                  order up to {% $q=3$%}. *)
+    | VariableOrderPredictor  (** Decrease the polynomial degree for later RK
+                                  stages. *)
+    | CutoffOrderPredictor    (** Maximum order for early RK stages and
+                                  first-order for later ones. *)
+    | BootstrapPredictor      (** Second-order predictor based only on the
+                                  current step. *)
+    | MinimumCorrectionPredictor
+                              (** Uses all preceding stage information within
+                                  the current step for prediction. *)
+
+  (** Internal data required to construct the current nonlinear implicit
+      system within a nonlinear solver. *)
+  type 'd nonlin_system_data = {
+    tcur  : float;
+      (** Independent variable value for slow stage {% $t^S_{n,i}$ %}. *)
+    zpred : 'd;
+      (** Predicted nonlinear solution {% $z_{\mathit{pred}}$ %}. This
+          data must not be changed. *)
+    zi    : 'd;
+      (** Stage vector {% $z_i$ %}. This data may not be current and may
+          need to be filled. *)
+    fi    : 'd;
+      (** Memory available for evaluating the slow right-hand side
+          {% $f^S(t^S_{n,i}, z_i)$ %}. This data may not be current and may
+          need to be filled. *)
+    gamma : float;
+      (** Current {% $\gamma$ %} for slow-stage calculation. *)
+    sdata : 'd;
+      (** Accumulated data from previous solution and stages
+          {% $\tilde{a}_i$ %}. This data must not be changed. *)
   }
 
-(** Used to specify the nterpolation method used for output values and
-    implicit method predictors. See, for example,
-    {!MRIStep.set_interpolation_type}. *)
-type interpolant_type =
-    Hermite     (** Polynomial interpolants of Hermite form.
-                    {cconst ARK_INTERP_HERMITE} *)
-  | Lagrange    (** Polynomial interpolants of Lagrange form, for stiff
-                    problems.
-                    {cconst ARK_INTERP_LAGRANGE} *)
+  (** {3:roots Roots} *)
 
-(** {3:arkodetol Tolerances} *)
+  (** Called by the solver to calculate the values of root functions. These
+      ‘zero-crossings’ are used to detect significant events. The function is
+      passed three arguments:
+      - [t], the value of the independent variable, i.e., the simulation time,
+      - [y], the vector of dependent-variable values, i.e., $y(t)$, and,
+      - [gout], a vector for storing the value of $g(t, y)$.
 
-(** Functions that set the multiplicative error weights for use in the weighted
-    RMS norm. The call [efun y ewt] takes the dependent variable vector [y] and
-    fills the error-weight vector [ewt] with positive values or raises
-    {!Sundials.NonPositiveEwt}. Other exceptions are eventually propagated, but
-    should be avoided ([efun] is not allowed to abort the solver). *)
-type 'data error_weight_fun = 'data -> 'data -> unit
+      {warning [y] and [gout] should not be accessed after the function has
+               returned.}
 
-(** Tolerance specifications. *)
-type ('data, 'kind) tolerance =
-  | SStolerances of float * float
-    (** [(rel, abs)] : scalar relative and absolute tolerances. *)
-  | SVtolerances of float * ('data, 'kind) Nvector.t
-    (** [(rel, abs)] : scalar relative and vector absolute tolerances. *)
-  | WFtolerances of 'data error_weight_fun
-    (** Set the multiplicative error weights for the weighted RMS norm. *)
+      @noarkode <node> ARKRootFn *)
+  type 'd rootsfn = float -> 'd -> RealArray.t -> unit
 
-(** A default relative tolerance of 1.0e-4 and absolute tolerance of 1.0e-9. *)
-val default_tolerances : ('data, 'kind) tolerance
+  (** A convenience value for signalling that there are no roots to monitor. *)
+  val no_roots : (int * 'd rootsfn)
 
-(** {3:arkoderoots Roots} *)
+  (** {3:adapt Adaptivity} *)
 
-(** Called by the solver to calculate the values of root functions. These
-    ‘zero-crossings’ are used to detect significant events. The function is
-    passed three arguments:
-    - [t], the value of the independent variable, i.e., the simulation time,
-    - [y], the vector of dependent-variable values, i.e., $y(t)$, and,
-    - [gout], a vector for storing the value of $g(t, y)$.
+  type adaptivity_args = {
+      h1 : float;  (** the current step size, {% $t_m - t_{m-1}$%}. *)
+      h2 : float;  (** the previous step size, {% $t_{m-1} - t_{m-2}$%}. *)
+      h3 : float;  (** the step size {% $t_{m-2} - t_{m-3}$%}. *)
+      e1 : float;  (** the error estimate from the current step, {% $m$%}. *)
+      e2 : float;  (** the error estimate from the previous step, {% $m-1$%}. *)
+      e3 : float;  (** the error estimate from the step {% $m-2$%}. *)
+      q  : int;    (** the global order of accuracy for the integration method. *)
+      p  : int;    (** the global order of accuracy for the embedding. *)
+    }
 
-    {warning [y] and [gout] should not be accessed after the function has
-             returned.}
+  (** A function implementing a time step adaptivity algorithm that chooses an
+      $h$ that satisfies the error tolerances. The call [hnew = adapt_fn t y args]
+      has as arguments
+      - [t], the value of the independent variable,
+      - [y], the value of the dependent variable vector {% $y(t)$%}, and
+      - [args], information on step sizes, error estimates, and accuracies.
+      and returns the next step size [hnew]. The function should raise an
+      exception if it cannot set the next step size. The step size should be the
+      maximum value where the error estimates remain below 1.
 
-    @noarkode <node> ARKRootFn *)
-type 'd rootsfn = float -> 'd -> RealArray.t -> unit
+      This function should focus on accuracy-based time step estimation; for
+      stability based time steps, {!ARKStep.set_stability_fn} and
+      {!ERKStep.set_stability_fn} should be used.
 
-(** A convenience value for signalling that there are no roots to monitor. *)
-val no_roots : (int * 'd rootsfn)
+      @noarkode <node> ARKAdaptFn *)
+  type 'd adaptivity_fn = float -> 'd -> adaptivity_args -> float
 
-(** {3:arkodeadapt Adaptivity} *)
+  (** Parameters for the standard adaptivity algorithms.
+      There are two:
+      - [adaptivity_ks], the [k1], [k2], and [k3] parameters, or [None]
+        to use the defaults, and
+      - [adaptivity_method_order], [true] specifies the method order of
+        accuracy $q$ and [false] specifies the embedding order of
+        accuracy $p$. *)
+  type adaptivity_params = {
+      ks : (float * float * float) option;
+      method_order : bool;
+    }
 
-type adaptivity_args = {
-    h1 : float;  (** the current step size, {% $t_m - t_{m-1}$%}. *)
-    h2 : float;  (** the previous step size, {% $t_{m-1} - t_{m-2}$%}. *)
-    h3 : float;  (** the step size {% $t_{m-2} - t_{m-3}$%}. *)
-    e1 : float;  (** the error estimate from the current step, {% $m$%}. *)
-    e2 : float;  (** the error estimate from the previous step, {% $m-1$%}. *)
-    e3 : float;  (** the error estimate from the step {% $m-2$%}. *)
-    q  : int;    (** the global order of accuracy for the integration method. *)
-    p  : int;    (** the global order of accuracy for the embedding. *)
-  }
+  (** Asymptotic error control algorithms.
 
-(** A function implementing a time step adaptivity algorithm that chooses an
-    $h$ that satisfies the error tolerances. The call [hnew = adapt_fn t y args]
-    has as arguments
-    - [t], the value of the independent variable,
-    - [y], the value of the dependent variable vector {% $y(t)$%}, and
-    - [args], information on step sizes, error estimates, and accuracies.
-    and returns the next step size [hnew]. The function should raise an
-    exception if it cannot set the next step size. The step size should be the
-    maximum value where the error estimates remain below 1.
+      @noarkode <node> Asymptotic error control *)
+  type 'd adaptivity_method =
+    | PIDcontroller of adaptivity_params
+          (** The default time adaptivity controller. *)
+    | PIcontroller of adaptivity_params
+          (** Uses the two most recent step sizes. *)
+    | Icontroller of adaptivity_params
+          (** Standard time adaptivity control algorithm. *)
+    | ExplicitGustafsson of adaptivity_params
+          (** Primarily used with explicit RK methods. *)
+    | ImplicitGustafsson of adaptivity_params
+          (** Primarily used with implicit RK methods. *)
+    | ImExGustafsson of adaptivity_params
+          (** An ImEx version of the two preceding controllers. *)
+    | AdaptivityFn of 'd adaptivity_fn
+          (** A custom time-step adaptivity function. *)
 
-    This function should focus on accuracy-based time step estimation; for
-    stability based time steps, {!ARKStep.set_stability_fn} and
-    {!ERKStep.set_stability_fn} should be used.
+  (** {3:callbacks Callback functions} *)
 
-    @noarkode <node> ARKAdaptFn *)
-type 'd adaptivity_fn = float -> 'd -> adaptivity_args -> float
+  (** Right-hand side functions for calculating ODE derivatives. They are passed
+      three arguments:
+      - [t], the value of the independent variable, i.e., the simulation time,
+      - [y], the vector of dependent-variable values, i.e., $y(t)$, and,
+      - [y'], a vector for storing the value of $f(t, y)$.
 
-(** Parameters for the standard adaptivity algorithms.
-    There are two:
-    - [adaptivity_ks], the [k1], [k2], and [k3] parameters, or [None]
-      to use the defaults, and
-    - [adaptivity_method_order], [true] specifies the method order of
-      accuracy $q$ and [false] specifies the embedding order of
-      accuracy $p$. *)
-type adaptivity_params = {
-    ks : (float * float * float) option;
-    method_order : bool;
-  }
+      Within the function, raising a {!Sundials.RecoverableFailure} exception
+      indicates a recoverable error. Any other exception is treated as an
+      unrecoverable error.
 
-(** Asymptotic error control algorithms.
+      {warning [y] and [y'] should not be accessed after the function returns.}
 
-    @noarkode <node> Asymptotic error control *)
-type 'd adaptivity_method =
-  | PIDcontroller of adaptivity_params
-        (** The default time adaptivity controller. *)
-  | PIcontroller of adaptivity_params
-        (** Uses the two most recent step sizes. *)
-  | Icontroller of adaptivity_params
-        (** Standard time adaptivity control algorithm. *)
-  | ExplicitGustafsson of adaptivity_params
-        (** Primarily used with explicit RK methods. *)
-  | ImplicitGustafsson of adaptivity_params
-        (** Primarily used with implicit RK methods. *)
-  | ImExGustafsson of adaptivity_params
-        (** An ImEx version of the two preceding controllers. *)
-  | AdaptivityFn of 'd adaptivity_fn
-        (** A custom time-step adaptivity function. *)
+      @noarkode <node> ARKRhsFn *)
+  type 'd rhsfn = float -> 'd -> 'd -> unit
 
-(** {3:arkodecallbacks Callback functions} *)
+  (** A function that predicts the maximum stable step size for the explicit
+      portions of an ImEx ODE system. The call [hstab = stab_fn t y]
+      has as arguments
+      - [t], the value of the independent variable, and
+      - [y], the value of the dependent variable vector {% $y(t)$%}.
+      and returns the absolute value of the maximum stable step size [hstab].
+      Returning {% $\mathtt{hstab}\le 0$%} indicates that there is no explicit
+      stability restriction on the time step size. The function should raise
+      an exception if it cannot set the next step size.
 
-(** Right-hand side functions for calculating ODE derivatives. They are passed
-    three arguments:
-    - [t], the value of the independent variable, i.e., the simulation time,
-    - [y], the vector of dependent-variable values, i.e., $y(t)$, and,
-    - [y'], a vector for storing the value of $f(t, y)$.
+      @noarkode <node> ARKExpStabFn *)
+  type 'd stability_fn = float -> 'd -> float
 
-    Within the function, raising a {!Sundials.RecoverableFailure} exception
-    indicates a recoverable error. Any other exception is treated as an
-    unrecoverable error.
+  (** Called to resize a vector to match the dimensions of another. The call
+      [resizefn y ytemplate] must resize [y] to match the size of [ytemplate].
 
-    {warning [y] and [y'] should not be accessed after the function returns.}
+      {warning [y] and [ytemplate] should not be accessed after the function
+               has returned.}
 
-    @noarkode <node> ARKRhsFn *)
-type 'd rhsfn = float -> 'd -> 'd -> unit
+      @noarkode <node> ARKVecResizeFn *)
+  type 'd resize_fn = 'd -> 'd -> unit
 
-(** A function that predicts the maximum stable step size for the explicit
-    portions of an ImEx ODE system. The call [hstab = stab_fn t y]
-    has as arguments
-    - [t], the value of the independent variable, and
-    - [y], the value of the dependent variable vector {% $y(t)$%}.
-    and returns the absolute value of the maximum stable step size [hstab].
-    Returning {% $\mathtt{hstab}\le 0$%} indicates that there is no explicit
-    stability restriction on the time step size. The function should raise
-    an exception if it cannot set the next step size.
+  (** A function to process the results of each timestep solution.
+      The arguments are
+      - [t], the value of the independent variable, and
+      - [y], the value of the dependent variable vector {% $y(t)$%}.
 
-    @noarkode <node> ARKExpStabFn *)
-type 'd stability_fn = float -> 'd -> float
+      @noarkode <node> ARKPostprocessStepFn *)
+  type 'd postprocess_step_fn = float -> 'd -> unit
 
-(** Called to resize a vector to match the dimensions of another. The call
-    [resizefn y ytemplate] must resize [y] to match the size of [ytemplate].
+  (** {2:lsolvers Common Linear Solver Definitions}
 
-    {warning [y] and [ytemplate] should not be accessed after the function
-             has returned.}
+      Definitions common to linear solvers within the time-stepping modules. *)
 
-    @noarkode <node> ARKVecResizeFn *)
-type 'd resize_fn = 'd -> 'd -> unit
+  (** Workspaces with three temporary vectors. *)
+  type 'd triple = 'd * 'd * 'd
 
-(** A function to process the results of each timestep solution.
-    The arguments are
-    - [t], the value of the independent variable, and
-    - [y], the value of the dependent variable vector {% $y(t)$%}.
+  (** Arguments common to Jacobian callback functions.
 
-    @noarkode <node> ARKPostprocessStepFn *)
-type 'd postprocess_step_fn = float -> 'd -> unit
+      @noarkode <node> ARKLsJacFn
+      @noarkode <node> ARKLsJacTimesVecFn
+      @noarkode <node> ARKLsPrecSolveFn
+      @noarkode <node> ARKLsPrecSetupFn *)
+  type ('t, 'd) jacobian_arg = ('t, 'd) Arkode_impl.jacobian_arg =
+    {
+      jac_t   : float;        (** The independent variable. *)
+      jac_y   : 'd;           (** The dependent variable vector. *)
+      jac_fy  : 'd;           (** The derivative vector {% $f_I(t, y)$%}. *)
+      jac_tmp : 't            (** Workspace data. *)
+    }
+
+end (* }}} *)
+
+(** Common definitions for Direct Linear Solvers operating on dense,
+    banded, and sparse matrices.
+
+    @noarkode <node> Description of the SUNLinearSolver module *)
+module Dls : sig (* {{{ *)
+
+  (** Callback functions that compute dense approximations to a Jacobian
+      matrix. In the call [jac arg jm], [arg] is a {!jacobian_arg}
+      with three work vectors and the computed Jacobian must be stored
+      in [jm].
+
+      The callback should load the [(i,j)]th entry of [jm] with
+      {% $\partial (f_I)_i/\partial y_j$%}, i.e., the partial derivative
+      of the [i]th implicit equation with respect to the [j]th variable,
+      evaluated at the values of [t] and [y] obtained from [arg]. Only
+      nonzero elements need be loaded into [jm].
+
+      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Any other exception is treated as an unrecoverable error.
+
+      {warning Neither the elements of [arg] nor the matrix [jm] should
+               be accessed after the function has returned.}
+
+      @noarkode <node> ARKLsJacFn *)
+  type 'm jac_fn = (RealArray.t Common.triple, RealArray.t) Common.jacobian_arg
+                   -> 'm -> unit
+
+  (** Function to compute the linear system matrix {% $A = M - \gamma J$ %}
+      or an approximation of it. Offers an alternative to evaluating the
+      Jacobian of the right-hand-side function.
+
+      In addition to those shared with the Jacobian function, the arguments of
+      this function are
+      - [a], storage for the computed linear system matrix,
+      - [m], the current mass matrix if {% $M \neq I$ %},
+      - [jok], indicates whether the Jacobian-related data needs to be
+               updated, and
+      - [gamma], the scalar in the formula above.
+
+      The function should return true only if the Jacobian data was
+      recomputed.
+
+      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Any other exception is treated as an unrecoverable error.
+
+      {warning Neither the Jacobian argument elements nor the matrices
+               [a] and [m] should be accessed after the function has
+               returned.}
+
+      @since 5.0.0
+      @nocvode <node> ARKLsLinSysFn *)
+  type 'm linsys_fn =
+    (RealArray.t Common.triple, RealArray.t) Common.jacobian_arg
+    -> 'm
+    -> 'm option
+    -> bool
+    -> float
+    -> bool
+
+end (* }}} *)
+
+(** Common definitions for Scaled Preconditioned Iterative Linear Solvers.
+
+    @noarkode <node> Description of the SUNLinearSolver module *)
+module Spils : sig (* {{{ *)
+
+  (** {3:spilsprecond Preconditioners} *)
+
+  (** Arguments passed to the preconditioner solver function.
+
+      @noarkode <node> ARKLsPrecSolveFn *)
+  type 'd prec_solve_arg =
+    {
+      rhs   : 'd;         (** Right-hand side vector of the linear system. *)
+      gamma : float;      (** Scalar $\gamma$ in the Newton
+                              matrix given by $A = M - \gamma J$. *)
+      delta : float;      (** Input tolerance for iterative methods. *)
+      left  : bool;       (** [true] for left preconditioning and
+                              [false] for right preconditioning. *)
+    }
+
+  (** Callback functions that solve a linear system involving a
+      preconditioner matrix. In the call [prec_solve_fn jac arg z],
+      [jac] is a {!jacobian_arg} with one work vector, [arg] is
+      a {!prec_solve_arg} that specifies the linear system, and [z] is
+      computed to solve {% $P\mathtt{z} = \mathtt{arg.rhs}$%}.
+      $P$ is a preconditioner matrix, which approximates, however crudely,
+      the Newton matrix {% $A = M - \gamma J$%} where
+      {% $J = \frac{\partial f_I}{\partial y}$%}.
+
+      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Any other exception is treated as an unrecoverable error.
+
+      {warning The elements of [jac], [arg], and [z] should not
+               be accessed after the function has returned.}
+
+      @noarkode <node> ARKLsPrecSolveFn *)
+  type 'd prec_solve_fn =
+    (unit, 'd) Common.jacobian_arg
+    -> 'd prec_solve_arg
+    -> 'd
+    -> unit
+
+  (** Callback functions that preprocess or evaluate Jacobian-related data
+      needed by {!prec_solve_fn}. In the call [prec_setup_fn jac jok gamma],
+      [jac] is a {!jacobian_arg} with three work vectors, [jok] indicates
+      whether any saved Jacobian-related data can be reused with the current
+      value of [gamma], and [gamma] is the scalar $\gamma$ in the Newton
+      matrix {% $A = M - \gamma J$%} where $J$ is the Jacobian matrix.
+      A function should return [true] if Jacobian-related data was updated
+      and [false] if saved data was reused.
+
+      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Any other exception is treated as an unrecoverable error.
+
+      {warning The elements of [jac] should not be accessed after the
+               function has returned.}
+
+      @noarkode <node> ARKLsPrecSetupFn *)
+  type 'd prec_setup_fn =
+    (unit, 'd) Common.jacobian_arg
+    -> bool
+    -> float
+    -> bool
+
+  (** Specifies a preconditioner, including the type of preconditioning
+      (none, left, right, or both) and callback functions.
+      The following functions and those in {!Banded} and {!Arkode_bbd}
+      construct preconditioners.
+
+      The {!prec_solve_fn} is usually mandatory. The {!prec_setup_fn} can be
+      omitted if not needed.
+
+      @noarkode <node> ARKLsPrecSetupFn
+      @noarkode <node> ARKLsPrecSolveFn *)
+  type ('d, 'k, 's) preconditioner
+    = ('d, 'k, 's) Arkode_impl.SpilsTypes.preconditioner
+
+  (** Banded preconditioners.  *)
+  module Banded : sig (* {{{ *)
+
+    (** The range of nonzero entries in a band matrix. *)
+    type bandrange =
+      { mupper : int; (** The upper half-bandwidth. *)
+        mlower : int; (** The lower half-bandwidth. *) }
+
+    (** A band matrix {!preconditioner} based on difference quotients.
+        The call [prec_left br] instantiates a left preconditioner which
+        generates a banded approximation to the Jacobian with [br.mlower]
+        sub-diagonals and [br.mupper] super-diagonals.
+
+        NB: Banded preconditioners may not be used for problems involving
+        a non-identity mass matrix.
+
+        @noarkode <node> ARKBandPrecInit *)
+    val prec_left :
+         bandrange -> (Nvector_serial.data,
+                       [>Nvector_serial.kind], 's) preconditioner
+
+    (** Like {!prec_left} but preconditions from the right.
+
+        @noarkode <node> ARKBandPrecInit *)
+    val prec_right :
+         bandrange -> (Nvector_serial.data,
+                       [>Nvector_serial.kind], 's) preconditioner
+
+    (** Like {!prec_left} but preconditions from both sides.
+
+        @noarkode <node> ARKBandPrecInit *)
+    val prec_both :
+         bandrange -> (Nvector_serial.data,
+                       [>Nvector_serial.kind], 's) preconditioner
+
+    (** {4:arkbandstats Banded statistics} *)
+
+    type ('k, 's) serial_session =
+      (Nvector_serial.data, 'k, 's) Arkode_impl.session
+      constraint 'k = [>Nvector_serial.kind]
+      constraint 's = [<arkstep|mristep]
+
+    (** Returns the sizes of the real and integer workspaces used by the
+        banded preconditioner module.
+
+        @noarkode <node> ARKBandPrecGetWorkSpace
+        @return ([real_size], [integer_size]) *)
+    val get_work_space : ('k, 's) serial_session -> int * int
+
+    (** Returns the number of calls to the right-hand side callback for
+        the difference banded Jacobian approximation. This counter is only
+        updated if the default difference quotient function is used.
+
+        @noarkode <node> ARKBandPrecGetNumRhsEvals *)
+    val get_num_rhs_evals : ('k, 's) serial_session -> int
+  end (* }}} *)
+
+  (** {3:spilslsolvers Solvers} *)
+
+  (** Callback functions that preprocess or evaluate Jacobian-related data
+      needed by the jac_times_vec_fn. In the call [jac_times_setup_fn arg],
+      [arg] is a {!jacobian_arg} with no work vectors.
+
+      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Any other exception is treated as an unrecoverable error.
+
+      {warning The elements of [arg] should not be accessed after the
+               function has returned.}
+
+      @noarkode <node> ARKLsJacTimesSetupFn *)
+  type 'd jac_times_setup_fn =
+    (unit, 'd) Common.jacobian_arg
+    -> unit
+
+  (** Callback functions that compute the Jacobian times a vector. In the
+      call [jac_times_vec_fn arg v jv], [arg] is a {!jacobian_arg} with one
+      work vector, [v] is the vector multiplying the Jacobian, and [jv] is
+      the vector in which to store the
+      result—{% $\mathtt{jv} = J\mathtt{v}$%}.
+
+      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
+      Any other exception is treated as an unrecoverable error.
+
+      {warning Neither the elements of [arg] nor [v] or [jv] should be
+               accessed after the function has returned.}
+
+      @noarkode <node> ARKLsJacTimesVecFn *)
+  type 'd jac_times_vec_fn =
+    ('d, 'd) Common.jacobian_arg
+    -> 'd (* v *)
+    -> 'd (* Jv *)
+    -> unit
+
+end (* }}} *)
 
 (** Butcher tables *)
 module ButcherTable : sig (* {{{ *)
@@ -397,6 +711,10 @@ module ButcherTable : sig (* {{{ *)
 
 end (* }}} *)
 
+(** {2:timestepping Time-stepping Modules}
+
+    The main time-stepping modules: ARKStep, ERKStep, and MRIStep. *)
+
 (** ARKStep Time-Stepping Module for ODE systems in split, linearly-implicit
     form.
 
@@ -415,6 +733,8 @@ end (* }}} *)
     @noarkode <node> Using ARKStep for C and C++ Applications *)
 module ARKStep : sig (* {{{ *)
 
+  include module type of Common
+
   (** A session with the ARKStep time-stepping solver.
 
       An example session with ARKStep ({openfile arkode_ark_skel.ml}): {[
@@ -422,104 +742,32 @@ module ARKStep : sig (* {{{ *)
       ]}
 
       @noarkode <node> Skeleton of main program *)
-  type ('d, 'k) session = ('d, 'k, Arkode_impl.arkstep) Arkode_impl.session
+  type ('d, 'k) session = ('d, 'k, arkstep) Arkode_impl.session
 
   (** Alias for sessions based on serial nvectors. *)
   type 'k serial_session = (Nvector_serial.data, 'k) session
                            constraint 'k = [>Nvector_serial.kind]
 
-  (** {2:linear Linear and mass matrix solvers} *)
+  (** {2:arklinear Linear and mass matrix solvers} *)
 
-  (** Linear solvers used by Arkode.
+  (** Linear solvers used by ARKStep.
 
       @noarkode <node> Linear Solver Specification Functions *)
   type ('data, 'kind) linear_solver
+      = ('data, 'kind, arkstep) Arkode_impl.lin_solver
 
   (** Alias for linear solvers that are restricted to serial nvectors. *)
-  type 'kind serial_linear_solver =
-    (Nvector_serial.data, 'kind) linear_solver
-    constraint 'kind = [>Nvector_serial.kind]
-
-  (** Workspaces with three temporary vectors. *)
-  type 'd triple = 'd * 'd * 'd
-
-  (** Arguments common to Jacobian callback functions.
-
-      @noarkode <node> ARKLsJacFn
-      @noarkode <node> ARKLsJacTimesVecFn
-      @noarkode <node> ARKLsPrecSolveFn
-      @noarkode <node> ARKLsPrecSetupFn *)
-  type ('t, 'd) jacobian_arg =
-    {
-      jac_t   : float;        (** The independent variable. *)
-      jac_y   : 'd;           (** The dependent variable vector. *)
-      jac_fy  : 'd;           (** The derivative vector {% $f_I(t, y)$%}. *)
-      jac_tmp : 't            (** Workspace data. *)
-    }
+  type 'kind serial_linear_solver = (Nvector_serial.data, 'kind) linear_solver
+                                    constraint 'kind = [>Nvector_serial.kind]
 
   (** Direct Linear Solvers operating on dense, banded, and sparse matrices.
 
-      @noarkode <node> Linear solver specification functions
-      @noarkode <node> Dense/band direct linear solvers optional input functions
-      @noarkode <node> Dense/band direct linear solvers optional output functions
-  *)
+      @noarkode <node> Description of the SUNLinearSolver module *)
   module Dls : sig (* {{{ *)
     include module type of Sundials_LinearSolver.Direct
+    include module type of Dls
 
-    (** Callback functions that compute dense approximations to a Jacobian
-        matrix. In the call [jac arg jm], [arg] is a {!jacobian_arg}
-        with three work vectors and the computed Jacobian must be stored
-        in [jm].
-
-        The callback should load the [(i,j)]th entry of [jm] with
-        {% $\partial (f_I)_i/\partial y_j$%}, i.e., the partial derivative
-        of the [i]th implicit equation with respect to the [j]th variable,
-        evaluated at the values of [t] and [y] obtained from [arg]. Only
-        nonzero elements need be loaded into [jm].
-
-        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
-        Any other exception is treated as an unrecoverable error.
-
-        {warning Neither the elements of [arg] nor the matrix [jm] should
-                 be accessed after the function has returned.}
-
-        @noarkode <node> ARKLsJacFn *)
-    type 'm jac_fn = (RealArray.t triple, RealArray.t) jacobian_arg
-                     -> 'm -> unit
-
-  (** Function to compute the linear system matrix {% $A = M - \gamma J$ %}
-      or an approximation of it. Offers an alternative to evaluating the
-      Jacobian of the right-hand-side function.
-
-      In addition to those shared with the Jacobian function, the arguments of
-      this function are
-      - [a], storage for the computed linear system matrix,
-      - [m], the current mass matrix if {% $M \neq I$ %},
-      - [jok], indicates whether the Jacobian-related data needs to be
-               updated, and
-      - [gamma], the scalar in the formula above.
-
-      The function should return true only if the Jacobian data was
-      recomputed.
-
-      Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
-      Any other exception is treated as an unrecoverable error.
-
-      {warning Neither the Jacobian argument elements nor the matrices
-               [a] and [m] should be accessed after the function has
-               returned.}
-
-      @since 5.0.0
-      @nocvode <node> ARKLsLinSysFn *)
-  type 'm linsys_fn =
-    (RealArray.t triple, RealArray.t) jacobian_arg
-    -> 'm
-    -> 'm option
-    -> bool
-    -> float
-    -> bool
-
-    (** Create an Arkode-specific linear solver from a Jacobian approximation
+    (** Create an ARKStep-specific linear solver from a Jacobian approximation
         function and a generic direct linear solver.
         The Jacobian approximation function is optional for dense and banded
         solvers (if not given an internal difference quotient approximation
@@ -560,195 +808,44 @@ module ARKStep : sig (* {{{ *)
 
   (** Scaled Preconditioned Iterative Linear Solvers.
 
-      @noarkode <node> Linear solver specification functions
-      @noarkode <node> Iterative linear solvers optional input functions.
-      @noarkode <node> Iterative linear solvers optional output functions. *)
+      @noarkode <node> Description of the SUNLinearSolver module *)
   module Spils : sig (* {{{ *)
     include module type of Sundials_LinearSolver.Iterative
+    include module type of Spils
 
     (** {3:arkspilsprecond Preconditioners} *)
 
-    (** Arguments passed to the preconditioner solver function.
-
-        @noarkode <node> ARKLsPrecSolveFn *)
-    type 'd prec_solve_arg =
-      {
-        rhs   : 'd;         (** Right-hand side vector of the linear system. *)
-        gamma : float;      (** Scalar $\gamma$ in the Newton
-                                matrix given by $A = M - \gamma J$. *)
-        delta : float;      (** Input tolerance for iterative methods. *)
-        left  : bool;       (** [true] for left preconditioning and
-                                [false] for right preconditioning. *)
-      }
-
-    (** Callback functions that solve a linear system involving a
-        preconditioner matrix. In the call [prec_solve_fn jac arg z],
-        [jac] is a {!jacobian_arg} with one work vector, [arg] is
-        a {!prec_solve_arg} that specifies the linear system, and [z] is
-        computed to solve {% $P\mathtt{z} = \mathtt{arg.rhs}$%}.
-        $P$ is a preconditioner matrix, which approximates, however crudely,
-        the Newton matrix {% $A = M - \gamma J$%} where
-        {% $J = \frac{\partial f_I}{\partial y}$%}.
-
-        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
-        Any other exception is treated as an unrecoverable error.
-
-        {warning The elements of [jac], [arg], and [z] should not
-                 be accessed after the function has returned.}
-
-        @noarkode <node> ARKLsPrecSolveFn *)
-    type 'd prec_solve_fn =
-      (unit, 'd) jacobian_arg
-      -> 'd prec_solve_arg
-      -> 'd
-      -> unit
-
-    (** Callback functions that preprocess or evaluate Jacobian-related data
-        needed by {!prec_solve_fn}. In the call [prec_setup_fn jac jok gamma],
-        [jac] is a {!jacobian_arg} with three work vectors, [jok] indicates
-        whether any saved Jacobian-related data can be reused with the current
-        value of [gamma], and [gamma] is the scalar $\gamma$ in the Newton
-        matrix {% $A = M - \gamma J$%} where $J$ is the Jacobian matrix.
-        A function should return [true] if Jacobian-related data was updated
-        and [false] if saved data was reused.
-
-        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
-        Any other exception is treated as an unrecoverable error.
-
-        {warning The elements of [jac] should not be accessed after the
-                 function has returned.}
-
-        @noarkode <node> ARKStepSetPreconditioner
-        @noarkode <node> ARKLsPrecSetupFn *)
-    type 'd prec_setup_fn =
-      (unit, 'd) jacobian_arg
-      -> bool
-      -> float
-      -> bool
-
-    (** Specifies a preconditioner, including the type of preconditioning
-        (none, left, right, or both) and callback functions.
-        The following functions and those in {!Banded} and {!Arkode_bbd}
-        construct preconditioners.
-
-        The {!prec_solve_fn} is usually mandatory. The {!prec_setup_fn} can be
-        omitted if not needed.
-
-        @noarkode <node> ARKStepSetPreconditioner
-        @noarkode <node> ARKLsPrecSetupFn
-        @noarkode <node> ARKLsPrecSolveFn *)
-    type ('d,'k) preconditioner = ('d,'k) Arkode_impl.SpilsTypes.preconditioner
-
     (** No preconditioning.  *)
-    val prec_none : ('d, 'k) preconditioner
+    val prec_none : ('d, 'k, arkstep) preconditioner
 
-    (** Left preconditioning. {% $(P^{-1}A)x = P^{-1}b$ %}. *)
+    (** Left preconditioning. {% $(P^{-1}A)x = P^{-1}b$ %}.
+
+        @noarkode <node> ARKStepSetPreconditioner *)
     val prec_left :
       ?setup:'d prec_setup_fn
       -> 'd prec_solve_fn
-      -> ('d, 'k) preconditioner
+      -> ('d, 'k, arkstep) preconditioner
 
-    (** Right preconditioning. {% $(AP^{-1})Px = b$ %}. *)
+    (** Right preconditioning. {% $(AP^{-1})Px = b$ %}.
+
+        @noarkode <node> ARKStepSetPreconditioner *)
     val prec_right :
       ?setup:'d prec_setup_fn
       -> 'd prec_solve_fn
-      -> ('d, 'k) preconditioner
+      -> ('d, 'k, arkstep) preconditioner
 
     (** Left and right preconditioning.
-        {% $(P_L^{-1}AP_R^{-1})P_Rx = P_L^{-1}b$ %} *)
+        {% $(P_L^{-1}AP_R^{-1})P_Rx = P_L^{-1}b$ %}
+
+        @noarkode <node> ARKStepSetPreconditioner *)
     val prec_both :
       ?setup:'d prec_setup_fn
       -> 'd prec_solve_fn
-      -> ('d, 'k) preconditioner
-
-    (** Banded preconditioners.  *)
-    module Banded : sig (* {{{ *)
-
-      (** The range of nonzero entries in a band matrix. *)
-      type bandrange =
-        { mupper : int; (** The upper half-bandwidth. *)
-          mlower : int; (** The lower half-bandwidth. *) }
-
-      (** A band matrix {!preconditioner} based on difference quotients.
-          The call [prec_left br] instantiates a left preconditioner which
-          generates a banded approximation to the Jacobian with [br.mlower]
-          sub-diagonals and [br.mupper] super-diagonals.
-
-          NB: Banded preconditioners may not be used for problems involving
-          a non-identity mass matrix.
-
-          @noarkode <node> ARKBandPrecInit *)
-      val prec_left : bandrange -> (Nvector_serial.data,
-                                    [>Nvector_serial.kind]) preconditioner
-
-      (** Like {!prec_left} but preconditions from the right.
-
-          @noarkode <node> ARKBandPrecInit *)
-      val prec_right :
-           bandrange -> (Nvector_serial.data,
-                         [>Nvector_serial.kind]) preconditioner
-
-      (** Like {!prec_left} but preconditions from both sides.
-
-          @noarkode <node> ARKBandPrecInit *)
-      val prec_both :
-           bandrange -> (Nvector_serial.data,
-                         [>Nvector_serial.kind]) preconditioner
-
-      (** {4:stats Banded statistics} *)
-
-      (** Returns the sizes of the real and integer workspaces used by the
-          banded preconditioner module.
-
-          @noarkode <node> ARKBandPrecGetWorkSpace
-          @return ([real_size], [integer_size]) *)
-      val get_work_space : 'k serial_session -> int * int
-
-      (** Returns the number of calls to the right-hand side callback for
-          the difference banded Jacobian approximation. This counter is only
-          updated if the default difference quotient function is used.
-
-          @noarkode <node> ARKBandPrecGetNumRhsEvals *)
-      val get_num_rhs_evals : 'k serial_session -> int
-    end (* }}} *)
+      -> ('d, 'k, arkstep) preconditioner
 
     (** {3:arkspilslsolvers Solvers} *)
 
-    (** Callback functions that preprocess or evaluate Jacobian-related data
-        needed by the jac_times_vec_fn. In the call [jac_times_setup_fn arg],
-        [arg] is a {!jacobian_arg} with no work vectors.
-
-        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
-        Any other exception is treated as an unrecoverable error.
-
-        {warning The elements of [arg] should not be accessed after the
-                 function has returned.}
-
-        @noarkode <node> ARKLsJacTimesSetupFn *)
-    type 'd jac_times_setup_fn =
-      (unit, 'd) jacobian_arg
-      -> unit
-
-    (** Callback functions that compute the Jacobian times a vector. In the
-        call [jac_times_vec_fn arg v jv], [arg] is a {!jacobian_arg} with one
-        work vector, [v] is the vector multiplying the Jacobian, and [jv] is
-        the vector in which to store the
-        result—{% $\mathtt{jv} = J\mathtt{v}$%}.
-
-        Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
-        Any other exception is treated as an unrecoverable error.
-
-        {warning Neither the elements of [arg] nor [v] or [jv] should be
-                 accessed after the function has returned.}
-
-        @noarkode <node> ARKLsJacTimesVecFn *)
-    type 'd jac_times_vec_fn =
-      ('d, 'd) jacobian_arg
-      -> 'd (* v *)
-      -> 'd (* Jv *)
-      -> unit
-
-    (** Create an Arkode-specific linear solver from a generic iterative
+    (** Create an ARKStep-specific linear solver from a generic iterative
         linear solver.
 
         The [jac_times_rhs] argument specifies an alternative right-hand-side
@@ -770,7 +867,7 @@ module ARKStep : sig (* {{{ *)
       ('m, 'd, 'k, [>`Iter]) LinearSolver.t
       -> ?jac_times_vec:'d jac_times_setup_fn option * 'd jac_times_vec_fn
       -> ?jac_times_rhs:'d rhsfn
-      -> ('d, 'k) preconditioner
+      -> ('d, 'k, arkstep) preconditioner
       -> ('d, 'k) linear_solver
 
     (** {3:arkspilsset Solver parameters} *)
@@ -1227,7 +1324,7 @@ module ARKStep : sig (* {{{ *)
     end (* }}} *)
   end (* }}} *)
 
-  (** {2:tols Tolerances} *)
+  (** {2:arktols Tolerances} *)
 
   (** Functions that compute the weighted RMS residual weights. The call
       [rfun y rwt] takes the dependent variable vector [y] and fills the
@@ -1244,14 +1341,7 @@ module ARKStep : sig (* {{{ *)
     | ResFtolerance of 'data res_weight_fun
       (** Compute the residual weight vector. *)
 
-  (** {2:solver Solver initialization and use} *)
-
-  (** The linearity of the implicit portion of the problem. *)
-  type linearity =
-    | Linear of bool  (** Implicit portion is linear. Specifies whether
-                          $f_I(t, y)$ or the preconditioner is
-                          time-dependent. *)
-    | Nonlinear       (** Implicit portion is nonlinear. *)
+  (** {2:arksolver Solver initialization and use} *)
 
   (** The form of the initial value problem. *)
   type ('d, 'k) problem
@@ -1286,11 +1376,11 @@ module ARKStep : sig (* {{{ *)
   (** Additive Runge-Kutta (ARK) solution of multi-rate problem. The arguments
       are as described under {!implicit} and {!explicit}. *)
   val imex :
-    ?nlsolver : ('data, 'kind,
+    ?nlsolver:('data, 'kind,
                   (('data, 'kind) session) Sundials_NonlinearSolver.integrator)
                 Sundials_NonlinearSolver.t
-    -> ?lsolver  : ('data, 'kind) linear_solver
-    -> ?linearity : linearity
+    -> ?lsolver:('data, 'kind) linear_solver
+    -> ?linearity: linearity
     -> fi:'data rhsfn
     -> 'data rhsfn
     -> ('data, 'kind) problem
@@ -1477,9 +1567,7 @@ module ARKStep : sig (* {{{ *)
     -> float
     -> unit
 
-  (** {2:set Modifying the solver (optional input functions)} *)
-
-  (** {3:arkset Optional inputs for ARKStep} *)
+  (** {2:arkset Modifying the solver (optional input functions)} *)
 
   (** Sets the integration tolerances.
 
@@ -1815,24 +1903,6 @@ module ARKStep : sig (* {{{ *)
       @noarkode <node> ARKStepSetNonlinear *)
   val set_nonlinear : ('d, 'k) session -> unit
 
-  (** Method choices for predicting implicit solutions.
-
-      @noarkode <node> Implicit predictors *)
-  type predictor_method =
-    | TrivialPredictor        (** Piece-wise constant interpolant
-                                  {% $p_0(\tau) = y_{n-1}$%} %*)
-    | MaximumOrderPredictor   (** An interpolant {% $p_q(t)$%} of polynomial
-                                  order up to {% $q=3$%}. *)
-    | VariableOrderPredictor  (** Decrease the polynomial degree for later RK
-                                  stages. *)
-    | CutoffOrderPredictor    (** Maximum order for early RK stages and
-                                  first-order for later ones. *)
-    | BootstrapPredictor      (** Second-order predictor based only on the
-                                  current step. *)
-    | MinimumCorrectionPredictor
-                              (** Uses all preceding stage information within
-                                  the current step for prediction. *)
-
   (** Specifies the method for predicting implicit solutions.
 
       @noarkode <node> ARKStepSetPredictorMethod *)
@@ -1935,7 +2005,7 @@ module ARKStep : sig (* {{{ *)
       @noarkode <node> ARKSetPostprocessStepFn *)
   val clear_postprocess_step_fn : ('d, 'k) session -> unit
 
-  (** {2:get Querying the solver (optional output functions)} *)
+  (** {2:arkget Querying the solver (optional output functions)} *)
 
   (** Returns the real and integer workspace sizes.
 
@@ -2007,28 +2077,6 @@ module ARKStep : sig (* {{{ *)
       @since 5.0.0
       @noarkode <node> ARKStepGetCurrentState *)
   val get_current_state : ('d, 'k) session -> 'd
-
-  (** Internal data required to construct the current nonlinear implicit
-      system within a nonlinear solver. *)
-  type 'd nonlin_system_data = {
-    tcur  : float;
-      (** Independent variable value for slow stage {% $t^S_{n,i}$ %}. *)
-    zpred : 'd;
-      (** Predicted nonlinear solution {% $z_{\mathit{pred}}$ %}. This
-          data must not be changed. *)
-    zi    : 'd;
-      (** Stage vector {% $z_i$ %}. This data may not be current and may
-          need to be filled. *)
-    fi    : 'd;
-      (** Memory available for evaluating the slow right-hand side
-          {% $f^S(t^S_{n,i}, z_i)$ %}. This data may not be current and may
-          need to be filled. *)
-    gamma : float;
-      (** Current {% $\gamma$ %} for slow-stage calculation. *)
-    sdata : 'd;
-      (** Accumulated data from previous solution and stages
-          {% $\tilde{a}_i$ %}. This data must not be changed. *)
-  }
 
   (** Gives direct access to the internal data required to construct the
       current nonlinear implicit system within a nonlinear solver. This
@@ -2165,7 +2213,7 @@ module ARKStep : sig (* {{{ *)
       @return ([nniters], [nncfails]) *)
   val get_nonlin_solv_stats : ('d, 'k) session -> int * int
 
-  (** {2:roots Additional root-finding functions} *)
+  (** {2:arkroots Additional root-finding functions} *)
 
   (** [set_root_direction s dir] specifies the direction of zero-crossings to
       be located and returned. [dir] may contain one entry for each root
@@ -2235,6 +2283,8 @@ end (* }}} *)
     @noarkode <node> Using ERKStep for C and C++ Applications *)
 module ERKStep : sig (* {{{ *)
 
+  include module type of Common
+
   (** A session with the ERKStep time-stepping solver.
 
       An example session with ERKStep ({openfile arkode_erk_skel.ml}): {[
@@ -2242,9 +2292,9 @@ module ERKStep : sig (* {{{ *)
       ]}
 
       @noarkode <node> Skeleton of main program *)
-  type ('d, 'k) session = ('d, 'k, Arkode_impl.erkstep) Arkode_impl.session
+  type ('d, 'k) session = ('d, 'k, erkstep) Arkode_impl.session
 
-  (** {2:solver Solver initialization and use} *)
+  (** {2:erksolver Solver initialization and use} *)
 
   (** Creates and initializes a session with the solver. The call
       {[init tol ~order f ~roots:(nroots, g) t0 y0]}
@@ -2375,9 +2425,7 @@ module ERKStep : sig (* {{{ *)
     -> float
     -> unit
 
-  (** {2:set Modifying the solver (optional input functions)} *)
-
-  (** {3:erkset Optional inputs for ERKStep} *)
+  (** {2:erksetin Modifying the solver (optional input functions)} *)
 
   (** Sets the integration tolerances.
 
@@ -2605,7 +2653,7 @@ module ERKStep : sig (* {{{ *)
       @noarkode <node> ERKStepSetConstraints *)
   val set_constraints : ('d, 'k) session -> ('d, 'k) Nvector.t -> unit
 
-  (** {2:get Querying the solver (optional output functions)} *)
+  (** {2:erkget Querying the solver (optional output functions)} *)
 
   (** Returns the real and integer workspace sizes.
 
@@ -2723,7 +2771,7 @@ module ERKStep : sig (* {{{ *)
       @noarkode <node> ERKStepGetStepStats *)
   val print_step_stats  : ('d, 'k) session -> out_channel -> unit
 
-  (** {2:roots Additional root-finding functions} *)
+  (** {2:erkroots Additional root-finding functions} *)
 
   (** [set_root_direction s dir] specifies the direction of zero-crossings to
       be located and returned. [dir] may contain one entry for each root
@@ -2793,6 +2841,8 @@ end (* }}} *)
     @noarkode <node> Using MRIStep for C and C++ Applications *)
 module MRIStep : sig (* {{{ *)
 
+  include module type of Common
+
   (** A session with the MRIStep time-stepping solver.
 
       An example session with MRIStep ({openfile arkode_mri_skel.ml}): {[
@@ -2800,16 +2850,295 @@ module MRIStep : sig (* {{{ *)
       ]}
 
       @noarkode <node> Skeleton of main program *)
-  type ('d, 'k) session = ('d, 'k, Arkode_impl.mristep) Arkode_impl.session
+  type ('d, 'k) session = ('d, 'k, mristep) Arkode_impl.session
 
-  (** {2:solver Solver initialization and use} *)
+  (** Alias for sessions based on serial nvectors. *)
+  type 'k serial_session = (Nvector_serial.data, 'k) session
+                           constraint 'k = [>Nvector_serial.kind]
+
+  (** {2:mrilinear Linear solvers} *)
+
+  (** Linear solvers used by MRIStep.
+
+      @noarkode <node> Linear Solver Specification Functions *)
+  type ('data, 'kind) linear_solver
+
+  (** Alias for linear solvers that are restricted to serial nvectors. *)
+  type 'kind serial_linear_solver = (Nvector_serial.data, 'kind) linear_solver
+                                    constraint 'kind = [>Nvector_serial.kind]
+
+  (** Direct Linear Solvers operating on dense, banded, and sparse matrices.
+
+      @noarkode <node> Description of the SUNLinearSolver module *)
+  module Dls : sig (* {{{ *)
+    include module type of Sundials_LinearSolver.Direct
+    include module type of Dls
+
+    (** Create an MRIStep-specific linear solver from a Jacobian approximation
+        function and a generic direct linear solver.
+        The Jacobian approximation function is optional for dense and banded
+        solvers (if not given an internal difference quotient approximation
+        is used), but must be provided for other solvers (or [Invalid_argument]
+        is raised).
+
+        @noarkode <node> MRIStepSetLinearSolver
+        @noarkode <node> MRIStepSetJacFn
+        @noarkode <node> MRIStepSetLinSysFn
+        @since 5.4.0 *)
+    val solver :
+      ?jac:'m jac_fn ->
+      ?linsys:'m linsys_fn ->
+      ('m, RealArray.t, 'kind, [>`Dls]) LinearSolver.t ->
+      'kind serial_linear_solver
+
+    (** {3:mridlsstats Solver statistics} *)
+
+    (** Returns the sizes of the real and integer workspaces used by a direct
+        linear solver.
+
+        @since 5.4.0
+        @noarkode <node> MRIStepGetLinWorkSpace
+        @return ([real_size], [integer_size]) *)
+    val get_work_space : 'k serial_session -> int * int
+
+    (** Returns the number of calls made by a direct linear solver to the
+        Jacobian approximation function.
+
+        @noarkode <node> MRIStepGetNumJacEvals
+        @since 5.4.0 *)
+    val get_num_jac_evals : 'k serial_session -> int
+
+    (** Returns the number of calls to the right-hand side callback due to
+        the finite difference Jacobian approximation.
+
+        @noarkode <node> MRIStepGetNumLinRhsEvals
+        @since 5.4.0 *)
+    val get_num_lin_rhs_evals : 'k serial_session -> int
+
+  end (* }}} *)
+
+  (** Scaled Preconditioned Iterative Linear Solvers.
+
+      @noarkode <node> Description of the SUNLinearSolver module *)
+  module Spils : sig (* {{{ *)
+    include module type of Sundials_LinearSolver.Iterative
+    include module type of Spils
+
+    (** {3:mrispilsprecond Preconditioners} *)
+
+    (** No preconditioning.
+
+        @since 5.4.0 *)
+    val prec_none : ('d, 'k, mristep) preconditioner
+
+    (** Left preconditioning. {% $(P^{-1}A)x = P^{-1}b$ %}.
+
+        @noarkode <node> MRIStepSetPreconditioner
+        @since 5.4.0 *)
+    val prec_left :
+      ?setup:'d prec_setup_fn
+      -> 'd prec_solve_fn
+      -> ('d, 'k, mristep) preconditioner
+
+    (** Right preconditioning. {% $(AP^{-1})Px = b$ %}.
+
+        @noarkode <node> MRIStepSetPreconditioner
+        @since 5.4.0 *)
+    val prec_right :
+      ?setup:'d prec_setup_fn
+      -> 'd prec_solve_fn
+      -> ('d, 'k, mristep) preconditioner
+
+    (** Left and right preconditioning.
+        {% $(P_L^{-1}AP_R^{-1})P_Rx = P_L^{-1}b$ %}
+
+        @noarkode <node> MRIStepSetPreconditioner
+        @since 5.4.0 *)
+    val prec_both :
+      ?setup:'d prec_setup_fn
+      -> 'd prec_solve_fn
+      -> ('d, 'k, mristep) preconditioner
+
+    (** {3:mrispilslsolvers Solvers} *)
+
+    (** Create an MRIStep-specific linear solver from a generic iterative
+        linear solver.
+
+        The [jac_times_rhs] argument specifies an alternative right-hand-side
+        function for use in the internal Jacobian-vector product difference
+        quotient approximation. It is incorrect to specify both this argument
+        and [jac_times_vec].
+
+        NB: a [jac_times_setup_fn] is not supported in
+            {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
+
+        NB: a [jac_times_rhs] function is not supported in
+            {{!Sundials_Config.sundials_version}Config.sundials_version} < 5.3.0.
+
+        @noarkode <node> MRIStepSetLinearSolver
+        @noarkode <node> MRIStepSetJacTimes
+        @noarkode <node> MRIStepSetJacTimesRhsFn
+        @since 5.4.0 *)
+    val solver :
+      ('m, 'd, 'k, [>`Iter]) LinearSolver.t
+      -> ?jac_times_vec:'d jac_times_setup_fn option * 'd jac_times_vec_fn
+      -> ?jac_times_rhs:'d rhsfn
+      -> ('d, 'k, mristep) preconditioner
+      -> ('d, 'k) linear_solver
+
+    (** {3:mrispilsset Solver parameters} *)
+
+    (** Sets the maximum number of time steps to wait before recomputation of
+        the Jacobian or recommendation to update the preconditioner. If the
+        integer argument is less than or equal to 0, a default value of 50 is
+        used.
+
+        @noarkode <node5> MRIStepSetJacEvalFrequency
+        @since 5.4.0 *)
+    val set_jac_eval_frequency : ('d, 'k) session -> int -> unit
+
+    (** Enables or disables scaling of the linear system solution to account
+        for a change in {% $\gamma$ %} in the linear system.
+        Linear solution scaling is enabled by default when a matrix-based
+        linear solver is attached.
+
+        @noarkode <node5> MRIStepSetLinearSolutionScaling
+        @since 5.4.0 *)
+    val set_linear_solution_scaling : ('d, 'k) session -> bool -> unit
+
+    (** Sets the factor by which the Krylov linear solver's convergence test
+        constant is reduced from the Newton iteration test constant.
+        This factor must be >= 0; passing 0 specifies the default (0.05).
+
+        @noarkode <node> MRIStepSetEpsLin
+        @since 5.4.0 *)
+    val set_eps_lin : ('d, 'k) session -> float -> unit
+
+    (** Sets the factor for converting from the integrator tolerance (WRMS
+        norm) to the linear solver tolerance (L2 norm). That is,
+        {% $\mathit{tol}_{\mathsf{L2}} =
+            \mathit{fact}\cdot\mathit{tol}_{\mathsf{WRMS}}$ %}.
+        The given value is used directly if it is greater than zero.
+        If it is zero (the default), then the square root of the state
+        vector length is used.
+        If it is less than zero, then the square root of the dot product of a
+        state vector full of ones with itself is used.
+
+        @noarkode <node> MRIStepSetLSNormFactor
+        @since 5.4.0 *)
+    val set_ls_norm_factor : ('d, 'k) session -> float -> unit
+
+    (** {3:mrispilsstats Solver statistics} *)
+
+    (** Returns the sizes of the real and integer workspaces used by the spils
+        linear solver.
+
+        @since 5.4.0
+        @noarkode <node> MRIStepGetLinWorkSpace
+        @return ([real_size], [integer_size]) *)
+    val get_work_space       : ('d, 'k) session -> int * int
+
+    (** Returns the cumulative number of linear iterations.
+
+        @noarkode <node> MRIStepGetNumLinIters
+        @since 5.4.0 *)
+    val get_num_lin_iters    : ('d, 'k) session -> int
+
+    (** Returns the cumulative number of linear convergence failures.
+
+        @noarkode <node> MRIStepGetNumLinConvFails
+        @since 5.4.0 *)
+    val get_num_lin_conv_fails   : ('d, 'k) session -> int
+
+    (** Returns the cumulative number of calls to the setup function with
+        [jok=false].
+
+        @noarkode <node> MRIStepGetNumPrecEvals
+        @since 5.4.0 *)
+    val get_num_prec_evals   : ('d, 'k) session -> int
+
+    (** Returns the cumulative number of calls to the preconditioner solve
+        function.
+
+        @noarkode <node> MRIStepGetNumPrecSolves
+        @since 5.4.0 *)
+    val get_num_prec_solves  : ('d, 'k) session -> int
+
+    (** Returns the cumulative number of calls to the Jacobian-vector
+        setup function.
+
+        @noarkode <node> MRIStepGetNumJTSetupEvals
+        @since 5.4.0 *)
+    val get_num_jtsetup_evals : ('d, 'k) session -> int
+
+    (** Returns the cumulative number of calls to the Jacobian-vector
+        function.
+
+        @noarkode <node> MRIStepGetNumJtimesEvals
+        @since 5.4.0 *)
+    val get_num_jtimes_evals : ('d, 'k) session -> int
+
+    (** Returns the number of calls to the right-hand side callback for
+        finite difference Jacobian-vector product approximation. This counter is
+        only updated if the default difference quotient function is used.
+
+        @noarkode <node> MRIStepGetNumLinRhsEvals
+        @since 5.4.0 *)
+    val get_num_lin_rhs_evals    : ('d, 'k) session -> int
+
+    (** {3:mrispilslowlevel Low-level solver manipulation}
+
+        The {!init} and {!reinit} functions are the preferred way to set or
+        change preconditioner functions. These low-level functions are
+        provided for experts who want to avoid resetting internal counters
+        and other associated side-effects. *)
+
+    (** Change the preconditioner functions.
+
+        @noarkode <node> MRIStepSetPreconditioner
+        @noarkode <node> ARKLsPrecSolveFn
+        @noarkode <node> ARKLsPrecSetupFn
+        @since 5.4.0 *)
+    val set_preconditioner :
+      ('d, 'k) session
+      -> ?setup:'d prec_setup_fn
+      -> 'd prec_solve_fn
+      -> unit
+
+    (** Change the Jacobian-times-vector function.
+
+        @noarkode <node> MRIStepSetJacTimes
+        @noarkode <node> ARKLsJacTimesVecFn
+        @since 5.4.0 *)
+    val set_jac_times :
+      ('d, 'k) session
+      -> ?jac_times_setup:'d jac_times_setup_fn
+      -> 'd jac_times_vec_fn
+      -> unit
+
+    (** Remove a Jacobian-times-vector function and use the default
+        implementation.
+
+        @noarkode <node> MRIStepSetJacTimes
+        @since 5.4.0 *)
+    val clear_jac_times : ('d, 'k) session -> unit
+
+  end (* }}} *)
+
+  (** {2:mrisolver Solver initialization and use} *)
 
   (** Creates and initializes a session with the solver. The call
-      {[init inner f_s ~slowstep:h_s ~roots:(nroots, g) t0 y0]}
+      {[init inner tol ~nlsolver ~lsolver ~linearity
+             f_s ~slowstep:h_s ~roots:(nroots, g) t0 y0]}
       has as arguments:
       - [inner],  a session to use for the (fast) inner integrator,
-      - [f_s],    the slow portion of the right-hand side function,
       - [tol],    the slow-step integration tolerances,
+      - [nlsolver], the nonlinear solver used for implicit stage solves,
+      - [lsolver], used by [nlsolver]s based on Newton interation.
+      - [linearity], specifies whether the implicit slow right-hand side
+                     function {% $f^S(t, y)$ %} is linear in {% $y$ %} or
+                     nonlinear (the default), and
+      - [f_s],    the slow portion of the right-hand side function,
       - [h_s],    the slow step size,
       - [nroots], the number of root functions,
       - [g],      the root function ([(nroots, g)] defaults to {!no_roots}),
@@ -2839,8 +3168,15 @@ module MRIStep : sig (* {{{ *)
       Neither Root finding nor non-identity mass matrices are supported in the
       inner session.
 
+      For Sundials < 5.4.0, the tolerance must be {!default_tolerances} and
+      the [nlsolver], [lsolver], and [linearity] arguments are not available.
+
       @since 5.0.0
       @noarkode <node> MRIStepCreate
+      @noarkode <node> MRIStepSetLinear
+      @noarkode <node> MRIStepSetNonlinear
+      @noarkode <node> MRIStepSetLinearSolver
+      @noarkode <node> MRIStepSetNonlinearSolver
       @noarkode <node> MRIStepRootInit
       @noarkode <node> MRIStepSetFixedStep
       @noarkode <node> MRIStepSStolerances
@@ -2848,8 +3184,13 @@ module MRIStep : sig (* {{{ *)
       @noarkode <node> MRIStepWFtolerances *)
   val init :
         ('data, 'kind) ARKStep.session
-      -> 'data rhsfn
       -> ('data, 'kind) tolerance
+      -> ?nlsolver:('data, 'kind,
+                    (('data, 'kind) session) Sundials_NonlinearSolver.integrator)
+                    Sundials_NonlinearSolver.t
+      -> ?lsolver :('data, 'kind) linear_solver
+      -> ?linearity:linearity
+      -> 'data rhsfn
       -> slowstep:float
       -> ?roots:(int * 'data rootsfn)
       -> float
@@ -2904,10 +3245,18 @@ module MRIStep : sig (* {{{ *)
       fast methods in the new problem must not be larger than that of the
       previous one.
 
+      @noarkode <node> MRIStepSetNonlinearSolver
+      @noarkode <node> MRIStepSetLinearSolver
+      @noarkode <node> MRIStepSetLinear
+      @noarkode <node> MRIStepSetNonlinear
       @noarkode <node> MRIStepReInit
       @noarkode <node> MRIStepRootInit *)
   val reinit :
     ('d, 'k) session
+    -> ?nlsolver:('data, 'kind,
+                  (('data, 'kind) session) Sundials_NonlinearSolver.integrator)
+                  Sundials_NonlinearSolver.t
+    -> ?lsolver :('data, 'kind) linear_solver
     -> ?roots:(int * 'd rootsfn)
     -> float
     -> ('d, 'k) Nvector.t
@@ -2939,9 +3288,7 @@ module MRIStep : sig (* {{{ *)
     -> float
     -> unit
 
-  (** {2:set Modifying the solver (optional input functions)} *)
-
-  (** {3:mriset Optional inputs for MRIStep} *)
+  (** {2:rmiset Modifying the solver (optional input functions)} *)
 
   (** Resets all optional input parameters to their default values. Neither
       the problem-defining functions nor the root-finding functions are
@@ -3188,7 +3535,108 @@ module MRIStep : sig (* {{{ *)
       @noarkode <node> MRISetPostprocessStepFn *)
   val clear_postprocess_step_fn : ('d, 'k) session -> unit
 
-  (** {2:get Querying the solver (optional output functions)} *)
+  (** {3:mrisetimplicit Optional inputs for implicit stage solves} *)
+
+  (** A function to be called {e after} the predictor algorithm to update the
+      predictor.
+
+      The first argument is the current value of the independent variable. The
+      second is the predicated stage solution which may be updated directly.
+
+      {warning The array and its contents should not be accessed after the
+               function has returned}.
+
+      All exceptions are treated as unrecoverable errors.
+
+      @noarkode <node> MRIStepStagePredictFn
+      @since 5.4.0 *)
+  type 'd stage_predict_fn = float -> 'd -> unit
+
+  (** Set the function called after the predictor algorithm and before the
+      calculation of an implicit stage solution.
+
+      If a stage prediction function is set and the current predictor method,
+      see {!set_predictor_method}, is
+      {{!predictor_method}MinimumCorrectionPredictor}, then the
+      {{!predictor_method}TrivialPredictor} will be used instead.
+
+      @noarkode <node> MRIStepSetStagePredictFn
+      @since 5.4.0 *)
+  val set_stage_predict_fn : ('d, 'k) session -> 'd stage_predict_fn -> unit
+
+  (** Clear the function called after the predictor algorithm.
+
+      @noarkode <node> MRIStepSetStagePredictFn
+      @since 5.4.0 *)
+  val clear_stage_predict_fn : ('d, 'k) session -> unit
+
+  (** Specifies the safety factor used in the nonlinear convergence test.
+
+      @noarkode <node> MRIStepSetNonlinConvCoef
+      @since 5.4.0 *)
+  val set_nonlin_conv_coef : ('d, 'k) session -> float -> unit
+
+  (** Specifies the constant used in estimating the nonlinear solver
+      convergence rate.
+
+      @noarkode <node> MRIStepSetNonlinCRDown
+      @since 5.4.0 *)
+  val set_nonlin_crdown : ('d, 'k) session -> float -> unit
+
+  (** Specifies the nonlinear correction threshold beyond which the iteration
+      will be declared divergent.
+
+      @noarkode <node> MRIStepSetNonlinRDiv
+      @since 5.4.0 *)
+  val set_nonlin_rdiv : ('d, 'k) session -> float -> unit
+
+  (** Specifies a scaled step size ratio tolerance beyond which the linear
+      solver setup routine will be signalled.
+
+      @noarkode <node> MRIStepSetDeltaGammaMax
+      @since 5.4.0 *)
+  val set_delta_gamma_max : ('d, 'k) session -> float -> unit
+
+  (** Specifies the frequency of calls to the linear solver setup routine.
+      Positive values specify the number of time steps between setup calls,
+      negative values force recomputation at each Newton step, and zero values
+      reset to the default (20).
+
+      @noarkode <node> MRIStepSetLSetupFrequency
+      @since 5.4.0 *)
+  val set_lsetup_frequency : ('d, 'k) session -> int -> unit
+
+  (** Specifies that the implicit portion of the problem is linear. The flag
+      indicates whether the Jacobian of {% $f_I(t,y)$%}, or, when using an
+      iterative linear solver, the preconditioner is time-dependent ([true])
+      or not ([false]).
+
+      @noarkode <node> MRIStepSetLinear
+      @since 5.4.0 *)
+  val set_linear : ('d, 'k) session -> bool -> unit
+
+  (** Specifies that the implicit portion of the problem is nonlinear.
+
+      @noarkode <node> MRIStepSetNonlinear
+      @since 5.4.0 *)
+  val set_nonlinear : ('d, 'k) session -> unit
+
+  (** Specifies the method for predicting implicit solutions.
+
+      @noarkode <node> MRIStepSetPredictorMethod
+      @since 5.4.0 *)
+  val set_predictor_method : ('d, 'k) session -> predictor_method -> unit
+
+  (** Specifies the maximum number of nonlinear solver iterations permitted
+      per RK stage at each step.
+
+      @raise NonlinearOperationError Nonlinear solver not configured
+      @noarkode <node> MRIStepSetMaxNonlinIters
+      @since 5.4.0 *)
+  val set_max_nonlin_iters : ('d, 'k) session -> int -> unit
+
+
+  (** {2:mriget Querying the solver (optional output functions)} *)
 
   (** Returns the real and integer workspace sizes.
 
@@ -3235,28 +3683,6 @@ module MRIStep : sig (* {{{ *)
       @noarkode <node> MRIStepWriteCoupling *)
   val write_coupling : ('d, 'k) session -> Logfile.t -> unit
 
-  (** Internal data required to construct the current nonlinear implicit
-      system within a nonlinear solver. *)
-  type 'd nonlin_system_data = {
-    tcur  : float;
-      (** Independent variable value for slow stage {% $t^S_{n,i}$ %}. *)
-    zpred : 'd;
-      (** Predicted nonlinear solution {% $z_{\mathit{pred}}$ %}. This
-          data must not be changed. *)
-    zi    : 'd;
-      (** Stage vector {% $z_i$ %}. This data may not be current and may
-          need to be filled. *)
-    fi    : 'd;
-      (** Memory available for evaluating the slow right-hand side
-          {% $f^S(t^S_{n,i}, z_i)$ %}. This data may not be current and may
-          need to be filled. *)
-    gamma : float;
-      (** Current {% $\gamma$ %} for slow-stage calculation. *)
-    sdata : 'd;
-      (** Accumulated data from previous solution and stages
-          {% $\tilde{a}_i$ %}. This data must not be changed. *)
-  }
-
   (** Gives direct access to the internal data required to construct the
       current nonlinear implicit system within a nonlinear solver. This
       function should be called inside the nonlinear system function.
@@ -3286,8 +3712,60 @@ module MRIStep : sig (* {{{ *)
                       -> ('d, 'k) Nvector.t
                       -> unit
 
+  (** Returns the current value of {% $\gamma$ %}.
+      This scalar appears in the internal Newton equation, either
+      {% $A = I - \gamma J$ %} or {% $A = M - \gamma J$ %}.
 
-  (** {2:roots Additional root-finding functions} *)
+      @noarkode <node> MRIStepGetCurrentGamma
+      @since 5.4.0 *)
+  val get_current_gamma : ('d, 'k) session -> float
+
+  (** Returns a suggested factor by which the user's tolerances should be
+      scaled when too much accuracy has been requested for some internal step.
+
+      @noarkode <node> MRIStepGetTolScaleFactor
+      @since 5.4.0 *)
+  val get_tol_scale_factor : ('d, 'k) session -> float
+
+  (** Returns the solution error weights at the current time.
+
+      @noarkode <node> MRIStepGetErrWeights
+      @since 5.4.0 *)
+  val get_err_weights : ('d, 'k) session -> ('d, 'k) Nvector.t -> unit
+
+  (** {3:mrigetimplicit Implicit solver optional output functions} *)
+
+  (** Returns the number of calls made to the linear solver's setup function.
+
+      @noarkode <node> MRIStepGetNumLinSolvSetups
+      @since 5.4.0 *)
+  val get_num_lin_solv_setups : ('d, 'k) session -> int
+
+  (** Returns the cumulative number of nonlinear (functional or Newton)
+      iterations.
+
+      @raise NonlinearOperationError Nonlinear solver not configured
+      @noarkode <node> MRIStepGetNumNonlinSolvIters
+      @since 5.4.0 *)
+  val get_num_nonlin_solv_iters : ('d, 'k) session -> int
+
+  (** Returns the cumulative number of nonlinear convergence failures.
+
+      @noarkode <node> MRIStepGetNumNonlinSolvConvFails
+      @since 5.4.0 *)
+  val get_num_nonlin_solv_conv_fails : ('d, 'k) session -> int
+
+  (** Returns both the numbers of nonlinear iterations performed [nniters] and
+      nonlinear convergence failures [nncfails].
+
+      @raise NonlinearOperationError Nonlinear solver not configured
+      @noarkode <node> MRIStepGetNonlinSolvStats
+      @since 5.4.0
+      @return ([nniters], [nncfails]) *)
+  val get_nonlin_solv_stats : ('d, 'k) session -> int * int
+
+
+  (** {2:mriroots Additional root-finding functions} *)
 
   (** [set_root_direction s dir] specifies the direction of zero-crossings to
       be located and returned. [dir] may contain one entry for each root
@@ -3392,6 +3870,7 @@ exception LinearInitFailure
     {!Sundials_LinearSolver.PackageFailure}.
 
     @noarkode <node> ARKStepGetLastLinFlag
+    @noarkode <node> MRIStepGetLastLinFlag
     @noarkode <node> ARK_LSETUP_FAIL *)
 exception LinearSetupFailure of exn option
 
@@ -3407,6 +3886,7 @@ exception LinearSetupFailure of exn option
     {!Sundials_LinearSolver.PackageFailure}.
 
     @noarkode <node> ARKStepGetLastLinFlag
+    @noarkode <node> MRIStepGetLastLinFlag
     @noarkode <node> ARK_LSOLVE_FAIL *)
 exception LinearSolveFailure of exn option
 
