@@ -1,7 +1,7 @@
 #! /bin/sh
 
 sysname='Sundials/ML'
-version=5.4.0
+version=5.7.0
 versionp=0
 contact='tim@tbrk.org'
 
@@ -538,7 +538,11 @@ else
 	5.1.*) sundials=510 ;;
 	5.2.*) sundials=520 ;;
 	5.3.*) sundials=530 ;;
-	5.*)   sundials=540 ;;
+	5.4.*) sundials=540 ;;
+	5.5.*) sundials=550 ;;
+	5.6.0) sundials=560 ;;
+	5.6.*) sundials=561 ;;
+	5.*)   sundials=570 ;;
 	6.*)   sundials=600 ;;
 	7.*)   sundials=700 ;;
 	8.*)   sundials=800 ;;
@@ -861,6 +865,7 @@ if [ $sundials -ge 260 ]; then
 			| ${CPP} ${cppflags} ${Isundials_inc_path} \
 			    -P 2>>${logfile} \
 			| grep -v ^$`
+    printf "Sundials uses -lm?: %s\n" "${sundials_info}" >>${logfile}
     case "${sundials_info}" in
 	1) ;;
 	0) unset libm ;;
@@ -935,6 +940,7 @@ if [ $sundials -gt 0 ]; then
 			| ${CPP} ${cppflags} ${Isundials_inc_path} \
 			    -P 2>>${logfile} \
 			| grep -v ^$`
+    printf "Sundials has LAPACK?: %s\n" "${sundials_info}" >>${logfile}
     case "${sundials_info}" in
 	1) lapack_lib=${LAPACKLIB} ;;
 	0) unset lapack_lib ;;
@@ -987,14 +993,21 @@ superlumt_info="not available"
 superlumt_libs=
 
 if [ $sundials -ge 260 ]; then
+
     include="\"sundials/sundials_config.h\""
-    q1="#ifdef SUNDIALS_KLU\n:KLU:\n#endif\n"
-    q2="#ifdef SUNDIALS_SUPERLUMT\n:SUPERLUMT:\n#endif\n"
+    if [ $sundials -ge 550 ]; then
+	q1="#ifdef SUNDIALS_SUNLINSOL_KLU\n:KLU:\n#endif\n"
+	q2="#ifdef SUNDIALS_SUNLINSOL_SUPERLUMT\n:SUPERLUMT:\n#endif\n"
+    else
+	q1="#ifdef SUNDIALS_KLU\n:KLU:\n#endif\n"
+	q2="#ifdef SUNDIALS_SUPERLUMT\n:SUPERLUMT:\n#endif\n"
+    fi
     sundials_info=`printf "#include %s\n%b%b" "${include}" "${q1}" "${q2}" \
 		    | ${CPP} ${cppflags} ${Isundials_inc_path} \
 			-P 2>>${logfile} \
 		    | grep -v ^$`
 
+    printf "Sundials has KLU/SUPERLUMT?: %s\n" "${sundials_info}" >>${logfile}
     case "${sundials_info}" in
 	*:KLU:*)
 	    if [ ${enable_klu:-1} -eq 1 ]; then
@@ -1196,6 +1209,7 @@ fi
 
 # Check for nvector_mpimanyvector installation
 nvecmpimanyvector_info='not available'
+nvecmpiplusx_info='not available'
 nvecmpimanyvector_enabled=
 if [ $sundials -ge 500 ] && [ ${ocamlmpi_enabled:-0} -eq 1 ]; then
     test_stem=__configure_test_file__nvecmpimanyvector

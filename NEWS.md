@@ -1,6 +1,6 @@
-Sundials/ML 5.4.0p0 (September 2021)
+Sundials/ML 5.7.0p0 (September 2021)
 ------------------------------------
-Sundials/ML v5.4.0p0 adds support for v5.x of the Sundials Suite of
+Sundials/ML v5.7.0p0 adds support for v5.x of the Sundials Suite of
 numerical solvers.
 
 OCaml 4.03.0 or greater is now required and optionally OCamlMPI 1.05.
