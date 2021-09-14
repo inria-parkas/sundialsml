@@ -134,12 +134,7 @@ let main () =
   (* Initialize the fast integrator. Specify the fast right-hand side
      function in y'=fs(t,y)+ff(t,y), the inital time T0, and the
      initial dependent variable vector y. *)
-  let inner_arkode_mem = ARKStep.(init
-                                   (explicit (ff udata))
-                                   Arkode.default_tolerances
-                                   t0
-                                   y)
-  in
+  let inner_arkode_mem = ARKStep.(init (explicit (ff udata)) default_tolerances t0 y) in
   ARKStep.set_erk_table_num inner_arkode_mem
     Arkode.ButcherTable.Knoth_Wolke_3_3;
   ARKStep.set_fixed_step inner_arkode_mem (Some hf);
@@ -150,8 +145,8 @@ let main () =
      problem is fully implicit, we set f_E to NULL and f_I to f. *)
   (* Pass udata to user functions *)
   (* Specify slow and fast step sizes *)
-  let arkode_mem = MRIStep.(init inner_arkode_mem (fs udata)
-                              Arkode.default_tolerances ~slowstep:hs t0 y) in
+  let arkode_mem = MRIStep.(init inner_arkode_mem default_tolerances (fs udata)
+                              ~slowstep:hs t0 y) in
   (* Increase max num steps  *)
   MRIStep.set_max_num_steps arkode_mem 10000;
 

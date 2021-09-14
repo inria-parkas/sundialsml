@@ -199,14 +199,15 @@ module ArkodeBbdTypes = struct
     }
 end
 
+type 'step arkode_mem
+type c_weak_ref
+
 type arkstep = [`ARKStep]
 type erkstep = [`ERKStep]
 type mristep = [`MRIStep]
 
-type 'step arkode_mem
-type c_weak_ref
-
 module Global = struct
+
   type 'a rhsfn = float -> 'a -> 'a -> unit
   type 'a rootsfn = float -> 'a -> RealArray.t -> unit
   type error_handler = Util.error_details -> unit
@@ -273,7 +274,7 @@ type ('a, 'kind, 'step) session = {
   mutable preinnerarray : 'a array;        (* MRI only *)
 
   (* ARK only *)
-  mutable linsolver      : ('a, 'kind) linear_solver option;
+  mutable linsolver      : ('a, 'kind, 'step) lin_solver option;
   mutable ls_solver      : LSI.held_linear_solver;
   mutable ls_callbacks   : ('a, 'kind) linsolv_callbacks;
   mutable ls_precfns     : 'a linsolv_precfns;
@@ -284,7 +285,7 @@ type ('a, 'kind, 'step) session = {
   mutable mass_precfns   : 'a mass_precfns;
 
   (* ARK only *)
-  mutable nls_solver     : ('a, 'kind, (('a, 'kind, arkstep) session)
+  mutable nls_solver     : ('a, 'kind, (('a, 'kind, 'step) session)
                              NLSI.integrator)
                            NLSI.nonlinear_solver option;
 
@@ -297,8 +298,8 @@ and problem_type =
   | ExplicitOnly
   | ImplicitAndExplicit
 
-and ('data, 'kind) linear_solver =
-  ('data, 'kind, arkstep) session
+and ('data, 'kind, 'step) lin_solver =
+  ('data, 'kind, 'step) session
   -> ('data, 'kind) nvector
   -> unit
 
@@ -446,21 +447,17 @@ let mass_check_spils session =
 type ('k, 'step) serial_session = (Nvector_serial.data, 'k, 'step) session
                                   constraint 'k = [>Nvector_serial.kind]
 
-type 'k serial_linear_solver =
-  (Nvector_serial.data, 'k) linear_solver
-  constraint 'k = [>Nvector_serial.kind]
-
 module SpilsTypes = struct
   include SpilsTypes'
 
-  type ('a, 'k) set_preconditioner =
-    ('a, 'k, arkstep) session -> ('a, 'k) nvector -> unit
+  type ('a, 'k, 's) set_preconditioner =
+    ('a, 'k, 's) session -> ('a, 'k) nvector -> unit
 
-  type ('a, 'k) preconditioner =
-    LSI.Iterative.preconditioning_type * ('a, 'k) set_preconditioner
+  type ('a, 'k, 's) preconditioner =
+    LSI.Iterative.preconditioning_type * ('a, 'k, 's) set_preconditioner
 
-  type 'k serial_preconditioner =
-    (Nvector_serial.data, 'k) preconditioner
+  type ('k, 's) serial_preconditioner =
+    (Nvector_serial.data, 'k, 's) preconditioner
     constraint 'k = [>Nvector_serial.kind]
 
 end

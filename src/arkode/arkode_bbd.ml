@@ -19,8 +19,14 @@ include ArkodeBbdTypes
 type data = Nvector_parallel.data
 type kind = Nvector_parallel.kind
 
-type parallel_session = (data, kind) Arkode.ARKStep.session
-type parallel_preconditioner = (data, kind) Arkode.ARKStep.Spils.preconditioner
+type 'step parallel_session =
+  (Nvector_parallel.data, Nvector_parallel.kind, 'step) Arkode_impl.session
+  constraint 'step = [<Arkode.arkstep|Arkode.mristep]
+
+type 'step parallel_preconditioner =
+  (Nvector_parallel.data, Nvector_parallel.kind, 'step)
+    Arkode_impl.SpilsTypes.preconditioner
+  constraint 'step = [<Arkode.arkstep|Arkode.mristep]
 
 module Impl = ArkodeBbdParamTypes
 type local_fn = data Impl.local_fn
@@ -35,7 +41,7 @@ let bbd_precfns { local_fn; comm_fn } =
   { Impl.local_fn = local_fn; Impl.comm_fn = comm_fn }
 
 external c_bbd_prec_init
-    : parallel_session -> int -> bandwidths -> float -> bool -> unit
+    : 'step parallel_session -> int -> bandwidths -> float -> bool -> unit
     = "sunml_arkode_bbd_prec_init"
 
 let init_preconditioner dqrely bandwidths precfns session nv =
@@ -57,7 +63,7 @@ let prec_both ?(dqrely=0.0) bandwidths ?comm local_fn =
     init_preconditioner dqrely bandwidths { local_fn ; comm_fn = comm })
 
 external c_bbd_prec_reinit
-    : parallel_session -> int -> int -> float -> unit
+    : 'step parallel_session -> int -> int -> float -> unit
     = "sunml_arkode_bbd_prec_reinit"
 
 let reinit s ?(dqrely=0.0) mudq mldq =
@@ -66,14 +72,14 @@ let reinit s ?(dqrely=0.0) mudq mldq =
   | BBDPrecFns _ -> c_bbd_prec_reinit s mudq mldq dqrely
   | _ -> raise LinearSolver.InvalidLinearSolver
 
-external get_work_space : parallel_session -> int * int
+external get_work_space : 'step parallel_session -> int * int
     = "sunml_arkode_bbd_get_work_space"
 
 let get_work_space s =
   ls_check_spils_bbd s;
   get_work_space s
 
-external get_num_gfn_evals : parallel_session -> int
+external get_num_gfn_evals : 'step parallel_session -> int
     = "sunml_arkode_bbd_get_num_gfn_evals"
 
 let get_num_gfn_evals s =

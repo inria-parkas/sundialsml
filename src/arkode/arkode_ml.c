@@ -896,6 +896,34 @@ CAMLprim value sunml_arkode_ark_set_linear_solver (value varkode_mem,
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_arkode_mri_set_linear_solver (value varkode_mem,
+						   value vlsolv,
+						   value vojmat,
+						   value vhasjac,
+						   value vhaslsf)
+{
+    CAMLparam5(varkode_mem, vlsolv, vojmat, vhasjac, vhaslsf);
+#if 540 <= SUNDIALS_LIB_VERSION
+    void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
+    SUNLinearSolver lsolv = LSOLVER_VAL(vlsolv);
+    SUNMatrix jmat = (vojmat == Val_none) ? NULL : MAT_VAL(Some_val(vojmat));
+    int flag;
+
+    flag = MRIStepSetLinearSolver(arkode_mem, lsolv, jmat);
+    CHECK_LS_FLAG ("MRIStepSetLinearSolver", flag);
+    flag = MRIStepSetJacFn(arkode_mem, Bool_val(vhasjac) ? jacfn : NULL);
+    CHECK_LS_FLAG("MRIStepSetJacFn", flag);
+
+    if (Bool_val(vhaslsf)) {
+	MRIStepSetLinSysFn(arkode_mem, linsysfn);
+	CHECK_LS_FLAG("MRIStepSetLinSysFn", flag);
+    }
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value sunml_arkode_dls_set_linear_solver (value varkode_mem, value vlsolv,
 					       value vjmat, value vhasjac)
 {
@@ -1012,6 +1040,22 @@ CAMLprim value sunml_arkode_ark_set_nonlinear_solver(value varkode_mem,
 
     int flag = ARKStepSetNonlinearSolver(arkode_mem, nlsolv);
     CHECK_FLAG ("ARKStepSetNonlinearSolver", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_mri_set_nonlinear_solver(value varkode_mem,
+						     value vnlsolv)
+{
+    CAMLparam2(varkode_mem, vnlsolv);
+#if 540 <= SUNDIALS_LIB_VERSION
+    void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
+    SUNNonlinearSolver nlsolv = NLSOLVER_VAL(vnlsolv);
+
+    int flag = MRIStepSetNonlinearSolver(arkode_mem, nlsolv);
+    CHECK_FLAG ("MRIStepSetNonlinearSolver", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
@@ -1486,11 +1530,13 @@ CAMLprim value sunml_arkode_ark_set_mass_times(value varkode_mem,
 
 /** ARKode generic interface: ARKStep, ERKStep, MRIStep **/
 
-static value sunml_arkode_ark_last_lin_exception(void *arkode_mem)
+static value sunml_arkode_last_lin_exception(void *arkode_mem)
 {
 #if 400 <= SUNDIALS_LIB_VERSION
     long int lsflag;
 
+    // ARKStepGetLastLinFlag and MRIStepGetLastLinFlag share the same
+    // underlying implementation
     if (arkode_mem != NULL
 	  && ARKStepGetLastLinFlag(arkode_mem, &lsflag) == ARKLS_SUCCESS)
 	return sunml_lsolver_exception_from_flag(lsflag);
@@ -1636,14 +1682,14 @@ void sunml_arkode_check_flag(const char *call, int flag, void *arkode_mem)
 	    caml_raise_constant(ARKODE_EXN(LinearInitFailure));
 
 	case ARK_LSETUP_FAIL:
-	    // NB: Only ARKStep should return this error
+	    // NB: Only ARKStep or MRIStep should return this error
 	    caml_raise_with_arg(ARKODE_EXN(LinearSetupFailure),
-				sunml_arkode_ark_last_lin_exception(arkode_mem));
+				sunml_arkode_last_lin_exception(arkode_mem));
 
 	case ARK_LSOLVE_FAIL:
-	    // NB: Only ARKStep should return this error
+	    // NB: Only ARKStep or MRIStep should return this error
 	    caml_raise_with_arg(ARKODE_EXN(LinearSolveFailure),
-				sunml_arkode_ark_last_lin_exception(arkode_mem));
+				sunml_arkode_last_lin_exception(arkode_mem));
 
 	case ARK_MASSINIT_FAIL:
 	    caml_raise_constant(ARKODE_EXN(MassInitFailure));
@@ -2042,6 +2088,8 @@ void sunml_arkode_check_ls_flag(const char *call, int flag)
 	case ARKLS_MASSFUNC_RECVR:
 	default:
 	    /* e.g. ARKLS_MEM_NULL, ARKLS_LMEM_NULL */
+	    // ARKStepGetLinReturnFlagName and MRIStepGetLinReturnFlagName
+	    // share the same underlying implementation
 	    snprintf(exmsg, MAX_ERRMSG_LEN, "%s: %s", call,
 		    ARKStepGetLinReturnFlagName(flag));
 	    caml_failwith(exmsg);
@@ -6753,6 +6801,272 @@ CAMLprim value sunml_arkode_mri_write_coupling(value varkode_mem, value vlog)
     CAMLreturn(Val_unit);
 }
 
+/* MRIStep: Linear and Nonlinear Solvers */
+
+CAMLprim value sunml_arkode_mri_get_lin_work_space(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    CAMLlocal1(r);
+#if 540 <= SUNDIALS_LIB_VERSION
+    long int lenrwLS;
+    long int leniwLS;
+
+    int flag = MRIStepGetLinWorkSpace(ARKODE_MEM_FROM_ML(varkode_mem),
+				      &lenrwLS, &leniwLS);
+    CHECK_FLAG("MRIStepGetLinWorkSpace", flag);
+
+    r = caml_alloc_tuple(2);
+    Store_field(r, 0, Val_long(lenrwLS));
+    Store_field(r, 1, Val_long(leniwLS));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(r);
+}
+
+CAMLprim value sunml_arkode_mri_get_num_jac_evals(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    long int r;
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepGetNumJacEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    CHECK_FLAG("MRIStepGetNumJacEvals", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(Val_long(r));
+}
+
+CAMLprim value sunml_arkode_mri_get_num_lin_rhs_evals(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    long int r;
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepGetNumLinRhsEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    CHECK_FLAG("MRIStepGetNumLinRhsEvals", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(Val_long(r));
+}
+
+CAMLprim value sunml_arkode_mri_set_jac_times(value vdata, value vhas_setup,
+					      value vhas_times)
+{
+    CAMLparam3(vdata, vhas_setup, vhas_times);
+#if 540 <= SUNDIALS_LIB_VERSION
+    ARKLsJacTimesSetupFn setup = Bool_val (vhas_setup) ? jacsetupfn : NULL;
+    ARKLsJacTimesVecFn   times = Bool_val (vhas_times) ? jactimesfn : NULL;
+
+    int flag = MRIStepSetJacTimes(ARKODE_MEM_FROM_ML(vdata), setup, times);
+    CHECK_LS_FLAG("MRIStepSetJacTimes", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_mri_set_jac_times_rhsfn(value vdata,
+						    value vhas_rhsfn)
+{
+    CAMLparam2(vdata, vhas_rhsfn);
+#if 540 <= SUNDIALS_LIB_VERSION
+    ARKRhsFn rhsfn = Bool_val (vhas_rhsfn) ? jactimesrhsfn : NULL;
+
+    int flag = MRIStepSetJacTimesRhsFn(ARKODE_MEM_FROM_ML(vdata), rhsfn);
+    CHECK_LS_FLAG("MRIStepSetJacTimesRhsFn", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_mri_set_preconditioner (value vsession,
+						    value vset_precsetup)
+{
+    CAMLparam2 (vsession, vset_precsetup);
+    void *mem = ARKODE_MEM_FROM_ML (vsession);
+#if 540 <= SUNDIALS_LIB_VERSION
+    ARKLsPrecSetupFn setup = Bool_val (vset_precsetup) ? precsetupfn : NULL;
+    int flag = MRIStepSetPreconditioner (mem, setup, precsolvefn);
+    CHECK_FLAG ("MRIStepSetPreconditioner", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_mri_set_jac_eval_frequency(value varkode_mem,
+						       value vevalfreq)
+{
+    CAMLparam2(varkode_mem, vevalfreq);
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepSetJacEvalFrequency(ARKODE_MEM_FROM_ML(varkode_mem),
+					  Long_val(vevalfreq));
+    CHECK_LS_FLAG("MRIStepSetJacEvalFrequency", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_mri_set_linear_solution_scaling(value varkode_mem,
+							    value vonoff)
+{
+    CAMLparam2(varkode_mem, vonoff);
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepSetLinearSolutionScaling(ARKODE_MEM_FROM_ML(varkode_mem),
+					       Bool_val(vonoff));
+    CHECK_FLAG("MRIStepSetLinearSolutionScaling", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_mri_set_eps_lin(value varkode_mem, value eplifac)
+{
+    CAMLparam2(varkode_mem, eplifac);
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepSetEpsLin(ARKODE_MEM_FROM_ML(varkode_mem),
+				Double_val(eplifac));
+    CHECK_FLAG("MRIStepSetEpsLin", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_mri_set_ls_norm_factor(value varkode_mem, value vfac)
+{
+    CAMLparam2(varkode_mem, vfac);
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepSetLSNormFactor(ARKODE_MEM_FROM_ML(varkode_mem),
+				      Double_val(vfac));
+    CHECK_FLAG("MRIStepSetLSNormFactor", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_mri_get_num_lin_iters(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    long int r;
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepGetNumLinIters(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    CHECK_FLAG("MRIStepGetNumLinIters", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(Val_long(r));
+}
+
+CAMLprim value sunml_arkode_mri_get_num_lin_conv_fails(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    long int r;
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepGetNumLinConvFails(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    CHECK_FLAG("MRIStepGetNumLinConvFails", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(Val_long(r));
+}
+
+CAMLprim value sunml_arkode_mri_get_num_prec_evals(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    long int r;
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepGetNumPrecEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    CHECK_FLAG("MRIStepGetNumPrecEvals", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(Val_long(r));
+}
+
+CAMLprim value sunml_arkode_mri_get_num_prec_solves(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    long int r;
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepGetNumPrecSolves(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    CHECK_FLAG("MRIStepGetNumPrecSolves", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(Val_long(r));
+}
+
+CAMLprim value sunml_arkode_mri_get_num_jtsetup_evals(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    long int r;
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepGetNumJTSetupEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    CHECK_FLAG("MRIStepGetNumJTSetupEvals", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(Val_long(r));
+}
+
+CAMLprim value sunml_arkode_mri_get_num_jtimes_evals(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    long int r;
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepGetNumJtimesEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    CHECK_FLAG("MRIStepGetNumJtimesEvals", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(Val_long(r));
+}
+
+CAMLprim value sunml_arkode_mri_set_linear(value varkode_mem, value vtimedepend)
+{
+    CAMLparam2(varkode_mem, vtimedepend);
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepSetLinear(ARKODE_MEM_FROM_ML(varkode_mem),
+			        Bool_val(vtimedepend));
+    CHECK_FLAG("MRIStepSetLinear", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_mri_set_nonlinear(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepSetNonlinear(ARKODE_MEM_FROM_ML(varkode_mem));
+    CHECK_FLAG("MRIStepSetNonlinear", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_mri_set_stage_predict_fn(value varkode_mem,
+						     value vset)
+{
+    CAMLparam2(varkode_mem, vset);
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepSetStagePredictFn(ARKODE_MEM_FROM_ML(varkode_mem),
+				    Bool_val(vset) ? stagepredictfn : NULL);
+    CHECK_FLAG("MRIStepSetStagePredictFn", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * Boiler plate definitions for MRIStep interface.
  */
@@ -7182,5 +7496,194 @@ CAMLprim value sunml_arkode_mri_write_parameters(value varkode_mem, value vlog)
 #endif
 
     CAMLreturn(Val_unit);
+}
+
+CAMLprim value sunml_arkode_mri_set_nonlin_conv_coef(value varkode_mem, value nlscoef)
+{
+    CAMLparam2(varkode_mem, nlscoef);
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepSetNonlinConvCoef(ARKODE_MEM_FROM_ML(varkode_mem),
+				        Double_val(nlscoef));
+    CHECK_FLAG("MRIStepSetNonlinConvCoef", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_mri_set_nonlin_crdown(value varkode_mem, value varg)
+{
+    CAMLparam2(varkode_mem, varg);
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepSetNonlinCRDown(ARKODE_MEM_FROM_ML(varkode_mem),
+				      Double_val(varg));
+    CHECK_FLAG("MRIStepSetNonlinCRDown", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_mri_set_nonlin_rdiv(value varkode_mem, value varg)
+{
+    CAMLparam2(varkode_mem, varg);
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepSetNonlinRDiv(ARKODE_MEM_FROM_ML(varkode_mem),
+				    Double_val(varg));
+    CHECK_FLAG("MRIStepSetNonlinRDiv", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_mri_set_delta_gamma_max(value varkode_mem, value varg)
+{
+    CAMLparam2(varkode_mem, varg);
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepSetDeltaGammaMax(ARKODE_MEM_FROM_ML(varkode_mem),
+				      Double_val(varg));
+    CHECK_FLAG("MRIStepSetDeltaGammaMax", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_mri_set_lsetup_frequency(value varkode_mem,
+						     value varg)
+{
+    CAMLparam2(varkode_mem, varg);
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepSetLSetupFrequency(ARKODE_MEM_FROM_ML(varkode_mem),
+				         Int_val(varg));
+    CHECK_FLAG("MRIStepSetLSetupFrequency", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_mri_set_predictor_method(value varkode_mem, value vmethod)
+{
+    CAMLparam2(varkode_mem, vmethod);
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepSetPredictorMethod(ARKODE_MEM_FROM_ML(varkode_mem),
+				         Int_val(vmethod));
+    CHECK_FLAG("MRIStepSetPredictorMethod", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_mri_set_max_nonlin_iters(value varkode_mem, value maxcor)
+{
+    CAMLparam2(varkode_mem, maxcor);
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepSetMaxNonlinIters(ARKODE_MEM_FROM_ML(varkode_mem),
+				        Int_val(maxcor));
+    CHECK_FLAG("MRIStepSetMaxNonlinIters", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_mri_get_current_gamma(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    double gamma;
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepGetCurrentGamma(ARKODE_MEM_FROM_ML(varkode_mem), &gamma);
+    CHECK_FLAG("MRIStepGetCurrentGamma", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(caml_copy_double(gamma));
+}
+
+CAMLprim value sunml_arkode_mri_get_tol_scale_factor(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    realtype r;
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepGetTolScaleFactor(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    CHECK_FLAG("MRIStepGetTolScaleFactor", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(caml_copy_double(r));
+}
+
+CAMLprim value sunml_arkode_mri_get_err_weights(value varkode_mem, value verrws)
+{
+    CAMLparam2(varkode_mem, verrws);
+#if 540 <= SUNDIALS_LIB_VERSION
+    N_Vector errws_nv = NVEC_VAL(verrws);
+    int flag = MRIStepGetErrWeights(ARKODE_MEM_FROM_ML(varkode_mem), errws_nv);
+    CHECK_FLAG("MRIStepGetErrWeights", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_mri_get_num_lin_solv_setups(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    long int v;
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepGetNumLinSolvSetups(ARKODE_MEM_FROM_ML(varkode_mem), &v);
+    CHECK_FLAG("ARKodeGetNumLinSolvSetups", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(Val_long(v));
+}
+
+CAMLprim value sunml_arkode_mri_get_num_nonlin_solv_iters(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    long int r;
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepGetNumNonlinSolvIters(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    CHECK_FLAG("MRIStepGetNumNonlinSolvIters", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(Val_long(r));
+}
+
+CAMLprim value sunml_arkode_mri_get_num_nonlin_solv_conv_fails(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    long int r;
+#if 540 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepGetNumNonlinSolvConvFails(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    CHECK_FLAG("MRIStepGetNumNonlinSolvConvFails", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(Val_long(r));
+}
+
+CAMLprim value sunml_arkode_mri_get_nonlin_solv_stats(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    CAMLlocal1(r);
+#if 540 <= SUNDIALS_LIB_VERSION
+    long int nniters, nncfails;
+    int flag = MRIStepGetNonlinSolvStats(ARKODE_MEM_FROM_ML(varkode_mem),
+				         &nniters, &nncfails);
+    CHECK_FLAG("MRIStepGetNonlinSolvStats", flag);
+
+    r = caml_alloc_tuple(2);
+    Store_field(r, 0, Val_long(nniters));
+    Store_field(r, 1, Val_long(nncfails));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(r);
 }
 

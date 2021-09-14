@@ -157,7 +157,7 @@ let main () =
        printf "  %12.5e  %12.5e  %12.5e  %12.5e\n" t y.{0} y.{1} y.{2};
        fprintf ufid " %.16e %.16e %.16e %.16e\n" t y.{0} y.{1} y.{2};
 
-       if flag = Arkode.RootsFound then begin
+       if flag = ARKStep.RootsFound then begin
          ARKStep.get_root_info arkode_mem rootsfound;
          printf "      rootsfound[] = %3d %3d\n" (root 0) (root 1)
        end;
