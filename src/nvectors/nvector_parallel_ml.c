@@ -87,6 +87,12 @@ static N_Vector clone_parallel(N_Vector w)
     content->own_data      = 0;
     content->data          = Caml_ba_data_val(Field(v_payload, 0));
 
+#if SUNDIALS_ML_SAFE == 1
+    sunindextype i;
+    for (i = 0; i < content->local_length; ++i)
+	content->data[i] = 0.0;
+#endif
+
     CAMLreturnT(N_Vector, v);
 }
 
@@ -131,6 +137,12 @@ static N_Vector clone_any_parallel(N_Vector w)
     content->comm          = NV_COMM_P(w);
     content->own_data      = 0;
     content->data          = Caml_ba_data_val(Field(v_payload, 0));
+
+#if SUNDIALS_ML_SAFE == 1
+    sunindextype i;
+    for (i = 0; i < content->local_length; ++i)
+	content->data[i] = 0.0;
+#endif
 
     CAMLreturnT(N_Vector, v);
 }
