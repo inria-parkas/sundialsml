@@ -57,13 +57,14 @@ module Custom = struct
 
   let wrap = Matrix.wrap_custom
     {
-      Matrix.m_clone      = m_clone;
-      Matrix.m_zero       = m_zero;
-      Matrix.m_copy       = m_copy;
-      Matrix.m_scale_add  = m_scale_add;
-      Matrix.m_scale_addi = m_scale_addi;
-      Matrix.m_matvec     = m_matvec;
-      Matrix.m_space      = m_space;
+      Matrix.m_clone        = m_clone;
+      Matrix.m_zero         = m_zero;
+      Matrix.m_copy         = m_copy;
+      Matrix.m_scale_add    = m_scale_add;
+      Matrix.m_scale_addi   = m_scale_addi;
+      Matrix.m_matvec_setup = None;
+      Matrix.m_matvec       = m_matvec;
+      Matrix.m_space        = m_space;
     }
 
   let make m n x = wrap (Array.make_matrix m n x)
