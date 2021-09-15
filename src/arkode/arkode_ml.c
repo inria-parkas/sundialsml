@@ -1640,19 +1640,27 @@ static value sunml_stepper_exception_from_flag(int flag)
 #if 400 <= SUNDIALS_LIB_VERSION
 static value sunml_arkode_mri_innerstep_exception(void *arkode_mem)
 {
+    CAMLparam0();
+    CAMLlocal1(vr);
 #if 400 <= SUNDIALS_LIB_VERSION
     int flag;
 
     if (arkode_mem != NULL
 	  && MRIStepGetLastInnerStepFlag(arkode_mem, &flag) == ARK_SUCCESS)
-	return sunml_stepper_exception_from_flag(flag);
+    {
+	vr = sunml_stepper_exception_from_flag(flag);
+    } else {
+	vr = Val_none;
+    }
 #endif
-    return Val_none;
+    CAMLreturn(vr);
 }
 #endif
 
 void sunml_arkode_check_flag(const char *call, int flag, void *arkode_mem)
 {
+    CAMLparam0();
+    CAMLlocal1(va);
     static char exmsg[MAX_ERRMSG_LEN] = "";
 
     if (flag == ARK_SUCCESS
@@ -1751,8 +1759,8 @@ void sunml_arkode_check_flag(const char *call, int flag, void *arkode_mem)
 	
 	case ARK_INNERSTEP_FAIL:
 	    // NB: Only MRIStep should return this error
-	    caml_raise_with_arg(ARKODE_EXN(InnerStepFail),
-				sunml_arkode_mri_innerstep_exception(arkode_mem));
+	    va = sunml_arkode_mri_innerstep_exception(arkode_mem);
+	    caml_raise_with_arg(ARKODE_EXN_TAG(InnerStepFail), va);
 #endif
 
 	default:
@@ -1768,6 +1776,8 @@ void sunml_arkode_check_flag(const char *call, int flag, void *arkode_mem)
 #endif
 	    caml_failwith(exmsg);
     }
+
+    CAMLreturn0;
 }
 
 /** ARKStep basic interface **/

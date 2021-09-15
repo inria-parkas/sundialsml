@@ -2856,7 +2856,7 @@ module MRIStep = struct (* {{{ *)
 
             nls_solver     = None;
 
-            inner_session  = Some fasts.arkode;
+            inner_session  = Some fasts;
           } in
     Gc.finalise session_finalize session;
     Weak.set weakref 0 (Some session);
@@ -2889,7 +2889,6 @@ module MRIStep = struct (* {{{ *)
       : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
       = "sunml_arkode_mri_reinit"
 
-  (* TODO: nlsolver, lsolver *)
   let reinit session ?nlsolver ?lsolver ?roots t0 y0 =
     if Sundials_configuration.safe then session.checkvec y0;
     c_reinit session t0 y0;

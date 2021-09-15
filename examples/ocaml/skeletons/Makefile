@@ -11,7 +11,7 @@ EXAMPLES = cvode_skel.byte  \
 	   arkode_mri_skel.byte \
 	   kinsol_skel.byte
 
-all: $(EXAMPLES)
+all: $(EXAMPLES) opt
 opt: $(EXAMPLES:.byte=.opt)
 
 cvode_skel.byte: cvode_skel.ml
