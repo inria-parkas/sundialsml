@@ -290,7 +290,7 @@ type ('a, 'kind, 'step) session = {
                            NLSI.nonlinear_solver option;
 
   (* MRI only *)
-  mutable inner_session  : arkstep arkode_mem option;
+  mutable inner_session  : ('a, 'kind, arkstep) session option;
 }
 
 and problem_type =
