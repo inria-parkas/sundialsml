@@ -2030,6 +2030,115 @@ CAMLprim value sunml_matrix_sparse_space(value vcptr)
     CAMLreturn(vr);
 }
 
+#if 520 <= SUNDIALS_LIB_VERSION
+// Adapted directly from sunmatrix_sparse.c:
+// - since not exposed by Sundials
+// - apply directly to sparse content (not SUNMatrix)
+static int csmat_sparse_format_convert(const MAT_CONTENT_SPARSE_TYPE A,
+				       MAT_CONTENT_SPARSE_TYPE B)
+{
+    realtype *Ax, *Bx;
+    sunindextype *Ap, *Aj;
+    sunindextype *Bp, *Bi;
+    sunindextype n_row, n_col, nnz;
+    sunindextype n, col, csum, row, last;
+
+    Ap = A->indexptrs;
+    Aj = A->indexvals;
+    Ax = A->data;
+    
+    n_row = (A->sparsetype == CSR_MAT) ? A->M : A->N;
+    n_col = (A->sparsetype == CSR_MAT) ? A->N : A->M;
+
+    Bp = B->indexptrs;
+    Bi = B->indexvals;
+    Bx = B->data;
+
+    nnz = Ap[n_row];
+
+    zero_sparse(B);
+
+    /* compute number of non-zero entries per column (if CSR) or per row (if CSC) of A */
+    for (n = 0; n < nnz; n++)
+    {
+        Bp[Aj[n]]++;
+    }
+
+    /* cumualtive sum the nnz per column to get Bp[] */
+    for (col = 0, csum = 0; col < n_col; col++)
+    {
+        sunindextype temp  = Bp[col];
+        Bp[col] = csum;
+        csum += temp;
+    }
+    Bp[n_col] = nnz;
+
+    for (row = 0; row < n_row; row++)
+    {
+        sunindextype jj;
+        for (jj = Ap[row]; jj < Ap[row+1]; jj++)
+        {
+            sunindextype col  = Aj[jj];
+            sunindextype dest = Bp[col];
+
+            Bi[dest] = row;
+            Bx[dest] = Ax[jj];
+
+            Bp[col]++;
+        }
+    }
+
+    for (col = 0, last = 0; col <= n_col; col++)
+    {
+        sunindextype temp  = Bp[col];
+        Bp[col] = last;
+        last    = temp;
+    }
+
+    return 0;
+}
+#endif
+
+CAMLprim value sunml_matrix_sparse_tocsr(value vcptra)
+{
+    CAMLparam1(vcptra);
+    CAMLlocal2(vcptrb, vb);
+#if 520 <= SUNDIALS_LIB_VERSION
+    MAT_CONTENT_SPARSE_TYPE a = MAT_CONTENT_SPARSE(vcptra);
+    MAT_CONTENT_SPARSE_TYPE b;
+
+    if (! matrix_sparse_create_mat(a->M, a->N, a->NNZ, CSR_MAT, &vb) )
+	caml_raise_out_of_memory();
+
+    vcptrb = Field(vb, RECORD_MAT_MATRIXCONTENT_RAWPTR);
+    b = MAT_CONTENT_SPARSE(vcptrb);
+    csmat_sparse_format_convert(a, b);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(vb);
+}
+
+CAMLprim value sunml_matrix_sparse_tocsc(value vcptra)
+{
+    CAMLparam1(vcptra);
+    CAMLlocal2(vcptrb, vb);
+#if 520 <= SUNDIALS_LIB_VERSION
+    MAT_CONTENT_SPARSE_TYPE a = MAT_CONTENT_SPARSE(vcptra);
+    MAT_CONTENT_SPARSE_TYPE b;
+
+    if (! matrix_sparse_create_mat(a->M, a->N, a->NNZ, CSC_MAT, &vb) )
+	caml_raise_out_of_memory();
+
+    vcptrb = Field(vb, RECORD_MAT_MATRIXCONTENT_RAWPTR);
+    b = MAT_CONTENT_SPARSE(vcptrb);
+    csmat_sparse_format_convert(a, b);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(vb);
+}
+
 // Sundials < 3.0.0
 CAMLprim void sunml_matrix_sparse_set_idx(value vcptr, value vj, value vidx)
 {

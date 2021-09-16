@@ -731,6 +731,17 @@ module Sparse = struct (* {{{ *)
     then raise IncompatibleArguments;
     c_copy ptr1 m2
 
+  external tocsr : cptr -> csr t = "sunml_matrix_sparse_tocsr"
+  external tocsc : cptr -> csc t = "sunml_matrix_sparse_tocsc"
+
+  let copy_to_csr { rawptr; valid } =
+    if check_valid && not valid then raise Invalidated;
+    tocsr rawptr
+
+  let copy_to_csc { rawptr; valid } =
+    if check_valid && not valid then raise Invalidated;
+    tocsc rawptr
+
   external c_space : cptr -> int * int
       = "sunml_matrix_sparse_space"
 
