@@ -354,6 +354,25 @@ let test_sunmatscaleaddi2 check_vector a x y =
     0
   with Exit -> 1
 
+let test_sunsparsematrix_convert (type s)
+    (check_matrix : (s, 'a) Matrix.sparse -> (s, 'a) Matrix.sparse -> float -> bool)
+    (am : (s, 'a) Matrix.sparse) =
+  let tol = 200.0 *. Sundials.Config.unit_roundoff in
+  let a = Matrix.unwrap am in
+  match Matrix.Sparse.((sformat a : s sformat)) with
+  | Matrix.Sparse.CSC ->
+      let csr = Matrix.Sparse.copy_to_csr a in
+      let csc = Matrix.(wrap_sparse (Sparse.copy_to_csc csr)) in
+      if check_matrix am csc tol then
+        (printf ">>> FAILED test --  Test_SUNSparseMatrixToCSR check_matrix failed\n"; 1)
+      else (printf "    PASSED test -- SUNSparseMatrixToCSR\n"; 0)
+  | Matrix.Sparse.CSR ->
+      let csc = Matrix.Sparse.copy_to_csc a in
+      let csr = Matrix.(wrap_sparse (Sparse.copy_to_csr csc)) in
+      if check_matrix am csr tol then
+        (printf ">>> FAILED test --  Test_SUNSparseMatrixToCSC check_martrix failed\n"; 1)
+      else (printf "    PASSED test -- SUNSparseMatrixToCSC\n"; 0)
+
 let int_of_mattype (type s) : s Matrix.Sparse.sformat -> int = function
   | Matrix.Sparse.CSC -> 0
   | Matrix.Sparse.CSR -> 1
@@ -629,6 +648,9 @@ and main_with_type : type s. int -> int -> s Matrix.Sparse.sformat -> unit
   end;
   fails += Test.test_sunmatmatvec a x y 0;
   fails += Test.test_sunmatspace a 0;
+  (match Sundials.Config.sundials_version with
+   | x, _, _ when x < 5 -> ()
+   | _ -> fails += test_sunsparsematrix_convert SparseTests.check_matrix a);
 
   (* Print result *)
   if !fails <> 0 then begin

@@ -401,6 +401,10 @@ module Sparse : sig (* {{{ *)
       solver callback functions (like {!Cvode.Dls.jac_fn},
       {!Ida.Dls.jac_fn}, and {!Kinsol.Dls.jac_fn}).
 
+      The type argument specifies the storage format, either
+      {{!csc}compressed-sparse-column format} or
+      {{!csr}compressed-sparse-row format}.
+
       @nocvode <node> The SUNMatrix_Sparse implementation *)
   type 's t
 
@@ -595,6 +599,20 @@ module Sparse : sig (* {{{ *)
       @nocvode <node> SUNMatCopy
       @nocvode <node> SUNMatCopy_Sparse *)
   val blit : src:'s t -> dst:'s t -> unit
+
+  (** Create a new sparse matrix in {{!sformat}CSR} format from the contents
+      of an existing one in {{!sformat}CSC} format.
+
+      @since 5.2.0
+      @nocvode <node> SUNSparseMatrix_ToCSR *)
+  val copy_to_csr : csc t -> csr t
+
+  (** Create a new sparse matrix in {{!sformat}CSC} format from the contents
+      of an existing one in {{!sformat}CSR} format.
+
+      @since 5.2.0
+      @nocvode <node> SUNSparseMatrix_ToCSC *)
+  val copy_to_csc : csr t -> csc t
 
   (** [lrw, liw = space a] returns the storage requirements of [a] as
       [lrw] realtype words and [liw] integer words.
