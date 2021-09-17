@@ -20,11 +20,9 @@ type t = (float, float64_elt, c_layout) Array1.t
 let create : int -> t = Array1.create kind layout
 let of_array : float array -> t = Array1.of_array kind layout
 
-let fill : t -> float -> unit = Array1.fill
-
 let make size x =
   let a = create size in
-  fill a x;
+  Array1.fill a x;
   a
 
 let init size f =
@@ -40,6 +38,18 @@ let get = Array1.get
 let set = Array1.set
 
 let length : t -> int = Array1.dim
+
+let dofill (a : t) pos len v =
+  for i = pos to len do
+    set a i v
+  done
+
+let fill (a : t) ?pos ?len v =
+  match pos, len with
+  | None, None -> Array1.fill a v
+  | Some p, None -> dofill a p (length a) v
+  | None, Some l -> dofill a 0 l v
+  | Some p, Some l -> dofill a p l v
 
 let ppi ?(start="[") ?(stop="]") ?(sep=";")
         ?(item=fun f->Format.fprintf f "%2d=% -14e") ()

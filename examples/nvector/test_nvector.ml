@@ -45,6 +45,22 @@ let compat_ge400 =
   (match Config.sundials_version with
    | 2,_,_ | 3,_,_ -> false | _ -> true)
 
+let compat_ge500 =
+  (match Config.sundials_version with
+   | 2,_,_ | 3,_,_ | 4,_,_ -> false | _ -> true)
+
+let compat_ge540 =
+  (match Config.sundials_version with
+   | 2,_,_ | 3,_,_ | 4,_,_ -> false
+   | 5,n,_ when n < 4 -> false
+   | _ -> true)
+
+let compat_ge570 =
+  (match Config.sundials_version with
+   | 2,_,_ | 3,_,_ | 4,_,_ -> false
+   | 5,n,_ when n < 7 -> false
+   | _ -> true)
+
 let print_passed s =
   if compat_ge400
   then Printf.printf "PASSED test -- %s \n" s
@@ -70,6 +86,8 @@ module type TEST = sig (* {{{ *)
 
   val set_timing : bool -> bool -> unit
   val test_getvectorid : t -> Nvector.nvector_id -> int -> int
+  val test_getlength                : t -> int -> int
+  val test_getcommunicator          : t -> 'comm -> int -> int
   val test_clonevectorarray         : int -> t -> 'a -> int -> int
   val test_cloneemptyvectorarray    : int -> t -> int -> int
   val test_cloneempty               : t -> int -> int
@@ -106,6 +124,20 @@ module type TEST = sig (* {{{ *)
   val test_wrmsnormmaskvectorarray  : t -> int -> int -> int -> int
   val test_scaleaddmultivectorarray : t -> int -> int -> int
   val test_linearcombinationvectorarray : t -> int -> int -> int
+
+  val test_dotprodlocal     : t -> t -> int -> int -> int
+  val test_maxnormlocal     : t -> int -> int -> int
+  val test_minlocal         : t -> int -> int -> int
+  val test_l1normlocal      : t -> int -> int -> int
+  val test_wsqrsumlocal     : t -> t -> int -> int -> int
+  val test_wsqrsummasklocal : t -> t -> t -> int -> int -> int
+  val test_invtestlocal     : t -> t -> int -> int -> int
+  val test_constrmasklocal  : t -> t -> t -> int -> int -> int
+  val test_minquotientlocal : t -> t -> int -> int -> int
+
+  val test_bufsize   : t -> int -> int -> int
+  val test_bufpack   : t -> int -> int -> int
+  val test_bufunpack : t -> int -> int -> int
 end (* }}} *)
 
 module Test (Nvector_ops : NVECTOR_OPS_EXT) : TEST with type t = Nvector_ops.t =
@@ -133,13 +165,16 @@ let two = 2.0
 external stdc_version : unit -> int = "stdc_version"
 let isnan (x : float) = x <> x
 
-let fneq =
+let fneqtol =
   if stdc_version () >= 199901 then
-    (fun a b ->
-      not (isnan a || abs_float (a -. b) /. abs_float b > 1.0e-15))
+    (fun a b tol ->
+      not (isnan a || abs_float (a -. b) /. abs_float b > tol))
   else
-    (fun a b ->
-      not (abs_float (a -. b) /. abs_float b > 1.0e-15))
+    (fun a b tol ->
+      not (abs_float (a -. b) /. abs_float b > tol))
+
+let fneq a b =
+  fneqtol a b (if compat_ge500 then 10.0 *. Config.unit_roundoff else 1.0e-15)
 
 (* private functions *)
 
@@ -182,16 +217,21 @@ let check_ans ans x local_length =
  * --------------------------------------------------------------------*)
 
 let int_of_nvector_id = function
-    Nvector.Serial    -> 0
-  | Nvector.Parallel  -> 1
-  | Nvector.OpenMP    -> 2
-  | Nvector.Pthreads  -> 3
-  | Nvector.ParHyp    -> 4
-  | Nvector.PETSc     -> 5
-  | Nvector.CUDA      -> 6
-  | Nvector.RAJA      -> 7
-  | Nvector.OpenMPdev -> 8
-  | Nvector.Custom    -> 9
+    Nvector.Serial        -> 0
+  | Nvector.Parallel      -> 1
+  | Nvector.OpenMP        -> 2
+  | Nvector.Pthreads      -> 3
+  | Nvector.ParHyp        -> 4
+  | Nvector.PETSc         -> 5
+  | Nvector.CUDA          -> 6
+  | Nvector.RAJA          -> 7
+  | Nvector.OpenMPdev     -> 8
+  | Nvector.Trilinos      -> 9
+  | Nvector.ManyVector    -> 10
+  | Nvector.MpiManyVector -> 11
+  | Nvector.MpiPlusX      -> 12
+  | Nvector.Custom        ->
+      if Sundials_impl.Versions.sundials_lt500 then 9 else 13
 
 let test_getvectorid x id myid =
   if Nvector_ops.get_id x <> id then (
@@ -203,6 +243,33 @@ let test_getvectorid x id myid =
     if myid = 0 then print_passed "N_VGetVectorID";
     0
   )
+
+(* ----------------------------------------------------------------------
+ * Test_N_VGetLength Test
+ * --------------------------------------------------------------------*)
+let test_getlength w myid =
+  (* ask W for it's overall length *)
+  let wlength = Nvector_ops.getlength w in
+  (* use N_VConst and N_VDotProd to compute length *)
+  Nvector_ops.const 1.0 w;
+  let wlength2 = Float.to_int (Nvector_ops.dotprod w w) in
+  Nvector_ops.sync_device ();
+  (* return error if lengths disagree *)
+  if wlength <> wlength2 then (
+    printf ">>> FAILED test -- N_VGetLength, Proc %d (%d != %d)\n"
+      myid wlength wlength2;
+    1
+  ) else (
+    if myid = 0 then printf "PASSED test -- N_VGetLength\n";
+    0
+  )
+
+(* ----------------------------------------------------------------------
+ * Test_N_VGetCommunicator Test (without MPI dependency)
+ * --------------------------------------------------------------------*)
+let test_getcommunicator w _ myid =
+  (* Cannot test without MPI *)
+  printf "PASSED test -- N_VGetCommunicator\n"; 0
 
 (* ----------------------------------------------------------------------
  * N_VCloneVectorArray Test
@@ -1241,6 +1308,32 @@ let test_min x local_length myid =
     print_time "N_VMin" (stop_time -. start_time)
   );
 
+  if compat_ge570 then begin
+    (* fill vector data *)
+    Nvector_ops.const 2.0 x;
+    let xdata = Nvector_ops.getarray x in
+    if myid = 0
+    then Nvector_ops.set xdata (local_length-1) neg_two
+    else Nvector_ops.set xdata (local_length-1) neg_one;
+
+    let start_time = get_time () in
+    let ans = Nvector_ops.min x in
+    let stop_time = get_time () in
+
+    (* ans should equal -2 *)
+    if not (fneq ans neg_two) then (
+      printf ">>> FAILED test -- N_VMin, Proc %d \n" myid;
+      printf "    min = %f, expected %f\n" ans (-2.0);
+      fails += 1
+    ) else if myid = 0 then (
+      printf "PASSED test -- N_VMin \n";
+    );
+
+    (* find max time across all processes *)
+    print_time "N_VMin"
+      (Nvector_ops.max_time x (stop_time -. start_time));
+  end;
+
   !fails
 
 
@@ -1317,7 +1410,7 @@ let test_compare x z local_length myid =
   in
 
   if local_length < 3 then (
-    printf "Error Test_N_VCompare: Local vector length is %d length must be >= 3" local_length;
+    printf "Error Test_N_VCompare: Local vector length is %d length must be >= 3\n" local_length;
     raise (TestFailed (-1))
   );
 
@@ -1386,7 +1479,7 @@ let test_invtest x z local_length myid =
   in
 
   if local_length < 2 then (
-    printf "Error Test_N_VCompare: Local vector length is %d length must be >= 2" local_length;
+    printf "Error Test_N_VCompare: Local vector length is %d length must be >= 2\n" local_length;
     raise (TestFailed (-1))
   );
 
@@ -1466,7 +1559,7 @@ let test_constrmask c x m local_length myid =
   in
 
   if local_length < 7 then (
-    printf "Error Test_N_VCompare: Local vector length is %d length must be >= 7" local_length;
+    printf "Error Test_N_VCompare: Local vector length is %d length must be >= 7\n" local_length;
     raise (TestFailed (-1))
   );
 
@@ -3615,6 +3708,410 @@ let test_linearcombinationvectorarray v local_length myid =
     (Nvector_ops.max_time v (stop_time -. start_time));
 
   !fails
+
+(* ----------------------------------------------------------------------
+ * N_VDotProdLocal test
+ * --------------------------------------------------------------------*)
+let test_dotprodlocal x y local_length myid =
+  let fails = ref 0 in
+  (* fill vector data *)
+  let rmyid = Int.to_float myid in
+  let locleninv = 1.0 /. Int.to_float local_length in
+  Nvector_ops.const rmyid x;
+  Nvector_ops.const locleninv y;
+
+  let start_time = get_time () in
+  let ans = Nvector_ops.Local.dotprod x y in
+  Nvector_ops.sync_device ();
+  let stop_time = get_time () in
+
+  (* ans should equal rmyid *)
+  if not (fneqtol ans rmyid (sqrt (Config.unit_roundoff)))
+  then (printf ">>> FAILED test -- N_VDotProdLocal, Proc %d\n" myid; fails += 1)
+  else if myid = 0 then printf "PASSED test -- N_VDotProdLocal\n";
+
+  (* find max time across all processes *)
+  print_time "N_VDotProdLocal"
+    (Nvector_ops.max_time x (stop_time -. start_time));
+
+  !fails
+
+(* ----------------------------------------------------------------------
+ * N_VMaxNormLocal test
+ * --------------------------------------------------------------------*)
+let test_maxnormlocal x local_length myid =
+  let fails = ref 0 in
+  (* fill vector data *)
+  let xdata = Nvector_ops.getarray x in
+  let myidp1 = Int.to_float (myid+1) in
+  Nvector_ops.const (-0.5) x;
+  Nvector_ops.set xdata (local_length - 1) (-. myidp1);
+
+  let start_time = get_time () in
+  let ans = Nvector_ops.Local.maxnorm x in
+  Nvector_ops.sync_device ();
+  let stop_time = get_time () in
+
+  (* ans should equal myidp1 *)
+  if ans < 0.0 || not (fneqtol ans myidp1 (sqrt Config.unit_roundoff))
+  then (printf ">>> FAILED test -- N_VMaxNormLocal, Proc %d\n" myid; fails += 1)
+  else if myid = 0 then printf "PASSED test -- N_VMaxNormLocal\n";
+
+  (* find max time across all processes *)
+  print_time "N_VMaxNormLocal"
+    (Nvector_ops.max_time x (stop_time -. start_time));
+
+  !fails
+
+
+(* ----------------------------------------------------------------------
+ * N_VMinLocal test
+ * --------------------------------------------------------------------*)
+let test_minlocal x local_length myid =
+  let fails = ref 0 in
+  (* fill vector data *)
+  let xdata = Nvector_ops.getarray x in
+  let negmyid = Int.to_float (-myid) in
+  Nvector_ops.const 2.0 x;
+  Nvector_ops.set xdata (local_length - 1) negmyid;
+
+  let start_time = get_time () in
+  let ans = Nvector_ops.Local.min x in
+  Nvector_ops.sync_device ();
+  let stop_time = get_time () in
+
+  (* ans should equal negmyid *)
+  if not (fneqtol ans negmyid (sqrt Config.unit_roundoff))
+  then (printf ">>> FAILED test -- N_VMinLocal, Proc %d\n" myid; fails +=1)
+  else if myid = 0 then printf "PASSED test -- N_VMinLocal\n";
+
+  (* find max time across all processes *)
+  print_time "N_VMinLocal"
+    (Nvector_ops.max_time x (stop_time -. start_time));
+
+  !fails
+
+(* ----------------------------------------------------------------------
+ * N_VL1NormLocal test
+ * --------------------------------------------------------------------*)
+let test_l1normlocal x local_length myid =
+  let fails = ref 0 in
+  (* fill vector data *)
+  let v = -. (Int.to_float myid) /. (Int.to_float local_length) in
+  Nvector_ops.const v x;
+
+  let start_time = get_time () in
+  let ans = Nvector_ops.Local.l1norm x in
+  Nvector_ops.sync_device ();
+  let stop_time = get_time () in
+
+  (* ans should equal myid *)
+  if ans < 0.0 || not (fneqtol ans (Int.to_float myid) (sqrt Config.unit_roundoff))
+  then (printf ">>> FAILED test -- N_VL1NormLocal, Proc %d\n" myid; fails += 1)
+  else if myid = 0 then printf "PASSED test -- N_VL1NormLocal\n";
+
+  (* find max time across all processes *)
+  print_time "N_VL1NormLocal"
+    (Nvector_ops.max_time x (stop_time -. start_time));
+
+  !fails
+
+(* ----------------------------------------------------------------------
+ * N_VWSqrSumLocal test
+ * --------------------------------------------------------------------*)
+let test_wsqrsumlocal x w local_length myid =
+  let fails = ref 0 in
+  (* fill vector data *)
+  let xval = sqrt (Int.to_float myid) in
+  let wval = 1.0 /. sqrt (Int.to_float local_length) in
+  Nvector_ops.const xval x;
+  Nvector_ops.const wval w;
+
+  let start_time = get_time () in
+  let ans = Nvector_ops.Local.wsqrsum x w in
+  Nvector_ops.sync_device ();
+  let stop_time = get_time () in
+
+  (* ans should equal myid *)
+  if ans < 0.0 || not (fneqtol ans (Int.to_float myid) (sqrt Config.unit_roundoff))
+  then (printf ">>> FAILED test -- N_VWSqrSumLocal, Proc %d\n" myid; fails += 1)
+  else if myid = 0 then printf "PASSED test -- N_VWSqrSumLocal\n";
+
+  (* find max time across all processes *)
+  print_time "N_VWSqrSumLocal"
+    (Nvector_ops.max_time x (stop_time -. start_time));
+
+  !fails
+
+(* ----------------------------------------------------------------------
+ * N_VWSqrSumMaskLocal test
+ * --------------------------------------------------------------------*)
+let test_wsqrsummasklocal x w id local_length myid =
+  let fails = ref 0 in
+  (* fill vector data *)
+  let xval = sqrt (Int.to_float myid) in
+  let wval = 1.0 /. sqrt (Int.to_float local_length) in
+  let id_data = Nvector_ops.getarray id in
+  Nvector_ops.const xval x;
+  Nvector_ops.const wval w;
+  (* use all elements except one *)
+  Nvector_ops.const 1.0 id;
+  Nvector_ops.set id_data (local_length - 1) 0.0;
+
+  let start_time = get_time () in
+  let ans = Nvector_ops.Local.wsqrsummask x w id in
+  Nvector_ops.sync_device ();
+  let stop_time = get_time () in
+
+  (* ans should equal myid *)
+  if ans < 0.0 || not (fneqtol ans (Int.to_float myid) (sqrt Config.unit_roundoff))
+  then (printf ">>> FAILED test -- N_VWSqrSumMaskLocal, Proc %d\n" myid; fails += 1)
+  else if myid = 0 then printf "PASSED test -- N_VWSqrSumMaskLocal\n";
+
+  (* find max time across all processes *)
+  print_time "N_VWSqrSumMaskLocal"
+    (Nvector_ops.max_time x (stop_time -. start_time));
+
+  !fails
+
+(* ----------------------------------------------------------------------
+ * N_VInvTestLocal test
+ * --------------------------------------------------------------------*)
+let test_invtestlocal x z local_length myid =
+  let fails = ref 0 in
+
+  if local_length < 2 then
+    (printf "Error Test_N_VInvTestLocal: Local vector length is %d, length must be >= 2\n"
+            local_length;
+     raise (TestFailed (-1)));
+
+  (*
+   * Case 1: All elements Nonzero, z[i] = 1/x[i], return True
+   *)
+
+  (* fill vector data *)
+  let xval = 1.0 /. Int.to_float (myid + 2) in
+  Nvector_ops.const xval x;
+  Nvector_ops.const 0.0 z;
+
+  let start_time = get_time () in
+  let test = Nvector_ops.Local.invtest x z in
+  Nvector_ops.sync_device ();
+  let stop_time = get_time () in
+
+  (* Z should be vector of myid+2 *)
+  if not (check_ans (Int.to_float (myid + 2)) z local_length && test)
+  then (printf ">>> FAILED test -- N_VInvTestLocal Case 1, Proc %d\n" myid; fails += 1)
+  else if myid = 0 then printf "PASSED test -- N_VInvTestLocal Case 1\n";
+
+  (* find max time across all processes *)
+  print_time "N_VInvTestLocal"
+    (Nvector_ops.max_time x (stop_time -. start_time));
+
+  (*
+   * Case 2: Some elements Zero, z[i] = 1/x[i] for x[i] != 0, return False
+   *)
+
+  (* reset failure *)
+
+  (* fill vector data *)
+  Nvector_ops.const 0.0 z;
+  let xdata = Nvector_ops.getarray x in
+  for i = 0 to local_length - 1 do
+    Nvector_ops.set xdata i (if i mod 2 = 1 then 0.5 else 0.0)
+  done;
+
+  let start_time = get_time () in
+  let test = Nvector_ops.Local.invtest x z in
+  Nvector_ops.sync_device ();
+  let stop_time = get_time () in
+
+  (* check return vector *)
+  let zdata = Nvector_ops.getarray z in
+  let failure =
+    try
+      for i = 0 to local_length - 1 do
+        if Nvector_ops.get zdata i <> (if i mod 2 = 1 then 2.0 else 0.0)
+        then raise Exit
+      done;
+      false
+    with Exit -> true
+  in
+
+  if failure || test
+  then (printf ">>> FAILED test -- N_VInvTestLocal Case 2, Proc %d\n" myid; fails += 1)
+  else if myid = 0 then printf "PASSED test -- N_VInvTestLocal Case 2\n";
+
+  (* find max time across all processes *)
+  print_time "N_VInvTestLocal"
+    (Nvector_ops.max_time x (stop_time -. start_time));
+
+  !fails
+
+(* ----------------------------------------------------------------------
+ * N_VConstrMaskLocal test
+ * --------------------------------------------------------------------*)
+let test_constrmasklocal c x m local_length myid =
+  let fails = ref 0 in
+  if local_length < 7
+  then (printf "Error Test_N_VConstrMaskLocal: Local vector length is %d, length must be >= 7\n" local_length;
+        raise (TestFailed (-1)));
+
+  (*
+   * Case 1: Return True
+   *)
+
+  (* fill vector data *)
+  let xdata = Nvector_ops.getarray x in
+  let cdata = Nvector_ops.getarray c in
+  Nvector_ops.const (-1.0) m;
+  for i = 0 to local_length - 1 do
+    let vc, vx = match i mod 7 with
+      | 0 -> -2.0, -2.0 (* c = -2, test for < 0*)
+      | 1 -> -1.0, -1.0 (* c = -1, test for <= 0 *)
+      | 2 -> -1.0,  0.0 (* c = -1, test for == 0 *)
+      | 3 ->  0.0,  0.5 (* c = 0, no test *)
+      | 4 ->  1.0,  0.0 (* c = 1, test for == 0*)
+      | 5 ->  1.0,  1.0 (* c = 1, test for >= 0*)
+      | 6 ->  2.0,  2.0 (* c = 2, test for > 0 *)
+      | _ -> assert false
+    in
+    Nvector_ops.set cdata i vc;
+    Nvector_ops.set xdata i vx
+  done;
+
+  let start_time = get_time () in
+  let test = Nvector_ops.Local.constrmask c x m in
+  Nvector_ops.sync_device ();
+  let stop_time = get_time () in
+
+  (* M should be vector of 0 *)
+  if not (check_ans 0.0 m local_length && test)
+  then (printf ">>> FAILED test -- N_VConstrMaskLocal Case 1, Proc %d \n" myid; fails += 1)
+  else if myid = 0 then printf "PASSED test -- N_VConstrMaskLocal Case 1 \n";
+
+  (* find max time across all processes *)
+  print_time "N_VConstrMaskLocal"
+    (Nvector_ops.max_time x (stop_time -. start_time));
+
+  (*
+   * Case 2: Return False
+   *)
+
+  (* fill vector data *)
+  Nvector_ops.const (-1.0) m;
+  for i = 0 to local_length - 1 do
+    let vc, vx = match i mod 5 with
+      | 0 -> -2.0,  2.0 (* c = -2, test for < 0*)
+      | 1 -> -1.0,  1.0 (* c = -1, test for <= 0 *)
+      | 2 ->  0.0,  0.5 (* c = 0, no test *)
+      | 3 ->  1.0, -1.0 (* c = 1, test for >= 0*)
+      | 4 ->  2.0, -2.0 (* c = 2, test for > 0 *)
+      | _ -> assert false
+    in
+    Nvector_ops.set cdata i vc;
+    Nvector_ops.set xdata i vx
+  done;
+
+  let start_time = get_time () in
+  let test = Nvector_ops.Local.constrmask c x m in
+  Nvector_ops.sync_device ();
+  let stop_time = get_time () in
+
+  (* check mask vector *)
+  let mdata = Nvector_ops.getarray m in
+  let failure =
+    try
+      for i = 0 to local_length - 1 do
+        if Nvector_ops.get mdata i <> (if i mod 5 = 2 then 0.0 else 1.0)
+        then raise Exit
+      done;
+      false
+    with Exit -> true
+  in
+
+  if failure || test
+  then (printf ">>> FAILED test -- N_VConstrMaskLocal Case 2, Proc %d \n" myid; fails += 1)
+  else if myid = 0 then printf "PASSED test -- N_VConstrMaskLocal Case 2 \n";
+
+  (* find max time across all processes *)
+  print_time "N_VConstrMaskLocal"
+    (Nvector_ops.max_time x (stop_time -. start_time));
+
+  !fails
+
+(* ----------------------------------------------------------------------
+ * N_VMinQuotientLocal test
+ * --------------------------------------------------------------------*)
+let test_minquotientlocal num denom local_length myid =
+  let fails = ref 0 in
+
+  (*
+   * Case 1: Pass
+   *)
+
+  (* fill vector data *)
+  Nvector_ops.const 2.0 denom;
+  Nvector_ops.const (2.0 *. Int.to_float myid) num;
+
+  let start_time = get_time () in
+  let ans = Nvector_ops.Local.minquotient num denom in
+  Nvector_ops.sync_device ();
+  let stop_time = get_time () in
+
+  (* ans should equal myid *)
+  if not (fneqtol ans (Int.to_float myid) (sqrt Config.unit_roundoff))
+  then (printf ">>> FAILED test -- N_VMinQuotientLocal Case 1, Proc %d \n" myid; fails += 1)
+  else if myid = 0 then printf "PASSED test -- N_VMinQuotientLocal Case 1 \n";
+
+  (* find max time across all processes *)
+  print_time "N_VMinQuotientLocal"
+    (Nvector_ops.max_time num (stop_time -. start_time));
+
+  (*
+   * Case 2: Fail
+   *)
+
+  (* fill vector data *)
+  Nvector_ops.const 2.0 num;
+  Nvector_ops.const 0.0 denom;
+
+  let start_time = get_time () in
+  let ans = Nvector_ops.Local.minquotient num denom in
+  Nvector_ops.sync_device ();
+  let stop_time = get_time () in
+
+  (* ans should equal BIG_REAL *)
+  if not (fneqtol ans Config.big_real (sqrt Config.unit_roundoff))
+  then (printf ">>> FAILED test -- N_VMinQuotientLocal Case 2, Proc %d \n" myid; fails += 1)
+  else if myid = 0 then printf "PASSED test -- N_VMinQuotientLocal Case 2 \n";
+
+  (* find max time across all processes *)
+  print_time "N_VMinQuotientLocal"
+    (Nvector_ops.max_time num (stop_time -. start_time));
+
+  !fails
+
+(* ----------------------------------------------------------------------
+ * N_VBufSize test
+ * --------------------------------------------------------------------*)
+let test_bufsize x local_length myid =
+  (* Not implemented in Sundials/ML *)
+  if myid = 0 then printf "PASSED test -- N_VBufSize\n"; 0
+
+(* ----------------------------------------------------------------------
+ * N_VBufPack test
+ * --------------------------------------------------------------------*)
+let test_bufpack x local_length myid =
+  (* Not implemented in Sundials/ML *)
+  if myid = 0 then printf "PASSED test -- N_VBufPack\n"; 0
+
+(* ----------------------------------------------------------------------
+ * N_VBufUnpack test
+ * --------------------------------------------------------------------*)
+let test_bufunpack x local_length myid =
+  (* Not implemented in Sundials/ML *)
+  if myid = 0 then printf "PASSED test -- N_VBufUnpack\n"; 0
 
 end
 

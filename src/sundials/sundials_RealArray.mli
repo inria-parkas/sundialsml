@@ -84,8 +84,10 @@ val blitn : src:t -> ?spos:int -> dst:t -> ?dpos:int -> int -> unit
     [Bigarray.Genarray.blit]} for more details. *)
 val blit : src:t -> dst:t -> unit
 
-(** [fill a c] sets all elements of [a] to the constant [c]. *)
-val fill : t -> float -> unit
+(** [fill a c] sets elements of [a] to the constant [c].
+    The elements from [pos] to [pos + len - 1] are set to the constant,
+    with [pos] defaulting to 0 and [len] to the length of the array. *)
+val fill : t -> ?pos:int -> ?len:int -> float -> unit
 
 (** Returns the length of an array. *)
 val length : t -> int
