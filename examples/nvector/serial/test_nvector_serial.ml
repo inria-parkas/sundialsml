@@ -274,6 +274,10 @@ let main () =
   (* NVector Tests *)
   if Test_nvector.compat_ge400 then begin
     fails += Test.test_getvectorid x Test.id 0;
+    if Test_nvector.compat_ge500 then begin
+      fails += Test.test_getlength x 0;
+      fails += Test.test_getcommunicator x 0 0;
+    end;
     fails += Test.test_cloneempty x 0;
     fails += Test.test_clone x length 0;
     fails += Test.test_cloneemptyvectorarray 5 x 0;
@@ -354,7 +358,31 @@ let main () =
     fails += Test.test_wrmsnormvectorarray u length 0;
     fails += Test.test_wrmsnormmaskvectorarray u length length 0;
     fails += Test.test_scaleaddmultivectorarray u length 0;
-    fails += Test.test_linearcombinationvectorarray u length 0
+    fails += Test.test_linearcombinationvectorarray u length 0;
+  end;
+
+  (* local reduction operations *)
+  if Test_nvector.compat_ge500 then begin
+    printf "\nTesting local reduction operations:\n\n";
+
+    fails += Test.test_dotprodlocal x y length 0;
+    fails += Test.test_maxnormlocal x length 0;
+    fails += Test.test_minlocal x length 0;
+    fails += Test.test_l1normlocal x length 0;
+    fails += Test.test_wsqrsumlocal x y length 0;
+    fails += Test.test_wsqrsummasklocal x y z length 0;
+    fails += Test.test_invtestlocal x z length 0;
+    fails += Test.test_constrmasklocal x y z length 0;
+    fails += Test.test_minquotientlocal x y length 0
+  end;
+
+  (* XBraid interface operations *)
+  if Test_nvector.compat_ge540 then begin
+    printf "\nTesting XBraid interface operations:\n\n";
+
+    fails += Test.test_bufsize x length 0;
+    fails += Test.test_bufpack x length 0;
+    fails += Test.test_bufunpack x length 0
   end;
 
   (* Free vectors *)
