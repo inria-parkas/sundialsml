@@ -464,7 +464,7 @@ module MakeOps = functor
       let nvec = Array.length wya in
       if nvec = 1 then linearsum a wxa.(0) b wya.(0) wza.(0)
       else if b =  1.0 && (wza == wya) then arr_vaxpy_array a wxa wya
-      else if a =  1.0 && (wza == wxa) then arr_vaxpy_array a wya wxa
+      else if a =  1.0 && (wza == wxa) then arr_vaxpy_array b wya wxa
       else if a =  1.0 && b =  1.0 then v_sumvectorarray wxa wya wza
       else if a =  1.0 && b = -1.0 then v_diffvectorarray wxa wya wza
       else if a = -1.0 && b =  1.0 then v_diffvectorarray wya wxa wza

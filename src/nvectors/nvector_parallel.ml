@@ -800,7 +800,7 @@ module MakeOps =
       let nvec = Array.length ya in
       if nvec = 1 then linearsum a xa.(0) b ya.(0) za.(0)
       else if b =  1.0 && (za == ya) then arr_vaxpy_array a xa ya
-      else if a =  1.0 && (za == xa) then arr_vaxpy_array a ya xa
+      else if a =  1.0 && (za == xa) then arr_vaxpy_array b ya xa
       else if a =  1.0 && b =  1.0 then v_sumvectorarray xa ya za
       else if a =  1.0 && b = -1.0 then v_diffvectorarray xa ya za
       else if a = -1.0 && b =  1.0 then v_diffvectorarray ya xa za
