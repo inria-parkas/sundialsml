@@ -563,5 +563,9 @@ module Any = struct (* {{{ *)
     in
     wrap comm (Nvector.clone nv)
 
+  let unwrap nv =
+    match Nvector.unwrap nv with
+    | MpiPlusX a -> a
+    | _ -> raise Nvector.BadGenericType
 end (* }}} *)
 

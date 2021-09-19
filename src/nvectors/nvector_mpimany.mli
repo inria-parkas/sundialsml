@@ -79,5 +79,9 @@ module Any : sig
       @raises Invalid_arg if an mpi communicator is not specified or found. *)
   val wrap : ?comm:Mpi.communicator -> Nvector.any ROArray.t -> Nvector.any
 
+  (** Returns the payload of the generic vector if it was constructed with
+      {{!Nvector.gdata}MpiMany}, otherwise raises {!Nvector.BadGenericType}. *)
+  val unwrap : Nvector.any -> data
+
 end
 

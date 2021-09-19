@@ -709,5 +709,10 @@ module Any = struct (* {{{ *)
     let comm = check_comms comm nvs in
     wrap_with_len (nvs, comm, sumlens nvs comm)
 
+  let unwrap nv =
+    match Nvector.unwrap nv with
+    | MpiMany a -> a
+    | _ -> raise Nvector.BadGenericType
+
 end (* }}} *)
 

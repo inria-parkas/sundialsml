@@ -65,5 +65,9 @@ module Any : sig
       @since 5.0.0 *)
   val wrap : Mpi.communicator -> Nvector.any -> Nvector.any
 
+  (** Returns the payload of the generic vector if it was constructed with
+      {{!Nvector.gdata}MpiPlusX}, otherwise raises {!Nvector.BadGenericType}. *)
+  val unwrap : Nvector.any -> data
+
 end
 
