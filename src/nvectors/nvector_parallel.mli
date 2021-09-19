@@ -168,7 +168,7 @@ module Any : sig (* {{{ *)
       @cvode <node5> N_VEnableScaleAddMultiVectorArray_Parallel
       @cvode <node5> N_VEnableLinearCombinationVectorArray_Parallel
       @raise Config.NotImplementedBySundialsVersion Fused and array operations not available.
-      @since 2.9.0 *)
+      @since 5.0.0 *)
   val make :
        ?with_fused_ops                       : bool
     -> ?with_linear_combination              : bool
@@ -204,7 +204,7 @@ module Any : sig (* {{{ *)
       @cvode <node5> N_VEnableScaleAddMultiVectorArray_Parallel
       @cvode <node5> N_VEnableLinearCombinationVectorArray_Parallel
       @raise Config.NotImplementedBySundialsVersion Fused and array operations not available.
-      @since 2.9.0 *)
+      @since 5.0.0 *)
   val wrap :
        ?with_fused_ops                       : bool
     -> ?with_linear_combination              : bool
@@ -219,6 +219,11 @@ module Any : sig (* {{{ *)
     -> ?with_linear_combination_vector_array : bool
     -> data
     -> Nvector.any
+
+  (** Returns the payload of the generic vector if it was constructed with
+      {{!Nvector.gdata}{Par} and a parallel payload, otherwise
+      raises {!Nvector.BadGenericType}. *)
+  val unwrap : Nvector.any -> data
 
 end (* }}} *)
 

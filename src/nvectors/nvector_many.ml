@@ -597,5 +597,10 @@ module Any = struct (* {{{ *)
       then raise Config.NotImplementedBySundialsVersion;
     wrap_with_len (nvs, sumlens nvs)
 
+  let unwrap nv =
+    match Nvector.unwrap nv with
+    | Many a -> a
+    | _ -> raise Nvector.BadGenericType
+
 end (* }}} *)
 

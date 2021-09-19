@@ -64,5 +64,9 @@ module Any : sig
       @since 5.0.0 *)
   val wrap : Nvector.any ROArray.t -> Nvector.any
 
+  (** Returns the payload of the generic vector if it was constructed with
+      {{!Nvector.gdata}Many}, otherwise raises {!Nvector.BadGenericType}. *)
+  val unwrap : Nvector.any -> data
+
 end
 

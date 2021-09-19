@@ -224,6 +224,11 @@ module Any = struct (* {{{ *)
            ?with_linear_combination_vector_array
            (RealArray.make n iv)
 
+  let unwrap nv =
+    match Nvector.unwrap nv with
+    | Nvector.RA a -> a
+    | _ -> raise Nvector.BadGenericType
+
 end (* }}} *)
 
 module Ops : Nvector.NVECTOR_OPS with type t = t =

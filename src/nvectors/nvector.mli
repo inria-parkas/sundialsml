@@ -422,6 +422,11 @@ type any = (gdata, gkind) t
 module Any : sig (* {{{ *)
   type t = any
 
+  (** {3:anyhasops Test generic vector operations}
+
+      These functions test whether a generic nvector is equipped with a
+      given operation. *)
+
   external has_linearcombination            : t -> bool
       = "sunml_nvec_has_linearcombination" [@@noalloc]
   external has_scaleaddmulti                : t -> bool

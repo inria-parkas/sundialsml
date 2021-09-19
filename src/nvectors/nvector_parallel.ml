@@ -262,6 +262,11 @@ module Any = struct (* {{{ *)
            ?with_linear_combination_vector_array
            (RealArray.make nl iv, ng, comm)
 
+  let unwrap nv =
+    match Nvector.unwrap nv with
+    | Par a -> a
+    | _ -> raise Nvector.BadGenericType
+
 end (* }}} *)
 
 module Ops = struct (* {{{ *)
