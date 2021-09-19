@@ -480,3 +480,13 @@ exception OperationNotProvided
 (** Operations on generic nvectors. *)
 module Ops : NVECTOR_OPS with type t = any
 
+(** Lifts a set of operations on a type [t] to a set of operations on a
+    generic nvector payload. *)
+module MakeDataOps :
+  functor (Ops : sig
+    include NVECTOR_OPS
+
+    val unwrap : gdata -> t
+    val wrap   : t -> gdata
+  end) -> NVECTOR_OPS with type t = gdata
+
