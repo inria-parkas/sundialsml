@@ -68,12 +68,12 @@ let print_passed s =
 
 module type NVECTOR_OPS_EXT = sig
   include Nvector.NVECTOR_OPS
-  type data
+  type contents
   val get_id   : t -> Nvector.nvector_id
-  val getarray : t -> data
+  val getarray : t -> contents
 
-  val get : data -> int -> float
-  val set : data -> int -> float -> unit
+  val get : contents -> int -> float
+  val set : contents -> int -> float -> unit
 
   val max_time : t -> float -> float
   val sync_device : unit -> unit
