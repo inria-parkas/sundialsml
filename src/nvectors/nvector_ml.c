@@ -1551,7 +1551,7 @@ static realtype callml_vminquotientlocal(N_Vector n, N_Vector d)
 	sunml_warn_discarded_exn (Extract_exception (r),
 					"user-defined minquotientlocal");
 
-    CAMLreturnT(realtype, Bool_val(r));
+    CAMLreturnT(realtype, caml_copy_double(r));
 }
 #endif
 
@@ -2986,7 +2986,7 @@ CAMLprim value sunml_nvec_any_constrmasklocal(value vc, value vx, value vm)
 CAMLprim value sunml_nvec_any_minquotientlocal(value vn, value vd)
 {
     CAMLparam2(vn, vd);
-    booleantype r;
+    realtype r;
 
 #if 500 <= SUNDIALS_LIB_VERSION
     r = N_VMinQuotientLocal(NVEC_VAL(vn), NVEC_VAL(vd));
@@ -2994,7 +2994,7 @@ CAMLprim value sunml_nvec_any_minquotientlocal(value vn, value vd)
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
 
-    CAMLreturn(Val_bool(r));
+    CAMLreturn(caml_copy_double(r));
 }
 
 CAMLprim value sunml_nvec_any_wsqrsumlocal(value vx, value vw)

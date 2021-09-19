@@ -941,8 +941,8 @@ CAMLprim value SUNML_NVEC_OP(minquotientlocal)(value vn, value vd)
 {
     CAMLparam2(vn, vd);
 #if 500 <= SUNDIALS_LIB_VERSION
-    booleantype r = MVAPPEND(N_VMinQuotientLocal)(NVEC_VAL(vn), NVEC_VAL(vd));
-    CAMLreturn(Val_bool(r));
+    realtype r = MVAPPEND(N_VMinQuotientLocal)(NVEC_VAL(vn), NVEC_VAL(vd));
+    CAMLreturn(caml_copy_double(r));
 #else
     CAMLreturn (Val_unit);
 #endif
