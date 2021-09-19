@@ -28,7 +28,7 @@ module Nvector_serial_ops =
   (struct
     include N.Ops
     let get_id = Nvector.get_id
-    type data = Sundials.RealArray.t
+    type contents = Sundials.RealArray.t
     let getarray = Nvector.unwrap
     let get = Sundials.RealArray.get
     let set = Sundials.RealArray.set
@@ -36,12 +36,29 @@ module Nvector_serial_ops =
     let sync_device () = ()
   end)
 
+module Nvector_generic_ops =
+  struct
+    include Nvector.Ops
+    let get_id = Nvector.get_id
+
+    type contents = Sundials.RealArray.t
+    let getarray x = match Nvector.unwrap x with
+                     | Nvector.RA xa -> xa
+                     | _ -> raise Nvector.BadGenericType
+
+    let get = Sundials.RealArray.get
+    let set = Sundials.RealArray.set
+
+    let max_time x t = t
+    let sync_device () = ()
+  end
+
 module Nvector_array_ops =
   functor (N : Nvector.NVECTOR with type data = float array) ->
   (struct
     include N.Ops
     let get_id = Nvector.get_id
-    type data = float array
+    type contents = float array
     let getarray = Nvector.unwrap
     let get = Array.get
     let set = Array.set
@@ -200,6 +217,16 @@ module MakeTest =
   let id = NI.id
 end
 
+module MakeAnyTest =
+  struct
+  include Test_nvector.Test (Nvector_generic_ops)
+
+  let make ?with_fused_ops n v =
+    Nvector_serial.Any.make ?with_fused_ops n v
+
+  let id = Nvector.Serial
+end
+
 module MakeArrayTest =
   functor (N : Nvector.NVECTOR with type data = float array)
           (NI : sig val id : Nvector.nvector_id end) ->
@@ -245,12 +272,14 @@ let main () =
   in
   let name, (module Test : TEST) =
     if m = 1
+    then ("generic serial", (module MakeAnyTest))
+    else if m = 2
     then ("custom serial", (module
       MakeTest (Custom_serial) (struct let id = Nvector.Custom end)))
-    else if m =2
+    else if m = 3
     then ("custom array-1 (dataops)", (module
       MakeArrayTest (Custom_array1) (struct let id = Nvector.Custom end)))
-    else if m =3
+    else if m = 4
     then ("custom array-2 (make)", (module
       MakeArrayTest (Custom_array2) (struct let id = Nvector.Custom end)))
     else ("serial", (module
