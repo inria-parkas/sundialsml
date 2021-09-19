@@ -565,3 +565,72 @@ module Ops = struct (* {{{ *)
   end
 end (* }}} *)
 
+module MakeDataOps (Ops : sig
+    include NVECTOR_OPS
+
+    val unwrap : gdata -> t
+    val wrap : t -> gdata
+  end) : NVECTOR_OPS with type t = gdata
+=
+struct
+  type t = gdata
+
+  let uw = Ops.unwrap
+  let uwa = Array.map uw
+  let uwaa = Array.map uwa
+
+  let clone a = Ops.wrap (Ops.clone (uw a))
+  let linearsum a x b y z = Ops.linearsum a (uw x) b (uw y) (uw z)
+  let const c x = Ops.const c (uw x)
+  let prod x y z = Ops.prod (uw x) (uw y) (uw z)
+  let div x y z = Ops.div (uw x) (uw y) (uw z)
+  let scale a x z = Ops.scale a (uw x) (uw z)
+  let abs x z = Ops.abs (uw x ) (uw z)
+  let inv x z = Ops.inv (uw x) (uw z)
+  let addconst x c z = Ops.addconst (uw x) c (uw z)
+  let dotprod x y = Ops.dotprod (uw x) (uw y)
+  let maxnorm x = Ops.maxnorm (uw x)
+  let wrmsnorm x y = Ops.wrmsnorm (uw x) (uw y)
+  let min x = Ops.min (uw x)
+  let compare c x y = Ops.compare c (uw x) (uw y)
+  let invtest x z = Ops.invtest (uw x) (uw z)
+
+  let wl2norm x y = Ops.wl2norm (uw x) (uw y)
+  let l1norm x = Ops.l1norm (uw x)
+  let wrmsnormmask x y z = Ops.wrmsnormmask (uw x) (uw y) (uw z)
+  let constrmask x y z = Ops.constrmask (uw x) (uw y) (uw z)
+  let minquotient x y = Ops.minquotient (uw x) (uw y)
+
+  let space x = Ops.space (uw x)
+  let getlength x = Ops.getlength (uw x)
+
+  let linearcombination a xa y = Ops.linearcombination a (uwa xa) (uw y)
+  let scaleaddmulti a x ya za = Ops.scaleaddmulti a (uw x) (uwa ya) (uwa za)
+  let dotprodmulti x ya a = Ops.dotprodmulti (uw x) (uwa ya) a
+
+  let linearsumvectorarray a xa b ya za
+    = Ops.linearsumvectorarray a (uwa xa) b (uwa ya) (uwa za)
+  let scalevectorarray ra xa ya = Ops.scalevectorarray ra (uwa xa) (uwa ya)
+  let constvectorarray c xa = Ops.constvectorarray c (uwa xa)
+  let wrmsnormvectorarray xa ya ra
+    = Ops.wrmsnormvectorarray (uwa xa) (uwa ya) ra
+  let wrmsnormmaskvectorarray xa ya z ra
+    = Ops.wrmsnormmaskvectorarray (uwa xa) (uwa ya) (uw z) ra
+  let scaleaddmultivectorarray ra xa yaa zaa
+    = Ops.scaleaddmultivectorarray ra (uwa xa) (uwaa yaa) (uwaa zaa)
+  let linearcombinationvectorarray ra xaa ya
+    = Ops.linearcombinationvectorarray ra (uwaa xaa) (uwa ya)
+
+  module Local = struct
+    let dotprod x y = Ops.Local.dotprod (uw x) (uw y)
+    let maxnorm x = Ops.Local.maxnorm (uw x)
+    let min x = Ops.Local.min (uw x)
+    let l1norm x = Ops.Local.l1norm (uw x)
+    let invtest x y = Ops.Local.invtest (uw x) (uw y)
+    let constrmask x y z = Ops.Local.constrmask (uw x) (uw y) (uw z)
+    let minquotient x y = Ops.Local.minquotient (uw x) (uw y)
+    let wsqrsum x y = Ops.Local.wsqrsum (uw x) (uw y)
+    let wsqrsummask x y z = Ops.Local.wsqrsummask (uw x) (uw y) (uw z)
+  end
+end
+
