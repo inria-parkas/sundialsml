@@ -27,7 +27,7 @@ module Nvector_parallel_ops =
 struct
   include N.Ops
   let get_id = Nvector.get_id
-  type data = Sundials.RealArray.t
+  type contents = Sundials.RealArray.t
   let getarray nv = let d, _, _ = Nvector.unwrap nv in d
   let get = Sundials.RealArray.get
   let set = Sundials.RealArray.set
@@ -35,6 +35,28 @@ struct
     let _, _, comm = Nvector.unwrap x in
     (* get max time across all MPI ranks *)
     Mpi.(reduce_float t Max 0 comm)
+  let sync_device () = ()
+end
+
+module Nvector_generic_ops =
+struct
+  include Nvector.Ops
+  let get_id = Nvector.get_id
+
+  type contents = Sundials.RealArray.t
+  let getarray x = match Nvector.unwrap x with
+                   | Nvector_parallel.Par (xd, _, _) -> xd
+                   | _ -> raise Nvector.BadGenericType
+
+  let get = Sundials.RealArray.get
+  let set = Sundials.RealArray.set
+
+  let max_time xv t =
+    match Nvector.unwrap xv with
+    | Nvector_parallel.Par (_, _, comm) ->
+      (* get max time across all MPI ranks *)
+      Mpi.(reduce_float t Max 0 comm)
+    | _ -> raise Nvector.BadGenericType
   let sync_device () = ()
 end
 
@@ -192,6 +214,22 @@ module MakeTest =
   let id = NI.id
 end
 
+module MakeAnyTest =
+  functor (NI : sig
+                  val id : Nvector.nvector_id
+                  val comm : Mpi.communicator
+                  val global_length : int
+                end) ->
+  struct
+  include Test_nvector.Test (Nvector_generic_ops)
+
+  let make ?with_fused_ops n v =
+    Nvector_parallel.Any.wrap ?with_fused_ops
+      (Sundials.RealArray.make n v, NI.global_length, NI.comm)
+
+  let id = Nvector.Parallel
+end
+
 module type TEST = sig
   include Test_nvector.TEST
   val make : ?with_fused_ops:bool -> int -> float -> t
@@ -235,13 +273,19 @@ let main () =
   in
   let name, (module Test : TEST) =
     if m = 1
+    then ("generic parallel", (module MakeAnyTest
+               (struct let id = Nvector.Custom
+                       let comm = comm
+                       let global_length = global_length
+                end)))
+    else if m =2
     then ("custom-1 parallel (MPI)", (module
       MakeTest (Custom_parallel1)
                (struct let id = Nvector.Custom
                        let comm = comm
                        let global_length = global_length
                 end)))
-    else if m =2
+    else if m =3
     then ("custom-2 parallel (MPI)", (module
       MakeTest (Custom_parallel2)
                (struct let id = Nvector.Custom
