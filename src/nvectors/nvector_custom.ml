@@ -698,6 +698,10 @@ module MakeOps = functor (A : sig
 
 module Any = struct (* {{{ *)
 
+  let option_map f = function
+    | None -> None
+    | Some x -> Some (f x)
+
   let convert_ops (type d)
         ~(inject:d -> Nvector.gdata)
         ~(project:Nvector.gdata -> d) ops
@@ -764,7 +768,7 @@ module Any = struct (* {{{ *)
         (* {{{ *)
         check        = double check;
         clone        = (fun v -> inject (clone (project v)));
-        space        = Option.map single space;
+        space        = option_map single space;
         getlength    = single getlength;
         linearsum    = (fun c1 v1 c2 v2 vr -> linearsum c1 (project v1)
                                                               c2 (project v2)

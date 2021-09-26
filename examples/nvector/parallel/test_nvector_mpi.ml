@@ -309,16 +309,15 @@ let main () =
      printf "Vector global length %d \n" global_length;
      printf "MPI processes %d \n" nprocs
   end;
-  let w = Test.make local_length 0.0
-  and x = Test.make local_length 0.0
-  in
+  let w = Test.make local_length 0.0 in
+  let x = Test.make local_length 0.0 in
 
   (* NVector Test *)
   if Test_nvector.compat_ge400 then begin
     fails += Test.test_getvectorid x Test.id myid;
     if Test_nvector.compat_ge500 then begin
-      fails += Test.test_getlength x 0;
-      fails += Test.test_getcommunicator x 0 0;
+      fails += Test.test_getlength x myid;
+      fails += Test.test_getcommunicator x 0 myid;
     end;
     fails += Test.test_cloneempty x myid;
     fails += Test.test_clone x local_length myid;
@@ -419,28 +418,27 @@ let main () =
 
   (* local reduction operations *)
   if Test_nvector.compat_ge500 then begin
-    printf "\nTesting local reduction operations:\n\n";
+    if myid = 0 then printf "\nTesting local reduction operations:\n\n";
 
-    fails += Test.test_dotprodlocal x y local_length 0;
-    fails += Test.test_maxnormlocal x local_length 0;
-    fails += Test.test_minlocal x local_length 0;
-    fails += Test.test_l1normlocal x local_length 0;
-    fails += Test.test_wsqrsumlocal x y local_length 0;
-    fails += Test.test_wsqrsummasklocal x y z local_length 0;
-    fails += Test.test_invtestlocal x z local_length 0;
-    fails += Test.test_constrmasklocal x y z local_length 0;
-    fails += Test.test_minquotientlocal x y local_length 0
+    fails += Test.test_dotprodlocal x y local_length myid;
+    fails += Test.test_maxnormlocal x local_length myid;
+    fails += Test.test_minlocal x local_length myid;
+    fails += Test.test_l1normlocal x local_length myid;
+    fails += Test.test_wsqrsumlocal x y local_length myid;
+    fails += Test.test_wsqrsummasklocal x y z local_length myid;
+    fails += Test.test_invtestlocal x z local_length myid;
+    fails += Test.test_constrmasklocal x y z local_length myid;
+    fails += Test.test_minquotientlocal x y local_length myid
   end;
 
   (* XBraid interface operations *)
   if Test_nvector.compat_ge540 then begin
-    printf "\nTesting XBraid interface operations:\n\n";
+    if myid = 0 then printf "\nTesting XBraid interface operations:\n\n";
 
-    fails += Test.test_bufsize x local_length 0;
-    fails += Test.test_bufpack x local_length 0;
-    fails += Test.test_bufunpack x local_length 0
+    fails += Test.test_bufsize x local_length myid;
+    fails += Test.test_bufpack x local_length myid;
+    fails += Test.test_bufunpack x local_length myid
   end;
-
 
   (* Print result *)
   if myid = 0 then begin

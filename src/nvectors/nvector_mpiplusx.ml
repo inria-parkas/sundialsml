@@ -173,19 +173,28 @@ struct (* {{{ *)
     if Sundials_configuration.safe then Array.iter (check z) xa;
     c_linearcombination ca xa z
 
+  let same_len' n ya =
+    if n <> Array.length ya then invalid_arg "arrays of unequal length"
+  let same_len xa ya = same_len' (Array.length xa) ya
+
   external c_scaleaddmulti : RealArray.t -> t -> t array -> t array -> unit
     = "sunml_nvec_mpimany_scaleaddmulti"
 
   let scaleaddmulti aa (x : t) (ya : t array) (za : t array) =
     if Sundials_configuration.safe then
-      (Array.iter (check x) ya; Array.iter (check x) za);
+      (Array.iter (check x) ya; Array.iter (check x) za;
+       let nv = RealArray.length aa in
+       same_len' nv ya; same_len' nv za);
     c_scaleaddmulti aa x ya za
 
   external c_dotprodmulti  : t -> t array -> RealArray.t -> unit
     = "sunml_nvec_mpimany_dotprodmulti"
 
   let dotprodmulti (x : t) (ya : t array) dp =
-    if Sundials_configuration.safe then Array.iter (check x) ya;
+    if Sundials_configuration.safe then
+      (let nv = RealArray.length dp in
+       same_len' nv ya;
+       Array.iter (check x) ya);
     c_dotprodmulti x ya dp
 
   external c_linearsumvectorarray
@@ -197,7 +206,8 @@ struct (* {{{ *)
     then (let x = Array.get xa 0 in
           Array.iter (check x) xa;
           Array.iter (check x) ya;
-          Array.iter (check x) za);
+          Array.iter (check x) za;
+          same_len xa ya; same_len xa za);
     c_linearsumvectorarray a xa b ya za
 
   external c_scalevectorarray
@@ -208,7 +218,8 @@ struct (* {{{ *)
     if Sundials_configuration.safe
     then (let x = Array.get xa 0 in
           Array.iter (check x) xa;
-          Array.iter (check x) za);
+          Array.iter (check x) za;
+          same_len xa za);
     c_scalevectorarray c xa za
 
   external c_constvectorarray
@@ -229,7 +240,8 @@ struct (* {{{ *)
     if Sundials_configuration.safe
     then (let x = Array.get xa 0 in
           Array.iter (check x) xa;
-          Array.iter (check x) wa);
+          Array.iter (check x) wa;
+         same_len xa wa);
     c_wrmsnormvectorarray xa wa nrm
 
   external c_wrmsnormmaskvectorarray
@@ -239,15 +251,47 @@ struct (* {{{ *)
   let wrmsnormmaskvectorarray (xa : t array) (wa : t array) (id : t) nrm =
     if Sundials_configuration.safe
     then (Array.iter (check id) xa;
-          Array.iter (check id) wa);
+          Array.iter (check id) wa;
+          same_len xa wa);
     c_wrmsnormmaskvectorarray xa wa id nrm
+
+  (* The generic nvector routine compensates for a missing
+     nvscaleaddmultivectorarray operation. *)
+  external c_scaleaddmultivectorarray
+    : RealArray.t -> t array -> t array array -> t array array -> unit
+    = "sunml_nvec_any_scaleaddmultivectorarray"
 
   let scaleaddmultivectorarray ra (xa : t array) (yaa : t array array)
                                      (zaa : t array array) =
-    raise Nvector.OperationNotProvided
+    if Sundials_configuration.safe
+    then (let x = Array.get xa 0 in
+          let ns = RealArray.length ra in
+          let nv = Array.length xa in
+          same_len' ns yaa;
+          same_len' ns zaa;
+          Array.iter (check x) xa;
+          Array.iter (fun ya -> same_len' nv ya; Array.iter (check x) ya) yaa;
+          Array.iter (fun za -> same_len' nv za; Array.iter (check x) za) zaa;
+          same_len yaa zaa);
+    (* MpiPlusX Nvectors do not provide this operation. *)
+    c_scaleaddmultivectorarray ra xa yaa zaa
+
+  (* The generic nvector routine compensates for a missing
+     nvscaleaddmultivectorarray operation. *)
+  external c_linearcombinationvectorarray 
+    : RealArray.t -> t array array -> t array -> unit
+    = "sunml_nvec_any_linearcombinationvectorarray"
 
   let linearcombinationvectorarray ca (xaa : t array array) (za : t array) =
-    raise Nvector.OperationNotProvided
+    if Sundials_configuration.safe
+    then (let z = Array.get za 0 in
+          let ns = RealArray.length ca in
+          let nv = Array.length za in
+          same_len' ns xaa;
+          Array.iter (check z) za;
+          Array.iter (fun xa -> same_len' nv xa; Array.iter (check z) xa) xaa);
+    (* MpiPlusX Nvectors do not provide this operation. *)
+    c_linearcombinationvectorarray ca xaa za
 
   let addconst (x : t) b (z : t) =
     if Sundials_configuration.safe then check x z;

@@ -56,6 +56,61 @@ let length nv = snd (unwrap nv)
 
 let num_subvectors nv = ROArray.length (fst (unwrap nv))
 
+(* Selectively enable and disable fused and array operations *)
+external c_enablefusedops_manyvector                : ('d, 'k) Nvector.t -> bool -> unit
+  = "sunml_nvec_many_enablefusedops"
+external c_enablelinearcombination_manyvector       : ('d, 'k) Nvector.t -> bool -> unit
+  = "sunml_nvec_many_enablelinearcombination"
+external c_enablescaleaddmulti_manyvector           : ('d, 'k) Nvector.t -> bool -> unit
+  = "sunml_nvec_many_enablescaleaddmulti"
+external c_enabledotprodmulti_manyvector            : ('d, 'k) Nvector.t -> bool -> unit
+  = "sunml_nvec_many_enabledotprodmulti"
+external c_enablelinearsumvectorarray_manyvector    : ('d, 'k) Nvector.t -> bool -> unit
+  = "sunml_nvec_many_enablelinearsumvectorarray"
+external c_enablescalevectorarray_manyvector        : ('d, 'k) Nvector.t -> bool -> unit
+  = "sunml_nvec_many_enablescalevectorarray"
+external c_enableconstvectorarray_manyvector        : ('d, 'k) Nvector.t -> bool -> unit
+  = "sunml_nvec_many_enableconstvectorarray"
+external c_enablewrmsnormvectorarray_manyvector     : ('d, 'k) Nvector.t -> bool -> unit
+  = "sunml_nvec_many_enablewrmsnormvectorarray"
+external c_enablewrmsnormmaskvectorarray_manyvector : ('d, 'k) Nvector.t -> bool -> unit
+  = "sunml_nvec_many_enablewrmsnormmaskvectorarray"
+
+let do_enable f nv v =
+  match v with
+  | None -> ()
+  | Some v -> f nv v
+
+let enable
+   ?with_fused_ops
+   ?with_linear_combination
+   ?with_scale_add_multi
+   ?with_dot_prod_multi
+   ?with_linear_sum_vector_array
+   ?with_scale_vector_array
+   ?with_const_vector_array
+   ?with_wrms_norm_vector_array
+   ?with_wrms_norm_mask_vector_array
+   nv
+  = do_enable c_enablefusedops_manyvector nv
+              with_fused_ops;
+    do_enable c_enablelinearcombination_manyvector nv
+              with_linear_combination;
+    do_enable c_enablescaleaddmulti_manyvector nv
+              with_scale_add_multi;
+    do_enable c_enabledotprodmulti_manyvector nv
+              with_dot_prod_multi;
+    do_enable c_enablelinearsumvectorarray_manyvector nv
+              with_linear_sum_vector_array;
+    do_enable c_enablescalevectorarray_manyvector nv
+              with_scale_vector_array;
+    do_enable c_enableconstvectorarray_manyvector nv
+              with_const_vector_array;
+    do_enable c_enablewrmsnormvectorarray_manyvector nv
+              with_wrms_norm_vector_array;
+    do_enable c_enablewrmsnormmaskvectorarray_manyvector nv
+              with_wrms_norm_mask_vector_array
+
 module Ops : Nvector.NVECTOR_OPS with type t = t =
 struct (* {{{ *)
   type t = (data, kind) Nvector.t
@@ -151,7 +206,7 @@ struct (* {{{ *)
     c_invtest x z
 
   external space          : t -> int * int
-    = "sunml_nvec_many_space" [@@noalloc]
+    = "sunml_nvec_many_space"
 
   external getlength      : t -> int
     = "sunml_nvec_many_getlength" [@@noalloc]
@@ -163,19 +218,28 @@ struct (* {{{ *)
     if Sundials_configuration.safe then Array.iter (check z) xa;
     c_linearcombination ca xa z
 
+  let same_len' n ya =
+    if n <> Array.length ya then invalid_arg "arrays of unequal length"
+  let same_len xa ya = same_len' (Array.length xa) ya
+
   external c_scaleaddmulti : RealArray.t -> t -> t array -> t array -> unit
     = "sunml_nvec_many_scaleaddmulti"
 
   let scaleaddmulti aa (x : t) (ya : t array) (za : t array) =
     if Sundials_configuration.safe then
-      (Array.iter (check x) ya; Array.iter (check x) za);
+      (Array.iter (check x) ya; Array.iter (check x) za;
+       let nv = RealArray.length aa in
+       same_len' nv ya; same_len' nv za);
     c_scaleaddmulti aa x ya za
 
   external c_dotprodmulti  : t -> t array -> RealArray.t -> unit
     = "sunml_nvec_many_dotprodmulti"
 
-  let dotprodmulti (x : t) (ya : t array) dp =
-    if Sundials_configuration.safe then Array.iter (check x) ya;
+  let dotprodmulti (x : t) (ya : t array) (dp : RealArray.t) =
+    if Sundials_configuration.safe then
+      (let nv = RealArray.length dp in
+       same_len' nv ya;
+       Array.iter (check x) ya);
     c_dotprodmulti x ya dp
 
   external c_linearsumvectorarray
@@ -187,7 +251,8 @@ struct (* {{{ *)
     then (let x = Array.get xa 0 in
           Array.iter (check x) xa;
           Array.iter (check x) ya;
-          Array.iter (check x) za);
+          Array.iter (check x) za;
+          same_len xa ya; same_len xa za);
     c_linearsumvectorarray a xa b ya za
 
   external c_scalevectorarray
@@ -198,7 +263,8 @@ struct (* {{{ *)
     if Sundials_configuration.safe
     then (let x = Array.get xa 0 in
           Array.iter (check x) xa;
-          Array.iter (check x) za);
+          Array.iter (check x) za;
+          same_len xa za);
     c_scalevectorarray c xa za
 
   external c_constvectorarray
@@ -219,7 +285,8 @@ struct (* {{{ *)
     if Sundials_configuration.safe
     then (let x = Array.get xa 0 in
           Array.iter (check x) xa;
-          Array.iter (check x) wa);
+          Array.iter (check x) wa;
+         same_len xa wa);
     c_wrmsnormvectorarray xa wa nrm
 
   external c_wrmsnormmaskvectorarray
@@ -229,15 +296,47 @@ struct (* {{{ *)
   let wrmsnormmaskvectorarray (xa : t array) (wa : t array) (id : t) nrm =
     if Sundials_configuration.safe
     then (Array.iter (check id) xa;
-          Array.iter (check id) wa);
+          Array.iter (check id) wa;
+          same_len xa wa);
     c_wrmsnormmaskvectorarray xa wa id nrm
 
+  (* The generic nvector routine compensates for a missing
+     nvscaleaddmultivectorarray operation. *)
+  external c_scaleaddmultivectorarray
+    : RealArray.t -> t array -> t array array -> t array array -> unit
+    = "sunml_nvec_any_scaleaddmultivectorarray"
+
   let scaleaddmultivectorarray ra (xa : t array) (yaa : t array array)
-                                     (zaa : t array array) =
-    raise Nvector.OperationNotProvided
+                                  (zaa : t array array) =
+    if Sundials_configuration.safe
+    then (let x = Array.get xa 0 in
+          let ns = RealArray.length ra in
+          let nv = Array.length xa in
+          same_len' ns yaa;
+          same_len' ns zaa;
+          Array.iter (check x) xa;
+          Array.iter (fun ya -> same_len' nv ya; Array.iter (check x) ya) yaa;
+          Array.iter (fun za -> same_len' nv za; Array.iter (check x) za) zaa;
+          same_len yaa zaa);
+    (* Many Nvectors do not provide this operation. *)
+    c_scaleaddmultivectorarray ra xa yaa zaa
+
+  (* The generic nvector routine compensates for a missing
+     nvscaleaddmultivectorarray operation. *)
+  external c_linearcombinationvectorarray 
+    : RealArray.t -> t array array -> t array -> unit
+    = "sunml_nvec_any_linearcombinationvectorarray"
 
   let linearcombinationvectorarray ca (xaa : t array array) (za : t array) =
-    raise Nvector.OperationNotProvided
+    if Sundials_configuration.safe
+    then (let z = Array.get za 0 in
+          let ns = RealArray.length ca in
+          let nv = Array.length za in
+          same_len' ns xaa;
+          Array.iter (check z) za;
+          Array.iter (fun xa -> same_len' nv xa; Array.iter (check z) xa) xaa);
+    (* Many Nvectors do not provide this operation. *)
+    c_linearcombinationvectorarray ca xaa za
 
   module Local = struct
     external c_dotprod      : t -> t -> float
@@ -601,6 +700,39 @@ module Any = struct (* {{{ *)
     match Nvector.unwrap nv with
     | Many a -> a
     | _ -> raise Nvector.BadGenericType
+
+  let enable
+     ?with_fused_ops
+     ?with_linear_combination
+     ?with_scale_add_multi
+     ?with_dot_prod_multi
+     ?with_linear_sum_vector_array
+     ?with_scale_vector_array
+     ?with_const_vector_array
+     ?with_wrms_norm_vector_array
+     ?with_wrms_norm_mask_vector_array
+     nv
+    = if Sundials_impl.Versions.sundials_lt400
+        then raise Config.NotImplementedBySundialsVersion;
+      if Nvector.get_id nv <> Nvector.ManyVector then raise Nvector.BadGenericType;
+      do_enable c_enablefusedops_manyvector nv
+                with_fused_ops;
+      do_enable c_enablelinearcombination_manyvector nv
+                with_linear_combination;
+      do_enable c_enablescaleaddmulti_manyvector nv
+                with_scale_add_multi;
+      do_enable c_enabledotprodmulti_manyvector nv
+                with_dot_prod_multi;
+      do_enable c_enablelinearsumvectorarray_manyvector nv
+                with_linear_sum_vector_array;
+      do_enable c_enablescalevectorarray_manyvector nv
+                with_scale_vector_array;
+      do_enable c_enableconstvectorarray_manyvector nv
+                with_const_vector_array;
+      do_enable c_enablewrmsnormvectorarray_manyvector nv
+                with_wrms_norm_vector_array;
+      do_enable c_enablewrmsnormmaskvectorarray_manyvector nv
+                with_wrms_norm_mask_vector_array
 
 end (* }}} *)
 

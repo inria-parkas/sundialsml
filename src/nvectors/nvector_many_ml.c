@@ -198,13 +198,13 @@ static N_Vector do_clone_many(N_Vector src, enum do_clone_mode clonemode)
 	Store_field(dstwrapped, 0, Field(srcwrapped, 0)); // Many constructor
 	Store_field(dstwrapped, 1, dstpayload);
 
-	NVEC_BACKLINK(dst) = dstwrapped;
+	caml_modify_generational_global_root(&NVEC_BACKLINK(dst), dstwrapped);
 	break;
 
     case CLONE_NORMAL:
     case CLONE_X_NORMAL:
     default:
-	NVEC_BACKLINK(dst) = dstpayload;
+	caml_modify_generational_global_root(&NVEC_BACKLINK(dst), dstpayload);
 	break;
     }
 
@@ -323,9 +323,9 @@ static value do_wrap(value payload,
     ops->nvclone           = mpiplusx			    /* ours */
 				? clone_mpiplusx
 				: clone_many;
-    ops->nvgetvectorid	   = mpiplusx
+    ops->nvgetvectorid	   = mpiplusx			    /* theirs */
 				? N_VGetVectorID_MPIPlusX
-				: MVAPPEND(N_VGetVectorID); /* theirs */
+				: MVAPPEND(N_VGetVectorID);
     ops->nvgetcommunicator = N_VGetCommunicator_MPIManyVector;
     ops->nvgetarraypointer = mpiplusx
 				? N_VGetArrayPointer_MPIPlusX
@@ -465,8 +465,8 @@ static value do_anywrap(value extconstr, value payload,
     Store_field(vwrapped, 0, extconstr);
     Store_field(vwrapped, 1, NVEC_BACKLINK(nv));
 
-    Store_field(vnv, 0, vwrapped);
-    NVEC_BACKLINK(nv) = vwrapped;
+    Store_field(vnv, NVEC_PAYLOAD, vwrapped);
+    caml_modify_generational_global_root(&NVEC_BACKLINK(nv), vwrapped);
 
     CAMLreturn(vnv);
 }
@@ -969,5 +969,106 @@ CAMLprim value SUNML_NVEC_OP(wsqrsummasklocal)(value vx, value vw, value vid)
 #else
     CAMLreturn (Val_unit);
 #endif
+}
+
+/** Selectively activate fused and array operations for many nvectors */
+
+CAMLprim value SUNML_NVEC_OP(enablefusedops)(value vx, value vv)
+{
+    CAMLparam2(vx, vv);
+#if 500 <= SUNDIALS_LIB_VERSION
+    MVAPPEND(N_VEnableFusedOps)(NVEC_VAL(vx), Bool_val(vv));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value SUNML_NVEC_OP(enablelinearcombination)(value vx, value vv)
+{
+    CAMLparam2(vx, vv);
+#if 500 <= SUNDIALS_LIB_VERSION
+    MVAPPEND(N_VEnableLinearCombination)(NVEC_VAL(vx), Bool_val(vv));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value SUNML_NVEC_OP(enablescaleaddmulti)(value vx, value vv)
+{
+    CAMLparam2(vx, vv);
+#if 500 <= SUNDIALS_LIB_VERSION
+    MVAPPEND(N_VEnableScaleAddMulti)(NVEC_VAL(vx), Bool_val(vv));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value SUNML_NVEC_OP(enabledotprodmulti)(value vx, value vv)
+{
+    CAMLparam2(vx, vv);
+#if 500 <= SUNDIALS_LIB_VERSION
+    MVAPPEND(N_VEnableDotProdMulti)(NVEC_VAL(vx), Bool_val(vv));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value SUNML_NVEC_OP(enablelinearsumvectorarray)(value vx, value vv)
+{
+    CAMLparam2(vx, vv);
+#if 500 <= SUNDIALS_LIB_VERSION
+    MVAPPEND(N_VEnableLinearSumVectorArray)(NVEC_VAL(vx), Bool_val(vv));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value SUNML_NVEC_OP(enablescalevectorarray)(value vx, value vv)
+{
+    CAMLparam2(vx, vv);
+#if 500 <= SUNDIALS_LIB_VERSION
+    MVAPPEND(N_VEnableScaleVectorArray)(NVEC_VAL(vx), Bool_val(vv));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value SUNML_NVEC_OP(enableconstvectorarray)(value vx, value vv)
+{
+    CAMLparam2(vx, vv);
+#if 500 <= SUNDIALS_LIB_VERSION
+    MVAPPEND(N_VEnableConstVectorArray)(NVEC_VAL(vx), Bool_val(vv));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value SUNML_NVEC_OP(enablewrmsnormvectorarray)(value vx, value vv)
+{
+    CAMLparam2(vx, vv);
+#if 500 <= SUNDIALS_LIB_VERSION
+    MVAPPEND(N_VEnableWrmsNormVectorArray)(NVEC_VAL(vx), Bool_val(vv));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value SUNML_NVEC_OP(enablewrmsnormmaskvectorarray)(value vx, value vv)
+{
+    CAMLparam2(vx, vv);
+#if 500 <= SUNDIALS_LIB_VERSION
+    MVAPPEND(N_VEnableWrmsNormMaskVectorArray)(NVEC_VAL(vx), Bool_val(vv));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
 }
 

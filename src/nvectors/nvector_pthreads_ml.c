@@ -237,7 +237,7 @@ CAMLprim value sunml_nvec_anywrap_pthreads(value extconstr,
     Store_field(vwrapped, 1, NVEC_BACKLINK(nv));
 
     Store_field(vnv, 0, vwrapped);
-    NVEC_BACKLINK(nv) = vwrapped;
+    caml_modify_generational_global_root(&NVEC_BACKLINK(nv), vwrapped);
 
     CAMLreturn(vnv);
 }
@@ -259,12 +259,6 @@ CAMLprim value sunml_nvec_pthreads_linearsum(value va, value vx, value vb,
     N_Vector x = NVEC_VAL(vx);
     N_Vector y = NVEC_VAL(vy);
     N_Vector z = NVEC_VAL(vz);
-
-#if SUNDIALS_ML_SAFE == 1
-    if (NV_LENGTH_PT(y) != NV_LENGTH_PT(x) || NV_LENGTH_PT(z) != NV_LENGTH_PT(x))
-	caml_invalid_argument("Nvector_pthreads.linearsum");
-#endif
-
     N_VLinearSum_Pthreads(Double_val(va), x, Double_val(vb), y, z);
     CAMLreturn (Val_unit);
 }
@@ -282,12 +276,6 @@ CAMLprim value sunml_nvec_pthreads_prod(value vx, value vy, value vz)
     N_Vector x = NVEC_VAL(vx);
     N_Vector y = NVEC_VAL(vy);
     N_Vector z = NVEC_VAL(vz);
-
-#if SUNDIALS_ML_SAFE == 1
-    if (NV_LENGTH_PT(y) != NV_LENGTH_PT(x) || NV_LENGTH_PT(z) != NV_LENGTH_PT(x))
-	caml_invalid_argument("Nvector_pthreads.prod");
-#endif
-
     N_VProd_Pthreads(x, y, z);
     CAMLreturn (Val_unit);
 }
@@ -298,12 +286,6 @@ CAMLprim value sunml_nvec_pthreads_div(value vx, value vy, value vz)
     N_Vector x = NVEC_VAL(vx);
     N_Vector y = NVEC_VAL(vy);
     N_Vector z = NVEC_VAL(vz);
-
-#if SUNDIALS_ML_SAFE == 1
-    if (NV_LENGTH_PT(y) != NV_LENGTH_PT(x) || NV_LENGTH_PT(z) != NV_LENGTH_PT(x))
-	caml_invalid_argument("Nvector_pthreads.div");
-#endif
-
     N_VDiv_Pthreads(x, y, z);
     CAMLreturn (Val_unit);
 }
@@ -313,12 +295,6 @@ CAMLprim value sunml_nvec_pthreads_scale(value vc, value vx, value vz)
     CAMLparam3(vc, vx, vz);
     N_Vector x = NVEC_VAL(vx);
     N_Vector z = NVEC_VAL(vz);
-
-#if SUNDIALS_ML_SAFE == 1
-    if (NV_LENGTH_PT(z) != NV_LENGTH_PT(x))
-	caml_invalid_argument("Nvector_pthreads.scale");
-#endif
-
     N_VScale_Pthreads(Double_val(vc), x, z);
     CAMLreturn (Val_unit);
 }
@@ -328,12 +304,6 @@ CAMLprim value sunml_nvec_pthreads_abs(value vx, value vz)
     CAMLparam2(vx, vz);
     N_Vector x = NVEC_VAL(vx);
     N_Vector z = NVEC_VAL(vz);
-
-#if SUNDIALS_ML_SAFE == 1
-    if (NV_LENGTH_PT(z) != NV_LENGTH_PT(x))
-	caml_invalid_argument("Nvector_pthreads.abs");
-#endif
-
     N_VAbs_Pthreads(x, z);
     CAMLreturn (Val_unit);
 }
@@ -343,12 +313,6 @@ CAMLprim value sunml_nvec_pthreads_inv(value vx, value vz)
     CAMLparam2(vx, vz);
     N_Vector x = NVEC_VAL(vx);
     N_Vector z = NVEC_VAL(vz);
-
-#if SUNDIALS_ML_SAFE == 1
-    if (NV_LENGTH_PT(z) != NV_LENGTH_PT(x))
-	caml_invalid_argument("Nvector_pthreads.inv");
-#endif
-
     N_VInv_Pthreads(x, z);
     CAMLreturn (Val_unit);
 }
@@ -358,12 +322,6 @@ CAMLprim value sunml_nvec_pthreads_addconst(value vx, value vb, value vz)
     CAMLparam3(vx, vb, vz);
     N_Vector x = NVEC_VAL(vx);
     N_Vector z = NVEC_VAL(vz);
-
-#if SUNDIALS_ML_SAFE == 1
-    if (NV_LENGTH_PT(z) != NV_LENGTH_PT(x))
-	caml_invalid_argument("Nvector_pthreads.addconst");
-#endif
-
     N_VAddConst_Pthreads(x, Double_val(vb), z);
     CAMLreturn (Val_unit);
 }
@@ -373,12 +331,6 @@ CAMLprim value sunml_nvec_pthreads_dotprod(value vx, value vy)
     CAMLparam2(vx, vy);
     N_Vector x = NVEC_VAL(vx);
     N_Vector y = NVEC_VAL(vy);
-
-#if SUNDIALS_ML_SAFE == 1
-    if (NV_LENGTH_PT(y) != NV_LENGTH_PT(x))
-	caml_invalid_argument("Nvector_pthreads.dotprod");
-#endif
-
     realtype r = N_VDotProd_Pthreads(x, y);
     CAMLreturn(caml_copy_double(r));
 }
@@ -395,12 +347,6 @@ CAMLprim value sunml_nvec_pthreads_wrmsnorm(value vx, value vw)
     CAMLparam2(vx, vw);
     N_Vector x = NVEC_VAL(vx);
     N_Vector w = NVEC_VAL(vw);
-
-#if SUNDIALS_ML_SAFE == 1
-    if (NV_LENGTH_PT(w) != NV_LENGTH_PT(x))
-	caml_invalid_argument("Nvector_pthreads.wrmsnorm");
-#endif
-
     realtype r = N_VWrmsNorm_Pthreads(x, w);
     CAMLreturn(caml_copy_double(r));
 }
@@ -411,12 +357,6 @@ CAMLprim value sunml_nvec_pthreads_wrmsnormmask(value vx, value vw, value vid)
     N_Vector x = NVEC_VAL(vx);
     N_Vector w = NVEC_VAL(vw);
     N_Vector id = NVEC_VAL(vid);
-
-#if SUNDIALS_ML_SAFE == 1
-    if (NV_LENGTH_PT(w) != NV_LENGTH_PT(x) || NV_LENGTH_PT(w) != NV_LENGTH_PT(id))
-	caml_invalid_argument("Nvector_pthreads.wrmsnormmask");
-#endif
-
     realtype r = N_VWrmsNormMask_Pthreads(x, w, id);
     CAMLreturn(caml_copy_double(r));
 }
@@ -433,12 +373,6 @@ CAMLprim value sunml_nvec_pthreads_wl2norm(value vx, value vw)
     CAMLparam2(vx, vw);
     N_Vector x = NVEC_VAL(vx);
     N_Vector w = NVEC_VAL(vw);
-
-#if SUNDIALS_ML_SAFE == 1
-    if (NV_LENGTH_PT(w) != NV_LENGTH_PT(x))
-	caml_invalid_argument("Nvector_pthreads.wl2norm");
-#endif
-
     realtype r = N_VWL2Norm_Pthreads(x, w);
     CAMLreturn(caml_copy_double(r));
 }
@@ -455,12 +389,6 @@ CAMLprim value sunml_nvec_pthreads_compare(value vc, value vx, value vz)
     CAMLparam3(vc, vx, vz);
     N_Vector x = NVEC_VAL(vx);
     N_Vector z = NVEC_VAL(vz);
-
-#if SUNDIALS_ML_SAFE == 1
-    if (NV_LENGTH_PT(z) != NV_LENGTH_PT(x))
-	caml_invalid_argument("Nvector_pthreads.compare");
-#endif
-
     N_VCompare_Pthreads(Double_val(vc), x, z);
     CAMLreturn (Val_unit);
 }
@@ -470,12 +398,6 @@ CAMLprim value sunml_nvec_pthreads_invtest(value vx, value vz)
     CAMLparam2(vx, vz);
     N_Vector x = NVEC_VAL(vx);
     N_Vector z = NVEC_VAL(vz);
-
-#if SUNDIALS_ML_SAFE == 1
-    if (NV_LENGTH_PT(z) != NV_LENGTH_PT(x))
-	caml_invalid_argument("Nvector_pthreads.invtest");
-#endif
-
     booleantype r = N_VInvTest_Pthreads(x, z);
     CAMLreturn(Val_bool(r));
 }
@@ -486,12 +408,6 @@ CAMLprim value sunml_nvec_pthreads_constrmask(value vc, value vx, value vm)
     N_Vector c = NVEC_VAL(vc);
     N_Vector x = NVEC_VAL(vx);
     N_Vector m = NVEC_VAL(vm);
-
-#if SUNDIALS_ML_SAFE == 1
-    if (NV_LENGTH_PT(x) != NV_LENGTH_PT(c) || NV_LENGTH_PT(m) != NV_LENGTH_PT(x))
-	caml_invalid_argument("Nvector_pthreads.constrmask");
-#endif
-
     booleantype r = N_VConstrMask_Pthreads(c, x, m);
     CAMLreturn(Val_bool(r));
 }
@@ -501,12 +417,6 @@ CAMLprim value sunml_nvec_pthreads_minquotient(value vnum, value vdenom)
     CAMLparam2(vnum, vdenom);
     N_Vector num = NVEC_VAL(vnum);
     N_Vector denom = NVEC_VAL(vdenom);
-
-#if SUNDIALS_ML_SAFE == 1
-    if (NV_LENGTH_PT(num) != NV_LENGTH_PT(denom))
-	caml_invalid_argument("Nvector_pthreads.minquotient");
-#endif
-
     realtype r = N_VMinQuotient_Pthreads(num, denom);
     CAMLreturn(caml_copy_double(r));
 }
@@ -549,17 +459,9 @@ CAMLprim value sunml_nvec_pthreads_linearcombination(value vac, value vax,
     N_Vector z = NVEC_VAL(vz);
     N_Vector *ax;
     int nvec = sunml_arrays_of_nvectors(&ax, 1, vax);
-
-#if SUNDIALS_ML_SAFE == 1
-    if (!nvec || ARRAY1_LEN(vac) < nvec
-	    || NV_LENGTH_PT(ax[0]) != NV_LENGTH_PT(z))
-	caml_invalid_argument("Nvector_pthreads.linearcombination");
-#endif
-
+    if (!nvec) caml_raise_out_of_memory();
     N_VLinearCombination_Pthreads(nvec, ac, ax, z);
     free(ax);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn(Val_unit);
 }
@@ -573,17 +475,9 @@ CAMLprim value sunml_nvec_pthreads_scaleaddmulti(value vac, value vx, value vay,
     N_Vector x = NVEC_VAL(vx);
     N_Vector *a[2];
     int nvec = sunml_arrays_of_nvectors(a, 2, vay, vaz);
-
-#if SUNDIALS_ML_SAFE == 1
-    if (!nvec || ARRAY1_LEN(vac) < nvec
-	    || NV_LENGTH_PT(a[0][0]) != NV_LENGTH_PT(x))
-	caml_invalid_argument("Nvector_pthreads.scaleaddmulti");
-#endif
-
+    if (!nvec) caml_raise_out_of_memory();
     N_VScaleAddMulti_Pthreads(nvec, ac, x, a[0], a[1]);
     free(*a);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn(Val_unit);
 }
@@ -596,17 +490,9 @@ CAMLprim value sunml_nvec_pthreads_dotprodmulti(value vx, value vay, value vad)
     N_Vector x = NVEC_VAL(vx);
     N_Vector *ay;
     int nvec = sunml_arrays_of_nvectors(&ay, 1, vay);
-
-#if SUNDIALS_ML_SAFE == 1
-    if (!nvec || ARRAY1_LEN(vad) < nvec
-		|| NV_LENGTH_PT(ay[0]) != NV_LENGTH_PT(x))
-	caml_invalid_argument("Nvector_pthreads.dotprodmulti");
-#endif
-
+    if (!nvec) caml_raise_out_of_memory();
     N_VDotProdMulti_Pthreads(nvec, x, ay, ad);
     free(ay);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn(Val_unit);
 }
@@ -622,16 +508,10 @@ CAMLprim value sunml_nvec_pthreads_linearsumvectorarray(value va, value vax,
 #if 400 <= SUNDIALS_LIB_VERSION
     N_Vector *a[3];
     int nvec = sunml_arrays_of_nvectors(a, 3, vax, vay, vaz);
-
-#if SUNDIALS_ML_SAFE == 1
-    if (!nvec) caml_invalid_argument("Nvector_pthreads.linearsumvectorarray");
-#endif
-
+    if (!nvec) caml_raise_out_of_memory();
     N_VLinearSumVectorArray_Pthreads(nvec, Double_val(va), a[0],
 					 Double_val(vb), a[1], a[2]);
     free(*a);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn(Val_unit);
 }
@@ -644,16 +524,9 @@ CAMLprim value sunml_nvec_pthreads_scalevectorarray(value vac, value vax,
     realtype *ac = REAL_ARRAY(vac);
     N_Vector *a[2];
     int nvec = sunml_arrays_of_nvectors(a, 2, vax, vaz);
-
-#if SUNDIALS_ML_SAFE == 1
-    if (!nvec || ARRAY1_LEN(vac) < nvec)
-	caml_invalid_argument("Nvector_pthreads.scalevectorarray");
-#endif
-
+    if (!nvec) caml_raise_out_of_memory();
     N_VScaleVectorArray_Pthreads(nvec, ac, a[0], a[1]);
     free(*a);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn(Val_unit);
 }
@@ -664,15 +537,9 @@ CAMLprim value sunml_nvec_pthreads_constvectorarray(value vc, value vaz)
 #if 400 <= SUNDIALS_LIB_VERSION
     N_Vector *az;
     int nvec = sunml_arrays_of_nvectors(&az, 1, vaz);
-
-#if SUNDIALS_ML_SAFE == 1
-    if (!nvec) caml_invalid_argument("Nvector_pthreads.constvectorarray");
-#endif
-
+    if (!nvec) caml_raise_out_of_memory();
     N_VConstVectorArray_Pthreads(nvec, Double_val(vc), az);
     free(az);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn(Val_unit);
 }
@@ -685,16 +552,9 @@ CAMLprim value sunml_nvec_pthreads_wrmsnormvectorarray(value vax, value vaw,
     realtype *an = REAL_ARRAY(van);
     N_Vector *a[2];
     int nvec = sunml_arrays_of_nvectors(a, 2, vax, vaw);
-
-#if SUNDIALS_ML_SAFE == 1
-    if (!nvec || ARRAY1_LEN(van) < nvec)
-	caml_invalid_argument("Nvector_pthreads.constvectorarray");
-#endif
-
+    if (!nvec) caml_raise_out_of_memory();
     N_VWrmsNormVectorArray_Pthreads(nvec, a[0], a[1], an);
     free(*a);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn(Val_unit);
 }
@@ -708,17 +568,9 @@ CAMLprim value sunml_nvec_pthreads_wrmsnormmaskvectorarray(value vax,
     N_Vector i = NVEC_VAL(vi);
     N_Vector *a[2];
     int nvec = sunml_arrays_of_nvectors(a, 2, vax, vaw);
-
-#if SUNDIALS_ML_SAFE == 1
-    if (!nvec || ARRAY1_LEN(van) < nvec
-		|| NV_LENGTH_PT(i) != NV_LENGTH_PT(a[0][0]))
-	caml_invalid_argument("Nvector_pthreads.constvectorarray");
-#endif
-
+    if (!nvec) caml_raise_out_of_memory();
     N_VWrmsNormMaskVectorArray_Pthreads(nvec, a[0], a[1], i, an);
     free(*a);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn(Val_unit);
 }
@@ -731,23 +583,13 @@ CAMLprim value sunml_nvec_pthreads_scaleaddmultivectorarray(value vaa,
     realtype *aa = REAL_ARRAY(vaa);
     N_Vector *ax = NULL;
     int nvec = sunml_arrays_of_nvectors(&ax, 1, vax);
+    if (!nvec) caml_raise_out_of_memory();
     N_Vector **ayz[2] = { NULL };
     int nvec2, nsum;
     sunml_arrays_of_nvectors2(&nsum, &nvec2, ayz, 2, vaay, vaaz);
-
-#if SUNDIALS_ML_SAFE == 1
-    if (!nvec || !nsum || nvec2 != nvec || ARRAY1_LEN(vaa) < nsum) {
-	if (ax != NULL) free(ax);
-	if (*ayz != NULL) free(*ayz);
-	caml_invalid_argument("Nvector_pthreads.scaleaddmultivectorarray");
-    }
-#endif
-
     N_VScaleAddMultiVectorArray_Pthreads(nvec, nsum, aa, ax, ayz[0], ayz[1]);
     free(ax);
     free(*ayz);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn(Val_unit);
 }
@@ -759,24 +601,13 @@ CAMLprim value sunml_nvec_pthreads_linearcombinationvectorarray(value vac,
 #if 400 <= SUNDIALS_LIB_VERSION
     realtype *ac = REAL_ARRAY(vac);
     N_Vector *az;
-    int nvecz __attribute__((unused))
-	= sunml_arrays_of_nvectors(&az, 1, vaz);
+    int nvecz = sunml_arrays_of_nvectors(&az, 1, vaz);
+    if (!nvecz) caml_raise_out_of_memory();
     N_Vector **aax;
     int nvec, nsum;
     sunml_arrays_of_nvectors2(&nsum, &nvec, &aax, 1, vaax);
-
-#if SUNDIALS_ML_SAFE == 1
-    if (!nvecz || !nsum || nvec > nvecz || ARRAY1_LEN(vac) < nsum) {
-	if (az != NULL) free(az);
-	if (aax != NULL) free(aax);
-	caml_invalid_argument("Nvector_pthreads.linearcombinationvectorarray");
-    }
-#endif
-
     N_VLinearCombinationVectorArray_Pthreads(nvec, nsum, ac, aax, az);
     free(aax);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn(Val_unit);
 }
@@ -787,22 +618,11 @@ CAMLprim value sunml_nvec_pthreads_wsqrsumlocal(value vx, value vw)
 {
     CAMLparam2(vx, vw);
     realtype r;
-
 #if 500 <= SUNDIALS_LIB_VERSION
     N_Vector x = NVEC_VAL(vx);
     N_Vector w = NVEC_VAL(vw);
-
-#if SUNDIALS_ML_SAFE == 1
-    if (NV_LENGTH_PT(w) != NV_LENGTH_PT(x))
-	caml_invalid_argument("Nvector_pthreads.wsqrsumlocal");
-#endif
-
     r = N_VWSqrSumLocal_Pthreads(x, w);
-
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-
     CAMLreturn(caml_copy_double(r));
 }
 
@@ -816,17 +636,7 @@ CAMLprim value sunml_nvec_pthreads_wsqrsummasklocal(value vx, value vw,
     N_Vector x = NVEC_VAL(vx);
     N_Vector w = NVEC_VAL(vw);
     N_Vector id = NVEC_VAL(vid);
-
-#if SUNDIALS_ML_SAFE == 1
-    if (NV_LENGTH_PT(w) != NV_LENGTH_PT(x)
-	    || NV_LENGTH_PT(id) != NV_LENGTH_PT(x))
-	caml_invalid_argument("Nvector_pthreads.wsqrsummasklocal");
-#endif
-
     r = N_VWSqrSumMaskLocal_Pthreads(x, w, id);
-
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
 
     CAMLreturn(caml_copy_double(r));

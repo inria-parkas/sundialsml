@@ -34,12 +34,15 @@ type t = (data, kind) Nvector.t
 type Nvector.gdata += MpiMany of data
 
 (** Creates a mpimany-vector nvector from an array of generic nvectors.
-    The parallel array elements must all use the same communicator which
-    becomes the communicator of the resulting nvector. Specifying the
-    communicator explicitly is useful if none of the array elements has
-    one.
+    If the communicator argument is not given then all nvectors in the array
+    that have a communicator must have the same communicator which becomes the
+    communicator of the new nvector (at least one element must have a
+    communicator). If the communicator argument is given, each array element
+    may use any or no communicator.
 
     @since 5.0.0
+    @cvode <node> N_VNew_MPIManyVector
+    @cvode <node> N_VMake_MPIManyVector
     @raises Invalid_arg if an mpi communicator is not specified or found. *)
 val wrap : ?comm:Mpi.communicator -> Nvector.any ROArray.t -> t
 
@@ -57,6 +60,31 @@ val num_subvectors : t -> int
     {!Nvector_parallel.hide_communicator}. *)
 val communicator : t -> Mpi.communicator
 
+(** Selectively enable or disable fused and array operations.
+    The [with_fused_ops] argument enables or disables all such operations.
+
+    @cvode <node5> N_VEnableFusedOps_MPIManyVector
+    @cvode <node5> N_VEnableLinearCombination_MPIManyVector
+    @cvode <node5> N_VEnableScaleAddMulti_MPIManyVector
+    @cvode <node5> N_VEnableDotProdMulti_MPIManyVector
+    @cvode <node5> N_VEnableLinearSumVectorArray_MPIManyVector
+    @cvode <node5> N_VEnableScaleVectorArray_MPIManyVector
+    @cvode <node5> N_VEnableConstVectorArray_MPIManyVector
+    @cvode <node5> N_VEnableWrmsNormVectorArray_MPIManyVector
+    @cvode <node5> N_VEnableWrmsNormMaskVectorArray_MPIManyVector *)
+val enable :
+     ?with_fused_ops                       : bool
+  -> ?with_linear_combination              : bool
+  -> ?with_scale_add_multi                 : bool
+  -> ?with_dot_prod_multi                  : bool
+  -> ?with_linear_sum_vector_array         : bool
+  -> ?with_scale_vector_array              : bool
+  -> ?with_const_vector_array              : bool
+  -> ?with_wrms_norm_vector_array          : bool
+  -> ?with_wrms_norm_mask_vector_array     : bool
+  -> t
+  -> unit
+
 (** Underlying nvector operations on mpimany-vector nvectors. *)
 module Ops : Nvector.NVECTOR_OPS with type t = t
 
@@ -67,15 +95,18 @@ module DataOps : Nvector.NVECTOR_OPS with type t = data
 
     Create mpimany-vector nvectors using the generic nvector interface where
     the payload is wrapped with the {{!Nvector.gdata}MpiMany} constructor. *)
-module Any : sig
+module Any : sig (* {{{ *)
 
   (** Creates a generic nvector from an array of generic nvectors.
-      The parallel array elements must all use the same communicator which
-      becomes the communicator of the resulting nvector. Specifying the
-      communicator explicitly is useful if none of the array elements has
-      one.
+      If the communicator argument is not given then all nvectors in the array
+      that have a communicator must have the same communicator which becomes
+      the communicator of the new nvector (at least one element must have a
+      communicator). If the communicator argument is given, each array element
+      may use any or no communicator.
 
       @since 5.0.0
+      @cvode <node> N_VNew_MPIManyVector
+      @cvode <node> N_VMake_MPIManyVector
       @raises Invalid_arg if an mpi communicator is not specified or found. *)
   val wrap : ?comm:Mpi.communicator -> Nvector.any ROArray.t -> Nvector.any
 
@@ -83,5 +114,30 @@ module Any : sig
       {{!Nvector.gdata}MpiMany}, otherwise raises {!Nvector.BadGenericType}. *)
   val unwrap : Nvector.any -> data
 
-end
+  (** Selectively enable or disable fused and array operations.
+      The [with_fused_ops] argument enables or disables all such operations.
+
+      @cvode <node5> N_VEnableFusedOps_MPIManyVector
+      @cvode <node5> N_VEnableLinearCombination_MPIManyVector
+      @cvode <node5> N_VEnableScaleAddMulti_MPIManyVector
+      @cvode <node5> N_VEnableDotProdMulti_MPIManyVector
+      @cvode <node5> N_VEnableLinearSumVectorArray_MPIManyVector
+      @cvode <node5> N_VEnableScaleVectorArray_MPIManyVector
+      @cvode <node5> N_VEnableConstVectorArray_MPIManyVector
+      @cvode <node5> N_VEnableWrmsNormVectorArray_MPIManyVector
+      @cvode <node5> N_VEnableWrmsNormMaskVectorArray_MPIManyVector
+      @raise Nvector.BadGenericType If not called on an MPIMany nvector *)
+  val enable :
+       ?with_fused_ops                       : bool
+    -> ?with_linear_combination              : bool
+    -> ?with_scale_add_multi                 : bool
+    -> ?with_dot_prod_multi                  : bool
+    -> ?with_linear_sum_vector_array         : bool
+    -> ?with_scale_vector_array              : bool
+    -> ?with_const_vector_array              : bool
+    -> ?with_wrms_norm_vector_array          : bool
+    -> ?with_wrms_norm_mask_vector_array     : bool
+    -> Nvector.any
+    -> unit
+end (* }}} *)
 

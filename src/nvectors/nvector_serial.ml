@@ -229,6 +229,44 @@ module Any = struct (* {{{ *)
     | Nvector.RA a -> a
     | _ -> raise Nvector.BadGenericType
 
+  let enable
+     ?with_fused_ops
+     ?with_linear_combination
+     ?with_scale_add_multi
+     ?with_dot_prod_multi
+     ?with_linear_sum_vector_array
+     ?with_scale_vector_array
+     ?with_const_vector_array
+     ?with_wrms_norm_vector_array
+     ?with_wrms_norm_mask_vector_array
+     ?with_scale_add_multi_vector_array
+     ?with_linear_combination_vector_array
+     nv
+    = if Sundials_impl.Versions.sundials_lt400
+        then raise Config.NotImplementedBySundialsVersion;
+      if Nvector.get_id nv <> Nvector.Serial then raise Nvector.BadGenericType;
+      do_enable c_enablefusedops_serial nv
+                with_fused_ops;
+      do_enable c_enablelinearcombination_serial nv
+                with_linear_combination;
+      do_enable c_enablescaleaddmulti_serial nv
+                with_scale_add_multi;
+      do_enable c_enabledotprodmulti_serial nv
+                with_dot_prod_multi;
+      do_enable c_enablelinearsumvectorarray_serial nv
+                with_linear_sum_vector_array;
+      do_enable c_enablescalevectorarray_serial nv
+                with_scale_vector_array;
+      do_enable c_enableconstvectorarray_serial nv
+                with_const_vector_array;
+      do_enable c_enablewrmsnormvectorarray_serial nv
+                with_wrms_norm_vector_array;
+      do_enable c_enablewrmsnormmaskvectorarray_serial nv
+                with_wrms_norm_mask_vector_array;
+      do_enable c_enablescaleaddmultivectorarray_serial nv
+                with_scale_add_multi_vector_array;
+      do_enable c_enablelinearcombinationvectorarray_serial nv
+                with_linear_combination_vector_array
 end (* }}} *)
 
 module Ops : Nvector.NVECTOR_OPS with type t = t =
@@ -356,7 +394,7 @@ struct (* {{{ *)
     c_minquotient n d
 
   external space          : t -> int * int
-    = "sunml_nvec_ser_space" [@@noalloc]
+    = "sunml_nvec_ser_space"
 
   external getlength      : t -> int
     = "sunml_nvec_ser_getlength"
@@ -370,6 +408,10 @@ struct (* {{{ *)
     if Sundials_configuration.safe then Array.iter (check z) xa;
     c_linearcombination ca xa z
 
+  let same_len' n ya =
+    if n <> Array.length ya then invalid_arg "arrays of unequal length"
+  let same_len xa ya = same_len' (Array.length xa) ya
+
   external c_scaleaddmulti : RealArray.t -> t -> t array -> t array -> unit
     = "sunml_nvec_ser_scaleaddmulti"
 
@@ -377,7 +419,9 @@ struct (* {{{ *)
     if Sundials_impl.Versions.sundials_lt400
       then raise Config.NotImplementedBySundialsVersion;
     if Sundials_configuration.safe then
-      (Array.iter (check x) ya; Array.iter (check x) za);
+      (Array.iter (check x) ya; Array.iter (check x) za;
+       let nv = RealArray.length aa in
+       same_len' nv ya; same_len' nv za);
     c_scaleaddmulti aa x ya za
 
   external c_dotprodmulti  : t -> t array -> RealArray.t -> unit
@@ -386,7 +430,10 @@ struct (* {{{ *)
   let dotprodmulti (x : t) (ya : t array) dp =
     if Sundials_impl.Versions.sundials_lt400
       then raise Config.NotImplementedBySundialsVersion;
-    if Sundials_configuration.safe then Array.iter (check x) ya;
+    if Sundials_configuration.safe then
+      (let nv = RealArray.length dp in
+       same_len' nv ya;
+       Array.iter (check x) ya);
     c_dotprodmulti x ya dp
 
   external c_linearsumvectorarray
@@ -400,7 +447,8 @@ struct (* {{{ *)
     then (let x = Array.get xa 0 in
           Array.iter (check x) xa;
           Array.iter (check x) ya;
-          Array.iter (check x) za);
+          Array.iter (check x) za;
+          same_len xa ya; same_len xa za);
     c_linearsumvectorarray a xa b ya za
 
   external c_scalevectorarray
@@ -413,7 +461,8 @@ struct (* {{{ *)
     if Sundials_configuration.safe
     then (let x = Array.get xa 0 in
           Array.iter (check x) xa;
-          Array.iter (check x) za);
+          Array.iter (check x) za;
+          same_len xa za);
     c_scalevectorarray c xa za
 
   external c_constvectorarray
@@ -438,7 +487,8 @@ struct (* {{{ *)
     if Sundials_configuration.safe
     then (let x = Array.get xa 0 in
           Array.iter (check x) xa;
-          Array.iter (check x) wa);
+          Array.iter (check x) wa;
+         same_len xa wa);
     c_wrmsnormvectorarray xa wa nrm
 
   external c_wrmsnormmaskvectorarray
@@ -450,7 +500,8 @@ struct (* {{{ *)
       then raise Config.NotImplementedBySundialsVersion;
     if Sundials_configuration.safe
     then (Array.iter (check id) xa;
-          Array.iter (check id) wa);
+          Array.iter (check id) wa;
+          same_len xa wa);
     c_wrmsnormmaskvectorarray xa wa id nrm
 
   external c_scaleaddmultivectorarray
@@ -463,9 +514,14 @@ struct (* {{{ *)
       then raise Config.NotImplementedBySundialsVersion;
     if Sundials_configuration.safe
     then (let x = Array.get xa 0 in
+          let ns = RealArray.length ra in
+          let nv = Array.length xa in
+          same_len' ns yaa;
+          same_len' ns zaa;
           Array.iter (check x) xa;
-          Array.iter (Array.iter (check x)) yaa;
-          Array.iter (Array.iter (check x)) zaa);
+          Array.iter (fun ya -> same_len' nv ya; Array.iter (check x) ya) yaa;
+          Array.iter (fun za -> same_len' nv za; Array.iter (check x) za) zaa;
+          same_len yaa zaa);
     c_scaleaddmultivectorarray ra xa yaa zaa
 
   external c_linearcombinationvectorarray
@@ -477,8 +533,11 @@ struct (* {{{ *)
       then raise Config.NotImplementedBySundialsVersion;
     if Sundials_configuration.safe
     then (let z = Array.get za 0 in
+          let ns = RealArray.length ca in
+          let nv = Array.length za in
+          same_len' ns xaa;
           Array.iter (check z) za;
-          Array.iter (Array.iter (check z)) xaa);
+          Array.iter (fun xa -> same_len' nv xa; Array.iter (check z) xa) xaa);
     c_linearcombinationvectorarray ca xaa za
 
   module Local = struct
@@ -495,6 +554,8 @@ struct (* {{{ *)
       = "sunml_nvec_ser_wsqrsumlocal"
 
     let wsqrsum (x : t) (w : t) =
+      if Sundials_impl.Versions.sundials_lt500
+        then raise Config.NotImplementedBySundialsVersion;
       if Sundials_configuration.safe then check x w;
       c_wsqrsum x w
 
@@ -503,6 +564,8 @@ struct (* {{{ *)
       = "sunml_nvec_ser_wsqrsummasklocal"
 
     let wsqrsummask (x : t) (w : t) (id : t) =
+      if Sundials_impl.Versions.sundials_lt500
+        then raise Config.NotImplementedBySundialsVersion;
       if Sundials_configuration.safe then (check x w; check x id);
       c_wsqrsummask x w id
   end

@@ -269,7 +269,8 @@ let test_getlength w myid =
  * --------------------------------------------------------------------*)
 let test_getcommunicator w _ myid =
   (* Cannot test without MPI *)
-  printf "PASSED test -- N_VGetCommunicator\n"; 0
+  if myid = 0 then printf "PASSED test -- N_VGetCommunicator\n";
+  0
 
 (* ----------------------------------------------------------------------
  * N_VCloneVectorArray Test
@@ -1100,14 +1101,9 @@ let test_addconst x z local_length myid =
 let test_dotprod x y local_length global_length myid =
   let fails = ref 0 in
 
-  let xdata = Nvector_ops.getarray x in
-  let ydata = Nvector_ops.getarray y in
-
   (* fill vector data *)
-  for i=0 to local_length-1 do
-    Nvector_ops.set xdata i two;
-    Nvector_ops.set ydata i half
-  done;
+  Nvector_ops.const two x;
+  Nvector_ops.const half y;
 
   let start_time = get_time () in
   let ans = Nvector_ops.dotprod x y in
@@ -1926,7 +1922,8 @@ let test_linearcombination x local_length myid =
 let test_scaleaddmulti x local_length myid =
   let fails = ref 0 in
 
-  let avals = RealArray.make 3 zero
+  let avals = RealArray.make 3 zero in
+  let avals1 = RealArray.sub avals 0 1
   and z = Array.init 3 (fun _ -> Nvector_ops.clone x)
   and v = Array.init 3 (fun _ -> Nvector_ops.clone x)
   in
@@ -1940,7 +1937,7 @@ let test_scaleaddmulti x local_length myid =
   avals.{0} <- two;                     (* set scaling factors *)
 
   let start_time = get_time () in
-  Nvector_ops.scaleaddmulti avals x v_len1 v_len1;
+  Nvector_ops.scaleaddmulti avals1 x v_len1 v_len1;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -1964,7 +1961,7 @@ let test_scaleaddmulti x local_length myid =
   Nvector_ops.const zero z.(0);
 
   let start_time = get_time () in
-  Nvector_ops.scaleaddmulti avals x v_len1 z_len1;
+  Nvector_ops.scaleaddmulti avals1 x v_len1 z_len1;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -2047,6 +2044,7 @@ let test_dotprodmulti x local_length global_length myid =
   let fails = ref 0
   and dotprods = RealArray.make 3 zero
   in
+  let dotprods1 = RealArray.sub dotprods 0 1 in
 
   (* create vectors for testing *)
   let v = Array.init 3 (fun _ -> Nvector_ops.clone x) in
@@ -2059,7 +2057,7 @@ let test_dotprodmulti x local_length global_length myid =
   Nvector_ops.const half v.(0);
 
   let start_time = get_time () in
-  Nvector_ops.dotprodmulti x v_len1 dotprods;
+  Nvector_ops.dotprodmulti x v_len1 dotprods1;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -2973,7 +2971,8 @@ let test_scaleaddmultivectorarray v local_length myid =
   and y = Array.init 3 (fun _ -> Array.init 3 (fun _ -> Nvector_ops.clone v))
   and z = Array.init 3 (fun _ -> Array.init 3 (fun _ -> Nvector_ops.clone v))
   in
-  let x_len1 = Array.sub x 0 1
+  let a_len1 = RealArray.sub a 0 1
+  and x_len1 = Array.sub x 0 1
   and y_len1_1 = Array.init 1 (fun i -> Array.sub y.(i) 0 1)
   and z_len1_1 = Array.init 1 (fun i -> Array.sub z.(i) 0 1)
   and y_len1_3 = Array.sub y 0 1
@@ -2992,7 +2991,7 @@ let test_scaleaddmultivectorarray v local_length myid =
   Nvector_ops.const neg_one y.(0).(0);
 
   let start_time = get_time () in
-  Nvector_ops.scaleaddmultivectorarray a x_len1 y_len1_1 y_len1_1;
+  Nvector_ops.scaleaddmultivectorarray a_len1 x_len1 y_len1_1 y_len1_1;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -3017,7 +3016,7 @@ let test_scaleaddmultivectorarray v local_length myid =
   Nvector_ops.const zero    z.(0).(0);
 
   let start_time = get_time () in
-  Nvector_ops.scaleaddmultivectorarray a x_len1 y_len1_1 z_len1_1;
+  Nvector_ops.scaleaddmultivectorarray a_len1 x_len1 y_len1_1 z_len1_1;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -3114,7 +3113,7 @@ let test_scaleaddmultivectorarray v local_length myid =
   Nvector_ops.const neg_one y.(0).(2);
 
   let start_time = get_time () in
-  Nvector_ops.scaleaddmultivectorarray a x y_len1_3 y_len1_3;
+  Nvector_ops.scaleaddmultivectorarray a_len1 x y_len1_3 y_len1_3;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -3150,7 +3149,7 @@ let test_scaleaddmultivectorarray v local_length myid =
   Nvector_ops.const two z.(0).(2);
 
   let start_time = get_time () in
-  Nvector_ops.scaleaddmultivectorarray a x y_len1_3 z_len1_3;
+  Nvector_ops.scaleaddmultivectorarray a_len1 x y_len1_3 z_len1_3;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -3297,11 +3296,14 @@ let test_linearcombinationvectorarray v local_length myid =
   and z = Array.init 3 (fun _ -> Nvector_ops.clone v)
   and x = Array.init 3 (fun _ -> Array.init 3 (fun _ -> Nvector_ops.clone v))
   in
-  let x_len1_1 = Array.init 1 (fun i -> Array.sub x.(i) 0 1)
+  let c_len1   = RealArray.sub c 0 1
+  and c_len2   = RealArray.sub c 0 2
+  and x_len1_1 = Array.init 1 (fun i -> Array.sub x.(i) 0 1)
   and x_len1_3 = Array.sub x 0 1
   and x_len2_1 = Array.init 2 (fun i -> Array.sub x.(i) 0 1)
   and x_len2_3 = Array.init 2 (fun i -> x.(i))
   and x_len3_1 = Array.map (fun xi -> Array.sub xi 0 1) x
+  and z_len1   = Array.sub z 0 1
   in
 
   (* Case 1a: (nvec = 1, nsum = 1), N_VScale
@@ -3312,7 +3314,7 @@ let test_linearcombinationvectorarray v local_length myid =
   c.{0} <- two;
 
   let start_time = get_time () in
-  Nvector_ops.linearcombinationvectorarray c x_len1_1 x.(0);
+  Nvector_ops.linearcombinationvectorarray c_len1 x_len1_1 x_len1_1.(0);
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -3335,7 +3337,7 @@ let test_linearcombinationvectorarray v local_length myid =
   c.{0} <- two;
 
   let start_time = get_time () in
-  Nvector_ops.linearcombinationvectorarray c x_len1_3 z;
+  Nvector_ops.linearcombinationvectorarray c_len1 x_len1_3 z;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -3360,7 +3362,7 @@ let test_linearcombinationvectorarray v local_length myid =
   c.{1} <- neg_one;
 
   let start_time = get_time () in
-  Nvector_ops.linearcombinationvectorarray c x_len2_1 x.(0);
+  Nvector_ops.linearcombinationvectorarray c_len2 x_len2_1 x_len2_1.(0);
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -3387,7 +3389,7 @@ let test_linearcombinationvectorarray v local_length myid =
   Nvector_ops.const zero z.(0);
 
   let start_time = get_time () in
-  Nvector_ops.linearcombinationvectorarray c x_len2_1 z;
+  Nvector_ops.linearcombinationvectorarray c_len2 x_len2_1 z_len1;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -3415,7 +3417,7 @@ let test_linearcombinationvectorarray v local_length myid =
   c.{2} <- neg_one;
 
   let start_time = get_time () in
-  Nvector_ops.linearcombinationvectorarray c x_len3_1 x.(0);
+  Nvector_ops.linearcombinationvectorarray c x_len3_1 x_len3_1.(0);
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -3443,7 +3445,7 @@ let test_linearcombinationvectorarray v local_length myid =
   c.{2} <- neg_one;
 
   let start_time = get_time () in
-  Nvector_ops.linearcombinationvectorarray c x_len3_1 z;
+  Nvector_ops.linearcombinationvectorarray c x_len3_1 z_len1;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -3468,7 +3470,7 @@ let test_linearcombinationvectorarray v local_length myid =
   c.{0} <- half;
 
   let start_time = get_time () in
-  Nvector_ops.linearcombinationvectorarray c x_len1_3 x.(0);
+  Nvector_ops.linearcombinationvectorarray c_len1 x_len1_3 x.(0);
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -3500,7 +3502,7 @@ let test_linearcombinationvectorarray v local_length myid =
   Nvector_ops.const zero z.(2);
 
   let start_time = get_time () in
-  Nvector_ops.linearcombinationvectorarray c x_len1_3 z;
+  Nvector_ops.linearcombinationvectorarray c_len1 x_len1_3 z;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -3534,7 +3536,7 @@ let test_linearcombinationvectorarray v local_length myid =
   c.{1} <- two;
 
   let start_time = get_time () in
-  Nvector_ops.linearcombinationvectorarray c x_len2_3 x.(0);
+  Nvector_ops.linearcombinationvectorarray c_len2 x_len2_3 x.(0);
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -3572,7 +3574,7 @@ let test_linearcombinationvectorarray v local_length myid =
   Nvector_ops.const zero z.(2);
 
   let start_time = get_time () in
-  Nvector_ops.linearcombinationvectorarray c x_len2_3 z;
+  Nvector_ops.linearcombinationvectorarray c_len2 x_len2_3 z;
   Nvector_ops.sync_device ();
   let stop_time = get_time () in
 
@@ -3850,7 +3852,7 @@ let test_wsqrsummasklocal x w id local_length myid =
   let fails = ref 0 in
   (* fill vector data *)
   let xval = sqrt (Int.to_float myid) in
-  let wval = 1.0 /. sqrt (Int.to_float local_length) in
+  let wval = 1.0 /. sqrt (Int.to_float (local_length - 1)) in
   let id_data = Nvector_ops.getarray id in
   Nvector_ops.const xval x;
   Nvector_ops.const wval w;

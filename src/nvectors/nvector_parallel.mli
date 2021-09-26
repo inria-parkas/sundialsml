@@ -225,5 +225,36 @@ module Any : sig (* {{{ *)
       raises {!Nvector.BadGenericType}. *)
   val unwrap : Nvector.any -> data
 
+  (** Selectively enable or disable fused and array operations.
+      The [with_fused_ops] argument enables or disables all such operations.
+
+      @since 4.0.0
+      @cvode <node5> N_VEnableFusedOps_Parallel
+      @cvode <node5> N_VEnableLinearCombination_Parallel
+      @cvode <node5> N_VEnableScaleAddMulti_Parallel
+      @cvode <node5> N_VEnableDotProdMulti_Parallel
+      @cvode <node5> N_VEnableLinearSumVectorArray_Parallel
+      @cvode <node5> N_VEnableScaleVectorArray_Parallel
+      @cvode <node5> N_VEnableConstVectorArray_Parallel
+      @cvode <node5> N_VEnableWrmsNormVectorArray_Parallel
+      @cvode <node5> N_VEnableWrmsNormMaskVectorArray_Parallel
+      @cvode <node5> N_VEnableScaleAddMultiVectorArray_Parallel
+      @cvode <node5> N_VEnableLinearCombinationVectorArray_Parallel
+      @raise Nvector.BadGenericType If not called on a parallel nvector
+      @raise Config.NotImplementedBySundialsVersion Fused and array operations not available. *)
+  val enable :
+       ?with_fused_ops                       : bool
+    -> ?with_linear_combination              : bool
+    -> ?with_scale_add_multi                 : bool
+    -> ?with_dot_prod_multi                  : bool
+    -> ?with_linear_sum_vector_array         : bool
+    -> ?with_scale_vector_array              : bool
+    -> ?with_const_vector_array              : bool
+    -> ?with_wrms_norm_vector_array          : bool
+    -> ?with_wrms_norm_mask_vector_array     : bool
+    -> ?with_scale_add_multi_vector_array    : bool
+    -> ?with_linear_combination_vector_array : bool
+    -> Nvector.any
+    -> unit
 end (* }}} *)
 
