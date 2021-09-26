@@ -47,6 +47,31 @@ val length : t -> int
 (** Returns the number of subectors in the array. *)
 val num_subvectors : t -> int
 
+(** Selectively enable or disable fused and array operations.
+    The [with_fused_ops] argument enables or disables all such operations.
+
+    @cvode <node5> N_VEnableFusedOps_ManyVector
+    @cvode <node5> N_VEnableLinearCombination_ManyVector
+    @cvode <node5> N_VEnableScaleAddMulti_ManyVector
+    @cvode <node5> N_VEnableDotProdMulti_ManyVector
+    @cvode <node5> N_VEnableLinearSumVectorArray_ManyVector
+    @cvode <node5> N_VEnableScaleVectorArray_ManyVector
+    @cvode <node5> N_VEnableConstVectorArray_ManyVector
+    @cvode <node5> N_VEnableWrmsNormVectorArray_ManyVector
+    @cvode <node5> N_VEnableWrmsNormMaskVectorArray_ManyVector *)
+val enable :
+     ?with_fused_ops                       : bool
+  -> ?with_linear_combination              : bool
+  -> ?with_scale_add_multi                 : bool
+  -> ?with_dot_prod_multi                  : bool
+  -> ?with_linear_sum_vector_array         : bool
+  -> ?with_scale_vector_array              : bool
+  -> ?with_const_vector_array              : bool
+  -> ?with_wrms_norm_vector_array          : bool
+  -> ?with_wrms_norm_mask_vector_array     : bool
+  -> t
+  -> unit
+
 (** Underlying nvector operations on many-vector nvectors. *)
 module Ops : Nvector.NVECTOR_OPS with type t = t
 
@@ -57,7 +82,7 @@ module DataOps : Nvector.NVECTOR_OPS with type t = data
 
     Create many-vector nvectors using the generic nvector interface where the
     payload is wrapped with the {{!Nvector.gdata}Many} constructor. *)
-module Any : sig
+module Any : sig (* {{{ *)
 
   (** Creates a generic nvector from an array of generic nvectors.
 
@@ -68,5 +93,31 @@ module Any : sig
       {{!Nvector.gdata}Many}, otherwise raises {!Nvector.BadGenericType}. *)
   val unwrap : Nvector.any -> data
 
-end
+  (** Selectively enable or disable fused and array operations.
+      The [with_fused_ops] argument enables or disables all such operations.
+
+      @cvode <node5> N_VEnableFusedOps_ManyVector
+      @cvode <node5> N_VEnableLinearCombination_ManyVector
+      @cvode <node5> N_VEnableScaleAddMulti_ManyVector
+      @cvode <node5> N_VEnableDotProdMulti_ManyVector
+      @cvode <node5> N_VEnableLinearSumVectorArray_ManyVector
+      @cvode <node5> N_VEnableScaleVectorArray_ManyVector
+      @cvode <node5> N_VEnableConstVectorArray_ManyVector
+      @cvode <node5> N_VEnableWrmsNormVectorArray_ManyVector
+      @cvode <node5> N_VEnableWrmsNormMaskVectorArray_ManyVector
+      @raise Nvector.BadGenericType If not called on a many nvector *)
+  val enable :
+       ?with_fused_ops                       : bool
+    -> ?with_linear_combination              : bool
+    -> ?with_scale_add_multi                 : bool
+    -> ?with_dot_prod_multi                  : bool
+    -> ?with_linear_sum_vector_array         : bool
+    -> ?with_scale_vector_array              : bool
+    -> ?with_const_vector_array              : bool
+    -> ?with_wrms_norm_vector_array          : bool
+    -> ?with_wrms_norm_mask_vector_array     : bool
+    -> Nvector.any
+    -> unit
+
+end (* }}} *)
 

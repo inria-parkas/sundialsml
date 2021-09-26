@@ -578,6 +578,15 @@ fi
 if [ ${sundials} -ge 600 ]; then
     sundials=0
     error="${error}\n\tsundials <= 5.x required (${sundials_version} is not yet supported)"
+elif [ ${sundials} -ge 500 ]; then
+    sundials_at_least_5_0_0=1
+    sundials_at_least_4_0_0=1
+    sundials_at_least_3_2_0=1
+    sundials_at_least_3_1_2=1
+    sundials_at_least_3_0=1
+    sundials_at_least_2_7=1
+    sundials_at_least_2_6=1
+    sundials_at_least_2_5=1
 elif [ ${sundials} -ge 400 ]; then
     sundials_at_least_4_0_0=1
     sundials_at_least_3_2_0=1
@@ -1238,7 +1247,7 @@ EOF
 	nvecmpiplusx_info='installed'
 	nvecmpimanyvector_enabled=1
 	nvecmpiplusx_enabled=1
-	parallel_nvec_libs="$parallel_nvec_libs -lsundials_nvecmpimanyvector"
+	parallel_nvec_libs="$parallel_nvec_libs -lsundials_nvecmpimanyvector -lsundials_nvecmpiplusx"
     fi
     ${debug_configure} || rm -f ./$test_stem.* ./$test_stem$XX
 fi
@@ -1480,6 +1489,7 @@ cat ${LOG}
 	 s#@configure_command@#${configure_command}#;
 	 s#@version@#${version}#;
 	 s#@versionp@#${versionp}#;
+	 s#@sundials_at_least_5_0_0@#${sundials_at_least_5_0_0}#;
 	 s#@sundials_at_least_4_0_0@#${sundials_at_least_4_0_0}#;
 	 s#@sundials_at_least_3_2_0@#${sundials_at_least_3_2_0}#;
 	 s#@sundials_at_least_3_1_2@#${sundials_at_least_3_1_2}#;

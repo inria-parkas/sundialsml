@@ -24,13 +24,13 @@ void mpi_finalize (void)
   MPI_Finalize ();
 }
 
-#define MPI_Init(argc, argv)    /* empty */
-#define MPI_Finalize()          /* empty */
+#define MPI_Init(argc, argv) MPI_SUCCESS
+#define MPI_Finalize()       MPI_SUCCESS
 
 #else
 
-#define mpi_init(argc, argv)    /* empty */
-#define mpi_finalize()          /* empty */
+#define mpi_init(argc, argv) MPI_SUCCESS
+#define mpi_finalize()       MPI_SUCCESS
 
 #endif
 

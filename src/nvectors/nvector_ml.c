@@ -457,7 +457,7 @@ CAMLprim value sunml_nvec_anywrap_serial(value extconstr,
     Store_field(vwrapped, 1, NVEC_BACKLINK(nv));
 
     Store_field(vnv, 0, vwrapped);
-    NVEC_BACKLINK(nv) = vwrapped;
+    caml_modify_generational_global_root(&NVEC_BACKLINK(nv), vwrapped);
 
     CAMLreturn(vnv);
 }
@@ -1769,7 +1769,6 @@ CAMLprim value sunml_nvec_ser_getlength(value vx)
    in rr[0] for vax, rr[1] for vay, and rr[2] for vaz. Returns the
    length of vax/vay/vaz on success, or 0 on fail. After a successful
    call (only), the caller must free the allocated memory with free(*r). */
-// TODO: no need to check for errors if the OCaml callers all do so already
 int sunml_arrays_of_nvectors(N_Vector *r[], int n, ...)
 {
     va_list valist;
@@ -1777,16 +1776,10 @@ int sunml_arrays_of_nvectors(N_Vector *r[], int n, ...)
     int nvecs;
     N_Vector *px = NULL;
     value vax;
-#if SUNDIALS_ML_SAFE == 1
-    int nx = -1;
-#endif
 
     va_start(valist, n);
     vax = va_arg(valist, value);
     nvecs = Wosize_val(vax);
-#if SUNDIALS_ML_SAFE == 1
-    if (nvecs < 1) goto error;
-#endif
 
     px = calloc(n * nvecs, sizeof(N_Vector));
     if (px == NULL) goto error;
@@ -1797,20 +1790,11 @@ int sunml_arrays_of_nvectors(N_Vector *r[], int n, ...)
 
 	for (i=0; i < nvecs; ++i, ++px) {
 	    *px = NVEC_VAL(Field(vax, i));
-#if SUNDIALS_ML_SAFE == 1
-	    if (NV_LENGTH_S((*px)) != nx) {
-		if (nx != -1) goto error;
-		nx = NV_LENGTH_S((*px));
-	    }
-#endif
 	}
 	++j;
 	if (j == n) break;
 
 	vax = va_arg(valist, value);
-#if SUNDIALS_ML_SAFE == 1
-	if (Wosize_val(vax) != nvecs) goto error;
-#endif
     }
 
     va_end(valist);
@@ -1841,9 +1825,6 @@ void sunml_arrays_of_nvectors2(int* nrows, int *ncols, N_Vector **vv[],
     N_Vector **px = NULL;
     N_Vector *pd;
     value vaax, vax;
-#if SUNDIALS_ML_SAFE == 1
-    int nx = -1;
-#endif
     int nr, nc, r, c;
 
     va_start(valist, n);
@@ -1869,17 +1850,8 @@ void sunml_arrays_of_nvectors2(int* nrows, int *ncols, N_Vector **vv[],
 	for (r=0; r < nr; ++r, ++px) {
 	    *px = pd;
 	    vax = Field(vaax, r);
-#if SUNDIALS_ML_SAFE == 1
-	    if (Wosize_val(vax) != nc) goto error;
-#endif
 	    for (c=0; c < nc; ++c, ++pd) {
 		*pd = NVEC_VAL(Field(vax, c));
-#if SUNDIALS_ML_SAFE == 1
-		if (NV_LENGTH_S((*pd)) != nx) {
-		    if (nx != -1) goto error;
-		    nx = NV_LENGTH_S((*pd));
-		}
-#endif
 	    }
 	}
 
@@ -1887,9 +1859,6 @@ void sunml_arrays_of_nvectors2(int* nrows, int *ncols, N_Vector **vv[],
 	if (j == n) break;
 
 	vaax = va_arg(valist, value);
-#if SUNDIALS_ML_SAFE == 1
-	if (Wosize_val(vaax) != nr) goto error;
-#endif
     }
 
     va_end(valist);
@@ -2084,22 +2053,12 @@ CAMLprim value sunml_nvec_ser_wsqrsumlocal(value vx, value vw)
 {
     CAMLparam2(vx, vw);
     realtype r;
-
 #if 500 <= SUNDIALS_LIB_VERSION
     N_Vector x = NVEC_VAL(vx);
     N_Vector w = NVEC_VAL(vw);
 
-#if SUNDIALS_ML_SAFE == 1
-    if (NV_LENGTH_S(w) != NV_LENGTH_S(x))
-	caml_invalid_argument("Nvector_serial.wsqrsumlocal");
-#endif
-
     r = N_VWSqrSumLocal_Serial(x, w);
-
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-
     CAMLreturn(caml_copy_double(r));
 }
 
@@ -2107,23 +2066,13 @@ CAMLprim value sunml_nvec_ser_wsqrsummasklocal(value vx, value vw, value vid)
 {
     CAMLparam3(vx, vw, vid);
     realtype r;
-
 #if 500 <= SUNDIALS_LIB_VERSION
     N_Vector x = NVEC_VAL(vx);
     N_Vector w = NVEC_VAL(vw);
     N_Vector id = NVEC_VAL(vid);
 
-#if SUNDIALS_ML_SAFE == 1
-    if (NV_LENGTH_S(w) != NV_LENGTH_S(x) || NV_LENGTH_S(id) != NV_LENGTH_S(x))
-	caml_invalid_argument("Nvector_serial.wsqrsummasklocal");
-#endif
-
     r = N_VWSqrSumMaskLocal_Serial(x, w, id);
-
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-
     CAMLreturn(caml_copy_double(r));
 }
 
