@@ -29,8 +29,8 @@ void mpi_finalize (void)
 
 #else
 
-#define mpi_init(argc, argv) MPI_SUCCESS
-#define mpi_finalize()       MPI_SUCCESS
+#define mpi_init(argc, argv)	/* empty */
+#define mpi_finalize()		/* empty */
 
 #endif
 
