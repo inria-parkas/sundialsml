@@ -1162,7 +1162,7 @@ void sunml_ida_check_flag(const char *call, int flag, void *ida_mem)
 #endif
 #if 500 <= SUNDIALS_LIB_VERSION
 	case IDA_NLS_FAIL:
-	    caml_raise_constant(IDA_EXN(NonlinearFailure));
+	    caml_raise_constant(IDA_EXN(NonlinearSolverFailure));
 #endif
 
     default:
