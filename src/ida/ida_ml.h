@@ -181,7 +181,7 @@ enum ida_exn_index {
     IDA_EXN_LinearInitFailure,
     IDA_EXN_LinearSetupFailure,
     IDA_EXN_LinearSolveFailure,
-    IDA_EXN_NonlinearFailure,
+    IDA_EXN_NonlinearSolverFailure,
     IDA_EXN_NonlinearInitFailure,
     IDA_EXN_NonlinearSetupFailure,
     IDA_EXN_NonlinearSetupRecoverable,

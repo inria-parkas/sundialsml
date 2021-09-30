@@ -1012,6 +1012,7 @@ let _ =
       LinearInitFailure;
       LinearSetupFailure None;
       LinearSolveFailure None;
+      NonlinearSolverFailure;
       NonlinearInitFailure;
       NonlinearSetupFailure;
       NonlinearSetupRecoverable;
