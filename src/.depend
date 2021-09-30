@@ -6,6 +6,7 @@ arkode/arkode.cmo : \
     lsolvers/sundials_NonlinearSolver.cmi \
     lsolvers/sundials_Matrix.cmi \
     sundials/sundials_Logfile.cmi \
+    lsolvers/sundials_LinearSolver_impl.cmo \
     lsolvers/sundials_LinearSolver.cmi \
     sundials/sundials_Config.cmi \
     sundials/sundials.cmi \
@@ -21,6 +22,7 @@ arkode/arkode.cmx : \
     lsolvers/sundials_NonlinearSolver.cmx \
     lsolvers/sundials_Matrix.cmx \
     sundials/sundials_Logfile.cmx \
+    lsolvers/sundials_LinearSolver_impl.cmx \
     lsolvers/sundials_LinearSolver.cmx \
     sundials/sundials_Config.cmx \
     sundials/sundials.cmx \
@@ -444,6 +446,7 @@ lsolvers/sundials_LinearSolver.cmo : \
     sundials/sundials_RealArray2.cmi \
     sundials/sundials_RealArray.cmi \
     lsolvers/sundials_Matrix.cmi \
+    sundials/sundials_Logfile.cmi \
     lsolvers/sundials_LinearSolver_impl.cmo \
     sundials/sundials_Config.cmi \
     sundials/sundials.cmi \
@@ -456,6 +459,7 @@ lsolvers/sundials_LinearSolver.cmx : \
     sundials/sundials_RealArray2.cmx \
     sundials/sundials_RealArray.cmx \
     lsolvers/sundials_Matrix.cmx \
+    sundials/sundials_Logfile.cmx \
     lsolvers/sundials_LinearSolver_impl.cmx \
     sundials/sundials_Config.cmx \
     sundials/sundials.cmx \
@@ -466,6 +470,7 @@ lsolvers/sundials_LinearSolver.cmi : \
     sundials/sundials_RealArray2.cmi \
     sundials/sundials_RealArray.cmi \
     lsolvers/sundials_Matrix.cmi \
+    sundials/sundials_Logfile.cmi \
     lsolvers/sundials_LinearSolver_impl.cmo \
     sundials/sundials.cmi \
     nvectors/nvector_serial.cmi \
@@ -514,27 +519,34 @@ lsolvers/sundials_Matrix.cmi : \
     nvectors/nvector_serial.cmi \
     nvectors/nvector.cmi
 lsolvers/sundials_NonlinearSolver.cmo : \
+    sundials/sundials_impl.cmo \
     lsolvers/sundials_NonlinearSolver_impl.cmo \
+    sundials/sundials_Logfile.cmi \
     sundials/sundials_Config.cmi \
     sundials/sundials.cmi \
     nvectors/nvector.cmi \
     lsolvers/sundials_NonlinearSolver.cmi
 lsolvers/sundials_NonlinearSolver.cmx : \
+    sundials/sundials_impl.cmx \
     lsolvers/sundials_NonlinearSolver_impl.cmx \
+    sundials/sundials_Logfile.cmx \
     sundials/sundials_Config.cmx \
     sundials/sundials.cmx \
     nvectors/nvector.cmx \
     lsolvers/sundials_NonlinearSolver.cmi
 lsolvers/sundials_NonlinearSolver.cmi : \
     lsolvers/sundials_NonlinearSolver_impl.cmo \
+    sundials/sundials_Logfile.cmi \
     sundials/sundials.cmi \
     nvectors/nvector.cmi
 lsolvers/sundials_NonlinearSolver_impl.cmo : \
     sundials/sundials_impl.cmo \
+    sundials/sundials_Logfile.cmi \
     sundials/sundials.cmi \
     nvectors/nvector.cmi
 lsolvers/sundials_NonlinearSolver_impl.cmx : \
     sundials/sundials_impl.cmx \
+    sundials/sundials_Logfile.cmx \
     sundials/sundials.cmx \
     nvectors/nvector.cmx
 nvectors/nvector.cmo : \
@@ -658,6 +670,7 @@ nvectors/nvector_mpiplusx.cmi : \
     nvectors/nvector.cmi
 nvectors/nvector_openmp.cmo : \
     sundials/sundials_impl.cmo \
+    sundials/sundials_configuration.cmo \
     sundials/sundials_RealArray.cmi \
     sundials/sundials_Config.cmi \
     sundials/sundials.cmi \
@@ -666,6 +679,7 @@ nvectors/nvector_openmp.cmo : \
     nvectors/nvector_openmp.cmi
 nvectors/nvector_openmp.cmx : \
     sundials/sundials_impl.cmx \
+    sundials/sundials_configuration.cmx \
     sundials/sundials_RealArray.cmx \
     sundials/sundials_Config.cmx \
     sundials/sundials.cmx \
@@ -683,6 +697,7 @@ nvectors/nvector_openmp_top.cmx : \
     sundials/sundials_top.cmx
 nvectors/nvector_parallel.cmo : \
     sundials/sundials_impl.cmo \
+    sundials/sundials_configuration.cmo \
     sundials/sundials_RealArray.cmi \
     sundials/sundials_Config.cmi \
     sundials/sundials.cmi \
@@ -691,6 +706,7 @@ nvectors/nvector_parallel.cmo : \
     nvectors/nvector_parallel.cmi
 nvectors/nvector_parallel.cmx : \
     sundials/sundials_impl.cmx \
+    sundials/sundials_configuration.cmx \
     sundials/sundials_RealArray.cmx \
     sundials/sundials_Config.cmx \
     sundials/sundials.cmx \
@@ -708,6 +724,7 @@ nvectors/nvector_parallel_top.cmx : \
     sundials/sundials_top.cmx
 nvectors/nvector_pthreads.cmo : \
     sundials/sundials_impl.cmo \
+    sundials/sundials_configuration.cmo \
     sundials/sundials_RealArray.cmi \
     sundials/sundials_Config.cmi \
     sundials/sundials.cmi \
@@ -716,6 +733,7 @@ nvectors/nvector_pthreads.cmo : \
     nvectors/nvector_pthreads.cmi
 nvectors/nvector_pthreads.cmx : \
     sundials/sundials_impl.cmx \
+    sundials/sundials_configuration.cmx \
     sundials/sundials_RealArray.cmx \
     sundials/sundials_Config.cmx \
     sundials/sundials.cmx \

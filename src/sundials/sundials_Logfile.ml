@@ -26,6 +26,12 @@ let stdout = c_stdout ()
 
 let openfile ?(trunc=false) fpath = fopen fpath trunc
 
+external output_string : t -> string -> unit
+  = "sunml_sundials_write"
+
+external output_bytes : t -> bytes -> unit
+  = "sunml_sundials_write"
+
 external flush : t -> unit
   = "sunml_sundials_fflush"
 

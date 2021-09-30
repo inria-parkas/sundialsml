@@ -25,6 +25,12 @@ val stdout : t
     truncated to zero length. Files are closed on garbage collection. *)
 val openfile : ?trunc:bool -> string -> t
 
+(** Writes the given string to an open log file. *)
+val output_string : t -> string -> unit
+
+(** Writes the given byte sequence to an open log file. *)
+val output_bytes : t -> bytes -> unit
+
 (** Flushes the given file. *)
 val flush : t -> unit
 

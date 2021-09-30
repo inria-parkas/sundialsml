@@ -243,6 +243,17 @@ CAMLprim value sunml_sundials_fopen(value vpath, value vtrunc)
     CAMLreturn (vr);
 }
 
+CAMLprim void sunml_sundials_write(value vfile, value vdata)
+{
+    CAMLparam2(vfile, vdata);
+    FILE *file = ML_CFILE(vfile);
+    size_t len = caml_string_length(vdata);
+    size_t w;
+    w = fwrite(Bytes_val(vdata), 1, len, file);
+    if (w < len) caml_failwith(strerror(errno));
+    CAMLreturn0;
+}
+
 CAMLprim value sunml_sundials_fflush(value vfile)
 {
     CAMLparam1(vfile);
