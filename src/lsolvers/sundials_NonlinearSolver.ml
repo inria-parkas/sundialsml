@@ -153,16 +153,6 @@ let set_max_iters (type d k s) ({ rawptr; solver } : (d, k, s) t) i =
   | FixedPointSolver _ | NewtonSolver
       -> c_set_max_iters rawptr i
 
-let set_info_file (type d k s) ({ rawptr; solver } : (d, k, s) t) file =
-  if Versions.sundials_lt530 then raise Config.NotImplementedBySundialsVersion;
-  match solver with
-  | CustomSolver     { set_info_file = Some f } -> f file
-  | CustomSensSolver { set_info_file = Some f } -> f file
-  | CustomSolver _ -> ()
-  | CustomSensSolver _ -> ()
-  | FixedPointSolver _ -> c_set_info_file_fixedpoint rawptr file
-  | NewtonSolver -> c_set_info_file_newton rawptr file
-
 let set_print_level (type d k s) ({ rawptr; solver } : (d, k, s) t) level =
   if Versions.sundials_lt530 then raise Config.NotImplementedBySundialsVersion;
   let level = if level then 1 else 0 in
@@ -173,6 +163,18 @@ let set_print_level (type d k s) ({ rawptr; solver } : (d, k, s) t) level =
   | CustomSensSolver _ -> ()
   | FixedPointSolver _ -> c_set_print_level_fixedpoint rawptr level
   | NewtonSolver -> c_set_print_level_newton rawptr level
+
+let set_info_file (type d k s)
+                  ({ rawptr; solver } as s : (d, k, s) t) ?print_level file =
+  if Versions.sundials_lt530 then raise Config.NotImplementedBySundialsVersion;
+  (match solver with
+   | CustomSolver     { set_info_file = Some f } -> f file
+   | CustomSensSolver { set_info_file = Some f } -> f file
+   | CustomSolver _ -> ()
+   | CustomSensSolver _ -> ()
+   | FixedPointSolver _ -> c_set_info_file_fixedpoint rawptr file
+   | NewtonSolver -> c_set_info_file_newton rawptr file);
+  (match print_level with None -> () | Some level -> set_print_level s level)
 
 let get_num_iters (type d k s) ({ rawptr; solver } : (d, k, s) t) =
   check_compat ();

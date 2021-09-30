@@ -615,27 +615,6 @@ val set_err_handler_fn
     @kinsol <node5#ss:optin_main> KINSetErrHandlerFn *)
 val clear_err_handler_fn : ('d, 'k) session -> unit
 
-(** Write informational (non-error) messages to the given file.
-    By default they are written to Logfile.stdout.
-
-    @kinsol <node5#ss:optin_main> KINSetInfoFile *)
-val set_info_file : ('d, 'k) session -> Logfile.t -> unit
-
-(** Specifies a custom function for handling informational (non-error) messages.
-    The [error_code] field of {{!Sundials.Util.error_details}Util.error_details}
-    is [0] for such messages.
-    The handler must not fail: any exceptions are trapped and discarded.
-
-    @kinsol <node5#ss:optin_main> KINSetInfoHandlerFn
-    @kinsol <node5#ss:ihFn> KINInfoHandlerFn *)
-val set_info_handler_fn
-  : ('d, 'k) session -> (Util.error_details -> unit) -> unit
-
-(** Restores the default information handling function.
-
-    @kinsol <node5#ss:optin_main> KINSetErrHandlerFn *)
-val clear_info_handler_fn : ('d, 'k) session -> unit
-
 (** Increasing levels of verbosity for informational messages. *)
 type print_level =
   | NoInformation     (** No information displayed. {cconst 0} *)
@@ -657,6 +636,29 @@ type print_level =
 
     @kinsol <node5#ss:optin_main> KINSetPrintLevel *)
 val set_print_level : ('d, 'k) session -> print_level -> unit
+
+(** Write informational (non-error) messages to the given file.
+    By default they are written to Logfile.stdout.
+    The optional argument is a convenience for invoking {!set_print_level}.
+
+    @kinsol <node5#ss:optin_main> KINSetInfoFile *)
+val set_info_file
+      : ('d, 'k) session -> ?print_level:print_level -> Logfile.t -> unit
+
+(** Specifies a custom function for handling informational (non-error) messages.
+    The [error_code] field of {{!Sundials.Util.error_details}Util.error_details}
+    is [0] for such messages.
+    The handler must not fail: any exceptions are trapped and discarded.
+
+    @kinsol <node5#ss:optin_main> KINSetInfoHandlerFn
+    @kinsol <node5#ss:ihFn> KINInfoHandlerFn *)
+val set_info_handler_fn
+  : ('d, 'k) session -> (Util.error_details -> unit) -> unit
+
+(** Restores the default information handling function.
+
+    @kinsol <node5#ss:optin_main> KINSetErrHandlerFn *)
+val clear_info_handler_fn : ('d, 'k) session -> unit
 
 (** Set the Anderson acceleration damping parameter. Valid values are
     {% $0 < \mathit{beta} \leq 1.0$ %}. Values greater than or equal to 1

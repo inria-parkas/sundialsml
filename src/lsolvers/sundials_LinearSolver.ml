@@ -293,16 +293,6 @@ module Iterative = struct (* {{{ *)
     if Versions.in_compat_mode2 then compat.set_prec_type prec_type
     else impl_set_prec_type rawptr solver prec_type true
 
-  external c_set_info_file
-   : ('m, 'nd, 'nk) cptr
-     -> ('m, 'nd, 'nk, [> `Iter]) solver_data
-     -> Logfile.t
-     -> unit
-   = "sunml_lsolver_set_info_file"
-
-  let set_info_file (LS { rawptr; solver; _ }) file =
-    c_set_info_file rawptr solver file
-
   external c_set_print_level
    : ('m, 'nd, 'nk) cptr
      -> ('m, 'nd, 'nk, [> `Iter]) solver_data
@@ -312,6 +302,18 @@ module Iterative = struct (* {{{ *)
 
   let set_print_level (LS { rawptr; solver; _ }) level =
     c_set_print_level rawptr solver (if level then 1 else 0)
+
+  external c_set_info_file
+   : ('m, 'nd, 'nk) cptr
+     -> ('m, 'nd, 'nk, [> `Iter]) solver_data
+     -> Logfile.t
+     -> unit
+   = "sunml_lsolver_set_info_file"
+
+  let set_info_file (LS { rawptr; solver; _ }) ?print_level file =
+    c_set_info_file rawptr solver file;
+    (match print_level with None -> ()
+     | Some level -> c_set_print_level rawptr solver (if level then 1 else 0))
 
   let default = function
     | Some x -> x

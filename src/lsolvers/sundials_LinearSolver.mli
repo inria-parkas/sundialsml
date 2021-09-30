@@ -488,6 +488,7 @@ module Iterative : sig (* {{{ *)
 
   (** Sets the output file for informative (non-error) messages. The default
       is to send such messages to stdout.
+      The optional argument is a convenience for invoking {!set_print_level}.
 
       Sundials must be built with {cconst SUNDIALS_BUILD_WITH_MONITORING} to
       use this function.
@@ -498,7 +499,8 @@ module Iterative : sig (* {{{ *)
       @nocvode <node> SUNLinSolSetInfoFile_SPGMR
       @nocvode <node> SUNLinSolSetInfoFile_SPTFQMR
       @since 5.3.0 *)
-  val set_info_file : ('m, 'd, 'k, [>`Iter]) t -> Sundials.Logfile.t -> unit
+  val set_info_file
+    : ('m, 'd, 'k, [>`Iter]) t -> ?print_level:bool -> Sundials.Logfile.t -> unit
 
   (** Sets the level of output verbosity. When [false] (the default) no
       information is printed, when [true] the residual norm is printed for

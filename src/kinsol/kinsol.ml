@@ -511,8 +511,15 @@ let clear_err_handler_fn s =
   s.errh <- dummy_errh;
   c_clear_err_handler_fn s
 
-external set_info_file : ('a, 'k) session -> Logfile.t -> unit
+external set_print_level : ('a, 'k) session -> print_level -> unit
+    = "sunml_kinsol_set_print_level"
+
+external c_set_info_file : ('a, 'k) session -> Logfile.t -> unit
     = "sunml_kinsol_set_info_file"
+
+let set_info_file s ?print_level lf =
+  c_set_info_file s lf;
+  (match print_level with None -> () | Some l -> set_print_level s l)
 
 external c_set_info_handler_fn : ('a, 'k) session -> unit
     = "sunml_kinsol_set_info_handler_fn"
@@ -527,9 +534,6 @@ external c_clear_info_handler_fn : ('a, 'k) session -> unit
 let clear_info_handler_fn s =
   s.infoh <- dummy_infoh;
   c_clear_info_handler_fn s
-
-external set_print_level : ('a, 'k) session -> print_level -> unit
-    = "sunml_kinsol_set_print_level"
 
 external set_damping_aa : ('a, 'k) session -> float -> unit
     = "sunml_kinsol_set_damping_aa"
