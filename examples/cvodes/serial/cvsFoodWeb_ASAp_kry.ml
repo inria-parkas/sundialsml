@@ -85,6 +85,10 @@ module Densemat = Matrix.ArrayDense
 open Bigarray
 let unwrap = Nvector.unwrap
 
+let sundials_gte500 =
+  let n, _, _ = Sundials_configuration.sundials_version in
+  n >= 5
+
 let nvwrmsnorm = Nvector_serial.DataOps.wrmsnorm
 let nvlinearsum = Nvector_serial.DataOps.linearsum
 
@@ -1062,6 +1066,11 @@ let main () =
         (f wdata) t0 c)
   in
   wdata.cvode_mem <- Some cvode_mem; (* Used in Precond *)
+
+  (* Call CVodeSetMaxNumSteps to set the maximum number of steps the
+   * solver will take in an attempt to reach the next output time
+   * during forward integration. *)
+  if sundials_gte500 then Cvode.set_max_num_steps cvode_mem 2500;
 
   (* Set-up adjoint calculations *)
   printf "\nAllocate global memory\n";

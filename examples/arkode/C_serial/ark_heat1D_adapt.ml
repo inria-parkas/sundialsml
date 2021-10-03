@@ -42,6 +42,10 @@
 open Sundials
 module ARKStep = Arkode.ARKStep
 
+let sungte500 =
+  let n, _, _ = Config.sundials_version in
+  n >= 5
+
 let printf = Printf.printf
 let fprintf = Printf.fprintf
 let dotprod = Nvector_serial.Ops.dotprod
@@ -153,7 +157,7 @@ let project nold (xold : RealArray.t) (yold : RealArray.t)
   done
 
 (* f routine to compute the ODE RHS function f(t,y). *)
-let f userdata t (y : RealArray.t) (ydot : RealArray.t) =
+let f_lt500 userdata t (y : RealArray.t) (ydot : RealArray.t) =
   let { n; k; x } = userdata in
   (* iterate over domain, computing all equations *)
   ydot.{0} <- 0.0;           (* left boundary condition *)
@@ -178,6 +182,23 @@ let f userdata t (y : RealArray.t) (ydot : RealArray.t) =
                  -. exp(-400.0 *. (x.{i} -. 0.7 ) *. (x.{i} -. 0.7 ))
                  +. exp(-500.0 *. (x.{i} -. 0.4 ) *. (x.{i} -. 0.4 ))
           -. 2.0 *. exp(-600.0 *. (x.{i} -. 0.55) *. (x.{i} -. 0.55)))
+  done
+
+(* f routine to compute the ODE RHS function f(t,y). *)
+let f userdata t (y : RealArray.t) (ydot : RealArray.t) =
+  let { n; k; x } = userdata in
+  RealArray.fill ydot 0.0;
+  (* iterate over domain, computing all equations *)
+  for i=1 to n-1-1 do        (* interior *)
+    let dxL = x.{i} -. x.{i-1} in
+    let dxR = x.{i+1} -. x.{i} in
+    ydot.{i} <- y.{i-1} *. k *. 2.0 /. (dxL *. (dxL +. dxR))
+             -. y.{i}   *. k *. 2.0 /. (dxL *. dxR)
+             +. y.{i+1} *. k *. 2.0 /. (dxR *. (dxL +. dxR))
+             +. 2.0 *. exp(-200.0 *. (x.{i} -. 0.25) *. (x.{i} -. 0.25))
+             -. exp(-400.0 *. (x.{i} -. 0.7) *. (x.{i} -. 0.7))
+             +. exp(-500.0 *. (x.{i} -. 0.4) *. (x.{i} -. 0.4))
+             -. 2.0 *. exp(-600.0 *. (x.{i} -. 0.55) *. (x.{i} -. 0.55))
   done
 
 (* Jacobian routine to compute J(t,y) = df/dy. *)
@@ -251,7 +272,7 @@ let main () =
                                ~jac_times_vec:(None, jac)
                                prec_none)
         ~linearity
-        (f udata))
+        ((if sungte500 then f else f_lt500) udata))
       (SStolerances (rtol, atol))
       t0
       y

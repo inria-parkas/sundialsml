@@ -63,6 +63,10 @@ module VarId = Ida.VarId
 
 let printf = Printf.printf
 
+let sundials_gte500 =
+  let n, _, _ = Sundials_configuration.sundials_version in
+  n >= 5
+
 let nvconst = Nvector_serial.DataOps.const
 let nvscale = Nvector_serial.DataOps.scale
 
@@ -336,6 +340,11 @@ let main () =
               t0
               wyy wyp)
   in
+
+  (* Call IDASetMaxNumSteps to set the maximum number of steps the
+   * solver will take in an attempt to reach the next output time
+   * during forward integration. *)
+  if sundials_gte500 then Ida.set_max_num_steps ida_mem 2500;
 
   Quad.init ida_mem (rhsQ data) wq;
   Quad.(set_tolerances ida_mem (SStolerances (reltolQ,abstolQ)));
