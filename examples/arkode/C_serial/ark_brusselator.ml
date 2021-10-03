@@ -66,6 +66,10 @@ let compat2_3 =
   | 3,_,_ -> true
   | _ -> false
 
+let sungte500 =
+  let n, _, _ = Config.sundials_version in
+  n >= 5
+
 let printf = Printf.printf
 let fprintf = Printf.fprintf
 
@@ -177,6 +181,9 @@ let main () =
          t0
          y
   ) in
+
+  (* Specify stiff interpolant *)
+  if sungte500 then ARKStep.(set_interpolant_type arkode_mem Lagrange);
 
   (* Open output stream for results, output comment line *)
   let ufid = open_out "solution.txt" in

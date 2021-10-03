@@ -112,9 +112,11 @@ let res imem y f _ =
   (* update state based on current correction *)
   Nvector_serial.Ops.linearsum one imem.y0 one imem.ycor imem.ycur;
   (* compute the residual function *)
-  f.{0} <- y.{0}*.y.{0} +. y.{1}*.y.{1} +. y.{2}*.y.{2} -. one;
-  f.{1} <- two *. y.{0}*.y.{0} +. y.{1}*.y.{1} -. four *. y.{2};
-  f.{2} <- three *. (y.{0}*.y.{0}) -. four *. y.{1} +. y.{2}*.y.{2}
+  let ycur = Nvector.unwrap imem.ycur in
+  let y1, y2, y3 = ycur.{0}, ycur.{1}, ycur.{2} in
+  f.{0} <- y1*.y1 +. y2*.y2 +. y3*.y3 -. one;
+  f.{1} <- two *. y1*.y1 +. y2*.y2 -. four *. y3;
+  f.{2} <- three *. (y1*.y1) -. four *. y2 +. y3*.y3
 
 (* -----------------------------------------------------------------------------
  * Main testing routine
@@ -124,7 +126,7 @@ let main () =
   let x = Nvector_serial.make neq 0.0 in
   let y0 = Nvector_serial.wrap (RealArray.of_array [| half; half; half |]) in
   let ycur = Nvector.clone y0 in
-  let ydata = Nvector_serial.unwrap ycur in
+  let ydata = Nvector.unwrap ycur in
   (* set initial guess for the state *)
   let ycor = Nvector_serial.make neq zero in
   (* set weights *)
@@ -155,11 +157,11 @@ let main () =
   (* set the maximum number of nonlinear iterations *)
   NLS.set_max_iters nls maxit;
 
-  (* update the initial guess with the final correction *)
-  Nvector_serial.Ops.linearsum one y0 one ycor ycur;
-
   (* solve the nonlinear system *)
   NLS.solve nls ~y0 ~ycor ~w tol true;
+
+  (* update the initial guess with the final correction *)
+  Nvector_serial.Ops.linearsum one y0 one ycor ycur;
 
   (* print the solution *)
   printf "Solution:\n";

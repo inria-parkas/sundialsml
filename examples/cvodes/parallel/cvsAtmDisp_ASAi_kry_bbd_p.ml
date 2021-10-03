@@ -43,6 +43,10 @@ let sundials_270_or_later =
   | 2,5,_ | 2,6,_ -> false
   | _ -> true
 
+let sundials_gte500 =
+  let n, _, _ = Sundials_configuration.sundials_version in
+  n >= 5
+
 (* Domain definition *)
 
 let xmin = 0.0
@@ -62,7 +66,7 @@ let my =
   else 40    (* no. of divisions in y dir. *)
 
 let npy =
-  if sundials_270_or_later
+  if sundials_270_or_later && not sundials_gte500
   then 4    (* no. of procs. in y dir.    *)
   else 2    (* no. of procs. in y dir.    *)
 

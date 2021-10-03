@@ -33,6 +33,10 @@ module Quad = Idas.Quadrature
 module Sens = Idas.Sensitivity
 module Adjoint = Idas.Adjoint
 
+let sundials_gte500 =
+  let n, _, _ = Sundials_configuration.sundials_version in
+  n >= 5
+
 let printf = Printf.printf
 
 let nvconst = Nvector_serial.DataOps.const
@@ -187,8 +191,12 @@ let resB : user_data -> RealArray.t Adjoint.bresfn_no_sens =
  * Print results after backward integration
  *)
 let print_output tfinal yB ypB =
-  printf "dG/dy0: \t%12.4e\n\t\t%12.4e\n\t\t%12.4e\n\t\t%12.4e\n\t\t%12.4e\n\t\t%12.4e\n"
-         yB.{0} yB.{1} yB.{2} yB.{3} yB.{4} yB.{5};
+  if sundials_gte500 then
+    printf "dG/dy0: \t%12.4e\n\t\t%12.4e\n\t\t%12.4e\n\t\t%12.4e\n\t\t%12.4e\n"
+           yB.{0} yB.{1} yB.{2} yB.{3} yB.{4}
+  else
+    printf "dG/dy0: \t%12.4e\n\t\t%12.4e\n\t\t%12.4e\n\t\t%12.4e\n\t\t%12.4e\n\t\t%12.4e\n"
+           yB.{0} yB.{1} yB.{2} yB.{3} yB.{4} yB.{5};
   printf "--------------------------------------------------------\n\n"
 
 (* Main program *)

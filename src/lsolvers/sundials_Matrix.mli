@@ -514,7 +514,7 @@ module Sparse : sig (* {{{ *)
       In the call [vals, ptrs, data = unwrap m] ,
       - [vals] contains the row (if [csc]) or column (if [csr]) indices of
                nonzero matrix entries in [data],
-      - [ptrs] contains the indices of the columnn (if [csc]) or
+      - [ptrs] contains the indices of the column (if [csc]) or
                row (if [csr]) entries in [data] and [vals], and
       - [data] contains the values of the nonzero entries.
 
