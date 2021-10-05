@@ -28,7 +28,7 @@ module Nvector_pthreads_ops : Test_nvector.NVECTOR_OPS_EXT
 struct
   include Nvector_pthreads.Ops
   let get_id = Nvector.get_id
-  type data = Sundials.RealArray.t
+  type contents = Sundials.RealArray.t
   let getarray = Nvector_pthreads.unwrap
   let get = Sundials.RealArray.get
   let set = Sundials.RealArray.set

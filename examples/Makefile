@@ -49,6 +49,9 @@ GEN_SUBDIRS=$(foreach m,cvode cvodes ida idas kinsol,			\
 	             $(if $(or $(1),$(MPI_ENABLED)),mpimanyvector)	\
 	             $(if $(or $(1),$(MPI_ENABLED)),mpiplusx),		\
 	           nvector/$v))						\
+	    $(if $(or $(1),$(AT_LEAST_5_0_0)),				\
+	    	arkode/C_manyvector					\
+	        $(if $(or $(1),$(MPI_ENABLED)),cvode/C_mpimanyvector))	\
 	    $(if $(or $(1),$(AT_LEAST_3_0)),				\
 	       $(foreach v,						\
 	   	   dense band sparse arraydense arrayband,		\
