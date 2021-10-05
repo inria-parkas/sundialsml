@@ -119,6 +119,9 @@ static N_Vector do_clone_many(N_Vector src, enum do_clone_mode clonemode)
     dstcontent->global_length = srccontent->global_length;
     dstcontent->own_data = SUNFALSE; // wait for garbage collection
     dstcontent->subvec_array = dst_subvec_array;
+#ifdef MANYVECTOR_BUILD_WITH_MPI
+    dstcontent->comm = srccontent->comm;
+#endif
     sunml_clone_cnvec_ops(dst, src);
 
     /* Duplicate the source array and the nvectors that it contains. */
