@@ -285,8 +285,7 @@ type ('a, 'kind, 'step) session = {
   mutable mass_precfns   : 'a mass_precfns;
 
   (* ARK only *)
-  mutable nls_solver     : ('a, 'kind, (('a, 'kind, 'step) session)
-                             NLSI.integrator)
+  mutable nls_solver     : ('a, 'kind, ('a, 'kind, 'step) session, [`Nvec])
                            NLSI.nonlinear_solver option;
 
   (* MRI only *)

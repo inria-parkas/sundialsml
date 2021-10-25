@@ -190,14 +190,11 @@ module Sensitivity = struct (* {{{ *)
 
   type ('d, 'k) sens_method =
       Simultaneous of
-        ((('d, 'k) NLSI.Senswrapper.t, 'k,
-         (('d, 'k) session) NLSI.integrator) NLSI.nonlinear_solver) option
+        (('d, 'k, ('d, 'k) session, [`Sens]) NLSI.nonlinear_solver) option
     | Staggered of
-        ((('d, 'k) NLSI.Senswrapper.t, 'k,
-         (('d, 'k) session) NLSI.integrator) NLSI.nonlinear_solver) option
+        (('d, 'k, ('d, 'k) session, [`Sens]) NLSI.nonlinear_solver) option
     | Staggered1 of
-        (('d, 'k,
-          (('d, 'k) session) NLSI.integrator) NLSI.nonlinear_solver) option
+        (('d, 'k, ('d, 'k) session, [`Nvec]) NLSI.nonlinear_solver) option
 
   type sens_params = {
       pvals  : RealArray.t option;
@@ -220,22 +217,19 @@ module Sensitivity = struct (* {{{ *)
 
   external c_set_nonlinear_solver_sim
     : ('d, 'k) session
-      -> (('d, 'k) NLSI.Senswrapper.t, 'k,
-          (('d, 'k) session) NLSI.integrator) NLSI.cptr
+      -> ('d, 'k, ('d, 'k) session, [`Sens]) NLSI.cptr
       -> unit
     = "sunml_cvodes_set_nonlinear_solver_sim"
 
   external c_set_nonlinear_solver_stg
     : ('d, 'k) session
-      -> (('d, 'k) NLSI.Senswrapper.t, 'k,
-          (('d, 'k) session) NLSI.integrator) NLSI.cptr
+      -> ('d, 'k, ('d, 'k) session, [`Sens]) NLSI.cptr
       -> unit
     = "sunml_cvodes_set_nonlinear_solver_stg"
 
   external c_set_nonlinear_solver_stg1
     : ('d, 'k) session
-      -> ('d, 'k,
-          (('d, 'k) session) NLSI.integrator) NLSI.cptr
+      -> ('d, 'k, ('d, 'k) session, [`Nvec]) NLSI.cptr
       -> unit
     = "sunml_cvodes_set_nonlinear_solver_stg1"
 
@@ -250,15 +244,13 @@ module Sensitivity = struct (* {{{ *)
     match sm with
     | Simultaneous None -> detach_nonlinear_solver_sens se
     | Simultaneous (Some ({ NLSI.rawptr = nlcptr } as nls)) ->
-        (NLSI.assert_senswrapper_solver nls;
-         detach_nonlinear_solver_sens se;
+        (detach_nonlinear_solver_sens se;
          NLSI.attach nls;
          se.fnls_solver <- NLS_sens nls;
          c_set_nonlinear_solver_sim session nlcptr)
     | Staggered None -> detach_nonlinear_solver_sens se
     | Staggered (Some ({ NLSI.rawptr = nlcptr } as nls)) ->
-        (NLSI.assert_senswrapper_solver nls;
-         detach_nonlinear_solver_sens se;
+        (detach_nonlinear_solver_sens se;
          NLSI.attach nls;
          se.fnls_solver <- NLS_sens nls;
          c_set_nonlinear_solver_stg session nlcptr)
@@ -1448,8 +1440,7 @@ module Adjoint = struct (* {{{ *)
   external c_set_nonlinear_solver
       : ('d, 'k) session
         -> int
-        -> ('data, 'kind,
-            (('data, 'kind) Cvode.session) NLSI.integrator) NLSI.cptr
+        -> ('data, 'kind, ('data, 'kind) Cvode.session, [`Nvec]) NLSI.cptr
         -> unit
       = "sunml_cvodes_adj_set_nonlinear_solver"
 
@@ -1471,7 +1462,8 @@ module Adjoint = struct (* {{{ *)
     let weakref = Weak.create 1 in
     let iter = match nlsolver with
                | None -> true
-               | Some { NLSI.solver = s } -> s = NLSI.NewtonSolver
+               | Some NLSI.{ solver = NewtonSolver _ } -> true
+               | Some _ -> false
     in
     let cvode_mem, which, backref =
       match mf with

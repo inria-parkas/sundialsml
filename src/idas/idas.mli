@@ -339,9 +339,7 @@ module Sensitivity : sig (* {{{ *)
              -> ('d, 'k) tolerance
              -> sens_method
              -> ?sens_nlsolver:
-                 (('d, 'k) Sundials_NonlinearSolver.Senswrapper.t, 'k,
-                  (('d, 'k) Ida.session) Sundials_NonlinearSolver.integrator)
-                                Sundials_NonlinearSolver.t
+                 ('d, 'k, ('d, 'k) Ida.session, [`Sens]) Sundials.NonlinearSolver.t
              -> ?sens_params:sens_params
              -> ?fs:'d sensresfn
              -> ('d, 'k) Nvector.t array
@@ -354,9 +352,7 @@ module Sensitivity : sig (* {{{ *)
   val reinit : ('d, 'k) Ida.session
                -> sens_method
                -> ?sens_nlsolver:
-                   (('d, 'k) Sundials_NonlinearSolver.Senswrapper.t, 'k,
-                    (('d, 'k) Ida.session) Sundials_NonlinearSolver.integrator)
-                                  Sundials_NonlinearSolver.t
+                  ('d, 'k, ('d, 'k) Ida.session, [`Sens]) Sundials.NonlinearSolver.t
                -> ('d, 'k) Nvector.t array
                -> ('d, 'k) Nvector.t array
                -> unit
@@ -1623,9 +1619,7 @@ module Adjoint : sig (* {{{ *)
   val init_backward :
        ('d, 'k) Ida.session
     -> ('d, 'k) tolerance
-    -> ?nlsolver:('d, 'k,
-                  (('d, 'k) session) Sundials_NonlinearSolver.integrator)
-                  Sundials_NonlinearSolver.t
+    -> ?nlsolver:('d, 'k, ('d, 'k) session, [`Nvec]) Sundials.NonlinearSolver.t
     -> lsolver:('d, 'k) linear_solver
     -> 'd bresfn
     -> ?varid:('d, 'k) Nvector.t
@@ -1862,9 +1856,7 @@ module Adjoint : sig (* {{{ *)
       @raise BadFinalTime      The final time is outside the interval over which the forward problem was solved. *)
   val reinit :
     ('d, 'k) bsession
-    -> ?nlsolver:('d, 'k,
-                  (('d, 'k) session) Sundials_NonlinearSolver.integrator)
-                  Sundials_NonlinearSolver.t
+    -> ?nlsolver:('d, 'k, ('d, 'k) session, [`Nvec]) Sundials.NonlinearSolver.t
     -> ?lsolver:('d, 'k) linear_solver
     -> float
     -> ('d, 'k) Nvector.t

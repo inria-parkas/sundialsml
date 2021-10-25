@@ -408,7 +408,7 @@ type ('a, 'kind) session = {
   mutable ls_callbacks : ('a, 'kind) linsolv_callbacks;
   mutable ls_precfns   : 'a linsolv_precfns;
 
-  mutable nls_solver   : ('a, 'kind, (('a, 'kind) session) NLSI.integrator)
+  mutable nls_solver   : ('a, 'kind, ('a, 'kind) session, [`Nvec])
                            NLSI.nonlinear_solver option;
 
   mutable sensext      : ('a, 'kind) sensext (* Used by Cvodes *)
@@ -540,7 +540,7 @@ and ('a, 'kind) fsensext = {
   mutable sensrhsfn1        : 'a SensitivityTypes.sensrhsfn1;
   mutable quadsensrhsfn     : 'a SensitivityTypes.QuadratureTypes.quadsensrhsfn;
 
-  mutable fnls_solver       : ('a, 'kind, (('a, 'kind) session) NLSI.integrator)
+  mutable fnls_solver       : ('a, 'kind, ('a, 'kind) session)
                                 NLSI.nonlinear_solver_hold;
   (* keep a reference to prevent garbage collection *)
 

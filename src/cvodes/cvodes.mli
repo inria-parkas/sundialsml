@@ -307,24 +307,18 @@ module Sensitivity : sig (* {{{ *)
       @cvodes <node6> CVodeSetNonlinearSolverSensStg1 *)
   type ('d, 'k) sens_method =
       Simultaneous of
-        ((('d, 'k) Sundials_NonlinearSolver.Senswrapper.t, 'k,
-         (('d, 'k) Cvode.session) Sundials_NonlinearSolver.integrator)
-                       Sundials_NonlinearSolver.t) option
+        (('d, 'k, ('d, 'k) Cvode.session, [`Sens]) Sundials.NonlinearSolver.t) option
       (** Correct state and sensitivity variables at the same time.
           {cconst CV_SIMULTANEOUS} *)
     | Staggered of
-        ((('d, 'k) Sundials_NonlinearSolver.Senswrapper.t, 'k,
-         (('d, 'k) Cvode.session) Sundials_NonlinearSolver.integrator)
-                       Sundials_NonlinearSolver.t) option
+        (('d, 'k, ('d, 'k) Cvode.session, [`Sens]) Sundials.NonlinearSolver.t) option
       (** The correction step for the sensitivity variables takes place at the
           same time for all sensitivity equations, but only after the
           correction of the state variables has converged and the state
           variables have passed the local error test.
           {cconst CV_STAGGERED} *)
     | Staggered1 of
-        (('d, 'k,
-          (('d, 'k) Cvode.session) Sundials_NonlinearSolver.integrator)
-                       Sundials_NonlinearSolver.t) option
+        (('d, 'k, ('d, 'k) Cvode.session, [`Nvec]) Sundials.NonlinearSolver.t) option
       (** All corrections are done sequentially, first for the state variables
           and then for the sensitivity variables, one parameter at a time. If
           the sensitivity variables are not included in the error control,
@@ -1852,10 +1846,7 @@ module Adjoint : sig (* {{{ *)
        ('d, 'k) Cvode.session
     -> Cvode.lmm
     -> ('d, 'k) tolerance
-    -> ?nlsolver
-         : ('d, 'k,
-            (('d, 'k) Cvode.session) Sundials_NonlinearSolver.integrator)
-           Sundials_NonlinearSolver.t
+    -> ?nlsolver : ('d, 'k, ('d, 'k) Cvode.session, [`Nvec]) Sundials.NonlinearSolver.t
     -> ?lsolver  : ('d, 'k) linear_solver
     -> 'd brhsfn
     -> float
@@ -2076,10 +2067,7 @@ module Adjoint : sig (* {{{ *)
       @raise BadFinalTime The final time is not within the forward problem solution interval. *)
   val reinit :
     ('d, 'k) bsession
-    -> ?nlsolver
-         : ('d, 'k,
-            (('d, 'k) Cvode.session) Sundials_NonlinearSolver.integrator)
-           Sundials_NonlinearSolver.t
+    -> ?nlsolver : ('d, 'k, ('d, 'k) Cvode.session, [`Nvec]) Sundials.NonlinearSolver.t
     -> ?lsolver  : ('d, 'k) linear_solver
     -> float
     -> ('d, 'k) Nvector.t

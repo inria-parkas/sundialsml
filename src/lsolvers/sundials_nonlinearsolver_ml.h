@@ -45,13 +45,6 @@ enum nlsolver_callbacks_index {
   RECORD_NLSOLVER_CALLBACKS_SIZE
 };
 
-enum nlsolver_solver_tag {
-  VARIANT_NLSOLVER_SOLVER_NEWTONSOLVER            = 0, // constant constrs
-  VARIANT_NLSOLVER_SOLVER_FIXEDPOINTSOLVER        = 0, // non-constant constrs
-  VARIANT_NLSOLVER_SOLVER_CUSTOMSOLVER            = 1,
-  VARIANT_NLSOLVER_SOLVER_CUSTOMSENSSOLVER        = 2
-};
-
 enum nlsolver_ops_index {
     RECORD_NLSOLVER_OPS_TYPE = 0,
     RECORD_NLSOLVER_OPS_INIT,
@@ -72,7 +65,6 @@ enum nlsolver_ops_index {
 enum nlsolver_index {
   RECORD_NLSOLVER_RAWPTR	   = 0,
   RECORD_NLSOLVER_SOLVER,
-  RECORD_NLSOLVER_CALLBACKS,
   RECORD_NLSOLVER_ATTACHED,
   RECORD_NLSOLVER_SIZE
 };

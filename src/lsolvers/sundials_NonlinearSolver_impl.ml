@@ -43,18 +43,16 @@ end (* }}} *)
    it is not possible to do anything with it.
    For O/Cnls, the mem argument is provided by the C stubs *)
 
-type user = unit
-
 (* Used as a phantom type tag. Define as a variant type to help GADT
    exhaustiveness checking.
    See: https://github.com/ocaml/ocaml/issues/7028#issuecomment-473051557 *)
 type 'a integrator = Integrator of 'a
 
-type ('d, 's) sysfn = 'd -> 'd -> 's -> unit
+type ('nv, 's) sysfn = 'nv -> 'nv -> 's -> unit
 
-type ('d, 's) lsetupfn = bool -> 's -> bool
+type 's lsetupfn = bool -> 's -> bool
 
-type ('d, 's) lsolvefn = 'd -> 's -> unit
+type ('nv, 's) lsolvefn = 'nv -> 's -> unit
 
 (* Used in sundials_nonlinearsolver_ml.c: nlsolver_convtest_tag *)
 type convtest =
@@ -62,16 +60,16 @@ type convtest =
   | Continue
   | Recover
 
-type ('d, 's) convtestfn = 'd -> 'd -> float -> 'd -> 's -> convtest
+type ('nv, 's) convtestfn = 'nv -> 'nv -> float -> 'nv -> 's -> convtest
 
-type ('d, 'k, 's) cptr
+type ('d, 'k, 's, 'v) cptr
 
 (* Accessed from sundials_nonlinearsolver_ml.c: nlsolver_callbacks_index *)
-type ('d, 'k, 's) callbacks = {
-  mutable sysfn      : ('d, 's) sysfn;
-  mutable lsetupfn   : ('d, 's) lsetupfn;
-  mutable lsolvefn   : ('d, 's) lsolvefn;
-  mutable convtestfn : ('d, 's) convtestfn;
+type ('nv, 's) callbacks = {
+  mutable sysfn      : ('nv, 's) sysfn;
+  mutable lsetupfn   : 's lsetupfn;
+  mutable lsolvefn   : ('nv, 's) lsolvefn;
+  mutable convtestfn : ('nv, 's) convtestfn;
 }
 
 (* Accessed from sundials_nonlinearsolver_ml.c: nlsolver_type *)
@@ -79,34 +77,78 @@ type nonlinear_solver_type =
   | RootFind
   | FixedPoint
 
-(* Accessed from sundials_nonlinearsolver_ml.c: nlsolver_solver_tag *)
-type ('d, 'k, _) solver =
-  | NewtonSolver     : ('d, 'k, 's) solver
-  | FixedPointSolver : int (* argument for backwards compatability in Arkode *)
-                       -> ('d, 'k, 's) solver
-  | CustomSolver     : (('d, 'k) Nvector.t, 's) ops
-                       -> ('d, 'k, 's) solver
-  | CustomSensSolver : (('d, 'k) Senswrapper.t, 'a integrator) ops
-                       -> (('d, 'k) Senswrapper.t, 'k, 'a integrator) solver
+type ('d, 'k, 's, _) solver =
+  (* C-NLS used from C or OCaml *)
+  | NewtonSolver :
+      ('d, 's) callbacks (* C-NLS to C callback: only used for convtestfn
+                            C-NLS to OCaml callback: backlink to 'd *)
+      -> ('d, 'k, 's, [`Nvec]) solver
+
+  (* C-NLS used from C or OCaml *)
+  | NewtonSolverSens :
+      (('d, 'k) Senswrapper.t, 's) callbacks
+                         (* C-NLS to C callback: only used for convtestfn
+                            C-NLS to OCaml callback: backlink to 'd *)
+      -> ('d, 'k, 's, [`Sens]) solver
+
+  (* C-NLS used from C or OCaml *)
+  | FixedPointSolver :
+      ('d, 's) callbacks (* C-NLS to C callback: only used for convtestfn
+                            C-NLS to OCaml callback: backlink to 'd *)
+      * int (* argument for backwards compatability in Arkode *)
+      -> ('d, 'k, 's, [`Nvec]) solver
+
+  (* C-NLS used from C or OCaml *)
+  | FixedPointSolverSens :
+      (('d, 'k) Senswrapper.t, 's) callbacks
+                         (* C-NLS to C callback: only used for convtestfn
+                            C-NLS to OCaml callback: backlink to 'd *)
+      * int (* argument for backwards compatability in Arkode *)
+      -> ('d, 'k, 's, [`Sens]) solver
+
+  (* OCaml-NLS used from C or OCaml *)
+  | CustomSolver :
+      (('d, 'k) Nvector.t, 's) callbacks
+                         (* OCaml-NLS to C callback: needs N_Vector
+                            OCaml-NLS to OCaml callback: would prefer 'd... *)
+      * (('d, 'k) Nvector.t, 'd, 's) ops
+      -> ('d, 'k, 's, [`Nvec]) solver
+
+  (* OCaml-NLS used from C only *)
+  (* A special effort is required for Senswrappers. They must be passed
+     directly to setup and solve so that they can then be passed onto
+     to sysfn, lsolvefn, and convtestfn. Passing the payload directly would
+     not be useful since a Senswrapper cannot be constructed from OCaml. *)
+  | CustomSolverSens :
+      (('d, 'k) Senswrapper.t, 's) callbacks
+                          (* OCaml-NLS to C callback: needs Senswrapper *)
+      * (('d, 'k) Senswrapper.t, ('d, 'k) Senswrapper.t, 's) ops
+      -> ('d, 'k, 's, [`Sens]) solver
 
 (* Accessed from sundials_nonlinearsolver_ml.c: nlsolver_index *)
-and ('d, 'k, 's) nonlinear_solver = {
-  rawptr : ('d, 'k, 's) cptr;
-  solver : ('d, 'k, 's) solver;
-  callbacks : ('d, 'k, 's) callbacks;
+and ('d, 'k, 's, 'v) nonlinear_solver = {
+  rawptr : ('d, 'k, 's, 'v) cptr;
+  solver : ('d, 'k, 's, 'v) solver;
   mutable attached : bool;
 }
 
+(* Distinguish operations that take an nvector ('nv), since the C function
+   (sysfn, lsolvefn, convtestfn) passed from the integrator requires
+   one, from those that take the payload directly ('d), since they are invoked
+   from C with nvectors. This asymmetry is an unfortunate consequence of the
+   implementation of nvectors in Sundials/ML. It occurs since there are call
+   chains from C to OCaml to C. *)
+
 (* Accessed from sundials_nonlinearsolver_ml.c: nlsolver_ops_index *)
-and ('nv, 's) ops = {
+and ('nv, 'd, 's) ops = {
   nls_type           : nonlinear_solver_type;
   init               : (unit -> unit) option;
 
-  setup              : ('nv -> 's -> unit) option;
-  solve              : 'nv -> 'nv -> 'nv -> float -> bool -> 's -> unit;
+  setup              : ('d -> 's -> unit) option;
+  solve              : 'd -> 'd -> 'd -> float -> bool -> 's -> unit;
 
   set_sys_fn         : ('nv, 's) sysfn -> unit;
-  set_lsetup_fn      : (('nv, 's) lsetupfn -> unit) option;
+  set_lsetup_fn      : ('s lsetupfn -> unit) option;
   set_lsolve_fn      : (('nv, 's) lsolvefn -> unit) option;
   set_convtest_fn    : (('nv, 's) convtestfn -> unit) option;
   set_max_iters      : (int -> unit) option;
@@ -122,8 +164,8 @@ and ('nv, 's) ops = {
    while hiding the fact that the data argument is a senswrapper. *)
 type ('d, 'k, 's) nonlinear_solver_hold =
   | NoNLS
-  | NLS of ('d, 'k, 's) nonlinear_solver
-  | NLS_sens of (('d, 'k) Senswrapper.t, 'k, 's) nonlinear_solver
+  | NLS of ('d, 'k, 's, [`Nvec]) nonlinear_solver
+  | NLS_sens of ('d, 'k, 's, [`Sens]) nonlinear_solver
 
 let attach ({ attached } as s) =
   if attached then raise NonlinearSolverInUse;
@@ -132,20 +174,12 @@ let attach ({ attached } as s) =
 let detach s =
   s.attached <- false
 
-let assert_senswrapper_solver { solver } =
+let get_type (type d k s v) ({ rawptr; solver } : (d, k, s, v) nonlinear_solver) =
   match solver with
-  | CustomSolver _ -> raise IncorrectUse
-  | CustomSensSolver _ -> ()
-  (* The native nl_solvers can handle senswrappers *)
-  | FixedPointSolver _ -> ()
-  | NewtonSolver     -> ()
-
-let get_type (type d k s) ({ rawptr; solver } : (d, k, s) nonlinear_solver) =
-  match solver with
-  | FixedPointSolver _            -> FixedPoint
-  | NewtonSolver                  -> RootFind
-  | CustomSolver { nls_type }     -> nls_type
-  | CustomSensSolver { nls_type } -> nls_type
+  | FixedPointSolver _ | FixedPointSolverSens _ -> FixedPoint
+  | NewtonSolver _ | NewtonSolverSens _ -> RootFind
+  | CustomSolver (_, { nls_type }) -> nls_type
+  | CustomSolverSens (_, { nls_type }) -> nls_type
 
 let empty_sysfn _ _ _ =
   Sundials_impl.crash "Internal error: nls_sysn called\n"
