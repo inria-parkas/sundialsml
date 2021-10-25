@@ -624,7 +624,7 @@ module ButcherTable : sig (* {{{ *)
     | Billington_3_2_3      (** From Billington 1983. *)
     | TRBDF2_3_2_3          (** From Billington 1985. *)
     | Kvaerno_4_2_3         (** From Kvaerno 2004. *)
-    | ARK_4_2_3_Implicit    (** Default 3rd order implicit method and the
+    | ARK324L2SA_DIRK_4_2_3 (** Default 3rd order implicit method and the
                                 implicit portion of the default 3rd order
                                 additive method. *)
     | Cash_5_2_4            (** From Cash 1979. *)
@@ -1759,7 +1759,7 @@ module ARKStep : sig (* {{{ *)
   (** Use specific built-in Butcher tables for an ImEx system.
 
       @raise IllInput If $f_I$ and $f_E$ are not already specified.
-      @noarkode <node> ARKStepSetTables
+      @noarkode <node> ARKStepSetTableNum
       @noarkode <node> ARKStepSetImEx *)
   val set_ark_table_num : ('d, 'k) session -> ButcherTable.ark_table -> unit
 
@@ -1772,7 +1772,7 @@ module ARKStep : sig (* {{{ *)
       prior to Sundials 4.0.0.
 
       @raise IllInput If $f_E$ is not already specified.
-      @noarkode <node> ARKStepSetTables
+      @noarkode <node> ARKStepSetTableNum
       @noarkode <node> ARKStepSetExplicit *)
   val set_erk_table_num : ('d, 'k) session -> ButcherTable.erk_table -> unit
 
@@ -1780,7 +1780,7 @@ module ARKStep : sig (* {{{ *)
       problem.
 
       @raise IllInput If $f_I$ is not already specified.
-      @noarkode <node> ARKStepSetTables
+      @noarkode <node> ARKStepSetTableNum
       @noarkode <node> ARKStepSetImplicit *)
   val set_dirk_table_num : ('d, 'k) session -> ButcherTable.dirk_table -> unit
 

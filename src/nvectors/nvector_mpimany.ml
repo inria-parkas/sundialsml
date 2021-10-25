@@ -31,17 +31,39 @@ external c_wrap
 
 let unwrap = Nvector.unwrap
 
-let rec wrap_withlen ((nvs, _, _) as payload) =
+(* Selectively enable and disable fused and array operations *)
+external c_enablefusedops_manyvector                : ('d, 'k) Nvector.t -> bool -> unit
+  = "sunml_nvec_mpimany_enablefusedops"
+external c_enablelinearcombination_manyvector       : ('d, 'k) Nvector.t -> bool -> unit
+  = "sunml_nvec_mpimany_enablelinearcombination"
+external c_enablescaleaddmulti_manyvector           : ('d, 'k) Nvector.t -> bool -> unit
+  = "sunml_nvec_mpimany_enablescaleaddmulti"
+external c_enabledotprodmulti_manyvector            : ('d, 'k) Nvector.t -> bool -> unit
+  = "sunml_nvec_mpimany_enabledotprodmulti"
+external c_enablelinearsumvectorarray_manyvector    : ('d, 'k) Nvector.t -> bool -> unit
+  = "sunml_nvec_mpimany_enablelinearsumvectorarray"
+external c_enablescalevectorarray_manyvector        : ('d, 'k) Nvector.t -> bool -> unit
+  = "sunml_nvec_mpimany_enablescalevectorarray"
+external c_enableconstvectorarray_manyvector        : ('d, 'k) Nvector.t -> bool -> unit
+  = "sunml_nvec_mpimany_enableconstvectorarray"
+external c_enablewrmsnormvectorarray_manyvector     : ('d, 'k) Nvector.t -> bool -> unit
+  = "sunml_nvec_mpimany_enablewrmsnormvectorarray"
+external c_enablewrmsnormmaskvectorarray_manyvector : ('d, 'k) Nvector.t -> bool -> unit
+  = "sunml_nvec_mpimany_enablewrmsnormmaskvectorarray"
+
+let rec wrap_withlen enable_fused_ops ((nvs, _, _) as payload) =
   let check nv' =
     let nvs', _, _ = unwrap nv' in
     try ROArray.iter2 Nvector.check nvs nvs'; true
     with Nvector.IncompatibleNvector -> false
   in
-  c_wrap payload check clone
+  let nv = c_wrap payload check clone in
+  if enable_fused_ops then c_enablefusedops_manyvector nv true;
+  nv
 
 and clone nv =
   let nvs, comm, gl = unwrap nv in
-  wrap_withlen (ROArray.map Nvector.clone nvs, comm, gl)
+  wrap_withlen false (ROArray.map Nvector.clone nvs, comm, gl)
 
 let subvector_mpi_rank nv =
   match Nvector_parallel.get_communicator nv with
@@ -73,7 +95,7 @@ let check_comms nvs =
   | None -> invalid_arg "communicator not found or specified"
   | Some comm -> comm
 
-let wrap ?comm nvs =
+let wrap ?(with_fused_ops=false) ?comm nvs =
   if Sundials_impl.Versions.sundials_lt500
     then raise Config.NotImplementedBySundialsVersion;
   let comm =
@@ -81,7 +103,7 @@ let wrap ?comm nvs =
     | None -> check_comms nvs
     | Some c -> c
   in
-  wrap_withlen (nvs, comm, sumlens nvs comm)
+  wrap_withlen with_fused_ops (nvs, comm, sumlens nvs comm)
 
 let length nv =
   let _, _, glen = unwrap nv in
@@ -94,26 +116,6 @@ let num_subvectors nv =
 let communicator nv =
   let _, comm, _ = Nvector.unwrap nv in
   comm
-
-(* Selectively enable and disable fused and array operations *)
-external c_enablefusedops_manyvector                : ('d, 'k) Nvector.t -> bool -> unit
-  = "sunml_nvec_mpimany_enablefusedops"
-external c_enablelinearcombination_manyvector       : ('d, 'k) Nvector.t -> bool -> unit
-  = "sunml_nvec_mpimany_enablelinearcombination"
-external c_enablescaleaddmulti_manyvector           : ('d, 'k) Nvector.t -> bool -> unit
-  = "sunml_nvec_mpimany_enablescaleaddmulti"
-external c_enabledotprodmulti_manyvector            : ('d, 'k) Nvector.t -> bool -> unit
-  = "sunml_nvec_mpimany_enabledotprodmulti"
-external c_enablelinearsumvectorarray_manyvector    : ('d, 'k) Nvector.t -> bool -> unit
-  = "sunml_nvec_mpimany_enablelinearsumvectorarray"
-external c_enablescalevectorarray_manyvector        : ('d, 'k) Nvector.t -> bool -> unit
-  = "sunml_nvec_mpimany_enablescalevectorarray"
-external c_enableconstvectorarray_manyvector        : ('d, 'k) Nvector.t -> bool -> unit
-  = "sunml_nvec_mpimany_enableconstvectorarray"
-external c_enablewrmsnormvectorarray_manyvector     : ('d, 'k) Nvector.t -> bool -> unit
-  = "sunml_nvec_mpimany_enablewrmsnormvectorarray"
-external c_enablewrmsnormmaskvectorarray_manyvector : ('d, 'k) Nvector.t -> bool -> unit
-  = "sunml_nvec_mpimany_enablewrmsnormmaskvectorarray"
 
 let do_enable f nv v =
   match v with
@@ -785,7 +787,7 @@ module Any = struct (* {{{ *)
       -> Nvector.any
     = "sunml_nvec_anywrap_mpimany"
 
-  let rec wrap_with_len ((nvs, _, _) as payload) =
+  let rec wrap_with_len enable_fused_ops ((nvs, _, _) as payload) =
     if Sundials_impl.Versions.sundials_lt500
       then raise Config.NotImplementedBySundialsVersion;
     let check nv' =
@@ -797,16 +799,18 @@ module Any = struct (* {{{ *)
            with Nvector.IncompatibleNvector -> false)
       | _ -> false
     in
-    c_any_wrap [%extension_constructor MpiMany] payload check clone
+    let nv = c_any_wrap [%extension_constructor MpiMany] payload check clone in
+    if enable_fused_ops then c_enablefusedops_manyvector nv true;
+    nv
 
   and clone nv =
     let nvs, gl, comm = match unwrap nv with
                         | MpiMany v -> v
                         | _ -> assert false
     in
-    wrap_with_len (ROArray.map Nvector.clone nvs, gl, comm)
+    wrap_with_len false (ROArray.map Nvector.clone nvs, gl, comm)
 
-  let wrap ?comm nvs =
+  let wrap ?(with_fused_ops=false) ?comm nvs =
     if Sundials_impl.Versions.sundials_lt500
       then raise Config.NotImplementedBySundialsVersion;
     let comm =
@@ -814,7 +818,7 @@ module Any = struct (* {{{ *)
       | None -> check_comms nvs
       | Some c -> c
     in
-    wrap_with_len (nvs, comm, sumlens nvs comm)
+    wrap_with_len with_fused_ops (nvs, comm, sumlens nvs comm)
 
   let unwrap nv =
     match Nvector.unwrap nv with

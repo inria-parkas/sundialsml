@@ -34,3 +34,6 @@ val output_bytes : t -> bytes -> unit
 (** Flushes the given file. *)
 val flush : t -> unit
 
+(** Closes the given file. *)
+val close : t -> unit
+

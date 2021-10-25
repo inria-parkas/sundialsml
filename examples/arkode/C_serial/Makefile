@@ -24,10 +24,15 @@ EXAMPLES_SINCE_4_0_0 = ark_analytic_nonlin.ml \
 		       ark_twowaycouple_mri.ml \
 		       ark_reaction_diffusion_mri.ml
 
+EXAMPLES_SINCE_5_0_0 = ark_brusselator_1D_mri.ml \
+		       ark_robertson_constraints.ml
+
 EXAMPLES = $(EXAMPLES_SINCE_2_5)				\
-	   $(if $(AT_LEAST_4_0_0),$(EXAMPLES_SINCE_4_0_0))
+	   $(if $(AT_LEAST_4_0_0),$(EXAMPLES_SINCE_4_0_0))	\
+	   $(if $(AT_LEAST_5_0_0),$(EXAMPLES_SINCE_5_0_0))
 
 FILES_TO_CLEAN = bruss_mesh.txt bruss_u.txt bruss_v.txt bruss_w.txt \
-		 heat1D.txt heat_mesh.txt solution.txt
+		 heat1D.txt heat_mesh.txt solution.txt \
+		 mesh.txt u.txt v.txt w.txt
 
 include ../../examples.mk

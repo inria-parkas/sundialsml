@@ -262,6 +262,15 @@ CAMLprim value sunml_sundials_fflush(value vfile)
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_sundials_close(value vfile)
+{
+    CAMLparam1(vfile);
+    FILE *file = ML_CFILE(vfile);
+    fclose(file);
+    ML_CFILE(vfile) = NULL;
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value sunml_sundials_stderr(value vunit)
 {
     CAMLparam1(vunit);

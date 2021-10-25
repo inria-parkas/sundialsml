@@ -35,3 +35,6 @@ external output_bytes : t -> bytes -> unit
 external flush : t -> unit
   = "sunml_sundials_fflush"
 
+external close : t -> unit
+  = "sunml_sundials_close"
+
