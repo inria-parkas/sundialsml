@@ -924,7 +924,7 @@ module Adjoint : sig (* {{{ *)
       jac_y : 'd;           (** The forward solution vector. *)
       jac_y' : 'd;          (** The forward derivatives vector. *)
       jac_yb : 'd;          (** The backward solution vector. *)
-      jac_yb' : 'd;         (** The forward derivatives vector. *)
+      jac_yb' : 'd;         (** The backward derivatives vector. *)
       jac_resb : 'd;        (** The current residual for the backward problem. *)
       jac_coef : float;     (** The scalar {% $c_\mathit{jB}$%} in the
                                 system Jacobian, proportional to the inverse
