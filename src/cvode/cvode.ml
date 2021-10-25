@@ -731,7 +731,7 @@ let session_finalize s =
 (* Sundials >= 4.0.0 *)
 external c_set_nonlinear_solver
     : ('d, 'k) session
-      -> ('d, 'k, (('d, 'k) session) NLSI.integrator) NLSI.cptr
+      -> ('d, 'k, ('d, 'k) session, [`Nvec]) NLSI.cptr
       -> unit
     = "sunml_cvode_set_nonlinear_solver"
 
@@ -743,10 +743,11 @@ external c_init
 external c_set_proj_fn : ('d, 'k) session -> unit
     = "sunml_cvode_set_proj_fn"
 
-let init lmm tol ?(nlsolver : ('data, 'kind,
-            (('data, 'kind) session) Sundials_NonlinearSolver.integrator)
-           Sundials_NonlinearSolver.t option) ?lsolver f ?(roots=no_roots)
-           ?projfn t0 y0 =
+let init lmm tol
+          ?(nlsolver : ('data, 'kind, ('data, 'kind) session, [`Nvec])
+                          Sundials_NonlinearSolver.t option)
+          ?lsolver f ?(roots=no_roots)
+          ?projfn t0 y0 =
   let (nroots, roots) = roots in
   let checkvec = Nvector.check y0 in
   if Sundials_configuration.safe && nroots < 0
@@ -754,7 +755,8 @@ let init lmm tol ?(nlsolver : ('data, 'kind,
   let weakref = Weak.create 1 in
   let iter = match nlsolver with
              | None -> true
-             | Some { NLSI.solver = s } -> s = NLSI.NewtonSolver
+             | Some NLSI.{ solver = NewtonSolver _ } -> true
+             | Some _ -> false
   in
   let hasprojfn, projfn = match projfn with
                           | None -> false, dummy_projfn

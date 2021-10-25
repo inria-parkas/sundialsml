@@ -526,9 +526,8 @@ type 'd rootsfn = float -> 'd -> 'd -> RealArray.t -> unit
     @ida <node5#sss:idasetid>      IDASetId *)
 val init :
     ('d, 'kind) tolerance
-    -> ?nlsolver: ('d, 'kind,
-                   (('d, 'kind) session) Sundials_NonlinearSolver.integrator)
-                  Sundials_NonlinearSolver.t
+    -> ?nlsolver: ('d, 'kind, ('d, 'kind) session, [`Nvec])
+                    Sundials_NonlinearSolver.t
     -> lsolver:('d, 'kind) linear_solver
     -> 'd resfn
     -> ?varid:('d, 'kind) Nvector.t
@@ -763,9 +762,7 @@ val get_dky : ('d, 'k) session -> ('d, 'k) Nvector.t -> float -> int -> unit
     @ida <node>               IDASetNonlinearSolver *)
 val reinit :
   ('d, 'k) session
-  -> ?nlsolver:('d, 'k,
-                (('d, 'k) session) Sundials_NonlinearSolver.integrator)
-               Sundials_NonlinearSolver.t
+  -> ?nlsolver:('d, 'k, ('d, 'k) session, [`Nvec]) Sundials_NonlinearSolver.t
   -> ?lsolver:('d, 'k) linear_solver
   -> ?roots:(int * 'd rootsfn)
   -> float

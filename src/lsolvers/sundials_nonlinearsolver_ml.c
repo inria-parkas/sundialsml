@@ -57,81 +57,144 @@ typedef struct _N_VectorContent_SensWrapper *N_VectorContent_SensWrapper;
 
 #define MAX_ERRMSG_LEN 256
 
-/* Nonlinear solvers (NLS) and callbacks from their "consumers".
+/* Nonlinear solvers (NLS) - use cases
 
    A consumer instantiates an NLS, configures callbacks (sysfn, lsetupfn,
    lsolvefn, convtestfn), and invokes init, setup, and solve.
-
    There are two types of "consumers": integrators (e.g., CVODE or IDA) and
    application code (written in OCaml).
 
-   The interface code must consider four scenarios.
+   There are three types of invocations:
 
-   1. C consumer (integrator) && C NLS && OCaml application (C/Cnls)
+   - setfn (set_sysfn, set_lsetupfn, set_lsolvefn, set_convtestfn)
+     tells the NLS which callback to use
+
+   - setup/solve
+     call the NLS to solve a problem
+
+   - callbackfn (sysfn, lsetupfn, lsolvefn, convtestfn)
+     during setup/solve, the NLS calls back into the given functions
+
+   Two types of data must be passed: nvectors, state.
+   C passes N_Vector, OCaml receives payload
+   OCaml passes Nvector.t, C receives N_Vector
+
+   1. C-integrator using (Newton/FixedPoint) C-NLS
+
+      The rawptr is passed to the integrator. It retains the original ops
+      from Sundials and thus all interaction occurs in C.
+
+      setfn: callback is stored by Sundials
+      setup/solve: invocation directly via ops
+      callbackfn: invocation directly on stored callback
+
+      - - -
+
+      'mem <> user (an internal value is provided by the integrator)
+      Configuration from OCaml is not possible ('mem <> user) since the mem
+      argument is controlled by the integrator and there is thus no way to
+      link a C stub passed to the NLS with the OCaml callback.
+      In any case, it is not clear that overriding the integrator's sys,
+      setup, and solve function is very useful in practice.
+
+      The convtestfn can be overridden from OCaml. In this case, the C stub
+      passed to the NLS can use the SUNNonlinearSolver argument to resolve
+      the OCaml callback (a "backlink" is guaranteed since the application
+      has access to the NLS to configure the callback). The (opaque) 'mem
+      value is wrapped by the C stub before invocation of the OCaml code; it
+      can later be used in calls to the wrapped C function retrieved through
+      Newton/FixedPoint.get_sys_fn.
+
+      NB: an NLS is not passed to the OCaml convtestfn since this would
+      require a cyclic "backlink" from the C-side NLS to its OCaml
+      counterpart. A closure should instead be used to provide the NLS value
+      necessary to invoke Newton/FixedPoint.get_sys_fn.
+
+   2. C-integrator using (Custom) OCaml-NLS
+
+      The rawptr is passed to the integrator.
+      Ops point to the callml_custom_* or callml_custom_*_sens functions.
+
+      setup/solve:
+      The callml_custom_* functions pass into OCaml via the nls-solver-ops
+      structure.
+      E.g.,
+	1. SUNNonlinSolSolve (arg: N_Vector)
+	2. callml_custom_solve (via C ops table, uses NVEC_BACKLINK)
+	3. OCaml ops.solve is invoked (arg: payload)
+
+      setfn:
+      The callml_custom_* functions pass into OCaml via registered callbacks
+      "Sundials_NonlinearSolver.set_c_*" that call into
+      Custom.set_c_*(_sens). The Custmo.set_c_* functions (a) wrap the given
+      function using sunml_nlsolver_call_* and (b) call the nls-solver-ops
+      set_* function on the result.
+      E.g.,
+	1. SUNNonlinSolSetSysFn (arg : SUNNonlinSolSysFn)
+	2. callml_custom_setsysfn (via C ops table)
+	3. Sundials.NonlinearSolver.Custom.set_c_sys_fn (via caml_named_value)
+	4. (apply sunml_nlsolver_call_sys_fn to arg giving an OCaml closure)
+	5. OCaml ops.set_sys_fn to store closure
+
+      callbackfn:
+      The OCaml solver invokes the closure created by setfn, the
+      sunml_nlsolver_call_* function calls the C function passed earlier.
+      E.g.,
+	1. sunml_nlsolver_call_sys_fn (arg: Nvector.t, state from solver)
+	2. calls *sysfn (via pointer in closure, uses NVEC_VAL)
+	3. sysfn (arg: N_Vector)
+
+      setup/solve is C -> OCaml so N_Vectors become payloads ('data)
+      callbackfn is OCaml -> C so Nvector.t becomes N_Vector
+      (This is unfortunate: it means that the OCaml solver must rewrap the
+       data in an Nvector.t when using the callback.)
+
+      with sensitivities: senswrappers are passed from C -> OCaml -> C
+
+      - - -
+
       'mem <> user (an internal value is provided by the integrator)
 
-      - Callback configuration: sysfn, lsetupfn, lsolvefn
-        Integrator only, occurs completely within C.
-	Configuration from OCaml is not possible ('mem <> user) since the mem
-	argument is controlled by the integrator and there is thus no way to
-	link a C stub passed to the NLS with the OCaml callback.
-	In any case, it is not clear that overriding the integrator's sys,
-	setup, and solve function is very useful in practice.
+      The convtestfn can be overridden from OCaml, as per (1) but the
+      "backlink" mechanism is unnecessary -- the callback occurs directly in
+      OCaml without passing via C.
 
-      - Callback configuration: convtestfn
-        Can be overridden from OCaml. In this case, the C stub passed to
-	the NLS can use the SUNNonlinearSolver argument to resolve the
-	OCaml callback (a "backlink" is guaranteed since the application
-	has access to the NLS to configure the callback). The (opaque)
-	'mem value is wrapped by the C stub before invocation of the OCaml
-	code; it can later be used in calls to the wrapped C function
-	retrieved through Newton/FixedPoint.get_sys_fn.
+   3. OCaml-app using C-NLS
 
-	NB: an NLS is not passed to the OCaml convtestfn since this would
-	    require a cyclic "backlink" from the C-side NLS to its OCaml
-	    counterpart. A closure should instead be used to provide the
-	    NLS value necessary to invoke Newton/FixedPoint.get_sys_fn.
-    
-      - Callback invocation: sysfn, lsetupfn, lsolvefn
-	Directly into C.
+      setup/solve:
+      The function is called via Sundials.NonlinearSolver and uses the
+      FixedPointSolver/NewtonSolver case, which invokes sunml_nlsolver_*,
+      which in turn calls into Sundials.
+      E.g.,
+	1. call to Sundials.NonlinearSolver.solve (arg: Nvector.t)
+	2. sunml_nlsolver_solve (uses NVEC_VAL)
+	3. SUNNonlinSolSolve (arg: N_Vector)
 
-      - Callback invocation: convtestfn
-        Either directly into C, or via the NLS "backlink" into OCaml.
+      setfn:
+      The function is called via Sundials.NonlinearSolver using the
+      FixedPointSolver/NewtonSolver case, which invokes sunml_nlsolver_set_*,
+      which in turn calls into Sundials passing a generic callback function.
+      E.g.,
+	1. call to Sundials.NonlinearSolver.set_sys_fn (stores closure
+	   in the OCaml nonlinear_solver-callbacks structure)
+	2. sunml_nlsolver_set_sys_fn
+	3. SUNNonlinSolSetSysFn specifying the generic sys_callback
 
-      - Init/setup/solve invocation
-        From C only. Not possible from OCaml ('mem <> C) since we would have
-	to provide a suitable 'mem value for the callbacks into C.
-	(This would not be impossible, but its utility is unclear.)
+      callbackfn:
+      The generic callback function invokes the OCaml closure from the
+      callback structure.
+      E.g.,
+	1. sys_callback (arg: N_Vector, uses NVEC_BACKLINK)
+	2. OCaml callbacks.sysfn (arg: payload, state = unit)
 
-   2. C consumer (integrator) && OCaml (custom) NLS && OCaml application (C/Onls)
-      'mem <> user (an internal value is provided by the integrator)
+      setup/solve is OCaml -> C so an Nvector.t is required
+      callbackfn is C to OCaml so an N_Vector becomes a payload
 
-      - Callback configuration: sysfn, lsetupfn, lsolvefn
-        The function pointers provided by the integrator are wrapped and
-	passed to the NLS as OCaml functions. The wrappers take care of
-	unwrapping the 'mem value passed from C to OCaml (and thus to C again).
-	Technically, nothing would prevent an OCaml application from
-	overriding these functions, but an extra phantom type argument would
-	be required to distinguish this case from the previous one (where
-	'mem comes from the C side, but where sysfn/lsetupfn/lsolvefn cannot
-	be overridden by the application). The potential gain in utility does
-	not seem to warrant the extra typing noise and complexity.
+      No support for sensitivities since such values cannot be constructed
+      from OCaml.
 
-      - Callback configuration: convtestfn
-        From C: wrapped as per sysfn, lsetupfn, lsolvefn.
-        Can be overridden from OCaml, as per (1) but the "backlink" mechanism
-	is unnecessary -- the callback occurs directly in OCaml without
-	passing via C.
+      - - -
 
-      - Callback invocation: 
-	Occurs directly from OCaml.
-
-      - Init/setup/solve invocation
-        From C only. Not possible from OCaml ('mem <> C) since we would have
-	to provide a suitable 'mem value for the callbacks into C.
-	(This would not be impossible, but its utility is unclear.)
-
-   3. OCaml consumer/application && C NLS (O/Cnls)
       'mem = user
       The internal value is provided by OCaml: we pass a pointer to the NLS's
       "backlink". The NLS must have been created from within OCaml (to be
@@ -139,40 +202,37 @@ typedef struct _N_VectorContent_SensWrapper *N_VectorContent_SensWrapper;
       invocation) and thus must have a backlink. The backlink is stored on
       the C heap and already registered as a global root.
 
-      - Callback configuration: sysfn, lsetupfn, lsolvefn, convtestfn
-        From OCaml only: pass generic C stubs to the C NLS.
+   4. OCaml-app using OCaml-NLS
 
-      - Callback invocation: sysfn, lsetupfn, lsolvefn
-        The C stub uses the mem value (the backlink) to invoke the relevant
-	OCaml closure.
+      setup/solve:
+      The function is called via Sundials.NonlinearSolver and uses the
+      CustomSolver case, which directly invokes the OCaml function in
+      nls-solver-ops.
+      E.g.,
+	1. call to Sundials.NonlinearSolver.solve (arg: Nvector.t)
+	2. OCaml ops.solve is invoked (arg: payload)
+      The Nvector.t is unwrapped for compatibility with case 2.
+      
+      setfn:
+      The function is called via Sundials.NonlinearSolver using the
+      CustomSolver case, which directly invokes the OCaml function in
+      nls-solver-ops.
+      E.g.,
+	1. call to Sundials.NonlinearSolver.set_sys_fn (arg: OCaml closure)
+	2. OCaml ops.set_sys_fn is invoked
 
-      - Callback invocation: convtestfn
-        The C stub uses the NLS value (with the same backlink) to invoke the
-	relevant OCaml closure as per (1).
+      callbackfn:
+      The closure passed to setfn is simply invoked directly.
 
-      - Init/setup/solve invocation
-        From OCaml only: pass a pointer to the NLS backlink value through the
-	C stub. The C NLS then transmits this value through to the callback
-	C stubs.
+      - - -
 
-   4. OCaml consumer/application && OCaml (custom) NLS (O/Onls)
       'mem = user
       The internal value is provided by OCaml but is unused.
 
-      - Callback configuration: sysfn, lsetupfn, lsolvefn, convtestfn
-        Store the OCaml closure directly.
-
-      - Callback invocation: sysfn, lsetupfn, lsolvefn, convtestfn
-        Invoke the stored OCaml closure directly.
-
-      - Init/setup/solve invocation
-        Call OCaml closure directly.
-
-  Note that the only place where we really need the backlink is in the
-  convtest callback (for the Cnls case), otherwise solve could just pass
-  an OCaml value on the stack for the mem argument which is used in sysfn,
-  lsetupfn, and solvefn (and potentially convtestfn) to callback into OCaml.
-
+    Note that the only place where we really need the NLS backlink is in the
+    convtest callback (for the Cnls case), otherwise solve could just pass
+    an OCaml value on the stack for the mem argument which is used in sysfn,
+    lsetupfn, and solvefn (and potentially convtestfn) to callback into OCaml.
  */
 
 /* - - - Exception handling - - - */

@@ -215,15 +215,13 @@ module Sensitivity = struct (* {{{ *)
 
   external c_set_nonlinear_solver_sim
     : ('d, 'k) session
-      -> (('d, 'k) NLSI.Senswrapper.t, 'k,
-          (('d, 'k) session) NLSI.integrator) NLSI.cptr
+      -> ('d, 'k, ('d, 'k) session, [`Sens]) NLSI.cptr
       -> unit
     = "sunml_idas_set_nonlinear_solver_sim"
 
   external c_set_nonlinear_solver_stg
     : ('d, 'k) session
-      -> (('d, 'k) NLSI.Senswrapper.t, 'k,
-          (('d, 'k) session) NLSI.integrator) NLSI.cptr
+      -> ('d, 'k, ('d, 'k) session, [`Sens]) NLSI.cptr
       -> unit
     = "sunml_idas_set_nonlinear_solver_stg"
 
@@ -237,8 +235,7 @@ module Sensitivity = struct (* {{{ *)
     match onls with
     | None -> detach_nonlinear_solver_sens se
     | Some ({ NLSI.rawptr = nlcptr } as nls) ->
-        (NLSI.assert_senswrapper_solver nls;
-         detach_nonlinear_solver_sens se;
+        (detach_nonlinear_solver_sens se;
          NLSI.attach nls;
          se.fnls_solver <- Some nls;
          (match sm with
@@ -1439,7 +1436,7 @@ module Adjoint = struct (* {{{ *)
   external c_set_nonlinear_solver
       : ('d, 'k) session
         -> int
-        -> ('d, 'k, (('d, 'k) Ida.session) NLSI.integrator) NLSI.cptr
+        -> ('d, 'k, ('d, 'k) Ida.session, [`Nvec]) NLSI.cptr
         -> unit
       = "sunml_idas_adj_set_nonlinear_solver"
 

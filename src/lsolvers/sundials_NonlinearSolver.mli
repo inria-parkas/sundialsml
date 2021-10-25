@@ -42,24 +42,9 @@ open Sundials
 
     @nocvode <node> Description of the SUNNonlinearSolver module
     @nocvode <node> SUNNonlinearSolver *)
-type ('data, 'kind, 's) t
-    = ('data, 'kind, 's) Sundials_NonlinearSolver_impl.nonlinear_solver
-
-(** Signifies a nonlinear solver used from an OCaml application.
-    Used as a ['s] argument to {!t} to signal an internal
-    calling convention for {!sysfn}, {!lsetupfn}, and {!lsolvefn}, which
-    are OCaml functions. Only such nonlinear solvers can be invoked
-    directly from user code (in OCaml) to initialize, setup, and solve
-    a problem. The {!convtestfn} may always be overridden. *)
-type user = Sundials_NonlinearSolver_impl.user
-
-(** Signifies a nonlinear solver used from a Sundials integrator.
-    Used as a ['s] argument to {!t} to signal that
-    direct calls are made to {!sysfn}, {!lsetupfn}, and {!lsolvefn}, which
-    are C functions. Such nonlinear solvers cannot be reinvoked from OCaml.
-    The ['a] argument specifies the integrator; a nonlinear solver used for
-    one integrator cannot be reused with another. *)
-type 'a integrator = 'a Sundials_NonlinearSolver_impl.integrator
+(* XXX *)
+type ('data, 'kind, 's, 'v) t
+    = ('data, 'kind, 's, 'v) Sundials_NonlinearSolver_impl.nonlinear_solver
 
 (** A limited interface to arrays of {!Nvector.nvector}s sometimes required
     to apply nonlinear solvers to sensitivity problems. *)
@@ -89,18 +74,18 @@ type nonlinear_solver_type =
 (** Returns the type of a nonlinear solver.
 
     @nocvode <node> SUNNonlinSolGetType *)
-val get_type : ('d, 'k, 's) t -> nonlinear_solver_type
+val get_type : ('d, 'k, 's, 'v) t -> nonlinear_solver_type
 
 (** Initializes a nonlinear solver.
 
     @nocvode <node> SUNNonlinSolInitialize *)
-val init  : ('d, 'k, 's) t -> unit
+val init  : ('d, 'k, unit, [`Nvec]) t -> unit
 
 (** Setup a nonlinear solver with an initial iteration value.
 
     @nocvode <node> SUNNonlinSolSetup *)
 val setup :
-  ('d, 'k, user) t
+  ('d, 'k, unit, [`Nvec]) t
   -> y:('d, 'k) Nvector.t
   -> unit
 
@@ -122,7 +107,7 @@ val setup :
 
     @nocvode <node> SUNNonlinSolSolve *)
 val solve :
-  ('d, 'k, user) t
+  ('d, 'k, unit, [`Nvec]) t
   ->  y0:('d, 'k) Nvector.t
   -> ycor:('d, 'k) Nvector.t
   ->   w:('d, 'k) Nvector.t
@@ -142,14 +127,14 @@ val solve :
     failures.
 
     @nocvode <node> SUNNonlinSolSysFn *)
-type ('data, 's) sysfn = 'data -> 'data -> 's -> unit
+type ('nv, 's) sysfn = 'nv -> 'nv -> 's -> unit
 
 (** Specify a system function callback.
     The system function specifies the problem, either {% $F(y)$ %} or
     {% $G(y)$ %}.
 
     @nocvode <node> SUNNonlinSolSetSysFn *)
-val set_sys_fn : ('d, 'k, user) t -> ('d, user) sysfn -> unit
+val set_sys_fn : ('d, 'k, unit, [`Nvec]) t -> ('d, unit) sysfn -> unit
 
 (** A function to setup linear solves.
     For direct linear solvers, sets up the system {% $Ax = b$ %}
@@ -167,12 +152,12 @@ val set_sys_fn : ('d, 'k, user) t -> ('d, user) sysfn -> unit
     failures.
 
     @nocvode <node> SUNNonlinSolLSetupFn *)
-type ('data, 's) lsetupfn = bool -> 's -> bool
+type 's lsetupfn = bool -> 's -> bool
 
 (** Specify a linear solver setup callback.
 
     @nocvode <node> SUNNonlinSolSetLSetupFn *)
-val set_lsetup_fn : ('d, 'k, user) t -> ('d, user) lsetupfn -> unit
+val set_lsetup_fn : ('d, 'k, unit, [`Nvec]) t -> unit lsetupfn -> unit
 
 (** A function to solve linear systems.
     Solves the system {% $Ax = b$ %} where
@@ -190,12 +175,12 @@ val set_lsetup_fn : ('d, 'k, user) t -> ('d, user) lsetupfn -> unit
     failures.
 
     @nocvode <node> SUNNonlinSolLSolveFn *)
-type ('data, 's) lsolvefn = 'data -> 's -> unit
+type ('nv, 's) lsolvefn = 'nv -> 's -> unit
 
 (** Specify a linear solver callback.
 
     @nocvode <node> SUNNonlinSolSetLSolveFn *)
-val set_lsolve_fn : ('d, 'k, user) t -> ('d, user) lsolvefn -> unit
+val set_lsolve_fn : ('d, 'k, unit, [`Nvec]) t -> ('d, unit) lsolvefn -> unit
 
 (** Values returned by convergence tests.
     @nocvode <node> SUNNonlinSolConvTestFn *)
@@ -215,17 +200,25 @@ type convtest =
     - [mem], a token passed by the function provider.
 
     @nocvode <node> SUNNonlinSolConvTestFn *)
-type ('data, 's) convtestfn = 'data -> 'data -> float -> 'data -> 's -> convtest
+type ('nv, 's) convtestfn = 'nv -> 'nv -> float -> 'nv -> 's -> convtest
 
 (** Specify a convergence test callback for the nonlinear solver iteration.
 
     @nocvode <node> SUNNonlinSolSetConvTestFn *)
-val set_convtest_fn : ('d, 'k, 's) t -> ('d, 's) convtestfn -> unit
+val set_convtest_fn
+  : ('d, 'k, 's, [`Nvec]) t -> ('d, 's) convtestfn -> unit
+
+(** Specify a convergence test callback for the nonlinear solver iteration
+    when using sensitivities.
+
+    @nocvode <node> SUNNonlinSolSetConvTestFn *)
+val set_convtest_fn_sens
+  : ('d, 'k, 's, [`Sens]) t -> (('d, 'k) Senswrapper.t, 's) convtestfn -> unit
 
 (** Sets the maximum number of nonlinear solver iterations.
 
     @nocvode <node> SUNNonlinSolSetMaxIters *)
-val set_max_iters : ('d, 'k, 's) t -> int -> unit
+val set_max_iters : ('d, 'k, 's, 'v) t -> int -> unit
 
 (** Sets the output file for informative (non-error) messages. The default
     is to send such messages to stdout.
@@ -238,7 +231,7 @@ val set_max_iters : ('d, 'k, 's) t -> int -> unit
     @nocvode <node> SUNLinSolSetInfoFile_FixedPoint
     @since 5.3.0 *)
 val set_info_file
-  : ('d, 'k, 's) t -> ?print_level:bool -> Sundials.Logfile.t -> unit
+  : ('d, 'k, 's, 'v) t -> ?print_level:bool -> Sundials.Logfile.t -> unit
 
 (** Sets the level of output verbosity. When [false] (the default) no
     information is printed, when [true] the residual norm is printed for
@@ -250,25 +243,25 @@ val set_info_file
     @nocvode <node> SUNLinSolSetPrintLevel_Newton
     @nocvode <node> SUNLinSolSetPrintLevel_FixedPoint
     @since 5.3.0 *)
-val set_print_level : ('d, 'k, 's) t -> bool -> unit
+val set_print_level : ('d, 'k, 's, 'v) t -> bool -> unit
 
 (** {2:nlsget Get functions} *)
 
 (** Returns the number of nonlinear solver iterations in the most recent solve.
 
     @nocvode <node> SUNNonlinSolGetNumIters *)
-val get_num_iters : ('d, 'k, 's) t -> int
+val get_num_iters : ('d, 'k, 's, 'v) t -> int
 
 (** Returns the iteration index of the current nonlinear solve.
 
     @nocvode <node> SUNNonlinSolGetCurIter *)
-val get_cur_iter : ('d, 'k, 's) t -> int
+val get_cur_iter : ('d, 'k, 's, 'v) t -> int
 
 (** Returns the number of nonlinear solver convergence failures in the most
     recent solve.
 
     @nocvode <node> SUNNonlinSolGetNumConvFails *)
-val get_num_conv_fails : ('d, 'k, 's) t -> int
+val get_num_conv_fails : ('d, 'k, 's, 'v) t -> int
 
 (** {2:nlsolvers Nonlinear Solver Implementations} *)
 
@@ -281,7 +274,7 @@ module Newton : sig (* {{{ *)
       Solves nonlinear systems of the form {% $F(y) = 0$ %}.
 
       @nocvode <node> SUNNonlinSol_Newton *)
-  val make : ('d, 'k) Nvector.t -> ('d, 'k, 's) t
+  val make : ('d, 'k) Nvector.t -> ('d, 'k, 's, [`Nvec]) t
 
   (** Creates a nonlinear solver based on Newton's method for
       sensitivity-enabled integrators.
@@ -296,8 +289,7 @@ module Newton : sig (* {{{ *)
       - [y] is a template for cloning vectors.
 
       @nocvode <node> SUNNonlinSol_NewtonSens *)
-  val make_sens : int -> ('d, 'k) Nvector.t
-    -> (('d, 'k) Senswrapper.t, 'k, 'a integrator) t
+  val make_sens : int -> ('d, 'k) Nvector.t -> ('d, 'k, 's, [`Sens]) t
 
   (** Returns the residual function that defines the nonlinear system.
 
@@ -305,7 +297,8 @@ module Newton : sig (* {{{ *)
       created by this module.
 
       @nocvode <node> SUNNonlinSolGetSysFn_Newton *)
-  val get_sys_fn : ('d, 'k, 's) t -> (('d, 'k) Nvector.t, 's) sysfn option
+  val get_sys_fn
+    : ('d, 'k, 's, [`Nvec]) t -> (('d, 'k) Nvector.t, 's) sysfn option
 
 end (* }}} *)
 
@@ -322,7 +315,7 @@ module FixedPoint : sig (* {{{ *)
       @nocvode <node> SUNNonlinSol_FixedPoint *)
   val make : ?acceleration_vectors:int
              -> ('d, 'k) Nvector.t
-             -> ('d, 'k, 's) t
+             -> ('d, 'k, 's, [`Nvec]) t
 
   (** Creates a nonlinear solver using fixed-point (functional) iteration for
       sensitivity-enabled integrators.
@@ -339,7 +332,7 @@ module FixedPoint : sig (* {{{ *)
 
       @nocvode <node> SUNNonlinSol_FixedPointSens *)
   val make_sens : ?acceleration_vectors:int -> int -> ('d, 'k) Nvector.t
-    -> (('d, 'k) Senswrapper.t, 'k, 'a integrator) t
+                  -> ('d, 'k, 's, [`Sens]) t
 
   (** Returns the residual function that defines the nonlinear system.
 
@@ -347,14 +340,15 @@ module FixedPoint : sig (* {{{ *)
       created by this module.
 
       @nocvode <node> SUNNonlinSolGetSysFn_FixedPoint *)
-  val get_sys_fn : ('d, 'k, 's) t -> (('d, 'k) Nvector.t, 's) sysfn option
+  val get_sys_fn
+    : ('d, 'k, 's, [`Nvec]) t -> (('d, 'k) Nvector.t, 's) sysfn option
 
   (** Sets the damping parameter {% $\beta$ %} to use with Anderson
       acceleration. Damping is disabled by default {% $\beta = 1.0$ %}.
 
       @nocvode <node> SUNNonlinSolSetDamping_FixedPoint
       @since 5.1.0 *)
-  val set_damping : ('d, 'k, 's) t -> float -> unit
+  val set_damping : ('d, 'k, 's, 'v) t -> float -> unit
 
 end (* }}} *)
 
@@ -402,11 +396,16 @@ module Custom : sig (* {{{ *)
       - [solve]: the call [solve y0 y w tol callLSetup mem] should solve the nonlinear system {% $F(y) = 0$ %} or {% $G(y) = y$ %}, given the initial iterate [y0], which must not be modified, the solution error-weight vector [w] used for computing weighted error norms, the requested solution tolerance in the weighted root-mean-squared norm [tol], a flag [callLSetup] indicating whether the integrator recommends calling the setup function, and a memory value to be passed to the system function.
 
       - [set_sys_fn]: receive the system callback.
-  *)
+
+      Note that the [setup] and [solve] functions are passed the payload data
+      directly, whereas the [lsolvefn], [convtestfn], and [sysfn]s require
+      the data to be wrapped in an nvector. This asymmetry is awkward but,
+      unfortunately, unavoidable given the implementation of nvectors and the
+      different constraints for C-to-OCaml calls and OCaml-to-C calls. *)
   val make :
        ?init               : (unit -> unit)
-    -> ?setup              : (('d, 'k) Nvector.t -> 's -> unit)
-    -> ?set_lsetup_fn      : ((('d, 'k) Nvector.t, 's) lsetupfn -> unit)
+    -> ?setup              : ('d -> 's -> unit)
+    -> ?set_lsetup_fn      : ('s lsetupfn -> unit)
     -> ?set_lsolve_fn      : ((('d, 'k) Nvector.t, 's) lsolvefn -> unit)
     -> ?set_convtest_fn    : ((('d, 'k) Nvector.t, 's) convtestfn -> unit)
     -> ?set_max_iters      : (int  -> unit)
@@ -416,13 +415,10 @@ module Custom : sig (* {{{ *)
     -> ?get_cur_iter       : (unit -> int)
     -> ?get_num_conv_fails : (unit -> int)
     -> nls_type            : nonlinear_solver_type
-    -> solve               : (('d, 'k) Nvector.t
-                              -> ('d, 'k) Nvector.t
-                              -> ('d, 'k) Nvector.t
-                              -> float -> bool -> 's -> unit)
+    -> solve               : ('d -> 'd -> 'd -> float -> bool -> 's -> unit)
     -> set_sys_fn          : ((('d, 'k) Nvector.t, 's) sysfn -> unit)
     -> unit
-    -> ('d, 'k, 's) t
+    -> ('d, 'k, 's, [`Nvec]) t
 
   (** Create a nonlinear solver from a set of callback functions for
       sensitivity problems that pass arrays of nvectors. As for the
@@ -431,18 +427,17 @@ module Custom : sig (* {{{ *)
 
       Writing custom nonlinear solvers for use with some forward sensitivity
       methods requires the "internal" senswrapper type.
-      Any attempt to use {!Senswrapper.t}s outside of the call to
+      Any attempt to use {!Sens.wrapper}s outside of the call to
       setup or solve that provides them will result in an {!IncorrectUse}
       exception. They must only be used to extract the underlying data with
-      {!Senswrapper.data} or as arguments for lsetup_fn, lsolve_fn,
-      convtest_fn, and sys_fn. There are no restrictions on the arrays
-      extracted with {!Senswrapper.data}. *)
+      {!Sens.data} or as arguments for lsolve_fn, convtest_fn, or sys_fn.
+      There are no restrictions on the arrays extracted with {!Sens.data}. *)
   val make_sens :
        ?init               : (unit -> unit)
-    -> ?setup              : (('d, 'k) Senswrapper.t -> 'a integrator -> unit)
-    -> ?set_lsetup_fn      : ((('d, 'k) Senswrapper.t, 'a integrator) lsetupfn -> unit)
-    -> ?set_lsolve_fn      : ((('d, 'k) Senswrapper.t, 'a integrator) lsolvefn -> unit)
-    -> ?set_convtest_fn    : ((('d, 'k) Senswrapper.t, 'a integrator) convtestfn -> unit)
+    -> ?setup              : (('d, 'k) Senswrapper.t -> 's -> unit)
+    -> ?set_lsetup_fn      : ('s lsetupfn -> unit)
+    -> ?set_lsolve_fn      : ((('d, 'k) Senswrapper.t, 's) lsolvefn -> unit)
+    -> ?set_convtest_fn    : ((('d, 'k) Senswrapper.t, 's) convtestfn -> unit)
     -> ?set_max_iters      : (int  -> unit)
     -> ?set_info_file      : (Logfile.t -> unit)
     -> ?set_print_level    : (int -> unit)
@@ -453,10 +448,10 @@ module Custom : sig (* {{{ *)
     -> solve               : (('d, 'k) Senswrapper.t
                               -> ('d, 'k) Senswrapper.t
                               -> ('d, 'k) Senswrapper.t
-                              -> float -> bool -> 'a integrator -> unit)
-    -> set_sys_fn          : ((('d, 'k) Senswrapper.t, 'a integrator) sysfn -> unit)
+                              -> float -> bool -> 's -> unit)
+    -> set_sys_fn          : ((('d, 'k) Senswrapper.t, 's) sysfn -> unit)
     -> unit
-    -> (('d, 'k) Senswrapper.t, 'k, 'a integrator) t
+    -> ('d, 'k, 's, [`Sens]) t
 
 end (* }}} *)
 

@@ -629,7 +629,7 @@ let session_finalize s =
 (* Sundials >= 4.0.0 *)
 external c_set_nonlinear_solver
     : ('d, 'k) session
-      -> ('d, 'k, (('d, 'k) session) NLSI.integrator) NLSI.cptr
+      -> ('d, 'k, ('d, 'k) session, [`Nvec]) NLSI.cptr
       -> unit
     = "sunml_ida_set_nonlinear_solver"
 

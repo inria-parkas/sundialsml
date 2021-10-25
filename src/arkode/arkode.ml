@@ -467,8 +467,7 @@ module ARKStep = struct (* {{{ *)
   type ('d, 'k) implicit_problem = {
       irhsfn    : 'd rhsfn;
       linearity : linearity;
-      nlsolver  : ('d, 'k, (('d, 'k) session) Sundials_NonlinearSolver.integrator)
-                  Sundials_NonlinearSolver.t option;
+      nlsolver  : ('d, 'k, ('d, 'k) session, [`Nvec]) Sundials_NonlinearSolver.t option;
       lsolver   : ('d, 'k) linear_solver option;
     }
 
@@ -1574,7 +1573,7 @@ module ARKStep = struct (* {{{ *)
   (* 4.0.0 <= Sundials *)
   external c_set_nonlinear_solver
       : ('d, 'k) session
-        -> ('d, 'k, (('d, 'k) session) NLSI.integrator) NLSI.cptr
+        -> ('d, 'k, ('d, 'k) session, [`Nvec]) NLSI.cptr
         -> unit
       = "sunml_arkode_ark_set_nonlinear_solver"
 
@@ -1654,8 +1653,8 @@ module ARKStep = struct (* {{{ *)
     set_tolerances session tol;
     if in_compat_mode2_3 then begin
       match nlsolver with
-      | Some { NLSI.solver = NLSI.NewtonSolver } | None -> () (* the default *)
-      | Some { NLSI.solver = NLSI.FixedPointSolver fpm } ->
+      | Some NLSI.{ solver = NewtonSolver _ } | None -> () (* the default *)
+      | Some NLSI.{ solver = FixedPointSolver (_, fpm) } ->
           set_fixed_point session fpm
       | _ -> raise Config.NotImplementedBySundialsVersion
     end else begin
@@ -1716,8 +1715,8 @@ module ARKStep = struct (* {{{ *)
     (if in_compat_mode2_3 then begin
       match nlsolver with
       | None -> ()
-      | Some { NLSI.solver = NLSI.NewtonSolver } -> set_newton session
-      | Some { NLSI.solver = NLSI.FixedPointSolver fpm } ->
+      | Some NLSI.{ solver = NewtonSolver _ } -> set_newton session
+      | Some NLSI.{ solver = FixedPointSolver (_, fpm) } ->
           set_fixed_point session fpm
       | _ -> raise Config.NotImplementedBySundialsVersion
     end else begin
@@ -2797,7 +2796,7 @@ module MRIStep = struct (* {{{ *)
   (* 5.4.0 <= Sundials *)
   external c_set_nonlinear_solver
       : ('d, 'k) session
-        -> ('d, 'k, (('d, 'k) session) NLSI.integrator) NLSI.cptr
+        -> ('d, 'k, ('d, 'k) session, [`Nvec]) NLSI.cptr
         -> unit
       = "sunml_arkode_mri_set_nonlinear_solver"
 

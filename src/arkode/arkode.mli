@@ -1361,9 +1361,8 @@ module ARKStep : sig (* {{{ *)
       {!IllInput} for Sundials < 4.0.0) exception on the first call to
       {!solve_normal} or {!solve_one_step}. *)
   val implicit :
-    ?nlsolver : ('data, 'kind,
-                  (('data, 'kind) session) Sundials_NonlinearSolver.integrator)
-                Sundials_NonlinearSolver.t
+    ?nlsolver : ('data, 'kind, ('data, 'kind) session, [`Nvec])
+                  Sundials_NonlinearSolver.t
     -> ?lsolver : ('data, 'kind) linear_solver
     -> ?linearity : linearity
     -> 'data rhsfn
@@ -1376,8 +1375,7 @@ module ARKStep : sig (* {{{ *)
   (** Additive Runge-Kutta (ARK) solution of multi-rate problem. The arguments
       are as described under {!implicit} and {!explicit}. *)
   val imex :
-    ?nlsolver:('data, 'kind,
-                  (('data, 'kind) session) Sundials_NonlinearSolver.integrator)
+    ?nlsolver:('data, 'kind, ('data, 'kind) session, [`Nvec])
                 Sundials_NonlinearSolver.t
     -> ?lsolver:('data, 'kind) linear_solver
     -> ?linearity: linearity
@@ -3185,9 +3183,8 @@ module MRIStep : sig (* {{{ *)
   val init :
         ('data, 'kind) ARKStep.session
       -> ('data, 'kind) tolerance
-      -> ?nlsolver:('data, 'kind,
-                    (('data, 'kind) session) Sundials_NonlinearSolver.integrator)
-                    Sundials_NonlinearSolver.t
+      -> ?nlsolver:('data, 'kind, ('data, 'kind) session, [`Nvec])
+                     Sundials_NonlinearSolver.t
       -> ?lsolver :('data, 'kind) linear_solver
       -> ?linearity:linearity
       -> 'data rhsfn
@@ -3253,9 +3250,8 @@ module MRIStep : sig (* {{{ *)
       @noarkode <node> MRIStepRootInit *)
   val reinit :
     ('d, 'k) session
-    -> ?nlsolver:('data, 'kind,
-                  (('data, 'kind) session) Sundials_NonlinearSolver.integrator)
-                  Sundials_NonlinearSolver.t
+    -> ?nlsolver:('data, 'kind, ('data, 'kind) session, [`Nvec])
+                   Sundials_NonlinearSolver.t
     -> ?lsolver :('data, 'kind) linear_solver
     -> ?roots:(int * 'd rootsfn)
     -> float

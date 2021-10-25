@@ -688,9 +688,8 @@ val init :
     lmm
     -> ('data, 'kind) tolerance
     -> ?nlsolver
-         : ('data, 'kind,
-            (('data, 'kind) session) Sundials_NonlinearSolver.integrator)
-           Sundials_NonlinearSolver.t
+         : ('data, 'kind, ('data, 'kind) session, [`Nvec])
+             Sundials_NonlinearSolver.t
     -> ?lsolver  : ('data, 'kind) linear_solver
     -> 'data rhsfn
     -> ?roots:(int * 'data rootsfn)
@@ -779,9 +778,7 @@ val get_dky : ('d, 'k) session -> ('d, 'k) Nvector.t -> float -> int -> unit
     @cvode <node>               CVodeSetNonlinearSolver *)
 val reinit :
   ('d, 'k) session
-  -> ?nlsolver:('d, 'k,
-                (('d, 'k) session) Sundials_NonlinearSolver.integrator)
-               Sundials_NonlinearSolver.t
+  -> ?nlsolver:('d, 'k, ('d, 'k) session, [`Nvec]) Sundials_NonlinearSolver.t
   -> ?lsolver:('d, 'k) linear_solver
   -> ?roots:(int * 'd rootsfn)
   -> float
