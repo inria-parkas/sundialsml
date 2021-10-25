@@ -40,11 +40,16 @@ type Nvector.gdata += MpiMany of data
     communicator). If the communicator argument is given, each array element
     may use any or no communicator.
 
+    An optional argument permits to enable all the fused and array operations
+    for a given nvector (they are disabled by default).
+
     @since 5.0.0
     @cvode <node> N_VNew_MPIManyVector
     @cvode <node> N_VMake_MPIManyVector
+    @cvode <node5> N_VEnableFusedOps_MPIManyVector
     @raises Invalid_arg if an mpi communicator is not specified or found. *)
-val wrap : ?comm:Mpi.communicator -> Nvector.any ROArray.t -> t
+val wrap
+  : ?with_fused_ops:bool -> ?comm:Mpi.communicator -> Nvector.any ROArray.t -> t
 
 (** Aliases {!Nvector.unwrap}. *)
 val unwrap : t -> data
@@ -104,11 +109,16 @@ module Any : sig (* {{{ *)
       communicator). If the communicator argument is given, each array element
       may use any or no communicator.
 
+      An optional argument permits to enable all the fused and array operations
+      for a given nvector (they are disabled by default).
+
       @since 5.0.0
       @cvode <node> N_VNew_MPIManyVector
       @cvode <node> N_VMake_MPIManyVector
+      @cvode <node> N_VEnableFusedOps_MPIManyVector
       @raises Invalid_arg if an mpi communicator is not specified or found. *)
-  val wrap : ?comm:Mpi.communicator -> Nvector.any ROArray.t -> Nvector.any
+  val wrap
+    : ?with_fused_ops:bool -> ?comm:Mpi.communicator -> Nvector.any ROArray.t -> Nvector.any
 
   (** Returns the payload of the generic vector if it was constructed with
       {{!Nvector.gdata}MpiMany}, otherwise raises {!Nvector.BadGenericType}. *)
@@ -139,5 +149,6 @@ module Any : sig (* {{{ *)
     -> ?with_wrms_norm_mask_vector_array     : bool
     -> Nvector.any
     -> unit
+
 end (* }}} *)
 

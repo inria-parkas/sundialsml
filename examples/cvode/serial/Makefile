@@ -24,13 +24,28 @@ EXAMPLES_SINCE_3_1_2 =	cvDisc_dns.ml \
 
 EXAMPLES_SINCE_3_2_0 = cvRoberts_dns_constraints.ml
 
+EXAMPLES_SINCE_5_1_0 = cvRoberts_block_klu.ml
+
+EXAMPLES_SINCE_5_3_0 = cvParticle_dns.ml \
+		       cvPendulum_dns.ml
+
 EXAMPLES = $(EXAMPLES_SINCE_2_5)				\
 	   $(if $(AT_LEAST_3_0),$(EXAMPLES_SINCE_3_0))		\
 	   $(if $(AT_LEAST_3_1_2),$(EXAMPLES_SINCE_3_1_2))	\
-	   $(if $(AT_LEAST_3_2_0),$(EXAMPLES_SINCE_3_2_0))
+	   $(if $(AT_LEAST_3_2_0),$(EXAMPLES_SINCE_3_2_0))	\
+	   $(if $(AT_LEAST_5_1_0),$(EXAMPLES_SINCE_5_1_0))	\
+	   $(if $(AT_LEAST_5_3_0),$(EXAMPLES_SINCE_5_3_0))
 
 LAPACK_EXAMPLES = cvAdvDiff_bndL.ml \
 		  cvRoberts_dnsL.ml
+
+FILES_TO_CLEAN = cvParticle_solution.txt cvParticle_error.txt \
+	 cvPendulum_dns_ref.txt \
+	 cvPendulum_dns_tol_1.00e-05.txt cvPendulum_dns_tol_1.00e-05_proj.txt \
+	 cvPendulum_dns_tol_1.00e-06.txt cvPendulum_dns_tol_1.00e-06_proj.txt \
+	 cvPendulum_dns_tol_1.00e-07.txt cvPendulum_dns_tol_1.00e-07_proj.txt \
+	 cvPendulum_dns_tol_1.00e-08.txt cvPendulum_dns_tol_1.00e-08_proj.txt \
+	 cvPendulum_dns_tol_1.00e-09.txt cvPendulum_dns_tol_1.00e-09_proj.txt \
 
 include ../../examples.mk
 

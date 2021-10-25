@@ -31,6 +31,27 @@ external c_wrap
 
 let unwrap = Nvector.unwrap
 
+(* Selectively enable and disable fused and array operations *)
+(* NOTE: intentionally linked to the *_manyvector primitives! *)
+external c_enablefusedops_manyvector                : ('d, 'k) Nvector.t -> bool -> unit
+  = "sunml_nvec_mpimany_enablefusedops"
+external c_enablelinearcombination_manyvector       : ('d, 'k) Nvector.t -> bool -> unit
+  = "sunml_nvec_mpimany_enablelinearcombination"
+external c_enablescaleaddmulti_manyvector           : ('d, 'k) Nvector.t -> bool -> unit
+  = "sunml_nvec_mpimany_enablescaleaddmulti"
+external c_enabledotprodmulti_manyvector            : ('d, 'k) Nvector.t -> bool -> unit
+  = "sunml_nvec_mpimany_enabledotprodmulti"
+external c_enablelinearsumvectorarray_manyvector    : ('d, 'k) Nvector.t -> bool -> unit
+  = "sunml_nvec_mpimany_enablelinearsumvectorarray"
+external c_enablescalevectorarray_manyvector        : ('d, 'k) Nvector.t -> bool -> unit
+  = "sunml_nvec_mpimany_enablescalevectorarray"
+external c_enableconstvectorarray_manyvector        : ('d, 'k) Nvector.t -> bool -> unit
+  = "sunml_nvec_mpimany_enableconstvectorarray"
+external c_enablewrmsnormvectorarray_manyvector     : ('d, 'k) Nvector.t -> bool -> unit
+  = "sunml_nvec_mpimany_enablewrmsnormvectorarray"
+external c_enablewrmsnormmaskvectorarray_manyvector : ('d, 'k) Nvector.t -> bool -> unit
+  = "sunml_nvec_mpimany_enablewrmsnormmaskvectorarray"
+
 let subvector_mpi_rank nv =
   match Nvector_parallel.get_communicator nv with
   | None -> 0
@@ -42,7 +63,7 @@ let sumlens comm nv =
   in
   Mpi.(allreduce_int local_length Sum comm)
 
-let rec wrap comm nv =
+let rec wrap ?(with_fused_ops=false) comm nv =
   if Sundials_impl.Versions.sundials_lt500
     then raise Config.NotImplementedBySundialsVersion;
   let check mnv' =
@@ -50,7 +71,9 @@ let rec wrap comm nv =
     try Nvector.check nv nv'; true
     with Nvector.IncompatibleNvector -> false
   in
-  c_wrap (nv, comm, sumlens comm nv) check clone
+  let nv = c_wrap (nv, comm, sumlens comm nv) check clone in
+  if with_fused_ops then c_enablefusedops_manyvector nv true;
+  nv
 
 and clone mnv =
   let nv, comm = unwrap mnv in
@@ -60,6 +83,41 @@ external c_ident_or_congruent : Mpi.communicator -> Mpi.communicator -> bool
   = "sunml_nvector_parallel_compare_comms" [@@noalloc]
 
 let communicator nv = snd (Nvector.unwrap nv)
+
+let do_enable f nv v =
+  match v with
+  | None -> ()
+  | Some v -> f nv v
+
+let enable
+   ?with_fused_ops
+   ?with_linear_combination
+   ?with_scale_add_multi
+   ?with_dot_prod_multi
+   ?with_linear_sum_vector_array
+   ?with_scale_vector_array
+   ?with_const_vector_array
+   ?with_wrms_norm_vector_array
+   ?with_wrms_norm_mask_vector_array
+   nv
+  = do_enable c_enablefusedops_manyvector nv
+              with_fused_ops;
+    do_enable c_enablelinearcombination_manyvector nv
+              with_linear_combination;
+    do_enable c_enablescaleaddmulti_manyvector nv
+              with_scale_add_multi;
+    do_enable c_enabledotprodmulti_manyvector nv
+              with_dot_prod_multi;
+    do_enable c_enablelinearsumvectorarray_manyvector nv
+              with_linear_sum_vector_array;
+    do_enable c_enablescalevectorarray_manyvector nv
+              with_scale_vector_array;
+    do_enable c_enableconstvectorarray_manyvector nv
+              with_const_vector_array;
+    do_enable c_enablewrmsnormvectorarray_manyvector nv
+              with_wrms_norm_vector_array;
+    do_enable c_enablewrmsnormmaskvectorarray_manyvector nv
+              with_wrms_norm_mask_vector_array
 
 module Ops : Nvector.NVECTOR_OPS with type t = t =
 struct (* {{{ *)
@@ -584,7 +642,7 @@ module Any = struct (* {{{ *)
       -> Nvector.any
     = "sunml_nvec_anywrap_mpimany"
 
-  let rec wrap comm nv =
+  let rec wrap ?(with_fused_ops=false) comm nv =
     if Sundials_impl.Versions.sundials_lt500
       then raise Config.NotImplementedBySundialsVersion;
     let check mnv' =
@@ -596,9 +654,12 @@ module Any = struct (* {{{ *)
            with Nvector.IncompatibleNvector -> false)
       | _ -> false
     in
-    c_any_wrap [%extension_constructor MpiPlusX]
-               (nv, comm, sumlens comm nv)
-               check clone
+    let nv = c_any_wrap [%extension_constructor MpiPlusX]
+                        (nv, comm, sumlens comm nv)
+                        check clone
+    in
+    if with_fused_ops then c_enablefusedops_manyvector nv true;
+    nv
 
   and clone mnv =
     let nv, comm = match unwrap mnv with
@@ -611,5 +672,40 @@ module Any = struct (* {{{ *)
     match Nvector.unwrap nv with
     | MpiPlusX a -> a
     | _ -> raise Nvector.BadGenericType
+
+  let enable
+     ?with_fused_ops
+     ?with_linear_combination
+     ?with_scale_add_multi
+     ?with_dot_prod_multi
+     ?with_linear_sum_vector_array
+     ?with_scale_vector_array
+     ?with_const_vector_array
+     ?with_wrms_norm_vector_array
+     ?with_wrms_norm_mask_vector_array
+     nv
+    = if Sundials_impl.Versions.sundials_lt400
+        then raise Config.NotImplementedBySundialsVersion;
+      if Nvector.get_id nv <> Nvector.MpiManyVector
+        then raise Nvector.BadGenericType;
+      do_enable c_enablefusedops_manyvector nv
+                with_fused_ops;
+      do_enable c_enablelinearcombination_manyvector nv
+                with_linear_combination;
+      do_enable c_enablescaleaddmulti_manyvector nv
+                with_scale_add_multi;
+      do_enable c_enabledotprodmulti_manyvector nv
+                with_dot_prod_multi;
+      do_enable c_enablelinearsumvectorarray_manyvector nv
+                with_linear_sum_vector_array;
+      do_enable c_enablescalevectorarray_manyvector nv
+                with_scale_vector_array;
+      do_enable c_enableconstvectorarray_manyvector nv
+                with_const_vector_array;
+      do_enable c_enablewrmsnormvectorarray_manyvector nv
+                with_wrms_norm_vector_array;
+      do_enable c_enablewrmsnormmaskvectorarray_manyvector nv
+                with_wrms_norm_mask_vector_array
+
 end (* }}} *)
 

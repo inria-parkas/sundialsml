@@ -263,7 +263,7 @@ module ButcherTable = struct (* {{{ *)
     | Billington_3_2_3
     | TRBDF2_3_2_3
     | Kvaerno_4_2_3
-    | ARK_4_2_3_Implicit
+    | ARK324L2SA_DIRK_4_2_3
     | Cash_5_2_4
     | Cash_5_3_4
     | SDIRK_5_3_4
@@ -353,7 +353,7 @@ module ButcherTable = struct (* {{{ *)
        | Billington_3_2_3   -> 12
        | TRBDF2_3_2_3       -> 13
        | Kvaerno_4_2_3      -> 14
-       | ARK_4_2_3_Implicit -> 15
+       | ARK324L2SA_DIRK_4_2_3 -> 15
        | Cash_5_2_4         -> 16
        | Cash_5_3_4         -> 17
        | SDIRK_5_3_4        -> 18
@@ -368,7 +368,7 @@ module ButcherTable = struct (* {{{ *)
        | Billington_3_2_3   -> 13
        | TRBDF2_3_2_3       -> 14
        | Kvaerno_4_2_3      -> 15
-       | ARK_4_2_3_Implicit -> 16
+       | ARK324L2SA_DIRK_4_2_3 -> 16
        | Cash_5_2_4         -> 17
        | Cash_5_3_4         -> 18
        | SDIRK_5_3_4        -> 19
@@ -383,7 +383,7 @@ module ButcherTable = struct (* {{{ *)
        | Billington_3_2_3   -> 101
        | TRBDF2_3_2_3       -> 102
        | Kvaerno_4_2_3      -> 103
-       | ARK_4_2_3_Implicit -> 104
+       | ARK324L2SA_DIRK_4_2_3 -> 104
        | Cash_5_2_4         -> 105
        | Cash_5_3_4         -> 106
        | SDIRK_5_3_4        -> 107
@@ -398,7 +398,7 @@ module ButcherTable = struct (* {{{ *)
        | Billington_3_2_3   -> 101
        | TRBDF2_3_2_3       -> 102
        | Kvaerno_4_2_3      -> 103
-       | ARK_4_2_3_Implicit -> 104
+       | ARK324L2SA_DIRK_4_2_3 -> 104
        | Cash_5_2_4         -> 105
        | Cash_5_3_4         -> 106
        | SDIRK_5_3_4        -> 107
@@ -411,7 +411,7 @@ module ButcherTable = struct (* {{{ *)
 
   let ints_of_ark_table v =
     match v with
-    | ARK_4_2_3 -> (int_of_dirk_table ARK_4_2_3_Implicit,
+    | ARK_4_2_3 -> (int_of_dirk_table ARK324L2SA_DIRK_4_2_3,
                     int_of_erk_table ARK_4_2_3_Explicit)
     | ARK_6_3_4 -> (int_of_dirk_table ARK_6_3_4_Implicit,
                     int_of_erk_table ARK_6_3_4_Explicit)
