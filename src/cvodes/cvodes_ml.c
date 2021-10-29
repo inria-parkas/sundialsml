@@ -1086,6 +1086,31 @@ CAMLprim value sunml_cvodes_quad_get_err_weights(value vdata, value veqweight)
 
 /* sensitivity interface */
 
+#if 400 <= SUNDIALS_LIB_VERSION
+// hack to work around lack of CVodeGetUserData
+typedef struct {
+  realtype cv_uround;
+  CVRhsFn cv_f;
+  void *cv_user_data;
+  //...
+} *StartOf_CVodeMem;
+
+static value sunml_cvodes_session_to_value(void *cvode_mem)
+{
+    value session;
+    // void *user_data = CVodeGetUserData(cvode_mem);
+    void *user_data = ((StartOf_CVodeMem)cvode_mem)->cv_user_data;
+
+    WEAK_DEREF (session, *(value*)user_data);
+    return session;
+}
+
+static void* sunml_cvodes_session_from_value(value vcvode_mem)
+{
+    return (CVODE_MEM_FROM_ML(vcvode_mem));
+}
+#endif
+
 CAMLprim value sunml_cvodes_set_nonlinear_solver_sim(value vcvode_mem,
 						     value vnlsolv)
 {
@@ -1093,6 +1118,10 @@ CAMLprim value sunml_cvodes_set_nonlinear_solver_sim(value vcvode_mem,
 #if 400 <= SUNDIALS_LIB_VERSION
     void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
     SUNNonlinearSolver nlsolv = NLSOLVER_VAL(vnlsolv);
+
+    sunml_nlsolver_set_to_from_mem(nlsolv,
+				   sunml_cvodes_session_to_value,
+				   sunml_cvodes_session_from_value);
 
     int flag = CVodeSetNonlinearSolverSensSim(cvode_mem, nlsolv);
     CHECK_FLAG ("CVodeSetNonlinearSolverSensSim", flag);
@@ -1110,6 +1139,10 @@ CAMLprim value sunml_cvodes_set_nonlinear_solver_stg(value vcvode_mem,
     void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
     SUNNonlinearSolver nlsolv = NLSOLVER_VAL(vnlsolv);
 
+    sunml_nlsolver_set_to_from_mem(nlsolv,
+				   sunml_cvodes_session_to_value,
+				   sunml_cvodes_session_from_value);
+
     int flag = CVodeSetNonlinearSolverSensStg(cvode_mem, nlsolv);
     CHECK_FLAG ("CVodeSetNonlinearSolverSensStg", flag);
 #else
@@ -1125,6 +1158,10 @@ CAMLprim value sunml_cvodes_set_nonlinear_solver_stg1(value vcvode_mem,
 #if 400 <= SUNDIALS_LIB_VERSION
     void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
     SUNNonlinearSolver nlsolv = NLSOLVER_VAL(vnlsolv);
+
+    sunml_nlsolver_set_to_from_mem(nlsolv,
+				   sunml_cvodes_session_to_value,
+				   sunml_cvodes_session_from_value);
 
     int flag = CVodeSetNonlinearSolverSensStg1(cvode_mem, nlsolv);
     CHECK_FLAG ("CVodeSetNonlinearSolverSensStg1", flag);
@@ -2747,6 +2784,13 @@ CAMLprim value sunml_cvodes_adj_set_nonlinear_solver(value vparent,
     void *cvode_mem = CVODE_MEM_FROM_ML (vparent);
     SUNNonlinearSolver nlsolv = NLSOLVER_VAL(vnlsolv);
     int flag;
+
+    // for the "B" case, the callback functions are passed the
+    // session for the backward integrator directly (so no need to
+    // use CVodeGetUserDataB).
+    sunml_nlsolver_set_to_from_mem(nlsolv,
+				   sunml_cvodes_session_to_value,
+				   sunml_cvodes_session_from_value);
 
     flag = CVodeSetNonlinearSolverB(cvode_mem, Int_val(vwhich), nlsolv);
     CHECK_FLAG ("CVodeSetNonlinearSolverB", flag);

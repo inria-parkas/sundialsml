@@ -1030,6 +1030,40 @@ CAMLprim value sunml_arkode_ark_set_jac_times_rhsfn(value vdata,
     CAMLreturn (Val_unit);
 }
 
+#if 400 <= SUNDIALS_LIB_VERSION
+// hack to work around lack of CVodeGetUserData
+typedef struct {
+  realtype uround;
+  void *user_data;
+  //...
+} *StartOf_ARKodeMem;
+
+static value sunml_arkode_ark_session_to_value(void *arkode_mem)
+{
+    value session;
+    // void *user_data = ARKStepGetUserData(arkode_mem);
+    void *user_data = ((StartOf_ARKodeMem)arkode_mem)->user_data;
+
+    WEAK_DEREF (session, *(value*)user_data);
+    return session;
+}
+
+static value sunml_arkode_mri_session_to_value(void *arkode_mem)
+{
+    value session;
+    // void *user_data = MRIStepGetUserData(arkode_mem);
+    void *user_data = ((StartOf_ARKodeMem)arkode_mem)->user_data;
+
+    WEAK_DEREF (session, *(value*)user_data);
+    return session;
+}
+
+static void* sunml_arkode_session_from_value(value varkode_mem)
+{
+    return (ARKODE_MEM_FROM_ML(varkode_mem));
+}
+#endif
+
 CAMLprim value sunml_arkode_ark_set_nonlinear_solver(value varkode_mem,
 						     value vnlsolv)
 {
@@ -1037,6 +1071,10 @@ CAMLprim value sunml_arkode_ark_set_nonlinear_solver(value varkode_mem,
 #if 400 <= SUNDIALS_LIB_VERSION
     void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
     SUNNonlinearSolver nlsolv = NLSOLVER_VAL(vnlsolv);
+
+    sunml_nlsolver_set_to_from_mem(nlsolv,
+				   sunml_arkode_ark_session_to_value,
+				   sunml_arkode_session_from_value);
 
     int flag = ARKStepSetNonlinearSolver(arkode_mem, nlsolv);
     CHECK_FLAG ("ARKStepSetNonlinearSolver", flag);
@@ -1053,6 +1091,10 @@ CAMLprim value sunml_arkode_mri_set_nonlinear_solver(value varkode_mem,
 #if 540 <= SUNDIALS_LIB_VERSION
     void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
     SUNNonlinearSolver nlsolv = NLSOLVER_VAL(vnlsolv);
+
+    sunml_nlsolver_set_to_from_mem(nlsolv,
+				   sunml_arkode_mri_session_to_value,
+				   sunml_arkode_session_from_value);
 
     int flag = MRIStepSetNonlinearSolver(arkode_mem, nlsolv);
     CHECK_FLAG ("MRIStepSetNonlinearSolver", flag);

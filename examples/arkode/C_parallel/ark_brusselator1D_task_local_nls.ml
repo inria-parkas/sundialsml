@@ -151,14 +151,14 @@ type 'k user_data = {
   wmask : Nvector_mpiplusx.t;
 
   (* problem paramaters *)
-  nvar  : int; (* number of species            *)
-  nx    : int;   (* number of intervals globally *)
-  nxl   : int;  (* number of intervals locally  *)
-  neq   : int;  (* number of equations locally  *)
+  nvar  : int;     (* number of species            *)
+  nx    : int;     (* number of intervals globally *)
+  nxl   : int;     (* number of intervals locally  *)
+  neq   : int;     (* number of equations locally  *)
   dx    : float;   (* mesh spacing                 *)
-  xmax  : float; (* maximum x value              *)
-  a     : float;    (* concentration of species A   *)
-  b     : float;    (* w source rate                *)
+  xmax  : float;   (* maximum x value              *)
+  a     : float;   (* concentration of species A   *)
+  b     : float;   (* w source rate                *)
   k1    : float;   (* reaction rates               *)
   k2    : float;
   k3    : float;
@@ -176,20 +176,17 @@ type 'k user_data = {
  *)
 
 type 's task_local_newton_content = {
-  comm         : Mpi.communicator;
-  myid         : Mpi.rank;
-  nprocs       : int;
-  mutable ncnf : int;
-  local_nls    : (Nvector.gdata, Nvector.gkind, 's) NonlinearSolver.t;
+  comm            : Mpi.communicator;
+  myid            : Mpi.rank;
+  nprocs          : int;
+  mutable ncnf    : int;
+  local_nls       : (Nvector.gdata, Nvector.gkind, unit, [`Nvec]) NonlinearSolver.t;
+  mutable session : 's option;
 }
 
 (* Compute the reaction term. *)
 let reaction { nvar; nxl = n; a; b; k1; k2; k3; k4; k5; k6;
-               uopt = { explicit; _ }; _ } t y ydot =
-  (* access data arrays *)
-  let ydata = Nvector_serial.Any.unwrap y in
-  let dYdata = Nvector_serial.Any.unwrap ydot in
-
+               uopt = { explicit; _ }; _ } t ydata dYdata =
   (* iterate over domain, computing reactions *)
   if explicit then
     (* when integrating explicitly, we add to ydot as we expect it
@@ -225,12 +222,12 @@ let reaction { nvar; nxl = n; a; b; k1; k2; k3; k4; k5; k6;
  * (Non)linear system functions
  * --------------------------------------------------------------*)
 
-let task_local_nls_residual udata ycor f arkode_mem =
+let task_local_nls_residual udata (Nvector.RA ycor) (Nvector.RA f) arkode_mem =
   let ARKStep.{ tcur; zpred; zi = z; fi; gamma; sdata } =
     ARKStep.get_nonlin_system_data arkode_mem
   in
   (* update 'z' value as stored predictor + current corrector *)
-  Nvector.Ops.linearsum 1.0 zpred 1.0 ycor z;
+  Nvector_serial.DataOps.linearsum 1.0 zpred 1.0 ycor z;
 
   (* compute implicit RHS and save for later *)
   reaction udata tcur zpred fi;
@@ -239,7 +236,7 @@ let task_local_nls_residual udata ycor f arkode_mem =
   udata.nnlfi <- udata.nnlfi + 1;
 
   (* update with y, sdata, and gamma * fy *)
-  Nvector.Ops.linearcombination
+  Nvector_serial.DataOps.linearcombination
     (RealArray.of_array    [|  1.0;   -1.0; -. gamma |])
                            [| ycor;  sdata;       fi |] f
 
@@ -344,7 +341,8 @@ let task_local_newton udata ((y, comm): Nvector_mpiplusx.data) dfid =
   (match dfid with None -> ()
    | Some dfid -> NLS.set_info_file local_nls dfid;
                   NLS.set_print_level local_nls 1);
-  NLS.Custom.(make ~set_convtest_fn:task_local_newton_setsysfn
+  NLS.Custom.(make
+                ~set_convtest_fn:(task_local_newton_setconvtestfn content)
                 ~get_num_conv_fails:(task_local_newton_getnumconvfails content)
                 ~nls_type:RootFind
                 ~solve:(task_local_newton_solve content)
@@ -365,16 +363,13 @@ let bytes x = header_and_empty_array_size + x * float_cell_size
 
 (* Starts the exchange of the neighbor information *)
 let exchange_all_start
-    ({ comm; c; nxl = n; nvar; myid; nprocs; esend; wsend; _ } as udata) y =
+    ({ comm; c; nxl = n; nvar; myid; nprocs; esend; wsend; _ } as udata) ydata =
 
   (* shortcuts *)
   let first = 0 in
   let last = nprocs - 1 in
   let ipW = if myid = first then  last else myid - 1 in (* periodic BC *)
   let ipE = if myid = last  then first else myid + 1 in (* periodic BC *)
-
-  (* extract the data *)
-  let ydata = mpiplusx_data y in
 
   if c > 0.0 then begin
     (* Right moving flow uses backward difference.
@@ -410,16 +405,12 @@ let exchange_all_end { c; reqR; reqS; wrecv; erecv; _ } =
   end
 
 (* Compute the advection term. *)
-let advection ({ nvar; nxl = n; dx; c; erecv; wrecv; _ } as udata) t y ydot =
+let advection ({ nvar; nxl = n; dx; c; erecv; wrecv; _ } as udata) t ydata dYdata =
   (* set output to zero *)
-  Nvector_mpiplusx.Ops.const 0.0 ydot;
-
-  (* access data arrays *)
-  let ydata = mpiplusx_data y in
-  let dYdata = mpiplusx_data ydot in
+  RealArray.fill dYdata 0.0;
 
   (* begin exchanging boundary information *)
-  exchange_all_start udata y;
+  exchange_all_start udata ydata;
 
   (* iterate over domain interior, computing advection *)
   let tmp = -. c /. dx in
@@ -472,16 +463,12 @@ let advection_reaction user_data t y ydot =
 
 (* Sets P = I - gamma * J *)
 let psetup { nvar; nxl = n; k2; k3; k4; k6; linear_system; _ }
-           Arkode.{ jac_y = y; _ } jok gamma
+           ARKStep.{ jac_y = ydata; _ } jok gamma
   =
   let p, ls = match linear_system with
               | TaskLocal { pre; prels } -> pre, prels
               | _ -> assert false
   in
-
-  (* access solution data *)
-  let ydata = mpiplusx_nv y in
-
   if jok then false
   else begin
     (* setup the block diagonal preconditioner matrix *)
@@ -846,7 +833,8 @@ let evolve_problem_imex ({ myid; nnlfi; _ } as udata) y =
   in
   (* Create the ARK timestepper module *)
   let arkode_mem =
-    ARKStep.(init (imex ~nlsolver ?lsolver ~fi:reaction advection)
+    ARKStep.(init (imex ~nlsolver ?lsolver
+                        ~fi:(reaction udata) (advection udata))
                   (SStolerances (rtol, atol))
                   ~order t0 y)
   in

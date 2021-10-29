@@ -767,12 +767,41 @@ CAMLprim value sunml_ida_set_jac_times_resfn(value vdata, value vhas_resfn)
     CAMLreturn (Val_unit);
 }
 
+#if 400 <= SUNDIALS_LIB_VERSION
+// hack to work around lack of CVodeGetUserData
+typedef struct {
+  realtype ida_uround;
+  IDAResFn ida_res;
+  void     *ida_user_data;
+  //...
+} *StartOf_IDAMem;
+
+static value sunml_ida_session_to_value(void *ida_mem)
+{
+    value session;
+    // void *user_data = IDAGetUserData(ida_mem);
+    void *user_data = ((StartOf_IDAMem)ida_mem)->ida_user_data;
+
+    WEAK_DEREF (session, *(value*)user_data);
+    return session;
+}
+
+static void* sunml_ida_session_from_value(value vida_mem)
+{
+    return (IDA_MEM_FROM_ML(vida_mem));
+}
+#endif
+
 CAMLprim value sunml_ida_set_nonlinear_solver(value vida_mem, value vnlsolv)
 {
     CAMLparam2(vida_mem, vnlsolv);
 #if 400 <= SUNDIALS_LIB_VERSION
     void *ida_mem = IDA_MEM_FROM_ML(vida_mem);
     SUNNonlinearSolver nlsolv = NLSOLVER_VAL(vnlsolv);
+
+    sunml_nlsolver_set_to_from_mem(nlsolv,
+				   sunml_ida_session_to_value,
+				   sunml_ida_session_from_value);
 
     int flag = IDASetNonlinearSolver(ida_mem, nlsolv);
     CHECK_FLAG ("IDASetNonlinearSolver", flag);
