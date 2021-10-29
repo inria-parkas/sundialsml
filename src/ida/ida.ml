@@ -700,7 +700,7 @@ external c_reinit
       -> ('a, 'k) Nvector.t -> unit
     = "sunml_ida_reinit"
 
-let reinit session ?nlsolver ?lsolver ?roots t0 y0 y'0 =
+let reinit session ?nlsolver ?lsolver ?roots ?resfn t0 y0 y'0 =
   if Sundials_configuration.safe then
     (session.checkvec y0;
      session.checkvec y'0);
@@ -724,7 +724,8 @@ let reinit session ?nlsolver ?lsolver ?roots t0 y0 y'0 =
     | _ -> ());
   (match roots with
    | None -> ()
-   | Some roots -> root_init session roots)
+   | Some roots -> root_init session roots);
+  (match resfn with None -> () | Some f -> session.resfn <- f)
 
 external get_root_info  : ('a, 'k) session -> Roots.t -> unit
     = "sunml_ida_get_root_info"
