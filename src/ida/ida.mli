@@ -755,7 +755,8 @@ val get_dky : ('d, 'k) session -> ('d, 'k) Nvector.t -> float -> int -> unit
     state variables, and the derivatives must be given.
     If the argument [~linsolv] is not given, the current linear solver
     remains unchanged. The argument [~roots] works similarly; pass
-    {!no_roots} to disable root finding.
+    {!no_roots} to disable root finding. The [~resfn] argument gives the
+    possibility to change the residual function.
 
     @ida <node5#sss:cvreinit> IDAReInit
     @ida <node>               IDASetLinearSolver
@@ -765,6 +766,7 @@ val reinit :
   -> ?nlsolver:('d, 'k, ('d, 'k) session, [`Nvec]) Sundials_NonlinearSolver.t
   -> ?lsolver:('d, 'k) linear_solver
   -> ?roots:(int * 'd rootsfn)
+  -> ?resfn:'d resfn
   -> float
   -> ('d, 'k) Nvector.t
   -> ('d, 'k) Nvector.t

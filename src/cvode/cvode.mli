@@ -766,8 +766,9 @@ val get_dky : ('d, 'k) session -> ('d, 'k) Nvector.t -> float -> int -> unit
 (** Reinitializes the solver with new parameters and state values. The
     values of the independent variable, i.e., the simulation time, and the
     state variables must be given. If given, [nlsolver] specifies a nonlinear
-    solver, [lsolver] specifies a linear solver, and [roots] specifies a
-    new root finding function; both default to unchanged.
+    solver, [lsolver] specifies a linear solver, [roots] specifies a
+    new root finding function, and [rhsfn] specifies a new rhs function;
+    all default to unchanged.
 
     If the new problem does not have a constraint equation, but the old one
     did, then {!set_proj_frequency} must a zero argument to disable
@@ -781,6 +782,7 @@ val reinit :
   -> ?nlsolver:('d, 'k, ('d, 'k) session, [`Nvec]) Sundials_NonlinearSolver.t
   -> ?lsolver:('d, 'k) linear_solver
   -> ?roots:(int * 'd rootsfn)
+  -> ?rhsfn:'d rhsfn
   -> float
   -> ('d, 'k) Nvector.t
   -> unit

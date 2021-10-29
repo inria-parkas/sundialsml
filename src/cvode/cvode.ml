@@ -823,7 +823,7 @@ external c_reinit
     : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
     = "sunml_cvode_reinit"
 
-let reinit session ?nlsolver ?lsolver ?roots t0 y0 =
+let reinit session ?nlsolver ?lsolver ?roots ?rhsfn t0 y0 =
   if Sundials_configuration.safe then session.checkvec y0;
   Dls.invalidate_callback session;
   c_reinit session t0 y0;
@@ -846,7 +846,8 @@ let reinit session ?nlsolver ?lsolver ?roots t0 y0 =
     | _ -> ());
   (match roots with
    | None -> ()
-   | Some roots -> root_init session roots)
+   | Some roots -> root_init session roots);
+  (match rhsfn with None -> () | Some f -> session.rhsfn <- f)
 
 external get_root_info  : ('a, 'k) session -> Roots.t -> unit
     = "sunml_cvode_get_root_info"
