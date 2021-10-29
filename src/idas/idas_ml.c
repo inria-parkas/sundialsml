@@ -1199,6 +1199,32 @@ CAMLprim value sunml_idas_quad_get_stats(value vdata)
 
 /* sensitivity interface */
 
+#if 400 <= SUNDIALS_LIB_VERSION
+// hack to work around lack of CVodeGetUserData
+typedef struct {
+  realtype ida_uround;
+  IDAResFn ida_res;
+  void     *ida_user_data;
+  //...
+} *StartOf_IDAMem;
+
+static value sunml_idas_session_to_value(void *ida_mem)
+{
+    value session;
+    // void *user_data = IDAGetUserData(ida_mem);
+    void *user_data = ((StartOf_IDAMem)ida_mem)->ida_user_data;
+
+    WEAK_DEREF (session, *(value*)user_data);
+    return session;
+}
+
+static void* sunml_idas_session_from_value(value vida_mem)
+{
+    return (IDA_MEM_FROM_ML(vida_mem));
+}
+#endif
+
+
 CAMLprim value sunml_idas_set_nonlinear_solver_sim(value vida_mem,
 						   value vnlsolv)
 {
@@ -1206,6 +1232,10 @@ CAMLprim value sunml_idas_set_nonlinear_solver_sim(value vida_mem,
 #if 400 <= SUNDIALS_LIB_VERSION
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
     SUNNonlinearSolver nlsolv = NLSOLVER_VAL(vnlsolv);
+
+    sunml_nlsolver_set_to_from_mem(nlsolv,
+				   sunml_idas_session_to_value,
+				   sunml_idas_session_from_value);
 
     int flag = IDASetNonlinearSolverSensSim(ida_mem, nlsolv);
     SCHECK_FLAG ("IDASetNonlinearSolverSensSim", flag);
@@ -1222,6 +1252,10 @@ CAMLprim value sunml_idas_set_nonlinear_solver_stg(value vida_mem,
 #if 400 <= SUNDIALS_LIB_VERSION
     void *ida_mem = IDA_MEM_FROM_ML (vida_mem);
     SUNNonlinearSolver nlsolv = NLSOLVER_VAL(vnlsolv);
+
+    sunml_nlsolver_set_to_from_mem(nlsolv,
+				   sunml_idas_session_to_value,
+				   sunml_idas_session_from_value);
 
     int flag = IDASetNonlinearSolverSensStg(ida_mem, nlsolv);
     SCHECK_FLAG ("IDASetNonlinearSolverSensStg", flag);
@@ -1984,6 +2018,13 @@ CAMLprim value sunml_idas_adj_set_nonlinear_solver(value vparent,
     void *ida_mem = IDA_MEM_FROM_ML (vparent);
     SUNNonlinearSolver nlsolv = NLSOLVER_VAL(vnlsolv);
     int flag;
+
+    // for the "B" case, the callback functions are passed the
+    // session for the backward integrator directly (so no need to
+    // use IDAGetUserDataB).
+    sunml_nlsolver_set_to_from_mem(nlsolv,
+				   sunml_idas_session_to_value,
+				   sunml_idas_session_from_value);
 
     flag = IDASetNonlinearSolverB(ida_mem, Int_val(vwhich), nlsolv);
     CHECK_FLAG ("IDASetNonlinearSolverB", flag);

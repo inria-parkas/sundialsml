@@ -876,12 +876,42 @@ CAMLprim value sunml_cvode_set_jac_times_rhsfn(value vdata, value vhas_rhsfn)
     CAMLreturn (Val_unit);
 }
 
+#if 400 <= SUNDIALS_LIB_VERSION
+
+// hack to work around lack of CVodeGetUserData
+typedef struct {
+  realtype cv_uround;
+  CVRhsFn cv_f;
+  void *cv_user_data;
+  //...
+} *StartOf_CVodeMem;
+
+static value sunml_cvode_session_to_value(void *cvode_mem)
+{
+    value session;
+    // void *user_data = CVodeGetUserData(cvode_mem);
+    void *user_data = ((StartOf_CVodeMem)cvode_mem)->cv_user_data;
+
+    WEAK_DEREF (session, *(value*)user_data);
+    return session;
+}
+
+static void* sunml_cvode_session_from_value(value vcvode_mem)
+{
+    return (CVODE_MEM_FROM_ML(vcvode_mem));
+}
+#endif
+
 CAMLprim value sunml_cvode_set_nonlinear_solver(value vcvode_mem, value vnlsolv)
 {
     CAMLparam2(vcvode_mem, vnlsolv);
 #if 400 <= SUNDIALS_LIB_VERSION
     void *cvode_mem = CVODE_MEM_FROM_ML (vcvode_mem);
     SUNNonlinearSolver nlsolv = NLSOLVER_VAL(vnlsolv);
+
+    sunml_nlsolver_set_to_from_mem(nlsolv,
+				   sunml_cvode_session_to_value,
+				   sunml_cvode_session_from_value);
 
     int flag = CVodeSetNonlinearSolver(cvode_mem, nlsolv);
     CHECK_FLAG ("CVodeSetNonlinearSolver", flag);

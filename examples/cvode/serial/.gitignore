@@ -1,2 +1,3 @@
 cvPendulum_dns_ref.txt
 cvPendulum_dns_tol_*.txt
+cvPendulum_dns_rtol_*.txt
