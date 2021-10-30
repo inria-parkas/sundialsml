@@ -661,7 +661,7 @@ static int convtest_callback_sens(SUNNonlinearSolver nls, N_Vector y, N_Vector d
 }
 #endif
 
-#if 400 <= SUNDIALS_LIB_VERSION
+#if 500 <= SUNDIALS_LIB_VERSION
 static int sunml_nlsolver_failed_ctestfn(SUNNonlinearSolver nls,
 					 N_Vector y,
 					 N_Vector del,
@@ -715,6 +715,19 @@ CAMLprim value sunml_nlsolver_set_lsolve_fn(value vnls)
     CAMLreturn (Val_unit);
 }
 
+#if 400 <= SUNDIALS_LIB_VERSION
+static int sunml_nlsolver_wrapped_ctestfn(SUNNonlinearSolver nls,
+					  N_Vector y,
+					  N_Vector del,
+					  realtype tol,
+					  N_Vector ewt,
+					  void* mem)
+{
+    p_nls_cbv cbv = (p_nls_cbv)mem;
+    return (cbv->pccallbacks->ctestfn(nls, y, del, tol, ewt, cbv->mem));
+}
+#endif
+
 CAMLprim value sunml_nlsolver_set_convtest_fn(value vnls)
 {
     CAMLparam1(vnls);
@@ -725,9 +738,13 @@ CAMLprim value sunml_nlsolver_set_convtest_fn(value vnls)
 
     snls->c_callbacks.ctestfn = convtest_callback;
 #if 500 <= SUNDIALS_LIB_VERSION
-    flag = snls->orig_setctestfn(nls, sunml_nlsolver_failed_ctestfn, (void *)0xdeadbeef);
+    // the ctestfn is set just before invoking setup or solve so that
+    // the integrator pointer can be wrapped and passed as ctestdata.
+    // we must set a value here because some nls check that ctestfn <> NULL
+    flag = snls->orig_setctestfn(nls, sunml_nlsolver_failed_ctestfn,
+	    (void *)0xdeadbeef);
 #else
-    flag = snls->orig_setctestfn(nls, sunml_nlsolver_failed_ctestfn);
+    flag = snls->orig_setctestfn(nls, convtest_callback);
 #endif
     NLS_CHECK_FLAG("SUNNonlinSolSetConvTestFn", flag);
 #endif
@@ -770,9 +787,13 @@ CAMLprim value sunml_nlsolver_set_convtest_fn_sens(value vnls, value vmem)
 
     snls->c_callbacks.ctestfn = convtest_callback_sens;
 #if 500 <= SUNDIALS_LIB_VERSION
-    flag = snls->orig_setctestfn(nls, sunml_nlsolver_failed_ctestfn, (void *)0xdeadbeef);
+    // the ctestfn is set just before invoking setup or solve so that
+    // the integrator pointer can be wrapped and passed as ctestdata.
+    // we must set a value here because some nls check that ctestfn <> NULL
+    flag = snls->orig_setctestfn(nls, sunml_nlsolver_failed_ctestfn,
+	    (void *)0xdeadbeef);
 #else
-    flag = snls->orig_setctestfn(nls, sunml_nlsolver_failed_ctestfn);
+    flag = snls->orig_setctestfn(nls, convtest_callback_sens);
 #endif
     NLS_CHECK_FLAG("SUNNonlinSolSetConvTestFn", flag);
 #endif
@@ -1092,17 +1113,6 @@ void sunml_nlsolver_set_to_from_mem(SUNNonlinearSolver nls,
 }
 
 #if 400 <= SUNDIALS_LIB_VERSION
-static int sunml_nlsolver_wrapped_ctestfn(SUNNonlinearSolver nls,
-					  N_Vector y,
-					  N_Vector del,
-					  realtype tol,
-					  N_Vector ewt,
-					  void* mem)
-{
-    p_nls_cbv cbv = (p_nls_cbv)mem;
-    return (cbv->pccallbacks->ctestfn(nls, y, del, tol, ewt, cbv->mem));
-}
-
 static int sunml_nlsolver_wrapped_setup(SUNNonlinearSolver nls,
 					N_Vector y, void* mem)
 {
@@ -1125,33 +1135,25 @@ static int sunml_nlsolver_wrapped_setup(SUNNonlinearSolver nls,
 	.pvmem = (snls->to_value == NULL) ? NULL : &vmem
     };
 
-    // we set the convtest function before calling setup, so that the ctdata
-    // is set to &cbmem (which lives in our stakc frame).
-    ctestfn = snls->c_callbacks.ctestfn;
 #if 500 <= SUNDIALS_LIB_VERSION
+    // we set the convtest function before calling setup, so that the ctdata
+    // is set to &cbmem (which lives in our stack frame).
+    ctestfn = snls->c_callbacks.ctestfn;
     if (ctestfn == convtest_callback || ctestfn == convtest_callback_sens) {
+	// callback into OCaml - no need for wrapping
 	r = snls->orig_setctestfn(nls, ctestfn, &cbmem);
     } else {
+	// callback into C - need to unwrap the mem argument
 	r = snls->orig_setctestfn(nls, sunml_nlsolver_wrapped_ctestfn, &cbmem);
     }
-#else
-    if (ctestfn == convtest_callback || ctestfn == convtest_callback_sens) {
-	r = snls->orig_setctestfn(nls, ctestfn);
-    } else {
-	r = snls->orig_setctestfn(nls, sunml_nlsolver_wrapped_ctestfn);
-    }
-#endif
     if (r != SUN_NLS_SUCCESS) goto done;
+#endif
 
     // call setup (which may invoke ctestfn callback
     r = snls->orig_setup(nls, y, &cbmem);
 
-    // clear the convtest function and ctdata to detect if our assumptions
-    // are ever violated
-#if 500 <= SUNDIALS_LIB_VERSION
+#if 500 <= SUNDIALS_LIB_VERSION && defined(SUNDIALS_ML_DEBUG)
     snls->orig_setctestfn(nls, sunml_nlsolver_failed_ctestfn, (void *)0xdeadbeef);
-#else
-    snls->orig_setctestfn(nls, sunml_nlsolver_failed_ctestfn);
 #endif
 
 done:
@@ -1182,32 +1184,24 @@ static int sunml_nlsolver_wrapped_solve(SUNNonlinearSolver nls,
 	.pvmem = (snls->to_value == NULL) ? NULL : &vmem
     };
 
+#if 500 <= SUNDIALS_LIB_VERSION
     // we set the convtest function before calling setup, so that the ctdata
     // is set to &cbmem (which lives in our stakc frame).
     ctestfn = snls->c_callbacks.ctestfn;
-#if 500 <= SUNDIALS_LIB_VERSION
     if (ctestfn == convtest_callback || ctestfn == convtest_callback_sens) {
+	// callback into OCaml - no need for wrapping
 	r = snls->orig_setctestfn(nls, ctestfn, &cbmem);
     } else {
+	// callback into C - need to unwrap the mem argument
 	r = snls->orig_setctestfn(nls, sunml_nlsolver_wrapped_ctestfn, &cbmem);
     }
-#else
-    if (ctestfn == convtest_callback || ctestfn == convtest_callback_sens) {
-	r = snls->orig_setctestfn(nls, ctestfn);
-    } else {
-	r = snls->orig_setctestfn(nls, sunml_nlsolver_wrapped_ctestfn);
-    }
-#endif
     if (r != SUN_NLS_SUCCESS) goto done;
+#endif
 
     r = snls->orig_solve(nls, y0, y, w, tol, callLSetup, &cbmem);
 
-    // clear the convtest function and ctdata to detect if our assumptions
-    // are ever violated
-#if 500 <= SUNDIALS_LIB_VERSION
+#if 500 <= SUNDIALS_LIB_VERSION && defined(SUNDIALS_ML_DEBUG)
     snls->orig_setctestfn(nls, sunml_nlsolver_failed_ctestfn, (void *)0xdeadbeef);
-#else
-    snls->orig_setctestfn(nls, sunml_nlsolver_failed_ctestfn);
 #endif
 
 done:
@@ -1269,6 +1263,9 @@ static int sunml_nlsolver_wrapped_setctestfn(SUNNonlinearSolver nls,
     p_sunml_nls snls = NLS_EXTENDED(nls);
     snls->c_callbacks.ctestfn = ctestfn;
 
+#if SUNDIALS_LIB_VERSION < 500
+    return (snls->orig_setctestfn(nls, sunml_nlsolver_wrapped_ctestfn);
+#elif defined(SUNDIALS_ML_DEBUG)
     // We do not call orig_setctestfn here.
     // Rather this is done by sunml_nlsolver_wrapped_setup
     // and sunml_nlsolver_wrapped_solve so that they can set
@@ -1280,11 +1277,10 @@ static int sunml_nlsolver_wrapped_setctestfn(SUNNonlinearSolver nls,
     // or in the sunml_nls structure (but then it holds OCaml values, and
     // that potentially with a cycle).
 
-#if 500 <= SUNDIALS_LIB_VERSION
     return (snls->orig_setctestfn(nls, sunml_nlsolver_failed_ctestfn,
 				  (void *)0xdeadbeef));
 #else
-    return (snls->orig_setctestfn(nls, sunml_nlsolver_failed_ctestfn);
+    return SUN_NLS_SUCCESS;
 #endif
 }
 
