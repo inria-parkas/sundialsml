@@ -1578,6 +1578,9 @@ printf "/* Automatically generated file - don't edit!  See configure.  */\\n"\
   printf "#define HAVE_WEAK %d\\n" "${have_weak}";\
   printf "#define SUNDIALS_ML_SAFE %d\\n" "${bounds_checking}";\
 } >> src/config.h
+if [ "x${enable_debug}" = x1 ]; then
+printf "#define SUNDIALS_ML_DEBUG\\n" >> src/config.h
+fi
 if [ "x${lapack_enabled}" = x1 ]; then
 printf "#define SUNDIALS_ML_LAPACK\\n" >> src/config.h
 fi
