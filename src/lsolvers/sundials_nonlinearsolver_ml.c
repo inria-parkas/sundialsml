@@ -88,14 +88,39 @@ typedef struct _N_VectorContent_SensWrapper *N_VectorContent_SensWrapper;
    C passes N_Vector, OCaml receives payload
    OCaml passes Nvector.t, C receives N_Vector
 
+   An nls_callback_value is used passed as the state. It includes both C and
+   OCaml versions of the integrator state (conversions are done via to_value
+   and from_value functions provided by integrators), and pointers to OCaml
+   and C callbacks.
+
    1. C-integrator using (Newton/FixedPoint) C-NLS
 
-      The rawptr is passed to the integrator. It retains the original ops
-      from Sundials and thus all interaction occurs in C.
+      The integrator and NLS interact directly in C, but this interaction
+      passes through wrapper functions. The wrapper functions support
+      the use of nls_callback_value, allowing largely unrestricted use of the
+      nls from C and OCaml. A more complicated implementation thus allows
+      simpler types in the OCaml interface.
 
-      setfn: callback is stored by Sundials
-      setup/solve: invocation directly via ops
-      callbackfn: invocation directly on stored callback
+      setup/solve: the original function is cached in sunml_nls, Sundials
+      instead calls into a wrapper function that creates an nls_callback_value
+      and applies special treatment for the convtestfn.
+      E.g.,
+	  1. SUNNonlinSolSolve (arg: N_Vector)
+	  2. sunml_nlsolver_wrapped_solve
+	  3. callback to original C solve function
+
+      setfn: the original callback is cached in sunml_nls, Sundials is given
+      a wrapper callback.
+      E.g.,
+	  1. SUNNonlinSolSetSysFn (arg : SUNNonlinSolSysFn)
+	  2. sunml_nlsolver_wrapped_setsysfn
+	  3. original C setsysfn with callback sunml_nlsolver_wrapped_sysfn
+
+      callbackfn: the wrapper function is invoked, it extracts the relevant
+      part of nls_callback_value and calls the cached original callbac,.
+      E.g.,
+	  1. sunml_nlsolver_wrapped_sysfn
+	  2. original sysfn
 
    2. C-integrator using (Custom) OCaml-NLS
 
@@ -113,7 +138,7 @@ typedef struct _N_VectorContent_SensWrapper *N_VectorContent_SensWrapper;
       setfn:
       The callml_custom_* functions pass into OCaml via registered callbacks
       "Sundials_NonlinearSolver.set_c_*" that call into
-      Custom.set_c_*(_sens). The Custmo.set_c_* functions (a) wrap the given
+      Custom.set_c_*(_sens). The Custom.set_c_* functions (a) wrap the given
       function using sunml_nlsolver_call_* and (b) call the nls-solver-ops
       set_* function on the result.
       E.g.,
@@ -127,7 +152,7 @@ typedef struct _N_VectorContent_SensWrapper *N_VectorContent_SensWrapper;
       The OCaml solver invokes the closure created by setfn, the
       sunml_nlsolver_call_* function calls the C function passed earlier.
       E.g.,
-	1. sunml_nlsolver_call_sys_fn (arg: Nvector.t, state from solver)
+	1. sunml_nlsolver_call_sys_fn (arg: Nvector.t)
 	2. calls *sysfn (via pointer in closure, uses NVEC_VAL)
 	3. sysfn (arg: N_Vector)
 
@@ -147,7 +172,7 @@ typedef struct _N_VectorContent_SensWrapper *N_VectorContent_SensWrapper;
       E.g.,
 	1. call to Sundials.NonlinearSolver.solve (arg: Nvector.t)
 	2. sunml_nlsolver_solve (uses NVEC_VAL)
-	3. SUNNonlinSolSolve (arg: N_Vector)
+	3. callback to original C solve function (arg: N_Vector)
 
       setfn:
       The function is called via Sundials.NonlinearSolver using the
@@ -164,13 +189,10 @@ typedef struct _N_VectorContent_SensWrapper *N_VectorContent_SensWrapper;
       callback structure.
       E.g.,
 	1. sys_callback (arg: N_Vector, uses NVEC_BACKLINK)
-	2. OCaml callbacks.sysfn (arg: payload, state = unit)
+	2. OCaml callbacks.sysfn (arg: payload)
 
       setup/solve is OCaml -> C so an Nvector.t is required
       callbackfn is C to OCaml so an N_Vector becomes a payload
-
-      No support for sensitivities since such values cannot be constructed
-      from OCaml.
 
    4. OCaml-app using OCaml-NLS
 
@@ -336,112 +358,6 @@ CAMLprim value sunml_senswrapper_data(value vsw)
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn(vr);
-}
-
-/* - - - O/Cnls functions (OCaml invoking init/setup/solve in a C NLS) - - - */
-
-CAMLprim value sunml_nlsolver_init(value vnls)
-{
-    CAMLparam1(vnls);
-#if 400 <= SUNDIALS_LIB_VERSION
-    SUNNonlinearSolver nls = NLSOLVER_VAL(vnls);
-
-    int flag = SUNNonlinSolInitialize(nls);
-    NLS_CHECK_FLAG("SUNNonlinSolInitialize", flag);
-#endif
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_nlsolver_setup(value vnls, value vy, value vmem)
-{
-    CAMLparam3(vnls, vy, vmem);
-#if 400 <= SUNDIALS_LIB_VERSION
-    SUNNonlinearSolver nls = NLSOLVER_VAL(vnls);
-    N_Vector y  = NVEC_VAL(vy);
-
-    p_sunml_nls snls = NLS_EXTENDED(nls);
-    struct nls_callback_value cbmem = {
-	.mem = (snls->from_value == NULL) ? NULL : snls->from_value(vmem),
-	.pvcallbacks = &(snls->callbacks),
-	.pccallbacks = &(snls->c_callbacks),
-	.pvmem = &vmem
-    };
-
-    int flag = SUNNonlinSolSetup(nls, y, &cbmem);
-    NLS_CHECK_FLAG("SUNNonlinSolSetup", flag);
-#endif
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_nlsolver_solve(value vnls, value vargs, value vmem)
-{
-    CAMLparam3(vnls, vargs, vmem);
-#if 400 <= SUNDIALS_LIB_VERSION
-    SUNNonlinearSolver nls = NLSOLVER_VAL(vnls);
-    N_Vector y0 = NVEC_VAL(Field(vargs, 0));
-    N_Vector y  = NVEC_VAL(Field(vargs, 1));
-    N_Vector w  = NVEC_VAL(Field(vargs, 2));
-    double tol  = Double_val(Field(vargs, 3));
-    int vcallsetup = Bool_val(Field(vargs, 4));
-
-    p_sunml_nls snls = NLS_EXTENDED(nls);
-    struct nls_callback_value cbmem = {
-	.mem = (snls->from_value == NULL) ? NULL : snls->from_value(vmem),
-	.pvcallbacks = &(snls->callbacks),
-	.pccallbacks = &(snls->c_callbacks),
-	.pvmem = &vmem
-    };
-
-    int flag = SUNNonlinSolSolve(nls, y0, y, w, tol, vcallsetup, &cbmem);
-    NLS_CHECK_FLAG("SUNNonlinSolSolve", flag);
-#endif
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_nlsolver_setup_sens(value vnls, value vy, value vmem)
-{
-    CAMLparam3(vnls, vy, vmem);
-#if 400 <= SUNDIALS_LIB_VERSION
-    SUNNonlinearSolver nls = NLSOLVER_VAL(vnls);
-    N_Vector y  = SENSWRAPPER(vy);
-
-    p_sunml_nls snls = NLS_EXTENDED(nls);
-    struct nls_callback_value cbmem = {
-	.mem = (snls->from_value == NULL) ? NULL : snls->from_value(vmem),
-	.pvcallbacks = &(snls->callbacks),
-	.pccallbacks = &(snls->c_callbacks),
-	.pvmem = &vmem
-    };
-
-    int flag = SUNNonlinSolSetup(nls, y, &cbmem);
-    NLS_CHECK_FLAG("SUNNonlinSolSetup", flag);
-#endif
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_nlsolver_solve_sens(value vnls, value vargs, value vmem)
-{
-    CAMLparam3(vnls, vargs, vmem);
-#if 400 <= SUNDIALS_LIB_VERSION
-    SUNNonlinearSolver nls = NLSOLVER_VAL(vnls);
-    N_Vector y0 = SENSWRAPPER(Field(vargs, 0));
-    N_Vector y  = SENSWRAPPER(Field(vargs, 1));
-    N_Vector w  = SENSWRAPPER(Field(vargs, 2));
-    double tol  = Double_val(Field(vargs, 3));
-    int vcallsetup = Bool_val(Field(vargs, 4));
-
-    p_sunml_nls snls = NLS_EXTENDED(nls);
-    struct nls_callback_value cbmem = {
-	.mem = (snls->from_value == NULL) ? NULL : snls->from_value(vmem),
-	.pvcallbacks = &(snls->callbacks),
-	.pccallbacks = &(snls->c_callbacks),
-	.pvmem = &vmem
-    };
-
-    int flag = SUNNonlinSolSolve(nls, y0, y, w, tol, vcallsetup, &cbmem);
-    NLS_CHECK_FLAG("SUNNonlinSolSolve", flag);
-#endif
-    CAMLreturn (Val_unit);
 }
 
 /* - - - O/Cnls: callback invocation (also C/Cnls for convtestfn) - - - */
@@ -661,6 +577,21 @@ static int convtest_callback_sens(SUNNonlinearSolver nls, N_Vector y, N_Vector d
 }
 #endif
 
+
+/* - - - O/Cnls functions (OCaml invoking init/setup/solve in a C NLS) - - - */
+
+CAMLprim value sunml_nlsolver_init(value vnls)
+{
+    CAMLparam1(vnls);
+#if 400 <= SUNDIALS_LIB_VERSION
+    SUNNonlinearSolver nls = NLSOLVER_VAL(vnls);
+
+    int flag = SUNNonlinSolInitialize(nls);
+    NLS_CHECK_FLAG("SUNNonlinSolInitialize", flag);
+#endif
+    CAMLreturn (Val_unit);
+}
+
 #if 500 <= SUNDIALS_LIB_VERSION
 static int sunml_nlsolver_failed_ctestfn(SUNNonlinearSolver nls,
 					 N_Vector y,
@@ -673,6 +604,174 @@ static int sunml_nlsolver_failed_ctestfn(SUNNonlinearSolver nls,
     assert(0);
 }
 #endif
+
+#if 400 <= SUNDIALS_LIB_VERSION
+static int sunml_nlsolver_wrapped_ctestfn(SUNNonlinearSolver nls,
+					  N_Vector y,
+					  N_Vector del,
+					  realtype tol,
+					  N_Vector ewt,
+					  void* mem)
+{
+    p_nls_cbv cbv = (p_nls_cbv)mem;
+    return (cbv->pccallbacks->ctestfn(nls, y, del, tol, ewt, cbv->mem));
+}
+#endif
+
+#if 500 <= SUNDIALS_LIB_VERSION
+static int sunml_nlsolver_install_ctestfn(p_sunml_nls snls,
+					  p_nls_cbv pcbmem)
+{
+    // we set the convtest function before calling setup, so that the ctdata
+    // is set to &cbmem (which lives in our stack frame).
+    SUNNonlinSolConvTestFn ctestfn = snls->c_callbacks.ctestfn;
+    if (ctestfn == convtest_callback || ctestfn == convtest_callback_sens) {
+	// callback into OCaml - no need for wrapping
+	return (snls->orig_setctestfn(&(snls->nls), ctestfn, pcbmem));
+    } else {
+	// callback into C - need to unwrap the mem argument
+	return (snls->orig_setctestfn(&(snls->nls), sunml_nlsolver_wrapped_ctestfn,
+		pcbmem));
+    }
+}
+#endif
+
+CAMLprim value sunml_nlsolver_setup(value vnls, value vy, value vmem)
+{
+    CAMLparam3(vnls, vy, vmem);
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag;
+    SUNNonlinearSolver nls = NLSOLVER_VAL(vnls);
+    N_Vector y  = NVEC_VAL(vy);
+
+    p_sunml_nls snls = NLS_EXTENDED(nls);
+    struct nls_callback_value cbmem = {
+	.mem = (snls->from_value == NULL) ? NULL : snls->from_value(vmem),
+	.pvcallbacks = &(snls->callbacks),
+	.pccallbacks = &(snls->c_callbacks),
+	.pvmem = &vmem
+    };
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    flag = sunml_nlsolver_install_ctestfn(snls, &cbmem);
+    NLS_CHECK_FLAG("SUNNonlinSolSetConvTestFn", flag);
+#endif
+
+    // call setup (which may invoke ctestfn callback
+    flag = snls->orig_setup(nls, y, &cbmem);
+    NLS_CHECK_FLAG("SUNNonlinSolSetup", flag);
+
+#if 500 <= SUNDIALS_LIB_VERSION && defined(SUNDIALS_ML_DEBUG)
+    snls->orig_setctestfn(nls, sunml_nlsolver_failed_ctestfn, (void *)0xdeadbeef);
+#endif
+
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_nlsolver_solve(value vnls, value vargs, value vmem)
+{
+    CAMLparam3(vnls, vargs, vmem);
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag;
+    SUNNonlinearSolver nls = NLSOLVER_VAL(vnls);
+    N_Vector y0 = NVEC_VAL(Field(vargs, 0));
+    N_Vector y  = NVEC_VAL(Field(vargs, 1));
+    N_Vector w  = NVEC_VAL(Field(vargs, 2));
+    double tol  = Double_val(Field(vargs, 3));
+    int callLSetup = Bool_val(Field(vargs, 4));
+
+    p_sunml_nls snls = NLS_EXTENDED(nls);
+    struct nls_callback_value cbmem = {
+	.mem = (snls->from_value == NULL) ? NULL : snls->from_value(vmem),
+	.pvcallbacks = &(snls->callbacks),
+	.pccallbacks = &(snls->c_callbacks),
+	.pvmem = &vmem
+    };
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    flag = sunml_nlsolver_install_ctestfn(snls, &cbmem);
+    NLS_CHECK_FLAG("SUNNonlinSolSetConvTestFn", flag);
+#endif
+
+    flag = snls->orig_solve(nls, y0, y, w, tol, callLSetup, &cbmem);
+    NLS_CHECK_FLAG("SUNNonlinSolSolve", flag);
+
+#if 500 <= SUNDIALS_LIB_VERSION && defined(SUNDIALS_ML_DEBUG)
+    snls->orig_setctestfn(nls, sunml_nlsolver_failed_ctestfn, (void *)0xdeadbeef);
+#endif
+
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_nlsolver_setup_sens(value vnls, value vy, value vmem)
+{
+    CAMLparam3(vnls, vy, vmem);
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag;
+    SUNNonlinearSolver nls = NLSOLVER_VAL(vnls);
+    N_Vector y  = SENSWRAPPER(vy);
+
+    p_sunml_nls snls = NLS_EXTENDED(nls);
+    struct nls_callback_value cbmem = {
+	.mem = (snls->from_value == NULL) ? NULL : snls->from_value(vmem),
+	.pvcallbacks = &(snls->callbacks),
+	.pccallbacks = &(snls->c_callbacks),
+	.pvmem = &vmem
+    };
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    flag = sunml_nlsolver_install_ctestfn(snls, &cbmem);
+    NLS_CHECK_FLAG("SUNNonlinSolSetConvTestFn", flag);
+#endif
+
+    // call setup (which may invoke ctestfn callback
+    flag = snls->orig_setup(nls, y, &cbmem);
+    NLS_CHECK_FLAG("SUNNonlinSolSetup", flag);
+
+#if 500 <= SUNDIALS_LIB_VERSION && defined(SUNDIALS_ML_DEBUG)
+    snls->orig_setctestfn(nls, sunml_nlsolver_failed_ctestfn, (void *)0xdeadbeef);
+#endif
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_nlsolver_solve_sens(value vnls, value vargs, value vmem)
+{
+    CAMLparam3(vnls, vargs, vmem);
+#if 400 <= SUNDIALS_LIB_VERSION
+    int flag;
+    SUNNonlinearSolver nls = NLSOLVER_VAL(vnls);
+    N_Vector y0 = SENSWRAPPER(Field(vargs, 0));
+    N_Vector y  = SENSWRAPPER(Field(vargs, 1));
+    N_Vector w  = SENSWRAPPER(Field(vargs, 2));
+    double tol  = Double_val(Field(vargs, 3));
+    int callLSetup = Bool_val(Field(vargs, 4));
+
+    p_sunml_nls snls = NLS_EXTENDED(nls);
+    struct nls_callback_value cbmem = {
+	.mem = (snls->from_value == NULL) ? NULL : snls->from_value(vmem),
+	.pvcallbacks = &(snls->callbacks),
+	.pccallbacks = &(snls->c_callbacks),
+	.pvmem = &vmem
+    };
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    flag = sunml_nlsolver_install_ctestfn(snls, &cbmem);
+    NLS_CHECK_FLAG("SUNNonlinSolSetConvTestFn", flag);
+#endif
+
+    flag = snls->orig_solve(nls, y0, y, w, tol, callLSetup, &cbmem);
+    NLS_CHECK_FLAG("SUNNonlinSolSolve", flag);
+
+#if 500 <= SUNDIALS_LIB_VERSION && defined(SUNDIALS_ML_DEBUG)
+    snls->orig_setctestfn(nls, sunml_nlsolver_failed_ctestfn, (void *)0xdeadbeef);
+#endif
+
+#endif
+    CAMLreturn (Val_unit);
+}
 
 /* - - - O/Cnls: callback configuration - - - */
 
@@ -714,19 +813,6 @@ CAMLprim value sunml_nlsolver_set_lsolve_fn(value vnls)
 #endif
     CAMLreturn (Val_unit);
 }
-
-#if 400 <= SUNDIALS_LIB_VERSION
-static int sunml_nlsolver_wrapped_ctestfn(SUNNonlinearSolver nls,
-					  N_Vector y,
-					  N_Vector del,
-					  realtype tol,
-					  N_Vector ewt,
-					  void* mem)
-{
-    p_nls_cbv cbv = (p_nls_cbv)mem;
-    return (cbv->pccallbacks->ctestfn(nls, y, del, tol, ewt, cbv->mem));
-}
-#endif
 
 CAMLprim value sunml_nlsolver_set_convtest_fn(value vnls)
 {
@@ -1119,7 +1205,6 @@ static int sunml_nlsolver_wrapped_setup(SUNNonlinearSolver nls,
     CAMLparam0();
     CAMLlocal1(vmem);
     int r;
-    SUNNonlinSolConvTestFn ctestfn;
 
     p_sunml_nls snls = NLS_EXTENDED(nls);
     if (snls->to_value != NULL) {
@@ -1136,17 +1221,7 @@ static int sunml_nlsolver_wrapped_setup(SUNNonlinearSolver nls,
     };
 
 #if 500 <= SUNDIALS_LIB_VERSION
-    // we set the convtest function before calling setup, so that the ctdata
-    // is set to &cbmem (which lives in our stack frame).
-    ctestfn = snls->c_callbacks.ctestfn;
-    if (ctestfn == convtest_callback || ctestfn == convtest_callback_sens) {
-	// callback into OCaml - no need for wrapping
-	r = snls->orig_setctestfn(nls, ctestfn, &cbmem);
-    } else {
-	// callback into C - need to unwrap the mem argument
-	r = snls->orig_setctestfn(nls, sunml_nlsolver_wrapped_ctestfn, &cbmem);
-    }
-    if (r != SUN_NLS_SUCCESS) goto done;
+    if (sunml_nlsolver_install_ctestfn(snls, &cbmem) != SUN_NLS_SUCCESS) goto done;
 #endif
 
     // call setup (which may invoke ctestfn callback
@@ -1168,7 +1243,6 @@ static int sunml_nlsolver_wrapped_solve(SUNNonlinearSolver nls,
     CAMLparam0();
     CAMLlocal1(vmem);
     int r;
-    SUNNonlinSolConvTestFn ctestfn;
 
     p_sunml_nls snls = NLS_EXTENDED(nls);
     if (snls->to_value != NULL) {
@@ -1185,17 +1259,7 @@ static int sunml_nlsolver_wrapped_solve(SUNNonlinearSolver nls,
     };
 
 #if 500 <= SUNDIALS_LIB_VERSION
-    // we set the convtest function before calling setup, so that the ctdata
-    // is set to &cbmem (which lives in our stakc frame).
-    ctestfn = snls->c_callbacks.ctestfn;
-    if (ctestfn == convtest_callback || ctestfn == convtest_callback_sens) {
-	// callback into OCaml - no need for wrapping
-	r = snls->orig_setctestfn(nls, ctestfn, &cbmem);
-    } else {
-	// callback into C - need to unwrap the mem argument
-	r = snls->orig_setctestfn(nls, sunml_nlsolver_wrapped_ctestfn, &cbmem);
-    }
-    if (r != SUN_NLS_SUCCESS) goto done;
+    if (sunml_nlsolver_install_ctestfn(snls, &cbmem) != SUN_NLS_SUCCESS) goto done;
 #endif
 
     r = snls->orig_solve(nls, y0, y, w, tol, callLSetup, &cbmem);
