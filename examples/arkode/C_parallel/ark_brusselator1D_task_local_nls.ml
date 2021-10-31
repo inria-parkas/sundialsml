@@ -805,9 +805,8 @@ let setup_problem () =
     printf "  reltol           = %.1e\n" uopt.rtol;
     printf "  abstol           = %.1e\n" uopt.atol;
     printf "  nout             = %d\n" uopt.nout;
-    if uopt.explicit then printf "  nonlinear solver = none\n";
-  end else begin
-    printf "  nonlinear solver = %s\n"
+    if uopt.explicit then printf "  nonlinear solver = none\n"
+    else printf "  nonlinear solver = %s\n"
            (if uopt.global then "global" else "task local");
     printf "Output directory: %s\n" uopt.outputdir
   end;
