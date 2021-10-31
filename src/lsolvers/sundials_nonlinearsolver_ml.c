@@ -1839,7 +1839,7 @@ static int callml_custom_setconvtestfn(SUNNonlinearSolver nls,
 {
     CAMLparam0();
     CAMLlocal3(vconvtestfn, vnls, vcdata);
-    CAMLlocalN(args, 4);
+    CAMLlocalN(args, 3);
 
     vconvtestfn = caml_alloc_final(1, NULL, 0, 1);
     CONVTESTFN_VAL(vconvtestfn) = convtestfn;
@@ -1850,12 +1850,11 @@ static int callml_custom_setconvtestfn(SUNNonlinearSolver nls,
     args[0] = vnls;
     args[1] = NLSOLV_OP_TABLE(nls);
     args[2] = vconvtestfn;
-    args[3] = sunml_nlsolver_wrap_from_value(nls);
     
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callbackN_exn(
 		*caml_named_value("Sundials_NonlinearSolver.set_c_convtest_fn"),
-		4, args);
+		3, args);
     CAMLreturnT(int, CHECK_NLS_EXCEPTION (r, UNRECOVERABLE));
 }
 
@@ -1870,7 +1869,7 @@ static int callml_custom_setconvtestfn_sens(SUNNonlinearSolver nls,
 {
     CAMLparam0();
     CAMLlocal2(vconvtestfn, vnls);
-    CAMLlocalN(args, 4);
+    CAMLlocalN(args, 3);
 
     vconvtestfn = caml_alloc_final(1, NULL, 0, 1);
     CONVTESTFN_VAL(vconvtestfn) = convtestfn;
@@ -1881,12 +1880,11 @@ static int callml_custom_setconvtestfn_sens(SUNNonlinearSolver nls,
     args[0] = vnls;
     args[1] = NLSOLV_OP_TABLE(nls);
     args[2] = vconvtestfn;
-    args[3] = sunml_nlsolver_wrap_from_value(nls);
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callbackN_exn(
 		*caml_named_value("Sundials_NonlinearSolver.set_c_convtest_fn_sens"),
-		4, args);
+		3, args);
     CAMLreturnT(int, CHECK_NLS_EXCEPTION (r, UNRECOVERABLE));
 }
 
