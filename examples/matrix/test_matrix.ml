@@ -395,7 +395,7 @@ let test_sunmatspace ?cheat_leniw ?cheat_lenrw a myid =
         | Some (actual, expected) when lenrw = actual -> expected
         | _ -> lenrw
       in
-      if Sundials_impl.Versions.sundials_lt500
+      if Sundials_impl.Version.lt500
       then printf "    PASSED test -- SUNMatSpace, lenrw = %d, leniw = %d@\n"
              lenrw leniw
       else printf "    PASSED test -- SUNMatSpace lenrw=%d leniw=%d@\n"

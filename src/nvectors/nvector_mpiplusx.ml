@@ -64,7 +64,7 @@ let sumlens comm nv =
   Mpi.(allreduce_int local_length Sum comm)
 
 let rec wrap ?(with_fused_ops=false) comm nv =
-  if Sundials_impl.Versions.sundials_lt500
+  if Sundials_impl.Version.lt500
     then raise Config.NotImplementedBySundialsVersion;
   let check mnv' =
     let nv', _ = unwrap mnv' in
@@ -643,7 +643,7 @@ module Any = struct (* {{{ *)
     = "sunml_nvec_anywrap_mpimany"
 
   let rec wrap ?(with_fused_ops=false) comm nv =
-    if Sundials_impl.Versions.sundials_lt500
+    if Sundials_impl.Version.lt500
       then raise Config.NotImplementedBySundialsVersion;
     let check mnv' =
       match unwrap mnv' with
@@ -684,7 +684,7 @@ module Any = struct (* {{{ *)
      ?with_wrms_norm_vector_array
      ?with_wrms_norm_mask_vector_array
      nv
-    = if Sundials_impl.Versions.sundials_lt400
+    = if Sundials_impl.Version.lt400
         then raise Config.NotImplementedBySundialsVersion;
       if Nvector.get_id nv <> Nvector.MpiManyVector
         then raise Nvector.BadGenericType;

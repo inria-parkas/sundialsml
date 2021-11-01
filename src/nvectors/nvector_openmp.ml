@@ -137,7 +137,7 @@ module Any = struct (* {{{ *)
       ?(with_linear_combination_vector_array=false)
       nthreads v
     =
-      if not Sundials_impl.Versions.has_nvector_get_id
+      if not Sundials_impl.Version.has_nvector_get_id
         then raise Config.NotImplementedBySundialsVersion;
       let len = RealArray.length v in
       let check nv =
@@ -248,7 +248,7 @@ module Any = struct (* {{{ *)
      ?with_scale_add_multi_vector_array
      ?with_linear_combination_vector_array
      nv
-    = if Sundials_impl.Versions.sundials_lt400
+    = if Sundials_impl.Version.lt400
         then raise Config.NotImplementedBySundialsVersion;
       if Nvector.get_id nv <> Nvector.Serial then raise Nvector.BadGenericType;
       do_enable c_enablefusedops_openmp nv
@@ -410,7 +410,7 @@ module Ops = struct (* {{{ *)
     = "sunml_nvec_openmp_linearcombination"
 
   let linearcombination ca (xa : t array) (z : t) =
-    if Sundials_impl.Versions.sundials_lt400
+    if Sundials_impl.Version.lt400
       then raise Config.NotImplementedBySundialsVersion;
     if Sundials_configuration.safe then Array.iter (check z) xa;
     c_linearcombination ca xa z

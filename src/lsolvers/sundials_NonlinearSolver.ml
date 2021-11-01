@@ -12,7 +12,6 @@
 (***********************************************************************)
 
 open Sundials
-open Sundials_impl
 
 include Sundials_NonlinearSolver_impl
 
@@ -20,7 +19,7 @@ type ('data, 'kind, 's, 'v) t
     = ('data, 'kind, 's, 'v) Sundials_NonlinearSolver_impl.nonlinear_solver
 
 let check_compat () =
-  if Versions.in_compat_mode2_3
+  if Sundials_impl.Version.in_compat_mode2_3
   then raise Config.NotImplementedBySundialsVersion
 
 external c_init : ('d, 'k, 's, 'v) cptr -> unit
@@ -236,7 +235,8 @@ let set_max_iters (type d k s v) ({ rawptr; solver; _ } : (d, k, s, v) t) i =
   | FixedPointSolver _ | NewtonSolver _ -> c_set_max_iters rawptr i
 
 let set_print_level (type d k s v) ({ rawptr; solver; _ } : (d, k, s, v) t) level =
-  if Versions.sundials_lt530 then raise Config.NotImplementedBySundialsVersion;
+  if Sundials_impl.Version.lt530
+    then raise Config.NotImplementedBySundialsVersion;
   let level = if level then 1 else 0 in
   match solver with
   | CustomSolver     (_, { set_print_level = Some f }) -> f level
@@ -247,7 +247,8 @@ let set_print_level (type d k s v) ({ rawptr; solver; _ } : (d, k, s, v) t) leve
 
 let set_info_file (type d k s v)
                   ({ rawptr; solver; _ } as s : (d, k, s, v) t) ?print_level file =
-  if Versions.sundials_lt530 then raise Config.NotImplementedBySundialsVersion;
+  if Sundials_impl.Version.lt530
+    then raise Config.NotImplementedBySundialsVersion;
   (match solver with
    | CustomSolver     (_, { set_info_file = Some f }) -> f file
    | CustomSolverSens (_, { set_info_file = Some f }) -> f file

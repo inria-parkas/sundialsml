@@ -13,8 +13,6 @@
 open Sundials
 include Kinsol_impl
 
-open Sundials_impl.Versions
-
 exception IllInput                       (* KIN_ILL_INPUT *)
 exception LineSearchNonConvergence       (* KIN_LINESEARCH_NONCONV *)
 exception MaxIterationsReached           (* KIN_MAXITER_REACHED *)
@@ -235,16 +233,17 @@ module Dls = struct (* {{{ *)
     let LSI.LS ({ rawptr; solver; matrix } as hls) = ls in
     let m = assert_matrix matrix in
     set_ls_callbacks ?jac solver m session;
-    if in_compat_mode2 then make_compat (jac <> None) solver m session
-    else if in_compat_mode2_3
+    if Sundials_impl.Version.in_compat_mode2
+      then make_compat (jac <> None) solver m session
+      else if Sundials_impl.Version.in_compat_mode2_3
       then c_dls_set_linear_solver session rawptr m (jac <> None)
-    else c_set_linear_solver session rawptr matrix (jac <> None);
+      else c_set_linear_solver session rawptr matrix (jac <> None);
     LSI.attach ls;
     session.ls_solver <- LSI.HLS hls
 
   (* Sundials < 3.0.0 *)
   let invalidate_callback session =
-    if in_compat_mode2 then
+    if Sundials_impl.Version.in_compat_mode2 then
       match session.ls_callbacks with
       | DlsDenseCallback ({ jmat = Some d } as cb) ->
           Matrix.Dense.invalidate d;
@@ -264,7 +263,7 @@ module Dls = struct (* {{{ *)
       = "sunml_kinsol_dls_get_work_space"
 
   let get_work_space s =
-    if in_compat_mode2_3 then ls_check_direct s;
+    if Sundials_impl.Version.in_compat_mode2_3 then ls_check_direct s;
     get_work_space s
 
   external c_get_num_jac_evals : 'k serial_session -> int
@@ -285,15 +284,15 @@ module Dls = struct (* {{{ *)
     | _ -> c_get_num_jac_evals s
 
   let get_num_jac_evals s =
-    if in_compat_mode2_3 then ls_check_direct s;
-    if in_compat_mode2 then compat_get_num_jac_evals s else
+    if Sundials_impl.Version.in_compat_mode2_3 then ls_check_direct s;
+    if Sundials_impl.Version.in_compat_mode2 then compat_get_num_jac_evals s else
     c_get_num_jac_evals s
 
   external get_num_lin_func_evals : 'k serial_session -> int
       = "sunml_kinsol_dls_get_num_func_evals"
 
   let get_num_lin_func_evals s =
-    if in_compat_mode2_3 then ls_check_direct s;
+    if Sundials_impl.Version.in_compat_mode2_3 then ls_check_direct s;
     get_num_lin_func_evals s
 end (* }}} *)
 
@@ -397,17 +396,18 @@ module Spils = struct (* {{{ *)
         ?jac_times_vec ?jac_times_sys (prec_type, set_prec) session nv =
      if jac_times_vec <> None && jac_times_sys <> None
        then invalid_arg "cannot pass both jac_times_vec and jac_times_sys";
-     if sundials_lt530 && jac_times_sys <> None
+     if Sundials_impl.Version.lt530 && jac_times_sys <> None
        then raise Config.NotImplementedBySundialsVersion;
-    if in_compat_mode2 then begin
+    if Sundials_impl.Version.in_compat_mode2 then begin
       make_compat compat prec_type solver session;
       session.ls_solver <- LSI.HLS hls;
       set_prec session nv;
       session.ls_callbacks <- SpilsCallback1 jac_times_vec;
       if jac_times_vec <> None then c_set_jac_times_vec_fn session true
     end else
-      if in_compat_mode2_3 then c_spils_set_linear_solver session rawptr
-      else c_set_linear_solver session rawptr None false;
+      if Sundials_impl.Version.in_compat_mode2_3
+        then c_spils_set_linear_solver session rawptr
+        else c_set_linear_solver session rawptr None false;
       LSI.attach ls;
       session.ls_solver <- LSI.HLS hls;
       LSI.(impl_set_prec_type rawptr solver prec_type false);
@@ -448,49 +448,49 @@ module Spils = struct (* {{{ *)
       = "sunml_kinsol_spils_get_work_space"
 
   let get_work_space s =
-    if in_compat_mode2_3 then ls_check_spils s;
+    if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
     get_work_space s
 
   external get_num_lin_iters    : ('a, 'k) session -> int
       = "sunml_kinsol_get_num_lin_iters"
 
   let get_num_lin_iters s =
-    if in_compat_mode2_3 then ls_check_spils s;
+    if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
     get_num_lin_iters s
 
   external get_num_lin_conv_fails   : ('a, 'k) session -> int
       = "sunml_kinsol_get_num_lin_conv_fails"
 
   let get_num_lin_conv_fails s =
-    if in_compat_mode2_3 then ls_check_spils s;
+    if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
     get_num_lin_conv_fails s
 
   external get_num_prec_evals   : ('a, 'k) session -> int
       = "sunml_kinsol_get_num_prec_evals"
 
   let get_num_prec_evals s =
-    if in_compat_mode2_3 then ls_check_spils s;
+    if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
     get_num_prec_evals s
 
   external get_num_prec_solves  : ('a, 'k) session -> int
       = "sunml_kinsol_get_num_prec_solves"
 
   let get_num_prec_solves s =
-    if in_compat_mode2_3 then ls_check_spils s;
+    if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
     get_num_prec_solves s
 
   external get_num_jtimes_evals : ('a, 'k) session -> int
       = "sunml_kinsol_get_num_jtimes_evals"
 
   let get_num_jtimes_evals s =
-    if in_compat_mode2_3 then ls_check_spils s;
+    if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
     get_num_jtimes_evals s
 
   external get_num_lin_func_evals    : ('a, 'k) session -> int
       = "sunml_kinsol_spils_get_num_func_evals"
 
   let get_num_lin_func_evals s =
-    if in_compat_mode2_3 then ls_check_spils s;
+    if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
     get_num_lin_func_evals s
 end (* }}} *)
 

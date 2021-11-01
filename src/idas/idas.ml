@@ -13,8 +13,6 @@
 open Sundials
 include Ida_impl
 
-open Sundials_impl.Versions
-
 external c_alloc_nvector_array : int -> 'a array
     = "sunml_idas_alloc_nvector_array"
 
@@ -291,7 +289,7 @@ module Sensitivity = struct (* {{{ *)
     se.sensarray2 <- c_alloc_nvector_array ns;
     se.sensarray3 <- c_alloc_nvector_array ns;
     set_tolerances s tol;
-    if not in_compat_mode2_3
+    if not Sundials_impl.Version.in_compat_mode2_3
       then set_nonlinear_solver_sens s fmethod sens_nlsolver
 
   external c_reinit
@@ -306,7 +304,7 @@ module Sensitivity = struct (* {{{ *)
        then invalid_arg "reinit: wrong number of sensitivity vectors";
        Array.iter s.checkvec s0;
        Array.iter s.checkvec s'0);
-    if not in_compat_mode2_3 then set_nonlinear_solver_sens s sm sens_nlsolver;
+    if not Sundials_impl.Version.in_compat_mode2_3 then set_nonlinear_solver_sens s sm sens_nlsolver;
     c_reinit s sm s0 s'0
 
   external toggle_off : ('a, 'k) session -> unit
@@ -1096,9 +1094,9 @@ module Adjoint = struct (* {{{ *)
       let matrix = assert_matrix matrix in
       let use_sens = match jac with Some (WithSens _) -> true | _ -> false in
       set_ls_callbacks ?jac solver matrix session;
-      if in_compat_mode2
+      if Sundials_impl.Version.in_compat_mode2
         then make_compat (jac <> None) use_sens solver matrix bs
-      else if in_compat_mode2_3
+      else if Sundials_impl.Version.in_compat_mode2_3
         then c_dls_set_linear_solver (parent, which) rawptr matrix
                                                      (jac <> None) use_sens
       else c_set_linear_solver (parent, which) rawptr (Some matrix)
@@ -1108,7 +1106,7 @@ module Adjoint = struct (* {{{ *)
 
     (* Sundials < 3.0.0 *)
     let invalidate_callback s =
-      if in_compat_mode2 then
+      if Sundials_impl.Version.in_compat_mode2 then
         match s.ls_callbacks with
         | BDlsDenseCallback ({ jmat = Some d } as cb) ->
             Matrix.Dense.invalidate d;
@@ -1274,9 +1272,9 @@ module Adjoint = struct (* {{{ *)
       let parent, which = parent_and_which bs in
       if jac_times_vec <> None && jac_times_res <> None
         then invalid_arg "cannot pass both jac_times_vec and jac_times_res";
-      if sundials_lt530 && jac_times_res <> None
+      if Sundials_impl.Version.lt530 && jac_times_res <> None
         then raise Config.NotImplementedBySundialsVersion;
-      if in_compat_mode2 then begin
+      if Sundials_impl.Version.in_compat_mode2 then begin
         match jac_times_vec with
         | Some (NoSens (Some _, _)) | Some (WithSens (Some _, _)) ->
             raise Config.NotImplementedBySundialsVersion;
@@ -1295,7 +1293,7 @@ module Adjoint = struct (* {{{ *)
          | None ->
              session.ls_callbacks <- BSpilsCallbackSens (None, None))
       end else
-        if in_compat_mode2_3 then c_spils_set_linear_solver parent which rawptr
+        if Sundials_impl.Version.in_compat_mode2_3 then c_spils_set_linear_solver parent which rawptr
         else c_set_linear_solver (parent, which) rawptr None false false;
         LSI.attach ls;
         session.ls_solver <- LSI.HLS lsolver;
@@ -1347,12 +1345,12 @@ module Adjoint = struct (* {{{ *)
           let parent, which = parent_and_which bs in
           (match jtv with
            | NoSens (ojs, jt) ->
-             if in_compat_mode2 && ojs <> None then
+             if Sundials_impl.Version.in_compat_mode2 && ojs <> None then
                raise Config.NotImplementedBySundialsVersion;
              c_set_jac_times parent which (ojs <> None) true false;
              (tosession bs).ls_callbacks <- BSpilsCallback (Some jt, ojs)
            | WithSens (ojs, jt) ->
-             if in_compat_mode2 && ojs <> None then
+             if Sundials_impl.Version.in_compat_mode2 && ojs <> None then
                raise Config.NotImplementedBySundialsVersion;
              c_set_jac_times parent which (ojs <> None) true true;
              (tosession bs).ls_callbacks <- BSpilsCallbackSens (Some jt, ojs))
@@ -1373,7 +1371,7 @@ module Adjoint = struct (* {{{ *)
         = "sunml_idas_adj_set_eps_lin"
 
     let set_eps_lin bs epsl =
-      if in_compat_mode2_3 then ls_check_spils (tosession bs);
+      if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils (tosession bs);
       let parent, which = parent_and_which bs in
       set_eps_lin parent which epsl
 
@@ -1396,7 +1394,7 @@ module Adjoint = struct (* {{{ *)
         = "sunml_idas_adj_set_increment_factor"
 
     let set_increment_factor bs dqincfac =
-      if in_compat_mode2_3 then ls_check_spils (tosession bs);
+      if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils (tosession bs);
       let parent, which = parent_and_which bs in
       set_increment_factor parent which dqincfac
 
@@ -1460,7 +1458,7 @@ module Adjoint = struct (* {{{ *)
     let checkvec = Nvector.check y0 in
     if Sundials_configuration.safe then checkvec y'0;
     let weakref = Weak.create 1 in
-    (if in_compat_mode2_3 then
+    (if Sundials_impl.Version.in_compat_mode2_3 then
       match nlsolver with
       | Some nls when NLSI.(get_type nls <> RootFind) -> raise Ida.IllInput
       | _ -> ());
@@ -1521,7 +1519,7 @@ module Adjoint = struct (* {{{ *)
      | Some x -> set_id bs x);
     lsolver bs y0;
     (match nlsolver with
-     | Some ({ NLSI.rawptr = nlcptr } as nls) when not in_compat_mode2_3 ->
+     | Some ({ NLSI.rawptr = nlcptr } as nls) when not Sundials_impl.Version.in_compat_mode2_3 ->
          NLSI.attach nls;
          (tosession bs).nls_solver <- Some nls;
          set_nonlinear_solver bs nlcptr
@@ -1544,7 +1542,7 @@ module Adjoint = struct (* {{{ *)
        checkvec y'b0);
     let parent, which = parent_and_which bs in
     c_reinit parent which tb0 yb0 y'b0;
-    if in_compat_mode2_3 then
+    if Sundials_impl.Version.in_compat_mode2_3 then
       match nlsolver with
       | Some nls when NLSI.(get_type nls <> RootFind) -> raise Ida.IllInput
       | _ -> ()
