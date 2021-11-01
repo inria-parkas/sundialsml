@@ -660,12 +660,39 @@ val set_info_handler_fn
     @kinsol <node5#ss:optin_main> KINSetErrHandlerFn *)
 val clear_info_handler_fn : ('d, 'k) session -> unit
 
-(** Set the Anderson acceleration damping parameter. Valid values are
-    {% $0 < \mathit{beta} \leq 1.0$ %}. Values greater than or equal to 1
-    disable damping.
+(** Specifies whether fixed-point iteration should return the newest
+    iteration or the iteration consistent with the last function
+    evaluation. The default values is false.
+
+    @since 5.8.0
+    @nokinsol <node> KINSetReturnNewest *)
+val set_return_newest : ('d, 'k) session -> bool -> unit
+
+(** Sets the damping parameter for the fixed point or Picard iteration.
+
+    To applying damping, the given [beta] value must be greater than 0
+    and less than 1. Damping is disabled if [beta >= 1]. The default
+    value is 1.
+
+    @since 5.8.0
+    @nokinsol <node> KINSetDamping *)
+val set_damping : ('d, 'k) session -> float -> unit
+
+(** Set the Anderson acceleration damping parameter.
+
+    To applying damping, the given [beta] value must be greater than 0
+    and less than 1. Damping is disabled if [beta >= 1]. The default
+    value is 1.
 
     @kinsol <node5> KINSetDampingAA *)
 val set_damping_aa : ('d, 'k) session -> float -> unit
+
+(** Sets the number of iterations to delay the start of Anderson acceleration.
+    The default value is 0.
+
+    @since 5.8.0
+    @nokinsol <node> KINSetDelayAA *)
+val set_delay_aa : ('d, 'k) session -> float -> unit
 
 (** {2:get Querying the solver (optional output functions)} *)
 

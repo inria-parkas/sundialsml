@@ -535,8 +535,17 @@ let clear_info_handler_fn s =
   s.infoh <- dummy_infoh;
   c_clear_info_handler_fn s
 
+external set_return_newest : ('a, 'k) session -> bool -> unit
+    = "sunml_kinsol_set_return_newest"
+
+external set_damping : ('a, 'k) session -> float -> unit
+    = "sunml_kinsol_set_damping"
+
 external set_damping_aa : ('a, 'k) session -> float -> unit
     = "sunml_kinsol_set_damping_aa"
+
+external set_delay_aa : ('a, 'k) session -> float -> unit
+    = "sunml_kinsol_set_delay_aa"
 
 external set_num_max_iters : ('a, 'k) session -> int -> unit
     = "sunml_kinsol_set_num_max_iters"
