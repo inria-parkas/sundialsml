@@ -438,6 +438,12 @@ module Util = struct (* {{{ *)
 
   let floata = format_float "%a"
 
+  external c_compare_float : float -> float -> float -> int
+      = "sunml_sundials_compare_tol"
+
+  let compare_float ?(tol=10.0 *. Config.unit_roundoff) a b =
+    c_compare_float a b tol = 0
+
 end (* }}} *)
 
 external c_init_module :

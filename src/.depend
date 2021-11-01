@@ -486,6 +486,7 @@ lsolvers/sundials_LinearSolver_impl.cmx : \
     sundials/sundials.cmx \
     nvectors/nvector.cmx
 lsolvers/sundials_Matrix.cmo : \
+    sundials/sundials_impl.cmo \
     sundials/sundials_configuration.cmo \
     sundials/sundials_RealArray2.cmi \
     sundials/sundials_RealArray.cmi \
@@ -498,6 +499,7 @@ lsolvers/sundials_Matrix.cmo : \
     nvectors/nvector.cmi \
     lsolvers/sundials_Matrix.cmi
 lsolvers/sundials_Matrix.cmx : \
+    sundials/sundials_impl.cmx \
     sundials/sundials_configuration.cmx \
     sundials/sundials_RealArray2.cmx \
     sundials/sundials_RealArray.cmx \

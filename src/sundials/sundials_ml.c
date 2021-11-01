@@ -31,6 +31,10 @@
 
 #include "sundials_ml.h"
 
+#if 580 <= SUNDIALS_LIB_VERSION
+#include <sundials/sundials_math.h>
+#endif
+
 value sundials_ml_exn_table = 0;
 
 void sunml_register_exns(enum sundials_exn_set_index index, value exns)
@@ -159,6 +163,19 @@ CAMLprim void sunml_crash (value msg)
     fflush (stderr);
     abort ();
     CAMLreturn0;
+}
+
+CAMLprim int sunml_sundials_compare_tol(value va, value vb, value vtol)
+{
+    CAMLparam3(va, vb, vtol);
+    CAMLlocal1(vr);
+#if 580 <= SUNDIALS_LIB_VERSION
+    int r = SUNRCompareTol(Double_val(va), Double_val(vb), Double_val(vtol));
+    vr = Int_val(r);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(vr);
 }
 
 /* Functions for storing OCaml values in the C heap. */
