@@ -947,6 +947,16 @@ static int callml_custom_setscalingvectors(SUNLinearSolver ls,
     CAMLreturnT(int, CHECK_EXCEPTION_SUCCESS(r));
 }
 
+static int callml_custom_setzeroguess(SUNLinearSolver ls, booleantype onoff)
+{
+    CAMLparam0();
+    CAMLlocal1(r);
+
+    r = caml_callback_exn(GET_OP(ls, SET_ZERO_GUESS), Val_bool(onoff));
+
+    CAMLreturnT(int, CHECK_EXCEPTION_SUCCESS(r));
+}
+
 static int callml_custom_initialize(SUNLinearSolver ls)
 {
     CAMLparam0();
@@ -1238,6 +1248,11 @@ CAMLprim value sunml_lsolver_make_custom(value vlstype,
     ops->setscalingvectors =
 	Bool_val(Field(vhasops, RECORD_LSOLVER_HASOPS_SET_SCALING_VECTORS))
 	? callml_custom_setscalingvectors : NULL;
+#if 580 <= SUNDIALS_LIB_VERSION
+    ops->setzeroguess =
+	Bool_val(Field(vhasops, RECORD_LSOLVER_HASOPS_SET_ZERO_GUESS))
+	? callml_custom_setzeroguess : NULL;
+#endif
     ops->numiters          =
 	Bool_val(Field(vhasops, RECORD_LSOLVER_HASOPS_GET_NUM_ITERS))
 	? callml_custom_numiters : NULL;
@@ -1682,6 +1697,18 @@ CAMLprim value sunml_lsolver_set_scaling_vectors(value vcptr,
     int flag = SUNLinSolSetScalingVectors(LSOLVER_VAL(vcptr),
 					  NVEC_VAL(vs1), NVEC_VAL(vs2));
     CHECK_FLAG("SUNLinSolSetScalingVectors", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim value sunml_lsolver_set_zero_guess(value vcptr, value vonoff)
+{
+    CAMLparam2(vcptr, vonoff);
+#if 580 <= SUNDIALS_LIB_VERSION
+    int flag = SUNLinSolSetZeroGuess(LSOLVER_VAL(vcptr), Bool_val(vonoff));
+    CHECK_FLAG("SUNLinSolSetZeroGuess", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif

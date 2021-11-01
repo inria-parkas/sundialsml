@@ -541,6 +541,8 @@ module Custom = struct (* {{{ *)
       set_scaling_vectors
       : ('lsolver -> 'data option -> 'data option -> unit) option;
 
+      set_zero_guess : ('lsolver -> bool -> unit) option;
+
       get_num_iters : ('lsolver -> int) option;
 
       get_res_norm : ('lsolver -> float) option;
@@ -599,6 +601,7 @@ module Custom = struct (* {{{ *)
              set_atimes = fset_atimes;
              set_preconditioner = fset_preconditioner;
              set_scaling_vectors = fset_scaling_vectors;
+             set_zero_guess = fset_zero_guess;
              get_num_iters = fget_num_iters;
              get_res_norm = fget_res_norm;
              get_res_id = fget_res_id;
@@ -621,6 +624,7 @@ module Custom = struct (* {{{ *)
           wrap_set_preconditioner fset_preconditioner ldata;
         set_scaling_vectors =
           mapo "set_scaling_vectors" fset_scaling_vectors ldata;
+        set_zero_guess = mapo "set_zero_guess" fset_zero_guess ldata;
         get_id = (fun () -> sid);
         get_num_iters = mapu "get_num_iters" fget_num_iters ldata;
         get_res_norm = mapu "get_res_norm" fget_res_norm ldata;
@@ -636,6 +640,7 @@ module Custom = struct (* {{{ *)
           has_set_atimes          = fset_atimes <> None;
           has_set_preconditioner  = fset_preconditioner <> None;
           has_set_scaling_vectors = fset_scaling_vectors <> None;
+          has_set_zero_guess      = fset_zero_guess <> None;
           has_get_num_iters       = fget_num_iters <> None;
           has_get_res_norm        = fget_res_norm <> None;
           has_get_res_id          = fget_res_id <> None;
@@ -689,6 +694,8 @@ module Custom = struct (* {{{ *)
           failwith "internal error: Direct.Custom.set_preconditioner");
         set_scaling_vectors = (fun _ _ ->
           failwith "internal error: Direct.Custom.set_scaling_vectors");
+        set_zero_guess = (fun _ ->
+          failwith "internal error: Direct.Custom.set_zero_guess");
         get_id = (fun () -> Custom);
         get_num_iters = (fun _ ->
           failwith "internal error: Direct.Custom.get_num_iters");
@@ -709,6 +716,7 @@ module Custom = struct (* {{{ *)
           has_set_atimes          = false;
           has_set_preconditioner  = false;
           has_set_scaling_vectors = false;
+          has_set_zero_guess      = false;
           has_get_num_iters       = false;
           has_get_res_norm        = false;
           has_get_res_id          = false;
@@ -772,6 +780,13 @@ let set_scaling_vectors (LS { rawptr; ocaml_callbacks }) s1 s2 =
   cb.scaling_vector1 <- Some s1; (* prevent garbage collection *)
   cb.scaling_vector2 <- Some s2; (* prevent garbage collection *)
   c_set_scaling_vectors rawptr s1 s2
+
+external c_set_zero_guess
+  : ('m, 'd, 'k) cptr -> bool -> unit
+  = "sunml_lsolver_set_zero_guess"
+
+let set_zero_guess (LS { rawptr; ocaml_callbacks }) onoff =
+  c_set_zero_guess rawptr onoff
 
 external c_initialize : ('m, 'd, 'k) cptr -> unit
   = "sunml_lsolver_initialize"

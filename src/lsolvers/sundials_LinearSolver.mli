@@ -609,6 +609,10 @@ module Custom : sig (* {{{ *)
           {% $\tilde{x} = S_2 P_2 x$ %}.
           A [None] argument indicates an identity scaling matrix. *)
 
+      set_zero_guess : ('lsolver -> bool -> unit) option;
+      (** Used to indicate whether the next call to the solve function will
+          be maed with a zero initial guess. *)
+
       get_num_iters : ('lsolver -> int) option;
       (** The number of linear iterations performed in the last
      [solve] call. *)
@@ -723,6 +727,16 @@ val set_scaling_vectors :
      ('m, 'd, 'k, 't) t
   -> ('d, 'k) Nvector.t
   -> ('d, 'k) Nvector.t
+  -> unit
+
+(** Indicates that the next call to {!solve} will be made with a zero initial
+    guess.
+
+    @since 5.8.0
+    @nocvode <node> SUNLinSolSetZeroGuess *)
+val set_zero_guess :
+     ('m, 'd, 'k, 't) t
+  -> bool
   -> unit
 
 (** Initializes a linear solver.
