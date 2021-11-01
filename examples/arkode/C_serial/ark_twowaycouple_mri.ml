@@ -100,8 +100,10 @@ let main () =
      specify the right-hand side functions in y'=fs(t,y)+ff(t,y),
      the inital time T0, and the initial dependent variable vector y. *)
   (* Specify slow and fast step sizes *)
-  let arkode_mem = MRIStep.(init inner_arkode_mem default_tolerances fs
-                              ~slowstep:hs t0 y) in
+  let arkode_mem = MRIStep.(init
+                              InnerStepper.(from_arkstep inner_arkode_mem)
+                              default_tolerances
+                              fs ~slowstep:hs t0 y) in
 
   (*
    * Integrate ODE

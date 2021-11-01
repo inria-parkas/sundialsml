@@ -61,6 +61,11 @@
 #include <stdio.h>
 #define MAX_ERRMSG_LEN 256
 
+#if 580 <= SUNDIALS_LIB_VERSION
+#define ISTEPPER(v) (*(MRIStepInnerStepper*)Data_custom_val(v))
+#define ISTEPPER_FROM_ML(v) (ISTEPPER(Field((v), RECORD_ARKODE_MRI_ISTEPPER_RAWPTR)))
+#endif
+
 // must correspond with the constructors of Arkode.interpolant_type
 static int ark_interpolant_types[] = {
     ARK_INTERP_HERMITE,
@@ -153,6 +158,20 @@ int sunml_arkode_translate_exception (value session, value exn,
     bucket = caml_alloc_small (1,0);
     Field (bucket, 0) = exn;
     Store_field (session, RECORD_ARKODE_SESSION_EXN_TEMP, bucket);
+    CAMLreturnT (int, -1);
+}
+
+static int istepper_translate_exception(value exn, recoverability recoverable)
+{
+    CAMLparam1(exn);
+
+    if ((recoverable & 0x1)
+	    && Field(exn, 0) == SUNDIALS_EXN_TAG (RecoverableFailure))
+	CAMLreturnT (int, 1);
+
+    if (recoverable) sunml_warn_discarded_exn (exn, "nonlinear solver");
+
+    /* Unrecoverable error -1. Unfortunately we lose the exception. */
     CAMLreturnT (int, -1);
 }
 
@@ -6279,17 +6298,34 @@ CAMLprim value sunml_arkode_erk_write_butcher(value varkode_mem, value vlog)
  */
 
 /* MRIStepCreate() */
-CAMLprim value sunml_arkode_mri_init(value weakref, value vinner,
+CAMLprim value sunml_arkode_mri_init(value weakref, value vistepper,
 				     value y0, value t0)
 {
-    CAMLparam4(weakref, vinner, y0, t0);
-    CAMLlocal2(r, varkode_mem);
+    CAMLparam4(weakref, vistepper, y0, t0);
+    CAMLlocal3(r, varkode_mem, vistepper_val);
 #if 500 <= SUNDIALS_LIB_VERSION
     value *backref;
+    void *arkode_mem;
 
-    void *arkode_mem = MRIStepCreate(rhsfn1, Double_val(t0), NVEC_VAL(y0),
-				     MRISTEP_ARKSTEP,
-				     ARKODE_MEM_FROM_ML(vinner));
+    vistepper_val = Field(vistepper, RECORD_ARKODE_MRI_ISTEPPER_VAL);
+
+    if (Is_block(vistepper_val)
+	&& Tag_val(vistepper_val) == VARIANT_ARKODE_MRI_ISTEPPER_ARKSTEP)
+    {
+	arkode_mem =
+	    MRIStepCreate(rhsfn1, Double_val(t0), NVEC_VAL(y0),
+			  MRISTEP_ARKSTEP,
+			  ARKODE_MEM_FROM_ML(Field(vistepper_val, 0)));
+    } else {
+#if 580 <= SUNDIALS_LIB_VERSION
+	arkode_mem =
+	    MRIStepCreate(rhsfn1, Double_val(t0), NVEC_VAL(y0),
+			  MRISTEP_CUSTOM,
+			  ISTEPPER_FROM_ML(vistepper));
+#else
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    }
 
     if (arkode_mem == NULL)
 	caml_failwith("MRIStepCreate returned NULL");
@@ -7117,6 +7153,234 @@ CAMLprim value sunml_arkode_mri_set_stage_predict_fn(value varkode_mem,
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn (Val_unit);
+}
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * MRIStep Inner Stepper interface.
+ */
+
+#if 580 <= SUNDIALS_LIB_VERSION
+static void finalize_istepper(value vistepper_cptr)
+{
+    MRIStepInnerStepper stepper = ISTEPPER(vistepper_cptr);
+
+    value *pvcallbacks = NULL;
+    MRIStepInnerStepper_GetContent(stepper, (void **)&pvcallbacks);
+    if (pvcallbacks != NULL) sunml_sundials_free_value(pvcallbacks);
+
+    MRIStepInnerStepper_Free(&stepper);
+}
+
+static void finalize_sundials_istepper(value vistepper_cptr)
+{
+    MRIStepInnerStepper stepper = ISTEPPER(vistepper_cptr);
+    MRIStepInnerStepper_Free(&stepper);
+}
+
+static int istepper_evolvefn(MRIStepInnerStepper stepper,
+			     realtype t0,
+			     realtype tout,
+			     N_Vector v)
+{
+    CAMLparam0();
+    CAMLlocalN(args, 3);
+    CAMLlocal1(callbacks);
+
+    value *pvcallbacks = NULL;
+    MRIStepInnerStepper_GetContent(stepper, (void **)&pvcallbacks);
+
+    args[0] = caml_copy_double(t0);
+    args[1] = caml_copy_double(tout);
+    args[2] = NVEC_BACKLINK(v);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (
+	Field(*pvcallbacks, RECORD_ARKODE_MRI_ISTEPPER_CALLBACKS_EVOLVE_FN),
+	3, args);
+    if (!Is_exception_result (r)) CAMLreturnT(int, 0);
+
+    r = Extract_exception (r);
+    CAMLreturnT(int, istepper_translate_exception (r, RECOVERABLE));
+}
+
+static int istepper_fullrhsfn(MRIStepInnerStepper stepper,
+			      realtype t,
+			      N_Vector v,
+			      N_Vector f,
+			      int mode)
+{
+    CAMLparam0();
+    CAMLlocalN(args, 4);
+    CAMLlocal2(callbacks, vmode);
+
+    value *pvcallbacks = NULL;
+    MRIStepInnerStepper_GetContent(stepper, (void **)&pvcallbacks);
+
+    switch (mode) {
+    case ARK_FULLRHS_START:
+	vmode = Val_int(VARIANT_ARKODE_MRI_ISTEPPER_FULL_RHSFN_MODE_START);
+	break;
+
+    case ARK_FULLRHS_END:
+	vmode = Val_int(VARIANT_ARKODE_MRI_ISTEPPER_FULL_RHSFN_MODE_END);
+	break;
+
+    case ARK_FULLRHS_OTHER:
+    default:
+	vmode = Val_int(VARIANT_ARKODE_MRI_ISTEPPER_FULL_RHSFN_MODE_OTHER);
+	break;
+    }
+
+    args[0] = caml_copy_double(t);
+    args[1] = NVEC_BACKLINK(v);
+    args[2] = NVEC_BACKLINK(f);
+    args[3] = vmode;
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (
+	Field(*pvcallbacks, RECORD_ARKODE_MRI_ISTEPPER_CALLBACKS_FULL_RHS_FN),
+	4, args);
+    if (!Is_exception_result (r)) CAMLreturnT(int, 0);
+
+    r = Extract_exception (r);
+    CAMLreturnT(int, istepper_translate_exception (r, RECOVERABLE));
+}
+
+static int istepper_resetfn(MRIStepInnerStepper stepper,
+			    realtype tR,
+			    N_Vector vR)
+{
+    CAMLparam0();
+    CAMLlocalN(args, 2);
+    CAMLlocal1(callbacks);
+
+    value *pvcallbacks = NULL;
+    MRIStepInnerStepper_GetContent(stepper, (void **)&pvcallbacks);
+
+    args[0] = caml_copy_double(tR);
+    args[1] = NVEC_BACKLINK(vR);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (
+	Field(*pvcallbacks, RECORD_ARKODE_MRI_ISTEPPER_CALLBACKS_RESET_FN),
+	2, args);
+    if (!Is_exception_result (r)) CAMLreturnT(int, 0);
+
+    r = Extract_exception (r);
+    CAMLreturnT(int, istepper_translate_exception (r, RECOVERABLE));
+}
+#endif
+
+CAMLprim value sunml_arkode_mri_istepper_from_arkstep(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    CAMLlocal1(r);
+#if 580 <= SUNDIALS_LIB_VERSION
+    int flag;
+    MRIStepInnerStepper stepper;
+
+    flag = ARKStepCreateMRIStepInnerStepper(ARKODE_MEM_FROM_ML(varkode_mem),
+					    &stepper);
+    CHECK_FLAG("ARKStepCreateMRIStepInnerStepper", flag);
+
+    r = caml_alloc_final(1, &finalize_sundials_istepper, 0, 1);
+    ISTEPPER(r) = stepper;
+#else
+    r = Val_unit;
+#endif
+    CAMLreturn(r);
+}
+
+CAMLprim value sunml_arkode_mri_istepper_create(value vcallbacks,
+						value vhasresetfn)
+{
+    CAMLparam2(vcallbacks, vhasresetfn);
+    CAMLlocal1(vistepper);
+#if 580 <= SUNDIALS_LIB_VERSION
+    int flag;
+    MRIStepInnerStepper stepper;
+
+    flag = MRIStepInnerStepper_Create(&stepper);
+    CHECK_FLAG("MRIStepInnerStepper_Create", flag);
+
+    flag = MRIStepInnerStepper_SetEvolveFn(stepper, istepper_evolvefn);
+    if (flag != ARK_SUCCESS) {
+	MRIStepInnerStepper_Free(&stepper);
+	sunml_arkode_check_flag("MRIStepInnerStepper_SetEvolveFn", flag, NULL);
+    }
+
+    flag = MRIStepInnerStepper_SetFullRhsFn(stepper, istepper_fullrhsfn);
+    if (flag != ARK_SUCCESS) {
+	MRIStepInnerStepper_Free(&stepper);
+	sunml_arkode_check_flag("MRIStepInnerStepper_SetFullRhsFn", flag, NULL);
+    }
+
+    if (Bool_val(vhasresetfn))
+    {
+	flag = MRIStepInnerStepper_SetResetFn(stepper, istepper_resetfn);
+	if (flag != ARK_SUCCESS) {
+	    MRIStepInnerStepper_Free(&stepper);
+	    sunml_arkode_check_flag("MRIStepInnerStepper_SetResetFn", flag, NULL);
+	}
+    }
+
+    value *pvcallbacks = sunml_sundials_malloc_value(vcallbacks);
+    if (pvcallbacks == NULL) caml_raise_out_of_memory();
+
+    flag = MRIStepInnerStepper_SetContent(stepper, (void *)pvcallbacks);
+    if (flag != ARK_SUCCESS) {
+	MRIStepInnerStepper_Free(&stepper);
+	sunml_sundials_free_value(pvcallbacks);
+	sunml_arkode_check_flag("MRIStepInnerStepper_SetContent", flag, NULL);
+    }
+
+    vistepper = caml_alloc_final(1, &finalize_istepper, 0, 1);
+    ISTEPPER(vistepper) = stepper;
+#endif
+    CAMLreturn(vistepper);
+}
+
+CAMLprim value sunml_arkode_mri_istepper_add_forcing(value visteppercptr,
+						     value vt, value vff)
+{
+    CAMLparam3(visteppercptr, vt, vff);
+#if 580 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepInnerStepper_AddForcing(ISTEPPER(visteppercptr),
+		    Double_val(vt), NVEC_VAL(vff));
+    CHECK_FLAG("MRIStepInnerStepper_AddForcing", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim value sunml_arkode_mri_istepper_get_forcing_data(value visteppercptr)
+{
+    CAMLparam1(visteppercptr);
+    CAMLlocal1(vr);
+#if 580 <= SUNDIALS_LIB_VERSION
+    realtype tshift;
+    realtype tscale;
+    N_Vector *forcing;
+    int nforcing;
+
+    int flag = MRIStepInnerStepper_GetForcingData(ISTEPPER(visteppercptr),
+		    &tshift, &tscale, &forcing, &nforcing);
+    CHECK_FLAG("MRIStepInnerStepper_GetForcingData", flag);
+
+    if (forcing == NULL) caml_invalid_argument("no forcing data");
+
+    vr = caml_alloc_tuple(RECORD_ARKODE_MRI_ISTEPPER_FORCING_DATA_SIZE);
+    Store_field(vr, RECORD_ARKODE_MRI_ISTEPPER_FORCING_DATA_TSHIFT,
+		caml_copy_double(tshift));
+    Store_field(vr, RECORD_ARKODE_MRI_ISTEPPER_FORCING_DATA_TSCALE,
+		caml_copy_double(tscale));
+    Store_field(vr, RECORD_ARKODE_MRI_ISTEPPER_FORCING_DATA_FORCING,
+		sunml_wrap_to_nvector_table(nforcing, forcing));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(vr);
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *

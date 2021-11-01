@@ -400,6 +400,41 @@ enum arkode_mri_coupling_table_tag {
   VARIANT_ARKODE_MRI_COUPLING_GARK_ESDIRK34a,
 };
 
+enum arkode_mri_istepper_full_rhsfn_mode_tag {
+  VARIANT_ARKODE_MRI_ISTEPPER_FULL_RHSFN_MODE_START = 0,
+  VARIANT_ARKODE_MRI_ISTEPPER_FULL_RHSFN_MODE_END,
+  VARIANT_ARKODE_MRI_ISTEPPER_FULL_RHSFN_MODE_OTHER,
+};
+
+enum arkode_mri_istepper_index {
+  RECORD_ARKODE_MRI_ISTEPPER_RAWPTR = 0,
+  RECORD_ARKODE_MRI_ISTEPPER_VAL,
+  RECORD_ARKODE_MRI_ISTEPPER_ICHECKVEC,
+  RECORD_ARKODE_MRI_ISTEPPER_SIZE
+};
+
+enum arkode_mri_istepper_tag {
+  /* constructors with arguments */
+  VARIANT_ARKODE_MRI_ISTEPPER_ARKSTEP = 0,
+  VARIANT_ARKODE_MRI_ISTEPPER_CUSTOM,
+  /* constructors without arguments */
+  VARIANT_ARKODE_MRI_ISTEPPER_SUNDIALS = 0,
+};
+
+enum arkode_mri_istepper_callbacks_index {
+  RECORD_ARKODE_MRI_ISTEPPER_CALLBACKS_EVOLVE_FN = 0,
+  RECORD_ARKODE_MRI_ISTEPPER_CALLBACKS_FULL_RHS_FN,
+  RECORD_ARKODE_MRI_ISTEPPER_CALLBACKS_RESET_FN,
+  RECORD_ARKODE_MRI_ISTEPPER_CALLBACKS_SIZE
+};
+
+enum arkode_mri_istepper_forcing_data_index {
+  RECORD_ARKODE_MRI_ISTEPPER_FORCING_DATA_TSHIFT = 0,
+  RECORD_ARKODE_MRI_ISTEPPER_FORCING_DATA_TSCALE,
+  RECORD_ARKODE_MRI_ISTEPPER_FORCING_DATA_FORCING,
+  RECORD_ARKODE_MRI_ISTEPPER_FORCING_DATA_SIZE
+};
+
 /* This enum must list exceptions in the same order as the call to
  * c_register_exns in arkode.ml.  */
 enum arkode_exn_index {

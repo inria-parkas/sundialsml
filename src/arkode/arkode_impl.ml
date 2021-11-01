@@ -233,6 +233,23 @@ module Global = struct
   type 'd post_inner_fn = float -> 'd -> unit
 end
 
+(* Inner steppers *)
+
+type ('d, 'k) inner_stepper_cptr
+
+(* synchronized with arkode_ml.h: arkode_mri_istepper_full_rhsfn_mode_tag *)
+type fullrhs_mode =
+  | Start
+  | End
+  | Other
+
+(* synchronized with arkode_ml.h: arkode_mri_istepper_callbacks_index *)
+type 'd inner_stepper_callbacks = {
+  evolve_fn   : float -> float -> 'd -> unit;
+  full_rhs_fn : float -> 'd -> 'd -> fullrhs_mode -> unit;
+  reset_fn    : float -> 'd -> unit;
+}
+
 open Global
 
 type 'a res_weight_fun = 'a -> 'a -> unit
@@ -289,7 +306,7 @@ type ('a, 'kind, 'step) session = {
                            NLSI.nonlinear_solver option;
 
   (* MRI only *)
-  mutable inner_session  : ('a, 'kind, arkstep) session option;
+  mutable inner_session  : ('a, 'kind) inner_stepper option;
 }
 
 and problem_type =
@@ -398,6 +415,19 @@ and ('a, 'kind) mass_callbacks =
 and 'a mass_precfns =
   | NoMassPrecFns
   | MassPrecFns of 'a MassTypes'.Iterative'.precfns
+
+(* synchronized with arkode_ml.h: arkode_mri_istepper_tag *)
+and ('d, 'k) istepper =
+  | ARKStepInnerStepper of ('d, 'k, arkstep) session (* Sundials < 580 *)
+  | SundialsInnerStepper
+  | CustomInnerStepper of 'd inner_stepper_callbacks
+
+(* synchronized with arkode_ml.h: arkode_mri_istepper_index *)
+and ('d, 'k) inner_stepper = {
+  rawptr   : ('d, 'k) inner_stepper_cptr;
+  istepper : ('d, 'k) istepper;
+  mutable icheckvec : (('d, 'k) Nvector.t -> unit) option
+}
 
 (* Linear solver check functions *)
 

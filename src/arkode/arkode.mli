@@ -369,7 +369,7 @@ module Dls : sig (* {{{ *)
                returned.}
 
       @since 5.0.0
-      @nocvode <node> ARKLsLinSysFn *)
+      @noarkode <node> ARKLsLinSysFn *)
   type 'm linsys_fn =
     (RealArray.t Common.triple, RealArray.t) Common.jacobian_arg
     -> 'm
@@ -713,7 +713,8 @@ end (* }}} *)
 
 (** {2:timestepping Time-stepping Modules}
 
-    The main time-stepping modules: ARKStep, ERKStep, and MRIStep. *)
+    The main time-stepping modules:
+    {!modules: ARKStep ERKStep MRIStep} *)
 
 (** ARKStep Time-Stepping Module for ODE systems in split, linearly-implicit
     form.
@@ -723,12 +724,12 @@ end (* }}} *)
 
     Its interface is structured as follows.
     {ol
-      {- {{:#linear}Linear and mass matrix solvers}}
-      {- {{:#tols}Tolerances}}
-      {- {{:#solver}Solver initialization and use}}
-      {- {{:#set}Modifying the solver}}
-      {- {{:#get}Querying the solver}}
-      {- {{:#roots}Additional root finding functions}}}
+      {- {{:#arklinear}Linear and mass matrix solvers}}
+      {- {{:#arktols}Tolerances}}
+      {- {{:#arksolver}Solver initialization and use}}
+      {- {{:#arkset}Modifying the solver}}
+      {- {{:#arkget}Querying the solver}}
+      {- {{:#arkroots}Additional root finding functions}}}
 
     @noarkode <node> Using ARKStep for C and C++ Applications *)
 module ARKStep : sig (* {{{ *)
@@ -2273,10 +2274,10 @@ end (* }}} *)
 
     Its interface is structured as follows.
     {ol
-      {- {{:#solver}Solver initialization and use}}
-      {- {{:#set}Modifying the solver}}
-      {- {{:#get}Querying the solver}}
-      {- {{:#roots}Additional root finding functions}}}
+      {- {{:#erksolver}Solver initialization and use}}
+      {- {{:#erkset}Modifying the solver}}
+      {- {{:#erkget}Querying the solver}}
+      {- {{:#erkroots}Additional root finding functions}}}
 
     @noarkode <node> Using ERKStep for C and C++ Applications *)
 module ERKStep : sig (* {{{ *)
@@ -2831,10 +2832,12 @@ end (* }}} *)
 
     Its interface is structured as follows.
     {ol
-      {- {{:#solver}Solver initialization and use}}
-      {- {{:#set}Modifying the solver}}
-      {- {{:#get}Querying the solver}}
-      {- {{:#roots}Additional root finding functions}}}
+      {- {{:#mrilinear}Linear solvers}}
+      {- {{:#innerstepper}Inner steppers}}
+      {- {{:#mrisolver}Solver initialization and use}}
+      {- {{:#mriset}Modifying the solver}}
+      {- {{:#mriget}Querying the solver}}
+      {- {{:#mriroots}Additional root finding functions}}}
 
     @noarkode <node> Using MRIStep for C and C++ Applications *)
 module MRIStep : sig (* {{{ *)
@@ -3123,13 +3126,126 @@ module MRIStep : sig (* {{{ *)
 
   end (* }}} *)
 
+  (** {2:innerstepper Inner Steppers} *)
+
+  (** Generic  *)
+  module InnerStepper : sig (* {{{ *)
+
+    (** Inner steppers are used to solve the auxiliary initial value problem
+        of an {{!module:MRIStep}MRIStep} integrator's fast time scale.
+
+        @noarkode <node> MRIStep Custom Inner Steppers *)
+    type ('d, 'k) t = ('d, 'k) Arkode_impl.inner_stepper
+
+    (** Wrap an {!module:ARKStep} session for use as an inner stepper.
+
+        @noarkode <node> ARKStepCreateMRIStepInnerStepper *)
+    val from_arkstep : ('d, 'k) ARKStep.session -> ('d, 'k) t
+
+    (** {2:mriinstepcreate Creation} *)
+
+    (** The function [efn t0 tout v] advances the state vector [v] for the
+        inner (fast) ODE system from time [t0] to time [tout].
+
+        Within the function, raising a {!Sundials.RecoverableFailure}
+        exception indicates a recoverable error. Any other exception is
+        treated as an unrecoverable error.
+
+        @noarkode <node> MRIStepInnerEvolveFn *)
+    type 'd evolvefn = float -> float -> 'd -> unit
+
+    (** A flag indicating why the full RHS function has been called.
+
+        @noarkode <node> MRIStepInnerFullRhsFn *)
+    type fullrhs_mode = Arkode_impl.fullrhs_mode =
+      | Start  (** It's the beginning of the simulation. *)
+      | End    (** It's the end of a successful step. *)
+      | Other  (** Some other reason, e.g., for dense output. *)
+
+    (** The function [rhsfn t v f m] updates [f] with the value of the
+        full right-hand-side function of the inner (fast) ODE at time [t]
+        and for dependent variable values [v].
+
+        Within the function, raising a {!Sundials.RecoverableFailure}
+        exception indicates a recoverable error. Any other exception is
+        treated as an unrecoverable error.
+
+        @noarkode <node> MRIStepInnerFullRhsFn *)
+    type 'd full_rhsfn = float -> 'd -> 'd -> fullrhs_mode -> unit
+
+
+    (** The function [rfn tR vR] rests the inner (fast) stepper state
+        to time [tR] and dependent variable values [vR].
+
+        Within the function, raising a {!Sundials.RecoverableFailure}
+        exception indicates a recoverable error. Any other exception is
+        treated as an unrecoverable error.
+
+        @noarkode <node> MRIStepInnerResetFn *)
+    type 'd resetfn = float -> 'd -> unit
+
+    (** Creates an inner stepper. An inner stepper is defined by
+        obligatory functions to evolve the state vector and calculate the
+        right-hand side, and an optional function to reset the internal state.
+        Inner stepper “content” can be implemented in OCaml using function
+        closures.
+
+        @noarkode <node> MRIStepInnerStepper_Create
+        @noarkode <node> MRIStepInnerStepper_Free
+        @noarkode <node> MRIStepInnerStepper_SetContent
+        @noarkode <node> MRIStepInnerStepper_GetContent
+        @noarkode <node> MRIStepInnerStepper_SetEvolveFn
+        @noarkode <node> MRIStepInnerStepper_SetFullRhsFn
+        @noarkode <node> MRIStepInnerStepper_SetFullResetFn
+        @since 5.8.0 *)
+    val make :
+         evolve_fn:'d evolvefn
+      -> full_rhs_fn:'d full_rhsfn
+      -> ?reset_fn:'d resetfn
+      -> unit
+      -> ('d, 'k) t
+
+    (** {2:mriinstepforcing Applying and Accessing Forcing Data} *)
+
+    (** Computes the forcing term at the given time and adds it to the
+        given inner (fast) right-hand-side vector.
+
+        @raise Invalid_argument The inner stepper is not associated with an integrator
+        @noarkode <node> MRIStepInnerStepper_AddForcing
+        @since 5.8.0 *)
+    val add_forcing : ('d, 'k) t -> float -> ('d, 'k) Nvector.t -> unit
+
+    (** The data necessary to computer the forcing term.
+        This includes the shift and scaling factors for the normalized time
+        {% $\tau = (t - t^S_{n,i-1})/(h^S\Delta c^S_i)$ %} and the array
+        of polynomial coefficient vectors {% $\hat{\gamma}_i^{\{k\}}$ %}.
+
+        @noarkode <node> MRIStepInnerStepper_GetForcingData *)
+    type 'd forcing_data = {
+      tshift   : float; (** Time shift to apply to the current time,
+                            {% $t^S_{n,i-1}$ %}. *)
+      tscale   : float; (** Time scaling to apply to the current time,
+                            {% $h^S\Delta C^S_i$ %}. *)
+      forcing  : 'd array; (** An array of forcing vectors
+                            {% $\hat{\gamma}_i^{\{k\}}$ %}. *)
+    }
+
+    (** Return the data necessary to compute the forcing term.
+
+        @raise Invalid_argument The inner stepper is not associated with an integrator
+        @noarkode <node> MRIStepInnerStepper_GetForcingData
+        @since 5.8.0 *)
+    val get_forcing_data : ('d, 'k) t -> 'd forcing_data
+
+  end (* }}} *)
+
   (** {2:mrisolver Solver initialization and use} *)
 
   (** Creates and initializes a session with the solver. The call
       {[init inner tol ~nlsolver ~lsolver ~linearity
              f_s ~slowstep:h_s ~roots:(nroots, g) t0 y0]}
       has as arguments:
-      - [inner],  a session to use for the (fast) inner integrator,
+      - [inner],  an inner stepper to use for the fast integrator,
       - [tol],    the slow-step integration tolerances,
       - [nlsolver], the nonlinear solver used for implicit stage solves,
       - [lsolver], used by [nlsolver]s based on Newton interation.
@@ -3181,7 +3297,7 @@ module MRIStep : sig (* {{{ *)
       @noarkode <node> MRIStepSVtolerances
       @noarkode <node> MRIStepWFtolerances *)
   val init :
-        ('data, 'kind) ARKStep.session
+         ('data, 'kind) InnerStepper.t
       -> ('data, 'kind) tolerance
       -> ?nlsolver:('data, 'kind, ('data, 'kind) session, [`Nvec])
                      Sundials_NonlinearSolver.t
@@ -3284,7 +3400,7 @@ module MRIStep : sig (* {{{ *)
     -> float
     -> unit
 
-  (** {2:rmiset Modifying the solver (optional input functions)} *)
+  (** {2:mriset Modifying the solver (optional input functions)} *)
 
   (** Resets all optional input parameters to their default values. Neither
       the problem-defining functions nor the root-finding functions are
@@ -3759,7 +3875,6 @@ module MRIStep : sig (* {{{ *)
       @since 5.4.0
       @return ([nniters], [nncfails]) *)
   val get_nonlin_solv_stats : ('d, 'k) session -> int * int
-
 
   (** {2:mriroots Additional root-finding functions} *)
 

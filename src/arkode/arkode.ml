@@ -2763,6 +2763,78 @@ module MRIStep = struct (* {{{ *)
 
   end (* }}} *)
 
+  module InnerStepper = struct (* {{{ *)
+
+    module I = Arkode_impl
+
+    type ('d, 'k) t = ('d, 'k) I.inner_stepper
+
+    external c_from_arkstep
+      : ('d, 'k, I.arkstep) I.session -> ('d, 'k) I.inner_stepper_cptr
+      = "sunml_arkode_mri_istepper_from_arkstep"
+
+    let from_arkstep session = I.{
+        rawptr = c_from_arkstep session;
+        istepper = if Sundials_impl.Version.lt580
+                   then I.ARKStepInnerStepper session
+                   else I.SundialsInnerStepper;
+        icheckvec = None;
+      }
+
+    type 'd evolvefn = float -> float -> 'd -> unit
+
+    type fullrhs_mode = Arkode_impl.fullrhs_mode =
+      | Start
+      | End
+      | Other
+
+    type 'd full_rhsfn = float -> 'd -> 'd -> fullrhs_mode -> unit
+
+    type 'd resetfn = float -> 'd -> unit
+
+    external c_create_inner_stepper
+      : 'd I.inner_stepper_callbacks -> bool -> ('d, 'k) I.inner_stepper_cptr
+      = "sunml_arkode_mri_istepper_create"
+
+    let make ~evolve_fn ~full_rhs_fn ?reset_fn () =
+      let reset_fn, has_reset_fn =
+        match reset_fn with
+        | None -> (fun _ _ -> assert false), false
+        | Some f -> f, true
+      in
+      let callbacks = { evolve_fn; full_rhs_fn; reset_fn } in
+      I.{
+        rawptr = c_create_inner_stepper callbacks has_reset_fn;
+        istepper = I.CustomInnerStepper callbacks;
+        icheckvec = None;
+      }
+
+    external c_add_forcing
+      : ('d, 'k) I.inner_stepper_cptr -> float -> ('d, 'k) Nvector.t -> unit
+      = "sunml_arkode_mri_istepper_add_forcing"
+
+    let add_forcing I.{ rawptr; icheckvec; _ } t ff =
+      (match icheckvec with
+       | None -> invalid_arg "no forcing data"
+       | Some cv -> cv ff);
+      c_add_forcing rawptr t ff
+
+    (* synchronized with arkode_ml.h: arkode_mri_istepper_forcing_data_index *)
+    type 'd forcing_data = {
+      tshift   : float;
+      tscale   : float;
+      forcing  : 'd array;
+    }
+
+    external c_get_forcing_data
+      : ('d, 'k) I.inner_stepper_cptr -> 'd forcing_data
+      = "sunml_arkode_mri_istepper_get_forcing_data"
+
+    let get_forcing_data I.{ rawptr; _ }
+      = c_get_forcing_data rawptr
+
+  end (* }}} *)
+
   external session_finalize : ('a, 'k) session -> unit
       = "sunml_arkode_mri_session_finalize"
 
@@ -2790,7 +2862,7 @@ module MRIStep = struct (* {{{ *)
 
   external c_init :
     ('a, 'k) session Weak.t
-    -> ('a, 'k) ARKStep.session
+    -> ('a, 'k) InnerStepper.t
     -> ('a, 'k) nvector (* y_0 *)
     -> float            (* t_0 *)
     -> (mristep arkode_mem * c_weak_ref)
@@ -2806,7 +2878,7 @@ module MRIStep = struct (* {{{ *)
   external set_linear : ('a, 'k) session -> bool -> unit
     = "sunml_arkode_mri_set_linear"
 
-  let init fasts tol ?nlsolver ?lsolver ?linearity slow
+  let init istepper tol ?nlsolver ?lsolver ?linearity slow
            ~slowstep ?(roots=no_roots) t0 y0 =
     if Sundials_impl.Version.lt500
       then raise Config.NotImplementedBySundialsVersion;
@@ -2817,8 +2889,9 @@ module MRIStep = struct (* {{{ *)
     if Sundials_impl.Version.lt540
         && (nlsolver <> None || lsolver <> None || linearity <> None)
       then invalid_arg "functions is negative";
+    if istepper.icheckvec <> None then invalid_arg "inner stepper already in use";
     let weakref = Weak.create 1 in
-    let arkode_mem, backref = c_init weakref fasts y0 t0 in
+    let arkode_mem, backref = c_init weakref istepper y0 t0 in
     (* arkode_mem and backref have to be immediately captured in a session and
        associated with the finalizer before we do anything else.  *)
     let session = {
@@ -2859,12 +2932,13 @@ module MRIStep = struct (* {{{ *)
 
             nls_solver     = None;
 
-            inner_session  = Some fasts;
+            inner_session  = Some istepper;
           } in
     Gc.finalise session_finalize session;
     Weak.set weakref 0 (Some session);
     (* Now the session is safe to use.  If any of the following fails and raises
        an exception, the GC will take care of freeing arkode_mem and backref.  *)
+    istepper.icheckvec <- Some checkvec;
     if nroots > 0 then c_root_init session nroots;
     set_tolerances session tol;
     (match nlsolver with

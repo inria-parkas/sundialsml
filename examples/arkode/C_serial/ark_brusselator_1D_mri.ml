@@ -269,11 +269,12 @@ let main () =
      initial dependent variable vector y, and the fast integrator. *)
   (* Pass udata to user functions *)
   (* Set the slow step size *)
-  let arkode_mem = MRIStep.(init inner_arkode_mem
-                                 default_tolerances
-                                 (fs udata)
-                                 ~slowstep:hs
-                                 t0 y)
+  let arkode_mem = MRIStep.(init
+                              InnerStepper.(from_arkstep inner_arkode_mem)
+                               default_tolerances
+                               (fs udata)
+                               ~slowstep:hs
+                               t0 y)
   in
 
   (* output spatial mesh to disk (add extra point for periodic BC) *)
