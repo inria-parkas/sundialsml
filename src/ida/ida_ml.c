@@ -870,7 +870,7 @@ CAMLprim value sunml_ida_init (value weakref, value vt0, value vy, value vyp)
     backref = sunml_sundials_malloc_value(weakref);
     if (backref == NULL) {
 	IDAFree (&ida_mem);
-	caml_failwith ("Out of memory");
+	caml_raise_out_of_memory ();
     }
     IDASetUserData (ida_mem, backref);
 
