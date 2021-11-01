@@ -170,6 +170,8 @@ module Custom = struct (* {{{ *)
 
     set_scaling_vectors : 'data option -> 'data option -> unit;
 
+    set_zero_guess : bool -> unit;
+
     get_id : unit -> linear_solver_id;
 
     get_num_iters : unit -> int;
@@ -192,6 +194,7 @@ module Custom = struct (* {{{ *)
     has_set_atimes          : bool;
     has_set_preconditioner  : bool;
     has_set_scaling_vectors : bool;
+    has_set_zero_guess      : bool;
     has_get_num_iters       : bool;
     has_get_res_norm        : bool;
     has_get_res_id          : bool;
