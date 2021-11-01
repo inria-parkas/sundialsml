@@ -898,7 +898,7 @@ module Any = struct (* {{{ *)
       ?(with_linear_combination_vector_array=false)
       rv
     =
-      if not Sundials_impl.Versions.has_nvector_get_id
+      if not Sundials_impl.Version.has_nvector_get_id
         then raise Sundials.Config.NotImplementedBySundialsVersion;
       let v = inject rv in
       let check nv' =

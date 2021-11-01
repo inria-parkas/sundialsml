@@ -48,10 +48,6 @@ let unwrap = RealArray2.unwrap
 
 let printf = Printf.printf
 
-let sundials_lt500 =
-  let n, _, _ = Sundials_configuration.sundials_version in
-  n < 5
-
 let option_map f = function None -> () | Some x -> f x
 
 (* Problem Constants *)
@@ -258,7 +254,7 @@ let print_stats s linsolver =
   printf "ncfn    = %5d     ncfl    = %5d\n\n" ncfn ncfl;
 
   if linsolver != UseSptfqmr
-     && not (not sundials_lt500 && linsolver = UseSpbcg)
+     && not (not Sundials_impl.Version.lt500 && linsolver = UseSpbcg)
   then printf "======================================================================\n"
 
 (*
@@ -610,7 +606,7 @@ let main () =
                                  (prec_left ~setup:(precond data) (psolve data))))
       end);
 
-    if not sundials_lt500 then begin
+    if not Sundials_impl.Version.lt500 then begin
       let nrmfact =
         match nrmfactor with
         | 1 -> sqrt(float neq) (* use the square root of the vector length *)
@@ -636,7 +632,7 @@ let main () =
   in  (* END: Loop through SPGMR, SPBCG and SPTFQMR linear solver modules *)
 
   ignore (List.iter (run cvode_mem)
-            (if sundials_lt500 then [UseSpgmr; UseSpbcg; UseSptfqmr]
+            (if Sundials_impl.Version.lt500 then [UseSpgmr; UseSpbcg; UseSptfqmr]
              else [UseSpgmr; UseSpfgmr; UseSpbcg; UseSptfqmr]))
 
 (* Check environment variables for extra arguments.  *)

@@ -22,13 +22,6 @@ let check_valid =
   | 2,_,_ -> Sundials_configuration.safe
   | _ -> false
 
-let sundials_lt500 =
-  match Config.sundials_version with
-  | 2,_,_ -> true
-  | 3,_,_ -> true
-  | 4,_,_ -> true
-  | _ -> false
-
 (* Must correspond with matrix_ml.h:mat_matrix_content_index *)
 type ('data, 'cptr) matrix_content = {
   mutable payload : 'data;
@@ -1205,7 +1198,8 @@ external c_matvecsetup : ('k, 'm, 'nd, 'nk) t -> unit
   = "sunml_matrix_matvecsetup"
 
 let matvec_setup ({ payload = a; _ } as m) =
-  if sundials_lt500 then raise Config.NotImplementedBySundialsVersion;
+  if Sundials_impl.Version.lt500
+    then raise Config.NotImplementedBySundialsVersion;
   c_matvecsetup m
 
 external c_matvec

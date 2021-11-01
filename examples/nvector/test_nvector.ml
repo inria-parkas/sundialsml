@@ -231,7 +231,7 @@ let int_of_nvector_id = function
   | Nvector.MpiManyVector -> 11
   | Nvector.MpiPlusX      -> 12
   | Nvector.Custom        ->
-      if Sundials_impl.Versions.sundials_lt500 then 9 else 13
+      if Sundials_impl.Version.lt500 then 9 else 13
 
 let test_getvectorid x id myid =
   if Nvector_ops.get_id x <> id then (

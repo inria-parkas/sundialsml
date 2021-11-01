@@ -11,8 +11,6 @@
 (***********************************************************************)
 open Sundials
 
-open Sundials_impl.Versions
-
 (*
  * NB: The order of variant constructors and record fields is important!
  *     If these types are changed or augmented, the corresponding declarations
@@ -676,12 +674,12 @@ module ARKStep = struct (* {{{ *)
     let solver ?jac ?linsys ls session nv =
       let LSI.LS ({ rawptr; solver; matrix } as hls) = ls in
       let matrix = assert_matrix matrix in
-      if sundials_lt500 && linsys <> None
+      if Sundials_impl.Version.lt500 && linsys <> None
         then raise Config.NotImplementedBySundialsVersion;
       set_ls_callbacks ?jac ?linsys solver matrix session;
-      if in_compat_mode2
+      if Sundials_impl.Version.in_compat_mode2
          then make_compat (jac <> None) solver matrix session
-      else if in_compat_mode2_3
+      else if Sundials_impl.Version.in_compat_mode2_3
            then c_dls_set_linear_solver session rawptr matrix (jac <> None)
       else c_set_linear_solver session rawptr (Some matrix) (jac <> None)
                                                             (linsys <> None);
@@ -690,7 +688,7 @@ module ARKStep = struct (* {{{ *)
 
     (* Sundials < 3.0.0 *)
     let invalidate_callback session =
-      if in_compat_mode2 then
+      if Sundials_impl.Version.in_compat_mode2 then
         match session.ls_callbacks with
         | DlsDenseCallback ({ jmat = Some d } as cb, _) ->
             Matrix.Dense.invalidate d;
@@ -710,7 +708,7 @@ module ARKStep = struct (* {{{ *)
         = "sunml_arkode_ark_get_lin_work_space"
 
     let get_work_space s =
-      if in_compat_mode2_3 then ls_check_direct s;
+      if Sundials_impl.Version.in_compat_mode2_3 then ls_check_direct s;
       get_work_space s
 
     external c_get_num_jac_evals : 'k serial_session -> int
@@ -731,15 +729,15 @@ module ARKStep = struct (* {{{ *)
       | _ -> c_get_num_jac_evals s
 
     let get_num_jac_evals s =
-      if in_compat_mode2_3 then ls_check_direct s;
-      if in_compat_mode2 then compat_get_num_jac_evals s else
+      if Sundials_impl.Version.in_compat_mode2_3 then ls_check_direct s;
+      if Sundials_impl.Version.in_compat_mode2 then compat_get_num_jac_evals s else
       c_get_num_jac_evals s
 
     external get_num_lin_rhs_evals : 'k serial_session -> int
         = "sunml_arkode_dls_get_num_lin_rhs_evals"
 
     let get_num_lin_rhs_evals s =
-      if in_compat_mode2_3 then ls_check_direct s;
+      if Sundials_impl.Version.in_compat_mode2_3 then ls_check_direct s;
       get_num_lin_rhs_evals s
 
   end (* }}} *)
@@ -794,15 +792,15 @@ module ARKStep = struct (* {{{ *)
       = "sunml_arkode_spils_set_prec_type"
 
     let old_set_maxl s maxl =
-      if in_compat_mode2_3 then ls_check_spils s;
+      if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
       c_set_maxl s maxl
 
     let old_set_prec_type s t =
-      if in_compat_mode2_3 then ls_check_spils s;
+      if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
       c_set_prec_type s t
 
     let old_set_gs_type s t =
-      if in_compat_mode2_3 then ls_check_spils s;
+      if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
       c_set_gs_type s t
 
     external c_set_jac_times : ('a, 'k) session -> bool -> bool -> unit
@@ -887,9 +885,9 @@ module ARKStep = struct (* {{{ *)
             invalid_arg "cannot pass both jac_times_vec and jac_times_rhs"
         | Some (ojts, jtv) -> ojts, Some jtv
       in
-      if sundials_lt530 && jac_times_rhs <> None
+      if Sundials_impl.Version.lt530 && jac_times_rhs <> None
         then raise Config.NotImplementedBySundialsVersion;
-      if in_compat_mode2 then begin
+      if Sundials_impl.Version.in_compat_mode2 then begin
         if jac_times_setup <> None then
           raise Config.NotImplementedBySundialsVersion;
         make_compat compat prec_type solver session;
@@ -898,7 +896,7 @@ module ARKStep = struct (* {{{ *)
         session.ls_callbacks <- SpilsCallback1 (jac_times_vec, None);
         if jac_times_vec <> None then c_set_jac_times session true false
       end else
-        if in_compat_mode2_3 then c_spils_set_linear_solver session rawptr
+        if Sundials_impl.Version.in_compat_mode2_3 then c_spils_set_linear_solver session rawptr
         else c_set_linear_solver session rawptr None false false;
         LSI.attach ls;
         session.ls_solver <- LSI.HLS hls;
@@ -918,7 +916,7 @@ module ARKStep = struct (* {{{ *)
           end
 
     let set_jac_times s ?jac_times_setup f =
-      if in_compat_mode2 && jac_times_setup <> None then
+      if Sundials_impl.Version.in_compat_mode2 && jac_times_setup <> None then
           raise Config.NotImplementedBySundialsVersion;
       match s.ls_callbacks with
       | SpilsCallback1 _ ->
@@ -945,7 +943,7 @@ module ARKStep = struct (* {{{ *)
         = "sunml_arkode_ark_set_jac_eval_frequency"
 
     let set_jac_eval_frequency s maxsteps =
-      if in_compat_mode2_3 then ls_check_spils s;
+      if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
       set_jac_eval_frequency s maxsteps
 
     external set_linear_solution_scaling : ('d, 'k) session -> bool -> unit
@@ -955,7 +953,7 @@ module ARKStep = struct (* {{{ *)
       = "sunml_arkode_ark_set_eps_lin"
 
     let set_eps_lin s epsl =
-      if in_compat_mode2_3 then ls_check_spils s;
+      if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
       set_eps_lin s epsl
 
     external set_ls_norm_factor : ('d, 'k) session -> float -> unit
@@ -965,28 +963,28 @@ module ARKStep = struct (* {{{ *)
       = "sunml_arkode_ark_get_num_lin_iters"
 
     let get_num_lin_iters s =
-      if in_compat_mode2_3 then ls_check_spils s;
+      if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
       get_num_lin_iters s
 
     external get_num_lin_conv_fails : ('a, 'k) session -> int
       = "sunml_arkode_ark_get_num_lin_conv_fails"
 
     let get_num_lin_conv_fails s =
-      if in_compat_mode2_3 then ls_check_spils s;
+      if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
       get_num_lin_conv_fails s
 
     external get_work_space         : ('a, 'k) session -> int * int
       = "sunml_arkode_spils_get_work_space"
 
     let get_work_space s =
-      if in_compat_mode2_3 then ls_check_spils s;
+      if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
       get_work_space s
 
     external get_num_prec_evals     : ('a, 'k) session -> int
       = "sunml_arkode_ark_get_num_prec_evals"
 
     let get_num_prec_evals s =
-      if in_compat_mode2_3 then ls_check_spils s;
+      if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
       get_num_prec_evals s
 
     external get_num_prec_solves    : ('a, 'k) session -> int
@@ -1204,8 +1202,8 @@ module ARKStep = struct (* {{{ *)
                  session nv =
         let matrix = assert_matrix matrix in
         set_mass_callbacks massfn solver matrix session;
-        if in_compat_mode2 then make_compat solver matrix session
-        else if in_compat_mode2_3
+        if Sundials_impl.Version.in_compat_mode2 then make_compat solver matrix session
+        else if Sundials_impl.Version.in_compat_mode2_3
              then c_dls_set_mass_linear_solver session rawptr matrix time_dep
         else (c_set_mass_linear_solver session rawptr (Some matrix) time_dep;
               c_set_mass_fn session);
@@ -1214,7 +1212,7 @@ module ARKStep = struct (* {{{ *)
 
       (* Sundials < 3.0.0 *)
       let invalidate_callback session =
-        if in_compat_mode2 then
+        if Sundials_impl.Version.in_compat_mode2 then
           match session.mass_callbacks with
           | DlsDenseMassCallback ({ mmat = Some d } as cb, _) ->
               Matrix.Dense.invalidate d;
@@ -1402,14 +1400,14 @@ module ARKStep = struct (* {{{ *)
             LSI.(LS { rawptr; solver; compat })
             ?mass_times_setup mass_times_vec time_dep (prec_type, set_prec)
             session nv =
-        if in_compat_mode2 then begin
+        if Sundials_impl.Version.in_compat_mode2 then begin
           if mass_times_setup <> None then
             raise Config.NotImplementedBySundialsVersion;
           make_compat compat prec_type solver session;
           set_prec session nv;
           session.mass_callbacks <- SpilsMassCallback (mass_times_vec, None)
         end else
-          if in_compat_mode2_3
+          if Sundials_impl.Version.in_compat_mode2_3
              then c_spils_set_mass_linear_solver session rawptr
                                                  (mass_times_setup <> None)
                                                  time_dep
@@ -1421,7 +1419,7 @@ module ARKStep = struct (* {{{ *)
                                       (mass_times_vec, mass_times_setup)
 
       let set_times s ?mass_times_setup mass_times_vec =
-        if in_compat_mode2 && mass_times_setup <> None then
+        if Sundials_impl.Version.in_compat_mode2 && mass_times_setup <> None then
             raise Config.NotImplementedBySundialsVersion;
         match s.mass_callbacks with
         | SpilsMassCallback _ ->
@@ -1651,7 +1649,7 @@ module ARKStep = struct (* {{{ *)
     if nroots > 0 then
       c_root_init session nroots;
     set_tolerances session tol;
-    if in_compat_mode2_3 then begin
+    if Sundials_impl.Version.in_compat_mode2_3 then begin
       match nlsolver with
       | Some NLSI.{ solver = NewtonSolver _ } | None -> () (* the default *)
       | Some NLSI.{ solver = FixedPointSolver (_, fpm) } ->
@@ -1712,7 +1710,7 @@ module ARKStep = struct (* {{{ *)
      | None -> ()
      | Some Nonlinear -> set_nonlinear session
      | Some (Linear timedepend) -> set_linear session timedepend);
-    (if in_compat_mode2_3 then begin
+    (if Sundials_impl.Version.in_compat_mode2_3 then begin
       match nlsolver with
       | None -> ()
       | Some NLSI.{ solver = NewtonSolver _ } -> set_newton session
@@ -1936,7 +1934,7 @@ module ARKStep = struct (* {{{ *)
        || (explicit_table <> None && s.rhsfn2 == dummy_rhsfn2)
     then raise IllInput;
     if implicit_table = None && explicit_table = None then raise IllInput;
-    if not in_compat_mode2_3
+    if not Sundials_impl.Version.in_compat_mode2_3
        && implicit_table <> None
        && explicit_table <> None
        && (global_method_order < 0 || global_embedding_order < 0)
@@ -2592,7 +2590,8 @@ module MRIStep = struct (* {{{ *)
       | None -> failwith "a direct linear solver is required"
 
     let solver ?jac ?linsys ls session nv =
-      if sundials_lt540 then raise Config.NotImplementedBySundialsVersion;
+      if Sundials_impl.Version.lt540
+        then raise Config.NotImplementedBySundialsVersion;
       let LSI.LS ({ rawptr; solver; matrix } as hls) = ls in
       let matrix = assert_matrix matrix in
       set_ls_callbacks ?jac ?linsys solver matrix session;
@@ -2655,7 +2654,8 @@ module MRIStep = struct (* {{{ *)
     let solver (type s)
           (LSI.(LS ({ rawptr; solver; compat } as hls) as ls))
           ?jac_times_vec ?jac_times_rhs (prec_type, set_prec) session nv =
-      if sundials_lt540 then raise Config.NotImplementedBySundialsVersion;
+      if Sundials_impl.Version.lt540
+        then raise Config.NotImplementedBySundialsVersion;
       let jac_times_setup, jac_times_vec =
         match jac_times_vec with
         | None -> None, None
@@ -2682,7 +2682,8 @@ module MRIStep = struct (* {{{ *)
         end
 
     let set_jac_times s ?jac_times_setup f =
-      if sundials_lt540 then raise Config.NotImplementedBySundialsVersion;
+      if Sundials_impl.Version.lt540
+        then raise Config.NotImplementedBySundialsVersion;
       match s.ls_callbacks with
       | SpilsCallback1 _ ->
           c_set_jac_times s (jac_times_setup <> None) true;
@@ -2690,7 +2691,8 @@ module MRIStep = struct (* {{{ *)
       | _ -> raise LinearSolver.InvalidLinearSolver
 
     let clear_jac_times s =
-      if sundials_lt540 then raise Config.NotImplementedBySundialsVersion;
+      if Sundials_impl.Version.lt540
+        then raise Config.NotImplementedBySundialsVersion;
       match s.ls_callbacks with
       | SpilsCallback1 _ ->
           c_set_jac_times s false false;
@@ -2698,7 +2700,8 @@ module MRIStep = struct (* {{{ *)
       | _ -> raise LinearSolver.InvalidLinearSolver
 
     let set_preconditioner s ?setup solve =
-      if sundials_lt540 then raise Config.NotImplementedBySundialsVersion;
+      if Sundials_impl.Version.lt540
+        then raise Config.NotImplementedBySundialsVersion;
       match s.ls_callbacks with
       | SpilsCallback1 _ | SpilsCallback2 _ ->
           c_set_preconditioner s (setup <> None);
@@ -2777,7 +2780,7 @@ module MRIStep = struct (* {{{ *)
       = "sunml_arkode_mri_wf_tolerances"
 
   let set_tolerances s tol =
-    if sundials_lt540 && tol <> default_tolerances
+    if Sundials_impl.Version.lt540 && tol <> default_tolerances
       then raise Config.NotImplementedBySundialsVersion;
     match tol with
     | SStolerances (rel, abs) -> (s.errw <- dummy_errw; ss_tolerances s rel abs)
@@ -2805,12 +2808,13 @@ module MRIStep = struct (* {{{ *)
 
   let init fasts tol ?nlsolver ?lsolver ?linearity slow
            ~slowstep ?(roots=no_roots) t0 y0 =
-    if sundials_lt500 then raise Config.NotImplementedBySundialsVersion;
+    if Sundials_impl.Version.lt500
+      then raise Config.NotImplementedBySundialsVersion;
     let (nroots, roots) = roots in
     let checkvec = Nvector.check y0 in
     if Sundials_configuration.safe && nroots < 0
       then raise Config.NotImplementedBySundialsVersion;
-    if sundials_lt540
+    if Sundials_impl.Version.lt540
         && (nlsolver <> None || lsolver <> None || linearity <> None)
       then invalid_arg "functions is negative";
     let weakref = Weak.create 1 in

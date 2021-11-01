@@ -12,8 +12,6 @@
 open Sundials
 include Ida_impl
 
-open Sundials_impl.Versions
-
 (*
  * NB: The order of variant constructors and record fields is important!
  *     If these types are changed or augmented, the corresponding declarations
@@ -268,9 +266,9 @@ module Dls = struct (* {{{ *)
     let LSI.LS ({ rawptr; solver; matrix } as hls) = ls in
     let matrix = assert_matrix matrix in
     set_ls_callbacks ?jac solver matrix session;
-    if in_compat_mode2
+    if Sundials_impl.Version.in_compat_mode2
        then make_compat (jac <> None) solver matrix session
-    else if in_compat_mode2_3
+    else if Sundials_impl.Version.in_compat_mode2_3
          then c_dls_set_linear_solver session rawptr matrix (jac <> None)
     else c_set_linear_solver session rawptr (Some matrix) (jac <> None);
     LSI.attach ls;
@@ -278,7 +276,7 @@ module Dls = struct (* {{{ *)
 
   (* Sundials < 3.0.0 *)
   let invalidate_callback session =
-    if in_compat_mode2 then
+    if Sundials_impl.Version.in_compat_mode2 then
       match session.ls_callbacks with
       | DlsDenseCallback ({ jmat = Some d } as cb) ->
           Matrix.Dense.invalidate d;
@@ -298,7 +296,7 @@ module Dls = struct (* {{{ *)
       = "sunml_ida_dls_get_work_space"
 
   let get_work_space s =
-    if in_compat_mode2_3 then ls_check_direct s;
+    if Sundials_impl.Version.in_compat_mode2_3 then ls_check_direct s;
     get_work_space s
 
   external c_get_num_jac_evals : 'k serial_session -> int
@@ -319,15 +317,15 @@ module Dls = struct (* {{{ *)
     | _ -> c_get_num_jac_evals s
 
   let get_num_jac_evals s =
-    if in_compat_mode2_3 then ls_check_direct s;
-    if in_compat_mode2 then compat_get_num_jac_evals s else
+    if Sundials_impl.Version.in_compat_mode2_3 then ls_check_direct s;
+    if Sundials_impl.Version.in_compat_mode2 then compat_get_num_jac_evals s else
     c_get_num_jac_evals s
 
   external get_num_lin_res_evals : 'k serial_session -> int
       = "sunml_ida_dls_get_num_lin_res_evals"
 
   let get_num_lin_res_evals s =
-    if in_compat_mode2_3 then ls_check_direct s;
+    if Sundials_impl.Version.in_compat_mode2_3 then ls_check_direct s;
     get_num_lin_res_evals s
 end (* }}} *)
 
@@ -447,9 +445,9 @@ module Spils = struct (* {{{ *)
           invalid_arg "cannot pass both jac_times_vec and jac_times_res"
       | Some (ojts, jtv) -> ojts, Some jtv
     in
-    if sundials_lt530 && jac_times_res <> None
+    if Sundials_impl.Version.lt530 && jac_times_res <> None
     then raise Config.NotImplementedBySundialsVersion;
-    if in_compat_mode2 then begin
+    if Sundials_impl.Version.in_compat_mode2 then begin
       if jac_times_setup <> None then
         raise Config.NotImplementedBySundialsVersion;
       lsolver.check_prec_type <- check_prec_type;
@@ -459,7 +457,7 @@ module Spils = struct (* {{{ *)
       session.ls_callbacks <- SpilsCallback1 (jac_times_vec, None);
       if jac_times_vec <> None then c_set_jac_times session true false
     end else
-      if in_compat_mode2_3 then c_spils_set_linear_solver session rawptr
+      if Sundials_impl.Version.in_compat_mode2_3 then c_spils_set_linear_solver session rawptr
       else c_set_linear_solver session rawptr None false;
       LSI.attach (LS lsolver);
       session.ls_solver <- LSI.HLS lsolver;
@@ -479,7 +477,7 @@ module Spils = struct (* {{{ *)
 
   (* Drop this function? *)
   let set_jac_times s ?jac_times_setup f =
-    if in_compat_mode2 && jac_times_setup <> None then
+    if Sundials_impl.Version.in_compat_mode2 && jac_times_setup <> None then
         raise Config.NotImplementedBySundialsVersion;
     match s.ls_callbacks with
     | SpilsCallback1 _ ->
@@ -507,7 +505,7 @@ module Spils = struct (* {{{ *)
       = "sunml_ida_set_eps_lin"
 
   let set_eps_lin s epsl =
-    if in_compat_mode2_3 then ls_check_spils s;
+    if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
     set_eps_lin s epsl
 
   external set_ls_norm_factor : ('d, 'k) session -> float -> unit
@@ -520,63 +518,63 @@ module Spils = struct (* {{{ *)
       = "sunml_ida_set_increment_factor"
 
   let set_increment_factor s dqincfac =
-    if in_compat_mode2_3 then ls_check_spils s;
+    if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
     set_increment_factor s dqincfac
 
   external get_num_lin_iters      : ('a, 'k) session -> int
       = "sunml_ida_get_num_lin_iters"
 
   let get_num_lin_iters s =
-    if in_compat_mode2_3 then ls_check_spils s;
+    if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
     get_num_lin_iters s
 
   external get_num_lin_conv_fails     : ('a, 'k) session -> int
       = "sunml_ida_get_num_lin_conv_fails"
 
   let get_num_lin_conv_fails s =
-    if in_compat_mode2_3 then ls_check_spils s;
+    if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
     get_num_lin_conv_fails s
 
   external get_work_space         : ('a, 'k) session -> int * int
       = "sunml_ida_spils_get_work_space"
 
   let get_work_space s =
-    if in_compat_mode2_3 then ls_check_spils s;
+    if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
     get_work_space s
 
   external get_num_prec_evals     : ('a, 'k) session -> int
       = "sunml_ida_get_num_prec_evals"
 
   let get_num_prec_evals s =
-    if in_compat_mode2_3 then ls_check_spils s;
+    if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
     get_num_prec_evals s
 
   external get_num_prec_solves    : ('a, 'k) session -> int
       = "sunml_ida_get_num_prec_solves"
 
   let get_num_prec_solves s =
-    if in_compat_mode2_3 then ls_check_spils s;
+    if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
     get_num_prec_solves s
 
   external get_num_jtsetup_evals   : ('a, 'k) session -> int
       = "sunml_ida_get_num_jtsetup_evals"
 
   let get_num_jtsetup_evals s =
-    if in_compat_mode2_3 then ls_check_spils s;
+    if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
     get_num_jtsetup_evals s
 
   external get_num_jtimes_evals   : ('a, 'k) session -> int
       = "sunml_ida_get_num_jtimes_evals"
 
   let get_num_jtimes_evals s =
-    if in_compat_mode2_3 then ls_check_spils s;
+    if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
     get_num_jtimes_evals s
 
   external get_num_lin_res_evals      : ('a, 'k) session -> int
       = "sunml_ida_spils_get_num_lin_res_evals"
 
   let get_num_lin_res_evals s =
-    if in_compat_mode2_3 then ls_check_spils s;
+    if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
     get_num_lin_res_evals s
 
 end (* }}} *)
@@ -645,7 +643,7 @@ let init tol ?nlsolver ~lsolver resfn ?varid ?(roots=no_roots) t0 y y' =
     (checkvec y';
      if nroots < 0 then invalid_arg "number of root functions is negative");
   let weakref = Weak.create 1 in
-  (if in_compat_mode2_3 then
+  (if Sundials_impl.Version.in_compat_mode2_3 then
     match nlsolver with
     | Some nls when NLSI.(get_type nls <> RootFind) -> raise IllInput
     | _ -> ());
@@ -686,7 +684,8 @@ let init tol ?nlsolver ~lsolver resfn ?varid ?(roots=no_roots) t0 y y' =
   set_tolerances session tol;
   lsolver session y;
   (match nlsolver with
-   | Some ({ NLSI.rawptr = nlcptr } as nls) when not in_compat_mode2_3 ->
+   | Some ({ NLSI.rawptr = nlcptr } as nls)
+         when not Sundials_impl.Version.in_compat_mode2_3 ->
        NLSI.attach nls;
        session.nls_solver <- Some nls;
        c_set_nonlinear_solver session nlcptr
@@ -709,7 +708,7 @@ let reinit session ?nlsolver ?lsolver ?roots ?resfn t0 y0 y'0 =
   (match lsolver with
    | None -> ()
    | Some linsolv -> linsolv session y0);
-  (if in_compat_mode2_3 then
+  (if Sundials_impl.Version.in_compat_mode2_3 then
     match nlsolver with
     | Some nls when NLSI.(get_type nls <> RootFind) -> raise IllInput
     | _ -> ()

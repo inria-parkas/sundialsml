@@ -96,7 +96,7 @@ let check_comms nvs =
   | Some comm -> comm
 
 let wrap ?(with_fused_ops=false) ?comm nvs =
-  if Sundials_impl.Versions.sundials_lt500
+  if Sundials_impl.Version.lt500
     then raise Config.NotImplementedBySundialsVersion;
   let comm =
     match comm with
@@ -788,7 +788,7 @@ module Any = struct (* {{{ *)
     = "sunml_nvec_anywrap_mpimany"
 
   let rec wrap_with_len enable_fused_ops ((nvs, _, _) as payload) =
-    if Sundials_impl.Versions.sundials_lt500
+    if Sundials_impl.Version.lt500
       then raise Config.NotImplementedBySundialsVersion;
     let check nv' =
       match unwrap nv' with
@@ -811,7 +811,7 @@ module Any = struct (* {{{ *)
     wrap_with_len false (ROArray.map Nvector.clone nvs, gl, comm)
 
   let wrap ?(with_fused_ops=false) ?comm nvs =
-    if Sundials_impl.Versions.sundials_lt500
+    if Sundials_impl.Version.lt500
       then raise Config.NotImplementedBySundialsVersion;
     let comm =
       match comm with
@@ -836,7 +836,7 @@ module Any = struct (* {{{ *)
      ?with_wrms_norm_vector_array
      ?with_wrms_norm_mask_vector_array
      nv
-    = if Sundials_impl.Versions.sundials_lt400
+    = if Sundials_impl.Version.lt400
         then raise Config.NotImplementedBySundialsVersion;
       if Nvector.get_id nv <> Nvector.MpiManyVector
         then raise Nvector.BadGenericType;

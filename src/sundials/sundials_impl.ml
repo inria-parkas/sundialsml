@@ -75,7 +75,7 @@ end = struct
 end
 
 (* Compatiblity modes and Sundials versions *)
-module Versions = struct
+module Version = struct
 
 (* "Simulate" Linear Solvers in Sundials < 3.0.0 *)
 let in_compat_mode2 =
@@ -90,39 +90,27 @@ let in_compat_mode2_3 =
   | 3,_,_ -> true
   | _ -> false
 
-let sundials_lt400 =
+let lt400 =
   match Sundials_configuration.sundials_version with
   | 2,_,_ -> true
   | 3,_,_ -> true
   | _ -> false
 
-let sundials_lt500 =
-  match Sundials_configuration.sundials_version with
-  | 2,_,_ -> true
-  | 3,_,_ -> true
-  | 4,_,_ -> true
-  | _ -> false
+let lt500 =
+  let m, _, _ = Sundials_configuration.sundials_version in
+  m < 5
 
-let sundials_lt530 =
-  match Sundials_configuration.sundials_version with
-  | 2,_,_ -> true
-  | 3,_,_ -> true
-  | 4,_,_ -> true
-  | 5,0,_ -> true
-  | 5,1,_ -> true
-  | 5,2,_ -> true
-  | _ -> false
+let lt530 =
+  let m, n, _ = Sundials_configuration.sundials_version in
+  m < 5 || (m = 5 && n < 3)
 
-let sundials_lt540 =
-  match Sundials_configuration.sundials_version with
-  | 2,_,_ -> true
-  | 3,_,_ -> true
-  | 4,_,_ -> true
-  | 5,0,_ -> true
-  | 5,1,_ -> true
-  | 5,2,_ -> true
-  | 5,3,_ -> true
-  | _ -> false
+let lt540 =
+  let m, n, _ = Sundials_configuration.sundials_version in
+  m < 5 || (m = 5 && n < 4)
+
+let lt580 =
+  let m, n, _ = Sundials_configuration.sundials_version in
+  m < 5 || (m = 5 && n < 8)
 
 let has_nvector_get_id =
   match Sundials_configuration.sundials_version with
