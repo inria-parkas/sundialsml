@@ -53,6 +53,7 @@ type linear_solver_type =
   | Direct          (** Performs an exact computation based on a matrix. *)
   | Iterative       (** Computes an inexact approximation without a matrix. *)
   | MatrixIterative (** Computes an inexact approximation using a matrix. *)
+  | MatrixEmbedded  (** Computes without an explicit input matrix *)
 
 (** The identifier of a linear solver. *)
 type linear_solver_id =
@@ -644,15 +645,34 @@ module Custom : sig (* {{{ *)
 
   (** Create a linear solver given a set of operations and an internal state.
       The resulting solver is tagged with both [`Dls] and [`Iter], although
-      its suitability depends on which operations are defined and whether a
-      matrix is passed or not. Use a type cast to filter inappropriate tags.
+      its suitability depends on which operations are defined.
+      Use a type cast to filter inappropriate tags.
+
+      The [solver_type] may not be {{!type:linear_solver_type}MatrixEmbedded}.
 
     NB: This feature is only available for
         {{!Sundials_Config.sundials_version}Config.sundials_version} >= 3.0.0. *)
-  val make : ('matrix, 'data, 'kind, 'lsolver) ops
+  val make_with_matrix : ('matrix, 'data, 'kind, 'lsolver) ops
      -> 'lsolver
-     -> ('matrixkind, 'matrix, 'data, 'kind) Matrix.t option
+     -> ('matrixkind, 'matrix, 'data, 'kind) Matrix.t
      -> ('matrix, 'data, 'kind, [`Dls|`Iter|`Custom of 'lsolver]) t
+
+  (** Create a linear solver given a set of operations and an internal state.
+      The resulting solver is tagged with both [`Dls] and [`Iter], although
+      its suitability depends on which operations are defined.
+      Use a type cast to filter inappropriate tags.
+
+      The [solver_type] may not be {{!type:linear_solver_type}Direct}.
+
+      This feature is only available for
+      {{!Sundials_Config.sundials_version}Config.sundials_version} >= 3.0.0.
+
+      The {{!type:linear_solver_type}MatrixEmbedded} solver_type is only
+      available for
+      {{!Sundials_Config.sundials_version}Config.sundials_version} >= 5.8.0. *)
+  val make_without_matrix : (unit, 'data, 'kind, 'lsolver) ops
+     -> 'lsolver
+     -> (unit, 'data, 'kind, [`Iter|`MatE|`Custom of 'lsolver]) t
 
   (** Return the internal state from an custom iterative linear solver. *)
   val unwrap : ('m, 'data, 'kind, [>`Custom of 'lsolver]) t -> 'lsolver

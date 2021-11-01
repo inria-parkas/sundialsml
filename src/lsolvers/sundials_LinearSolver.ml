@@ -47,6 +47,7 @@ type linear_solver_type = LSI.linear_solver_type =
   | Direct
   | Iterative
   | MatrixIterative
+  | MatrixEmbedded
 
 type linear_solver_id = LSI.linear_solver_id =
   | Band
@@ -607,7 +608,7 @@ module Custom = struct (* {{{ *)
              get_res_id = fget_res_id;
              get_last_flag = fget_last_flag;
              get_work_space = fget_work_space;
-             set_prec_type = fset_prec_type } ldata mat =
+             set_prec_type = fset_prec_type } ldata omat =
     (match Config.sundials_version with
      | 2,_,_ -> raise Config.NotImplementedBySundialsVersion;
      | _ -> ());
@@ -636,8 +637,10 @@ module Custom = struct (* {{{ *)
       }) in
     let only_ops = LSI.Custom.({
           has_init                = finit <> None;
-          has_setup               = fsetup <> None;
-          has_set_atimes          = fset_atimes <> None;
+          has_setup               = fsetup <> None
+                                    && stype <> MatrixEmbedded;
+          has_set_atimes          = fset_atimes <> None
+                                    && stype <> MatrixEmbedded;
           has_set_preconditioner  = fset_preconditioner <> None;
           has_set_scaling_vectors = fset_scaling_vectors <> None;
           has_set_zero_guess      = fset_zero_guess <> None;
@@ -651,12 +654,24 @@ module Custom = struct (* {{{ *)
     LS {
        rawptr = c_make_custom stype ops only_ops;
        solver = Custom (ldata, ops);
-       matrix = mat;
+       matrix = omat;
        compat = LSI.Iterative.info;
        check_prec_type = (fun _ -> true);
        ocaml_callbacks = empty_ocaml_callbacks ();
        attached = false;
      }
+
+  let make_with_matrix ({ solver_type; _ } as ops) ldata mat =
+    if solver_type = MatrixEmbedded
+      then invalid_arg "invalid solver_type when matrix is given";
+    make ops ldata (Some mat)
+
+  let make_without_matrix ({ solver_type; _ } as ops) ldata =
+    if solver_type = Direct
+      then invalid_arg "invalid solver_type when matrix is not given";
+    if Sundials_impl.Version.lt580 && solver_type = MatrixEmbedded
+      then raise Config.NotImplementedBySundialsVersion;
+    make ops ldata None
 
   let unwrap (LS { solver } :
         ('m, 'data, 'kind, [>`Custom of 'lsolver]) linear_solver) =

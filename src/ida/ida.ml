@@ -637,7 +637,7 @@ external c_init : ('a, 'k) session Weak.t -> float
     = "sunml_ida_init"
 
 external c_set_nls_res_fn : ('d, 'k) session -> unit
-    = "sunml_cvode_set_nls_res_fn"
+    = "sunml_ida_set_nls_res_fn"
 
 let init tol ?nlsolver ?nlsresfn ~lsolver resfn ?varid ?(roots=no_roots) t0 y y' =
   let (nroots, rootsfn) = roots in

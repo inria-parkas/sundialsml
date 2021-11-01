@@ -29,6 +29,7 @@ type linear_solver_type =
   | Direct
   | Iterative
   | MatrixIterative
+  | MatrixEmbedded
 
 (* Must correspond with sundials_linearSolver_ml.h:lsolver_solver_id_tag *)
 type linear_solver_id =

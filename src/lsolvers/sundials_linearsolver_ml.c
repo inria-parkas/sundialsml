@@ -72,8 +72,12 @@ CAMLprim void sunml_lsolver_init_module (value exns)
 	    == SUNLINEARSOLVER_ITERATIVE);
 #endif
 #if 400 <= SUNDIALS_LIB_VERSION
-    assert((int)VARIANT_LSOLVER_TYPE_ITERATIVE_MATRIX
+    assert((int)VARIANT_LSOLVER_TYPE_MATRIX_ITERATIVE
 	    == SUNLINEARSOLVER_MATRIX_ITERATIVE);
+#endif
+#if 580 <= SUNDIALS_LIB_VERSION
+    assert((int)VARIANT_LSOLVER_TYPE_MATRIX_EMBEDDED
+	    == SUNLINEARSOLVER_MATRIX_EMBEDDED);
 #endif
     CAMLreturn0;
 }
@@ -833,6 +837,14 @@ static SUNLinearSolver_Type callml_custom_gettype_matrix_iterative(
 }
 #endif
 
+#if 580 <= SUNDIALS_LIB_VERSION
+static SUNLinearSolver_Type callml_custom_gettype_matrix_embedded(
+							    SUNLinearSolver ls)
+{
+    return SUNLINEARSOLVER_MATRIX_EMBEDDED;
+}
+#endif
+
 struct atimes_with_data {
     ATimesFn atimes_func;
     void *atimes_data;
@@ -1213,6 +1225,11 @@ CAMLprim value sunml_lsolver_make_custom(value vlstype,
 #if 400 <= SUNDIALS_LIB_VERSION
 	case SUNLINEARSOLVER_MATRIX_ITERATIVE:
 	    callml_get_type = callml_custom_gettype_matrix_iterative;
+	    break;
+#endif
+#if 580 <= SUNDIALS_LIB_VERSION
+	case SUNLINEARSOLVER_MATRIX_EMBEDDED:
+	    callml_get_type = callml_custom_gettype_matrix_embedded;
 	    break;
 #endif
 	default:
