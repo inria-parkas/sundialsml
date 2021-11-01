@@ -58,7 +58,8 @@ enum lsolver_solver_data_tag {
 enum lsolver_linear_solver_type {
     VARIANT_LSOLVER_TYPE_DIRECT = 0,
     VARIANT_LSOLVER_TYPE_ITERATIVE,
-    VARIANT_LSOLVER_TYPE_ITERATIVE_MATRIX,
+    VARIANT_LSOLVER_TYPE_MATRIX_ITERATIVE,
+    VARIANT_LSOLVER_TYPE_MATRIX_EMBEDDED,
 };
 
 enum lsolver_linear_solver_id_tag {

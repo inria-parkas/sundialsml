@@ -319,6 +319,7 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
       set_atimes          = Some set_atimes;
       set_preconditioner  = Some set_preconditioner;
       set_scaling_vectors = Some set_scaling_vectors;
+      set_zero_guess      = None;
       get_num_iters       = Some (fun ls -> ls.numiters);
       get_res_norm        = Some (fun ls -> ls.resnorm);
       get_res_id          = Some (fun ls -> ls.vtemp);
@@ -330,7 +331,7 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
   let solver ?(maxl=maxl_default) ?(max_restarts=maxrs_default)
              ?(gs_type=gstype_default) nv_y =
     let maxl = if maxl <= 0 then maxl_default else maxl in
-    LS.Custom.make ops {
+    LS.Custom.make_without_matrix ops {
         maxl         = maxl;
         pretype      = PrecNone;
         gstype       = gs_type;
@@ -351,7 +352,7 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
         hes          = RealArray2.create maxl (maxl + 1);
         givens       = RealArray.create (2 * maxl);
         yg           = RealArray.create (maxl + 1);
-      } None
+      }
 
   let set_prec_type ls pretype =
     (LS.Custom.unwrap ls).pretype <- pretype
