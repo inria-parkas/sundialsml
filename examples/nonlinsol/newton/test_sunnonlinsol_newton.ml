@@ -158,7 +158,7 @@ let main () =
   NLS.set_max_iters nls maxit;
 
   (* solve the nonlinear system *)
-  NLS.solve nls ~y0 ~ycor ~w tol true;
+  NLS.solve nls ~y0 ~ycor ~w tol true ();
 
   (* update the initial guess with the final correction *)
   Nvector_serial.Ops.linearsum one y0 one ycor ycur;

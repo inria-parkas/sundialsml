@@ -194,7 +194,7 @@ let main () =
   if sungte500 then NLS.FixedPoint.set_damping nls damping;
 
   (* solve the nonlinear system *)
-  NLS.solve nls ~y0 ~ycor ~w tol true;
+  NLS.solve nls ~y0 ~ycor ~w tol true ();
 
   if sungte500 then
     (* update the initial guess with the final correction *)
