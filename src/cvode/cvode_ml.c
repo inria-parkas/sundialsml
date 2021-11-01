@@ -241,6 +241,27 @@ static int rhsfn(realtype t, N_Vector y, N_Vector ydot, void *user_data)
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
+#if 580 <= SUNDIALS_LIB_VERSION
+static int nlsrhsfn(realtype t, N_Vector y, N_Vector ydot, void *user_data)
+{
+    CAMLparam0();
+    CAMLlocal1(session);
+    CAMLlocalN(args, 3);
+
+    WEAK_DEREF (session, *(value*)user_data);
+
+    args[0] = caml_copy_double(t);
+    args[1] = NVEC_BACKLINK(y);
+    args[2] = NVEC_BACKLINK(ydot);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn(Field(session, RECORD_CVODE_SESSION_NLS_RHSFN),
+				 3, args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
+}
+#endif
+
 static int roots(realtype t, N_Vector y, realtype *gout, void *user_data)
 {
     CAMLparam0();
@@ -1927,14 +1948,28 @@ CAMLprim value sunml_cvode_clear_constraints (value vcvode_mem)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_cvode_set_proj_fn(value vcvode_mem, value varg)
+CAMLprim value sunml_cvode_set_proj_fn(value vcvode_mem)
 {
-    CAMLparam2(vcvode_mem, varg);
+    CAMLparam1(vcvode_mem);
 #if 530 <= SUNDIALS_LIB_VERSION && !SUNDIALSML_WITHSENS
     int flag;
 
     flag = CVodeSetProjFn(CVODE_MEM_FROM_ML (vcvode_mem), projfn);
     CHECK_FLAG ("CVodeSetProjFn", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_cvode_set_nls_rhs_fn(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+#if 580 <= SUNDIALS_LIB_VERSION
+    int flag;
+
+    flag = CVodeSetNlsRhsFn(CVODE_MEM_FROM_ML (vcvode_mem), nlsrhsfn);
+    CHECK_FLAG ("CVodeSetNlsRhsFn", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif

@@ -213,6 +213,27 @@ static int rhsfn2(realtype t, N_Vector y, N_Vector ydot, void *user_data)
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
+#if 580 <= SUNDIALS_LIB_VERSION
+static int nlsrhsfn(realtype t, N_Vector y, N_Vector ydot, void *user_data)
+{
+    CAMLparam0();
+    CAMLlocal1(session);
+    CAMLlocalN(args, 3);
+
+    WEAK_DEREF (session, *(value*)user_data);
+
+    args[0] = caml_copy_double(t);
+    args[1] = NVEC_BACKLINK(y);
+    args[2] = NVEC_BACKLINK(ydot);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn(Field(session, RECORD_ARKODE_SESSION_NLS_RHSFN),
+				 3, args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
+}
+#endif
+
 static int roots(realtype t, N_Vector y, realtype *gout, void *user_data)
 {
     CAMLparam0();
@@ -3803,6 +3824,20 @@ CAMLprim value sunml_arkode_ark_set_constraints(value varkode_mem, value vnv)
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_arkode_ark_set_nls_rhs_fn(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+#if 580 <= SUNDIALS_LIB_VERSION
+    int flag;
+
+    flag = ARKStepSetNlsRhsFn(ARKODE_MEM_FROM_ML (varkode_mem), nlsrhsfn);
+    CHECK_FLAG ("ARKStepSetNlsRhsFn", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value sunml_arkode_ark_set_no_inactive_root_warn(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
@@ -6607,6 +6642,20 @@ CAMLprim value sunml_arkode_mri_set_postprocess_step_fn(value varkode_mem,
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
 
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_mri_set_nls_rhs_fn(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+#if 580 <= SUNDIALS_LIB_VERSION
+    int flag;
+
+    flag = MRIStepSetNlsRhsFn(ARKODE_MEM_FROM_ML (varkode_mem), nlsrhsfn);
+    CHECK_FLAG ("MRIStepSetNlsRhsFn", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 

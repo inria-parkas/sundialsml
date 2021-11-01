@@ -466,24 +466,25 @@ module ARKStep = struct (* {{{ *)
       irhsfn    : 'd rhsfn;
       linearity : linearity;
       nlsolver  : ('d, 'k, ('d, 'k) session, [`Nvec]) Sundials_NonlinearSolver.t option;
+      nlsrhsfn  : 'd rhsfn option;
       lsolver   : ('d, 'k) linear_solver option;
     }
 
-  let implicit_problem ?nlsolver ?lsolver ?(linearity=Nonlinear) fi =
-    { irhsfn = fi; linearity; nlsolver; lsolver }
+  let implicit_problem ?nlsolver ?nlsrhsfn ?lsolver ?(linearity=Nonlinear) fi =
+    { irhsfn = fi; linearity; nlsolver; nlsrhsfn; lsolver }
 
   type ('d, 'k) problem =
     | Implicit of ('d, 'k) implicit_problem
     | Explicit of 'd rhsfn
     | ImEx of 'd rhsfn * ('d, 'k) implicit_problem
 
-  let implicit ?nlsolver ?lsolver ?linearity fi =
-    Implicit (implicit_problem ?nlsolver ?lsolver ?linearity fi)
+  let implicit ?nlsolver ?nlsrhsfn ?lsolver ?linearity fi =
+    Implicit (implicit_problem ?nlsolver ?nlsrhsfn ?lsolver ?linearity fi)
 
   let explicit f = Explicit f
 
-  let imex ?nlsolver ?lsolver ?linearity ~fi fe =
-    ImEx (fe, implicit_problem ?nlsolver ?lsolver ?linearity fi)
+  let imex ?nlsolver ?nlsrhsfn ?lsolver ?linearity ~fi fe =
+    ImEx (fe, implicit_problem ?nlsolver ?nlsrhsfn ?lsolver ?linearity fi)
 
   external c_root_init : ('a, 'k) session -> int -> unit
       = "sunml_arkode_ark_root_init"
@@ -1584,19 +1585,22 @@ module ARKStep = struct (* {{{ *)
     -> (arkstep arkode_mem * c_weak_ref)
     = "sunml_arkode_ark_init"
 
+  external c_set_nls_rhs_fn : ('d, 'k) session -> unit
+      = "sunml_arkode_ark_set_nls_rhs_fn"
+
   let init prob tol ?restol ?order ?mass ?(roots=no_roots) t0 y0 =
     let (nroots, roots) = roots in
     let checkvec = Nvector.check y0 in
     if Sundials_configuration.safe && nroots < 0
       then invalid_arg "number of root functions is negative";
-    let problem, fi, fe, nlsolver, lsolver, lin =
+    let problem, fi, fe, nlsolver, nlsrhsfn, lsolver, lin =
       match prob with
-      | Implicit { irhsfn=fi; linearity=l; nlsolver=nls; lsolver=ls } ->
-          ImplicitOnly,        Some fi, None,    nls,  ls,   Some l
+      | Implicit { irhsfn=fi; linearity=l; nlsolver=nls; nlsrhsfn; lsolver=ls } ->
+          ImplicitOnly,        Some fi, None,    nls,    nlsrhsfn,    ls,   Some l
       | Explicit fe ->
-          ExplicitOnly,        None,    Some fe, None, None, None
-      | ImEx (fe, { irhsfn=fi; linearity=l; nlsolver=nls; lsolver=ls }) ->
-          ImplicitAndExplicit, Some fi, Some fe, nls,  ls,   Some l
+          ExplicitOnly,        None,    Some fe, None, None, None, None
+      | ImEx (fe, { irhsfn=fi; linearity=l; nlsolver=nls; nlsrhsfn; lsolver=ls }) ->
+          ImplicitAndExplicit, Some fi, Some fe, nls,      None,      ls,   Some l
     in
     let weakref = Weak.create 1 in
     let arkode_mem, backref = c_init weakref (fi <> None) (fe <> None) y0 t0 in
@@ -1639,6 +1643,7 @@ module ARKStep = struct (* {{{ *)
             mass_precfns   = NoMassPrecFns;
 
             nls_solver     = None;
+            nls_rhsfn      = dummy_nlsrhsfn;
 
             inner_session  = None;
           } in
@@ -1663,6 +1668,10 @@ module ARKStep = struct (* {{{ *)
           c_set_nonlinear_solver session nlcptr
       | _ -> ()
     end;
+    (match nlsrhsfn with
+     | None -> () | _ when Sundials_impl.Version.lt580 -> ()
+     | Some f -> session.nls_rhsfn <- f;
+                 c_set_nls_rhs_fn session);
     (match lsolver with
      | None -> ()
      | Some ls -> session.linsolver <- Some ls;
@@ -1687,24 +1696,24 @@ module ARKStep = struct (* {{{ *)
   let reinit session ?problem ?order ?mass ?roots t0 y0 =
     if Sundials_configuration.safe then session.checkvec y0;
     Dls.invalidate_callback session;
-    let lin, nlsolver, lsolver =
+    let lin, nlsolver, nlsrhsfn, lsolver =
       match problem with
-      | None -> None, None, None
-      | Some (Implicit { irhsfn = fi; linearity; nlsolver; lsolver }) ->
+      | None -> None, None, None, None
+      | Some (Implicit { irhsfn = fi; linearity; nlsolver; nlsrhsfn; lsolver }) ->
           session.problem <- ImplicitOnly;
           session.rhsfn1 <- fi;
           session.rhsfn2 <- dummy_rhsfn2;
-          Some linearity, nlsolver, lsolver
+          Some linearity, nlsolver, nlsrhsfn, lsolver
       | Some (Explicit fe) ->
           session.problem <- ExplicitOnly;
           session.rhsfn1 <- dummy_rhsfn1;
           session.rhsfn2 <- fe;
-          None, None, None
-      | Some (ImEx (fe, { irhsfn = fi; linearity; nlsolver; lsolver })) ->
+          None, None, None, None
+      | Some (ImEx (fe, { irhsfn = fi; linearity; nlsolver; nlsrhsfn; lsolver })) ->
           session.problem <- ImplicitAndExplicit;
           session.rhsfn1 <- fi;
           session.rhsfn2 <- fe;
-          Some linearity, nlsolver, lsolver
+          Some linearity, nlsolver, nlsrhsfn, lsolver
     in
     (match lin with
      | None -> ()
@@ -1727,6 +1736,10 @@ module ARKStep = struct (* {{{ *)
           c_set_nonlinear_solver session nlcptr
       | _ -> ()
     end);
+    (match nlsrhsfn with
+     | None -> () | _ when Sundials_impl.Version.lt580 -> ()
+     | Some f -> session.nls_rhsfn <- f;
+                 c_set_nls_rhs_fn session);
     (match lsolver with None -> () | Some ls -> ls session y0);
     session.linsolver <- lsolver;
     (match mass with Some msolver -> msolver session y0 | None -> ());
@@ -2223,6 +2236,7 @@ module ERKStep = struct (* {{{ *)
             mass_precfns   = NoMassPrecFns;
 
             nls_solver     = None;
+            nls_rhsfn      = dummy_nlsrhsfn;
 
             inner_session  = None;
           } in
@@ -2878,7 +2892,10 @@ module MRIStep = struct (* {{{ *)
   external set_linear : ('a, 'k) session -> bool -> unit
     = "sunml_arkode_mri_set_linear"
 
-  let init istepper tol ?nlsolver ?lsolver ?linearity slow
+  external c_set_nls_rhs_fn : ('d, 'k) session -> unit
+      = "sunml_arkode_mri_set_nls_rhs_fn"
+
+  let init istepper tol ?nlsolver ?nlsrhsfn ?lsolver ?linearity slow
            ~slowstep ?(roots=no_roots) t0 y0 =
     if Sundials_impl.Version.lt500
       then raise Config.NotImplementedBySundialsVersion;
@@ -2931,6 +2948,7 @@ module MRIStep = struct (* {{{ *)
             mass_precfns   = NoMassPrecFns;
 
             nls_solver     = None;
+            nls_rhsfn      = dummy_nlsrhsfn;
 
             inner_session  = Some istepper;
           } in
@@ -2947,6 +2965,10 @@ module MRIStep = struct (* {{{ *)
          session.nls_solver <- Some nls;
          c_set_nonlinear_solver session nlcptr
      | _ -> ());
+    (match nlsrhsfn with
+     | None -> () | _ when Sundials_impl.Version.lt580 -> ()
+     | Some f -> session.nls_rhsfn <- f;
+                 c_set_nls_rhs_fn session);
     (match lsolver with
      | None -> ()
      | Some ls -> session.linsolver <- Some ls;
@@ -2966,9 +2988,23 @@ module MRIStep = struct (* {{{ *)
       : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
       = "sunml_arkode_mri_reinit"
 
-  let reinit session ?nlsolver ?lsolver ?roots t0 y0 =
+  let reinit session ?nlsolver ?nlsrhsfn ?lsolver ?roots t0 y0 =
     if Sundials_configuration.safe then session.checkvec y0;
     c_reinit session t0 y0;
+    (match lsolver with None -> () | Some ls -> ls session y0);
+    session.linsolver <- lsolver;
+    (match nlsolver with
+     | Some ({ NLSI.rawptr = nlcptr } as nls) ->
+         (match session.nls_solver with
+          | None -> () | Some old_nls -> NLSI.detach old_nls);
+         NLSI.attach nls;
+         session.nls_solver <- Some nls;
+         c_set_nonlinear_solver session nlcptr
+     | _ -> ());
+    (match nlsrhsfn with
+     | None -> () | _ when Sundials_impl.Version.lt580 -> ()
+     | Some f -> session.nls_rhsfn <- f;
+                 c_set_nls_rhs_fn session);
     (match roots with Some roots -> root_init session roots| None -> ())
 
   external c_resize

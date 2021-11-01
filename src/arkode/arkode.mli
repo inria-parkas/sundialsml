@@ -1350,6 +1350,8 @@ module ARKStep : sig (* {{{ *)
   (** Diagonally Implicit Runge-Kutta (DIRK) solution of stiff problem.
       The fields are as follows.
       - [nlsolver], the nonlinear solver used for implicit stage solves,
+      - [nlsrhsfn], alternative implicit right-hand-side function to use in
+                    nonlinear system function evaluations,
       - [lsolver], used by [nlsolver]s based on Newton interation.
       - [linearity], specifies whether the implicit portion is linear or
                      nonlinear (the default), and
@@ -1360,10 +1362,15 @@ module ARKStep : sig (* {{{ *)
       Specifying an [nlsolver] that requires a linear solver without
       specifying an [lsolver] results in a {!NonlinearInitFailure} (or
       {!IllInput} for Sundials < 4.0.0) exception on the first call to
-      {!solve_normal} or {!solve_one_step}. *)
+      {!solve_normal} or {!solve_one_step}.
+
+      The alternative implicit right-hand-side function for nonlinear
+      system function evaluations is only supported for Sundials >= 5.8.0. *)
+
   val implicit :
-    ?nlsolver : ('data, 'kind, ('data, 'kind) session, [`Nvec])
-                  Sundials_NonlinearSolver.t
+       ?nlsolver : ('data, 'kind, ('data, 'kind) session, [`Nvec])
+                     Sundials_NonlinearSolver.t
+    -> ?nlsrhsfn :'data rhsfn
     -> ?lsolver : ('data, 'kind) linear_solver
     -> ?linearity : linearity
     -> 'data rhsfn
@@ -1376,8 +1383,9 @@ module ARKStep : sig (* {{{ *)
   (** Additive Runge-Kutta (ARK) solution of multi-rate problem. The arguments
       are as described under {!implicit} and {!explicit}. *)
   val imex :
-    ?nlsolver:('data, 'kind, ('data, 'kind) session, [`Nvec])
-                Sundials_NonlinearSolver.t
+       ?nlsolver:('data, 'kind, ('data, 'kind) session, [`Nvec])
+                   Sundials_NonlinearSolver.t
+    -> ?nlsrhsfn:'data rhsfn
     -> ?lsolver:('data, 'kind) linear_solver
     -> ?linearity: linearity
     -> fi:'data rhsfn
@@ -1421,7 +1429,8 @@ module ARKStep : sig (* {{{ *)
       @noarkode <node> ARKStepResStolerance
       @noarkode <node> ARKStepResVtolerance
       @noarkode <node> ARKStepResFtolerance
-      @noarkode <node> ARKStepSetOrder *)
+      @noarkode <node> ARKStepSetOrder
+      @noarkode <node> ARKStepSetNlsRhsFn *)
   val init :
       ('data, 'kind) problem
       -> ('data, 'kind) tolerance
@@ -1503,7 +1512,8 @@ module ARKStep : sig (* {{{ *)
       @noarkode <node> ARKStepSetOrder
       @noarkode <node> ARKStepSetLinearSolver
       @noarkode <node> ARKStepSetMassLinearSolver
-      @noarkode <node> ARKStepSetNonlinearSolver *)
+      @noarkode <node> ARKStepSetNonlinearSolver
+      @noarkode <node> ARKStepSetNlsRhsFn *)
   val reinit :
     ('d, 'k) session
     -> ?problem:('d, 'k) problem
@@ -3242,12 +3252,14 @@ module MRIStep : sig (* {{{ *)
   (** {2:mrisolver Solver initialization and use} *)
 
   (** Creates and initializes a session with the solver. The call
-      {[init inner tol ~nlsolver ~lsolver ~linearity
+      {[init inner tol ~nlsolver ~nlsrhsfn ~lsolver ~linearity
              f_s ~slowstep:h_s ~roots:(nroots, g) t0 y0]}
       has as arguments:
       - [inner],  an inner stepper to use for the fast integrator,
       - [tol],    the slow-step integration tolerances,
       - [nlsolver], the nonlinear solver used for implicit stage solves,
+      - [nlsrhsfn], alternative implicit slow right-hand-side function to
+                    use in nonlinear system function evaluations,
       - [lsolver], used by [nlsolver]s based on Newton interation.
       - [linearity], specifies whether the implicit slow right-hand side
                      function {% $f^S(t, y)$ %} is linear in {% $y$ %} or
@@ -3285,6 +3297,9 @@ module MRIStep : sig (* {{{ *)
       For Sundials < 5.4.0, the tolerance must be {!default_tolerances} and
       the [nlsolver], [lsolver], and [linearity] arguments are not available.
 
+      The alternative implicit right-hand-side function for nonlinear
+      system function evaluations is only supported for Sundials >= 5.8.0.
+
       @since 5.0.0
       @noarkode <node> MRIStepCreate
       @noarkode <node> MRIStepSetLinear
@@ -3295,12 +3310,14 @@ module MRIStep : sig (* {{{ *)
       @noarkode <node> MRIStepSetFixedStep
       @noarkode <node> MRIStepSStolerances
       @noarkode <node> MRIStepSVtolerances
-      @noarkode <node> MRIStepWFtolerances *)
+      @noarkode <node> MRIStepWFtolerances
+      @noarkode <node> MRIStepSetNlsRhsFn *)
   val init :
          ('data, 'kind) InnerStepper.t
       -> ('data, 'kind) tolerance
       -> ?nlsolver:('data, 'kind, ('data, 'kind) session, [`Nvec])
                      Sundials_NonlinearSolver.t
+      -> ?nlsrhsfn :'data rhsfn
       -> ?lsolver :('data, 'kind) linear_solver
       -> ?linearity:linearity
       -> 'data rhsfn
@@ -3363,12 +3380,14 @@ module MRIStep : sig (* {{{ *)
       @noarkode <node> MRIStepSetLinear
       @noarkode <node> MRIStepSetNonlinear
       @noarkode <node> MRIStepReInit
-      @noarkode <node> MRIStepRootInit *)
+      @noarkode <node> MRIStepRootInit
+      @noarkode <node> MRIStepSetNlsRhsFn *)
   val reinit :
     ('d, 'k) session
-    -> ?nlsolver:('data, 'kind, ('data, 'kind) session, [`Nvec])
+    -> ?nlsolver:('d, 'k, ('d, 'k) session, [`Nvec])
                    Sundials_NonlinearSolver.t
-    -> ?lsolver :('data, 'kind) linear_solver
+    -> ?nlsrhsfn :'d rhsfn
+    -> ?lsolver :('d, 'k) linear_solver
     -> ?roots:(int * 'd rootsfn)
     -> float
     -> ('d, 'k) Nvector.t

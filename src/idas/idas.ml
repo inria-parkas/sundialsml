@@ -1487,6 +1487,7 @@ module Adjoint = struct (* {{{ *)
             ls_precfns   = NoPrecFns;
 
             nls_solver   = None;
+            nls_resfn    = dummy_nlsresfn;
 
             sensext    = BwdSensExt {
               parent   = s;

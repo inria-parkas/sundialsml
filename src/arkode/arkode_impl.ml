@@ -301,9 +301,10 @@ type ('a, 'kind, 'step) session = {
   mutable mass_callbacks : ('a, 'kind) mass_callbacks;
   mutable mass_precfns   : 'a mass_precfns;
 
-  (* ARK only *)
+  (* ARK and MRI only *)
   mutable nls_solver     : ('a, 'kind, ('a, 'kind, 'step) session, [`Nvec])
                            NLSI.nonlinear_solver option;
+  mutable nls_rhsfn      : 'a rhsfn;
 
   (* MRI only *)
   mutable inner_session  : ('a, 'kind) inner_stepper option;
@@ -535,6 +536,8 @@ let dummy_rhsfn1 _ _ _ =
   Sundials_impl.crash "Internal error: dummy_rhsfn1 called\n"
 let dummy_rhsfn2 _ _ _ =
   Sundials_impl.crash "Internal error: dummy_rhsfn2 called\n"
+let dummy_nlsrhsfn _ _ _ =
+  Sundials_impl.crash "Internal error: dummy_nlsrhsfn called\n"
 let dummy_rootsfn _ _ _ =
   Sundials_impl.crash "Internal error: dummy_rootsfn called\n"
 let dummy_errh _ =

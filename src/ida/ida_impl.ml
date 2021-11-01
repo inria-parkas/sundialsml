@@ -351,6 +351,7 @@ type ('a,'kind) session = {
 
   mutable nls_solver   : ('a, 'kind, ('a, 'kind) session, [`Nvec])
                            NLSI.nonlinear_solver option;
+  mutable nls_resfn    : 'a resfn;
 
   mutable sensext      : ('a, 'kind) sensext; (* Used by IDAS *)
 }
@@ -588,6 +589,8 @@ let read_weak_ref x : ('a, 'kind) session =
 
 let dummy_resfn _ _ _ _ =
   Sundials_impl.crash "Internal error: dummy_resfn called\n"
+let dummy_nlsresfn _ _ _ _ =
+  Sundials_impl.crash "Internal error: dummy_nlsresfn called\n"
 let dummy_rootsfn _ _ _ _ =
   Sundials_impl.crash "Internal error: dummy_rootsfn called\n"
 let dummy_errh _ =

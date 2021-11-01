@@ -645,13 +645,15 @@ type 'd rootsfn = float -> 'd -> RealArray.t -> unit
 type 'd proj_fn = float -> 'd -> 'd -> float -> 'd -> unit
 
 (** Creates and initializes a session with the solver. The call
-    {[init lmm tol ~nlsolver ~lsolver f ~roots:(nroots, g) ~projfn t0 y0]} has
-    as arguments:
+    {[init lmm tol ~nlsolver ~nlsrhsfn ~lsolver f ~roots:(nroots, g) ~projfn t0 y0]}
+    has as arguments:
     - [lmm],      the linear multistep method (see {!lmm}),
     - [tol],      the integration tolerances,
     - [nlsolver], the solver to use to calculate integration steps,
+    - [nlsrhsfn], alternative right-hand-side function to use in
+                  nonlinear system function evaluations,
     - [lsolver],  used by [nlsolver]s based on Newton interation,
-    - [f],        the ODE right-hand side function,
+    - [f],        the ODE right-hand-side function,
     - [nroots],   the number of root functions,
     - [g],        the root function ([(nroots, g)] defaults to {!no_roots}),
     - [projfn],   enables projection onto the constraint manifold using the
@@ -675,6 +677,9 @@ type 'd proj_fn = float -> 'd -> 'd -> float -> 'd -> unit
     The projection feature is only supported for Sundials >= 5.3.0 and the
     {{!lmm}BDF} method.
 
+    The alternative right-hand-side function for nonlinear system function
+    evaluations is only supported for Sundials >= 5.8.0.
+
     @cvode <node5#sss:cvodemalloc>   CVodeCreate/CVodeInit
     @cvode <node5#ss:cvrootinit>     CVodeRootInit
     @cvode <node>                    CVodeSetLinearSolver
@@ -683,13 +688,15 @@ type 'd proj_fn = float -> 'd -> 'd -> float -> 'd -> unit
     @cvode <node5#sss:cvtolerances>  CVodeSVtolerances
     @cvode <node5#sss:cvtolerances>  CVodeWFtolerances
     @cvode <node5#ss:ewtsetFn>       CVEwtFn
-    @nocvode <node> CVodeSetProjFn *)
+    @nocvode <node>                  CVodeSetProjFn
+    @nocvode <node>                  CVodeSetNlsRhsFn *)
 val init :
     lmm
     -> ('data, 'kind) tolerance
     -> ?nlsolver
          : ('data, 'kind, ('data, 'kind) session, [`Nvec])
              Sundials_NonlinearSolver.t
+    -> ?nlsrhsfn:'data rhsfn
     -> ?lsolver  : ('data, 'kind) linear_solver
     -> 'data rhsfn
     -> ?roots:(int * 'data rootsfn)
@@ -766,9 +773,10 @@ val get_dky : ('d, 'k) session -> ('d, 'k) Nvector.t -> float -> int -> unit
 (** Reinitializes the solver with new parameters and state values. The
     values of the independent variable, i.e., the simulation time, and the
     state variables must be given. If given, [nlsolver] specifies a nonlinear
-    solver, [lsolver] specifies a linear solver, [roots] specifies a
-    new root finding function, and [rhsfn] specifies a new rhs function;
-    all default to unchanged.
+    solver, [nlsrhsfn] specifies an alternative rhs function for nonlinear
+    system function evaluations,[lsolver] specifies a linear solver,
+    [roots] specifies a new root finding function, and [rhsfn] specifies
+    a new rhs function; all default to unchanged.
 
     If the new problem does not have a constraint equation, but the old one
     did, then {!set_proj_frequency} must a zero argument to disable
@@ -776,10 +784,12 @@ val get_dky : ('d, 'k) session -> ('d, 'k) Nvector.t -> float -> int -> unit
 
     @cvode <node5#sss:cvreinit> CVodeReInit
     @cvode <node>               CVodeSetLinearSolver
-    @cvode <node>               CVodeSetNonlinearSolver *)
+    @cvode <node>               CVodeSetNonlinearSolver
+    @nocvode <node>             CVodeSetNlsRhsFn *)
 val reinit :
   ('d, 'k) session
   -> ?nlsolver:('d, 'k, ('d, 'k) session, [`Nvec]) Sundials_NonlinearSolver.t
+  -> ?nlsrhsfn:'d rhsfn
   -> ?lsolver:('d, 'k) linear_solver
   -> ?roots:(int * 'd rootsfn)
   -> ?rhsfn:'d rhsfn

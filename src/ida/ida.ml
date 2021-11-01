@@ -636,7 +636,10 @@ external c_init : ('a, 'k) session Weak.t -> float
                   -> (ida_mem * c_weak_ref)
     = "sunml_ida_init"
 
-let init tol ?nlsolver ~lsolver resfn ?varid ?(roots=no_roots) t0 y y' =
+external c_set_nls_res_fn : ('d, 'k) session -> unit
+    = "sunml_cvode_set_nls_res_fn"
+
+let init tol ?nlsolver ?nlsresfn ~lsolver resfn ?varid ?(roots=no_roots) t0 y y' =
   let (nroots, rootsfn) = roots in
   let checkvec = Nvector.check y in
   if Sundials_configuration.safe then
@@ -668,6 +671,7 @@ let init tol ?nlsolver ~lsolver resfn ?varid ?(roots=no_roots) t0 y y' =
                   ls_precfns = NoPrecFns;
 
                   nls_solver = None;
+                  nls_resfn  = dummy_nlsresfn;
 
                   sensext    = NoSensExt;
                 }
@@ -690,6 +694,10 @@ let init tol ?nlsolver ~lsolver resfn ?varid ?(roots=no_roots) t0 y y' =
        session.nls_solver <- Some nls;
        c_set_nonlinear_solver session nlcptr
    | _ -> ());
+   (match nlsresfn with
+    | None -> () | _ when Sundials_impl.Version.lt580 -> ()
+    | Some f -> session.nls_resfn <- f;
+                c_set_nls_res_fn session);
   session
 
 let get_num_roots { nroots } = nroots
@@ -699,7 +707,7 @@ external c_reinit
       -> ('a, 'k) Nvector.t -> unit
     = "sunml_ida_reinit"
 
-let reinit session ?nlsolver ?lsolver ?roots ?resfn t0 y0 y'0 =
+let reinit session ?nlsolver ?nlsresfn ?lsolver ?roots ?resfn t0 y0 y'0 =
   if Sundials_configuration.safe then
     (session.checkvec y0;
      session.checkvec y'0);
@@ -721,6 +729,10 @@ let reinit session ?nlsolver ?lsolver ?roots ?resfn t0 y0 y'0 =
         session.nls_solver <- Some nls;
         c_set_nonlinear_solver session nlcptr
     | _ -> ());
+  (match nlsresfn with
+   | None -> () | _ when Sundials_impl.Version.lt580 -> ()
+   | Some f -> session.nls_resfn <- f;
+               c_set_nls_res_fn session);
   (match roots with
    | None -> ()
    | Some roots -> root_init session roots);

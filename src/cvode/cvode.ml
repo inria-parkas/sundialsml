@@ -742,9 +742,13 @@ external c_init
 external c_set_proj_fn : ('d, 'k) session -> unit
     = "sunml_cvode_set_proj_fn"
 
+external c_set_nls_rhs_fn : ('d, 'k) session -> unit
+    = "sunml_cvode_set_nls_rhs_fn"
+
 let init lmm tol
           ?(nlsolver : ('data, 'kind, ('data, 'kind) session, [`Nvec])
                           Sundials_NonlinearSolver.t option)
+          ?nlsrhsfn
           ?lsolver f ?(roots=no_roots)
           ?projfn t0 y0 =
   let (nroots, roots) = roots in
@@ -785,6 +789,7 @@ let init lmm tol
           ls_precfns   = NoPrecFns;
 
           nls_solver   = None;
+          nls_rhsfn    = dummy_nlsrhsfn;
 
           sensext      = NoSensExt;
         } in
@@ -806,6 +811,10 @@ let init lmm tol
        session.nls_solver <- Some nls;
        c_set_nonlinear_solver session nlcptr
    | _ -> ());
+  (match nlsrhsfn with
+   | None -> () | _ when Sundials_impl.Version.lt580 -> ()
+   | Some f -> session.nls_rhsfn <- f;
+               c_set_nls_rhs_fn session);
   if hasprojfn then c_set_proj_fn session;
   session
 
@@ -823,7 +832,7 @@ external c_reinit
     : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
     = "sunml_cvode_reinit"
 
-let reinit session ?nlsolver ?lsolver ?roots ?rhsfn t0 y0 =
+let reinit session ?nlsolver ?nlsrhsfn ?lsolver ?roots ?rhsfn t0 y0 =
   if Sundials_configuration.safe then session.checkvec y0;
   Dls.invalidate_callback session;
   c_reinit session t0 y0;
@@ -844,6 +853,10 @@ let reinit session ?nlsolver ?lsolver ?roots ?rhsfn t0 y0 =
         session.nls_solver <- Some nls;
         c_set_nonlinear_solver session nlcptr
     | _ -> ());
+  (match nlsrhsfn with
+   | None -> () | _ when Sundials_impl.Version.lt580 -> ()
+   | Some f -> session.nls_rhsfn <- f;
+               c_set_nls_rhs_fn session);
   (match roots with
    | None -> ()
    | Some roots -> root_init session roots);

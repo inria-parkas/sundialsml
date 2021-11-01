@@ -185,6 +185,28 @@ static int resfn (realtype t, N_Vector y, N_Vector yp,
     CAMLreturnT (int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
+#if 580 <= SUNDIALS_LIB_VERSION
+static int nlsresfn (realtype t, N_Vector y, N_Vector yp,
+		     N_Vector resval, void *user_data)
+{
+    CAMLparam0 ();
+    CAMLlocalN (args, 4);
+    CAMLlocal2 (session, cb);
+
+    args[0] = caml_copy_double(t);
+    args[1] = NVEC_BACKLINK (y);
+    args[2] = NVEC_BACKLINK (yp);
+    args[3] = NVEC_BACKLINK (resval);
+
+    WEAK_DEREF (session, *(value*)user_data);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn (IDA_NLS_RESFN_FROM_ML (session), 4, args);
+
+    CAMLreturnT (int, CHECK_EXCEPTION (session, r, RECOVERABLE));
+}
+#endif
+
 value sunml_ida_make_jac_arg(realtype t, realtype coef, N_Vector y, N_Vector yp,
 		       N_Vector res, value tmp)
 {
@@ -1101,6 +1123,20 @@ CAMLprim value sunml_ida_clear_constraints (value vida_mem)
     flag = IDASetConstraints (IDA_MEM_FROM_ML (vida_mem), NULL);
     CHECK_FLAG ("IDASetConstraints", flag);
 
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_ida_set_nls_res_fn(value vida_mem)
+{
+    CAMLparam1(vida_mem);
+#if 580 <= SUNDIALS_LIB_VERSION
+    int flag;
+
+    flag = IDASetNlsResFn(IDA_MEM_FROM_ML (vida_mem), nlsresfn);
+    CHECK_FLAG ("IDASetNlsResFn", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
