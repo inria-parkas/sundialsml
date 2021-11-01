@@ -1270,6 +1270,31 @@ CAMLprim value sunml_kinsol_set_print_level(value vkin_mem, value vplvl)
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_kinsol_set_return_newest(value vkin_mem, value vrnewest)
+{
+    CAMLparam2(vkin_mem, vrnewest);
+#if 580 <= SUNDIALS_LIB_VERSION
+    int flag = KINSetReturnNewest(KINSOL_MEM_FROM_ML(vkin_mem),
+				  Bool_val(vrnewest));
+    CHECK_FLAG("KINSetReturnNewest", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_kinsol_set_damping(value vkin_mem, value vbeta)
+{
+    CAMLparam2(vkin_mem, vbeta);
+#if 580 <= SUNDIALS_LIB_VERSION
+    int flag = KINSetDamping(KINSOL_MEM_FROM_ML(vkin_mem), Double_val(vbeta));
+    CHECK_FLAG("KINSetDamping", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value sunml_kinsol_set_damping_aa(value vkin_mem, value vbeta)
 {
     CAMLparam2(vkin_mem, vbeta);
@@ -1277,6 +1302,18 @@ CAMLprim value sunml_kinsol_set_damping_aa(value vkin_mem, value vbeta)
     int flag = KINSetDampingAA(KINSOL_MEM_FROM_ML(vkin_mem), Double_val(vbeta));
     CHECK_FLAG("KINSetDampingAA", flag);
 
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_kinsol_set_delay_aa(value vkin_mem, value vdelay)
+{
+    CAMLparam2(vkin_mem, vdelay);
+#if 580 <= SUNDIALS_LIB_VERSION
+    int flag = KINSetDelayAA(KINSOL_MEM_FROM_ML(vkin_mem), Double_val(vdelay));
+    CHECK_FLAG("KINSetDelayAA", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
