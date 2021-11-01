@@ -326,5 +326,16 @@ module Util : sig (* {{{ *)
       Equivalent to [format_float "%a"]. *)
   val floata : float -> string
 
+  (** Returns true if the relative difference of the two arguments is less
+      than or equal to the tolerance.
+      The tolerance defaults to 10 times {!Sundials.Config.unit_roundoff}.
+      This function handles the cases where the arguments are near zero and
+      where either is {!Float.infinity} or {!Float.nan}.
+
+      @nocvode <node> SUNRCompare
+      @nocvode <node> SUNRCompareTol
+      @since 5.8.0 *)
+  val compare_float : ?tol:float -> float -> float -> bool
+
 end (* }}} *)
 
