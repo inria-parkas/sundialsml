@@ -585,7 +585,7 @@ module ButcherTable : sig (* {{{ *)
                                        solution coefficients ({% $b$ %}). *)
       bembed : RealArray.t option; (** Optional array (of length [stages]) of
                                        embedding coefficients
-                                       ({% $\tilde{b}$ %}). *)
+                                       ({% $\tilde{b}$ %} or {% $d$ %}). *)
     }
 
   (** Explicit Butcher tables

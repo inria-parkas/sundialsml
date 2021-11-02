@@ -239,6 +239,22 @@ module ButcherTable = struct (* {{{ *)
       bembed : RealArray.t option;
     }
 
+  let check { method_order = q; embedding_order = p; stages = s;
+              stage_values = a; stage_times = c;
+              coefficients = b; bembed = d; } =
+    let m, n = RealArray2.size a in
+    if m <> s || n <> s
+      then invalid_arg "butcher table: stage_values array has wrong length";
+    if RealArray.length c <> s
+      then invalid_arg "butcher table: stage_times array has wrong length";
+    if RealArray.length b <> s
+      then invalid_arg "butcher table: coefficients array has wrong length";
+    (match d with None -> () | Some d ->
+      if RealArray.length d <> s
+        then invalid_arg "butcher table: embedding array has wrong length");
+
+  (* Tables {{{ *)
+
   type erk_table =
     | HeunEuler_2_1_2
     | BogackiShampine_4_2_3
@@ -416,6 +432,8 @@ module ButcherTable = struct (* {{{ *)
     | ARK_8_4_5 -> (int_of_dirk_table ARK_8_4_5_Implicit,
                     int_of_erk_table ARK_8_4_5_Explicit)
 
+  (* }}} *)
+
   external c_load_erk : int -> t
     = "sunml_arkode_butcher_table_load_erk"
 
@@ -425,8 +443,12 @@ module ButcherTable = struct (* {{{ *)
   let load_erk v = c_load_erk (int_of_erk_table v)
   let load_dirk v = c_load_dirk (int_of_dirk_table v)
 
-  external write : t -> Logfile.t -> unit
+  external c_write : t -> Logfile.t -> unit
     = "sunml_arkode_butcher_table_write"
+
+  let write bt f =
+    if Sundials_configuration.safe then check bt;
+    c_write bt f
 
   exception ButcherTableCheckFailed
 
@@ -435,6 +457,7 @@ module ButcherTable = struct (* {{{ *)
     = "sunml_arkode_butcher_table_check_order"
 
   let check_order ?outfile bt =
+    if Sundials_configuration.safe then check bt;
     let q, op, err, warn = c_check_order outfile bt in
     if err then raise ButcherTableCheckFailed;
     q, op, warn
@@ -443,7 +466,9 @@ module ButcherTable = struct (* {{{ *)
     : Logfile.t option -> t -> t -> int * int option * bool
     = "sunml_arkode_butcher_table_check_ark_order"
 
-  let check_ark_order ?outfile = c_check_ark_order outfile
+  let check_ark_order ?outfile b1 b2 =
+    if Sundials_configuration.safe then (check b1; check b2);
+    c_check_ark_order outfile b1 b2
 
 end (* }}} *)
 
@@ -1952,6 +1977,10 @@ module ARKStep = struct (* {{{ *)
        && explicit_table <> None
        && (global_method_order < 0 || global_embedding_order < 0)
     then raise IllInput;
+    if Sundials_configuration.safe then begin
+      (match implicit_table with None -> () | Some bt -> ButcherTable.check bt);
+      (match explicit_table with None -> () | Some bt -> ButcherTable.check bt)
+    end;
     c_set_tables s global_method_order global_embedding_order
                    implicit_table explicit_table
 
@@ -2397,6 +2426,7 @@ module ERKStep = struct (* {{{ *)
     = "sunml_arkode_erk_set_table"
 
   let set_table s table =
+    if Sundials_configuration.safe then ButcherTable.check table;
     c_set_table s (Some table)
 
   external c_set_table_num : ('d, 'k) session -> int -> unit
@@ -3143,6 +3173,7 @@ module MRIStep = struct (* {{{ *)
       = "sunml_arkode_mri_coupling_mistomri"
 
     let mis_to_mri ~method_order ~embedding_order bt =
+      if Sundials_configuration.safe then ButcherTable.check bt;
       c_mis_to_mri method_order embedding_order bt
 
     external copy : t -> t
@@ -3164,6 +3195,7 @@ module MRIStep = struct (* {{{ *)
     = "sunml_arkode_mri_set_table"
 
   let set_table s q bt =
+    if Sundials_configuration.safe then ButcherTable.check bt;
     c_set_table s q (Some bt)
 
   external c_set_table_num : ('d, 'k) session -> int -> unit
