@@ -43,6 +43,31 @@ let size a =
 
 let fill (a, _) v = Array2.fill a v
 
+let of_lists xxs =
+  match xxs with
+  | [] -> empty
+  | r0 :: ors -> begin
+      let nc = List.length xxs in
+      let nr = List.length r0 in
+      if List.exists (fun r -> List.length r <> nr) ors
+        then invalid_arg "all rows must have the same length";
+      let d = Array2.create float64 c_layout nc nr in
+      List.iteri (fun i rs -> List.iteri (fun j v -> d.{j, i} <- v) rs) xxs;
+      wrap d
+    end
+
+let of_arrays xxs =
+  let nc = Array.length xxs in
+  if nc = 0 then empty
+  else begin
+    let nr = Array.length xxs.(0) in
+    if Array.exists (fun r -> Array.length r <> nr) xxs
+      then invalid_arg "all rows must have the same length";
+    let d = Array2.create float64 c_layout nc nr in
+    Array.iteri (fun i rs -> Array.iteri (fun j v -> d.{j, i} <- v) rs) xxs;
+    wrap d
+  end
+
 let ppi ?(start="[") ?(rowstart="[") ?(stop="]") ?(rowstop="]")
         ?(sep=";") ?(rowsep=";")
         ?(item=fun f -> Format.fprintf f "(%2d,%2d)=% -14e") ()

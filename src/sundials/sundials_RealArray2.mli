@@ -31,6 +31,14 @@ val make : int -> int -> float -> t
     columns. *)
 val create : int -> int -> t
 
+(** [of_lists xxs] constructs an array from lists of rows. The inner lists
+    must all have the same length. *)
+val of_lists : (float list) list -> t
+
+(** [of_lists xxs] constructs an array from an array of rows. The inner arrays
+    must all have the same length. *)
+val of_arrays : (float array) array -> t
+
 (** An array with no elements. *)
 val empty : t
 
