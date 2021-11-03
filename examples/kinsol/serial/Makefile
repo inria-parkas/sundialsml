@@ -21,14 +21,17 @@ EXAMPLES_SINCE_3_0 = kinRoboKin_dns_alt.ml
 
 EXAMPLES_SINCE_5_1_0 = kinAnalytic_fp.ml
 
+EXAMPLES_SINCE_5_4_0 = kinLaplace_picard_kry.ml
+
 EXAMPLES = $(EXAMPLES_SINCE_2_5) $(EXAMPLES_SINCE_2_6) $(EXAMPLES_SINCE_3_0) \
-	   $(EXAMPLES_SINCE_5_1_0)
+	   $(EXAMPLES_SINCE_5_1_0) $(EXAMPLES_SINCE_5_4_0)
 
 
 ENABLED_EXAMPLES = $(EXAMPLES_SINCE_2_5)			\
 		   $(if $(AT_LEAST_2_6),$(EXAMPLES_SINCE_2_6))	\
 	   	   $(if $(AT_LEAST_3_0),$(EXAMPLES_SINCE_3_0))	\
-	   	   $(if $(AT_LEAST_5_1_0),$(EXAMPLES_SINCE_5_1_0))
+	   	   $(if $(AT_LEAST_5_1_0),$(EXAMPLES_SINCE_5_1_0)) \
+	   	   $(if $(AT_LEAST_5_4_0),$(EXAMPLES_SINCE_5_4_0))
 
 include ../../examples.mk
 
