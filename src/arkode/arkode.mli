@@ -2195,6 +2195,11 @@ module ARKStep : sig (* {{{ *)
       @noarkode <node> ARKStepGetStepStats *)
   val print_step_stats  : ('d, 'k) session -> out_channel -> unit
 
+  (** Summarize the session on the standard output (or given file).
+
+      @noarkode <node> ARKStepPrintMem *)
+  val write_session  : ?logfile:Logfile.t -> ('d, 'k) session -> unit
+
   (** {3:arkgetimplicit Implicit solver optional output functions} *)
 
   (** Returns the number of calls made to the linear solver's setup function.
@@ -2779,6 +2784,11 @@ module ERKStep : sig (* {{{ *)
 
       @noarkode <node> ERKStepGetStepStats *)
   val print_step_stats  : ('d, 'k) session -> out_channel -> unit
+
+  (** Summarize the session on the standard output (or given file).
+
+      @noarkode <node> ERKStepPrintMem *)
+  val write_session  : ?logfile:Logfile.t -> ('d, 'k) session -> unit
 
   (** {2:erkroots Additional root-finding functions} *)
 
@@ -3894,6 +3904,11 @@ module MRIStep : sig (* {{{ *)
       @since 5.4.0
       @return ([nniters], [nncfails]) *)
   val get_nonlin_solv_stats : ('d, 'k) session -> int * int
+
+  (** Summarize the session on the standard output (or given file).
+
+      @noarkode <node> MRIStepPrintMem *)
+  val write_session  : ?logfile:Logfile.t -> ('d, 'k) session -> unit
 
   (** {2:mriroots Additional root-finding functions} *)
 
