@@ -2174,6 +2174,11 @@ module ARKStep = struct (* {{{ *)
   external write_butcher : ('d, 'k) session -> Logfile.t -> unit
       = "sunml_arkode_ark_write_butcher"
 
+  external c_print_mem : ('d, 'k) session -> Logfile.t option -> unit
+      = "sunml_arkode_ark_print_mem"
+
+  let write_session ?logfile session = c_print_mem session logfile
+
 end (* }}} *)
 
 module ERKStep = struct (* {{{ *)
@@ -2556,6 +2561,11 @@ module ERKStep = struct (* {{{ *)
 
   external write_butcher : ('d, 'k) session -> Logfile.t -> unit
       = "sunml_arkode_erk_write_butcher"
+
+  external c_print_mem : ('d, 'k) session -> Logfile.t option -> unit
+      = "sunml_arkode_erk_print_mem"
+
+  let write_session ?logfile session = c_print_mem session logfile
 
 end (* }}} *)
 
@@ -3360,6 +3370,12 @@ module MRIStep = struct (* {{{ *)
 
   external get_nonlin_solv_stats          : ('a, 'k) session -> int * int
       = "sunml_arkode_mri_get_nonlin_solv_stats"
+
+  external c_print_mem : ('d, 'k) session -> Logfile.t option -> unit
+      = "sunml_arkode_mri_print_mem"
+
+  let write_session ?logfile session = c_print_mem session logfile
+
 end (* }}} *)
 
 (* Let C code know about some of the values in this module.  *)

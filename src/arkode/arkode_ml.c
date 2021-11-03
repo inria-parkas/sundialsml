@@ -3347,6 +3347,19 @@ CAMLprim value sunml_arkode_ark_set_postprocess_step_fn(value varkode_mem,
  * Boiler plate definitions for ARKStep interface.
  */
 
+CAMLprim value sunml_arkode_ark_print_mem(value varkode_mem, value volog)
+{
+    CAMLparam2(varkode_mem, volog);
+#if 500 <= SUNDIALS_LIB_VERSION
+    FILE *vlog = (volog == Val_none) ? NULL : ML_CFILE(Some_val(volog));
+
+    ARKStepPrintMem(ARKODE_MEM_FROM_ML(varkode_mem), vlog);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value sunml_arkode_ark_resv_tolerance(value vdata, value abstol)
 {
     CAMLparam2(vdata, abstol);
@@ -5595,6 +5608,19 @@ CAMLprim value sunml_arkode_erk_set_postprocess_step_fn(value varkode_mem,
  * Boiler plate definitions for ERKStep interface.
  */
 
+CAMLprim value sunml_arkode_erk_print_mem(value varkode_mem, value volog)
+{
+    CAMLparam2(varkode_mem, volog);
+#if 500 <= SUNDIALS_LIB_VERSION
+    FILE *vlog = (volog == Val_none) ? NULL : ML_CFILE(Some_val(volog));
+
+    ERKStepPrintMem(ARKODE_MEM_FROM_ML(varkode_mem), vlog);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
 /* main solver optional output functions */
 
 CAMLprim value sunml_arkode_erk_get_work_space(value varkode_mem)
@@ -7435,6 +7461,19 @@ CAMLprim value sunml_arkode_mri_istepper_get_forcing_data(value visteppercptr)
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * Boiler plate definitions for MRIStep interface.
  */
+
+CAMLprim value sunml_arkode_mri_print_mem(value varkode_mem, value volog)
+{
+    CAMLparam2(varkode_mem, volog);
+#if 500 <= SUNDIALS_LIB_VERSION
+    FILE *vlog = (volog == Val_none) ? NULL : ML_CFILE(Some_val(volog));
+
+    MRIStepPrintMem(ARKODE_MEM_FROM_ML(varkode_mem), vlog);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
 
 /* main solver optional output functions */
 
