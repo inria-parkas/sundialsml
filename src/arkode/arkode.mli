@@ -2854,6 +2854,7 @@ end (* }}} *)
     {ol
       {- {{:#mrilinear}Linear solvers}}
       {- {{:#innerstepper}Inner steppers}}
+      {- {{:#coupling}Coupilng coefficients}}
       {- {{:#mrisolver}Solver initialization and use}}
       {- {{:#mriset}Modifying the solver}}
       {- {{:#mriget}Querying the solver}}
@@ -3146,7 +3147,7 @@ module MRIStep : sig (* {{{ *)
 
   end (* }}} *)
 
-  (** {2:innerstepper Inner Steppers} *)
+  (** {2:innerstepper Inner steppers} *)
 
   (** Generic  *)
   module InnerStepper : sig (* {{{ *)
@@ -3259,6 +3260,89 @@ module MRIStep : sig (* {{{ *)
 
   end (* }}} *)
 
+  (** {2:coupling Coupling coefficients} *)
+
+  (** Coupling coefficients between fast and slow time scales.
+
+      @since 5.4.0
+      @noarkode <node> MRI Coupling Coefficients Data Structure *)
+  module Coupling : sig (* {{{ *)
+
+    (** Represents a set of coupling coefficients. The coupling from slow to
+        fast time scales is encoded as a vector of slow “stage time”
+        abscissae, {% $c^S \in \mathbb{R}^{s+1}$ %} and a set of coupling
+        matrices %{ $\Gamma^{\{k\}} \in \mathbb{R}^{(s+1)\times(s+1)} $ %}.
+        The individual fields can be accessed using the functions below.
+
+        @since 5.4.0
+        @noarkode <node> MRIStepCoupling
+        @noarkode <node> MRIStepCoupling_Alloc *)
+    type t
+
+    (** The number of {% $\Gamma^{\{k\}}$ %} coupling matrices. *)
+    val nmat              : t -> int
+
+    (** The number of slow abscissae ({% $s + 1$ %}). *)
+    val stages            : t -> int
+
+    (** The accuracy order of the MRI method. *)
+    val method_order      : t -> int
+
+    (** The accuracy order of the embedding. *)
+    val embedding_order   : t -> int
+
+    (** The set of {% $\Gamma^{\{k\}}$ %} matrices as
+        [nmat * stages * stages] floats. *)
+    val coupling_matrices : t -> RealArray.t array array
+
+    (** An array of slow abscissae {% $c^S$ %}. The array has length [stages]. *)
+    val abscissae         : t -> RealArray.t
+
+    (** Create a set of coupling coefficients. The values of [nmat] and
+        [stages] are obtained from the array lengths.
+
+        @since 5.4.0
+        @noarkode <node> MRIStepCoupling_Create *)
+    val make :
+         method_order:int
+      -> embedding_order:int
+      -> RealArray.t array array
+      -> RealArray.t
+      -> t
+
+    (** Available coupling tables.
+
+        @noarkode <node> MRIStepCoupling tables *)
+    type coupling_table =
+      | MIS_KW3         (** Explicit table of order 3. *)
+      | GARK_ERK45a     (** Explicit table of order 4. *)
+      | GARK_IRK21a     (** Implicit table of order 2 with implicit solves 1. *)
+      | GARK_ESDIRK34a  (** Implicit table of order 4 with implicit solves 3. *)
+
+    (** Retrieves a copy of a specific coupling table.
+
+        @since 5.4.0
+        @noarkode <node> MRIStepCoupling_LoadTable *)
+    val load_table : coupling_table -> t
+
+    (** Create a new coupling table from a slow Butcher table. *)
+    val mis_to_mri :
+         method_order:int
+      -> embedding_order:int
+      -> ButcherTable.t
+      -> t
+
+    (** Create a copy of a given coupling table. *)
+    val copy : t -> t
+
+    (** Return a coupling table's real and integer workspace sizes. *)
+    val space : t -> int * int
+
+    (** Write a coupling table to a file. *)
+    val write : t -> Logfile.t -> unit
+
+  end (* }}} *)
+
   (** {2:mrisolver Solver initialization and use} *)
 
   (** Creates and initializes a session with the solver. The call
@@ -3286,6 +3370,16 @@ module MRIStep : sig (* {{{ *)
       it makes the calls referenced below. The {!solve_normal} and
       {!solve_one_step} functions may be called directly.
 
+      At most one of the options below may be specified:
+      - [~coupling], use a customized set of slow-to-fast coupling
+                     coefficients,
+      - [~table], use a customized Butcher table with the given global order
+                  of accuracy for the outer (slow) method, or
+      - [~tablenum], use a specific built-in Butcher table for the outer
+                     (slow) method.
+      One of these options must be specified (correctly) if specifying a
+      linear solver.
+
       If the inner (fast) stepper uses a fixed step size [h_f] that does not
       evenly divide the time interval between the stages of the outer (slow)
       method, then the actual value used for the fast steps will
@@ -3305,13 +3399,17 @@ module MRIStep : sig (* {{{ *)
       inner session.
 
       For Sundials < 5.4.0, the tolerance must be {!default_tolerances} and
-      the [nlsolver], [lsolver], and [linearity] arguments are not available.
+      the [coupling], [nlsolver], [lsolver], and [linearity] arguments are
+      not available.
 
       The alternative implicit right-hand-side function for nonlinear
       system function evaluations is only supported for Sundials >= 5.8.0.
 
       @since 5.0.0
       @noarkode <node> MRIStepCreate
+      @noarkode <node> MRIStepSetCoupling
+      @noarkode <node> MRIStepSetTable
+      @noarkode <node> MRIStepSetTableNum
       @noarkode <node> MRIStepSetLinear
       @noarkode <node> MRIStepSetNonlinear
       @noarkode <node> MRIStepSetLinearSolver
@@ -3325,10 +3423,16 @@ module MRIStep : sig (* {{{ *)
   val init :
          ('data, 'kind) InnerStepper.t
       -> ('data, 'kind) tolerance
+
+      -> ?coupling:Coupling.t
+      -> ?table:(ButcherTable.t * int)
+      -> ?tablenum:ButcherTable.erk_table
+
       -> ?nlsolver:('data, 'kind, ('data, 'kind) session, [`Nvec])
                      Sundials_NonlinearSolver.t
       -> ?nlsrhsfn :'data rhsfn
       -> ?lsolver :('data, 'kind) linear_solver
+
       -> ?linearity:linearity
       -> 'data rhsfn
       -> slowstep:float
@@ -3563,106 +3667,6 @@ module MRIStep : sig (* {{{ *)
 
       @noarkode <node> MRIStepSetPostInnerFn *)
   val clear_post_inner_fn : ('d, 'k) session -> unit
-
-  (** {3:mrisetivp Optional inputs for IVP method selection} *)
-
-  (** Coupling coefficients between fast and slow time scales.
-
-      @since 5.4.0
-      @noarkode <node> MRI Coupling Coefficients Data Structure *)
-  module Coupling : sig (* {{{ *)
-
-    (** Represents a set of coupling coefficients. The coupling from slow to
-        fast time scales is encoded as a vector of slow “stage time”
-        abscissae, {% $c^S \in \mathbb{R}^{s+1}$ %} and a set of coupling
-        matrices %{ $\Gamma^{\{k\}} \in \mathbb{R}^{(s+1)\times(s+1)} $ %}.
-        The individual fields can be accessed using the functions below.
-
-        @since 5.4.0
-        @noarkode <node> MRIStepCoupling
-        @noarkode <node> MRIStepCoupling_Alloc *)
-    type t
-
-    (** The number of {% $\Gamma^{\{k\}}$ %} coupling matrices. *)
-    val nmat              : t -> int
-
-    (** The number of slow abscissae ({% $s + 1$ %}). *)
-    val stages            : t -> int
-
-    (** The accuracy order of the MRI method. *)
-    val method_order      : t -> int
-
-    (** The accuracy order of the embedding. *)
-    val embedding_order   : t -> int
-
-    (** The set of {% $\Gamma^{\{k\}}$ %} matrices as
-        [nmat * stages * stages] floats. *)
-    val coupling_matrices : t -> RealArray.t array array
-
-    (** An array of slow abscissae {% $c^S$ %}. The array has length [stages]. *)
-    val abscissae         : t -> RealArray.t
-
-    (** Create a set of coupling coefficients. The values of [nmat] and
-        [stages] are obtained from the array lengths.
-
-        @since 5.4.0
-        @noarkode <node> MRIStepCoupling_Create *)
-    val make :
-         method_order:int
-      -> embedding_order:int
-      -> RealArray.t array array
-      -> RealArray.t
-      -> t
-
-    (** Available coupling tables.
-
-        @noarkode <node> MRIStepCoupling tables *)
-    type coupling_table =
-      | MIS_KW3         (** Explicit table of order 3. *)
-      | GARK_ERK45a     (** Explicit table of order 4. *)
-      | GARK_IRK21a     (** Implicit table of order 2 with implicit solves 1. *)
-      | GARK_ESDIRK34a  (** Implicit table of order 4 with implicit solves 3. *)
-
-    (** Retrieves a copy of a specific coupling table.
-
-        @since 5.4.0
-        @noarkode <node> MRIStepCoupling_LoadTable *)
-    val load_table : coupling_table -> t
-
-    (** Create a new coupling table from a slow Butcher table. *)
-    val mis_to_mri :
-         method_order:int
-      -> embedding_order:int
-      -> ButcherTable.t
-      -> t
-
-    (** Create a copy of a given coupling table. *)
-    val copy : t -> t
-
-    (** Return a coupling table's real and integer workspace sizes. *)
-    val space : t -> int * int
-
-    (** Write a coupling table to a file. *)
-    val write : t -> Logfile.t -> unit
-
-  end (* }}} *)
-
-  (** Specifies a customized set of slow-to-fast coupling coefficients.
-
-      @since 5.4.0
-      @noarkode <node> MRIStepSetCoupling *)
-  val set_coupling : ('d, 'k) session -> Coupling.t -> unit
-
-  (** Specifies a customized Butcher table for the outer (slow) method.
-      The integer argument sets the global order of accuracy.
-
-      @noarkode <node> MRIStepSetTable *)
-  val set_table : ('d, 'k) session -> int -> ButcherTable.t -> unit
-
-  (** Use a specific built-in Butcher table for the outer (slow) method.
-
-      @noarkode <node> MRIStepSetMRITableNum *)
-  val set_table_num : ('d, 'k) session -> ButcherTable.erk_table -> unit
 
   (** {3:mrisetadap Optional inputs for time step adaptivity} *)
 

@@ -2889,6 +2889,79 @@ module MRIStep = struct (* {{{ *)
 
   end (* }}} *)
 
+  module Coupling = struct (* {{{ *)
+
+    type cptr
+
+    (* Synchronized with arkode_mri_coupling_index in arkode_ml.h *)
+    type t = {
+      cptr              : cptr;
+      nmat              : int;
+      stages            : int;
+      method_order      : int;
+      embedding_order   : int;
+      coupling_matrices : RealArray.t array array;
+      abscissae          : RealArray.t;
+    }
+
+    let nmat { nmat; _ } = nmat
+    let stages { stages; _ } = stages
+    let method_order { method_order; _ } = method_order
+    let embedding_order { embedding_order; _ } = embedding_order
+    let coupling_matrices { coupling_matrices; _ } = coupling_matrices
+    let abscissae { abscissae; _ } = abscissae
+
+    external c_make
+      : int * int * int * int * RealArray.t array array * RealArray.t -> cptr
+      = "sunml_arkode_mri_coupling_make"
+
+    let make ~method_order ~embedding_order g c =
+      let nmat = Array.length g in
+      let stages = RealArray.length c in
+      if nmat < 1 || stages < 1 then invalid_arg "zero-length array";
+      let check ra = RealArray.length ra <> stages in
+      if Array.exists (fun gi -> Array.length gi <> stages
+                                 || Array.exists check gi) g
+        then invalid_arg "coupling matrice incompatible with abscissae";
+      {
+        cptr = c_make (nmat, stages, method_order, embedding_order, g, c);
+        nmat;
+        stages;
+        method_order;
+        embedding_order;
+        coupling_matrices = g;
+        abscissae = c;
+      }
+
+    (* Synchronized with arkode_mri_coupling_table_tag in arkode_ml.h *)
+    type coupling_table =
+      | MIS_KW3
+      | GARK_ERK45a
+      | GARK_IRK21a
+      | GARK_ESDIRK34a
+
+    external load_table : coupling_table -> t
+      = "sunml_arkode_mri_coupling_load_table"
+
+    external c_mis_to_mri : int -> int -> ButcherTable.t -> t
+      = "sunml_arkode_mri_coupling_mistomri"
+
+    let mis_to_mri ~method_order ~embedding_order bt =
+      if Sundials_configuration.safe then ButcherTable.check bt;
+      c_mis_to_mri method_order embedding_order bt
+
+    external copy : t -> t
+      = "sunml_arkode_mri_coupling_copy"
+
+    external space : t -> int * int
+      = "sunml_arkode_mri_coupling_space"
+
+    external write : t -> Logfile.t -> unit
+      = "sunml_arkode_mri_coupling_write"
+
+  end (* }}} *)
+
+
   external session_finalize : ('a, 'k) session -> unit
       = "sunml_arkode_mri_session_finalize"
 
@@ -2935,14 +3008,38 @@ module MRIStep = struct (* {{{ *)
   external c_set_nls_rhs_fn : ('d, 'k) session -> unit
       = "sunml_arkode_mri_set_nls_rhs_fn"
 
-  let init istepper tol ?nlsolver ?nlsrhsfn ?lsolver ?linearity slow
+  external set_coupling : ('d, 'k) session -> Coupling.t -> unit
+    = "sunml_arkode_mri_set_coupling"
+
+  external c_set_table
+    : ('d, 'k) session -> int -> ButcherTable.t option -> unit
+    = "sunml_arkode_mri_set_table"
+
+  let set_table s q bt =
+    if Sundials_configuration.safe then ButcherTable.check bt;
+    c_set_table s q (Some bt)
+
+  external c_set_table_num : ('d, 'k) session -> int -> unit
+      = "sunml_arkode_mri_set_table_num"
+
+  let set_table_num s tn =
+    c_set_table_num s (ButcherTable.int_of_erk_table tn)
+
+  let count_option = function None -> 0 | Some _ -> 1
+
+  let init istepper tol
+           ?coupling ?table ?tablenum
+           ?nlsolver ?nlsrhsfn ?lsolver ?linearity slow
            ~slowstep ?(roots=no_roots) t0 y0 =
     if Sundials_impl.Version.lt500
       then raise Config.NotImplementedBySundialsVersion;
     let (nroots, roots) = roots in
     let checkvec = Nvector.check y0 in
-    if Sundials_configuration.safe && nroots < 0
-      then raise Config.NotImplementedBySundialsVersion;
+    if Sundials_configuration.safe then begin
+      if nroots < 0 then raise Config.NotImplementedBySundialsVersion;
+      if 1 < count_option coupling + count_option table + count_option tablenum
+      then invalid_arg "more than one coupling or table option"
+    end;
     if Sundials_impl.Version.lt540
         && (nlsolver <> None || lsolver <> None || linearity <> None)
       then invalid_arg "functions is negative";
@@ -2999,6 +3096,9 @@ module MRIStep = struct (* {{{ *)
     istepper.icheckvec <- Some checkvec;
     if nroots > 0 then c_root_init session nroots;
     set_tolerances session tol;
+    (match coupling with None -> () | Some c -> set_coupling session c);
+    (match table with None -> () | Some (bt, go) -> set_table session go bt);
+    (match tablenum with None -> () | Some n -> set_table_num session n);
     (match nlsolver with
      | Some ({ NLSI.rawptr = nlcptr } as nls) ->
          NLSI.attach nls;
@@ -3124,95 +3224,6 @@ module MRIStep = struct (* {{{ *)
 
   external set_fixed_step : ('d, 'k) session -> float -> unit
       = "sunml_arkode_mri_set_fixed_step"
-
-  module Coupling = struct (* {{{ *)
-
-    type cptr
-
-    (* Synchronized with arkode_mri_coupling_index in arkode_ml.h *)
-    type t = {
-      cptr              : cptr;
-      nmat              : int;
-      stages            : int;
-      method_order      : int;
-      embedding_order   : int;
-      coupling_matrices : RealArray.t array array;
-      abscissae          : RealArray.t;
-    }
-
-    let nmat { nmat; _ } = nmat
-    let stages { stages; _ } = stages
-    let method_order { method_order; _ } = method_order
-    let embedding_order { embedding_order; _ } = embedding_order
-    let coupling_matrices { coupling_matrices; _ } = coupling_matrices
-    let abscissae { abscissae; _ } = abscissae
-
-    external c_make
-      : int * int * int * int * RealArray.t array array * RealArray.t -> cptr
-      = "sunml_arkode_mri_coupling_make"
-
-    let make ~method_order ~embedding_order g c =
-      let nmat = Array.length g in
-      let stages = RealArray.length c in
-      if nmat < 1 || stages < 1 then invalid_arg "zero-length array";
-      let check ra = RealArray.length ra <> stages in
-      if Array.exists (fun gi -> Array.length gi <> stages
-                                 || Array.exists check gi) g
-        then invalid_arg "coupling matrice incompatible with abscissae";
-      {
-        cptr = c_make (nmat, stages, method_order, embedding_order, g, c);
-        nmat;
-        stages;
-        method_order;
-        embedding_order;
-        coupling_matrices = g;
-        abscissae = c;
-      }
-
-    (* Synchronized with arkode_mri_coupling_table_tag in arkode_ml.h *)
-    type coupling_table =
-      | MIS_KW3
-      | GARK_ERK45a
-      | GARK_IRK21a
-      | GARK_ESDIRK34a
-
-    external load_table : coupling_table -> t
-      = "sunml_arkode_mri_coupling_load_table"
-
-    external c_mis_to_mri : int -> int -> ButcherTable.t -> t
-      = "sunml_arkode_mri_coupling_mistomri"
-
-    let mis_to_mri ~method_order ~embedding_order bt =
-      if Sundials_configuration.safe then ButcherTable.check bt;
-      c_mis_to_mri method_order embedding_order bt
-
-    external copy : t -> t
-      = "sunml_arkode_mri_coupling_copy"
-
-    external space : t -> int * int
-      = "sunml_arkode_mri_coupling_space"
-
-    external write : t -> Logfile.t -> unit
-      = "sunml_arkode_mri_coupling_write"
-
-  end (* }}} *)
-
-  external set_coupling : ('d, 'k) session -> Coupling.t -> unit
-    = "sunml_arkode_mri_set_coupling"
-
-  external c_set_table
-    : ('d, 'k) session -> int -> ButcherTable.t option -> unit
-    = "sunml_arkode_mri_set_table"
-
-  let set_table s q bt =
-    if Sundials_configuration.safe then ButcherTable.check bt;
-    c_set_table s q (Some bt)
-
-  external c_set_table_num : ('d, 'k) session -> int -> unit
-      = "sunml_arkode_mri_set_table_num"
-
-  let set_table_num s tn =
-    c_set_table_num s (ButcherTable.int_of_erk_table tn)
 
   external set_defaults           : ('a, 'k) session -> unit
       = "sunml_arkode_mri_set_defaults"

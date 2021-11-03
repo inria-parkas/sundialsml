@@ -420,46 +420,30 @@ let main () =
      initial dependent variable vector y, and the fast integrator. *)
   let arkode_mem = match solve_type with
     | 0 ->  (* KW3 slow solver *)
-        let arkode_mem =
-          MRIStep.(init (InnerStepper.from_arkstep inner_arkode_mem)
-                        default_tolerances
-                        (fs rpar)
-                        ~slowstep:hs
-                        t0 y)
-        in
-        MRIStep.set_table_num arkode_mem Arkode.ButcherTable.Knoth_Wolke_3_3;
-        arkode_mem
+        MRIStep.(init (InnerStepper.from_arkstep inner_arkode_mem)
+                      default_tolerances
+                      ~tablenum:Arkode.ButcherTable.Knoth_Wolke_3_3
+                      (fs rpar)
+                      ~slowstep:hs
+                      t0 y)
 
     | 3 ->  (* KW3 slow solver (full problem) *)
-        let arkode_mem =
-          MRIStep.(init (InnerStepper.from_arkstep inner_arkode_mem)
-                        default_tolerances
-                        (fn rpar)
-                        ~slowstep:hs
-                        t0 y)
-        in
-        MRIStep.set_table_num arkode_mem Arkode.ButcherTable.Knoth_Wolke_3_3;
-        arkode_mem
+        MRIStep.(init (InnerStepper.from_arkstep inner_arkode_mem)
+                      default_tolerances
+                      ~tablenum:Arkode.ButcherTable.Knoth_Wolke_3_3
+                      (fn rpar)
+                      ~slowstep:hs
+                      t0 y)
 
     | 5 | 6 -> (* MRI-GARK-ERK45a slow solver *)
-        let arkode_mem =
-          MRIStep.(init (InnerStepper.from_arkstep inner_arkode_mem)
-                        default_tolerances
-                        (fs rpar)
-                        ~slowstep:hs
-                        t0 y)
-        in
-        MRIStep.(set_coupling arkode_mem Coupling.(load_table GARK_ERK45a));
-        arkode_mem
+        MRIStep.(init (InnerStepper.from_arkstep inner_arkode_mem)
+                      default_tolerances
+                      ~coupling:Coupling.(load_table GARK_ERK45a)
+                      (fs rpar)
+                      ~slowstep:hs
+                      t0 y)
 
     | 1 | 2 ->  (* no slow dynamics (use ERK-2-2) *)
-        let arkode_mem =
-          MRIStep.(init (InnerStepper.from_arkstep inner_arkode_mem)
-                        default_tolerances
-                        (f0 rpar)
-                        ~slowstep:hs
-                        t0 y)
-        in
         let bt = Arkode.ButcherTable.{
             method_order = 2;
             embedding_order = 0;
@@ -473,36 +457,34 @@ let main () =
             bembed = None;
           }
         in
-        MRIStep.set_table arkode_mem 2 bt;
-        arkode_mem
+        MRIStep.(init (InnerStepper.from_arkstep inner_arkode_mem)
+                      default_tolerances
+                      ~table:(bt, 2)
+                      (f0 rpar)
+                      ~slowstep:hs
+                      t0 y)
 
     | 4 ->  (* dirk-2 (trapezoidal), solve-decoupled slow solver *)
         let a_s = Matrix.dense neq in
         let ls_s = LinearSolver.Direct.dense y a_s in
-        let arkode_mem =
-          MRIStep.(init (InnerStepper.from_arkstep inner_arkode_mem)
-                        (SStolerances (reltol, abstol))
-                         ~lsolver:(Dls.solver ~jac:(jn rpar) ls_s)
-                        (fn rpar)
-                        ~slowstep:hs
-                        t0 y)
-        in
-        MRIStep.(set_coupling arkode_mem Coupling.(load_table GARK_IRK21a));
-        arkode_mem
+        MRIStep.(init (InnerStepper.from_arkstep inner_arkode_mem)
+                      (SStolerances (reltol, abstol))
+                      ~coupling:Coupling.(load_table GARK_IRK21a)
+                      ~lsolver:(Dls.solver ~jac:(jn rpar) ls_s)
+                      (fn rpar)
+                      ~slowstep:hs
+                      t0 y)
 
     | 7 ->  (* MRI-GARK-ESDIRK34a, solve-decoupled slow solver *)
         let a_s = Matrix.dense neq in
         let ls_s = LinearSolver.Direct.dense y a_s in
-        let arkode_mem =
-          MRIStep.(init (InnerStepper.from_arkstep inner_arkode_mem)
-                        (SStolerances (reltol, abstol))
-                         ~lsolver:(Dls.solver ~jac:(js rpar) ls_s)
-                        (fs rpar)
-                        ~slowstep:hs
-                        t0 y)
-        in
-        MRIStep.(set_coupling arkode_mem Coupling.(load_table GARK_ESDIRK34a));
-        arkode_mem
+        MRIStep.(init (InnerStepper.from_arkstep inner_arkode_mem)
+                      (SStolerances (reltol, abstol))
+                      ~coupling:Coupling.(load_table GARK_ESDIRK34a)
+                      ~lsolver:(Dls.solver ~jac:(js rpar) ls_s)
+                      (fs rpar)
+                      ~slowstep:hs
+                      t0 y)
 
     | _ -> assert false
   in
