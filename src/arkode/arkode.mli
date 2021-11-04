@@ -999,6 +999,15 @@ module ARKStep : sig (* {{{ *)
 
   end (* }}} *)
 
+  (** Create an ARKStep-specific linear solver from a generic matrix embedded
+      solver.
+
+      @noarkode <node> ARKStepSetLinearSolver
+      @since 5.8.0 *)
+  val matrix_embedded_solver :
+         (unit, 'data, 'kind, [>`MatE]) LinearSolver.t
+      -> ('data, 'kind) linear_solver
+
   (** Mass Matrix Solvers
 
       @noarkode <node> Mass matrix solver *)
@@ -1323,6 +1332,16 @@ module ARKStep : sig (* {{{ *)
         -> unit
 
     end (* }}} *)
+
+    (** Create an ARKStep-specific mass linear solver from a generic
+        matrix embedded solver.
+
+        @noarkode <node> ARKStepSetMassLinearSolver
+        @since 5.8.0 *)
+    val matrix_embedded_solver :
+           (unit, 'data, 'kind, [>`MatE]) LinearSolver.t
+        -> ('data, 'kind) linear_solver
+
   end (* }}} *)
 
   (** {2:arktols Tolerances} *)
@@ -3146,6 +3165,15 @@ module MRIStep : sig (* {{{ *)
     val clear_jac_times : ('d, 'k) session -> unit
 
   end (* }}} *)
+
+  (** Create an MRIStep-specific linear solver from a generic matrix embedded
+      solver.
+
+      @noarkode <node> MRIStepSetLinearSolver
+      @since 5.8.0 *)
+  val matrix_embedded_solver :
+         (unit, 'data, 'kind, [>`MatE]) LinearSolver.t
+      -> ('data, 'kind) linear_solver
 
   (** {2:innerstepper Inner steppers} *)
 

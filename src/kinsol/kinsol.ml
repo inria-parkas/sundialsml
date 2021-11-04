@@ -52,6 +52,15 @@ type 'k serial_linear_solver =
 
 let int_default = function None -> 0 | Some v -> v
 
+(* 4.0.0 <= Sundials *)
+external c_set_linear_solver
+  : ('d, 'k) session
+    -> ('m, 'd, 'k) LSI.cptr
+    -> ('mk, 'm, 'd, 'k) Matrix.t option
+    -> bool
+    -> unit
+  = "sunml_kinsol_set_linear_solver"
+
 module Dls = struct (* {{{ *)
   include DirectTypes
   include LinearSolver.Direct
@@ -216,15 +225,6 @@ module Dls = struct (* {{{ *)
       -> unit
     = "sunml_kinsol_dls_set_linear_solver"
 
-  (* 4.0.0 <= Sundials *)
-  external c_set_linear_solver
-    : ('d, 'k) session
-      -> ('m, 'd, 'k) LSI.cptr
-      -> ('mk, 'm, 'd, 'k) Matrix.t option
-      -> bool
-      -> unit
-    = "sunml_kinsol_set_linear_solver"
-
   let assert_matrix = function
     | Some m -> m
     | None -> failwith "a direct linear solver is required"
@@ -334,15 +334,6 @@ module Spils = struct (* {{{ *)
   external c_spils_set_linear_solver
     : ('a, 'k) session -> ('m, 'a, 'k) LSI.cptr -> unit
     = "sunml_kinsol_spils_set_linear_solver"
-
-  (* 4.0.0 <= Sundials *)
-  external c_set_linear_solver
-    : ('d, 'k) session
-      -> ('m, 'd, 'k) LSI.cptr
-      -> ('mk, 'm, 'd, 'k) Matrix.t option
-      -> bool
-      -> unit
-    = "sunml_kinsol_set_linear_solver"
 
   let old_set_max_restarts s t =
     ls_check_spils s;
@@ -493,6 +484,14 @@ module Spils = struct (* {{{ *)
     if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
     get_num_lin_func_evals s
 end (* }}} *)
+
+let matrix_embedded_solver
+    (LSI.(LS ({ rawptr; solver; compat } as hls)) as ls) session nv =
+  if Sundials_impl.Version.lt580
+    then raise Config.NotImplementedBySundialsVersion;
+  c_set_linear_solver session rawptr None false;
+  LSI.attach ls;
+  session.ls_solver <- LSI.HLS hls
 
 external set_error_file : ('a, 'k) session -> Logfile.t -> unit
     = "sunml_kinsol_set_error_file"

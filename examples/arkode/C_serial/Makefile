@@ -29,10 +29,13 @@ EXAMPLES_SINCE_5_0_0 = ark_brusselator_1D_mri.ml \
 
 EXAMPLES_SINCE_5_4_0 = ark_kpr_mri.ml
 
+EXAMPLES_SINCE_5_8_0 = ark_analytic_mels.ml
+
 EXAMPLES = $(EXAMPLES_SINCE_2_5)				\
 	   $(if $(AT_LEAST_4_0_0),$(EXAMPLES_SINCE_4_0_0))	\
 	   $(if $(AT_LEAST_5_0_0),$(EXAMPLES_SINCE_5_0_0))	\
-	   $(if $(AT_LEAST_5_4_0),$(EXAMPLES_SINCE_5_4_0))
+	   $(if $(AT_LEAST_5_4_0),$(EXAMPLES_SINCE_5_4_0))	\
+	   $(if $(AT_LEAST_5_8_0),$(EXAMPLES_SINCE_5_8_0))
 
 FILES_TO_CLEAN = bruss_mesh.txt bruss_u.txt bruss_v.txt bruss_w.txt \
 		 heat1D.txt heat_mesh.txt solution.txt \

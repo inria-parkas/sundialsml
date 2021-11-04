@@ -1739,6 +1739,15 @@ module Adjoint : sig (* {{{ *)
 
   end (* }}} *)
 
+  (** Create a CVode-specific linear solver from a generic matrix embedded
+      solver.
+
+      @nocvode <node> CVodeSetLinearSolver
+      @since 5.8.0 *)
+  val matrix_embedded_solver :
+         (unit, 'data, 'kind, [>`MatE]) LinearSolver.t
+      -> ('data, 'kind) linear_solver
+
   (** {2:bsolve Backward solutions} *)
 
   (** Arguments common to {!brhsfn_no_sens} and {!brhsfn_with_sens}.  *)

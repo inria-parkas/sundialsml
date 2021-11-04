@@ -87,6 +87,16 @@ let root_init session (nroots, rootsfn) =
   c_root_init session nroots;
   session.rootsfn <- rootsfn
 
+(* 4.0.0 <= Sundials *)
+external c_set_linear_solver
+  : ('d, 'k) session
+    -> ('m, 'd, 'k) LSI.cptr
+    -> ('mk, 'm, 'd, 'k) Matrix.t option
+    -> bool
+    -> bool
+    -> unit
+  = "sunml_cvode_set_linear_solver"
+
 module Diag = struct (* {{{ *)
 
   external sunml_cvode_diag : ('a, 'k) session -> unit
@@ -277,16 +287,6 @@ module Dls = struct (* {{{ *)
       -> unit
     = "sunml_cvode_dls_set_linear_solver"
 
-  (* 4.0.0 <= Sundials *)
-  external c_set_linear_solver
-    : ('d, 'k) session
-      -> ('m, 'd, 'k) LSI.cptr
-      -> ('mk, 'm, 'd, 'k) Matrix.t option
-      -> bool
-      -> bool
-      -> unit
-    = "sunml_cvode_set_linear_solver"
-
   let assert_matrix = function
     | Some m -> m
     | None -> failwith "a direct linear solver is required"
@@ -426,16 +426,6 @@ module Spils = struct (* {{{ *)
   external c_spils_set_linear_solver
     : ('a, 'k) session -> ('m, 'a, 'k) LSI.cptr -> unit
     = "sunml_cvode_spils_set_linear_solver"
-
-  (* 4.0.0 <= Sundials *)
-  external c_set_linear_solver
-    : ('d, 'k) session
-      -> ('m, 'd, 'k) LSI.cptr
-      -> ('mk, 'm, 'd, 'k) Matrix.t option
-      -> bool
-      -> bool
-      -> unit
-    = "sunml_cvode_set_linear_solver"
 
   let init_preconditioner solve setup session nv =
     c_set_preconditioner session (setup <> None);
@@ -691,6 +681,14 @@ module Spils = struct (* {{{ *)
       get_num_rhs_evals s
   end (* }}} *)
 end (* }}} *)
+
+let matrix_embedded_solver
+    (LSI.(LS ({ rawptr; solver; compat } as hls)) as ls) session nv =
+  if Sundials_impl.Version.lt580
+    then raise Config.NotImplementedBySundialsVersion;
+  c_set_linear_solver session rawptr None false false;
+  LSI.attach ls;
+  session.ls_solver <- LSI.HLS hls
 
 external sv_tolerances  : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
     = "sunml_cvode_sv_tolerances"
