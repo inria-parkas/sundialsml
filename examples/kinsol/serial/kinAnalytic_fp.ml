@@ -119,10 +119,13 @@ let main () =
     if Array.length Sys.argv > 1 then int_of_string Sys.argv.(1)
     else 0 (* no acceleration *)
   in
-  let damping =
+  let damping_aa =
     if Array.length Sys.argv > 1 then float_of_string Sys.argv.(2)
     else 1.0 (* no damping *)
   in
+
+  let delay_aa = 0 in     (* no delay *)
+  let damping_fp = 1.0 in (* no FP damping *)
 
   (* -------------------------
    * Print problem description
@@ -137,10 +140,19 @@ let main () =
   printf "    y = %g\n" ytrue;
   printf "    z = %g\n" ztrue;
   printf "Solution method: Anderson accelerated fixed point iteration.\n";
-  printf "    tolerance = %g\n" tol;
-  printf "    max iters = %d\n" mxiter;
-  printf "    accel vec = %d\n" maa;
-  printf "    damping   = %g\n" damping;
+  if Sundials_impl.Version.lt580 then begin
+    printf "    tolerance = %g\n" tol;
+    printf "    max iters = %d\n" mxiter;
+    printf "    accel vec = %d\n" maa;
+    printf "    damping   = %g\n" damping_aa
+  end else begin
+    printf "    tolerance  = %g\n" tol;
+    printf "    max iters  = %d\n" mxiter;
+    printf "    m_aa       = %d\n" maa;
+    printf "    delay_aa   = %d\n" delay_aa;
+    printf "    damping_aa = %g\n" damping_aa;
+    printf "    damping_fp = %g\n" damping_fp
+  end;
 
   (* --------------------------------------
    * Create vectors for solution and scales

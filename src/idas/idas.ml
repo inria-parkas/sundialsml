@@ -864,6 +864,16 @@ module Adjoint = struct (* {{{ *)
     let parent, which = parent_and_which bs in
     c_clear_constraints parent which
 
+  (* 4.0.0 <= Sundials *)
+  external c_set_linear_solver
+    : ('d, 'k) session * int
+      -> ('m, 'd, 'k) LSI.cptr
+      -> ('mk, 'm, 'd, 'k) Matrix.t option
+      -> bool
+      -> bool
+      -> unit
+    = "sunml_idas_adj_set_linear_solver"
+
   module Dls = struct (* {{{ *)
     include DirectTypes
     include LinearSolver.Direct
@@ -1073,16 +1083,6 @@ module Adjoint = struct (* {{{ *)
          -> unit
       = "sunml_idas_adj_dls_set_linear_solver"
 
-    (* 4.0.0 <= Sundials *)
-    external c_set_linear_solver
-      : ('d, 'k) session * int
-        -> ('m, 'd, 'k) LSI.cptr
-        -> ('mk, 'm, 'd, 'k) Matrix.t option
-        -> bool
-        -> bool
-        -> unit
-      = "sunml_idas_adj_set_linear_solver"
-
     let assert_matrix = function
       | Some m -> m
       | None -> failwith "a direct linear solver is required"
@@ -1197,16 +1197,6 @@ module Adjoint = struct (* {{{ *)
     external c_set_jac_times_resfn
       : ('a, 'k) session -> int -> bool -> unit
       = "sunml_idas_adj_set_jac_times_resfn"
-
-    (* 4.0.0 <= Sundials *)
-    external c_set_linear_solver
-      : ('d, 'k) session * int
-        -> ('m, 'd, 'k) LSI.cptr
-        -> ('mk, 'm, 'd, 'k) Matrix.t option
-        -> bool
-        -> bool
-        -> unit
-      = "sunml_idas_adj_set_linear_solver"
 
     let init_preconditioner solve setup bs parent which nv =
       c_set_preconditioner parent which (setup <> None) false;
@@ -1422,6 +1412,16 @@ module Adjoint = struct (* {{{ *)
     let get_num_lin_res_evals bs =
       Ida.Spils.get_num_lin_res_evals (tosession bs)
   end (* }}} *)
+
+  let matrix_embedded_solver
+      (LSI.(LS ({ rawptr; solver; compat } as hls)) as ls) bs nv =
+    if Sundials_impl.Version.lt580
+      then raise Config.NotImplementedBySundialsVersion;
+    let session = tosession bs in
+    let parent, which = parent_and_which bs in
+    c_set_linear_solver (parent, which) rawptr None false false;
+    LSI.attach ls;
+    session.ls_solver <- LSI.HLS hls
 
   external c_bsession_finalize : ('a, 'k) session -> unit
       = "sunml_idas_adj_bsession_finalize"

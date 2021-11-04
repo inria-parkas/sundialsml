@@ -358,6 +358,15 @@ module Spils : sig (* {{{ *)
   val clear_jac_times : ('d, 'k) session -> unit
 end (* }}} *)
 
+(** Create a Kinsol-specific linear solver from a generic matrix embedded
+    solver.
+
+    @nokinsol <node> KINSetLinearSolver
+    @since 5.8.0 *)
+val matrix_embedded_solver :
+       (unit, 'data, 'kind, [>`MatE]) LinearSolver.t
+    -> ('data, 'kind) linear_solver
+
 (** {2:solver Solver initialization and use} *)
 
 (** Creates and initializes a session with the Kinsol solver. The call

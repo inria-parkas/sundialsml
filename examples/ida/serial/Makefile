@@ -19,8 +19,11 @@ EXAMPLES_SINCE_2_5 =	idaRoberts_dns.ml  \
 EXAMPLES_SINCE_3_0 =	idaKrylovDemo_ls.ml \
 			idaRoberts_dns_alt.ml
 
+EXAMPLES_SINCE_5_8_0 =	idaAnalytic_mels.ml
+
 EXAMPLES = $(EXAMPLES_SINCE_2_5)				\
-	   $(if $(AT_LEAST_3_0),$(EXAMPLES_SINCE_3_0))
+	   $(if $(AT_LEAST_3_0),$(EXAMPLES_SINCE_3_0))		\
+	   $(if $(AT_LEAST_5_8_0),$(EXAMPLES_SINCE_5_8_0))
 
 include ../../examples.mk
 

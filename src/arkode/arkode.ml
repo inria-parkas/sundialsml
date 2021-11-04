@@ -518,6 +518,16 @@ module ARKStep = struct (* {{{ *)
     c_root_init session nroots;
     session.rootsfn <- rootsfn
 
+  (* 4.0.0 <= Sundials *)
+  external c_set_linear_solver
+    : ('d, 'k) session
+      -> ('m, 'd, 'k) LSI.cptr
+      -> ('mk, 'm, 'd, 'k) Matrix.t option
+      -> bool
+      -> bool
+      -> unit
+    = "sunml_arkode_ark_set_linear_solver"
+
   module Dls = struct (* {{{ *)
     include Dls
     include LinearSolver.Direct
@@ -683,16 +693,6 @@ module ARKStep = struct (* {{{ *)
         -> unit
       = "sunml_arkode_dls_set_linear_solver"
 
-    (* 4.0.0 <= Sundials *)
-    external c_set_linear_solver
-      : ('d, 'k) session
-        -> ('m, 'd, 'k) LSI.cptr
-        -> ('mk, 'm, 'd, 'k) Matrix.t option
-        -> bool
-        -> bool
-        -> unit
-      = "sunml_arkode_ark_set_linear_solver"
-
     let assert_matrix = function
       | Some m -> m
       | None -> failwith "a direct linear solver is required"
@@ -843,16 +843,6 @@ module ARKStep = struct (* {{{ *)
     external c_spils_set_linear_solver
       : ('a, 'k) session -> ('m, 'a, 'k) LSI.cptr -> unit
       = "sunml_arkode_spils_set_linear_solver"
-
-    (* 4.0.0 <= Sundials *)
-    external c_set_linear_solver
-      : ('d, 'k) session
-        -> ('m, 'd, 'k) LSI.cptr
-        -> ('mk, 'm, 'd, 'k) Matrix.t option
-        -> bool
-        -> bool
-        -> unit
-      = "sunml_arkode_ark_set_linear_solver"
 
     let init_preconditioner solve setup session nv =
       c_set_preconditioner session (setup <> None);
@@ -1043,8 +1033,25 @@ module ARKStep = struct (* {{{ *)
 
   end (* }}} *)
 
+let matrix_embedded_solver
+    (LSI.(LS ({ rawptr; solver; compat } as hls)) as ls) session nv =
+  if Sundials_impl.Version.lt580
+    then raise Config.NotImplementedBySundialsVersion;
+  c_set_linear_solver session rawptr None false false;
+  LSI.attach ls;
+  session.ls_solver <- LSI.HLS hls
+
   module Mass = struct (* {{{ *)
     include MassTypes
+
+    (* 4.0.0 <= Sundials *)
+    external c_set_mass_linear_solver
+      : ('d, 'k) session
+        -> ('m, 'd, 'k) LSI.cptr
+        -> ('mk, 'm, 'd, 'k) Matrix.t option
+        -> bool
+        -> unit
+      = "sunml_arkode_ark_set_mass_linear_solver"
 
     module Dls = struct (* {{{ *)
       include MassTypes.Direct'
@@ -1207,15 +1214,6 @@ module ARKStep = struct (* {{{ *)
         = "sunml_arkode_dls_set_mass_linear_solver"
 
       (* 4.0.0 <= Sundials *)
-      external c_set_mass_linear_solver
-        : ('d, 'k) session
-          -> ('m, 'd, 'k) LSI.cptr
-          -> ('mk, 'm, 'd, 'k) Matrix.t option
-          -> bool
-          -> unit
-        = "sunml_arkode_ark_set_mass_linear_solver"
-
-      (* 4.0.0 <= Sundials *)
       external c_set_mass_fn : ('a, 'k) session -> unit
         = "sunml_arkode_ark_set_mass_fn"
 
@@ -1366,15 +1364,6 @@ module ARKStep = struct (* {{{ *)
           -> unit
         = "sunml_arkode_spils_set_mass_linear_solver"
 
-      (* 4.0.0 <= Sundials *)
-      external c_set_mass_linear_solver
-        : ('d, 'k) session
-          -> ('m, 'd, 'k) LSI.cptr
-          -> ('mk, 'm, 'd, 'k) Matrix.t option
-          -> bool
-          -> unit
-        = "sunml_arkode_ark_set_mass_linear_solver"
-
       let init_preconditioner solve setup session nv =
         c_set_preconditioner session (setup <> None);
         session.mass_precfns <- MassPrecFns { prec_solve_fn = solve;
@@ -1520,7 +1509,17 @@ module ARKStep = struct (* {{{ *)
       let get_num_prec_solves s =
         mass_check_spils s;
         get_num_prec_solves s
+
     end (* }}} *)
+
+    let matrix_embedded_solver
+        (LSI.(LS ({ rawptr; solver; compat } as hls)) as ls) session nv =
+      if Sundials_impl.Version.lt580
+        then raise Config.NotImplementedBySundialsVersion;
+      c_set_mass_linear_solver session rawptr None false;
+      LSI.attach ls;
+      session.ls_solver <- LSI.HLS hls
+
   end (* }}} *)
 
   external sv_tolerances
@@ -2591,6 +2590,15 @@ module MRIStep = struct (* {{{ *)
     c_root_init session nroots;
     session.rootsfn <- rootsfn
 
+  external c_set_linear_solver
+    : ('d, 'k) session
+      -> ('m, 'd, 'k) LSI.cptr
+      -> ('mk, 'm, 'd, 'k) Matrix.t option
+      -> bool
+      -> bool
+      -> unit
+    = "sunml_arkode_mri_set_linear_solver"
+
   module Dls = struct (* {{{ *)
     include Dls
     include LinearSolver.Direct
@@ -2629,15 +2637,6 @@ module MRIStep = struct (* {{{ *)
       | _ -> assert false
       end;
       session.ls_precfns <- NoPrecFns
-
-    external c_set_linear_solver
-      : ('d, 'k) session
-        -> ('m, 'd, 'k) LSI.cptr
-        -> ('mk, 'm, 'd, 'k) Matrix.t option
-        -> bool
-        -> bool
-        -> unit
-      = "sunml_arkode_mri_set_linear_solver"
 
     let assert_matrix = function
       | Some m -> m
@@ -2695,15 +2694,6 @@ module MRIStep = struct (* {{{ *)
 
     let prec_both ?setup solve  = LSI.Iterative.(PrecBoth,
                                               init_preconditioner solve setup)
-
-    external c_set_linear_solver
-      : ('d, 'k) session
-        -> ('m, 'd, 'k) LSI.cptr
-        -> ('mk, 'm, 'd, 'k) Matrix.t option
-        -> bool
-        -> bool
-        -> unit
-      = "sunml_arkode_ark_set_linear_solver"
 
     let solver (type s)
           (LSI.(LS ({ rawptr; solver; compat } as hls) as ls))
@@ -2816,6 +2806,14 @@ module MRIStep = struct (* {{{ *)
       get_num_lin_rhs_evals s
 
   end (* }}} *)
+
+  let matrix_embedded_solver
+      (LSI.(LS ({ rawptr; solver; compat } as hls)) as ls) session nv =
+    if Sundials_impl.Version.lt580
+      then raise Config.NotImplementedBySundialsVersion;
+    c_set_linear_solver session rawptr None false false;
+    LSI.attach ls;
+    session.ls_solver <- LSI.HLS hls
 
   module InnerStepper = struct (* {{{ *)
 
