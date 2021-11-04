@@ -572,8 +572,7 @@ module Custom : sig (* {{{ *)
 
       setup : ('lsolver -> 'matrix -> unit) option;
       (** Performs linear solver setup. *)
-
-      solve : 'lsolver -> 'matrix -> 'data -> 'data -> float -> unit;
+solve : 'lsolver -> 'matrix -> 'data -> 'data -> float -> unit;
       (** The call [solve ls a x b tol] should solve the linear system
           {% $Ax = b$ %}.
 
@@ -642,6 +641,26 @@ module Custom : sig (* {{{ *)
       set_prec_type :
         ('lsolver -> Iterative.preconditioning_type -> unit) option;
     }
+
+  (** Convenience function for constructing a {!ops} value. *)
+  val make_ops :
+       ?solver_id : linear_solver_id
+    -> ?init : ('lsolver -> unit)
+    -> ?setup : ('lsolver -> 'matrix -> unit)
+    -> ?set_atimes : ('lsolver -> ('data, 'kind) atimesfn -> unit)
+    -> ?set_preconditioner : ('lsolver -> psetupfn option -> ('data, 'kind) psolvefn option -> unit)
+    -> ?set_scaling_vectors : ('lsolver -> 'data option -> 'data option -> unit)
+    -> ?set_zero_guess : ('lsolver -> bool -> unit)
+    -> ?get_num_iters : ('lsolver -> int)
+    -> ?get_res_norm : ('lsolver -> float)
+    -> ?get_res_id : ('lsolver -> ('data, 'kind) Nvector.t)
+    -> ?get_last_flag : ('lsolver -> int)
+    -> ?get_work_space : ('lsolver -> int * int)
+    -> ?set_prec_type : ('lsolver -> Iterative.preconditioning_type -> unit)
+    -> solver_type : linear_solver_type
+    -> solve : ('lsolver -> 'matrix -> 'data -> 'data -> float -> unit)
+    -> unit
+    -> ('matrix, 'data, 'kind, 'lsolver) ops
 
   (** Create a linear solver given a set of operations and an internal state.
       The resulting solver is tagged with both [`Dls] and [`Iter], although

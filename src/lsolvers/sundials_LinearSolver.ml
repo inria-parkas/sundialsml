@@ -558,6 +558,16 @@ module Custom = struct (* {{{ *)
       : ('lsolver -> Iterative.preconditioning_type -> unit) option;
     }
 
+  let make_ops ?(solver_id=Custom) ?init ?setup
+               ?set_atimes ?set_preconditioner ?set_scaling_vectors
+               ?set_zero_guess ?get_num_iters ?get_res_norm ?get_res_id
+               ?get_last_flag ?get_work_space ?set_prec_type
+               ~solver_type ~solve () =
+    { solver_type; solver_id  ; init; setup; solve; set_atimes;
+      set_preconditioner; set_scaling_vectors; set_zero_guess;
+      get_num_iters; get_res_norm; get_res_id; get_last_flag;
+      get_work_space; set_prec_type; }
+
   let wrap_set_atimes fseto ldata =
     match fseto with
     | None ->
