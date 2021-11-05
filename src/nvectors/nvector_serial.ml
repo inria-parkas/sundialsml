@@ -4,7 +4,6 @@ open Sundials
 type data = RealArray.t
 type kind = [`Serial]
 type t = (data, kind) Nvector.t
-type 'k any = (data, [>kind] as 'k) Nvector.t
 
 (* Selectively enable and disable fused and array operations *)
 external c_enablefusedops_serial                     : ('d, 'k) Nvector.t -> bool -> unit

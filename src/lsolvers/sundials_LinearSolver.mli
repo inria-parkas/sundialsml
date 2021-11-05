@@ -114,7 +114,7 @@ module Direct : sig (* {{{ *)
 
   @nocvode <node> SUNLinSol_Dense *)
   val dense :
-    'k Nvector_serial.any
+    'k Nvector.serial
     -> 'k Matrix.dense
     -> (Matrix.Dense.t, 'k, [`Dls]) serial_t
 
@@ -124,7 +124,7 @@ module Direct : sig (* {{{ *)
 
   @nocvode <node> SUNLinSol_LapackDense *)
   val lapack_dense :
-    'k Nvector_serial.any
+    'k Nvector.serial
     -> 'k Matrix.dense
     -> (Matrix.Dense.t, 'k, [`Dls]) serial_t
 
@@ -136,7 +136,7 @@ module Direct : sig (* {{{ *)
 
   @nocvode <node> SUNLinSol_Band *)
   val band :
-    'k Nvector_serial.any
+    'k Nvector.serial
     -> 'k Matrix.band
     -> (Matrix.Band.t, 'k, [`Dls]) serial_t
 
@@ -146,7 +146,7 @@ module Direct : sig (* {{{ *)
 
   @nocvode <node> SUNLinSol_LapackBand *)
   val lapack_band :
-    'k Nvector_serial.any
+    'k Nvector.serial
     -> 'k Matrix.band
     -> (Matrix.Band.t, 'k, [`Dls]) serial_t
 
@@ -170,7 +170,7 @@ module Direct : sig (* {{{ *)
       @nocvode <node> SUNLinSol_KLU *)
     val make :
       ?ordering:ordering
-      -> 'k Nvector_serial.any
+      -> 'k Nvector.serial
       -> ('s, 'k) Matrix.sparse
       -> ('s Matrix.Sparse.t, 'k, [`Dls|`Klu]) serial_t
 
@@ -199,7 +199,7 @@ module Direct : sig (* {{{ *)
     @nocvode <node> SUNLinSol_KLU *)
   val klu :
     ?ordering:Klu.ordering
-    -> 'k Nvector_serial.any
+    -> 'k Nvector.serial
     -> ('s, 'k) Matrix.sparse
     -> ('s Matrix.Sparse.t, 'k, [`Klu|`Dls]) serial_t
 
@@ -230,7 +230,7 @@ module Direct : sig (* {{{ *)
     val make :
       ?ordering:ordering
       -> nthreads:int
-      -> 'k Nvector_serial.any
+      -> 'k Nvector.serial
       -> ('s, 'k) Matrix.sparse
       -> ('s Matrix.Sparse.t, 'k, [`Dls|`Slu]) serial_t
 
@@ -254,7 +254,7 @@ module Direct : sig (* {{{ *)
   val superlumt :
     ?ordering:Superlumt.ordering
     -> nthreads:int
-    -> 'k Nvector_serial.any
+    -> 'k Nvector.serial
     -> ('s, 'k) Matrix.sparse
     -> ('s Matrix.Sparse.t, 'k, [>`Slu|`Dls]) serial_t
 

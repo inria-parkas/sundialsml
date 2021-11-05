@@ -67,7 +67,7 @@ type linear_solver_id = LSI.linear_solver_id =
 module Direct = struct (* {{{ *)
 
   external c_dense
-           : 'k Nvector_serial.any
+           : 'k Nvector.serial
              -> 'k Matrix.dense
              -> (Matrix.Dense.t, Nvector_serial.data, 'k) cptr
     = "sunml_lsolver_dense"
@@ -83,7 +83,7 @@ module Direct = struct (* {{{ *)
   }
 
   external c_lapack_dense
-           : 'k Nvector_serial.any
+           : 'k Nvector.serial
              -> 'k Matrix.dense
              -> (Matrix.Dense.t, Nvector_serial.data, 'k) cptr
     = "sunml_lsolver_lapack_dense"
@@ -102,7 +102,7 @@ module Direct = struct (* {{{ *)
     }
 
   external c_band
-           : 'k Nvector_serial.any
+           : 'k Nvector.serial
              -> 'k Matrix.band
              -> (Matrix.Band.t, Nvector_serial.data, 'k) cptr
     = "sunml_lsolver_band"
@@ -118,7 +118,7 @@ module Direct = struct (* {{{ *)
   }
 
   external c_lapack_band
-           : 'k Nvector_serial.any
+           : 'k Nvector.serial
              -> 'k Matrix.band
              -> (Matrix.Band.t, Nvector_serial.data, 'k) cptr
     = "sunml_lsolver_lapack_band"
@@ -140,7 +140,7 @@ module Direct = struct (* {{{ *)
     include LSI.Klu
 
     external c_klu
-             : 'k Nvector_serial.any
+             : 'k Nvector.serial
                -> ('s, 'k) Matrix.sparse
                -> ('s Matrix.Sparse.t, Nvector_serial.data, 'k) cptr
       = "sunml_lsolver_klu"
@@ -206,7 +206,7 @@ module Direct = struct (* {{{ *)
     include LSI.Superlumt
 
     external c_superlumt
-             : 'k Nvector_serial.any
+             : 'k Nvector.serial
                -> ('s, 'k) Matrix.sparse
                -> int
                -> ('s Matrix.Sparse.t, Nvector_serial.data, 'k) cptr

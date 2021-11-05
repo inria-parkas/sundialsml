@@ -19,6 +19,8 @@ type ('data, 'kind) nvector =
         }
 and ('data, 'kind) t = ('data, 'kind) nvector
 
+type 'k serial = (Sundials.RealArray.t, [>`Serial] as 'k) t
+
 let unwrap (NV { payload; _ }) = payload
 
 exception IncompatibleNvector
