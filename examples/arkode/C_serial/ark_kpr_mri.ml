@@ -293,7 +293,6 @@ let main () =
         in
         let explicit_table = Arkode.ButcherTable.{
             method_order = 3;
-            embedding_order = 2;
             stages = 3;
             stage_values = RealArray2.of_lists [
                 [ 0.0; 0.5; -1.0 ];
@@ -303,7 +302,7 @@ let main () =
             stage_times = RealArray.of_list [ 0.0; 0.5; 1.0 ];
             coefficients = RealArray.of_list [
                              1.0 /. 6.0;  2.0 /. 3.0; 1.0 /. 6.0 ];
-            bembed = Some (RealArray.of_list [ 0.0; 1.0; 0.0 ]);
+            embedding = Some (2, RealArray.of_list [ 0.0; 1.0; 0.0 ]);
           }
         in
         ARKStep.set_tables inner_arkode_mem ~explicit_table ();
@@ -315,7 +314,6 @@ let main () =
         in
         let explicit_table = Arkode.ButcherTable.{
             method_order = 3;
-            embedding_order = 2;
             stages = 3;
             stage_values = RealArray2.of_lists [
                 [ 0.0; 0.5; -1.0 ];
@@ -325,7 +323,7 @@ let main () =
             stage_times = RealArray.of_list [ 0.0; 0.5; 1.0 ];
             coefficients = RealArray.of_list [
                              1.0 /. 6.0;  2.0 /. 3.0; 1.0 /. 6.0 ];
-            bembed = Some (RealArray.of_list [ 0.0; 1.0; 0.0 ]);
+            embedding = Some (2, RealArray.of_list [ 0.0; 1.0; 0.0 ]);
           }
         in
         ARKStep.set_tables inner_arkode_mem ~explicit_table ();
@@ -337,7 +335,6 @@ let main () =
         in
         let explicit_table = Arkode.ButcherTable.{
             method_order = 4;
-            embedding_order = 0;
             stages = 4;
             stage_values = RealArray2.of_lists [
                 [ 0.0; 0.5;  0.0; 0.0 ];
@@ -348,7 +345,7 @@ let main () =
             stage_times = RealArray.of_list [ 0.0; 0.5; 0.5; 1.0 ];
             coefficients = RealArray.of_list [
                               1.0 /. 6.0;  1.0 /. 3.0; 1.0 /. 3.0; 1.0 /. 6.0 ];
-            bembed = None;
+            embedding = None;
           }
         in
         ARKStep.set_tables inner_arkode_mem ~explicit_table ();
@@ -368,7 +365,6 @@ let main () =
         let gamma = (-1.0 /. 8.0) *. (sqrt 3.0 +. 1.0) in
         let implicit_table = Arkode.ButcherTable.{
             method_order = 3;
-            embedding_order = 0;
             stages = 3;
             stage_values = RealArray2.of_lists [
                 [ 0.0 ; 4.0 *. gamma +. 2.0 *. beta        ; 0.5 -. beta -. gamma];
@@ -378,7 +374,7 @@ let main () =
             stage_times = RealArray.of_list [ 0.0; 1.0; 0.5 ];
             coefficients = RealArray.of_list [
                              1.0 /. 6.0;  1.0 /. 6.0; 2.0 /. 3.0 ];
-            bembed = None;
+            embedding = None;
           }
         in
         ARKStep.set_tables inner_arkode_mem ~implicit_table ();
@@ -390,7 +386,6 @@ let main () =
         in
         let explicit_table = Arkode.ButcherTable.{
             method_order = 3;
-            embedding_order = 2;
             stages = 3;
             stage_values = RealArray2.of_lists [
                 [ 0.0; 0.5; -1.0 ];
@@ -400,7 +395,7 @@ let main () =
             stage_times = RealArray.of_list [ 0.0; 0.5; 1.0 ];
             coefficients = RealArray.of_list [
                              1.0 /. 6.0;  2.0 /. 3.0; 1.0 /. 6.0 ];
-            bembed = Some (RealArray.of_list [ 0.0; 1.0; 0.0 ]);
+            embedding = Some (2, RealArray.of_list [ 0.0; 1.0; 0.0 ]);
           }
         in
         ARKStep.set_tables inner_arkode_mem ~explicit_table ();
@@ -446,7 +441,6 @@ let main () =
     | 1 | 2 ->  (* no slow dynamics (use ERK-2-2) *)
         let bt = Arkode.ButcherTable.{
             method_order = 2;
-            embedding_order = 0;
             stages = 2;
             stage_values = RealArray2.of_arrays [|
                 [| 0.0; 2.0 /. 3.0 |];
@@ -454,7 +448,7 @@ let main () =
               |];
             stage_times = RealArray.of_list [ 0.0; 2.0 /. 3.0 ];
             coefficients = RealArray.of_list [ 0.25; 0.75 ];
-            bembed = None;
+            embedding = None;
           }
         in
         MRIStep.(init (InnerStepper.from_arkstep inner_arkode_mem)

@@ -231,17 +231,16 @@ module ButcherTable = struct (* {{{ *)
   (* Synchronized with arkode_butcher_table_index in arkode_ml.h *)
   type t = {
       method_order : int;
-      embedding_order : int;
       stages : int;
       stage_values : Sundials.RealArray2.t;
       stage_times : RealArray.t;
       coefficients : RealArray.t;
-      bembed : RealArray.t option;
+      embedding : (int * RealArray.t) option;
     }
 
-  let check { method_order = q; embedding_order = p; stages = s;
+  let check { method_order = q; stages = s;
               stage_values = a; stage_times = c;
-              coefficients = b; bembed = d; } =
+              coefficients = b; embedding = d; } =
     let m, n = RealArray2.size a in
     if m <> s || n <> s
       then invalid_arg "butcher table: stage_values array has wrong length";
@@ -249,7 +248,7 @@ module ButcherTable = struct (* {{{ *)
       then invalid_arg "butcher table: stage_times array has wrong length";
     if RealArray.length b <> s
       then invalid_arg "butcher table: coefficients array has wrong length";
-    (match d with None -> () | Some d ->
+    (match d with None -> () | Some (_, d) ->
       if RealArray.length d <> s
         then invalid_arg "butcher table: embedding array has wrong length");
 

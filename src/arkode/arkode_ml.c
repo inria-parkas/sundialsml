@@ -2642,7 +2642,11 @@ static value val_butcher_table(ARKodeButcherTable bt)
 	if (bt->d != NULL) {
 	    vd = caml_ba_alloc(BIGARRAY_FLOAT, 1, NULL, &stages);
 	    d = REAL_ARRAY(vd);
-	    Store_some(vod, vd);
+
+	    vod = caml_alloc_tuple(2);
+	    Store_field(vod, 0, Val_int(p));
+	    Store_field(vod, 1, vd);
+	    Store_some(vod, vod);
 
 	    for (i = 0; i < stages; i++) {
 		d[i] = bt->d[i];
@@ -2651,12 +2655,11 @@ static value val_butcher_table(ARKodeButcherTable bt)
 
 	vbt = caml_alloc_tuple(RECORD_ARKODE_BUTCHER_TABLE_SIZE);
 	Store_field(vbt, RECORD_ARKODE_BUTCHER_TABLE_METHOD_ORDER, Val_int(q));
-	Store_field(vbt, RECORD_ARKODE_BUTCHER_TABLE_EMBEDDING_ORDER, Val_int(p));
 	Store_field(vbt, RECORD_ARKODE_BUTCHER_TABLE_STAGES, Val_int(stages));
 	Store_field(vbt, RECORD_ARKODE_BUTCHER_TABLE_STAGE_VALUES, va);
 	Store_field(vbt, RECORD_ARKODE_BUTCHER_TABLE_STAGE_TIMES, vc);
 	Store_field(vbt, RECORD_ARKODE_BUTCHER_TABLE_COEFFICIENTS, vb);
-	Store_field(vbt, RECORD_ARKODE_BUTCHER_TABLE_BEMBED, vod);
+	Store_field(vbt, RECORD_ARKODE_BUTCHER_TABLE_EMBEDDING, vod);
 	Store_some(vobt, vbt);
     }
     CAMLreturn(vobt);
@@ -2695,9 +2698,7 @@ CAMLprim value sunml_arkode_ark_get_current_butcher_tables(value varkode_mem)
     vbi = caml_ba_alloc_dims (BIGARRAY_FLOAT, 1, NULL, ARK_S_MAX);
     vbe = caml_ba_alloc_dims (BIGARRAY_FLOAT, 1, NULL, ARK_S_MAX);
     vdi = caml_ba_alloc_dims (BIGARRAY_FLOAT, 1, NULL, ARK_S_MAX);
-    Store_some(vodi, vdi);
     vde = caml_ba_alloc_dims (BIGARRAY_FLOAT, 1, NULL, ARK_S_MAX);
-    Store_some(vode, vde);
 
     Ai = calloc(ARK_S_MAX * ARK_S_MAX, sizeof(realtype));
     if (Ai == NULL) caml_raise_out_of_memory();
@@ -2728,24 +2729,32 @@ CAMLprim value sunml_arkode_ark_get_current_butcher_tables(value varkode_mem)
     free(Ai);
     free(Ae);
 
+    vodi = caml_alloc_tuple(2);
+    Store_field(vodi, 0, Val_int(p));
+    Store_field(vodi, 1, vdi);
+    Store_some(vodi, vodi);
+
+    vode = caml_alloc_tuple(2);
+    Store_field(vode, 0, Val_int(p));
+    Store_field(vode, 1, vde);
+    Store_some(vode, aovde);
+
     vbti = caml_alloc_tuple(RECORD_ARKODE_BUTCHER_TABLE_SIZE);
     Store_field(vbti, RECORD_ARKODE_BUTCHER_TABLE_METHOD_ORDER, Val_int(q));
-    Store_field(vbti, RECORD_ARKODE_BUTCHER_TABLE_EMBEDDING_ORDER, Val_int(p));
     Store_field(vbti, RECORD_ARKODE_BUTCHER_TABLE_STAGES, Val_int(s));
     Store_field(vbti, RECORD_ARKODE_BUTCHER_TABLE_STAGE_VALUES, vai);
     Store_field(vbti, RECORD_ARKODE_BUTCHER_TABLE_STAGE_TIMES, vci);
     Store_field(vbti, RECORD_ARKODE_BUTCHER_TABLE_COEFFICIENTS, vbi);
-    Store_field(vbti, RECORD_ARKODE_BUTCHER_TABLE_BEMBED, vodi);
+    Store_field(vbti, RECORD_ARKODE_BUTCHER_TABLE_EMBEDDING, vodi);
     Store_some(vobti, vbti);
 
     vbte = caml_alloc_tuple(RECORD_ARKODE_BUTCHER_TABLE_SIZE);
     Store_field(vbte, RECORD_ARKODE_BUTCHER_TABLE_METHOD_ORDER, Val_int(q));
-    Store_field(vbte, RECORD_ARKODE_BUTCHER_TABLE_EMBEDDING_ORDER, Val_int(p));
     Store_field(vbte, RECORD_ARKODE_BUTCHER_TABLE_STAGES, Val_int(s));
     Store_field(vbte, RECORD_ARKODE_BUTCHER_TABLE_STAGE_VALUES, vae);
     Store_field(vbte, RECORD_ARKODE_BUTCHER_TABLE_STAGE_TIMES, vce);
     Store_field(vbte, RECORD_ARKODE_BUTCHER_TABLE_COEFFICIENTS, vbe);
-    Store_field(vbte, RECORD_ARKODE_BUTCHER_TABLE_BEMBED, vode);
+    Store_field(vbte, RECORD_ARKODE_BUTCHER_TABLE_EMBEDDING, vode);
     Store_some(vobte, vbte);
 
     vr = caml_alloc_tuple(2);
@@ -2794,24 +2803,27 @@ CAMLprim value sunml_arkode_ark_get_current_butcher_tables(value varkode_mem)
     free(Ai);
     free(Ae);
 
+    vodi = caml_alloc_tuple(2);
+    Store_field(vodi, 0, Val_int(p));
+    Store_field(vodi, 1, vdi);
+    Store_some(vodi, vodi);
+
     vbti = caml_alloc_tuple(RECORD_ARKODE_BUTCHER_TABLE_SIZE);
     Store_field(vbti, RECORD_ARKODE_BUTCHER_TABLE_METHOD_ORDER, Val_int(q));
-    Store_field(vbti, RECORD_ARKODE_BUTCHER_TABLE_EMBEDDING_ORDER, Val_int(p));
+    Store_field(vbti, RECORD_ARKODE_BUTCHER_TABLE_EMBEDDING, vodi);
     Store_field(vbti, RECORD_ARKODE_BUTCHER_TABLE_STAGES, Val_int(stages));
     Store_field(vbti, RECORD_ARKODE_BUTCHER_TABLE_STAGE_VALUES, vai);
     Store_field(vbti, RECORD_ARKODE_BUTCHER_TABLE_STAGE_TIMES, vci);
     Store_field(vbti, RECORD_ARKODE_BUTCHER_TABLE_COEFFICIENTS, vbi);
-    Store_field(vbti, RECORD_ARKODE_BUTCHER_TABLE_BEMBED, vodi);
     Store_some(vobti, vbti);
 
     vbte = caml_alloc_tuple(RECORD_ARKODE_BUTCHER_TABLE_SIZE);
     Store_field(vbte, RECORD_ARKODE_BUTCHER_TABLE_METHOD_ORDER, Val_int(q));
-    Store_field(vbte, RECORD_ARKODE_BUTCHER_TABLE_EMBEDDING_ORDER, Val_int(p));
+    Store_field(vbti, RECORD_ARKODE_BUTCHER_TABLE_EMBEDDING, vodi);
     Store_field(vbte, RECORD_ARKODE_BUTCHER_TABLE_STAGES, Val_int(stages));
     Store_field(vbte, RECORD_ARKODE_BUTCHER_TABLE_STAGE_VALUES, vai);
     Store_field(vbte, RECORD_ARKODE_BUTCHER_TABLE_STAGE_TIMES, vci);
     Store_field(vbte, RECORD_ARKODE_BUTCHER_TABLE_COEFFICIENTS, vbi);
-    Store_field(vbte, RECORD_ARKODE_BUTCHER_TABLE_BEMBED, vodi);
     Store_some(vobte, vbte);
 
     vr = caml_alloc_tuple(2);
@@ -2868,19 +2880,27 @@ static ARKodeButcherTable butcher_table_val(value vob)
     CAMLparam0();
     ARKodeButcherTable r = NULL;
     CAMLlocal2(vb, vd);
+    realtype *d = NULL;
+    int p = 0;
 
     if (vob != Val_none) {
 	vb = Some_val(vob);
-	vd = Field(vb, RECORD_ARKODE_BUTCHER_TABLE_BEMBED);
+
+	vd = Field(vb, RECORD_ARKODE_BUTCHER_TABLE_EMBEDDING);
+	if (vd != Val_none) {
+	    vd = Some_val(vd);
+	    p = Field(vd, 0);
+	    d = REAL_ARRAY(Field(vd, 1));
+	}
+
 	r = ARKodeButcherTable_Create(
 		Int_val(Field(vb, RECORD_ARKODE_BUTCHER_TABLE_STAGES)),
 	        Int_val(Field(vb, RECORD_ARKODE_BUTCHER_TABLE_METHOD_ORDER)),
-		(vd == Val_none) ? 0
-		  : Int_val(Field(vb, RECORD_ARKODE_BUTCHER_TABLE_EMBEDDING_ORDER)),
+		p,
 		REAL_ARRAY(Field(vb, RECORD_ARKODE_BUTCHER_TABLE_STAGE_TIMES)),
 		ARRAY2_DATA(Field(vb, RECORD_ARKODE_BUTCHER_TABLE_STAGE_VALUES)),
 		REAL_ARRAY(Field(vb, RECORD_ARKODE_BUTCHER_TABLE_COEFFICIENTS)),
-		(vd == Val_none) ? NULL : REAL_ARRAY(Some_val(vd)));
+		d);
     }
 
     CAMLreturnT(ARKodeButcherTable, r);
@@ -2986,19 +3006,32 @@ CAMLprim value sunml_arkode_ark_set_tables(value varkode_mem,
 
 #else // SUNDIALS_LIB_VERSION < 400
     CAMLlocal4(vbi, vbe, vbembedi, vbembede);
+    CAMLlocal1(vd);
     realtype *Ai = NULL, *Ae = NULL;
-    realtype *ai, *ae;
-    int s, p, q, i, j;
+    realtype *ai, *ae, *bembedi = NULL, *bembede = NULL;
+    int s, p = 0, q, i, j;
 
     if ((vobi != Val_none) && (vobe != Val_none)) {
 	vbi = Some_val(vobi);
 	vbe = Some_val(vobe);
-	vbembedi = Field(vbi, RECORD_ARKODE_BUTCHER_TABLE_BEMBED);
-	vbembede = Field(vbe, RECORD_ARKODE_BUTCHER_TABLE_BEMBED);
+
+	vbembedi = Field(vbi, RECORD_ARKODE_BUTCHER_TABLE_EMBEDDING);
+	vbembede = Field(vbe, RECORD_ARKODE_BUTCHER_TABLE_EMBEDDING);
 
 	s = Int_val(Field(vbi, RECORD_ARKODE_BUTCHER_TABLE_STAGES));
 	q = Int_val(Field(vbi, RECORD_ARKODE_BUTCHER_TABLE_METHOD_ORDER));
-	p = Int_val(Field(vbi, RECORD_ARKODE_BUTCHER_TABLE_EMBEDDING_ORDER));
+
+	if (vbembede != Val_none) {
+	    vd = Some_val(vbembede);
+	    p = Int_val(Field(vd, 0));
+	    bembede = REAL_ARRAY(Field(vd, 1));
+	}
+
+	if (vbembedi != Val_none) {
+	    vd = Some_val(vbembedi);
+	    p = Int_val(Field(vd, 0));
+	    bembedi = REAL_ARRAY(Field(vd, 1));
+	}
 
 	// NB: translate to row-major from column-major
 	Ai = calloc(s * s, sizeof(realtype));
@@ -3025,15 +3058,15 @@ CAMLprim value sunml_arkode_ark_set_tables(value varkode_mem,
 		Ai, Ae,
 		REAL_ARRAY(Field(vbi, RECORD_ARKODE_BUTCHER_TABLE_COEFFICIENTS)),
 		REAL_ARRAY(Field(vbe, RECORD_ARKODE_BUTCHER_TABLE_COEFFICIENTS)),
-		((vbembedi == Val_none) ? NULL : REAL_ARRAY(Some_val(vbembedi))),
-		((vbembede == Val_none) ? NULL : REAL_ARRAY(Some_val(vbembede))));
+		bembedi,
+		bembede);
 #else // SUNDIALS_LIB_VERSION < 270
 	flag = ARKodeSetARKTables(ARKODE_MEM_FROM_ML(varkode_mem),
 		s, q, p
 		REAL_ARRAY(Field(vbi, RECORD_ARKODE_BUTCHER_TABLE_STAGE_TIMES)),
 		Ai, Ae,
 		REAL_ARRAY(Field(vbi, RECORD_ARKODE_BUTCHER_TABLE_COEFFICIENTS)),
-		((vbembedi == Val_none) ? NULL : REAL_ARRAY(Some_val(vbembedi))));
+		bembedi);
 #endif
 	free(Ai);
 	free(Ae);
@@ -3041,8 +3074,14 @@ CAMLprim value sunml_arkode_ark_set_tables(value varkode_mem,
 
     } else if ((vobi != Val_none) && (vobe == Val_none)) {
 	vbi= Some_val(vobi);
-	vbembedi = Field(vbi, RECORD_ARKODE_BUTCHER_TABLE_BEMBED);
+	vbembedi = Field(vbi, RECORD_ARKODE_BUTCHER_TABLE_EMBEDDING);
 	s = Int_val(Field(vbi, RECORD_ARKODE_BUTCHER_TABLE_STAGES));
+
+	if (vbembedi != Val_none) {
+	    vd = Some_val(vbembedi);
+	    p = Int_val(Field(vd, 0));
+	    bembedi = REAL_ARRAY(Field(vd, 1));
+	}
 
 	// NB: translate to row-major from column-major
 	Ai = calloc(s * s, sizeof(realtype));
@@ -3061,14 +3100,20 @@ CAMLprim value sunml_arkode_ark_set_tables(value varkode_mem,
 	    REAL_ARRAY(Field(vbi, RECORD_ARKODE_BUTCHER_TABLE_STAGE_TIMES)),
 	    Ai,
 	    REAL_ARRAY(Field(vbi, RECORD_ARKODE_BUTCHER_TABLE_COEFFICIENTS)),
-	    ((vbembedi == Val_none) ? NULL : REAL_ARRAY(Some_val(vbembedi))));
+	    bembedi);
 	free(Ai);
 	CHECK_FLAG("ARKodeSetIRKTable", flag);
 
     } else if ((vobi == Val_none) && (vobe != Val_none)) {
 	vbe = Some_val(vobe);
-	vbembede = Field(vbe, RECORD_ARKODE_BUTCHER_TABLE_BEMBED);
+	vbembede = Field(vbe, RECORD_ARKODE_BUTCHER_TABLE_EMBEDDING);
 	s = Int_val(Field(vbi, RECORD_ARKODE_BUTCHER_TABLE_STAGES));
+
+	if (vbembede != Val_none) {
+	    vd = Some_val(vbembede);
+	    p = Int_val(Field(vd, 0));
+	    bembede = REAL_ARRAY(Field(vd, 1));
+	}
 
 	// NB: translate to row-major from column-major
 	Ae = calloc(s * s, sizeof(realtype));
@@ -3087,7 +3132,7 @@ CAMLprim value sunml_arkode_ark_set_tables(value varkode_mem,
 	    REAL_ARRAY(Field(vbe, RECORD_ARKODE_BUTCHER_TABLE_STAGE_TIMES)),
 	    Ae,
 	    REAL_ARRAY(Field(vbe, RECORD_ARKODE_BUTCHER_TABLE_COEFFICIENTS)),
-	    ((vbembede == Val_none) ? NULL : REAL_ARRAY(Some_val(vbembede))));
+	    bembede);
 	free(Ae);
 	CHECK_FLAG("ARKodeSetERKTable", flag);
     }
