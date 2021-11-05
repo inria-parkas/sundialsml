@@ -297,7 +297,7 @@ let main () =
       ARKStep.set_init_step arkode_mem newdt;
 
       (* call integrator *)
-      let t, _ = ARKStep.solve_one_step arkode_mem tf y in
+      let t, _ = ARKStep.evolve_one_step arkode_mem tf y in
 
       (* "get" routines *)
       let olddt = ARKStep.get_last_step arkode_mem in

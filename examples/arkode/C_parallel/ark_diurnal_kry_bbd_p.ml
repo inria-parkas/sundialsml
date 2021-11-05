@@ -625,7 +625,7 @@ let main () =
     (* In loop over output points, call ARKode, print results, test for error *)
     let tout = ref twohr in
     for iout=1 to nout do
-      let (t, flag) = ARKStep.solve_normal arkode_mem !tout u in
+      let (t, flag) = ARKStep.evolve_normal arkode_mem !tout u in
       print_output arkode_mem my_pe comm u t;
       tout := !tout +. twohr
     done;

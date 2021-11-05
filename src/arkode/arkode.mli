@@ -1382,7 +1382,7 @@ module ARKStep : sig (* {{{ *)
       Specifying an [nlsolver] that requires a linear solver without
       specifying an [lsolver] results in a {!NonlinearInitFailure} (or
       {!IllInput} for Sundials < 4.0.0) exception on the first call to
-      {!solve_normal} or {!solve_one_step}.
+      {!evolve_normal} or {!evolve_one_step}.
 
       The alternative implicit right-hand-side function for nonlinear
       system function evaluations is only supported for Sundials >= 5.8.0. *)
@@ -1433,8 +1433,8 @@ module ARKStep : sig (* {{{ *)
       - for imex methods: {% $3 \le \mathtt{order} \le 5$%}.
 
       This function does everything necessary to initialize a session, i.e.,
-      it makes the calls referenced below. The {!solve_normal} and
-      {!solve_one_step} functions may be called directly.
+      it makes the calls referenced below. The {!evolve_normal} and
+      {!evolve_one_step} functions may be called directly.
 
       @noarkode <node> ARKStepCreate
       @noarkode <node> ARKStepSetLinear
@@ -1463,7 +1463,7 @@ module ARKStep : sig (* {{{ *)
       -> ('data, 'kind) session
 
   (** Integrates an ODE system over an interval. The call
-      [tret, r = solve_normal s tout yout] has as arguments
+      [tret, r = evolve_normal s tout yout] has as arguments
       - [s], a solver session,
       - [tout], the next time at which a solution is desired, and,
       - [yout], a vector to store the computed solution.
@@ -1491,13 +1491,13 @@ module ARKStep : sig (* {{{ *)
       @raise UnrecoverableRhsFuncFailure One of the right-hand side functions had a recoverable error, but no recovery was possible. This error can only occur after an error test failure at order one.
       @raise RootFuncFailure Failure in the rootfinding function [g].
       @raise PostprocStepFailure Failure in the Postprocess Step function. *)
-  val solve_normal : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
+  val evolve_normal : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
                           -> float * solver_result
 
-  (** Like {!solve_normal} but returns after one internal solver step.
+  (** Like {!evolve_normal} but returns after one internal solver step.
 
       @noarkode <node> ARKStepEvolve (ARK_ONE_STEP) *)
-  val solve_one_step : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
+  val evolve_one_step : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
                           -> float * solver_result
 
   (** Returns the interpolated solution or derivatives.
@@ -1510,7 +1510,7 @@ module ARKStep : sig (* {{{ *)
       and {% $0 \leq \mathtt{k} \leq 3$%}.
 
       This function may only be called after a successful return from either
-      {!solve_normal} or {!solve_one_step}.
+      {!evolve_normal} or {!evolve_one_step}.
 
       @noarkode <node> ARKStepGetDky
       @raise BadT [t] is not in the interval {% $[t_n - h_n, t_n]$%}.
@@ -2343,8 +2343,8 @@ module ERKStep : sig (* {{{ *)
                   of equations.
 
       This function does everything necessary to initialize a session, i.e.,
-      it makes the calls referenced below. The {!solve_normal} and
-      {!solve_one_step} functions may be called directly.
+      it makes the calls referenced below. The {!evolve_normal} and
+      {!evolve_one_step} functions may be called directly.
 
       @since 4.0.0
       @noarkode <node> ERKStepCreate
@@ -2363,7 +2363,7 @@ module ERKStep : sig (* {{{ *)
       -> ('data, 'kind) session
 
   (** Integrates an ODE system over an interval. The call
-      [tret, r = solve_normal s tout yout] has as arguments
+      [tret, r = evolve_normal s tout yout] has as arguments
       - [s], a solver session,
       - [tout], the next time at which a solution is desired, and,
       - [yout], a vector to store the computed solution.
@@ -2381,13 +2381,13 @@ module ERKStep : sig (* {{{ *)
       @raise RepeatedRhsFuncFailure Too many convergence test failures, or unable to estimate the initial step size, due to repeated recoverable errors in one of the right-hand side functions.
       @raise UnrecoverableRhsFuncFailure One of the right-hand side functions had a recoverable error, but no recovery was possible. This error can only occur after an error test failure at order one.
       @raise RootFuncFailure Failure in the rootfinding function [g]. *)
-  val solve_normal : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
+  val evolve_normal : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
                           -> float * solver_result
 
-  (** Like {!solve_normal} but returns after one internal solver step.
+  (** Like {!evolve_normal} but returns after one internal solver step.
 
       @noarkode <node> ERKStepEvolve (ARK_ONE_STEP) *)
-  val solve_one_step : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
+  val evolve_one_step : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
                           -> float * solver_result
 
   (** Returns the interpolated solution or derivatives.
@@ -2400,7 +2400,7 @@ module ERKStep : sig (* {{{ *)
       and {% $0 \leq \mathtt{k} \leq 3$%}.
 
       This function may only be called after a successful return from either
-      {!solve_normal} or {!solve_one_step}.
+      {!evolve_normal} or {!evolve_one_step}.
 
       @noarkode <node> ERKStepGetDky
       @raise BadT [t] is not in the interval {% $[t_n - h_n, t_n]$%}.
@@ -3396,8 +3396,8 @@ module MRIStep : sig (* {{{ *)
                   of equations.
 
       This function does everything necessary to initialize a session, i.e.,
-      it makes the calls referenced below. The {!solve_normal} and
-      {!solve_one_step} functions may be called directly.
+      it makes the calls referenced below. The {!evolve_normal} and
+      {!evolve_one_step} functions may be called directly.
 
       At most one of the options below may be specified:
       - [~coupling], use a customized set of slow-to-fast coupling
@@ -3421,8 +3421,8 @@ module MRIStep : sig (* {{{ *)
       If fixed step sizes and a stop time are used, then the fixed step size
       will be used for all steps except the final step, which may be shorter.
       To resume use of the previous fixed step size, another call to
-      {!set_fixed_step} is required before calling either {!solve_normal} or
-      {!solve_one_step}.
+      {!set_fixed_step} is required before calling either {!evolve_normal} or
+      {!evolve_one_step}.
 
       Neither Root finding nor non-identity mass matrices are supported in the
       inner session.
@@ -3471,7 +3471,7 @@ module MRIStep : sig (* {{{ *)
       -> ('data, 'kind) session
 
   (** Integrates an ODE system over an interval. The call
-      [tret, r = solve_normal s tout yout] has as arguments
+      [tret, r = evolve_normal s tout yout] has as arguments
       - [s], a solver session,
       - [tout], the next time at which a solution is desired, and,
       - [yout], a vector to store the computed solution.
@@ -3484,13 +3484,13 @@ module MRIStep : sig (* {{{ *)
       @raise TooMuchWork The requested time could not be reached in [mxstep] internal steps.
       @raise VectorOpErr A vector operation error occurred
       @raise InnerStepFail The inner stepper had an unrecoverable error *)
-  val solve_normal : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
+  val evolve_normal : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
                           -> float * solver_result
 
-  (** Like {!solve_normal} but returns after one internal solver step.
+  (** Like {!evolve_normal} but returns after one internal solver step.
 
       @noarkode <node> MRIStepEvolve (ARK_ONE_STEP) *)
-  val solve_one_step : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
+  val evolve_one_step : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
                           -> float * solver_result
 
   (** Returns the interpolated solution or derivatives.
@@ -3503,7 +3503,7 @@ module MRIStep : sig (* {{{ *)
       and {% $0 \leq \mathtt{k} \leq 3$%}.
 
       This function may only be called after a successful return from either
-      {!solve_normal} or {!solve_one_step}.
+      {!evolve_normal} or {!evolve_one_step}.
 
       @noarkode <node> MRIStepGetDky
       @raise BadT [t] is not in the interval {% $[t_n - h_n, t_n]$%}.

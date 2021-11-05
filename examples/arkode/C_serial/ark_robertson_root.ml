@@ -151,7 +151,7 @@ let main () =
   (try
      for iout=0 to nt-1 do
        (* call integrator *)
-       let t, flag = ARKStep.solve_normal arkode_mem !tout y_nv in
+       let t, flag = ARKStep.evolve_normal arkode_mem !tout y_nv in
 
        (* access/print solution *)
        printf "  %12.5e  %12.5e  %12.5e  %12.5e\n" t y.{0} y.{1} y.{2};

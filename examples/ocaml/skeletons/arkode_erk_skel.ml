@@ -22,11 +22,11 @@ ERKStep.set_stop_time s 10.0;;
 ERKStep.set_all_root_directions s RootDirs.Increasing;;
 
 (* 6. Advance the solution in time,
-      by repeatedly calling [solve_normal] or [solve_one_step]. *)
+      by repeatedly calling [evolve_normal] or [evolve_one_step]. *)
 let rec go (t, r) =
   Printf.printf "% .10e\t% .10e\t% .10e\n" t yd.{0} yd.{1};
   match r with
-  | ERKStep.Success -> go (ERKStep.solve_normal s (t +. 0.5) y)
+  | ERKStep.Success -> go (ERKStep.evolve_normal s (t +. 0.5) y)
   | ERKStep.RootsFound -> begin
         yd.{1} <- -0.8 *. yd.{1};
         ERKStep.reinit s t y;

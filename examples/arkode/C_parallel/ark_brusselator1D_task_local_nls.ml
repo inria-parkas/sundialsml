@@ -907,7 +907,7 @@ let evolve_problem_imex ({ myid; nnlfi; _ } as udata) (y : Nvector_mpiplusx.t) =
   let dtout = if nout <> 0 then (tf -. t0) /. float nout else (tf -. t0) in
   let rec loop iout tout =
     (* Integrate to output time *)
-    let t, _ = ARKStep.solve_normal arkode_mem tout y in
+    let t, _ = ARKStep.evolve_normal arkode_mem tout y in
     write_output udata t y;
 
     (* Update output time *)
@@ -981,7 +981,7 @@ let evolve_problem_explicit ({ myid; uopt; _ } as udata) (y : Nvector_mpiplusx.t
   let dtout = if nout <> 0 then (tf -. t0) /. float nout else (tf -. t0) in
   let rec loop iout tout =
     (* Integrate to output time *)
-    let t, _ = ERKStep.solve_normal arkode_mem tout y in
+    let t, _ = ERKStep.evolve_normal arkode_mem tout y in
     write_output udata t y;
 
     (* Update output time *)

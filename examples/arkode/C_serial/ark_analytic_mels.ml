@@ -140,7 +140,7 @@ let main () =
   let rec loop t tout =
     if tf -. t <= 1.0e-15 then t
     else begin
-      let t, _ = ARKStep.solve_normal arkode_mem tout y in (* call integrator *)
+      let t, _ = ARKStep.evolve_normal arkode_mem tout y in (* call integrator *)
       printf "  %10.6f  %10.6f\n" t ydata.{0};      (* access/print solution *)
       loop t (min tf (tout +. dTout))
     end

@@ -2073,13 +2073,13 @@ static value ark_solver(value vdata, value nextt, value vy, int onestep)
     CAMLreturn (ret);
 }
 
-CAMLprim value sunml_arkode_ark_solve_normal(value vdata, value nextt, value y)
+CAMLprim value sunml_arkode_ark_evolve_normal(value vdata, value nextt, value y)
 {
     CAMLparam3(vdata, nextt, y);
     CAMLreturn(ark_solver(vdata, nextt, y, 0));
 }
 
-CAMLprim value sunml_arkode_ark_solve_one_step(value vdata, value nextt, value y)
+CAMLprim value sunml_arkode_ark_evolve_one_step(value vdata, value nextt, value y)
 {
     CAMLparam3(vdata, nextt, y);
     CAMLreturn(ark_solver(vdata, nextt, y, 1));
@@ -5356,13 +5356,13 @@ static value erk_solver(value vdata, value nextt, value vy, int onestep)
     CAMLreturn (ret);
 }
 
-CAMLprim value sunml_arkode_erk_solve_normal(value vdata, value nextt, value y)
+CAMLprim value sunml_arkode_erk_evolve_normal(value vdata, value nextt, value y)
 {
     CAMLparam3(vdata, nextt, y);
     CAMLreturn(erk_solver(vdata, nextt, y, 0));
 }
 
-CAMLprim value sunml_arkode_erk_solve_one_step(value vdata, value nextt, value y)
+CAMLprim value sunml_arkode_erk_evolve_one_step(value vdata, value nextt, value y)
 {
     CAMLparam3(vdata, nextt, y);
     CAMLreturn(erk_solver(vdata, nextt, y, 1));
@@ -6556,13 +6556,13 @@ static value mri_solver(value vdata, value nextt, value vy, int onestep)
     CAMLreturn (ret);
 }
 
-CAMLprim value sunml_arkode_mri_solve_normal(value vdata, value nextt, value y)
+CAMLprim value sunml_arkode_mri_evolve_normal(value vdata, value nextt, value y)
 {
     CAMLparam3(vdata, nextt, y);
     CAMLreturn(mri_solver(vdata, nextt, y, 0));
 }
 
-CAMLprim value sunml_arkode_mri_solve_one_step(value vdata, value nextt, value y)
+CAMLprim value sunml_arkode_mri_evolve_one_step(value vdata, value nextt, value y)
 {
     CAMLparam3(vdata, nextt, y);
     CAMLreturn(mri_solver(vdata, nextt, y, 1));

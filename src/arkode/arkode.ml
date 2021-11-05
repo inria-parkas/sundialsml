@@ -1795,21 +1795,21 @@ let matrix_embedded_solver
   external get_root_info  : ('a, 'k) session -> Roots.t -> unit
       = "sunml_arkode_ark_get_root_info"
 
-  external c_solve_normal : ('a, 'k) session -> float -> ('a, 'k) nvector
+  external c_evolve_normal : ('a, 'k) session -> float -> ('a, 'k) nvector
                                 -> float * solver_result
-      = "sunml_arkode_ark_solve_normal"
+      = "sunml_arkode_ark_evolve_normal"
 
-  let solve_normal s t y =
+  let evolve_normal s t y =
     if Sundials_configuration.safe then s.checkvec y;
-    c_solve_normal s t y
+    c_evolve_normal s t y
 
-  external c_solve_one_step : ('a, 'k) session -> float -> ('a, 'k) nvector
+  external c_evolve_one_step : ('a, 'k) session -> float -> ('a, 'k) nvector
                                 -> float * solver_result
-      = "sunml_arkode_ark_solve_one_step"
+      = "sunml_arkode_ark_evolve_one_step"
 
-  let solve_one_step s t y =
+  let evolve_one_step s t y =
     if Sundials_configuration.safe then s.checkvec y;
-    c_solve_one_step s t y
+    c_evolve_one_step s t y
 
   external c_get_dky
       : ('a, 'k) session -> float -> int -> ('a, 'k) nvector -> unit
@@ -2311,21 +2311,21 @@ module ERKStep = struct (* {{{ *)
   external get_root_info  : ('a, 'k) session -> Roots.t -> unit
       = "sunml_arkode_erk_get_root_info"
 
-  external c_solve_normal : ('a, 'k) session -> float -> ('a, 'k) nvector
+  external c_evolve_normal : ('a, 'k) session -> float -> ('a, 'k) nvector
                                 -> float * solver_result
-      = "sunml_arkode_erk_solve_normal"
+      = "sunml_arkode_erk_evolve_normal"
 
-  let solve_normal s t y =
+  let evolve_normal s t y =
     if Sundials_configuration.safe then s.checkvec y;
-    c_solve_normal s t y
+    c_evolve_normal s t y
 
-  external c_solve_one_step : ('a, 'k) session -> float -> ('a, 'k) nvector
+  external c_evolve_one_step : ('a, 'k) session -> float -> ('a, 'k) nvector
                                 -> float * solver_result
-      = "sunml_arkode_erk_solve_one_step"
+      = "sunml_arkode_erk_evolve_one_step"
 
-  let solve_one_step s t y =
+  let evolve_one_step s t y =
     if Sundials_configuration.safe then s.checkvec y;
-    c_solve_one_step s t y
+    c_evolve_one_step s t y
 
   external c_get_dky
       : ('a, 'k) session -> float -> int -> ('a, 'k) nvector -> unit
@@ -3157,21 +3157,21 @@ module MRIStep = struct (* {{{ *)
   external get_root_info  : ('a, 'k) session -> Roots.t -> unit
       = "sunml_arkode_mri_get_root_info"
 
-  external c_solve_normal : ('a, 'k) session -> float -> ('a, 'k) nvector
+  external c_evolve_normal : ('a, 'k) session -> float -> ('a, 'k) nvector
                                 -> float * solver_result
-      = "sunml_arkode_mri_solve_normal"
+      = "sunml_arkode_mri_evolve_normal"
 
-  let solve_normal s t y =
+  let evolve_normal s t y =
     if Sundials_configuration.safe then s.checkvec y;
-    c_solve_normal s t y
+    c_evolve_normal s t y
 
-  external c_solve_one_step : ('a, 'k) session -> float -> ('a, 'k) nvector
+  external c_evolve_one_step : ('a, 'k) session -> float -> ('a, 'k) nvector
                                 -> float * solver_result
-      = "sunml_arkode_mri_solve_one_step"
+      = "sunml_arkode_mri_evolve_one_step"
 
-  let solve_one_step s t y =
+  let evolve_one_step s t y =
     if Sundials_configuration.safe then s.checkvec y;
-    c_solve_one_step s t y
+    c_evolve_one_step s t y
 
   external c_get_dky
       : ('a, 'k) session -> float -> int -> ('a, 'k) nvector -> unit
