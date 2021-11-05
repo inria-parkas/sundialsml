@@ -575,7 +575,6 @@ module ButcherTable : sig (* {{{ *)
       @noarkode <node> ARKodeButcherTable *)
   type t = {
       method_order : int;          (** Method order of accuracy ({% $q$ %}). *)
-      embedding_order : int;       (** Embedding order of accuracy ({% $p$ %}). *)
       stages : int;                (** Number of stages ({% $s$ %}). *)
       stage_values : Sundials.RealArray2.t; (** Matrix ([stages * stages])
                                                 of coefficients ({% $A$ %}) *)
@@ -583,9 +582,11 @@ module ButcherTable : sig (* {{{ *)
                                        stage times ({% $c$ %}). *)
       coefficients : RealArray.t;  (** Array (of length [stages]) of
                                        solution coefficients ({% $b$ %}). *)
-      bembed : RealArray.t option; (** Optional array (of length [stages]) of
-                                       embedding coefficients
-                                       ({% $\tilde{b}$ %} or {% $d$ %}). *)
+      embedding : (int * RealArray.t) option;
+                                    (** Optional embedding order ({% $p$ %})
+                                        and array (of length [stages]) of
+                                        embedding coefficients
+                                        ({% $\tilde{b}$ %} or {% $d$ %}). *)
     }
 
   (** Explicit Butcher tables
