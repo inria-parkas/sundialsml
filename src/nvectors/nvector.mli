@@ -31,6 +31,9 @@ type ('data, 'kind) t
 (** An alias for {!t}. *)
 type ('data, 'kind) nvector = ('data, 'kind) t
 
+(** The type of any nvector that can be used as a serial nvector. *)
+type 'k serial = (Sundials.RealArray.t, [>`Serial] as 'k) t
+
 (** [unwrap nv] returns the data underlying the nvector [nv]. *)
 val unwrap : ('data, 'kind) t -> 'data
 

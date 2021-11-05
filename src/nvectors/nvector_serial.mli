@@ -33,9 +33,6 @@ type kind = [`Serial]
 (** The type of serial nvectors. *)
 type t = (data, kind) Nvector.t
 
-(** The type of any nvector that can be used as a serial nvector. *)
-type 'k any = (data, [>kind] as 'k) Nvector.t
-
 (** [make n iv] creates a new serial nvector with [n] elements, each initialized
     to [iv].
 
