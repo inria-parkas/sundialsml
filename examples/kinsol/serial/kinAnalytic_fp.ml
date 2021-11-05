@@ -177,7 +177,7 @@ let main () =
   Kinsol.set_func_norm_tol kmem tol;
 
   (* Set Anderson acceleration damping parameter *)
-  Kinsol.set_damping_aa kmem damping;
+  Kinsol.set_damping_aa kmem damping_aa;
 
   (* -------------
    * Initial guess
