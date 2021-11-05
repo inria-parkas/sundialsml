@@ -318,7 +318,7 @@ let main () =
   printf "   ----------------------------------------------\n";
   for iout = 0 to nt - 1 do
     (* call integrator *)
-    let t, r = MRIStep.solve_normal arkode_mem !tout y in
+    let t, r = MRIStep.evolve_normal arkode_mem !tout y in
 
     (* access/print solution statistics *)
     let u = Nvector_serial.Ops.wl2norm y umask in

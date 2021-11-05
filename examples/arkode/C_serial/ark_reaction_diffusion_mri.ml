@@ -184,7 +184,7 @@ let main () =
     if iout = nt then ()
     else begin
       (* call integrator *)
-      let t, _ = MRIStep.solve_normal arkode_mem tout y in
+      let t, _ = MRIStep.evolve_normal arkode_mem tout y in
 
       (* print solution stats and output results to disk *)
       printf "  %10.6f  %10.6f\n" t

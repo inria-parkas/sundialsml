@@ -30,11 +30,11 @@ MRIStep.set_stop_time s 10.0;;
 MRIStep.set_all_root_directions s RootDirs.Increasing;;
 
 (* 7. Advance the solution in time,
-      by repeatedly calling [solve_normal] or [solve_one_step]. *)
+      by repeatedly calling [evolve_normal] or [evolve_one_step]. *)
 let rec go (t, r) =
   Printf.printf "% .10e\t% .10e\t% .10e\n" t y.{0} y.{1};
   match r with
-  | MRIStep.Success -> go (MRIStep.solve_normal s (t +. 0.5) ynv)
+  | MRIStep.Success -> go (MRIStep.evolve_normal s (t +. 0.5) ynv)
   | MRIStep.RootsFound -> begin
         y.{1} <- -0.8 *. y.{1};
         MRIStep.reinit s t ynv;

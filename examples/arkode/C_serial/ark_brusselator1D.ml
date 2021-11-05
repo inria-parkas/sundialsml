@@ -267,7 +267,7 @@ let main () =
   (try
      for iout=0 to nt-1 do
        (* call integrator *)
-       let t, _ = ARKStep.solve_normal arkode_mem !tout y in
+       let t, _ = ARKStep.evolve_normal arkode_mem !tout y in
 
        (* access/print solution statistics *)
        let u = wl2norm y umask in

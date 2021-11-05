@@ -165,7 +165,7 @@ let main () =
      for iout=0 to nt-1 do
 
        (* call integrator *)
-       let t, _ = ARKStep.solve_normal arkode_mem !tout y in
+       let t, _ = ARKStep.evolve_normal arkode_mem !tout y in
        (* print solution stats *)
        printf "  %10.6f  %10.6f\n" t (sqrt((dotprod y y)/.float mesh_n));
        (* successful solve: update output time *)

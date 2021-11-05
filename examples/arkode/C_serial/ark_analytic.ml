@@ -105,7 +105,7 @@ let main () =
   (try
      while (tf -. !t > 1.0e-15) do
        (* call integrator *)
-       let t', _ = ARKStep.solve_normal arkode_mem !tout y in
+       let t', _ = ARKStep.evolve_normal arkode_mem !tout y in
        t := t';
        printf "  %10.6f  %10.6f\n" t' data.{0};     (* access/print solution *)
        fprintf ufid " %.16e %.16e\n" t' data.{0};

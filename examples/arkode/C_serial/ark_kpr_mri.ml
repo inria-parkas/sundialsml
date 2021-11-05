@@ -514,7 +514,7 @@ let main () =
     if iout >= nt then ()
     else begin
       (* call integrator *)
-      let t, _ = MRIStep.solve_normal arkode_mem tout y in
+      let t, _ = MRIStep.evolve_normal arkode_mem tout y in
 
       (* access/print solution and error *)
       uerr := abs_float (ydata.{0} -. utrue rpar t);

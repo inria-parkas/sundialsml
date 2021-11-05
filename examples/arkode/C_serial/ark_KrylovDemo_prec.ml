@@ -925,7 +925,7 @@ let main () =
     (* Loop over output points, call ARKode, print sample solution values. *)
     let tout = ref t1 in
     for iout = 1 to nout do
-      let (t, _) = ARKStep.solve_normal arkode_mem !tout c in
+      let (t, _) = ARKStep.evolve_normal arkode_mem !tout c in
       print_output arkode_mem t;
       if !firstrun && (iout mod 3 = 0)
         then print_all_species (unwrap c) ns mxns t;

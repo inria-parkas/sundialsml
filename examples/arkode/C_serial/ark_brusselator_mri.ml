@@ -128,7 +128,7 @@ let main () =
      fprintf ufid " %.16e %.16e %.16e %.16e\n" 0. data.{0} data.{1} data.{2};
      for iout=0 to nt-1 do
        (* call integrator *)
-       let t, _ = MRIStep.solve_normal arkode_mem !tout y in
+       let t, _ = MRIStep.evolve_normal arkode_mem !tout y in
        (* access/print solution *)
        printf "  %10.6f  %10.6f  %10.6f  %10.6f\n" t data.{0} data.{1} data.{2};
        fprintf ufid " %.16e %.16e %.16e %.16e\n" t data.{0} data.{1} data.{2};

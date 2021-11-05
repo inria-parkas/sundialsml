@@ -179,7 +179,7 @@ let main () =
   printf "   --------------------------------------------------\n";
   printf "  %10.3e  %12.5e  %12.5e  %12.5e\n" t yd.{0} yd.{1} yd.{2};
   for iout = 0 to nt - 1 do
-    let t, flag = ARKStep.solve_normal arkode_mem !tout y in     (* call integrator *)
+    let t, flag = ARKStep.evolve_normal arkode_mem !tout y in     (* call integrator *)
 
     printf "  %10.3e  %12.5e  %12.5e  %12.5e\n" t yd.{0} yd.{1} yd.{2}; (* access/print solution *)
     fprintf ufid " %.16e %.16e %.16e %.16e\n" t yd.{0} yd.{1} yd.{2};
