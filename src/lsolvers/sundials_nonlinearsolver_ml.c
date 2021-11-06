@@ -1133,19 +1133,19 @@ CAMLprim value sunml_nlsolver_call_convtest_fn(value vnls, value vconvtestfn,
     int flag = (*convtestfn)(nls, y, del, tol, ewt, mem);
     switch (flag) {
     case SUN_NLS_SUCCESS:
-	CAMLreturn (VARIANT_NLSOLVER_CONVTEST_SUCCESS);
+	CAMLreturn (Val_int(VARIANT_NLSOLVER_CONVTEST_SUCCESS));
 
     case SUN_NLS_CONTINUE:
-	CAMLreturn (VARIANT_NLSOLVER_CONVTEST_CONTINUE);
+	CAMLreturn (Val_int(VARIANT_NLSOLVER_CONVTEST_CONTINUE));
 
     case SUN_NLS_CONV_RECVR:
-	CAMLreturn (VARIANT_NLSOLVER_CONVTEST_RECOVER);
+	CAMLreturn (Val_int(VARIANT_NLSOLVER_CONVTEST_RECOVER));
 
     default:
 	sunml_nlsolver_check_flag("SUNNonlinSolConvTestFn", flag);
     }
 #endif
-    CAMLreturn (VARIANT_NLSOLVER_CONVTEST_SUCCESS);
+    CAMLreturn (Val_int(VARIANT_NLSOLVER_CONVTEST_SUCCESS));
 }
 
 CAMLprim value sunml_nlsolver_call_convtest_fn_sens(value vnls,
@@ -1172,19 +1172,19 @@ CAMLprim value sunml_nlsolver_call_convtest_fn_sens(value vnls,
     int flag = (*convtestfn)(nls, y, del, tol, ewt, mem);
     switch (flag) {
     case SUN_NLS_SUCCESS:
-	CAMLreturn (VARIANT_NLSOLVER_CONVTEST_SUCCESS);
+	CAMLreturn (Val_int(VARIANT_NLSOLVER_CONVTEST_SUCCESS));
 
     case SUN_NLS_CONTINUE:
-	CAMLreturn (VARIANT_NLSOLVER_CONVTEST_CONTINUE);
+	CAMLreturn (Val_int(VARIANT_NLSOLVER_CONVTEST_CONTINUE));
 
     case SUN_NLS_CONV_RECVR:
-	CAMLreturn (VARIANT_NLSOLVER_CONVTEST_RECOVER);
+	CAMLreturn (Val_int(VARIANT_NLSOLVER_CONVTEST_RECOVER));
 
     default:
 	sunml_nlsolver_check_flag("SUNNonlinSolConvTestFn (sens)", flag);
     }
 #endif
-    CAMLreturn (VARIANT_NLSOLVER_CONVTEST_SUCCESS);
+    CAMLreturn (Val_int(VARIANT_NLSOLVER_CONVTEST_SUCCESS));
 }
 
 void sunml_nlsolver_set_to_from_mem(SUNNonlinearSolver nls,
