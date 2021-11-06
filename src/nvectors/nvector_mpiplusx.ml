@@ -224,6 +224,11 @@ struct (* {{{ *)
   external getlength      : t -> int
     = "sunml_nvec_mpimany_getlength" [@@noalloc]
 
+  external c_print_file : t -> Sundials.Logfile.t option -> unit
+    = "sunml_nvec_mpimany_print_file"
+
+  let print ?logfile (x : t) = c_print_file x logfile
+
   external c_linearcombination : RealArray.t -> t array -> t -> unit
     = "sunml_nvec_mpimany_linearcombination"
 
@@ -520,6 +525,8 @@ struct (* {{{ *)
     Mpi.(allreduce_float lmax Max comm)
 
   let getlength ((x, comm) : t) = sumlens comm x
+
+  let print ?logfile ((x, _) : t) = Nvector.Ops.print ?logfile x
 
   let wrmsnorm (x : t) (w : t) =
     let lx = getlength x in

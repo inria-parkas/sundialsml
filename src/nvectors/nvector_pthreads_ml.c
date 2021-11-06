@@ -195,6 +195,10 @@ CAMLprim value sunml_nvec_wrap_pthreads(value nthreads,
     ops->nvwsqrsumlocal     = N_VWSqrSumLocal_Pthreads;
     ops->nvwsqrsummasklocal = N_VWSqrSumMaskLocal_Pthreads;
 #endif
+#if 530 <= SUNDIALS_LIB_VERSION
+    ops->nvprint	    = N_VPrint_Pthreads;
+    ops->nvprintfile	    = N_VPrintFile_Pthreads;
+#endif
 
     /* Create content */
     content->length      = length;
@@ -248,6 +252,21 @@ CAMLprim value sunml_nvec_pthreads_num_threads(value va)
     int num_threads = NV_NUM_THREADS_PT(NVEC_VAL(va));
 
     CAMLreturn(Val_int(num_threads));
+}
+
+CAMLprim value sunml_nvec_pthreads_print_file(value vx, value volog)
+{
+    CAMLparam2(vx, volog);
+#if 270 <= SUNDIALS_LIB_VERSION
+    if (volog == Val_none) {
+	N_VPrint_Pthreads(NVEC_VAL(vx));
+    } else {
+	N_VPrintFile_Pthreads(NVEC_VAL(vx), ML_CFILE(Some_val(volog)));
+    }
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
 }
 
 /** Interface to underlying pthreads nvector functions */

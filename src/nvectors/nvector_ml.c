@@ -404,6 +404,10 @@ CAMLprim value sunml_nvec_wrap_serial(value payload,
 
 #if 500 <= SUNDIALS_LIB_VERSION
     ops->nvgetlength	    = N_VGetLength_Serial;
+#if 530 <= SUNDIALS_LIB_VERSION
+    ops->nvprint	   = N_VPrint_Serial;
+    ops->nvprintfile	   = N_VPrintFile_Serial;
+#endif
     ops->nvgetcommunicator  = NULL;
 
     ops->nvdotprodlocal     = N_VDotProd_Serial;
@@ -468,7 +472,7 @@ CAMLprim value sunml_nvec_anywrap_serial(value extconstr,
 
 #define GET_OP(nvec, x) (Field((value)CNVEC_OP_TABLE(nvec), x))
 
-#define HAS_OP(ops, x)	     (Field(ops, x) != Val_int(0))
+#define HAS_OP(ops, x)	     (Field(ops, x) != Val_none)
 #define IS_SOME_OP(nvec, x)  (HAS_OP(CNVEC_OP_TABLE(nvec), x))
 #define GET_SOME_OP(nvec, x) (Field(Field(CNVEC_OP_TABLE(nvec), x), 0))
 
@@ -495,6 +499,10 @@ static N_Vector_ID getvectorid_custom(N_Vector v)
 static N_Vector callml_vclone(N_Vector w);
 static void callml_vspace(N_Vector v, sundials_ml_index *lrw, sundials_ml_index *liw);
 static sunindextype callml_vgetlength(N_Vector v);
+#if 530 <= SUNDIALS_LIB_VERSION
+static void callml_vprint(N_Vector v);
+#endif
+static void callml_vprintfile(N_Vector v, FILE *logfile);
 static void callml_vlinearsum(realtype a, N_Vector x, realtype b, N_Vector y, N_Vector z);
 static void callml_vconst(realtype c, N_Vector z);
 static void callml_vprod(N_Vector x, N_Vector y, N_Vector z);
@@ -684,6 +692,15 @@ CAMLprim value sunml_nvec_wrap_custom(value mlops, value payload,
     if (HAS_OP(mlops, NVECTOR_OPS_NVWSQRSUMMASK_LOCAL))
 	ops->nvwsqrsummasklocal = callml_vwsqrsummasklocal;
 #endif
+#if 530 <= SUNDIALS_LIB_VERSION
+    ops->nvprint	   = NULL;
+    ops->nvprintfile	   = NULL;
+
+    if (HAS_OP(mlops, NVECTOR_OPS_NVPRINTFILE)) {
+	ops->nvprint = callml_vprint;
+	ops->nvprintfile = callml_vprintfile;
+    }
+#endif
 
     /* Create content */
     nv->content = (void *)mlops;
@@ -778,6 +795,49 @@ static sunindextype callml_vgetlength(N_Vector v)
     }
 
     CAMLreturnT(sunindextype, Int_val(r));
+}
+#endif
+
+#if 530 <= SUNDIALS_LIB_VERSION
+static void callml_vprint(N_Vector v)
+{
+    CAMLparam0();
+    CAMLlocal1(mlop);
+    mlop = GET_SOME_OP(v, NVECTOR_OPS_NVPRINTFILE);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback2_exn (mlop, NVEC_BACKLINK(v), Val_none);
+    if (Is_exception_result (r)) {
+	sunml_warn_discarded_exn (Extract_exception (r),
+					"user-defined printfile");
+	fputs ("Sundials/ML has no sensible value to return to Sundials, "
+	       "and incorrect values risk memory corruption.  Abort.", stderr);
+	fflush (stderr);
+	abort ();
+    }
+
+    CAMLreturn0;
+}
+
+static void callml_vprintfile(N_Vector v, FILE* logfile)
+{
+    CAMLparam0();
+    CAMLlocal2(mlop, vologfile);
+    mlop = GET_SOME_OP(v, NVECTOR_OPS_NVPRINTFILE);
+    vologfile = sunml_sundials_wrap_file(logfile);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback2_exn (mlop, NVEC_BACKLINK(v), vologfile);
+    if (Is_exception_result (r)) {
+	sunml_warn_discarded_exn (Extract_exception (r),
+					"user-defined printfile");
+	fputs ("Sundials/ML has no sensible value to return to Sundials, "
+	       "and incorrect values risk memory corruption.  Abort.", stderr);
+	fflush (stderr);
+	abort ();
+    }
+
+    CAMLreturn0;
 }
 #endif
 
@@ -1759,6 +1819,21 @@ CAMLprim value sunml_nvec_ser_getlength(value vx)
     CAMLreturn(r);
 }
 
+CAMLprim value sunml_nvec_ser_print_file(value vx, value volog)
+{
+    CAMLparam2(vx, volog);
+#if 270 <= SUNDIALS_LIB_VERSION
+    if (volog == Val_none) {
+	N_VPrint_Serial(NVEC_VAL(vx));
+    } else {
+	N_VPrintFile_Serial(NVEC_VAL(vx), ML_CFILE(Some_val(volog)));
+    }
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
 /* fused vector operations */
 
 #if 400 <= SUNDIALS_LIB_VERSION
@@ -1922,7 +1997,6 @@ CAMLprim value sunml_nvec_ser_dotprodmulti(value vx, value vay, value vad)
 #endif
     CAMLreturn(Val_unit);
 }
-
 
 /* vector array operations */
 
@@ -2675,6 +2749,21 @@ CAMLprim value sunml_nvec_any_getlength(value vx)
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn(r);
+}
+
+CAMLprim value sunml_nvec_any_print_file(value vx, value volog)
+{
+    CAMLparam2(vx, volog);
+#if 530 <= SUNDIALS_LIB_VERSION
+    if (volog == Val_none) {
+	N_VPrint(NVEC_VAL(vx));
+    } else {
+	N_VPrintFile(NVEC_VAL(vx), ML_CFILE(Some_val(volog)));
+    }
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value sunml_nvec_any_linearcombination(value vac, value vax,

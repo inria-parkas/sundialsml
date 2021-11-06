@@ -215,6 +215,11 @@ module type NVECTOR_OPS =
        @since 5.0.0 *)
     val getlength : t -> int
 
+    (** Prints to the given logfile (stdout, by default).
+
+        @since 5.3.0 *)
+    val print : ?logfile:Logfile.t -> t -> unit
+
     (* Fused and array operations *)
 
     (** [linearcombination c x z] calculates

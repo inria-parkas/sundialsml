@@ -21,6 +21,7 @@ type 'a nvector_ops = { (* {{{ *)
   clone           : 'a -> 'a;
   space           : ('a -> (int * int)) option;
   getlength       : 'a -> int;
+  print           : ('a -> Sundials.Logfile.t option-> unit) option;
   linearsum       : float -> 'a -> float -> 'a -> 'a -> unit;
   const           : float -> 'a -> unit;
   prod            : 'a -> 'a -> 'a -> unit;
@@ -187,6 +188,7 @@ let add_tracing msg ops =
       clone           = clone;
       space           = space;
       getlength       = getlength;
+      print           = print;
       linearsum       = linearsum;
       const           = const;
       prod            = prod;
@@ -246,6 +248,8 @@ let add_tracing msg ops =
   (* ... {{{ *)
   and tr_nvspace = fo space (fun f -> fun a -> (pr "space"; f a))
   and tr_nvgetlength a = pr "getlength"; getlength a
+  and tr_nvprint = match print with None -> None
+                   | Some f -> Some (fun a lf -> pr "print"; f a lf);
   and tr_nvlinearsum a x b y z = pr "linearsum"; linearsum a x b y z
   and tr_nvconst c z = pr "const"; const c z
   and tr_nvprod x y z = pr "prod"; prod x y z
@@ -331,6 +335,7 @@ let add_tracing msg ops =
       clone           = tr_nvclone;
       space           = tr_nvspace;
       getlength       = tr_nvgetlength;
+      print           = tr_nvprint;
       linearsum       = tr_nvlinearsum;
       const           = tr_nvconst;
       prod            = tr_nvprod;
@@ -441,6 +446,11 @@ module MakeOps = functor (A : sig
         | Some f -> (fun x -> f (uv x))
 
       let getlength a = A.ops.getlength (uv a)
+
+      let print =
+        match A.ops.print with
+        | None -> (fun ?logfile _ -> raise Nvector.OperationNotProvided)
+        | Some f -> (fun ?logfile x -> f (uv x) logfile)
 
       let linearcombination =
         match A.ops.linearcombination with
@@ -597,6 +607,11 @@ module MakeOps = functor (A : sig
 
       let getlength = A.ops.getlength
 
+      let print =
+        match A.ops.print with
+        | None -> (fun ?logfile _ -> raise Nvector.OperationNotProvided)
+        | Some f -> (fun ?logfile x -> f x logfile)
+
       let linearcombination =
         match A.ops.linearcombination with
         | None -> (fun c x z -> raise Nvector.OperationNotProvided)
@@ -711,6 +726,7 @@ module Any = struct (* {{{ *)
         clone;
         space;
         getlength;
+        print;
         linearsum;
         const;
         prod;
@@ -770,6 +786,8 @@ module Any = struct (* {{{ *)
         clone        = (fun v -> inject (clone (project v)));
         space        = option_map single space;
         getlength    = single getlength;
+        print        = (match print with None -> None
+                       | Some f -> Some (fun v lf -> f (project v) lf));
         linearsum    = (fun c1 v1 c2 v2 vr -> linearsum c1 (project v1)
                                                               c2 (project v2)
                                                               (project vr));

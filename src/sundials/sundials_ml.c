@@ -310,3 +310,19 @@ CAMLprim value sunml_sundials_stdout(value vunit)
     CAMLreturn (vr);
 }
 
+CAMLprim value sunml_sundials_wrap_file(FILE* f)
+{
+    CAMLparam0();
+    CAMLlocal1(vr);
+
+    if (f == NULL) {
+	vr = Val_none;
+    } else {
+	vr = caml_alloc_final(1, NULL, 0, 1);
+	ML_CFILE(vr) = f;
+	Store_some(vr, vr);
+    }
+
+    CAMLreturn (vr);
+}
+

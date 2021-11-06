@@ -244,6 +244,10 @@ CAMLprim value sunml_nvec_wrap_parallel(value payload,
     ops->nvwsqrsumlocal     = N_VWSqrSumLocal_Parallel;
     ops->nvwsqrsummasklocal = N_VWSqrSumMaskLocal_Parallel;
 #endif
+#if 530 <= SUNDIALS_LIB_VERSION
+    ops->nvprint	    = N_VPrint_Parallel;
+    ops->nvprintfile	    = N_VPrintFile_Parallel;
+#endif
 
     /* Attach lengths and communicator */
     content->local_length  = local_length;
@@ -287,6 +291,21 @@ CAMLprim value sunml_nvec_anywrap_parallel(value extconstr,
     caml_modify_generational_global_root(&NVEC_BACKLINK(nv), vwrapped);
 
     CAMLreturn(vnv);
+}
+
+CAMLprim value sunml_nvec_par_print_file(value vx, value volog)
+{
+    CAMLparam2(vx, volog);
+#if 270 <= SUNDIALS_LIB_VERSION
+    if (volog == Val_none) {
+	N_VPrint_Parallel(NVEC_VAL(vx));
+    } else {
+	N_VPrintFile_Parallel(NVEC_VAL(vx), ML_CFILE(Some_val(volog)));
+    }
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value sunml_nvec_par_linearsum(value va, value vx, value vb, value vy,
@@ -555,7 +574,6 @@ CAMLprim value sunml_nvec_par_dotprodmulti(value vx, value vay, value vad)
 #endif
     CAMLreturn(Val_unit);
 }
-
 
 /* vector array operations */
 

@@ -406,6 +406,11 @@ module Ops = struct (* {{{ *)
   external getlength  : t -> int
     = "sunml_nvec_openmp_getlength"
 
+  external c_print_file : t -> Logfile.t option -> unit
+    = "sunml_nvec_openmp_print_file"
+
+  let print ?logfile nv = c_print_file nv logfile
+
   external c_linearcombination : RealArray.t -> t array -> t -> unit
     = "sunml_nvec_openmp_linearcombination"
 

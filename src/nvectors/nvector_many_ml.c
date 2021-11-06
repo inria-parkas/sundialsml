@@ -344,6 +344,10 @@ static value do_wrap(value payload,
     ops->nvsetarraypointer = NULL;
 #endif
     ops->nvgetlength	   = MVAPPEND(N_VGetLength);
+#if 530 <= SUNDIALS_LIB_VERSION
+    ops->nvprint	   = MVAPPEND(N_VPrint);
+    ops->nvprintfile	   = MVAPPEND(N_VPrintFile);
+#endif
     ops->nvlinearsum       = MVAPPEND(N_VLinearSum);
     ops->nvconst           = MVAPPEND(N_VConst);
     ops->nvprod            = MVAPPEND(N_VProd);
@@ -496,6 +500,30 @@ CAMLprim value sunml_nvec_anywrap_mpiplusx(value extconstr, value payload,
 #endif
 }
 #endif
+
+CAMLprim value SUNML_NVEC_OP(print_file)(value vx, value volog)
+{
+    CAMLparam2(vx, volog);
+#if 530 <= SUNDIALS_LIB_VERSION
+    if (volog == Val_none) {
+#ifdef MANYVECTOR_BUILD_WITH_MPI
+	N_VPrint_MPIManyVector(NVEC_VAL(vx));
+#else
+	N_VPrint_ManyVector(NVEC_VAL(vx));
+#endif
+    } else {
+#ifdef MANYVECTOR_BUILD_WITH_MPI
+	N_VPrintFile_MPIManyVector(NVEC_VAL(vx), ML_CFILE(Some_val(volog)));
+#else
+	N_VPrintFile_ManyVector(NVEC_VAL(vx), ML_CFILE(Some_val(volog)));
+#endif
+    }
+
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
 
 /* * * * Operations * * * */
 

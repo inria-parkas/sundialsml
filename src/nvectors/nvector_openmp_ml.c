@@ -221,6 +221,10 @@ CAMLprim value sunml_nvec_wrap_openmp(value nthreads,
     ops->nvwsqrsumlocal     = N_VWSqrSumLocal_OpenMP;
     ops->nvwsqrsummasklocal = N_VWSqrSumMaskLocal_OpenMP;
 #endif
+#if 530 <= SUNDIALS_LIB_VERSION
+    ops->nvprint	    = N_VPrint_OpenMP;
+    ops->nvprintfile	    = N_VPrintFile_OpenMP;
+#endif
 
     /* Create content */
     content->length      = length;
@@ -275,6 +279,21 @@ CAMLprim value sunml_nvec_openmp_num_threads(value va)
     int num_threads = NV_NUM_THREADS_OMP(NVEC_VAL(va));
 
     CAMLreturn(Val_int(num_threads));
+}
+
+CAMLprim value sunml_nvec_openmp_print_file(value vx, value volog)
+{
+    CAMLparam2(vx, volog);
+#if 270 <= SUNDIALS_LIB_VERSION
+    if (volog == Val_none) {
+	N_VPrint_OpenMP(NVEC_VAL(vx));
+    } else {
+	N_VPrintFile_OpenMP(NVEC_VAL(vx), ML_CFILE(Some_val(volog)));
+    }
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
 }
 
 /** Interface to underlying openmp nvector functions */
@@ -547,7 +566,6 @@ CAMLprim value sunml_nvec_openmp_dotprodmulti(value vx, value vay, value vad)
 #endif
     CAMLreturn(Val_unit);
 }
-
 
 /* vector array operations */
 

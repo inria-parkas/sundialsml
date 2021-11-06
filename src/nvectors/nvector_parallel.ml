@@ -437,6 +437,11 @@ module Ops = struct (* {{{ *)
   external getlength  : t -> int
     = "sunml_nvec_par_getlength"
 
+  external c_print_file : t -> Logfile.t option -> unit
+    = "sunml_nvec_par_print_file"
+
+  let print ?logfile nv = c_print_file nv logfile
+
   external c_linearcombination : RealArray.t -> t array -> t -> unit
     = "sunml_nvec_par_linearcombination"
 
@@ -868,6 +873,13 @@ module MakeOps =
     let space (_, ng, comm) = (ng, 2 * Mpi.comm_size comm)
 
     let getlength (_, ng, _) = ng
+
+    let print ?(logfile=Logfile.stdout) (x, _, _) =
+      for i = 0 to A.length x - 1 do
+        Logfile.output_string logfile (Printf.sprintf "%19.16g" (A.get x i));
+        Logfile.output_string logfile "\n"
+      done;
+      Logfile.output_string logfile "\n"
 
     (* fused and array operations *)
 
@@ -1504,6 +1516,13 @@ module DataOps =
     let space (_, ng, comm) = (ng, 2 * Mpi.comm_size comm)
 
     let getlength (_, ng, _) = ng
+
+    let print ?(logfile=Logfile.stdout) (x, _, _) =
+      for i = 0 to A.dim x - 1 do
+        Logfile.output_string logfile (Printf.sprintf "%19.16g" (A.get x i));
+        Logfile.output_string logfile "\n"
+      done;
+      Logfile.output_string logfile "\n"
 
     (* fused and array operations *)
 

@@ -65,6 +65,9 @@ type 'd nvector_ops = { (* {{{ *)
   (** Returns the number of "active" entries. This value is cumulative
       across all processes in a parallel environment. *)
 
+  print           : ('d -> Sundials.Logfile.t option -> unit) option;
+  (** Print to the given logfile (stdout, by default). *)
+
   linearsum       : float -> 'd -> float -> 'd -> 'd -> unit;
   (** [linearsum a x b y z] calculates [z = ax + by]. *)
 
