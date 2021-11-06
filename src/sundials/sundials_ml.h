@@ -204,6 +204,8 @@ enum sundials_exn_index {
 /* Accessing FILE* values */
 #define ML_CFILE(v) (*(FILE **)Data_custom_val(v))
 
+CAMLprim value sunml_sundials_wrap_file(FILE* f);
+
 /* Functions for storing OCaml values in the C heap, with registration of a
    global root and construction of a block header. */
 

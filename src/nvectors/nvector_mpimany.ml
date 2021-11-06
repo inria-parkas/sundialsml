@@ -254,6 +254,11 @@ struct (* {{{ *)
   external getlength      : t -> int
     = "sunml_nvec_mpimany_getlength" [@@noalloc]
 
+  external c_print_file : t -> Logfile.t option -> unit
+    = "sunml_nvec_mpimany_print_file"
+
+  let print ?logfile nv = c_print_file nv logfile
+
   external c_linearcombination : RealArray.t -> t array -> t -> unit
     = "sunml_nvec_mpimany_linearcombination"
 
@@ -660,6 +665,9 @@ struct (* {{{ *)
     ROArray.fold_left f (0, 0) x
 
   let getlength ((_, _, gx) : t) = gx
+
+  let print ?logfile ((x, _, _) : t) =
+    ROArray.iter (Nvector.Ops.print ?logfile) x
 
   (* fused and array operations *)
 

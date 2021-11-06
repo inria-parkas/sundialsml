@@ -297,6 +297,14 @@ module MakeOps = functor
 
     let getlength wx = A.length (uw wx)
 
+    let print ?(logfile=Logfile.stdout) wx =
+      let x = uw wx in
+      for i = 0 to A.length x - 1 do
+        Logfile.output_string logfile (Printf.sprintf "%19.16g" (A.get x i));
+        Logfile.output_string logfile "\n"
+      done;
+      Logfile.output_string logfile "\n"
+
     (* fused and array operations *)
 
     let linearcombination (ca : RealArray.t) (wxa : t array) (wz : t) =
@@ -691,6 +699,7 @@ module MakeOps = functor
         Nvector_custom.clone        = clone;
         Nvector_custom.space        = Some space;
         Nvector_custom.getlength    = getlength;
+        Nvector_custom.print        = Some (fun x logfile -> print ?logfile x);
         Nvector_custom.linearsum    = linearsum;
         Nvector_custom.const        = const;
         Nvector_custom.prod         = prod;
@@ -1025,6 +1034,13 @@ module Array =
       let space (x : float array) = (A.length x, 1)
 
       let getlength (x : float array) = A.length x
+
+      let print ?(logfile=Logfile.stdout) (x : float array) =
+        for i = 0 to A.length x - 1 do
+          Logfile.output_string logfile (Printf.sprintf "%19.16g" (A.get x i));
+          Logfile.output_string logfile "\n"
+        done;
+        Logfile.output_string logfile "\n"
 
       (* fused and array operations *)
 
@@ -1430,6 +1446,7 @@ module Array =
           Nvector_custom.clone        = DataOps.clone;
           Nvector_custom.space        = Some DataOps.space;
           Nvector_custom.getlength    = DataOps.getlength;
+          Nvector_custom.print        = Some (fun x logfile -> DataOps.print ?logfile x);
           Nvector_custom.linearsum    = DataOps.linearsum;
           Nvector_custom.const        = DataOps.const;
           Nvector_custom.prod         = DataOps.prod;
