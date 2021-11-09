@@ -60,7 +60,8 @@ type convtest =
   | Continue
   | Recover
 
-type ('nv, 's) convtestfn = 'nv -> 'nv -> float -> 'nv -> 's -> convtest
+type ('nv, 's) convtestfn_with_nls
+  = 'nv -> 'nv -> float -> 'nv -> 's -> convtest
 
 type ('d, 'k, 's, 'v) cptr
 
@@ -69,7 +70,7 @@ type ('nv, 's) callbacks = {
   mutable sysfn      : ('nv, 's) sysfn;
   mutable lsetupfn   : 's lsetupfn;
   mutable lsolvefn   : ('nv, 's) lsolvefn;
-  mutable convtestfn : ('nv, 's) convtestfn;
+  mutable convtestfn : ('nv, 's) convtestfn_with_nls;
 }
 
 (* Accessed from sundials_nonlinearsolver_ml.c: nlsolver_type *)
@@ -111,7 +112,7 @@ type ('d, 'k, 's, _) solver =
       (('d, 'k) Nvector.t, 's) callbacks
                          (* OCaml-NLS to C callback: needs N_Vector
                             OCaml-NLS to OCaml callback: would prefer 'd... *)
-      * (('d, 'k) Nvector.t, 'd, 's) ops
+      * (('d, 'k) Nvector.t, 'd, 's, [`Nvec]) ops
       -> ('d, 'k, 's, [`Nvec]) solver
 
   (* OCaml-NLS used from C only *)
@@ -122,7 +123,7 @@ type ('d, 'k, 's, _) solver =
   | CustomSolverSens :
       (('d, 'k) Senswrapper.t, 's) callbacks
                           (* OCaml-NLS to C callback: needs Senswrapper *)
-      * (('d, 'k) Senswrapper.t, ('d, 'k) Senswrapper.t, 's) ops
+      * (('d, 'k) Senswrapper.t, ('d, 'k) Senswrapper.t, 's, [`Sens]) ops
       -> ('d, 'k, 's, [`Sens]) solver
 
 (* Accessed from sundials_nonlinearsolver_ml.c: nlsolver_index *)
@@ -132,6 +133,11 @@ and ('d, 'k, 's, 'v) nonlinear_solver = {
   mutable attached : bool;
 }
 
+and ('nv, 's, 'v) convtestfn =
+  { ctfn : 'd 'k 't.
+      ('d, 'k, 't, 'v) nonlinear_solver -> 'nv -> 'nv -> float -> 'nv -> 's -> convtest }
+  [@@unboxed]
+
 (* Distinguish operations that take an nvector ('nv), since the C function
    (sysfn, lsolvefn, convtestfn) passed from the integrator requires
    one, from those that take the payload directly ('d), since they are invoked
@@ -140,7 +146,7 @@ and ('d, 'k, 's, 'v) nonlinear_solver = {
    chains from C to OCaml to C. *)
 
 (* Accessed from sundials_nonlinearsolver_ml.c: nlsolver_ops_index *)
-and ('nv, 'd, 's) ops = {
+and ('nv, 'd, 's, 'v) ops = {
   nls_type           : nonlinear_solver_type;
   init               : (unit -> unit) option;
 
@@ -150,7 +156,7 @@ and ('nv, 'd, 's) ops = {
   set_sys_fn         : ('nv, 's) sysfn -> unit;
   set_lsetup_fn      : ('s lsetupfn -> unit) option;
   set_lsolve_fn      : (('nv, 's) lsolvefn -> unit) option;
-  set_convtest_fn    : (('nv, 's) convtestfn -> unit) option;
+  set_convtest_fn    : (('nv, 's, 'v) convtestfn -> unit) option;
   set_max_iters      : (int -> unit) option;
   set_info_file      : (Logfile.t -> unit) option;
   set_print_level    : (int -> unit) option;

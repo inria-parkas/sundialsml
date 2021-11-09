@@ -163,16 +163,16 @@ let set_lsolve_fn { rawptr; solver; _ } cbf =
       -> callbacks.lsolvefn <- cbf;
          c_set_lsolve_fn rawptr
 
-let set_convtest_fn (type d k s)
-                    ({ rawptr; solver; _ } : (d, k, s, [`Nvec]) t)
-                    (cbf : (d, s) convtestfn) =
+let set_convtest_fn (type d k s di ki si)
+                    (({ rawptr; solver; _ } as nls) : (d, k, s, [`Nvec]) t)
+                    ({ ctfn } : (d, s, [`Nvec]) convtestfn) =
   check_compat ();
   match solver with
   | CustomSolver (_, { set_convtest_fn = Some set }) ->       (* O/Onls *)
-      set (fun y del tol ewt -> cbf (uw y) (uw del) tol (uw ewt))
+      set ({ ctfn = fun nls y del tol ewt -> ctfn nls (uw y) (uw del) tol (uw ewt)})
   | CustomSolver (callbacks, _) -> ()
   | FixedPointSolver (callbacks, _) | NewtonSolver callbacks  (* O/Cnls *)
-      -> callbacks.convtestfn <- cbf;
+      -> callbacks.convtestfn <- (ctfn nls);
          c_set_convtest_fn rawptr
 
 module Sens = struct (* {{{ *)
@@ -213,14 +213,14 @@ module Sens = struct (* {{{ *)
            c_set_lsolve_fn_sens rawptr
 
   let set_convtest_fn (type d k s v)
-                      ({ rawptr; solver; _ } : (d, k, s, [`Sens]) t)
-                      cbf =
+                      (({ rawptr; solver; _ } as nls) : (d, k, s, [`Sens]) t)
+                      ({ ctfn } as cbf) =
     check_compat ();
     match solver with
     | CustomSolverSens (_, { set_convtest_fn = Some set }) -> set cbf
     | CustomSolverSens (callbacks, _) -> ()
     | FixedPointSolverSens (callbacks, _) | NewtonSolverSens callbacks  (* O/Cnls *)
-        -> callbacks.convtestfn <- cbf;
+        -> callbacks.convtestfn <- (ctfn nls);
            c_set_convtest_fn_sens rawptr
 
 end (* }}} *)
@@ -320,8 +320,8 @@ external c_call_lsolve_fn
   = "sunml_nlsolver_call_lsolve_fn"
 
 external c_call_convtest_fn' :
-              ('d, 'k, 's, [`Nvec]) cptr
-              -> (('d, 'k) Nvector.t, 's) c_convtestfn
+                 ('di, 'ki, 'si, [`Nvec]) cptr
+              -> (('d, 'k) Nvector.t, 's) c_convtestfn * 's c_fromvaluefn
               -> (  ('d, 'k) Nvector.t
                   * ('d, 'k) Nvector.t
                   * float
@@ -330,8 +330,8 @@ external c_call_convtest_fn' :
               -> convtest
   = "sunml_nlsolver_call_convtest_fn"
 
-let c_call_convtest_fn nlsptr cfn y del tol ewt mem =
-  c_call_convtest_fn' nlsptr cfn (y, del, tol, ewt, mem)
+let c_call_convtest_fn cfns { rawptr; _} y del tol ewt mem =
+  c_call_convtest_fn' rawptr cfns (y, del, tol, ewt, mem)
 
 external c_call_sys_fn_sens
   : (('d, 'k) Senswrapper.t, 's) c_sysfn * 's c_fromvaluefn
@@ -356,8 +356,8 @@ external c_call_lsolve_fn_sens
   = "sunml_nlsolver_call_lsolve_fn_sens"
 
 external c_call_convtest_fn_sens' :
-                 ('d, 'k, 's, [`Sens]) cptr
-              -> (('d, 'k) Senswrapper.t, 's) c_convtestfn
+                 ('di, 'ki, 'si, [`Sens]) cptr
+              -> (('d, 'k) Senswrapper.t, 's) c_convtestfn * 's c_fromvaluefn
               -> (  ('d, 'k) Senswrapper.t
                   * ('d, 'k) Senswrapper.t
                   * float
@@ -366,8 +366,8 @@ external c_call_convtest_fn_sens' :
               -> convtest
   = "sunml_nlsolver_call_convtest_fn_sens"
 
-let c_call_convtest_fn_sens nlsptr cfn y del tol ewt mem =
-  c_call_convtest_fn_sens' nlsptr cfn (y, del, tol, ewt, mem)
+let c_call_convtest_fn_sens cfns { rawptr; _ } y del tol ewt mem =
+  c_call_convtest_fn_sens' rawptr cfns (y, del, tol, ewt, mem)
 
 module Newton = struct (* {{{ *)
 
@@ -480,13 +480,13 @@ module Custom = struct (* {{{ *)
 
   external c_make
     : (('d, 'k) Nvector.t, 's) callbacks
-      -> (('d, 'k) Nvector.t, 'd, 's) ops
+      -> (('d, 'k) Nvector.t, 'd, 's, [`Nvec]) ops
       -> ('d, 'k, 's, [`Nvec]) cptr
     = "sunml_nlsolver_custom_make"
 
   external c_make_sens
     :     (('d, 'k) Senswrapper.t, 's) callbacks
-       -> (('d, 'k) Senswrapper.t, ('d, 'k) Senswrapper.t, 's) ops
+       -> (('d, 'k) Senswrapper.t, ('d, 'k) Senswrapper.t, 's, [`Sens]) ops
        -> ('d, 'k, 's, [`Sens]) cptr
     = "sunml_nlsolver_custom_make_sens"
 
@@ -506,8 +506,9 @@ module Custom = struct (* {{{ *)
   let set_c_lsolve_fn ops clsolvefn cfromvalfn =
     f_call ops.set_lsolve_fn (c_call_lsolve_fn (clsolvefn, cfromvalfn))
 
-  let set_c_convtest_fn nlsptr ops cconvtestfn =
-    f_call ops.set_convtest_fn (c_call_convtest_fn nlsptr cconvtestfn)
+  let set_c_convtest_fn ops cconvtestfn cfromvalfn =
+    f_call ops.set_convtest_fn { ctfn = fun nls ->
+        c_call_convtest_fn (cconvtestfn, cfromvalfn) nls }
 
   let set_c_sys_fn_sens ops csysfn cfromvalfn =
     ops.set_sys_fn (c_call_sys_fn_sens (csysfn, cfromvalfn))
@@ -518,8 +519,9 @@ module Custom = struct (* {{{ *)
   let set_c_lsolve_fn_sens ops clsolvefn cfromvalfn =
     f_call ops.set_lsolve_fn (c_call_lsolve_fn_sens (clsolvefn, cfromvalfn))
 
-  let set_c_convtest_fn_sens nlsptr ops cconvtestfn =
-    f_call ops.set_convtest_fn (c_call_convtest_fn_sens nlsptr cconvtestfn)
+  let set_c_convtest_fn_sens ops cconvtestfn cfromvalfn =
+    f_call ops.set_convtest_fn { ctfn = fun nls ->
+        c_call_convtest_fn_sens (cconvtestfn, cfromvalfn) nls }
 
   let _ = Callback.register "Sundials_NonlinearSolver.set_c_sys_fn"
                             set_c_sys_fn
