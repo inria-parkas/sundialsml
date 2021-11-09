@@ -190,7 +190,8 @@ type convtest =
 (** A function providing an integrator-specific convergence test.
     The call [convtestfn y del tol ewt mem] has as arguments
 
-    - [y], the current nonlinear iterate,
+    - [nls], the nonlinear solver that invokes the function,
+    - [y],   the current nonlinear iterate,
     - [del], the difference between current and prior nonlinear iterates,
     - [tol], the nonlinear solver tolerance (in a weighted root-mean-squared
              norm with the given error-weight vector),
@@ -198,12 +199,16 @@ type convtest =
     - [mem], a token passed by the function provider.
 
     @nocvode <node> SUNNonlinSolConvTestFn *)
-type ('nv, 's) convtestfn = 'nv -> 'nv -> float -> 'nv -> 's -> convtest
+type ('nv, 's, 'v) convtestfn =
+  { ctfn : 'd 'k 't.
+           ('d, 'k, 't, 'v) t -> 'nv -> 'nv -> float -> 'nv -> 's -> convtest }
+  [@@unboxed]
 
 (** Specify a convergence test callback for the nonlinear solver iteration.
 
     @nocvode <node> SUNNonlinSolSetConvTestFn *)
-val set_convtest_fn : ('d, 'k, 's, [`Nvec]) t -> ('d, 's) convtestfn -> unit
+val set_convtest_fn :
+  ('d, 'k, 's, [`Nvec]) t -> ('d, 's, [`Nvec]) convtestfn -> unit
 
 (** Support for nonlinear solvers with sensitivities. *)
 module Sens : sig (* {{{ *)
@@ -246,7 +251,9 @@ module Sens : sig (* {{{ *)
 
       @nocvode <node> SUNNonlinSolSetConvTestFn *)
   val set_convtest_fn :
-    ('d, 'k, 's, [`Sens]) t -> (('d, 'k) Senswrapper.t, 's) convtestfn -> unit
+       ('d, 'k, 's, [`Sens]) t
+    -> (('d, 'k) Senswrapper.t, 's, [`Sens]) convtestfn
+    -> unit
 
 end (* }}} *)
 
@@ -442,7 +449,7 @@ module Custom : sig (* {{{ *)
     -> ?setup              : ('d -> 's -> unit)
     -> ?set_lsetup_fn      : ('s lsetupfn -> unit)
     -> ?set_lsolve_fn      : ((('d, 'k) Nvector.t, 's) lsolvefn -> unit)
-    -> ?set_convtest_fn    : ((('d, 'k) Nvector.t, 's) convtestfn -> unit)
+    -> ?set_convtest_fn    : ((('d, 'k) Nvector.t, 's, [`Nvec]) convtestfn -> unit)
     -> ?set_max_iters      : (int  -> unit)
     -> ?set_info_file      : (Logfile.t -> unit)
     -> ?set_print_level    : (int -> unit)
@@ -472,7 +479,7 @@ module Custom : sig (* {{{ *)
     -> ?setup              : (('d, 'k) Senswrapper.t -> 's -> unit)
     -> ?set_lsetup_fn      : ('s lsetupfn -> unit)
     -> ?set_lsolve_fn      : ((('d, 'k) Senswrapper.t, 's) lsolvefn -> unit)
-    -> ?set_convtest_fn    : ((('d, 'k) Senswrapper.t, 's) convtestfn -> unit)
+    -> ?set_convtest_fn    : ((('d, 'k) Senswrapper.t, 's, [`Sens]) convtestfn -> unit)
     -> ?set_max_iters      : (int  -> unit)
     -> ?set_info_file      : (Logfile.t -> unit)
     -> ?set_print_level    : (int -> unit)
