@@ -220,6 +220,13 @@ CAMLprim value sunml_nvec_get_id(value vx)
     CAMLreturn(vr);
 }
 
+CAMLprim value sunml_nvec_init_module (value exns)
+{
+    CAMLparam1 (exns);
+    REGISTER_EXNS (NVEC, exns);
+    CAMLreturn (Val_unit);
+}
+
 /** Serial nvectors * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 /* Creation from Sundials/C.  */
@@ -2538,531 +2545,6 @@ CAMLprim value sunml_nvec_custom_enablelinearcombinationvectorarray(value vx, va
     CAMLreturn (Val_bool(r));
 }
 
-/** Interface to underlying generic nvector functions */
-
-CAMLprim value sunml_nvec_any_linearsum(value va, value vx, value vb,
-					   value vy, value vz)
-{
-    CAMLparam5(va, vx, vb, vy, vz);
-    N_Vector x = NVEC_VAL(vx);
-    N_Vector y = NVEC_VAL(vy);
-    N_Vector z = NVEC_VAL(vz);
-
-    N_VLinearSum(Double_val(va), x, Double_val(vb), y, z);
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_nvec_any_const(value vc, value vz)
-{
-    CAMLparam2(vc, vz);
-    N_VConst(Double_val(vc), NVEC_VAL(vz));
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_nvec_any_prod(value vx, value vy, value vz)
-{
-    CAMLparam3(vx, vy, vz);
-    N_Vector x = NVEC_VAL(vx);
-    N_Vector y = NVEC_VAL(vy);
-    N_Vector z = NVEC_VAL(vz);
-
-    N_VProd(x, y, z);
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_nvec_any_div(value vx, value vy, value vz)
-{
-    CAMLparam3(vx, vy, vz);
-    N_Vector x = NVEC_VAL(vx);
-    N_Vector y = NVEC_VAL(vy);
-    N_Vector z = NVEC_VAL(vz);
-
-    N_VDiv(x, y, z);
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_nvec_any_scale(value vc, value vx, value vz)
-{
-    CAMLparam3(vc, vx, vz);
-    N_Vector x = NVEC_VAL(vx);
-    N_Vector z = NVEC_VAL(vz);
-
-    N_VScale(Double_val(vc), x, z);
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_nvec_any_abs(value vx, value vz)
-{
-    CAMLparam2(vx, vz);
-    N_Vector x = NVEC_VAL(vx);
-    N_Vector z = NVEC_VAL(vz);
-
-    N_VAbs(x, z);
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_nvec_any_inv(value vx, value vz)
-{
-    CAMLparam2(vx, vz);
-    N_Vector x = NVEC_VAL(vx);
-    N_Vector z = NVEC_VAL(vz);
-
-    N_VInv(x, z);
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_nvec_any_addconst(value vx, value vb, value vz)
-{
-    CAMLparam3(vx, vb, vz);
-    N_Vector x = NVEC_VAL(vx);
-    N_Vector z = NVEC_VAL(vz);
-
-    N_VAddConst(x, Double_val(vb), z);
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_nvec_any_dotprod(value vx, value vy)
-{
-    CAMLparam2(vx, vy);
-    N_Vector x = NVEC_VAL(vx);
-    N_Vector y = NVEC_VAL(vy);
-
-    realtype r = N_VDotProd(x, y);
-    CAMLreturn(caml_copy_double(r));
-}
-
-CAMLprim value sunml_nvec_any_maxnorm(value vx)
-{
-    CAMLparam1(vx);
-    realtype r = N_VMaxNorm(NVEC_VAL(vx));
-    CAMLreturn(caml_copy_double(r));
-}
-
-CAMLprim value sunml_nvec_any_wrmsnorm(value vx, value vw)
-{
-    CAMLparam2(vx, vw);
-    N_Vector x = NVEC_VAL(vx);
-    N_Vector w = NVEC_VAL(vw);
-
-    realtype r = N_VWrmsNorm(x, w);
-    CAMLreturn(caml_copy_double(r));
-}
-
-CAMLprim value sunml_nvec_any_wrmsnormmask(value vx, value vw, value vid)
-{
-    CAMLparam3(vx, vw, vid);
-    N_Vector x = NVEC_VAL(vx);
-    N_Vector w = NVEC_VAL(vw);
-    N_Vector id = NVEC_VAL(vid);
-
-    realtype r = N_VWrmsNormMask(x, w, id);
-    CAMLreturn(caml_copy_double(r));
-}
-
-CAMLprim value sunml_nvec_any_min(value vx)
-{
-    CAMLparam1(vx);
-    realtype r = N_VMin(NVEC_VAL(vx));
-    CAMLreturn(caml_copy_double(r));
-}
-
-CAMLprim value sunml_nvec_any_wl2norm(value vx, value vw)
-{
-    CAMLparam2(vx, vw);
-    N_Vector x = NVEC_VAL(vx);
-    N_Vector w = NVEC_VAL(vw);
-
-    realtype r = N_VWL2Norm(x, w);
-    CAMLreturn(caml_copy_double(r));
-}
-
-CAMLprim value sunml_nvec_any_l1norm(value vx)
-{
-    CAMLparam1(vx);
-    realtype r = N_VL1Norm(NVEC_VAL(vx));
-    CAMLreturn(caml_copy_double(r));
-}
-
-CAMLprim value sunml_nvec_any_compare(value vc, value vx, value vz)
-{
-    CAMLparam3(vc, vx, vz);
-    N_Vector x = NVEC_VAL(vx);
-    N_Vector z = NVEC_VAL(vz);
-
-    N_VCompare(Double_val(vc), x, z);
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_nvec_any_invtest(value vx, value vz)
-{
-    CAMLparam2(vx, vz);
-    N_Vector x = NVEC_VAL(vx);
-    N_Vector z = NVEC_VAL(vz);
-
-    booleantype r = N_VInvTest(x, z);
-    CAMLreturn(Val_bool(r));
-}
-
-CAMLprim value sunml_nvec_any_constrmask(value vc, value vx, value vm)
-{
-    CAMLparam3(vc, vx, vm);
-    N_Vector c = NVEC_VAL(vc);
-    N_Vector x = NVEC_VAL(vx);
-    N_Vector m = NVEC_VAL(vm);
-
-    booleantype r = N_VConstrMask(c, x, m);
-    CAMLreturn(Val_bool(r));
-}
-
-CAMLprim value sunml_nvec_any_minquotient(value vnum, value vdenom)
-{
-    CAMLparam2(vnum, vdenom);
-    N_Vector num = NVEC_VAL(vnum);
-    N_Vector denom = NVEC_VAL(vdenom);
-
-    realtype r = N_VMinQuotient(num, denom);
-    CAMLreturn(caml_copy_double(r));
-}
-
-CAMLprim value sunml_nvec_any_space(value vx)
-{
-    CAMLparam1(vx);
-    CAMLlocal1(r);
-    sundials_ml_index lrw, liw;
-
-    N_VSpace(NVEC_VAL(vx), &lrw, &liw);
-
-    r = caml_alloc_tuple(2);
-    Store_field(r, 0, Val_index(lrw));
-    Store_field(r, 1, Val_index(liw));
-
-    CAMLreturn(r);
-}
-
-CAMLprim value sunml_nvec_any_getlength(value vx)
-{
-    CAMLparam1(vx);
-    CAMLlocal1(r);
-#if 500 <= SUNDIALS_LIB_VERSION
-    r = Val_int(N_VGetLength(NVEC_VAL(vx)));
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-    CAMLreturn(r);
-}
-
-CAMLprim value sunml_nvec_any_print_file(value vx, value volog)
-{
-    CAMLparam2(vx, volog);
-#if 530 <= SUNDIALS_LIB_VERSION
-    if (volog == Val_none) {
-	N_VPrint(NVEC_VAL(vx));
-    } else {
-	N_VPrintFile(NVEC_VAL(vx), ML_CFILE(Some_val(volog)));
-    }
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_nvec_any_linearcombination(value vac, value vax,
-						   value vz)
-{
-    CAMLparam3(vac, vax, vz);
-#if 400 <= SUNDIALS_LIB_VERSION
-    realtype *ac = REAL_ARRAY(vac);
-    N_Vector z = NVEC_VAL(vz);
-    N_Vector *ax;
-    int nvec = sunml_arrays_of_nvectors(&ax, 1, vax);
-    if (!nvec) caml_raise_out_of_memory();
-
-    N_VLinearCombination(nvec, ac, ax, z);
-    free(ax);
-#endif
-    CAMLreturn(Val_unit);
-}
-
-CAMLprim value sunml_nvec_any_scaleaddmulti(value vac, value vx, value vay,
-					       value vaz)
-{
-    CAMLparam4(vac, vx, vay, vaz);
-#if 400 <= SUNDIALS_LIB_VERSION
-    realtype *ac = REAL_ARRAY(vac);
-    N_Vector x = NVEC_VAL(vx);
-    N_Vector *a[2];
-    int nvec = sunml_arrays_of_nvectors(a, 2, vay, vaz);
-    if (!nvec) caml_raise_out_of_memory();
-
-    N_VScaleAddMulti(nvec, ac, x, a[0], a[1]);
-    free(*a);
-#endif
-    CAMLreturn(Val_unit);
-}
-
-CAMLprim value sunml_nvec_any_dotprodmulti(value vx, value vay, value vad)
-{
-    CAMLparam3(vx, vay, vad);
-#if 400 <= SUNDIALS_LIB_VERSION
-    realtype *ad = REAL_ARRAY(vad);
-    N_Vector x = NVEC_VAL(vx);
-    N_Vector *ay;
-    int nvec = sunml_arrays_of_nvectors(&ay, 1, vay);
-    if (!nvec) caml_raise_out_of_memory();
-
-    N_VDotProdMulti(nvec, x, ay, ad);
-    free(ay);
-#endif
-    CAMLreturn(Val_unit);
-}
-
-CAMLprim value sunml_nvec_any_linearsumvectorarray(value va, value vax,
-						      value vb, value vay,
-						      value vaz)
-{
-    CAMLparam5(va, vax, vb, vay, vaz);
-#if 400 <= SUNDIALS_LIB_VERSION
-    N_Vector *a[3];
-    int nvec = sunml_arrays_of_nvectors(a, 3, vax, vay, vaz);
-    if (!nvec) caml_raise_out_of_memory();
-
-    N_VLinearSumVectorArray(nvec, Double_val(va), a[0],
-				  Double_val(vb), a[1], a[2]);
-    free(*a);
-#endif
-    CAMLreturn(Val_unit);
-}
-
-CAMLprim value sunml_nvec_any_scalevectorarray(value vac, value vax,
-						  value vaz)
-{
-    CAMLparam3(vac, vax, vaz);
-#if 400 <= SUNDIALS_LIB_VERSION
-    realtype *ac = REAL_ARRAY(vac);
-    N_Vector *a[2];
-    int nvec = sunml_arrays_of_nvectors(a, 2, vax, vaz);
-    if (!nvec) caml_raise_out_of_memory();
-
-    N_VScaleVectorArray(nvec, ac, a[0], a[1]);
-    free(*a);
-#endif
-    CAMLreturn(Val_unit);
-}
-
-CAMLprim value sunml_nvec_any_constvectorarray(value vc, value vaz)
-{
-    CAMLparam2(vc, vaz);
-#if 400 <= SUNDIALS_LIB_VERSION
-    N_Vector *az;
-    int nvec = sunml_arrays_of_nvectors(&az, 1, vaz);
-    if (!nvec) caml_raise_out_of_memory();
-
-    N_VConstVectorArray(nvec, Double_val(vc), az);
-    free(az);
-#endif
-    CAMLreturn(Val_unit);
-}
-
-CAMLprim value sunml_nvec_any_wrmsnormvectorarray(value vax, value vaw,
-						     value van)
-{
-    CAMLparam3(vax, vaw, van);
-#if 400 <= SUNDIALS_LIB_VERSION
-    realtype *an = REAL_ARRAY(van);
-    N_Vector *a[2];
-    int nvec = sunml_arrays_of_nvectors(a, 2, vax, vaw);
-    if (!nvec) caml_raise_out_of_memory();
-
-    N_VWrmsNormVectorArray(nvec, a[0], a[1], an);
-    free(*a);
-#endif
-    CAMLreturn(Val_unit);
-}
-
-CAMLprim value sunml_nvec_any_wrmsnormmaskvectorarray(value vax, value vaw,
-							 value vi, value van)
-{
-    CAMLparam4(vax, vaw, vi, van);
-#if 400 <= SUNDIALS_LIB_VERSION
-    realtype *an = REAL_ARRAY(van);
-    N_Vector i = NVEC_VAL(vi);
-    N_Vector *a[2];
-    int nvec = sunml_arrays_of_nvectors(a, 2, vax, vaw);
-    if (!nvec) caml_raise_out_of_memory();
-
-    N_VWrmsNormMaskVectorArray(nvec, a[0], a[1], i, an);
-    free(*a);
-#endif
-    CAMLreturn(Val_unit);
-}
-
-CAMLprim value sunml_nvec_any_scaleaddmultivectorarray(value vaa, value vax,
-							  value vaay, value vaaz)
-{
-    CAMLparam4(vaa, vax, vaay, vaaz);
-#if 400 <= SUNDIALS_LIB_VERSION
-    realtype *aa = REAL_ARRAY(vaa);
-    N_Vector *ax = NULL;
-    int nvec = sunml_arrays_of_nvectors(&ax, 1, vax);
-    if (!nvec) caml_raise_out_of_memory();
-    N_Vector **ayz[2] = { NULL };
-    int nvec2, nsum;
-    sunml_arrays_of_nvectors2(&nsum, &nvec2, ayz, 2, vaay, vaaz);
-    if (!nsum) caml_raise_out_of_memory();
-
-    N_VScaleAddMultiVectorArray(nvec, nsum, aa, ax, ayz[0], ayz[1]);
-    free(ax);
-    free(*ayz);
-#endif
-    CAMLreturn(Val_unit);
-}
-
-CAMLprim value sunml_nvec_any_linearcombinationvectorarray(value vac,
-							      value vaax,
-							      value vaz)
-{
-    CAMLparam3(vac, vaax, vaz);
-#if 400 <= SUNDIALS_LIB_VERSION
-    realtype *ac = REAL_ARRAY(vac);
-    N_Vector *az;
-    int nvecz __attribute__((unused))
-	= sunml_arrays_of_nvectors(&az, 1, vaz);
-    N_Vector **aax;
-    int nvec, nsum;
-    sunml_arrays_of_nvectors2(&nsum, &nvec, &aax, 1, vaax);
-    if (!nsum) caml_raise_out_of_memory();
-
-    N_VLinearCombinationVectorArray(nvec, nsum, ac, aax, az);
-    free(aax);
-#endif
-    CAMLreturn(Val_unit);
-}
-
-CAMLprim value sunml_nvec_any_dotprodlocal(value vx, value vw)
-{
-    CAMLparam2(vx, vw);
-    realtype r;
-
-#if 500 <= SUNDIALS_LIB_VERSION
-    r = N_VDotProdLocal(NVEC_VAL(vx), NVEC_VAL(vw));
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-
-    CAMLreturn(caml_copy_double(r));
-}
-
-CAMLprim value sunml_nvec_any_maxnormlocal(value vx)
-{
-    CAMLparam1(vx);
-    realtype r;
-
-#if 500 <= SUNDIALS_LIB_VERSION
-    r = N_VMaxNormLocal(NVEC_VAL(vx));
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-
-    CAMLreturn(caml_copy_double(r));
-}
-
-CAMLprim value sunml_nvec_any_minlocal(value vx)
-{
-    CAMLparam1(vx);
-    realtype r;
-
-#if 500 <= SUNDIALS_LIB_VERSION
-    r = N_VMinLocal(NVEC_VAL(vx));
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-
-    CAMLreturn(caml_copy_double(r));
-}
-
-CAMLprim value sunml_nvec_any_l1normlocal(value vx)
-{
-    CAMLparam1(vx);
-    realtype r;
-
-#if 500 <= SUNDIALS_LIB_VERSION
-    r = N_VL1NormLocal(NVEC_VAL(vx));
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-
-    CAMLreturn(caml_copy_double(r));
-}
-
-CAMLprim value sunml_nvec_any_invtestlocal(value vx, value vz)
-{
-    CAMLparam2(vx, vz);
-    booleantype r;
-
-#if 500 <= SUNDIALS_LIB_VERSION
-    r = N_VInvTestLocal(NVEC_VAL(vx), NVEC_VAL(vz));
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-
-    CAMLreturn(Val_bool(r));
-}
-
-CAMLprim value sunml_nvec_any_constrmasklocal(value vc, value vx, value vm)
-{
-    CAMLparam3(vc, vx, vm);
-
-#if 500 <= SUNDIALS_LIB_VERSION
-    booleantype r = N_VConstrMaskLocal(NVEC_VAL(vc), NVEC_VAL(vx), NVEC_VAL(vm));
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-
-    CAMLreturn(Val_bool(r));
-}
-
-CAMLprim value sunml_nvec_any_minquotientlocal(value vn, value vd)
-{
-    CAMLparam2(vn, vd);
-    realtype r;
-
-#if 500 <= SUNDIALS_LIB_VERSION
-    r = N_VMinQuotientLocal(NVEC_VAL(vn), NVEC_VAL(vd));
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-
-    CAMLreturn(caml_copy_double(r));
-}
-
-CAMLprim value sunml_nvec_any_wsqrsumlocal(value vx, value vw)
-{
-    CAMLparam2(vx, vw);
-    realtype r;
-
-#if 500 <= SUNDIALS_LIB_VERSION
-    r = N_VWSqrSumLocal(NVEC_VAL(vx), NVEC_VAL(vw));
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-
-    CAMLreturn(caml_copy_double(r));
-}
-
-CAMLprim value sunml_nvec_any_wsqrsummasklocal(value vx, value vw, value vid)
-{
-    CAMLparam3(vx, vw, vid);
-    realtype r;
-
-#if 500 <= SUNDIALS_LIB_VERSION
-    r = N_VWSqrSumMaskLocal(NVEC_VAL(vx), NVEC_VAL(vw), NVEC_VAL(vid));
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-
-    CAMLreturn(caml_copy_double(r));
-}
-
 /** Test for nvector features */
 
 CAMLprim value sunml_nvec_has_linearcombination(value vx)
@@ -3310,5 +2792,519 @@ CAMLprim value sunml_nvec_has_wsqrsummasklocal(value vx)
 #endif
 
     CAMLreturn(Val_bool(r));
+}
+
+/** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+ * Interface to underlying generic nvector functions */
+
+CAMLprim value sunml_nvec_linearsum(value va, value vx, value vb,
+				    value vy, value vz)
+{
+    CAMLparam5(va, vx, vb, vy, vz);
+    N_VLinearSum(Double_val(va), NVEC_VAL(vx), Double_val(vb),
+		 NVEC_VAL(vy), NVEC_VAL(vz));
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_nvec_const(value vc, value vz)
+{
+    CAMLparam2(vc, vz);
+    N_VConst(Double_val(vc), NVEC_VAL(vz));
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_nvec_prod(value vx, value vy, value vz)
+{
+    CAMLparam3(vx, vy, vz);
+    N_VProd(NVEC_VAL(vx), NVEC_VAL(vy), NVEC_VAL(vz));
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_nvec_div(value vx, value vy, value vz)
+{
+    CAMLparam3(vx, vy, vz);
+    N_VDiv(NVEC_VAL(vx), NVEC_VAL(vy), NVEC_VAL(vz));
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_nvec_scale(value vc, value vx, value vz)
+{
+    CAMLparam3(vc, vx, vz);
+    N_VScale(Double_val(vc), NVEC_VAL(vx), NVEC_VAL(vz));
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_nvec_abs(value vx, value vz)
+{
+    CAMLparam2(vx, vz);
+    N_VAbs(NVEC_VAL(vx), NVEC_VAL(vz));
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_nvec_inv(value vx, value vz)
+{
+    CAMLparam2(vx, vz);
+    N_VInv(NVEC_VAL(vx), NVEC_VAL(vz));
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_nvec_addconst(value vx, value vb, value vz)
+{
+    CAMLparam3(vx, vb, vz);
+    N_VAddConst(NVEC_VAL(vx), Double_val(vb), NVEC_VAL(vz));
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_nvec_dotprod(value vx, value vy)
+{
+    CAMLparam2(vx, vy);
+    realtype r = N_VDotProd(NVEC_VAL(vx), NVEC_VAL(vy));
+    CAMLreturn(caml_copy_double(r));
+}
+
+CAMLprim value sunml_nvec_maxnorm(value vx)
+{
+    CAMLparam1(vx);
+    realtype r = N_VMaxNorm(NVEC_VAL(vx));
+    CAMLreturn(caml_copy_double(r));
+}
+
+CAMLprim value sunml_nvec_wrmsnorm(value vx, value vw)
+{
+    CAMLparam2(vx, vw);
+    realtype r = N_VWrmsNorm(NVEC_VAL(vx), NVEC_VAL(vw));
+    CAMLreturn(caml_copy_double(r));
+}
+
+CAMLprim value sunml_nvec_wrmsnormmask(value vx, value vw, value vid)
+{
+    CAMLparam3(vx, vw, vid);
+    N_Vector x = NVEC_VAL(vx);
+
+    if (x->ops->nvwrmsnormmask == NULL)
+	caml_raise_constant(NVEC_EXN(OperationNotProvided));
+
+    realtype r = N_VWrmsNormMask(x, NVEC_VAL(vw), NVEC_VAL(vid));
+    CAMLreturn(caml_copy_double(r));
+}
+
+CAMLprim value sunml_nvec_min(value vx)
+{
+    CAMLparam1(vx);
+    realtype r = N_VMin(NVEC_VAL(vx));
+    CAMLreturn(caml_copy_double(r));
+}
+
+CAMLprim value sunml_nvec_wl2norm(value vx, value vw)
+{
+    CAMLparam2(vx, vw);
+    N_Vector x = NVEC_VAL(vx);
+
+    if (x->ops->nvwl2norm == NULL)
+	caml_raise_constant(NVEC_EXN(OperationNotProvided));
+
+    realtype r = N_VWL2Norm(x, NVEC_VAL(vw));
+    CAMLreturn(caml_copy_double(r));
+}
+
+CAMLprim value sunml_nvec_l1norm(value vx)
+{
+    CAMLparam1(vx);
+    N_Vector x = NVEC_VAL(vx);
+
+    if (x->ops->nvl1norm == NULL)
+	caml_raise_constant(NVEC_EXN(OperationNotProvided));
+
+    realtype r = N_VL1Norm(x);
+    CAMLreturn(caml_copy_double(r));
+}
+
+CAMLprim value sunml_nvec_compare(value vc, value vx, value vz)
+{
+    CAMLparam3(vc, vx, vz);
+    N_VCompare(Double_val(vc), NVEC_VAL(vx), NVEC_VAL(vz));
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_nvec_invtest(value vx, value vz)
+{
+    CAMLparam2(vx, vz);
+    booleantype r = N_VInvTest(NVEC_VAL(vx), NVEC_VAL(vz));
+    CAMLreturn(Val_bool(r));
+}
+
+CAMLprim value sunml_nvec_constrmask(value vc, value vx, value vm)
+{
+    CAMLparam3(vc, vx, vm);
+    N_Vector c = NVEC_VAL(vc);
+
+    if (c->ops->nvconstrmask == NULL)
+	caml_raise_constant(NVEC_EXN(OperationNotProvided));
+
+    booleantype r = N_VConstrMask(c, NVEC_VAL(vx), NVEC_VAL(vm));
+    CAMLreturn(Val_bool(r));
+}
+
+CAMLprim value sunml_nvec_minquotient(value vnum, value vdenom)
+{
+    CAMLparam2(vnum, vdenom);
+    N_Vector num = NVEC_VAL(vnum);
+
+    if (num->ops->nvminquotient == NULL)
+	caml_raise_constant(NVEC_EXN(OperationNotProvided));
+
+    realtype r = N_VMinQuotient(num, NVEC_VAL(vdenom));
+    CAMLreturn(caml_copy_double(r));
+}
+
+CAMLprim value sunml_nvec_space(value vx)
+{
+    CAMLparam1(vx);
+    CAMLlocal1(r);
+    sundials_ml_index lrw, liw;
+    N_Vector x = NVEC_VAL(vx);
+
+    if (x->ops->nvspace == NULL)
+	caml_raise_constant(NVEC_EXN(OperationNotProvided));
+    N_VSpace(x, &lrw, &liw);
+
+    r = caml_alloc_tuple(2);
+    Store_field(r, 0, Val_index(lrw));
+    Store_field(r, 1, Val_index(liw));
+
+    CAMLreturn(r);
+}
+
+CAMLprim value sunml_nvec_getlength(value vx)
+{
+    CAMLparam1(vx);
+    CAMLlocal1(r);
+#if 500 <= SUNDIALS_LIB_VERSION
+    r = Val_int(N_VGetLength(NVEC_VAL(vx)));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(r);
+}
+
+CAMLprim value sunml_nvec_print_file(value vx, value volog)
+{
+    CAMLparam2(vx, volog);
+#if 530 <= SUNDIALS_LIB_VERSION
+    if (volog == Val_none) {
+	N_VPrint(NVEC_VAL(vx));
+    } else {
+	N_VPrintFile(NVEC_VAL(vx), ML_CFILE(Some_val(volog)));
+    }
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+/* fused vector operations */
+
+CAMLprim value sunml_nvec_linearcombination(value vac, value vax, value vz)
+{
+    CAMLparam3(vac, vax, vz);
+#if 400 <= SUNDIALS_LIB_VERSION
+    realtype *ac = REAL_ARRAY(vac);
+    N_Vector z = NVEC_VAL(vz);
+    N_Vector *ax;
+    int nvec = sunml_arrays_of_nvectors(&ax, 1, vax);
+    if (!nvec) caml_raise_out_of_memory();
+
+    N_VLinearCombination(nvec, ac, ax, z);
+    free(ax);
+#endif
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim value sunml_nvec_scaleaddmulti(value vac, value vx, value vay,
+				        value vaz)
+{
+    CAMLparam4(vac, vx, vay, vaz);
+#if 400 <= SUNDIALS_LIB_VERSION
+    realtype *ac = REAL_ARRAY(vac);
+    N_Vector x = NVEC_VAL(vx);
+    N_Vector *a[2];
+    int nvec = sunml_arrays_of_nvectors(a, 2, vay, vaz);
+    if (!nvec) caml_raise_out_of_memory();
+
+    N_VScaleAddMulti(nvec, ac, x, a[0], a[1]);
+    free(*a);
+#endif
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim value sunml_nvec_dotprodmulti(value vx, value vay, value vad)
+{
+    CAMLparam3(vx, vay, vad);
+#if 400 <= SUNDIALS_LIB_VERSION
+    realtype *ad = REAL_ARRAY(vad);
+    N_Vector x = NVEC_VAL(vx);
+    N_Vector *ay;
+    int nvec = sunml_arrays_of_nvectors(&ay, 1, vay);
+    if (!nvec) caml_raise_out_of_memory();
+
+    N_VDotProdMulti(nvec, x, ay, ad);
+    free(ay);
+#endif
+    CAMLreturn(Val_unit);
+}
+
+/* vector array operations */
+
+CAMLprim value sunml_nvec_linearsumvectorarray(value va, value vax,
+					       value vb, value vay, value vaz)
+{
+    CAMLparam5(va, vax, vb, vay, vaz);
+#if 400 <= SUNDIALS_LIB_VERSION
+    N_Vector *a[3];
+    int nvec = sunml_arrays_of_nvectors(a, 3, vax, vay, vaz);
+    if (!nvec) caml_raise_out_of_memory();
+
+    N_VLinearSumVectorArray(nvec, Double_val(va), a[0],
+					 Double_val(vb), a[1], a[2]);
+    free(*a);
+#endif
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim value sunml_nvec_scalevectorarray(value vac, value vax, value vaz)
+{
+    CAMLparam3(vac, vax, vaz);
+#if 400 <= SUNDIALS_LIB_VERSION
+    realtype *ac = REAL_ARRAY(vac);
+    N_Vector *a[2];
+    int nvec = sunml_arrays_of_nvectors(a, 2, vax, vaz);
+    if (!nvec) caml_raise_out_of_memory();
+
+    N_VScaleVectorArray(nvec, ac, a[0], a[1]);
+    free(*a);
+#endif
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim value sunml_nvec_constvectorarray(value vc, value vaz)
+{
+    CAMLparam2(vc, vaz);
+#if 400 <= SUNDIALS_LIB_VERSION
+    N_Vector *az;
+    int nvec = sunml_arrays_of_nvectors(&az, 1, vaz);
+    if (!nvec) caml_raise_out_of_memory();
+
+    N_VConstVectorArray(nvec, Double_val(vc), az);
+    free(az);
+#endif
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim value sunml_nvec_wrmsnormvectorarray(value vax, value vaw, value van)
+{
+    CAMLparam3(vax, vaw, van);
+#if 400 <= SUNDIALS_LIB_VERSION
+    realtype *an = REAL_ARRAY(van);
+    N_Vector *a[2];
+    int nvec = sunml_arrays_of_nvectors(a, 2, vax, vaw);
+    if (!nvec) caml_raise_out_of_memory();
+
+    N_VWrmsNormVectorArray(nvec, a[0], a[1], an);
+    free(*a);
+#endif
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim value sunml_nvec_wrmsnormmaskvectorarray(value vax, value vaw,
+						  value vi, value van)
+{
+    CAMLparam4(vax, vaw, vi, van);
+#if 400 <= SUNDIALS_LIB_VERSION
+    realtype *an = REAL_ARRAY(van);
+    N_Vector i = NVEC_VAL(vi);
+    N_Vector *a[2];
+    int nvec = sunml_arrays_of_nvectors(a, 2, vax, vaw);
+    if (!nvec) caml_raise_out_of_memory();
+
+    N_VWrmsNormMaskVectorArray(nvec, a[0], a[1], i, an);
+    free(*a);
+#endif
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim value sunml_nvec_scaleaddmultivectorarray(value vaa, value vax,
+						   value vaay, value vaaz)
+{
+    CAMLparam4(vaa, vax, vaay, vaaz);
+#if 400 <= SUNDIALS_LIB_VERSION
+    realtype *aa = REAL_ARRAY(vaa);
+    N_Vector *ax = NULL;
+    int nvec = sunml_arrays_of_nvectors(&ax, 1, vax);
+    if (!nvec) caml_raise_out_of_memory();
+    N_Vector **ayz[2] = { NULL };
+    int nvec2, nsum;
+    sunml_arrays_of_nvectors2(&nsum, &nvec2, ayz, 2, vaay, vaaz);
+    if (!nsum) caml_raise_out_of_memory();
+
+    N_VScaleAddMultiVectorArray(nvec, nsum, aa, ax, ayz[0], ayz[1]);
+    free(ax);
+    free(*ayz);
+#endif
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim value sunml_nvec_linearcombinationvectorarray(value vac,
+							value vaax, value vaz)
+{
+    CAMLparam3(vac, vaax, vaz);
+#if 400 <= SUNDIALS_LIB_VERSION
+    realtype *ac = REAL_ARRAY(vac);
+    N_Vector *az;
+    int nvecz __attribute__((unused))
+	= sunml_arrays_of_nvectors(&az, 1, vaz);
+    N_Vector **aax;
+    int nvec, nsum;
+    sunml_arrays_of_nvectors2(&nsum, &nvec, &aax, 1, vaax);
+    if (!nsum) caml_raise_out_of_memory();
+
+    N_VLinearCombinationVectorArray(nvec, nsum, ac, aax, az);
+    free(aax);
+#endif
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim value sunml_nvec_dotprodlocal(value vx, value vy)
+{
+    CAMLparam2(vx, vy);
+    realtype r;
+#if 500 <= SUNDIALS_LIB_VERSION
+    N_Vector x = NVEC_VAL(vx);
+
+    if (x->ops->nvdotprodlocal == NULL)
+	caml_raise_constant(NVEC_EXN(OperationNotProvided));
+
+    r = N_VDotProdLocal(x, NVEC_VAL(vy));
+#endif
+    CAMLreturn(caml_copy_double(r));
+}
+
+CAMLprim value sunml_nvec_maxnormlocal(value vx)
+{
+    CAMLparam1(vx);
+    realtype r;
+#if 500 <= SUNDIALS_LIB_VERSION
+    N_Vector x = NVEC_VAL(vx);
+
+    if (x->ops->nvmaxnormlocal == NULL)
+	caml_raise_constant(NVEC_EXN(OperationNotProvided));
+
+    r = N_VMaxNormLocal(x);
+#endif
+    CAMLreturn(caml_copy_double(r));
+}
+
+CAMLprim value sunml_nvec_minlocal(value vx)
+{
+    CAMLparam1(vx);
+    realtype r;
+#if 500 <= SUNDIALS_LIB_VERSION
+    N_Vector x = NVEC_VAL(vx);
+
+    if (x->ops->nvminlocal == NULL)
+	caml_raise_constant(NVEC_EXN(OperationNotProvided));
+
+    r = N_VMinLocal(x);
+#endif
+    CAMLreturn(caml_copy_double(r));
+}
+
+CAMLprim value sunml_nvec_l1normlocal(value vx)
+{
+    CAMLparam1(vx);
+    realtype r;
+#if 500 <= SUNDIALS_LIB_VERSION
+    N_Vector x = NVEC_VAL(vx);
+
+    if (x->ops->nvl1normlocal == NULL)
+	caml_raise_constant(NVEC_EXN(OperationNotProvided));
+
+    r = N_VL1NormLocal(x);
+#endif
+    CAMLreturn(caml_copy_double(r));
+}
+
+CAMLprim value sunml_nvec_invtestlocal(value vx, value vz)
+{
+    CAMLparam2(vx, vz);
+    booleantype r;
+#if 500 <= SUNDIALS_LIB_VERSION
+    N_Vector x = NVEC_VAL(vx);
+
+    if (x->ops->nvinvtestlocal == NULL)
+	caml_raise_constant(NVEC_EXN(OperationNotProvided));
+
+    r = N_VInvTestLocal(x, NVEC_VAL(vz));
+#endif
+    CAMLreturn(Val_bool(r));
+}
+
+CAMLprim value sunml_nvec_constrmasklocal(value vc, value vx, value vm)
+{
+    CAMLparam3(vc, vx, vm);
+    booleantype r;
+#if 500 <= SUNDIALS_LIB_VERSION
+    N_Vector c = NVEC_VAL(vc);
+
+    if (c->ops->nvconstrmasklocal == NULL)
+	caml_raise_constant(NVEC_EXN(OperationNotProvided));
+
+    r = N_VConstrMaskLocal(c, NVEC_VAL(vx), NVEC_VAL(vm));
+#endif
+    CAMLreturn(Val_bool(r));
+}
+
+CAMLprim value sunml_nvec_minquotientlocal(value vn, value vd)
+{
+    CAMLparam2(vn, vd);
+    realtype r;
+#if 500 <= SUNDIALS_LIB_VERSION
+    N_Vector n = NVEC_VAL(vn);
+
+    if (n->ops->nvminquotientlocal == NULL)
+	caml_raise_constant(NVEC_EXN(OperationNotProvided));
+
+    r = N_VMinQuotientLocal(n, NVEC_VAL(vd));
+#endif
+    CAMLreturn(caml_copy_double(r));
+}
+
+CAMLprim value sunml_nvec_wsqrsumlocal(value vx, value vw)
+{
+    CAMLparam2(vx, vw);
+    realtype r;
+#if 500 <= SUNDIALS_LIB_VERSION
+    N_Vector x = NVEC_VAL(vx);
+
+    if (x->ops->nvwsqrsumlocal == NULL)
+	caml_raise_constant(NVEC_EXN(OperationNotProvided));
+
+    r = N_VWSqrSumLocal(x, NVEC_VAL(vw));
+#endif
+    CAMLreturn(caml_copy_double(r));
+}
+
+CAMLprim value sunml_nvec_wsqrsummasklocal(value vx, value vw, value vid)
+{
+    CAMLparam3(vx, vw, vid);
+    realtype r;
+#if 500 <= SUNDIALS_LIB_VERSION
+    N_Vector x = NVEC_VAL(vx);
+
+    if (x->ops->nvwsqrsummasklocal == NULL)
+	caml_raise_constant(NVEC_EXN(OperationNotProvided));
+
+    r = N_VWSqrSumMaskLocal(x, NVEC_VAL(vw), NVEC_VAL(vid));
+#endif
+    CAMLreturn(caml_copy_double(r));
 }
 

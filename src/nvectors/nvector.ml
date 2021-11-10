@@ -244,335 +244,6 @@ module Any = struct (* {{{ *)
   end
 end (* }}} *)
 
-module Ops = struct (* {{{ *)
-  type t = any
-
-  let clone = clone
-
-  external c_linearsum    : float -> t -> float -> t -> t -> unit
-    = "sunml_nvec_any_linearsum" [@@noalloc]
-
-  let linearsum a (x : t) b (y : t) (z : t) =
-    if Sundials_configuration.safe then (check x y; check x z);
-    c_linearsum a x b y z
-
-  external const          : float -> t -> unit
-    = "sunml_nvec_any_const" [@@noalloc]
-
-  external c_prod         : t -> t -> t -> unit
-    = "sunml_nvec_any_prod" [@@noalloc]
-
-  let prod (x : t) (y : t) (z : t) =
-    if Sundials_configuration.safe then (check x y; check x z);
-    c_prod x y z
-
-  external c_div          : t -> t -> t -> unit
-    = "sunml_nvec_any_div" [@@noalloc]
-
-  let div (x : t) (y : t) (z : t) =
-    if Sundials_configuration.safe then (check x y; check x z);
-    c_div x y z
-
-  external c_scale        : float -> t -> t -> unit
-    = "sunml_nvec_any_scale" [@@noalloc]
-
-  let scale c (x : t) (z : t) =
-    if Sundials_configuration.safe then check x z;
-    c_scale c x z
-
-  external c_abs          : t -> t -> unit
-    = "sunml_nvec_any_abs" [@@noalloc]
-
-  let abs (x : t) (z : t) =
-    if Sundials_configuration.safe then check x z;
-    c_abs x z
-
-  external c_inv          : t -> t -> unit
-    = "sunml_nvec_any_inv" [@@noalloc]
-
-  let inv (x : t) (z : t) =
-    if Sundials_configuration.safe then check x z;
-    c_inv x z
-
-  external c_addconst     : t -> float -> t -> unit
-    = "sunml_nvec_any_addconst" [@@noalloc]
-
-  let addconst (x : t) b (z : t) =
-    if Sundials_configuration.safe then check x z;
-    c_addconst x b z
-
-  external c_dotprod      : t -> t -> float
-    = "sunml_nvec_any_dotprod"
-
-  let dotprod (x : t) (y : t) =
-    if Sundials_configuration.safe then check x y;
-    c_dotprod x y
-
-  external maxnorm        : t -> float
-    = "sunml_nvec_any_maxnorm"
-
-  external c_wrmsnorm     : t -> t -> float
-    = "sunml_nvec_any_wrmsnorm"
-
-  let wrmsnorm (x : t) (w : t) =
-    if Sundials_configuration.safe then check x w;
-    c_wrmsnorm x w
-
-  external c_wrmsnormmask : t -> t -> t -> float
-    = "sunml_nvec_any_wrmsnormmask"
-
-  let wrmsnormmask (x : t) (w : t) (id : t) =
-    if Sundials_configuration.safe then (check x w; check x id);
-    c_wrmsnormmask x w id
-
-  external min            : t -> float
-    = "sunml_nvec_any_min"
-
-  external c_wl2norm      : t -> t -> float
-    = "sunml_nvec_any_wl2norm"
-
-  let wl2norm (x : t) (w : t) =
-    if Sundials_configuration.safe then check x w;
-    c_wl2norm x w
-
-  external l1norm         : t -> float
-    = "sunml_nvec_any_l1norm"
-
-  external c_compare      : float -> t -> t -> unit
-    = "sunml_nvec_any_compare" [@@noalloc]
-
-  let compare c (x : t) (z : t) =
-    if Sundials_configuration.safe then check x z;
-    c_compare c x z
-
-  external c_invtest      : t -> t -> bool
-    = "sunml_nvec_any_invtest" [@@noalloc]
-
-  let invtest (x : t) (z : t) =
-    if Sundials_configuration.safe then check x z;
-    c_invtest x z
-
-  external c_constrmask   : t -> t -> t -> bool
-    = "sunml_nvec_any_constrmask" [@@noalloc]
-
-  let constrmask (c : t) (x : t) (m : t) =
-    if Sundials_configuration.safe then (check c x; check c m);
-    c_constrmask c x m
-
-  external c_minquotient  : t -> t -> float
-    = "sunml_nvec_any_minquotient"
-
-  let minquotient (n : t) (d : t) =
-    if Sundials_configuration.safe then check n d;
-    c_minquotient n d
-
-  external space  : t -> int * int
-    = "sunml_nvec_any_space" [@@noalloc]
-
-  external getlength : t -> int
-    = "sunml_nvec_any_getlength"
-
-  external c_print_file : t -> Sundials.Logfile.t option -> unit
-    = "sunml_nvec_any_print_file"
-
-  let print ?logfile x = c_print_file x logfile
-
-  external c_linearcombination
-    : Sundials.RealArray.t -> t array -> t -> unit
-    = "sunml_nvec_any_linearcombination"
-
-  let linearcombination ca (xa : t array) (z : t) =
-    if Sundials_impl.Version.lt400
-      then raise Sundials.Config.NotImplementedBySundialsVersion;
-    if Sundials_configuration.safe then Array.iter (check z) xa;
-    c_linearcombination ca xa z
-
-  external c_scaleaddmulti
-    : Sundials.RealArray.t -> t -> t array -> t array -> unit
-    = "sunml_nvec_any_scaleaddmulti"
-
-  let scaleaddmulti aa (x : t) (ya : t array) (za : t array) =
-    if Sundials_impl.Version.lt400
-      then raise Sundials.Config.NotImplementedBySundialsVersion;
-    if Sundials_configuration.safe then
-      (Array.iter (check x) ya; Array.iter (check x) za);
-    c_scaleaddmulti aa x ya za
-
-  external c_dotprodmulti
-    : t -> t array -> Sundials.RealArray.t -> unit
-    = "sunml_nvec_any_dotprodmulti"
-
-  let dotprodmulti (x : t) (ya : t array) dp =
-    if Sundials_impl.Version.lt400
-      then raise Sundials.Config.NotImplementedBySundialsVersion;
-    if Sundials_configuration.safe then Array.iter (check x) ya;
-    c_dotprodmulti x ya dp
-
-  external c_linearsumvectorarray
-    : float -> t array -> float -> t array -> t array -> unit
-    = "sunml_nvec_any_linearsumvectorarray"
-
-  let linearsumvectorarray a (xa : t array) b (ya : t array) (za : t array) =
-    if Sundials_impl.Version.lt400
-      then raise Sundials.Config.NotImplementedBySundialsVersion;
-    let xa0 = Array.get xa 0 in
-    if Sundials_configuration.safe
-    then (Array.iter (check xa0) xa;
-          Array.iter (check xa0) ya;
-          Array.iter (check xa0) za);
-    c_linearsumvectorarray a xa b ya za
-
-  external c_scalevectorarray
-    : Sundials.RealArray.t -> t array -> t array -> unit
-    = "sunml_nvec_any_scalevectorarray"
-
-  let scalevectorarray c (xa : t array) (za : t array) =
-    if Sundials_impl.Version.lt400
-      then raise Sundials.Config.NotImplementedBySundialsVersion;
-    let xa0 = Array.get xa 0 in
-    if Sundials_configuration.safe
-    then (Array.iter (check xa0) xa;
-          Array.iter (check xa0) za);
-    c_scalevectorarray c xa za
-
-  external c_constvectorarray
-    : float -> t array -> unit
-    = "sunml_nvec_any_constvectorarray"
-
-  let constvectorarray c (za : t array) =
-    if Sundials_impl.Version.lt400
-      then raise Sundials.Config.NotImplementedBySundialsVersion;
-    let za0 = Array.get za 0 in
-    if Sundials_configuration.safe
-    then Array.iter (check za0) za;
-    c_constvectorarray c za
-
-  external c_wrmsnormvectorarray
-    : t array -> t array -> Sundials.RealArray.t -> unit
-    = "sunml_nvec_any_wrmsnormvectorarray"
-
-  let wrmsnormvectorarray (xa : t array) (wa : t array) nrm =
-    if Sundials_impl.Version.lt400
-      then raise Sundials.Config.NotImplementedBySundialsVersion;
-    let xa0 = Array.get xa 0 in
-    if Sundials_configuration.safe
-    then (Array.iter (check xa0) xa;
-          Array.iter (check xa0) wa);
-    c_wrmsnormvectorarray xa wa nrm
-
-  external c_wrmsnormmaskvectorarray
-    : t array -> t array -> t -> Sundials.RealArray.t -> unit
-    = "sunml_nvec_any_wrmsnormmaskvectorarray"
-
-  let wrmsnormmaskvectorarray (xa : t array) (wa : t array) (id : t) nrm =
-    if Sundials_impl.Version.lt400
-      then raise Sundials.Config.NotImplementedBySundialsVersion;
-    if Sundials_configuration.safe
-    then (Array.iter (check id) xa;
-          Array.iter (check id) wa);
-    c_wrmsnormmaskvectorarray xa wa id nrm
-
-  external c_scaleaddmultivectorarray
-    : Sundials.RealArray.t -> t array -> t array array -> t array array -> unit
-    = "sunml_nvec_any_scaleaddmultivectorarray"
-
-  let scaleaddmultivectorarray ra (xa : t array) (yaa : t array array)
-                                     (zaa : t array array) =
-    if Sundials_impl.Version.lt400
-      then raise Sundials.Config.NotImplementedBySundialsVersion;
-    let xa0 = Array.get xa 0 in
-    if Sundials_configuration.safe
-    then (Array.iter (check xa0) xa;
-          Array.iter (Array.iter (check xa0)) yaa;
-          Array.iter (Array.iter (check xa0)) zaa);
-    c_scaleaddmultivectorarray ra xa yaa zaa
-
-  external c_linearcombinationvectorarray
-    : Sundials.RealArray.t -> t array array -> t array -> unit
-    = "sunml_nvec_any_linearcombinationvectorarray"
-
-  let linearcombinationvectorarray ca (xaa : t array array) (za : t array) =
-    if Sundials_impl.Version.lt400
-      then raise Sundials.Config.NotImplementedBySundialsVersion;
-    let za0 = Array.get za 0 in
-    if Sundials_configuration.safe
-    then (Array.iter (check za0) za;
-          Array.iter (Array.iter (check za0)) xaa);
-    c_linearcombinationvectorarray ca xaa za
-
-  module Local = struct
-
-    external c_dotprod      : t -> t -> float
-      = "sunml_nvec_any_dotprodlocal"
-
-    let dotprod (x : t) (y : t) =
-      if Sundials_configuration.safe then check x y;
-      if Any.Local.has_dotprod x then c_dotprod x y
-      else raise OperationNotProvided
-
-    external c_maxnorm        : t -> float
-      = "sunml_nvec_any_maxnormlocal"
-
-    let maxnorm (x : t) =
-      if Any.Local.has_invtest x then c_maxnorm x
-      else raise OperationNotProvided
-
-    external c_min            : t -> float
-      = "sunml_nvec_any_minlocal"
-
-    let min (x : t) =
-      if Any.Local.has_min x then c_min x
-      else raise OperationNotProvided
-
-    external c_l1norm         : t -> float
-      = "sunml_nvec_any_l1normlocal"
-
-    let l1norm (x : t) =
-      if Any.Local.has_l1norm x then c_l1norm x
-      else raise OperationNotProvided
-
-    external c_invtest      : t -> t -> bool
-      = "sunml_nvec_any_invtestlocal"
-
-    let invtest (x : t) (z : t) =
-      if Sundials_configuration.safe then check x z;
-      if Any.Local.has_invtest x then c_invtest x z
-      else raise OperationNotProvided
-
-    external c_constrmask   : t -> t -> t -> bool
-      = "sunml_nvec_any_constrmasklocal"
-
-    let constrmask (c : t) (x : t) (m : t) =
-      if Sundials_configuration.safe then (check c x; check c m);
-      if Any.Local.has_constrmask c then c_constrmask c x m
-      else raise OperationNotProvided
-
-    external c_minquotient  : t -> t -> float
-      = "sunml_nvec_any_minquotientlocal"
-
-    let minquotient (n : t) (d : t) =
-      if Sundials_configuration.safe then check n d;
-      if Any.Local.has_minquotient n then c_minquotient n d
-      else raise OperationNotProvided
-
-    external c_wsqrsum      : t -> t -> float
-      = "sunml_nvec_any_wsqrsumlocal"
-
-    let wsqrsum (x : t) (w : t) =
-      if Sundials_configuration.safe then check x w;
-      if Any.Local.has_wsqrsum x then c_wsqrsum x w
-      else raise OperationNotProvided
-
-    external c_wsqrsummask  : t -> t -> t -> float
-      = "sunml_nvec_any_wsqrsummasklocal"
-
-    let wsqrsummask (x : t) (w : t) (id : t) =
-      if Sundials_configuration.safe then (check x w; check x id);
-      if Any.Local.has_wsqrsummask x then c_wsqrsummask x w id
-      else raise OperationNotProvided
-  end
-end (* }}} *)
-
 module MakeDataOps (Ops : sig
     include NVECTOR_OPS
 
@@ -642,4 +313,395 @@ struct
     let wsqrsummask x y z = Ops.Local.wsqrsummask (uw x) (uw y) (uw z)
   end
 end
+
+module Ops =
+  struct (* {{{ *)
+    let clone = clone
+
+    external c_linearsum
+      : float -> ('d, 'k) t -> float -> ('d, 'k) t -> ('d, 'k) t -> unit
+      = "sunml_nvec_linearsum" [@@noalloc]
+
+    let linearsum a x b y z =
+      if Sundials_configuration.safe then (check x y; check x z);
+      c_linearsum a x b y z
+
+    external const
+      : float -> ('d, 'k) t -> unit
+      = "sunml_nvec_const" [@@noalloc]
+
+    external c_prod
+      : ('d, 'k) t -> ('d, 'k) t -> ('d, 'k) t -> unit
+      = "sunml_nvec_prod" [@@noalloc]
+
+    let prod x y z =
+      if Sundials_configuration.safe then (check x y; check x z);
+      c_prod x y z
+
+    external c_div
+      : ('d, 'k) t -> ('d, 'k) t -> ('d, 'k) t -> unit
+      = "sunml_nvec_div" [@@noalloc]
+
+    let div x y z =
+      if Sundials_configuration.safe then (check x y; check x z);
+      c_div x y z
+
+    external c_scale
+      : float -> ('d, 'k) t -> ('d, 'k) t -> unit
+      = "sunml_nvec_scale" [@@noalloc]
+
+    let scale c x z =
+      if Sundials_configuration.safe then check x z;
+      c_scale c x z
+
+    external c_abs
+      : ('d, 'k) t -> ('d, 'k) t -> unit
+      = "sunml_nvec_abs" [@@noalloc]
+
+    let abs x z =
+      if Sundials_configuration.safe then check x z;
+      c_abs x z
+
+    external c_inv
+      : ('d, 'k) t -> ('d, 'k) t -> unit
+      = "sunml_nvec_inv" [@@noalloc]
+
+    let inv x z =
+      if Sundials_configuration.safe then check x z;
+      c_inv x z
+
+    external c_addconst
+      : ('d, 'k) t -> float -> ('d, 'k) t -> unit
+      = "sunml_nvec_addconst" [@@noalloc]
+
+    let addconst x b z =
+      if Sundials_configuration.safe then check x z;
+      c_addconst x b z
+
+    external c_dotprod
+      : ('d, 'k) t -> ('d, 'k) t -> float
+      = "sunml_nvec_dotprod"
+
+    let dotprod x y =
+      if Sundials_configuration.safe then check x y;
+      c_dotprod x y
+
+    external maxnorm
+      : ('d, 'k) t -> float
+      = "sunml_nvec_maxnorm"
+
+    external c_wrmsnorm
+      : ('d, 'k) t -> ('d, 'k) t -> float
+      = "sunml_nvec_wrmsnorm"
+
+    let wrmsnorm x w =
+      if Sundials_configuration.safe then check x w;
+      c_wrmsnorm x w
+
+    external c_wrmsnormmask
+      : ('d, 'k) t -> ('d, 'k) t -> ('d, 'k) t -> float
+      = "sunml_nvec_wrmsnormmask"
+
+    let wrmsnormmask x w id =
+      if Sundials_configuration.safe then (check x w; check x id);
+      c_wrmsnormmask x w id
+
+    external min
+      : ('d, 'k) t -> float
+      = "sunml_nvec_min"
+
+    external c_wl2norm
+      : ('d, 'k) t -> ('d, 'k) t -> float
+      = "sunml_nvec_wl2norm"
+
+    let wl2norm x w =
+      if Sundials_configuration.safe then check x w;
+      c_wl2norm x w
+
+    external l1norm
+      : ('d, 'k) t -> float
+      = "sunml_nvec_l1norm"
+
+    external c_compare
+      : float -> ('d, 'k) t -> ('d, 'k) t -> unit
+      = "sunml_nvec_compare" [@@noalloc]
+
+    let compare c x z =
+      if Sundials_configuration.safe then check x z;
+      c_compare c x z
+
+    external c_invtest
+      : ('d, 'k) t -> ('d, 'k) t -> bool
+      = "sunml_nvec_invtest" [@@noalloc]
+
+    let invtest x z =
+      if Sundials_configuration.safe then check x z;
+      c_invtest x z
+
+    external c_constrmask
+      : ('d, 'k) t -> ('d, 'k) t -> ('d, 'k) t -> bool
+      = "sunml_nvec_constrmask"
+
+    let constrmask c x m =
+      if Sundials_configuration.safe then (check c x; check c m);
+      c_constrmask c x m
+
+    external c_minquotient
+      : ('d, 'k) t -> ('d, 'k) t -> float
+      = "sunml_nvec_minquotient"
+
+    let minquotient n d =
+      if Sundials_configuration.safe then check n d;
+      c_minquotient n d
+
+    external space
+      : ('d, 'k) t -> int * int
+      = "sunml_nvec_space"
+
+    external getlength
+      : ('d, 'k) t -> int
+      = "sunml_nvec_getlength"
+
+    external c_print_file
+      : ('d, 'k) t -> Sundials.Logfile.t option -> unit
+      = "sunml_nvec_print_file"
+
+    let print ?logfile nv = c_print_file nv logfile
+
+    external c_linearcombination
+      : Sundials.RealArray.t -> ('d, 'k) t array -> ('d, 'k) t -> unit
+      = "sunml_nvec_linearcombination"
+
+    let linearcombination ca xa z =
+      if Sundials_impl.Version.lt400
+        then raise Sundials.Config.NotImplementedBySundialsVersion;
+      if Sundials_configuration.safe then Array.iter (check z) xa;
+      c_linearcombination ca xa z
+
+    let same_len' n ya =
+      if n <> Array.length ya then invalid_arg "arrays of unequal length"
+    let same_len xa ya = same_len' (Array.length xa) ya
+
+    external c_scaleaddmulti
+      : Sundials.RealArray.t -> ('d, 'k) t -> ('d, 'k) t array -> ('d, 'k) t array -> unit
+      = "sunml_nvec_scaleaddmulti"
+
+    let scaleaddmulti aa x ya za =
+      if Sundials_impl.Version.lt400
+        then raise Sundials.Config.NotImplementedBySundialsVersion;
+      if Sundials_configuration.safe then
+        (Array.iter (check x) ya; Array.iter (check x) za;
+         let nv = Sundials.RealArray.length aa in
+         same_len' nv ya; same_len' nv za);
+      c_scaleaddmulti aa x ya za
+
+    external c_dotprodmulti
+      : ('d, 'k) t -> ('d, 'k) t array -> Sundials.RealArray.t -> unit
+      = "sunml_nvec_dotprodmulti"
+
+    let dotprodmulti x ya dp =
+      if Sundials_impl.Version.lt400
+        then raise Sundials.Config.NotImplementedBySundialsVersion;
+      if Sundials_configuration.safe then
+        (let nv = Sundials.RealArray.length dp in
+         same_len' nv ya;
+         Array.iter (check x) ya);
+      c_dotprodmulti x ya dp
+
+    external c_linearsumvectorarray
+      : float -> ('d, 'k) t array -> float -> ('d, 'k) t array -> ('d, 'k) t array -> unit
+      = "sunml_nvec_linearsumvectorarray"
+
+    let linearsumvectorarray a xa b ya za =
+      if Sundials_impl.Version.lt400
+        then raise Sundials.Config.NotImplementedBySundialsVersion;
+      if Sundials_configuration.safe
+      then (let x = Array.get xa 0 in
+            Array.iter (check x) xa;
+            Array.iter (check x) ya;
+            Array.iter (check x) za;
+            same_len xa ya; same_len xa za);
+      c_linearsumvectorarray a xa b ya za
+
+    external c_scalevectorarray
+      : Sundials.RealArray.t -> ('d, 'k) t array -> ('d, 'k) t array -> unit
+      = "sunml_nvec_scalevectorarray"
+
+    let scalevectorarray c xa za =
+      if Sundials_impl.Version.lt400
+        then raise Sundials.Config.NotImplementedBySundialsVersion;
+      if Sundials_configuration.safe
+      then (let x = Array.get xa 0 in
+            Array.iter (check x) xa;
+            Array.iter (check x) za;
+            same_len xa za);
+      c_scalevectorarray c xa za
+
+    external c_constvectorarray
+      : float -> ('d, 'k) t array -> unit
+      = "sunml_nvec_constvectorarray"
+
+    let constvectorarray c za =
+      if Sundials_impl.Version.lt400
+        then raise Sundials.Config.NotImplementedBySundialsVersion;
+      if Sundials_configuration.safe
+      then (let z = Array.get za 0 in
+            Array.iter (check z) za);
+      c_constvectorarray c za
+
+    external c_wrmsnormvectorarray
+      : ('d, 'k) t array -> ('d, 'k) t array -> Sundials.RealArray.t -> unit
+      = "sunml_nvec_wrmsnormvectorarray"
+
+    let wrmsnormvectorarray xa wa nrm =
+      if Sundials_impl.Version.lt400
+        then raise Sundials.Config.NotImplementedBySundialsVersion;
+      if Sundials_configuration.safe
+      then (let x = Array.get xa 0 in
+            Array.iter (check x) xa;
+            Array.iter (check x) wa;
+           same_len xa wa);
+      c_wrmsnormvectorarray xa wa nrm
+
+    external c_wrmsnormmaskvectorarray
+      : ('d, 'k) t array -> ('d, 'k) t array -> ('d, 'k) t -> Sundials.RealArray.t -> unit
+      = "sunml_nvec_wrmsnormmaskvectorarray"
+
+    let wrmsnormmaskvectorarray xa wa id nrm =
+      if Sundials_impl.Version.lt400
+        then raise Sundials.Config.NotImplementedBySundialsVersion;
+      if Sundials_configuration.safe
+      then (Array.iter (check id) xa;
+            Array.iter (check id) wa;
+            same_len xa wa);
+      c_wrmsnormmaskvectorarray xa wa id nrm
+
+    external c_scaleaddmultivectorarray
+      : Sundials.RealArray.t -> ('d, 'k) t array -> ('d, 'k) t array array -> ('d, 'k) t array array -> unit
+      = "sunml_nvec_scaleaddmultivectorarray"
+
+    let scaleaddmultivectorarray ra xa yaa zaa =
+      if Sundials_impl.Version.lt400
+        then raise Sundials.Config.NotImplementedBySundialsVersion;
+      if Sundials_configuration.safe
+      then (let x = Array.get xa 0 in
+            let ns = Sundials.RealArray.length ra in
+            let nv = Array.length xa in
+            same_len' ns yaa;
+            same_len' ns zaa;
+            Array.iter (check x) xa;
+            Array.iter (fun ya -> same_len' nv ya; Array.iter (check x) ya) yaa;
+            Array.iter (fun za -> same_len' nv za; Array.iter (check x) za) zaa;
+            same_len yaa zaa);
+      c_scaleaddmultivectorarray ra xa yaa zaa
+
+    external c_linearcombinationvectorarray
+      : Sundials.RealArray.t -> ('d, 'k) t array array -> ('d, 'k) t array -> unit
+      = "sunml_nvec_linearcombinationvectorarray"
+
+    let linearcombinationvectorarray ca xaa za =
+      if Sundials_impl.Version.lt400
+        then raise Sundials.Config.NotImplementedBySundialsVersion;
+      if Sundials_configuration.safe
+      then (let z = Array.get za 0 in
+            let ns = Sundials.RealArray.length ca in
+            let nv = Array.length za in
+            same_len' ns xaa;
+            Array.iter (check z) za;
+            Array.iter (fun xa -> same_len' nv xa; Array.iter (check z) xa) xaa);
+      c_linearcombinationvectorarray ca xaa za
+
+    module Local = struct
+
+      external c_dotprod : ('d, 'k) t -> ('d, 'k) t -> float
+        = "sunml_nvec_dotprodlocal"
+
+      let dotprod x y =
+        if Sundials_impl.Version.lt500
+          then raise Sundials.Config.NotImplementedBySundialsVersion;
+        if Sundials_configuration.safe then check x y;
+        c_dotprod x y
+
+      external c_maxnorm : ('d, 'k) t -> float
+        = "sunml_nvec_maxnormlocal"
+
+      let maxnorm x =
+        if Sundials_impl.Version.lt500
+          then raise Sundials.Config.NotImplementedBySundialsVersion;
+        c_maxnorm x
+
+      external c_min : ('d, 'k) t -> float
+        = "sunml_nvec_minlocal"
+
+      let min x =
+        if Sundials_impl.Version.lt500
+          then raise Sundials.Config.NotImplementedBySundialsVersion;
+        c_min x
+
+      external c_l1norm : ('d, 'k) t -> float
+        = "sunml_nvec_l1normlocal"
+
+      let l1norm x =
+        if Sundials_impl.Version.lt500
+          then raise Sundials.Config.NotImplementedBySundialsVersion;
+        c_l1norm x
+
+      external c_invtest : ('d, 'k) t -> ('d, 'k) t -> bool
+        = "sunml_nvec_invtestlocal"
+
+      let invtest x z =
+        if Sundials_impl.Version.lt500
+          then raise Sundials.Config.NotImplementedBySundialsVersion;
+        if Sundials_configuration.safe then check x z;
+        c_invtest x z
+
+      external c_constrmask : ('d, 'k) t -> ('d, 'k) t -> ('d, 'k) t -> bool
+        = "sunml_nvec_constrmasklocal"
+
+      let constrmask c x m =
+        if Sundials_impl.Version.lt500
+          then raise Sundials.Config.NotImplementedBySundialsVersion;
+        if Sundials_configuration.safe then (check c x; check c m);
+        c_constrmask c x m
+
+      external c_minquotient : ('d, 'k) t -> ('d, 'k) t -> float
+        = "sunml_nvec_minquotientlocal"
+
+      let minquotient n d =
+        if Sundials_impl.Version.lt500
+          then raise Sundials.Config.NotImplementedBySundialsVersion;
+        if Sundials_configuration.safe then check n d;
+        c_minquotient n d
+
+      external c_wsqrsum
+        : ('d, 'k) t -> ('d, 'k) t -> float
+        = "sunml_nvec_wsqrsumlocal"
+
+      let wsqrsum x w =
+        if Sundials_impl.Version.lt500
+          then raise Sundials.Config.NotImplementedBySundialsVersion;
+        if Sundials_configuration.safe then check x w;
+        c_wsqrsum x w
+
+      external c_wsqrsummask
+        : ('d, 'k) t -> ('d, 'k) t -> ('d, 'k) t -> float
+        = "sunml_nvec_wsqrsummasklocal"
+
+      let wsqrsummask x w id =
+        if Sundials_impl.Version.lt500
+          then raise Sundials.Config.NotImplementedBySundialsVersion;
+        if Sundials_configuration.safe then (check x w; check x id);
+        c_wsqrsummask x w id
+    end
+  end (* }}} *)
+
+(* Let C code know about some of the values in this module.  *)
+external c_init_module : exn array -> unit =
+  "sunml_nvec_init_module"
+
+let _ =
+  c_init_module
+    (* Exceptions must be listed in the same order as nv_exn_index.  *)
+    [|OperationNotProvided;
+    |]
 

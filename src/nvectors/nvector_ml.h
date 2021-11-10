@@ -264,4 +264,14 @@ void sunml_nvector_array_free(N_Vector *nvarr);
 value ml_nvec_wrap_serial(value payload, value checkfn);
 value ml_nvec_wrap_custom(value mlops, value payload, value checkfn);
 
+/* This enum must list exceptions in the same order as the call to
+ * c_register_exns in cvode.ml.  */
+enum nv_exn_index {
+    NVEC_EXN_OperationNotProvided = 0,
+    NVEC_EXN_SET_SIZE
+};
+
+#define NVEC_EXN(name)     REGISTERED_EXN(NVEC, name)
+#define NVEC_EXN_TAG(name) REGISTERED_EXN_TAG(NVEC, name)
+
 #endif

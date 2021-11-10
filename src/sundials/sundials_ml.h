@@ -134,6 +134,7 @@ extern value sundials_ml_exn_table;
 
 enum sundials_exn_set_index {
     SUNDIALS_EXN_SET = 0,
+    NVEC_EXN_SET,
     CVODE_EXN_SET,
     CVODES_EXN_SET,
     IDA_EXN_SET,

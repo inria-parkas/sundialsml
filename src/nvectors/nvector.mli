@@ -391,6 +391,247 @@ module type NVECTOR =
 
   end (* }}} *)
 
+(** Operations on any type of nvector. *)
+module Ops : sig (* {{{ *)
+
+    (** Create a new, distinct vector from an existing one. *)
+    val clone        : ('d, 'k) t -> ('d, 'k) t
+
+    (** [linearsum a x b y z] calculates [z = a*x + b*y]. *)
+    val linearsum
+      : float -> ('d, 'k) t -> float -> ('d, 'k) t -> ('d, 'k) t -> unit
+
+    (** [const c z] sets all of [z] to [c]. *)
+    val const        : float -> ('d, 'k) t -> unit
+
+    (** [prod x y z] calculates [z = x * y] (pointwise). *)
+    val prod         : ('d, 'k) t -> ('d, 'k) t -> ('d, 'k) t -> unit
+
+    (** [div x y z] calculates [z = x / y] (pointwise). *)
+    val div          : ('d, 'k) t -> ('d, 'k) t -> ('d, 'k) t -> unit
+
+    (** [scale c x z] calculates [z = c *. x]. *)
+    val scale        : float -> ('d, 'k) t -> ('d, 'k) t -> unit
+
+    (** [abs x z] calculates [z = abs(x)]. *)
+    val abs          : ('d, 'k) t -> ('d, 'k) t -> unit
+
+    (** [inv x z] calculates [z = 1/x] (pointwise). *)
+    val inv          : ('d, 'k) t -> ('d, 'k) t -> unit
+
+    (** [addconst x b z] calculates [z = x + b]. *)
+    val addconst     : ('d, 'k) t -> float -> ('d, 'k) t -> unit
+
+    (** [dotprod x y] returns the dot product of [x] and [y]. *)
+    val dotprod      : ('d, 'k) t -> ('d, 'k) t -> float
+
+    (** [maxnorm x] returns the maximum absolute value in x. *)
+    val maxnorm      : ('d, 'k) t -> float
+
+    (** [wrmsnorm x w] returns the weighted root-mean-square norm of [x]
+        with weight vector [w]. *)
+    val wrmsnorm     : ('d, 'k) t -> ('d, 'k) t -> float
+
+    (** [min x] returns the smallest element in [x]. *)
+    val min          : ('d, 'k) t -> float
+
+    (** [compare c x z] calculates
+        [z(i) = if abs x(i) >= c then 1 else 0]. *)
+    val compare      : float -> ('d, 'k) t -> ('d, 'k) t -> unit
+
+    (** [invtest x z] calculates [z(i) = 1 / x(i)] with prior testing for
+        zero values. This routine returns [true] if all components of [x] are
+        nonzero (successful inversion) and [false] otherwise (not all elements
+        inverted). *)
+    val invtest      : ('d, 'k) t -> ('d, 'k) t -> bool
+
+    (** [wl2norm x w] returns the weighted ([w]) Euclidean l2 norm of [x]. *)
+    val wl2norm      : ('d, 'k) t -> ('d, 'k) t -> float
+
+    (** [l1norm x] returns the l1 norm of [x]. *)
+    val l1norm       : ('d, 'k) t -> float
+
+    (** [maxnormmask x w id] returns the weighted root-mean-square norm
+        of [x] using only elements where the corresponding [id] is non-zero. *)
+    val wrmsnormmask : ('d, 'k) t -> ('d, 'k) t -> ('d, 'k) t -> float
+
+    (** [constrmask c x m] calculates [m(i) = Pi x(i)] returning the
+        conjunction. The value of [Pi] depends on [c(i)]: [2: x(i) > 0],
+        [1: x(i) >= 0], [0: true], [-1: x(i) <= 0], and [-2: x(i) < 0]. *)
+    val constrmask   : ('d, 'k) t -> ('d, 'k) t -> ('d, 'k) t -> bool
+
+    (** [minquotient num denom] returns the minimum of [num(i) / denom(i)].
+        Zero [denom] elements are skipped. *)
+    val minquotient  : ('d, 'k) t -> ('d, 'k) t -> float
+
+    (** [lrw, liw = space c] returns the number of realtype words [lrw] and
+        integer words [liw] required to store [c]. *)
+    val space : ('d, 'k) t -> int * int
+
+    (** Returns the number of "active" entries. This value is cumulative
+        across all processes in a parallel environment.
+
+       @since 5.0.0 *)
+    val getlength : ('d, 'k) t -> int
+
+    (** Prints to the given logfile (stdout, by default).
+
+        @since 5.3.0 *)
+    val print : ?logfile:Logfile.t -> ('d, 'k) t -> unit
+
+    (* Fused and array operations *)
+
+    (** [linearcombination c x z] calculates
+        {% $z_i = \sum_{j=0}^{n_v-1} c_j (x_j)_i$ %}.
+        The sum is over the {% $n_v$ %} elements of [c] and [x]. *)
+    val linearcombination
+      : Sundials.RealArray.t -> ('d, 'k) t array -> ('d, 'k) t -> unit
+
+    (** [scaleaddmulti c x y z] scales [x] and adds it to the
+        {% $n_v$ %} vectors in [y].
+        That is,
+        {% $\forall j=0,\ldots,n_v-1, (z_j)_i = c_j x_i + (y_j)_i}$ %}. *)
+    val scaleaddmulti
+      :    Sundials.RealArray.t
+        -> ('d, 'k) t
+        -> ('d, 'k) t array
+        -> ('d, 'k) t array
+        -> unit
+
+    (** [dotprodmulti x y d] calculates the dot product of [x] with
+        the {% $n_v$ %} elements of [y].
+        That is, {% $\forall j=0,\ldots,n_v-1,
+                       d_j = \sum_{i=0}^{n-1} x_i (y_j)_i$ %}. *)
+    val dotprodmulti
+      : ('d, 'k) t -> ('d, 'k) t array -> Sundials.RealArray.t -> unit
+
+    (* {2: Vector array operations} *)
+
+    (** [linearsumvectorarray a x b y z] computes the linear sum of the
+        {% $n_v$ %} elements of [x] and [y].
+        That is,
+        {% $\forall j=0,\ldots,n_v-1, (z_j)_i = a (x_j)_i + b (y_j)_i$ %}. *)
+    val linearsumvectorarray
+      :    float
+        -> ('d, 'k) t array
+        -> float
+        -> ('d, 'k) t array
+        -> ('d, 'k) t array
+        -> unit
+
+    (** [scalevectorarray c x z] scales each of the {% $n_v$ %} vectors
+        of [x].
+        That is, {% $\forall j=0,\ldots,n_v-1, (z_j)_i = c_j (x_j)_i$ %}. *)
+    val scalevectorarray
+      : Sundials.RealArray.t -> ('d, 'k) t array -> ('d, 'k) t array -> unit
+
+    (** [constvectorarray c x] sets all elements of the {% $n_v$ %} nvectors
+        in [x] to [c].
+        That is, {% $\forall j=0,\ldots,n_v, (z_j)_i = c$ %}. *)
+    val constvectorarray
+      : float -> ('d, 'k) t array -> unit
+
+    (** [wrmsnormvectorarray x w m] computes the weighted root mean
+        square norm of the {% $n_v$ %} vectors in [x] and [w].
+        That is,
+        {% $\forall j=0,\ldots,n_v,
+            m_j = \left( \frac{1}{n}
+            \sum_{i=0}^{n-1} ((x_j)_i (w_j)_i)^2
+            \right)^\frac{1}{2}$ %},
+        where {% $n$ %} is the number of elements in each nvector. *)
+    val wrmsnormvectorarray
+      : ('d, 'k) t array -> ('d, 'k) t array -> Sundials.RealArray.t -> unit
+
+    (** [wrmsnormmaskvectorarray x w id m] computes the weighted root mean
+        square norm of the {% $n_v$ %} vectors in [x] and [w].
+        That is,
+        {% $\forall j=0,\ldots,n_v,
+            m_j = \left( \frac{1}{n}
+            \sum_{i=0}^{n-1} ((x_j)_i (w_j)_i H(\mathit{id}_i))^2
+            \right)^\frac{1}{2}$ %},
+        where {% $H(x) = \begin{cases} 1 & \text{if } x > 0 \\
+                                       0 & \text{otherwise}
+                         \end{cases}$ %} and
+        {% $n$ %} is the number of elements in each nvector. *)
+    val wrmsnormmaskvectorarray
+      :    ('d, 'k) t array
+        -> ('d, 'k) t array
+        -> ('d, 'k) t
+        -> Sundials.RealArray.t
+        -> unit
+
+    (** [scaleaddmultivectorarray a x yy zz] scales and adds {% $n_v$ %}
+        vectors in [x] across the {% $n_s$ %} vector arrays in [yy].
+        That is, {% $\forall j=0,\ldots,n_s-1,
+                     \forall k=0,\ldots,n_v-1,
+          (\mathit{zz}_{j,k})_i = a_k (x_k)_i + (\mathit{yy}_{j,k})_i$ %}. *)
+    val scaleaddmultivectorarray
+      :    Sundials.RealArray.t
+        -> ('d, 'k) t array
+        -> ('d, 'k) t array array
+        -> ('d, 'k) t array array
+        -> unit
+
+    (** [linearcombinationvectorarray c xx z] computes the linear
+        combinations of {% $n_s$ %} vector arrays containing {% $n_v$ %}
+        vectors.
+        That is, {% $\forall k=0,\ldots,n_v-1,
+                      (z_k)_i = \sum_{j=0}^{n_s-1} c_j (x_{j,k})_i$ %}. *)
+    val linearcombinationvectorarray
+      :    Sundials.RealArray.t
+        -> ('d, 'k) t array array
+        -> ('d, 'k) t array
+        -> unit
+
+    (* {2: Vector local reduction operations} *)
+
+    (** Compute the task-local portions of certain operations. *)
+    module Local : sig (* {{{ *)
+      (** [dotprod x y] returns the dot product of [x] and [y]. *)
+      val dotprod      : ('d, 'k) t -> ('d, 'k) t -> float
+
+      (** [maxnorm x] returns the maximum absolute value in x. *)
+      val maxnorm      : ('d, 'k) t -> float
+
+      (** [min x] returns the smallest element in [x]. *)
+      val min          : ('d, 'k) t -> float
+
+      (** [l1norm x] returns the l1 norm of [x]. *)
+      val l1norm       : ('d, 'k) t -> float
+
+      (** [invtest x z] calculates [z(i) = 1 / x(i)] with prior testing for
+          zero values. This routine returns [true] if all components of [x] are
+          nonzero (successful inversion) and [false] otherwise (not all elements
+          inverted). *)
+      val invtest      : ('d, 'k) t -> ('d, 'k) t -> bool
+
+      (** [constrmask c x m] calculates [m(i) = Pi x(i)] returning the
+          conjunction. The value of [Pi] depends on [c(i)]: [2: x(i) > 0],
+          [1: x(i) >= 0], [0: true], [-1: x(i) <= 0], and [-2: x(i) < 0]. *)
+      val constrmask   : ('d, 'k) t -> ('d, 'k) t -> ('d, 'k) t -> bool
+
+      (** [minquotient num denom] returns the minimum of [num(i) / denom(i)].
+          Zero [denom] elements are skipped. *)
+      val minquotient  : ('d, 'k) t -> ('d, 'k) t -> float
+
+      (** [wsqrsum x w] calculates the weighted squared sum of [x] with
+          weight vector [w].
+          That is, {% $s = \sum_{i=0}^{n_\mathit{local} - 1}(x_i w_i)^2$ %}. *)
+      val wsqrsum      : ('d, 'k) t -> ('d, 'k) t -> float
+
+      (** [wsqrsummask x w id] calculates the weighted squared sum of [x]
+          with weight vector [w] for the elements where [id] is positive.
+          That is, {% $m =
+          \sum_{i=0}^{n_\mathit{local} - 1}(x_i w_i H(\math{id}_i))^2$ %}
+          where {% $H(\alpha) = \begin{cases}
+                                  1 & \alpha > 0 \\
+                                  0 & \alpha \le 0
+                                \end{cases} $ %}. *)
+      val wsqrsummask  : ('d, 'k) t -> ('d, 'k) t -> ('d, 'k) t -> float
+    end (* }}} *)
+
+  end (* }}} *)
+
 (** {2:genvec Generic nvectors}
 
     The two arguments of the standard nvector type encode, respectively, the
@@ -484,9 +725,6 @@ exception BadGenericType
 
 (** The requested operation is not provided by the given nvector. *)
 exception OperationNotProvided
-
-(** Operations on generic nvectors. *)
-module Ops : NVECTOR_OPS with type t = any
 
 (** Lifts a set of operations on a type [t] to a set of operations on a
     generic nvector payload. *)
