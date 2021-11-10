@@ -352,7 +352,7 @@ struct (* {{{ *)
      nvscaleaddmultivectorarray operation. *)
   external c_scaleaddmultivectorarray
     : RealArray.t -> t array -> t array array -> t array array -> unit
-    = "sunml_nvec_any_scaleaddmultivectorarray"
+    = "sunml_nvec_scaleaddmultivectorarray"
 
   let scaleaddmultivectorarray ra (xa : t array) (yaa : t array array)
                                   (zaa : t array array) =
@@ -373,7 +373,7 @@ struct (* {{{ *)
      nvscaleaddmultivectorarray operation. *)
   external c_linearcombinationvectorarray 
     : RealArray.t -> t array array -> t array -> unit
-    = "sunml_nvec_any_linearcombinationvectorarray"
+    = "sunml_nvec_linearcombinationvectorarray"
 
   let linearcombinationvectorarray ca (xaa : t array array) (za : t array) =
     if Sundials_configuration.safe
