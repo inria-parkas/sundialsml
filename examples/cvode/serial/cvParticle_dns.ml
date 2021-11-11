@@ -82,7 +82,7 @@ let jac { alpha; _ } _ jacmat =
 
 (* Project the solution onto the constraint manifold *)
 let proj t (ydata : RealArray.t) (cdata : RealArray.t)
-           epsProj (edata : RealArray.t) =
+           epsProj (edata : RealArray.t option) =
   let  x = ydata.{0} in
   let  y = ydata.{1} in
 
@@ -97,10 +97,14 @@ let proj t (ydata : RealArray.t) (cdata : RealArray.t)
   cdata.{1} <- yp -. y;
 
   (* project the error *)
-  let errxp =    edata.{0} *. yp *. yp -. edata.{1} *. xp *. yp in
-  let erryp = -. edata.{0} *. xp *. yp +. edata.{1} *. xp *. xp in
-  edata.{0} <- errxp;
-  edata.{1} <- erryp
+  match edata with
+  | None -> ()
+  | Some edata -> begin
+      let errxp =    edata.{0} *. yp *. yp -. edata.{1} *. xp *. yp in
+      let erryp = -. edata.{0} *. xp *. yp +. edata.{1} *. xp *. xp in
+      edata.{0} <- errxp;
+      edata.{1} <- erryp
+    end
 
 (* -----------------------------------------------------------------------------
  * Private helper functions
@@ -261,7 +265,7 @@ let main () =
                     (f udata) ?projfn 0.0 y)
   in
   (* Set a user-supplied projection function *)
-  if not udata.proj then Cvode.set_proj_err_est cvode_mem true;
+  if udata.proj then Cvode.set_proj_err_est cvode_mem udata.projerr;
 
   (* Set max steps between outputs *)
   Cvode.set_max_num_steps cvode_mem 100000;

@@ -658,16 +658,22 @@ int projfn(realtype t, N_Vector ycur, N_Vector corr,
            realtype epsProj, N_Vector err, void *user_data)
 {
     CAMLparam0();
-    CAMLlocal1(session);
+    CAMLlocal2(session, verr);
     CAMLlocalN(args, 5);
 
     WEAK_DEREF (session, *(value*)user_data);
+
+    if (err == NULL) {
+	verr = Val_none;
+    } else {
+	Store_some(verr, NVEC_BACKLINK(err));
+    }
 
     args[0] = caml_copy_double(t);
     args[1] = NVEC_BACKLINK(ycur);
     args[2] = NVEC_BACKLINK(corr);
     args[3] = caml_copy_double(epsProj);
-    args[4] = NVEC_BACKLINK(err);
+    args[4] = verr;
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callbackN_exn(Field(session, RECORD_CVODE_SESSION_PROJFN),

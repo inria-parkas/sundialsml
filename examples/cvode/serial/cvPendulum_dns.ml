@@ -93,7 +93,7 @@ let f t (yydata : RealArray.t) (fydata : RealArray.t) =
 
 (* Projection function *)
 let proj t (yydata : RealArray.t) (cdata : RealArray.t)
-           epsProj (edata : RealArray.t) =
+           epsProj (edata : RealArray.t option) =
   (* Extract current solution *)
   let x  = yydata.{0} in
   let y  = yydata.{1} in
@@ -127,21 +127,25 @@ let proj t (yydata : RealArray.t) (cdata : RealArray.t)
   cdata.{3} <- yd_new -. yd;
 
   (* Project error P * err *)
-  let e1 = edata.{0} in
-  let e2 = edata.{1} in
-  let e3 = edata.{2} in
-  let e4 = edata.{3} in
+  match edata with
+  | None -> ()
+  | Some edata -> begin
+      let e1 = edata.{0} in
+      let e2 = edata.{1} in
+      let e3 = edata.{2} in
+      let e4 = edata.{3} in
 
-  let e1_new =    y_new *. y_new *. e1 -. x_new *. y_new *. e2 in
-  let e2_new = -. x_new *. y_new *. e1 +. x_new *. x_new *. e2 in
+      let e1_new =    y_new *. y_new *. e1 -. x_new *. y_new *. e2 in
+      let e2_new = -. x_new *. y_new *. e1 +. x_new *. x_new *. e2 in
 
-  let e3_new =    y_new *. y_new *. e3 -. x_new *. y_new *. e4 in
-  let e4_new = -. x_new *. y_new *. e3 +. x_new *. x_new *. e4 in
+      let e3_new =    y_new *. y_new *. e3 -. x_new *. y_new *. e4 in
+      let e4_new = -. x_new *. y_new *. e3 +. x_new *. x_new *. e4 in
 
-  edata.{0} <- e1_new;
-  edata.{1} <- e2_new;
-  edata.{2} <- e3_new;
-  edata.{3} <- e4_new
+      edata.{0} <- e1_new;
+      edata.{1} <- e2_new;
+      edata.{2} <- e3_new;
+      edata.{3} <- e4_new
+    end
 
 (* -----------------------------------------------------------------------------
  * Private helper functions
@@ -156,7 +160,8 @@ let input_help =
      --noerrproj      : disable error projection\n"
 
 type inputs = {
-  tol : float;
+  rtol : float;
+  atol : float;
   tf  : float;
   nout : int;
   projerr : bool;
@@ -165,13 +170,18 @@ type inputs = {
 (* Read command line unputs *)
 let read_inputs () =
   let inputs = ref {
-    tol     = 1.0e-5; (* integration tolerance   *)
+    rtol    = 1.0e-5; (* relative integration tolerance   *)
+    atol    = 1.0e-5; (* absolute integration tolerance   *)
     tf      = 30.0;   (* final integration time  *)
     nout    = 1;      (* number of outputs       *)
     projerr = true;   (* enable error projection *)
   } in
   let args = Arg.[
-    "--tol",  Float (fun tol  -> inputs := { !inputs with tol })  , "";
+    "--tol",  Float (fun rtol  ->
+                inputs := { !inputs with rtol;
+                                         atol = Float.of_string
+                                             Sys.argv.(!Arg.current + 2) };
+                incr Arg.current), "";
     "--tf",   Float (fun tf   -> inputs := { !inputs with tf })   , "";
     "--nout", Int   (fun nout -> inputs := { !inputs with nout }) , "";
     "--noerrproj", Unit (fun () -> inputs := { !inputs with projerr = false }) , "";
@@ -185,7 +195,7 @@ let read_inputs () =
  * ---------------------------------------------------------------------------*)
 
 (* Compute the Cartesian system solution *)
-let get_sol cvode_mem yy0 tol tf nout proj projerr yref =
+let get_sol cvode_mem yy0 rtol atol tf nout proj projerr yref =
   (* Enable or disable projection *)
   if proj then begin
     printf("  YES   ");
@@ -210,12 +220,12 @@ let get_sol cvode_mem yy0 tol tf nout proj projerr yref =
   Cvode.reinit cvode_mem 0.0 yy0;
 
   (* Set integration tolerances for this run *)
-  Cvode.(set_tolerances cvode_mem (SStolerances (tol, tol)));
+  Cvode.(set_tolerances cvode_mem (SStolerances (rtol, atol)));
 
   (* Open output file *)
   let outname =
-    if proj then Printf.sprintf "cvPendulum_dns_tol_%03.2e_proj.txt" tol
-    else Printf.sprintf "cvPendulum_dns_tol_%03.2e.txt" tol
+    if proj then Printf.sprintf "cvPendulum_dns_rtol_%03.2e_rtol_%03.2e_proj.txt" rtol atol
+    else Printf.sprintf "cvPendulum_dns_rtol_%03.2e_atol_%03.2e..txt" rtol atol
   in
   let fid = open_out outname in
 
@@ -353,7 +363,7 @@ let ref_sol tf yref nout =
 
 let main () =
   (* Read command line inputs *)
-  let { tol; tf; nout; projerr } as inputs = read_inputs () in
+  let { rtol; atol; tf; nout; projerr } as inputs = read_inputs () in
 
   (* Compute reference solution *)
   let yref = Nvector_serial.make 4 0.0 in
@@ -379,30 +389,32 @@ let main () =
   let a = Matrix.dense 4 in
   let cvode_mem =
     Cvode.(init BDF ~lsolver:Dls.(solver (dense yy0 a))
-                    (SStolerances (tol, tol))
+                    (SStolerances (rtol, atol))
                     f ~projfn:proj 0.0 yy0)
   in
   (* Set maximum number of steps between outputs *)
   Cvode.set_max_num_steps cvode_mem 50000;
 
   (* Compute the solution with various tolerances *)
-  let tol = ref tol in
+  let rtol = ref rtol in
+  let atol = ref atol in
   for i = 0 to 4 do
 
     (* Output tolerance and output header for this run *)
-    printf "\n\nTol = %8.2e\n" !tol;
+    printf "\n\nrtol = %8.2e, atol = %8.2e\n" !rtol !atol;
     printf "Project    x         y";
     printf "         x'        y'     |     g      |    ";
     printf "nst     rhs eval    setups (J eval)  |   cf   ef\n";
 
     (* Compute solution with projection *)
-    get_sol cvode_mem yy0 !tol tf nout true projerr yref;
+    get_sol cvode_mem yy0 !rtol !atol tf nout true projerr yref;
 
     (* Compute solution without projection *)
-    get_sol cvode_mem yy0 !tol tf nout false false yref;
+    get_sol cvode_mem yy0 !rtol !atol tf nout false false yref;
 
     (* Reduce tolerance for next run *)
-    tol := !tol /. 10.0
+    rtol := !rtol /. 10.0;
+    atol := !atol /. 10.0
   done
 
 (* Check environment variables for extra arguments.  *)
