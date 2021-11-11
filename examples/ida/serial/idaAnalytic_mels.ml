@@ -66,7 +66,8 @@ type matrix_embedded_ls_content = {
 }
 
 (* linear solve routine *)
-let matrix_embedded_ls_solve { rdata; ida_mem } () x b tol =
+let matrix_embedded_ls_solve content () x b tol =
+  let { rdata; ida_mem } = content in
   match ida_mem with
   | None -> failwith "linear solver not properly configure"
   | Some ida_mem ->
