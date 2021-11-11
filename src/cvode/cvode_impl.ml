@@ -374,7 +374,7 @@ type 'a rhsfn = float -> 'a -> 'a -> unit
 type 'a rootsfn = float -> 'a -> RealArray.t -> unit
 type error_handler = Util.error_details -> unit
 type 'a error_weight_fun = 'a -> 'a -> unit
-type 'd proj_fn = float -> 'd -> 'd -> float -> 'd -> unit
+type 'd proj_fn = float -> 'd -> 'd -> float -> 'd option -> unit
 
 let no_rhsfn = fun _ _ _ -> Sundials_impl.crash "no rhsfn"
 

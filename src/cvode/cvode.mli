@@ -637,9 +637,10 @@ type 'd rootsfn = float -> 'd -> RealArray.t -> unit
               {% $y(t) + c$ %} satisifies the constraint equation,
     - [eps], the tolerance to use in the nonlinear stopping test when
              solving the nonlinear contrained least-squares problem, and
-    - [err], the current error estimate on input, if error projection is
-             enabled (the default), and updated to the projected error for
-             output.
+    - [err], if error project is enabled (the default), the current error
+             estimate on input and updated to the projected error for output.
+
+    (The [err] argument is [None] if error projection is not enabled.)
 
     Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
     Any other exception is treated as an unrecoverable error. The integrator
@@ -651,7 +652,7 @@ type 'd rootsfn = float -> 'd -> RealArray.t -> unit
 
     @since 5.3.0
     @nocvode <node> CVProjFn *)
-type 'd proj_fn = float -> 'd -> 'd -> float -> 'd -> unit
+type 'd proj_fn = float -> 'd -> 'd -> float -> 'd option -> unit
 
 (** Creates and initializes a session with the solver. The call
     {[init lmm tol ~nlsolver ~nlsrhsfn ~lsolver f ~roots:(nroots, g) ~projfn t0 y0]}
