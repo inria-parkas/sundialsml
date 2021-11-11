@@ -58,9 +58,12 @@ type matrix_embedded_ls_content = {
 }
 
 (* linear solve routine *)
-let matrix_embedded_ls_solve { rdata; arkode_mem } () x b tol =
+let matrix_embedded_ls_solve content () x b tol =
+  let { rdata; arkode_mem } = content in
   match arkode_mem with
-  | None -> failwith "linear solver not properly configure"
+  | None ->
+      Printf.eprintf "internal error: linear solver not properly configured\n";
+      exit(-1)
   | Some arkode_mem ->
       (* retrieve implicit system data from ARKStep *)
       let ARKStep.{ gamma; _ } = ARKStep.get_nonlin_system_data arkode_mem in

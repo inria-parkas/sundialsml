@@ -78,7 +78,7 @@ let vel        = 0.001        (* advection velocity V      *)
 let kv0        = 1.0e-8       (* coefficient in Kv(y)      *)
 let q1         = 1.63e-16     (* coefficients q1, q2, c3   *)
 let q2         = 4.66e-16
-let c3         = 3.7e16
+let c3g        = 3.7e16
 let a3         = 22.62        (* coefficient in expression for q3(t) *)
 let a4         = 7.601        (* coefficient in expression for q4(t) *)
 let c1_scale   = 1.0e6        (* coefficients in initial profiles    *)
@@ -144,8 +144,8 @@ type userdata = {
 
   sendbufferE : RealArray.t; (* NVARS*MYSUB *)
   sendbufferW : RealArray.t; (* NVARS*MYSUB *)
-  sendbufferN : RealArray.t; (* NVARS*MYSUB *)
-  sendbufferS : RealArray.t; (* NVARS*MYSUB *)
+  sendbufferN : RealArray.t; (* NVARS*MXSUB *)
+  sendbufferS : RealArray.t; (* NVARS*MXSUB *)
 
   my_pe    : int;
   isubx    : int;
@@ -185,8 +185,8 @@ let init_user_data my_pe comm =
 
     sendbufferE = RealArray.make (nvars*mysub) 0.0;
     sendbufferW = RealArray.make (nvars*mysub) 0.0;
-    sendbufferN = RealArray.make (nvars*mysub) 0.0;
-    sendbufferS = RealArray.make (nvars*mysub) 0.0;
+    sendbufferN = RealArray.make (nvars*mxsub) 0.0;
+    sendbufferS = RealArray.make (nvars*mxsub) 0.0;
 
     (* Set machine-related constants *)
     comm;
@@ -331,9 +331,9 @@ let brecvpost { my_pe; isubx; isuby; comm; request; _ } =
 
 (* Routine to send boundary data to neighboring PEs *)
 
-let bsend c1data c2data { my_pe; isubx; isuby; comm; request;
-                          sendbufferS; sendbufferN; sendbufferE; sendbufferW;
-                          _ } =
+let bsend { my_pe; isubx; isuby; comm; request;
+            sendbufferS; sendbufferN; sendbufferE; sendbufferW; _ }
+          c1data c2data =
   (* If isuby > 0, send data from bottom x-line of c1 and c2 *)
   if isuby > 0 then begin
     for lx = 0 to mxsub - 1 do
@@ -363,7 +363,7 @@ let bsend c1data c2data { my_pe; isubx; isuby; comm; request;
       sendbufferW.{ly} <- c1data.{ly * mxsub}
     done;
     for ly = 0 to mxsub - 1 do
-      sendbufferW.{mysub + ly} <- c2data.{ly* mxsub}
+      sendbufferW.{mysub + ly} <- c2data.{ly * mxsub}
     done;
     request.(6) <- Mpi.isend sendbufferW (my_pe - 1) 3 comm
   end;
@@ -385,56 +385,56 @@ let brecvwait { my_pe; isuby; isubx; c1ext; c2ext; request; _ } =
   (* If isuby > 0, wait on communication for bottom x-line *)
   if isuby > 0 then begin
     let recvbuffer0 = Mpi.wait_receive request.(0) in
-    let recvbuffer1 = Mpi.wait_receive request.(4) in
+    Mpi.wait request.(4);
 
     (* Copy the receive buffer to c1ext and c2ext *)
     for lx = 0 to mxsub - 1 do
       c1ext.{1+lx} <- recvbuffer0.{lx}
     done;
     for lx = 0 to mxsub - 1 do
-      c2ext.{1+lx} <- recvbuffer1.{lx}
+      c2ext.{1+lx} <- recvbuffer0.{mxsub + lx}
     done
   end;
 
   (* If isuby < NPEY-1, wait on communication for top x-line *)
   if isuby < npey - 1 then begin
     let recvbuffer0 = Mpi.wait_receive request.(1) in
-    let recvbuffer1 = Mpi.wait_receive request.(5) in
+    Mpi.wait request.(5);
 
     (* Copy the receive buffer to c1ext and c2ext *)
     for lx = 0 to mxsub - 1 do
       c1ext.{(mysub+1)*(mxsub+2)+1+lx} <- recvbuffer0.{lx}
     done;
     for lx = 0 to mxsub - 1 do
-      c2ext.{(mysub+1)*(mxsub+2)+1+lx} <- recvbuffer1.{lx}
+      c2ext.{(mysub+1)*(mxsub+2)+1+lx} <- recvbuffer0.{mxsub + lx}
     done
   end;
 
   (* If isubx > 0, wait on communication for left y-line *)
   if isubx > 0 then begin
     let recvbuffer0 = Mpi.wait_receive request.(2) in
-    let recvbuffer1 = Mpi.wait_receive request.(6) in
+    Mpi.wait request.(6);
 
     (* Copy the receive buffer to c1ext and c2ext *)
     for ly = 0 to mysub - 1 do
       c1ext.{(ly+1)*(mxsub+2)} <- recvbuffer0.{ly}
     done;
     for ly = 0 to mysub - 1 do
-      c2ext.{(ly+1)*(mxsub+2)} <- recvbuffer1.{ly}
+      c2ext.{(ly+1)*(mxsub+2)} <- recvbuffer0.{mysub + ly}
     done
   end;
 
   (* If isubx < NPEX-1, wait on communication for right y-line *)
   if isubx < npex - 1 then begin
     let recvbuffer0 = Mpi.wait_receive request.(3) in
-    let recvbuffer1 = Mpi.wait_receive request.(7) in
+    Mpi.wait request.(7);
 
     (* Copy the receive buffer to c1ext and c2ext *)
     for ly = 0 to mysub - 1 do
       c1ext.{(ly+2)*(mxsub+2)-1} <- recvbuffer0.{ly}
     done;
     for ly = 0 to mysub - 1 do
-      c2ext.{(ly+2)*(mxsub+2)-1} <- recvbuffer1.{ly}
+      c2ext.{(ly+2)*(mxsub+2)-1} <- recvbuffer0.{mysub + ly}
     done
   end
 
@@ -453,7 +453,7 @@ let prepare_ext (udata, _, _) ({ c1ext; c2ext; isubx; isuby; _ } as data) =
   brecvpost data;
 
   (* Send data from boundary of local grid to neighboring PEs *)
-  bsend c1data c2data data;
+  bsend data c1data c2data;
 
   (* Copy local segments of c1 and c2 vectors into the working
      extended arrays c1ext and c2ext *)
@@ -558,9 +558,9 @@ let fcalc t (udot, _, _)
       let c2rt = c2ext.{offset+1} in
 
       (* Set kinetic rate terms *)
-      let qq1 = q1 *. c1 *. c3 in
+      let qq1 = q1 *. c1 *. c3g in
       let qq2 = q2 *. c1 *. c2 in
-      let qq3 = q3 *. c3 in
+      let qq3 = q3 *. c3g in
       let qq4 = q4coef *. c2 in
       let rkin1 = -. qq1 -. qq2 +. 2.0 *. qq3 +. qq4 in
       let rkin2 = qq1 -. qq2 -. qq4 in
@@ -627,9 +627,9 @@ let precond { isuby; dy; vdco; hdco; q4; p; jbd; pivot; _ }
         let c2 = c2data.{lx + ly * mxsub} in
         let j = jbd.(lx).(ly) in
         let a = p.(lx).(ly) in
-        set_ijth j 1 1 ((-. q1 *. c3 -. q2 *. c2) +. diag);
+        set_ijth j 1 1 ((-. q1 *. c3g -. q2 *. c2) +. diag);
         set_ijth j 1 2 (-. q2 *. c1 +. q4);
-        set_ijth j 2 1 (q1 *. c3 -. q2 *. c2);
+        set_ijth j 2 1 (q1 *. c3g -. q2 *. c2);
         set_ijth j 2 2 ((-. q2 *. c1 -. q4) +. diag);
         DM.blit ~src:j ~dst:a
       done

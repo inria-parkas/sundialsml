@@ -57,7 +57,8 @@ type matrix_embedded_ls_content = {
 }
 
 (* linear solve routine *)
-let matrix_embedded_ls_solve { rdata; cvode_mem } () x b tol =
+let matrix_embedded_ls_solve content () x b tol =
+  let { rdata; cvode_mem } = content in
   match cvode_mem with
   | None -> failwith "linear solver not properly configure"
   | Some cvode_mem ->

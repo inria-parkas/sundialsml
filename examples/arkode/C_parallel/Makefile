@@ -6,6 +6,8 @@ USELIB ?= sundials_no_sens
 SRCROOT=../../..
 SUBDIR=arkode/C_parallel
 
+FILES_TO_CLEAN= mesh.txt t.000000.txt u.0*.txt v.0*.txt w.0*.txt
+
 EXAMPLES_SINCE_5_4_0 = ark_brusselator1D_task_local_nls.ml
 
 MPI_EXAMPLES = ark_diurnal_kry_p.ml \

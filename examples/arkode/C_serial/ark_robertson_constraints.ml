@@ -69,7 +69,7 @@ let jac ARKStep.{ jac_y = (y : RealArray.t); _ } jac =
   set jac 0 1 (1.e4 *. w);
   set jac 0 2 (1.e4 *. v);
 
-  set jac 1 0 (-0.04);
+  set jac 1 0 0.04;
   set jac 1 1 (-1.e4 *. w -. 6.e7 *. v);
   set jac 1 2 (-1.e4 *. v);
 
