@@ -246,6 +246,7 @@ div#intro code {
 
 p {
   max-width: 40em;
+  hyphens: auto;
 }
 
 div#intro p {
