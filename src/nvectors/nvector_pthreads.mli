@@ -97,7 +97,7 @@ val enable :
 (** Underlyling nvector operations on Pthreads nvectors. *)
 module Ops : Nvector.NVECTOR_OPS with type t = t
 
-(** {2:genvec Generic nvector interface}
+(** A generic nvector interface to Pthreads nvectors.
 
     Create Pthreads nvectors using the generic nvector interface where the
     payload is wrapped with the {{!Nvector.gdata}RA} constructor. *)

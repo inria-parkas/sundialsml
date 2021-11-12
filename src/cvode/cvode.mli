@@ -842,7 +842,7 @@ val clear_err_handler_fn : ('d, 'k) session -> unit
     not be changed.
 
     This function requires that the underlying library was explicitly built
-    with support for monitoring (see {!Sundials.Config.monitoring_enabled}).
+    with support for monitoring (see {!Sundials_Config.monitoring_enabled}).
 
     @since 5.3.0
     @raise NotImplementedBySundialsVersion if not provided by the underlying library

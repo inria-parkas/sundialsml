@@ -38,12 +38,15 @@ type custom_type =
 
 let broken_sundials_link div_class doc_root page anchor title =
   Printf.sprintf
-    "<div class=\"sundials %s\"><span class=\"seesundials\">See sundials: </span><a href=\"%s%s.html%s\">%s</a></div>"
+    "<li><div class=\"sundials %s\">\
+      <span class=\"seesundials\">See sundials: </span>\
+      <a href=\"%s%s.html%s\">%s</a></div></li>"
     div_class doc_root page anchor title
 
 let sundials_link div_class doc_root page anchor title =
   Printf.sprintf
-    "<div class=\"sundials %s\"><span class=\"seesundials\">See sundials: </span>%s</div>"
+    "<li><div class=\"sundials %s\">\
+      <span class=\"seesundials\">See sundials: </span>%s</div></li>"
     div_class title
 
 module Generator (G : Odoc_html.Html_generator) =

@@ -59,7 +59,7 @@ html/index.html: html $(SUNDIALS_DOCS) intro.doc
 		-D'OCAML_DOC_ROOT(x)=$(OCAML_DOC_ROOT)x'		     \
 		-D'VERSION()=$(VERSION)'"				     \
 	    -d ./html/							     \
-	    -hide Cvode_impl,Ida_impl,Kinsol_impl,Arkode_impl		     \
+	    -hide Cvode_impl,Ida_impl,Kinsol_impl,Arkode_impl,Sundials_impl,Sundials_LinearSolver_impl,Sundials_NonlinearSolver_impl \
 	    -t "Sundials/ML $(VERSION)p$(VERSIONP)"			     \
 	    -intro intro.doc						     \
 	    $(foreach f, $(DOC_SOURCES:.cmi=.mli), ../src/$f)

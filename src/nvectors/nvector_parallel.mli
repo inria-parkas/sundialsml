@@ -143,7 +143,7 @@ module Ops : Nvector.NVECTOR_OPS with type t = t
 (** Nvector operations on {!data} implemented in OCaml. *)
 module DataOps : Nvector.NVECTOR_OPS with type t = data
 
-(** {2:genvec Generic nvector interface}
+(** A generic nvector interface to parallel nvectors.
 
     Create parallel nvectors using the generic nvector interface where the
     payload is wrapped with the {{!Nvector.gdata}Par} constructor. *)
@@ -221,7 +221,7 @@ module Any : sig (* {{{ *)
     -> Nvector.any
 
   (** Returns the payload of the generic vector if it was constructed with
-      {{!Nvector.gdata}{Par} and a parallel payload, otherwise
+      {{!Nvector.gdata}Par} and a parallel payload, otherwise
       raises {!Nvector.BadGenericType}. *)
   val unwrap : Nvector.any -> data
 

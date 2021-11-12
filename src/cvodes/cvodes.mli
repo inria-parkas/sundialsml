@@ -818,11 +818,11 @@ module Sensitivity : sig (* {{{ *)
       (** Independent variable value {% $t_n$ %}. *)
     yspred : 'd array;
       (** Predicted state vectors {% $\mathit{yS}_{i,\mathit{pred}}$ %}
-          at {% $t_n$ %} for {%i = 0,\ldots,N_s-1%}. This data must not
+          at {% $t_n$ %} for {% $i = 0,\ldots,N_s-1$ %}. This data must not
           be changed. *)
     ysn    : 'd array;
       (** State vectors {% $\mathit{yS}^n_i$ %}
-          for {%i = 0,\ldots,N_s-1%}.
+          for {% $i = 0,\ldots,N_s-1$ %}.
           This data may not be current and may need to be filled. *)
     gamma  : float;
       (** Current value of {% $\gamma$ %}. *)
@@ -1837,8 +1837,8 @@ module Adjoint : sig (* {{{ *)
       {{!Sundials_NonlinearSolver.Newton}Newton} module is used by default.
       In this case only, [lsolver] defaults to {!Diag.solver} if not otherwise
       specified. Specifying an [nlsolver] that requires a linear solver without
-      specifying an [lsolver] results in a {!NonlinearInitFailure} (or
-      {!IllInput} for Sundials < 4.0.0) exception on the first call to
+      specifying an [lsolver] results in a {!Cvode.NonlinearInitFailure} (or
+      {!Cvode.IllInput} for Sundials < 4.0.0) exception on the first call to
       {!backward_normal} or {!backward_one_step}.
 
       @cvodes <node7#sss:cvinitb> CVodeCreateB

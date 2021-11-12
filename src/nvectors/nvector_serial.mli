@@ -97,7 +97,7 @@ module Ops : Nvector.NVECTOR_OPS with type t = t
 (** Nvector operations on {{!Sundials.RealArray}RealArray}s implemented in OCaml. *)
 module DataOps : Nvector.NVECTOR_OPS with type t = RealArray.t
 
-(** {2:genvec Generic nvector interface}
+(** A generic nvector interface to serial nvectors.
 
     Create serial nvectors using the generic nvector interface where the
     payload is wrapped with the {{!Nvector.gdata}RA} constructor. *)

@@ -469,11 +469,12 @@ module Custom : sig (* {{{ *)
 
       Writing custom nonlinear solvers for use with some forward sensitivity
       methods requires the "internal" senswrapper type.
-      Any attempt to use {!Sens.wrapper}s outside of the call to
+      Any attempt to use {!Senswrapper.t}s outside of the call to
       setup or solve that provides them will result in an {!IncorrectUse}
       exception. They must only be used to extract the underlying data with
-      {!Sens.data} or as arguments for lsolve_fn, convtest_fn, or sys_fn.
-      There are no restrictions on the arrays extracted with {!Sens.data}. *)
+      {!Senswrapper.data} or as arguments for lsolve_fn, convtest_fn, or sys_fn.
+      There are no restrictions on the arrays extracted with
+      {!Senswrapper.data}. *)
   val make_sens :
        ?init               : (unit -> unit)
     -> ?setup              : (('d, 'k) Senswrapper.t -> 's -> unit)

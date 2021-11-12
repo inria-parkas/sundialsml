@@ -74,7 +74,7 @@ type nvector_id =
     @since 2.9.0 *)
 val get_id : ('data, 'kind) t -> nvector_id
 
-(** {2:hasops Test vector operations}
+(** {2:hasops Test presence of nvector operations}
 
     These functions test whether an nvector is equipped with a given
     operation. *)
@@ -101,6 +101,7 @@ external has_scaleaddmultivectorarray     : ('d, 'k) t -> bool
 external has_linearcombinationvectorarray : ('d, 'k) t -> bool
     = "sunml_nvec_has_linearcombinationvectorarray" [@@noalloc]
 
+(** Test presence of task-local nvector operations. *)
 module Local : sig
   external has_dotprod      : ('d, 'k) t -> bool
     = "sunml_nvec_has_dotprodlocal" [@@noalloc]
@@ -658,7 +659,7 @@ module Ops : sig (* {{{ *)
     nvector modules can support the generic form. *)
 type gdata = ..
 
-(** The wrapper for {{!Sundials.RealArray.t}RealArray}s. *)
+(** The wrapper for {{!Sundials_RealArray.t}RealArray}s. *)
 type gdata += RA of Sundials.RealArray.t
 
 (** Represents an nvector whose data must be accessed through a constructor
@@ -668,53 +669,54 @@ type gkind
 (** The type of a generic nvector. *)
 type any = (gdata, gkind) t
 
+(** Utility functions on generic nvectors. *)
 module Any : sig (* {{{ *)
-  type t = any
 
-  (** {3:anyhasops Test generic vector operations}
+  (** Test presence of generic nvector operations.
 
       These functions test whether a generic nvector is equipped with a
       given operation. *)
 
-  external has_linearcombination            : t -> bool
+  external has_linearcombination            : any -> bool
       = "sunml_nvec_has_linearcombination" [@@noalloc]
-  external has_scaleaddmulti                : t -> bool
+  external has_scaleaddmulti                : any -> bool
       = "sunml_nvec_has_scaleaddmulti" [@@noalloc]
-  external has_dotprodmulti                 : t -> bool
+  external has_dotprodmulti                 : any -> bool
       = "sunml_nvec_has_dotprodmulti" [@@noalloc]
-  external has_linearsumvectorarray         : t -> bool
+  external has_linearsumvectorarray         : any -> bool
       = "sunml_nvec_has_linearsumvectorarray" [@@noalloc]
-  external has_scalevectorarray             : t -> bool
+  external has_scalevectorarray             : any -> bool
       = "sunml_nvec_has_scalevectorarray" [@@noalloc]
-  external has_constvectorarray             : t -> bool
+  external has_constvectorarray             : any -> bool
       = "sunml_nvec_has_constvectorarray" [@@noalloc]
-  external has_wrmsnormvectorarray          : t -> bool
+  external has_wrmsnormvectorarray          : any -> bool
       = "sunml_nvec_has_wrmsnormvectorarray" [@@noalloc]
-  external has_wrmsnormmaskvectorarray      : t -> bool
+  external has_wrmsnormmaskvectorarray      : any -> bool
       = "sunml_nvec_has_wrmsnormmaskvectorarray" [@@noalloc]
-  external has_scaleaddmultivectorarray     : t -> bool
+  external has_scaleaddmultivectorarray     : any -> bool
       = "sunml_nvec_has_scaleaddmultivectorarray" [@@noalloc]
-  external has_linearcombinationvectorarray : t -> bool
+  external has_linearcombinationvectorarray : any -> bool
       = "sunml_nvec_has_linearcombinationvectorarray" [@@noalloc]
 
+  (** Test presence of task-local nvector operations. *)
   module Local : sig
-    external has_dotprod      : t -> bool
+    external has_dotprod      : any -> bool
       = "sunml_nvec_has_dotprodlocal" [@@noalloc]
-    external has_maxnorm      : t -> bool
+    external has_maxnorm      : any -> bool
       = "sunml_nvec_has_maxnormlocal" [@@noalloc]
-    external has_min          : t -> bool
+    external has_min          : any -> bool
       = "sunml_nvec_has_minlocal" [@@noalloc]
-    external has_l1norm       : t -> bool
+    external has_l1norm       : any -> bool
       = "sunml_nvec_has_l1normlocal" [@@noalloc]
-    external has_invtest      : t -> bool
+    external has_invtest      : any -> bool
       = "sunml_nvec_has_invtestlocal" [@@noalloc]
-    external has_constrmask   : t -> bool
+    external has_constrmask   : any -> bool
       = "sunml_nvec_has_constrmasklocal" [@@noalloc]
-    external has_minquotient  : t -> bool
+    external has_minquotient  : any -> bool
       = "sunml_nvec_has_minquotientlocal" [@@noalloc]
-    external has_wsqrsum      : t -> bool
+    external has_wsqrsum      : any -> bool
       = "sunml_nvec_has_wsqrsumlocal" [@@noalloc]
-    external has_wsqrsummask  : t -> bool
+    external has_wsqrsummask  : any -> bool
       = "sunml_nvec_has_wsqrsummasklocal" [@@noalloc]
   end
 

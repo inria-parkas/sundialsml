@@ -207,23 +207,22 @@ let reaction' { nvar; nxl = n; a; b; k1; k2; k3; k4; k5; k6;
     done
   else begin
     (* set output to zero *)
-    Nvector_serial.DataOps.const 0.0 y;
     for i = 0 to n - 1 do
       let u = y.{idx nvar i 0} in
       let v = y.{idx nvar i 1} in
       let w = y.{idx nvar i 2} in
-      dY.{idx nvar i 0} <- dY.{idx nvar i 0}
-              +. k1 *. a -. k2 *. w *. u +. k3 *. u *. u *. v -. k4 *. u;
-      dY.{idx nvar i 1} <- dY.{idx nvar i 1}
-              +. k2 *. w *. u -. k3 *. u *. u *. v;
-      dY.{idx nvar i 2} <- dY.{idx nvar i 2}
+      dY.{idx nvar i 0} <-
+              k1 *. a -. k2 *. w *. u +. k3 *. u *. u *. v -. k4 *. u;
+      dY.{idx nvar i 1} <-
+              k2 *. w *. u -. k3 *. u *. u *. v;
+      dY.{idx nvar i 2} <-
               -. k2 *. w *. u +. k5 *. b -. k6 *. w;
     done
   end
 
 let reaction udata t ((y, _)  : Nvector_mpiplusx.data)
                      ((dY, _) : Nvector_mpiplusx.data) =
-  reaction' udata t (Nvector_serial.Any.unwrap y) (Nvector_serial.Any.unwrap y)
+  reaction' udata t (Nvector_serial.Any.unwrap y) (Nvector_serial.Any.unwrap dY)
 
 (* --------------------------------------------------------------
  * (Non)linear system functions
@@ -242,12 +241,13 @@ let task_local_nls_residual udata
   let zpred_d = Nvector_serial.Any.unwrap (fst zpred) in
   let fi_d = Nvector_serial.Any.unwrap (fst fi) in
   let sdata_d = Nvector_serial.Any.unwrap (fst sdata) in
+  let z_d = Nvector_serial.Any.unwrap (fst zi) in
 
   (* update 'z' value as stored predictor + current corrector *)
-  Nvector_serial.(DataOps.linearsum 1.0 zpred_d 1.0 ycor_d (Any.unwrap (fst zi)));
+  Nvector_serial.(DataOps.linearsum 1.0 zpred_d 1.0 ycor_d z_d);
 
   (* compute implicit RHS and save for later *)
-  reaction' udata tcur zpred_d fi_d;
+  reaction' udata tcur z_d fi_d;
 
   (* count calls to Fi as part of the nonlinear residual *)
   udata.nnlfi <- udata.nnlfi + 1;
@@ -349,16 +349,20 @@ let rewrap comm (y : Nvector.gdata) =
   | Nvector.RA ydata -> Nvector_mpiplusx.wrap comm (Nvector_serial.Any.wrap ydata)
   | _ -> assert false
 
+let task_local_newton_initialize udata { local_nls; comm; _ } () =
+  NLS.set_sys_fn local_nls (task_local_nls_residual udata);
+  NLS.set_lsolve_fn local_nls (task_local_lsolve udata)
+
 let task_local_newton_setsysfn { local_nls; comm; _ }
       (sysfn : (Nvector_mpiplusx.t, local_nls_session) NLS.sysfn) =
   let rw = rewrap comm in
   NLS.set_sys_fn local_nls (fun y fg -> sysfn (rw y) (rw fg))
 
 let task_local_newton_setconvtestfn { local_nls; comm; _ }
-      (ctestfn : (Nvector_mpiplusx.t, local_nls_session) NLS.convtestfn) =
+      (ctestfn : (Nvector_mpiplusx.t, local_nls_session, [`Nvec]) NLS.convtestfn) =
   let rw = rewrap comm in
-  NLS.set_convtest_fn local_nls
-    (fun y del tol ewt -> ctestfn (rw y) (rw del) tol (rw ewt))
+  NLS.(set_convtest_fn local_nls
+    { ctfn = fun nls y del tol ewt -> ctestfn.ctfn nls (rw y) (rw del) tol (rw ewt)})
 
 let task_local_newton_getnumconvfails { ncnf; _ } () = ncnf
 
@@ -377,13 +381,12 @@ let task_local_newton udata (y : Nvector_mpiplusx.t) dfid =
     nprocs    = Mpi.comm_size comm;
     ncnf      = 0;
   } in
-  NLS.set_sys_fn local_nls (task_local_nls_residual udata);
-  NLS.set_lsolve_fn local_nls (task_local_lsolve udata);
   (* Setup the local nonlinear solver monitoring *)
   (match dfid with None -> ()
    | Some dfid -> NLS.set_info_file local_nls dfid;
                   NLS.set_print_level local_nls true);
   (NLS.Custom.(make
+                ~init:(task_local_newton_initialize udata content)
                 ~set_convtest_fn:(task_local_newton_setconvtestfn content)
                 ~get_num_conv_fails:(task_local_newton_getnumconvfails content)
                 ~nls_type:RootFind
@@ -469,7 +472,7 @@ let advection' ({ nvar; nxl = n; dx; c; erecv; wrecv; _ } as udata) t
     done
   else if c < 0.0 then
     (* left moving flow *)
-    for i = 0 to n - 1 do
+    for i = 0 to n - 2 do
       for var = 0 to nvar - 1 do
         dY.{idx nvar i var} <-
           tmp *. (y.{idx nvar (i + 1) var} -. y.{idx nvar i var})
@@ -860,9 +863,8 @@ let write_output ({ myid; uopt; umask; vmask; wmask; nvar;
   end
 
 (* Setup ARKODE and evolve problem in time with IMEX method*)
-let evolve_problem_imex ({ myid; nnlfi; _ } as udata) (y : Nvector_mpiplusx.t) =
-  let { rtol; atol; order; t0; tf; nout;
-        monitor; global; outputdir; _ } = udata.uopt
+let evolve_problem_imex ({ myid; uopt; _ } as udata) (y : Nvector_mpiplusx.t) =
+  let { rtol; atol; order; t0; tf; nout; monitor; global; outputdir; _ } = uopt
   in
   let dfid = if monitor
     then Some (Logfile.openfile
@@ -933,19 +935,19 @@ let evolve_problem_imex ({ myid; nnlfi; _ } as udata) (y : Nvector_mpiplusx.t) =
   if myid = 0 then begin
     printf "\nFinal Solver Statistics (for processor 0):\n";
     printf "   Internal solver steps = %d (attempted = %d)\n" nst nst_a;
-    printf "   Total RHS evals:  Fe = %d,  Fi = %d\n" nfe (nfi + nnlfi);
+    printf "   Total RHS evals:  Fe = %d,  Fi = %d\n" nfe (nfi + udata.nnlfi);
     printf "   Total number of error test failures = %d\n" netf;
-    printf "   Total number of nonlinear solver convergence failures = %d\n" ncnf
-  end;
+    printf "   Total number of nonlinear solver convergence failures = %d\n" ncnf;
 
-  if global then begin
-    let nli = Spils.get_num_lin_iters arkode_mem in
-    let npre = Spils.get_num_prec_evals arkode_mem in
-    let npsol = Spils.get_num_prec_solves arkode_mem in
-    printf "   Total number of nonlinear iterations = %d\n" nni;
-    printf "   Total number of linear iterations = %d\n" nli;
-    printf "   Total number of preconditioner setups = %d\n" npre;
-    printf "   Total number of preconditioner solves = %d\n" npsol
+    if global then begin
+      let nli = Spils.get_num_lin_iters arkode_mem in
+      let npre = Spils.get_num_prec_evals arkode_mem in
+      let npsol = Spils.get_num_prec_solves arkode_mem in
+      printf "   Total number of nonlinear iterations = %d\n" nni;
+      printf "   Total number of linear iterations = %d\n" nli;
+      printf "   Total number of preconditioner setups = %d\n" npre;
+      printf "   Total number of preconditioner solves = %d\n" npsol
+    end
   end
 
 (* Setup ARKODE and evolve problem in time explicitly *)
@@ -1044,6 +1046,15 @@ let main () =
         uopt = { fused; explicit; nout; outputdir; printtime; _ } as uopt;
     _ } as udata = setup_problem ()
   in
+
+  (* XXX *)
+  let rank = Mpi.comm_rank comm in
+  if rank = 1 then begin
+    Unix.sleep 3;
+    Printf.printf "pid=%d\n" (Unix.getpid ()); flush stdout;
+    Unix.sleep 10;
+  end;
+  (* XXX *)
 
   (* Create solution vector *)
   let ys = Nvector_serial.Any.make ~with_fused_ops:fused neq 0.0 in

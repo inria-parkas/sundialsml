@@ -11,6 +11,8 @@
 (*                                                                     *)
 (***********************************************************************)
 
+(** A rudimentary interface to C streams for logging in Sundials. *)
+
 (** An open log file. *)
 type t
 
