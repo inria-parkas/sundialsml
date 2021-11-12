@@ -26,7 +26,7 @@ There is no support for nvectors based on CUDA, Hypre ParVector, PETSC,
 RAJA, Trilinos, HIP, or SYCLC; nor for linear solvers requiring CUDA,
 PETSCSNES, MAGMA, or SuperLU_DIST; nor for XBraid.
 These features require libraries that are not available
-in OCaml—{{:mailto:tim\@tbrk.org}contact us} if you need these.
+in OCaml—{{:mailto:tim\@tbrk.org}contact us} if you need them.
 
 The source code is available under a New BSD license at
 {{:https://github.com/inria-parkas/sundialsml}git\@github.com:inria-parkas/sundialsml.git}.
@@ -60,7 +60,9 @@ Theoretical Computer Science} {{:#refs}\[3\]}.
 
 {2:overview Overview}
 
-The structure of this interface mostly follows that of the original library,
+This interface provides access to the {!Cvode}, {!Cvodes}, {!Ida}, {!Idas},
+{!Kinsol}, and {!Arkode} modules.
+Its structure mostly follows that of the original library,
 both for ease of reading the official documentation and for converting
 existing source code, but several changes have been made for programming
 convenience and to increase safety, namely:
@@ -84,9 +86,9 @@ into lowercase. For instance, [IdaSetErrHandlerFn], becomes
 Constants are replaced by variant types in most cases. They are renamed by
 conversion to {e CamlCase} and the removal of underscores. For instance,
 [PREC_NONE] becomes
-{{!Sundials_LinearSolver.Iterative.preconditioning_type}LinearSolver.Iterative.PrecNone}.
-Exception names are sometimes renamed for consistency and to make them more
-self explanatory.
+{{!Sundials_LinearSolver.Iterative.preconditioning_type}PrecNone}.
+The names chosen for exceptions sometimes differ from the corresponding return
+code names when this improves consistency or comprehensibility.
 For instance, the return codes [CV_FIRST_RHSFUNC_ERR] and
 [IDA_FIRST_RES_FAIL] become, respectively, the exceptions
 {!Cvode.FirstRhsFuncFailure} and {!Ida.FirstResFuncFailure}, and [CV_BAD_IS]
@@ -100,12 +102,10 @@ with references to the original texts and underlying functions.
 {3:nvector Nvectors}
 
 Sundials defines an abstract interface for vectors and provides
-serial, parallel, Pthreads, and OpenMP instantiations.
+several instantiations.
 The OCaml interface defines likewise a generic
 {!Nvector.t} type whose type arguments indicate the underlying {e
-data} and {e kind}—the latter may be {!Nvector_serial.kind},
-{!Nvector_parallel.kind}, {!Nvector_pthreads.kind}, {!Nvector_openmp.kind},
-or {!Nvector_custom.kind}.
+data} and {e kind}.
 The {!Nvector.unwrap} function gives direct access to the underlying data.
 
 The interface to serial nvectors, {!Nvector_serial}, is based on
@@ -114,7 +114,7 @@ These arrays are manipulated directly, i.e., with no additional overhead,
 within the solver by the original low-level serial nvector operations
 (see {!Nvector.NVECTOR_OPS}).
 The same low-level operations can be called from OCaml
-({!Nvector_serial.Ops}), as can equivalent reimplementations in OCaml on the
+({!Nvector_serial.Ops}), as can equivalent OCaml reimplementations on the
 underlying data ({!Nvector_serial.DataOps}).
 
 The interface to parallel nvectors, {!Nvector_parallel}, is based on
@@ -123,12 +123,14 @@ and the {{:https://github.com/xavierleroy/ocamlmpi/}OCamlMPI}
 library. Parallel nvectors are only available when Sundials/ML is configured
 to build with MPI.
 
-The underlying operations of Pthreads nvectors, {!Nvector_pthreads}, and
-OpenMP nvectors, {!Nvector_openmp}, are implemented using multiple threads.
-These nvectors can be used anywhere that Serial nvectors can (except for
-the operations in {!Nvector_serial.Ops}).
+The {!Nvector.any} type provides alternatives to the standard nvector types.
+It replaces the static typing of the {e data} and {e kind} arguments with
+dynamic checks on the extensible {!Nvector.gdata} type. This approach is
+exploited in the {e many} nvectors, like {!Nvector_many},
+{!Nvector_mpimany}, or {!Nvector_mpiplusx}, that group and operate on arrays
+of nvectors.
 
-Besides these four standard implementations, it is also possible to define
+Besides the standard implementations, it is also possible to define
 new nvector implementations through {!Nvector_custom} by providing low-level
 operations on an underlying datatype. A demonstration of this feature on
 float arrays is provided in {!Nvector_array}. Custom nvectors suffer two
@@ -158,16 +160,31 @@ Some low-level matrix routines on arrays are provided by
 {{!Sundials_Matrix.ArrayDense}Matrix.ArrayDense} and
 {{!Sundials_Matrix.ArrayBand}Matrix.ArrayBand}.
 
-{3:linsolv Linear Solvers}
+{3:nonlinsolv Nonlinear Solvers}
 
 Nonlinear algebraic systems occur optionally in the solution of ODE initial
 value problems with {!Cvode}, invariably when solving DAE initial value
 problems with {!Ida}, and when solving implicit problems or problems
-involving a mass matrix with {!Arkode}, and directly in the problems treated
-by {!Kinsol}. Such systems are solved using some form of Newton iteration
-which in turn requires the solution of linear equations.
+involving a mass matrix with {!Arkode}.
+Sundials provides generic {{!Sundials_NonlinearSolver.Newton}Newton} and
+{{!Sundials_NonlinearSolver.FixedPoint}Fixed-point} nonlinear solvers.
+It is also possible to define {{!Sundials_NonlinearSolver.Custom}Custom}
+nonlinear solvers by providing appropriate OCaml functions.
 
-Sundials provides four options for the solution of linear equations:
+The user of a nonlinear solver, whether a Sundials module or OCaml program,
+provides callback functions that describe the
+{{!Sundials_NonlinearSolver.set_sys_fn}system},
+the {{!Sundials_NonlinearSolver.set_lsetup_fn}setup} and
+{{!Sundials_NonlinearSolver.set_lsolve_fn}solution} of linear equations,
+and a {{!Sundials_NonlinearSolver.set_convtest_fn}convergence test}.
+It then invokes the {{!Sundials_NonlinearSolver.setup}setup} and
+{{!Sundials_NonlinearSolver.solve}solve} functions.
+
+{3:linsolv Linear Solvers}
+
+{!Sundials.NonlinearSolver}s and the {!Kinsol} solver both require the
+solution of systems of linear equations for which Sundials provides four
+options:
 {ul
     {- The {e diagonal approximation} of Jacobians by difference equations (only
     for {!Cvode});}
@@ -176,12 +193,11 @@ Sundials provides four options for the solution of linear equations:
     {- {e Scaled Preconditioned Iterative Linear Solvers (SPILS)}
     requiring user-supplied callback functions to setup and solve
     linear preconditioning systems;}
-    {- {e Alternate linear solvers} providing hooks for implementing new
-    linear solver modules in OCaml.}
+    {- {e Custom linear solvers} defined by a set of OCaml functions.}
 }
 
-The DLS routines are only available to sessions that use serial, Pthreads,
-or OpenMP nvectors.
+The {{!Sundials_LinearSolver.Direct}DLS routines} are only available to
+sessions that use serial, Pthreads, or OpenMP nvectors.
 The external SuperLU_MT and KLU libraries are required for working with
 sparse Jacobians.
 Callback functions manipulate Jacobian matrices through the operations in
@@ -189,9 +205,10 @@ Callback functions manipulate Jacobian matrices through the operations in
 {{!Sundials_Matrix.Band}Matrix.Band}, and
 {{!Sundials_Matrix.Sparse}Matrix.Sparse}.
 
-The SPILS routines include the {e Scaled Preconditioned GMRES (SPGMR)}, {e
+The {{!Sundials_Iterative}SPILS routines} include the
+{e Scaled Preconditioned GMRES (SPGMR)}, {e
 Scaled Preconditioned Bi-CGStab (SPBCG)}, {e Scaled Preconditioned TFQMR
-(SPTFQMR)}, {e Scaled Preconditioned Flexible GMRES (SPFMGR)}, and
+(SPTFQMR)}, {e Scaled Preconditioned Flexible GMRES (SPFGMR)}, and
 {e Preconditioned Conjugate Gradient (PCG)} methods.
 Additionally, {!Cvode} provides banded preconditioners
 for sessions that use serial, Pthreads, or OpenMP nvectors.
@@ -221,10 +238,6 @@ Custom linear solvers can be created by providing a set of operations to
 {{!Sundials_LinearSolver.Custom.make_with_matrix}LinearSolver.Custom.make_with_matrix},
 or
 {{!Sundials_LinearSolver.Custom.make_without_matrix}LinearSolver.Custom.make_without_matrix}.
-
-{3:nonlinsolv Nonlinear Solvers}
-
-TODO
 
 {2:api API Reference}
 
@@ -257,10 +270,8 @@ installing Sundials and Sundials/ML.
 
 The {{:https://opam.ocaml.org}OPAM} package manager provides the easiest way
 to install Sundials/ML and the underlying Sundials library.
-
-Note that the {i Debian/Ubuntu packages are out-of-date}: at the
-time of writing they install Sundials 2.7.0.
-In this case, Sundials/ML will still function correctly but with less features.
+The features available in Sundials/ML depend on the version and options of
+the underlying library (see {!Sundials.Config}).
 
 {ol
     {- {i Optionally} run [opam install mpi].}
@@ -270,8 +281,7 @@ In this case, Sundials/ML will still function correctly but with less features.
 If OPAM fails to install the required Sundials package automatically, then
 try using your system's package manager directly, for example:
 {ul
-    {- Debian/Ubuntu (version 2.7.0 without parallelism):
-	    [apt-get install libsundials-serial-dev]}
+    {- Debian/Ubuntu: [apt-get install libsundials-dev]}
     {- Fedora:
 	    [dnf install lapack-devel sundials-devel
 	    sundials-threads-devel sundials-openmpi-devel]}
@@ -304,7 +314,7 @@ For {b Debian}-based systems, we found the following worked:
     {{:http://crd-legacy.lbl.gov/~xiaoye/SuperLU/superlu_mt_3.1.tar.gz}download}
     and build SuperLU/MT 3.1.}
     {- {v mkdir build; cd build v}}
-    {- {v cmake -Wno-dev ../sundials-3.1.1 \
+    {- {v cmake -Wno-dev ../sundials-5.8.0 \
 -DCMAKE_BUILD_TYPE=Release \
 -DOPENMP_ENABLE=1 \
 -DPTHREAD_ENABLE=1 \
@@ -315,18 +325,18 @@ For {b Debian}-based systems, we found the following worked:
        {v -DLAPACK_ENABLE=1 -DLAPACK_LIBRARIES='-llapack -lblas' v}
        adding, if necessary,
        {v -DSUPERLUMT_ENABLE=1 \
--DSUPERLUMT_LIBRARY_DIR=<full-path-to>/SuperLU_MT_3.0/lib \
--DSUPERLUMT_INCLUDE_DIR=<full-path-to>/SuperLU_MT_3.0/SRC \
+-DSUPERLUMT_LIBRARY_DIR=<full-path-to>/SuperLU_MT_3.1/lib \
+-DSUPERLUMT_INCLUDE_DIR=<full-path-to>/SuperLU_MT_3.1/SRC \
 -DSUPERLUMT_LIBRARIES=-lblas v}}
     {- Build and install Sundials by running [make install].}
     {- Change to the Sundials/ML source directory and run
 	{v ./configure v}
 	Adding, if necessary,
-	{v SUPERLUMT_INCLUDE_DIR=<full-path-to>/SuperLU_MT_3.0/SRC \
-SUPERLUMT_LIBRARY_DIR=<full-path-to>/SuperLU_MT_3.0/lib \
+	{v SUPERLUMT_INCLUDE_DIR=<full-path-to>/SuperLU_MT_3.1/SRC \
+SUPERLUMT_LIBRARY_DIR=<full-path-to>/SuperLU_MT_3.1/lib \
 KLU_INCLUDE_DIR=/usr/include/suitesparse v}
        Note that [SUPERLUMT_LIBRARY_DIR] must be registered with [ld]:
-	{v export LD_LIBRARY_PATH=<full-path-to>/SuperLU_MT_3.0/lib:$LD_LIBRARY_PATH v}}
+	{v export LD_LIBRARY_PATH=<full-path-to>/SuperLU_MT_3.1/lib:$LD_LIBRARY_PATH v}}
     {- Run [make] to build the library and [make install] or [make install-findlib] to install it.}
 }
 
@@ -340,9 +350,9 @@ For {b macOS}, we found the following worked:
        and build SuperLU/MT.}
     {- {v mkdir build; cd build v}}
     {- For OpenMP, the gcc compiler is required:
-       {v cmake -Wno-dev ../sundials-3.1.1 \
+       {v cmake -Wno-dev ../sundials-5.8.0 \
 -DCMAKE_BUILD_TYPE=Release \
--DCMAKE_C_COMPILER=gcc-8 \
+-DCMAKE_C_COMPILER=gcc-11 \
 -DOPENMP_ENABLE=1 \
 -DPTHREAD_ENABLE=1 \
 -DMPI_ENABLE=1 \
@@ -351,10 +361,10 @@ For {b macOS}, we found the following worked:
        {v -DLAPACK_ENABLE=1 v}
        adding, if necessary,
        {v -DSUPERLUMT_ENABLE=1 \
--DSUPERLUMT_LIBRARY_DIR=<full-path-to>/SuperLU_MT_3.0/lib \
--DSUPERLUMT_INCLUDE_DIR=<full-path-to>/SuperLU_MT_3.0/SRC v}}
+-DSUPERLUMT_LIBRARY_DIR=<full-path-to>/SuperLU_MT_3.1/lib \
+-DSUPERLUMT_INCLUDE_DIR=<full-path-to>/SuperLU_MT_3.1/SRC v}}
     {- Configure Sundials/ML with
-	{v ./configure SUPERLUMT_LIBRARY_DIR=<full-path-to>/SuperLU_MT_3.0/lib v}}
+	{v ./configure SUPERLUMT_DIR=<full-path-to>/SuperLU_MT_3.1 v}}
 }
 
 The Sundials/ML [configure] script detects and automatically enables optional
@@ -512,7 +522,7 @@ Printf.printf "Sum of abs. = %f\n" (Nvector_parallel.Ops.n_vl1norm pv);;
        {v Couldn't determine C compiler flag for OpenMP. v}
        can usually be eliminated by specifying a compiler that supports OpenMP,
        for example,
-       {v CC=gcc-8 ./configure v}}
+       {v CC=gcc-11 ./configure v}}
 }
 
 
