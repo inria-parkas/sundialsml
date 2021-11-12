@@ -1109,7 +1109,7 @@ type 'd nonlin_system_data = {
     {% $\mathit{res} = F(t_n, y_n, \dot{y}_n)$ %} where
     {% $y_{\mathit{cor}}$ %} is the
     first argument of the nonlinear solver system function. Within a custom
-    linear solver, then the vectors [yyn, [ypn], and [res] are only current
+    linear solver, then the vectors [yyn], [ypn], and [res] are only current
     after an evaluation of the nonlinear system function.
 
     @since 5.4.0

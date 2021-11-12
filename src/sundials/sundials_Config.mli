@@ -11,6 +11,8 @@
 (*                                                                     *)
 (***********************************************************************)
 
+(** Information on Sundials/ML and the underlying Sundials library. *)
+
 (** The [major], [minor], [patch], and [binding] version numbers of
     Sundials/ML.
     The first three elements correspond to the maximum supported version

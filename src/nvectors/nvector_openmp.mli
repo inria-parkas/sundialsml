@@ -97,7 +97,7 @@ val enable :
 (** Underlying nvector operations on OpenMP nvectors. *)
 module Ops : Nvector.NVECTOR_OPS with type t = t
 
-(** {2:genvec Generic nvector interface}
+(** A generic nvector interface to OpenMP nvectors.
 
     Create OpenMP nvectors using the generic nvector interface where the
     payload is wrapped with the {{!Nvector.gdata}RA} constructor. *)

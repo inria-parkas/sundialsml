@@ -11,6 +11,8 @@
 (*                                                                     *)
 (***********************************************************************)
 
+(** Arrays of integers. *)
+
 (** A {{:OCAML_DOC_ROOT(Bigarray.Array1.html)} Bigarray} of integers. *)
 type t = (int, Bigarray.int_elt, Bigarray.c_layout) Bigarray.Array1.t
 

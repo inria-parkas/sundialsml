@@ -78,7 +78,7 @@ module Ops : Nvector.NVECTOR_OPS with type t = t
 (** Nvector operations implemented in OCaml on many-vector payloads. *)
 module DataOps : Nvector.NVECTOR_OPS with type t = data
 
-(** {2:genvec Generic nvector interface}
+(** A generic nvector interface to many-vector nvectors.
 
     Create many-vector nvectors using the generic nvector interface where the
     payload is wrapped with the {{!Nvector.gdata}Many} constructor. *)

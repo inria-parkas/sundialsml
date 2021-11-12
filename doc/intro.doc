@@ -217,14 +217,21 @@ Any given generic instance, and hence a solver-specific instance, of a
 linear solver can only be associated with one solver session.
 
 Custom linear solvers can be created by providing a set of operations to
-either {{!Sundials_LinearSolver.Custom.make_dls}LinearSolver.Custom.make_dls}
-or {{!Sundials_LinearSolver.Custom.make}LinearSolver.Custom.make}.
+{{!Sundials_LinearSolver.Custom.make_dls}LinearSolver.Custom.make_dls},
+{{!Sundials_LinearSolver.Custom.make_with_matrix}LinearSolver.Custom.make_with_matrix},
+or
+{{!Sundials_LinearSolver.Custom.make_without_matrix}LinearSolver.Custom.make_without_matrix}.
+
+{3:nonlinsolv Nonlinear Solvers}
+
+TODO
 
 {2:api API Reference}
 
 {!modules: Sundials}
 {!modules: Nvector Nvector_serial Nvector_parallel
 	   Nvector_pthreads Nvector_openmp
+	   Nvector_many Nvector_mpimany Nvector_mpiplusx
 	   Nvector_custom Nvector_array}
 {!modules: Cvode Cvode_bbd Cvodes Cvodes_bbd}
 {!modules: Ida Ida_bbd Idas Idas_bbd}
@@ -236,9 +243,9 @@ or {{!Sundials_LinearSolver.Custom.make}LinearSolver.Custom.make}.
 The dependencies of Sundials/ML are
 - {{:http://caml.inria.fr/ocaml/}OCaml} {b 4.03.0 or greater},
 - {{:http://computation.llnl.gov/casc/sundials/}Sundials} {b {var version}}
-  (compiles with 2.5.0 onwards with less features),
+  (compiles with version back to 2.7.0 with less features),
 - {e Optionally}:
-  {{:https://forge.ocamlcore.org/projects/ocamlmpi/}OCamlMPI} {b 1.03}.
+  {{:https://forge.ocamlcore.org/projects/ocamlmpi/}OCamlMPI} {b 1.05}.
 
 Normally, to install Sundials/ML, you need only type
 [opam install sundialsml].
@@ -651,12 +658,14 @@ We gratefully acknowledge the support of the
 driven physical systems operation), {{:http://www.inria.fr/}Inria}, and
 the {{:http://www.di.ens.fr/}Departement d'Informatique de l'ENS}.
 
-This library benefits greatly from the OCaml {{:http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.html}Bigarray} and {{:https://forge.ocamlcore.org/projects/ocamlmpi/}MPI}
+This library benefits greatly from the OCaml
+{{:https://ocaml.org/api/Bigarray.html}Bigarray} and
+{{:https://forge.ocamlcore.org/projects/ocamlmpi/}MPI}
 libraries, and from {{:https://ocaml.org/}OCaml}'s optimized floating-point
 representations and compilation.
 
-This documentation uses {{:http://www.xulforum.org}J. Protzenko}'s
-{{:http://www.xulforum.org/files/ocamlcss/style.css}CSS stylesheet}, and
+This documentation uses {{:https://jonathan.protzenko.fr/}J. Protzenko}'s
+{{:https://jonathan.protzenko.fr/misc/ocamlcss/style.css}CSS stylesheet}, and
 {{:http://www.mathjax.org}MathJax} for rendering mathematics.
 
 We are grateful for direct contributions to this library from

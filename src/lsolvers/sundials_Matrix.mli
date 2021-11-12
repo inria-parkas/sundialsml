@@ -392,7 +392,7 @@ module Sparse : sig (* {{{ *)
   type csc (** Compressed-sparse-column format. *)
   type csr (** Compressed-sparse-row format. *)
 
-  (* Matrix storage formats. *)
+  (** Matrix storage formats. *)
   type _ sformat =
     | CSC : csc sformat (** Compressed-sparse-column format ([CSC_MAT]). *)
     | CSR : csr sformat (** Compressed-sparse-row format ([CSR_MAT]). *)

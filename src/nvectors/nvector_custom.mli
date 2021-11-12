@@ -211,25 +211,25 @@ type 'd nvector_ops = { (* {{{ *)
   (* optional reduction operations *)
 
   dotprod_local      : ('d -> 'd -> float) option;
-  (** Perform {!vdotprod} on task-local elements. *)
+  (** Perform [dotprod] on task-local elements. *)
 
   maxnorm_local      : ('d -> float) option;
-  (** Perform {!maxnorm} on task-local elements. *)
+  (** Perform [maxnorm] on task-local elements. *)
 
   min_local          : ('d -> float) option;
   (** Returns the smallest task-local element. *)
 
   l1norm_local       : ('d -> float) option;
-  (** Perform {!l1norm} on task-local elements. *)
+  (** Perform [l1norm] on task-local elements. *)
 
   invtest_local      : ('d -> 'd -> bool) option;
-  (** Perform {!invtest} on task-local elements. *)
+  (** Perform [invtest] on task-local elements. *)
 
   constrmask_local   : ('d -> 'd -> 'd -> bool) option;
-  (** Perform {!constrmask} on task-local elements. *)
+  (** Perform [constrmask] on task-local elements. *)
 
   minquotient_local  : ('d -> 'd -> float) option;
-  (** Perform {!minquotient} on task-local elements. *)
+  (** Perform [minquotient] on task-local elements. *)
 
   wsqrsum_local      : ('d -> 'd -> float) option;
   (** [wsqrsum x w] calculates the weighted squared sum of [x] with
@@ -281,7 +281,7 @@ module MakeOps : functor (A : sig
   end) -> Nvector.NVECTOR with type data = A.data
                            and type kind = kind
 
-(** {2:genvec Generic nvector interface}
+(** A generic nvector interface to custom nvectors.
 
     Create custom nvectors using the generic nvector interface where the
     payload is wrapped with a constructor from {!Nvector.gdata}. *)

@@ -76,7 +76,7 @@ module type ARRAY_NVECTOR =
       -> t
       -> unit
 
-    (* A generic nvector interface for an arbitrary array type. *)
+    (** A generic nvector interface to arbitrary array types. *)
     module Any : sig (* {{{ *)
 
       (** Generic wrapper for {!data}. *)
@@ -113,7 +113,9 @@ module type ARRAY_NVECTOR =
     module DataOps : Nvector.NVECTOR_OPS with type t = data
   end
 
+(** A minimal interface for creating a custom nvector on an array type. *)
 module type ArrayOps = sig
+  (** The type of an array to be wrapped as an {!Nvector.t}. *)
   type data
   val get       : data -> int -> float
   val set       : data -> int -> float -> unit

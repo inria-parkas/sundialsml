@@ -1679,9 +1679,11 @@ echo "(** Index values for sparse matrices. *)"\
     > src/sundials/sundials_Index.mli
 if [ "${sundials_indextype}" -eq 64 ]; then
     echo "include module type of Int64" >> src/sundials/sundials_Index.mli
+    echo "(** Type of indexes into sparse matrices. *)" >> src/sundials/sundials_Index.mli
     echo "type index_elt = Bigarray.int64_elt" >> src/sundials/sundials_Index.mli
 else
     echo "include module type of Int32" >> src/sundials/sundials_Index.mli
+    echo "(** Type of indexes into sparse matrices. *)" >> src/sundials/sundials_Index.mli
     echo "type index_elt = Bigarray.int32_elt" >> src/sundials/sundials_Index.mli
 fi
 

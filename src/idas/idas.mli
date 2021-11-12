@@ -1520,6 +1520,7 @@ module Adjoint : sig (* {{{ *)
 
   (** {2:bsolve Backward solutions} *)
 
+  (** Arguments for backward functions. *)
   type 'd bresfn_args = 'd Ida_impl.AdjointTypes.bresfn_args =
     {
       t : float;

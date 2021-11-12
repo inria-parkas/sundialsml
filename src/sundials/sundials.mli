@@ -42,8 +42,8 @@ exception NonPositiveEwt
 (** Vectors of floats (one-dimensional bigarrays). *)
 module RealArray = Sundials_RealArray
 
-(** Matrices of floats (wrappers around two-dimensional bigarrays with
-    extra internal information required by Sundials). *)
+(** Matrices of floats (two-dimensional bigarrays plus
+    extra information for Sundials. *)
 module RealArray2 = Sundials_RealArray2
 
 (** Vectors of integers (one-dimensional bigarrays). *)
@@ -287,10 +287,13 @@ end (* }}} *)
 
 (** {2:matlin Matrices, Linear Solvers, and Nonlinear Solvers} *)
 
+(** Generic matrices. *)
 module Matrix = Sundials_Matrix
 
+(** Generic linear solvers. *)
 module LinearSolver = Sundials_LinearSolver
 
+(** Generic nonlinear solvers. *)
 module NonlinearSolver = Sundials_NonlinearSolver
 
 (** {2:results Solver results and error reporting} *)
@@ -300,6 +303,7 @@ module NonlinearSolver = Sundials_NonlinearSolver
     log solver errors and diagnostics. *)
 module Logfile = Sundials_Logfile
 
+(** Shared definitions and miscellaneous utility functions. *)
 module Util : sig (* {{{ *)
 
   (** Information passed to registered error handler functions.
@@ -328,9 +332,10 @@ module Util : sig (* {{{ *)
 
   (** Returns true if the relative difference of the two arguments is less
       than or equal to the tolerance.
-      The tolerance defaults to 10 times {!Sundials.Config.unit_roundoff}.
+      The tolerance defaults to 10 times {!Sundials_Config.unit_roundoff}.
       This function handles the cases where the arguments are near zero and
-      where either is {!Float.infinity} or {!Float.nan}.
+      where either is {{:OCAML_DOC_ROOT(Float.html)} Float.infinity}
+      or {{:OCAML_DOC_ROOT(Float.html)} Float.nan}.
 
       @nocvode <node> SUNRCompare
       @nocvode <node> SUNRCompareTol

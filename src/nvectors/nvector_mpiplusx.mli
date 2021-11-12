@@ -83,7 +83,7 @@ module Ops : Nvector.NVECTOR_OPS with type t = t
 (** Nvector operations implemented in OCaml on mpiplusx payloads. *)
 module DataOps : Nvector.NVECTOR_OPS with type t = data
 
-(** {2:genvec Generic nvector interface}
+(** A generic nvector interface to mpiplusx nvectors.
 
     Create mpiplusx nvectors using the generic nvector interface where
     the payload is wrapped with the {{!Nvector.gdata}MpiPlusX} constructor. *)

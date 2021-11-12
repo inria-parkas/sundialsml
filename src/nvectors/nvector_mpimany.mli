@@ -47,7 +47,7 @@ type Nvector.gdata += MpiMany of data
     @cvode <node> N_VNew_MPIManyVector
     @cvode <node> N_VMake_MPIManyVector
     @cvode <node5> N_VEnableFusedOps_MPIManyVector
-    @raises Invalid_arg if an mpi communicator is not specified or found. *)
+    @raise Invalid_arg if an mpi communicator is not specified or found. *)
 val wrap
   : ?with_fused_ops:bool -> ?comm:Mpi.communicator -> Nvector.any ROArray.t -> t
 
@@ -96,7 +96,7 @@ module Ops : Nvector.NVECTOR_OPS with type t = t
 (** Nvector operations implemented in OCaml on mpimany-vector payloads. *)
 module DataOps : Nvector.NVECTOR_OPS with type t = data
 
-(** {2:genvec Generic nvector interface}
+(** A generic nvector interface to mpimany-vector nvectors.
 
     Create mpimany-vector nvectors using the generic nvector interface where
     the payload is wrapped with the {{!Nvector.gdata}MpiMany} constructor. *)
@@ -116,7 +116,7 @@ module Any : sig (* {{{ *)
       @cvode <node> N_VNew_MPIManyVector
       @cvode <node> N_VMake_MPIManyVector
       @cvode <node> N_VEnableFusedOps_MPIManyVector
-      @raises Invalid_arg if an mpi communicator is not specified or found. *)
+      @raise Invalid_arg if an mpi communicator is not specified or found. *)
   val wrap
     : ?with_fused_ops:bool -> ?comm:Mpi.communicator -> Nvector.any ROArray.t -> Nvector.any
 

@@ -11,6 +11,8 @@
 (*                                                                     *)
 (***********************************************************************)
 
+(** Arrays of flaoting-point values. *)
+
 (** A {{:OCAML_DOC_ROOT(Bigarray.Array1.html)} Bigarray} of floats. *)
 type t = (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
 

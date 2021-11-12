@@ -11,7 +11,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(** Immutable polymorphic arrays.
+(** Read-only polymorphic arrays.
 
     An immutable version of the [Array] module from the OCaml standard
     library. Used when the values in an array are shared with the underlying C
@@ -20,6 +20,7 @@
     This, in turn, prevents the corresponding C values from being freed while
     the array is still reachable. *)
 
+(** An immutable array. *)
 type 'a t
 
 val from_array : 'a array -> 'a t

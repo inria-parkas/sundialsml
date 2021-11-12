@@ -94,7 +94,7 @@ module Common : sig (* {{{ *)
 
   (** Used to specify the nterpolation method used for output values and
       implicit method predictors. See, for example,
-      {!MRIStep.set_interpolation_type}. *)
+      {!MRIStep.set_interpolant_type}. *)
   type interpolant_type =
       Hermite     (** Polynomial interpolants of Hermite form.
                       {cconst ARK_INTERP_HERMITE} *)
@@ -190,6 +190,7 @@ module Common : sig (* {{{ *)
 
   (** {3:adapt Adaptivity} *)
 
+  (** Arguments for {!adaptivity_fn}s. *)
   type adaptivity_args = {
       h1 : float;  (** the current step size, {% $t_m - t_{m-1}$%}. *)
       h2 : float;  (** the previous step size, {% $t_{m-1} - t_{m-2}$%}. *)
@@ -326,7 +327,7 @@ end (* }}} *)
 module Dls : sig (* {{{ *)
 
   (** Callback functions that compute dense approximations to a Jacobian
-      matrix. In the call [jac arg jm], [arg] is a {!jacobian_arg}
+      matrix. In the call [jac arg jm], [arg] is a {!Common.jacobian_arg}
       with three work vectors and the computed Jacobian must be stored
       in [jm].
 
@@ -402,7 +403,7 @@ module Spils : sig (* {{{ *)
 
   (** Callback functions that solve a linear system involving a
       preconditioner matrix. In the call [prec_solve_fn jac arg z],
-      [jac] is a {!jacobian_arg} with one work vector, [arg] is
+      [jac] is a {!Common.jacobian_arg} with one work vector, [arg] is
       a {!prec_solve_arg} that specifies the linear system, and [z] is
       computed to solve {% $P\mathtt{z} = \mathtt{arg.rhs}$%}.
       $P$ is a preconditioner matrix, which approximates, however crudely,
@@ -424,7 +425,7 @@ module Spils : sig (* {{{ *)
 
   (** Callback functions that preprocess or evaluate Jacobian-related data
       needed by {!prec_solve_fn}. In the call [prec_setup_fn jac jok gamma],
-      [jac] is a {!jacobian_arg} with three work vectors, [jok] indicates
+      [jac] is a {!Common.jacobian_arg} with three work vectors, [jok] indicates
       whether any saved Jacobian-related data can be reused with the current
       value of [gamma], and [gamma] is the scalar $\gamma$ in the Newton
       matrix {% $A = M - \gamma J$%} where $J$ is the Jacobian matrix.
@@ -494,6 +495,8 @@ module Spils : sig (* {{{ *)
 
     (** {4:arkbandstats Banded statistics} *)
 
+
+    (** Alias for sessions based on serial nvectors. *)
     type ('k, 's) serial_session =
       (Nvector_serial.data, 'k, 's) Arkode_impl.session
       constraint 'k = [>Nvector_serial.kind]
@@ -518,7 +521,7 @@ module Spils : sig (* {{{ *)
 
   (** Callback functions that preprocess or evaluate Jacobian-related data
       needed by the jac_times_vec_fn. In the call [jac_times_setup_fn arg],
-      [arg] is a {!jacobian_arg} with no work vectors.
+      [arg] is a {!Common.jacobian_arg} with no work vectors.
 
       Raising {!Sundials.RecoverableFailure} indicates a recoverable error.
       Any other exception is treated as an unrecoverable error.
@@ -532,8 +535,8 @@ module Spils : sig (* {{{ *)
     -> unit
 
   (** Callback functions that compute the Jacobian times a vector. In the
-      call [jac_times_vec_fn arg v jv], [arg] is a {!jacobian_arg} with one
-      work vector, [v] is the vector multiplying the Jacobian, and [jv] is
+      call [jac_times_vec_fn arg v jv], [arg] is a {!Common.jacobian_arg} with
+      one work vector, [v] is the vector multiplying the Jacobian, and [jv] is
       the vector in which to store the
       result—{% $\mathtt{jv} = J\mathtt{v}$%}.
 
@@ -712,10 +715,7 @@ module ButcherTable : sig (* {{{ *)
 
 end (* }}} *)
 
-(** {2:timestepping Time-stepping Modules}
-
-    The main time-stepping modules:
-    {!modules: ARKStep ERKStep MRIStep} *)
+(** {2:timestepping Time-stepping Modules} *)
 
 (** ARKStep Time-Stepping Module for ODE systems in split, linearly-implicit
     form.
@@ -1079,8 +1079,8 @@ module ARKStep : sig (* {{{ *)
           @noarkode <node> ARKStepGetNumMassSetups *)
       val get_num_setups : 'k serial_session -> int
 
-      (** Returns the number of calls made to the mass matrix {em matvec
-          setup} routine.
+      (** Returns the number of calls made to the mass matrix matvec
+          setup routine.
 
           @since 5.0.0
           @noarkode <node> ARKStepGetNumMassMultSetups *)
@@ -1354,6 +1354,7 @@ module ARKStep : sig (* {{{ *)
       but should be avoided ([ffun] is not allowed to abort the solver). *)
   type 'data res_weight_fun = 'data -> 'data -> unit
 
+  (** Tolerance specification for calculations on mass matrix residuals. *)
   type ('data, 'kind) res_tolerance =
     | ResStolerance of float
       (** [abs] : scalar absolute residual tolerance. *)
@@ -1386,7 +1387,6 @@ module ARKStep : sig (* {{{ *)
 
       The alternative implicit right-hand-side function for nonlinear
       system function evaluations is only supported for Sundials >= 5.8.0. *)
-
   val implicit :
        ?nlsolver : ('data, 'kind, ('data, 'kind) session, [`Nvec])
                      Sundials_NonlinearSolver.t
@@ -1422,7 +1422,8 @@ module ARKStep : sig (* {{{ *)
       - [msolver], a linear mass matrix solver is required only if the problem
                    involves a non-identity mass matrix,
       - [nroots],  the number of root functions,
-      - [g],       the root function ([(nroots, g)] defaults to {!no_roots}),
+      - [g],       the root function ([(nroots, g)] defaults to
+                   {!Common.no_roots}),
       - [t0],     the initial value of the independent variable, and
       - [y0],     a vector of initial values that also determines the number
                   of equations.
@@ -1469,7 +1470,7 @@ module ARKStep : sig (* {{{ *)
       - [yout], a vector to store the computed solution.
 
       It returns [tret], the time reached by the solver, which will be equal to
-      [tout] if no errors occur, and, [r], a {!solver_result}.
+      [tout] if no errors occur, and, [r], a {!Common.solver_result}.
 
       @noarkode <node> ARKStepEvolve (ARK_NORMAL)
       @raise IllInput Missing or illegal solver inputs.
@@ -1969,8 +1970,8 @@ module ARKStep : sig (* {{{ *)
 
       If a stage prediction function is set and the current predictor method,
       see {!set_predictor_method}, is
-      {{!predictor_method}MinimumCorrectionPredictor}, then the
-      {{!predictor_method}TrivialPredictor} will be used instead.
+      {{!Common.predictor_method}MinimumCorrectionPredictor}, then the
+      {{!Common.predictor_method}TrivialPredictor} will be used instead.
 
       @since 5.0.0
       @noarkode <node> ARKStepSetStagePredictFn *)
@@ -2337,7 +2338,8 @@ module ERKStep : sig (* {{{ *)
       - [order],  the order of accuracy for the integration method,
       - [f],      the ODE right-hand side function,
       - [nroots], the number of root functions,
-      - [g],      the root function ([(nroots, g)] defaults to {!no_roots}),
+      - [g],      the root function ([(nroots, g)] defaults to
+                  {!Common.no_roots}),
       - [t0],     the initial value of the independent variable, and
       - [y0],     a vector of initial values that also determines the number
                   of equations.
@@ -2369,7 +2371,7 @@ module ERKStep : sig (* {{{ *)
       - [yout], a vector to store the computed solution.
 
       It returns [tret], the time reached by the solver, which will be equal to
-      [tout] if no errors occur, and, [r], a {!solver_result}.
+      [tout] if no errors occur, and, [r], a {!Common.solver_result}.
 
       @noarkode <node> ERKStepEvolve (ARK_NORMAL)
       @raise IllInput Missing or illegal solver inputs.
@@ -3178,16 +3180,16 @@ module MRIStep : sig (* {{{ *)
 
   (** {2:innerstepper Inner steppers} *)
 
-  (** Generic  *)
+  (** Integrators for problems on the MRIStep fast time-scale. *)
   module InnerStepper : sig (* {{{ *)
 
     (** Inner steppers are used to solve the auxiliary initial value problem
-        of an {{!module:MRIStep}MRIStep} integrator's fast time scale.
+        of an {{!module:MRIStep}MRIStep} integrator's fast time-scale.
 
         @noarkode <node> MRIStep Custom Inner Steppers *)
     type ('d, 'k) t = ('d, 'k) Arkode_impl.inner_stepper
 
-    (** Wrap an {!module:ARKStep} session for use as an inner stepper.
+    (** Wrap an {!ARKStep.session} for use as an inner stepper.
 
         @noarkode <node> ARKStepCreateMRIStepInnerStepper *)
     val from_arkstep : ('d, 'k) ARKStep.session -> ('d, 'k) t
@@ -3300,7 +3302,7 @@ module MRIStep : sig (* {{{ *)
     (** Represents a set of coupling coefficients. The coupling from slow to
         fast time scales is encoded as a vector of slow “stage time”
         abscissae, {% $c^S \in \mathbb{R}^{s+1}$ %} and a set of coupling
-        matrices %{ $\Gamma^{\{k\}} \in \mathbb{R}^{(s+1)\times(s+1)} $ %}.
+        matrices {% $\Gamma^{\{k\}} \in \mathbb{R}^{(s+1)\times(s+1)} $ %}.
         The individual fields can be accessed using the functions below.
 
         @since 5.4.0
@@ -3390,7 +3392,8 @@ module MRIStep : sig (* {{{ *)
       - [f_s],    the slow portion of the right-hand side function,
       - [h_s],    the slow step size,
       - [nroots], the number of root functions,
-      - [g],      the root function ([(nroots, g)] defaults to {!no_roots}),
+      - [g],      the root function ([(nroots, g)] defaults to
+                  {!Common.no_roots}),
       - [t0],     the initial value of the independent variable, and
       - [y0],     a vector of initial values that also determines the number
                   of equations.
@@ -3427,8 +3430,8 @@ module MRIStep : sig (* {{{ *)
       Neither Root finding nor non-identity mass matrices are supported in the
       inner session.
 
-      For Sundials < 5.4.0, the tolerance must be {!default_tolerances} and
-      the [coupling], [nlsolver], [lsolver], and [linearity] arguments are
+      For Sundials < 5.4.0, the tolerance must be {!Common.default_tolerances}
+      and the [coupling], [nlsolver], [lsolver], and [linearity] arguments are
       not available.
 
       The alternative implicit right-hand-side function for nonlinear
@@ -3477,7 +3480,7 @@ module MRIStep : sig (* {{{ *)
       - [yout], a vector to store the computed solution.
 
       It returns [tret], the time reached by the solver, which will be equal to
-      [tout] if no errors occur, and, [r], a {!solver_result}.
+      [tout] if no errors occur, and, [r], a {!Common.solver_result}.
 
       @noarkode <node> MRIStepEvolve (ARK_NORMAL)
       @raise IllInput Missing or illegal solver inputs.
@@ -3731,8 +3734,8 @@ module MRIStep : sig (* {{{ *)
 
       If a stage prediction function is set and the current predictor method,
       see {!set_predictor_method}, is
-      {{!predictor_method}MinimumCorrectionPredictor}, then the
-      {{!predictor_method}TrivialPredictor} will be used instead.
+      {{!Common.predictor_method}MinimumCorrectionPredictor}, then the
+      {{!Common.predictor_method}TrivialPredictor} will be used instead.
 
       @noarkode <node> MRIStepSetStagePredictFn
       @since 5.4.0 *)

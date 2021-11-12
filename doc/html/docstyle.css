@@ -267,6 +267,10 @@ ul.info-attributes li {
   line-height: 1em;
 }
 
+ul.info-attributes b {
+  font-weight: normal;
+}
+
 table.module-list div.info {
   max-width: none;
   padding-bottom: .0em;
