@@ -30,7 +30,7 @@ type kind
 (** The type of many-vector nvectors. *)
 type t = (data, kind) Nvector.t
 
-(** A generic data wrapper for {!data}. *)
+(** Generic wrapper for {!data}. *)
 type Nvector.gdata += Many of data
 
 (** Creates a many-vector nvector from an array of generic nvectors.

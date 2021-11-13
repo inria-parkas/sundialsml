@@ -31,7 +31,7 @@ type kind
 (** The type of mpiplusx nvectors. *)
 type t = (data, kind) Nvector.t
 
-(** A generic data wrapper for {!data}. *)
+(** Generic wrapper for {!data}. *)
 type Nvector.gdata += MpiPlusX of data
 
 (** Creates an mpiplusx nvector from an mpi communicator and a generic nvector.

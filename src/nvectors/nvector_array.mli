@@ -117,11 +117,23 @@ module type ARRAY_NVECTOR =
 module type ArrayOps = sig
   (** The type of an array to be wrapped as an {!Nvector.t}. *)
   type data
+
+  (** Return the value from the array at the given index. *)
   val get       : data -> int -> float
+
+  (** Update the value in the array at the given index. *)
   val set       : data -> int -> float -> unit
+
+  (** Fill the array with a value. *)
   val fill      : data -> float -> unit
+
+  (** Create an array of the given length initialized to the given value. *)
   val make      : int -> float -> data
+
+  (** Create a copy of an array. *)
   val clone     : data -> data
+
+  (** Return the length of an array. *)
   val length    : data -> int
 end
 

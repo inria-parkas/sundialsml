@@ -32,7 +32,7 @@ type kind
 (** The type of parallel nvectors. *)
 type t = (data, kind) Nvector.t
 
-(** A generic data wrapper for {!data}. *)
+(** Generic wrapper for {!data}. *)
 type Nvector.gdata += Par of data
 
 (** Raised by make if the given global length is not consistent with the sum of
