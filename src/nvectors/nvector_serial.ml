@@ -43,25 +43,25 @@ let rec wrap ?(with_fused_ops=false) v =
 and clone nv =
   let nv' = wrap (RealArray.copy (unwrap nv)) in
   c_enablelinearcombination_serial nv'
-    (Nvector.has_linearcombination nv);
+    (Nvector.Ops.has_linearcombination nv);
   c_enablescaleaddmulti_serial nv'
-    (Nvector.has_scaleaddmulti nv);
+    (Nvector.Ops.has_scaleaddmulti nv);
   c_enabledotprodmulti_serial nv'
-    (Nvector.has_dotprodmulti nv);
+    (Nvector.Ops.has_dotprodmulti nv);
   c_enablelinearsumvectorarray_serial nv'
-    (Nvector.has_linearsumvectorarray nv);
+    (Nvector.Ops.has_linearsumvectorarray nv);
   c_enablescalevectorarray_serial nv'
-    (Nvector.has_scalevectorarray nv);
+    (Nvector.Ops.has_scalevectorarray nv);
   c_enableconstvectorarray_serial nv'
-    (Nvector.has_constvectorarray nv);
+    (Nvector.Ops.has_constvectorarray nv);
   c_enablewrmsnormvectorarray_serial nv'
-    (Nvector.has_wrmsnormvectorarray nv);
+    (Nvector.Ops.has_wrmsnormvectorarray nv);
   c_enablewrmsnormmaskvectorarray_serial nv'
-    (Nvector.has_wrmsnormmaskvectorarray nv);
+    (Nvector.Ops.has_wrmsnormmaskvectorarray nv);
   c_enablescaleaddmultivectorarray_serial nv'
-    (Nvector.has_scaleaddmultivectorarray nv);
+    (Nvector.Ops.has_scaleaddmultivectorarray nv);
   c_enablelinearcombinationvectorarray_serial nv'
-    (Nvector.has_linearcombinationvectorarray nv);
+    (Nvector.Ops.has_linearcombinationvectorarray nv);
   nv'
 
 let make ?with_fused_ops n iv = wrap ?with_fused_ops (RealArray.make n iv)
@@ -176,25 +176,25 @@ module Any = struct (* {{{ *)
     in
     let nv' = wrap (RealArray.copy v) in
     c_enablelinearcombination_serial nv'
-      (Nvector.has_linearcombination nv);
+      (Nvector.Ops.has_linearcombination nv);
     c_enablescaleaddmulti_serial nv'
-      (Nvector.has_scaleaddmulti nv);
+      (Nvector.Ops.has_scaleaddmulti nv);
     c_enabledotprodmulti_serial nv'
-      (Nvector.has_dotprodmulti nv);
+      (Nvector.Ops.has_dotprodmulti nv);
     c_enablelinearsumvectorarray_serial nv'
-      (Nvector.has_linearsumvectorarray nv);
+      (Nvector.Ops.has_linearsumvectorarray nv);
     c_enablescalevectorarray_serial nv'
-      (Nvector.has_scalevectorarray nv);
+      (Nvector.Ops.has_scalevectorarray nv);
     c_enableconstvectorarray_serial nv'
-      (Nvector.has_constvectorarray nv);
+      (Nvector.Ops.has_constvectorarray nv);
     c_enablewrmsnormvectorarray_serial nv'
-      (Nvector.has_wrmsnormvectorarray nv);
+      (Nvector.Ops.has_wrmsnormvectorarray nv);
     c_enablewrmsnormmaskvectorarray_serial nv'
-      (Nvector.has_wrmsnormmaskvectorarray nv);
+      (Nvector.Ops.has_wrmsnormmaskvectorarray nv);
     c_enablescaleaddmultivectorarray_serial nv'
-      (Nvector.has_scaleaddmultivectorarray nv);
+      (Nvector.Ops.has_scaleaddmultivectorarray nv);
     c_enablelinearcombinationvectorarray_serial nv'
-      (Nvector.has_linearcombinationvectorarray nv);
+      (Nvector.Ops.has_linearcombinationvectorarray nv);
     nv'
 
   let make

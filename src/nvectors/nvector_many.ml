@@ -424,7 +424,7 @@ struct (* {{{ *)
     let maxnorm ((x, _) : t) =
       let f max xi =
         let maxl =
-          if Nvector.Any.Local.has_maxnorm xi
+          if Nvector.Ops.Local.has_maxnorm xi
           then Nvector.Ops.Local.maxnorm xi
           else Nvector.Ops.maxnorm xi
         in
@@ -435,7 +435,7 @@ struct (* {{{ *)
     let min ((x, _) : t) =
       let f min xi =
         let minl =
-          if Nvector.Any.Local.has_min xi
+          if Nvector.Ops.Local.has_min xi
           then Nvector.Ops.Local.min xi
           else Nvector.Ops.min xi
         in
@@ -449,7 +449,7 @@ struct (* {{{ *)
 
     let invtest ((x, _) : t) ((z, _) : t) =
       let f v xi zi =
-        v && (if Nvector.Any.Local.has_invtest xi
+        v && (if Nvector.Ops.Local.has_invtest xi
               then Nvector.Ops.Local.invtest xi zi
               else Nvector.Ops.invtest xi zi)
       in
@@ -457,7 +457,7 @@ struct (* {{{ *)
 
     let constrmask ((c, _) : t) ((x, _) : t) ((m, _) : t) =
       let f v ci xi mi =
-        v && (if Nvector.Any.Local.has_constrmask ci
+        v && (if Nvector.Ops.Local.has_constrmask ci
               then Nvector.Ops.Local.constrmask ci xi mi
               else Nvector.Ops.constrmask ci xi mi)
       in
@@ -466,7 +466,7 @@ struct (* {{{ *)
     let minquotient ((n, _) : t) ((d, _) : t) =
       let f min ni di =
         let minl =
-          if Nvector.Any.Local.has_minquotient ni
+          if Nvector.Ops.Local.has_minquotient ni
           then Nvector.Ops.Local.minquotient ni di
           else Nvector.Ops.minquotient ni di
         in

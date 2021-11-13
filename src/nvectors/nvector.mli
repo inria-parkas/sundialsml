@@ -74,57 +74,6 @@ type nvector_id =
     @since 2.9.0 *)
 val get_id : ('data, 'kind) t -> nvector_id
 
-(** {2:hasops Test presence of nvector operations}
-
-    These functions test whether an nvector is equipped with a given
-    operation. *)
-(* {{{ *)
-
-external has_linearcombination            : ('d, 'k) t -> bool
-    = "sunml_nvec_has_linearcombination" [@@noalloc]
-external has_scaleaddmulti                : ('d, 'k) t -> bool
-    = "sunml_nvec_has_scaleaddmulti" [@@noalloc]
-external has_dotprodmulti                 : ('d, 'k) t -> bool
-    = "sunml_nvec_has_dotprodmulti" [@@noalloc]
-external has_linearsumvectorarray         : ('d, 'k) t -> bool
-    = "sunml_nvec_has_linearsumvectorarray" [@@noalloc]
-external has_scalevectorarray             : ('d, 'k) t -> bool
-    = "sunml_nvec_has_scalevectorarray" [@@noalloc]
-external has_constvectorarray             : ('d, 'k) t -> bool
-    = "sunml_nvec_has_constvectorarray" [@@noalloc]
-external has_wrmsnormvectorarray          : ('d, 'k) t -> bool
-    = "sunml_nvec_has_wrmsnormvectorarray" [@@noalloc]
-external has_wrmsnormmaskvectorarray      : ('d, 'k) t -> bool
-    = "sunml_nvec_has_wrmsnormmaskvectorarray" [@@noalloc]
-external has_scaleaddmultivectorarray     : ('d, 'k) t -> bool
-    = "sunml_nvec_has_scaleaddmultivectorarray" [@@noalloc]
-external has_linearcombinationvectorarray : ('d, 'k) t -> bool
-    = "sunml_nvec_has_linearcombinationvectorarray" [@@noalloc]
-
-(** Test presence of task-local nvector operations. *)
-module Local : sig
-  external has_dotprod      : ('d, 'k) t -> bool
-    = "sunml_nvec_has_dotprodlocal" [@@noalloc]
-  external has_maxnorm      : ('d, 'k) t -> bool
-    = "sunml_nvec_has_maxnormlocal" [@@noalloc]
-  external has_min          : ('d, 'k) t -> bool
-    = "sunml_nvec_has_minlocal" [@@noalloc]
-  external has_l1norm       : ('d, 'k) t -> bool
-    = "sunml_nvec_has_l1normlocal" [@@noalloc]
-  external has_invtest      : ('d, 'k) t -> bool
-    = "sunml_nvec_has_invtestlocal" [@@noalloc]
-  external has_constrmask   : ('d, 'k) t -> bool
-    = "sunml_nvec_has_constrmasklocal" [@@noalloc]
-  external has_minquotient  : ('d, 'k) t -> bool
-    = "sunml_nvec_has_minquotientlocal" [@@noalloc]
-  external has_wsqrsum      : ('d, 'k) t -> bool
-    = "sunml_nvec_has_wsqrsumlocal" [@@noalloc]
-  external has_wsqrsummask  : ('d, 'k) t -> bool
-    = "sunml_nvec_has_wsqrsummasklocal" [@@noalloc]
-end
-
-(* }}} *)
-
 (** {2:vecops Vector operations}
 
     @cvode <node7> Description of the NVECTOR module. *)
@@ -584,6 +533,48 @@ module Ops : sig (* {{{ *)
         -> ('d, 'k) t array
         -> unit
 
+    (** {3:hasnvecop Availability of nvector array operations} *)
+
+    (** Indicates whether an nvector supports {!linearcombination}. *)
+    external has_linearcombination            : ('d, 'k) t -> bool
+        = "sunml_nvec_has_linearcombination" [@@noalloc]
+
+    (** Indicates whether an nvector supports {!scaleaddmulti}. *)
+    external has_scaleaddmulti                : ('d, 'k) t -> bool
+        = "sunml_nvec_has_scaleaddmulti" [@@noalloc]
+
+    (** Indicates whether an nvector supports {!dotprodmulti}. *)
+    external has_dotprodmulti                 : ('d, 'k) t -> bool
+        = "sunml_nvec_has_dotprodmulti" [@@noalloc]
+
+    (** Indicates whether an nvector supports {!linearsumvectorarray}. *)
+    external has_linearsumvectorarray         : ('d, 'k) t -> bool
+        = "sunml_nvec_has_linearsumvectorarray" [@@noalloc]
+
+    (** Indicates whether an nvector supports {!scalevectorarray}. *)
+    external has_scalevectorarray             : ('d, 'k) t -> bool
+        = "sunml_nvec_has_scalevectorarray" [@@noalloc]
+
+    (** Indicates whether an nvector supports {!constvectorarray}. *)
+    external has_constvectorarray             : ('d, 'k) t -> bool
+        = "sunml_nvec_has_constvectorarray" [@@noalloc]
+
+    (** Indicates whether an nvector supports {!wrmsnormvectorarray}. *)
+    external has_wrmsnormvectorarray          : ('d, 'k) t -> bool
+        = "sunml_nvec_has_wrmsnormvectorarray" [@@noalloc]
+
+    (** Indicates whether an nvector supports {!wrmsnormmaskvectorarray}. *)
+    external has_wrmsnormmaskvectorarray      : ('d, 'k) t -> bool
+        = "sunml_nvec_has_wrmsnormmaskvectorarray" [@@noalloc]
+
+    (** Indicates whether an nvector supports {!scaleaddmultivectorarray}. *)
+    external has_scaleaddmultivectorarray     : ('d, 'k) t -> bool
+        = "sunml_nvec_has_scaleaddmultivectorarray" [@@noalloc]
+
+    (** Indicates whether an nvector supports {!linearcombinationvectorarray}. *)
+    external has_linearcombinationvectorarray : ('d, 'k) t -> bool
+        = "sunml_nvec_has_linearcombinationvectorarray" [@@noalloc]
+
     (* {2: Vector local reduction operations} *)
 
     (** Compute the task-local portions of certain operations. *)
@@ -629,6 +620,45 @@ module Ops : sig (* {{{ *)
                                   0 & \alpha \le 0
                                 \end{cases} $ %}. *)
       val wsqrsummask  : ('d, 'k) t -> ('d, 'k) t -> ('d, 'k) t -> float
+
+      (** {3:hasnveclop Availability of nvector local operations} *)
+
+      (** Indicates whether an nvector supports a local {!dotprod}. *)
+      external has_dotprod      : ('d, 'k) t -> bool
+        = "sunml_nvec_has_dotprodlocal" [@@noalloc]
+
+      (** Indicates whether an nvector supports a local {!maxnorm}. *)
+      external has_maxnorm      : ('d, 'k) t -> bool
+        = "sunml_nvec_has_maxnormlocal" [@@noalloc]
+
+      (** Indicates whether an nvector supports a local {!min}. *)
+      external has_min          : ('d, 'k) t -> bool
+        = "sunml_nvec_has_minlocal" [@@noalloc]
+
+      (** Indicates whether an nvector supports a local {!l1norm}. *)
+      external has_l1norm       : ('d, 'k) t -> bool
+        = "sunml_nvec_has_l1normlocal" [@@noalloc]
+
+      (** Indicates whether an nvector supports a local {!invtest}. *)
+      external has_invtest      : ('d, 'k) t -> bool
+        = "sunml_nvec_has_invtestlocal" [@@noalloc]
+
+      (** Indicates whether an nvector supports a local {!constrmask}. *)
+      external has_constrmask   : ('d, 'k) t -> bool
+        = "sunml_nvec_has_constrmasklocal" [@@noalloc]
+
+      (** Indicates whether an nvector supports a local {!minquotient}. *)
+      external has_minquotient  : ('d, 'k) t -> bool
+        = "sunml_nvec_has_minquotientlocal" [@@noalloc]
+
+      (** Indicates whether an nvector supports a local {!wsqrsum}. *)
+      external has_wsqrsum      : ('d, 'k) t -> bool
+        = "sunml_nvec_has_wsqrsumlocal" [@@noalloc]
+
+      (** Indicates whether an nvector supports a local {!wsqrsummask}. *)
+      external has_wsqrsummask  : ('d, 'k) t -> bool
+        = "sunml_nvec_has_wsqrsummasklocal" [@@noalloc]
+
     end (* }}} *)
 
   end (* }}} *)
@@ -668,59 +698,6 @@ type gkind
 
 (** The type of a generic nvector. *)
 type any = (gdata, gkind) t
-
-(** Utility functions on generic nvectors. *)
-module Any : sig (* {{{ *)
-
-  (** Test presence of generic nvector operations.
-
-      These functions test whether a generic nvector is equipped with a
-      given operation. *)
-
-  external has_linearcombination            : any -> bool
-      = "sunml_nvec_has_linearcombination" [@@noalloc]
-  external has_scaleaddmulti                : any -> bool
-      = "sunml_nvec_has_scaleaddmulti" [@@noalloc]
-  external has_dotprodmulti                 : any -> bool
-      = "sunml_nvec_has_dotprodmulti" [@@noalloc]
-  external has_linearsumvectorarray         : any -> bool
-      = "sunml_nvec_has_linearsumvectorarray" [@@noalloc]
-  external has_scalevectorarray             : any -> bool
-      = "sunml_nvec_has_scalevectorarray" [@@noalloc]
-  external has_constvectorarray             : any -> bool
-      = "sunml_nvec_has_constvectorarray" [@@noalloc]
-  external has_wrmsnormvectorarray          : any -> bool
-      = "sunml_nvec_has_wrmsnormvectorarray" [@@noalloc]
-  external has_wrmsnormmaskvectorarray      : any -> bool
-      = "sunml_nvec_has_wrmsnormmaskvectorarray" [@@noalloc]
-  external has_scaleaddmultivectorarray     : any -> bool
-      = "sunml_nvec_has_scaleaddmultivectorarray" [@@noalloc]
-  external has_linearcombinationvectorarray : any -> bool
-      = "sunml_nvec_has_linearcombinationvectorarray" [@@noalloc]
-
-  (** Test presence of task-local nvector operations. *)
-  module Local : sig
-    external has_dotprod      : any -> bool
-      = "sunml_nvec_has_dotprodlocal" [@@noalloc]
-    external has_maxnorm      : any -> bool
-      = "sunml_nvec_has_maxnormlocal" [@@noalloc]
-    external has_min          : any -> bool
-      = "sunml_nvec_has_minlocal" [@@noalloc]
-    external has_l1norm       : any -> bool
-      = "sunml_nvec_has_l1normlocal" [@@noalloc]
-    external has_invtest      : any -> bool
-      = "sunml_nvec_has_invtestlocal" [@@noalloc]
-    external has_constrmask   : any -> bool
-      = "sunml_nvec_has_constrmasklocal" [@@noalloc]
-    external has_minquotient  : any -> bool
-      = "sunml_nvec_has_minquotientlocal" [@@noalloc]
-    external has_wsqrsum      : any -> bool
-      = "sunml_nvec_has_wsqrsumlocal" [@@noalloc]
-    external has_wsqrsummask  : any -> bool
-      = "sunml_nvec_has_wsqrsummasklocal" [@@noalloc]
-  end
-
-end (* }}} *)
 
 (** A {!gdata} value did not have the expected wrapper. *)
 exception BadGenericType

@@ -485,7 +485,7 @@ struct (* {{{ *)
 
     let dotprod ((x, _, _) : t) ((y, _, _) : t) =
       let f sum xi yi =
-        if Nvector.Local.has_dotprod xi
+        if Nvector.Ops.Local.has_dotprod xi
         then sum +. Nvector.Ops.Local.dotprod xi yi
         else
           let contrib = Nvector.Ops.dotprod xi yi in
@@ -499,7 +499,7 @@ struct (* {{{ *)
     let maxnorm ((x, _, _) : t) =
       let f max xi =
         let maxl =
-          if Nvector.Any.Local.has_maxnorm xi
+          if Nvector.Ops.Local.has_maxnorm xi
           then Nvector.Ops.Local.maxnorm xi
           else Nvector.Ops.maxnorm xi
         in
@@ -510,7 +510,7 @@ struct (* {{{ *)
     let min ((x, _, _) : t) =
       let f min xi =
         let minl =
-          if Nvector.Any.Local.has_min xi
+          if Nvector.Ops.Local.has_min xi
           then Nvector.Ops.Local.min xi
           else Nvector.Ops.min xi
         in
@@ -520,7 +520,7 @@ struct (* {{{ *)
 
     let l1norm ((x, _, _) : t) =
       let f sum xi =
-        if Nvector.Local.has_l1norm xi
+        if Nvector.Ops.Local.has_l1norm xi
         then sum +. Nvector.Ops.Local.l1norm xi
         else
           let contrib = Nvector.Ops.l1norm xi in
@@ -533,7 +533,7 @@ struct (* {{{ *)
 
     let invtest ((x, _, _) : t) ((z, _, _) : t) =
       let f v xi zi =
-        v && (if Nvector.Any.Local.has_invtest xi
+        v && (if Nvector.Ops.Local.has_invtest xi
               then Nvector.Ops.Local.invtest xi zi
               else Nvector.Ops.invtest xi zi)
       in
@@ -541,7 +541,7 @@ struct (* {{{ *)
 
     let constrmask ((c, _, _) : t) ((x, _, _) : t) ((m, _, _) : t) =
       let f v ci xi mi =
-        v && (if Nvector.Any.Local.has_constrmask ci
+        v && (if Nvector.Ops.Local.has_constrmask ci
               then Nvector.Ops.Local.constrmask ci xi mi
               else Nvector.Ops.constrmask ci xi mi)
       in
@@ -550,7 +550,7 @@ struct (* {{{ *)
     let minquotient ((n, _, _) : t) ((d, _, _) : t) =
       let f min ni di =
         let minl =
-          if Nvector.Any.Local.has_minquotient ni
+          if Nvector.Ops.Local.has_minquotient ni
           then Nvector.Ops.Local.minquotient ni di
           else Nvector.Ops.minquotient ni di
         in
@@ -560,7 +560,7 @@ struct (* {{{ *)
 
     let wsqrsum ((x, _, _) : t) ((w, _, _) : t) =
       let f sum xi wi =
-        if Nvector.Local.has_wsqrsum xi
+        if Nvector.Ops.Local.has_wsqrsum xi
         then sum +. Nvector.Ops.Local.wsqrsum xi wi
         else
           let contrib = Nvector.Ops.wrmsnorm xi wi in
@@ -574,7 +574,7 @@ struct (* {{{ *)
 
     let wsqrsummask ((x, _, _) : t) ((w, _, _) : t) ((id, _, _) : t) =
       let f sum xi wi idi =
-        if Nvector.Local.has_wsqrsummask xi
+        if Nvector.Ops.Local.has_wsqrsummask xi
         then sum +. Nvector.Ops.Local.wsqrsummask xi wi idi
         else
           let contrib = Nvector.Ops.wrmsnormmask xi wi idi in
