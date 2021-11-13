@@ -450,7 +450,7 @@ struct (* {{{ *)
   module Local = struct
 
     let dotprod ((x, _) : t) ((y, _) : t) =
-      if Nvector.Local.has_dotprod x
+      if Nvector.Ops.Local.has_dotprod x
       then Nvector.Ops.Local.dotprod x y
       else
         let contrib = Nvector.Ops.dotprod x y in
@@ -458,17 +458,17 @@ struct (* {{{ *)
         if rank = 0 then contrib else 0.
 
     let maxnorm ((x, _) : t) =
-      if Nvector.Any.Local.has_maxnorm x
+      if Nvector.Ops.Local.has_maxnorm x
       then Nvector.Ops.Local.maxnorm x
       else Nvector.Ops.maxnorm x
 
     let min ((x, _) : t) =
-      if Nvector.Any.Local.has_min x
+      if Nvector.Ops.Local.has_min x
       then Nvector.Ops.Local.min x
       else Nvector.Ops.min x
 
     let l1norm ((x, _) : t) =
-      if Nvector.Local.has_l1norm x
+      if Nvector.Ops.Local.has_l1norm x
       then Nvector.Ops.Local.l1norm x
       else
         let contrib = Nvector.Ops.l1norm x in
@@ -476,22 +476,22 @@ struct (* {{{ *)
         if rank = 0 then contrib else 0.
 
     let invtest ((x, _) : t) ((z, _) : t) =
-      if Nvector.Any.Local.has_invtest x
+      if Nvector.Ops.Local.has_invtest x
       then Nvector.Ops.Local.invtest x z
       else Nvector.Ops.invtest x z
 
     let constrmask ((c, _) : t) ((x, _) : t) ((m, _) : t) =
-      if Nvector.Any.Local.has_constrmask c
+      if Nvector.Ops.Local.has_constrmask c
       then Nvector.Ops.Local.constrmask c x m
       else Nvector.Ops.constrmask c x m
 
     let minquotient ((n, _) : t) ((d, _) : t) =
-      if Nvector.Any.Local.has_minquotient n
+      if Nvector.Ops.Local.has_minquotient n
       then Nvector.Ops.Local.minquotient n d
       else Nvector.Ops.minquotient n d
 
     let wsqrsum ((x, _) : t) ((w, _) : t) =
-      if Nvector.Local.has_wsqrsum x
+      if Nvector.Ops.Local.has_wsqrsum x
       then Nvector.Ops.Local.wsqrsum x w
       else
         let contrib = Nvector.Ops.wrmsnorm x w in
@@ -501,7 +501,7 @@ struct (* {{{ *)
         else 0.
 
     let wsqrsummask ((x, _) : t) ((w, _) : t) ((id, _) : t) =
-      if Nvector.Local.has_wsqrsummask x
+      if Nvector.Ops.Local.has_wsqrsummask x
       then Nvector.Ops.Local.wsqrsummask x w id
       else
         let contrib = Nvector.Ops.wrmsnormmask x w id in

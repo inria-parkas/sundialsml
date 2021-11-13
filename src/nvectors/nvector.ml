@@ -144,52 +144,6 @@ module type NVECTOR =
    exceptions are properly registered. *)
 let e = Sundials.RecoverableFailure
 
-(* {{{ *)
-
-external has_linearcombination            : ('d, 'k) t -> bool
-    = "sunml_nvec_has_linearcombination" [@@noalloc]
-external has_scaleaddmulti                : ('d, 'k) t -> bool
-    = "sunml_nvec_has_scaleaddmulti" [@@noalloc]
-external has_dotprodmulti                 : ('d, 'k) t -> bool
-    = "sunml_nvec_has_dotprodmulti" [@@noalloc]
-external has_linearsumvectorarray         : ('d, 'k) t -> bool
-    = "sunml_nvec_has_linearsumvectorarray" [@@noalloc]
-external has_scalevectorarray             : ('d, 'k) t -> bool
-    = "sunml_nvec_has_scalevectorarray" [@@noalloc]
-external has_constvectorarray             : ('d, 'k) t -> bool
-    = "sunml_nvec_has_constvectorarray" [@@noalloc]
-external has_wrmsnormvectorarray          : ('d, 'k) t -> bool
-    = "sunml_nvec_has_wrmsnormvectorarray" [@@noalloc]
-external has_wrmsnormmaskvectorarray      : ('d, 'k) t -> bool
-    = "sunml_nvec_has_wrmsnormmaskvectorarray" [@@noalloc]
-external has_scaleaddmultivectorarray     : ('d, 'k) t -> bool
-    = "sunml_nvec_has_scaleaddmultivectorarray" [@@noalloc]
-external has_linearcombinationvectorarray : ('d, 'k) t -> bool
-    = "sunml_nvec_has_linearcombinationvectorarray" [@@noalloc]
-
-module Local = struct
-  external has_dotprod      : ('d, 'k) t -> bool
-    = "sunml_nvec_has_dotprodlocal" [@@noalloc]
-  external has_maxnorm      : ('d, 'k) t -> bool
-    = "sunml_nvec_has_maxnormlocal" [@@noalloc]
-  external has_min          : ('d, 'k) t -> bool
-    = "sunml_nvec_has_minlocal" [@@noalloc]
-  external has_l1norm       : ('d, 'k) t -> bool
-    = "sunml_nvec_has_l1normlocal" [@@noalloc]
-  external has_invtest      : ('d, 'k) t -> bool
-    = "sunml_nvec_has_invtestlocal" [@@noalloc]
-  external has_constrmask   : ('d, 'k) t -> bool
-    = "sunml_nvec_has_constrmasklocal" [@@noalloc]
-  external has_minquotient  : ('d, 'k) t -> bool
-    = "sunml_nvec_has_minquotientlocal" [@@noalloc]
-  external has_wsqrsum      : ('d, 'k) t -> bool
-    = "sunml_nvec_has_wsqrsumlocal" [@@noalloc]
-  external has_wsqrsummask  : ('d, 'k) t -> bool
-    = "sunml_nvec_has_wsqrsummasklocal" [@@noalloc]
-end
-
-(* }}} *)
-
 type gdata = ..
 type gdata += RA of Sundials.RealArray.t
 type gkind
@@ -198,52 +152,6 @@ exception BadGenericType
 
 exception OperationNotProvided
 
-module Any = struct (* {{{ *)
-  type t = any
-
-  external has_linearcombination            : t -> bool
-      = "sunml_nvec_has_linearcombination" [@@noalloc]
-  external has_scaleaddmulti                : t -> bool
-      = "sunml_nvec_has_scaleaddmulti" [@@noalloc]
-  external has_dotprodmulti                 : t -> bool
-      = "sunml_nvec_has_dotprodmulti" [@@noalloc]
-  external has_linearsumvectorarray         : t -> bool
-      = "sunml_nvec_has_linearsumvectorarray" [@@noalloc]
-  external has_scalevectorarray             : t -> bool
-      = "sunml_nvec_has_scalevectorarray" [@@noalloc]
-  external has_constvectorarray             : t -> bool
-      = "sunml_nvec_has_constvectorarray" [@@noalloc]
-  external has_wrmsnormvectorarray          : t -> bool
-      = "sunml_nvec_has_wrmsnormvectorarray" [@@noalloc]
-  external has_wrmsnormmaskvectorarray      : t -> bool
-      = "sunml_nvec_has_wrmsnormmaskvectorarray" [@@noalloc]
-  external has_scaleaddmultivectorarray     : t -> bool
-      = "sunml_nvec_has_scaleaddmultivectorarray" [@@noalloc]
-  external has_linearcombinationvectorarray : t -> bool
-      = "sunml_nvec_has_linearcombinationvectorarray" [@@noalloc]
-
-  module Local = struct
-    external has_dotprod      : t -> bool
-      = "sunml_nvec_has_dotprodlocal" [@@noalloc]
-    external has_maxnorm      : t -> bool
-      = "sunml_nvec_has_maxnormlocal" [@@noalloc]
-    external has_min          : t -> bool
-      = "sunml_nvec_has_minlocal" [@@noalloc]
-    external has_l1norm       : t -> bool
-      = "sunml_nvec_has_l1normlocal" [@@noalloc]
-    external has_invtest      : t -> bool
-      = "sunml_nvec_has_invtestlocal" [@@noalloc]
-    external has_constrmask   : t -> bool
-      = "sunml_nvec_has_constrmasklocal" [@@noalloc]
-    external has_minquotient  : t -> bool
-      = "sunml_nvec_has_minquotientlocal" [@@noalloc]
-    external has_wsqrsum      : t -> bool
-      = "sunml_nvec_has_wsqrsumlocal" [@@noalloc]
-    external has_wsqrsummask  : t -> bool
-      = "sunml_nvec_has_wsqrsummasklocal" [@@noalloc]
-  end
-end (* }}} *)
-
 module MakeDataOps (Ops : sig
     include NVECTOR_OPS
 
@@ -251,7 +159,7 @@ module MakeDataOps (Ops : sig
     val wrap : t -> gdata
   end) : NVECTOR_OPS with type t = gdata
 =
-struct
+struct (* {{{ *)
   type t = gdata
 
   let uw = Ops.unwrap
@@ -312,7 +220,7 @@ struct
     let wsqrsum x y = Ops.Local.wsqrsum (uw x) (uw y)
     let wsqrsummask x y z = Ops.Local.wsqrsummask (uw x) (uw y) (uw z)
   end
-end
+end (* }}} *)
 
 module Ops =
   struct (* {{{ *)
@@ -611,6 +519,27 @@ module Ops =
             Array.iter (fun xa -> same_len' nv xa; Array.iter (check z) xa) xaa);
       c_linearcombinationvectorarray ca xaa za
 
+    external has_linearcombination            : ('d, 'k) t -> bool
+        = "sunml_nvec_has_linearcombination" [@@noalloc]
+    external has_scaleaddmulti                : ('d, 'k) t -> bool
+        = "sunml_nvec_has_scaleaddmulti" [@@noalloc]
+    external has_dotprodmulti                 : ('d, 'k) t -> bool
+        = "sunml_nvec_has_dotprodmulti" [@@noalloc]
+    external has_linearsumvectorarray         : ('d, 'k) t -> bool
+        = "sunml_nvec_has_linearsumvectorarray" [@@noalloc]
+    external has_scalevectorarray             : ('d, 'k) t -> bool
+        = "sunml_nvec_has_scalevectorarray" [@@noalloc]
+    external has_constvectorarray             : ('d, 'k) t -> bool
+        = "sunml_nvec_has_constvectorarray" [@@noalloc]
+    external has_wrmsnormvectorarray          : ('d, 'k) t -> bool
+        = "sunml_nvec_has_wrmsnormvectorarray" [@@noalloc]
+    external has_wrmsnormmaskvectorarray      : ('d, 'k) t -> bool
+        = "sunml_nvec_has_wrmsnormmaskvectorarray" [@@noalloc]
+    external has_scaleaddmultivectorarray     : ('d, 'k) t -> bool
+        = "sunml_nvec_has_scaleaddmultivectorarray" [@@noalloc]
+    external has_linearcombinationvectorarray : ('d, 'k) t -> bool
+        = "sunml_nvec_has_linearcombinationvectorarray" [@@noalloc]
+
     module Local = struct
 
       external c_dotprod : ('d, 'k) t -> ('d, 'k) t -> float
@@ -692,6 +621,25 @@ module Ops =
           then raise Sundials.Config.NotImplementedBySundialsVersion;
         if Sundials_configuration.safe then (check x w; check x id);
         c_wsqrsummask x w id
+
+      external has_dotprod      : ('d, 'k) t -> bool
+        = "sunml_nvec_has_dotprodlocal" [@@noalloc]
+      external has_maxnorm      : ('d, 'k) t -> bool
+        = "sunml_nvec_has_maxnormlocal" [@@noalloc]
+      external has_min          : ('d, 'k) t -> bool
+        = "sunml_nvec_has_minlocal" [@@noalloc]
+      external has_l1norm       : ('d, 'k) t -> bool
+        = "sunml_nvec_has_l1normlocal" [@@noalloc]
+      external has_invtest      : ('d, 'k) t -> bool
+        = "sunml_nvec_has_invtestlocal" [@@noalloc]
+      external has_constrmask   : ('d, 'k) t -> bool
+        = "sunml_nvec_has_constrmasklocal" [@@noalloc]
+      external has_minquotient  : ('d, 'k) t -> bool
+        = "sunml_nvec_has_minquotientlocal" [@@noalloc]
+      external has_wsqrsum      : ('d, 'k) t -> bool
+        = "sunml_nvec_has_wsqrsumlocal" [@@noalloc]
+      external has_wsqrsummask  : ('d, 'k) t -> bool
+        = "sunml_nvec_has_wsqrsummasklocal" [@@noalloc]
     end
   end (* }}} *)
 
