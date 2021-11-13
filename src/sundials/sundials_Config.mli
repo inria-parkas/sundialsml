@@ -23,7 +23,7 @@ val version : int * int * int * int
 
 (** The [major], [minor], and [patch] version numbers of the underlying
     Sundials/C library. The OCaml interface may have been built against
-    an older version of  *)
+    an older version of the Sundials/C library  *)
 val sundials_version : int * int * int
 
 (** Indicates whether the interface was compiled with BLAS/LAPACK support. *)

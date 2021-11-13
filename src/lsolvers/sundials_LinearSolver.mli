@@ -611,11 +611,10 @@ solve : 'lsolver -> 'matrix -> 'data -> 'data -> float -> unit;
 
       set_zero_guess : ('lsolver -> bool -> unit) option;
       (** Used to indicate whether the next call to the solve function will
-          be maed with a zero initial guess. *)
+          be made with a zero initial guess. *)
 
       get_num_iters : ('lsolver -> int) option;
-      (** The number of linear iterations performed in the last
-     [solve] call. *)
+      (** The number of linear iterations performed in the last [solve] call. *)
 
       get_res_norm : ('lsolver -> float) option;
       (** The final residual norm from the last [solve] call. *)
@@ -808,25 +807,25 @@ val solve :
   -> float
   -> unit
 
-(* The number of linear iterations performed in the last {!solve} call.
+(** The number of linear iterations performed in the last {!solve} call.
 
     @nocvode <node> SUNLinNumIters *)
 val get_num_iters : ('m, 'd, 'k, 't) t -> int
 
-(* The final residual norm from the last {!solve} call.
+(** The final residual norm from the last {!solve} call.
 
     @nocvode <node> SUNLinResNorm *)
 val get_res_norm : ('m, 'd, 'k, 't) t -> float
 
-(* The preconditioned initial residual vector.
-   May be called when an iterative method computes the preconditioned initial
-   residual and {!solve} succeeds without performing any iterations, i.e., if
-   the intial guess or the preconditioner is sufficiently accurate.
+(** The preconditioned initial residual vector.
+    May be called when an iterative method computes the preconditioned initial
+    residual and {!solve} succeeds without performing any iterations, i.e., if
+    the intial guess or the preconditioner is sufficiently accurate.
 
-   The linear solver may return a reference to its internal array, i.e., it
-   may not return a copy.
+    The linear solver may return a reference to its internal array, i.e., it
+    may not return a copy.
 
-   @nocvode <node> SUNLinResNorm *)
+    @nocvode <node> SUNLinResNorm *)
 val get_res_id : ('m, 'd, 'k, 't) t -> 'd
 
 (** Returns the type of the linear solver.

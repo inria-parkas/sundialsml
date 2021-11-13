@@ -30,7 +30,7 @@ type kind
 (** The type of mpimany-vector nvectors. *)
 type t = (data, kind) Nvector.t
 
-(** A generic data wrapper for {!data}. *)
+(** Generic wrapper for {!data}. *)
 type Nvector.gdata += MpiMany of data
 
 (** Creates a mpimany-vector nvector from an array of generic nvectors.

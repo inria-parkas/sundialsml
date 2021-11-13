@@ -205,7 +205,7 @@ Callback functions manipulate Jacobian matrices through the operations in
 {{!Sundials_Matrix.Band}Matrix.Band}, and
 {{!Sundials_Matrix.Sparse}Matrix.Sparse}.
 
-The {{!Sundials_Iterative}SPILS routines} include the
+The {{!Sundials_LinearSolver.Iterative}SPILS routines} include the
 {e Scaled Preconditioned GMRES (SPGMR)}, {e
 Scaled Preconditioned Bi-CGStab (SPBCG)}, {e Scaled Preconditioned TFQMR
 (SPTFQMR)}, {e Scaled Preconditioned Flexible GMRES (SPFGMR)}, and

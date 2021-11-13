@@ -689,7 +689,7 @@ module Ops : sig (* {{{ *)
     nvector modules can support the generic form. *)
 type gdata = ..
 
-(** The wrapper for {{!Sundials_RealArray.t}RealArray}s. *)
+(** Generic wrapper for {{!Sundials_RealArray.t}RealArray}. *)
 type gdata += RA of Sundials.RealArray.t
 
 (** Represents an nvector whose data must be accessed through a constructor

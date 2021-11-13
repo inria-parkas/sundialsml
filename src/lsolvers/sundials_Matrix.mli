@@ -328,7 +328,6 @@ module Band : sig (* {{{ *)
   (** {3:band_ops Operations} *)
 
   (** Operations on band matrices. *)
-
   val ops : (t, Nvector_serial.data) matrix_ops
 
   (** [scale_add c A B] calculates $A = cA + B$.
@@ -972,9 +971,9 @@ type ('k, 'm, 'nd, 'nk) t
 type 'nk dense =
   (standard, Dense.t, Nvector_serial.data, [>Nvector_serial.kind] as 'nk) t
 
-(* By default, [dense n] returns an [n] by [n] dense matrix with all elements
-   initialized to [0.0]. Optional arguments allow specifying the number of rows
-   ([m]) and the initial value ([i]).
+(** By default, [dense n] returns an [n] by [n] dense matrix with all elements
+    initialized to [0.0]. Optional arguments allow specifying the number of rows
+    ([m]) and the initial value ([i]).
 
     @nocvode <node> SUNDenseMatrix *)
 val dense : ?m:int -> ?i:float -> int -> 'nk dense

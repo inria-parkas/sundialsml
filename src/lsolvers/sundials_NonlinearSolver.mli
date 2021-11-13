@@ -21,6 +21,14 @@
     This module supports calling both Sundials and custom OCaml nonlinear
     solvers from both Sundials integrators and OCaml applications.
 
+    This documentation is structured as follows.
+    {ol
+      {- {{:#nlscore}Core functions}}
+      {- {{:#nlsset}Set functions}}
+      {- {{:#nlsget}Get functions}}
+      {- {{:#nlssolvers}Nonlinear Solver Implementations}}
+      {- {{:#nlsexceptions}Exceptions}}}
+
     @version VERSION()
     @author Timothy Bourke (Inria/ENS)
     @author Jun Inoue (Inria/ENS)
@@ -305,7 +313,7 @@ val get_cur_iter : ('d, 'k, 's, 'v) t -> int
     @nocvode <node> SUNNonlinSolGetNumConvFails *)
 val get_num_conv_fails : ('d, 'k, 's, 'v) t -> int
 
-(** {2:nlsolvers Nonlinear Solver Implementations} *)
+(** {2:nlssolvers Nonlinear Solver Implementations} *)
 
 (** Generic nonlinear solver based on Newton's method.
 
@@ -498,7 +506,7 @@ module Custom : sig (* {{{ *)
 
 end (* }}} *)
 
-(** {2:exceptions Exceptions} *)
+(** {2:nlsexceptions Exceptions} *)
 
 (** An error occurred in a vector operation.
     {cconst SUN_NLS_VECTOROP_ERR} *)
