@@ -38,6 +38,8 @@ module Nvector_serial_ops =
 
 module Nvector_generic_ops =
   struct
+    type t = Nvector.any
+
     include Nvector.Ops
     let get_id = Nvector.get_id
 
@@ -77,6 +79,8 @@ module Custom_serial =
       Nvector_custom.space        = Some Nvector_serial.DataOps.space;
       Nvector_custom.getlength    = Nvector_serial.DataOps.getlength;
       Nvector_custom.getcommunicator = None;
+      Nvector_custom.print
+        = Some (fun d logfile -> Nvector_serial.DataOps.print ?logfile d);
       Nvector_custom.linearsum    = Nvector_serial.DataOps.linearsum;
       Nvector_custom.const        = Nvector_serial.DataOps.const;
       Nvector_custom.prod         = Nvector_serial.DataOps.prod;
@@ -140,6 +144,8 @@ module Custom_array1 =
       Nvector_custom.space        = Some Nvector_array.DataOps.space;
       Nvector_custom.getlength    = Nvector_array.DataOps.getlength;
       Nvector_custom.getcommunicator = None;
+      Nvector_custom.print
+        = Some (fun d logfile -> Nvector_array.DataOps.print ?logfile d);
       Nvector_custom.linearsum    = Nvector_array.DataOps.linearsum;
       Nvector_custom.const        = Nvector_array.DataOps.const;
       Nvector_custom.prod         = Nvector_array.DataOps.prod;

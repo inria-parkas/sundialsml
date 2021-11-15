@@ -43,6 +43,8 @@ struct
   include Nvector.Ops
   let get_id = Nvector.get_id
 
+  type t = Nvector.any
+
   type contents = Sundials.RealArray.t
   let getarray x = match Nvector.unwrap x with
                    | Nvector_parallel.Par (xd, _, _) -> xd
@@ -74,6 +76,8 @@ module Custom_parallel1 =
       Nvector_custom.space        = Some Nvector_parallel.DataOps.space;
       Nvector_custom.getlength    = Nvector_parallel.DataOps.getlength;
       Nvector_custom.getcommunicator = None;
+      Nvector_custom.print
+        = Some (fun d logfile -> Nvector_parallel.DataOps.print ?logfile d);
       Nvector_custom.linearsum    = Nvector_parallel.DataOps.linearsum;
       Nvector_custom.const        = Nvector_parallel.DataOps.const;
       Nvector_custom.prod         = Nvector_parallel.DataOps.prod;
@@ -150,6 +154,8 @@ module Custom_parallel2 =
       Nvector_custom.space        = Some DataOps.space;
       Nvector_custom.getlength    = Nvector_parallel.DataOps.getlength;
       Nvector_custom.getcommunicator = None;
+      Nvector_custom.print
+        = Some (fun d logfile -> Nvector_parallel.DataOps.print ?logfile d);
       Nvector_custom.linearsum    = DataOps.linearsum;
       Nvector_custom.const        = DataOps.const;
       Nvector_custom.prod         = DataOps.prod;
