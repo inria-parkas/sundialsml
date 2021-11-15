@@ -134,9 +134,21 @@ and ('d, 'k, 's, 'v) nonlinear_solver = {
 }
 
 and ('nv, 's, 'v) convtestfn =
-  { ctfn : 'd 'k 't.
-      ('d, 'k, 't, 'v) nonlinear_solver -> 'nv -> 'nv -> float -> 'nv -> 's -> convtest }
-  [@@unboxed]
+  | CConvTest : (   ('d1, 'k1, 't2, 'v) nonlinear_solver
+                 -> ('d2, 'k2) Nvector.t
+                 -> ('d2, 'k2) Nvector.t
+                 -> float
+                 -> ('d2, 'k2) Nvector.t
+                 -> 's
+                 -> convtest) cfun -> ('d, 's, [`Nvec]) convtestfn
+  | CSensConvTest : (   ('d1, 'k1, 't2, 'v) nonlinear_solver
+                 -> ('d2, 'k2) Senswrapper.t
+                 -> ('d2, 'k2) Senswrapper.t
+                 -> float
+                 -> ('d2, 'k2) Senswrapper.t
+                 -> 's
+                 -> convtest) cfun -> ('d, 's, [`Sens]) convtestfn
+  | OConvTest of ('nv -> 'nv -> float -> 'nv -> 's -> convtest)
 
 (* Distinguish operations that take an nvector ('nv), since the C function
    (sysfn, lsolvefn, convtestfn) passed from the integrator requires
@@ -156,7 +168,7 @@ and ('nv, 'd, 's, 'v) ops = {
   set_sys_fn         : ('nv, 's) sysfn -> unit;
   set_lsetup_fn      : ('s lsetupfn -> unit) option;
   set_lsolve_fn      : (('nv, 's) lsolvefn -> unit) option;
-  set_convtest_fn    : (('nv, 's, 'v) convtestfn -> unit) option;
+  set_convtest_fn    : (('d, 's, 'v) convtestfn -> unit) option;
   set_max_iters      : (int -> unit) option;
   set_info_file      : (Logfile.t -> unit) option;
   set_print_level    : (int -> unit) option;

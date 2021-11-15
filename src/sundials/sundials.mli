@@ -37,6 +37,14 @@ exception RecoverableFailure
     {{!Ida.tolerance}[Ida.WFtolerances]}. *)
 exception NonPositiveEwt
 
+(** {2:values Generic values} *)
+
+(** A callback function into the underlying library. *)
+type 'f cfun = 'f Sundials_impl.Callback.cfun
+
+(** Use a callback function provided by the underlying library. *)
+val invoke : 'f cfun -> 'f
+
 (** {2:arrays Arrays} *)
 
 (** Vectors of floats (one-dimensional bigarrays). *)

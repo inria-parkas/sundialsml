@@ -152,7 +152,7 @@ let main () =
   (* set the wrapper functions to linear solver setup and solve functions *)
   NLS.set_lsetup_fn nls (lsetup imem);
   NLS.set_lsolve_fn nls (lsolve imem);
-  NLS.set_convtest_fn nls (conv_test imem);
+  NLS.(set_convtest_fn nls (OConvTest (conv_test imem)));
 
   (* set the maximum number of nonlinear iterations *)
   NLS.set_max_iters nls maxit;

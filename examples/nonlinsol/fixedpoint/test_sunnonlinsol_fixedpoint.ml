@@ -186,7 +186,7 @@ let main () =
      else fp_function_lt500);
 
   (* set the convergence test function *)
-  NLS.set_convtest_fn nls conv_test;
+  NLS.(set_convtest_fn nls (OConvTest conv_test));
 
   (* set the maximum number of nonlinear iterations *)
   NLS.set_max_iters nls mxiter;

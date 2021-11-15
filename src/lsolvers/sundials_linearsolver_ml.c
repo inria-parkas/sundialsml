@@ -870,10 +870,7 @@ static int callml_custom_setatimes(SUNLinearSolver ls, void* A_data,
     CAMLparam0();
     CAMLlocal2(vcptr, r);
 
-    vcptr = caml_alloc_final(
-		(sizeof(struct atimes_with_data) + sizeof(value) - 1)
-		    / sizeof(value),
-		NULL, 0, 1);
+    vcptr = caml_alloc_final(OCAMLSIZEOF(struct atimes_with_data), NULL, 0, 1);
     ATIMES_WITH_DATA(vcptr)->atimes_func = ATimes;
     ATIMES_WITH_DATA(vcptr)->atimes_data = A_data;
 
@@ -930,10 +927,7 @@ static int callml_custom_setpreconditioner(SUNLinearSolver ls, void* P_data,
     CAMLparam0();
     CAMLlocal2(vcptr, r);
 
-    vcptr = caml_alloc_final(
-		(sizeof(struct precond_with_data) + sizeof(value) - 1)
-		    / sizeof(value),
-		NULL, 0, 1);
+    vcptr = caml_alloc_final(OCAMLSIZEOF(struct precond_with_data), NULL, 0, 1);
     PRECOND_WITH_DATA(vcptr)->psetup_func = Pset;
     PRECOND_WITH_DATA(vcptr)->psolve_func = Psol;
     PRECOND_WITH_DATA(vcptr)->precond_data = P_data;
