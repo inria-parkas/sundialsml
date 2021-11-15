@@ -74,6 +74,21 @@ end = struct
 
 end
 
+(* Callbacks into Sundials combine a C function pointer and an OCaml function
+   to invoke it. *)
+module Callback = struct
+
+  type 'f cfunptr
+
+  type 'f cfun = {
+    cptr : 'f cfunptr;
+    call : 'f;
+  }
+
+  let invoke { call; _ } = call
+
+end
+
 (* Compatiblity modes and Sundials versions *)
 module Version = struct
 

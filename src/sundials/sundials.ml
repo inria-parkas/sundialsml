@@ -17,6 +17,10 @@ module Index = Sundials_Index
 exception RecoverableFailure
 exception NonPositiveEwt
 
+type 'f cfun = 'f Sundials_impl.Callback.cfun
+
+let invoke = Sundials_impl.Callback.invoke
+
 (* Note the type annotations are redundant because there's already a .mli, but
    explicit annotations improve performance for bigarrays.  *)
 module RealArray = Sundials_RealArray

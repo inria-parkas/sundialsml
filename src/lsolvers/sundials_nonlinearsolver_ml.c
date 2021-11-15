@@ -22,11 +22,20 @@
 #include <sunnonlinsol/sunnonlinsol_fixedpoint.h>
 #include <sunnonlinsol/sunnonlinsol_newton.h>
 
+typedef void* (*FromValFn)(value);
+
 #define SYSFN_VAL(v) (*(SUNNonlinSolSysFn*)Data_custom_val(v))
 #define LSETUPFN_VAL(v) (*(SUNNonlinSolLSetupFn*)Data_custom_val(v))
 #define LSOLVEFN_VAL(v) (*(SUNNonlinSolLSolveFn*)Data_custom_val(v))
-#define CONVTESTFN_VAL(v) (*(SUNNonlinSolConvTestFn*)Data_custom_val(v))
-#define FROMVAL_VAL(v) (*((void*(**)(value))Data_custom_val(v)))
+#define FROMVAL_VAL(v) (*(FromValFn*)Data_custom_val(v))
+
+struct convtestfn_data {
+    SUNNonlinSolConvTestFn convtestfn;
+    FromValFn fromvalfn;
+};
+
+#define CONVTESTFN_VAL(v) (((struct convtestfn_data*)Data_custom_val(v))->convtestfn)
+#define CONVTESTFN_FROMVALFN(v) ((( struct convtestfn_data*)Data_custom_val(v))->fromvalfn)
 
 struct nls_callback_value {
     void *mem;
@@ -814,7 +823,34 @@ CAMLprim value sunml_nlsolver_set_lsolve_fn(value vnls)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_nlsolver_set_convtest_fn(value vnls)
+CAMLprim value sunml_nlsolver_set_convtest_fn(value vnls, value vcfun)
+{
+    CAMLparam2(vnls, vcfun);
+#if 400 <= SUNDIALS_LIB_VERSION
+    CAMLlocal1(vcptr);
+    int flag;
+    SUNNonlinearSolver nls = NLSOLVER_VAL(vnls);
+    p_sunml_nls snls = NLS_EXTENDED(nls);
+    vcptr = ML_CALLBACK_CPTR(vcfun);
+
+    snls->c_callbacks.ctestfn = CONVTESTFN_VAL(vcptr);
+    snls->from_value = CONVTESTFN_FROMVALFN(vcptr);
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    // the ctestfn is set just before invoking setup or solve so that
+    // the integrator pointer can be wrapped and passed as ctestdata.
+    // we must set a value here because some nls check that ctestfn <> NULL
+    flag = snls->orig_setctestfn(nls, sunml_nlsolver_failed_ctestfn,
+	    (void *)0xdeadbeef);
+#else
+    flag = snls->orig_setctestfn(nls, snls->c_callbacks.ctestfn);
+#endif
+    NLS_CHECK_FLAG("SUNNonlinSolSetConvTestFn", flag);
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_nlsolver_set_convtest_fn_callback(value vnls)
 {
     CAMLparam1(vnls);
 #if 400 <= SUNDIALS_LIB_VERSION
@@ -863,9 +899,9 @@ CAMLprim value sunml_nlsolver_set_lsolve_fn_sens(value vnls)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_nlsolver_set_convtest_fn_sens(value vnls, value vmem)
+CAMLprim value sunml_nlsolver_set_convtest_fn_callback_sens(value vnls)
 {
-    CAMLparam2(vnls, vmem);
+    CAMLparam1(vnls);
 #if 400 <= SUNDIALS_LIB_VERSION
     int flag;
     SUNNonlinearSolver nls = NLSOLVER_VAL(vnls);
@@ -1115,13 +1151,13 @@ CAMLprim value sunml_nlsolver_call_lsolve_fn_sens(value vfns,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_nlsolver_call_convtest_fn(value vnls, value vfns,
+CAMLprim value sunml_nlsolver_call_convtest_fn(value vnls, value vconvtestfn,
 					       value vargs)
 {
-    CAMLparam3(vnls, vfns, vargs);
+    CAMLparam3(vnls, vconvtestfn, vargs);
 #if 400 <= SUNDIALS_LIB_VERSION
-    SUNNonlinSolConvTestFn convtestfn = CONVTESTFN_VAL(Field(vfns, 0));
-    void *(*from_value)(value) = FROMVAL_VAL(Field(vfns, 1));
+    SUNNonlinSolConvTestFn convtestfn = CONVTESTFN_VAL(vconvtestfn);
+    FromValFn from_value = CONVTESTFN_FROMVALFN(vconvtestfn);
 
     SUNNonlinearSolver nls = NLSOLVER_VAL(vnls);
     N_Vector y   = NVEC_VAL(Field(vargs, 0));
@@ -1149,13 +1185,13 @@ CAMLprim value sunml_nlsolver_call_convtest_fn(value vnls, value vfns,
 }
 
 CAMLprim value sunml_nlsolver_call_convtest_fn_sens(value vnls,
-						    value vfns,
+						    value vconvtestfn,
 						    value vargs)
 {
-    CAMLparam3(vnls, vfns, vargs);
+    CAMLparam3(vnls, vconvtestfn, vargs);
 #if 400 <= SUNDIALS_LIB_VERSION
-    SUNNonlinSolConvTestFn convtestfn = CONVTESTFN_VAL(Field(vfns, 0));
-    void *(*from_value)(value) = FROMVAL_VAL(Field(vfns, 1));
+    SUNNonlinSolConvTestFn convtestfn = CONVTESTFN_VAL(vconvtestfn);
+    FromValFn from_value = CONVTESTFN_FROMVALFN(vconvtestfn);
 
     SUNNonlinearSolver nls = NLSOLVER_VAL(vnls);
     N_Vector y   = SENSWRAPPER(Field(vargs, 0));
@@ -1839,16 +1875,18 @@ static int callml_custom_setconvtestfn(SUNNonlinearSolver nls,
 {
     CAMLparam0();
     CAMLlocal1(vconvtestfn);
+    p_sunml_nls snls = NLS_EXTENDED(nls);
 
-    vconvtestfn = caml_alloc_final(1, NULL, 0, 1);
+    vconvtestfn = caml_alloc_final(
+		    OCAMLSIZEOF(struct convtestfn_data), NULL, 0, 1);
     CONVTESTFN_VAL(vconvtestfn) = convtestfn;
+    CONVTESTFN_FROMVALFN(vconvtestfn) = snls->from_value;
     
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn(
+    value r = caml_callback2_exn(
 		*caml_named_value("Sundials_NonlinearSolver.set_c_convtest_fn"),
 		NLSOLV_OP_TABLE(nls),
-		vconvtestfn,
-		sunml_nlsolver_wrap_from_value(nls));
+		vconvtestfn);
     CAMLreturnT(int, CHECK_NLS_EXCEPTION (r, UNRECOVERABLE));
 }
 
@@ -1863,16 +1901,18 @@ static int callml_custom_setconvtestfn_sens(SUNNonlinearSolver nls,
 {
     CAMLparam0();
     CAMLlocal1(vconvtestfn);
+    p_sunml_nls snls = NLS_EXTENDED(nls);
 
-    vconvtestfn = caml_alloc_final(1, NULL, 0, 1);
+    vconvtestfn = caml_alloc_final(
+		    OCAMLSIZEOF(struct convtestfn_data), NULL, 0, 1);
     CONVTESTFN_VAL(vconvtestfn) = convtestfn;
+    CONVTESTFN_FROMVALFN(vconvtestfn) = snls->from_value;
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback3_exn(
+    value r = caml_callback2_exn(
 		*caml_named_value("Sundials_NonlinearSolver.set_c_convtest_fn_sens"),
 		NLSOLV_OP_TABLE(nls),
-		vconvtestfn,
-		sunml_nlsolver_wrap_from_value(nls));
+		vconvtestfn);
     CAMLreturnT(int, CHECK_NLS_EXCEPTION (r, UNRECOVERABLE));
 }
 

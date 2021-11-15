@@ -359,10 +359,10 @@ let task_local_newton_setsysfn { local_nls; comm; _ }
   NLS.set_sys_fn local_nls (fun y fg -> sysfn (rw y) (rw fg))
 
 let task_local_newton_setconvtestfn { local_nls; comm; _ }
-      (ctestfn : (Nvector_mpiplusx.t, local_nls_session, [`Nvec]) NLS.convtestfn) =
-  let rw = rewrap comm in
+      (ctestfn : (Nvector_mpiplusx.data, local_nls_session, [`Nvec]) NLS.convtestfn) =
   NLS.(set_convtest_fn local_nls
-    { ctfn = fun nls y del tol ewt -> ctestfn.ctfn nls (rw y) (rw del) tol (rw ewt)})
+         ((assert_not_oconvtestfn ctestfn)
+            : (Nvector.gdata, local_nls_session, [`Nvec]) NLS.convtestfn))
 
 let task_local_newton_getnumconvfails { ncnf; _ } () = ncnf
 
@@ -1046,15 +1046,6 @@ let main () =
         uopt = { fused; explicit; nout; outputdir; printtime; _ } as uopt;
     _ } as udata = setup_problem ()
   in
-
-  (* XXX *)
-  let rank = Mpi.comm_rank comm in
-  if rank = 1 then begin
-    Unix.sleep 3;
-    Printf.printf "pid=%d\n" (Unix.getpid ()); flush stdout;
-    Unix.sleep 10;
-  end;
-  (* XXX *)
 
   (* Create solution vector *)
   let ys = Nvector_serial.Any.make ~with_fused_ops:fused neq 0.0 in

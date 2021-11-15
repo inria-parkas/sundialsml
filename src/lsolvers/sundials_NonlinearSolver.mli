@@ -206,11 +206,36 @@ type convtest =
     - [ewt], the error-weight vector used in computing weighted norms, and,
     - [mem], a token passed by the function provider.
 
+    The OCaml interface distinguishes callback functions set by the
+    underlying library ([CConvTest]) from those supplied by user programs
+    ([OConvTest]). This reflects the different underlying mechanisms used
+    to create and invoke such functions. Callback functions provied by the
+    underlying library can be invoked with any kind of linear solver and
+    (homogeneous) nvectors since they manipulate these values generically.
+
     @nocvode <node> SUNNonlinSolConvTestFn *)
 type ('nv, 's, 'v) convtestfn =
-  { ctfn : 'd 'k 't.
-           ('d, 'k, 't, 'v) t -> 'nv -> 'nv -> float -> 'nv -> 's -> convtest }
-  [@@unboxed]
+  | CConvTest : (   ('d1, 'k1, 't2, 'v) t
+                 -> ('d2, 'k2) Nvector.t
+                 -> ('d2, 'k2) Nvector.t
+                 -> float
+                 -> ('d2, 'k2) Nvector.t
+                 -> 's
+                 -> convtest) cfun -> ('nv, 's, [`Nvec]) convtestfn
+  | CSensConvTest : (   ('d1, 'k1, 't2, 'v) t
+                 -> ('d2, 'k2) Senswrapper.t
+                 -> ('d2, 'k2) Senswrapper.t
+                 -> float
+                 -> ('d2, 'k2) Senswrapper.t
+                 -> 's
+                 -> convtest) cfun -> ('nv, 's, [`Sens]) convtestfn
+  | OConvTest of ('nv -> 'nv -> float -> 'nv -> 's -> convtest)
+
+(** Ignore the nvector type argument in a convtestfn.
+
+    @raise Invalid_argument if the value was constructed with [OConvTest] *)
+val assert_not_oconvtestfn
+  : ('nv1, 's, [`Nvec]) convtestfn -> ('nv2, 's, [`Nvec]) convtestfn
 
 (** Specify a convergence test callback for the nonlinear solver iteration.
 
@@ -253,6 +278,12 @@ module Sens : sig (* {{{ *)
       @nocvode <node> SUNNonlinSolSetLSolveFn *)
   val set_lsolve_fn :
     ('d, 'k, 's, [`Sens]) t -> (('d, 'k) Senswrapper.t, 's) lsolvefn -> unit
+
+  (** Ignore the nvector type argument in a convtestfn.
+
+      @raise Invalid_argument if the value was constructed with [OConvTest] *)
+  val assert_not_oconvtestfn
+    : ('nv1, 's, [`Sens]) convtestfn -> ('nv2, 's, [`Sens]) convtestfn
 
   (** Specify a convergence test callback for the nonlinear solver iteration
       when using sensitivities. See {!set_convtest_fn}.
@@ -448,7 +479,7 @@ module Custom : sig (* {{{ *)
       - [set_sys_fn]: receive the system callback.
 
       Note that the [setup] and [solve] functions are passed the payload data
-      directly, whereas the [lsolvefn], [convtestfn], and [sysfn]s require
+      directly, whereas the [lsolvefn] and [sysfn]s require
       the data to be wrapped in an nvector. This asymmetry is awkward but,
       unfortunately, unavoidable given the implementation of nvectors and the
       different constraints for C-to-OCaml calls and OCaml-to-C calls. *)
@@ -457,7 +488,7 @@ module Custom : sig (* {{{ *)
     -> ?setup              : ('d -> 's -> unit)
     -> ?set_lsetup_fn      : ('s lsetupfn -> unit)
     -> ?set_lsolve_fn      : ((('d, 'k) Nvector.t, 's) lsolvefn -> unit)
-    -> ?set_convtest_fn    : ((('d, 'k) Nvector.t, 's, [`Nvec]) convtestfn -> unit)
+    -> ?set_convtest_fn    : (('d, 's, [`Nvec]) convtestfn -> unit)
     -> ?set_max_iters      : (int  -> unit)
     -> ?set_info_file      : (Logfile.t -> unit)
     -> ?set_print_level    : (int -> unit)

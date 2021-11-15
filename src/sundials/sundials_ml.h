@@ -72,6 +72,8 @@ typedef int sundials_ml_smat_index;
 
 #define ARRAY1_LEN(v) (Caml_ba_array_val((v))->dim[0])
 
+#define OCAMLSIZEOF(type) ((sizeof(type) + sizeof(value) - 1) / sizeof(value))
+
 #if HAVE_WEAK
 CAMLprim value caml_weak_get (value ar, value n);
 #define sundials_ml_weak_get caml_weak_get
@@ -206,6 +208,9 @@ enum sundials_exn_index {
 #define ML_CFILE(v) (*(FILE **)Data_custom_val(v))
 
 CAMLprim value sunml_sundials_wrap_file(FILE* f);
+
+/* Accessing callback values */
+#define ML_CALLBACK_CPTR(v) (Field(v, 0))
 
 /* Functions for storing OCaml values in the C heap, with registration of a
    global root and construction of a block header. */
