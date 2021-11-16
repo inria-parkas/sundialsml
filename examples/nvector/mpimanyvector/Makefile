@@ -7,7 +7,6 @@ SRCROOT=../../..
 SUBDIR=nvector/mpimanyvector
 
 MPI_EXAMPLES = \
-	$(if $(AT_LEAST_5_0_0), test_nvector_mpimanyvector_serial.ml) \
 	$(if $(AT_LEAST_5_0_0), test_nvector_mpimanyvector_parallel1.ml) \
 	$(if $(AT_LEAST_5_0_0), test_nvector_mpimanyvector_parallel2.ml)
 
