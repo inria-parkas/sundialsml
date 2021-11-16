@@ -70,13 +70,7 @@ external c_set_lsolve_fn_sens : ('d, 'k, 's, [`Sens]) cptr -> unit
 
 external c_set_convtest_fn
   :    ('d, 'k, 's, [`Nvec]) cptr
-    -> (('d1, 'k1, 't2, 'v) t
-        -> ('d2, 'k2) Nvector.t
-        -> ('d2, 'k2) Nvector.t
-        -> float
-        -> ('d2, 'k2) Nvector.t
-        -> 's
-        -> convtest) Sundials.cfun
+    -> 's convtest_callback Sundials.cfun
     -> unit
   = "sunml_nlsolver_set_convtest_fn"
 
@@ -86,13 +80,7 @@ external c_set_convtest_fn_callback
 
 external c_set_convtest_fn_sens
   :    ('d, 'k, 's, [`Sens]) cptr
-    -> (('d1, 'k1, 't2, 'v) t
-        -> ('d2, 'k2) Senswrapper.t
-        -> ('d2, 'k2) Senswrapper.t
-        -> float
-        -> ('d2, 'k2) Senswrapper.t
-        -> 's
-        -> convtest) Sundials.cfun
+    -> 's convtest_callback_sens Sundials.cfun
     -> unit
   = "sunml_nlsolver_set_convtest_fn" (* Same as c_set_convtest_fn *)
 
@@ -189,23 +177,27 @@ let set_lsolve_fn { rawptr; solver; _ } cbf =
       -> callbacks.lsolvefn <- cbf;
          c_set_lsolve_fn rawptr
 
-type ('d, 's, 'v) convtestfn
-  = ('d, 's, 'v) Sundials_NonlinearSolver_impl.convtestfn
-  = CConvTest : (   ('d1, 'k1, 't2, 'v) t
-                 -> ('d2, 'k2) Nvector.t
-                 -> ('d2, 'k2) Nvector.t
-                 -> float
-                 -> ('d2, 'k2) Nvector.t
-                 -> 's
-                 -> convtest) cfun -> ('d, 's, [`Nvec]) convtestfn
-  | CSensConvTest : (   ('d1, 'k1, 't2, 'v) t
-                 -> ('d2, 'k2) Senswrapper.t
-                 -> ('d2, 'k2) Senswrapper.t
-                 -> float
-                 -> ('d2, 'k2) Senswrapper.t
-                 -> 's
-                 -> convtest) cfun -> ('d, 's, [`Sens]) convtestfn
-  | OConvTest of ('d -> 'd -> float -> 'd -> 's -> convtest)
+type ('nv, 's) convtestfn' = 'nv -> 'nv -> float -> 'nv -> 's -> convtest
+
+type 's convtest_callback
+  = 's Sundials_NonlinearSolver_impl.convtest_callback
+  = { f : 'd1 'k1 't2 'd2 'k2. ('d1, 'k1, 't2, [`Nvec]) nonlinear_solver
+                               -> (('d2, 'k2) Nvector.t, 's) convtestfn' }
+  [@@unboxed]
+
+type 's convtest_callback_sens
+  = 's Sundials_NonlinearSolver_impl.convtest_callback_sens
+  = { f : 'd1 'k1 't2 'd2 'k2. ('d1, 'k1, 't2, [`Sens]) nonlinear_solver
+                               -> (('d2, 'k2) Senswrapper.t, 's) convtestfn' }
+  [@@unboxed]
+
+type ('nv, 's, 'v) convtestfn
+  = ('nv, 's, 'v) Sundials_NonlinearSolver_impl.convtestfn
+  = CConvTest
+    : 's convtest_callback cfun -> ('nv, 's, [`Nvec]) convtestfn
+  | CSensConvTest
+    : 's convtest_callback_sens cfun -> ('nv, 's, [`Sens]) convtestfn
+  | OConvTest of ('nv, 's) convtestfn'
 
 let assert_not_oconvtestfn (type d s) (ctfn : (d, s, [`Nvec]) convtestfn) =
   match ctfn with
@@ -221,7 +213,7 @@ let set_convtest_fn (type d k s)
   | CustomSolver (callbacks, _) -> ()
   | FixedPointSolver (callbacks, _) | NewtonSolver callbacks      (* O/Cnls *)
       -> (match ctfn with
-          | CConvTest cfun ->
+        | CConvTest cfun ->
               callbacks.convtestfn <- empty_convtestfn;
               c_set_convtest_fn rawptr cfun
           | OConvTest ofn ->
@@ -383,13 +375,7 @@ external c_call_lsolve_fn
 
 external c_call_convtest_fn' :
                  ('di, 'ki, 'si, [`Nvec]) cptr
-              -> ((('d1, 'k1, 't2, 'v) t
-                   -> ('d2, 'k2) Nvector.t
-                   -> ('d2, 'k2) Nvector.t
-                   -> float
-                   -> ('d2, 'k2) Nvector.t
-                   -> 's
-                   -> convtest) Sundials_impl.Callback.cfunptr)
+              -> 's convtest_callback Sundials_impl.Callback.cfunptr
               -> (  ('d, 'k) Nvector.t
                   * ('d, 'k) Nvector.t
                   * float
@@ -398,8 +384,10 @@ external c_call_convtest_fn' :
               -> convtest
   = "sunml_nlsolver_call_convtest_fn"
 
-let c_call_convtest_fn cconvtestfn { rawptr; _} y del tol ewt mem =
-  c_call_convtest_fn' rawptr cconvtestfn (y, del, tol, ewt, mem)
+let c_call_convtest_fn cconvtestfn =
+  ({ f = fun { rawptr; _ } y del tol ewt mem ->
+           c_call_convtest_fn' rawptr cconvtestfn (y, del, tol, ewt, mem) }
+   : 's convtest_callback)
 
 external c_call_sys_fn_sens
   : (('d, 'k) Senswrapper.t, 's) c_sysfn * 's c_fromvaluefn
@@ -425,13 +413,7 @@ external c_call_lsolve_fn_sens
 
 external c_call_convtest_fn_sens' :
                  ('di, 'ki, 'si, [`Sens]) cptr
-              -> ((('d1, 'k1, 't2, 'v) t
-                   -> ('d2, 'k2) Senswrapper.t
-                   -> ('d2, 'k2) Senswrapper.t
-                   -> float
-                   -> ('d2, 'k2) Senswrapper.t
-                   -> 's
-                   -> convtest) Sundials_impl.Callback.cfunptr)
+              -> 's convtest_callback_sens Sundials_impl.Callback.cfunptr
               -> (  ('d, 'k) Senswrapper.t
                   * ('d, 'k) Senswrapper.t
                   * float
@@ -440,8 +422,10 @@ external c_call_convtest_fn_sens' :
               -> convtest
   = "sunml_nlsolver_call_convtest_fn_sens"
 
-let c_call_convtest_fn_sens cconvtestfn { rawptr; _ } y del tol ewt mem =
-  c_call_convtest_fn_sens' rawptr cconvtestfn (y, del, tol, ewt, mem)
+let c_call_convtest_fn_sens cconvtestfn =
+  ({ f = fun { rawptr; _ } y del tol ewt mem ->
+           c_call_convtest_fn_sens' rawptr cconvtestfn (y, del, tol, ewt, mem) }
+   : 's convtest_callback_sens)
 
 module Newton = struct (* {{{ *)
 
@@ -580,12 +564,12 @@ module Custom = struct (* {{{ *)
   let set_c_lsolve_fn ops clsolvefn cfromvalfn =
     f_call ops.set_lsolve_fn (c_call_lsolve_fn (clsolvefn, cfromvalfn))
 
-  let set_c_convtest_fn ops cconvtestfn =
-    f_call ops.set_convtest_fn
-      (CConvTest Sundials_impl.Callback.{
-           cptr = cconvtestfn;
-           call = c_call_convtest_fn cconvtestfn;
-         })
+  let set_c_convtest_fn ops
+      (cconvtestfn : 's convtest_callback Sundials_impl.Callback.cfunptr)
+    = f_call ops.set_convtest_fn
+        (CConvTest Sundials_impl.Callback.{
+             cptr = cconvtestfn;
+             call = c_call_convtest_fn cconvtestfn })
 
   let set_c_sys_fn_sens ops csysfn cfromvalfn =
     ops.set_sys_fn (c_call_sys_fn_sens (csysfn, cfromvalfn))
@@ -600,7 +584,8 @@ module Custom = struct (* {{{ *)
     f_call ops.set_convtest_fn
       (CSensConvTest Sundials_impl.Callback.{
            cptr = cconvtestfn;
-           call = c_call_convtest_fn_sens cconvtestfn })
+           call = c_call_convtest_fn_sens cconvtestfn;
+         })
 
   let _ = Callback.register "Sundials_NonlinearSolver.set_c_sys_fn"
                             set_c_sys_fn

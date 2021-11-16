@@ -60,8 +60,7 @@ type convtest =
   | Continue
   | Recover
 
-type ('nv, 's) convtestfn_with_nls
-  = 'nv -> 'nv -> float -> 'nv -> 's -> convtest
+type ('nv, 's) convtestfn' = 'nv -> 'nv -> float -> 'nv -> 's -> convtest
 
 type ('d, 'k, 's, 'v) cptr
 
@@ -70,7 +69,7 @@ type ('nv, 's) callbacks = {
   mutable sysfn      : ('nv, 's) sysfn;
   mutable lsetupfn   : 's lsetupfn;
   mutable lsolvefn   : ('nv, 's) lsolvefn;
-  mutable convtestfn : ('nv, 's) convtestfn_with_nls;
+  mutable convtestfn : ('nv, 's) convtestfn';
 }
 
 (* Accessed from sundials_nonlinearsolver_ml.c: nlsolver_type *)
@@ -133,22 +132,22 @@ and ('d, 'k, 's, 'v) nonlinear_solver = {
   mutable attached : bool;
 }
 
+and 's convtest_callback =
+  { f : 'd1 'k1 't2 'd2 'k2. ('d1, 'k1, 't2, [`Nvec]) nonlinear_solver
+      -> (('d2, 'k2) Nvector.t, 's) convtestfn' }
+  [@@unboxed]
+
+and 's convtest_callback_sens =
+  { f : 'd1 'k1 't2 'd2 'k2. ('d1, 'k1, 't2, [`Sens]) nonlinear_solver
+      -> (('d2, 'k2) Senswrapper.t, 's) convtestfn' }
+  [@@unboxed]
+
 and ('nv, 's, 'v) convtestfn =
-  | CConvTest : (   ('d1, 'k1, 't2, 'v) nonlinear_solver
-                 -> ('d2, 'k2) Nvector.t
-                 -> ('d2, 'k2) Nvector.t
-                 -> float
-                 -> ('d2, 'k2) Nvector.t
-                 -> 's
-                 -> convtest) cfun -> ('d, 's, [`Nvec]) convtestfn
-  | CSensConvTest : (   ('d1, 'k1, 't2, 'v) nonlinear_solver
-                 -> ('d2, 'k2) Senswrapper.t
-                 -> ('d2, 'k2) Senswrapper.t
-                 -> float
-                 -> ('d2, 'k2) Senswrapper.t
-                 -> 's
-                 -> convtest) cfun -> ('d, 's, [`Sens]) convtestfn
-  | OConvTest of ('nv -> 'nv -> float -> 'nv -> 's -> convtest)
+  | CConvTest
+    : 's convtest_callback cfun -> ('nv, 's, [`Nvec]) convtestfn
+  | CSensConvTest
+    : 's convtest_callback_sens cfun -> ('nv, 's, [`Sens]) convtestfn
+  | OConvTest of ('nv, 's) convtestfn'
 
 (* Distinguish operations that take an nvector ('nv), since the C function
    (sysfn, lsolvefn, convtestfn) passed from the integrator requires

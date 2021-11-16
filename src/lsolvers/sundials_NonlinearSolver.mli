@@ -195,10 +195,8 @@ type convtest =
   | Continue (** Not converged, keep iterating ([SUN_NLS_CONTINUE]) *)
   | Recover  (** Appears to diverge, try to recover ([SUN_NLS_CONV_RECVR]) *)
 
-(** A function providing an integrator-specific convergence test.
+(** A function providing a convergence test.
     The call [convtestfn y del tol ewt mem] has as arguments
-
-    - [nls], the nonlinear solver that invokes the function,
     - [y],   the current nonlinear iterate,
     - [del], the difference between current and prior nonlinear iterates,
     - [tol], the nonlinear solver tolerance (in a weighted root-mean-squared
@@ -206,30 +204,42 @@ type convtest =
     - [ewt], the error-weight vector used in computing weighted norms, and,
     - [mem], a token passed by the function provider.
 
+    @nocvode <node> SUNNonlinSolConvTestFn *)
+type ('nv, 's) convtestfn' = 'nv -> 'nv -> float -> 'nv -> 's -> convtest
+
+(** A convergence test callback provided by an integrator.
+    Such callbacks require an additional first argument, the nonlinear solver
+    invoking the function, and otherwise expect nvector arguments.
+    They access the linear solver and nvector arguments using generic
+    functions, which is why the type variables are universally quantified. *)
+type 's convtest_callback =
+  { f : 'd1 'k1 't2 'd2 'k2. ('d1, 'k1, 't2, [`Nvec]) t
+      -> (('d2, 'k2) Nvector.t, 's) convtestfn' }
+  [@@unboxed]
+
+(** A convergence test callback provided by an integrator with sensitivities.
+    Such callbacks require an additional first argument, the nonlinear solver
+    invoking the function, and otherwise expect senswrapper arguments.
+    They access the linear solver and senswrapper arguments using generic
+    functions, which is why the type variables are universally quantified. *)
+type 's convtest_callback_sens =
+  { f : 'd1 'k1 't2 'd2 'k2. ('d1, 'k1, 't2, [`Sens]) t
+      -> (('d2, 'k2) Senswrapper.t, 's) convtestfn' }
+  [@@unboxed]
+
+(** A convergence test provided either by an integrator or a user program.
     The OCaml interface distinguishes callback functions set by the
     underlying library ([CConvTest]) from those supplied by user programs
     ([OConvTest]). This reflects the different underlying mechanisms used
     to create and invoke such functions. Callback functions provied by the
     underlying library can be invoked with any kind of linear solver and
-    (homogeneous) nvectors since they manipulate these values generically.
-
-    @nocvode <node> SUNNonlinSolConvTestFn *)
+    (homogeneous) nvectors since they manipulate these values generically. *)
 type ('nv, 's, 'v) convtestfn =
-  | CConvTest : (   ('d1, 'k1, 't2, 'v) t
-                 -> ('d2, 'k2) Nvector.t
-                 -> ('d2, 'k2) Nvector.t
-                 -> float
-                 -> ('d2, 'k2) Nvector.t
-                 -> 's
-                 -> convtest) cfun -> ('nv, 's, [`Nvec]) convtestfn
-  | CSensConvTest : (   ('d1, 'k1, 't2, 'v) t
-                 -> ('d2, 'k2) Senswrapper.t
-                 -> ('d2, 'k2) Senswrapper.t
-                 -> float
-                 -> ('d2, 'k2) Senswrapper.t
-                 -> 's
-                 -> convtest) cfun -> ('nv, 's, [`Sens]) convtestfn
-  | OConvTest of ('nv -> 'nv -> float -> 'nv -> 's -> convtest)
+  | CConvTest
+    : 's convtest_callback cfun -> ('nv, 's, [`Nvec]) convtestfn
+  | CSensConvTest
+    : 's convtest_callback_sens cfun -> ('nv, 's, [`Sens]) convtestfn
+  | OConvTest of ('nv, 's) convtestfn'
 
 (** Ignore the nvector type argument in a convtestfn.
 
