@@ -112,7 +112,7 @@ let check_ans (data : RealArray.t) tol =
  * ---------------------------------------------------------------------------*)
 let main () =
   let tol = 100.0 *. sqrt Config.unit_roundoff in
-  let mxiter = 10 in
+  let mxiter = if Sundials_impl.Version.lt580 then 10 else 30 in
 
   (* Check if a acceleration/dampling values were provided *)
   let maa =
