@@ -344,7 +344,7 @@ let task_local_newton_solve
   if Mpi.(allreduce_int solve_status Max comm) = 2
   then (content.ncnf <- content.ncnf + 1; raise RecoverableFailure)
 
-let rewrap comm (y : Nvector.gdata) =
+let rewrap_mpiplusx comm (y : Nvector.gdata) =
   match y with
   | Nvector.RA ydata -> Nvector_mpiplusx.wrap comm (Nvector_serial.Any.wrap ydata)
   | _ -> assert false
@@ -355,13 +355,30 @@ let task_local_newton_initialize udata { local_nls; comm; _ } () =
 
 let task_local_newton_setsysfn { local_nls; comm; _ }
       (sysfn : (Nvector_mpiplusx.t, local_nls_session) NLS.sysfn) =
-  let rw = rewrap comm in
+  let rw = rewrap_mpiplusx comm in
   NLS.set_sys_fn local_nls (fun y fg -> sysfn (rw y) (rw fg))
 
 let task_local_newton_setconvtestfn { local_nls; comm; _ }
       (ctestfn : (Nvector_mpiplusx.data, local_nls_session, [`Nvec]) NLS.convtestfn) =
   NLS.(set_convtest_fn local_nls
          ((assert_not_oconvtestfn ctestfn)
+            : (Nvector.gdata, local_nls_session, [`Nvec]) NLS.convtestfn))
+
+(* Pass via OCaml (for testing) *)
+let task_local_newton_setconvtestfn' { local_nls; comm; _ }
+      (ctestfn : (Nvector_mpiplusx.data, local_nls_session, [`Nvec]) NLS.convtestfn) =
+  let rewrap = function
+    | Nvector.RA a -> Nvector_serial.wrap a
+    | _ -> assert false
+  in
+  let ocaml_convtestfn y del tol ewt mem =
+    match ctestfn with
+    | CConvTest cfn -> (Sundials.invoke cfn).f local_nls
+                         (rewrap y) (rewrap del) tol (rewrap ewt) mem
+    | _ -> assert false
+  in
+  NLS.(set_convtest_fn local_nls
+         ((OConvTest ocaml_convtestfn)
             : (Nvector.gdata, local_nls_session, [`Nvec]) NLS.convtestfn))
 
 let task_local_newton_getnumconvfails { ncnf; _ } () = ncnf
