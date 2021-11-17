@@ -1253,7 +1253,7 @@ static int sunml_nlsolver_wrapped_setup(SUNNonlinearSolver nls,
 	.mem = mem,
 	.pvcallbacks = &(snls->callbacks),
 	.pccallbacks = &(snls->c_callbacks),
-	.pvmem = (snls->to_value == NULL) ? NULL : &vmem
+	.pvmem = &vmem,
     };
 
 #if 500 <= SUNDIALS_LIB_VERSION
@@ -1291,7 +1291,7 @@ static int sunml_nlsolver_wrapped_solve(SUNNonlinearSolver nls,
 	.mem = mem,
 	.pvcallbacks = &(snls->callbacks),
 	.pccallbacks = &(snls->c_callbacks),
-	.pvmem = (snls->to_value == NULL) ? NULL : &vmem
+	.pvmem = &vmem,
     };
 
 #if 500 <= SUNDIALS_LIB_VERSION
