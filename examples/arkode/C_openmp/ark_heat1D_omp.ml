@@ -105,7 +105,7 @@ let main () =
   let udata = {
     n        = mesh_n;
     nthreads = num_threads;
-    dx       = 1.0/.(1.0*.float(mesh_n)-.1.0);     (* mesh spacing *)
+    dx       = 1.0/.(float(mesh_n)-.1.0);     (* mesh spacing *)
     k        = heat_k;
   } in
 
@@ -128,7 +128,7 @@ let main () =
          ~lsolver:Spils.(solver (pcg ~maxl:mesh_n y)
                                 ~jac_times_vec:(None, jac udata)
                                 prec_none)
-         ~linearity:(Linear true)
+         ~linearity:(Linear false)
         (f udata))
       (SStolerances (rtol, atol))
       t0
