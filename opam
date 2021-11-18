@@ -45,8 +45,8 @@ depopts: [
     "mpi"
 ]
 depexts: [
-    [["debian"] ["libsundials-serial-dev"]]
-    [["ubuntu"] ["libsundials-serial-dev"]]
+    [["debian"] ["libsundials-dev"]]
+    [["ubuntu"] ["libsundials-dev"]]
     [["fedora"] ["lapack-devel" "sundials-devel"]]
     [["centos"] ["epel-release" "lapack-devel" "sundials-devel"]]
     [["osx" "homebrew"] ["homebrew/science/sundials"]]
