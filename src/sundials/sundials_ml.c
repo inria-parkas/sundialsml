@@ -26,6 +26,7 @@
 #include <caml/fail.h>
 #include <caml/memory.h>
 #include <caml/alloc.h>
+#include <caml/custom.h>
 #include <caml/callback.h>
 #include <caml/bigarray.h>
 
@@ -195,6 +196,36 @@ void sunml_sundials_free_value(value *pv)
 {
     caml_remove_generational_global_root (pv);
     free (Hp_op(pv));
+}
+
+/* Functions for storing pointers to integrators (cvode_mem, ida_mem, etc.) */
+
+static void finalize_session_pointer(value vmem) {
+    // there is nothing to finalize, but a distinct function is necessary
+    // because caml_final_custom_operations uses the address of this
+    // function as a key to find the custom operations table.
+}
+
+static int compare_session_pointers(value vmem1, value vmem2)
+{
+    void* mem1 = SUNML_MEM(vmem1);
+    void* mem2 = SUNML_MEM(vmem2);
+
+    // only works for equality, other pointer comparisons are undefined.
+    return (mem1 == mem2);
+}
+
+value sunml_wrap_session_pointer(void *sun_mem)
+{
+    CAMLparam0();
+    CAMLlocal1(vmem);
+
+    vmem = caml_alloc_final(1, finalize_session_pointer, 1, 15);
+    Custom_ops_val(vmem)->compare = compare_session_pointers;
+
+    SUNML_MEM(vmem) = sun_mem;
+
+    CAMLreturn(vmem);
 }
 
 /* Functions for sharing OCaml values with C. */

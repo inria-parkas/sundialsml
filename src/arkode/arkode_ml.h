@@ -175,7 +175,7 @@ enum arkode_session_index {
     RECORD_ARKODE_SESSION_SIZE,
 };
 
-#define ARKODE_MEM(v) (*(void **)Data_custom_val(v))
+#define ARKODE_MEM(v) (SUNML_MEM(v))
 #define ARKODE_MEM_FROM_ML(v) \
     (ARKODE_MEM(Field((v), RECORD_ARKODE_SESSION_ARKODE)))
 #define ARKODE_BACKREF_FROM_ML(v) \

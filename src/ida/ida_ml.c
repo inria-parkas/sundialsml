@@ -878,8 +878,7 @@ CAMLprim value sunml_ida_init (value weakref, value vt0, value vy, value vyp)
     if (ida_mem == NULL)
 	caml_failwith ("IDACreate failed");
 
-    vida_mem = caml_alloc_final(1, NULL, 1, 5);
-    IDA_MEM(vida_mem) = ida_mem;
+    vida_mem = sunml_wrap_session_pointer(ida_mem);
 
     y = NVEC_VAL (vy);
     yp = NVEC_VAL (vyp);

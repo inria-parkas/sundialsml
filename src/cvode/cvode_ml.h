@@ -208,7 +208,7 @@ enum cvode_session_index {
     RECORD_CVODE_SESSION_SIZE,	/* This has to come last.  */
 };
 
-#define CVODE_MEM(v) (*(void **)Data_custom_val(v))
+#define CVODE_MEM(v) (SUNML_MEM(v))
 #define CVODE_MEM_FROM_ML(v) (CVODE_MEM(Field((v), RECORD_CVODE_SESSION_CVODE)))
 #define CVODE_BACKREF_FROM_ML(v) \
     ((value *)(Field((v), RECORD_CVODE_SESSION_BACKREF)))

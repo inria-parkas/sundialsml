@@ -90,7 +90,7 @@ enum ida_index {
     RECORD_IDA_SESSION_SIZE	/* This has to come last. */
 };
 
-#define IDA_MEM(v) (*(void **)Data_custom_val(v))
+#define IDA_MEM(v) (SUNML_MEM(v))
 #define IDA_MEM_FROM_ML(v) (IDA_MEM(Field((v), RECORD_IDA_SESSION_MEM)))
 #define IDA_BACKREF_FROM_ML(v) ((value*)Field((v), RECORD_IDA_SESSION_BACKREF))
 #define IDA_NEQS_FROM_ML(v)    Long_val(Field((v), RECORD_IDA_SESSION_NEQS))

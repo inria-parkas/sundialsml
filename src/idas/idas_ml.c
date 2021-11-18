@@ -2769,8 +2769,7 @@ CAMLprim value sunml_idas_adj_init_backward(value vparent, value weakref,
 	}
     }
 
-    vida_mem = caml_alloc_final(1, NULL, 1, 15);
-    IDA_MEM(vida_mem) = IDAGetAdjIDABmem(parent, which);
+    vida_mem = sunml_wrap_session_pointer(IDAGetAdjIDABmem(parent, which));
 
     value *backref = sunml_sundials_malloc_value(weakref);
     if (backref == NULL) {
