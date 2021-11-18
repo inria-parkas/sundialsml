@@ -1883,8 +1883,7 @@ CAMLprim value sunml_arkode_ark_init(value weakref, value hasfi, value hasfe,
     if (arkode_mem == NULL)
 	caml_failwith("ARKStepCreate returned NULL");
 
-    varkode_mem = caml_alloc_final(1, NULL, 1, 5);
-    ARKODE_MEM(varkode_mem) = arkode_mem;
+    varkode_mem = sunml_wrap_session_pointer(arkode_mem);
 
     backref = sunml_sundials_malloc_value(weakref);
     if (backref == NULL) {
@@ -1898,8 +1897,7 @@ CAMLprim value sunml_arkode_ark_init(value weakref, value hasfi, value hasfe,
     if (arkode_mem == NULL)
 	caml_failwith("ARKodeCreate returned NULL");
 
-    varkode_mem = caml_alloc_final(1, NULL, 1, 5);
-    ARKODE_MEM(varkode_mem) = arkode_mem;
+    varkode_mem = sunml_wrap_session_pointer(arkode_mem);
 
     N_Vector nv_y0 = NVEC_VAL(y0);
     flag = ARKodeInit(arkode_mem,
@@ -5220,8 +5218,7 @@ CAMLprim value sunml_arkode_erk_init(value weakref, value y0, value t0)
     if (arkode_mem == NULL)
 	caml_failwith("ERKStepCreate returned NULL");
 
-    varkode_mem = caml_alloc_final(1, NULL, 1, 5);
-    ARKODE_MEM(varkode_mem) = arkode_mem;
+    varkode_mem = sunml_wrap_session_pointer(arkode_mem);
 
     backref = sunml_sundials_malloc_value(weakref);
     if (backref == NULL) {
@@ -6436,8 +6433,7 @@ CAMLprim value sunml_arkode_mri_init(value weakref, value vistepper,
     if (arkode_mem == NULL)
 	caml_failwith("MRIStepCreate returned NULL");
 
-    varkode_mem = caml_alloc_final(1, NULL, 1, 5);
-    ARKODE_MEM(varkode_mem) = arkode_mem;
+    varkode_mem = sunml_wrap_session_pointer(arkode_mem);
 
     backref = sunml_sundials_malloc_value(weakref);
     if (backref == NULL) {

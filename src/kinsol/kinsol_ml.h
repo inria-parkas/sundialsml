@@ -93,7 +93,7 @@ enum kinsol_bandrange_index {
   RECORD_KINSOL_BANDRANGE_SIZE
 };
 
-#define KINSOL_MEM(v) (*(void **)Data_custom_val(v))
+#define KINSOL_MEM(v) (SUNML_MEM(v))
 #define KINSOL_MEM_FROM_ML(v) \
     (KINSOL_MEM(Field((v), RECORD_KINSOL_SESSION_MEM)))
 #define KINSOL_BACKREF_FROM_ML(v) \

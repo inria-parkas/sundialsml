@@ -1955,8 +1955,7 @@ CAMLprim value sunml_cvodes_adj_init_backward(value vparent, value weakref,
 	}
     }
 
-    vcvode_mem = caml_alloc_final(1, NULL, 1, 15);
-    CVODE_MEM(vcvode_mem) = CVodeGetAdjCVodeBmem(parent, which);
+    vcvode_mem = sunml_wrap_session_pointer(CVodeGetAdjCVodeBmem(parent, which));
 
     value *backref = sunml_sundials_malloc_value(weakref);
     if (backref == NULL) {

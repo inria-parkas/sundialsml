@@ -993,8 +993,7 @@ CAMLprim value sunml_cvode_init(value weakref, value lmm, value iter, value init
     if (cvode_mem == NULL)
 	caml_failwith("CVodeCreate returned NULL");
 
-    vcvode_mem = caml_alloc_final(1, NULL, 1, 5);
-    CVODE_MEM(vcvode_mem) = cvode_mem;
+    vcvode_mem = sunml_wrap_session_pointer(cvode_mem);
 
     N_Vector initial_nv = NVEC_VAL(initial);
     flag = CVodeInit(cvode_mem, rhsfn, Double_val(t0), initial_nv);

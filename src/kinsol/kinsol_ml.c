@@ -708,8 +708,7 @@ CAMLprim value sunml_kinsol_init(value weakref, value vtemp,
     if (kin_mem == NULL)
 	caml_failwith("KINCreate returned NULL");
 
-    vkin_mem = caml_alloc_final(1, NULL, 1, 5);
-    KINSOL_MEM(vkin_mem) = kin_mem;
+    vkin_mem = sunml_wrap_session_pointer(kin_mem);
 
     if (vomaxiters != Val_none) {
 	flag = KINSetNumMaxIters(kin_mem, Long_val(Some_val(vomaxiters)));

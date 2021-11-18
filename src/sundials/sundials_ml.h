@@ -105,6 +105,10 @@ value sundials_ml_weak_get (value ar, value n);
 #define ARRAY2_NCOLS(v) (ARRAY2_DATA(v)->dim[0])
 #define ARRAY2_NROWS(v) (ARRAY2_DATA(v)->dim[1])
 
+// wrap a pointer to an integrator (cvode_mem, ida_mem. etc.)
+value sunml_wrap_session_pointer(void *sun_mem);
+#define SUNML_MEM(v) (*(void **)Data_custom_val(v))
+
 // create a Sundials.RealArray2.t from C
 CAMLprim value sunml_sundials_realarray2_create(int nc, int nr);
 
