@@ -671,11 +671,11 @@ module ButcherTable : sig (* {{{ *)
       @since 4.0.0 *)
   val load_dirk : dirk_table -> t
 
-  (** Writes a Butcher table to a file.
+  (** Writes a Butcher table on the standard output (or given file).
 
       @noarkode <node> ARKodeButcherTable_Write
       @since 4.0.0 *)
-  val write : t -> Logfile.t -> unit
+  val write : ?logfile:Logfile.t -> t -> unit
 
   (** Indicates that a check on the analytic order of accuracy failed. *)
   exception ButcherTableCheckFailed
@@ -1620,10 +1620,11 @@ module ARKStep : sig (* {{{ *)
       @noarkode <node> ARKStepSetDefaults *)
   val set_defaults : ('d, 'k) session -> unit
 
-  (** Write step adaptivity and solver diagnostics to the given file.
+  (** Write step adaptivity and solver diagnostics on the standard output
+      (or given file).
 
       @noarkode <node> ARKStepSetDiagnostics *)
-  val set_diagnostics : ('d, 'k) session -> Logfile.t -> unit
+  val set_diagnostics : ?logfile:Logfile.t -> ('d, 'k) session -> unit
 
   (** Specifies the interpolation module used for output value interpolation
       and implicit method predictors.
@@ -2289,17 +2290,17 @@ module ARKStep : sig (* {{{ *)
       @noarkode <node> ARKStepGetNumConstrFails *)
   val get_num_constr_fails : ('d, 'k) session -> int
 
-  (** Outputs all the solver parameters to the given file.
+  (** Outputs all the solver parameters on the standard output (or given file).
 
       @since 4.1.0
       @noarkode <node> ARKStepWriteParameters *)
-  val write_parameters : ('d, 'k) session -> Logfile.t -> unit
+  val write_parameters : ?logfile:Logfile.t -> ('d, 'k) session -> unit
 
-  (** Outputs the current butcher table to the given file.
+  (** Outputs the current butcher table on the standard output (or given file).
 
       @since 4.1.0
       @noarkode <node> ARKStepWriteButcher *)
-  val write_butcher : ('d, 'k) session -> Logfile.t -> unit
+  val write_butcher : ?logfile:Logfile.t -> ('d, 'k) session -> unit
 
 end (* }}} *)
 
@@ -2477,10 +2478,11 @@ module ERKStep : sig (* {{{ *)
       @noarkode <node> ERKStepSetDefaults *)
   val set_defaults : ('d, 'k) session -> unit
 
-  (** Write step adaptivity and solver diagnostics to the given file.
+  (** Write step adaptivity and solver diagnostics on the standard output
+      (or given file).
 
       @noarkode <node> ERKStepSetDiagnostics *)
-  val set_diagnostics : ('d, 'k) session -> Logfile.t -> unit
+  val set_diagnostics : ?logfile:Logfile.t -> ('d, 'k) session -> unit
 
   (** Specifies the interpolation module used for output value interpolation
       and implicit method predictors.
@@ -2853,17 +2855,17 @@ module ERKStep : sig (* {{{ *)
       @noarkode <node> ERKStepGetNumConstrFails *)
   val get_num_constr_fails : ('d, 'k) session -> int
 
-  (** Outputs all the solver parameters to the given file.
+  (** Outputs all the solver parameters on the standard output (or given file).
 
       @since 4.1.0
       @noarkode <node> ERKStepWriteParameters *)
-  val write_parameters : ('d, 'k) session -> Logfile.t -> unit
+  val write_parameters : ?logfile:Logfile.t -> ('d, 'k) session -> unit
 
-  (** Outputs the current butcher table to the given file.
+  (** Outputs the current butcher table on the standard output (or given file).
 
       @since 4.1.0
       @noarkode <node> ERKStepWriteButcher *)
-  val write_butcher : ('d, 'k) session -> Logfile.t -> unit
+  val write_butcher : ?logfile:Logfile.t -> ('d, 'k) session -> unit
 
 end (* }}} *)
 
@@ -3369,8 +3371,8 @@ module MRIStep : sig (* {{{ *)
     (** Return a coupling table's real and integer workspace sizes. *)
     val space : t -> int * int
 
-    (** Write a coupling table to a file. *)
-    val write : t -> Logfile.t -> unit
+    (** Write a coupling table on the standard output (or given file). *)
+    val write : ?logfile:Logfile.t -> t -> unit
 
   end (* }}} *)
 
@@ -3588,10 +3590,11 @@ module MRIStep : sig (* {{{ *)
       @noarkode <node> MRIStepSetInterpolantDegree *)
   val set_interpolant_degree : ('d, 'k) session -> int -> unit
 
-  (** Write step adaptivity and solver diagnostics to the given file.
+  (** Write step adaptivity and solver diagnostics on the standard output
+      (or given file).
 
       @noarkode <node> MRIStepSetDiagnostics *)
-  val set_diagnostics : ('d, 'k) session -> Logfile.t -> unit
+  val set_diagnostics : ?logfile:Logfile.t -> ('d, 'k) session -> unit
 
   (** Do not write step adaptivity or solver diagnostics of a file.
 
@@ -3854,11 +3857,11 @@ module MRIStep : sig (* {{{ *)
       @noarkode <node> MRIStepGetCurrentCoupling *)
   val get_current_coupling : ('d, 'k) session -> Coupling.t
 
-  (** Output the current coupling table to the given file.
+  (** Output the current coupling table on the standard output (or given file).
 
       @since 5.4.0
       @noarkode <node> MRIStepWriteCoupling *)
-  val write_coupling : ('d, 'k) session -> Logfile.t -> unit
+  val write_coupling : ?logfile:Logfile.t -> ('d, 'k) session -> unit
 
   (** Gives direct access to the internal data required to construct the
       current nonlinear implicit system within a nonlinear solver. This
@@ -3981,10 +3984,10 @@ module MRIStep : sig (* {{{ *)
       @noarkode <node> MRIStepGetNumGEvals *)
   val get_num_g_evals : ('d, 'k) session -> int
 
-  (** Outputs all the solver parameters to the given file.
+  (** Outputs all the solver parameters on the standard output (or given file).
 
       @noarkode <node> MRIStepWriteParameters *)
-  val write_parameters : ('d, 'k) session -> Logfile.t -> unit
+  val write_parameters : ?logfile:Logfile.t -> ('d, 'k) session -> unit
 
 end (* }}} *)
 

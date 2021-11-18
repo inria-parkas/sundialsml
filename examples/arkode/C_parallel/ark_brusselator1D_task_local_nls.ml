@@ -913,7 +913,7 @@ let evolve_problem_imex ({ myid; uopt; _ } as udata) (y : Nvector_mpiplusx.t) =
 
   (* Open output file for integrator diagnostics *)
   (match dfid with None -> ()
-   | Some dfid -> ARKStep.set_diagnostics arkode_mem dfid);
+   | Some dfid -> ARKStep.set_diagnostics ~logfile:dfid arkode_mem);
 
   (* Output initial condition *)
   if myid = 0 && monitor then begin
