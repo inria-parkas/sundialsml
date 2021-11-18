@@ -213,7 +213,7 @@ module Dls = struct (* {{{ *)
         let { n; mu; ml } = dims (Matrix.unwrap mat) in
         c_dls_lapack_band session n mu ml hasjac
 
-    | LSI.(Klu sinfo) ->
+    | LSI.Klu sinfo ->
         if not Config.klu_enabled
           then raise Config.NotImplementedBySundialsVersion;
         let smat = Matrix.unwrap mat in
@@ -227,7 +227,7 @@ module Dls = struct (* {{{ *)
         (match sinfo.ordering with None -> ()
                                  | Some o -> c_klu_set_ordering session o)
 
-    | LSI.(Superlumt sinfo) ->
+    | LSI.Superlumt sinfo ->
         if not Config.superlumt_enabled
           then raise Config.NotImplementedBySundialsVersion;
         let smat = Matrix.unwrap mat in
@@ -245,7 +245,8 @@ module Dls = struct (* {{{ *)
   let check_dqjac (type k m nd nk) jac (mat : (k,m,nd,nk) Matrix.t) =
     let open Matrix in
     match get_id mat with
-    | Dense | Band -> ()
+    | Dense -> ()
+    | Band -> ()
     | _ -> if jac = None then invalid_arg "A Jacobian function is required"
 
   let set_ls_callbacks (type m) (type tag)
@@ -446,7 +447,7 @@ module Spils = struct (* {{{ *)
 
   (* Sundials < 3.0.0 *)
   let make_compat (type tag)
-        (LSI.Iterative.({ maxl; gs_type }) as compat)
+        ({ LSI.Iterative.maxl; LSI.Iterative.gs_type } as compat)
         prec_type
         (solver_data : ('s, 'nd, 'nk, tag) LSI.solver_data) session =
     match solver_data with
@@ -466,7 +467,7 @@ module Spils = struct (* {{{ *)
     | _ -> raise Config.NotImplementedBySundialsVersion
 
   let solver (type s)
-      (LSI.(LS ({ rawptr; solver; compat } as hls)) as ls)
+      (LSI.LS ({ LSI.rawptr; LSI.solver; LSI.compat } as hls) as ls)
       ?jac_times_vec ?jac_times_rhs (prec_type, set_prec) session nv =
     let jac_times_setup, jac_times_vec =
       match jac_times_vec with
@@ -683,7 +684,7 @@ module Spils = struct (* {{{ *)
 end (* }}} *)
 
 let matrix_embedded_solver
-    (LSI.(LS ({ rawptr; solver; compat } as hls)) as ls) session nv =
+    ((LSI.LS ({ LSI.rawptr; LSI.solver; LSI.compat } as hls)) as ls) session nv =
   if Sundials_impl.Version.lt580
     then raise Config.NotImplementedBySundialsVersion;
   c_set_linear_solver session rawptr None false false;
@@ -756,7 +757,7 @@ let init lmm tol
   let weakref = Weak.create 1 in
   let iter = match nlsolver with
              | None -> true
-             | Some NLSI.{ solver = NewtonSolver _ } -> true
+             | Some { NLSI.solver = NLSI.NewtonSolver _ } -> true
              | Some _ -> false
   in
   let hasprojfn, projfn = match projfn with

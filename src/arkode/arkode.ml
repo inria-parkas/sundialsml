@@ -472,7 +472,7 @@ module ButcherTable = struct (* {{{ *)
 end (* }}} *)
 
 module ARKStep = struct (* {{{ *)
-  include Arkode_impl
+  open Arkode_impl
   include Common
 
   type ('d, 'k) session = ('d, 'k, arkstep) Arkode_impl.session
@@ -651,7 +651,8 @@ module ARKStep = struct (* {{{ *)
     let check_dqjac (type k m nd nk) jac (mat : (k,m,nd,nk) Matrix.t) =
       let open Matrix in
       match get_id mat with
-      | Dense | Band -> ()
+      | Dense -> ()
+      | Band -> ()
       | _ -> if jac = None then invalid_arg "A Jacobian function is required"
 
     let set_ls_callbacks (type m) (type tag)
@@ -862,7 +863,7 @@ module ARKStep = struct (* {{{ *)
 
     (* Sundials < 3.0.0 *)
     let make_compat (type tag)
-          (LSI.Iterative.({ maxl; gs_type }) as compat)
+          ({ LSI.Iterative.maxl; LSI.Iterative.gs_type } as compat)
           prec_type
           (solver_data : ('s, 'nd, 'nk, tag) LSI.solver_data) session =
       match solver_data with
@@ -891,7 +892,7 @@ module ARKStep = struct (* {{{ *)
       | _ -> assert false
 
     let solver (type s)
-          (LSI.(LS ({ rawptr; solver; compat } as hls) as ls))
+          (LSI.LS ({ LSI.rawptr; LSI.solver; LSI.compat } as hls) as ls)
           ?jac_times_vec ?jac_times_rhs (prec_type, set_prec) session nv =
       let jac_times_setup, jac_times_vec =
         match jac_times_vec with
@@ -1033,7 +1034,7 @@ module ARKStep = struct (* {{{ *)
   end (* }}} *)
 
 let matrix_embedded_solver
-    (LSI.(LS ({ rawptr; solver; compat } as hls)) as ls) session nv =
+    (LSI.LS ({ LSI.rawptr; LSI.solver; LSI.compat } as hls) as ls) session nv =
   if Sundials_impl.Version.lt580
     then raise Config.NotImplementedBySundialsVersion;
   c_set_linear_solver session rawptr None false false;
@@ -1221,7 +1222,7 @@ let matrix_embedded_solver
         | None -> failwith "a direct linear solver is required"
 
       let solver massfn time_dep
-                 (LSI.(LS ({ rawptr; solver; matrix } as hls)) as ls)
+                 (LSI.LS ({ LSI.rawptr; LSI.solver; LSI.matrix } as hls) as ls)
                  session nv =
         let matrix = assert_matrix matrix in
         set_mass_callbacks massfn solver matrix session;
@@ -1382,7 +1383,7 @@ let matrix_embedded_solver
 
       (* Sundials < 3.0.0 *)
       let make_compat (type tag)
-            (LSI.Iterative.({ maxl; gs_type }) as compat)
+            ({ LSI.Iterative.maxl; LSI.Iterative.gs_type } as compat)
             prec_type
             (solver_data : ('s, 'nd, 'nk, tag) LSI.solver_data) session =
         (match solver_data with
@@ -1411,7 +1412,7 @@ let matrix_embedded_solver
          | _ -> assert false)
 
       let solver (type s)
-            LSI.(LS { rawptr; solver; compat })
+            (LSI.LS { LSI.rawptr; LSI.solver; LSI.compat })
             ?mass_times_setup mass_times_vec time_dep (prec_type, set_prec)
             session nv =
         if Sundials_impl.Version.in_compat_mode2 then begin
@@ -1512,7 +1513,7 @@ let matrix_embedded_solver
     end (* }}} *)
 
     let matrix_embedded_solver
-        (LSI.(LS ({ rawptr; solver; compat } as hls)) as ls) session nv =
+        (LSI.LS ({ LSI.rawptr; LSI.solver; LSI.compat } as hls) as ls) session nv =
       if Sundials_impl.Version.lt580
         then raise Config.NotImplementedBySundialsVersion;
       c_set_mass_linear_solver session rawptr None false;
@@ -1679,8 +1680,8 @@ let matrix_embedded_solver
     set_tolerances session tol;
     if Sundials_impl.Version.in_compat_mode2_3 then begin
       match nlsolver with
-      | Some NLSI.{ solver = NewtonSolver _ } | None -> () (* the default *)
-      | Some NLSI.{ solver = FixedPointSolver (_, fpm) } ->
+      | Some { NLSI.solver = NLSI.NewtonSolver _ } | None -> () (* the default *)
+      | Some { NLSI.solver = NLSI.FixedPointSolver (_, fpm) } ->
           set_fixed_point session fpm
       | _ -> raise Config.NotImplementedBySundialsVersion
     end else begin
@@ -1745,8 +1746,8 @@ let matrix_embedded_solver
     (if Sundials_impl.Version.in_compat_mode2_3 then begin
       match nlsolver with
       | None -> ()
-      | Some NLSI.{ solver = NewtonSolver _ } -> set_newton session
-      | Some NLSI.{ solver = FixedPointSolver (_, fpm) } ->
+      | Some { NLSI.solver = NLSI.NewtonSolver _ } -> set_newton session
+      | Some { NLSI.solver = NLSI.FixedPointSolver (_, fpm) } ->
           set_fixed_point session fpm
       | _ -> raise Config.NotImplementedBySundialsVersion
     end else begin
@@ -2018,8 +2019,6 @@ let matrix_embedded_solver
     s.stabfn <- dummy_stabfn;
     c_set_stability_fn s false
 
-  type 'd stage_predict_fn  = 'd Arkode_impl.Global.stage_predict_fn
-
   external set_predictor_method : ('d, 'k) session -> predictor_method -> unit
       = "sunml_arkode_ark_set_predictor_method"
 
@@ -2189,7 +2188,7 @@ let matrix_embedded_solver
 end (* }}} *)
 
 module ERKStep = struct (* {{{ *)
-  include Arkode_impl
+  open Arkode_impl
   include Common
 
   type ('d, 'k) session = ('d, 'k, erkstep) Arkode_impl.session
@@ -2586,7 +2585,7 @@ module ERKStep = struct (* {{{ *)
 end (* }}} *)
 
 module MRIStep = struct (* {{{ *)
-  include Arkode_impl
+  open Arkode_impl
   include Common
 
   type ('d, 'k) session = ('d, 'k, mristep) Arkode_impl.session
@@ -2623,7 +2622,8 @@ module MRIStep = struct (* {{{ *)
     let check_dqjac (type k m nd nk) jac (mat : (k,m,nd,nk) Matrix.t) =
       let open Matrix in
       match get_id mat with
-      | Dense | Band -> ()
+      | Dense -> ()
+      | Band -> ()
       | _ -> if jac = None then invalid_arg "A Jacobian function is required"
 
     let set_ls_callbacks (type m) (type tag)
@@ -2713,7 +2713,7 @@ module MRIStep = struct (* {{{ *)
                                               init_preconditioner solve setup)
 
     let solver (type s)
-          (LSI.(LS ({ rawptr; solver; compat } as hls) as ls))
+          (LSI.LS ({ LSI.rawptr; LSI.solver; LSI.compat } as hls) as ls)
           ?jac_times_vec ?jac_times_rhs (prec_type, set_prec) session nv =
       if Sundials_impl.Version.lt540
         then raise Config.NotImplementedBySundialsVersion;
@@ -2825,7 +2825,7 @@ module MRIStep = struct (* {{{ *)
   end (* }}} *)
 
   let matrix_embedded_solver
-      (LSI.(LS ({ rawptr; solver; compat } as hls)) as ls) session nv =
+      (LSI.LS ({ LSI.rawptr; LSI.solver; LSI.compat } as hls) as ls) session nv =
     if Sundials_impl.Version.lt580
       then raise Config.NotImplementedBySundialsVersion;
     c_set_linear_solver session rawptr None false false;
@@ -2882,7 +2882,7 @@ module MRIStep = struct (* {{{ *)
       : ('d, 'k) I.inner_stepper_cptr -> float -> ('d, 'k) Nvector.t -> unit
       = "sunml_arkode_mri_istepper_add_forcing"
 
-    let add_forcing I.{ rawptr; icheckvec; _ } t ff =
+    let add_forcing { I.rawptr; I.icheckvec; _ } t ff =
       (match icheckvec with
        | None -> invalid_arg "no forcing data"
        | Some cv -> cv ff);
@@ -2899,7 +2899,7 @@ module MRIStep = struct (* {{{ *)
       : ('d, 'k) I.inner_stepper_cptr -> 'd forcing_data
       = "sunml_arkode_mri_istepper_get_forcing_data"
 
-    let get_forcing_data I.{ rawptr; _ }
+    let get_forcing_data { I.rawptr; _ }
       = c_get_forcing_data rawptr
 
   end (* }}} *)
@@ -3262,9 +3262,6 @@ module MRIStep = struct (* {{{ *)
   external set_stop_time          : ('a, 'k) session -> float -> unit
       = "sunml_arkode_mri_set_stop_time"
 
-  type 'd pre_inner_fn  = 'd Arkode_impl.Global.pre_inner_fn
-  type 'd post_inner_fn = 'd Arkode_impl.Global.post_inner_fn
-
   external c_set_pre_inner_fn : ('a, 'k) session -> bool -> unit
       = "sunml_arkode_mri_set_pre_inner_fn"
 
@@ -3337,16 +3334,6 @@ module MRIStep = struct (* {{{ *)
 
   let write_coupling ?(logfile=Logfile.stdout) s =
     c_write_coupling s logfile
-
-  (* must correspond to arkode_nonlin_system_data_index in arkode_ml.h *)
-  type 'd nonlin_system_data = {
-    tcur  : float;
-    zpred : 'd;
-    zi    : 'd;
-    fi    : 'd;
-    gamma : float;
-    sdata : 'd;
-  }
 
   external get_nonlin_system_data
     : ('d, 'k) session -> 'd nonlin_system_data

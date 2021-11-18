@@ -543,7 +543,7 @@ let gs_iter wdata gamma zd xd =
   blocks in P, and pivot information in pivot, and returns the result in z.
 *)
 let psolve wdata jac_arg solve_arg z =
-  let ARKStep.Spils.({ rhs; gamma }) = solve_arg
+  let { ARKStep.Spils.rhs; ARKStep.Spils.gamma } = solve_arg
   in
   Array1.blit rhs z;
 

@@ -66,7 +66,7 @@ let matrix_embedded_ls_solve content () x b tol =
       exit(-1)
   | Some arkode_mem ->
       (* retrieve implicit system data from ARKStep *)
-      let ARKStep.{ gamma; _ } = ARKStep.get_nonlin_system_data arkode_mem in
+      let { ARKStep.gamma; _ } = ARKStep.get_nonlin_system_data arkode_mem in
       (* extract stiffness parameter from user_data *)
       let lambda = rdata.{0} in
       (* perform linear solve: (1-gamma*lamda)*x = b *)

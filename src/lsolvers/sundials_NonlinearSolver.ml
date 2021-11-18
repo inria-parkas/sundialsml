@@ -121,10 +121,12 @@ let init (type v) ({ rawptr; solver } : ('d, 'k, 's, v) t) =
   match solver with
   | CustomSolver     (_, { init = Some f }) -> f ()          (* O/Onls *)
   | CustomSolverSens (_, { init = Some f }) -> f ()          (* O/Onls *)
-  | CustomSolver _ | CustomSolverSens _   -> ()
-  | FixedPointSolver _ | NewtonSolver _
-  | FixedPointSolverSens _ | NewtonSolverSens _
-    -> c_init rawptr   (* O/Cnls *)
+  | CustomSolver _ -> ()
+  | CustomSolverSens _   -> ()
+  | FixedPointSolver _ -> c_init rawptr                      (* O/Cnls *)
+  | NewtonSolver _ -> c_init rawptr
+  | FixedPointSolverSens _ -> c_init rawptr
+  | NewtonSolverSens _ -> c_init rawptr
 
 let setup { rawptr; solver } ~y s =
   check_compat ();
@@ -160,12 +162,18 @@ let set_lsetup_fn (type v) ({ rawptr; solver; _ } : ('d, 'k, 's, v) t) cbf =
   | CustomSolver (_, { set_lsetup_fn = None }) -> ()
   | CustomSolverSens (_, { set_lsetup_fn = Some set }) -> set cbf
   | CustomSolverSens (_, { set_lsetup_fn = None }) -> ()
-  | FixedPointSolver (callbacks, _) | NewtonSolver callbacks  (* O/Cnls *)
-      -> callbacks.lsetupfn <- cbf;
-         c_set_lsetup_fn rawptr
-  | FixedPointSolverSens (callbacks, _) | NewtonSolverSens callbacks
-      -> callbacks.lsetupfn <- cbf;
-         c_set_lsetup_fn rawptr
+  | FixedPointSolver (callbacks, _) ->                        (* O/Cnls *)
+      callbacks.lsetupfn <- cbf;
+      c_set_lsetup_fn rawptr
+  | NewtonSolver callbacks ->
+      callbacks.lsetupfn <- cbf;
+      c_set_lsetup_fn rawptr
+  | FixedPointSolverSens (callbacks, _) ->
+      callbacks.lsetupfn <- cbf;
+      c_set_lsetup_fn rawptr
+  | NewtonSolverSens callbacks ->
+      callbacks.lsetupfn <- cbf;
+      c_set_lsetup_fn rawptr
 
 let set_lsolve_fn { rawptr; solver; _ } cbf =
   check_compat ();
@@ -176,28 +184,6 @@ let set_lsolve_fn { rawptr; solver; _ } cbf =
   | FixedPointSolver (callbacks, _) | NewtonSolver callbacks  (* O/Cnls *)
       -> callbacks.lsolvefn <- cbf;
          c_set_lsolve_fn rawptr
-
-type ('nv, 's) convtestfn' = 'nv -> 'nv -> float -> 'nv -> 's -> convtest
-
-type 's convtest_callback
-  = 's Sundials_NonlinearSolver_impl.convtest_callback
-  = { f : 'd1 'k1 't2 'd2 'k2. ('d1, 'k1, 't2, [`Nvec]) nonlinear_solver
-                               -> (('d2, 'k2) Nvector.t, 's) convtestfn' }
-  [@@unboxed]
-
-type 's convtest_callback_sens
-  = 's Sundials_NonlinearSolver_impl.convtest_callback_sens
-  = { f : 'd1 'k1 't2 'd2 'k2. ('d1, 'k1, 't2, [`Sens]) nonlinear_solver
-                               -> (('d2, 'k2) Senswrapper.t, 's) convtestfn' }
-  [@@unboxed]
-
-type ('nv, 's, 'v) convtestfn
-  = ('nv, 's, 'v) Sundials_NonlinearSolver_impl.convtestfn
-  = CConvTest
-    : 's convtest_callback cfun -> ('nv, 's, [`Nvec]) convtestfn
-  | CSensConvTest
-    : 's convtest_callback_sens cfun -> ('nv, 's, [`Sens]) convtestfn
-  | OConvTest of ('nv, 's) convtestfn'
 
 let assert_not_oconvtestfn (type d s) (ctfn : (d, s, [`Nvec]) convtestfn) =
   match ctfn with
@@ -285,9 +271,12 @@ let set_max_iters (type d k s v) ({ rawptr; solver; _ } : (d, k, s, v) t) i =
   match solver with
   | CustomSolver     (_, { set_max_iters = Some f }) -> f i
   | CustomSolverSens (_, { set_max_iters = Some f }) -> f i
-  | CustomSolver _ | CustomSolverSens _ -> ()
-  | FixedPointSolverSens _ | NewtonSolverSens _
-  | FixedPointSolver _ | NewtonSolver _ -> c_set_max_iters rawptr i
+  | CustomSolver _ -> ()
+  | CustomSolverSens _ -> ()
+  | FixedPointSolverSens _ -> c_set_max_iters rawptr i
+  | NewtonSolverSens _ -> c_set_max_iters rawptr i
+  | FixedPointSolver _ -> c_set_max_iters rawptr i
+  | NewtonSolver _ -> c_set_max_iters rawptr i
 
 let set_print_level (type d k s v) ({ rawptr; solver; _ } : (d, k, s, v) t) level =
   if Sundials_impl.Version.lt530
@@ -296,9 +285,12 @@ let set_print_level (type d k s v) ({ rawptr; solver; _ } : (d, k, s, v) t) leve
   match solver with
   | CustomSolver     (_, { set_print_level = Some f }) -> f level
   | CustomSolverSens (_, { set_print_level = Some f }) -> f level
-  | CustomSolver _ | CustomSolverSens _ -> ()
-  | FixedPointSolverSens _ | NewtonSolverSens _
-  | FixedPointSolver _ | NewtonSolver _ -> c_set_print_level_newton rawptr level
+  | CustomSolver _ -> ()
+  | CustomSolverSens _ -> ()
+  | FixedPointSolverSens _ -> c_set_print_level_newton rawptr level
+  | NewtonSolverSens _ -> c_set_print_level_newton rawptr level
+  | FixedPointSolver _ -> c_set_print_level_newton rawptr level
+  | NewtonSolver _ -> c_set_print_level_newton rawptr level
 
 let set_info_file (type d k s v)
                   ({ rawptr; solver; _ } as s : (d, k, s, v) t) ?print_level file =
@@ -307,11 +299,12 @@ let set_info_file (type d k s v)
   (match solver with
    | CustomSolver     (_, { set_info_file = Some f }) -> f file
    | CustomSolverSens (_, { set_info_file = Some f }) -> f file
-   | CustomSolver _ | CustomSolverSens _ -> ()
-   | FixedPointSolverSens _ | FixedPointSolver _ ->
-       c_set_info_file_fixedpoint rawptr file
-   | NewtonSolverSens _ | NewtonSolver _ ->
-       c_set_info_file_newton rawptr file);
+   | CustomSolver _ -> ()
+   | CustomSolverSens _ -> ()
+   | FixedPointSolverSens _ -> c_set_info_file_fixedpoint rawptr file
+   | FixedPointSolver _ -> c_set_info_file_fixedpoint rawptr file
+   | NewtonSolverSens _ -> c_set_info_file_newton rawptr file
+   | NewtonSolver _ -> c_set_info_file_newton rawptr file);
   (match print_level with None -> () | Some level -> set_print_level s level)
 
 let get_num_iters (type d k s v) ({ rawptr; solver; _ } : (d, k, s, v) t) =
@@ -319,20 +312,24 @@ let get_num_iters (type d k s v) ({ rawptr; solver; _ } : (d, k, s, v) t) =
   match solver with
   | CustomSolver     (_, { get_num_iters = Some f }) -> f ()
   | CustomSolverSens (_, { get_num_iters = Some f }) -> f ()
-  | CustomSolver _ | CustomSolverSens _ -> 0
-  | FixedPointSolverSens _ | NewtonSolverSens _
-  | FixedPointSolver _ | NewtonSolver _
-      -> c_get_num_iters rawptr
+  | CustomSolver _ -> 0
+  | CustomSolverSens _ -> 0
+  | FixedPointSolverSens _ -> c_get_num_iters rawptr
+  | NewtonSolverSens _ -> c_get_num_iters rawptr
+  | FixedPointSolver _ -> c_get_num_iters rawptr
+  | NewtonSolver _ -> c_get_num_iters rawptr
 
 let get_cur_iter (type d k s v) ({ rawptr; solver; _ } : (d, k, s, v) t) =
   check_compat ();
   match solver with
   | CustomSolver     (_, { get_cur_iter = Some f }) -> f ()
   | CustomSolverSens (_, { get_cur_iter = Some f }) -> f ()
-  | CustomSolver _ | CustomSolverSens _ -> 0
-  | FixedPointSolverSens _ | NewtonSolverSens _
-  | FixedPointSolver _ | NewtonSolver _
-      -> c_get_cur_iter rawptr
+  | CustomSolver _ -> 0
+  | CustomSolverSens _ -> 0
+  | FixedPointSolverSens _ -> c_get_cur_iter rawptr
+  | NewtonSolverSens _ -> c_get_cur_iter rawptr
+  | FixedPointSolver _ -> c_get_cur_iter rawptr
+  | NewtonSolver _ -> c_get_cur_iter rawptr
 
 let get_num_conv_fails (type d k s v)
                        ({ rawptr; solver; _ } : (d, k, s, v) t) =
@@ -340,10 +337,12 @@ let get_num_conv_fails (type d k s v)
   match solver with
   | CustomSolver     (_, { get_num_conv_fails = Some f }) -> f ()
   | CustomSolverSens (_, { get_num_conv_fails = Some f }) -> f ()
-  | CustomSolver _ | CustomSolverSens _ -> 0
-  | FixedPointSolverSens _ | NewtonSolverSens _
-  | FixedPointSolver _ | NewtonSolver _
-      -> c_get_num_conv_fails rawptr
+  | CustomSolver _ -> 0
+  | CustomSolverSens _ -> 0
+  | FixedPointSolverSens _ -> c_get_num_conv_fails rawptr
+  | NewtonSolverSens _ -> c_get_num_conv_fails rawptr
+  | FixedPointSolver _ -> c_get_num_conv_fails rawptr
+  | NewtonSolver _ -> c_get_num_conv_fails rawptr
 
 type ('d, 's) c_sysfn
 type ('d, 's) c_lsetupfn

@@ -572,7 +572,9 @@ and ('a, 'kind) bsensext = {
 let revlookup_bsession ({ sensext; _ } : ('d, 'k) session) (child : cvode_mem) =
   match sensext with
   | FwdSensExt { bsessions } ->
-      List.find_opt (fun { cvode; _ } -> cvode = child) bsessions
+      (match List.find (fun { cvode; _ } -> cvode = child) bsessions with
+       | bs -> Some bs
+       | exception Not_found -> None)
   | NoSensExt | BwdSensExt _ -> None
 
 (* called from sunml_cvodes_bsession_to_value *)

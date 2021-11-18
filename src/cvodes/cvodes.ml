@@ -1018,7 +1018,8 @@ module Adjoint = struct (* {{{ *)
           session.ls_callbacks <- (match jac with
             | None ->
                 (match Matrix.get_id mat with
-                 | Matrix.Dense | Matrix.Band -> ()
+                 | Matrix.Dense -> ()
+                 | Matrix.Band -> ()
                  | _ -> invalid_arg "A Jacobian function is required");
                 BDirectCustomCallback ({ jacfn = no_callback; jmat = none }, ls)
             | Some (NoSens f) ->
@@ -1207,7 +1208,7 @@ module Adjoint = struct (* {{{ *)
 
     (* Sundials < 3.0.0 *)
     let make_compat (type tag)
-          (LSI.Iterative.({ maxl; gs_type }) as compat)
+          ({ LSI.Iterative.maxl; LSI.Iterative.gs_type } as compat)
           prec_type
           (solver_data : ('s, 'nd, 'nk, tag) LSI.solver_data) bs =
       let parent, which = parent_and_which bs in
@@ -1229,7 +1230,7 @@ module Adjoint = struct (* {{{ *)
       | _ -> raise Config.NotImplementedBySundialsVersion
 
     let solver (type s)
-          (LSI.(LS ({ rawptr; solver; compat } as hls)) as ls)
+          (LSI.LS ({ LSI.rawptr; LSI.solver; LSI.compat } as hls) as ls)
           ?jac_times_vec ?jac_times_rhs (prec_type, set_prec) bs nv =
       let session = tosession bs in
       let parent, which = parent_and_which bs in
@@ -1418,7 +1419,7 @@ module Adjoint = struct (* {{{ *)
   end (* }}} *)
 
   let matrix_embedded_solver
-      (LSI.(LS ({ rawptr; solver; compat } as hls)) as ls) bs nv =
+      (LSI.LS ({ LSI.rawptr; LSI.solver; LSI.compat } as hls) as ls) bs nv =
     if Sundials_impl.Version.lt580
       then raise Config.NotImplementedBySundialsVersion;
     let session = tosession bs in
@@ -1461,7 +1462,7 @@ module Adjoint = struct (* {{{ *)
     let weakref = Weak.create 1 in
     let iter = match nlsolver with
                | None -> true
-               | Some NLSI.{ solver = NewtonSolver _ } -> true
+               | Some { NLSI.solver = NLSI.NewtonSolver _ } -> true
                | Some _ -> false
     in
     let cvode_mem, which, backref =

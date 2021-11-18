@@ -137,9 +137,9 @@ let fn (rpar : RealArray.t) t (y : RealArray.t) (ydot : RealArray.t) =
 let f0 (rpar : RealArray.t) t (y : RealArray.t) (ydot : RealArray.t) =
   RealArray.fill ydot 0.0
 
-let js (rpar : RealArray.t) MRIStep.{ jac_t = t;
-                                      jac_y = (y : RealArray.t);
-                                      jac_fy = (ydot : RealArray.t); _ }
+let js (rpar : RealArray.t) { MRIStep.jac_t = t;
+                              MRIStep.jac_y = (y : RealArray.t);
+                              MRIStep.jac_fy = (ydot : RealArray.t); _ }
                             jmat =
   let g = rpar.{0} in
   let e = rpar.{2} in
@@ -153,9 +153,9 @@ let js (rpar : RealArray.t) MRIStep.{ jac_t = t;
   DM.set jmat 1 0 0.0;
   DM.set jmat 1 1 0.0
 
-let jn (rpar : RealArray.t) MRIStep.{ jac_t = t;
-                                      jac_y = (y : RealArray.t);
-                                      jac_fy = (ydot : RealArray.t); _ }
+let jn (rpar : RealArray.t) { MRIStep.jac_t = t;
+                              MRIStep.jac_y = (y : RealArray.t);
+                              MRIStep.jac_fy = (ydot : RealArray.t); _ }
                             jmat =
   let g = rpar.{0} in
   let e = rpar.{2} in
@@ -176,7 +176,7 @@ let main () =
   let tf         = 5.0 in     (* final time *)
   let dTout      = 0.1 in     (* time between outputs *)
   let neq        = 2 in       (* number of dependent vars. *)
-  let nt         = Int.of_float (ceil (tf /. dTout)) in (* number of output times *)
+  let nt         = int_of_float (ceil (tf /. dTout)) in (* number of output times *)
   let default_reltol =    0.01 in
   let default_abstol = 1e-11 in
 

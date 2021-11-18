@@ -65,7 +65,7 @@ let main () =
   let t0 = 0.0 in      (* initial time *)
   let tf = 2.0 in      (* final time *)
   let dTout = 0.1 in   (* time between outputs *)
-  let nt = Int.of_float (ceil(tf/.dTout)) in (* number of output times *)
+  let nt = int_of_float (ceil(tf/.dTout)) in (* number of output times *)
   let hs = 0.001 in    (* slow step size *)
   let hf = 0.00002 in  (* fast step size *)
 

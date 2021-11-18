@@ -1003,7 +1003,8 @@ module Adjoint = struct (* {{{ *)
     let check_dqjac (type k m nd nk) jac (mat : (k,m,nd,nk) Matrix.t) =
       let open Matrix in
       match get_id mat with
-      | Dense | Band -> ()
+      | Dense -> ()
+      | Band -> ()
       | _ -> if jac = None then invalid_arg "A Jacobian function is required"
 
     let set_ls_callbacks (type mk m nd nk) (type tag)
@@ -1062,7 +1063,8 @@ module Adjoint = struct (* {{{ *)
           session.ls_callbacks <- (match jac with
             | None ->
                 (match Matrix.get_id mat with
-                 | Matrix.Dense | Matrix.Band -> ()
+                 | Matrix.Dense -> ()
+                 | Matrix.Band -> ()
                  | _ -> invalid_arg "A Jacobian function is required");
                 BDirectCustomCallback { jacfn = no_callback; jmat = none }
             | Some (NoSens f) ->
@@ -1234,7 +1236,7 @@ module Adjoint = struct (* {{{ *)
 
     (* Sundials < 3.0.0 *)
     let make_compat (type tag)
-          (LSI.Iterative.({ maxl; gs_type }) as compat)
+          ({ LSI.Iterative.maxl; LSI.Iterative.gs_type } as compat)
           prec_type
           (solver_data : ('s, 'nd, 'nk, tag) LSI.solver_data) bs =
       let parent, which = parent_and_which bs in
@@ -1256,7 +1258,7 @@ module Adjoint = struct (* {{{ *)
       | _ -> raise Config.NotImplementedBySundialsVersion
 
     let solver (type s)
-          LSI.(LS ({ rawptr; solver; compat; } as lsolver) as ls)
+          (LSI.LS ({ LSI.rawptr; LSI.solver; LSI.compat; } as lsolver) as ls)
           ?jac_times_vec ?jac_times_res (prec_type, set_prec) bs nv =
       let session = tosession bs in
       let parent, which = parent_and_which bs in
@@ -1414,7 +1416,7 @@ module Adjoint = struct (* {{{ *)
   end (* }}} *)
 
   let matrix_embedded_solver
-      (LSI.(LS ({ rawptr; solver; compat } as hls)) as ls) bs nv =
+      (LSI.LS ({ LSI.rawptr; LSI.solver; LSI.compat } as hls) as ls) bs nv =
     if Sundials_impl.Version.lt580
       then raise Config.NotImplementedBySundialsVersion;
     let session = tosession bs in
