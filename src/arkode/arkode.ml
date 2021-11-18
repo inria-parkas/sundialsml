@@ -445,9 +445,9 @@ module ButcherTable = struct (* {{{ *)
   external c_write : t -> Logfile.t -> unit
     = "sunml_arkode_butcher_table_write"
 
-  let write bt f =
+  let write ?(logfile=Logfile.stdout) bt =
     if Sundials_configuration.safe then check bt;
-    c_write bt f
+    c_write bt logfile
 
   exception ButcherTableCheckFailed
 
@@ -1907,8 +1907,11 @@ let matrix_embedded_solver
   let print_step_stats s oc =
     print_step_stats oc (get_step_stats s)
 
-  external set_diagnostics : ('a, 'k) session -> Logfile.t -> unit
+  external c_set_diagnostics : ('a, 'k) session -> Logfile.t -> unit
       = "sunml_arkode_ark_set_diagnostics"
+
+  let set_diagnostics ?(logfile=Logfile.stdout) s =
+    c_set_diagnostics s logfile
 
   external clear_diagnostics : ('a, 'k) session -> unit
       = "sunml_arkode_ark_clear_diagnostics"
@@ -2166,11 +2169,17 @@ let matrix_embedded_solver
   external get_num_constr_fails           : ('a, 'k) session -> int
       = "sunml_arkode_ark_get_num_constr_fails"
 
-  external write_parameters : ('d, 'k) session -> Logfile.t -> unit
+  external c_write_parameters : ('d, 'k) session -> Logfile.t -> unit
       = "sunml_arkode_ark_write_parameters"
 
-  external write_butcher : ('d, 'k) session -> Logfile.t -> unit
+  let write_parameters ?(logfile=Logfile.stdout) s =
+    c_write_parameters s logfile
+
+  external c_write_butcher : ('d, 'k) session -> Logfile.t -> unit
       = "sunml_arkode_ark_write_butcher"
+
+  let write_butcher ?(logfile=Logfile.stdout) s =
+    c_write_butcher s logfile
 
   external c_print_mem : ('d, 'k) session -> Logfile.t option -> unit
       = "sunml_arkode_ark_print_mem"
@@ -2395,8 +2404,11 @@ module ERKStep = struct (* {{{ *)
   let print_step_stats s oc =
     print_step_stats oc (get_step_stats s)
 
-  external set_diagnostics : ('a, 'k) session -> Logfile.t -> unit
+  external c_set_diagnostics : ('a, 'k) session -> Logfile.t -> unit
       = "sunml_arkode_erk_set_diagnostics"
+
+  let set_diagnostics ?(logfile=Logfile.stdout) s =
+    c_set_diagnostics s logfile
 
   external clear_diagnostics : ('a, 'k) session -> unit
       = "sunml_arkode_erk_clear_diagnostics"
@@ -2554,11 +2566,17 @@ module ERKStep = struct (* {{{ *)
   external get_num_constr_fails           : ('a, 'k) session -> int
       = "sunml_arkode_erk_get_num_constr_fails"
 
-  external write_parameters : ('d, 'k) session -> Logfile.t -> unit
+  external c_write_parameters : ('d, 'k) session -> Logfile.t -> unit
       = "sunml_arkode_erk_write_parameters"
 
-  external write_butcher : ('d, 'k) session -> Logfile.t -> unit
+  let write_parameters ?(logfile=Logfile.stdout) s =
+    c_write_parameters s logfile
+
+  external c_write_butcher : ('d, 'k) session -> Logfile.t -> unit
       = "sunml_arkode_erk_write_butcher"
+
+  let write_butcher ?(logfile=Logfile.stdout) s =
+    c_write_butcher s logfile
 
   external c_print_mem : ('d, 'k) session -> Logfile.t option -> unit
       = "sunml_arkode_erk_print_mem"
@@ -2953,8 +2971,11 @@ module MRIStep = struct (* {{{ *)
     external space : t -> int * int
       = "sunml_arkode_mri_coupling_space"
 
-    external write : t -> Logfile.t -> unit
+    external c_write : t -> Logfile.t -> unit
       = "sunml_arkode_mri_coupling_write"
+
+    let write ?(logfile=Logfile.stdout) s =
+      c_write s logfile
 
   end (* }}} *)
 
@@ -3196,8 +3217,11 @@ module MRIStep = struct (* {{{ *)
   external get_current_time       : ('a, 'k) session -> float
       = "sunml_arkode_mri_get_current_time"
 
-  external set_diagnostics : ('a, 'k) session -> Logfile.t -> unit
+  external c_set_diagnostics : ('a, 'k) session -> Logfile.t -> unit
       = "sunml_arkode_mri_set_diagnostics"
+
+  let set_diagnostics ?(logfile=Logfile.stdout) s =
+    c_set_diagnostics s logfile
 
   external clear_diagnostics : ('a, 'k) session -> unit
       = "sunml_arkode_mri_clear_diagnostics"
@@ -3308,8 +3332,11 @@ module MRIStep = struct (* {{{ *)
   external get_current_coupling : ('d, 'k) session -> Coupling.t
     = "sunml_arkode_mri_get_current_coupling"
 
-  external write_coupling : ('d, 'k) session -> Logfile.t -> unit
+  external c_write_coupling : ('d, 'k) session -> Logfile.t -> unit
     = "sunml_arkode_mri_write_coupling"
+
+  let write_coupling ?(logfile=Logfile.stdout) s =
+    c_write_coupling s logfile
 
   (* must correspond to arkode_nonlin_system_data_index in arkode_ml.h *)
   type 'd nonlin_system_data = {
@@ -3335,8 +3362,11 @@ module MRIStep = struct (* {{{ *)
   external get_num_g_evals                : ('a, 'k) session -> int
       = "sunml_arkode_mri_get_num_g_evals"
 
-  external write_parameters : ('d, 'k) session -> Logfile.t -> unit
+  external c_write_parameters : ('d, 'k) session -> Logfile.t -> unit
       = "sunml_arkode_mri_write_parameters"
+
+  let write_parameters ?(logfile=Logfile.stdout) s =
+    c_write_parameters s logfile
 
   external set_nonlin_conv_coef   : ('a, 'k) session -> float -> unit
       = "sunml_arkode_mri_set_nonlin_conv_coef"
