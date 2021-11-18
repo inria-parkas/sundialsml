@@ -567,6 +567,17 @@ and ('a, 'kind) bsensext = {
   mutable checkbquadvec   : (('a, 'kind) Nvector.t -> unit);
 }
 
+(* Reverse lookup of a session value for a child session, given the pointer
+   to the Sundials (child) session. *)
+let revlookup_bsession ({ sensext; _ } : ('d, 'k) session) (child : cvode_mem) =
+  match sensext with
+  | FwdSensExt { bsessions } ->
+      List.find_opt (fun { cvode; _ } -> cvode = child) bsessions
+  | NoSensExt | BwdSensExt _ -> None
+
+(* called from sunml_cvodes_bsession_to_value *)
+let _ = Callback.register "Cvodes.revlookup_bsession" revlookup_bsession
+
 (* Linear solver check functions *)
 
 let ls_check_diag session =

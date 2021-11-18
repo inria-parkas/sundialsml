@@ -1218,6 +1218,37 @@ static value sunml_idas_session_to_value(void *ida_mem)
     return session;
 }
 
+static value sunml_idas_bsession_to_value(void *ida_mem)
+{
+    CAMLparam0();
+    CAMLlocal3(vparent, vsession, vchildptr);
+
+    // for the "B" case, the callback functions are passed the
+    // session for the backward integrator directly.
+    //
+    // The user_data field of Adjoint sessions contains a pointer to
+    // the parent session structure (see CVodeCreateB). The actual
+    // user data is stored in the associated CVodeBMemRec structure.
+    //
+    // A CVodeGetUserDataB function would not help, since we do not know
+    // what the `which` value is.
+
+    // void *user_data = CVodeGetUserData(cvode_mem);
+    void *parent = ((StartOf_IDAMem)ida_mem)->ida_user_data;
+    void *parent_mem = ((StartOf_IDAMem)parent)->ida_user_data;
+    WEAK_DEREF (vparent, *(value*)parent_mem);
+    vchildptr = sunml_wrap_session_pointer(ida_mem);
+
+    vsession = caml_callback2(
+		*caml_named_value("Idas.revlookup_bsession"),
+		vparent, vchildptr);
+
+    assert (vsession != Val_none);
+    vsession = Some_val(vsession);
+
+    return vsession;
+}
+
 static void* sunml_idas_session_from_value(value vida_mem)
 {
     return (IDA_MEM_FROM_ML(vida_mem));
@@ -2019,11 +2050,8 @@ CAMLprim value sunml_idas_adj_set_nonlinear_solver(value vparent,
     SUNNonlinearSolver nlsolv = NLSOLVER_VAL(vnlsolv);
     int flag;
 
-    // for the "B" case, the callback functions are passed the
-    // session for the backward integrator directly (so no need to
-    // use IDAGetUserDataB).
     sunml_nlsolver_set_to_from_mem(nlsolv,
-				   sunml_idas_session_to_value,
+				   sunml_idas_bsession_to_value,
 				   sunml_idas_session_from_value);
 
     flag = IDASetNonlinearSolverB(ida_mem, Int_val(vwhich), nlsolv);

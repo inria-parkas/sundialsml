@@ -212,7 +212,8 @@ static int compare_session_pointers(value vmem1, value vmem2)
     void* mem2 = SUNML_MEM(vmem2);
 
     // only works for equality, other pointer comparisons are undefined.
-    return (mem1 == mem2);
+    // the comparison is negated to return 0 if equal and 1 otherwise
+    return (mem1 != mem2);
 }
 
 value sunml_wrap_session_pointer(void *sun_mem)
