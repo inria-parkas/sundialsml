@@ -43,12 +43,7 @@ LAPACK_EXAMPLES = cvAdvDiff_bndL.ml \
 		  cvRoberts_dnsL.ml
 
 FILES_TO_CLEAN = cvParticle_solution.txt cvParticle_error.txt \
-	 cvPendulum_dns_ref.txt \
-	 cvPendulum_dns_tol_1.00e-05.txt cvPendulum_dns_tol_1.00e-05_proj.txt \
-	 cvPendulum_dns_tol_1.00e-06.txt cvPendulum_dns_tol_1.00e-06_proj.txt \
-	 cvPendulum_dns_tol_1.00e-07.txt cvPendulum_dns_tol_1.00e-07_proj.txt \
-	 cvPendulum_dns_tol_1.00e-08.txt cvPendulum_dns_tol_1.00e-08_proj.txt \
-	 cvPendulum_dns_tol_1.00e-09.txt cvPendulum_dns_tol_1.00e-09_proj.txt \
+	 cvPendulum_dns_ref.txt cvPendulum_dns_rtol_*.txt
 
 include ../../examples.mk
 
