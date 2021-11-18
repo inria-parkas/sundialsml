@@ -128,9 +128,9 @@ let check_ans data tol =
   printf "    y3 = %g\n" data.{2};
 
   (* solution error *)
-  let ex = Float.abs(data.{0} -. xtrue) in
-  let ey = Float.abs(data.{1} -. ytrue) in
-  let ez = Float.abs(data.{2} -. ztrue) in
+  let ex = abs_float(data.{0} -. xtrue) in
+  let ey = abs_float(data.{1} -. ytrue) in
+  let ez = abs_float(data.{2} -. ztrue) in
 
   (* print the solution error *)
   printf "Solution error:\n";

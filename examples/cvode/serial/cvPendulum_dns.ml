@@ -179,7 +179,7 @@ let read_inputs () =
   let args = Arg.[
     "--tol",  Float (fun rtol  ->
                 inputs := { !inputs with rtol;
-                                         atol = Float.of_string
+                                         atol = float_of_string
                                              Sys.argv.(!Arg.current + 2) };
                 incr Arg.current), "";
     "--tf",   Float (fun tf   -> inputs := { !inputs with tf })   , "";

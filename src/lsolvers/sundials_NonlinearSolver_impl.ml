@@ -193,8 +193,10 @@ let detach s =
 
 let get_type (type d k s v) ({ rawptr; solver } : (d, k, s, v) nonlinear_solver) =
   match solver with
-  | FixedPointSolver _ | FixedPointSolverSens _ -> FixedPoint
-  | NewtonSolver _ | NewtonSolverSens _ -> RootFind
+  | FixedPointSolver _ -> FixedPoint
+  | FixedPointSolverSens _ -> FixedPoint
+  | NewtonSolver _ -> RootFind
+  | NewtonSolverSens _ -> RootFind
   | CustomSolver (_, { nls_type }) -> nls_type
   | CustomSolverSens (_, { nls_type }) -> nls_type
 

@@ -58,7 +58,7 @@ let f t (y : RealArray.t) (ydot : RealArray.t) =
   ydot.{2} <- 3.e7 *. v *. v
 
 (* Jacobian routine to compute J(t,y) = df/dy. *)
-let jac ARKStep.{ jac_y = (y : RealArray.t); _ } jac =
+let jac { ARKStep.jac_y = (y : RealArray.t); _ } jac =
   let v = y.{1} in   (* access current solution *)
   let w = y.{2} in
   Matrix.Dense.set_to_zero jac; (* initialize Jacobian to zero *)
@@ -116,7 +116,7 @@ let main () =
   let t0 = 0.0 in                               (* initial time *)
   let tf = 1.e11 in                             (* final time *)
   let dTout = (tf -. t0) /. 100.0 in            (* time between outputs *)
-  let nt = Int.of_float (ceil (tf /. dTout)) in (* number of output times *)
+  let nt = int_of_float (ceil (tf /. dTout)) in (* number of output times *)
   let neq = 3 in                                (* number of dependent vars. *)
 
   (* set up the initial conditions, tolerances, initial time step size *)

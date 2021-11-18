@@ -492,7 +492,9 @@ and 'a linsolv_precfns =
 let revlookup_bsession ({ sensext; _ } : ('d, 'k) session) (child : ida_mem) =
   match sensext with
   | FwdSensExt { bsessions } ->
-      List.find_opt (fun { ida; _ } -> ida = child) bsessions
+      (match List.find (fun { ida; _ } -> ida = child) bsessions with
+       | bs -> Some bs
+       | exception Not_found -> None)
   | NoSensExt | BwdSensExt _ -> None
 
 (* called from sunml_cvodes_bsession_to_value *)

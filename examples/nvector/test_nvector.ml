@@ -252,7 +252,7 @@ let test_getlength w myid =
   let wlength = Nvector_ops.getlength w in
   (* use N_VConst and N_VDotProd to compute length *)
   Nvector_ops.const 1.0 w;
-  let wlength2 = Float.to_int (Nvector_ops.dotprod w w) in
+  let wlength2 = int_of_float (Nvector_ops.dotprod w w) in
   Nvector_ops.sync_device ();
   (* return error if lengths disagree *)
   if wlength <> wlength2 then (
@@ -3717,8 +3717,8 @@ let test_linearcombinationvectorarray v local_length myid =
 let test_dotprodlocal x y local_length myid =
   let fails = ref 0 in
   (* fill vector data *)
-  let rmyid = Int.to_float myid in
-  let locleninv = 1.0 /. Int.to_float local_length in
+  let rmyid = float_of_int myid in
+  let locleninv = 1.0 /. float_of_int local_length in
   Nvector_ops.const rmyid x;
   Nvector_ops.const locleninv y;
 
@@ -3745,7 +3745,7 @@ let test_maxnormlocal x local_length myid =
   let fails = ref 0 in
   (* fill vector data *)
   let xdata = Nvector_ops.getarray x in
-  let myidp1 = Int.to_float (myid+1) in
+  let myidp1 = float_of_int (myid+1) in
   Nvector_ops.const (-0.5) x;
   Nvector_ops.set xdata (local_length - 1) (-. myidp1);
 
@@ -3773,7 +3773,7 @@ let test_minlocal x local_length myid =
   let fails = ref 0 in
   (* fill vector data *)
   let xdata = Nvector_ops.getarray x in
-  let negmyid = Int.to_float (-myid) in
+  let negmyid = float_of_int (-myid) in
   Nvector_ops.const 2.0 x;
   Nvector_ops.set xdata (local_length - 1) negmyid;
 
@@ -3799,7 +3799,7 @@ let test_minlocal x local_length myid =
 let test_l1normlocal x local_length myid =
   let fails = ref 0 in
   (* fill vector data *)
-  let v = -. (Int.to_float myid) /. (Int.to_float local_length) in
+  let v = -. (float_of_int myid) /. (float_of_int local_length) in
   Nvector_ops.const v x;
 
   let start_time = get_time () in
@@ -3808,7 +3808,7 @@ let test_l1normlocal x local_length myid =
   let stop_time = get_time () in
 
   (* ans should equal myid *)
-  if ans < 0.0 || not (fneqtol ans (Int.to_float myid) (sqrt Config.unit_roundoff))
+  if ans < 0.0 || not (fneqtol ans (float_of_int myid) (sqrt Config.unit_roundoff))
   then (printf ">>> FAILED test -- N_VL1NormLocal, Proc %d\n" myid; fails += 1)
   else if myid = 0 then printf "PASSED test -- N_VL1NormLocal\n";
 
@@ -3824,8 +3824,8 @@ let test_l1normlocal x local_length myid =
 let test_wsqrsumlocal x w local_length myid =
   let fails = ref 0 in
   (* fill vector data *)
-  let xval = sqrt (Int.to_float myid) in
-  let wval = 1.0 /. sqrt (Int.to_float local_length) in
+  let xval = sqrt (float_of_int myid) in
+  let wval = 1.0 /. sqrt (float_of_int local_length) in
   Nvector_ops.const xval x;
   Nvector_ops.const wval w;
 
@@ -3835,7 +3835,7 @@ let test_wsqrsumlocal x w local_length myid =
   let stop_time = get_time () in
 
   (* ans should equal myid *)
-  if ans < 0.0 || not (fneqtol ans (Int.to_float myid) (sqrt Config.unit_roundoff))
+  if ans < 0.0 || not (fneqtol ans (float_of_int myid) (sqrt Config.unit_roundoff))
   then (printf ">>> FAILED test -- N_VWSqrSumLocal, Proc %d\n" myid; fails += 1)
   else if myid = 0 then printf "PASSED test -- N_VWSqrSumLocal\n";
 
@@ -3851,8 +3851,8 @@ let test_wsqrsumlocal x w local_length myid =
 let test_wsqrsummasklocal x w id local_length myid =
   let fails = ref 0 in
   (* fill vector data *)
-  let xval = sqrt (Int.to_float myid) in
-  let wval = 1.0 /. sqrt (Int.to_float (local_length - 1)) in
+  let xval = sqrt (float_of_int myid) in
+  let wval = 1.0 /. sqrt (float_of_int (local_length - 1)) in
   let id_data = Nvector_ops.getarray id in
   Nvector_ops.const xval x;
   Nvector_ops.const wval w;
@@ -3866,7 +3866,7 @@ let test_wsqrsummasklocal x w id local_length myid =
   let stop_time = get_time () in
 
   (* ans should equal myid *)
-  if ans < 0.0 || not (fneqtol ans (Int.to_float myid) (sqrt Config.unit_roundoff))
+  if ans < 0.0 || not (fneqtol ans (float_of_int myid) (sqrt Config.unit_roundoff))
   then (printf ">>> FAILED test -- N_VWSqrSumMaskLocal, Proc %d\n" myid; fails += 1)
   else if myid = 0 then printf "PASSED test -- N_VWSqrSumMaskLocal\n";
 
@@ -3892,7 +3892,7 @@ let test_invtestlocal x z local_length myid =
    *)
 
   (* fill vector data *)
-  let xval = 1.0 /. Int.to_float (myid + 2) in
+  let xval = 1.0 /. float_of_int (myid + 2) in
   Nvector_ops.const xval x;
   Nvector_ops.const 0.0 z;
 
@@ -3902,7 +3902,7 @@ let test_invtestlocal x z local_length myid =
   let stop_time = get_time () in
 
   (* Z should be vector of myid+2 *)
-  if not (check_ans (Int.to_float (myid + 2)) z local_length && test)
+  if not (check_ans (float_of_int (myid + 2)) z local_length && test)
   then (printf ">>> FAILED test -- N_VInvTestLocal Case 1, Proc %d\n" myid; fails += 1)
   else if myid = 0 then printf "PASSED test -- N_VInvTestLocal Case 1\n";
 
@@ -4054,7 +4054,7 @@ let test_minquotientlocal num denom local_length myid =
 
   (* fill vector data *)
   Nvector_ops.const 2.0 denom;
-  Nvector_ops.const (2.0 *. Int.to_float myid) num;
+  Nvector_ops.const (2.0 *. float_of_int myid) num;
 
   let start_time = get_time () in
   let ans = Nvector_ops.Local.minquotient num denom in
@@ -4062,7 +4062,7 @@ let test_minquotientlocal num denom local_length myid =
   let stop_time = get_time () in
 
   (* ans should equal myid *)
-  if not (fneqtol ans (Int.to_float myid) (sqrt Config.unit_roundoff))
+  if not (fneqtol ans (float_of_int myid) (sqrt Config.unit_roundoff))
   then (printf ">>> FAILED test -- N_VMinQuotientLocal Case 1, Proc %d \n" myid; fails += 1)
   else if myid = 0 then printf "PASSED test -- N_VMinQuotientLocal Case 1 \n";
 

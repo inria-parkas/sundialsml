@@ -13,7 +13,7 @@
 open Sundials
 module LSI = Sundials_LinearSolver_impl
 
-include LSI
+open LSI
 
 exception InvalidLinearSolver
 exception UnrecoverableFailure of bool
@@ -63,6 +63,12 @@ type linear_solver_id = LSI.linear_solver_id =
   | Superludist
   | Superlumt
   | Custom
+
+exception LinearSolverInUse = LSI.LinearSolverInUse
+
+type 'd atimesfn = 'd LSI.atimesfn
+type psetupfn = LSI.psetupfn
+type 'd psolvefn = 'd LSI.psolvefn
 
 module Direct = struct (* {{{ *)
 

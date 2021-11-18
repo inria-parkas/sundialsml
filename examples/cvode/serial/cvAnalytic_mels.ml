@@ -63,7 +63,7 @@ let matrix_embedded_ls_solve content () x b tol =
   | None -> failwith "linear solver not properly configure"
   | Some cvode_mem ->
       (* retrieve implicit system data from ARKStep *)
-      let Cvode.{ gamma; _ } = Cvode.get_nonlin_system_data cvode_mem in
+      let { Cvode.gamma; _ } = Cvode.get_nonlin_system_data cvode_mem in
       (* extract stiffness parameter from user_data *)
       let lambda = rdata.{0} in
       (* perform linear solve: (1-gamma*lamda)*x = b *)

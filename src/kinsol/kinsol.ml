@@ -186,7 +186,8 @@ module Dls = struct (* {{{ *)
   let check_dqjac (type k m nd nk) jac (mat : (k,m,nd,nk) Matrix.t) =
     let open Matrix in
     match get_id mat with
-    | Dense | Band -> ()
+    | Dense -> ()
+    | Band -> ()
     | _ -> if jac = None then invalid_arg "A Jacobian function is required"
 
   let set_ls_callbacks (type m) (type tag)
@@ -354,7 +355,7 @@ module Spils = struct (* {{{ *)
 
   (* Sundials < 3.0.0 *)
   let make_compat (type tag)
-        (LSI.Iterative.({ maxl; gs_type }) as compat)
+        ({ LSI.Iterative.maxl; LSI.Iterative.gs_type } as compat)
         prec_type
         (solver_data : ('s, 'nd, 'nk, tag) LSI.solver_data) session =
     match solver_data with
@@ -383,7 +384,7 @@ module Spils = struct (* {{{ *)
     | _ -> raise Config.NotImplementedBySundialsVersion
 
   let solver (type s)
-        LSI.(LS ({ rawptr; solver; compat; } as hls) as ls)
+        (LSI.LS ({ LSI.rawptr; LSI.solver; LSI.compat; } as hls) as ls)
         ?jac_times_vec ?jac_times_sys (prec_type, set_prec) session nv =
      if jac_times_vec <> None && jac_times_sys <> None
        then invalid_arg "cannot pass both jac_times_vec and jac_times_sys";
@@ -486,7 +487,7 @@ module Spils = struct (* {{{ *)
 end (* }}} *)
 
 let matrix_embedded_solver
-    (LSI.(LS ({ rawptr; solver; compat } as hls)) as ls) session nv =
+    (LSI.LS ({ LSI.rawptr; LSI.solver; LSI.compat } as hls) as ls) session nv =
   if Sundials_impl.Version.lt580
     then raise Config.NotImplementedBySundialsVersion;
   c_set_linear_solver session rawptr None false;

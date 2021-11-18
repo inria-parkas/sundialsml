@@ -298,7 +298,11 @@ CAMLprim void sunml_sundials_write(value vfile, value vdata)
     FILE *file = ML_CFILE(vfile);
     size_t len = caml_string_length(vdata);
     size_t w;
+#if 40600 <= OCAML_VERSION
     w = fwrite(Bytes_val(vdata), 1, len, file);
+#else
+    w = fwrite(Bp_val(vdata), 1, len, file);
+#endif
     if (w < len) caml_failwith(strerror(errno));
     CAMLreturn0;
 }

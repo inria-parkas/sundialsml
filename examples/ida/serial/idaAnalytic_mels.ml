@@ -72,7 +72,7 @@ let matrix_embedded_ls_solve content () x b tol =
   | None -> failwith "linear solver not properly configure"
   | Some ida_mem ->
       (* retrieve implicit system data from IDA *)
-      let Ida.{ cj; tn = tcur; _ } = Ida.get_nonlin_system_data ida_mem in
+      let { Ida.cj; Ida.tn = tcur; _ } = Ida.get_nonlin_system_data ida_mem in
 
       (* extract stiffness parameter from user_data *)
       let alpha = rdata.{0} in
