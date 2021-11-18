@@ -487,6 +487,18 @@ and 'a linsolv_precfns =
   | BBDPrecFns of 'a IdaBbdParamTypes.precfns
   | BBBDPrecFns of 'a IdasBbdParamTypes.precfns
 
+(* Reverse lookup of a session value for a child session, given the pointer
+   to the Sundials (child) session. *)
+let revlookup_bsession ({ sensext; _ } : ('d, 'k) session) (child : ida_mem) =
+  match sensext with
+  | FwdSensExt { bsessions } ->
+      List.find_opt (fun { ida; _ } -> ida = child) bsessions
+  | NoSensExt | BwdSensExt _ -> None
+
+(* called from sunml_cvodes_bsession_to_value *)
+let _ = Callback.register "Idas.revlookup_bsession" revlookup_bsession
+
+
 (* Linear solver check functions *)
 
 let ls_check_direct session =
