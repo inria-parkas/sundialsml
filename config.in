@@ -40,6 +40,8 @@ ML_CPPFLAGS = @ml_cppflags@
 
 LAPACK_ENABLED=@lapack_enabled@
 
+NVECMANYVECTOR_ENABLED=@nvecmanyvector_enabled@
+
 MPICC = @mpicc@
 MPIRUN = @mpirun@
 MPI_ENABLED=@ocamlmpi_enabled@

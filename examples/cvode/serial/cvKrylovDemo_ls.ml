@@ -589,9 +589,12 @@ let main () =
     (* (d) SPTFQMR *)
     | UseSptfqmr -> begin
         (* Print header *)
-        let h = " ---------"
-              ^ " \n| SPTFQMR |\n"
-              ^ " ---------\n";
+        let h =
+          (match Config.sundials_version with
+           | 2,_,_ -> "\n ---------"
+           | _     -> " ---------")
+                    ^ " \n| SPTFQMR |\n"
+                    ^ " ---------\n";
         in
         print_string h;
         option_map (fun oc -> Logfile.output_string oc h) infofp;

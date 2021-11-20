@@ -91,7 +91,7 @@ static N_Vector do_clone_many(N_Vector src, enum do_clone_mode clonemode)
     CAMLlocal1(vcomm);
 #endif
     static const value *pnvector_clone = NULL;
-    sunindextype i;
+    sundials_ml_index i;
 
     N_Vector dst = NULL;
     MVAPPEND(N_VectorContent) dstcontent = NULL;
@@ -281,7 +281,7 @@ static value do_wrap(value payload,
     N_Vector nv;
     N_Vector_Ops ops;
     MVAPPEND(N_VectorContent) content = NULL;
-    sunindextype num_subvectors, i;
+    sundials_ml_index num_subvectors, i;
     N_Vector *subvec_array;
 
     /* Create vector */

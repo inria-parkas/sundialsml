@@ -19,6 +19,7 @@
 #include <caml/fail.h>
 
 #include "../sundials/sundials_ml.h"
+#include "../nvectors/nvector_ml.h"
 
 #ifndef SUNDIALS_ML_KLU
 CAMLprim value sunml_cvodes_klub_init (value vparent_which, value vformat,

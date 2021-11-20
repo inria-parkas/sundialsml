@@ -159,26 +159,29 @@ let rec make_wrap ops ?(with_fused_ops=false) v =
 
 and clone ops nv =
   let nv' = make_wrap ops (ops.clone (uv nv)) in
-  ignore (c_enablelinearcombination_custom nv'
-            (Nvector.Ops.has_linearcombination nv));
-  ignore (c_enablescaleaddmulti_custom nv'
-            (Nvector.Ops.has_scaleaddmulti nv));
-  ignore (c_enabledotprodmulti_custom nv'
-            (Nvector.Ops.has_dotprodmulti nv));
-  ignore (c_enablelinearsumvectorarray_custom nv'
-            (Nvector.Ops.has_linearsumvectorarray nv));
-  ignore (c_enablescalevectorarray_custom nv'
-            (Nvector.Ops.has_scalevectorarray nv));
-  ignore (c_enableconstvectorarray_custom nv'
-            (Nvector.Ops.has_constvectorarray nv));
-  ignore (c_enablewrmsnormvectorarray_custom nv'
-            (Nvector.Ops.has_wrmsnormvectorarray nv));
-  ignore (c_enablewrmsnormmaskvectorarray_custom nv'
-            (Nvector.Ops.has_wrmsnormmaskvectorarray nv));
-  ignore (c_enablescaleaddmultivectorarray_custom nv'
-            (Nvector.Ops.has_scaleaddmultivectorarray nv));
-  ignore (c_enablelinearcombinationvectorarray_custom nv'
-            (Nvector.Ops.has_linearcombinationvectorarray nv));
+  if Sundials_impl.Version.lt400 then ()
+  else begin
+    ignore (c_enablelinearcombination_custom nv'
+              (Nvector.Ops.has_linearcombination nv));
+    ignore (c_enablescaleaddmulti_custom nv'
+              (Nvector.Ops.has_scaleaddmulti nv));
+    ignore (c_enabledotprodmulti_custom nv'
+              (Nvector.Ops.has_dotprodmulti nv));
+    ignore (c_enablelinearsumvectorarray_custom nv'
+              (Nvector.Ops.has_linearsumvectorarray nv));
+    ignore (c_enablescalevectorarray_custom nv'
+              (Nvector.Ops.has_scalevectorarray nv));
+    ignore (c_enableconstvectorarray_custom nv'
+              (Nvector.Ops.has_constvectorarray nv));
+    ignore (c_enablewrmsnormvectorarray_custom nv'
+              (Nvector.Ops.has_wrmsnormvectorarray nv));
+    ignore (c_enablewrmsnormmaskvectorarray_custom nv'
+              (Nvector.Ops.has_wrmsnormmaskvectorarray nv));
+    ignore (c_enablescaleaddmultivectorarray_custom nv'
+              (Nvector.Ops.has_scaleaddmultivectorarray nv));
+    ignore (c_enablelinearcombinationvectorarray_custom nv'
+              (Nvector.Ops.has_linearcombinationvectorarray nv));
+  end;
   nv'
 
 let add_tracing msg ops =

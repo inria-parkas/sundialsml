@@ -1223,16 +1223,16 @@ CAMLprim value sunml_nlsolver_call_convtest_fn_sens(value vnls,
     CAMLreturn (Val_int(VARIANT_NLSOLVER_CONVTEST_SUCCESS));
 }
 
+#if 400 <= SUNDIALS_LIB_VERSION
 void sunml_nlsolver_set_to_from_mem(SUNNonlinearSolver nls,
 				    value (*to_value)(void *),
 				    void* (*from_value)(value))
 {
-#if 400 <= SUNDIALS_LIB_VERSION
     p_sunml_nls snls = NLS_EXTENDED(nls);
     snls->to_value = to_value;
     snls->from_value = from_value;
-#endif
 }
+#endif
 
 #if 400 <= SUNDIALS_LIB_VERSION
 static int sunml_nlsolver_wrapped_setup(SUNNonlinearSolver nls,

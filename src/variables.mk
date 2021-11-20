@@ -30,7 +30,7 @@ COBJ_COMMON = sundials/sundials_ml$(XO)	\
 COBJ_MAIN = $(COBJ_COMMON) \
 		kinsol/kinsol_ml$(XO) \
 		$(ARKODE_COBJ_MAIN) \
-		nvectors/nvector_many_ml$(XO)
+		$(if $(NVECMANYVECTOR_ENABLED),nvectors/nvector_many_ml$(XO))
 
 MLOBJ_MAIN =	sundials/sundials_configuration.cmo	\
 		sundials/sundials_impl.cmo		\
@@ -44,7 +44,7 @@ MLOBJ_MAIN =	sundials/sundials_configuration.cmo	\
 	     	sundials/sundials.cmo			\
 		nvectors/nvector.cmo			\
 		nvectors/nvector_serial.cmo		\
-		nvectors/nvector_many.cmo		\
+		$(if $(NVECMANYVECTOR_ENABLED),nvectors/nvector_many.cmo) \
 		lsolvers/sundials_Matrix.cmo		\
 		lsolvers/sundials_LinearSolver_impl.cmo	\
 		lsolvers/sundials_LinearSolver.cmo	\
@@ -98,7 +98,7 @@ MLOBJ_NO_SENS =
 
 ### Objects specific to sundials_mpi.cma.
 COBJ_MPI =	nvectors/nvector_parallel_ml$(XO)	\
-		nvectors/nvector_mpimany_ml$(XO)	\
+		$(if $(NVECMANYVECTOR_ENABLED),nvectors/nvector_mpimany_ml$(XO)) \
 		kinsol/kinsol_bbd_ml$(XO)		\
 		$(ARKODE_COBJ_BBD)			\
 		cvode/cvode_bbd_ml$(XO)			\
@@ -106,8 +106,8 @@ COBJ_MPI =	nvectors/nvector_parallel_ml$(XO)	\
 		ida/ida_bbd_ml$(XO)			\
 		idas/idas_bbd_ml$(XO)
 MLOBJ_MPI =	nvectors/nvector_parallel.cmo	\
-		nvectors/nvector_mpimany.cmo	\
-		nvectors/nvector_mpiplusx.cmo	\
+		$(if $(NVECMANYVECTOR_ENABLED),nvectors/nvector_mpimany.cmo) \
+		$(if $(NVECMANYVECTOR_ENABLED),nvectors/nvector_mpiplusx.cmo) \
 		kinsol/kinsol_bbd.cmo		\
 		$(ARKODE_MLOBJ_BBD)		\
 		cvode/cvode_bbd.cmo		\

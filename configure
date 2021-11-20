@@ -1557,6 +1557,7 @@ cat ${LOG}
 	 s#@superlumt_enabled@#${superlumt_enabled}#;
 	 s#@nvecpthreads_enabled@#${nvecpthreads_enabled}#;
 	 s#@nvecopenmp_enabled@#${nvecopenmp_enabled}#;
+	 s#@nvecmanyvector_enabled@#${nvecmanyvector_enabled}#;
 	 s#@serial_nvec_libs@#${serial_nvec_libs}#;
 	 s#@parallel_nvec_libs@#${parallel_nvec_libs}#;
 	 s#@sparse_libs@#${sparse_libs}#;

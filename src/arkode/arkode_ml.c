@@ -66,11 +66,13 @@
 #define ISTEPPER_FROM_ML(v) (ISTEPPER(Field((v), RECORD_ARKODE_MRI_ISTEPPER_RAWPTR)))
 #endif
 
+#if 520 <= SUNDIALS_LIB_VERSION
 // must correspond with the constructors of Arkode.interpolant_type
 static int ark_interpolant_types[] = {
     ARK_INTERP_HERMITE,
     ARK_INTERP_LAGRANGE,
 };
+#endif
 
 CAMLprim value sunml_arkode_init_module (value exns)
 {
@@ -161,6 +163,7 @@ int sunml_arkode_translate_exception (value session, value exn,
     CAMLreturnT (int, -1);
 }
 
+#if 580 <= SUNDIALS_LIB_VERSION
 static int istepper_translate_exception(value exn, recoverability recoverable)
 {
     CAMLparam1(exn);
@@ -174,6 +177,7 @@ static int istepper_translate_exception(value exn, recoverability recoverable)
     /* Unrecoverable error -1. Unfortunately we lose the exception. */
     CAMLreturnT (int, -1);
 }
+#endif
 
 static int rhsfn1(realtype t, N_Vector y, N_Vector ydot, void *user_data)
 {
@@ -2735,7 +2739,7 @@ CAMLprim value sunml_arkode_ark_get_current_butcher_tables(value varkode_mem)
     vode = caml_alloc_tuple(2);
     Store_field(vode, 0, Val_int(p));
     Store_field(vode, 1, vde);
-    Store_some(vode, aovde);
+    Store_some(vode, vode);
 
     vbti = caml_alloc_tuple(RECORD_ARKODE_BUTCHER_TABLE_SIZE);
     Store_field(vbti, RECORD_ARKODE_BUTCHER_TABLE_METHOD_ORDER, Val_int(q));
@@ -3094,7 +3098,7 @@ CAMLprim value sunml_arkode_ark_set_tables(value varkode_mem,
 	flag = ARKodeSetIRKTable(ARKODE_MEM_FROM_ML(varkode_mem),
 	    Int_val(Field(vbi, RECORD_ARKODE_BUTCHER_TABLE_STAGES)),
 	    Int_val(Field(vbi, RECORD_ARKODE_BUTCHER_TABLE_METHOD_ORDER)),
-	    Int_val(Field(vbi, RECORD_ARKODE_BUTCHER_TABLE_EMBEDDING_ORDER)),
+	    Int_val(Field(Field(vbi, RECORD_ARKODE_BUTCHER_TABLE_EMBEDDING), 0)),
 	    REAL_ARRAY(Field(vbi, RECORD_ARKODE_BUTCHER_TABLE_STAGE_TIMES)),
 	    Ai,
 	    REAL_ARRAY(Field(vbi, RECORD_ARKODE_BUTCHER_TABLE_COEFFICIENTS)),
@@ -3126,7 +3130,7 @@ CAMLprim value sunml_arkode_ark_set_tables(value varkode_mem,
 	flag = ARKodeSetERKTable(ARKODE_MEM_FROM_ML(varkode_mem),
 	    Int_val(Field(vbe, RECORD_ARKODE_BUTCHER_TABLE_STAGES)),
 	    Int_val(Field(vbe, RECORD_ARKODE_BUTCHER_TABLE_METHOD_ORDER)),
-	    Int_val(Field(vbe, RECORD_ARKODE_BUTCHER_TABLE_EMBEDDING_ORDER)),
+	    Int_val(Field(Field(vbe, RECORD_ARKODE_BUTCHER_TABLE_EMBEDDING), 0)),
 	    REAL_ARRAY(Field(vbe, RECORD_ARKODE_BUTCHER_TABLE_STAGE_TIMES)),
 	    Ae,
 	    REAL_ARRAY(Field(vbe, RECORD_ARKODE_BUTCHER_TABLE_COEFFICIENTS)),
@@ -6611,10 +6615,9 @@ CAMLprim value sunml_arkode_mri_sv_tolerances(value vdata, value reltol,
 					      value abstol)
 {
     CAMLparam3(vdata, reltol, abstol);
-
+#if 540 <= SUNDIALS_LIB_VERSION
     N_Vector atol_nv = NVEC_VAL(abstol);
 
-#if 540 <= SUNDIALS_LIB_VERSION
     int flag = MRIStepSVtolerances(ARKODE_MEM_FROM_ML(vdata),
 			 	   Double_val(reltol), atol_nv);
     CHECK_FLAG("MRIStepSVtolerances", flag);
@@ -7089,8 +7092,8 @@ CAMLprim value sunml_arkode_mri_set_preconditioner (value vsession,
 						    value vset_precsetup)
 {
     CAMLparam2 (vsession, vset_precsetup);
-    void *mem = ARKODE_MEM_FROM_ML (vsession);
 #if 540 <= SUNDIALS_LIB_VERSION
+    void *mem = ARKODE_MEM_FROM_ML (vsession);
     ARKLsPrecSetupFn setup = Bool_val (vset_precsetup) ? precsetupfn : NULL;
     int flag = MRIStepSetPreconditioner (mem, setup, precsolvefn);
     CHECK_FLAG ("MRIStepSetPreconditioner", flag);
