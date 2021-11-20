@@ -2306,7 +2306,7 @@ CAMLprim void sunml_matrix_sparse_set_to_zero(value vcptr)
  * Matrix
  */
 
-#if SUNDIALS_LIB_VERSION >= 300
+#if 300 <= SUNDIALS_LIB_VERSION
 /*
  *  Type	    content		    backlink
  *  --------+-------------------------------------------------
@@ -2456,7 +2456,7 @@ CAMLprim value sunml_matrix_wrap(value vid, value vcontent, value vpayload,
     CAMLparam4(vid, vcontent, vpayload, vhasmatvecsetup);
     CAMLlocal1(vr);
 
-#if SUNDIALS_LIB_VERSION >= 300
+#if 300 <= SUNDIALS_LIB_VERSION
     int mat_id = Int_val(vid);
     SUNMatrix smat;
 
@@ -2550,7 +2550,7 @@ CAMLprim value sunml_matrix_wrap(value vid, value vcontent, value vpayload,
     CAMLreturn(vr);
 }
 
-#if SUNDIALS_LIB_VERSION >= 300
+#if 300 <= SUNDIALS_LIB_VERSION
 
 static SUNMatrix csmat_custom_clone(SUNMatrix A)
 {
@@ -2691,7 +2691,7 @@ static int csmat_custom_space(SUNMatrix A, long int *lenrw, long int *leniw)
 CAMLprim void sunml_matrix_scale_add(value vc, value va, value vb)
 {
     CAMLparam3(vc, va, vb);
-#if SUNDIALS_LIB_VERSION >= 300
+#if 300 <= SUNDIALS_LIB_VERSION
     if (SUNMatScaleAdd(Double_val(vc), MAT_VAL(va), MAT_VAL(vb)))
 	caml_failwith("SUNMatScaleAdd");
 #else
@@ -2703,7 +2703,7 @@ CAMLprim void sunml_matrix_scale_add(value vc, value va, value vb)
 CAMLprim void sunml_matrix_scale_addi(value vc, value va)
 {
     CAMLparam2(vc, va);
-#if SUNDIALS_LIB_VERSION >= 300
+#if 300 <= SUNDIALS_LIB_VERSION
     if (SUNMatScaleAddI(Double_val(vc), MAT_VAL(va)))
 	caml_failwith("SUNMatScaleAddI");
 #else
@@ -2731,7 +2731,7 @@ CAMLprim void sunml_matrix_matvecsetup(value va)
 CAMLprim void sunml_matrix_matvec(value va, value vx, value vy)
 {
     CAMLparam3(va, vx, vy);
-#if SUNDIALS_LIB_VERSION >= 300
+#if 300 <= SUNDIALS_LIB_VERSION
     if (SUNMatMatvec(MAT_VAL(va), NVEC_VAL(vx), NVEC_VAL(vy)))
 	caml_failwith("SUNMatMatvec");
 #else
@@ -2743,7 +2743,7 @@ CAMLprim void sunml_matrix_matvec(value va, value vx, value vy)
 CAMLprim void sunml_matrix_zero(value va)
 {
     CAMLparam1(va);
-#if SUNDIALS_LIB_VERSION >= 300
+#if 300 <= SUNDIALS_LIB_VERSION
     if (SUNMatZero(MAT_VAL(va)))
 	caml_failwith("SUNMatZero");
 #else
@@ -2755,7 +2755,7 @@ CAMLprim void sunml_matrix_zero(value va)
 CAMLprim void sunml_matrix_copy(value va, value vb)
 {
     CAMLparam2(va, vb);
-#if SUNDIALS_LIB_VERSION >= 300
+#if 300 <= SUNDIALS_LIB_VERSION
     if (SUNMatCopy(MAT_VAL(va), MAT_VAL(vb)))
 	caml_failwith("SUNMatCopy");
 #else
@@ -2768,7 +2768,7 @@ CAMLprim value sunml_matrix_space(value va)
 {
     CAMLparam1(va);
     CAMLlocal1(vr);
-#if SUNDIALS_LIB_VERSION >= 300
+#if 300 <= SUNDIALS_LIB_VERSION
     long int lenrw, leniw;
 
     if (SUNMatSpace(MAT_VAL(va), &lenrw, &leniw))
@@ -2786,7 +2786,7 @@ CAMLprim value sunml_matrix_space(value va)
 CAMLprim void sunml_matrix_print_dense(value vm, value vfile)
 {
     CAMLparam2(vm, vfile);
-#if SUNDIALS_LIB_VERSION >= 300
+#if 300 <= SUNDIALS_LIB_VERSION
     SUNDenseMatrix_Print(MAT_VAL(vm), ML_CFILE(vfile));
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -2797,7 +2797,7 @@ CAMLprim void sunml_matrix_print_dense(value vm, value vfile)
 CAMLprim void sunml_matrix_print_band(value vm, value vfile)
 {
     CAMLparam2(vm, vfile);
-#if SUNDIALS_LIB_VERSION >= 300
+#if 300 <= SUNDIALS_LIB_VERSION
     SUNBandMatrix_Print(MAT_VAL(vm), ML_CFILE(vfile));
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -2808,7 +2808,7 @@ CAMLprim void sunml_matrix_print_band(value vm, value vfile)
 CAMLprim void sunml_matrix_print_sparse(value vm, value vfile)
 {
     CAMLparam2(vm, vfile);
-#if SUNDIALS_LIB_VERSION >= 300
+#if 300 <= SUNDIALS_LIB_VERSION
     SUNSparseMatrix_Print(MAT_VAL(vm), ML_CFILE(vfile));
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -2850,7 +2850,7 @@ CAMLprim value sunml_arraydensematrix_add_identity(value va)
     CAMLreturn (Val_unit);
 }
 
-#if SUNDIALS_LIB_VERSION >= 260
+#if 260 <= SUNDIALS_LIB_VERSION
 CAMLprim value sunml_arraydensematrix_matvec(value va, value vx, value vy)
 {
     CAMLparam3(va, vx, vy);
@@ -3102,7 +3102,7 @@ CAMLprim value sunml_arraybandmatrix_add_identity(value vsmu, value va)
     CAMLreturn (Val_unit);
 }
 
-#if SUNDIALS_LIB_VERSION >= 260
+#if 260 <= SUNDIALS_LIB_VERSION
 CAMLprim value sunml_arraybandmatrix_matvec(value va, value vsizes,
 					value vx, value vy)
 {
