@@ -2444,7 +2444,9 @@ static int csmat_custom_zero(SUNMatrix A);
 static int csmat_custom_copy(SUNMatrix A, SUNMatrix B);
 static int csmat_custom_scale_add(realtype c, SUNMatrix A, SUNMatrix B);
 static int csmat_custom_scale_addi(realtype c, SUNMatrix A);
+#if 500 <= SUNDIALS_LIB_VERSION
 static int csmat_custom_matvecsetup(SUNMatrix A);
+#endif
 static int csmat_custom_matvec(SUNMatrix A, N_Vector x, N_Vector y);
 static int csmat_custom_space(SUNMatrix A, long int *lenrw, long int *leniw);
 
