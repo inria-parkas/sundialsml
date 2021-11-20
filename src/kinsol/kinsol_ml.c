@@ -1297,10 +1297,12 @@ CAMLprim value sunml_kinsol_set_damping(value vkin_mem, value vbeta)
 CAMLprim value sunml_kinsol_set_damping_aa(value vkin_mem, value vbeta)
 {
     CAMLparam2(vkin_mem, vbeta);
-
+#if 510 <= SUNDIALS_LIB_VERSION
     int flag = KINSetDampingAA(KINSOL_MEM_FROM_ML(vkin_mem), Double_val(vbeta));
     CHECK_FLAG("KINSetDampingAA", flag);
-
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 

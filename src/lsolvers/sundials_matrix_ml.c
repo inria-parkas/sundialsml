@@ -509,7 +509,7 @@ static int csmat_band_copy(SUNMatrix A, SUNMatrix B)
 {
     CAMLparam0();
     CAMLlocal1(vcontentb);
-    sunindextype i, j;
+    sundials_ml_index i, j;
     realtype *A_colj, *B_colj;
 
     vcontentb = MAT_BACKLINK(B);
@@ -627,7 +627,7 @@ CAMLprim void sunml_matrix_band_scale_add(value vc, value va, value vcptrb)
 static int csmat_band_scale_add(realtype c, SUNMatrix A, SUNMatrix B)
 {
     CAMLparam0();
-    sunindextype i, j;
+    sundials_ml_index i, j;
     realtype *A_colj, *B_colj;
 
     /* Verify that A and B are compatible */
@@ -2038,10 +2038,10 @@ static int csmat_sparse_format_convert(const MAT_CONTENT_SPARSE_TYPE A,
 				       MAT_CONTENT_SPARSE_TYPE B)
 {
     realtype *Ax, *Bx;
-    sunindextype *Ap, *Aj;
-    sunindextype *Bp, *Bi;
-    sunindextype n_row, n_col, nnz;
-    sunindextype n, col, csum, row, last;
+    sundials_ml_index *Ap, *Aj;
+    sundials_ml_index *Bp, *Bi;
+    sundials_ml_index n_row, n_col, nnz;
+    sundials_ml_index n, col, csum, row, last;
 
     Ap = A->indexptrs;
     Aj = A->indexvals;
@@ -2067,7 +2067,7 @@ static int csmat_sparse_format_convert(const MAT_CONTENT_SPARSE_TYPE A,
     /* cumualtive sum the nnz per column to get Bp[] */
     for (col = 0, csum = 0; col < n_col; col++)
     {
-        sunindextype temp  = Bp[col];
+        sundials_ml_index temp  = Bp[col];
         Bp[col] = csum;
         csum += temp;
     }
@@ -2075,11 +2075,11 @@ static int csmat_sparse_format_convert(const MAT_CONTENT_SPARSE_TYPE A,
 
     for (row = 0; row < n_row; row++)
     {
-        sunindextype jj;
+        sundials_ml_index jj;
         for (jj = Ap[row]; jj < Ap[row+1]; jj++)
         {
-            sunindextype col  = Aj[jj];
-            sunindextype dest = Bp[col];
+            sundials_ml_index col  = Aj[jj];
+            sundials_ml_index dest = Bp[col];
 
             Bi[dest] = row;
             Bx[dest] = Ax[jj];
@@ -2090,7 +2090,7 @@ static int csmat_sparse_format_convert(const MAT_CONTENT_SPARSE_TYPE A,
 
     for (col = 0, last = 0; col <= n_col; col++)
     {
-        sunindextype temp  = Bp[col];
+        sundials_ml_index temp  = Bp[col];
         Bp[col] = last;
         last    = temp;
     }

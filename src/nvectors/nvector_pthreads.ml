@@ -41,26 +41,29 @@ let rec wrap ?(with_fused_ops=false) nthreads v =
 
 and clone nthreads nv =
   let nv' = wrap nthreads (RealArray.copy (unwrap nv)) in
-  c_enablelinearcombination_pthreads nv'
-    (Nvector.Ops.has_linearcombination nv);
-  c_enablescaleaddmulti_pthreads nv'
-    (Nvector.Ops.has_scaleaddmulti nv);
-  c_enabledotprodmulti_pthreads nv'
-    (Nvector.Ops.has_dotprodmulti nv);
-  c_enablelinearsumvectorarray_pthreads nv'
-    (Nvector.Ops.has_linearsumvectorarray nv);
-  c_enablescalevectorarray_pthreads nv'
-    (Nvector.Ops.has_scalevectorarray nv);
-  c_enableconstvectorarray_pthreads nv'
-    (Nvector.Ops.has_constvectorarray nv);
-  c_enablewrmsnormvectorarray_pthreads nv'
-    (Nvector.Ops.has_wrmsnormvectorarray nv);
-  c_enablewrmsnormmaskvectorarray_pthreads nv'
-    (Nvector.Ops.has_wrmsnormmaskvectorarray nv);
-  c_enablescaleaddmultivectorarray_pthreads nv'
-    (Nvector.Ops.has_scaleaddmultivectorarray nv);
-  c_enablelinearcombinationvectorarray_pthreads nv'
-    (Nvector.Ops.has_linearcombinationvectorarray nv);
+  if Sundials_impl.Version.lt400 then ()
+  else begin
+    c_enablelinearcombination_pthreads nv'
+      (Nvector.Ops.has_linearcombination nv);
+    c_enablescaleaddmulti_pthreads nv'
+      (Nvector.Ops.has_scaleaddmulti nv);
+    c_enabledotprodmulti_pthreads nv'
+      (Nvector.Ops.has_dotprodmulti nv);
+    c_enablelinearsumvectorarray_pthreads nv'
+      (Nvector.Ops.has_linearsumvectorarray nv);
+    c_enablescalevectorarray_pthreads nv'
+      (Nvector.Ops.has_scalevectorarray nv);
+    c_enableconstvectorarray_pthreads nv'
+      (Nvector.Ops.has_constvectorarray nv);
+    c_enablewrmsnormvectorarray_pthreads nv'
+      (Nvector.Ops.has_wrmsnormvectorarray nv);
+    c_enablewrmsnormmaskvectorarray_pthreads nv'
+      (Nvector.Ops.has_wrmsnormmaskvectorarray nv);
+    c_enablescaleaddmultivectorarray_pthreads nv'
+      (Nvector.Ops.has_scaleaddmultivectorarray nv);
+    c_enablelinearcombinationvectorarray_pthreads nv'
+      (Nvector.Ops.has_linearcombinationvectorarray nv)
+  end;
   nv'
 
 let pp fmt v = RealArray.pp fmt (unwrap v)

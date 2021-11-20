@@ -255,7 +255,7 @@ CAMLprim value sunml_make_vptr(value v)
     caml_register_generational_global_root(croot);
 
     // create the vptr pair
-    vptr = caml_alloc_tuple(1);
+    vptr = caml_alloc_tuple(2);
     Store_field(vptr, 0, v);
     Store_field(vptr, 1, cptr);
 

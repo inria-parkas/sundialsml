@@ -42,26 +42,29 @@ let rec wrap ?(with_fused_ops=false) v =
 
 and clone nv =
   let nv' = wrap (RealArray.copy (unwrap nv)) in
-  c_enablelinearcombination_serial nv'
-    (Nvector.Ops.has_linearcombination nv);
-  c_enablescaleaddmulti_serial nv'
-    (Nvector.Ops.has_scaleaddmulti nv);
-  c_enabledotprodmulti_serial nv'
-    (Nvector.Ops.has_dotprodmulti nv);
-  c_enablelinearsumvectorarray_serial nv'
-    (Nvector.Ops.has_linearsumvectorarray nv);
-  c_enablescalevectorarray_serial nv'
-    (Nvector.Ops.has_scalevectorarray nv);
-  c_enableconstvectorarray_serial nv'
-    (Nvector.Ops.has_constvectorarray nv);
-  c_enablewrmsnormvectorarray_serial nv'
-    (Nvector.Ops.has_wrmsnormvectorarray nv);
-  c_enablewrmsnormmaskvectorarray_serial nv'
-    (Nvector.Ops.has_wrmsnormmaskvectorarray nv);
-  c_enablescaleaddmultivectorarray_serial nv'
-    (Nvector.Ops.has_scaleaddmultivectorarray nv);
-  c_enablelinearcombinationvectorarray_serial nv'
-    (Nvector.Ops.has_linearcombinationvectorarray nv);
+  if Sundials_impl.Version.lt400 then ()
+  else begin
+    c_enablelinearcombination_serial nv'
+      (Nvector.Ops.has_linearcombination nv);
+    c_enablescaleaddmulti_serial nv'
+      (Nvector.Ops.has_scaleaddmulti nv);
+    c_enabledotprodmulti_serial nv'
+      (Nvector.Ops.has_dotprodmulti nv);
+    c_enablelinearsumvectorarray_serial nv'
+      (Nvector.Ops.has_linearsumvectorarray nv);
+    c_enablescalevectorarray_serial nv'
+      (Nvector.Ops.has_scalevectorarray nv);
+    c_enableconstvectorarray_serial nv'
+      (Nvector.Ops.has_constvectorarray nv);
+    c_enablewrmsnormvectorarray_serial nv'
+      (Nvector.Ops.has_wrmsnormvectorarray nv);
+    c_enablewrmsnormmaskvectorarray_serial nv'
+      (Nvector.Ops.has_wrmsnormmaskvectorarray nv);
+    c_enablescaleaddmultivectorarray_serial nv'
+      (Nvector.Ops.has_scaleaddmultivectorarray nv);
+    c_enablelinearcombinationvectorarray_serial nv'
+      (Nvector.Ops.has_linearcombinationvectorarray nv)
+  end;
   nv'
 
 let make ?with_fused_ops n iv = wrap ?with_fused_ops (RealArray.make n iv)

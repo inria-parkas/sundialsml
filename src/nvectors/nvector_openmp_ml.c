@@ -57,7 +57,7 @@ static N_Vector clone_openmp(N_Vector w)
     content->data        = Caml_ba_data_val(v_payload);
 
 #if SUNDIALS_ML_SAFE == 1
-    sunindextype i;
+    sundials_ml_index i;
     for (i = 0; i < content->length; ++i)
 	content->data[i] = 0.0;
 #endif
@@ -104,7 +104,7 @@ static N_Vector clone_any_openmp(N_Vector w)
     content->data     = Caml_ba_data_val(v_payload);
 
 #if SUNDIALS_ML_SAFE == 1
-    sunindextype i;
+    sundials_ml_index i;
     for (i = 0; i < content->length; ++i)
 	content->data[i] = 0.0;
 #endif
@@ -288,7 +288,11 @@ CAMLprim value sunml_nvec_openmp_print_file(value vx, value volog)
     if (volog == Val_none) {
 	N_VPrint_OpenMP(NVEC_VAL(vx));
     } else {
+#if 310 <= SUNDIALS_LIB_VERSION
 	N_VPrintFile_OpenMP(NVEC_VAL(vx), ML_CFILE(Some_val(volog)));
+#else
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     }
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));

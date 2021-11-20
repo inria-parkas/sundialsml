@@ -693,6 +693,7 @@ val set_damping : ('d, 'k) session -> float -> unit
     and less than 1. Damping is disabled if [beta >= 1]. The default
     value is 1.
 
+    @since 5.1.0
     @kinsol <node5> KINSetDampingAA *)
 val set_damping_aa : ('d, 'k) session -> float -> unit
 

@@ -52,26 +52,29 @@ let rec wrap ?(with_fused_ops=false) ((nl, ng, comm) as v) =
 
 and clone nv =
   let nv' = wrap (copydata (unwrap nv)) in
-  c_enablelinearcombination_parallel nv'
-    (Nvector.Ops.has_linearcombination nv);
-  c_enablescaleaddmulti_parallel nv'
-    (Nvector.Ops.has_scaleaddmulti nv);
-  c_enabledotprodmulti_parallel nv'
-    (Nvector.Ops.has_dotprodmulti nv);
-  c_enablelinearsumvectorarray_parallel nv'
-    (Nvector.Ops.has_linearsumvectorarray nv);
-  c_enablescalevectorarray_parallel nv'
-    (Nvector.Ops.has_scalevectorarray nv);
-  c_enableconstvectorarray_parallel nv'
-    (Nvector.Ops.has_constvectorarray nv);
-  c_enablewrmsnormvectorarray_parallel nv'
-    (Nvector.Ops.has_wrmsnormvectorarray nv);
-  c_enablewrmsnormmaskvectorarray_parallel nv'
-    (Nvector.Ops.has_wrmsnormmaskvectorarray nv);
-  c_enablescaleaddmultivectorarray_parallel nv'
-    (Nvector.Ops.has_scaleaddmultivectorarray nv);
-  c_enablelinearcombinationvectorarray_parallel nv'
-    (Nvector.Ops.has_linearcombinationvectorarray nv);
+  if Sundials_impl.Version.lt400 then ()
+  else begin
+    c_enablelinearcombination_parallel nv'
+      (Nvector.Ops.has_linearcombination nv);
+    c_enablescaleaddmulti_parallel nv'
+      (Nvector.Ops.has_scaleaddmulti nv);
+    c_enabledotprodmulti_parallel nv'
+      (Nvector.Ops.has_dotprodmulti nv);
+    c_enablelinearsumvectorarray_parallel nv'
+      (Nvector.Ops.has_linearsumvectorarray nv);
+    c_enablescalevectorarray_parallel nv'
+      (Nvector.Ops.has_scalevectorarray nv);
+    c_enableconstvectorarray_parallel nv'
+      (Nvector.Ops.has_constvectorarray nv);
+    c_enablewrmsnormvectorarray_parallel nv'
+      (Nvector.Ops.has_wrmsnormvectorarray nv);
+    c_enablewrmsnormmaskvectorarray_parallel nv'
+      (Nvector.Ops.has_wrmsnormmaskvectorarray nv);
+    c_enablescaleaddmultivectorarray_parallel nv'
+      (Nvector.Ops.has_scaleaddmultivectorarray nv);
+    c_enablelinearcombinationvectorarray_parallel nv'
+      (Nvector.Ops.has_linearcombinationvectorarray nv)
+  end;
   nv'
 
 let make ?with_fused_ops nl ng comm iv =

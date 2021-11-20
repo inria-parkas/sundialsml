@@ -1120,7 +1120,7 @@ static N_Vector callml_custom_resid(SUNLinearSolver ls)
 }
 
 #if 500 <= SUNDIALS_LIB_VERSION
-static sunindextype callml_custom_lastflag(SUNLinearSolver ls)
+static sundials_ml_index callml_custom_lastflag(SUNLinearSolver ls)
 {
     CAMLparam0();
     CAMLlocal1(r);

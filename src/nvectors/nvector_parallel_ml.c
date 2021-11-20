@@ -88,7 +88,7 @@ static N_Vector clone_parallel(N_Vector w)
     content->data          = Caml_ba_data_val(Field(v_payload, 0));
 
 #if SUNDIALS_ML_SAFE == 1
-    sunindextype i;
+    sundials_ml_index i;
     for (i = 0; i < content->local_length; ++i)
 	content->data[i] = 0.0;
 #endif
@@ -139,7 +139,7 @@ static N_Vector clone_any_parallel(N_Vector w)
     content->data          = Caml_ba_data_val(Field(v_payload, 0));
 
 #if SUNDIALS_ML_SAFE == 1
-    sunindextype i;
+    sundials_ml_index i;
     for (i = 0; i < content->local_length; ++i)
 	content->data[i] = 0.0;
 #endif
@@ -300,7 +300,11 @@ CAMLprim value sunml_nvec_par_print_file(value vx, value volog)
     if (volog == Val_none) {
 	N_VPrint_Parallel(NVEC_VAL(vx));
     } else {
+#if 310 <= SUNDIALS_LIB_VERSION
 	N_VPrintFile_Parallel(NVEC_VAL(vx), ML_CFILE(Some_val(volog)));
+#else
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     }
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -694,7 +698,7 @@ CAMLprim value sunml_nvec_par_linearcombinationvectorarray(value vac,
 CAMLprim value sunml_nvec_par_dotprodlocal(value vx, value vy)
 {
     CAMLparam2(vx, vy);
-    realtype r;
+    realtype r = 0.0;
 #if 500 <= SUNDIALS_LIB_VERSION
     N_Vector x = NVEC_VAL(vx);
     N_Vector y = NVEC_VAL(vy);
@@ -706,7 +710,7 @@ CAMLprim value sunml_nvec_par_dotprodlocal(value vx, value vy)
 CAMLprim value sunml_nvec_par_maxnormlocal(value vx)
 {
     CAMLparam1(vx);
-    realtype r;
+    realtype r = 0.0;
 #if 500 <= SUNDIALS_LIB_VERSION
     N_Vector x = NVEC_VAL(vx);
 
@@ -718,7 +722,7 @@ CAMLprim value sunml_nvec_par_maxnormlocal(value vx)
 CAMLprim value sunml_nvec_par_minlocal(value vx)
 {
     CAMLparam1(vx);
-    realtype r;
+    realtype r = 0.0;
 #if 500 <= SUNDIALS_LIB_VERSION
     N_Vector x = NVEC_VAL(vx);
 
@@ -730,7 +734,7 @@ CAMLprim value sunml_nvec_par_minlocal(value vx)
 CAMLprim value sunml_nvec_par_l1normlocal(value vx)
 {
     CAMLparam1(vx);
-    realtype r;
+    realtype r = 0.0;
 #if 500 <= SUNDIALS_LIB_VERSION
     N_Vector x = NVEC_VAL(vx);
 
@@ -767,7 +771,7 @@ CAMLprim value sunml_nvec_par_constrmasklocal(value vc, value vx, value vm)
 CAMLprim value sunml_nvec_par_minquotientlocal(value vn, value vd)
 {
     CAMLparam2(vn, vd);
-    realtype r;
+    realtype r = 0.0;
 #if 500 <= SUNDIALS_LIB_VERSION
     N_Vector n = NVEC_VAL(vn);
     N_Vector d = NVEC_VAL(vd);
@@ -779,7 +783,7 @@ CAMLprim value sunml_nvec_par_minquotientlocal(value vn, value vd)
 CAMLprim value sunml_nvec_par_wsqrsumlocal(value vx, value vw)
 {
     CAMLparam2(vx, vw);
-    realtype r;
+    realtype r = 0.0;
 #if 500 <= SUNDIALS_LIB_VERSION
     N_Vector x = NVEC_VAL(vx);
     N_Vector w = NVEC_VAL(vw);
@@ -791,7 +795,7 @@ CAMLprim value sunml_nvec_par_wsqrsumlocal(value vx, value vw)
 CAMLprim value sunml_nvec_par_wsqrsummasklocal(value vx, value vw, value vid)
 {
     CAMLparam3(vx, vw, vid);
-    realtype r;
+    realtype r = 0.0;
 #if 500 <= SUNDIALS_LIB_VERSION
     N_Vector x = NVEC_VAL(vx);
     N_Vector w = NVEC_VAL(vw);
