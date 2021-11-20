@@ -953,6 +953,7 @@ static int callml_custom_setscalingvectors(SUNLinearSolver ls,
     CAMLreturnT(int, CHECK_EXCEPTION_SUCCESS(r));
 }
 
+#if 580 <= SUNDIALS_LIB_VERSION
 static int callml_custom_setzeroguess(SUNLinearSolver ls, booleantype onoff)
 {
     CAMLparam0();
@@ -962,6 +963,7 @@ static int callml_custom_setzeroguess(SUNLinearSolver ls, booleantype onoff)
 
     CAMLreturnT(int, CHECK_EXCEPTION_SUCCESS(r));
 }
+#endif
 
 static int callml_custom_initialize(SUNLinearSolver ls)
 {
