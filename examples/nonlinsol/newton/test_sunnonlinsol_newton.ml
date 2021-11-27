@@ -109,11 +109,17 @@ let conv_test imem y del tol ewt _ =
  *
  * ---------------------------------------------------------------------------*)
 let res imem y f _ =
-  (* update state based on current correction *)
-  Nvector_serial.Ops.linearsum one imem.y0 one imem.ycor imem.ycur;
-  (* compute the residual function *)
-  let ycur = Nvector.unwrap imem.ycur in
-  let y1, y2, y3 = ycur.{0}, ycur.{1}, ycur.{2} in
+  let y1, y2, y3 =
+    if Sundials_impl.Version.lt500 then
+      y.{0}, y.{1}, y.{2}
+    else begin
+      (* update state based on current correction *)
+      Nvector_serial.Ops.linearsum one imem.y0 one imem.ycor imem.ycur;
+      (* compute the residual function *)
+      let ycur = Nvector.unwrap imem.ycur in
+      ycur.{0}, ycur.{1}, ycur.{2}
+    end
+  in
   f.{0} <- y1*.y1 +. y2*.y2 +. y3*.y3 -. one;
   f.{1} <- two *. y1*.y1 +. y2*.y2 -. four *. y3;
   f.{2} <- three *. (y1*.y1) -. four *. y2 +. y3*.y3
@@ -126,7 +132,6 @@ let main () =
   let x = Nvector_serial.make neq 0.0 in
   let y0 = Nvector_serial.wrap (RealArray.of_array [| half; half; half |]) in
   let ycur = Nvector.clone y0 in
-  let ydata = Nvector.unwrap ycur in
   (* set initial guess for the state *)
   let ycor = Nvector_serial.make neq zero in
   (* set weights *)
@@ -161,7 +166,11 @@ let main () =
   NLS.solve nls ~y0 ~ycor ~w tol true ();
 
   (* update the initial guess with the final correction *)
-  Nvector_serial.Ops.linearsum one y0 one ycor ycur;
+  let ydata =
+    if Sundials_impl.Version.lt500 then Nvector.unwrap ycor
+    else (Nvector_serial.Ops.linearsum one y0 one ycor ycur;
+          Nvector.unwrap ycur)
+  in
 
   (* print the solution *)
   printf "Solution:\n";

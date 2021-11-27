@@ -1092,6 +1092,13 @@ static value sunml_arkode_ark_session_to_value(void *arkode_mem)
     return session;
 }
 
+static void* sunml_arkode_session_from_value(value varkode_mem)
+{
+    return (ARKODE_MEM_FROM_ML(varkode_mem));
+}
+#endif
+
+#if 540 <= SUNDIALS_LIB_VERSION
 static value sunml_arkode_mri_session_to_value(void *arkode_mem)
 {
     value session;
@@ -1100,11 +1107,6 @@ static value sunml_arkode_mri_session_to_value(void *arkode_mem)
 
     WEAK_DEREF (session, *(value*)user_data);
     return session;
-}
-
-static void* sunml_arkode_session_from_value(value varkode_mem)
-{
-    return (ARKODE_MEM_FROM_ML(varkode_mem));
 }
 #endif
 
