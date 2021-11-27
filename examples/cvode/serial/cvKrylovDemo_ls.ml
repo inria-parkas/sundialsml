@@ -591,7 +591,7 @@ let main () =
         (* Print header *)
         let h =
           (match Config.sundials_version with
-           | n,_,_ when n <= 3 ->
+           | n,_,_ when n <= 4 ->
                       "\n ---------"
            | _     -> " ---------")
                     ^ " \n| SPTFQMR |\n"

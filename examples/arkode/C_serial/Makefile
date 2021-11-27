@@ -18,14 +18,14 @@ EXAMPLES_SINCE_2_5 = ark_KrylovDemo_prec.ml \
 		     $(if $(KLU_ENABLED),ark_brusselator1D_klu.ml) \
 		     $(if $(SUPERLUMT_ENABLED),ark_brusselator1D_FEM_slu.ml)
 
-EXAMPLES_SINCE_4_0_0 = ark_analytic_nonlin.ml \
+EXAMPLES_SINCE_4_0_0 = ark_analytic_nonlin.ml
+
+EXAMPLES_SINCE_5_0_0 = ark_brusselator_1D_mri.ml \
+		       ark_robertson_constraints.ml \
 		       ark_brusselator_mri.ml \
 		       ark_onewaycouple_mri.ml \
 		       ark_twowaycouple_mri.ml \
 		       ark_reaction_diffusion_mri.ml
-
-EXAMPLES_SINCE_5_0_0 = ark_brusselator_1D_mri.ml \
-		       ark_robertson_constraints.ml
 
 EXAMPLES_SINCE_5_4_0 = ark_kpr_mri.ml
 

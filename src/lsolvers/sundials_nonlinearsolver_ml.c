@@ -1144,7 +1144,7 @@ CAMLprim value sunml_nlsolver_call_lsolve_fn_sens(value vfns,
 #if 500 <= SUNDIALS_LIB_VERSION
     int flag = (*lsolvefn)(b, from_value(vmem));
 #else
-    int flag = (*lsolvefn)(NULL, b, from_value(mem));
+    int flag = (*lsolvefn)(NULL, b, from_value(vmem));
 #endif
     NLS_CHECK_FLAG("SUNNonlinSolLSolveFn (sens)", flag);
 #endif
@@ -1267,7 +1267,9 @@ static int sunml_nlsolver_wrapped_setup(SUNNonlinearSolver nls,
     snls->orig_setctestfn(nls, sunml_nlsolver_failed_ctestfn, (void *)0xdeadbeef);
 #endif
 
+#if 500 <= SUNDIALS_LIB_VERSION
 done:
+#endif
     CAMLreturnT(int, r);
 }
 
@@ -1304,7 +1306,9 @@ static int sunml_nlsolver_wrapped_solve(SUNNonlinearSolver nls,
     snls->orig_setctestfn(nls, sunml_nlsolver_failed_ctestfn, (void *)0xdeadbeef);
 #endif
 
+#if 500 <= SUNDIALS_LIB_VERSION
 done:
+#endif
     CAMLreturnT(int, r);
 }
 
@@ -1314,18 +1318,36 @@ static int sunml_nlsolver_wrapped_sysfn(N_Vector y, N_Vector F, void* mem)
     return (cbv->pccallbacks->sysfn(y, F, cbv->mem));
 }
 
+#if 500 <= SUNDIALS_LIB_VERSION
 static int sunml_nlsolver_wrapped_lsetupfn(booleantype jbad, booleantype* jcur,
 					   void* mem)
 {
     p_nls_cbv cbv = (p_nls_cbv)mem;
     return (cbv->pccallbacks->lsetupfn(jbad, jcur, cbv->mem));
 }
+#else
+static int sunml_nlsolver_wrapped_lsetupfn(N_Vector y, N_Vector F,
+					   booleantype jbad, booleantype* jcur,
+					   void* mem)
+{
+    p_nls_cbv cbv = (p_nls_cbv)mem;
+    return (cbv->pccallbacks->lsetupfn(y, F, jbad, jcur, cbv->mem));
+}
+#endif
 
+#if 500 <= SUNDIALS_LIB_VERSION
 static int sunml_nlsolver_wrapped_lsolvefn(N_Vector b, void* mem)
 {
     p_nls_cbv cbv = (p_nls_cbv)mem;
     return (cbv->pccallbacks->lsolvefn(b, cbv->mem));
 }
+#else
+static int sunml_nlsolver_wrapped_lsolvefn(N_Vector y, N_Vector b, void* mem)
+{
+    p_nls_cbv cbv = (p_nls_cbv)mem;
+    return (cbv->pccallbacks->lsolvefn(y, b, cbv->mem));
+}
+#endif
 
 static int sunml_nlsolver_wrapped_setsysfn(SUNNonlinearSolver nls,
 					   SUNNonlinSolSysFn sysfn)
@@ -1340,7 +1362,11 @@ static int sunml_nlsolver_wrapped_setlsetupfn(SUNNonlinearSolver nls,
 {
     p_sunml_nls snls = NLS_EXTENDED(nls);
     snls->c_callbacks.lsetupfn = lsetupfn;
+#if 500 <= SUNDIALS_LIB_VERSION
     return (snls->orig_setlsetupfn(nls, sunml_nlsolver_wrapped_lsetupfn));
+#else
+    return (snls->orig_setlsetupfn(nls, sunml_nlsolver_wrapped_lsetupfn));
+#endif
 }
 
 static int sunml_nlsolver_wrapped_setlsolvefn(SUNNonlinearSolver nls,
@@ -1364,7 +1390,7 @@ static int sunml_nlsolver_wrapped_setctestfn(SUNNonlinearSolver nls,
     snls->c_callbacks.ctestfn = ctestfn;
 
 #if SUNDIALS_LIB_VERSION < 500
-    return (snls->orig_setctestfn(nls, sunml_nlsolver_wrapped_ctestfn);
+    return (snls->orig_setctestfn(nls, sunml_nlsolver_wrapped_ctestfn));
 #elif defined(SUNDIALS_ML_DEBUG)
     // We do not call orig_setctestfn here.
     // Rather this is done by sunml_nlsolver_wrapped_setup
