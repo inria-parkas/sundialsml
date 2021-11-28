@@ -17,6 +17,6 @@ NVECTOR_SIZE2 ?= 20000
 $(eval $(call EXECUTION_RULE,test_nvector_mpimanyvector_serial, \
 	 $$< $(NVECTOR_SIZE1) $(NVECTOR_SIZE2) 0))
 $(eval $(call EXECUTION_RULE,test_nvector_mpimanyvector_parallel1, \
-	 $(MPIRUN) -np 4 $$< $(NVECTOR_SIZE1) $(NVECTOR_SIZE2) 0))
+	 $(MPIRUN) -np 4 $(UTILS)/unmute.sh 0 $$< $(NVECTOR_SIZE1) $(NVECTOR_SIZE2) 0))
 $(eval $(call EXECUTION_RULE,test_nvector_mpimanyvector_parallel2, \
-	 $(MPIRUN) -np 4 $$< $(NVECTOR_SIZE1) $(NVECTOR_SIZE2) 0))
+	 $(MPIRUN) -np 4 $(UTILS)/unmute.sh 0 $$< $(NVECTOR_SIZE1) $(NVECTOR_SIZE2) 0))

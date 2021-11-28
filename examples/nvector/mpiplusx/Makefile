@@ -13,5 +13,5 @@ include ../nvector.mk
 
 NVECTOR_SIZE ?= 5000
 $(eval $(call EXECUTION_RULE,test_nvector_mpiplusx, \
-	 $(MPIRUN) -np 4 $$< $(NVECTOR_SIZE) 0))
+	 $(MPIRUN) -np 4 $(UTILS)/unmute.sh 0 $$< $(NVECTOR_SIZE) 0))
 
