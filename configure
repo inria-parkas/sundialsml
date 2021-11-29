@@ -1502,6 +1502,7 @@ cat ${LOG}
 	 s#@configure_command@#${configure_command}#;
 	 s#@version@#${version}#;
 	 s#@versionp@#${versionp}#;
+	 s#@sundials_version@#${sundials_version}#;
 	 s#@sundials_at_least_5_8_0@#${sundials_at_least_5_8_0}#;
 	 s#@sundials_at_least_5_4_0@#${sundials_at_least_5_4_0}#;
 	 s#@sundials_at_least_5_3_0@#${sundials_at_least_5_3_0}#;
