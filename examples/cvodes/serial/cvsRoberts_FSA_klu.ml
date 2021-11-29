@@ -258,11 +258,8 @@ let print_final_stats s sensi =
     and nfeS     = get_num_rhs_evals_sens s
     and nsetupsS = get_num_lin_solv_setups s
     and netfS    = get_num_err_test_fails s
-    in
-    let nniS, ncfnS =
-      try get_num_nonlin_solv_iters s,
-          get_num_nonlin_solv_conv_fails s
-      with Failure _ -> 0,0
+    and nniS     = get_num_nonlin_solv_iters s
+    and ncfnS    = get_num_nonlin_solv_conv_fails s
     in
     print_string_5d "\nnfSe    = " nfSe;
     print_string_5d "    nfeS     = " nfeS;
