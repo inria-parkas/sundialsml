@@ -399,9 +399,10 @@ EG_CFLAGS=$(CVODE_CFLAGS) -I $(EXAMPLESROOT)/nvector \
      then echo $(EXAMPLESROOT)/$(C_SUBDIR)/test_nvector.c; \
      else echo $(EXAMPLESROOT)/nvector/test_nvector.c; fi`
 EG_CFLAGS_MPI=\
-    `if test -f $(EXAMPLESROOT)/$(C_SUBDIR)/test_mpinvector.c; \
-     then echo $(EXAMPLESROOT)/$(C_SUBDIR)/test_mpinvector.c; \
-     else echo $(EXAMPLESROOT)/nvector/test_mpinvector.c; fi`
+    $(if $(AT_LEAST_5_0_0),\
+        `if test -f $(EXAMPLESROOT)/$(C_SUBDIR)/test_mpinvector.c; \
+         then echo $(EXAMPLESROOT)/$(C_SUBDIR)/test_mpinvector.c; \
+         else echo $(EXAMPLESROOT)/nvector/test_mpinvector.c; fi`)
 EG_LDFLAGS=$(CVODE_LDFLAGS)
 else ifeq ($(MODULE),matrix)
 EG_CFLAGS=$(CVODE_CFLAGS) $(EXAMPLESROOT)/$(C_SUBDIR)/test_sunmatrix.c
