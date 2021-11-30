@@ -49,7 +49,7 @@ depexts: [
     [["ubuntu"] ["libsundials-dev"]]
     [["fedora"] ["lapack-devel" "sundials-devel"]]
     [["centos"] ["epel-release" "lapack-devel" "sundials-devel"]]
-    [["osx" "homebrew"] ["homebrew/science/sundials"]]
+    [["osx" "homebrew"] ["sundials"]]
     [["osx" "macports"] ["sundials"]]
 ]
 available: [ ocaml-version >= "4.03.0" ]
