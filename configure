@@ -1083,8 +1083,7 @@ EOF
 EOF
     fi
     sundials_info=$(${CPP} ${cppflags} ${Isundials_inc_path} \
-			-P $test_stem.c 2>>${logfile} \
-		    | tail -1)
+			-P $test_stem.c 2>>${logfile})
     ${debug_configure} || rm -f ./$test_stem.c
 
     printf "Sundials has KLU/SUPERLUMT?: %s\n" "${sundials_info}" >>${logfile}
