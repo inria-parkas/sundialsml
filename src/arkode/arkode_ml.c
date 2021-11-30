@@ -2354,7 +2354,7 @@ CAMLprim value sunml_arkode_ark_get_nonlin_system_data(value varkode_mem)
     CAMLreturn(vnv);
 }
 
-CAMLprim value sunml_arkode_ark_compute_state(value varkode_mem,
+CAMLprim void sunml_arkode_ark_compute_state(value varkode_mem,
 					      value vzcor, value vz)
 {
     CAMLparam3(varkode_mem, vzcor, vz);
@@ -7906,7 +7906,7 @@ CAMLprim value sunml_arkode_mri_get_nonlin_system_data(value varkode_mem)
     CAMLreturn(vnv);
 }
 
-CAMLprim value sunml_arkode_mri_compute_state(value varkode_mem,
+CAMLprim void sunml_arkode_mri_compute_state(value varkode_mem,
 					      value vzcor, value vz)
 {
     CAMLparam3(varkode_mem, vzcor, vz);

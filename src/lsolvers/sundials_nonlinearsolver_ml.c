@@ -320,12 +320,12 @@ static int senswrapper_compare(value vsw1, value vsw2)
 }
 
 static struct custom_operations senswrapper_custom_ops = {
-    identifier: "sunml_senswrapper",
-    finalize:    custom_finalize_default,
-    compare:     senswrapper_compare,
-    hash:        senswrapper_hash,
-    serialize:   custom_serialize_default,
-    deserialize: custom_deserialize_default
+    .identifier = "sunml_senswrapper",
+    .finalize =    custom_finalize_default,
+    .compare =     senswrapper_compare,
+    .hash =        senswrapper_hash,
+    .serialize =   custom_serialize_default,
+    .deserialize = custom_deserialize_default
 };
 
 CAMLprim value sunml_senswrapper_wrap(N_Vector sw)
@@ -611,6 +611,7 @@ static int sunml_nlsolver_failed_ctestfn(SUNNonlinearSolver nls,
 {
     // this callback should never be invoked
     assert(0);
+    return 0;
 }
 #endif
 
@@ -1240,7 +1241,7 @@ static int sunml_nlsolver_wrapped_setup(SUNNonlinearSolver nls,
 {
     CAMLparam0();
     CAMLlocal1(vmem);
-    int r;
+    int r = 0;
 
     p_sunml_nls snls = NLS_EXTENDED(nls);
     if (snls->to_value != NULL) {
@@ -1280,7 +1281,7 @@ static int sunml_nlsolver_wrapped_solve(SUNNonlinearSolver nls,
 {
     CAMLparam0();
     CAMLlocal1(vmem);
-    int r;
+    int r = 0;
 
     p_sunml_nls snls = NLS_EXTENDED(nls);
     if (snls->to_value != NULL) {

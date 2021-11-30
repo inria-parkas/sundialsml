@@ -2680,7 +2680,7 @@ CAMLprim value sunml_cvodes_get_nonlin_system_data_sens(value vcvode_mem,
     CAMLreturn(vnv);
 }
 
-CAMLprim value sunml_cvodes_compute_state_sens(value vcvode_mem,
+CAMLprim void sunml_cvodes_compute_state_sens(value vcvode_mem,
 					       value vyscor, value vysz)
 {
     CAMLparam3(vcvode_mem, vyscor, vysz);
@@ -2706,7 +2706,7 @@ CAMLprim value sunml_cvodes_compute_state_sens(value vcvode_mem,
     CAMLreturn0;
 }
 
-CAMLprim value sunml_cvodes_compute_state_sens1(value vcvode_mem, value vidx,
+CAMLprim void sunml_cvodes_compute_state_sens1(value vcvode_mem, value vidx,
 						value vycor, value vyz)
 {
     CAMLparam4(vcvode_mem, vidx, vycor, vyz);

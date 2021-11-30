@@ -1716,7 +1716,7 @@ CAMLprim value sunml_cvode_get_nonlin_system_data(value vcvode_mem)
     CAMLreturn(vnv);
 }
 
-CAMLprim value sunml_cvode_compute_state(value vcvode_mem,
+CAMLprim void sunml_cvode_compute_state(value vcvode_mem,
 					 value vycor, value vyz)
 {
     CAMLparam3(vcvode_mem, vycor, vyz);
