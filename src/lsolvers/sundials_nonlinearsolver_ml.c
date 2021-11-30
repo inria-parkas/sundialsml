@@ -1392,7 +1392,7 @@ static int sunml_nlsolver_wrapped_setctestfn(SUNNonlinearSolver nls,
 
 #if SUNDIALS_LIB_VERSION < 500
     return (snls->orig_setctestfn(nls, sunml_nlsolver_wrapped_ctestfn));
-#elif defined(SUNDIALS_ML_DEBUG)
+#else
     // We do not call orig_setctestfn here.
     // Rather this is done by sunml_nlsolver_wrapped_setup
     // and sunml_nlsolver_wrapped_solve so that they can set
@@ -1406,8 +1406,6 @@ static int sunml_nlsolver_wrapped_setctestfn(SUNNonlinearSolver nls,
 
     return (snls->orig_setctestfn(nls, sunml_nlsolver_failed_ctestfn,
 				  (void *)0xdeadbeef));
-#else
-    return SUN_NLS_SUCCESS;
 #endif
 }
 
