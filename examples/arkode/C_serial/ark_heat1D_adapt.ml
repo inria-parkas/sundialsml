@@ -289,12 +289,13 @@ let main () =
   printf " %s\n" border;
   printf " %4d  %19.15e  %19.15e  %19.15e  %d   %2d  %3d\n"
          0 0.0 0.0 (sqrt(dotprod y y /. float udata.n)) udata.n 0 0;
-  let rec loop t newdt y iout nni_tot nli_tot =
+  let rec loop t newdt y iout nni_cur nni_tot nli_tot =
     if t >= tf then iout, nni_tot, nli_tot
     else begin
       (* "set" routines *)
       ARKStep.set_stop_time arkode_mem tf;
-      ARKStep.set_init_step arkode_mem newdt;
+      if Sundials_impl.Version.lt530 then
+        ARKStep.set_init_step arkode_mem newdt;
 
       (* call integrator *)
       let t, _ = ARKStep.evolve_one_step arkode_mem tf y in
@@ -305,11 +306,13 @@ let main () =
       let nni   = ARKStep.get_num_nonlin_solv_iters arkode_mem in
       let nli   = ARKStep.Spils.get_num_lin_iters arkode_mem in
 
+      let nni_cur = if Sundials_impl.Version.lt400 then nni_cur else 0 in
+
       (* print current solution stats *)
       printf " %4d  %19.15e  %19.15e  %19.15e  %d   %2d  %3d\n"
              (iout + 1) olddt newdt
              (sqrt(dotprod y y /. float udata.n))
-             udata.n nni nli;
+             udata.n (nni - nni_cur) nli;
 
       (* output results and current mesh to disk *)
       let data = Nvector.unwrap y in
@@ -342,10 +345,12 @@ let main () =
         (SStolerances (rtol, atol))
         hscale y2 t);
 
-      loop t newdt y2 (iout + 1) (nni_tot+nni) (nli_tot + nli)
+      loop t newdt y2 (iout + 1) nni
+           (if Sundials_impl.Version.lt400 then nni else nni_tot+nni)
+           (nli_tot + nli)
     end
   in
-  let iout, nni_tot, nli_tot = loop t0 0.0 y 0 0 0 in
+  let iout, nni_tot, nli_tot = loop t0 0.0 y 0 0 0 0 in
   printf " %s\n" border;
 
   (* print some final statistics *)
