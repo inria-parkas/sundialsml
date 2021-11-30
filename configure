@@ -342,7 +342,7 @@ if [ x"${MATHJAX}" != x ]; then
 fi
 
 CC=${CC:-cc}
-CPP=${CPP:-cpp}
+CPP=${CPP:-cc -E}
 LAPACKLIB=${LAPACKLIB:-"-llapack"}
 error=""
 
@@ -358,7 +358,7 @@ if [ "x${prefix}" = x ]; then
 	    fi
 	    if [ "x${sundials_inc_path}" = x ]; then
 		sundials_inc_path="${prefix}include/"
-		Isundials_inc_path="isystem I${sundials_inc_path}"
+		Isundials_inc_path="-isystem I${sundials_inc_path}"
 	    fi
 	    if [ "x${superlumt_lib_path}" = x ]; then
 		superlumt_lib_path="${prefix}lib/"
@@ -474,15 +474,16 @@ case `uname -s` in
 esac
 
 # Check for Sundials installation (and version)
-include="\"sundials/sundials_config.h\""
-query="SUNDIALS_PACKAGE_VERSION"
-sundials_version=`printf "#include %s\n%s" "${include}" "${query}" \
-		    | ${CPP} ${cppflags} ${Isundials_inc_path} -P 2>>${logfile} \
-		    | tail -1 | sed -e 's/ //g' -e 's/"//g'`
-if [ x"${sundials_version}" = x ]; then
-    sundials_version="UNKNOWN"
-    sundials=0
-fi
+test_stem=__configure_test_file_sundialsversion0
+cat > $test_stem.c <<EOF
+// ${CPP} ${cppflags} ${Isundials_inc_path} -P $test_stem.c
+#include "sundials/sundials_config.h"
+SUNDIALS_PACKAGE_VERSION
+EOF
+sundials_version=$(${CPP} ${cppflags} ${Isundials_inc_path} \
+			-P $test_stem.c 2>>${logfile} \
+		   | tail -1 | sed -e 's/ //g' -e 's/"//g')
+${debug_configure} || rm -f ./$test_stem.c
 Lsundials_arkode=
 arkode_mlobj_main=
 arkode_cobj_main=
@@ -492,11 +493,16 @@ arkode_cobj_sens=
 arkode_subdir=
 arkode_enabled=
 if [ "${sundials_version}" = "SUNDIALS_PACKAGE_VERSION" ]; then
-    query="SUNDIALS_VERSION"
-    sundials_version=`printf "#include %s\n%s" "${include}" "${query}" \
-			| ${CPP} ${cppflags} ${Isundials_inc_path} \
-			    -P 2>>${logfile} \
-			| tail -1 | sed -e 's/ //g' -e 's/"//g'`
+    test_stem=__configure_test_file_sundialsversion1
+    cat > $test_stem.c <<EOF
+// ${CPP} ${cppflags} ${Isundials_inc_path} -P $test_stem.c
+#include "sundials/sundials_config.h"
+SUNDIALS_VERSION
+EOF
+    sundials_version=$(${CPP} ${cppflags} ${Isundials_inc_path} \
+			    -P $test_stem.c 2>>${logfile} \
+			| tail -1 | sed -e 's/ //g' -e 's/"//g')
+    ${debug_configure} || rm -f ./$test_stem.c
 fi
 
 if [ "${sundials_version}" = "SUNDIALS_VERSION" ]; then
@@ -644,17 +650,23 @@ fi
 sundials_indextype=
 if [ ${sundials} -ge 300 ]; then
     include="\"sundials/sundials_config.h\""
-    query="SUNDIALS_INT64_T"
-    sundials_int64_t=`printf "#include %s\n%s" "${include}" "${query}" \
-			| ${CPP} ${cppflags} ${Isundials_inc_path} \
-			    -P 2>>${logfile} \
-			| tail -1 | sed -e 's/ //g' -e 's/"//g'`
+    test_stem=__configure_test_file_indextype
+    cat > $test_stem.c <<EOF
+// ${CPP} ${cppflags} ${Isundials_inc_path} -P $test_stem.c
+#include "sundials/sundials_config.h"
+SUNDIALS_INT64_T
+EOF
+    sundials_int64_t=$(${CPP} ${cppflags} ${Isundials_inc_path} \
+			    -P $test_stem.c 2>>${logfile} \
+			| tail -1 | sed -e 's/ //g' -e 's/"//g')
+    ${debug_configure} || rm -f ./$test_stem.c
     if [ "${sundials_int64_t}" = SUNDIALS_INT64_T ]; then
 	sundials_indextype=32
 	other_tweaks="${other_tweaks} index-int32"
     else
 	sundials_indextype=64
     fi
+    printf "Sundials index_type=%s\n" "${sundials_indextype}" >>${logfile}
 else
     sundials_indextype=64
 fi
@@ -724,14 +736,17 @@ fi
 
 cppflags="${cppflags} ${Isundials_inc_path} -isystem ${ocaml_path}"
 cflags="${cflags} -isystem ${ocaml_path}"
-
-include="<caml/mlvalues.h>"
-query="SIZEOF_INT,SIZEOF_LONG,SIZEOF_PTR"
-ilp_size=`printf "#include %s\n%s" "${include}" "${query}" \
-    | ${CPP} ${cppflags} -P 2>>${logfile} | tail -1`
+test_stem=__configure_test_file__intsizes
+cat > $test_stem.c <<EOF
+// ${CPP} ${cppflags} -P $test_stem.c
+#include <caml/mlvalues.h>
+SIZEOF_INT,SIZEOF_LONG,SIZEOF_PTR
+EOF
+ilp_size=$(${CPP} ${cppflags} -P $test_stem.c 2>>${logfile} | tail -1)
 int_size=`expr "$ilp_size" : "^\([^,]*\),*"`
 long_size=`expr "$ilp_size" : "^[^,]*,\([^,]*\),*"`
 ptr_size=`expr "$ilp_size" : "^[^,]*,[^,]*,\([^,]*\)"`
+${debug_configure} || rm -f ./$test_stem.c
 
 if echo ${int_size:-not_found} | grep -q '[^0-9]'; then
     printf "Failed to detect size of \`int'.  This might be a problem\n"
@@ -881,12 +896,20 @@ ${debug_configure} || rm -f ./${test_ml_stem}.* ${test_ml_stem}
 # Check whether using generic math library (-lm) or not
 libm=-lm
 if [ $sundials -ge 260 ]; then
-    include="\"sundials/sundials_config.h\""
-    query="#ifdef SUNDIALS_USE_GENERIC_MATH\n1\n#else\n0\n#endif\n"
-    sundials_info=`printf "#include %s\n%b" "${include}" "${query}" \
-			| ${CPP} ${cppflags} ${Isundials_inc_path} \
-			    -P 2>>${logfile} \
-			| grep -v ^$`
+    test_stem=__configure_test_file__generic_math
+    cat > $test_stem.c <<EOF
+// ${CPP} ${cppflags} ${Isundials_inc_path} -P 2>>${logfile} $test_stem.c
+#include "sundials/sundials_config.h"
+#ifdef SUNDIALS_USE_GENERIC_MATH
+1
+#else
+0
+#endif
+EOF
+    sundials_info=$(${CPP} ${cppflags} ${Isundials_inc_path} \
+			-P 2>>${logfile} $test_stem.c \
+		    | grep -v ^$)
+    ${debug_configure} || rm -f ./${test_stem}.c
     printf "Sundials uses -lm?: %s\n" "${sundials_info}" >>${logfile}
     case "${sundials_info}" in
 	1) ;;
@@ -952,16 +975,26 @@ fi
 # Check for LAPACK support
 unset lapack_lib
 if [ $sundials -gt 0 ]; then
-    include="\"sundials/sundials_config.h\""
+    test_stem=__configure_test_file__blas_lapack
     if [ $sundials -ge 260 ]; then
-	query="#ifdef SUNDIALS_BLAS_LAPACK\n1\n#else\n0\n#endif\n"
+	cat > $test_stem.c <<EOF
+#include "sundials/sundials_config.h"
+#ifdef SUNDIALS_BLAS_LAPACK
+1
+#else
+0
+#endif
+EOF
     else
-	query="SUNDIALS_BLAS_LAPACK"
+	cat > $test_stem.c <<EOF
+#include "sundials/sundials_config.h"
+SUNDIALS_BLAS_LAPACK
+EOF
     fi
-    sundials_info=`printf "#include %s\n%b" "${include}" "${query}" \
-			| ${CPP} ${cppflags} ${Isundials_inc_path} \
-			    -P 2>>${logfile} \
-			| grep -v ^$`
+    sundials_info=$(${CPP} ${cppflags} ${Isundials_inc_path} \
+			-P $test_stem.c 2>>${logfile} \
+		    | grep -v ^$)
+    ${debug_configure} || rm -f ./${test_stem}.c
     printf "Sundials has LAPACK?: %s\n" "${sundials_info}" >>${logfile}
     case "${sundials_info}" in
 	1) lapack_lib=${LAPACKLIB} ;;
@@ -987,12 +1020,21 @@ fi
 # Check for monitoring support
 monitoring_enabled=
 if [ ${sundials} -ge 500 ]; then
-    include="\"sundials/sundials_config.h\""
-    query="#ifdef SUNDIALS_BUILD_WITH_MONITORING\\n1\\n#else\\n0\\n#endif\\n"
-    monitoring_enabled=$(printf "#include %s\\n%b" "${include}" "${query}" \
-			| "${CPP}" ${cppflags} ${Isundials_inc_path} \
-			    -P 2>>${logfile} \
-			| grep -v ^$)
+    test_stem=__configure_test_file__monitoring
+    cat > $test_stem.c <<EOF
+// ${CPP} ${cppflags} ${Isundials_inc_path} -P $test_stem.c
+#include "sundials/sundials_config.h"
+#ifdef SUNDIALS_BUILD_WITH_MONITORING
+1
+#else
+0
+#endif
+EOF
+    monitoring_enabled=$(${CPP} ${cppflags} ${Isundials_inc_path} \
+			    -P $test_stem.c 2>>${logfile} \
+			| tail -1)
+    printf "Sundials monitoring enabled?: %s\n" "${monitoring_enabled}" >>${logfile}
+    ${debug_configure} || rm -f ./${test_stem}.c
     case "${monitoring_enabled}" in
 	1) ;;
 	0) ;;
@@ -1016,18 +1058,34 @@ superlumt_libs=
 
 if [ $sundials -ge 260 ]; then
 
-    include="\"sundials/sundials_config.h\""
+    test_stem=__configure_test_file_klu_superlumt
     if [ $sundials -ge 550 ]; then
-	q1="#ifdef SUNDIALS_SUNLINSOL_KLU\n:KLU:\n#endif\n"
-	q2="#ifdef SUNDIALS_SUNLINSOL_SUPERLUMT\n:SUPERLUMT:\n#endif\n"
+    cat > $test_stem.c <<EOF
+// ${CPP} ${cppflags} ${Isundials_inc_path} -P $test_stem.c
+#include "sundials/sundials_config.h"
+#ifdef SUNDIALS_SUNLINSOL_KLU
+:KLU:
+#endif
+#ifdef SUNDIALS_SUNLINSOL_SUPERLUMT
+:SUPERLUMT:
+#endif
+EOF
     else
-	q1="#ifdef SUNDIALS_KLU\n:KLU:\n#endif\n"
-	q2="#ifdef SUNDIALS_SUPERLUMT\n:SUPERLUMT:\n#endif\n"
+    cat > $test_stem.c <<EOF
+// ${CPP} ${cppflags} ${Isundials_inc_path} -P $test_stem.c
+#include "sundials/sundials_config.h"
+#ifdef SUNDIALS_KLU
+:KLU:
+#endif
+#ifdef SUNDIALS_SUPERLUMT
+:SUPERLUMT:
+#endif
+EOF
     fi
-    sundials_info=`printf "#include %s\n%b%b" "${include}" "${q1}" "${q2}" \
-		    | ${CPP} ${cppflags} ${Isundials_inc_path} \
-			-P 2>>${logfile} \
-		    | grep -v ^$`
+    sundials_info=$(${CPP} ${cppflags} ${Isundials_inc_path} \
+			-P $test_stem.c 2>>${logfile} \
+		    | tail -1)
+    ${debug_configure} || rm -f ./$test_stem.c
 
     printf "Sundials has KLU/SUPERLUMT?: %s\n" "${sundials_info}" >>${logfile}
     case "${sundials_info}" in
@@ -1356,11 +1414,16 @@ fi
 # Sundials examples directory
 if [ "x$EXAMPLESROOT" = x ]; then
     # Try to infer it from the include path.
-    include="\"sundials/sundials_config.h\""
-    prefix_info=`printf "#include %s\n" "${include}" \
-	| ${CPP} ${cppflags} ${Isundials_inc_path} -E 2>>${logfile} \
+    test_stem=__configure_test_file__examplesroot
+    cat > $test_stem.c <<EOF
+// ${CPP} ${cppflags} ${Isundials_inc_path} -E $test_stem.c
+#include "sundials/sundials_config.h"
+EOF
+    prefix_info=$(${CPP} ${cppflags} ${Isundials_inc_path} \
+	    $test_stem.c -P 2>>${logfile} \
 	| sed -ne "s/^.*\"\(.*\)\/include\/sundials\/sundials_config.h\".*$/\1/p" \
-	| head -n 1`
+	| head -n 1)
+    ${debug_configure} || rm -f ./${test_stem}.c
 
     if [ "x${prefix_info}" != x ]; then
 	EXAMPLESROOT="${prefix_info}/examples"
