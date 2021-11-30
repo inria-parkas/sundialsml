@@ -307,7 +307,7 @@ idas/idas_superlumt_ml.o: idas/idas_superlumt_ml.c \
 # Other files
 
 META: META.in ../config
-	$(CPP) -DVERSION=\"$(VERSION)\"				\
+	$(CPP) -x c -DVERSION=\"$(VERSION)\"				\
 	    $(if $(MPI_ENABLED),-DMPI_ENABLED)			\
 	    $(if $(PTHREADS_ENABLED),-DPTHREADS_ENABLED)	\
 	    $(if $(OPENMP_ENABLED),-DOPENMP_ENABLED)		\
