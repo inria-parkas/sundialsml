@@ -470,18 +470,17 @@ The available packages and the features they select are:
 
 Sundials/ML can also be used from the OCaml interactive loop, either by an
 invocation like:
-{v ocaml bigarray.cma -I +sundialsml sundials.cma sundials_openmp.cma v}
+{v ocaml bigarray.cma -I +sundialsml sundials.cma v}
 or through [ocamlfind], for example: {[
 #use "topfind";;
-#predicates "no_sens";;	  (* optional—excludes sensitivity code *)
+#predicates "no_sens";;	  (* optional: excludes sensitivity code *)
 #require "sundialsml";;
 
 let f t y yd = yd.{0} <- 1.;;
 let g t y gout = gout.{0} <- y.{0};;
 let y = Sundials.RealArray.of_array [| -1.0 |];;
 let yvec = Nvector_serial.wrap y;;
-let s =
-  Cvode.(init Adams Functional default_tolerances f ~roots:(1, g) 0. yvec);;
+let s = Cvode.(init Adams default_tolerances f ~roots:(1, g) 0. yvec);;
 Cvode.set_stop_time s 2.;;
 
 (* repeat the commands below to advance the simulation until t = 2.0 *)

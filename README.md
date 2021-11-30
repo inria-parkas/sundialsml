@@ -42,7 +42,7 @@ or try:
 1. [Download Sundials](http://computation.llnl.gov/casc/sundials/download/download.php), extract, and install it:
     1. `mkdir sundials-build`
     2. `cd sundials-build`
-    3. `cmake -Wno-dev ../sundials-3.1.1`, optionally adding:
+    3. `cmake -Wno-dev ../sundials-5.8.0`, optionally adding:
         - `-DOPENMP_ENABLE=1` for OpenMP nvectors,
         - `-DPTHREAD_ENABLE=1` for Pthreads nvectors,
         - `-DMPI_ENABLE=1` for parallel nvectors,
