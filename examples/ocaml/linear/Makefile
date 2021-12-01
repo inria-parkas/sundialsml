@@ -90,7 +90,7 @@ distclean: clean
 
 .ml.opt:
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ $(INCLUDES) \
-	    -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) \
+	    -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) $(LIB_PATH:%=-ccopt %) \
 	    bigarray.cmxa unix.cmxa sundials.cmxa $<
 
 .byte.byte.log:

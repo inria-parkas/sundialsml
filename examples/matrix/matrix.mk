@@ -29,5 +29,6 @@ test_matrix.cmo: test_matrix.ml
 	$(OCAMLC) $(OCAMLFLAGS) -c $(SUBDIRS:%=-I $(SRC)/%) -o $@ $<
 
 test_matrix.cmx: test_matrix.ml
-	$(OCAMLOPT) $(OCAMLOPTFLAGS) -c $(SUBDIRS:%=-I $(SRC)/%) -o $@ $<
+	$(OCAMLOPT) $(OCAMLOPTFLAGS) -c $(SUBDIRS:%=-I $(SRC)/%) \
+	    $(LIB_PATH:%=-ccopt %) -o $@ $<
 

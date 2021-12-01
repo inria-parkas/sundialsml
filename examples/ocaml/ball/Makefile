@@ -13,7 +13,7 @@ ball.byte: showball.cmi showball.cmo ball.ml
 
 ball.opt: showball.cmi showball.cmx ball.ml
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ $(INCLUDES) \
-	    -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) \
+	    -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) $(LIB_PATH:%=-ccopt %) \
 	    -I "$(OCAML_GRAPHICS_PATH)" \
 	    unix.cmxa bigarray.cmxa graphics.cmxa \
 	    sundials.cmxa showball.cmx ball.ml
@@ -27,6 +27,7 @@ showball.cmo : showball.ml showball.cmi
 
 showball.cmx : showball.ml showball.cmi
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -I "$(OCAML_GRAPHICS_PATH)" \
+	    $(LIB_PATH:%=-ccopt %) \
 	    unix.cmxa graphics.cmxa -c $<
 
 clean:

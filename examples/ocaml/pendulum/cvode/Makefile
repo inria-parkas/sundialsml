@@ -17,7 +17,7 @@ pendulum.byte: showpendulum.ml pendulum.ml
 pendulum.opt: showpendulum.cmx pendulum.ml
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
 	    $(INCLUDES) -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) \
-	    -I "$(OCAML_GRAPHICS_PATH)" \
+	    $(LIB_PATH:%=-ccopt %) -I "$(OCAML_GRAPHICS_PATH)" \
 	    unix.cmxa bigarray.cmxa graphics.cmxa sundials.cmxa \
 	    showpendulum.ml pendulum.ml
 
