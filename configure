@@ -10,6 +10,7 @@ unset libdir
 unset stubdir
 unset docdir
 unset install_docs
+unset os_distribution
 enable_mpi=1
 enable_klu=1
 enable_superlumt=1
@@ -73,6 +74,8 @@ do
 	stubdir="${value%/}/";;
     --docdir)
 	docdir="${value%/}/";;
+    --os-distribution)
+	os_distribution="${value}";;
     --disable-doc)
 	install_docs=0;;
     --disable-mpi)
@@ -347,7 +350,13 @@ LAPACKLIB=${LAPACKLIB:-"-llapack"}
 error=""
 
 if [ "x${prefix}" = x ]; then
-    prefix=/usr/local/
+
+    case "${os_distribution}" in
+	macports)
+	    prefix=/opt/local/ ;;
+	*)
+	    prefix=/usr/local/ ;;
+    esac
 
     case `uname -s` in
 	Darwin)
@@ -798,7 +807,7 @@ fi
 
 # Check for opam
 if command -v opam >>${logfile} 2>&1; then
-    opam_libpath="$(opam config var lib)/"
+    opam_libpath="$(opam var lib)/"
 
     # if the opam path is a prefix of the ocaml path, use the former
     case "${ocaml_libpath}" in
