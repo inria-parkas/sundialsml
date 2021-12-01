@@ -7292,11 +7292,13 @@ static void finalize_istepper(value vistepper_cptr)
     MRIStepInnerStepper_Free(&stepper);
 }
 
+/*
 static void finalize_sundials_istepper(value vistepper_cptr)
 {
     MRIStepInnerStepper stepper = ISTEPPER(vistepper_cptr);
     MRIStepInnerStepper_Free(&stepper);
 }
+*/
 
 static int istepper_evolvefn(MRIStepInnerStepper stepper,
 			     realtype t0,
@@ -7397,6 +7399,16 @@ CAMLprim value sunml_arkode_mri_istepper_from_arkstep(value varkode_mem)
     CAMLparam1(varkode_mem);
     CAMLlocal1(r);
 #if 580 <= SUNDIALS_LIB_VERSION
+/*
+ * This code is disabled for the moment.
+ * Freeing an InnerStepper requires access to the outer MRI session
+ * (see decrement assignments in arkFreeVecArray).
+ * This means that the InnerStepper should be GCed before the outer MRI
+ * session, but the InnerStepper should not be GCed before the outer MRI
+ * session has finished using it...
+ *
+ */
+/*
     int flag;
     MRIStepInnerStepper stepper;
 
@@ -7406,6 +7418,8 @@ CAMLprim value sunml_arkode_mri_istepper_from_arkstep(value varkode_mem)
 
     r = caml_alloc_final(1, &finalize_sundials_istepper, 0, 1);
     ISTEPPER(r) = stepper;
+*/
+    r = Val_unit;
 #else
     r = Val_unit;
 #endif

@@ -2844,9 +2844,11 @@ module MRIStep = struct (* {{{ *)
 
     let from_arkstep session = I.{
         rawptr = c_from_arkstep session;
-        istepper = if Sundials_impl.Version.lt580
-                   then I.ARKStepInnerStepper session
-                   else I.SundialsInnerStepper;
+        istepper = I.ARKStepInnerStepper session;
+        (* (* see: sunml_arkode_mri_istepper_from_arkstep *)
+          if Sundials_impl.Version.lt580
+          then I.ARKStepInnerStepper session
+          else I.SundialsInnerStepper; *)
         icheckvec = None;
       }
 
