@@ -344,7 +344,7 @@ static value do_wrap(value payload,
     ops->nvsetarraypointer = NULL;
 #endif
     ops->nvgetlength	   = MVAPPEND(N_VGetLength);
-#if 530 <= SUNDIALS_LIB_VERSION
+#if 580 <= SUNDIALS_LIB_VERSION
     ops->nvprint	   = MVAPPEND(N_VPrint);
     ops->nvprintfile	   = MVAPPEND(N_VPrintFile);
 #endif
@@ -504,7 +504,7 @@ CAMLprim value sunml_nvec_anywrap_mpiplusx(value extconstr, value payload,
 CAMLprim value SUNML_NVEC_OP(print_file)(value vx, value volog)
 {
     CAMLparam2(vx, volog);
-#if 530 <= SUNDIALS_LIB_VERSION
+#if 580 <= SUNDIALS_LIB_VERSION
     if (volog == Val_none) {
 #ifdef MANYVECTOR_BUILD_WITH_MPI
 	N_VPrint_MPIManyVector(NVEC_VAL(vx));
