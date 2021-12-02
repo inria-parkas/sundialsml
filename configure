@@ -12,6 +12,7 @@ unset docdir
 unset install_docs
 unset os_distribution
 enable_mpi=1
+enable_openmp=1
 enable_klu=1
 enable_superlumt=1
 unset enable_debug
@@ -80,6 +81,8 @@ do
 	install_docs=0;;
     --disable-mpi)
 	enable_mpi=0;;
+    --disable-openmp)
+	enable_openmp=0;;
     --disable-klu)
 	enable_klu=0;;
     --disable-superlumt)
@@ -126,6 +129,7 @@ do
 	Optional Features:
 	  --disable-doc          do not install html documentation
 	  --disable-mpi          build without parallel features
+	  --disable-openmp	 build without OpenMP features
 	  --disable-klu          build without KLU features
 	  --disable-superlumt    build without SuperLU/MT features
 	  --no-lib-path          do not record paths in the OCaml library
@@ -1362,9 +1366,10 @@ fi
 # Check for nvector_openmp installation
 nvecopenmp_info='not available'
 nvecopenmp_enabled=
-if [ $sundials -ge 260 ]; then
-    test_stem=__configure_test_file__nvecopenmp
-    cat > $test_stem.c <<EOF
+if [ ${enable_openmp:-1} -eq 1 ]; then
+    if [ $sundials -ge 260 ]; then
+	test_stem=__configure_test_file__nvecopenmp
+	cat > $test_stem.c <<EOF
 #include <stdio.h>
 #include <nvector/nvector_openmp.h>
 int main (int argc, char *argv[])
@@ -1373,19 +1378,19 @@ int main (int argc, char *argv[])
   return 0;
 }
 EOF
-    if ! $CC -o $test_stem$XX ${Isundials_inc_path} $test_stem.c \
-	 ${Lsundials_lib_path} -lsundials_nvecopenmp ${libm} \
-       >>${logfile} 2>&1;
-    then
-	nvecopenmp_info='not installed'
-    else
-	nvecopenmp_info='installed'
-	nvecopenmp_enabled=1
-	serial_nvec_libs="$serial_nvec_libs -lsundials_nvecopenmp"
+	if ! $CC -o $test_stem$XX ${Isundials_inc_path} $test_stem.c \
+	     ${Lsundials_lib_path} -lsundials_nvecopenmp ${libm} \
+	   >>${logfile} 2>&1;
+	then
+	    nvecopenmp_info='not installed'
+	else
+	    nvecopenmp_info='installed'
+	    nvecopenmp_enabled=1
+	    serial_nvec_libs="$serial_nvec_libs -lsundials_nvecopenmp"
 
-        # Determine the C compiler flag for enabling OpenMP.
-        if [ "x$cflags_openmp" = x ]; then
-            cat > $test_stem.c <<EOF
+	    # Determine the C compiler flag for enabling OpenMP.
+	    if [ "x$cflags_openmp" = x ]; then
+		cat > $test_stem.c <<EOF
 #include <stdio.h>
 void omp_set_num_threads (int);
 int main (int argc, char *argv[])
@@ -1398,25 +1403,28 @@ int main (int argc, char *argv[])
   return 0;
 }
 EOF
-            # Credit: List of known flags borrowed from ax_openmp.m4
-            for flag in -fopenmp -openmp -mp -xopenmp -omp -qsmp=omp
-            do
-                if $CC $CFLAGS $flag $test_stem.c -o $test_stem$XX \
-                       >>${logfile} 2>&1
-                then
-                    cflags_openmp=$flag
-                    break
-                fi
-            done
-            if [ "x$cflags_openmp" = x ]; then
-                warning="${warning}\n\tCouldn't determine C compiler flag for OpenMP.  The library should compile"
-                warning="${warning}\n\tcorrectly with OpenMP enabled, but some examples may fail to compile."
-                warning="${warning}\n\tTo fix this warning, re-configure with CFLAGS_OPENMP set to the appropriate"
-		warning="${warning}\n\tflag, or use CC= to specify a compiler that supports OpenMP."
-            fi
-        fi
+		# Credit: List of known flags borrowed from ax_openmp.m4
+		for flag in -fopenmp -openmp -mp -xopenmp -omp -qsmp=omp
+		do
+		    if $CC $CFLAGS $flag $test_stem.c -o $test_stem$XX \
+			   >>${logfile} 2>&1
+		    then
+			cflags_openmp=$flag
+			break
+		    fi
+		done
+		if [ "x$cflags_openmp" = x ]; then
+		    warning="${warning}\n\tCouldn't determine C compiler flag for OpenMP.  The library should compile"
+		    warning="${warning}\n\tcorrectly with OpenMP enabled, but some examples may fail to compile."
+		    warning="${warning}\n\tTo fix this warning, re-configure with CFLAGS_OPENMP set to the appropriate"
+		    warning="${warning}\n\tflag, or use CC= to specify a compiler that supports OpenMP."
+		fi
+	    fi
+	fi
+	${debug_configure} || rm -f ./$test_stem.* ./$test_stem$XX
     fi
-    ${debug_configure} || rm -f ./$test_stem.* ./$test_stem$XX
+else
+    nvecopenmp_info='disabled'
 fi
 
 # Sundials examples directory
