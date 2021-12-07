@@ -157,35 +157,35 @@ module Custom = struct (* {{{ *)
     = "sunml_lsolver_call_psolve"
 
   (* The fields and their order must match linearSolver_ml.h:lsolver_ops_index *)
-  type ('matrix, 'data, 'kind) ops = {
-    init : unit -> unit;
+  type ('matrix, 'data, 'kind, 't) ops = {
+    init : 't -> unit;
 
-    setup : 'matrix -> unit;
+    setup : 't -> 'matrix -> unit;
 
-    solve : 'matrix -> 'data -> 'data -> float -> unit;
+    solve : 't -> 'matrix -> 'data -> 'data -> float -> unit;
 
-    set_atimes : ('data, 'kind) atimes_with_data -> unit;
+    set_atimes : 't -> ('data, 'kind) atimes_with_data -> unit;
 
     set_preconditioner :
-      ('data, 'kind) precond_with_data -> bool -> bool -> unit;
+      't -> ('data, 'kind) precond_with_data -> bool -> bool -> unit;
 
-    set_scaling_vectors : 'data option -> 'data option -> unit;
+    set_scaling_vectors : 't -> 'data option -> 'data option -> unit;
 
-    set_zero_guess : bool -> unit;
+    set_zero_guess : 't -> bool -> unit;
 
-    get_id : unit -> linear_solver_id;
+    get_id : 't -> linear_solver_id;
 
-    get_num_iters : unit -> int;
+    get_num_iters : 't -> int;
 
-    get_res_norm : unit -> float;
+    get_res_norm : 't -> float;
 
-    get_res_id : unit -> ('data, 'kind) Nvector.t;
+    get_res_id : 't -> ('data, 'kind) Nvector.t;
 
-    get_last_flag : unit -> int;
+    get_last_flag : 't -> int;
 
-    get_work_space : unit -> int * int;
+    get_work_space : 't -> int * int;
 
-    set_prec_type : Iterative.preconditioning_type -> unit;
+    set_prec_type : 't -> Iterative.preconditioning_type -> unit;
   }
 
   (* The fields and their order must match linearSolver_ml.h:lsolver_hasops_index *)
@@ -210,7 +210,7 @@ exception LinearSolverInUse
 type ('m, 'nd, 'nk) cptr
 
 (* Must correspond with linearSolver_ml.h:lsolver_solver_data_tag *)
-type ('m, 'nd, 'nk, 't) solver_data =
+type (_, 'nd, 'nk, _) solver_data =
   (* Iterative Linear Solvers *)
   | Spbcgs      : ('m, 'nd, 'nk, [>`Spbcgs])  solver_data
   | Spfgmr      : ('m, 'nd, 'nk, [>`Spfgmr])  solver_data
@@ -227,8 +227,8 @@ type ('m, 'nd, 'nk, 't) solver_data =
   | Superlumt   : Superlumt.info
                   -> ('s Matrix.Sparse.t, 'nd, 'nk, [>`Slu]) solver_data
   (* Custom Linear Solvers *)
-  | Custom      : 'lsolver * ('m, 'nd, 'nk) Custom.ops
-                   -> ('m, 'nd, 'nk, [>`Custom of 'lsolver]) solver_data
+  | Custom      : ('t * ('m, 'nd, 'nk, 't) Custom.ops)
+                   -> ('m, 'nd, 'nk, [>`Custom of 't]) solver_data
 
 type 'd atimesfn = 'd -> 'd -> unit
 type psetupfn = unit -> unit
@@ -319,12 +319,12 @@ external c_set_prec_type
 
 let impl_set_prec_type (type t) rawptr solver prec_type docheck =
   match (solver : ('m, 'nd, 'nk, t) solver_data) with
-  | Custom (_, { Custom.set_prec_type = f }) -> f prec_type
+  | Custom (ldata, { Custom.set_prec_type = f }) -> f ldata prec_type
   | _ -> c_set_prec_type rawptr solver prec_type docheck
 
 external c_make_custom
   : linear_solver_type
-    -> ('m, 'nd, 'nk) Custom.ops
+    -> ('t * ('m, 'nd, 'nk, 't) Custom.ops) Weak.t
     -> Custom.has_ops
     -> ('m, 'nd, 'nk) cptr
   = "sunml_lsolver_make_custom"

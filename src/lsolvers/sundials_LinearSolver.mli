@@ -558,7 +558,7 @@ module Custom : sig (* {{{ *)
       one of the exceptions in this package). Raising
       {!exception:Sundials.RecoverableFailure} indicates a generic
       recoverable failure. *)
-  type ('matrix, 'data, 'kind, 'lsolver) ops = {
+  type ('matrix, 'data, 'kind, 'lsolver) ops = { (* {{{ *)
       solver_type : linear_solver_type;
       (** Broadly classifies the operations provided by a linear solver and
           its operating principle. *)
@@ -572,7 +572,8 @@ module Custom : sig (* {{{ *)
 
       setup : ('lsolver -> 'matrix -> unit) option;
       (** Performs linear solver setup. *)
-solve : 'lsolver -> 'matrix -> 'data -> 'data -> float -> unit;
+
+      solve : 'lsolver -> 'matrix -> 'data -> 'data -> float -> unit;
       (** The call [solve ls a x b tol] should solve the linear system
           {% $Ax = b$ %}.
 
@@ -639,7 +640,7 @@ solve : 'lsolver -> 'matrix -> 'data -> 'data -> float -> unit;
           associated with an integrator. *)
       set_prec_type :
         ('lsolver -> Iterative.preconditioning_type -> unit) option;
-    }
+    } (* }}} *)
 
   (** Convenience function for constructing a {!ops} value. *)
   val make_ops :

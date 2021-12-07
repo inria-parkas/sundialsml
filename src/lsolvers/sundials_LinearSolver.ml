@@ -574,41 +574,39 @@ module Custom = struct (* {{{ *)
       get_num_iters; get_res_norm; get_res_id; get_last_flag;
       get_work_space; set_prec_type; }
 
-  let wrap_set_atimes fseto ldata =
+  let wrap_set_atimes fseto =
     match fseto with
     | None ->
-       fun _  -> failwith ("internal error: Iterative.Custom.set_atimes")
+       fun _ _  -> failwith ("internal error: Iterative.Custom.set_atimes")
     | Some fset ->
-       let fset' = fset ldata in
-       fun fd -> fset' (LSI.Custom.call_atimes fd)
+       fun ldata fd -> fset ldata (LSI.Custom.call_atimes fd)
 
-  let wrap_set_preconditioner fseto ldata =
+  let wrap_set_preconditioner fseto =
     match fseto with
-    | None -> fun _  ->
+    | None -> fun _ _  ->
               failwith ("internal error: Iterative.Custom.set_preconditioner")
     | Some fset ->
-       let fset' = fset ldata in
-       fun fd has_setup has_solve ->
-       fset'
-         (if has_setup
-          then Some (fun () -> LSI.Custom.call_psetup fd) else None)
-         (if has_solve
-          then Some (LSI.Custom.call_psolve fd) else None)
+       fun ldata fd has_setup has_solve ->
+       fset ldata
+              (if has_setup
+               then Some (fun () -> LSI.Custom.call_psetup fd) else None)
+              (if has_solve
+               then Some (LSI.Custom.call_psolve fd) else None)
 
-  let mapignore fo x =
+  let mapignore fo =
     match fo with
-    | None -> (fun _ -> ())
-    | Some f -> f x
+    | None -> (fun _ _ -> ())
+    | Some f -> f
 
-  let mapo s fo x =
-    match fo with
-    | None -> (fun _ -> failwith ("internal error: Iterative.Custom." ^ s))
-    | Some f -> f x
-
-  let mapu s fo x =
+  let mapo s fo =
     match fo with
     | None -> (fun _ -> failwith ("internal error: Iterative.Custom." ^ s))
-    | Some f -> fun () -> f x
+    | Some f -> f
+
+  let weak_wrap x =
+    let wx = Weak.create 1 in
+    Weak.set wx 0 (Some x);
+    wx
 
   let make { solver_type = stype;
              solver_id = sid;
@@ -624,32 +622,32 @@ module Custom = struct (* {{{ *)
              get_res_id = fget_res_id;
              get_last_flag = fget_last_flag;
              get_work_space = fget_work_space;
-             set_prec_type = fset_prec_type } ldata omat =
+             set_prec_type = fset_prec_type } (ldata : 'lsolver) omat =
     (match Config.sundials_version with
      | 2,_,_ -> raise Config.NotImplementedBySundialsVersion;
      | _ -> ());
     let ops = LSI.Custom.({
         init = (match finit with
-                | None -> (fun () -> ())
-                | Some f -> (fun () -> f ldata));
+                | None -> (fun _ -> ())
+                | Some f -> f);
         setup = (match fsetup with
-                 | None -> (fun _ -> ())
-                 | Some f -> f ldata);
-        solve = fsolve ldata;
-        set_atimes = wrap_set_atimes fset_atimes ldata;
+                 | None -> (fun _ _ -> ())
+                 | Some f -> f);
+        solve = fsolve;
+        set_atimes = wrap_set_atimes fset_atimes;
         set_preconditioner =
-          wrap_set_preconditioner fset_preconditioner ldata;
+          wrap_set_preconditioner fset_preconditioner;
         set_scaling_vectors =
-          mapo "set_scaling_vectors" fset_scaling_vectors ldata;
-        set_zero_guess = mapo "set_zero_guess" fset_zero_guess ldata;
-        get_id = (fun () -> sid);
-        get_num_iters = mapu "get_num_iters" fget_num_iters ldata;
-        get_res_norm = mapu "get_res_norm" fget_res_norm ldata;
-        get_res_id = mapu "get_res_id" fget_res_id ldata;
-        get_last_flag = mapu "get_last_flag" fget_last_flag ldata;
-        get_work_space = mapu "get_work_space" fget_work_space ldata;
+          mapo "set_scaling_vectors" fset_scaling_vectors;
+        set_zero_guess = mapo "set_zero_guess" fset_zero_guess;
+        get_id = (fun _ -> sid);
+        get_num_iters = mapo "get_num_iters" fget_num_iters;
+        get_res_norm = mapo "get_res_norm" fget_res_norm;
+        get_res_id = mapo "get_res_id" fget_res_id;
+        get_last_flag = mapo "get_last_flag" fget_last_flag;
+        get_work_space = mapo "get_work_space" fget_work_space;
         (* set_prec_type is only every called from OCaml and never from C. *)
-        set_prec_type = mapignore fset_prec_type ldata;
+        set_prec_type = mapignore fset_prec_type;
       }) in
     let only_ops = LSI.Custom.({
           has_init                = finit <> None;
@@ -667,9 +665,10 @@ module Custom = struct (* {{{ *)
           has_get_work_space      = fget_work_space <> None;
        })
     in
+    let ldata_and_ops = (ldata, ops) in
     LS {
-       rawptr = c_make_custom stype ops only_ops;
-       solver = Custom (ldata, ops);
+       rawptr = c_make_custom stype (weak_wrap ldata_and_ops) only_ops;
+       solver = Custom ldata_and_ops;
        matrix = omat;
        compat = LSI.Iterative.info;
        check_prec_type = (fun _ -> true);
@@ -706,20 +705,20 @@ module Custom = struct (* {{{ *)
       space : ('lsolver -> int * int) option;
     }
 
-  let make_dls { init = fi; setup = fs0; solve = fs; space = fgws}
+  let make_dls { init = fi; setup = fs0; solve; space = fgws}
                ldata mat =
     (match Config.sundials_version with
      | 2,_,_ -> raise Config.NotImplementedBySundialsVersion;
      | _ -> ());
     let ops = LSI.Custom.({
         init = (match fi with
-                | None -> (fun () -> ())
-                | Some f -> (fun () -> f ldata));
+                | None -> (fun _ -> ())
+                | Some f -> f);
         setup = (match fs0 with
-                 | None -> (fun _ -> ())
-                 | Some f -> f ldata);
-        solve = fs ldata;
-        set_atimes = (fun _ ->
+                 | None -> (fun _ _ -> ())
+                 | Some f -> f);
+        solve;
+        set_atimes = (fun _ _ ->
           failwith "internal error: Direct.Custom.set_atimes");
         set_preconditioner = (fun _ _ ->
           failwith "internal error: Direct.Custom.set_preconditioner");
@@ -727,7 +726,7 @@ module Custom = struct (* {{{ *)
           failwith "internal error: Direct.Custom.set_scaling_vectors");
         set_zero_guess = (fun _ ->
           failwith "internal error: Direct.Custom.set_zero_guess");
-        get_id = (fun () -> Custom);
+        get_id = (fun _ -> Custom);
         get_num_iters = (fun _ ->
           failwith "internal error: Direct.Custom.get_num_iters");
         get_res_norm = (fun _ ->
@@ -737,9 +736,9 @@ module Custom = struct (* {{{ *)
         get_last_flag = (fun _ ->
           failwith "internal error: Direct.Custom.get_last_flag");
         get_work_space = (match fgws with
-          | Some f -> (fun _ -> f ldata)
-          | None -> (fun () -> (0, 0)));
-        set_prec_type = (fun _ -> ());
+          | Some f -> f
+          | None -> (fun _ -> (0, 0)));
+        set_prec_type = (fun _ _ -> ());
       }) in
     let only_ops = LSI.Custom.({
           has_init                = fi <> None;
@@ -755,9 +754,10 @@ module Custom = struct (* {{{ *)
           has_get_work_space      = fgws <> None;
        })
     in
+    let ldata_and_ops = (ldata, ops) in
     LS {
-     rawptr = c_make_custom Direct ops only_ops;
-     solver = Custom (ldata, ops);
+     rawptr = c_make_custom Direct (weak_wrap ldata_and_ops) only_ops;
+     solver = Custom ldata_and_ops;
      matrix = Some mat;
      compat = LSI.Iterative.info;
      check_prec_type = (fun _ -> true);
