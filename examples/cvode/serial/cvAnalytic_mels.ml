@@ -40,7 +40,7 @@ let printf = Printf.printf
  *-------------------------------*)
 
 (* f routine to compute the ODE RHS function f(t,y). *)
-let f rdata t y ydot =
+let f rdata t (y : RealArray.t) (ydot : RealArray.t) =
   let lambda = rdata.{0} in (* set shortcut for stiffness parameter *)
   let u = y.{0} in          (* access current solution value *)
 
@@ -57,13 +57,13 @@ type matrix_embedded_ls_content = {
 }
 
 (* linear solve routine *)
-let matrix_embedded_ls_solve content () x b tol =
+let matrix_embedded_ls_solve content () (x : RealArray.t) (b : RealArray.t) tol =
   let { rdata; cvode_mem } = content in
   match cvode_mem with
   | None -> failwith "linear solver not properly configure"
   | Some cvode_mem ->
       (* retrieve implicit system data from ARKStep *)
-      let { Cvode.gamma; _ } = Cvode.get_nonlin_system_data cvode_mem in
+      let gamma = Cvode.get_current_gamma cvode_mem in
       (* extract stiffness parameter from user_data *)
       let lambda = rdata.{0} in
       (* perform linear solve: (1-gamma*lamda)*x = b *)
@@ -83,7 +83,7 @@ let matrix_embedded_ls rdata =
  *-------------------------------*)
 
 (* check the computed solution *)
-let check_ans y t rtol atol =
+let check_ans (y : RealArray.t) t rtol atol =
   (* compute solution error *)
   let ans = atan(t) in
   let ewt = 1.0 /. (rtol *. abs_float ans +. atol) in
@@ -107,10 +107,10 @@ let main () =
   let lambda  = -100.0 in (* stiffness parameter *)
 
   (* Initial diagnostics output *)
-  printf "\nAnalytical ODE test problem:\n";
-  printf "    lamda = %g\n"     lambda;
-  printf "   reltol = %.1e\n"   reltol;
-  printf "   abstol = %.1e\n\n" abstol;
+  print_string "\nAnalytical ODE test problem:\n";
+  printf "    lamda = %g\n\
+         \   reltol = %.1e\n\
+         \   abstol = %.1e\n\n" lambda reltol abstol;
 
   (* Initialize data structures *)
   let y = Nvector_serial.make neq 0.0 in (* Create serial vector for solution *)
@@ -137,8 +137,8 @@ let main () =
 
   (* In loop, call CVode, print results, and test for error.
      Break out of loop when NOUT preset output times have been reached.  *)
-  printf "        t           u\n";
-  printf "   ---------------------\n";
+  print_string "        t           u\n";
+  print_string "   ---------------------\n";
   let ydata = Nvector.unwrap y in
   let rec loop t tout =
     if tf -. t <= 1.0e-15 then t
@@ -152,7 +152,7 @@ let main () =
     try loop t0 (t0 +. dTout);
     with _ -> (Format.eprintf "Solver failure, stopping integration\n"; 0.0)
   in
-  printf "   ---------------------\n";
+  print_string "   ---------------------\n";
 
   (* Get/print some final statistics on how the solve progressed *)
   let nst = Cvode.get_num_steps cvode_mem in
@@ -164,15 +164,16 @@ let main () =
   let nje = Cvode.Dls.get_num_jac_evals cvode_mem in
   let nfeLS = Cvode.Dls.get_num_lin_rhs_evals cvode_mem in
 
-  printf "\nFinal Solver Statistics:\n";
-  printf "   Internal solver steps = %d\n" nst;
-  printf "   Total RHS evals = %d\n" nfe;
-  printf "   Total linear solver setups = %d\n" nsetups;
-  printf "   Total RHS evals for setting up the linear system = %d\n" nfeLS;
-  printf "   Total number of Jacobian evaluations = %d\n" nje;
-  printf "   Total number of Newton iterations = %d\n" nni;
-  printf "   Total number of linear solver convergence failures = %d\n" ncfn;
-  printf "   Total number of error test failures = %d\n\n" netf;
+  print_string "\nFinal Solver Statistics:\n";
+  print_string "   Internal solver steps = "; print_int nst;
+  print_string "\n   Total RHS evals = "; print_int nfe;
+  print_string "\n   Total linear solver setups = "; print_int nsetups;
+  print_string "\n   Total RHS evals for setting up the linear system = "; print_int nfeLS;
+  print_string "\n   Total number of Jacobian evaluations = "; print_int nje;
+  print_string "\n   Total number of Newton iterations = "; print_int nni;
+  print_string "\n   Total number of linear solver convergence failures = "; print_int ncfn;
+  print_string "\n   Total number of error test failures = "; print_int netf;
+  print_string "\n\n";
 
   (* check the solution error *)
   ignore (check_ans ydata t reltol abstol)
