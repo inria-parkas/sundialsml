@@ -13,27 +13,77 @@ Benchmarking notes
 Analysis/Debugging
 ==================
 
+To run everything with valgrind:
+```
+make RUN_WITH_VALGRIND=1 tests.opt.log
+```
+
+Or just a single example:
+```
+GC_EACH_REP=1 GC_AT_END=1 valgrind --leak-check=full \
+  ./ark_heat1D_adapt.opt > /dev/null
+```
+
+To run a program under valgrind so that gdb can attach to it:
+```
+GC_AT_END=1 valgrind --leak-check=full --vgdb=full \
+  --vgdb-error=0 ./ark_heat1D_adapt.opt > /dev/null
+```
+
+Triggering leak checks from gdb + valgrind:
+```
+# Assume gdb is attached to a process supervised by valgrind.
+monitor leak_check full reachable any  # Check leaks.
+monitor block_list <loss record ID(s)> # Get details of the leak.
+```
+
+The examples can be compiled to use the OCaml runtime with debugging 
+features (like assertions) enabled.
+```
+make COMPILE_WITH_RUNTIME_DEBUG=1
+```
+
+Profiling
+=========
+
 Performance differences can be analyzed with 
 [valgrind](http://valgrind.org), 
 [kcachegrind](https://kcachegrind.github.io), or Linux's `perf stat`.
 
-To run everything with valgrind:
-    make RUN_WITH_VALGRIND=1 tests.opt.log
+Using `kcachegrind`:
+```
+NUM_REPS=20000 valgrind --tool=callgrind ./cvAnalytic_mels >/dev/null
+kcachegrind callgrind.out.<pid>
+```
 
-Or just a single example:
-    GC_EACH_REP=1 GC_AT_END=1 valgrind --leak-check=full \
-      ./ark_heat1D_adapt.opt > /dev/null
+Memory Leaks
+============
 
-To run a program under valgrind so that gdb can attach to it:
-    GC_AT_END=1 valgrind --leak-check=full --vgdb=full \
-      --vgdb-error=0 ./ark_heat1D_adapt.opt > /dev/null
+To detect memory leaks, run GCs in verbose mode and watch whether the heap 
+size grows:
+```
+OCAMLRUNPARAM=v=0x404 ...
+```
 
-Triggering leak checks from gdb + valgrind:
-    # Assume gdb is attached to a process supervised by valgrind.
-    monitor leak_check full reachable any  # Check leaks.
-    monitor block_list <loss record ID(s)> # Get details of the leak.
+For more detailed analysis of heap usage use 
+[memtrace](https://blog.janestreet.com/finding-memory-leaks-with-memtrace/).
 
-The examples can be compiled to use the OCaml runtime with debugging 
-features (like assertions) enabled.
-    make COMPILE_WITH_RUNTIME_DEBUG=1
+```
+opam install memtrace memtrace_viewer
+```
+
+Add the following line to the program under test:
+```
+let _ = Memtrace.trace_if_requested ()
+```
+
+Compile it with these additional arguments:
+```
+-thread -I $(opam var lib)/memtrace ... unix.cmxa threads.cmxa memtrace.cmxa...
+```
+
+And run it with
+```
+NUM_REPS=20000 MEMTRACE=trace.ctf ./cvAnalytic_mels.opt  > /dev/null
+```
 
