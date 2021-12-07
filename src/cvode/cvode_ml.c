@@ -1742,6 +1742,21 @@ CAMLprim value sunml_cvode_get_current_gamma(value vcvode_mem)
     CAMLreturn(caml_copy_double(gamma));
 }
 
+CAMLprim value sunml_cvode_get_current_gamma_unboxed(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+    double gamma;
+
+#if 500 <= SUNDIALS_LIB_VERSION
+    int flag = CVodeGetCurrentGamma(CVODE_MEM_FROM_ML(vcvode_mem), &gamma);
+    CHECK_FLAG("CVodeGetCurrentGamma", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturnT(double, gamma);
+}
+
 CAMLprim value sunml_cvode_get_actual_init_step(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);

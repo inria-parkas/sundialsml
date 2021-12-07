@@ -1089,7 +1089,9 @@ val compute_state : ('d, 'k) session
 
     @since 5.0.0
     @nocvode <node> CVodeGetCurrentGamma *)
-val get_current_gamma : ('d, 'k) session -> float
+external get_current_gamma : ('d, 'k) session -> (float [@unboxed])
+    = "sunml_cvode_get_current_gamma"
+      "sunml_cvode_get_current_gamma_unboxed"
 
 (** Returns the integration step size taken on the last internal step.
 

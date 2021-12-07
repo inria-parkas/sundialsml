@@ -949,8 +949,11 @@ let compute_state s ycor yn =
   if Sundials_configuration.safe then (s.checkvec ycor; s.checkvec yn);
   compute_state s ycor yn
 
-external get_current_gamma : ('d, 'k) session -> float
+external get_current_gamma : ('d, 'k) session -> (float [@unboxed])
     = "sunml_cvode_get_current_gamma"
+      "sunml_cvode_get_current_gamma_unboxed"
+(* Could also be [@@noalloc] if it were not for the version check and
+   possible exception. *)
 
 external get_actual_init_step   : ('a, 'k) session -> float
     = "sunml_cvode_get_actual_init_step"
