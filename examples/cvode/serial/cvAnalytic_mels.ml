@@ -40,10 +40,8 @@ let printf = Printf.printf
  *-------------------------------*)
 
 (* f routine to compute the ODE RHS function f(t,y). *)
-let f rdata t (y : RealArray.t) (ydot : RealArray.t) =
-  let lambda = rdata.{0} in (* set shortcut for stiffness parameter *)
+let f lambda t (y : RealArray.t) (ydot : RealArray.t) =
   let u = y.{0} in          (* access current solution value *)
-
   (* fill in the RHS function: "NV_Ith_S" accesses the 0th entry of ydot *)
   ydot.{0} <- lambda *. u +. 1.0 /. (1.0 +. t *. t) -. lambda *. atan t
 
@@ -52,26 +50,24 @@ let f rdata t (y : RealArray.t) (ydot : RealArray.t) =
  *-------------------------------------*)
 
 type matrix_embedded_ls_content = {
-  rdata : RealArray.t;
+  lambda : float;
   mutable cvode_mem : (RealArray.t, Nvector_serial.kind) Cvode.session option;
 }
 
 (* linear solve routine *)
 let matrix_embedded_ls_solve content () (x : RealArray.t) (b : RealArray.t) tol =
-  let { rdata; cvode_mem } = content in
+  let { lambda; cvode_mem } = content in
   match cvode_mem with
   | None -> failwith "linear solver not properly configure"
   | Some cvode_mem ->
       (* retrieve implicit system data from ARKStep *)
       let gamma = Cvode.get_current_gamma cvode_mem in
-      (* extract stiffness parameter from user_data *)
-      let lambda = rdata.{0} in
       (* perform linear solve: (1-gamma*lamda)*x = b *)
       x.{0} <- b.{0} /. (1.0 -. gamma *. lambda)
 
 (* constructor *)
-let matrix_embedded_ls rdata =
-  let content = { rdata; cvode_mem = None } in
+let matrix_embedded_ls lambda =
+  let content = { lambda; cvode_mem = None } in
   (fun session -> content.cvode_mem <- Some session),
   LinearSolver.Custom.(
     make_without_matrix (make_ops ~solver_type:MatrixEmbedded
@@ -116,9 +112,8 @@ let main () =
   let y = Nvector_serial.make neq 0.0 in (* Create serial vector for solution *)
                                          (* Specify initial condition *)
 
-  let rdata = RealArray.of_list [ lambda ] in
   (* Create custom matrix-embedded linear solver *)
-  let set_ls_session, ls = matrix_embedded_ls rdata in
+  let set_ls_session, ls = matrix_embedded_ls lambda in
   (* Call CVodeCreate to create the solver memory and specify the
    * Backward Differentiation Formula *)
   (* Call CVodeInit to initialize the integrator memory and specify the
@@ -130,7 +125,7 @@ let main () =
                            BDF
                            (SStolerances (reltol, abstol))
                            ~lsolver:(matrix_embedded_solver ls)
-                           (f rdata)
+                           (f lambda)
                            t0 y)
   in
   set_ls_session cvode_mem;
