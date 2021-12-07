@@ -226,17 +226,14 @@ static int rhsfn(realtype t, N_Vector y, N_Vector ydot, void *user_data)
 {
     CAMLparam0();
     CAMLlocal1(session);
-    CAMLlocalN(args, 3);
 
     WEAK_DEREF (session, *(value*)user_data);
 
-    args[0] = caml_copy_double(t);
-    args[1] = NVEC_BACKLINK(y);
-    args[2] = NVEC_BACKLINK(ydot);
-
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn(Field(session, RECORD_CVODE_SESSION_RHSFN),
-				 3, args);
+    value r = caml_callback3_exn(Field(session, RECORD_CVODE_SESSION_RHSFN),
+				 caml_copy_double(t),
+				 NVEC_BACKLINK(y),
+				 NVEC_BACKLINK(ydot));
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
