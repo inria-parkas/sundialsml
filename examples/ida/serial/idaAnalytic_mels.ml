@@ -43,12 +43,10 @@ let printf = Printf.printf
       0 = (t+2)*x1 - (t+2)*exp(t)
 *)
 
-let fres rdata t yy yp rr =
-  let alpha = rdata.{0} in         (* set shortcut for stiffness parameter *)
+let fres alpha t (yy : RealArray.t) (yp : RealArray.t) (rr : RealArray.t) =
   let x1 = yy.{0} in               (* access current solution values *)
   let x2 = yy.{1} in
   let x1p = yp.{0} in              (* access current derivative values *)
-
   rr.{0} <- (1.0 -. alpha) /. (t -. 2.0) *. x1
             -. x1
             +. (alpha -. 1.0) *. x2
@@ -61,22 +59,18 @@ let fres rdata t yy yp rr =
  *-------------------------------------*)
 
 type matrix_embedded_ls_content = {
-  rdata : RealArray.t;
+  alpha : float;
   mutable ida_mem : (RealArray.t, Nvector_serial.kind) Ida.session option;
 }
 
 (* linear solve routine *)
-let matrix_embedded_ls_solve content () x b tol =
-  let { rdata; ida_mem } = content in
+let matrix_embedded_ls_solve content () (x : RealArray.t) (b : RealArray.t) tol =
+  let { alpha; ida_mem } = content in
   match ida_mem with
   | None -> failwith "linear solver not properly configure"
   | Some ida_mem ->
       (* retrieve implicit system data from IDA *)
       let { Ida.cj; Ida.tn = tcur; _ } = Ida.get_nonlin_system_data ida_mem in
-
-      (* extract stiffness parameter from user_data *)
-      let alpha = rdata.{0} in
-
       (* perform linear solve: A*x=b
              A = df/dy + cj*df/dyp
           =>
@@ -93,8 +87,8 @@ let matrix_embedded_ls_solve content () x b tol =
       x.{1} <- -. (a11 *. b2 -. a21 *. b1) /. (a12 *. a21)
 
 (* constructor *)
-let matrix_embedded_ls rdata =
-  let content = { rdata; ida_mem = None } in
+let matrix_embedded_ls alpha =
+  let content = { alpha; ida_mem = None } in
   (fun session -> content.ida_mem <- Some session),
   LinearSolver.Custom.(
     make_without_matrix (make_ops ~solver_type:MatrixEmbedded
@@ -106,7 +100,7 @@ let matrix_embedded_ls rdata =
  *-------------------------------*)
 
 (* routine to fill analytical solution and its derivative *)
-let analytical_solution t y yp =
+let analytical_solution t (y : Nvector_serial.t) (yp : Nvector_serial.t) =
   let y = Nvector.unwrap y in
   let yp = Nvector.unwrap yp in
   y.{0} <- exp t;
@@ -115,7 +109,7 @@ let analytical_solution t y yp =
   yp.{1} <- exp t /. (t -. 2.0) -. exp t /. (t -. 2.0) /. (t -. 2.0)
 
 (* check the computed solution *)
-let check_ans y t rtol atol =
+let check_ans (y : Nvector_serial.t) t rtol atol =
   (* create solution and error weight vectors *)
   let ytrue = Nvector.clone y in
   let ewt = Nvector.clone y in
@@ -168,14 +162,13 @@ let main () =
   let yp = Nvector.clone yy in
   analytical_solution t0 yy yp;           (* Specify initial conditions *)
 
-  let rdata = RealArray.of_list [ alpha ] in
   (* Create custom matrix-embedded linear solver *)
-  let set_ls_session, ls = matrix_embedded_ls rdata in
+  let set_ls_session, ls = matrix_embedded_ls alpha in
   (* Call IDACreate and IDAInit to initialize IDA memory *)
   (* Attach the linear solver *)
   let ida_mem = Ida.(init (SStolerances (reltol, abstol))
                           ~lsolver:(matrix_embedded_solver ls)
-                          (fres rdata) t0 yy yp)
+                          (fres alpha) t0 yy yp)
   in
   set_ls_session ida_mem;
 
@@ -206,12 +199,13 @@ let main () =
   let ncfn = Ida.get_num_nonlin_solv_conv_fails ida_mem in
   let nreLS = Ida.Dls.get_num_lin_res_evals ida_mem in
 
-  printf "\nFinal Solver Statistics: \n\n";
-  printf "Number of steps                    = %d\n" nst;
-  printf "Number of residual evaluations     = %d\n" (nre + nreLS);
-  printf "Number of nonlinear iterations     = %d\n" nni;
-  printf "Number of error test failures      = %d\n" netf;
-  printf "Number of nonlinear conv. failures = %d\n" ncfn;
+  print_string "\nFinal Solver Statistics: \n";
+  print_string "\nNumber of steps                    = "; print_int nst;
+  print_string "\nNumber of residual evaluations     = "; print_int (nre + nreLS);
+  print_string "\nNumber of nonlinear iterations     = "; print_int nni;
+  print_string "\nNumber of error test failures      = "; print_int netf;
+  print_string "\nNumber of nonlinear conv. failures = "; print_int ncfn;
+  print_string "\n";
 
   (* check the solution error *)
   ignore (check_ans yy t reltol abstol)

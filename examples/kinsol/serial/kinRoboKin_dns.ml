@@ -204,15 +204,15 @@ let print_final_stats kmem =
   let nfe  = get_num_func_evals kmem in
   let nje  = Dls.get_num_jac_evals kmem in
   let nfeD = Dls.get_num_lin_func_evals kmem in
-  printf "\nFinal Statistics.. \n";
+  print_string "\nFinal Statistics.. \n";
   printf "nni    = %5d    nfe   = %5d \n" nni nfe;
   printf "nje    = %5d    nfeD  = %5d \n" nje nfeD
 
 (* MAIN PROGRAM *)
 let main () =
-  printf "\nRobot Kinematics Example\n";
-  printf "8 variables; -1 <= x_i <= 1\n";
-  printf "KINSOL problem size: 8 + 2*8 = 24 \n\n";
+  print_string "\nRobot Kinematics Example\n";
+  print_string "8 variables; -1 <= x_i <= 1\n";
+  print_string "KINSOL problem size: 8 + 2*8 = 24 \n\n";
 
   (* Create vectors for solution, scales, and constraints *)
   let y = Nvector_serial.make neq one in

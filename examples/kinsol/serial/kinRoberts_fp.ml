@@ -78,15 +78,15 @@ let print_final_stats kmem =
 let main () =
   (* Print problem description *)
 
-  printf "Example problem from chemical kinetics solving\n";
-  printf "the first time step in a Backward Euler solution for the\n";
-  printf "following three rate equations:\n";
-  printf "    dy1/dt = -.04*y1 + 1.e4*y2*y3\n";
-  printf "    dy2/dt = .04*y1 - 1.e4*y2*y3 - 3.e2*(y2)^2\n";
-  printf "    dy3/dt = 3.e2*(y2)^2\n";
-  printf "on the interval from t = 0.0 to t = 0.1, with initial\n";
-  printf "conditions: y1 = 1.0, y2 = y3 = 0.\n";
-  printf "Solution method: Anderson accelerated fixed point iteration.\n";
+  print_string "Example problem from chemical kinetics solving\n";
+  print_string "the first time step in a Backward Euler solution for the\n";
+  print_string "following three rate equations:\n";
+  print_string "    dy1/dt = -.04*y1 + 1.e4*y2*y3\n";
+  print_string "    dy2/dt = .04*y1 - 1.e4*y2*y3 - 3.e2*(y2)^2\n";
+  print_string "    dy3/dt = 3.e2*(y2)^2\n";
+  print_string "on the interval from t = 0.0 to t = 0.1, with initial\n";
+  print_string "conditions: y1 = 1.0, y2 = y3 = 0.\n";
+  print_string "Solution method: Anderson accelerated fixed point iteration.\n";
 
   (* Create vectors for solution and scales *)
   let y = Nvector_serial.make neq 0.0 in
