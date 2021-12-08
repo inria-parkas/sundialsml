@@ -273,6 +273,7 @@ type ('m, 'mk, 'nd, 'nk, 't) linear_solver_data = {
   compat : Iterative.info;
   mutable check_prec_type : Iterative.preconditioning_type -> bool;
   ocaml_callbacks : ('nd, 'nk) ocaml_callbacks Sundials_impl.Vptr.vptr;
+  mutable info_file : Logfile.t option;
   mutable attached : bool;
 }
 

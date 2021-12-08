@@ -1648,6 +1648,9 @@ let matrix_embedded_solver
             errw         = dummy_errw;
             resw         = dummy_resw;
 
+            error_file   = None;
+            diag_file    = None;
+
             adaptfn      = dummy_adaptfn;
             stabfn       = dummy_stabfn;
             resizefn     = dummy_resizefn;
@@ -1912,13 +1915,18 @@ let matrix_embedded_solver
       = "sunml_arkode_ark_set_diagnostics"
 
   let set_diagnostics ?(logfile=Logfile.stdout) s =
+    s.diag_file <- Some logfile;
     c_set_diagnostics s logfile
 
   external clear_diagnostics : ('a, 'k) session -> unit
       = "sunml_arkode_ark_clear_diagnostics"
 
-  external set_error_file : ('a, 'k) session -> Logfile.t -> unit
+  external c_set_error_file : ('a, 'k) session -> Logfile.t -> unit
       = "sunml_arkode_ark_set_error_file"
+
+  let set_error_file s f =
+    s.error_file <- Some f;
+    c_set_error_file s f
 
   external c_set_err_handler_fn  : ('a, 'k) session -> unit
       = "sunml_arkode_ark_set_err_handler_fn"
@@ -2257,6 +2265,9 @@ module ERKStep = struct (* {{{ *)
             errw         = dummy_errw;
             resw         = dummy_resw;
 
+            error_file   = None;
+            diag_file    = None;
+
             adaptfn      = dummy_adaptfn;
             stabfn       = dummy_stabfn;
             resizefn     = dummy_resizefn;
@@ -2407,6 +2418,7 @@ module ERKStep = struct (* {{{ *)
       = "sunml_arkode_erk_set_diagnostics"
 
   let set_diagnostics ?(logfile=Logfile.stdout) s =
+    s.diag_file <- Some logfile;
     c_set_diagnostics s logfile
 
   external clear_diagnostics : ('a, 'k) session -> unit
@@ -2418,8 +2430,12 @@ module ERKStep = struct (* {{{ *)
   external set_interpolant_degree : ('d, 'k) session -> int -> unit
       = "sunml_arkode_erk_set_interpolant_degree"
 
-  external set_error_file : ('a, 'k) session -> Logfile.t -> unit
+  external c_set_error_file : ('a, 'k) session -> Logfile.t -> unit
       = "sunml_arkode_erk_set_error_file"
+
+  let set_error_file s f =
+    s.error_file <- Some f;
+    c_set_error_file s f
 
   external c_set_err_handler_fn  : ('a, 'k) session -> unit
       = "sunml_arkode_erk_set_err_handler_fn"
@@ -3086,6 +3102,9 @@ module MRIStep = struct (* {{{ *)
             errw         = dummy_errw;
             resw         = dummy_resw;
 
+            error_file   = None;
+            diag_file    = None;
+
             adaptfn      = dummy_adaptfn;
             stabfn       = dummy_stabfn;
             resizefn     = dummy_resizefn;
@@ -3223,13 +3242,18 @@ module MRIStep = struct (* {{{ *)
       = "sunml_arkode_mri_set_diagnostics"
 
   let set_diagnostics ?(logfile=Logfile.stdout) s =
+    s.diag_file <- Some logfile;
     c_set_diagnostics s logfile
 
   external clear_diagnostics : ('a, 'k) session -> unit
       = "sunml_arkode_mri_clear_diagnostics"
 
-  external set_error_file : ('a, 'k) session -> Logfile.t -> unit
+  external c_set_error_file : ('a, 'k) session -> Logfile.t -> unit
       = "sunml_arkode_mri_set_error_file"
+
+  let set_error_file s f =
+    s.error_file <- Some f;
+    c_set_error_file s f
 
   external c_set_err_handler_fn  : ('a, 'k) session -> unit
       = "sunml_arkode_mri_set_err_handler_fn"

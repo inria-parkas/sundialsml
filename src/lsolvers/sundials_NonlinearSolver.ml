@@ -301,6 +301,7 @@ let set_info_file (type d k s v)
                   ({ rawptr; solver; _ } as s : (d, k, s, v) t) ?print_level file =
   if Sundials_impl.Version.lt530
     then raise Config.NotImplementedBySundialsVersion;
+  s.info_file <- Some file;
   (match solver with
    | CustomSolver     (_, { set_info_file = Some f }) -> f file
    | CustomSolverSens (_, { set_info_file = Some f }) -> f file
@@ -456,6 +457,7 @@ module Newton = struct (* {{{ *)
     {
       rawptr    = c_make y (weak_wrap callbacks);
       solver    = NewtonSolver callbacks;
+      info_file = None;
       attached  = false;
     }
 
@@ -464,6 +466,7 @@ module Newton = struct (* {{{ *)
     {
       rawptr    = c_make_sens count y (weak_wrap callbacks);
       solver    = NewtonSolverSens callbacks;
+      info_file = None;
       attached  = false;
     }
 
@@ -510,6 +513,7 @@ module FixedPoint = struct (* {{{ *)
     {
       rawptr    = c_make y acceleration_vectors (weak_wrap callbacks);
       solver    = FixedPointSolver (callbacks, acceleration_vectors);
+      info_file = None;
       attached  = false;
     }
 
@@ -518,6 +522,7 @@ module FixedPoint = struct (* {{{ *)
     {
       rawptr    = c_make_sens count y acceleration_vectors (weak_wrap callbacks);
       solver    = FixedPointSolverSens (callbacks, acceleration_vectors);
+      info_file = None;
       attached  = false;
     }
 
@@ -637,6 +642,7 @@ module Custom = struct (* {{{ *)
     {
       rawptr    = c_make (weak_wrap callbacks) (weak_wrap ops);
       solver    = CustomSolver (callbacks, ops);
+      info_file = None;
       attached  = false;
     }
 
@@ -667,6 +673,7 @@ module Custom = struct (* {{{ *)
     {
       rawptr    = c_make_sens (weak_wrap callbacks) (weak_wrap ops);
       solver    = CustomSolverSens (callbacks, ops);
+      info_file = None;
       attached  = false;
     }
 

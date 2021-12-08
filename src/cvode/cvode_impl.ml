@@ -401,6 +401,8 @@ type ('a, 'kind) session = {
   mutable errh         : error_handler;
   mutable errw         : 'a error_weight_fun;
 
+  mutable error_file   : Logfile.t option;
+
   mutable projfn       : 'a proj_fn;
   mutable monitorfn    : ('a, 'kind) session -> unit;
 

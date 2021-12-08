@@ -1484,6 +1484,7 @@ module Adjoint = struct (* {{{ *)
             rootsfn      = dummy_rootsfn;
             errh         = dummy_errh;
             errw         = dummy_errw;
+            error_file   = None;
             projfn       = dummy_projfn;
             monitorfn    = dummy_monitorfn;
             ls_solver    = LSI.NoHLS;

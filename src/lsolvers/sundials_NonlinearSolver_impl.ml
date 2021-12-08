@@ -129,6 +129,7 @@ type ('d, 'k, 's, _) solver =
 and ('d, 'k, 's, 'v) nonlinear_solver = {
   rawptr : ('d, 'k, 's, 'v) cptr;
   solver : ('d, 'k, 's, 'v) solver;
+  mutable info_file : Logfile.t option;
   mutable attached : bool;
 }
 

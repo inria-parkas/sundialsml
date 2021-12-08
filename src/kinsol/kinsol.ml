@@ -494,8 +494,12 @@ let matrix_embedded_solver
   LSI.attach ls;
   session.ls_solver <- LSI.HLS hls
 
-external set_error_file : ('a, 'k) session -> Logfile.t -> unit
+external c_set_error_file : ('a, 'k) session -> Logfile.t -> unit
     = "sunml_kinsol_set_error_file"
+
+let set_error_file s f =
+  s.error_file <- Some f;
+  c_set_error_file s f
 
 external c_set_err_handler_fn : ('a, 'k) session -> unit
     = "sunml_kinsol_set_err_handler_fn"
@@ -518,6 +522,7 @@ external c_set_info_file : ('a, 'k) session -> Logfile.t -> unit
     = "sunml_kinsol_set_info_file"
 
 let set_info_file s ?print_level lf =
+  s.info_file <- Some lf;
   c_set_info_file s lf;
   (match print_level with None -> () | Some l -> set_print_level s l)
 
@@ -682,6 +687,9 @@ let init ?max_iters ?maa ?lsolver f u0 =
           sysfn        = f;
           errh         = dummy_errh;
           infoh        = dummy_infoh;
+
+          error_file   = None;
+          info_file    = None;
 
           ls_solver    = LSI.NoHLS;
           ls_callbacks = NoCallbacks;

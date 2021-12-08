@@ -281,6 +281,9 @@ type ('a, 'kind, 'step) session = {
   mutable errw         : 'a error_weight_fun;
   mutable resw         : 'a res_weight_fun;  (* ARK only *)
 
+  mutable error_file   : Logfile.t option;
+  mutable diag_file    : Logfile.t option;
+
   mutable adaptfn      : 'a adaptivity_fn;
   mutable stabfn       : 'a stability_fn;
   mutable resizefn     : 'a resize_fn;

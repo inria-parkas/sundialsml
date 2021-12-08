@@ -328,7 +328,7 @@ type 'a error_weight_fun = 'a -> 'a -> unit
    garbage collected while still being used by a session.
 *)
 
-(* Fields must be given in the same order as in cvode_session_index *)
+(* Fields must be given in the same order as in ida_session_index *)
 type ('a,'kind) session = {
   ida        : ida_mem;
   backref    : c_weak_ref;
@@ -344,6 +344,8 @@ type ('a,'kind) session = {
   mutable rootsfn    : 'a rootsfn;
   mutable errh       : error_handler;
   mutable errw       : 'a error_weight_fun;
+
+  mutable error_file : Logfile.t option;
 
   mutable ls_solver    : LSI.held_linear_solver;
   mutable ls_callbacks : ('a, 'kind) linsolv_callbacks;

@@ -666,6 +666,8 @@ let init tol ?nlsolver ?nlsresfn ~lsolver resfn ?varid ?(roots=no_roots) t0 y y'
                   errh       = dummy_errh;
                   errw       = dummy_errw;
 
+                  error_file = None;
+
                   ls_solver  = LSI.NoHLS;
                   ls_callbacks = NoCallbacks;
                   ls_precfns = NoPrecFns;
@@ -826,8 +828,12 @@ let print_integrator_stats s oc =
     Printf.fprintf oc "current_step = %e\n"        stats.current_step;
     Printf.fprintf oc "current_time = %e\n"        stats.current_time;
 
-external set_error_file : ('a, 'k) session -> Logfile.t -> unit
+external c_set_error_file : ('a, 'k) session -> Logfile.t -> unit
     = "sunml_ida_set_error_file"
+
+let set_error_file s f =
+  s.error_file <- Some f;
+  c_set_error_file s f
 
 external set_err_handler_fn  : ('a, 'k) session -> unit
     = "sunml_ida_set_err_handler_fn"

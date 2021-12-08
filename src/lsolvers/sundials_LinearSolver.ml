@@ -79,14 +79,15 @@ module Direct = struct (* {{{ *)
     = "sunml_lsolver_dense"
 
   let dense nvec mat = LS {
-    rawptr = c_dense nvec mat;
-    solver = Dense;
-    matrix = Some mat;
-    compat = LSI.Iterative.info;
-    check_prec_type = (fun _ -> true);
-    ocaml_callbacks = empty_ocaml_callbacks ();
-    attached = false;
-  }
+      rawptr = c_dense nvec mat;
+      solver = Dense;
+      matrix = Some mat;
+      compat = LSI.Iterative.info;
+      check_prec_type = (fun _ -> true);
+      ocaml_callbacks = empty_ocaml_callbacks ();
+      info_file = None;
+      attached = false;
+    }
 
   external c_lapack_dense
            : 'k Nvector.serial
@@ -104,6 +105,7 @@ module Direct = struct (* {{{ *)
       compat = LSI.Iterative.info;
       check_prec_type = (fun _ -> true);
       ocaml_callbacks = empty_ocaml_callbacks ();
+      info_file = None;
       attached = false;
     }
 
@@ -114,14 +116,15 @@ module Direct = struct (* {{{ *)
     = "sunml_lsolver_band"
 
   let band nvec mat = LS {
-    rawptr = c_band nvec mat;
-    solver = Band;
-    matrix = Some mat;
-    compat = LSI.Iterative.info;
-    check_prec_type = (fun _ -> true);
-    ocaml_callbacks = empty_ocaml_callbacks ();
-    attached = false;
-  }
+      rawptr = c_band nvec mat;
+      solver = Band;
+      matrix = Some mat;
+      compat = LSI.Iterative.info;
+      check_prec_type = (fun _ -> true);
+      ocaml_callbacks = empty_ocaml_callbacks ();
+      info_file = None;
+      attached = false;
+    }
 
   external c_lapack_band
            : 'k Nvector.serial
@@ -139,6 +142,7 @@ module Direct = struct (* {{{ *)
       compat = LSI.Iterative.info;
       check_prec_type = (fun _ -> true);
       ocaml_callbacks = empty_ocaml_callbacks ();
+      info_file = None;
       attached = false;
     }
 
@@ -168,6 +172,7 @@ module Direct = struct (* {{{ *)
         compat = LSI.Iterative.info;
         check_prec_type = (fun _ -> true);
         ocaml_callbacks = empty_ocaml_callbacks ();
+        info_file = None;
         attached = false;
       }
 
@@ -237,6 +242,7 @@ module Direct = struct (* {{{ *)
         compat = LSI.Iterative.info;
         check_prec_type = (fun _ -> true);
         ocaml_callbacks = empty_ocaml_callbacks ();
+        info_file = None;
         attached = false;
       }
 
@@ -317,7 +323,8 @@ module Iterative = struct (* {{{ *)
      -> unit
    = "sunml_lsolver_set_info_file"
 
-  let set_info_file (LS { rawptr; solver; _ }) ?print_level file =
+  let set_info_file (LS ({ rawptr; solver; _ } as lsdata)) ?print_level file =
+    lsdata.info_file <- Some file;
     c_set_info_file rawptr solver file;
     (match print_level with None -> ()
      | Some level -> c_set_print_level rawptr solver (if level then 1 else 0))
@@ -346,6 +353,7 @@ module Iterative = struct (* {{{ *)
       compat = compat;
       check_prec_type = (fun _ -> true);
       ocaml_callbacks = empty_ocaml_callbacks ();
+      info_file = None;
       attached = false;
     }
 
@@ -383,6 +391,7 @@ module Iterative = struct (* {{{ *)
       compat = compat;
       check_prec_type = (fun _ -> true);
       ocaml_callbacks = empty_ocaml_callbacks ();
+      info_file = None;
       attached = false;
     }
 
@@ -420,6 +429,7 @@ module Iterative = struct (* {{{ *)
       compat = compat;
       check_prec_type = (fun _ -> true);
       ocaml_callbacks = empty_ocaml_callbacks ();
+      info_file = None;
       attached = false;
     }
 
@@ -443,6 +453,7 @@ module Iterative = struct (* {{{ *)
       compat = compat;
       check_prec_type = (fun _ -> true);
       ocaml_callbacks = empty_ocaml_callbacks ();
+      info_file = None;
       attached = false;
     }
 
@@ -465,6 +476,7 @@ module Iterative = struct (* {{{ *)
       compat = compat;
       check_prec_type = (fun _ -> true);
       ocaml_callbacks = empty_ocaml_callbacks ();
+      info_file = None;
       attached = false;
     }
 
@@ -673,6 +685,7 @@ module Custom = struct (* {{{ *)
        compat = LSI.Iterative.info;
        check_prec_type = (fun _ -> true);
        ocaml_callbacks = empty_ocaml_callbacks ();
+       info_file = None;
        attached = false;
      }
 
@@ -762,6 +775,7 @@ module Custom = struct (* {{{ *)
      compat = LSI.Iterative.info;
      check_prec_type = (fun _ -> true);
      ocaml_callbacks = empty_ocaml_callbacks ();
+     info_file = None;
      attached = false;
    }
 
