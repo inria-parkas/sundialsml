@@ -541,7 +541,7 @@ static int csmat_band_copy(SUNMatrix A, SUNMatrix B)
 #endif
 
 // Adapted directly from SMScaleAddNew_Band
-static bool matrix_band_scale_add_new(realtype c, value va, value vcptrb)
+static int matrix_band_scale_add_new(realtype c, value va, value vcptrb)
 {
     CAMLparam2(va, vcptrb);
     CAMLlocal2(vcptra, voldpayload);
@@ -569,7 +569,7 @@ static bool matrix_band_scale_add_new(realtype c, value va, value vcptrb)
     new_ml = SUNMAX(B->ml, A_ml);
     if (! matrix_band_realloc(B->N, new_mu, new_ml,
 			      SUNMIN(A_N - 1, new_mu + new_ml), va, 0) )
-	CAMLreturnT(bool, true);
+	CAMLreturnT(int, 1); // failure
 
     /* scale/add c*A into new matrix */
     for (j=0; j < A_N; j++) {
@@ -590,7 +590,7 @@ static bool matrix_band_scale_add_new(realtype c, value va, value vcptrb)
 	    C_colj[i] += B_colj[i];
     }
 
-    CAMLreturnT(bool, false);
+    CAMLreturnT(int, 0); // success
 }
 
 CAMLprim void sunml_matrix_band_scale_add(value vc, value va, value vcptrb)
