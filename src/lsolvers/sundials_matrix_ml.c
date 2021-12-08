@@ -50,6 +50,7 @@
 #include <caml/bigarray.h>
 
 extern CAMLprim value caml_ba_blit(value vsrc, value vdst);
+extern CAMLprim value caml_ba_fill(value vb, value vinit);
 
 CAMLprim void sunml_mat_init_module (value exns)
 {
@@ -328,6 +329,7 @@ static bool matrix_band_realloc(sundials_ml_index n, sundials_ml_index mu,
 
     // columns first
     vnewdata = caml_ba_alloc_dims(BIGARRAY_FLOAT, 2, NULL, n, colSize);
+    caml_ba_fill(vnewdata, caml_copy_double(0.));
 
     newcols = (realtype **) malloc(n * sizeof(realtype *));
     if (newcols == NULL) CAMLreturnT(bool, false);

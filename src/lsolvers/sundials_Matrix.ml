@@ -1005,7 +1005,7 @@ module ArrayBand = struct (* {{{ *)
 
   let clone (a, dims) =
     let m, n = RealArray2.size a in
-    (RealArray2.create m n, dims)
+    (RealArray2.make m n 0.0, dims)
 
   let scale_addi c (a, (smu, mu, ml)) =
     let ad = RealArray2.unwrap a in
