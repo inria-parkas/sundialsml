@@ -68,7 +68,7 @@ else
     SET_TMARGIN="set tmargin ${TMARGIN}"
 fi
 
-FONT=${FONT:-Arial,7}
+FONT=${FONT:-Arial,6}
 
 case x$FONT in
     x)    SET_FONT=;;

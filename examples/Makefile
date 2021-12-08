@@ -144,7 +144,7 @@ perf-intv.opt.log perf-intv.byte.log: perf-intv.%.log: $(C_EXAMPLES)	  \
 
 reps: $(foreach s,$(SUBDIRS),$s/reps)
 
-C_TITLE=C ($(CC) $(filter-out -I% -DNDEBUG=1,$(CFLAGS)))
+C_TITLE=C ($(CC) $(filter-out -I% -isystem% -DNDEBUG=1,$(CFLAGS)))
 NATIVE_TITLE='OCaml ($(OCAML_VERSION)) native code performance over $(C_TITLE)'
 BYTE_TITLE  ='OCaml ($(OCAML_VERSION)) byte code performance over $(C_TITLE)'
 CONF_TITLE=", `$(UTILS)/crunchperf --conf $(1)`% confidence"
