@@ -2461,9 +2461,13 @@ CAMLprim value sunml_matrix_wrap(value vid, value vcontent, value vpayload,
 #if 300 <= SUNDIALS_LIB_VERSION
     int mat_id = Int_val(vid);
     SUNMatrix smat;
+    int content_is_value =
+	(mat_id == MATRIX_ID_CUSTOM)
+	|| (mat_id == MATRIX_ID_ARRAYDENSE)
+	|| (mat_id == MATRIX_ID_ARRAYBAND);
 
     /* Create matrix */
-    if (mat_id >= MATRIX_ID_CUSTOM) {
+    if (content_is_value) {
 	smat = alloc_smat((void *)vcontent, vpayload, true);
     } else {
 	smat = alloc_smat(MAT_CONTENT(vcontent), vpayload, false);
@@ -2540,7 +2544,7 @@ CAMLprim value sunml_matrix_wrap(value vid, value vcontent, value vpayload,
 
     // Setup the OCaml-side
     vr = caml_alloc_final(1,
-	    (mat_id == MATRIX_ID_CUSTOM)
+	    content_is_value
 		? &finalize_caml_custom_smat
 		: &finalize_caml_smat,
 	    1, 20);
