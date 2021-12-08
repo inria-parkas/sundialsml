@@ -235,16 +235,16 @@ let print_final_stats mem =
  *)
 
 let main () =
-  let pbar  = RealArray.create 2
-  and gm    = RealArray.create 2
-  and gp    = RealArray.create 2
-  and atolS = RealArray.create np
+  let pbar  = RealArray.make 2 0.0
+  and gm    = RealArray.make 2 0.0
+  and gp    = RealArray.make 2 0.0
+  and atolS = RealArray.make np 0.0
   in
 
-  let id    = RealArray.create neq in
-  let yy    = RealArray.create neq in
-  let yp    = RealArray.create neq in
-  let q     = RealArray.create 1 in
+  let id    = RealArray.make neq 0.0 in
+  let yy    = RealArray.make neq 0.0 in
+  let yp    = RealArray.make neq 0.0 in
+  let q     = RealArray.make 1 0.0 in
 
   let yyS= Array.init np (fun _ -> wrap (RealArray.copy yy)) in
   let ypS= Array.init np (fun _ -> wrap (RealArray.copy yp)) in
