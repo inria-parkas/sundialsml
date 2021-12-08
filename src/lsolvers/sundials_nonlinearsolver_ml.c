@@ -39,7 +39,7 @@ struct convtestfn_data {
 
 struct nls_callback_value {
     void *mem;
-    value *pvcallbacks;
+    value *pvcallbacks;				// holds Weak pointer
     struct sunml_nls_callbacks *pccallbacks;
     value *pvmem;
 };
@@ -376,18 +376,18 @@ static int sys_callback(N_Vector y, N_Vector F, void* mem)
 {
     CAMLparam0();
     CAMLlocalN(args, 3);
-    CAMLlocal1(callbacks);
+    CAMLlocal1(vcallbacks);
 
     p_nls_cbv cbv = (p_nls_cbv)mem;
 
     args[0] = NVEC_BACKLINK(y);
     args[1] = NVEC_BACKLINK(F);
     args[2] = *(cbv->pvmem);
-    callbacks = *(cbv->pvcallbacks);
+    WEAK_DEREF(vcallbacks, *(cbv->pvcallbacks));
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callbackN_exn (
-	Field(callbacks, RECORD_NLSOLVER_CALLBACKS_SYSFN), 3, args);
+	Field(vcallbacks, RECORD_NLSOLVER_CALLBACKS_SYSFN), 3, args);
     if (!Is_exception_result (r)) CAMLreturnT(int, 0);
 
     r = Extract_exception (r);
@@ -398,18 +398,18 @@ static int sys_callback_sens(N_Vector y, N_Vector F, void* mem)
 {
     CAMLparam0();
     CAMLlocalN(args, 3);
-    CAMLlocal1(callbacks);
+    CAMLlocal1(vcallbacks);
 
     p_nls_cbv cbv = (p_nls_cbv)mem;
 
     args[0] = sunml_senswrapper_wrap(y);
     args[1] = sunml_senswrapper_wrap(F);
     args[2] = *(cbv->pvmem);
-    callbacks = *(cbv->pvcallbacks);
+    WEAK_DEREF(vcallbacks, *(cbv->pvcallbacks));
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callbackN_exn (
-	Field(callbacks, RECORD_NLSOLVER_CALLBACKS_SYSFN), 3, args);
+	Field(vcallbacks, RECORD_NLSOLVER_CALLBACKS_SYSFN), 3, args);
     if (!Is_exception_result (r)) CAMLreturnT(int, 0);
 
     r = Extract_exception (r);
@@ -427,17 +427,17 @@ static int lsetup_callback(N_Vector y, N_Vector F, booleantype jbad,
 {
     CAMLparam0();
     CAMLlocalN(args, 2);
-    CAMLlocal1(callbacks);
+    CAMLlocal1(vcallbacks);
 
     p_nls_cbv cbv = (p_nls_cbv)mem;
 
     args[0] = Val_bool(jbad);
     args[1] = *(cbv->pvmem);
-    callbacks = *(cbv->pvcallbacks);
+    WEAK_DEREF(vcallbacks, *(cbv->pvcallbacks));
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callbackN_exn (
-	Field(callbacks, RECORD_NLSOLVER_CALLBACKS_LSETUPFN), 2, args);
+	Field(vcallbacks, RECORD_NLSOLVER_CALLBACKS_LSETUPFN), 2, args);
 
     /* Update jcur; leave it unchanged if an error occurred. */
     if (!Is_exception_result (r)) {
@@ -459,17 +459,17 @@ static int lsolve_callback(N_Vector y, N_Vector b, void* mem)
 {
     CAMLparam0();
     CAMLlocalN(args, 2);
-    CAMLlocal1(callbacks);
+    CAMLlocal1(vcallbacks);
 
     p_nls_cbv cbv = (p_nls_cbv)mem;
 
     args[0] = NVEC_BACKLINK(b);
     args[1] = *(cbv->pvmem);
-    callbacks = *(cbv->pvcallbacks);
+    WEAK_DEREF(vcallbacks, *(cbv->pvcallbacks));
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callbackN_exn (
-	Field(callbacks, RECORD_NLSOLVER_CALLBACKS_LSOLVEFN), 2, args);
+	Field(vcallbacks, RECORD_NLSOLVER_CALLBACKS_LSOLVEFN), 2, args);
 
     CAMLreturnT(int, CHECK_NLS_EXCEPTION (r, UNRECOVERABLE));
 }
@@ -484,17 +484,17 @@ static int lsolve_callback_sens(N_Vector y, N_Vector b, void* mem)
 {
     CAMLparam0();
     CAMLlocalN(args, 2);
-    CAMLlocal1(callbacks);
+    CAMLlocal1(vcallbacks);
 
     p_nls_cbv cbv = (p_nls_cbv)mem;
 
     args[0] = sunml_senswrapper_wrap(b);
     args[1] = *(cbv->pvmem);
-    callbacks = *(cbv->pvcallbacks);
+    WEAK_DEREF(vcallbacks, *(cbv->pvcallbacks));
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callbackN_exn (
-	Field(callbacks, RECORD_NLSOLVER_CALLBACKS_LSOLVEFN), 2, args);
+	Field(vcallbacks, RECORD_NLSOLVER_CALLBACKS_LSOLVEFN), 2, args);
 
     CAMLreturnT(int, CHECK_NLS_EXCEPTION (r, UNRECOVERABLE));
 }
@@ -510,7 +510,7 @@ static int convtest_callback(SUNNonlinearSolver nls, N_Vector y, N_Vector del,
 
     p_nls_cbv cbv = (p_nls_cbv)mem;
 
-    vcallbacks = *(cbv->pvcallbacks);
+    WEAK_DEREF(vcallbacks, *(cbv->pvcallbacks));
 
     args[0] = NVEC_BACKLINK(y);
     args[1] = NVEC_BACKLINK(del);
@@ -553,7 +553,7 @@ static int convtest_callback_sens(SUNNonlinearSolver nls, N_Vector y, N_Vector d
 
     p_nls_cbv cbv = (p_nls_cbv)mem;
 
-    vcallbacks = *(cbv->pvcallbacks);
+    WEAK_DEREF(vcallbacks, *(cbv->pvcallbacks));
 
     args[0] = sunml_senswrapper_wrap(y);
     args[1] = sunml_senswrapper_wrap(del);
@@ -1489,7 +1489,7 @@ CAMLprim value sunml_nlsolver_newton_make(value vy, value vcallbacks)
     CAMLlocal1(vr);
     N_Vector y = NVEC_VAL(vy);
 
-    vr = rewrap_nlsolver( SUNNonlinSol_Newton(y), vcallbacks);
+    vr = rewrap_nlsolver(SUNNonlinSol_Newton(y), vcallbacks);
     CAMLreturn (vr);
 #else
     CAMLreturn (Val_unit);
@@ -1649,15 +1649,17 @@ CAMLprim value sunml_nlsolver_fixedpoint_get_sys_fn(value vnls)
 #if 400 <= SUNDIALS_LIB_VERSION
 
 #define NLSOLV_OP_TABLE(nls)  ((value)((nls)->content))
-#define GET_OP(nls, x) (Field((value)NLSOLV_OP_TABLE(nls), RECORD_NLSOLVER_OPS_ ## x))
-#define GET_SOME_OP(nls, x) (Some_val (GET_OP(nls, x)))
+#define GET_OP(vops, x) (Field((vops), RECORD_NLSOLVER_OPS_ ## x))
+#define GET_SOME_OP(vops, x) (Some_val (GET_OP(vops, x)))
 
 static SUNNonlinearSolver_Type callml_custom_gettype(SUNNonlinearSolver nls)
 {
     CAMLparam0();
+    CAMLlocal1(vops);
+    WEAK_DEREF(vops, NLSOLV_OP_TABLE(nls));
     SUNNonlinearSolver_Type r = SUNNONLINEARSOLVER_ROOTFIND;
 
-    switch (Int_val(GET_OP(nls, TYPE))) {
+    switch (Int_val(GET_OP(vops, TYPE))) {
     case VARIANT_NLSOLVER_TYPE_ROOT_FIND:
 	break;
 
@@ -1672,14 +1674,18 @@ static SUNNonlinearSolver_Type callml_custom_gettype(SUNNonlinearSolver nls)
 static int callml_custom_initialize(SUNNonlinearSolver nls)
 {
     CAMLparam0();
+    CAMLlocal1(vops);
+    WEAK_DEREF(vops, NLSOLV_OP_TABLE(nls));
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback_exn(GET_SOME_OP(nls, INIT), Val_unit);
+    value r = caml_callback_exn(GET_SOME_OP(vops, INIT), Val_unit);
     CAMLreturnT(int, CHECK_NLS_EXCEPTION (r, UNRECOVERABLE));
 }
 
 static int callml_custom_setup(SUNNonlinearSolver nls, N_Vector y, void* mem)
 {
     CAMLparam0();
+    CAMLlocal1(vops);
+    WEAK_DEREF(vops, NLSOLV_OP_TABLE(nls));
     CAMLlocalN(args, 2);
 
     p_sunml_nls snls = NLS_EXTENDED(nls);
@@ -1691,13 +1697,15 @@ static int callml_custom_setup(SUNNonlinearSolver nls, N_Vector y, void* mem)
     args[1] = snls->to_value(mem);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn(GET_SOME_OP(nls, SETUP), 2, args);
+    value r = caml_callbackN_exn(GET_SOME_OP(vops, SETUP), 2, args);
     CAMLreturnT(int, CHECK_NLS_EXCEPTION (r, UNRECOVERABLE));
 }
 
 static int callml_custom_setup_sens(SUNNonlinearSolver nls, N_Vector y, void* mem)
 {
     CAMLparam0();
+    CAMLlocal1(vops);
+    WEAK_DEREF(vops, NLSOLV_OP_TABLE(nls));
     CAMLlocalN(args, 2);
 
     p_sunml_nls snls = NLS_EXTENDED(nls);
@@ -1709,7 +1717,7 @@ static int callml_custom_setup_sens(SUNNonlinearSolver nls, N_Vector y, void* me
     args[1] = snls->to_value(mem);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn(GET_SOME_OP(nls, SETUP), 2, args);
+    value r = caml_callbackN_exn(GET_SOME_OP(vops, SETUP), 2, args);
 
     invalidate_senswrapper(args[0]);
 
@@ -1721,6 +1729,8 @@ static int callml_custom_solve(SUNNonlinearSolver nls,
 			       realtype tol, booleantype callLSetup, void* mem)
 {
     CAMLparam0();
+    CAMLlocal1(vops);
+    WEAK_DEREF(vops, NLSOLV_OP_TABLE(nls));
     CAMLlocalN(args, 6);
 
     p_sunml_nls snls = NLS_EXTENDED(nls);
@@ -1736,7 +1746,7 @@ static int callml_custom_solve(SUNNonlinearSolver nls,
     args[5] = snls->to_value(mem);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn(GET_OP(nls, SOLVE), 6, args);
+    value r = caml_callbackN_exn(GET_OP(vops, SOLVE), 6, args);
     CAMLreturnT(int, CHECK_NLS_EXCEPTION (r, RECOVERABLE));
 }
 
@@ -1746,6 +1756,8 @@ static int callml_custom_solve_sens(SUNNonlinearSolver nls,
 				    void* mem)
 {
     CAMLparam0();
+    CAMLlocal1(vops);
+    WEAK_DEREF(vops, NLSOLV_OP_TABLE(nls));
     CAMLlocalN(args, 6);
 
     p_sunml_nls snls = NLS_EXTENDED(nls);
@@ -1761,7 +1773,7 @@ static int callml_custom_solve_sens(SUNNonlinearSolver nls,
     args[5] = snls->to_value(mem);
 
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn(GET_OP(nls, SOLVE), 6, args);
+    value r = caml_callbackN_exn(GET_OP(vops, SOLVE), 6, args);
 
     invalidate_senswrapper(args[0]);
     invalidate_senswrapper(args[1]);
@@ -1776,6 +1788,7 @@ static int callml_custom_free(SUNNonlinearSolver nls)
 
     nls->content = NULL;
     caml_remove_generational_global_root((value *)&(nls->content));
+    caml_remove_generational_global_root(&NLS_CALLBACKS(nls));
 
     if (nls->ops) {
 	free(nls->ops);
@@ -1792,15 +1805,15 @@ static int callml_custom_setsysfn(SUNNonlinearSolver nls,
 {
     CAMLparam0();
     CAMLlocal1(vsysfn);
+    CAMLlocal1(vops);
+    WEAK_DEREF(vops, NLSOLV_OP_TABLE(nls));
     vsysfn = caml_alloc_final(1, NULL, 0, 1);
     SYSFN_VAL(vsysfn) = sysfn;
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback3_exn(
 		*caml_named_value("Sundials_NonlinearSolver.set_c_sys_fn"),
-		NLSOLV_OP_TABLE(nls),
-		vsysfn,
-		sunml_nlsolver_wrap_from_value(nls));
+		vops, vsysfn, sunml_nlsolver_wrap_from_value(nls));
     CAMLreturnT(int, CHECK_NLS_EXCEPTION (r, UNRECOVERABLE));
 }
 
@@ -1809,15 +1822,15 @@ static int callml_custom_setsysfn_sens(SUNNonlinearSolver nls,
 {
     CAMLparam0();
     CAMLlocal1(vsysfn);
+    CAMLlocal1(vops);
+    WEAK_DEREF(vops, NLSOLV_OP_TABLE(nls));
     vsysfn = caml_alloc_final(1, NULL, 0, 1);
     SYSFN_VAL(vsysfn) = sysfn;
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback3_exn(
 		*caml_named_value("Sundials_NonlinearSolver.set_c_sys_fn_sens"),
-		NLSOLV_OP_TABLE(nls),
-		vsysfn,
-		sunml_nlsolver_wrap_from_value(nls));
+		vops, vsysfn, sunml_nlsolver_wrap_from_value(nls));
     CAMLreturnT(int, CHECK_NLS_EXCEPTION (r, UNRECOVERABLE));
 }
 
@@ -1826,15 +1839,15 @@ static int callml_custom_setlsetupfn(SUNNonlinearSolver nls,
 {
     CAMLparam0();
     CAMLlocal1(vlsetupfn);
+    CAMLlocal1(vops);
+    WEAK_DEREF(vops, NLSOLV_OP_TABLE(nls));
     vlsetupfn = caml_alloc_final(1, NULL, 0, 1);
     LSETUPFN_VAL(vlsetupfn) = lsetupfn;
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback3_exn(
 		*caml_named_value("Sundials_NonlinearSolver.set_c_lsetup_fn"),
-		NLSOLV_OP_TABLE(nls),
-		vlsetupfn,
-		sunml_nlsolver_wrap_from_value(nls));
+		vops, vlsetupfn, sunml_nlsolver_wrap_from_value(nls));
     CAMLreturnT(int, CHECK_NLS_EXCEPTION (r, UNRECOVERABLE));
 }
 
@@ -1843,15 +1856,15 @@ static int callml_custom_setlsetupfn_sens(SUNNonlinearSolver nls,
 {
     CAMLparam0();
     CAMLlocal1(vlsetupfn);
+    CAMLlocal1(vops);
+    WEAK_DEREF(vops, NLSOLV_OP_TABLE(nls));
     vlsetupfn = caml_alloc_final(1, NULL, 0, 1);
     LSETUPFN_VAL(vlsetupfn) = lsetupfn;
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback3_exn(
 		*caml_named_value("Sundials_NonlinearSolver.set_c_lsetup_fn_sens"),
-		NLSOLV_OP_TABLE(nls),
-		vlsetupfn,
-		sunml_nlsolver_wrap_from_value(nls));
+		vops, vlsetupfn, sunml_nlsolver_wrap_from_value(nls));
     CAMLreturnT(int, CHECK_NLS_EXCEPTION (r, UNRECOVERABLE));
 }
 
@@ -1860,15 +1873,15 @@ static int callml_custom_setlsolvefn(SUNNonlinearSolver nls,
 {
     CAMLparam0();
     CAMLlocal1(vlsolvefn);
+    CAMLlocal1(vops);
+    WEAK_DEREF(vops, NLSOLV_OP_TABLE(nls));
     vlsolvefn = caml_alloc_final(1, NULL, 0, 1);
     LSOLVEFN_VAL(vlsolvefn) = lsolvefn;
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback3_exn(
 		*caml_named_value("Sundials_NonlinearSolver.set_c_lsolve_fn"),
-		NLSOLV_OP_TABLE(nls),
-		vlsolvefn,
-		sunml_nlsolver_wrap_from_value(nls));
+		vops, vlsolvefn, sunml_nlsolver_wrap_from_value(nls));
     CAMLreturnT(int, CHECK_NLS_EXCEPTION (r, UNRECOVERABLE));
 }
 
@@ -1877,15 +1890,15 @@ static int callml_custom_setlsolvefn_sens(SUNNonlinearSolver nls,
 {
     CAMLparam0();
     CAMLlocal1(vlsolvefn);
+    CAMLlocal1(vops);
+    WEAK_DEREF(vops, NLSOLV_OP_TABLE(nls));
     vlsolvefn = caml_alloc_final(1, NULL, 0, 1);
     LSOLVEFN_VAL(vlsolvefn) = lsolvefn;
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback3_exn(
 		*caml_named_value("Sundials_NonlinearSolver.set_c_lsolve_fn_sens"),
-		NLSOLV_OP_TABLE(nls),
-		vlsolvefn,
-		sunml_nlsolver_wrap_from_value(nls));
+		vops, vlsolvefn, sunml_nlsolver_wrap_from_value(nls));
     CAMLreturnT(int, CHECK_NLS_EXCEPTION (r, UNRECOVERABLE));
 }
 
@@ -1900,6 +1913,8 @@ static int callml_custom_setconvtestfn(SUNNonlinearSolver nls,
 {
     CAMLparam0();
     CAMLlocal1(vconvtestfn);
+    CAMLlocal1(vops);
+    WEAK_DEREF(vops, NLSOLV_OP_TABLE(nls));
     p_sunml_nls snls = NLS_EXTENDED(nls);
 
     vconvtestfn = caml_alloc_final(
@@ -1910,8 +1925,7 @@ static int callml_custom_setconvtestfn(SUNNonlinearSolver nls,
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback2_exn(
 		*caml_named_value("Sundials_NonlinearSolver.set_c_convtest_fn"),
-		NLSOLV_OP_TABLE(nls),
-		vconvtestfn);
+		vops, vconvtestfn);
     CAMLreturnT(int, CHECK_NLS_EXCEPTION (r, UNRECOVERABLE));
 }
 
@@ -1926,6 +1940,8 @@ static int callml_custom_setconvtestfn_sens(SUNNonlinearSolver nls,
 {
     CAMLparam0();
     CAMLlocal1(vconvtestfn);
+    CAMLlocal1(vops);
+    WEAK_DEREF(vops, NLSOLV_OP_TABLE(nls));
     p_sunml_nls snls = NLS_EXTENDED(nls);
 
     vconvtestfn = caml_alloc_final(
@@ -1936,16 +1952,17 @@ static int callml_custom_setconvtestfn_sens(SUNNonlinearSolver nls,
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback2_exn(
 		*caml_named_value("Sundials_NonlinearSolver.set_c_convtest_fn_sens"),
-		NLSOLV_OP_TABLE(nls),
-		vconvtestfn);
+		vops, vconvtestfn);
     CAMLreturnT(int, CHECK_NLS_EXCEPTION (r, UNRECOVERABLE));
 }
 
 static int callml_custom_setmaxiters(SUNNonlinearSolver nls, int maxiters)
 {
     CAMLparam0();
+    CAMLlocal1(vops);
+    WEAK_DEREF(vops, NLSOLV_OP_TABLE(nls));
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback_exn(GET_SOME_OP(nls, SET_MAX_ITERS),
+    value r = caml_callback_exn(GET_SOME_OP(vops, SET_MAX_ITERS),
 				Val_int(maxiters));
     CAMLreturnT(int, CHECK_NLS_EXCEPTION (r, UNRECOVERABLE));
 }
@@ -1953,8 +1970,10 @@ static int callml_custom_setmaxiters(SUNNonlinearSolver nls, int maxiters)
 static int callml_custom_getnumiters(SUNNonlinearSolver nls, long int *niters)
 {
     CAMLparam0();
+    CAMLlocal1(vops);
+    WEAK_DEREF(vops, NLSOLV_OP_TABLE(nls));
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback_exn(GET_SOME_OP(nls, GET_NUM_ITERS), Val_unit);
+    value r = caml_callback_exn(GET_SOME_OP(vops, GET_NUM_ITERS), Val_unit);
 
     /* Update niters; leave it unchanged if an error occurred. */
     if (!Is_exception_result (r)) {
@@ -1968,8 +1987,10 @@ static int callml_custom_getnumiters(SUNNonlinearSolver nls, long int *niters)
 static int callml_custom_getcuriter(SUNNonlinearSolver nls, int *iter)
 {
     CAMLparam0();
+    CAMLlocal1(vops);
+    WEAK_DEREF(vops, NLSOLV_OP_TABLE(nls));
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback_exn(GET_SOME_OP(nls, GET_CUR_ITER), Val_unit);
+    value r = caml_callback_exn(GET_SOME_OP(vops, GET_CUR_ITER), Val_unit);
 
     /* Update niters; leave it unchanged if an error occurred. */
     if (!Is_exception_result (r)) {
@@ -1984,8 +2005,10 @@ static int callml_custom_getnumconvfails(SUNNonlinearSolver nls,
 				 	 long int *nconvfails)
 {
     CAMLparam0();
+    CAMLlocal1(vops);
+    WEAK_DEREF(vops, NLSOLV_OP_TABLE(nls));
     /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback_exn(GET_SOME_OP(nls, GET_NUM_CONV_FAILS), Val_unit);
+    value r = caml_callback_exn(GET_SOME_OP(vops, GET_NUM_CONV_FAILS), Val_unit);
 
     /* Update niters; leave it unchanged if an error occurred. */
     if (!Is_exception_result (r)) {
@@ -1996,10 +2019,10 @@ static int callml_custom_getnumconvfails(SUNNonlinearSolver nls,
     CAMLreturnT(int, CHECK_NLS_EXCEPTION (r, UNRECOVERABLE));
 }
 
-static CAMLprim value custom_make(int sens, value vcallbacks, value vops)
+static CAMLprim value custom_make(int sens, value vcallbacks, value vweakops)
 {
-    CAMLparam2(vcallbacks, vops);
-    CAMLlocal1(vnls);
+    CAMLparam2(vcallbacks, vweakops);
+    CAMLlocal2(vnls, vops);
     SUNNonlinearSolver nls;
     SUNNonlinearSolver_Ops ops;
 
@@ -2013,9 +2036,10 @@ static CAMLprim value custom_make(int sens, value vcallbacks, value vops)
 	caml_raise_out_of_memory();
     }
 
-    nls->content = (void *) vops;
+    nls->content = (void *) vweakops;
     caml_register_generational_global_root((value *)&(nls->content));
     nls->ops = ops;
+    WEAK_DEREF(vops, vweakops);
 
     /* Attach operations */
     ops->gettype = callml_custom_gettype;

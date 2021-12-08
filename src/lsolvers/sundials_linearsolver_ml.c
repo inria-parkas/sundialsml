@@ -744,18 +744,10 @@ CAMLprim value sunml_lsolver_pcg(value vmaxl, value vnvec)
 
 #if 300 <= SUNDIALS_LIB_VERSION
 
-/* XXX
-#define LSOLV_OPS_AND_DATA(ls)  ((value)((ls)->content))
-#define LSOLV_OPS(ls)  (Field((LSOLV_OPS_AND_DATA(ls)), 0))
-#define LSOLV_WEAK_DATA(ls)  (Field((LSOLV_OPS_AND_DATA(ls)), 1))
-#define GET_OP(ls, x) (Field(LSOLV_OPS(ls), RECORD_LSOLVER_OPS_ ## x))
-*/
-
 #define LSOLV_WEAK_OPS_AND_DATA(ls)  ((value)((ls)->content))
 #define LSOLV_DATA(vls) (Field((vls), 0))
 #define LSOLV_OPS(vls)  (Field((vls), 1))
 #define GET_OP(vls, x) (Field(LSOLV_OPS(vls), RECORD_LSOLVER_OPS_ ## x))
-
 
 #define CHECK_EXCEPTION(result)						 \
     (Is_exception_result (result)					 \

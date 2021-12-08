@@ -22,6 +22,11 @@ let check_compat () =
   if Sundials_impl.Version.in_compat_mode2_3
   then raise Config.NotImplementedBySundialsVersion
 
+let weak_wrap x =
+  let wx = Weak.create 1 in
+  Weak.set wx 0 (Some x);
+  wx
+
 external c_init : ('d, 'k, 's, 'v) cptr -> unit
   = "sunml_nlsolver_init"
 
@@ -429,14 +434,14 @@ let c_call_convtest_fn_sens cconvtestfn =
 module Newton = struct (* {{{ *)
 
   external c_make : ('d, 'k) Nvector.t
-                    -> ('d, 's) callbacks
+                    -> ('d, 's) callbacks Weak.t
                     -> ('d, 'k, 's, [`Nvec]) cptr
     = "sunml_nlsolver_newton_make"
 
   external c_make_sens
     : int
       -> ('d, 'k) Nvector.t
-      -> (('d, 'k) Senswrapper.t, 's) callbacks
+      -> (('d, 'k) Senswrapper.t, 's) callbacks Weak.t
       -> ('d, 'k, 's, [`Sens]) cptr
     = "sunml_nlsolver_newton_make_sens"
 
@@ -449,7 +454,7 @@ module Newton = struct (* {{{ *)
   let make y =
     let callbacks = empty_callbacks () in
     {
-      rawptr    = c_make y callbacks;
+      rawptr    = c_make y (weak_wrap callbacks);
       solver    = NewtonSolver callbacks;
       attached  = false;
     }
@@ -457,7 +462,7 @@ module Newton = struct (* {{{ *)
   let make_sens count y =
     let callbacks = empty_callbacks () in
     {
-      rawptr    = c_make_sens count y callbacks;
+      rawptr    = c_make_sens count y (weak_wrap callbacks);
       solver    = NewtonSolverSens callbacks;
       attached  = false;
     }
@@ -480,7 +485,7 @@ module FixedPoint = struct (* {{{ *)
 
   external c_make : ('d, 'k) Nvector.t
                     -> int
-                    -> ('d, 's) callbacks
+                    -> ('d, 's) callbacks Weak.t
                     -> ('d, 'k, 's, [`Nvec]) cptr
     = "sunml_nlsolver_fixedpoint_make"
 
@@ -488,7 +493,7 @@ module FixedPoint = struct (* {{{ *)
     : int
       -> ('d, 'k) Nvector.t
       -> int
-      -> (('d, 'k) Senswrapper.t, 's) callbacks
+      -> (('d, 'k) Senswrapper.t, 's) callbacks Weak.t
       -> ('d, 'k, 's, [`Sens]) cptr
     = "sunml_nlsolver_fixedpoint_make_sens"
 
@@ -503,7 +508,7 @@ module FixedPoint = struct (* {{{ *)
   let make ?(acceleration_vectors=0) y =
     let callbacks = empty_callbacks () in
     {
-      rawptr    = c_make y acceleration_vectors callbacks;
+      rawptr    = c_make y acceleration_vectors (weak_wrap callbacks);
       solver    = FixedPointSolver (callbacks, acceleration_vectors);
       attached  = false;
     }
@@ -511,7 +516,7 @@ module FixedPoint = struct (* {{{ *)
   let make_sens ?(acceleration_vectors=0) count y =
     let callbacks = empty_callbacks () in
     {
-      rawptr    = c_make_sens count y acceleration_vectors callbacks;
+      rawptr    = c_make_sens count y acceleration_vectors (weak_wrap callbacks);
       solver    = FixedPointSolverSens (callbacks, acceleration_vectors);
       attached  = false;
     }
@@ -536,14 +541,14 @@ end (* }}} *)
 module Custom = struct (* {{{ *)
 
   external c_make
-    : (('d, 'k) Nvector.t, 's) callbacks
-      -> (('d, 'k) Nvector.t, 'd, 's, [`Nvec]) ops
+    : (('d, 'k) Nvector.t, 's) callbacks Weak.t
+      -> (('d, 'k) Nvector.t, 'd, 's, [`Nvec]) ops Weak.t
       -> ('d, 'k, 's, [`Nvec]) cptr
     = "sunml_nlsolver_custom_make"
 
   external c_make_sens
-    :     (('d, 'k) Senswrapper.t, 's) callbacks
-       -> (('d, 'k) Senswrapper.t, ('d, 'k) Senswrapper.t, 's, [`Sens]) ops
+    :     (('d, 'k) Senswrapper.t, 's) callbacks Weak.t
+       -> (('d, 'k) Senswrapper.t, ('d, 'k) Senswrapper.t, 's, [`Sens]) ops Weak.t
        -> ('d, 'k, 's, [`Sens]) cptr
     = "sunml_nlsolver_custom_make_sens"
 
@@ -630,7 +635,7 @@ module Custom = struct (* {{{ *)
     in
     let callbacks = empty_callbacks () in
     {
-      rawptr    = c_make callbacks ops;
+      rawptr    = c_make (weak_wrap callbacks) (weak_wrap ops);
       solver    = CustomSolver (callbacks, ops);
       attached  = false;
     }
@@ -660,7 +665,7 @@ module Custom = struct (* {{{ *)
     in
     let callbacks = empty_callbacks () in
     {
-      rawptr    = c_make_sens callbacks ops;
+      rawptr    = c_make_sens (weak_wrap callbacks) (weak_wrap ops);
       solver    = CustomSolverSens (callbacks, ops);
       attached  = false;
     }
