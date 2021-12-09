@@ -111,8 +111,8 @@ uninstall:
 	-$(RMDIR) $(DOCDIR)
 
 distclean clean:
-	-@$(RM) -f html/*.html sundials_doc.cmxs sundials_doc.cma
-	-@$(RM) -f dochtml.cmo dochtml.cmx dochtml.cmi dochtml.o
+	-@$(RM) -f html/*.html sundials_docs.cmxs sundials_docs.cma
+	-@$(RM) -f dochtml.cmo dochtml.cmx dochtml.cmi dochtml.cmt dochtml.o
 
 depend: .depend
 .depend:
