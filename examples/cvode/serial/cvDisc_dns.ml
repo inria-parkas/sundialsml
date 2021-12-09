@@ -34,16 +34,19 @@ type flag = RHS1 | RHS2
  *   flag = RHS2 -> y' = -5*y
  *)
 let f flag t (y : RealArray.t) (ydot : RealArray.t) =
-  match !flag with
-  | RHS1 -> ydot.{0} <- -. y.{0}
-  | RHS2 -> ydot.{0} <- -.5.0 *. y.{0}
+  ydot.{0} <-
+    match !flag with
+    | RHS1 -> -. y.{0}
+    | RHS2 -> -.5.0 *. y.{0}
 
-let solve cvode_mem ynv y t_stop =
+let print_out t y = printf "%12.8e  %12.8e\n" t y
+
+let solve cvode_mem ynv (y : RealArray.t) t_stop =
   let rec go t =
     if t < t_stop then begin
       (* advance solver just one internal step *)
       let (t', _) = Cvode.solve_one_step cvode_mem t_stop ynv in
-      printf "%12.8e  %12.8e\n" t' y.{0};
+      print_out t' y.{0};
       go t'
     end
   in
@@ -96,14 +99,14 @@ let main () =
    *)
 
   (* ---- Integrate to the discontinuity *)
-  printf "\nDiscontinuity in solution\n\n";
+  print_string "\nDiscontinuity in solution\n\n";
 
   (* set TSTOP (max time solution proceeds to) - this is not required *)
   Cvode.set_stop_time cvode_mem t1;
 
   flag := RHS1; (* use -y for RHS *)
 
-  printf "%12.8e  %12.8e\n" t0 y.{0};
+  print_out t0 y.{0};
   solve cvode_mem ynv y t1 t0;
   (* Get the number of steps the solver took to get to the discont. *)
   let nst1 = Cvode.get_num_steps cvode_mem in
@@ -121,7 +124,7 @@ let main () =
 
   flag := RHS1; (* use -y for RHS *)
 
-  printf "%12.8e  %12.8e\n" t1 y.{0};
+  print_out t1 y.{0};
   solve cvode_mem ynv y t2 t1;
 
   (* Get the number of steps the solver took after the discont. *)
@@ -139,7 +142,7 @@ let main () =
    * ---------------------------------------------------------------
    *)
 
-  printf "\nDiscontinuity in RHS: Case 1 - explicit treatment\n\n";
+  print_string "\nDiscontinuity in RHS: Case 1 - explicit treatment\n\n";
 
   (* Set initial condition *)
   y.{0} <- 1.0;
@@ -156,7 +159,7 @@ let main () =
 
   flag := RHS1; (* use -y for RHS *)
 
-  printf "%12.8e  %12.8e\n" t0 y.{0};
+  print_out t0 y.{0};
   solve cvode_mem ynv y t1 t0;
 
   (* Get the number of steps the solver took to get to the discont. *)
@@ -175,7 +178,7 @@ let main () =
 
   flag := RHS2; (* use -5y for RHS *)
 
-  printf "%12.8e  %12.8e\n" t1 y.{0};
+  print_out t1 y.{0};
   solve cvode_mem ynv y t2 t1;
 
   (* Get the number of steps the solver took after the discont. *)
@@ -192,7 +195,7 @@ let main () =
    * change in the RHS happens at the appropriate time
    * ---------------------------------------------------------------
    *)
-  printf "\nDiscontinuity in RHS: Case 2 - let CVODE deal with it\n\n";
+  print_string "\nDiscontinuity in RHS: Case 2 - let CVODE deal with it\n\n";
 
   (* Set initial condition *)
   y.{0} <- 1.0;
@@ -209,7 +212,7 @@ let main () =
 
   flag := RHS1; (* use -y for RHS *)
 
-  printf "%12.8e  %12.8e\n" t0 y.{0};
+  print_out t0 y.{0};
   solve cvode_mem ynv y t1 t0;
 
   (* Get the number of steps the solver took to get to the discont. *)
@@ -222,7 +225,7 @@ let main () =
 
   flag := RHS2; (* use -5y for RHS *)
 
-  printf "%12.8e  %12.8e\n" t1 y.{0};
+  print_out t1 y.{0};
   solve cvode_mem ynv y t2 t1;
 
   (* Get the number of steps the solver took after the discont. *)

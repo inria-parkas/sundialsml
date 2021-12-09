@@ -72,7 +72,7 @@ let print_output (y : RealArray.t) =
 let print_final_stats kmem =
   let nni = Kinsol.get_num_nonlin_solv_iters kmem in
   let nfe = Kinsol.get_num_func_evals kmem in
-  printf "\nFinal Statistics.. \n\n";
+  print_string "\nFinal Statistics.. \n\n";
   printf "nni      = %6d    nfe     = %6d \n" nni nfe
 
 let main () =

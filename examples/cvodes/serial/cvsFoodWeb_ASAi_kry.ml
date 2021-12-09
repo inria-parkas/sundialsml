@@ -206,17 +206,17 @@ let ispec  =  6  (* species # in objective *)
 
 (* Small Vector Kernels *)
 
-let v_sum_prods n (u : RealArray.t) uoffs p (q : RealArray.t) qoffs v (w : RealArray.t) woffs =
+let v_sum_prods n (u : RealArray.t) uoffs p (q : RealArray.t) qoffs (v : float array)(w : RealArray.t) woffs =
   for i = 0 to n - 1 do
     u.{uoffs + i} <- p.(i) *. q.{qoffs + i} +. v.(i) *. w.{woffs + i}
   done
 
-let v_inc_by_prod n (u : RealArray.t) uoffs v (w : RealArray.t) woffs =
+let v_inc_by_prod n (u : RealArray.t) uoffs (v : float array) (w : RealArray.t) woffs =
   for i = 0 to n - 1 do
     u.{uoffs + i} <- u.{uoffs + i} +. v.(i) *. w.{woffs + i}
   done
 
-let v_prod n (u : RealArray.t) uoffs v (w : RealArray.t) woffs =
+let v_prod n (u : RealArray.t) uoffs (v : float array) (w : RealArray.t) woffs =
   for i = 0 to n - 1 do
     u.{uoffs + i} <- v.(i) *. w.{woffs + i}
   done
@@ -337,9 +337,11 @@ let alloc_user_data () =
     diff.(np + j)           <- dpred
   done;
 
+  let sqr_dx = sqr dx in
+  let sqr_dy = sqr dy in
   for i = 0 to ns - 1 do
-    cox.(i) <- diff.(i) /. sqr dx;
-    coy.(i) <- diff.(i) /. sqr dy
+    cox.(i) <- diff.(i) /. sqr_dx;
+    coy.(i) <- diff.(i) /. sqr_dy
   done;
 
   r
@@ -393,9 +395,9 @@ let web_rates wdata x y ((c : RealArray.t), c_off)
   for i = rate_off to rate_off + ns - 1 do
     rate.{i} <- 0.0
   done;
-  for j = 0 to ns - 1 do
-    let c = c.{c_off + j} in
-    for i = 0 to ns - 1 do
+  for i = 0 to ns - 1 do
+    for j = 0 to ns - 1 do
+      let c = c.{c_off + j} in
       rate.{rate_off + i} <- rate.{rate_off + i} +. c *. acoef.(i).(j)
     done
   done;

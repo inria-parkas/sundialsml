@@ -38,8 +38,8 @@ let zero  = 0.0
 let one   = 1.0
 let two   = 2.0
 
-let ith v i = v.{i - 1}
-let set_ith v i e = v.{i - 1} <- e
+let ith (v : RealArray.t) i = v.{i - 1}
+let set_ith (v : RealArray.t) i e = v.{i - 1} <- e
 
 (* System function *)
 let func (yd : RealArray.t) (fd : RealArray.t) =
@@ -187,8 +187,8 @@ let jac { Kinsol.jac_u   = (yd : RealArray.t);
 
 (* Print solution *)
 let print_output y =
-  printf "     l=x+1          x         u=1-x\n";
-  printf "   ----------------------------------\n";
+  print_string "     l=x+1          x         u=1-x\n";
+  print_string "   ----------------------------------\n";
 
   for i=1 to nvar do
     printf " %10.6g   %10.6g   %10.6g\n"
@@ -217,8 +217,9 @@ let main () =
   (* Create vectors for solution, scales, and constraints *)
   let y = Nvector_serial.make neq one in
   let ydata = Nvector.unwrap y in
+  let c = sqrt(two) /. two in
   for i = 1 to nvar do
-    set_ith ydata i (sqrt(two) /. two)
+    set_ith ydata i c
   done;
   let scale = Nvector_serial.make neq one in
 
@@ -240,7 +241,7 @@ let main () =
   Kinsol.set_max_setup_calls kmem 1;
 
   (* Initial guess *)
-  printf "Initial guess:\n";
+  print_string "Initial guess:\n";
   print_output ydata;
 
   (* Call KINSol to solve problem *)
@@ -251,7 +252,7 @@ let main () =
                     scale       (* scaling vector, for the variable cc *)
                     scale);     (* scaling vector for function values fval *)
 
-  printf "\nComputed solution:\n";
+  print_string "\nComputed solution:\n";
   print_output ydata;
 
   (* Print final statistics and free memory *)
