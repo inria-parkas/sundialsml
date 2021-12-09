@@ -225,7 +225,6 @@ let print_final_stats cvode_mem sensi =
 (* f routine. Compute f(t,u). *)
 
 let f data t (udata, _, _) (dudata, _, _) =
-
   (* Extract needed problem constants from data *)
   let dx = data.dx in
   let hordc = data.p.{0}/.(dx*.dx) in
@@ -253,7 +252,8 @@ let f data t (udata, _, _) (dudata, _, _) =
   if my_pe <> last_pe then Mpi.send_float z.(my_length) my_pe_p1 0 comm;
 
   (* Receive needed data from processes before and after current process. *)
-  z.(0) <- if my_pe <> 0 then Mpi.receive_float my_pe_m1 0 comm else zero;
+  z.(0) <-
+    if my_pe <> 0 then Mpi.receive_float my_pe_m1 0 comm else zero;
   z.(my_length + 1) <-
     if my_pe <> last_pe then Mpi.receive_float my_pe_p1 0 comm else zero;
 
@@ -404,6 +404,10 @@ let gc_each_rep =
 let _ =
   for i = 1 to reps do
     main ();
-    if gc_each_rep then Gc.compact ()
+    if gc_each_rep
+          (* Nasty hack to avoid system getting stuck on mismatched
+             communications. *)
+       || (i mod 2 = 0)
+    then Gc.compact ()
   done;
   if gc_at_end then Gc.compact ()
