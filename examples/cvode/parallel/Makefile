@@ -16,3 +16,4 @@ include ../../examples.mk
 $(eval $(call EXECUTION_RULE,cvDiurnal_kry_p,$(MPIRUN) -np 4 $$<))
 $(eval $(call EXECUTION_RULE,cvDiurnal_kry_bbd_p,$(MPIRUN) -np 4 $$<))
 $(eval $(call EXECUTION_RULE,cvAdvDiff_non_p,$(MPIRUN) -np 6 $$<))
+$(eval $(call EXECUTION_RULE,cvAdvDiff_diag_p,$(MPIRUN) -np 6 $$<))
