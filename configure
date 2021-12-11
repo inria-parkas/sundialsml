@@ -692,6 +692,7 @@ if [ $? -ne 0 ]; then
     ocaml_path='NOT FOUND'
     ocaml_version=''
     ocaml_version_info=''
+    Iocaml_inc_path=''
     ocaml_libpath=''
 else
     case "${ocaml_version}" in
@@ -700,6 +701,7 @@ else
 	*) ;;
     esac
 
+    Iocaml_inc_path="-isystem ${ocaml_path}"
     ocaml_libpath="${ocaml_path%/}/"
     ocaml_version_info=" (${ocaml_version})"
 fi
@@ -746,9 +748,8 @@ else
     ocamldep="${OCAMLBIN}ocamldep"
 fi
 
-
-cppflags="${cppflags} ${Isundials_inc_path} -isystem ${ocaml_path}"
-cflags="${cflags} -isystem ${ocaml_path}"
+cppflags="${cppflags} ${Isundials_inc_path} ${Iocaml_inc_path}"
+cflags="${cflags} ${Iocaml_inc_path}"
 test_stem=__configure_test_file__intsizes
 cat > $test_stem.c <<EOF
 // ${CPP} ${cppflags} -P $test_stem.c
@@ -1605,6 +1606,7 @@ cat ${LOG}
 	 s#@ldflags@#${ldflags}#;
 	 s#@sundials_lib_path@#${Lsundials_lib_path} ${Lmpi_lib_path}#;
 	 s#@sundials_inc_path@#${Isundials_inc_path}#;
+	 s#@ocaml_inc_path@#${Iocaml_inc_path}#;
 	 s#@superlumt_lib_path@#${Lsuperlumt_lib_path}#;
 	 s#@superlumt_inc_path@#${Isuperlumt_inc_path}#;
 	 s#@klu_lib_path@#${Lklu_lib_path}#;

@@ -57,7 +57,6 @@ type dense_solver = {
 let alternate_dense y a =
   let m, n = Matrix.Dense.size a in
   if m <> n then failwith "The matrix is not square";
-  (* TODO: replace with new nvector length function when available *)
   let yd = Nvector_serial.unwrap y in
   if m <> RealArray.length yd then failwith "Matrix has wrong dimensions";
 
@@ -97,8 +96,8 @@ let idadense =
 
 let print_header rtol avtol yy =
   let open Printf in
-  printf "\nidaRoberts_dns: Robertson kinetics DAE serial example problem for IDA\n";
-  printf "         Three equation chemical kinetics problem.\n\n";
+  print_string "\nidaRoberts_dns: Robertson kinetics DAE serial example problem for IDA\n";
+  print_string "         Three equation chemical kinetics problem.\n\n";
   printf "Linear solver: %s, with user-supplied Jacobian.\n" idadense;
 
   printf "Tolerance parameters:  rtol = %g   atol = %g %g %g \n"
@@ -106,13 +105,13 @@ let print_header rtol avtol yy =
   printf "Initial conditions y0 = (%g %g %g)\n"
     yy.{0} yy.{1} yy.{2};
 
-  printf "Constraints and id not used.\n\n";
-  printf "-----------------------------------------------------------------------\n";
-  printf "  t             y1           y2           y3";
-  printf "      | nst  k      h\n";
-  printf "-----------------------------------------------------------------------\n";
+  print_string "Constraints and id not used.\n\n";
+  print_string "-----------------------------------------------------------------------\n";
+  print_string "  t             y1           y2           y3";
+  print_string "      | nst  k      h\n";
+  print_string "-----------------------------------------------------------------------\n";
 
-and print_output ida t y =
+and print_output ida t (y : RealArray.t) =
   let kused = Ida.get_last_order ida
   and nst   = Ida.get_num_steps ida
   and hused = Ida.get_last_step ida
@@ -131,14 +130,15 @@ and print_final_stats ida =
   and nge   = get_num_g_evals ida
   and nreLS = Dls.get_num_lin_res_evals ida
   in
-  printf "\nFinal Run Statistics: \n\n";
-  printf "Number of steps                    = %d\n" nst;
-  printf "Number of residual evaluations     = %d\n" (nre+nreLS);
-  printf "Number of Jacobian evaluations     = %d\n" nje;
-  printf "Number of nonlinear iterations     = %d\n" nni;
-  printf "Number of error test failures      = %d\n" netf;
-  printf "Number of nonlinear conv. failures = %d\n" ncfn;
-  printf "Number of root fn. evaluations     = %d\n" nge;
+  print_string "\nFinal Run Statistics: \n";
+  print_string "\nNumber of steps                    = "; print_int nst;
+  print_string "\nNumber of residual evaluations     = "; print_int (nre+nreLS);
+  print_string "\nNumber of Jacobian evaluations     = "; print_int nje;
+  print_string "\nNumber of nonlinear iterations     = "; print_int nni;
+  print_string "\nNumber of error test failures      = "; print_int netf;
+  print_string "\nNumber of nonlinear conv. failures = "; print_int ncfn;
+  print_string "\nNumber of root fn. evaluations     = "; print_int nge;
+  print_newline ()
 
 and print_root_info root_f1 root_f2 =
   (* For printing root_events.  Normally, string_of_root_event makes the output
@@ -166,16 +166,16 @@ and jacrob params jj =
       Ida.jac_y=(y : RealArray.t);
       Ida.jac_res=resvec }
     ->
-  let set = Matrix.Dense.set jj in
-  set 0 0 (-. 0.04 -. cj);
-  set 1 0 (0.04);
-  set 2 0 (1.);
-  set 0 1 (1.0e4*.y.{2});
-  set 1 1 (-. 1.0e4*.y.{2} -. 6.0e7*.y.{1} -. cj);
-  set 2 1 (1.);
-  set 0 2 (1.0e4*.y.{1});
-  set 1 2 (-.1.0e4*.y.{1});
-  set 2 2 (1.)
+  let jjd = Matrix.Dense.unwrap jj in
+  jjd.{0,0} <- (-. 0.04 -. cj);
+  jjd.{0,1} <- (0.04);
+  jjd.{0,2} <- (1.);
+  jjd.{1,0} <- (1.0e4*.y.{2});
+  jjd.{1,1} <- (-. 1.0e4*.y.{2} -. 6.0e7*.y.{1} -. cj);
+  jjd.{1,2} <- (1.);
+  jjd.{2,0} <- (1.0e4*.y.{1});
+  jjd.{2,1} <- (-.1.0e4*.y.{1});
+  jjd.{2,2} <- (1.)
 
 and grob t (y : RealArray.t) y' (gout : RealArray.t) =
   let y1 = y.{0}

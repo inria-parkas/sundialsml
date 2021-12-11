@@ -407,7 +407,7 @@ let _ =
     if gc_each_rep
           (* Nasty hack to avoid system getting stuck on mismatched
              communications. *)
-       || (i mod 2 = 0)
+       || true
     then Gc.compact ()
   done;
   if gc_at_end then Gc.compact ()

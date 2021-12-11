@@ -44,6 +44,45 @@ git push origin v2.5.0p0
 
 10. Announce on: `caml-list@inria.fr`
 
+Performance Graphs
+------------------
+Requires _octave_ with statistics package
+(`apt install octave octave-statistics`)
+
+1. Compile Sundials with `-DCMAKE_BUILD_TYPE=Release`
+2. Compile Sundials/ML with `--unsafe`
+```
+make distclean
+./configure --unsafe --disable-openmp \
+  SUNDIALS_DIR=<sundials-5.8.0-install> \
+  SUPERLUMT_DIR=<SuperLU_MT_3.1> \
+  KLU_LIBRARY_DIR=/usr/lib/x86_64-linux-gnu \
+  KLU_INCLUDE_DIR=/usr/include/suitesparse
+make -j
+cd examples
+make perf-intv.opt.pdf GC_AT_END=1 PERF_DATA_POINTS=40
+make SIZE=2000,1200 FONT=Arial,14 DOTSIZE=1 perf-intv.opt.pngcairo
+cp perf-intv.opt.pngcairo ../doc/html/perf-intv.opt.png
+cp perf-intv.opt.log ../doc/html/perf-intv.opt.log
+cp perf-intv.opt.pdf ../doc/html/perf-intv.opt.pdf
+```
+3. Compile Sundials/ML normally
+```
+make distclean
+./configure --disable-openmp \
+  SUNDIALS_DIR=<sundials-5.8.0-install> \
+  SUPERLUMT_DIR=<SuperLU_MT_3.1> \
+  KLU_LIBRARY_DIR=/usr/lib/x86_64-linux-gnu \
+  KLU_INCLUDE_DIR=/usr/include/suitesparse
+make -j
+cd examples
+make perf-intv.opt.pdf GC_AT_END=1 PERF_DATA_POINTS=40
+make SIZE=2000,1200 FONT=Arial,14 DOTSIZE=1 perf-intv.opt.pngcairo
+cp perf-intv.opt.pngcairo ../doc/html/perf-intv-safe.opt.png
+cp perf-intv.opt.log ../doc/html/perf-intv-safe.opt.log
+cp perf-intv.opt.pdf ../doc/html/perf-intv-safe.opt.pdf
+```
+
 Debugging Tips
 --------------
 

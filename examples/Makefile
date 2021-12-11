@@ -144,12 +144,13 @@ perf-intv.opt.log perf-intv.byte.log: perf-intv.%.log: $(C_EXAMPLES)	  \
 
 reps: $(foreach s,$(SUBDIRS),$s/reps)
 
-C_TITLE=C ($(CC) $(filter-out -I% -isystem% -DNDEBUG=1,$(CFLAGS)))
+C_TITLE=C ($(CC) $(filter-out -I% $(OCAML_INC_PATH) -DNDEBUG=1 \
+			      $(KLU_INC_PATH) $(SUPERLUMT_INC_PATH),$(CFLAGS)))
 NATIVE_TITLE='OCaml ($(OCAML_VERSION)) native code performance over $(C_TITLE)'
 BYTE_TITLE  ='OCaml ($(OCAML_VERSION)) byte code performance over $(C_TITLE)'
 CONF_TITLE=", `$(UTILS)/crunchperf --conf $(1)`% confidence"
 
-PLOTTYPES=jpg png pdf eps
+PLOTTYPES=jpg png pngcairo pdf eps
 
 perf.opt.plot: perf.opt.log
 	TITLE=$(NATIVE_TITLE) utils/plot.sh $<

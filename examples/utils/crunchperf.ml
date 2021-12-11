@@ -64,6 +64,8 @@ let abbreviate name =
      ("/parallel/", "--par--");
      ("/C_parallel/", "--C_par--");
      ("/C_openmp/", "--C_omp--");
+     ("/C_manyvector/", "--many--");
+     ("/C_mpimanyvector/", "--mpimany--");
     ]
 let expand name =
   List.fold_left
@@ -77,6 +79,8 @@ let expand name =
      ("--par--", "/parallel/");
      ("--C_par--", "/C_parallel/");
      ("--C_omp--", "/C_openmp/");
+     ("--many--", "/C_manyvector/");
+     ("--mpimany--", "/C_mpimanyvector/");
     ]
 
 let parallel_example s      = Str.string_match (Str.regexp ".*--\\(C_\\)?par--\\|/parallel/.*") s 0

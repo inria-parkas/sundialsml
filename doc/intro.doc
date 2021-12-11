@@ -569,8 +569,7 @@ examples are so short that accurate profiling is not possible, i.e.,
 and {{:https://sourceware.org/binutils/docs/gprof/}gprof} simply show 0
 seconds.
 The figures in the graph were obtained by modifying the examples to
-repeatedly execute their [main] functions; we trigger a [Gc.compact] at
-the end of each execution since the C program must call [malloc] and [free].
+repeatedly execute their [main] functions.
 The number of repetitions varies per example since otherwise the slower
 examples take too long.
 The timings indicated by the dots and the axis at right are calculated by
@@ -579,9 +578,18 @@ All but six of the serial examples ({color #de2d26 red}) run so fast that
 comparisons are made based on tens, or usually hundreds of repetitions and
 in some cases this amplifies factors other than the interface overhead.
 The slowest example, for instance, [kin--ser--kinRoberts_fp] is iterated
-more than 170 000 times to achieve a significant wall clock time.
+nearly 200 000 times to achieve a significant wall clock time.
 This means creating and destroying many more data structures than usual for
 such code.
+In fact, about 25% of the runtime is spent in garbage collection,
+about 15% in allocating nvectors (10% in [calloc] alone),
+about 10% in freeing memory on the C heap,
+and about 15% calling [printf].
+There is very little calculation in this example and thus bookkeeping
+predominates (and OCaml does more of it than C).
+Similar comments apply to the second slowest example,
+[kin--ser--kinRoboKin_dns] (10% in garbage collection and 30% in [printf]
+formatting numbers).
 
 The running times of the parallel examples ({color #fc9272 lighter red})
 often vary considerably between different runs.
@@ -664,7 +672,8 @@ Sundials/ML should be configured with [-unsafe].
 
 We gratefully acknowledge the support of the
 {{:https://itea3.org/project/modrio.html} ITEA 3 project 11004 MODRIO} (Model
-driven physical systems operation), {{:http://www.inria.fr/}Inria}, and
+driven physical systems operation), {{:http://www.inria.fr/}Inria}
+(Modeliscale), and
 the {{:http://www.di.ens.fr/}Departement d'Informatique de l'ENS}.
 
 This library benefits greatly from the OCaml

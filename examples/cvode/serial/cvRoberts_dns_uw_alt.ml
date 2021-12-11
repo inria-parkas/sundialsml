@@ -51,7 +51,6 @@ type dense_solver = {
 let alternate_dense y a =
   let m, n = Matrix.Dense.size a in
   if m <> n then failwith "The matrix is not square";
-  (* TODO: replace with new nvector length function when available *)
   let yd = Nvector_serial.unwrap y in
   if m <> RealArray.length yd then failwith "Matrix has wrong dimensions";
 
@@ -158,7 +157,7 @@ let main () =
   set_ith ydata 2 y2;
   set_ith ydata 3 y3;
 
-  printf " \n3-species kinetics problem\n\n";
+  print_string " \n3-species kinetics problem\n\n";
 
   (* Call CVodeCreate to create the solver memory and specify the
    * Backward Differentiation Formula and the use of a Newton iteration *)

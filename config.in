@@ -36,9 +36,13 @@ KINSOL_DOC_ROOT_DEFAULT = https://computation.llnl.gov/casc/sundials/documentati
 OCAML_DOC_ROOT_DEFAULT  = http://caml.inria.fr/pub/docs/manual-ocaml/libref/
 MATHJAX_URL_DEFAULT     = @mathjax@
 
+OCAML_INC_PATH=@ocaml_inc_path@
+KLU_INC_PATH=@klu_inc_path@
+SUPERLUMT_INC_PATH=@superlumt_inc_path@
+
 CC = @cc@
 CPP= @cpp@
-CFLAGS += @cflags@ @klu_inc_path@ @superlumt_inc_path@
+CFLAGS += @cflags@ $(KLU_INC_PATH) $(SUPERLUMT_INC_PATH)
 LDFLAGS += @ldflags@
 CPPFLAGS += @cppflags@ @klu_inc_path@ @superlumt_inc_path@
 C_SUPPRESS_WARNINGS = @c_suppress_warnings@

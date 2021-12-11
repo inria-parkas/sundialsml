@@ -1,4 +1,4 @@
-Sundials/ML 5.8.0p0 (November 2021)
+Sundials/ML 5.8.0p0 (December 2021)
 ------------------------------------
 Sundials/ML v5.8.0p0 adds support for v5.x of the Sundials Suite of
 numerical solvers.

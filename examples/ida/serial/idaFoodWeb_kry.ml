@@ -376,7 +376,7 @@ let psolve webdata jac rvec zvec delta =
     done (* End of jy loop. *)
   done (* End of jx loop. *)
 
-let set_initial_profiles webdata c c' id =
+let set_initial_profiles webdata (c : RealArray.t) (c' : RealArray.t) (id : RealArray.t) =
   (* Loop over grid, load c values and id values.  *)
   for jy = 0 to my-1 do
     let y = webdata.dy *. float_of_int jy

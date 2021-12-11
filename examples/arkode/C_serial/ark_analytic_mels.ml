@@ -41,8 +41,7 @@ let printf = Printf.printf
  *-------------------------------*)
 
 (* f routine to compute the ODE RHS function f(t,y). *)
-let f rdata t y ydot =
-  let lambda = rdata.{0} in (* set shortcut for stiffness parameter *)
+let f lambda t (y : RealArray.t) (ydot : RealArray.t) =
   let u = y.{0} in          (* access current solution value *)
 
   (* fill in the RHS function: "NV_Ith_S" accesses the 0th entry of ydot *)
@@ -53,13 +52,13 @@ let f rdata t y ydot =
  *-------------------------------------*)
 
 type matrix_embedded_ls_content = {
-  rdata : RealArray.t;
+  lambda : float;
   mutable arkode_mem : (RealArray.t, Nvector_serial.kind) ARKStep.session option;
 }
 
 (* linear solve routine *)
-let matrix_embedded_ls_solve content () x b tol =
-  let { rdata; arkode_mem } = content in
+let matrix_embedded_ls_solve content () (x : RealArray.t) (b : RealArray.t) tol =
+  let { lambda; arkode_mem } = content in
   match arkode_mem with
   | None ->
       Printf.eprintf "internal error: linear solver not properly configured\n";
@@ -68,13 +67,12 @@ let matrix_embedded_ls_solve content () x b tol =
       (* retrieve implicit system data from ARKStep *)
       let { ARKStep.gamma; _ } = ARKStep.get_nonlin_system_data arkode_mem in
       (* extract stiffness parameter from user_data *)
-      let lambda = rdata.{0} in
       (* perform linear solve: (1-gamma*lamda)*x = b *)
       x.{0} <- b.{0} /. (1.0 -. gamma *. lambda)
 
 (* constructor *)
-let matrix_embedded_ls rdata =
-  let content = { rdata; arkode_mem = None } in
+let matrix_embedded_ls lambda =
+  let content = { lambda; arkode_mem = None } in
   (fun session -> content.arkode_mem <- Some session),
   LinearSolver.Custom.(
     make_without_matrix (make_ops ~solver_type:MatrixEmbedded
@@ -82,7 +80,7 @@ let matrix_embedded_ls rdata =
                         content)
 
 (* check the computed solution *)
-let check_ans y t rtol atol =
+let check_ans (y : RealArray.t) t rtol atol =
   (* compute solution error *)
   let ans = atan(t) in
   let ewt = 1.0 /. (rtol *. abs_float ans +. atol) in
@@ -106,7 +104,7 @@ let main () =
   let lambda  = -100.0 in (* stiffness parameter *)
 
   (* Initial diagnostics output *)
-  printf "\nAnalytical ODE test problem:\n";
+  print_string "\nAnalytical ODE test problem:\n";
   printf "    lamda = %g\n"     lambda;
   printf "   reltol = %.1e\n"   reltol;
   printf "   abstol = %.1e\n\n" abstol;
@@ -116,9 +114,8 @@ let main () =
                                          (* Specify initial condition *)
 
   (* Pass lamda to user functions *)
-  let rdata = RealArray.of_list [ lambda ] in
   (* Initialize custom matrix-embedded linear solver *)
-  let set_ls_session, ls = matrix_embedded_ls rdata in
+  let set_ls_session, ls = matrix_embedded_ls lambda in
   (* Call ARKStepCreate to initialize the ARK timestepper module and
      specify the right-hand side function in y'=f(t,y), the inital time
      T0, and the initial dependent variable vector y.  Note: since this
@@ -127,7 +124,7 @@ let main () =
   (* Attach linear solver *)
   (* Specify linearly implicit RHS, with non-time-dependent Jacobian *)
   let arkode_mem =
-    ARKStep.(init (implicit (f rdata)
+    ARKStep.(init (implicit (f lambda)
                             ~lsolver:(matrix_embedded_solver ls)
                             ~linearity:(Linear false))
                   (SStolerances (reltol, abstol))
