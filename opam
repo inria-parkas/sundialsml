@@ -39,12 +39,13 @@ remove: [
     ["rm" "-rf" "%{doc}%/sundialsml"]
 ]
 depends: [
+    "ocaml" {>= "4.03.0"}
     "base-bigarray"
-    "ocamlfind"
+    "ocamlfind" {build}
+    "conf-sundials" {build}
 ]
 depopts: [
     "mpi"
-    "ocaml" { >= "4.03.0" }
 ]
 depexts: [
     ["libsundials-dev"] {os-family = "debian"}
