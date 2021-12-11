@@ -1,0 +1,866 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials_Index" rel="Chapter" href="Sundials_Index.html">
+<link title="Sundials_Config" rel="Chapter" href="Sundials_Config.html">
+<link title="Sundials_RealArray" rel="Chapter" href="Sundials_RealArray.html">
+<link title="Sundials_RealArray2" rel="Chapter" href="Sundials_RealArray2.html">
+<link title="Sundials_LintArray" rel="Chapter" href="Sundials_LintArray.html">
+<link title="Sundials_ROArray" rel="Chapter" href="Sundials_ROArray.html">
+<link title="Sundials_Logfile" rel="Chapter" href="Sundials_Logfile.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Nvector_many" rel="Chapter" href="Nvector_many.html">
+<link title="Sundials_Matrix" rel="Chapter" href="Sundials_Matrix.html">
+<link title="Sundials_LinearSolver" rel="Chapter" href="Sundials_LinearSolver.html">
+<link title="Sundials_NonlinearSolver" rel="Chapter" href="Sundials_NonlinearSolver.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Arkode" rel="Chapter" href="Arkode.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Nvector_mpimany" rel="Chapter" href="Nvector_mpimany.html">
+<link title="Nvector_mpiplusx" rel="Chapter" href="Nvector_mpiplusx.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Arkode_bbd" rel="Chapter" href="Arkode_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Nvector_openmp" rel="Chapter" href="Nvector_openmp.html">
+<link title="Nvector_pthreads" rel="Chapter" href="Nvector_pthreads.html"><title>Sundials/ML 5.8.0p0</title>
+</head>
+<body>
+<h1>Sundials/ML 5.8.0p0</h1>
+<div class="info-desc">
+<p><div id="intro"></p>
+
+<p><a href="https://computation.llnl.gov/casc/sundials/main.html">Sundials</a> is a
+collection of six numeric solvers: CVODE,  CVODES, IDA, IDAS, ARKODE,
+and KINSOL <a href="#refs">[1]</a>.
+It is written by Cody J. Balos, David J. Gardner, Alan C. Hindmarsh, Daniel
+R. Reynolds, and Carol S. Woodward at the <em>Center for Applied Scientific
+Computing, Lawrence Livermore National Laboratory</em> with significant
+contributions from Radu Serban, and contributions from James Almgren-Bell,
+Lawrence E. Banks, Peter N. Brown, George Byrne, Rujeko Chinomona, Scott D.
+Cohen, Aaron Collier, Keith E. Grant, Steven L. Lee, Shelby L. Lockhart,
+John Loffeld, Daniel McGreer, Slaven Peles, Cosmin Petra, H. Hunter
+Schwartz, Jean M. Sexton, Dan Shumaker, Steve G. Smith, Allan G. Taylor,
+Hilari C. Tiedeman, Chris White, Ting Yan, and Ulrike M. Yang.</p>
+
+<p>This OCaml interface was written by <a href="http://www.tbrk.org">Timothy Bourke</a>
+(<a href="http://www.inria.fr">Inria</a>/<a href="http://www.di.ens.fr/">ENS</a>),
+<a href="https://sites.google.com/site/juninoueprofessional/">Jun Inoue</a>
+(<a href="http://www.aist.go.jp/index_en.html">AIST</a>),
+and
+<a href="http://www.di.ens.fr/~pouzet/">Marc Pouzet</a>
+(<a href="http://www.upmc.fr/">UPMC</a>/<a href="http://www.di.ens.fr/">ENS</a>/<a href="http://www.inria.fr/">Inria</a>).
+It provides an OCaml interface to most features of Sundials
+version <b>5.8.0</b>.
+There is no support for nvectors based on CUDA, Hypre ParVector, PETSC,
+RAJA, Trilinos, HIP, or SYCLC; nor for linear solvers requiring CUDA,
+PETSCSNES, MAGMA, or SuperLU_DIST; nor for XBraid.
+These features require libraries that are not available
+in OCaml—<a href="mailto:tim@tbrk.org">contact us</a> if you need them.</p>
+
+<p>The source code is available under a New BSD license at
+<a href="https://github.com/inria-parkas/sundialsml">git@github.com:inria-parkas/sundialsml.git</a>.
+<a href="mailto:tim@tbrk.org">Feedback</a>,
+<a href="https://github.com/inria-parkas/sundialsml/issues/new">bug reports</a>,
+and <a href="https://github.com/inria-parkas/sundialsml/compare">pull requests</a>
+are welcome.
+Support requests should be made to the 
+<a href="mailto:caml-list@inria.fr?subject=Sundials/ML:">OCaml mailing list</a>.</p>
+
+<p>We presented Sundials/ML at the 2016
+<a href="https://ocaml.org/meetings/ocaml/2016/">The OCaml Users and Developers Workshop</a>.
+A brief <a href="mlworkshop2016.pdf">technical summary</a> is included in the proceedings
+of the 2016 <a href="http://www.mlworkshop.org/ml2016/">ACM Workshop on ML</a>
+<a href="#refs">[2]</a>.
+A greatly extended <a href="https://arxiv.org/pdf/1812.11668">overview and
+technical description</a> is included in the <a href="http://eptcs.web.cse.unsw.edu.au/paper.cgi?MLOCAML2016.4">Electronic Proceedings in
+Theoretical Computer Science</a> <a href="#refs">[3]</a>.</p>
+
+<h4 id="contents">Contents</h4><ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#api">API Reference</a></li>
+<li><a href="#install">Installation</a></li>
+<li><a href="#running">Running programs</a></li>
+<li><a href="#performance">Performance</a></li>
+<li><a href="#refs">References</a></li>
+<li><a href="#acks">Acknowledgements</a></li>
+<li><a href="#indexes">Indexes</a></li>
+</ul>
+
+<h3 id="overview">Overview</h3>
+<p>This interface provides access to the <a href="Cvode.html"><code class="code"><span class="constructor">Cvode</span></code></a>, <a href="Cvodes.html"><code class="code"><span class="constructor">Cvodes</span></code></a>, <a href="Ida.html"><code class="code"><span class="constructor">Ida</span></code></a>, <a href="Idas.html"><code class="code"><span class="constructor">Idas</span></code></a>,
+<a href="Kinsol.html"><code class="code"><span class="constructor">Kinsol</span></code></a>, and <a href="Arkode.html"><code class="code"><span class="constructor">Arkode</span></code></a> modules.
+Its structure mostly follows that of the original library,
+both for ease of reading the official documentation and for converting
+existing source code, but several changes have been made for programming
+convenience and to increase safety, namely:</p>
+<ul>
+<li>solver sessions are mostly configured via algebraic data types
+  rather than multiple function calls;</li>
+<li>errors are signalled by exceptions, not return codes;</li>
+<li>user data is shared between callback routines via closures (partial
+  function applications);</li>
+<li>vectors are checked for compatibility using a combination
+  of static and dynamic checks; and</li>
+<li>explicit free commands are not necessary since OCaml is a garbage-collected
+  language.</li>
+</ul>
+<p>Functions have been renamed according to a regular scheme. Leading <em>module identifiers</em> are replaced by module paths, words
+beginning with an uppercase letter are separated by underscores and put
+into lowercase. For instance, <code class="code"><span class="constructor">IdaSetErrHandlerFn</span></code>, becomes
+<a href="Ida.html#VALset_err_handler_fn"><code class="code"><span class="constructor">Ida</span>.set_err_handler_fn</code></a>, and <code class="code"><span class="constructor">CVSpilsSetJacTimes</span></code> becomes
+<a href="Cvode.Spils.html#VALset_jac_times"><code class="code"><span class="constructor">Cvode</span>.<span class="constructor">Spils</span>.set_jac_times</code></a>.</p>
+
+<p>Constants are replaced by variant types in most cases. They are renamed by
+conversion to <em>CamlCase</em> and the removal of underscores. For instance,
+<code class="code"><span class="constructor">PREC_NONE</span></code> becomes
+<a href="Sundials_LinearSolver.Iterative.html#TYPEpreconditioning_type">PrecNone</a>.
+The names chosen for exceptions sometimes differ from the corresponding return
+code names when this improves consistency or comprehensibility.
+For instance, the return codes <code class="code"><span class="constructor">CV_FIRST_RHSFUNC_ERR</span></code> and
+<code class="code"><span class="constructor">IDA_FIRST_RES_FAIL</span></code> become, respectively, the exceptions
+<a href="Cvode.html#EXCEPTIONFirstRhsFuncFailure"><code class="code"><span class="constructor">Cvode</span>.<span class="constructor">FirstRhsFuncFailure</span></code></a> and <a href="Ida.html#EXCEPTIONFirstResFuncFailure"><code class="code"><span class="constructor">Ida</span>.<span class="constructor">FirstResFuncFailure</span></code></a>, and <code class="code"><span class="constructor">CV_BAD_IS</span></code>
+becomes <a href="Cvodes.Sensitivity.html#EXCEPTIONBadSensIdentifier"><code class="code"><span class="constructor">Cvodes</span>.<span class="constructor">Sensitivity</span>.<span class="constructor">BadSensIdentifier</span></code></a>.</p>
+
+<p>Rather than duplicate the comprehensive
+<a href="https://computation.llnl.gov/casc/sundials/documentation/documentation.html">
+Sundials user manuals</a>, this documentation provides brief summaries
+with references to the original texts and underlying functions.</p>
+
+<h4 id="nvector">Nvectors</h4>
+<p>Sundials defines an abstract interface for vectors and provides
+several instantiations.
+The OCaml interface defines likewise a generic
+<a href="Nvector.html#TYPEt"><code class="code"><span class="constructor">Nvector</span>.t</code></a> type whose type arguments indicate the underlying <em>data</em> and <em>kind</em>.
+The <a href="Nvector.html#VALunwrap"><code class="code"><span class="constructor">Nvector</span>.unwrap</code></a> function gives direct access to the underlying data.</p>
+
+<p>The interface to serial nvectors, <a href="Nvector_serial.html"><code class="code"><span class="constructor">Nvector_serial</span></code></a>, is based on
+<a href="http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.html">Bigarrays</a>.
+These arrays are manipulated directly, i.e., with no additional overhead,
+within the solver by the original low-level serial nvector operations
+(see <a href="Nvector.NVECTOR_OPS.html"><code class="code"><span class="constructor">Nvector</span>.<span class="constructor">NVECTOR_OPS</span></code></a>).
+The same low-level operations can be called from OCaml
+(<a href="Nvector_serial.Ops.html"><code class="code"><span class="constructor">Nvector_serial</span>.<span class="constructor">Ops</span></code></a>), as can equivalent OCaml reimplementations on the
+underlying data (<a href="Nvector_serial.DataOps.html"><code class="code"><span class="constructor">Nvector_serial</span>.<span class="constructor">DataOps</span></code></a>).</p>
+
+<p>The interface to parallel nvectors, <a href="Nvector_parallel.html"><code class="code"><span class="constructor">Nvector_parallel</span></code></a>, is based on
+<a href="http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.html">Bigarrays</a>
+and the <a href="https://github.com/xavierleroy/ocamlmpi/">OCamlMPI</a>
+library. Parallel nvectors are only available when Sundials/ML is configured
+to build with MPI.</p>
+
+<p>The <a href="Nvector.html#TYPEany"><code class="code"><span class="constructor">Nvector</span>.any</code></a> type provides alternatives to the standard nvector types.
+It replaces the static typing of the <em>data</em> and <em>kind</em> arguments with
+dynamic checks on the extensible <a href="Nvector.html#TYPEgdata"><code class="code"><span class="constructor">Nvector</span>.gdata</code></a> type. This approach is
+exploited in the <em>many</em> nvectors, like <a href="Nvector_many.html"><code class="code"><span class="constructor">Nvector_many</span></code></a>,
+<a href="Nvector_mpimany.html"><code class="code"><span class="constructor">Nvector_mpimany</span></code></a>, or <a href="Nvector_mpiplusx.html"><code class="code"><span class="constructor">Nvector_mpiplusx</span></code></a>, that group and operate on arrays
+of nvectors.</p>
+
+<p>Besides the standard implementations, it is also possible to define
+new nvector implementations through <a href="Nvector_custom.html"><code class="code"><span class="constructor">Nvector_custom</span></code></a> by providing low-level
+operations on an underlying datatype. A demonstration of this feature on
+float arrays is provided in <a href="Nvector_array.html"><code class="code"><span class="constructor">Nvector_array</span></code></a>. Custom nvectors suffer two
+disadvantages compared to the standard nvector implementations. First, each
+low-level operation incurs the cost of a callback into OCaml. Second, of all
+the provided linear solvers, only <a href="Cvode.Diag.html"><code class="code"><span class="constructor">Cvode</span>.<span class="constructor">Diag</span></code></a> can be used; although it is
+also possible to implement custom solvers in OCaml.</p>
+
+<h4 id="matrix">Matrices</h4>
+<p>Sundials defines an abstract interface for matrices and provides
+dense, banded, and sparse (either in compressed-sparse-column or
+compressed-sparse-row format) implementations.
+The OCaml interface defines likewise a generic
+<a href="Sundials_Matrix.html#TYPEt">Matrix.t</a> type whose type
+arguments indicate the underlying <em>matrix content</em> and the <em>data</em> and
+<em>kind</em> of nvectors used in the
+<a href="Sundials_Matrix.html#VALmatvec">Matrix.matvec</a> operation.
+There are specific submodules for <a href="Sundials_Matrix.Dense.html">dense</a>,
+<a href="Sundials_Matrix.Band.html">band</a>, and
+<a href="Sundials_Matrix.Sparse.html">sparse</a> content.
+It is also possible to define custom matrix types by providing a set of
+standard <a href="Sundials_Matrix.html#TYPEmatrix_ops">matrix operations</a> to the
+<a href="Sundials_Matrix.html#VALwrap_custom">Matrix.wrap_custom</a>
+function.
+Some low-level matrix routines on arrays are provided by
+<a href="Sundials_Matrix.ArrayDense.html">Matrix.ArrayDense</a> and
+<a href="Sundials_Matrix.ArrayBand.html">Matrix.ArrayBand</a>.</p>
+
+<h4 id="nonlinsolv">Nonlinear Solvers</h4>
+<p>Nonlinear algebraic systems occur optionally in the solution of ODE initial
+value problems with <a href="Cvode.html"><code class="code"><span class="constructor">Cvode</span></code></a>, invariably when solving DAE initial value
+problems with <a href="Ida.html"><code class="code"><span class="constructor">Ida</span></code></a>, and when solving implicit problems or problems
+involving a mass matrix with <a href="Arkode.html"><code class="code"><span class="constructor">Arkode</span></code></a>.
+Sundials provides generic <a href="Sundials_NonlinearSolver.Newton.html">Newton</a> and
+<a href="Sundials_NonlinearSolver.FixedPoint.html">Fixed-point</a> nonlinear solvers.
+It is also possible to define <a href="Sundials_NonlinearSolver.Custom.html">Custom</a>
+nonlinear solvers by providing appropriate OCaml functions.</p>
+
+<p>The user of a nonlinear solver, whether a Sundials module or OCaml program,
+provides callback functions that describe the
+<a href="Sundials_NonlinearSolver.html#VALset_sys_fn">system</a>,
+the <a href="Sundials_NonlinearSolver.html#VALset_lsetup_fn">setup</a> and
+<a href="Sundials_NonlinearSolver.html#VALset_lsolve_fn">solution</a> of linear equations,
+and a <a href="Sundials_NonlinearSolver.html#VALset_convtest_fn">convergence test</a>.
+It then invokes the <a href="Sundials_NonlinearSolver.html#VALsetup">setup</a> and
+<a href="Sundials_NonlinearSolver.html#VALsolve">solve</a> functions.</p>
+
+<h4 id="linsolv">Linear Solvers</h4>
+<p><a href="Sundials.NonlinearSolver.html"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">NonlinearSolver</span></code></a>s and the <a href="Kinsol.html"><code class="code"><span class="constructor">Kinsol</span></code></a> solver both require the
+solution of systems of linear equations for which Sundials provides four
+options:</p>
+<ul>
+<li>The <em>diagonal approximation</em> of Jacobians by difference equations (only
+    for <a href="Cvode.html"><code class="code"><span class="constructor">Cvode</span></code></a>);</li>
+<li><em>Direct Linear Solvers (DLS)</em> requiring user-supplied callback
+    functions that explicitly compute a Jacobian;</li>
+<li><em>Scaled Preconditioned Iterative Linear Solvers (SPILS)</em>
+    requiring user-supplied callback functions to setup and solve
+    linear preconditioning systems;</li>
+<li><em>Custom linear solvers</em> defined by a set of OCaml functions.</li>
+</ul>
+
+<p>The <a href="Sundials_LinearSolver.Direct.html">DLS routines</a> are only available to
+sessions that use serial, Pthreads, or OpenMP nvectors.
+The external SuperLU_MT and KLU libraries are required for working with
+sparse Jacobians.
+Callback functions manipulate Jacobian matrices through the operations in
+<a href="Sundials_Matrix.Dense.html">Matrix.Dense</a>,
+<a href="Sundials_Matrix.Band.html">Matrix.Band</a>, and
+<a href="Sundials_Matrix.Sparse.html">Matrix.Sparse</a>.</p>
+
+<p>The <a href="Sundials_LinearSolver.Iterative.html">SPILS routines</a> include the
+<em>Scaled Preconditioned GMRES (SPGMR)</em>, <em>Scaled Preconditioned Bi-CGStab (SPBCG)</em>, <em>Scaled Preconditioned TFQMR
+(SPTFQMR)</em>, <em>Scaled Preconditioned Flexible GMRES (SPFGMR)</em>, and
+<em>Preconditioned Conjugate Gradient (PCG)</em> methods.
+Additionally, <a href="Cvode.html"><code class="code"><span class="constructor">Cvode</span></code></a> provides banded preconditioners
+for sessions that use serial, Pthreads, or OpenMP nvectors.
+Access to the underlying solver
+routines on bigarrays is provided via the submodules of
+<a href="Sundials_LinearSolver.Iterative.Algorithms.html">LinearSolver.Iterative.Algorithms</a>.
+Parallel Band-Block-Diagonal (BBD) preconditioners are available to sessions
+that use parallel nvectors—see <a href="Cvode_bbd.html"><code class="code"><span class="constructor">Cvode_bbd</span></code></a>, <a href="Cvodes_bbd.html"><code class="code"><span class="constructor">Cvodes_bbd</span></code></a>, <a href="Ida_bbd.html"><code class="code"><span class="constructor">Ida_bbd</span></code></a>,
+<a href="Idas_bbd.html"><code class="code"><span class="constructor">Idas_bbd</span></code></a>, and <a href="Kinsol_bbd.html"><code class="code"><span class="constructor">Kinsol_bbd</span></code></a>.</p>
+
+<p>Using a linear solver requires three steps:</p>
+<OL>
+<li>Create a generic instance of <a href="Sundials_LinearSolver.html#TYPEt">LinearSolver.t</a></li>
+<li>Use it to instantiate a solver-specific instance, e.g.,
+	<a href="Cvode.html#TYPElinear_solver"><code class="code"><span class="constructor">Cvode</span>.linear_solver</code></a> or
+	<a href="Cvodes.Adjoint.html#TYPElinear_solver"><code class="code"><span class="constructor">Cvodes</span>.<span class="constructor">Adjoint</span>.linear_solver</code></a>.</li>
+<li>Pass the solver-specific instance to appropriate <code class="code">init</code> or <code class="code">reinit</code>
+	functions, e.g., <a href="Cvode.html#VALinit"><code class="code"><span class="constructor">Cvode</span>.init</code></a> or <a href="Ida.html#VALreinit"><code class="code"><span class="constructor">Ida</span>.reinit</code></a>,
+	to create or configure a session.</li>
+</OL>
+
+<p>Any given generic instance, and hence a solver-specific instance, of a
+linear solver can only be associated with one solver session.</p>
+
+<p>Custom linear solvers can be created by providing a set of operations to
+<a href="Sundials_LinearSolver.Custom.html#VALmake_dls">LinearSolver.Custom.make_dls</a>,
+<a href="Sundials_LinearSolver.Custom.html#VALmake_with_matrix">LinearSolver.Custom.make_with_matrix</a>,
+or
+<a href="Sundials_LinearSolver.Custom.html#VALmake_without_matrix">LinearSolver.Custom.make_without_matrix</a>.</p>
+
+<h3 id="api">API Reference</h3>
+<p><table class="indextable module-list">
+<tr><td class="module"><a href="Sundials.html">Sundials</a></td><td><div class="info">
+<p>Generic definitions, arrays, matrices, linear solvers, nonlinear solvers,
+    and utility functions.</p>
+
+</div>
+</td></tr>
+</table>
+
+
+<table class="indextable module-list">
+<tr><td class="module"><a href="Nvector.html">Nvector</a></td><td><div class="info">
+<p>Generic nvector types and operations.</p>
+
+</div>
+</td></tr>
+<tr><td class="module"><a href="Nvector_serial.html">Nvector_serial</a></td><td><div class="info">
+<p>Standard serial nvectors of Sundials.</p>
+
+</div>
+</td></tr>
+<tr><td class="module"><a href="Nvector_parallel.html">Nvector_parallel</a></td><td><div class="info">
+<p>The standard parallel nvectors of Sundials (requires MPI).</p>
+
+</div>
+</td></tr>
+<tr><td class="module"><a href="Nvector_pthreads.html">Nvector_pthreads</a></td><td><div class="info">
+<p>The Pthreads nvectors of Sundials (requires pthreads).</p>
+
+</div>
+</td></tr>
+<tr><td class="module"><a href="Nvector_openmp.html">Nvector_openmp</a></td><td><div class="info">
+<p>The OpenMP nvectors of Sundials (requires OpenMP).</p>
+
+</div>
+</td></tr>
+<tr><td class="module"><a href="Nvector_many.html">Nvector_many</a></td><td><div class="info">
+<p>The standard many-vector nvectors of Sundials.</p>
+
+</div>
+</td></tr>
+<tr><td class="module"><a href="Nvector_mpimany.html">Nvector_mpimany</a></td><td><div class="info">
+<p>The standard mpimany-vector nvectors of Sundials.</p>
+
+</div>
+</td></tr>
+<tr><td class="module"><a href="Nvector_mpiplusx.html">Nvector_mpiplusx</a></td><td><div class="info">
+<p>The standard mpiplusx nvectors of Sundials.</p>
+
+</div>
+</td></tr>
+<tr><td class="module"><a href="Nvector_custom.html">Nvector_custom</a></td><td><div class="info">
+<p>An interface for creating custom nvectors in OCaml.</p>
+
+</div>
+</td></tr>
+<tr><td class="module"><a href="Nvector_array.html">Nvector_array</a></td><td><div class="info">
+<p>A custom nvector based on float arrays.</p>
+
+</div>
+</td></tr>
+</table>
+
+
+<table class="indextable module-list">
+<tr><td class="module"><a href="Cvode.html">Cvode</a></td><td><div class="info">
+<p>Variable-step solution of ODE initial value problems with
+    zero-crossing detection.</p>
+
+</div>
+</td></tr>
+<tr><td class="module"><a href="Cvode_bbd.html">Cvode_bbd</a></td><td><div class="info">
+<p>Parallel band-block-diagonal preconditioners for CVODE (requires MPI).</p>
+
+</div>
+</td></tr>
+<tr><td class="module"><a href="Cvodes.html">Cvodes</a></td><td><div class="info">
+<p>Sensitivity analysis (forward and adjoint) and quadrature equations
+    for CVODE.</p>
+
+</div>
+</td></tr>
+<tr><td class="module"><a href="Cvodes_bbd.html">Cvodes_bbd</a></td><td><div class="info">
+<p>Parallel band-block-diagonal preconditioners for CVODES (requires MPI).</p>
+
+</div>
+</td></tr>
+</table>
+
+
+<table class="indextable module-list">
+<tr><td class="module"><a href="Ida.html">Ida</a></td><td><div class="info">
+<p>Variable-step solution of DAE initial value problems with
+    zero-crossing detection.</p>
+
+</div>
+</td></tr>
+<tr><td class="module"><a href="Ida_bbd.html">Ida_bbd</a></td><td><div class="info">
+<p>Parallel band-block-diagonal preconditioners for IDA (requires MPI).</p>
+
+</div>
+</td></tr>
+<tr><td class="module"><a href="Idas.html">Idas</a></td><td><div class="info">
+<p>Sensitivity analysis (forward and adjoint) and quadrature equations for
+    IDA.</p>
+
+</div>
+</td></tr>
+<tr><td class="module"><a href="Idas_bbd.html">Idas_bbd</a></td><td><div class="info">
+<p>Parallel band-block-diagonal preconditioners for IDAS (requires MPI).</p>
+
+</div>
+</td></tr>
+</table>
+
+
+<table class="indextable module-list">
+<tr><td class="module"><a href="Arkode.html">Arkode</a></td><td><div class="info">
+<p>Adaptive-step time integration for stiff, nonstiff, and mixed
+    stiff/nonstiff systems of ODE initial value problems with zero-crossing
+    detection.</p>
+
+</div>
+</td></tr>
+<tr><td class="module"><a href="Arkode_bbd.html">Arkode_bbd</a></td><td><div class="info">
+<p>Parallel band-block-diagonal preconditioners for ARKODE (requires MPI).</p>
+
+</div>
+</td></tr>
+</table>
+
+
+<table class="indextable module-list">
+<tr><td class="module"><a href="Kinsol.html">Kinsol</a></td><td><div class="info">
+<p>Solves nonlinear systems using Newton-Krylov techniques.</p>
+
+</div>
+</td></tr>
+<tr><td class="module"><a href="Kinsol_bbd.html">Kinsol_bbd</a></td><td><div class="info">
+<p>Parallel band-block-diagonal preconditioners for KINSOL (requires MPI).</p>
+
+</div>
+</td></tr>
+</table></p>
+
+<h3 id="install">Installation</h3>
+<p>The dependencies of Sundials/ML are</p>
+<ul>
+<li><a href="http://caml.inria.fr/ocaml/">OCaml</a> <b>4.03.0 or greater</b>,</li>
+<li><a href="http://computation.llnl.gov/casc/sundials/">Sundials</a> <b>5.8.0</b>
+  (compiles with version back to 2.7.0 with less features),</li>
+<li><em>Optionally</em>:
+  <a href="https://forge.ocamlcore.org/projects/ocamlmpi/">OCamlMPI</a> <b>1.05</b>.</li>
+</ul>
+<p>Normally, to install Sundials/ML, you need only type
+<code class="code">opam&nbsp;install&nbsp;sundialsml</code>.</p>
+
+<p>The following sections provide more detailed information on building and
+installing Sundials and Sundials/ML.</p>
+
+<h4 id="opam">Installing Sundials/ML with OPAM</h4>
+<p>The <a href="https://opam.ocaml.org">OPAM</a> package manager provides the easiest way
+to install Sundials/ML and the underlying Sundials library.
+The features available in Sundials/ML depend on the version and options of
+the underlying library (see <a href="Sundials.Config.html"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">Config</span></code></a>).</p>
+
+<OL>
+<li><i>Optionally</i> run <code class="code">opam&nbsp;install&nbsp;mpi</code>.</li>
+<li>Run <code class="code">opam&nbsp;install&nbsp;sundialsml</code>.</li>
+</OL>
+
+<p>If OPAM fails to install the required Sundials package automatically, then
+try using your system's package manager directly, for example:</p>
+<ul>
+<li>Debian/Ubuntu: <code class="code">apt-get&nbsp;install&nbsp;libsundials-dev</code></li>
+<li>Fedora:
+	    <code class="code">dnf&nbsp;install&nbsp;lapack-devel&nbsp;sundials-devel<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sundials-threads-devel&nbsp;sundials-openmpi-devel</code></li>
+<li>macOS:
+	<code class="code">brew&nbsp;install&nbsp;sundials</code> / <code class="code">port&nbsp;install&nbsp;sundials</code></li>
+</ul>
+<p>Otherwise, the following section describes how to install Sundials
+manually.
+After installing Sundials, retry <code class="code">opam&nbsp;install&nbsp;sundialsml</code>.</p>
+
+<h4 id="sundials">Manually Building and Installing Sundials</h4>
+<p>First
+<a href="https://computation.llnl.gov/projects/sundials/sundials-software">download</a>
+the Sundials source code.
+It must be compiled with 64-bit floats (the default: <i>--with-precision=double</i>) and the C compiler must provide 32-bit
+<code class="code">int</code>s.</p>
+
+<p>Building the extra features of Sundials requires the installation of
+dependencies and the right cmake incantation.
+In particular, it can be tricky to get the optional
+<a href="http://crd-legacy.lbl.gov/~xiaoye/SuperLU/#superlu_mt">SuperLU/MT</a>
+library to work.</p>
+
+<p>For <b>Debian</b>-based systems, we found the following worked:</p>
+<OL>
+<li><pre class="verbatim">apt-get install cmake liblapack-dev libopenmpi-dev libsuitesparse-dev</pre></li>
+<li>Optionally
+    <a href="http://crd-legacy.lbl.gov/~xiaoye/SuperLU/superlu_mt_3.1.tar.gz">download</a>
+    and build SuperLU/MT 3.1.</li>
+<li><pre class="verbatim">mkdir build; cd build</pre></li>
+<li><pre class="verbatim">cmake -Wno-dev ../sundials-5.8.0 \
+-DCMAKE_BUILD_TYPE=Release \
+-DOPENMP_ENABLE=1 \
+-DPTHREAD_ENABLE=1 \
+-DMPI_ENABLE=1 \
+-DKLU_ENABLE=1 -DKLU_LIBRARY_DIR=/usr/lib/x86_64-linux-gnu \
+-DKLU_INCLUDE_DIR=/usr/include/suitesparse</pre>
+       adding, optionally,
+       <pre class="verbatim">-DLAPACK_ENABLE=1 -DLAPACK_LIBRARIES='-llapack -lblas'</pre>
+       adding, if necessary,
+       <pre class="verbatim">-DSUPERLUMT_ENABLE=1 \
+-DSUPERLUMT_LIBRARY_DIR=&lt;full-path-to&gt;/SuperLU_MT_3.1/lib \
+-DSUPERLUMT_INCLUDE_DIR=&lt;full-path-to&gt;/SuperLU_MT_3.1/SRC \
+-DSUPERLUMT_LIBRARIES=-lblas</pre></li>
+<li>Build and install Sundials by running <code class="code">make&nbsp;install</code>.</li>
+<li>Change to the Sundials/ML source directory and run
+	<pre class="verbatim">./configure</pre>
+	Adding, if necessary,
+	<pre class="verbatim">SUPERLUMT_INCLUDE_DIR=&lt;full-path-to&gt;/SuperLU_MT_3.1/SRC \
+SUPERLUMT_LIBRARY_DIR=&lt;full-path-to&gt;/SuperLU_MT_3.1/lib \
+KLU_INCLUDE_DIR=/usr/include/suitesparse</pre>
+       Note that <code class="code"><span class="constructor">SUPERLUMT_LIBRARY_DIR</span></code> must be registered with <code class="code">ld</code>:
+	<pre class="verbatim">export LD_LIBRARY_PATH=&lt;full-path-to&gt;/SuperLU_MT_3.1/lib:$LD_LIBRARY_PATH</pre></li>
+<li>Run <code class="code">make</code> to build the library and <code class="code">make&nbsp;install</code> or <code class="code">make&nbsp;install-findlib</code> to install it.</li>
+</OL>
+
+<p>For <b>macOS</b>, we found the following worked:</p>
+<OL>
+<li>Optionally install
+    <a href="http://faculty.cse.tamu.edu/davis/suitesparse.html">suite-sparse</a> with
+    <code class="code">brew&nbsp;install&nbsp;suite-sparse</code>.</li>
+<li>Optionally
+       <a href="http://crd-legacy.lbl.gov/~xiaoye/SuperLU/superlu_mt_3.1.tar.gz">download</a>
+       and build SuperLU/MT.</li>
+<li><pre class="verbatim">mkdir build; cd build</pre></li>
+<li>For OpenMP, the gcc compiler is required:
+       <pre class="verbatim">cmake -Wno-dev ../sundials-5.8.0 \
+-DCMAKE_BUILD_TYPE=Release \
+-DCMAKE_C_COMPILER=gcc-11 \
+-DOPENMP_ENABLE=1 \
+-DPTHREAD_ENABLE=1 \
+-DMPI_ENABLE=1 \
+-DKLU_ENABLE=1 -DKLU_LIBRARY_DIR=/usr/local/lib -DKLU_INCLUDE_DIR=/usr/local/include</pre>
+       adding, optionally,
+       <pre class="verbatim">-DLAPACK_ENABLE=1</pre>
+       adding, if necessary,
+       <pre class="verbatim">-DSUPERLUMT_ENABLE=1 \
+-DSUPERLUMT_LIBRARY_DIR=&lt;full-path-to&gt;/SuperLU_MT_3.1/lib \
+-DSUPERLUMT_INCLUDE_DIR=&lt;full-path-to&gt;/SuperLU_MT_3.1/SRC</pre></li>
+<li>Configure Sundials/ML with
+	<pre class="verbatim">./configure SUPERLUMT_DIR=&lt;full-path-to&gt;/SuperLU_MT_3.1</pre></li>
+</OL>
+
+<p>The Sundials/ML <code class="code">configure</code> script detects and automatically enables optional
+features.  Lapack solvers, like
+<a href="Sundials_LinearSolver.Direct.html#VALlapack_dense">LinearSolver.Direct.lapack_dense</a>, are enabled
+if Sundials was built with lapack support
+(see also <a href="Sundials_Config.html#VALlapack_enabled">Sundials.Config.lapack_enabled</a>).
+The KLU and SuperLU_MT solvers, and the Pthreads and OpenMP nvectors are
+only enabled if Sundials was built with them.
+Parallel nvectors and Band-Block-Diagonal (BBD) solvers
+are only enabled if Sundials was built with them and OCamlMPI is available.</p>
+
+<h4 id="build">Manually Building and Installing Sundials/ML</h4>
+<p>Building Sundials/ML from source is a three step process:</p>
+<OL>
+<li><a href="https://computation.llnl.gov/projects/sundials/sundials-software">Download</a>
+        and manually install Sundials,
+        or use a package manager:
+	<ul>
+<li>Debian/Ubuntu (without parallelism):
+                    <code class="code">apt-get&nbsp;install&nbsp;libsundials-serial-dev</code></li>
+<li>macOS: <code class="code">brew&nbsp;install&nbsp;sundials</code> / <code class="code">port&nbsp;install&nbsp;sundials</code></li>
+</ul>
+</li>
+<li>Run <code class="code">configure</code> to find and check dependencies.</li>
+<li>Run <code class="code">make&nbsp;install</code> or <code class="code">make&nbsp;install-findlib</code> to build and
+       install the library.</li>
+</OL>
+
+<p>The choices made by the configure script can be influenced by
+arguments (like <i>--prefix=...</i>) and variables (like
+<code class="code"><span class="constructor">OCAMLROOT</span>=...</code>). Type <code class="code">configure&nbsp;--help</code> for detailed information.</p>
+
+<p>OCaml reimplementations of the standard Sundials examples are provided in
+the <code class="code">examples/</code> subdirectory.
+The library's behaviour can be tested via <code class="code">make&nbsp;tests.opt.log</code> which runs the OCaml
+versions and compares their outputs against those of the original C
+versions: they should be identical.
+The library's performance can be analyzed via <code class="code">make&nbsp;perf-intv.opt.pdf</code> which
+produces the graph explained <a href="#performance">below</a>.</p>
+
+<p>The OPAM “pinning” feature is supported: perform step 1 above and then, from
+the Sundials/ML source directory, run</p>
+<pre class="verbatim">opam pin add .</pre><p>Environment variables (<code class="code"><span class="constructor">SUPERLUMT_LIBRARY_DIR</span></code>, etc.) can be set to fine-tune
+the build process.</p>
+
+<h3 id="running">Running programs</h3>
+<h4 id="compilation">Compiling and linking</h4>
+<p>Programs are compiled by specifying where Sundials/ML is installed, e.g.,</p>
+<ul>
+<li><code class="code">-<span class="constructor">I</span>&nbsp;+sundialsml</code>,</li>
+<li>or <code class="code">-<span class="constructor">I</span>&nbsp;<span class="keywordsign">`</span>opam&nbsp;config&nbsp;var&nbsp;lib<span class="keywordsign">`</span>/sundialsml</code>,</li>
+<li>or <code class="code">ocamlfind&nbsp;...&nbsp;-package&nbsp;sundialsml</code>,</li>
+</ul>
+<p>and including <code class="code">bigarray.cma</code> and <code class="code">sundials.cma</code>, for example:</p>
+<pre class="verbatim">ocamlc -o myprog.byte -I +sundialsml bigarray.cma sundials.cma myprog.ml</pre><p>or the <code class="code">.cmxa</code> versions:</p>
+<pre class="verbatim">ocamlopt -o myprog.opt -I +sundialsml bigarray.cmxa sundials.cmxa myprog.ml</pre>
+<p>The <code class="code">sundials.cma/.cmxa</code> files link against the libraries
+<code class="code">libsundials_cvodes</code> and <code class="code">libsundials_idas</code>. The code in these libraries
+should give the same results as that in those without sensitivity analysis
+(except for the functions <a href="Cvode.html#VALget_work_space"><code class="code"><span class="constructor">Cvode</span>.get_work_space</code></a> and <a href="Ida.html#VALget_work_space"><code class="code"><span class="constructor">Ida</span>.get_work_space</code></a>),
+even though they are compiled from distinct source files. The
+<code class="code">sundials_no_sens.cma/cmxa</code> files, on the other hand, link against the
+libraries <code class="code">libsundials_cvode</code> and <code class="code">libsundials_ida</code> and thus do not include the
+functionality in <a href="Cvodes.html"><code class="code"><span class="constructor">Cvodes</span></code></a> or <a href="Idas.html"><code class="code"><span class="constructor">Idas</span></code></a>.
+Both sets of files link against
+<code class="code">libsundials_kinsol</code>, <code class="code">libsundials_arkode</code>, and <code class="code">libsundials_nvecserial</code>.</p>
+
+<p>The parallel features—in the <a href="Nvector_parallel.html"><code class="code"><span class="constructor">Nvector_parallel</span></code></a>, <a href="Cvode_bbd.html"><code class="code"><span class="constructor">Cvode_bbd</span></code></a>,
+<a href="Cvodes_bbd.html"><code class="code"><span class="constructor">Cvodes_bbd</span></code></a>, <a href="Ida_bbd.html"><code class="code"><span class="constructor">Ida_bbd</span></code></a>, <a href="Idas_bbd.html"><code class="code"><span class="constructor">Idas_bbd</span></code></a>, <a href="Kinsol_bbd.html"><code class="code"><span class="constructor">Kinsol_bbd</span></code></a>, and <a href="Arkode_bbd.html"><code class="code"><span class="constructor">Arkode_bbd</span></code></a>
+modules—require the
+additional inclusions of <code class="code">mpi.cma</code> and <code class="code">sundials_mpi.cma</code>. So, for example:</p>
+<pre class="verbatim">ocamlc -o myprog.byte -I +sundialsml bigarray.cma mpi.cma sundials.cma \
+					sundials_mpi.cma myprog.ml</pre><p>or with the <code class="code">.cmxa</code> versions:</p>
+<pre class="verbatim">ocamlopt -o myprog.opt -I +sundialsml bigarray.cmxa mpi.cmxa sundials.cmxa \
+					 sundials_mpi.cmxa myprog.ml</pre><p>The <code class="code">sundials_mpi.cm(x)a</code> files link against the
+<code class="code">libsundials_nvecparallel</code> library.</p>
+
+<p>The <code class="code"><span class="constructor">Nvector_openmp</span></code> and <code class="code"><span class="constructor">Nvector_pthreads</span></code> modules require the additional
+inclusion, respectively, of <code class="code">sundials_openmp.cm(x)a</code> and
+<code class="code">sundials_pthreads.cm(x)a</code>.</p>
+
+<p>Under <code class="code">ocamlfind</code>, the parallel, OpenMP, and Pthreads features
+are selected via subpackages, and the use of the libraries without
+sensitivity analysis via a predicate.
+For example, for everything:</p>
+<pre class="verbatim">ocamlfind ocamlopt -package sundialsml.mpi,sundials.pthreads,sundials.openmp \
+				-linkpkg -o mysim.opt mysim.ml</pre><p>The available packages and the features they select are:</p>
+<ul>
+<li><code class="code">sundialsml</code>: basic features; add <code class="code">-predicates&nbsp;no_sens</code> to disable
+    sensitivity, </li>
+<li><code class="code">sundialsml.mpi</code>: additionally include MPI-based parallel nvectors,</li>
+<li><code class="code">sundialsml.openmp</code>: additionally include OpenMP nvectors,</li>
+<li><code class="code">sundialsml.pthreads</code>: additionally include Pthreads nvectors.</li>
+</ul>
+
+<h4 id="toplevel">From the toplevel</h4>
+<p>Sundials/ML can also be used from the OCaml interactive loop, either by an
+invocation like:</p>
+<pre class="verbatim">ocaml bigarray.cma -I +sundialsml sundials.cma</pre><p>or through <code class="code">ocamlfind</code>, for example:</p>
+<pre class="codepre"><code class="code"><span class="keywordsign">#</span>use <span class="string">"topfind"</span>;;
+<span class="keywordsign">#</span>predicates <span class="string">"no_sens"</span>;;	  <span class="comment">(* optional: excludes sensitivity code *)</span>
+<span class="keywordsign">#</span>require <span class="string">"sundialsml"</span>;;
+
+<span class="keyword">let</span> f t y yd = yd.{0} &lt;- 1.;;
+<span class="keyword">let</span> g t y gout = gout.{0} &lt;- y.{0};;
+<span class="keyword">let</span> y = <span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.of_array [| -1.0 |];;
+<span class="keyword">let</span> yvec = <span class="constructor">Nvector_serial</span>.wrap y;;
+<span class="keyword">let</span> s = <span class="constructor">Cvode</span>.(init <span class="constructor">Adams</span> default_tolerances f ~roots:(1, g) 0. yvec);;
+<span class="constructor">Cvode</span>.set_stop_time s 2.;;
+
+<span class="comment">(* repeat the commands below to advance the simulation until t = 2.0 *)</span>
+<span class="keyword">let</span> (t', result) = <span class="constructor">Cvode</span>.solve_normal s 2. yvec;;
+<span class="constructor">Format</span>.printf <span class="string">"%e: %a\n"</span> t' <span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.pp y;;</code></pre>
+<p>Using MPI from a toplevel is best done with <code class="code">ocamlfind</code> by first creating a
+custom toplevel:</p>
+<pre class="verbatim">ocamlfind ocamlmktop -o partop -package sundialsml.mpi,findlib -linkpkg</pre>
+<p>and then launching it in multiple terminals:</p>
+<pre class="verbatim">mpirun -np 2 xterm -e ./partop</pre><p>Here, <code class="code">2</code> is the number of processes, <code class="code">xterm</code> is the terminal program, and
+<code class="code">-e&nbsp;./partop</code> has each <code class="code">xterm</code> execute <code class="code">./partop</code>.
+As a simple test, paste the following into all terminals:</p>
+<pre class="codepre"><code class="code"><span class="keywordsign">#</span>use <span class="string">"topfind"</span>;;
+<span class="keywordsign">#</span>require <span class="string">"sundialsml.mpi"</span>;;
+
+<span class="keyword">let</span> comm = <span class="constructor">Mpi</span>.comm_world
+<span class="keyword">let</span> n = <span class="constructor">Mpi</span>.comm_size comm
+<span class="keyword">let</span> my_id = <span class="constructor">Mpi</span>.comm_rank comm
+<span class="keyword">let</span> pv = <span class="constructor">Nvector_parallel</span>.make 1 n comm (float_of_int (my_id + 1));;
+
+<span class="constructor">Printf</span>.printf <span class="string">"%d: local=%f.\n"</span> my_id (<span class="constructor">Nvector_parallel</span>.local_array pv).{0};;
+<span class="constructor">Printf</span>.printf <span class="string">"Sum of abs. = %f\n"</span> (<span class="constructor">Nvector_parallel</span>.<span class="constructor">Ops</span>.n_vl1norm pv);;
+</code></pre>
+<h4 id="solutions">Solutions to common problems</h4>
+<OL>
+<li>The message
+       <pre class="verbatim">Fatal error: cannot load required shared library dllmlsundials</pre>
+       can usually be fixed by updating <code class="code"><span class="constructor">LD_LIBRARY_PATH</span></code>, for example,
+       <pre class="verbatim">export LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH}</pre>
+       Otherwise you may have compiled Sundials without
+       <code class="code">--enable-shared</code>.</li>
+<li>The configuration warning
+       <pre class="verbatim">Couldn't determine C compiler flag for OpenMP.</pre>
+       can usually be eliminated by specifying a compiler that supports OpenMP,
+       for example,
+       <pre class="verbatim">CC=gcc-11 ./configure</pre></li>
+</OL>
+
+<h3 id="performance">Performance</h3>
+<p>An interface like Sundials/ML inevitably adds overhead: there is
+extra code to execute at each call. But, how significant is this cost? And,
+more broadly, how does the performance of OCaml compare to that of C for
+programs that use numeric solvers?</p>
+
+<p>These questions are not easy to answer. As a first attempt, we took the
+examples in C from the Sundials distribution, reimplemented them in
+OCaml and compared the execution times. The bars in the graph below show
+the ratios of the execution times of the OCaml code to the C code, i.e., a
+value of 2 on the left axis means that OCaml is twice as
+slow. The black dots indicate, against the right axis, the execution
+time of the C code.</p>
+
+<p>The colored bars show the confidence intervals of the estimated
+running times. More precisely, let $C$  and $O$  be random
+variables representing the running times of an example coded, respectively,
+in C and OCaml. The plot shows the range of $r$  such that the null
+hypothesis $P(rC < O) = P(rC > O)$  is <i>not</i> rejected at the 99.5%
+confidence level.</p>
+
+<p><a href=" perf-intv.opt.png"><img src=" perf-intv.opt.png"></a></p>
+
+<p>The <a href="perf-intv.opt.pdf">graph</a> shows that the OCaml examples are usually
+less than 50% slower than the original ones, sometimes up to 100% slower,
+and only very rarely any slower than that.
+The <code class="code">*_custom</code> example (<span style="color: #deebf7;">light blue</span>) uses custom nvectors
+with low-level operations in OCaml and the <code class="code">*_alt</code> examples (<span style="color: #9ecae1;">darker blue</span>) use linear solvers implemented in OCaml.
+The OCaml library and examples were compiled in “unsafe” mode, that is,
+without array bounds and other safety checks—the C code does not perform
+these checks either.
+The <a href="perf-intv-safe.opt.pdf">results with safety checks</a> are also
+available.</p>
+
+<p>This conclusion seems reasonable as a first approximation, but several
+details of the analysis process and individual results show that the real
+situation is less clear-cut. For one, the running times of most of the
+examples are so short that accurate profiling is not possible, i.e.,
+<a href="http://pubs.opengroup.org/onlinepubs/9699919799/utilities/time.html">time</a>
+and <a href="https://sourceware.org/binutils/docs/gprof/">gprof</a> simply show 0
+seconds.
+The figures in the graph were obtained by modifying the examples to
+repeatedly execute their <code class="code">main</code> functions.
+The number of repetitions varies per example since otherwise the slower
+examples take too long.
+The timings indicated by the dots and the axis at right are calculated by
+dividing the wall-clock time of each C version by the number of repetitions.
+All but six of the serial examples (<span style="color: #de2d26;">red</span>) run so fast that 
+comparisons are made based on tens, or usually hundreds of repetitions and
+in some cases this amplifies factors other than the interface overhead.
+The slowest example, for instance, <code class="code">kin--ser--kinRoberts_fp</code> is iterated
+nearly 200 000 times to achieve a significant wall clock time.
+This means creating and destroying many more data structures than usual for
+such code.
+In fact, about 25% of the runtime is spent in garbage collection,
+about 15% in allocating nvectors (10% in <code class="code">calloc</code> alone),
+about 10% in freeing memory on the C heap,
+and about 15% calling <code class="code">printf</code>.
+There is very little calculation in this example and thus bookkeeping
+predominates (and OCaml does more of it than C).
+Similar comments apply to the second slowest example,
+<code class="code">kin--ser--kinRoboKin_dns</code> (10% in garbage collection and 30% in <code class="code">printf</code>
+formatting numbers).</p>
+
+<p>The running times of the parallel examples (<span style="color: #fc9272;">lighter red</span>)
+often vary considerably between different runs.
+Those with the highest variations—with the exception of
+idaHeat2D_kry_bbd_p—often have relatively long running times
+and the results are obtained in relatively few (&lt; 10) iterations.</p>
+
+<p>We were able to make our OCaml versions much faster (up to 4 times) by:</p>
+<ul>
+<li>Adding explicit type annotations to all vector arguments.
+       For instance, rather than declare a callback with
+       <pre class="codepre"><code class="code"> <span class="keyword">let</span> f t y yd = ... ,</code></pre>
+       it is better to use
+       <pre class="codepre"><code class="code"> <span class="keyword">let</span> f t (y : <span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.t) (yd : <span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.t) = ... ,</code></pre>
+       or more concisely
+       <pre class="codepre"><code class="code"> <span class="keyword">let</span> f : <span class="constructor">Sundials</span>.<span class="constructor">RealArray</span>.t <span class="constructor">Cvode</span>.rhsfn = <span class="keyword">fun</span> t y yd <span class="keywordsign">-&gt;</span> ...</code></pre>
+       since then the compiler need not generate polymorphic code and
+       can optimize for the bigarray layout.</li>
+<li>Avoid functions like
+       <a href="http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.Array1.html#VALsub"><code class="code"><span class="constructor">Bigarray</span>.<span class="constructor">Array1</span>.sub</code></a>
+       and
+       <a href="http://caml.inria.fr/pub/docs/manual-ocaml/libref/Bigarray.Array2.html#VALslice_left"><code class="code"><span class="constructor">Bigarray</span>.<span class="constructor">Array2</span>.slice_left</code></a>.
+       These functions allocate new bigarrays on the major
+       heap, which increases the frequency of major GCs. They can often be
+       avoided by calculating and passing indices more explicitly.
+       When part of an array must be passed to another function, it
+       can be faster, depending on the size, to copy into and out of a
+       statically-allocated temporary array.</li>
+<li>Sequences of <a href="Sundials_RealArray2.html#VALget">RealArray2.get</a> and
+       <a href="Sundials_RealArray2.html#VALset">RealArray2.set</a> operations are usually better replaced by
+       <a href="Sundials_RealArray2.html#VALunwrap">RealArray2.unwrap</a>
+       (projection from a tuple) and direct
+       accesses to the underlying array.</li>
+<li>Write numeric expressions and loops according to the advice in
+	<a href="#refs">[4]</a>
+       to avoid float ‘boxing’.</li>
+</ul>
+
+<p>In summary, OCaml code using the Sundials solvers should almost never be
+more than 50% slower than the equivalent code written in C, provided the
+guidelines above are followed, and it should usually not be more than 30%
+slower. It is usually, however, faster to write and debug OCaml code thanks
+to automatic memory management, bounds checking on arrays, strong static
+type checking, higher-order functions, etcetera. Moreover, the Sundials/ML
+library offers a good comprise for programs combining symbolic manipulation and
+numeric calculation.</p>
+
+<p>The graph above can be generated from the Sundials source by running</p>
+<pre class="codepre"><code class="code">cd examples; make perf-intv.opt.pdf <span class="constructor">GC_AT_END</span>=1 <span class="constructor">PERF_DATA_POINTS</span>=40
+</code></pre><p>Be sure to build Sundials with <code class="code">-<span class="constructor">DCMAKE_BUILD_TYPE</span>=<span class="constructor">Release</span></code> otherwise the
+underlying library is unoptimized.
+Sundials/ML should be configured with <code class="code">-unsafe</code>.</p>
+
+<h3 id="refs">References</h3>
+<p><div class="references"></p>
+<OL>
+<li>A. C. Hindmarsh, P. N. Brown, K. E. Grant, S. L. Lee, R. Serban,
+     D. E. Shumaker, and C. S. Woodward,
+     “<a href="http://computation.llnl.gov/casc/nsde/pubs/toms_sundials.pdf"><b>      SUNDIALS: Suite of Nonlinear and Differential/Algebraic Equation
+      Solvers</b></a>,” ACM Transactions on Mathematical Software, 31(3),
+      pp. 363-396, 2005.</li>
+<li>T. Bourke, J. Inoue, and M. Pouzet,
+     “<a href="http://inria-parkas.github.io/sundialsml/mlworkshop2016.pdf"><b>Sundials/ML: interfacing with numerical solvers</b></a>,”
+     ACM Workshop on ML, Nara, Japan, 2016.</li>
+<li>T. Bourke, J. Inoue, and M. Pouzet,
+     “<a href="https://dx.doi.org/10.4204/EPTCS.285.4"><b>Sundials/ML: Connecting
+     OCaml to the Sundials Numeric Solvers</b></a>,”
+     EPTCS 285, pp. 101–130, 2018.</li>
+<li>X. Leroy,
+     “<a href="http://caml.inria.fr/pub/old_caml_site/ocaml/numerical.html"><b>Old
+      Objective Caml site: Writing efficient numerical code in Objective
+      Caml</b></a>,” July 2002.</li>
+</OL>
+<p></div></p>
+
+<h3 id="acks">Acknowledgements</h3>
+<p>We gratefully acknowledge the support of the
+<a href="https://itea3.org/project/modrio.html"> ITEA 3 project 11004 MODRIO</a> (Model
+driven physical systems operation), <a href="http://www.inria.fr/">Inria</a>
+(Modeliscale), and
+the <a href="http://www.di.ens.fr/">Departement d'Informatique de l'ENS</a>.</p>
+
+<p>This library benefits greatly from the OCaml
+<a href="https://ocaml.org/api/Bigarray.html">Bigarray</a> and
+<a href="https://forge.ocamlcore.org/projects/ocamlmpi/">MPI</a>
+libraries, and from <a href="https://ocaml.org/">OCaml</a>'s optimized floating-point
+representations and compilation.</p>
+
+<p>This documentation uses <a href="https://jonathan.protzenko.fr/">J. Protzenko</a>'s
+<a href="https://jonathan.protzenko.fr/misc/ocamlcss/style.css">CSS stylesheet</a>, and
+<a href="http://www.mathjax.org">MathJax</a> for rendering mathematics.</p>
+
+<p>We are grateful for direct contributions to this library from</p>
+<ul>
+<li><a href="http://gallium.inria.fr/~scherer/">G. Scherer</a></li>
+<li><a href="http://www.lix.polytechnique.fr/~ghorbal/">K. Ghorbal</a></li>
+</ul>
+
+<h3 id="indexes">Indexes</h3>
+<ul class="indexlist">
+<li><a href="index_types.html">Index of types</a></li>
+<li><a href="index_extensions.html">Index of extensions</a></li>
+<li><a href="index_exceptions.html">Index of exceptions</a></li>
+<li><a href="index_values.html">Index of values</a></li>
+<li><a href="index_modules.html">Index of modules</a></li>
+<li><a href="index_module_types.html">Index of module types</a></li>
+</ul>
+<p></div></p>
+</div>
+</body>
+</html>

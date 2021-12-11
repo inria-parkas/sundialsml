@@ -1,0 +1,311 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Sundials_LintArray.html">
+<link rel="next" href="Sundials_Logfile.html">
+<link rel="Up" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials_Index" rel="Chapter" href="Sundials_Index.html">
+<link title="Sundials_Config" rel="Chapter" href="Sundials_Config.html">
+<link title="Sundials_RealArray" rel="Chapter" href="Sundials_RealArray.html">
+<link title="Sundials_RealArray2" rel="Chapter" href="Sundials_RealArray2.html">
+<link title="Sundials_LintArray" rel="Chapter" href="Sundials_LintArray.html">
+<link title="Sundials_ROArray" rel="Chapter" href="Sundials_ROArray.html">
+<link title="Sundials_Logfile" rel="Chapter" href="Sundials_Logfile.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Nvector_many" rel="Chapter" href="Nvector_many.html">
+<link title="Sundials_Matrix" rel="Chapter" href="Sundials_Matrix.html">
+<link title="Sundials_LinearSolver" rel="Chapter" href="Sundials_LinearSolver.html">
+<link title="Sundials_NonlinearSolver" rel="Chapter" href="Sundials_NonlinearSolver.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Arkode" rel="Chapter" href="Arkode.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Nvector_mpimany" rel="Chapter" href="Nvector_mpimany.html">
+<link title="Nvector_mpiplusx" rel="Chapter" href="Nvector_mpiplusx.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Arkode_bbd" rel="Chapter" href="Arkode_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Nvector_openmp" rel="Chapter" href="Nvector_openmp.html">
+<link title="Nvector_pthreads" rel="Chapter" href="Nvector_pthreads.html"><title>Sundials/ML 5.8.0p0 : Sundials_ROArray</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Sundials_LintArray.html" title="Sundials_LintArray">Previous</a>
+&nbsp;<a class="up" href="index.html" title="Index">Up</a>
+&nbsp;<a class="post" href="Sundials_Logfile.html" title="Sundials_Logfile">Next</a>
+</div>
+<h1>Module <a href="type_Sundials_ROArray.html">Sundials_ROArray</a></h1>
+
+<pre><span id="MODULESundials_ROArray"><span class="keyword">module</span> Sundials_ROArray</span>: <code class="code"><span class="keyword">sig</span></code> <a href="Sundials_ROArray.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+<div class="info-desc">
+<p>Read-only polymorphic arrays.</p>
+
+<p>An immutable version of the <code class="code"><span class="constructor">Array</span></code> module from the OCaml standard
+    library. Used when the values in an array are shared with the underlying C
+    library and must not be removed. Holding the values in the array stops
+    them from being garbage collected until the array is no longer required.
+    This, in turn, prevents the corresponding C values from being freed while
+    the array is still reachable.</p>
+</div>
+</div>
+<hr width="100%">
+
+<pre><span id="TYPEt"><span class="keyword">type</span> <code class="type">'a</code> t</span> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>An immutable array.</p>
+</div>
+</div>
+
+
+<pre><span id="VALfrom_array"><span class="keyword">val</span> from_array</span> : <code class="type">'a array -> 'a <a href="Sundials_ROArray.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Copy a mutable array into an immutable one.</p>
+</div>
+</div>
+
+<pre><span id="VALto_array"><span class="keyword">val</span> to_array</span> : <code class="type">'a <a href="Sundials_ROArray.html#TYPEt">t</a> -> 'a array</code></pre><div class="info ">
+<div class="info-desc">
+<p>Copy an immutable array into a mutable one.</p>
+</div>
+</div>
+
+<pre><span id="VALlength"><span class="keyword">val</span> length</span> : <code class="type">'a <a href="Sundials_ROArray.html#TYPEt">t</a> -> int</code></pre><div class="info ">
+<div class="info-desc">
+<p>Return the length of the array.</p>
+</div>
+</div>
+
+<pre><span id="VALget"><span class="keyword">val</span> get</span> : <code class="type">'a <a href="Sundials_ROArray.html#TYPEt">t</a> -> int -> 'a</code></pre><div class="info ">
+<div class="info-desc">
+<p>Return the element at the given index.</p>
+</div>
+</div>
+
+<pre><span id="VALinit"><span class="keyword">val</span> init</span> : <code class="type">int -> (int -> 'a) -> 'a <a href="Sundials_ROArray.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Create an immutable array of the given length and apply a function to
+    set each element.</p>
+</div>
+</div>
+
+<pre><span id="VALappend"><span class="keyword">val</span> append</span> : <code class="type">'a <a href="Sundials_ROArray.html#TYPEt">t</a> -> 'a <a href="Sundials_ROArray.html#TYPEt">t</a> -> 'a <a href="Sundials_ROArray.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Create a new immutable array by joining two existing ones.</p>
+</div>
+</div>
+
+<pre><span id="VALconcat"><span class="keyword">val</span> concat</span> : <code class="type">'a <a href="Sundials_ROArray.html#TYPEt">t</a> list -> 'a <a href="Sundials_ROArray.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Create a new immutable array by concatenating a list of existing ones.</p>
+</div>
+</div>
+
+<pre><span id="VALsub"><span class="keyword">val</span> sub</span> : <code class="type">'a <a href="Sundials_ROArray.html#TYPEt">t</a> -> int -> int -> 'a <a href="Sundials_ROArray.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Create a new immutable array from a slice of an existing one.</p>
+</div>
+</div>
+
+<pre><span id="VALcopy"><span class="keyword">val</span> copy</span> : <code class="type">'a <a href="Sundials_ROArray.html#TYPEt">t</a> -> 'a <a href="Sundials_ROArray.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Copy an immutable array.</p>
+</div>
+</div>
+
+<pre><span id="VALto_list"><span class="keyword">val</span> to_list</span> : <code class="type">'a <a href="Sundials_ROArray.html#TYPEt">t</a> -> 'a list</code></pre><div class="info ">
+<div class="info-desc">
+<p>Copy the elements of an immutable array into a list.</p>
+</div>
+</div>
+
+<pre><span id="VALof_list"><span class="keyword">val</span> of_list</span> : <code class="type">'a list -> 'a <a href="Sundials_ROArray.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Copy the elements of a list into a new immutable array.</p>
+</div>
+</div>
+
+<pre><span id="VALiter"><span class="keyword">val</span> iter</span> : <code class="type">('a -> unit) -> 'a <a href="Sundials_ROArray.html#TYPEt">t</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Call a function successively on elements of an immutable array
+    starting at index <code class="code">0</code>.</p>
+</div>
+</div>
+
+<pre><span id="VALiteri"><span class="keyword">val</span> iteri</span> : <code class="type">(int -> 'a -> unit) -> 'a <a href="Sundials_ROArray.html#TYPEt">t</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Call a function successively on index values and elements of an
+    immutable array starting at index <code class="code">0</code>.</p>
+</div>
+</div>
+
+<pre><span id="VALmap"><span class="keyword">val</span> map</span> : <code class="type">('a -> 'b) -> 'a <a href="Sundials_ROArray.html#TYPEt">t</a> -> 'b <a href="Sundials_ROArray.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Create a new immutable array by mapping a function across the elements
+    of an existing one.</p>
+</div>
+</div>
+
+<pre><span id="VALmapi"><span class="keyword">val</span> mapi</span> : <code class="type">(int -> 'a -> 'b) -> 'a <a href="Sundials_ROArray.html#TYPEt">t</a> -> 'b <a href="Sundials_ROArray.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Create a new immutable array by mapping a function across the elements,
+    and their indexes, of an existing one.</p>
+</div>
+</div>
+
+<pre><span id="VALfold_left"><span class="keyword">val</span> fold_left</span> : <code class="type">('a -> 'b -> 'a) -> 'a -> 'b <a href="Sundials_ROArray.html#TYPEt">t</a> -> 'a</code></pre><div class="info ">
+<div class="info-desc">
+<p>Fold a function across the elements of an immutable array from the
+    <code class="code">0</code>th element upward.</p>
+</div>
+</div>
+
+<pre><span id="VALfold_right"><span class="keyword">val</span> fold_right</span> : <code class="type">('b -> 'a -> 'a) -> 'b <a href="Sundials_ROArray.html#TYPEt">t</a> -> 'a -> 'a</code></pre><div class="info ">
+<div class="info-desc">
+<p>Fold a function across the elements of an immutable array from the
+    last element downward.</p>
+</div>
+</div>
+
+<pre><span id="VALiter2"><span class="keyword">val</span> iter2</span> : <code class="type">('a -> 'b -> unit) -> 'a <a href="Sundials_ROArray.html#TYPEt">t</a> -> 'b <a href="Sundials_ROArray.html#TYPEt">t</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Call a function successively on paired elements from two immutable arrays
+    starting at index <code class="code">0</code>.</p>
+</div>
+<ul class="info-attributes">
+<div class="raisedexceptions"><span class="raises">Raises</span> <code>Invalid_Argument</code> if the arrays are not of the same size.</div>
+</ul>
+</div>
+
+<pre><span id="VALiteri2"><span class="keyword">val</span> iteri2</span> : <code class="type">(int -> 'a -> 'b -> unit) -><br>       'a <a href="Sundials_ROArray.html#TYPEt">t</a> -> 'b <a href="Sundials_ROArray.html#TYPEt">t</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Call a function successively on paired elements, and their indexes, from
+    two immutable arrays starting at index <code class="code">0</code>.</p>
+</div>
+<ul class="info-attributes">
+<div class="raisedexceptions"><span class="raises">Raises</span> <code>Invalid_Argument</code> if the arrays are not of the same size.</div>
+</ul>
+</div>
+
+<pre><span id="VALmap2"><span class="keyword">val</span> map2</span> : <code class="type">('a -> 'b -> 'c) -><br>       'a <a href="Sundials_ROArray.html#TYPEt">t</a> -> 'b <a href="Sundials_ROArray.html#TYPEt">t</a> -> 'c <a href="Sundials_ROArray.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Create a new immutable array by mapping a function across the elements
+    of two existing ones.</p>
+</div>
+<ul class="info-attributes">
+<div class="raisedexceptions"><span class="raises">Raises</span> <code>Invalid_Argument</code> if the arrays are not of the same size.</div>
+</ul>
+</div>
+
+<pre><span id="VALfold_left2"><span class="keyword">val</span> fold_left2</span> : <code class="type">('a -> 'b -> 'c -> 'a) -><br>       'a -> 'b <a href="Sundials_ROArray.html#TYPEt">t</a> -> 'c <a href="Sundials_ROArray.html#TYPEt">t</a> -> 'a</code></pre><div class="info ">
+<div class="info-desc">
+<p>Fold a function across the elements of two immutable arrays from the
+    <code class="code">0</code>th elements upward.</p>
+</div>
+<ul class="info-attributes">
+<div class="raisedexceptions"><span class="raises">Raises</span> <code>Invalid_Argument</code> if the arrays are not of the same size.</div>
+</ul>
+</div>
+
+<pre><span id="VALfor_all"><span class="keyword">val</span> for_all</span> : <code class="type">('a -> bool) -> 'a <a href="Sundials_ROArray.html#TYPEt">t</a> -> bool</code></pre><div class="info ">
+<div class="info-desc">
+<p>Returns true only if a predicate is true for all elements of an
+    immutable array.</p>
+</div>
+</div>
+
+<pre><span id="VALfor_all2"><span class="keyword">val</span> for_all2</span> : <code class="type">('a -> 'b -> bool) -> 'a <a href="Sundials_ROArray.html#TYPEt">t</a> -> 'b <a href="Sundials_ROArray.html#TYPEt">t</a> -> bool</code></pre><div class="info ">
+<div class="info-desc">
+<p>Returns true only if a predicate is true for all paired elements of two
+    immutable arrays.</p>
+</div>
+<ul class="info-attributes">
+<div class="raisedexceptions"><span class="raises">Raises</span> <code>Invalid_Argument</code> if the arrays are not of the same size.</div>
+</ul>
+</div>
+
+<pre><span id="VALexists"><span class="keyword">val</span> exists</span> : <code class="type">('a -> bool) -> 'a <a href="Sundials_ROArray.html#TYPEt">t</a> -> bool</code></pre><div class="info ">
+<div class="info-desc">
+<p>Returns true only if a predicate is true for at least one element of an
+    immutable array.</p>
+</div>
+</div>
+
+<pre><span id="VALmem"><span class="keyword">val</span> mem</span> : <code class="type">'a -> 'a <a href="Sundials_ROArray.html#TYPEt">t</a> -> bool</code></pre><div class="info ">
+<div class="info-desc">
+<p>Returns true only if the immutable array contains an element that is
+    structurally equal to the given one.</p>
+</div>
+</div>
+
+<pre><span id="VALmemq"><span class="keyword">val</span> memq</span> : <code class="type">'a -> 'a <a href="Sundials_ROArray.html#TYPEt">t</a> -> bool</code></pre><div class="info ">
+<div class="info-desc">
+<p>Returns true only if the immutable array contains an element that is
+    (physically) identical to the given one.</p>
+</div>
+</div>
+
+<pre><span id="VALiter3"><span class="keyword">val</span> iter3</span> : <code class="type">('a -> 'b -> 'c -> unit) -><br>       'a <a href="Sundials_ROArray.html#TYPEt">t</a> -><br>       'b <a href="Sundials_ROArray.html#TYPEt">t</a> -> 'c <a href="Sundials_ROArray.html#TYPEt">t</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Call a function successively on triples from three immutable arrays
+    starting at index <code class="code">0</code>.</p>
+</div>
+<ul class="info-attributes">
+<div class="raisedexceptions"><span class="raises">Raises</span> <code>Invalid_Argument</code> if the arrays are not of the same size.</div>
+</ul>
+</div>
+
+<pre><span id="VALiteri3"><span class="keyword">val</span> iteri3</span> : <code class="type">(int -> 'a -> 'b -> 'c -> unit) -><br>       'a <a href="Sundials_ROArray.html#TYPEt">t</a> -><br>       'b <a href="Sundials_ROArray.html#TYPEt">t</a> -> 'c <a href="Sundials_ROArray.html#TYPEt">t</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Call a function successively on triples, and their indexes, from three
+    immutable arrays starting at index <code class="code">0</code>.</p>
+</div>
+<ul class="info-attributes">
+<div class="raisedexceptions"><span class="raises">Raises</span> <code>Invalid_Argument</code> if the arrays are not of the same size.</div>
+</ul>
+</div>
+
+<pre><span id="VALmap3"><span class="keyword">val</span> map3</span> : <code class="type">('a -> 'b -> 'c -> 'd) -><br>       'a <a href="Sundials_ROArray.html#TYPEt">t</a> -><br>       'b <a href="Sundials_ROArray.html#TYPEt">t</a> -> 'c <a href="Sundials_ROArray.html#TYPEt">t</a> -> 'd <a href="Sundials_ROArray.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Create a new immutable array by mapping a function across the elements
+    of three existing ones.</p>
+</div>
+<ul class="info-attributes">
+<div class="raisedexceptions"><span class="raises">Raises</span> <code>Invalid_Argument</code> if the arrays are not of the same size.</div>
+</ul>
+</div>
+
+<pre><span id="VALfold_left3"><span class="keyword">val</span> fold_left3</span> : <code class="type">('a -> 'b -> 'c -> 'd -> 'a) -><br>       'a -><br>       'b <a href="Sundials_ROArray.html#TYPEt">t</a> -> 'c <a href="Sundials_ROArray.html#TYPEt">t</a> -> 'd <a href="Sundials_ROArray.html#TYPEt">t</a> -> 'a</code></pre><div class="info ">
+<div class="info-desc">
+<p>Fold a function across the elements of three immutable arrays from the
+    <code class="code">0</code>th elements upward.</p>
+</div>
+<ul class="info-attributes">
+<div class="raisedexceptions"><span class="raises">Raises</span> <code>Invalid_Argument</code> if the arrays are not of the same size.</div>
+</ul>
+</div>
+</body></html>

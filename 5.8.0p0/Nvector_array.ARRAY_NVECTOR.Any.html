@@ -1,0 +1,95 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="Start" href="index.html">
+<link rel="next" href="Nvector_array.ARRAY_NVECTOR.Ops.html">
+<link rel="Up" href="Nvector_array.ARRAY_NVECTOR.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials_Index" rel="Chapter" href="Sundials_Index.html">
+<link title="Sundials_Config" rel="Chapter" href="Sundials_Config.html">
+<link title="Sundials_RealArray" rel="Chapter" href="Sundials_RealArray.html">
+<link title="Sundials_RealArray2" rel="Chapter" href="Sundials_RealArray2.html">
+<link title="Sundials_LintArray" rel="Chapter" href="Sundials_LintArray.html">
+<link title="Sundials_ROArray" rel="Chapter" href="Sundials_ROArray.html">
+<link title="Sundials_Logfile" rel="Chapter" href="Sundials_Logfile.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Nvector_many" rel="Chapter" href="Nvector_many.html">
+<link title="Sundials_Matrix" rel="Chapter" href="Sundials_Matrix.html">
+<link title="Sundials_LinearSolver" rel="Chapter" href="Sundials_LinearSolver.html">
+<link title="Sundials_NonlinearSolver" rel="Chapter" href="Sundials_NonlinearSolver.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Arkode" rel="Chapter" href="Arkode.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Nvector_mpimany" rel="Chapter" href="Nvector_mpimany.html">
+<link title="Nvector_mpiplusx" rel="Chapter" href="Nvector_mpiplusx.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Arkode_bbd" rel="Chapter" href="Arkode_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Nvector_openmp" rel="Chapter" href="Nvector_openmp.html">
+<link title="Nvector_pthreads" rel="Chapter" href="Nvector_pthreads.html"><title>Sundials/ML 5.8.0p0 : Nvector_array.ARRAY_NVECTOR.Any</title>
+</head>
+<body>
+<div class="navbar">&nbsp;<a class="up" href="Nvector_array.ARRAY_NVECTOR.html" title="Nvector_array.ARRAY_NVECTOR">Up</a>
+&nbsp;<a class="post" href="Nvector_array.ARRAY_NVECTOR.Ops.html" title="Nvector_array.ARRAY_NVECTOR.Ops">Next</a>
+</div>
+<h1>Module <a href="type_Nvector_array.ARRAY_NVECTOR.Any.html">Nvector_array.ARRAY_NVECTOR.Any</a></h1>
+
+<pre><span id="MODULEAny"><span class="keyword">module</span> Any</span>: <code class="code"><span class="keyword">sig</span></code> <a href="Nvector_array.ARRAY_NVECTOR.Any.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+<div class="info-desc">
+<p>A generic nvector interface to arbitrary array types.</p>
+</div>
+</div>
+<hr width="100%">
+<pre><code><span class="keyword">type</span> <code class="type"></code><a href="Nvector.html#TYPEgdata">Nvector.gdata</a> += </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="EXTENSIONArr">Arr</span> <span class="keyword">of</span> <code class="type"><a href="Nvector_array.ARRAY_NVECTOR.html#TYPEdata">Nvector_array.ARRAY_NVECTOR.data</a></code></code></td>
+
+</tr></table>
+
+<div class="info ">
+<div class="info-desc">
+<p>Generic wrapper for <a href="Nvector_array.ARRAY_NVECTOR.html#TYPEdata"><code class="code"><span class="constructor">Nvector_array</span>.<span class="constructor">ARRAY_NVECTOR</span>.data</code></a>.</p>
+</div>
+</div>
+
+
+<pre><span id="VALwrap"><span class="keyword">val</span> wrap</span> : <code class="type">?with_fused_ops:bool -><br>       ?with_linear_combination:bool -><br>       ?with_scale_add_multi:bool -><br>       ?with_dot_prod_multi:bool -><br>       ?with_linear_sum_vector_array:bool -><br>       ?with_scale_vector_array:bool -><br>       ?with_const_vector_array:bool -><br>       ?with_wrms_norm_vector_array:bool -><br>       ?with_wrms_norm_mask_vector_array:bool -><br>       ?with_scale_add_multi_vector_array:bool -><br>       ?with_linear_combination_vector_array:bool -><br>       <a href="Nvector_array.ARRAY_NVECTOR.html#TYPEdata">Nvector_array.ARRAY_NVECTOR.data</a> -> <a href="Nvector.html#TYPEany">Nvector.any</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Lifts an array to a generic nvector.</p>
+
+<p>The optional arguments permit to enable fused and array operations for
+          a given nvector (they are disabled by default).</p>
+</div>
+<ul class="info-attributes">
+<li><b>Since</b> 2.9.0</li>
+<div class="raisedexceptions"><span class="raises">Raises</span> <code>Config.NotImplementedBySundialsVersion</code> Fused and array operations not available.</div>
+</ul>
+</div>
+</body></html>

@@ -1,0 +1,111 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Nvector_array.ARRAY_NVECTOR.html">
+<link rel="Up" href="Nvector_array.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials_Index" rel="Chapter" href="Sundials_Index.html">
+<link title="Sundials_Config" rel="Chapter" href="Sundials_Config.html">
+<link title="Sundials_RealArray" rel="Chapter" href="Sundials_RealArray.html">
+<link title="Sundials_RealArray2" rel="Chapter" href="Sundials_RealArray2.html">
+<link title="Sundials_LintArray" rel="Chapter" href="Sundials_LintArray.html">
+<link title="Sundials_ROArray" rel="Chapter" href="Sundials_ROArray.html">
+<link title="Sundials_Logfile" rel="Chapter" href="Sundials_Logfile.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Nvector_many" rel="Chapter" href="Nvector_many.html">
+<link title="Sundials_Matrix" rel="Chapter" href="Sundials_Matrix.html">
+<link title="Sundials_LinearSolver" rel="Chapter" href="Sundials_LinearSolver.html">
+<link title="Sundials_NonlinearSolver" rel="Chapter" href="Sundials_NonlinearSolver.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Arkode" rel="Chapter" href="Arkode.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Nvector_mpimany" rel="Chapter" href="Nvector_mpimany.html">
+<link title="Nvector_mpiplusx" rel="Chapter" href="Nvector_mpiplusx.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Arkode_bbd" rel="Chapter" href="Arkode_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Nvector_openmp" rel="Chapter" href="Nvector_openmp.html">
+<link title="Nvector_pthreads" rel="Chapter" href="Nvector_pthreads.html"><title>Sundials/ML 5.8.0p0 : Nvector_array.ArrayOps</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Nvector_array.ARRAY_NVECTOR.html" title="Nvector_array.ARRAY_NVECTOR">Previous</a>
+&nbsp;<a class="up" href="Nvector_array.html" title="Nvector_array">Up</a>
+&nbsp;</div>
+<h1>Module type <a href="type_Nvector_array.ArrayOps.html">Nvector_array.ArrayOps</a></h1>
+
+<pre><span id="MODULETYPEArrayOps"><span class="keyword">module type</span> ArrayOps</span> = <code class="code"><span class="keyword">sig</span></code> <a href="Nvector_array.ArrayOps.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info modtype top">
+<div class="info-desc">
+<p>A minimal interface for creating a custom nvector on an array type.</p>
+</div>
+</div>
+<hr width="100%">
+
+<pre><span id="TYPEdata"><span class="keyword">type</span> <code class="type"></code>data</span> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>The type of an array to be wrapped as an <a href="Nvector.html#TYPEt"><code class="code"><span class="constructor">Nvector</span>.t</code></a>.</p>
+</div>
+</div>
+
+
+<pre><span id="VALget"><span class="keyword">val</span> get</span> : <code class="type"><a href="Nvector_array.ArrayOps.html#TYPEdata">data</a> -> int -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p>Return the value from the array at the given index.</p>
+</div>
+</div>
+
+<pre><span id="VALset"><span class="keyword">val</span> set</span> : <code class="type"><a href="Nvector_array.ArrayOps.html#TYPEdata">data</a> -> int -> float -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Update the value in the array at the given index.</p>
+</div>
+</div>
+
+<pre><span id="VALfill"><span class="keyword">val</span> fill</span> : <code class="type"><a href="Nvector_array.ArrayOps.html#TYPEdata">data</a> -> float -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Fill the array with a value.</p>
+</div>
+</div>
+
+<pre><span id="VALmake"><span class="keyword">val</span> make</span> : <code class="type">int -> float -> <a href="Nvector_array.ArrayOps.html#TYPEdata">data</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Create an array of the given length initialized to the given value.</p>
+</div>
+</div>
+
+<pre><span id="VALclone"><span class="keyword">val</span> clone</span> : <code class="type"><a href="Nvector_array.ArrayOps.html#TYPEdata">data</a> -> <a href="Nvector_array.ArrayOps.html#TYPEdata">data</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Create a copy of an array.</p>
+</div>
+</div>
+
+<pre><span id="VALlength"><span class="keyword">val</span> length</span> : <code class="type"><a href="Nvector_array.ArrayOps.html#TYPEdata">data</a> -> int</code></pre><div class="info ">
+<div class="info-desc">
+<p>Return the length of an array.</p>
+</div>
+</div>
+</body></html>

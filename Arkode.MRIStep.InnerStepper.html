@@ -1,0 +1,271 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Arkode.MRIStep.Spils.html">
+<link rel="next" href="Arkode.MRIStep.Coupling.html">
+<link rel="Up" href="Arkode.MRIStep.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials_Index" rel="Chapter" href="Sundials_Index.html">
+<link title="Sundials_Config" rel="Chapter" href="Sundials_Config.html">
+<link title="Sundials_RealArray" rel="Chapter" href="Sundials_RealArray.html">
+<link title="Sundials_RealArray2" rel="Chapter" href="Sundials_RealArray2.html">
+<link title="Sundials_LintArray" rel="Chapter" href="Sundials_LintArray.html">
+<link title="Sundials_ROArray" rel="Chapter" href="Sundials_ROArray.html">
+<link title="Sundials_Logfile" rel="Chapter" href="Sundials_Logfile.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Nvector_many" rel="Chapter" href="Nvector_many.html">
+<link title="Sundials_Matrix" rel="Chapter" href="Sundials_Matrix.html">
+<link title="Sundials_LinearSolver" rel="Chapter" href="Sundials_LinearSolver.html">
+<link title="Sundials_NonlinearSolver" rel="Chapter" href="Sundials_NonlinearSolver.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Arkode" rel="Chapter" href="Arkode.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Nvector_mpimany" rel="Chapter" href="Nvector_mpimany.html">
+<link title="Nvector_mpiplusx" rel="Chapter" href="Nvector_mpiplusx.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Arkode_bbd" rel="Chapter" href="Arkode_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Nvector_openmp" rel="Chapter" href="Nvector_openmp.html">
+<link title="Nvector_pthreads" rel="Chapter" href="Nvector_pthreads.html"><link title="Creation" rel="Section" href="#mriinstepcreate">
+<link title="Applying and Accessing Forcing Data" rel="Section" href="#mriinstepforcing">
+<title>Sundials/ML 5.8.0p0 : Arkode.MRIStep.InnerStepper</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Arkode.MRIStep.Spils.html" title="Arkode.MRIStep.Spils">Previous</a>
+&nbsp;<a class="up" href="Arkode.MRIStep.html" title="Arkode.MRIStep">Up</a>
+&nbsp;<a class="post" href="Arkode.MRIStep.Coupling.html" title="Arkode.MRIStep.Coupling">Next</a>
+</div>
+<h1>Module <a href="type_Arkode.MRIStep.InnerStepper.html">Arkode.MRIStep.InnerStepper</a></h1>
+
+<pre><span id="MODULEInnerStepper"><span class="keyword">module</span> InnerStepper</span>: <code class="code"><span class="keyword">sig</span></code> <a href="Arkode.MRIStep.InnerStepper.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+<div class="info-desc">
+<p>Integrators for problems on the MRIStep fast time-scale.</p>
+</div>
+</div>
+<hr width="100%">
+
+<pre><span id="TYPEt"><span class="keyword">type</span> <code class="type">('d, 'k)</code> t</span> = <code class="type">('d, 'k) inner_stepper</code> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>Inner steppers are used to solve the auxiliary initial value problem
+        of an <a href="Arkode.MRIStep.html">MRIStep</a> integrator's fast time-scale.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStep Custom Inner Steppers</div></ul>
+</div>
+
+
+<pre><span id="VALfrom_arkstep"><span class="keyword">val</span> from_arkstep</span> : <code class="type">('d, 'k) <a href="Arkode.ARKStep.html#TYPEsession">Arkode.ARKStep.session</a> -> ('d, 'k) <a href="Arkode.MRIStep.InnerStepper.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Wrap an <a href="Arkode.ARKStep.html#TYPEsession"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">ARKStep</span>.session</code></a> for use as an inner stepper.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKStepCreateMRIStepInnerStepper</div></ul>
+</div>
+<h3 id="mriinstepcreate">Creation</h3>
+<pre><span id="TYPEevolvefn"><span class="keyword">type</span> <code class="type">'d</code> evolvefn</span> = <code class="type">float -> float -> 'd -> unit</code> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>The function <code class="code">efn&nbsp;t0&nbsp;tout&nbsp;v</code> advances the state vector <code class="code">v</code> for the
+        inner (fast) ODE system from time <code class="code">t0</code> to time <code class="code">tout</code>.</p>
+
+<p>Within the function, raising a <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a>
+        exception indicates a recoverable error. Any other exception is
+        treated as an unrecoverable error.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepInnerEvolveFn</div></ul>
+</div>
+
+
+<pre><span id="TYPEfullrhs_mode"><span class="keyword">type</span> <code class="type"></code>fullrhs_mode</span> = <code class="type">fullrhs_mode</code> = </pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfullrhs_mode.Start"><span class="constructor">Start</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>It's the beginning of the simulation.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfullrhs_mode.End"><span class="constructor">End</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>It's the end of a successful step.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfullrhs_mode.Other"><span class="constructor">Other</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Some other reason, e.g., for dense output.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info ">
+<div class="info-desc">
+<p>A flag indicating why the full RHS function has been called.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepInnerFullRhsFn</div></ul>
+</div>
+
+
+<pre><span id="TYPEfull_rhsfn"><span class="keyword">type</span> <code class="type">'d</code> full_rhsfn</span> = <code class="type">float -> 'd -> 'd -> <a href="Arkode.MRIStep.InnerStepper.html#TYPEfullrhs_mode">fullrhs_mode</a> -> unit</code> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>The function <code class="code">rhsfn&nbsp;t&nbsp;v&nbsp;f&nbsp;m</code> updates <code class="code">f</code> with the value of the
+        full right-hand-side function of the inner (fast) ODE at time <code class="code">t</code>
+        and for dependent variable values <code class="code">v</code>.</p>
+
+<p>Within the function, raising a <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a>
+        exception indicates a recoverable error. Any other exception is
+        treated as an unrecoverable error.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepInnerFullRhsFn</div></ul>
+</div>
+
+
+<pre><span id="TYPEresetfn"><span class="keyword">type</span> <code class="type">'d</code> resetfn</span> = <code class="type">float -> 'd -> unit</code> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>The function <code class="code">rfn&nbsp;tR&nbsp;vR</code> rests the inner (fast) stepper state
+        to time <code class="code">tR</code> and dependent variable values <code class="code">vR</code>.</p>
+
+<p>Within the function, raising a <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a>
+        exception indicates a recoverable error. Any other exception is
+        treated as an unrecoverable error.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepInnerResetFn</div></ul>
+</div>
+
+
+<pre><span id="VALmake"><span class="keyword">val</span> make</span> : <code class="type">evolve_fn:'d <a href="Arkode.MRIStep.InnerStepper.html#TYPEevolvefn">evolvefn</a> -><br>       full_rhs_fn:'d <a href="Arkode.MRIStep.InnerStepper.html#TYPEfull_rhsfn">full_rhsfn</a> -><br>       ?reset_fn:'d <a href="Arkode.MRIStep.InnerStepper.html#TYPEresetfn">resetfn</a> -><br>       unit -> ('d, 'k) <a href="Arkode.MRIStep.InnerStepper.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Creates an inner stepper. An inner stepper is defined by
+        obligatory functions to evolve the state vector and calculate the
+        right-hand side, and an optional function to reset the internal state.
+        Inner stepper “content” can be implemented in OCaml using function
+        closures.</p>
+</div>
+<ul class="info-attributes">
+<li><b>Since</b> 5.8.0</li>
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepInnerStepper_Create</div><div class="sundials"><span class="seesundials">See sundials: </span>MRIStepInnerStepper_Free</div><div class="sundials"><span class="seesundials">See sundials: </span>MRIStepInnerStepper_SetContent</div><div class="sundials"><span class="seesundials">See sundials: </span>MRIStepInnerStepper_GetContent</div><div class="sundials"><span class="seesundials">See sundials: </span>MRIStepInnerStepper_SetEvolveFn</div><div class="sundials"><span class="seesundials">See sundials: </span>MRIStepInnerStepper_SetFullRhsFn</div><div class="sundials"><span class="seesundials">See sundials: </span>MRIStepInnerStepper_SetFullResetFn</div></ul>
+</div>
+<h3 id="mriinstepforcing">Applying and Accessing Forcing Data</h3>
+<pre><span id="VALadd_forcing"><span class="keyword">val</span> add_forcing</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.InnerStepper.html#TYPEt">t</a> -> float -> ('d, 'k) <a href="Nvector.html#TYPEt">Nvector.t</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Computes the forcing term at the given time and adds it to the
+        given inner (fast) right-hand-side vector.</p>
+</div>
+<ul class="info-attributes">
+<li><b>Since</b> 5.8.0</li>
+<div class="raisedexceptions"><span class="raises">Raises</span> <code>Invalid_argument</code> The inner stepper is not associated with an integrator</div>
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepInnerStepper_AddForcing</div></ul>
+</div>
+
+<pre><code><span id="TYPEforcing_data"><span class="keyword">type</span> <code class="type">'d</code> forcing_data</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTforcing_data.tshift">tshift</span>&nbsp;: <code class="type">float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Time shift to apply to the current time,
+                            $t^S_{n,i-1}$ .</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTforcing_data.tscale">tscale</span>&nbsp;: <code class="type">float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Time scaling to apply to the current time,
+                            $h^S\Delta C^S_i$ .</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTforcing_data.forcing">forcing</span>&nbsp;: <code class="type">'d array</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>An array of forcing vectors
+                            $\hat{\gamma}_i^{{k}}$ .</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+<code>}</code>
+
+<div class="info ">
+<div class="info-desc">
+<p>The data necessary to computer the forcing term.
+        This includes the shift and scaling factors for the normalized time
+        $\tau = (t - t^S_{n,i-1})/(h^S\Delta c^S_i)$  and the array
+        of polynomial coefficient vectors $\hat{\gamma}_i^{{k}}$ .</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepInnerStepper_GetForcingData</div></ul>
+</div>
+
+
+<pre><span id="VALget_forcing_data"><span class="keyword">val</span> get_forcing_data</span> : <code class="type">('d, 'k) <a href="Arkode.MRIStep.InnerStepper.html#TYPEt">t</a> -><br>       'd <a href="Arkode.MRIStep.InnerStepper.html#TYPEforcing_data">forcing_data</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Return the data necessary to compute the forcing term.</p>
+</div>
+<ul class="info-attributes">
+<li><b>Since</b> 5.8.0</li>
+<div class="raisedexceptions"><span class="raises">Raises</span> <code>Invalid_argument</code> The inner stepper is not associated with an integrator</div>
+<div class="sundials"><span class="seesundials">See sundials: </span>MRIStepInnerStepper_GetForcingData</div></ul>
+</div>
+</body></html>

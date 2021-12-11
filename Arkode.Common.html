@@ -1,0 +1,932 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$']]}});
+</script><script type="text/javascript"
+        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="Start" href="index.html">
+<link rel="next" href="Arkode.Dls.html">
+<link rel="Up" href="Arkode.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Sundials_Index" rel="Chapter" href="Sundials_Index.html">
+<link title="Sundials_Config" rel="Chapter" href="Sundials_Config.html">
+<link title="Sundials_RealArray" rel="Chapter" href="Sundials_RealArray.html">
+<link title="Sundials_RealArray2" rel="Chapter" href="Sundials_RealArray2.html">
+<link title="Sundials_LintArray" rel="Chapter" href="Sundials_LintArray.html">
+<link title="Sundials_ROArray" rel="Chapter" href="Sundials_ROArray.html">
+<link title="Sundials_Logfile" rel="Chapter" href="Sundials_Logfile.html">
+<link title="Sundials" rel="Chapter" href="Sundials.html">
+<link title="Nvector" rel="Chapter" href="Nvector.html">
+<link title="Nvector_serial" rel="Chapter" href="Nvector_serial.html">
+<link title="Nvector_many" rel="Chapter" href="Nvector_many.html">
+<link title="Sundials_Matrix" rel="Chapter" href="Sundials_Matrix.html">
+<link title="Sundials_LinearSolver" rel="Chapter" href="Sundials_LinearSolver.html">
+<link title="Sundials_NonlinearSolver" rel="Chapter" href="Sundials_NonlinearSolver.html">
+<link title="Nvector_custom" rel="Chapter" href="Nvector_custom.html">
+<link title="Nvector_array" rel="Chapter" href="Nvector_array.html">
+<link title="Cvode" rel="Chapter" href="Cvode.html">
+<link title="Kinsol" rel="Chapter" href="Kinsol.html">
+<link title="Ida" rel="Chapter" href="Ida.html">
+<link title="Arkode" rel="Chapter" href="Arkode.html">
+<link title="Cvodes" rel="Chapter" href="Cvodes.html">
+<link title="Idas" rel="Chapter" href="Idas.html">
+<link title="Nvector_parallel" rel="Chapter" href="Nvector_parallel.html">
+<link title="Nvector_mpimany" rel="Chapter" href="Nvector_mpimany.html">
+<link title="Nvector_mpiplusx" rel="Chapter" href="Nvector_mpiplusx.html">
+<link title="Kinsol_bbd" rel="Chapter" href="Kinsol_bbd.html">
+<link title="Arkode_bbd" rel="Chapter" href="Arkode_bbd.html">
+<link title="Cvode_bbd" rel="Chapter" href="Cvode_bbd.html">
+<link title="Cvodes_bbd" rel="Chapter" href="Cvodes_bbd.html">
+<link title="Ida_bbd" rel="Chapter" href="Ida_bbd.html">
+<link title="Idas_bbd" rel="Chapter" href="Idas_bbd.html">
+<link title="Nvector_openmp" rel="Chapter" href="Nvector_openmp.html">
+<link title="Nvector_pthreads" rel="Chapter" href="Nvector_pthreads.html"><link title="Common Linear Solver Definitions" rel="Section" href="#lsolvers">
+<link title="Tolerances" rel="Subsection" href="#tol">
+<link title="Roots" rel="Subsection" href="#roots">
+<link title="Adaptivity" rel="Subsection" href="#adapt">
+<link title="Callback functions" rel="Subsection" href="#callbacks">
+<title>Sundials/ML 5.8.0p0 : Arkode.Common</title>
+</head>
+<body>
+<div class="navbar">&nbsp;<a class="up" href="Arkode.html" title="Arkode">Up</a>
+&nbsp;<a class="post" href="Arkode.Dls.html" title="Arkode.Dls">Next</a>
+</div>
+<h1>Module <a href="type_Arkode.Common.html">Arkode.Common</a></h1>
+
+<pre><span id="MODULECommon"><span class="keyword">module</span> Common</span>: <code class="code"><span class="keyword">sig</span></code> <a href="Arkode.Common.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+<div class="info-desc">
+<p>Common definitions that are included in each of the time-stepping
+    modules.</p>
+</div>
+</div>
+<hr width="100%">
+
+<pre><code><span id="TYPEsolver_result"><span class="keyword">type</span> <code class="type"></code>solver_result</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTsolver_result.Success"><span class="constructor">Success</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>The solution was advanced. <span class="cconst">(ARK_SUCCESS)</span></p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTsolver_result.RootsFound"><span class="constructor">RootsFound</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>A root was found. See <a href="Arkode.ARKStep.html#VALget_root_info"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">ARKStep</span>.get_root_info</code></a>,
+                              <a href="Arkode.ERKStep.html#VALget_root_info"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.get_root_info</code></a>, or
+                              <a href="Arkode.MRIStep.html#VALget_root_info"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">MRIStep</span>.get_root_info</code></a>.
+                              <span class="cconst">(ARK_ROOT_RETURN)</span></p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTsolver_result.StopTimeReached"><span class="constructor">StopTimeReached</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>The stop time was reached. See
+                              <a href="Arkode.ARKStep.html#VALset_stop_time"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">ARKStep</span>.set_stop_time</code></a>,
+                              <a href="Arkode.ERKStep.html#VALset_stop_time"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.set_stop_time</code></a>,
+                              or <a href="Arkode.MRIStep.html#VALset_stop_time"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">MRIStep</span>.set_stop_time</code></a>.
+                              <span class="cconst">(ARK_TSTOP_RETURN)</span></p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info ">
+<div class="info-desc">
+<p>Values returned by the step functions. Failures are indicated by
+      exceptions.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKStepEvolve</div><div class="sundials"><span class="seesundials">See sundials: </span>ERKStepEvolve</div><div class="sundials"><span class="seesundials">See sundials: </span>MRIStepEvolve</div></ul>
+</div>
+
+
+<pre><code><span id="TYPEstep_stats"><span class="keyword">type</span> <code class="type"></code>step_stats</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTstep_stats.num_steps">num_steps</span>&nbsp;: <code class="type">int</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Cumulative number of internal solver steps.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTstep_stats.actual_init_step">actual_init_step</span>&nbsp;: <code class="type">float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Integration step sized used on the first step.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTstep_stats.last_step">last_step</span>&nbsp;: <code class="type">float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Integration step size of the last internal step.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTstep_stats.current_step">current_step</span>&nbsp;: <code class="type">float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Integration step size to attempt on the next internal step.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTstep_stats.current_time">current_time</span>&nbsp;: <code class="type">float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Current internal time reached by the solver.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+<code>}</code>
+
+<div class="info ">
+<div class="info-desc">
+<p>Summaries of integrator statistics.</p>
+</div>
+</div>
+
+
+<pre><code><span id="TYPEinterpolant_type"><span class="keyword">type</span> <code class="type"></code>interpolant_type</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTinterpolant_type.Hermite"><span class="constructor">Hermite</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Polynomial interpolants of Hermite form.
+                      <span class="cconst">(ARK_INTERP_HERMITE)</span></p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTinterpolant_type.Lagrange"><span class="constructor">Lagrange</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Polynomial interpolants of Lagrange form, for stiff
+                      problems.
+                      <span class="cconst">(ARK_INTERP_LAGRANGE)</span></p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info ">
+<div class="info-desc">
+<p>Used to specify the nterpolation method used for output values and
+      implicit method predictors. See, for example,
+      <a href="Arkode.MRIStep.html#VALset_interpolant_type"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">MRIStep</span>.set_interpolant_type</code></a>.</p>
+</div>
+</div>
+
+
+<pre><code><span id="TYPElinearity"><span class="keyword">type</span> <code class="type"></code>linearity</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTlinearity.Linear"><span class="constructor">Linear</span></span> <span class="keyword">of</span> <code class="type">bool</code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Implicit portion is linear. Specifies whether
+                          $f_I(t, y)$ or the preconditioner is
+                          time-dependent.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTlinearity.Nonlinear"><span class="constructor">Nonlinear</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Implicit portion is nonlinear.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info ">
+<div class="info-desc">
+<p>The linearity of the implicit portion of the problem.</p>
+</div>
+</div>
+
+<h4 id="tol">Tolerances</h4>
+<pre><span id="TYPEerror_weight_fun"><span class="keyword">type</span> <code class="type">'data</code> error_weight_fun</span> = <code class="type">'data -> 'data -> unit</code> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>Functions that set the multiplicative error weights for use in the weighted
+      RMS norm. The call <code class="code">efun&nbsp;y&nbsp;ewt</code> takes the dependent variable vector <code class="code">y</code> and
+      fills the error-weight vector <code class="code">ewt</code> with positive values or raises
+      <a href="Sundials.html#EXCEPTIONNonPositiveEwt"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">NonPositiveEwt</span></code></a>. Other exceptions are eventually propagated, but
+      should be avoided (<code class="code">efun</code> is not allowed to abort the solver).</p>
+</div>
+</div>
+
+
+<pre><code><span id="TYPEtolerance"><span class="keyword">type</span> <code class="type">('data, 'kind)</code> tolerance</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTtolerance.SStolerances"><span class="constructor">SStolerances</span></span> <span class="keyword">of</span> <code class="type">float * float</code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p><code class="code">(rel,&nbsp;abs)</code> : scalar relative and absolute tolerances.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTtolerance.SVtolerances"><span class="constructor">SVtolerances</span></span> <span class="keyword">of</span> <code class="type">float * ('data, 'kind) <a href="Nvector.html#TYPEt">Nvector.t</a></code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p><code class="code">(rel,&nbsp;abs)</code> : scalar relative and vector absolute tolerances.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTtolerance.WFtolerances"><span class="constructor">WFtolerances</span></span> <span class="keyword">of</span> <code class="type">'data <a href="Arkode.Common.html#TYPEerror_weight_fun">error_weight_fun</a></code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Set the multiplicative error weights for the weighted RMS norm.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info ">
+<div class="info-desc">
+<p>Tolerance specifications.</p>
+</div>
+</div>
+
+
+<pre><span id="VALdefault_tolerances"><span class="keyword">val</span> default_tolerances</span> : <code class="type">('data, 'kind) <a href="Arkode.Common.html#TYPEtolerance">tolerance</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>A default relative tolerance of 1.0e-4 and absolute tolerance of 1.0e-9.</p>
+</div>
+</div>
+
+<pre><code><span id="TYPEpredictor_method"><span class="keyword">type</span> <code class="type"></code>predictor_method</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTpredictor_method.TrivialPredictor"><span class="constructor">TrivialPredictor</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Piece-wise constant interpolant
+                                  $p_0(\tau) = y_{n-1}$ %</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTpredictor_method.MaximumOrderPredictor"><span class="constructor">MaximumOrderPredictor</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>An interpolant $p_q(t)$ of polynomial
+                                  order up to $q=3$.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTpredictor_method.VariableOrderPredictor"><span class="constructor">VariableOrderPredictor</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Decrease the polynomial degree for later RK
+                                  stages.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTpredictor_method.CutoffOrderPredictor"><span class="constructor">CutoffOrderPredictor</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Maximum order for early RK stages and
+                                  first-order for later ones.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTpredictor_method.BootstrapPredictor"><span class="constructor">BootstrapPredictor</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Second-order predictor based only on the
+                                  current step.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTpredictor_method.MinimumCorrectionPredictor"><span class="constructor">MinimumCorrectionPredictor</span></span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Uses all preceding stage information within
+                                  the current step for prediction.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info ">
+<div class="info-desc">
+<p>Method choices for predicting implicit solutions.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>Implicit predictors</div></ul>
+</div>
+
+
+<pre><code><span id="TYPEnonlin_system_data"><span class="keyword">type</span> <code class="type">'d</code> nonlin_system_data</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTnonlin_system_data.tcur">tcur</span>&nbsp;: <code class="type">float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Independent variable value for slow stage $t^S_{n,i}$ .</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTnonlin_system_data.zpred">zpred</span>&nbsp;: <code class="type">'d</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Predicted nonlinear solution $z_{\mathit{pred}}$ . This
+          data must not be changed.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTnonlin_system_data.zi">zi</span>&nbsp;: <code class="type">'d</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Stage vector $z_i$ . This data may not be current and may
+          need to be filled.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTnonlin_system_data.fi">fi</span>&nbsp;: <code class="type">'d</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Memory available for evaluating the slow right-hand side
+          $f^S(t^S_{n,i}, z_i)$ . This data may not be current and may
+          need to be filled.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTnonlin_system_data.gamma">gamma</span>&nbsp;: <code class="type">float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Current $\gamma$  for slow-stage calculation.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTnonlin_system_data.sdata">sdata</span>&nbsp;: <code class="type">'d</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Accumulated data from previous solution and stages
+          $\tilde{a}_i$ . This data must not be changed.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+<code>}</code>
+
+<div class="info ">
+<div class="info-desc">
+<p>Internal data required to construct the current nonlinear implicit
+      system within a nonlinear solver.</p>
+</div>
+</div>
+
+<h4 id="roots">Roots</h4>
+<pre><span id="TYPErootsfn"><span class="keyword">type</span> <code class="type">'d</code> rootsfn</span> = <code class="type">float -> 'd -> Sundials.RealArray.t -> unit</code> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>Called by the solver to calculate the values of root functions. These
+      ‘zero-crossings’ are used to detect significant events. The function is
+      passed three arguments:</p>
+<ul>
+<li><code class="code">t</code>, the value of the independent variable, i.e., the simulation time,</li>
+<li><code class="code">y</code>, the vector of dependent-variable values, i.e., $y(t)$, and,</li>
+<li><code class="code">gout</code>, a vector for storing the value of $g(t, y)$.</li>
+</ul>
+<p><div class="warningbox"> <code class="code">y</code> and <code class="code">gout</code> should not be accessed after the function has
+               returned.</div></p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKRootFn</div></ul>
+</div>
+
+
+<pre><span id="VALno_roots"><span class="keyword">val</span> no_roots</span> : <code class="type">int * 'd <a href="Arkode.Common.html#TYPErootsfn">rootsfn</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>A convenience value for signalling that there are no roots to monitor.</p>
+</div>
+</div>
+<h4 id="adapt">Adaptivity</h4>
+<pre><code><span id="TYPEadaptivity_args"><span class="keyword">type</span> <code class="type"></code>adaptivity_args</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTadaptivity_args.h1">h1</span>&nbsp;: <code class="type">float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>the current step size, $t_m - t_{m-1}$.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTadaptivity_args.h2">h2</span>&nbsp;: <code class="type">float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>the previous step size, $t_{m-1} - t_{m-2}$.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTadaptivity_args.h3">h3</span>&nbsp;: <code class="type">float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>the step size $t_{m-2} - t_{m-3}$.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTadaptivity_args.e1">e1</span>&nbsp;: <code class="type">float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>the error estimate from the current step, $m$.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTadaptivity_args.e2">e2</span>&nbsp;: <code class="type">float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>the error estimate from the previous step, $m-1$.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTadaptivity_args.e3">e3</span>&nbsp;: <code class="type">float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>the error estimate from the step $m-2$.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTadaptivity_args.q">q</span>&nbsp;: <code class="type">int</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>the global order of accuracy for the integration method.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTadaptivity_args.p">p</span>&nbsp;: <code class="type">int</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>the global order of accuracy for the embedding.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+<code>}</code>
+
+<div class="info ">
+<div class="info-desc">
+<p>Arguments for <a href="Arkode.Common.html#TYPEadaptivity_fn"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">Common</span>.adaptivity_fn</code></a>s.</p>
+</div>
+</div>
+
+
+<pre><span id="TYPEadaptivity_fn"><span class="keyword">type</span> <code class="type">'d</code> adaptivity_fn</span> = <code class="type">float -> 'd -> <a href="Arkode.Common.html#TYPEadaptivity_args">adaptivity_args</a> -> float</code> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>A function implementing a time step adaptivity algorithm that chooses an
+      $h$ that satisfies the error tolerances. The call <code class="code">hnew&nbsp;=&nbsp;adapt_fn&nbsp;t&nbsp;y&nbsp;args</code>
+      has as arguments</p>
+<ul>
+<li><code class="code">t</code>, the value of the independent variable,</li>
+<li><code class="code">y</code>, the value of the dependent variable vector $y(t)$, and</li>
+<li><code class="code">args</code>, information on step sizes, error estimates, and accuracies.
+      and returns the next step size <code class="code">hnew</code>. The function should raise an
+      exception if it cannot set the next step size. The step size should be the
+      maximum value where the error estimates remain below 1.</li>
+</ul>
+<p>This function should focus on accuracy-based time step estimation; for
+      stability based time steps, <a href="Arkode.ARKStep.html#VALset_stability_fn"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">ARKStep</span>.set_stability_fn</code></a> and
+      <a href="Arkode.ERKStep.html#VALset_stability_fn"><code class="code"><span class="constructor">Arkode</span>.<span class="constructor">ERKStep</span>.set_stability_fn</code></a> should be used.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKAdaptFn</div></ul>
+</div>
+
+
+<pre><code><span id="TYPEadaptivity_params"><span class="keyword">type</span> <code class="type"></code>adaptivity_params</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTadaptivity_params.ks">ks</span>&nbsp;: <code class="type">(float * float * float) option</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTadaptivity_params.method_order">method_order</span>&nbsp;: <code class="type">bool</code>;</code></td>
+
+</tr></table>
+<code>}</code>
+
+<div class="info ">
+<div class="info-desc">
+<p>Parameters for the standard adaptivity algorithms.
+      There are two:</p>
+<ul>
+<li><code class="code">adaptivity_ks</code>, the <code class="code">k1</code>, <code class="code">k2</code>, and <code class="code">k3</code> parameters, or <code class="code"><span class="constructor">None</span></code>
+        to use the defaults, and</li>
+<li><code class="code">adaptivity_method_order</code>, <code class="code"><span class="keyword">true</span></code> specifies the method order of
+        accuracy $q$ and <code class="code"><span class="keyword">false</span></code> specifies the embedding order of
+        accuracy $p$.</li>
+</ul>
+</div>
+</div>
+
+
+<pre><code><span id="TYPEadaptivity_method"><span class="keyword">type</span> <code class="type">'d</code> adaptivity_method</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTadaptivity_method.PIDcontroller"><span class="constructor">PIDcontroller</span></span> <span class="keyword">of</span> <code class="type"><a href="Arkode.Common.html#TYPEadaptivity_params">adaptivity_params</a></code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>The default time adaptivity controller.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTadaptivity_method.PIcontroller"><span class="constructor">PIcontroller</span></span> <span class="keyword">of</span> <code class="type"><a href="Arkode.Common.html#TYPEadaptivity_params">adaptivity_params</a></code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Uses the two most recent step sizes.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTadaptivity_method.Icontroller"><span class="constructor">Icontroller</span></span> <span class="keyword">of</span> <code class="type"><a href="Arkode.Common.html#TYPEadaptivity_params">adaptivity_params</a></code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Standard time adaptivity control algorithm.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTadaptivity_method.ExplicitGustafsson"><span class="constructor">ExplicitGustafsson</span></span> <span class="keyword">of</span> <code class="type"><a href="Arkode.Common.html#TYPEadaptivity_params">adaptivity_params</a></code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Primarily used with explicit RK methods.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTadaptivity_method.ImplicitGustafsson"><span class="constructor">ImplicitGustafsson</span></span> <span class="keyword">of</span> <code class="type"><a href="Arkode.Common.html#TYPEadaptivity_params">adaptivity_params</a></code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Primarily used with implicit RK methods.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTadaptivity_method.ImExGustafsson"><span class="constructor">ImExGustafsson</span></span> <span class="keyword">of</span> <code class="type"><a href="Arkode.Common.html#TYPEadaptivity_params">adaptivity_params</a></code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>An ImEx version of the two preceding controllers.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTadaptivity_method.AdaptivityFn"><span class="constructor">AdaptivityFn</span></span> <span class="keyword">of</span> <code class="type">'d <a href="Arkode.Common.html#TYPEadaptivity_fn">adaptivity_fn</a></code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>A custom time-step adaptivity function.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info ">
+<div class="info-desc">
+<p>Asymptotic error control algorithms.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>Asymptotic error control</div></ul>
+</div>
+
+<h4 id="callbacks">Callback functions</h4>
+<pre><span id="TYPErhsfn"><span class="keyword">type</span> <code class="type">'d</code> rhsfn</span> = <code class="type">float -> 'd -> 'd -> unit</code> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>Right-hand side functions for calculating ODE derivatives. They are passed
+      three arguments:</p>
+<ul>
+<li><code class="code">t</code>, the value of the independent variable, i.e., the simulation time,</li>
+<li><code class="code">y</code>, the vector of dependent-variable values, i.e., $y(t)$, and,</li>
+<li><code class="code">y'</code>, a vector for storing the value of $f(t, y)$.</li>
+</ul>
+<p>Within the function, raising a <a href="Sundials.html#EXCEPTIONRecoverableFailure"><code class="code"><span class="constructor">Sundials</span>.<span class="constructor">RecoverableFailure</span></code></a> exception
+      indicates a recoverable error. Any other exception is treated as an
+      unrecoverable error.</p>
+
+<p><div class="warningbox"> <code class="code">y</code> and <code class="code">y'</code> should not be accessed after the function returns.</div></p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKRhsFn</div></ul>
+</div>
+
+
+<pre><span id="TYPEstability_fn"><span class="keyword">type</span> <code class="type">'d</code> stability_fn</span> = <code class="type">float -> 'd -> float</code> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>A function that predicts the maximum stable step size for the explicit
+      portions of an ImEx ODE system. The call <code class="code">hstab&nbsp;=&nbsp;stab_fn&nbsp;t&nbsp;y</code>
+      has as arguments</p>
+<ul>
+<li><code class="code">t</code>, the value of the independent variable, and</li>
+<li><code class="code">y</code>, the value of the dependent variable vector $y(t)$.
+      and returns the absolute value of the maximum stable step size <code class="code">hstab</code>.
+      Returning $\mathtt{hstab}\le 0$ indicates that there is no explicit
+      stability restriction on the time step size. The function should raise
+      an exception if it cannot set the next step size.</li>
+</ul>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKExpStabFn</div></ul>
+</div>
+
+
+<pre><span id="TYPEresize_fn"><span class="keyword">type</span> <code class="type">'d</code> resize_fn</span> = <code class="type">'d -> 'd -> unit</code> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>Called to resize a vector to match the dimensions of another. The call
+      <code class="code">resizefn&nbsp;y&nbsp;ytemplate</code> must resize <code class="code">y</code> to match the size of <code class="code">ytemplate</code>.</p>
+
+<p><div class="warningbox"> <code class="code">y</code> and <code class="code">ytemplate</code> should not be accessed after the function
+               has returned.</div></p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKVecResizeFn</div></ul>
+</div>
+
+
+<pre><span id="TYPEpostprocess_step_fn"><span class="keyword">type</span> <code class="type">'d</code> postprocess_step_fn</span> = <code class="type">float -> 'd -> unit</code> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>A function to process the results of each timestep solution.
+      The arguments are</p>
+<ul>
+<li><code class="code">t</code>, the value of the independent variable, and</li>
+<li><code class="code">y</code>, the value of the dependent variable vector $y(t)$.</li>
+</ul>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKPostprocessStepFn</div></ul>
+</div>
+
+<h3 id="lsolvers">Common Linear Solver Definitions</h3>
+<p>Definitions common to linear solvers within the time-stepping modules.</p>
+
+<pre><span id="TYPEtriple"><span class="keyword">type</span> <code class="type">'d</code> triple</span> = <code class="type">'d * 'd * 'd</code> </pre>
+<div class="info ">
+<div class="info-desc">
+<p>Workspaces with three temporary vectors.</p>
+</div>
+</div>
+
+
+<pre><span id="TYPEjacobian_arg"><span class="keyword">type</span> <code class="type">('t, 'd)</code> jacobian_arg</span> = <code class="type">('t, 'd) jacobian_arg</code> = {</pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTjacobian_arg.jac_t">jac_t</span>&nbsp;: <code class="type">float</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>The independent variable.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTjacobian_arg.jac_y">jac_y</span>&nbsp;: <code class="type">'d</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>The dependent variable vector.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTjacobian_arg.jac_fy">jac_fy</span>&nbsp;: <code class="type">'d</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>The derivative vector $f_I(t, y)$.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTjacobian_arg.jac_tmp">jac_tmp</span>&nbsp;: <code class="type">'t</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+<div class="info-desc">
+<p>Workspace data.</p>
+</div>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+<code>}</code>
+
+<div class="info ">
+<div class="info-desc">
+<p>Arguments common to Jacobian callback functions.</p>
+</div>
+<ul class="info-attributes">
+<div class="sundials"><span class="seesundials">See sundials: </span>ARKLsJacFn</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKLsJacTimesVecFn</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKLsPrecSolveFn</div><div class="sundials"><span class="seesundials">See sundials: </span>ARKLsPrecSetupFn</div></ul>
+</div>
+
+</body></html>
