@@ -243,6 +243,16 @@ else
     distribution=unknown
 fi
 
+case "${os_distribution}" in
+    macports)
+	prefix="${prefix:-/opt/local/}"
+	SUNDIALS_DIR="${SUNDIALS_DIR:-/opt/local/}"
+	KLU_LIBRARY_DIR="${KLU_LIBRARY_DIR:-/opt/local/lib/}"
+	KLU_INCLUDE_DIR="${KLU_INCLUDE_DIR:-/opt/local/include/}"
+	;;
+    *)
+esac
+
 if [ x"${OCAMLROOT}" != x ]; then
     OCAMLBIN="${OCAMLROOT%/}/bin/"
 fi

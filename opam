@@ -47,12 +47,11 @@ depopts: [
     "ocaml" { >= "4.03.0" }
 ]
 depexts: [
-    [["debian"] ["libsundials-dev"]]
-    [["ubuntu"] ["libsundials-dev"]]
-    [["fedora"] ["lapack-devel" "sundials-devel"]]
-    [["centos"] ["epel-release" "lapack-devel" "sundials-devel"]]
-    [["osx" "homebrew"] ["sundials"]]
-    [["osx" "macports"] ["sundials"]]
+    ["libsundials-dev"] {os-family = "debian"}
+    ["lapack-devel" "sundials-devel"] {os-distribution = "fedora"}
+    ["epel-release" "lapack-devel" "sundials-devel"] {os-distribution = "centos"}
+    ["sundials"] {os = "macos" & os-distribution = "homebrew"}
+    ["sundials" "SuiteSparse_config"] {os = "macos" & os-distribution = "macports"}
 ]
 synopsis: "Interface to the Sundials suite of numerical solvers"
 description: """
