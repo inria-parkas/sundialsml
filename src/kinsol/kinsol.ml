@@ -229,7 +229,7 @@ module Dls = struct (* {{{ *)
     | None -> failwith "a direct linear solver is required"
 
   let solver ?jac ls session _ =
-    let LSI.(LS ({ rawptr; solver; matrix } as hls)) = ls in
+    let LSI.LS ({ LSI.rawptr; LSI.solver; LSI.matrix } as hls) = ls in
     let m = assert_matrix matrix in
     set_ls_callbacks ?jac solver m session;
     if Sundials_impl.Version.in_compat_mode2

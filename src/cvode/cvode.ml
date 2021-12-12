@@ -293,7 +293,7 @@ module Dls = struct (* {{{ *)
     | None -> failwith "a direct linear solver is required"
 
   let solver ?jac ?linsys ls session _ =
-    let LSI.(LS ({ rawptr; solver; matrix } as hls)) = ls in
+    let LSI.LS ({ LSI.rawptr; LSI.solver; LSI.matrix } as hls) = ls in
     let matrix = assert_matrix matrix in
     if Sundials_impl.Version.lt500 && linsys <> None
       then raise Config.NotImplementedBySundialsVersion;
