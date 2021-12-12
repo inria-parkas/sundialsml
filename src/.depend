@@ -69,6 +69,7 @@ arkode/arkode_impl.cmo : \
     sundials/sundials_RealArray.cmi \
     lsolvers/sundials_NonlinearSolver_impl.cmo \
     lsolvers/sundials_Matrix.cmi \
+    sundials/sundials_Logfile.cmi \
     lsolvers/sundials_LinearSolver_impl.cmo \
     lsolvers/sundials_LinearSolver.cmi \
     sundials/sundials.cmi \
@@ -80,6 +81,7 @@ arkode/arkode_impl.cmx : \
     sundials/sundials_RealArray.cmx \
     lsolvers/sundials_NonlinearSolver_impl.cmx \
     lsolvers/sundials_Matrix.cmx \
+    sundials/sundials_Logfile.cmx \
     lsolvers/sundials_LinearSolver_impl.cmx \
     lsolvers/sundials_LinearSolver.cmx \
     sundials/sundials.cmx \
@@ -151,6 +153,7 @@ cvode/cvode_impl.cmo : \
     sundials/sundials_RealArray.cmi \
     lsolvers/sundials_NonlinearSolver_impl.cmo \
     lsolvers/sundials_Matrix.cmi \
+    sundials/sundials_Logfile.cmi \
     lsolvers/sundials_LinearSolver_impl.cmo \
     lsolvers/sundials_LinearSolver.cmi \
     sundials/sundials.cmi \
@@ -162,6 +165,7 @@ cvode/cvode_impl.cmx : \
     sundials/sundials_RealArray.cmx \
     lsolvers/sundials_NonlinearSolver_impl.cmx \
     lsolvers/sundials_Matrix.cmx \
+    sundials/sundials_Logfile.cmx \
     lsolvers/sundials_LinearSolver_impl.cmx \
     lsolvers/sundials_LinearSolver.cmx \
     sundials/sundials.cmx \
@@ -288,6 +292,7 @@ ida/ida_impl.cmo : \
     sundials/sundials_RealArray.cmi \
     lsolvers/sundials_NonlinearSolver_impl.cmo \
     lsolvers/sundials_Matrix.cmi \
+    sundials/sundials_Logfile.cmi \
     lsolvers/sundials_LinearSolver_impl.cmo \
     lsolvers/sundials_LinearSolver.cmi \
     sundials/sundials.cmi \
@@ -299,6 +304,7 @@ ida/ida_impl.cmx : \
     sundials/sundials_RealArray.cmx \
     lsolvers/sundials_NonlinearSolver_impl.cmx \
     lsolvers/sundials_Matrix.cmx \
+    sundials/sundials_Logfile.cmx \
     lsolvers/sundials_LinearSolver_impl.cmx \
     lsolvers/sundials_LinearSolver.cmx \
     sundials/sundials.cmx \
@@ -421,6 +427,7 @@ kinsol/kinsol_impl.cmo : \
     sundials/sundials_configuration.cmo \
     sundials/sundials_RealArray.cmi \
     lsolvers/sundials_Matrix.cmi \
+    sundials/sundials_Logfile.cmi \
     lsolvers/sundials_LinearSolver_impl.cmo \
     lsolvers/sundials_LinearSolver.cmi \
     sundials/sundials.cmi \
@@ -431,6 +438,7 @@ kinsol/kinsol_impl.cmx : \
     sundials/sundials_configuration.cmx \
     sundials/sundials_RealArray.cmx \
     lsolvers/sundials_Matrix.cmx \
+    sundials/sundials_Logfile.cmx \
     lsolvers/sundials_LinearSolver_impl.cmx \
     lsolvers/sundials_LinearSolver.cmx \
     sundials/sundials.cmx \
@@ -478,11 +486,13 @@ lsolvers/sundials_LinearSolver.cmi : \
 lsolvers/sundials_LinearSolver_impl.cmo : \
     sundials/sundials_impl.cmo \
     lsolvers/sundials_Matrix.cmi \
+    sundials/sundials_Logfile.cmi \
     sundials/sundials.cmi \
     nvectors/nvector.cmi
 lsolvers/sundials_LinearSolver_impl.cmx : \
     sundials/sundials_impl.cmx \
     lsolvers/sundials_Matrix.cmx \
+    sundials/sundials_Logfile.cmx \
     sundials/sundials.cmx \
     nvectors/nvector.cmx
 lsolvers/sundials_Matrix.cmo : \
@@ -900,7 +910,8 @@ cvodes_bbd_ml.o: cvodes/cvodes_bbd_ml.c cvodes/../sundials/sundials_ml.h \
  cvodes/cvodes_ml.h cvodes/../nvectors/nvector_ml.h \
  cvodes/../nvectors/../sundials/sundials_ml.h
 cvodes_klu_ml.o: cvodes/cvodes_klu_ml.c cvodes/../sundials/sundials_ml.h \
- cvodes/../sundials/../config.h cvodes/../cvode/cvode_ml.h \
+ cvodes/../sundials/../config.h cvodes/../nvectors/nvector_ml.h \
+ cvodes/../nvectors/../sundials/sundials_ml.h cvodes/../cvode/cvode_ml.h \
  cvodes/cvodes_ml.h cvodes/../lsolvers/sundials_matrix_ml.h
 cvodes_ml.o: cvodes/cvodes_ml.c cvodes/../config.h \
  cvodes/../lsolvers/sundials_matrix_ml.h \
@@ -912,8 +923,9 @@ cvodes_ml.o: cvodes/cvodes_ml.c cvodes/../config.h \
  cvodes/../nvectors/../sundials/sundials_ml.h
 cvodes_superlumt_ml.o: cvodes/cvodes_superlumt_ml.c \
  cvodes/../sundials/sundials_ml.h cvodes/../sundials/../config.h \
- cvodes/../cvode/cvode_ml.h cvodes/cvodes_ml.h \
- cvodes/../lsolvers/sundials_matrix_ml.h
+ cvodes/../nvectors/nvector_ml.h \
+ cvodes/../nvectors/../sundials/sundials_ml.h cvodes/../cvode/cvode_ml.h \
+ cvodes/cvodes_ml.h cvodes/../lsolvers/sundials_matrix_ml.h
 ida_bbd_ml.o: ida/ida_bbd_ml.c ida/../sundials/sundials_ml.h \
  ida/../sundials/../config.h ida/ida_ml.h ida/../nvectors/nvector_ml.h \
  ida/../nvectors/../sundials/sundials_ml.h
@@ -934,7 +946,8 @@ idas_bbd_ml.o: idas/idas_bbd_ml.c idas/../sundials/sundials_ml.h \
  idas/../ida/../sundials/sundials_ml.h idas/idas_ml.h \
  idas/../nvectors/nvector_ml.h idas/../nvectors/../sundials/sundials_ml.h
 idas_klu_ml.o: idas/idas_klu_ml.c idas/../sundials/sundials_ml.h \
- idas/../sundials/../config.h idas/../ida/ida_ml.h \
+ idas/../sundials/../config.h idas/../nvectors/nvector_ml.h \
+ idas/../nvectors/../sundials/sundials_ml.h idas/../ida/ida_ml.h \
  idas/../ida/../sundials/sundials_ml.h idas/idas_ml.h \
  idas/../lsolvers/sundials_matrix_ml.h
 idas_ml.o: idas/idas_ml.c idas/../config.h idas/../ida/ida_ml.h \
@@ -947,6 +960,7 @@ idas_ml.o: idas/idas_ml.c idas/../config.h idas/../ida/ida_ml.h \
  idas/../lsolvers/sundials_matrix_ml.h
 idas_superlumt_ml.o: idas/idas_superlumt_ml.c \
  idas/../sundials/sundials_ml.h idas/../sundials/../config.h \
+ idas/../nvectors/nvector_ml.h idas/../nvectors/../sundials/sundials_ml.h \
  idas/../ida/ida_ml.h idas/../ida/../sundials/sundials_ml.h \
  idas/idas_ml.h idas/../lsolvers/sundials_matrix_ml.h
 kinsol_bbd_ml.o: kinsol/kinsol_bbd_ml.c kinsol/kinsol_ml.h \
