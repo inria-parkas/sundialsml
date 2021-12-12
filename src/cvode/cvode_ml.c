@@ -2093,7 +2093,7 @@ CAMLprim value sunml_cvode_set_jac_eval_frequency(value vcvode_mem,
 {
     CAMLparam2(vcvode_mem, vfreq);
 
-#if 500 <= SUNDIALS_LIB_VERSION
+#if 540 <= SUNDIALS_LIB_VERSION
     int flag = CVodeSetJacEvalFrequency(CVODE_MEM_FROM_ML(vcvode_mem),
 					Long_val(vfreq));
     CHECK_LS_FLAG("CVodeSetJacEvalFrequency", flag);
