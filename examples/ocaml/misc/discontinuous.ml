@@ -24,7 +24,7 @@ let print_with_time t v =
 
  *)
 
-let f t_s y yd =
+let f _ y yd =
   let r =
     if y.{t} < thresh1 then 1.0
     else if y.{t} < thresh2 then -1.0
@@ -35,7 +35,7 @@ let f t_s y yd =
 
 (* z = up(t -. thresh2) *)
 
-let g t_s y gout =
+let g _ y gout =
   gout.{0} <- y.{t} -. thresh2
 
 (* simulation *)

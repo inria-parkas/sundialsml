@@ -61,14 +61,14 @@ type userdata = {
 }
 
 (* ff routine to compute the fast portion of the ODE RHS. *)
-let ff { n } t (y : RealArray.t) (ydot : RealArray.t) =
+let ff { n } _ (y : RealArray.t) (ydot : RealArray.t) =
   (* iterate over domain, computing reaction term *)
   for i = 0 to n - 1 do
     ydot.{i} <- y.{i} *. y.{i} *. (1.0 -. y.{i})
   done
 
 (* fs routine to compute the slow portion of the ODE RHS. *)
-let fs { n; k; dx } t (y : RealArray.t) (ydot : RealArray.t) =
+let fs { n; k; dx } _ (y : RealArray.t) (ydot : RealArray.t) =
   (* iterate over domain, computing diffusion term *)
   let c1 = k/.dx/.dx in
   let c2 = 2.0*.k/.dx/.dx in
@@ -224,7 +224,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

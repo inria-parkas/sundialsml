@@ -38,11 +38,11 @@ let pivot = (0.5, 0.8)
 (* There are 2 variables.  *)
 let theta, theta' = 0, 1
 
-let rhs t y yd =
+let rhs _ y yd =
   yd.{theta}  <- y.{theta'};
   yd.{theta'} <- -. g * sin y.{theta}
 
-let roots t y r =
+let roots _ y r =
   r.{0} <- wall_angle - y.{theta}
 
 let main () =

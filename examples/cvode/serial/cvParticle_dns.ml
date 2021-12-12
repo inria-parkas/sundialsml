@@ -68,7 +68,7 @@ type user_data =
  * ---------------------------------------------------------------------------*)
 
 (* Compute the right-hand side function, y' = f(t,y) *)
-let f { alpha; _ } t (ydata : RealArray.t) (fdata : RealArray.t) =
+let f { alpha; _ } _ (ydata : RealArray.t) (fdata : RealArray.t) =
   fdata.{0} <- -.alpha *. ydata.{1};
   fdata.{1} <-   alpha *. ydata.{0}
 
@@ -81,8 +81,8 @@ let jac { alpha; _ } _ jacmat =
   jdata.{1, 1} <-    0.0
 
 (* Project the solution onto the constraint manifold *)
-let proj t (ydata : RealArray.t) (cdata : RealArray.t)
-           epsProj (edata : RealArray.t option) =
+let proj _ (ydata : RealArray.t) (cdata : RealArray.t)
+           _ (edata : RealArray.t option) =
   let  x = ydata.{0} in
   let  y = ydata.{1} in
 
@@ -338,7 +338,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

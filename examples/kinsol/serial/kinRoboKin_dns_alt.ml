@@ -51,19 +51,19 @@ let alternate_dense y a =
     let acols = Matrix.Dense.unwrap a in
     Matrix.ArrayDense.getrf (RealArray2.wrap acols) pivots
   in
-  let lsolve { pivots } a x b tol =
+  let lsolve { pivots } a x b _ =
     RealArray.blit ~src:b ~dst:x;
     let acols = Matrix.Dense.unwrap a in
     Matrix.ArrayDense.getrs (RealArray2.wrap acols) pivots x
   in
   let lspace { n } = (0, 2 + n)
   in
-  LinearSolver.Custom.make_dls {
+  LinearSolver.Custom.(make_dls {
       init=None;
       setup=Some lsetup;
       solve=lsolve;
       space=Some lspace;
-    } { n=m; pivots=LintArray.make m 0 } (Matrix.wrap_dense a)
+    }) { n=m; pivots=LintArray.make m 0 } (Matrix.wrap_dense a)
 
 (* Problem Constants *)
 
@@ -135,9 +135,7 @@ let func (yd : RealArray.t) (fd : RealArray.t) =
   fd.{7} <- eq8; fd.{15} <- lb8; fd.{23} <- ub8
 
 (* System Jacobian *)
-let jac { Kinsol.jac_u   = (yd : RealArray.t);
-          Kinsol.jac_fu  = f;
-          Kinsol.jac_tmp = (tmp1, tmp2)} j =
+let jac { Kinsol.jac_u   = (yd : RealArray.t); _ } j =
   let x1 = yd.{0}
   and x2 = yd.{1}
   and x3 = yd.{2}
@@ -311,7 +309,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

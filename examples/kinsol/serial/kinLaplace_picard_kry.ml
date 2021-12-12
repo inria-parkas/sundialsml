@@ -96,7 +96,7 @@ let func (u : RealArray.t) (f : RealArray.t) =
  * Jacobian vector product function
  *)
 
-let jactimes (v : RealArray.t) (jv : RealArray.t) (u : RealArray.t) new_u =
+let jactimes (v : RealArray.t) (jv : RealArray.t) _ _ =
   let dx  = one /. float (nx+1) in
   let dy  = one /. float (ny+1) in
   let hdc = one /. (dx *. dx) in
@@ -280,7 +280,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

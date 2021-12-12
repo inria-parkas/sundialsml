@@ -48,7 +48,7 @@ let sundials_270_or_later =
   | _ -> true
 
 (* f routine to compute the ODE RHS function f(t,y). *)
-let f t (y : RealArray.t) (ydot : RealArray.t) =
+let f _ (y : RealArray.t) (ydot : RealArray.t) =
   let u = y.{0} in   (* access current solution *)
   let v = y.{1} in
   let w = y.{2} in
@@ -135,7 +135,7 @@ let main () =
   printf "   --------------------------------------------------\n";
   printf "  %10.3e  %12.5e  %12.5e  %12.5e\n" t0 y.{0} y.{1} y.{2};
   (try
-     for iout=0 to nt-1 do
+     for _ = 0 to nt-1 do
        (* call integrator *)
        let t, _ = ARKStep.evolve_normal arkode_mem !tout y_nv in
 
@@ -185,7 +185,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

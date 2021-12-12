@@ -192,7 +192,7 @@ let attach ({ attached } as s) =
 let detach s =
   s.attached <- false
 
-let get_type (type d k s v) ({ rawptr; solver } : (d, k, s, v) nonlinear_solver) =
+let get_type (type d k s v) ({ solver; _ } : (d, k, s, v) nonlinear_solver) =
   match solver with
   | FixedPointSolver _ -> FixedPoint
   | FixedPointSolverSens _ -> FixedPoint

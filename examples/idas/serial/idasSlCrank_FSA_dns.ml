@@ -131,8 +131,8 @@ let set_ic data yy yp =
   yp.{4} <- _Q.{1}/.m2;
   yp.{5} <- _Q.{2}/.j2
 
-let ressc data tres (yval : RealArray.t) (ypval : RealArray.t)
-                    (rval : RealArray.t) =
+let ressc data _ (yval : RealArray.t) (ypval : RealArray.t)
+                 (rval : RealArray.t) =
   let a  = data.a in
   let j1 = data.j1 in
   let m2 = data.m2 in
@@ -175,7 +175,7 @@ let ressc data tres (yval : RealArray.t) (ypval : RealArray.t)
   rval.{8} <- a*.s1*.qd +. xd +. s2*.pd;
   rval.{9} <- -.a*.c1*.qd -. c2*.pd
 
-let rhsQ data t (yy : RealArray.t) (yp : RealArray.t) (qdot : RealArray.t) =
+let rhsQ data _ (yy : RealArray.t) _ (qdot : RealArray.t) =
   let j1 = data.j1 in
   let m2 = data.m2 in
   let j2 = data.j2 in
@@ -453,7 +453,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

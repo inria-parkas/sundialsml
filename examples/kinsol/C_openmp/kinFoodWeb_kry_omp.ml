@@ -143,14 +143,14 @@ let ij_vptr_idx i j = i*num_species + j*nsmx
    contains preconditioner blocks, pivot arrays, and problem constants *)
 
 let p =
-  Array.init mx (fun jx ->
-    Array.init my (fun jy ->
+  Array.init mx (fun _ ->
+    Array.init my (fun _ ->
       Dense.create num_species num_species
     ))
 
 let pivot =
-  Array.init mx (fun jx ->
-    Array.init my (fun jy ->
+  Array.init mx (fun _ ->
+    Array.init my (fun _ ->
       let v = LintArray.create num_species in
       Array1.fill v 0;
       v
@@ -460,7 +460,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

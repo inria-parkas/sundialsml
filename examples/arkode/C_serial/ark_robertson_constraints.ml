@@ -47,7 +47,7 @@ let eprintf = Printf.eprintf
  *-------------------------------*)
 
 (* f routine to compute the ODE RHS function f(t,y). *)
-let f t (y : RealArray.t) (ydot : RealArray.t) =
+let f _ (y : RealArray.t) (ydot : RealArray.t) =
   let u = y.{0} in   (* access current solution *)
   let v = y.{1} in
   let w = y.{2} in
@@ -81,7 +81,7 @@ let jac { ARKStep.jac_y = (y : RealArray.t); _ } jac =
 
 (* compare the solution at the final time 1e11s to a reference solution computed
    using a relative tolerance of 1e-8 and absoltue tolerance of 1e-14 *)
-let check_ans (y : Nvector_serial.t) t rtol atol =
+let check_ans (y : Nvector_serial.t) _ rtol atol =
 
   (* create reference solution and error weight vectors *)
   let refv = Nvector.clone y in
@@ -178,13 +178,13 @@ let main () =
   printf "        t           u           v           w\n";
   printf "   --------------------------------------------------\n";
   printf "  %10.3e  %12.5e  %12.5e  %12.5e\n" t yd.{0} yd.{1} yd.{2};
-  for iout = 0 to nt - 1 do
+  for _ = 0 to nt - 1 do
     let t, flag = ARKStep.evolve_normal arkode_mem !tout y in     (* call integrator *)
 
     printf "  %10.3e  %12.5e  %12.5e  %12.5e\n" t yd.{0} yd.{1} yd.{2}; (* access/print solution *)
     fprintf ufid " %.16e %.16e %.16e %.16e\n" t yd.{0} yd.{1} yd.{2};
     (match flag with
-     | Success ->                   (* successful solve: update time *)
+     | ARKStep.Success ->           (* successful solve: update time *)
         tout := min tf (!tout +. dTout);
      | _ ->                         (* unsuccessful solve: break *)
       eprintf "Solver failure, stopping integration\n")
@@ -232,7 +232,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

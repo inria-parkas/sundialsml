@@ -301,7 +301,7 @@ let print_final_stats s =
 
 (* Routine to send boundary data to neighboring PEs *)
 
-let bsend comm my_pe isubx isuby dsizex dsizey udata =
+let bsend comm my_pe isubx isuby dsizex _ udata =
   let buf = RealArray.create (nvars*mysub) in
 
   (* If isuby > 0, send data from bottom x-line of u *)
@@ -418,7 +418,7 @@ let brecvwait request isubx isuby dsizex uext =
 (* ucomm routine.  This routine performs all communication
    between processors of data needed to calculate f. *)
 
-let ucomm data t udata =
+let ucomm data _ udata =
   let comm    = data.comm
   and my_pe   = data.my_pe
   and isubx   = data.isubx
@@ -558,10 +558,7 @@ let f data t ((udata : RealArray.t),_,_) ((dudata : RealArray.t),_,_) =
 
 (* Preconditioner setup routine. Generate and preprocess P. *)
 let precond data jacarg jok gamma =
-  let { Cvode.jac_t   = tn;
-        Cvode.jac_y   = (udata, _, _);
-      } = jacarg
-  in
+  let { Cvode.jac_y   = (udata, _, _); } = jacarg in
   (* Make local copies of pointers in user_data, and of pointer to u's data *)
   let p       = data.p
   and jbd     = data.jbd
@@ -634,12 +631,8 @@ let precond data jacarg jok gamma =
 
 (* Preconditioner solve routine *)
 
-let psolve data jac_arg solve_arg (zdata, _, _) =
-  let { Cvode.Spils.rhs = (r, _, _);
-        Cvode.Spils.gamma = gamma;
-        Cvode.Spils.delta = delta;
-        Cvode.Spils.left = lr } = solve_arg
-  in
+let psolve data _ solve_arg (zdata, _, _) =
+  let { Cvode.Spils.rhs = (r, _, _); _ } = solve_arg in
   (* Extract the P and pivot arrays from user_data. *)
   let p       = data.p
   and pivot   = data.pivot
@@ -701,8 +694,8 @@ let main () =
 
   (* In loop over output points, call CVode, print results, test for error *)
   let tout = ref twohr in
-  for iout=1 to nout do
-    let (t, flag) = Cvode.solve_normal cvode_mem !tout u in
+  for _ = 1 to nout do
+    let t, _ = Cvode.solve_normal cvode_mem !tout u in
     print_output cvode_mem my_pe comm u t;
     tout := !tout +. twohr
   done;
@@ -723,7 +716,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

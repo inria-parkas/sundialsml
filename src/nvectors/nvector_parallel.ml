@@ -675,7 +675,6 @@ module MakeOps =
       val get       : local_data -> int -> float
       val set       : local_data -> int -> float -> unit
       val fill      : local_data -> float -> unit
-      val make      : int -> float -> local_data
       val clone     : local_data -> local_data
       val length    : local_data -> int
     end) ->
@@ -1320,7 +1319,6 @@ module DataOps =
   struct (* {{{ *)
     module A = Bigarray.Array1
 
-    let make      = RealArray.make
     let clone     = RealArray.copy
 
     let floatmin (x : float) (y : float) = min x y

@@ -46,7 +46,7 @@ let _ =
 
       print_with_time t' y;
       Printf.printf "\t\t(step size = %e)\n" (Cvode.get_last_step s);
-        
+
       match result with
       | Cvode.RootsFound -> print_endline "** root found"
       | Cvode.StopTimeReached -> raise Done

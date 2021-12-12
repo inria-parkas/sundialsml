@@ -68,7 +68,8 @@ type user_data = {
       nnew [output] -- the size of the new mesh
       udata [input] -- the current system information
    The return for this function is a pointer to the new mesh. *)
-let adapt_mesh { x = xold; n; refine_tol } (y : RealArray.t) =
+let adapt_mesh udata (y : RealArray.t) =
+  let { x = xold; n; refine_tol } = udata in
   (* create marking array *)
   let marks = Array.make (n-1) 0 in
 
@@ -157,7 +158,7 @@ let project nold (xold : RealArray.t) (yold : RealArray.t)
   done
 
 (* f routine to compute the ODE RHS function f(t,y). *)
-let f_lt500 userdata t (y : RealArray.t) (ydot : RealArray.t) =
+let f_lt500 userdata _ (y : RealArray.t) (ydot : RealArray.t) =
   let { n; k; x } = userdata in
   (* iterate over domain, computing all equations *)
   ydot.{0} <- 0.0;           (* left boundary condition *)
@@ -185,7 +186,7 @@ let f_lt500 userdata t (y : RealArray.t) (ydot : RealArray.t) =
   done
 
 (* f routine to compute the ODE RHS function f(t,y). *)
-let f userdata t (y : RealArray.t) (ydot : RealArray.t) =
+let f userdata _ (y : RealArray.t) (ydot : RealArray.t) =
   let { n; k; x } = userdata in
   RealArray.fill ydot 0.0;
   (* iterate over domain, computing all equations *)
@@ -372,7 +373,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

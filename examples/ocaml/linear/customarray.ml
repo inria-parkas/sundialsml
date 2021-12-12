@@ -9,7 +9,7 @@ module Custom = struct
   let m_size a = (Array.length a, Array.length a.(0))
 
   let m_copy a b =
-    let m, n = m_size a in
+    let _, n = m_size a in
     Array.iteri (fun i c1 -> Array.blit c1 0 b.(i) 0 n) a
 
   let m_clone a =
@@ -19,7 +19,7 @@ module Custom = struct
     b
 
   let m_zero a =
-    let m, n = m_size a in
+    let m, _ = m_size a in
     for i = 0 to m - 1 do
       for j = 0 to m - 1 do
         a.(i).(j) <- 0.0
@@ -27,7 +27,7 @@ module Custom = struct
     done
 
   let m_scale_add c a b =
-    let m, n = m_size a in
+    let m, _ = m_size a in
     for i = 0 to m - 1 do
       for j = 0 to m - 1 do
         a.(i).(j) <- c *. a.(i).(j) +. b.(i).(j)
@@ -35,7 +35,7 @@ module Custom = struct
     done
 
   let m_scale_addi c a =
-    let m, n = m_size a in
+    let m, _ = m_size a in
     for i = 0 to m - 1 do
       for j = 0 to m - 1 do
         a.(i).(j) <- c *. a.(i).(j) +. (if i = j then 1.0 else 0.0)

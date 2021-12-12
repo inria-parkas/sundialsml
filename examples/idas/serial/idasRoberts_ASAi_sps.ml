@@ -113,7 +113,7 @@ type user_data = { p : RealArray.t }
  * f routine. Compute f(t,y).
 *)
 
-let res data t (yy : RealArray.t) (yp : RealArray.t) (rval : RealArray.t) =
+let res data _ (yy : RealArray.t) (yp : RealArray.t) (rval : RealArray.t) =
   let y1  = yy.{0}
   and y2  = yy.{1}
   and y3  = yy.{2}
@@ -165,12 +165,11 @@ let jac data { Ida.jac_y = (yval : RealArray.t);
  * rhsQ routine. Compute fQ(t,y).
 *)
 
-let rhsQ data t (yy : RealArray.t) yp (qdot : RealArray.t) =
-  qdot.{0} <- yy.{2}
+let rhsQ _ _ (yy : RealArray.t) _ (qdot : RealArray.t) = qdot.{0} <- yy.{2}
 
 (* EwtSet function. Computes the error weights at the current solution. *)
 
-let ewt data (y : RealArray.t) (w : RealArray.t) =
+let ewt _ (y : RealArray.t) (w : RealArray.t) =
   let atol = [|atol1; atol2; atol3|] in
 
   for i = 1 to 3 do
@@ -207,25 +206,6 @@ let resB : user_data -> RealArray.t Adjoint.bresfn_no_sens =
   rrB.{2} <- -. p2*.y2*.l21 -.l3 +. 1.0
 
 (*Jacobian for backward problem. *)
-let jacB data { Adjoint.jac_coef = cj; Adjoint.jac_y = (yy : RealArray.t) } jB =
-  let y2 = yy.{1} and y3 = yy.{2} in
-
-  let p1 = data.p.{0} and p2 = data.p.{1} and p3 = data.p.{2} in
-
-  let set = Matrix.Dense.set jB in
-  set 0 0 (-.p1+.cj);
-  set 0 1 (p1);
-  set 0 2 (-.1.0);
-
-  set 1 0 (p2*.y3);
-  set 1 1 (-.(p2*.y3+.2.0*.p3*.y2)+.cj);
-  set 1 2 (-.1.0);
-
-  set 2 0 (p2*.y2);
-  set 2 1 (-.p2*.y2);
-  set 2 2 (-.1.0)
-
-(*Jacobian for backward problem. *)
 let jacB data { Adjoint.jac_coef = cj;
                 Adjoint.jac_y = (yb : RealArray.t) } jacmat =
   let set_col = Matrix.Sparse.set_col jacmat in
@@ -254,7 +234,7 @@ let jacB data { Adjoint.jac_coef = cj;
   set 8 2 (-1.0)
 
 let rhsQB : user_data -> RealArray.t AdjQuad.bquadrhsfn_no_sens =
-  fun data { AdjQuad.y = yy; AdjQuad.yb = yyB } rrQB ->
+  fun _ { AdjQuad.y = yy; AdjQuad.yb = yyB } rrQB ->
 
   (* The y vector *)
   let y1 = yy.{0} and y2 = yy.{1} and y3 = yy.{2} in
@@ -278,7 +258,7 @@ let rhsQB : user_data -> RealArray.t AdjQuad.bquadrhsfn_no_sens =
 
 (* Print results after backward integration *)
 
-let print_output tfinal yB ypB qB =
+let print_output tfinal yB _ qB =
   printf "--------------------------------------------------------\n";
   printf "tB0:        %12.4e\n" tfinal;
   printf "dG/dp:      %12.4e %12.4e %12.4e\n"
@@ -410,7 +390,7 @@ let main () =
   let m = Matrix.sparse_csc ~nnz neq in
   let indexB =
     Adjoint.(init_backward ida_mem
-               ~lsolver:Dls.(solver ~jac:(NoSens (jacB data))
+               ~lsolver:Dls.(solver ~jac:(Dls.NoSens (jacB data))
                               (superlumt ~nthreads:nthreads wyB m))
                  (SStolerances (reltolB, abstolB))
                  (NoSens (resB data))
@@ -513,7 +493,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

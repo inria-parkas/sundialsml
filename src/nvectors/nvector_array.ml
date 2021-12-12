@@ -83,7 +83,7 @@ module MakeOps = functor
   struct (* {{{ *)
     type t = A.t
 
-    let clone wx = A.(inject (clone (project wx)))
+    let clone wx = A.inject (A.clone (A.project wx))
 
     let uw = A.project
 
@@ -761,10 +761,6 @@ module Make =
     type kind = Nvector_custom.kind
     type t = data Nvector_custom.t
 
-    let checkfn v1 =
-      let l = A.length v1 in
-      (fun v2 -> l = A.length v2)
-
     module DataOps = MakeOps (struct
         include A
         type t = A.data
@@ -805,7 +801,7 @@ module Make =
         include A
         type t = A.data Nvector_custom.t
         let project = unwrap
-        let inject x = assert false (* clone is overridden *)
+        let inject _ = assert false (* clone is overridden *)
       end)
 
       (* Cloning in this way ensures that the enabled status of fused and
@@ -1597,7 +1593,7 @@ module Array =
 
         type t = float array Nvector_custom.t
         let project = unwrap
-        let inject x = assert false (* clone is overridden *)
+        let inject _ = assert false (* clone is overridden *)
       end)
 
       (* Cloning in this way ensures that the enabled status of fused and

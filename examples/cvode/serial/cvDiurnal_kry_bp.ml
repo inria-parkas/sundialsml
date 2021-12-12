@@ -35,7 +35,6 @@
 
 open Sundials
 
-open Bigarray
 let unwrap = Nvector.unwrap
 
 let printf = Printf.printf
@@ -334,7 +333,7 @@ let main () =
   let lsolver = Cvode.Spils.(spgmr u) in
   let cvode_mem = Cvode.(
     init BDF ~lsolver:Spils.(solver lsolver
-                        Banded.(prec_left { mupper = mu; mlower = ml}))
+                        (Banded.prec_left Banded.{ mupper = mu; mlower = ml}))
              (SStolerances (reltol, abstol))
              (f data) t0 u)
   in
@@ -343,13 +342,13 @@ let main () =
 
   (* Loop over jpre (= PREC_LEFT, PREC_RIGHT), and solve the problem *)
 
-  let jpre_loop jpre jpre_str =
+  let jpre_loop _ jpre_str =
     printf "\n\nPreconditioner type is:  jpre = %s\n\n" jpre_str;
 
     (* In loop over output points, call CVode, print results, test for error *)
     let tout = ref twohr in
-    for iout = 1 to nout do
-      let (t, flag) = Cvode.solve_normal cvode_mem !tout u in
+    for _ = 1 to nout do
+      let t, _ = Cvode.solve_normal cvode_mem !tout u in
       print_output cvode_mem (unwrap u) t;
       tout := !tout +. twohr
     done;
@@ -382,7 +381,7 @@ let main () =
    | _ ->
       Cvode.reinit cvode_mem t0 u
         ~lsolver:Cvode.(Spils.(solver (spgmr u)
-                                 (Banded.(prec_right { mupper = mu; mlower = ml}))))
+                                 (Banded.prec_right Banded.{ mupper = mu; mlower = ml})))
   );
 
   printf "\n\n-------------------------------------------------------";
@@ -403,7 +402,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

@@ -64,7 +64,7 @@ type matrix_embedded_ls_content = {
 }
 
 (* linear solve routine *)
-let matrix_embedded_ls_solve content () (x : RealArray.t) (b : RealArray.t) tol =
+let matrix_embedded_ls_solve content () (x : RealArray.t) (b : RealArray.t) _ =
   let { alpha; ida_mem } = content in
   match ida_mem with
   | None -> failwith "linear solver not properly configure"
@@ -91,7 +91,7 @@ let matrix_embedded_ls alpha =
   let content = { alpha; ida_mem = None } in
   (fun session -> content.ida_mem <- Some session),
   LinearSolver.Custom.(
-    make_without_matrix (make_ops ~solver_type:MatrixEmbedded
+    make_without_matrix (make_ops ~solver_type:LinearSolver.MatrixEmbedded
                                   ~solve:matrix_embedded_ls_solve ())
                         content)
 
@@ -223,7 +223,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

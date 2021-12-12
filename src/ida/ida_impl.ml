@@ -491,8 +491,8 @@ and 'a linsolv_precfns =
 
 (* Reverse lookup of a session value for a child session, given the pointer
    to the Sundials (child) session. *)
-let revlookup_bsession ({ sensext; _ } : ('d, 'k) session) (child : ida_mem) =
-  match sensext with
+let revlookup_bsession (s : ('d, 'k) session) (child : ida_mem) =
+  match s.sensext with
   | FwdSensExt { bsessions } ->
       (match List.find (fun { ida; _ } -> ida = child) bsessions with
        | bs -> Some bs

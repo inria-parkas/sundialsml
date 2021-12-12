@@ -19,8 +19,6 @@
     @nocvode <node> NVECTOR_MPIPLUSX
     @since 5.0.0 *)
 
-open Sundials
-
 (** The data in underlying nvectors is exposed as an array of wrapped values
     together with an MPI communicator. *)
 type data = Nvector.any * Mpi.communicator

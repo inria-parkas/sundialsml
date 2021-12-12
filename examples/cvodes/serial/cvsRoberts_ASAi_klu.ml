@@ -107,7 +107,7 @@ type user_data = { p : float array }
 
 (* f routine. Compute f(t,y). *)
 
-let f data t (y : RealArray.t) (ydot : RealArray.t) =
+let f data _ (y : RealArray.t) (ydot : RealArray.t) =
   let p1 = data.p.(0)
   and p2 = data.p.(1)
   and p3 = data.p.(2) in
@@ -148,12 +148,12 @@ let jac data {Cvode.jac_y = (y : RealArray.t)} smat =
 
 (* fQ routine. Compute fQ(t,y). *)
 
-let fQ data t (y : RealArray.t) (qdot : RealArray.t) = qdot.{0} <- y.{2}
+let fQ _ _ (y : RealArray.t) (qdot : RealArray.t) = qdot.{0} <- y.{2}
 
 (* EwtSet function. Computes the error weights at the current solution. *)
 
 let atol = Array.of_list [ atol1; atol2; atol3 ]
-let ewt data (y : RealArray.t) (w : RealArray.t) =
+let ewt _ (y : RealArray.t) (w : RealArray.t) =
   let rtol = rtol;
   in
   for i = 0 to 2 do
@@ -216,7 +216,7 @@ let jacb data { Adj.jac_y = (y : RealArray.t) } smat =
 (* fQB routine. Compute integrand for quadratures *)
 
 let fQB : user_data -> RealArray.t QuadAdj.bquadrhsfn_no_sens =
-  fun data args qBdot ->
+  fun _ args qBdot ->
   let y = args.QuadAdj.y
   and yB = args.QuadAdj.yb
   in
@@ -360,7 +360,7 @@ let main () =
     Adj.(init_backward
           cvode_mem Cvode.BDF
             (SStolerances (reltolB, abstolB))
-            ~lsolver:Dls.(solver ~jac:(NoSens (jacb data)) (klu yB m))
+            ~lsolver:Dls.(solver ~jac:(Dls.NoSens (jacb data)) (klu yB m))
             (NoSens (fB data))
             tb1 yB)
   in
@@ -453,7 +453,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

@@ -32,8 +32,6 @@
  * -----------------------------------------------------------------
  *)
 
-open Sundials
-
 open Bigarray
 let local_array = Nvector_parallel.local_array
 
@@ -74,7 +72,7 @@ type user_data = {
 
 (* Set initial conditions in u vector *)
 
-let set_ic u dx my_length my_base =
+let set_ic u dx _ my_base =
   (* Set pointer to data array and get local length of u. *)
   let udata = local_array u in
   let my_length = Array1.dim udata in
@@ -116,7 +114,7 @@ let print_final_stats s =
 
 (* f routine. Compute f(t,u). *)
 
-let f data t (udata, _, _) (dudata, _, _) =
+let f data _ (udata, _, _) (dudata, _, _) =
   (* Extract needed problem constants from data *)
   let hordc = data.hdcoef
   and horac = data.hacoef
@@ -212,8 +210,8 @@ let main () =
   (* In loop over output points, call CVode, print results, test for error *)
 
   let tout = ref t1 in
-  for iout = 1 to nout do
-    let (t, flag) = Cvode.solve_normal cvode_mem !tout u
+  for _ = 1 to nout do
+    let t, _ = Cvode.solve_normal cvode_mem !tout u
     in
     let nst  = Cvode.get_num_steps cvode_mem in
     let umax = vmaxnorm u in
@@ -237,7 +235,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

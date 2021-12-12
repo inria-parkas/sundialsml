@@ -188,7 +188,7 @@ type task_local_newton_content = {
 
 (* Compute the reaction term. *)
 let reaction' { nvar; nxl = n; a; b; k1; k2; k3; k4; k5; k6;
-               uopt = { explicit; _ }; _ } t (y  : RealArray.t) (dY : RealArray.t)
+               uopt = { explicit; _ }; _ } _ (y  : RealArray.t) (dY : RealArray.t)
   =
   (* iterate over domain, computing reactions *)
   if explicit then
@@ -265,7 +265,7 @@ let task_local_lsolve
     | MeshNode { b_node; jac_node; ls_node } -> b_node, jac_node, ls_node
     | _ -> assert false
   in
-  let ARKStep.{ tcur; zpred; zi; fi; gamma; sdata } =
+  let ARKStep.{ zi; gamma; _ } =
     ARKStep.get_nonlin_system_data arkode_mem
   in
   (* access solution array *)
@@ -349,7 +349,7 @@ let rewrap_mpiplusx comm (y : Nvector.gdata) =
   | Nvector.RA ydata -> Nvector_mpiplusx.wrap comm (Nvector_serial.Any.wrap ydata)
   | _ -> assert false
 
-let task_local_newton_initialize udata { local_nls; comm; _ } () =
+let task_local_newton_initialize udata { local_nls; _ } () =
   NLS.set_sys_fn local_nls (task_local_nls_residual udata);
   NLS.set_lsolve_fn local_nls (task_local_lsolve udata)
 
@@ -358,14 +358,14 @@ let task_local_newton_setsysfn { local_nls; comm; _ }
   let rw = rewrap_mpiplusx comm in
   NLS.set_sys_fn local_nls (fun y fg -> sysfn (rw y) (rw fg))
 
-let task_local_newton_setconvtestfn { local_nls; comm; _ }
+let task_local_newton_setconvtestfn { local_nls; _ }
       (ctestfn : (Nvector_mpiplusx.data, local_nls_session, [`Nvec]) NLS.convtestfn) =
   NLS.(set_convtest_fn local_nls
          ((assert_not_oconvtestfn ctestfn)
             : (Nvector.gdata, local_nls_session, [`Nvec]) NLS.convtestfn))
 
 (* Pass via OCaml (for testing) *)
-let task_local_newton_setconvtestfn' { local_nls; comm; _ }
+let task_local_newton_setconvtestfn' { local_nls; _ }
       (ctestfn : (Nvector_mpiplusx.data, local_nls_session, [`Nvec]) NLS.convtestfn) =
   let rewrap = function
     | Nvector.RA a -> Nvector_serial.wrap a
@@ -373,15 +373,15 @@ let task_local_newton_setconvtestfn' { local_nls; comm; _ }
   in
   let ocaml_convtestfn y del tol ewt mem =
     match ctestfn with
-    | CConvTest cfn -> (Sundials.invoke cfn).f local_nls
-                         (rewrap y) (rewrap del) tol (rewrap ewt) mem
+    | NLS.CConvTest cfn -> (Sundials.invoke cfn).NLS.f local_nls
+                             (rewrap y) (rewrap del) tol (rewrap ewt) mem
     | _ -> assert false
   in
   NLS.(set_convtest_fn local_nls
          ((OConvTest ocaml_convtestfn)
             : (Nvector.gdata, local_nls_session, [`Nvec]) NLS.convtestfn))
 
-let task_local_newton_getnumconvfails { ncnf; _ } () = ncnf
+let task_local_newton_getnumconvfails nls () = nls.ncnf
 
 type nlsolver =
   (Nvector_mpiplusx.data, Nvector_mpiplusx.kind, local_nls_session, [`Nvec])
@@ -406,7 +406,7 @@ let task_local_newton udata (y : Nvector_mpiplusx.t) dfid =
                 ~init:(task_local_newton_initialize udata content)
                 ~set_convtest_fn:(task_local_newton_setconvtestfn content)
                 ~get_num_conv_fails:(task_local_newton_getnumconvfails content)
-                ~nls_type:RootFind
+                ~nls_type:NLS.RootFind
                 ~solve:(task_local_newton_solve content)
                 ~set_sys_fn:(task_local_newton_setsysfn content)
                 ()) : nlsolver)
@@ -467,7 +467,7 @@ let exchange_all_end { c; reqR; reqS; wrecv; erecv; _ } =
   end
 
 (* Compute the advection term. *)
-let advection' ({ nvar; nxl = n; dx; c; erecv; wrecv; _ } as udata) t
+let advection' ({ nvar; nxl = n; dx; c; erecv; wrecv; _ } as udata) _
                (y : RealArray.t) (dY : RealArray.t)
   =
   (* set output to zero *)
@@ -576,8 +576,7 @@ let psetup { nvar; nxl = n; k2; k3; k4; k6; linear_system; _ }
   end
 
 (* Solves Pz = r *)
-let psolve { linear_system; _ }
-           ARKStep.{ jac_y = ((y, _) : Nvector_mpiplusx.data); _ }
+let psolve { linear_system; _ } _
            ARKStep.Spils.{ rhs = ((r, _) : Nvector_mpiplusx.data); _ }
            ((z, _) : Nvector_mpiplusx.data) =
   let p, ls = match linear_system with
@@ -893,7 +892,7 @@ let evolve_problem_imex ({ myid; uopt; _ } as udata) (y : Nvector_mpiplusx.t) =
     if global then
       NonlinearSolver.Newton.make y,
       Some ARKStep.Spils.(solver
-                            LinearSolver.Iterative.(spgmr y)
+                            (LinearSolver.Iterative.spgmr y)
                             (prec_left ~setup:(psetup udata) (psolve udata)))
     else
       task_local_newton udata y dfid,
@@ -969,9 +968,7 @@ let evolve_problem_imex ({ myid; uopt; _ } as udata) (y : Nvector_mpiplusx.t) =
 
 (* Setup ARKODE and evolve problem in time explicitly *)
 let evolve_problem_explicit ({ myid; uopt; _ } as udata) (y : Nvector_mpiplusx.t) =
-  let { rtol; atol; order; t0; tf; nout;
-        monitor; global; outputdir; _ } = udata.uopt
-  in
+  let { rtol; atol; order; t0; tf; nout; monitor; outputdir; _ } = uopt in
   let dfid = if monitor
     then Some (Logfile.openfile
                  (sprintf "%s/diagnostics.%06d.txt" outputdir myid))
@@ -1060,7 +1057,7 @@ let main () =
 
   (* Process input args and setup the problem *)
   let { myid; neq; comm; dx; nx;
-        uopt = { fused; explicit; nout; outputdir; printtime; _ } as uopt;
+        uopt = { fused; explicit; nout; outputdir; printtime; _ };
     _ } as udata = setup_problem ()
   in
 
@@ -1102,7 +1099,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

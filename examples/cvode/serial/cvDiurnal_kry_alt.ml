@@ -107,10 +107,10 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
     lsolver.numiters <- 0;
     (* set booleantype flags for internal solver options *)
     let preOnLeft, preOnRight = match lsolver.pretype with
-      | PrecNone  -> false, false
-      | PrecLeft  ->  true, false
-      | PrecRight -> false, true
-      | PrecBoth  ->  true, true
+      | LS.Iterative.PrecNone  -> false, false
+      | LS.Iterative.PrecLeft  ->  true, false
+      | LS.Iterative.PrecRight -> false, true
+      | LS.Iterative.PrecBoth  ->  true, true
     in
     (* Set vtemp and V[0] to initial (unscaled) residual r_0 = b - A*x_0 *)
     if dotprod x x = 0.
@@ -184,9 +184,9 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
               (*  Orthogonalize v.(l+1) against previous v.(i): v.(l+1) = w_tilde *)
               RealArray2.set hes l l_plus_1
                 (match gstype with
-                 | ClassicalGS ->
+                 | LS.Iterative.ClassicalGS ->
                      (LS.Iterative.Algorithms.classical_gs v hes l_plus_1 l_max yg vtemps);
-                 | ModifiedGS  ->
+                 | LS.Iterative.ModifiedGS  ->
                      (LS.Iterative.Algorithms.modified_gs v hes l_plus_1 l_max));
 
               (*  Update the QR factorization of Hes *)
@@ -295,8 +295,8 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
   let mapo f = function None -> None | Some x -> Some (f x)
 
   let set_scaling_vectors lsolver s1 s2 =
-    lsolver.s1 <- mapo NV.wrap s1;
-    lsolver.s2 <- mapo NV.wrap s2
+    lsolver.s1 <- mapo (fun s -> NV.wrap s) s1;
+    lsolver.s2 <- mapo (fun s -> NV.wrap s) s2
 
   let get_workspace lsolver =
     let lrw1, liw1 = NV.Ops.space lsolver.vtemp in
@@ -311,8 +311,8 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
   let ops =
     let open LS.Custom in
     {
-      solver_type         = Iterative;
-      solver_id           = Spgmr;
+      solver_type         = LS.Iterative;
+      solver_id           = LS.Spgmr;
       init                = None;
       setup               = Some setup;
       solve               = solve;
@@ -333,7 +333,7 @@ module MakeCustomSpgmr (NV : Nvector.NVECTOR) = struct (* {{{ *)
     let maxl = if maxl <= 0 then maxl_default else maxl in
     LS.Custom.make_without_matrix ops {
         maxl         = maxl;
-        pretype      = PrecNone;
+        pretype      = LS.Iterative.PrecNone;
         gstype       = gs_type;
         max_restarts = max_restarts;
         numiters     = 0;
@@ -743,12 +743,7 @@ let jtv data jac_arg (vdata : RealArray.t) (jvdata : RealArray.t) = (* {{{ *)
 
 let precond data jacarg jok gamma = (* {{{ *)
   let open Cvode in
-  let { jac_t   = tn;
-        jac_y   = (udata : RealArray.t);
-        jac_fy  = fudata;
-        jac_tmp = ();
-      } = jacarg
-  in
+  let { jac_y   = (udata : RealArray.t); _ } = jacarg in
 
   (* Make local copies of pointers in user_data, and of pointer to u's data *)
   let p     = data.p
@@ -821,13 +816,9 @@ let precond data jacarg jok gamma = (* {{{ *)
 
 (* Preconditioner solve routine *)
 
-let psolve data jac_arg solve_arg (zdata : RealArray.t) = (* {{{ *)
+let psolve data _ solve_arg (zdata : RealArray.t) = (* {{{ *)
   let open Cvode.Spils in
-  let { rhs = (r : RealArray.t);
-        gamma = gamma;
-        delta = delta;
-        left = lr } = solve_arg
-  in
+  let { rhs = (r : RealArray.t); _ } = solve_arg in
 
   (* Extract the P and pivot arrays from user_data. *)
   let p = data.p
@@ -883,8 +874,8 @@ let main () =
 
   printf " \n2-species diurnal advection-diffusion problem\n\n";
   let tout = ref twohr in
-  for iout = 1 to nout do
-    let (t, flag) = Cvode.solve_normal cvode_mem !tout u in
+  for _ = 1 to nout do
+    let t, _ = Cvode.solve_normal cvode_mem !tout u in
     print_output cvode_mem (unwrap u) t;
     tout := !tout +. twohr
   done;
@@ -904,7 +895,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

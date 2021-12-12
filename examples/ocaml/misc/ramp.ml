@@ -26,7 +26,7 @@ let thresh_2 = 7.0
 let max_sim_t = 10.0
 
 let disc_state = ref RampingUp
-let f1 t_s y yd =
+let f1 t_s _ yd =
   if !debug then
     printf "> f called at %.15e (%s)\n" t_s (string_of_mode !disc_state);
   yd.{idx_t} <- 1.0;
@@ -36,7 +36,7 @@ let f1 t_s y yd =
     | Flat -> 0.0
     | RampingDown -> -1.0
 
-let f2 t_s y yd =
+let f2 t_s _ yd =
   if !debug then
     printf "> f called at %.15e (%s)\n" t_s (string_of_mode !disc_state);
   yd.{idx_t} <- 1.0;
@@ -45,7 +45,7 @@ let f2 t_s y yd =
     else if t_s <= 7.0 then 0.0
     else -1.0
 
-let g t_s y gout =
+let g _ y gout =
   gout.{0} <- y.{idx_t} -. thresh_1; (* up(t -. thresh_1) *)
   gout.{1} <- y.{idx_t} -. thresh_2  (* up(t -. thresh_2) *)
 

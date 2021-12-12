@@ -70,12 +70,12 @@ let grav = 13.750371636040745654980191559621114395801712
  * ---------------------------------------------------------------------------*)
 
 (* ODE RHS function for the reference system *)
-let fref t yydata fydata =
+let fref _ yydata fydata =
   fydata.{0} <- yydata.{1};                (* theta'          *)
   fydata.{1} <- -. grav *. cos yydata.{0}  (* -g * cos(theta) *)
 
 (* ODE RHS function for the Cartesian system *)
-let f t (yydata : RealArray.t) (fydata : RealArray.t) =
+let f _ (yydata : RealArray.t) (fydata : RealArray.t) =
   (* Get vector components *)
   let x  = yydata.{0} in
   let y  = yydata.{1} in
@@ -92,8 +92,8 @@ let f t (yydata : RealArray.t) (fydata : RealArray.t) =
   fydata.{3} <- -. y *. tmp -. grav
 
 (* Projection function *)
-let proj t (yydata : RealArray.t) (cdata : RealArray.t)
-           epsProj (edata : RealArray.t option) =
+let proj _ (yydata : RealArray.t) (cdata : RealArray.t)
+           _ (edata : RealArray.t option) =
   (* Extract current solution *)
   let x  = yydata.{0} in
   let y  = yydata.{1} in
@@ -363,7 +363,7 @@ let ref_sol tf yref nout =
 
 let main () =
   (* Read command line inputs *)
-  let { rtol; atol; tf; nout; projerr } as inputs = read_inputs () in
+  let { rtol; atol; tf; nout; projerr } = read_inputs () in
 
   (* Compute reference solution *)
   let yref = Nvector_serial.make 4 0.0 in
@@ -398,7 +398,7 @@ let main () =
   (* Compute the solution with various tolerances *)
   let rtol = ref rtol in
   let atol = ref atol in
-  for i = 0 to 4 do
+  for _ = 0 to 4 do
 
     (* Output tolerance and output header for this run *)
     printf "\n\nrtol = %8.2e, atol = %8.2e\n" !rtol !atol;
@@ -430,7 +430,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

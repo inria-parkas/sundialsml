@@ -19,8 +19,6 @@
     @author Marc Pouzet (UPMC/ENS/Inria)
     @noarkode <node5#sss:arkbbdpre> Parallel band-block-diagonal preconditioner module *)
 
-open Sundials
-
 (** Alias for sessions based on parallel nvectors. *)
 type 'step parallel_session =
   (Nvector_parallel.data, Nvector_parallel.kind, 'step) Arkode_impl.session

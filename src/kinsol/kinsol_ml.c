@@ -1318,29 +1318,6 @@ CAMLprim value sunml_kinsol_set_delay_aa(value vkin_mem, value vdelay)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_kinsol_set_num_max_iters(value vkin_mem, value vmxiter)
-{
-    CAMLparam2(vkin_mem, vmxiter);
-
-    int flag = KINSetNumMaxIters(KINSOL_MEM_FROM_ML(vkin_mem), Long_val(vmxiter));
-    CHECK_FLAG("KINSetNumMaxIters", flag);
-
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_kinsol_set_maa(value vkin_mem, value vmaa)
-{
-    CAMLparam2(vkin_mem, vmaa);
-#if 260 <= SUNDIALS_LIB_VERSION
-
-    int flag = KINSetMAA(KINSOL_MEM_FROM_ML(vkin_mem), Long_val(vmaa));
-    CHECK_FLAG("KINSetMAA", flag);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-    CAMLreturn (Val_unit);
-}
-
 CAMLprim value sunml_kinsol_set_no_init_setup(value vkin_mem, value vnoinitsetup)
 {
     CAMLparam2(vkin_mem, vnoinitsetup);

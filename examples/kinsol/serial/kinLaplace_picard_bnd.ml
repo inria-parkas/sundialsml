@@ -56,8 +56,7 @@ let set_ijth (v : RealArray.t) i j e = v.{(j - 1) + (i - 1)*ny} <- e
 let bandset bm i j v = Matrix.Band.set bm i j v
 
 (* Jacobian function *)
-let jac { Kinsol.jac_u = (yd : RealArray.t); Kinsol.jac_fu  = f } jac =
-
+let jac _ jac =
   let dx  = 1.0 /. float(nx+1) in
   let dy  = 1.0 /. float(ny+1) in
   let hdc = 1.0 /. (dx*.dx) in
@@ -233,7 +232,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

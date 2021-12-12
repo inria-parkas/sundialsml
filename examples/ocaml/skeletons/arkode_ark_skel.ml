@@ -2,11 +2,11 @@ open Sundials
 module ARKStep = Arkode.ARKStep
 
 (* 1. Define right-hand-side functions. *)
-let fe t y yd = yd.{0} <- y.{1}
-let fi t y yd = yd.{1} <- -9.81
+let fe _t y yd = yd.{0} <- y.{1}
+let fi _t _y yd = yd.{1} <- -9.81
 
 (* 2. Optionally define a root function. *)
-let g t y gout = gout.{0} <- 1.0 -. y.{0}
+let g _t y gout = gout.{0} <- 1.0 -. y.{0}
 
 (* 3. Set vector of initial values.
       The length of this vector determines the problem size. *)

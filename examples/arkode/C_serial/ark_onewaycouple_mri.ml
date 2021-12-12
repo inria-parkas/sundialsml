@@ -54,14 +54,14 @@ let fprintf = Printf.fprintf
  * ------------------------------*)
 
 (* ff routine to compute the fast portion of the ODE RHS. *)
-let ff t (y : RealArray.t) (ydot : RealArray.t) =
+let ff _ (y : RealArray.t) (ydot : RealArray.t) =
   let w = y.{2} in
   ydot.{0} <- 0.0;
   ydot.{1} <- 0.0;
   ydot.{2} <- -.w
 
 (* fs routine to compute the slow portion of the ODE RHS. *)
-let fs t (y : RealArray.t) (ydot : RealArray.t) =
+let fs _ (y : RealArray.t) (ydot : RealArray.t) =
   let c1 = 50.0 in
   let u = y.{0} in
   let v = y.{1} in
@@ -210,7 +210,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

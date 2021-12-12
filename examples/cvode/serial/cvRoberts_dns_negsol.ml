@@ -52,7 +52,7 @@ let tmult  = 10.0     (* output time factor     *)
 let nout   = 14       (* number of output times *)
 let nroots = 2        (* number of root functions *)
 
-let f check_negative t (y : RealArray.t) (yd : RealArray.t) =
+let f check_negative _ (y : RealArray.t) (yd : RealArray.t) =
   if !check_negative && (y.{0} < 0.0 || y.{1} < 0.0 || y.{2} < 0.0)
   then raise RecoverableFailure;
   let yd1 = -0.04 *. y.{0} +. 1.0e4 *. y.{1} *. y.{2}
@@ -122,7 +122,7 @@ let main () =
   and iout = ref 0
   in
   while (!iout <> nout) do
-    let (t, flag) = Cvode.solve_normal cvode_mem !tout y in
+    let t, _ = Cvode.solve_normal cvode_mem !tout y in
     print_output t (ith ydata 1) (ith ydata 2) (ith ydata 3);
     iout := !iout + 1;
     tout := !tout *. tmult
@@ -145,7 +145,7 @@ let main () =
   and iout = ref 0
   in
   while (!iout <> nout) do
-    let (t, flag) = Cvode.solve_normal cvode_mem !tout y in
+    let t, _ = Cvode.solve_normal cvode_mem !tout y in
     print_output t (ith ydata 1) (ith ydata 2) (ith ydata 3);
     iout := !iout + 1;
     tout := !tout *. tmult
@@ -167,7 +167,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

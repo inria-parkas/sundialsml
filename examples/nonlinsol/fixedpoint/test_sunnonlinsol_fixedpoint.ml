@@ -62,7 +62,7 @@ let ytrue = if sungte500 then one else zero
 let ztrue = -.pi/.six
 
 (* Proxy for integrator convergence test function *)
-let conv_test (y : RealArray.t) (del : RealArray.t) tol (ewt : RealArray.t) _ =
+let conv_test _ (del : RealArray.t) tol _ _ =
   (* compute the norm of the correction *)
   if Nvector_serial.DataOps.maxnorm del <= tol
   then NLS.Success else NLS.Continue
@@ -234,7 +234,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

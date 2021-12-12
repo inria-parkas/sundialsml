@@ -599,7 +599,7 @@ struct (* {{{ *)
   let addconst ((x, _, _) : t) b ((z, _, _) : t) =
     ROArray.iter2 (fun xi zi -> Nvector.Ops.addconst xi b zi) x z
 
-  let maxnorm ((x, comm, _) as xv : t) =
+  let maxnorm ((_, comm, _) as xv : t) =
     let lmax = Local.maxnorm xv in
     Mpi.(allreduce_float lmax Max comm)
 
@@ -614,18 +614,18 @@ struct (* {{{ *)
     let gsum = Local.wsqrsummask xv wv idv in
     sqrt (gsum /. float gx)
 
-  let min ((x, comm, _) as xv : t) =
+  let min ((_, comm, _) as xv : t) =
     let lmin = Local.min xv in
     Mpi.(allreduce_float lmin Min comm)
 
-  let dotprod ((x, comm, _) as xv : t) (yv : t) =
+  let dotprod ((_, comm, _) as xv : t) (yv : t) =
     let lsum = Local.dotprod xv yv in
     Mpi.(allreduce_float lsum Sum comm)
 
   let compare c ((x, _, _) : t) ((z, _, _) : t) =
     ROArray.iter2 (fun xi zi -> Nvector.Ops.compare c xi zi) x z
 
-  let invtest ((x, comm, _) as xv : t) (zv : t) =
+  let invtest ((_, comm, _) as xv : t) (zv : t) =
     let v = if Local.invtest xv zv then 1. else 0. in
     Mpi.(allreduce_float v Min comm) <> 0.
 
@@ -633,15 +633,15 @@ struct (* {{{ *)
     let gsum = Local.wsqrsum xv wv in
     sqrt (gsum)
 
-  let l1norm ((x, comm, _) as xv : t) =
+  let l1norm ((_, comm, _) as xv : t) =
     let lsum = Local.l1norm xv in
     Mpi.(allreduce_float lsum Sum comm)
 
-  let constrmask (cv : t) ((x, comm, _) as xv : t) (mv : t) =
+  let constrmask (cv : t) ((_, comm, _) as xv : t) (mv : t) =
     let v = if Local.constrmask cv xv mv then 1. else 0. in
     Mpi.(allreduce_float v Min comm) <> 0.
 
-  let minquotient ((n, comm, _) as nv : t) (dv : t) =
+  let minquotient ((_, comm, _) as nv : t) (dv : t) =
     let lmin = Local.minquotient nv dv in
     Mpi.(allreduce_float lmin Min comm)
 
@@ -775,12 +775,10 @@ struct (* {{{ *)
       nrm.{i} <- sqrt (Local.wsqrsummask xa.(i) wa.(i) id /. float glen)
     done
 
-  let scaleaddmultivectorarray (ra : RealArray.t) (xa : t array)
-                                  (yaa : t array array) (zaa : t array array) =
+  let scaleaddmultivectorarray _ _ _ _ =
     raise Config.NotImplementedBySundialsVersion
 
-  let linearcombinationvectorarray (ca : RealArray.t) (xaa : t array array)
-                                      (za : t array) =
+  let linearcombinationvectorarray _ _ _ =
     raise Config.NotImplementedBySundialsVersion
 
 end (* }}} *)

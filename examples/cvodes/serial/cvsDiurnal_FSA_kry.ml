@@ -270,18 +270,17 @@ let print_final_stats s sensi =
   match sensi with
   | None -> ()
   | Some sensi_meth -> begin
-      let open Sens in
-      let nfSe     = get_num_rhs_evals s
-      and nfeS     = get_num_rhs_evals_sens s
-      and nsetupsS = get_num_lin_solv_setups s
-      and netfS    = get_num_err_test_fails s
+      let nfSe     = Sens.get_num_rhs_evals s
+      and nfeS     = Sens.get_num_rhs_evals_sens s
+      and nsetupsS = Sens.get_num_lin_solv_setups s
+      and netfS    = Sens.get_num_err_test_fails s
       in
       let nniS, ncfnS =
         match sensi_meth with
-        | Staggered _ | Staggered1 _   ->
-            get_num_nonlin_solv_iters s,
-            get_num_nonlin_solv_conv_fails s
-        | Simultaneous _ -> 0, 0
+        | Sens.Staggered _ | Sens.Staggered1 _   ->
+            Sens.get_num_nonlin_solv_iters s,
+            Sens.get_num_nonlin_solv_conv_fails s
+        | Sens.Simultaneous _ -> 0, 0
       in
       printf "\n";
       printf "nfSe    = %5d    nfeS     = %5d\n" nfSe nfeS;
@@ -375,10 +374,7 @@ let f data t (ydata : RealArray.t) (ydot : RealArray.t) =
 (* Preconditioner setup routine. Generate and preprocess P. *)
 
 let precond data jacarg jok gamma =
-  let { Cvode.jac_t   = tn;
-        Cvode.jac_y   = (ydata : RealArray.t);
-        Cvode.jac_fy  = fydata } = jacarg
-  in
+  let { Cvode.jac_y   = (ydata : RealArray.t); _ } = jacarg in
   (* Load problem coefficients and parameters *)
   let q1  = data.params.{0}
   and q2  = data.params.{1}
@@ -454,13 +450,9 @@ let precond data jacarg jok gamma =
 
 (* Preconditioner solve routine *)
 
-let psolve data jac_arg solve_arg (zdata : RealArray.t) =
+let psolve data _ solve_arg (zdata : RealArray.t) =
   let open Cvode.Spils in
-  let { rhs = (r : RealArray.t);
-        gamma = gamma;
-        delta = delta;
-        left = lr } = solve_arg
-  in
+  let { rhs = (r : RealArray.t); _ } = solve_arg in
 
   (* Extract the P and pivot arrays from user_data. *)
   let p = data.p
@@ -587,8 +579,8 @@ let main () =
   printf "========================================================================\n";
 
   let tout = ref twohr in
-  for iout = 1 to nout do
-    let (t, flag) = Cvode.solve_normal cvode_mem !tout y in
+  for _ = 1 to nout do
+    let t, _ = Cvode.solve_normal cvode_mem !tout y in
     print_output cvode_mem t y;
     print_sensi cvode_mem;
     tout := !tout +. twohr;
@@ -611,7 +603,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

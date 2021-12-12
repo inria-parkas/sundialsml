@@ -368,7 +368,7 @@ let cinit wdata (cdata : RealArray.t) =
 
 (* This function computes and loads the final values for the adjoint variables *)
 
-let cb_init wdata (cdata : RealArray.t) is =
+let cb_init wdata (cdata : RealArray.t) _ =
   let ns   = wdata.ns
   and mxns = wdata.mxns
   in
@@ -454,7 +454,7 @@ let web_rates_b wdata x y ((c : RealArray.t), c_off)
  * Here jx and jy count from 0.
  *)
 
-let fblock wdata t cdata jx jy cdotdata =
+let fblock wdata _ cdata jx jy cdotdata =
   let iblok = jx + jy * wdata.mx
   and y = float jy *. wdata.dy
   and x = float jx *. wdata.dx
@@ -721,7 +721,7 @@ let double_intgr (cdata : RealArray.t) i wdata =
  * and these are saved in fsave for use in preconditioning.
  *)
 
-let f wdata t cdata (cdotdata : RealArray.t) =
+let f wdata _ cdata (cdotdata : RealArray.t) =
   let ns    = wdata.ns
   and fsave = wdata.fsave
   and cox   = wdata.cox
@@ -773,7 +773,7 @@ let f wdata t cdata (cdotdata : RealArray.t) =
  * there are ngrp=ngx*ngy blocks computed in the block-grouping scheme.
  *)
 
-let precond wdata jacarg jok gamma =
+let precond wdata jacarg _ gamma =
   let open Cvode in
   let { jac_t   = t;
         jac_y   = cdata;
@@ -851,7 +851,7 @@ let precond wdata jacarg jok gamma =
  * blocks in P, and pivot information in pivot, and returns the result in z.
  *)
 
-let psolve wdata jac_arg solve_arg z =
+let psolve wdata _ solve_arg z =
   let { Cvode.Spils.rhs = r; Cvode.Spils.gamma = gamma } = solve_arg in
   Array1.blit r z;
 
@@ -933,12 +933,11 @@ let fB : web_data -> RealArray.t Adj.brhsfn_no_sens =
 
 (* Preconditioner setup function for the backward problem *)
 
-let precondb wdata jacarg jok gamma =
+let precondb wdata jacarg _ gamma =
   let open Adj in
   let { jac_t   = t;
         jac_y   = cdata;
-        jac_yb  = cBdata;
-        jac_fyb = fcBdata } = jacarg
+        jac_fyb = fcBdata; _ } = jacarg
   in
   let f1 = wdata.tmp in
   let cvode_mem =
@@ -1003,7 +1002,7 @@ let precondb wdata jacarg jok gamma =
 
 (* Preconditioner solve function for the backward problem *)
 
-let psolveb wdata jac_arg solve_arg (z : RealArray.t) =
+let psolveb wdata _ solve_arg (z : RealArray.t) =
   let { Adj.Spils.rhs = r; Adj.Spils.gamma = gamma } = solve_arg in
   Array1.blit r z;
 
@@ -1078,7 +1077,7 @@ let main () =
 
   (* Perform forward run *)
   printf "\nForward integration\n";
-  let t, ncheck, _ = Adj.forward_normal cvode_mem tout c in
+  let _, ncheck, _ = Adj.forward_normal cvode_mem tout c in
 
   printf "\nncheck = %d\n"  ncheck;
 
@@ -1130,7 +1129,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

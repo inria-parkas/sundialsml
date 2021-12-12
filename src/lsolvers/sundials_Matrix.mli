@@ -389,6 +389,7 @@ end (* }}} *)
 module Sparse : sig (* {{{ *)
 
   type csc (** Compressed-sparse-column format. *)
+
   type csr (** Compressed-sparse-row format. *)
 
   (** Matrix storage formats. *)
@@ -804,7 +805,9 @@ end (* }}} *)
 module ArrayBand : sig (* {{{ *)
 
   type smu = int (** Storage upper-bandwidth. *)
+
   type mu  = int (** Upper-bandwidth. *)
+
   type ml  = int (** Lower-bandwidth. *)
 
   (** A band matrix accessible directly through a

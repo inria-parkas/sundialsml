@@ -39,7 +39,6 @@ let e = Sundials.RecoverableFailure
  *     in arkode_ml.h (and code in arkode_ml.c) must also be updated.
  *)
 
-type ('data, 'kind) nvector = ('data, 'kind) Nvector.t
 module LSI = Sundials_LinearSolver_impl
 module NLSI = Sundials_NonlinearSolver_impl
 
@@ -320,7 +319,7 @@ and problem_type =
 
 and ('data, 'kind, 'step) lin_solver =
   ('data, 'kind, 'step) session
-  -> ('data, 'kind) nvector
+  -> ('data, 'kind) Nvector.t
   -> unit
 
 (* Note: When compatibility with Sundials < 3.0.0 is no longer required,
@@ -484,7 +483,7 @@ module SpilsTypes = struct
   include SpilsTypes'
 
   type ('a, 'k, 's) set_preconditioner =
-    ('a, 'k, 's) session -> ('a, 'k) nvector -> unit
+    ('a, 'k, 's) session -> ('a, 'k) Nvector.t -> unit
 
   type ('a, 'k, 's) preconditioner =
     LSI.Iterative.preconditioning_type * ('a, 'k, 's) set_preconditioner
@@ -498,7 +497,7 @@ end
 module MassTypes = struct
   type ('data, 'kind) solver =
     ('data, 'kind, arkstep) session
-    -> ('data, 'kind) nvector
+    -> ('data, 'kind) Nvector.t
     -> unit
 
   type 'k serial_solver =
@@ -513,7 +512,7 @@ module MassTypes = struct
     include MassTypes'.Iterative'
 
     type ('a, 'k) set_preconditioner =
-      ('a, 'k, arkstep) session -> ('a, 'k) nvector -> unit
+      ('a, 'k, arkstep) session -> ('a, 'k) Nvector.t -> unit
 
     type ('a, 'k) preconditioner =
       LSI.Iterative.preconditioning_type * ('a, 'k) set_preconditioner

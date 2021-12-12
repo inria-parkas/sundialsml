@@ -179,11 +179,11 @@ let init_user_data num_threads =
       coy   = Array.make num_species 0.;
       bcoef = Array.make num_species 0.;
       rates = RealArray.create neq;
-      pp    = Array.init mx (fun jx ->
-                Array.init my (fun jy ->
+      pp    = Array.init mx (fun _ ->
+                Array.init my (fun _ ->
                   Matrix.ArrayDense.create num_species num_species));
-      pivot = Array.init mx (fun jx ->
-                Array.init my (fun jy ->
+      pivot = Array.init mx (fun _ ->
+                Array.init my (fun _ ->
                   LintArray.make num_species 0));
       ewt   = Nvector_openmp.make num_threads neq 0.0;
       ida_mem = None;
@@ -250,7 +250,7 @@ let web_rates webdata x y ((cxy : RealArray.t), cxy_off)
  * This routine computes the right-hand sides of the system equations,
  * consisting of the diffusion term and interaction term.
  * The interaction term is computed by the function WebRates.  *)
-let fweb webdata t c (crate : RealArray.t) =
+let fweb webdata _ c (crate : RealArray.t) =
   let cox = webdata.cox
   and coy = webdata.coy in
   (* Loop over grid points, evaluate interaction vector (length ns), form
@@ -374,7 +374,7 @@ let precond webdata jac =
     done (* End of jx loop. *)
   done (* End of jy loop. *)
 
-let psolve webdata jac rvec zvec delta =
+let psolve webdata _ rvec zvec _ =
   RealArray.blit ~src:rvec ~dst:zvec;
 
   (* Loop through subgrid and apply preconditioner factors at each point. *)
@@ -536,7 +536,7 @@ let main () =
   (* Loop over iout, call IDASolve (normal mode), print selected output. *)
   let tout = ref tout1 in
   for iout = 1 to nout do
-    let (tret, retval) = Ida.solve_normal mem !tout wcc wcp in
+    let tret, _ = Ida.solve_normal mem !tout wcc wcp in
     print_output mem cc tret;
     if iout < 3 then tout := !tout *. tmult
     else tout := !tout +. tadd
@@ -558,7 +558,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

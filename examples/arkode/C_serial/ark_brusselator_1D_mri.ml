@@ -76,7 +76,7 @@ type userdata = {
  * -----------------------------------*)
 
 (* ff routine to compute the fast portion of the ODE RHS. *)
-let ff { n; a; b; ep; _ } t (ydata : RealArray.t) (dydata : RealArray.t) =
+let ff { n; a; b; ep; _ } _ (ydata : RealArray.t) (dydata : RealArray.t) =
   (* iterate over domain, computing reactions *)
   for i = 0 to n - 1 do
 
@@ -96,7 +96,7 @@ let ff { n; a; b; ep; _ } t (ydata : RealArray.t) (dydata : RealArray.t) =
   done
 
 (* fs routine to compute the slow portion of the ODE RHS. *)
-let fs { n; c; dx; _ } t (ydata : RealArray.t) (dydata : RealArray.t) =
+let fs { n; c; dx; _ } _ (ydata : RealArray.t) (dydata : RealArray.t) =
   (* iterate over domain, computing advection *)
   let tmp = -. c /. dx in
 
@@ -316,9 +316,9 @@ let main () =
   let tout = ref (t0 +. dTout) in
   printf "        t      ||u||_rms   ||v||_rms   ||w||_rms\n";
   printf "   ----------------------------------------------\n";
-  for iout = 0 to nt - 1 do
+  for _ = 0 to nt - 1 do
     (* call integrator *)
-    let t, r = MRIStep.evolve_normal arkode_mem !tout y in
+    let t, _ = MRIStep.evolve_normal arkode_mem !tout y in
 
     (* access/print solution statistics *)
     let u = Nvector_serial.Ops.wl2norm y umask in
@@ -362,16 +362,15 @@ let main () =
   let nfs   = get_num_rhs_evals arkode_mem in
 
   (* Get some fast integrator statistics *)
-  let open ARKStep in
-  let nstf       = get_num_steps inner_arkode_mem in
-  let nstf_a     = get_num_step_attempts inner_arkode_mem in
-  let nffe, nffi = get_num_rhs_evals inner_arkode_mem in
-  let nsetups    = get_num_lin_solv_setups inner_arkode_mem in
-  let netf       = get_num_err_test_fails inner_arkode_mem in
-  let nni        = get_num_nonlin_solv_iters inner_arkode_mem in
-  let ncfn       = get_num_nonlin_solv_conv_fails inner_arkode_mem in
-  let nje        = Dls.get_num_jac_evals inner_arkode_mem in
-  let nfeLS      = Dls.get_num_lin_rhs_evals inner_arkode_mem in
+  let nstf    = ARKStep.get_num_steps inner_arkode_mem in
+  let nstf_a  = ARKStep.get_num_step_attempts inner_arkode_mem in
+  let _, nffi = ARKStep.get_num_rhs_evals inner_arkode_mem in
+  let nsetups = ARKStep.get_num_lin_solv_setups inner_arkode_mem in
+  let netf    = ARKStep.get_num_err_test_fails inner_arkode_mem in
+  let nni     = ARKStep.get_num_nonlin_solv_iters inner_arkode_mem in
+  let ncfn    = ARKStep.get_num_nonlin_solv_conv_fails inner_arkode_mem in
+  let nje     = ARKStep.Dls.get_num_jac_evals inner_arkode_mem in
+  let nfeLS   = ARKStep.Dls.get_num_lin_rhs_evals inner_arkode_mem in
 
   (* Print some final statistics *)
   printf "\nFinal Solver Statistics:\n";
@@ -398,7 +397,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

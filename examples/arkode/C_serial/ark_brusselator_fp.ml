@@ -63,7 +63,7 @@ let printf = Printf.printf
 let fprintf = Printf.fprintf
 
 (* fi routine to compute the implicit portion of the ODE RHS. *)
-let fi rdata t (y : RealArray.t) (ydot : RealArray.t) =
+let fi rdata _ (y : RealArray.t) (ydot : RealArray.t) =
   let b  = rdata.(1) in     (* access data entries *)
   let ep = rdata.(2) in
   let w = y.{2} in          (* access solution values *)
@@ -74,7 +74,7 @@ let fi rdata t (y : RealArray.t) (ydot : RealArray.t) =
   ydot.{2} <- (b-.w) /. ep
 
 (* fe routine to compute the explicit portion of the ODE RHS. *)
-let fe rdata t (y : RealArray.t) (ydot : RealArray.t) =
+let fe rdata _ (y : RealArray.t) (ydot : RealArray.t) =
   let a  = rdata.(0) in     (* access data entries *)
   let u = y.{0} in          (* access solution values *)
   let v = y.{1} in
@@ -176,7 +176,7 @@ let main () =
   printf "        t           u           v           w\n";
   printf "   ----------------------------------------------\n";
   (try
-     for iout=0 to nt-1 do
+     for _ = 0 to nt-1 do
        (* call integrator *)
        let t, _ = ARKStep.evolve_normal arkode_mem !tout y in
        (* access/print solution *)
@@ -219,7 +219,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

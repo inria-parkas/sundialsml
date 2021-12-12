@@ -19,7 +19,6 @@ module QuadAdj = Cvodes.Adjoint.Quadrature
 module Nvector = Nvector_parallel
 module Bbd = Cvode_bbd
 module Adjbbd = Cvodes_bbd
-open Bigarray
 
 let printf = Printf.printf
 let eprintf = Printf.eprintf
@@ -274,8 +273,8 @@ let set_source d =
  *------------------------------------------------------------------
  *)
 
-let array_of_third (x, y, z) = Array.of_list z
-let array_of_second (x, y) = Array.of_list y
+let array_of_third (_, _, z) = Array.of_list z
+let array_of_second (_, y) = Array.of_list y
 
 let set_data comm npes myId =
   (* Set domain boundaries *)
@@ -367,7 +366,7 @@ let set_data comm npes myId =
  *------------------------------------------------------------------
  *)
 
-let f_comm d t ((ydata : RealArray.t), _, _) =
+let f_comm d _ ((ydata : RealArray.t), _, _) =
   let comm = d.comm in
   let id = d.myId in
 
@@ -417,7 +416,7 @@ let f_comm d t ((ydata : RealArray.t), _, _) =
         let l = Array.init (dim - 1) (fun i -> (d + 1 + i) mod dim) in
 
         let c = ref 0 in
-        let rec fill_send_buf () =
+        let fill_send_buf () =
           for k=0 to l_m.(l.(0)) - 1 do
             i.(l.(0)) <- k;
             buf_send.{!c} <- ijth l_m ydata i;
@@ -449,7 +448,7 @@ let f_comm d t ((ydata : RealArray.t), _, _) =
 
         (* Loop over all other dimensions and copy data into yextdata *)
         let c = ref 0 in
-        let rec empty_recv_buf () =
+        let empty_recv_buf () =
           for k=0 to l_m.(l.(0)) - 1 do
             i.(l.(0)) <- k;
             set_ijth_ext l_m yextdata i buf_recv.{!c};
@@ -811,7 +810,7 @@ let output_gradient data myId qB =
  *------------------------------------------------------------------
  *)
 
-let f_local data t ((ydata : RealArray.t), _, _)
+let f_local data _ ((ydata : RealArray.t), _, _)
                    ((dydata : RealArray.t), _, _) =
   (* Extract stuff from data structure *)
   let id = data.myId in
@@ -899,7 +898,7 @@ let f data t y ydot =
  *------------------------------------------------------------------
  *)
 
-let fQ data t y ((dqdata : RealArray.t), _, _) =
+let fQ data _ y ((dqdata : RealArray.t), _, _) =
   dqdata.{0} <- (dotprod y y) *. 0.5 *. data.dOmega
 
 (*
@@ -909,9 +908,8 @@ let fQ data t y ((dqdata : RealArray.t), _, _) =
  *------------------------------------------------------------------
  *)
 
-let fB_local data { Adj.t = t;
-                    Adj.y  = ((ydata : RealArray.t), _, _);
-                    Adj.yb = ((yBdata : RealArray.t), _, _) }
+let fB_local data { Adj.y  = ((ydata : RealArray.t), _, _);
+                    Adj.yb = ((yBdata : RealArray.t), _, _); _ }
     ((dyBdata : RealArray.t), _, _) =
   (* Extract stuff from data structure *)
   let id = data.myId in
@@ -1049,10 +1047,10 @@ let main () =
   let cvode_mem =
     Cvode.(init BDF
       ~lsolver:Spils.(solver (spgmr y)
-                             Bbd.(prec_left { mudq = d.l_m.(0) + 1;
-                                              mldq = d.l_m.(0) + 1;
-                                              mukeep = 2;
-                                              mlkeep = 2; }
+                             (Bbd.prec_left Bbd.({ mudq = d.l_m.(0) + 1;
+                                                   mldq = d.l_m.(0) + 1;
+                                                   mukeep = 2;
+                                                   mlkeep = 2; })
                                             (f_local d)))
       (SStolerances (reltol, abstol))
       (f d) ti y)
@@ -1102,10 +1100,10 @@ let main () =
                        (SStolerances (reltolB, abstolB))
                        ~lsolver:Spils.(solver
                           (spgmr yB)
-                          Adjbbd.(prec_left { mudq = d.l_m.(0) + 1;
-                                              mldq = d.l_m.(0) + 1;
-                                              mukeep = 2;
-                                              mlkeep = 2; }
+                          (Adjbbd.prec_left Adjbbd.({ mudq = d.l_m.(0) + 1;
+                                                      mldq = d.l_m.(0) + 1;
+                                                      mukeep = 2;
+                                                      mlkeep = 2; })
                                              (fB_local d)))
                        (NoSens (fB d))
                        tf yB)
@@ -1150,7 +1148,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

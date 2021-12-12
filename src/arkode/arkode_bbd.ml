@@ -17,7 +17,6 @@ include ArkodeBbdTypes
 (* These types can't be defined in Arkode_impl because they introduce
    dependence on Mpi.  Some duplication is unavoidable.  *)
 type data = Nvector_parallel.data
-type kind = Nvector_parallel.kind
 
 type 'step parallel_session =
   (Nvector_parallel.data, Nvector_parallel.kind, 'step) Arkode_impl.session

@@ -47,7 +47,7 @@ struct
   let check_matrix a b tol =
     let ac, bc = Matrix.(unwrap a, unwrap b) in
     let (am, an), (bm, bn) = Matrix.Sparse.(size ac, size bc) in
-    let (annz, anp), (bnnz, bnp) = Matrix.Sparse.(dims ac, dims bc) in
+    let (annz, anp), (bnnz, _) = Matrix.Sparse.(dims ac, dims bc) in
     try
       if am <> bm then
         (printf ">>> ERROR: check_matrix: Different numbers of rows (%d vs %d)@\n"
@@ -83,7 +83,7 @@ struct
 
   let check_matrix_entry a v tol =
     let c = Matrix.unwrap a in
-    let indexvals, indexptrs, data = Matrix.Sparse.unwrap c in
+    let _, _, data = Matrix.Sparse.unwrap c in
     let nnz, _ = Matrix.Sparse.dims c in
     try
       for i = 0 to nnz - 1 do
@@ -163,13 +163,13 @@ let test_sunmatscaleadd2 check_vector a b x y z =
       printf ">>> FAILED test -- SUNMatScaleAdd2 check 1 \n";
       printf "\nA =@.";
       Matrix.print_sparse a Sundials.Logfile.stdout;
-      Sundials.Logfile.(flush stdout);
+      Sundials.Logfile.flush Sundials.Logfile.stdout;
       printf "\nB =@.";
       Matrix.print_sparse b Sundials.Logfile.stdout;
-      Sundials.Logfile.(flush stdout);
+      Sundials.Logfile.flush Sundials.Logfile.stdout;
       printf "\nC =@.";
       Matrix.print_sparse c Sundials.Logfile.stdout;
-      Sundials.Logfile.(flush stdout);
+      Sundials.Logfile.flush Sundials.Logfile.stdout;
       printf "\nx =\n%a@\n" Nvector_serial.pp x;
       printf "\ny =\n%a@\n" Nvector_serial.pp y;
       printf "\nz =\n%a@\n" Nvector_serial.pp z;
@@ -199,13 +199,13 @@ let test_sunmatscaleadd2 check_vector a b x y z =
       printf ">>> FAILED test -- SUNMatScaleAdd2 check 2 @\n";
       printf "\nA =@.";
       Matrix.print_sparse a Sundials.Logfile.stdout;
-      Sundials.Logfile.(flush stdout);
+      Sundials.Logfile.flush Sundials.Logfile.stdout;
       printf "\nB =@.";
       Matrix.print_sparse b Sundials.Logfile.stdout;
-      Sundials.Logfile.(flush stdout);
+      Sundials.Logfile.flush Sundials.Logfile.stdout;
       printf "\nC =@.";
       Matrix.print_sparse c Sundials.Logfile.stdout;
-      Sundials.Logfile.(flush stdout);
+      Sundials.Logfile.flush Sundials.Logfile.stdout;
       printf "\nx =\n%a@\n" Nvector_serial.pp x;
       printf "\ny =\n%a@\n" Nvector_serial.pp y;
       printf "\nz =\n%a@\n" Nvector_serial.pp z;
@@ -233,16 +233,16 @@ let test_sunmatscaleadd2 check_vector a b x y z =
       printf ">>> FAILED test -- SUNMatScaleAdd2 check 3 @\n";
       printf "\nA =@.";
       Matrix.print_sparse a Sundials.Logfile.stdout;
-      Sundials.Logfile.(flush stdout);
+      Sundials.Logfile.flush Sundials.Logfile.stdout;
       printf "\nB =@.";
       Matrix.print_sparse b Sundials.Logfile.stdout;
-      Sundials.Logfile.(flush stdout);
+      Sundials.Logfile.flush Sundials.Logfile.stdout;
       printf "\nC =@.";
       Matrix.print_sparse c Sundials.Logfile.stdout;
-      Sundials.Logfile.(flush stdout);
+      Sundials.Logfile.flush Sundials.Logfile.stdout;
       printf "\nE =@.";
       Matrix.print_sparse e Sundials.Logfile.stdout;
-      Sundials.Logfile.(flush stdout);
+      Sundials.Logfile.flush Sundials.Logfile.stdout;
       printf "\nx =\n%a@\n" Nvector_serial.pp x;
       printf "\ny =\n%a@\n" Nvector_serial.pp y;
       printf "\nu =\n%a@\n" Nvector_serial.pp u;
@@ -286,10 +286,10 @@ let test_sunmatscaleaddi2 check_vector a x y =
       printf ">>> FAILED test -- SUNMatScaleAddI2 check 1 @\n";
       printf "\nA =@.";
       Matrix.print_sparse a Sundials.Logfile.stdout;
-      Sundials.Logfile.(flush stdout);
+      Sundials.Logfile.flush Sundials.Logfile.stdout;
       printf "\nB =@.";
       Matrix.print_sparse b Sundials.Logfile.stdout;
-      Sundials.Logfile.(flush stdout);
+      Sundials.Logfile.flush Sundials.Logfile.stdout;
       printf "\nz =\n%a@\n" Nvector_serial.pp z;
       printf "\nw =\n%a@\n" Nvector_serial.pp w;
       raise Exit
@@ -317,10 +317,10 @@ let test_sunmatscaleaddi2 check_vector a x y =
       printf ">>> FAILED test -- SUNMatScaleAddI2 check 2 @\n";
       printf "\nA =@.";
       Matrix.print_sparse a Sundials.Logfile.stdout;
-      Sundials.Logfile.(flush stdout);
+      Sundials.Logfile.flush Sundials.Logfile.stdout;
       printf "\nC =@.";
       Matrix.print_sparse c Sundials.Logfile.stdout;
-      Sundials.Logfile.(flush stdout);
+      Sundials.Logfile.flush Sundials.Logfile.stdout;
       printf "\nz =\n%a@\n" Nvector_serial.pp z;
       printf "\nw =\n%a@\n" Nvector_serial.pp w;
       raise Exit
@@ -343,10 +343,10 @@ let test_sunmatscaleaddi2 check_vector a x y =
       printf ">>> FAILED test -- SUNMatScaleAddI2 check 3 @\n";
       printf "\nA =@.";
       Matrix.print_sparse a Sundials.Logfile.stdout;
-      Sundials.Logfile.(flush stdout);
+      Sundials.Logfile.flush Sundials.Logfile.stdout;
       printf "\nD =@.";
       Matrix.print_sparse d Sundials.Logfile.stdout;
-      Sundials.Logfile.(flush stdout);
+      Sundials.Logfile.flush Sundials.Logfile.stdout;
       printf "\nz =\n%a@\n" Nvector_serial.pp z;
       printf "\ny =\n%a@\n" Nvector_serial.pp y;
       raise Exit
@@ -602,12 +602,12 @@ and main_with_type : type s. int -> int -> s Matrix.Sparse.sformat -> unit
   let c = Matrix.wrap_dense mc in
   let md = Matrix.Dense.make matrows matcols 0.0 in
   let d = Matrix.wrap_dense md in
-  for k = 0 to 3*matrows - 1 do
+  for _ = 0 to 3*matrows - 1 do
     let i = Test_matrix.rand () mod matrows in
     let j = Test_matrix.rand () mod matcols in
     Matrix.Dense.set md i j (rand_float ())
   done;
-  for k = 0 to matrows - 1 do
+  for _ = 0 to matrows - 1 do
     let i = Test_matrix.rand () mod matrows in
     let j = Test_matrix.rand () mod matcols in
     Matrix.Dense.set mc i j (rand_float ())
@@ -683,7 +683,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

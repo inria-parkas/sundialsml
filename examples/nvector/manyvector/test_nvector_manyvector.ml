@@ -41,7 +41,7 @@ module Nvector_manyvector_ops =
       if i < x0len then RealArray.set xsub0 i v
       else RealArray.set xsub1 (i - x0len) v
 
-    let max_time x t = t
+    let max_time _ t = t
     let sync_device () = ()
   end
 
@@ -49,7 +49,7 @@ module Test =
   struct
   include Test_nvector.Test (Nvector_manyvector_ops)
 
-  let make ?with_fused_ops lens =
+  let make lens =
     let num = Array.length lens in
     Nvector_many.wrap
       (ROArray.init num (fun i -> Nvector_serial.Any.make lens.(i) 0.0))
@@ -215,7 +215,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

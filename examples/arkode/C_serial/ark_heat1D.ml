@@ -61,7 +61,7 @@ type user_data = {
 (* Functions called by the solver *)
 
 (* f routine to compute the ODE RHS function f(t,y). *)
-let f { n; dx; k } t (y : RealArray.t) (ydot : RealArray.t) =
+let f { n; dx; k } _ (y : RealArray.t) (ydot : RealArray.t) =
   RealArray.fill ydot 0.0;    (* Initialize ydot to zero *)
 
   (* iterate over domain, computing all equations *)
@@ -162,7 +162,7 @@ let main () =
   printf "   -------------------------\n";
   printf "  %10.6f  %10.6f\n" t0 (sqrt((dotprod y y)/.float mesh_n));
   (try
-     for iout=0 to nt-1 do
+     for _ = 0 to nt-1 do
 
        (* call integrator *)
        let t, _ = ARKStep.evolve_normal arkode_mem !tout y in
@@ -221,7 +221,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

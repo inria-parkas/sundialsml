@@ -20,7 +20,7 @@ let print_mat_data out (m, _) =
   done;
   fprintf out "@]"
 
-let print_mat out ((data, (smu, mu, ml)) as m) =
+let print_mat out ((data, (_, mu, ml)) as m) =
   let (_, nc) = RealArray2.size data in
   fprintf out "@[<v>";
   for i = 0 to nc - 1 do

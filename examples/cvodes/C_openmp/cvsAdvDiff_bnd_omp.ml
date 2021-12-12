@@ -101,7 +101,7 @@ type user_data = {
 
 (* f routine. Compute f(t,u). *)
 
-let f data t (udata : RealArray.t) (dudata : RealArray.t) =
+let f data _ (udata : RealArray.t) (dudata : RealArray.t) =
   (* Extract needed constants from data *)
   let hordc = data.hdcoef
   and horac = data.hacoef
@@ -132,7 +132,7 @@ let f data t (udata : RealArray.t) (dudata : RealArray.t) =
 
 (* Jacobian routine. Compute J(t,u). *)
 
-let jac data arg jmat =
+let jac data _ jmat =
   (*
     The components of f = udot that depend on u(i,j) are
     f(i,j), f(i-1,j), f(i+1,j), f(i,j-1), f(i,j+1), with
@@ -256,8 +256,8 @@ let main () =
   print_header reltol abstol (vmax_norm u);
 
   let tout = ref t1 in
-  for iout = 1 to nout do
-    let (t, flag) = Cvode.solve_normal cvode_mem !tout u
+  for _ = 1 to nout do
+    let t, _ = Cvode.solve_normal cvode_mem !tout u
     in
     let nst = Cvode.get_num_steps cvode_mem in
 
@@ -281,7 +281,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

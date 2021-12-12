@@ -57,7 +57,6 @@ let idadense =
   match Config.sundials_version with 2,_,_ -> "IDADENSE" | _ -> "DENSE"
 
 let print_header rtol avtol yy =
-  let open Printf in
   printf "\nidaRoberts_dns: Robertson kinetics DAE serial example problem for IDA\n";
   printf "         Three equation chemical kinetics problem.\n\n";
   printf "Linear solver: %s, with user-supplied Jacobian.\n" idadense;
@@ -114,19 +113,14 @@ and print_root_info root_f1 root_f2 =
     (int_of_root_event root_f1)
     (int_of_root_event root_f2)
 
-let resrob tres (y : RealArray.t) (yp : RealArray.t) (rr : RealArray.t) =
+let resrob _ (y : RealArray.t) (yp : RealArray.t) (rr : RealArray.t) =
   rr.{0} <- -.0.04*.y.{0} +. 1.0e4*.y.{1}*.y.{2};
   rr.{1} <- -.rr.{0} -. 3.0e7*.y.{1}*.y.{1} -. yp.{1};
   rr.{0} <-  rr.{0} -. yp.{0};
   rr.{2} <-  y.{0} +. y.{1} +. y.{2} -. 1.0
 
 and jacrob params jj =
-  match params with
-    { Ida.jac_t=tt;
-      Ida.jac_coef=cj;
-      Ida.jac_y=(y : RealArray.t);
-      Ida.jac_res=resvec }
-    ->
+  match params with { Ida.jac_coef=cj; Ida.jac_y=(y : RealArray.t); _ } ->
   let set = Matrix.Dense.set jj in
   set 0 0 (-. 0.04 -. cj);
   set 1 0 (0.04);
@@ -138,7 +132,7 @@ and jacrob params jj =
   set 1 2 (-.1.0e4*.y.{1});
   set 2 2 (1.)
 
-and grob t (y : RealArray.t) y' (gout : RealArray.t) =
+and grob _ (y : RealArray.t) _ (gout : RealArray.t) =
   let y1 = y.{0}
   and y3 = y.{2}
   in
@@ -224,7 +218,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

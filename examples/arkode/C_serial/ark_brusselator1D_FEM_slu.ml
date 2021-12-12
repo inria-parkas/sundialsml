@@ -1362,7 +1362,7 @@ module Problem (I : sig
 struct (* {{{ *)
 
   (* Routine to compute the reaction portion of the ODE RHS function f(t,y). *)
-  let f_rx { n; a; b; ep; x } t (y : RealArray.t) (ydot : RealArray.t) =
+  let f_rx { n; a; b; ep; x } _ (y : RealArray.t) (ydot : RealArray.t) =
     (* iterate over intervals, filling in residual function *)
     for i=0 to n-1-1 do
       (* set booleans to determine whether equations exist on the left/right *)
@@ -1479,7 +1479,7 @@ struct (* {{{ *)
     done
 
   (* Routine to compute the diffusion portion of the ODE RHS function f(t,y). *)
-  let f_diff { n; du; dv; dw; x } t (y : RealArray.t) (ydot : RealArray.t) =
+  let f_diff { n; du; dv; dw; x } _ (y : RealArray.t) (ydot : RealArray.t) =
     (* iterate over intervals, filling in residual function *)
     for i=0 to n-2 do
       (* set booleans to determine whether equations exist on the left/right *)
@@ -1698,7 +1698,7 @@ struct (* {{{ *)
     printf "        t      ||u||_rms   ||v||_rms   ||w||_rms\n";
     printf "   ----------------------------------------------\n";
     (try
-       for iout=0 to nt-1 do
+       for _ = 0 to nt-1 do
          (* call integrator *)
          let t, _ = ARKStep.evolve_normal arkode_mem !tout y in
 
@@ -1780,7 +1780,7 @@ module CsrProblem = Problem (Csr)
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     if sungte500 then CsrProblem.main ()
                  else CscProblem.main ();
     if gc_each_rep then Gc.compact ()

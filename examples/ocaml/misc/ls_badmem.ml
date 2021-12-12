@@ -5,7 +5,7 @@
 
 let printf = Printf.printf
 
-let f t y yd = yd.{0} <- 1.0
+let f _ _ yd = yd.{0} <- 1.0
 
 (* simulation *)
 

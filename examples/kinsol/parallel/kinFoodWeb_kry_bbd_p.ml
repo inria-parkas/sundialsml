@@ -231,7 +231,7 @@ let bytes x = header_and_empty_array_size + x * float_cell_size
 
 (* Routine to send boundary data to neighboring PEs *)
 
-let bsend comm my_pe isubx isuby dsizex dsizey udata =
+let bsend comm my_pe isubx isuby dsizex _ udata =
   let buf = RealArray.create (num_species*mysub) in
 
   (* If isuby > 0, send data from bottom x-line of u *)
@@ -395,7 +395,7 @@ let func_local data (cdata, _, _) (fval, _, _) =
   (* Copy local segment of cc vector into the working extended array cext *)
   let offsetc = ref 0 in
   let offsetce = ref (nsmxsub2 + num_species) in
-  for ly = 0 to mysub - 1 do
+  for _ = 0 to mysub - 1 do
     for i = 0 to nsmxsub - 1 do
       cext.{!offsetce+i} <- cdata.{!offsetc+i}
     done;
@@ -485,7 +485,7 @@ let func_local data (cdata, _, _) (fval, _, _) =
  * by a call to func_local.
  *)
 
-let func data ((cdata, _, _) as cc) ((fvdata, _, _) as fv) =
+let func data ((cdata, _, _) as cc) fv =
   (* Call ccomm to do inter-processor communicaiton *)
   ccomm data cdata;
 
@@ -663,7 +663,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

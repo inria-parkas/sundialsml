@@ -409,12 +409,7 @@ let jtv data jac_arg (vdata : RealArray.t) (jvdata : RealArray.t) =
 
 let precond data jacarg jok gamma =
   let open Cvode in
-  let { jac_t   = tn;
-        jac_y   = (udata : RealArray.t);
-        jac_fy  = fudata;
-        jac_tmp = ();
-      } = jacarg
-  in
+  let { jac_y   = (udata : RealArray.t); jac_tmp = (); _ } = jacarg in
 
   (* Make local copies of pointers in user_data, and of pointer to u's data *)
   let p     = data.p
@@ -427,7 +422,7 @@ let precond data jacarg jok gamma =
       (* jok = TRUE: Copy Jbd to P *)
       for jy = 0 to my - 1 do
         for jx = 0 to mx - 1 do
-          Direct.blit jbd.(jx).(jy) p.(jx).(jy)
+          Direct.blit ~src:jbd.(jx).(jy) ~dst:p.(jx).(jy)
         done
       done;
       false
@@ -486,13 +481,9 @@ let precond data jacarg jok gamma =
 
 (* Preconditioner solve routine *)
 
-let psolve data jac_arg solve_arg (zdata : RealArray.t) =
+let psolve data _ solve_arg (zdata : RealArray.t) =
   let open Cvode.Spils in
-  let { rhs = (r : RealArray.t);
-        gamma = gamma;
-        delta = delta;
-        left = lr } = solve_arg
-  in
+  let { rhs = (r : RealArray.t); _ } = solve_arg in
 
   (* Extract the P and pivot arrays from user_data. *)
   let p = data.p
@@ -547,8 +538,8 @@ let main () =
 
   printf " \n2-species diurnal advection-diffusion problem\n\n";
   let tout = ref twohr in
-  for iout = 1 to nout do
-    let (t, flag) = Cvode.solve_normal cvode_mem !tout u in
+  for _ = 1 to nout do
+    let t, _ = Cvode.solve_normal cvode_mem !tout u in
     print_output cvode_mem (unwrap u) t;
     tout := !tout +. twohr
   done;
@@ -568,7 +559,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

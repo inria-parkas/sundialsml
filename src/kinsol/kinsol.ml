@@ -50,8 +50,6 @@ type 'k serial_linear_solver =
 
 (* interface *)
 
-let int_default = function None -> 0 | Some v -> v
-
 (* 4.0.0 <= Sundials *)
 external c_set_linear_solver
   : ('d, 'k) session
@@ -230,8 +228,8 @@ module Dls = struct (* {{{ *)
     | Some m -> m
     | None -> failwith "a direct linear solver is required"
 
-  let solver ?jac ls session nv =
-    let LSI.LS ({ rawptr; solver; matrix } as hls) = ls in
+  let solver ?jac ls session _ =
+    let LSI.(LS ({ rawptr; solver; matrix } as hls)) = ls in
     let m = assert_matrix matrix in
     set_ls_callbacks ?jac solver m session;
     if Sundials_impl.Version.in_compat_mode2
@@ -340,13 +338,13 @@ module Spils = struct (* {{{ *)
     ls_check_spils s;
     c_set_max_restarts s t
 
-  let init_preconditioner solve setup session nv =
+  let init_preconditioner solve setup session _ =
     c_set_preconditioner session (setup <> None);
     session.ls_precfns <- PrecFns { prec_solve_fn = solve;
                                     prec_setup_fn = setup }
 
   let prec_none = LSI.Iterative.(PrecNone,
-                    fun session nv -> session.ls_precfns <- NoPrecFns)
+                    fun session _ -> session.ls_precfns <- NoPrecFns)
 
   let prec_right ?setup solve = LSI.Iterative.(PrecRight,
                                               init_preconditioner solve setup)
@@ -354,36 +352,35 @@ module Spils = struct (* {{{ *)
   let not_implemented _ = raise Config.NotImplementedBySundialsVersion
 
   (* Sundials < 3.0.0 *)
-  let make_compat (type tag)
-        ({ LSI.Iterative.maxl; LSI.Iterative.gs_type } as compat)
-        prec_type
+  let make_compat (type tag) compat _
         (solver_data : ('s, 'nd, 'nk, tag) LSI.solver_data) session =
+    let { LSI.Iterative.maxl; LSI.Iterative.max_restarts; _ } = compat in
     match solver_data with
     | LSI.Spgmr ->
-        c_spgmr session compat.maxl;
-        (match compat.max_restarts with
+        c_spgmr session maxl;
+        (match max_restarts with
          | None -> () | Some t -> c_set_max_restarts session t);
-        compat.set_gs_type <- not_implemented;
-        compat.set_prec_type <- not_implemented;
-        compat.set_max_restarts <- old_set_max_restarts session
+        LSI.Iterative.(compat.set_gs_type <- not_implemented);
+        LSI.Iterative.(compat.set_prec_type <- not_implemented);
+        LSI.Iterative.(compat.set_max_restarts <- old_set_max_restarts session)
     | LSI.Spfgmr ->
-        c_spfgmr session compat.maxl;
-        (match compat.max_restarts with
+        c_spfgmr session maxl;
+        (match max_restarts with
          | None -> () | Some t -> c_set_max_restarts session t);
-        compat.set_gs_type <- not_implemented;
-        compat.set_prec_type <- not_implemented;
-        compat.set_max_restarts <- old_set_max_restarts session
+        LSI.Iterative.(compat.set_gs_type <- not_implemented);
+        LSI.Iterative.(compat.set_prec_type <- not_implemented);
+        LSI.Iterative.(compat.set_max_restarts <- old_set_max_restarts session)
     | LSI.Spbcgs ->
-        c_spbcgs session compat.maxl;
-        compat.set_maxl <- not_implemented;
-        compat.set_prec_type <- not_implemented
+        c_spbcgs session maxl;
+        LSI.Iterative.(compat.set_maxl <- not_implemented);
+        LSI.Iterative.(compat.set_prec_type <- not_implemented)
     | LSI.Sptfqmr ->
-        c_sptfqmr session compat.maxl;
-        compat.set_maxl <- not_implemented;
-        compat.set_prec_type <- not_implemented
+        c_sptfqmr session maxl;
+        LSI.Iterative.(compat.set_maxl <- not_implemented);
+        LSI.Iterative.(compat.set_prec_type <- not_implemented)
     | _ -> raise Config.NotImplementedBySundialsVersion
 
-  let solver (type s)
+  let solver
         (LSI.LS ({ LSI.rawptr; LSI.solver; LSI.compat; } as hls) as ls)
         ?jac_times_vec ?jac_times_sys (prec_type, set_prec) session nv =
      if jac_times_vec <> None && jac_times_sys <> None
@@ -486,8 +483,7 @@ module Spils = struct (* {{{ *)
     get_num_lin_func_evals s
 end (* }}} *)
 
-let matrix_embedded_solver
-    (LSI.LS ({ LSI.rawptr; LSI.solver; LSI.compat } as hls) as ls) session nv =
+let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
   if Sundials_impl.Version.lt580
     then raise Config.NotImplementedBySundialsVersion;
   c_set_linear_solver session rawptr None false;
@@ -551,12 +547,6 @@ external set_damping_aa : ('a, 'k) session -> float -> unit
 
 external set_delay_aa : ('a, 'k) session -> float -> unit
     = "sunml_kinsol_set_delay_aa"
-
-external set_num_max_iters : ('a, 'k) session -> int -> unit
-    = "sunml_kinsol_set_num_max_iters"
-
-external set_maa : ('a, 'k) session -> int -> unit
-    = "sunml_kinsol_set_maa"
 
 external c_set_no_init_setup : ('a, 'k) session -> bool -> unit
     = "sunml_kinsol_set_no_init_setup"

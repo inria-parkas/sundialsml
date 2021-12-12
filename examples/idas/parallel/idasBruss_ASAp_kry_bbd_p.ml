@@ -173,7 +173,7 @@ type user_data =
  * (2) request should have 4 entries, and is also passed in both calls.
  *)
 
-let brecvpost comm my_pe ixsub jysub dsizex dsizey cext =
+let brecvpost comm my_pe ixsub jysub dsizex dsizey _ =
   (* If jysub > 0, receive data for bottom x-line of cext. *)
   let r0 = if jysub <> 0
            then Mpi.ireceive (bytes dsizex) (my_pe-npex) 0 comm
@@ -307,8 +307,8 @@ let bsend comm my_pe ixsub jysub dsizex dsizey cdata =
  * ReactRates: Evaluate reaction rates at a given spatial point.
  * At a given (x,y), evaluate the array of ns reaction terms R.
  *)
-let react_rates data xx yy ((uvval : RealArray.t), uvval_off)
-                           (rates : RealArray.t) =
+let react_rates data _ _ ((uvval : RealArray.t), uvval_off)
+                         (rates : RealArray.t) =
   let a = data.a and b = data.b in
 
   rates.{0} <- uvval.{uvval_off}*.uvval.{uvval_off}*.uvval.{uvval_off + 1};
@@ -331,9 +331,9 @@ let react_rates data xx yy ((uvval : RealArray.t), uvval_off)
  * The reaction terms are saved separately in the vector data.rates
  * for use by the preconditioner setup routine.
  *)
-let reslocal data tt ((uv : RealArray.t), _, _)
-                     ((uvp : RealArray.t), _, _)
-                     ((rr : RealArray.t), _, _) =
+let reslocal data _ ((uv : RealArray.t), _, _)
+                    ((uvp : RealArray.t), _, _)
+                    ((rr : RealArray.t), _, _) =
   let mxsub =      data.mxsub in
   let mysub =      data.mysub in
   let npex =       data.npex in
@@ -355,7 +355,7 @@ let reslocal data tt ((uv : RealArray.t), _, _)
   (* Copy local segment of uv vector into the working extended array gridext. *)
   let locc = ref 0 in
   let locce = ref (nsmxsub2 + num_species) in
-  for jy = 0 to mysub-1 do
+  for _ = 0 to mysub-1 do
     for i = 0 to nsmxsub-1 do
       gridext.{!locce+i} <- uv.{!locc+i}
     done;
@@ -492,7 +492,7 @@ let reslocal data tt ((uv : RealArray.t), _, _)
  * and receive-waiting, in routines BRecvPost, BSend, BRecvWait.
  *)
 
-let rescomm data tt uv uvp =
+let rescomm data _ uv _ =
   let cdata,_,_ = uv in
 
   (* Get comm, thispe, subgrid indices, data sizes, extended array cext. *)
@@ -531,11 +531,9 @@ let res data tt uv uvp rr =
   reslocal data tt uv uvp rr
 
 let resBlocal : user_data -> Idas_bbd.local_fn =
-  fun data { Adjoint.t = tt;
-             Adjoint.y = (uv, _, _);
-             Adjoint.y' = (uvp, _, _);
+  fun data { Adjoint.y = (uv, _, _);
              Adjoint.yb = (uvB, _, _);
-             Adjoint.yb' = (uvpB, _, _); } (rrB, _, _) ->
+             Adjoint.yb' = (uvpB, _, _); _ } (rrB, _, _) ->
   let b = data.b in
   let mxsub =      data.mxsub in
   let mysub =      data.mysub in
@@ -558,7 +556,7 @@ let resBlocal : user_data -> Idas_bbd.local_fn =
   (* Copy local segment of uv vector into the working extended array gridext. *)
   let locc = ref 0 in
   let locce = ref (nsmxsub2 + num_species) in
-  for jy = 0 to mysub-1 do
+  for _ = 0 to mysub-1 do
     for i = 0 to nsmxsub-1 do
       gridext.{!locce+i} <- uvB.{!locc+i}
     done;
@@ -840,7 +838,7 @@ let set_initial_profiles data uv uvp id resid =
  * SetInitialProfilesB: Set initial conditions in uvB, uvpB
  *)
 
-let set_initial_profiles_b uv uvp uvB uvpB residB data =
+let set_initial_profiles_b uv _ uvB uvpB _ data =
   let ixsub = data.ixsub in
   let jysub = data.jysub in
   let mxsub = data.mxsub in
@@ -977,7 +975,7 @@ let print_output mem uv tt data comm =
     printf "\n"
   end
 
-let print_sol mem uv uvp data comm =
+let print_sol _ uv _ data _ =
   let thispe = data.thispe in
   let szFilename = Printf.sprintf "ysol%da.txt" thispe in
 
@@ -1018,7 +1016,7 @@ let print_sol mem uv uvp data comm =
   close_out fout
 
 
-let print_adj_sol uvB uvpB data =
+let print_adj_sol uvB _ data =
   let thispe = data.thispe in
   let szFilename = Printf.sprintf "ysol%dadj.txt" thispe in
 
@@ -1170,8 +1168,8 @@ let main () =
     Ida.(init
       (SStolerances (rtol,atol))
       ~lsolver:Spils.(solver (spgmr ~maxl uv)
-                        Ida_bbd.(prec_left ~dqrely:zero
-                                           { mudq; mldq; mukeep; mlkeep }
+                        (Ida_bbd.prec_left ~dqrely:zero
+                                           Ida_bbd.({ mudq; mldq; mukeep; mlkeep })
                                            (reslocal data)))
       (res data)
       t0 uv uvp)
@@ -1193,7 +1191,7 @@ let main () =
     print_header system_size maxl mudq mldq mukeep mlkeep rtol atol
   ;
   (* Call IDAS in tout loop, normal mode, and print selected output. *)
-  let tret,nckpnt,_ = Adjoint.forward_normal mem tend uv uvp in
+  let tret,_,_ = Adjoint.forward_normal mem tend uv uvp in
 
   print_output mem uv tret data comm;
 
@@ -1229,8 +1227,8 @@ let main () =
        mem
        (SStolerances (rtol,atol))
        ~lsolver:Spils.(solver (spgmr ~maxl uvB)
-                         Idas_bbd.(prec_left ~dqrely:zero
-                                             { mudq; mldq; mukeep; mlkeep }
+                         (Idas_bbd.prec_left ~dqrely:zero
+                                             Idas_bbd.({ mudq; mldq; mukeep; mlkeep })
                                              (resBlocal data)))
        (NoSens (resB data))
        ~varid:id
@@ -1262,7 +1260,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

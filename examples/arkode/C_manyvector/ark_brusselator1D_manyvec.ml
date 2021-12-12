@@ -76,7 +76,7 @@ type user_data = {
 
 (* fe routine to compute the diffusion portion of the ODE RHS. *)
 let fe { n; du; dv; dw; dx; _ }
-       t ((y : Nvector.any ROArray.t), _)
+       _ ((y : Nvector.any ROArray.t), _)
          (((dy : Nvector.any ROArray.t), _) as nvdy) =
   let y_u = Nvector_serial.Any.unwrap (ROArray.get y 0) in
   let y_v = Nvector_serial.Any.unwrap (ROArray.get y 1) in
@@ -114,7 +114,7 @@ let fe { n; du; dv; dw; dx; _ }
 
 (* fi routine to compute the reaction portion of the ODE RHS. *)
 let fi { n; a; b; ep; _ }
-       t ((y : Nvector.any ROArray.t), _)
+       _ ((y : Nvector.any ROArray.t), _)
          (((dy : Nvector.any ROArray.t), _) as nvdy) =
   let y_u = Nvector_serial.Any.unwrap (ROArray.get y 0) in
   let y_v = Nvector_serial.Any.unwrap (ROArray.get y 1) in
@@ -287,7 +287,7 @@ let main () =
   printf "        t      ||u||_rms   ||v||_rms   ||w||_rms\n";
   printf "   ----------------------------------------------\n";
   (try
-     for iout=0 to nt-1 do
+     for _ = 0 to nt-1 do
        (* call integrator *)
        let t, _ = ARKStep.evolve_normal arkode_mem !tout y in
 
@@ -355,7 +355,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

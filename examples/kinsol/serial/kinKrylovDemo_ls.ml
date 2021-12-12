@@ -146,14 +146,14 @@ let ij_vptr vv i j = subarray vv (ij_vptr_idx i j) num_species
    contains preconditioner blocks, pivot arrays, and problem constants *)
 
 let p =
-  Array.init mx (fun jx ->
-    Array.init my (fun jy ->
+  Array.init mx (fun _ ->
+    Array.init my (fun _ ->
       Dense.create num_species num_species
     ))
 
 let pivot =
-  Array.init mx (fun jx ->
-    Array.init my (fun jy ->
+  Array.init mx (fun _ ->
+    Array.init my (fun _ ->
       let v = LintArray.create num_species in
       Array1.fill v 0;
       v
@@ -313,11 +313,7 @@ let prec_setup_bd { Kinsol.jac_u=cc;
   done (* end of jy loop *)
 
 (* Preconditioner solve routine *)
-let prec_solve_bd { Kinsol.jac_u=cc;
-                    Kinsol.jac_fu=fval }
-                  { Kinsol.Spils.uscale=cscale;
-                    Kinsol.Spils.fscale=fscale }
-                  vv =
+let prec_solve_bd _ _ vv =
   for jx = 0 to mx - 1 do
     for jy = 0 to my - 1 do
       (* For each (jx,jy), solve a linear system of size NUM_SPECIES.
@@ -466,7 +462,7 @@ let main () =
             routines PrecSetupBD and PrecSolveBD, and the pointer to the user block
             data. *)
           maxl := 15;
-          Any Kinsol.Spils.(spbcgs ~maxl:(!maxl) cc)
+          Any (Kinsol.Spils.spbcgs ~maxl:(!maxl) cc)
 
       | Use_Sptfqmr ->
           printf " ---------";
@@ -477,7 +473,7 @@ let main () =
              preconditioner routines PrecSetupBD and PrecSolveBD, and the pointer to
              the user block data. *)
           maxl := 25;
-          Any Kinsol.Spils.(sptfqmr ~maxl:(!maxl) cc)
+          Any (Kinsol.Spils.sptfqmr ~maxl:(!maxl) cc)
 
       | Use_Spfgmr ->
           printf " -------";
@@ -489,7 +485,7 @@ let main () =
              the user block data. *)
           maxl := 15;
           maxlrst := 2;
-          Any Kinsol.Spils.(spfgmr ~maxl:(!maxl) ~max_restarts:(!maxlrst) cc)
+          Any (Kinsol.Spils.spfgmr ~maxl:(!maxl) ~max_restarts:(!maxlrst) cc)
     in
     (* Call KINCreate/KINInit to initialize KINSOL using the linear solver
        KINSPGMR with preconditioner routines prec_setup_bd
@@ -535,7 +531,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

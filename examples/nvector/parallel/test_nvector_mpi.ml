@@ -222,7 +222,6 @@ end
 
 module MakeAnyTest =
   functor (NI : sig
-                  val id : Nvector.nvector_id
                   val comm : Mpi.communicator
                   val global_length : int
                 end) ->
@@ -280,7 +279,7 @@ let main () =
   let name, (module Test : TEST) =
     if m = 1
     then ("generic parallel", (module MakeAnyTest
-               (struct let id = Nvector.Custom
+               (struct
                        let comm = comm
                        let global_length = global_length
                 end)))
@@ -458,7 +457,7 @@ let main () =
   end;
   match Mpi.(allreduce_int (!fails) Max comm) with
   | 0 -> ();
-  | n -> failwith "Tests failed"
+  | _ -> failwith "Tests failed"
 
 (* Check environment variables for extra arguments.  *)
 let reps =
@@ -473,7 +472,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

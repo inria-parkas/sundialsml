@@ -95,7 +95,7 @@ let func (yd : RealArray.t) (fd : RealArray.t) =
   fd.{7} <- eq8; fd.{15} <- lb8; fd.{23} <- ub8
 
 (* System Jacobian *)
-let jac { Kinsol.jac_u = (yd : RealArray.t); Kinsol.jac_fu  = f } smat =
+let jac { Kinsol.jac_u = (yd : RealArray.t); _ } smat =
   let set_col = Matrix.Sparse.set_col smat in
   let set = Matrix.Sparse.set smat in
 
@@ -324,7 +324,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

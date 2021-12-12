@@ -138,7 +138,7 @@ let jac data { Ida.jac_y = (yval : RealArray.t);
   set 7 1 (p2*.yval.{1});
   set 8 2 (1.0)
 
-let res data t (yy : RealArray.t) (yp : RealArray.t) (resval : RealArray.t) =
+let res data _ (yy : RealArray.t) (yp : RealArray.t) (resval : RealArray.t) =
   let p1 = data.p.{0}
   and p2 = data.p.{1}
   and p3 = data.p.{2}
@@ -187,7 +187,7 @@ let resS : user_data -> RealArray.t Sens.sensresfn =
     resvalS.(is).{2} <- !rs3
   done
 
-let rhsQ data t (y : RealArray.t) (yp : RealArray.t) (ypQ : RealArray.t) =
+let rhsQ data _ (y : RealArray.t) _ (ypQ : RealArray.t) =
   ypQ.{0} <- y.{2};
   ypQ.{1} <- data.coef *. (y.{0}*.y.{0}+.
                            y.{1}*.y.{1}+.
@@ -203,7 +203,7 @@ let print_ic y yp =
   print_string "\typ= ";
   printf "%12.4e %12.4e %12.4e \n" data.{0} data.{1} data.{2}
 
-let print_sens_ic y yp yS ypS =
+let print_sens_ic _ _ yS ypS =
   let sdata = unwrap yS.(0) in
 
   print_string "                  Sensitivity 1  ";
@@ -274,15 +274,14 @@ let print_final_stats ida_mem sensi =
 
   let sens_stats =
     if sensi then
-      let open Sens in
-      let nfSe     = get_num_res_evals ida_mem
-      and nfeS     = get_num_res_evals_sens ida_mem
-      and nsetupsS = get_num_lin_solv_setups ida_mem
-      and netfS    = get_num_err_test_fails ida_mem
+      let nfSe     = Sens.get_num_res_evals ida_mem
+      and nfeS     = Sens.get_num_res_evals_sens ida_mem
+      and nsetupsS = Sens.get_num_lin_solv_setups ida_mem
+      and netfS    = Sens.get_num_err_test_fails ida_mem
       and nniS, ncfnS =
         try
-          get_num_nonlin_solv_iters ida_mem,
-          get_num_nonlin_solv_conv_fails ida_mem
+          Sens.get_num_nonlin_solv_iters ida_mem,
+          Sens.get_num_nonlin_solv_conv_fails ida_mem
         with Failure _ -> 0,0
       in lazy (nfSe, nfeS, nsetupsS, netfS, nniS, ncfnS)
     else
@@ -333,7 +332,7 @@ let main () =
      is non-None) or is a no-op (if sensi = None).  *)
   let with_yS =
     match sensi with
-    | None -> printf "Sensitivity: NO "; (fun f -> ())
+    | None -> printf "Sensitivity: NO "; (fun _ -> ())
     | Some sensi_meth ->
       let pbar = RealArray.copy data.p in
       let yS = Array.init ns (fun _ -> Nvector_serial.make neq 0.0) in
@@ -400,10 +399,10 @@ let main () =
   printf "============================\n";
 
   let tout = ref t1 in
-  for iout = 1 to nout do
-    let t, res = Ida.solve_normal ida_mem !tout wy wyp in
+  for _ = 1 to nout do
+    let t, _ = Ida.solve_normal ida_mem !tout wy wyp in
     print_output ida_mem t y;
-    with_yS (fun yS ypS ->
+    with_yS (fun yS _ ->
         let _ = Sens.get ida_mem yS in
         print_sens_output yS);
     printf "-----------------------------------------";
@@ -415,7 +414,7 @@ let main () =
   let _ = Quad.get ida_mem wyQ in
   printf "G:      %10.4e\n" yQ.{0};
 
-  with_yS (fun yS ypS ->
+  with_yS (fun _ _ ->
       let t = QuadSens.get ida_mem yQS in
       printf "\nSensitivities at t=%g:\n" t;
       printf "dG/dp1: %11.4e\n" (unwrap yQS.(0)).{0};
@@ -439,7 +438,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

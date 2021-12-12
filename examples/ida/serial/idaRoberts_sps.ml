@@ -51,7 +51,6 @@ let idasuperlumt = match Config.sundials_version with
                    | 2,_,_ -> "IDASUPERLUMT" | _ -> "SUPERLUMT"
 
 let print_header rtol avtol yy =
-  let open Printf in
   printf "\nidaRoberts_sps: Robertson kinetics DAE serial example problem for IDA.\n";
   printf "               Three equation chemical kinetics problem.\n\n";
   printf "Linear solver: %s, with user-supplied Jacobian.\n" idasuperlumt;
@@ -107,7 +106,7 @@ and print_root_info root_f1 root_f2 =
     (int_of_root_event root_f1)
     (int_of_root_event root_f2)
 
-let resrob tres (y : RealArray.t) (yp : RealArray.t) (rr : RealArray.t) =
+let resrob _ (y : RealArray.t) (yp : RealArray.t) (rr : RealArray.t) =
   rr.{0} <- -.0.04*.y.{0} +. 1.0e4*.y.{1}*.y.{2};
   rr.{1} <- -.rr.{0} -. 3.0e7*.y.{1}*.y.{1} -. yp.{1};
   rr.{0} <-  rr.{0} -. yp.{0};
@@ -136,7 +135,7 @@ let jacrob { Ida.jac_y = (yval : RealArray.t);
   set 7 1 (-1.0e4*.yval.{1});
   set 8 2 (1.0)
 
-and grob t (y : RealArray.t) y' (gout : RealArray.t) =
+and grob _ (y : RealArray.t) _ (gout : RealArray.t) =
   let y1 = y.{0}
   and y3 = y.{2}
   in
@@ -214,7 +213,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

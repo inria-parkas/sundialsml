@@ -449,7 +449,7 @@ let web_rates_b wdata x y ((c : RealArray.t), c_off)
  * Here jx and jy count from 0.
  *)
 
-let fblock wdata t cdata jx jy cdotdata =
+let fblock wdata _ cdata jx jy cdotdata =
   let iblok = jx + jy * wdata.mx
   and y = float jy *. wdata.dy
   and x = float jx *. wdata.dx
@@ -715,7 +715,7 @@ let double_intgr (cdata : RealArray.t) i wdata =
  * and these are saved in fsave for use in preconditioning.
  *)
 
-let f wdata t (cdata : RealArray.t) (cdotdata : RealArray.t) =
+let f wdata _ (cdata : RealArray.t) (cdotdata : RealArray.t) =
   let ns    = wdata.ns
   and fsave = wdata.fsave
   and cox   = wdata.cox
@@ -769,7 +769,7 @@ let f wdata t (cdata : RealArray.t) (cdotdata : RealArray.t) =
  * there are ngrp=ngx*ngy blocks computed in the block-grouping scheme.
  *)
 
-let precond wdata jacarg jok gamma =
+let precond wdata jacarg _ gamma =
   let { Cvode.jac_t   = t;
         Cvode.jac_y   = cdata;
         Cvode.jac_fy  = fc } = jacarg
@@ -846,7 +846,7 @@ let precond wdata jacarg jok gamma =
  * blocks in P, and pivot information in pivot, and returns the result in z.
  *)
 
-let psolve wdata jac_arg solve_arg (z : RealArray.t) =
+let psolve wdata _ solve_arg (z : RealArray.t) =
   let { Cvode.Spils.rhs = r; Cvode.Spils.gamma = gamma } = solve_arg in
   Array1.blit r z;
 
@@ -934,12 +934,11 @@ let fB : web_data -> RealArray.t Adj.brhsfn_no_sens =
 
 (* Preconditioner setup function for the backward problem *)
 
-let precondb wdata jacarg jok gamma =
+let precondb wdata jacarg _ gamma =
   let open Adj in
   let { jac_t   = t;
         jac_y   = cdata;
-        jac_yb  = cBdata;
-        jac_fyb = fcBdata } = jacarg
+        jac_fyb = fcBdata; _ } = jacarg
   in
   let f1 = wdata.tmp in
   let cvode_mem =
@@ -1006,7 +1005,7 @@ let precondb wdata jacarg jok gamma =
 
 let psolveb wdata =
   let cache = RealArray.create ns in
-  fun jac_arg solve_arg z ->
+  fun _ solve_arg z ->
   let { Adj.Spils.rhs = r; Adj.Spils.gamma = gamma } = solve_arg in
   Array1.blit r z;
 
@@ -1094,7 +1093,7 @@ let main () =
   (* Perform forward run *)
   printf "\nForward integration\n";
   flush stdout;
-  let t, ncheck, _ = Adj.forward_normal cvode_mem tout c in
+  let _, ncheck, _ = Adj.forward_normal cvode_mem tout c in
 
   printf "\nncheck = %d\n"  ncheck;
 
@@ -1148,7 +1147,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

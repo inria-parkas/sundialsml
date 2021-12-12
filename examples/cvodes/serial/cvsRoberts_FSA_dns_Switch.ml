@@ -62,7 +62,7 @@ type user_data = {
 
 (* f routine. Compute f(t,y). *)
 
-let f data t (y : RealArray.t) (ydot : RealArray.t) =
+let f data _ (y : RealArray.t) (ydot : RealArray.t) =
   let p1 = data.p.{0}
   and p2 = data.p.{1}
   and p3 = data.p.{2} in
@@ -175,16 +175,15 @@ let print_final_stats s data =
   print_newline ();
 
   if data.sensi then begin
-    let open Sens in
-    let nfSe     = get_num_rhs_evals s
-    and nfeS     = get_num_rhs_evals_sens s
-    and nsetupsS = get_num_lin_solv_setups s
-    and netfS    = if data.errconS then get_num_err_test_fails s else 0
+    let nfSe     = Sens.get_num_rhs_evals s
+    and nfeS     = Sens.get_num_rhs_evals_sens s
+    and nsetupsS = Sens.get_num_lin_solv_setups s
+    and netfS    = if data.errconS then Sens.get_num_err_test_fails s else 0
     and nniS, ncfnS =
       match data.meth with
-      | Staggered _ -> get_num_nonlin_solv_iters s,
-                       get_num_nonlin_solv_conv_fails s
-      | Staggered1 _ | Simultaneous _ -> 0,0
+      | Sens.Staggered _ -> Sens.get_num_nonlin_solv_iters s,
+                            Sens.get_num_nonlin_solv_conv_fails s
+      | Sens.Staggered1 _ | Sens.Simultaneous _ -> 0,0
     in
     print_string "   -----------------------------------\n";
     print_string_5d "   nfSe    = " nfSe;
@@ -357,7 +356,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

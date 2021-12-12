@@ -27,7 +27,7 @@ let print_roots vs =
     Printf.printf "\t%s" (string_of_root x)) vs;
   print_newline ()
 
-let f t_s y yd =
+let f _ _ yd =
   yd.{x} <- !yc;
   yd.{t} <- 1.0
 
@@ -37,14 +37,14 @@ let z_x = 0
 and z_nx = 1
 and z_t  = 2
 
-let g t_s y gout =
+let g _ y gout =
   gout.{z_x}  <- y.{x};
   gout.{z_nx} <- -. y.{x};
   gout.{z_t}  <- y.{t}
   (* ; Printf.printf "->%.15f (z_x=%.15f z_nx=%.15f z_t=%.15f)\n" t_s gout.{z_x}
      gout.{z_nx} gout.{z_t} *)
 
-let d t_s r ys =
+let d _ r ys =
   let root = Sundials.Roots.detected r in
 
   if root z_x then yc := -1.0

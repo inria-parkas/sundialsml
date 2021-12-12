@@ -227,7 +227,7 @@ let web_rates webdata x y ((cxy : RealArray.t), cxy_off)
  * This routine computes the right-hand sides of the system equations,
  * consisting of the diffusion term and interaction term.
  * The interaction term is computed by the function WebRates.  *)
-let fweb webdata t c (crate : RealArray.t) =
+let fweb webdata _ c (crate : RealArray.t) =
   let cox = webdata.cox
   and coy = webdata.coy in
   (* Loop over grid points, evaluate interaction vector (length ns), form
@@ -416,7 +416,7 @@ let main () =
   (* Loop over iout, call IDASolve (normal mode), print selected output. *)
   let tout = ref tout1 in
   for iout = 1 to nout do
-    let (tret, retval) = Ida.solve_normal mem !tout wc wc' in
+    let tret, _ = Ida.solve_normal mem !tout wc wc' in
     print_output mem c tret;
     if iout < 3 then tout := !tout *. tmult
     else tout := !tout +. tadd
@@ -437,7 +437,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

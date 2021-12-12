@@ -78,7 +78,7 @@ let p3 = 3.0e7
 type user_data = { p : RealArray.t;     (* size 3 *) }
 
 (* residual for forward problem *)
-let res data tres (yy : RealArray.t) (yp : RealArray.t) (rr : RealArray.t) =
+let res data _ (yy : RealArray.t) (yp : RealArray.t) (rr : RealArray.t) =
   let y1  = yy.{0}
   and y2  = yy.{1}
   and y3  = yy.{2}
@@ -136,7 +136,7 @@ let resS : user_data -> RealArray.t Sens.sensresfn =
     resvalS.(is).{2} <- rs3
   done
 
-let rhsQ data t (yy : RealArray.t) (yp : RealArray.t) (qdot : RealArray.t) =
+let rhsQ _ _ (yy : RealArray.t) _ (qdot : RealArray.t) =
   let y1 = yy.{0}
   and y2 = yy.{1}
   and y3 = yy.{2}
@@ -144,7 +144,7 @@ let rhsQ data t (yy : RealArray.t) (yp : RealArray.t) (qdot : RealArray.t) =
   qdot.{0} <- 0.5*.(y1*.y1+.y2*.y2+.y3*.y3)
 
 let rhsQS : user_data -> RealArray.t QuadSens.quadsensrhsfn =
-  fun data { QuadSens.y = yy; QuadSens.s = yyS } rhsQS ->
+  fun _ { QuadSens.y = yy; QuadSens.s = yyS } rhsQS ->
   let y1 = yy.{0}
   and y2 = yy.{1}
   and y3 = yy.{2}
@@ -166,7 +166,7 @@ let rhsQS : user_data -> RealArray.t QuadSens.quadsensrhsfn =
 
 (* Residuals for adjoint model. *)
 let resBS1 : user_data -> RealArray.t Adjoint.bresfn_with_sens =
-  fun data args yyS ypS rrBS ->
+  fun data args yyS _ rrBS ->
   let yy = args.Adjoint.y
   and yyB = args.Adjoint.yb
   and ypB = args.Adjoint.yb'
@@ -219,7 +219,7 @@ let resBS1 : user_data -> RealArray.t Adjoint.bresfn_with_sens =
   rrBS.{5} <- p2*.y2*.(m1-.m2) -. m3 -. p2*.s2*.l21 +. s3
 
 let rhsQBS1 : user_data -> RealArray.t AdjQuad.bquadrhsfn_with_sens =
-  fun data { AdjQuad.y = yy; AdjQuad.yb = yyB } yyS ypS rhsBQS ->
+  fun _ { AdjQuad.y = yy; AdjQuad.yb = yyB } yyS _ rhsBQS ->
 
   (* The y vector *)
   let y1 = yy.{0}
@@ -249,7 +249,7 @@ let rhsQBS1 : user_data -> RealArray.t AdjQuad.bquadrhsfn_with_sens =
   rhsBQS.{3} <- y2*.y3*.(m2-.m1) +. (y3*.s2+.y2*.s3)*.l21
 
 let resBS2 : user_data -> RealArray.t Adjoint.bresfn_with_sens =
-  fun data { Adjoint.y = yy; Adjoint.yb = yyB; Adjoint.yb' = ypB } yyS ypS rrBS
+  fun data { Adjoint.y = yy; Adjoint.yb = yyB; Adjoint.yb' = ypB } yyS _ rrBS
   ->
   (* The parameters. *)
   let p1 = data.p.{0}
@@ -295,7 +295,7 @@ let resBS2 : user_data -> RealArray.t Adjoint.bresfn_with_sens =
   rrBS.{5} <- p2*.y2*.(m1-.m2) -. m3 -. (y2+.p2*.s2)*.l21 +. s3
 
 let rhsQBS2 : user_data -> RealArray.t AdjQuad.bquadrhsfn_with_sens =
-  fun data {AdjQuad.y = yy; AdjQuad.yb = yyB } yyS ypS rhsBQS ->
+  fun _ {AdjQuad.y = yy; AdjQuad.yb = yyB } yyS _ rhsBQS ->
   (* The y vector *)
   let y1 = yy.{0}
   and y2 = yy.{1}
@@ -649,7 +649,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

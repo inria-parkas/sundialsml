@@ -120,7 +120,7 @@ let acc_y  = 3      (* Acceleration in the y direction. *)
 let constr = 4      (* Constraint. *)
 let neqs   = 5
 
-let residual t vars vars' res =
+let residual _ vars vars' res =
   res.{vx_x}   <-  vars.{vx}  -  vars'.{x};
   res.{vy_y}   <-  vars.{vy}  -  vars'.{y};
   res.{acc_x}  <- vars'.{vx}  -  vars.{p} * vars.{x};
@@ -148,7 +148,7 @@ let jac jac out =
   out.{vx, constr} <- c * vars.{x}   +  vars'.{x};
   out.{vy, constr} <- c * vars.{y}   +  vars'.{y}
 
-let roots t vars vars' r =
+let roots _ vars _ r =
   let (wx,wy) = wall in
   r.{0} <- vars.{x} - vars.{y} * (wx / wy)
 

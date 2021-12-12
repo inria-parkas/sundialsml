@@ -234,7 +234,7 @@ let brecvwait requests ixsub jysub dsizex uext =
  * communication of data in u needed to calculate G.
  *)
 
-let rescomm data tt uu up =
+let rescomm data _ uu _ =
   let uarray,_,_ = uu in
 
   (* Get comm, thispe, subgrid indices, data sizes, extended array uext. *)
@@ -264,7 +264,7 @@ let rescomm data tt uu up =
  * has already been done, and that this data is in the work array uext.
  *)
 
-let reslocal data tres uu up res =
+let reslocal data _ uu up res =
   (* Get subgrid indices, array sizes, extended work array uext. *)
 
   let uext = data.uext in
@@ -285,7 +285,7 @@ let reslocal data tres uu up res =
 
   let offsetu = ref 0 in
   let offsetue = ref (mxsub2 + 1) in
-  for ly = 0 to mysub-1 do
+  for _ = 0 to mysub-1 do
     for lx = 0 to mxsub-1 do
       uext.{!offsetue+lx} <- uuv.{!offsetu+lx}
     done;
@@ -392,8 +392,7 @@ let psetup_heat data jac =
  * computed in psetup_heat), returning the result in zvec.
  *)
 
-let psolve_heat data jac rvec zvec delta =
-  vprod data.pp rvec zvec
+let psolve_heat data _ rvec zvec _ = vprod data.pp rvec zvec
 
 
 (*
@@ -579,15 +578,14 @@ let main () =
   let neq = mx * my in
 
   (* Allocate and initialize the data structure and N-vectors. *)
-  let open Nvector_parallel in
-  let uu          = make local_N neq comm 0. in
-  let up          = make local_N neq comm 0. in
-  let res         = make local_N neq comm 0. in
-  let constraints = make local_N neq comm 0. in
-  let id          = make local_N neq comm 0. in
+  let uu          = Nvector_parallel.make local_N neq comm 0. in
+  let up          = Nvector_parallel.make local_N neq comm 0. in
+  let res         = Nvector_parallel.make local_N neq comm 0. in
+  let constraints = Nvector_parallel.make local_N neq comm 0. in
+  let id          = Nvector_parallel.make local_N neq comm 0. in
 
   (* An N-vector to hold preconditioner. *)
-  let pp = make local_N neq comm 0. in
+  let pp = Nvector_parallel.make local_N neq comm 0. in
 
   let data = init_user_data thispe comm (unwrap pp) in
 
@@ -597,7 +595,7 @@ let main () =
 
   (* Set constraints to all 1's for nonnegative solution values. *)
 
-  Ops.const one constraints;
+  Nvector_parallel.Ops.const one constraints;
 
   let t0 = zero and t1 = 0.01 in
 
@@ -612,7 +610,7 @@ let main () =
   let mem =
     Ida.(init
       (SStolerances (rtol, atol))
-      ~lsolver:Spils.(solver (spgmr uu)
+      ~lsolver:Spils.(solver (Spils.spgmr uu)
                        (prec_left ~setup:(psetup_heat data) (psolve_heat data)))
       (res_heat data)
       t0 uu up)
@@ -629,8 +627,8 @@ let main () =
   (* Loop over tout, call IDASolve, print output. *)
 
   let tout = ref t1 in
-  for iout = 1 to nout do
-    let (tret,_) = Ida.solve_normal mem !tout uu up in
+  for _ = 1 to nout do
+    let tret, _ = Ida.solve_normal mem !tout uu up in
 
     print_output thispe mem tret uu;
 
@@ -654,7 +652,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

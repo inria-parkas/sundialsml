@@ -94,9 +94,7 @@ let func (yd : RealArray.t) (fd : RealArray.t) =
   fd.{7} <- eq8; fd.{15} <- lb8; fd.{23} <- ub8
 
 (* System Jacobian *)
-let jac { Kinsol.jac_u   = (yd : RealArray.t);
-          Kinsol.jac_fu  = f;
-          Kinsol.jac_tmp = (tmp1, tmp2)} j =
+let jac { Kinsol.jac_u = (yd : RealArray.t); _ } j =
   let x1 = yd.{0}
   and x2 = yd.{1}
   and x3 = yd.{2}
@@ -268,7 +266,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

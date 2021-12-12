@@ -241,7 +241,7 @@ let web_rates wdata x y ((c : RealArray.t), c_off)
   system, namely block (jx,jy), for use in preconditioning.
   Here jx and jy count from 0.
 *)
-let fblock wdata t (cdata : RealArray.t) jx jy (cdotdata : RealArray.t) =
+let fblock wdata _ (cdata : RealArray.t) jx jy (cdotdata : RealArray.t) =
   let iblok = jx + jy * wdata.mx
   and y = float jy *. wdata.dy
   and x = float jx *. wdata.dx
@@ -272,7 +272,7 @@ let v_sum_prods ((u : RealArray.t), u_off) p ((q : RealArray.t), q_off) v
  of a block-diagonal preconditioner. The blocks are of size mp, and
  there are ngrp=ngx*ngy blocks computed in the block-grouping scheme.
 *)
-let precond wdata jacarg jok gamma =
+let precond wdata jacarg _ gamma =
   let { ARKStep.jac_t   = t;
         ARKStep.jac_y   = (cdata : RealArray.t);
         ARKStep.jac_fy  = fc } = jacarg
@@ -542,7 +542,7 @@ let gs_iter wdata gamma zd xd =
   Then it computes ((I - gamma*Jr)-inverse)*z, using LU factors of the
   blocks in P, and pivot information in pivot, and returns the result in z.
 *)
-let psolve wdata jac_arg solve_arg z =
+let psolve wdata _ solve_arg z =
   let { ARKStep.Spils.rhs; ARKStep.Spils.gamma } = solve_arg
   in
   Array1.blit rhs z;
@@ -581,7 +581,7 @@ let psolve wdata jac_arg solve_arg z =
  returns it in cdot. The interaction rates are computed by calls to WebRates,
  and these are saved in fsave for use in preconditioning.
 *)
-let f wdata t cdata (cdotdata : RealArray.t) =
+let f wdata _ cdata (cdotdata : RealArray.t) =
   let ns    = wdata.ns
   and fsave = wdata.fsave
   and cox   = wdata.cox
@@ -884,7 +884,7 @@ let main () =
   cinit wdata (unwrap c);
 
   (* Call ARKodeInit or ARKodeReInit, then ARKSpgmr to set up problem *)
-  let lsolver= ARKStep.Spils.(spgmr ~maxl:maxl c) in
+  let lsolver= ARKStep.Spils.spgmr ~maxl c in
   let arkode_mem = ARKStep.(init
       (implicit
         ~lsolver:Spils.(solver lsolver
@@ -958,7 +958,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

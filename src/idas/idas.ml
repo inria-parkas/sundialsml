@@ -18,7 +18,7 @@ external c_alloc_nvector_array : int -> 'a array
 
 let add_fwdsensext s =
   match s.sensext with
-  | FwdSensExt se -> ()
+  | FwdSensExt _ -> ()
   | BwdSensExt _ -> failwith "Quadrature.add_fwdsensext: internal error"
   | NoSensExt ->
       s.sensext <- FwdSensExt {
@@ -200,8 +200,6 @@ module Sensitivity = struct (* {{{ *)
       pbar   : RealArray.t option;
       plist  : int array option;
     }
-
-  let no_sens_params = { pvals = None; pbar = None; plist = None }
 
   external c_sens_init : ('a, 'k) session -> sens_method -> bool
                          -> ('a, 'k) Nvector.t array
@@ -1000,13 +998,6 @@ module Adjoint = struct (* {{{ *)
 
     | _ -> assert false
 
-    let check_dqjac (type k m nd nk) jac (mat : (k,m,nd,nk) Matrix.t) =
-      let open Matrix in
-      match get_id mat with
-      | Dense -> ()
-      | Band -> ()
-      | _ -> if jac = None then invalid_arg "A Jacobian function is required"
-
     let set_ls_callbacks (type mk m nd nk) (type tag)
           ?(jac : m jac_fn option)
           (solver_data : (m, nd, nk, tag) LSI.solver_data)
@@ -1089,8 +1080,8 @@ module Adjoint = struct (* {{{ *)
       | Some m -> m
       | None -> failwith "a direct linear solver is required"
 
-    let solver ?jac ls bs nv =
-      let LSI.LS ({ rawptr; solver; matrix } as hls) = ls in
+    let solver ?jac ls bs _ =
+      let LSI.LS ({ LSI.rawptr; LSI.solver; LSI.matrix } as hls) = ls in
       let session = tosession bs in
       let parent, which = parent_and_which bs in
       let matrix = assert_matrix matrix in
@@ -1200,7 +1191,7 @@ module Adjoint = struct (* {{{ *)
       : ('a, 'k) session -> int -> bool -> unit
       = "sunml_idas_adj_set_jac_times_resfn"
 
-    let init_preconditioner solve setup bs parent which nv =
+    let init_preconditioner solve setup bs parent which _ =
       c_set_preconditioner parent which (setup <> None) false;
       (tosession bs).ls_precfns <- BPrecFns { prec_solve_fn = solve;
                                               prec_setup_fn = setup }
@@ -1216,7 +1207,7 @@ module Adjoint = struct (* {{{ *)
       | PrecNone | PrecLeft -> true
       | PrecRight | PrecBoth -> false
 
-    let init_preconditioner_with_sens solve setup bs parent which nv =
+    let init_preconditioner_with_sens solve setup bs parent which _ =
       c_set_preconditioner parent which (setup <> None) true;
       (tosession bs).ls_precfns <- BPrecFnsSens
             { prec_solve_fn_sens = solve; prec_setup_fn_sens = setup }
@@ -1235,29 +1226,29 @@ module Adjoint = struct (* {{{ *)
       = "sunml_idas_adj_spils_set_linear_solver"
 
     (* Sundials < 3.0.0 *)
-    let make_compat (type tag)
-          ({ LSI.Iterative.maxl; LSI.Iterative.gs_type } as compat)
-          prec_type
+    let make_compat (type tag) compat _
           (solver_data : ('s, 'nd, 'nk, tag) LSI.solver_data) bs =
+      let { LSI.Iterative.maxl; LSI.Iterative.gs_type;
+             LSI.Iterative.max_restarts; _ } = compat in
       let parent, which = parent_and_which bs in
       match solver_data with
       | LSI.Spgmr ->
-          c_spgmr parent which compat.maxl;
-          (match compat.gs_type with None -> () | Some t ->
+          c_spgmr parent which maxl;
+          (match gs_type with None -> () | Some t ->
               c_set_gs_type parent which t);
-          (match compat.max_restarts with None -> () | Some t ->
+          (match max_restarts with None -> () | Some t ->
               c_set_max_restarts parent which t);
-          compat.set_gs_type <- old_set_gs_type bs;
-          compat.set_max_restarts <- old_set_max_restarts bs
+          LSI.Iterative.(compat.set_gs_type <- old_set_gs_type bs);
+          LSI.Iterative.(compat.set_max_restarts <- old_set_max_restarts bs)
       | LSI.Spbcgs ->
-          c_spbcgs parent which compat.maxl;
-          compat.set_maxl <- old_set_maxl bs
+          c_spbcgs parent which maxl;
+          LSI.Iterative.(compat.set_maxl <- old_set_maxl bs)
       | LSI.Sptfqmr ->
-          c_sptfqmr parent which compat.maxl;
-          compat.set_maxl <- old_set_maxl bs
+          c_sptfqmr parent which maxl;
+          LSI.Iterative.(compat.set_maxl <- old_set_maxl bs)
       | _ -> raise Config.NotImplementedBySundialsVersion
 
-    let solver (type s)
+    let solver
           (LSI.LS ({ LSI.rawptr; LSI.solver; LSI.compat; } as lsolver) as ls)
           ?jac_times_vec ?jac_times_res (prec_type, set_prec) bs nv =
       let session = tosession bs in
@@ -1272,7 +1263,7 @@ module Adjoint = struct (* {{{ *)
             raise Config.NotImplementedBySundialsVersion;
         | _ -> ();
         make_compat compat prec_type solver bs;
-        lsolver.check_prec_type <- check_prec_type;
+        LSI.(lsolver.check_prec_type <- check_prec_type);
         session.ls_solver <- LSI.HLS lsolver;
         set_prec bs parent which nv;
         (match jac_times_vec with
@@ -1415,8 +1406,7 @@ module Adjoint = struct (* {{{ *)
       Ida.Spils.get_num_lin_res_evals (tosession bs)
   end (* }}} *)
 
-  let matrix_embedded_solver
-      (LSI.LS ({ LSI.rawptr; LSI.solver; LSI.compat } as hls) as ls) bs nv =
+  let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) bs _ =
     if Sundials_impl.Version.lt580
       then raise Config.NotImplementedBySundialsVersion;
     let session = tosession bs in

@@ -35,7 +35,7 @@ let ida, idadense =
   | 2,_,_ -> "IDAS", "IDADENSE"
   | _ -> "IDA", "DENSE"
 
-let print_header rtol atol y =
+let print_header rtol atol _ =
   printf "\nidaSlCrank_dns: Slider-Crank DAE serial example problem for %s\n" ida;
   printf "Linear solver: %s, Jacobian is computed by %s.\n" idadense ida;
   printf "Tolerance parameters:  rtol = %g   atol = %g\n" rtol atol;
@@ -140,7 +140,7 @@ let set_ic data y y' =
   y'.{4} <- qq.{1} /. m2;
   y'.{5} <- qq.{2} /. j2
 
-let ressc data tres y (y' : RealArray.t) (res : RealArray.t) =
+let ressc data _ y (y' : RealArray.t) (res : RealArray.t) =
   let a = data.a
   and j1 = data.j1
   and m2 = data.m2
@@ -236,7 +236,7 @@ let main () =
     try
       for iout = 1 to nout-1 do
         tout := float_of_int iout *. dt;
-        let (tret, flag) = Ida.solve_normal mem !tout wy wy' in
+        let tret, _ = Ida.solve_normal mem !tout wy wy' in
         print_output mem tret y;
       done;
     with _ -> ()
@@ -258,7 +258,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

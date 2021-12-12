@@ -48,7 +48,6 @@ module Sens = Cvodes.Sensitivity
 module QuadSens = Cvodes.Sensitivity.Quadrature
 module Adj = Cvodes.Adjoint
 module QuadAdj = Cvodes.Adjoint.Quadrature
-open Bigarray
 let unwrap = Nvector.unwrap
 
 let printf = Printf.printf
@@ -70,14 +69,14 @@ type user_data = {
  *--------------------------------------------------------------------
  *)
 
-let f data t (y : RealArray.t) (ydot : RealArray.t) =
+let f data _ (y : RealArray.t) (ydot : RealArray.t) =
   let p1 = data.p1
   and p2 = data.p2 in
   ydot.{0} <- -.p1*.y.{0}*.y.{0} -. y.{2};
   ydot.{1} <- -.y.{1};
   ydot.{2} <- -.p2*.p2*.y.{1}*.y.{2}
 
-let fQ data t (y : RealArray.t) (qdot : RealArray.t) =
+let fQ _ _ (y : RealArray.t) (qdot : RealArray.t) =
   qdot.{0} <- 0.5 *. ( y.{0}*.y.{0} +. y.{1}*.y.{1} +. y.{2}*.y.{2})
 
 let fS : user_data -> RealArray.t Sens.sensrhsfn_all =
@@ -110,7 +109,7 @@ let fS : user_data -> RealArray.t Sens.sensrhsfn_all =
   ySdot.(1).{2} <- (fys3 -. 2.0*.p2*.y.{1}*.y.{2})
 
 let fQS : user_data -> RealArray.t QuadSens.quadsensrhsfn =
-  fun data { QuadSens.y = y; QuadSens.s = yS } yQSdot ->
+  fun _ { QuadSens.y = y; QuadSens.s = yS } yQSdot ->
   (* 1st sensitivity RHS *)
   let s1 = yS.(0).{0}
   and s2 = yS.(0).{1}
@@ -247,20 +246,15 @@ let print_fwd_stats cvode_mem =
         num_rhs_evals = nfe;
         num_lin_solv_setups = nsetups;
         num_err_test_fails = netf;
-        last_order = qlast;
-        current_order = qcur;
-        actual_init_step = h0u;
-        last_step = hlast;
-        current_step = hcur;
-        current_time = tcur;
+        _
     } = get_integrator_stats cvode_mem
   in
   let nni, ncfn = get_nonlin_solv_stats cvode_mem
   and nfQe, netfQ = Quad.get_stats cvode_mem
   and { Sens.num_sens_evals = nfSe;
-        Sens.num_rhs_evals = nfeS;
         Sens.num_err_test_fails = netfS;
         Sens.num_lin_solv_setups = nsetupsS;
+        _
       } = Sens.get_stats cvode_mem
   and nniS, ncfnS =
     if compat2_3 then Sens.get_nonlin_solv_stats cvode_mem else 0,0
@@ -289,12 +283,7 @@ let print_bck_stats cvode_mem =
         num_rhs_evals = nfe;
         num_lin_solv_setups = nsetups;
         num_err_test_fails = netf;
-        last_order = qlast;
-        current_order = qcur;
-        actual_init_step = h0u;
-        last_step = hlast;
-        current_step = hcur;
-        current_time = tcur;
+        _
     } = Adj.get_integrator_stats cvode_mem
   in
   let nni, ncfn = Adj.get_nonlin_solv_stats cvode_mem
@@ -378,7 +367,7 @@ let main () =
   printf "-------------------\n";
   printf "Forward integration\n";
   printf "-------------------\n\n";
-  let time, ncheck, _ = Adj.forward_normal cvode_mem tf y in
+  let _, ncheck, _ = Adj.forward_normal cvode_mem tf y in
   ignore (Quad.get cvode_mem yQ);
   let g = ith (unwrap yQ) 1 in
 
@@ -409,11 +398,10 @@ let main () =
   print_fwd_stats cvode_mem;
 
   (* Initializations for backward problems *)
-  let open Nvector_serial in
-  let yB1  = make (2 * neq) zero in
-  let yQB1 = make np2 zero in
-  let yB2  = make (2 * neq) zero in
-  let yQB2 = make np2 zero in
+  let yB1  = Nvector_serial.make (2 * neq) zero in
+  let yQB1 = Nvector_serial.make np2 zero in
+  let yB2  = Nvector_serial.make (2 * neq) zero in
+  let yQB2 = Nvector_serial.make np2 zero in
 
   (* Create and initialize backward problems (one for each column of the Hessian) *)
   let m = Matrix.dense (2*neq) in
@@ -596,7 +584,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

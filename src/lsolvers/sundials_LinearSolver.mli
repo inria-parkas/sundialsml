@@ -634,12 +634,12 @@ module Custom : sig (* {{{ *)
       (** Return the storage requirements for the linear solver.
           The result [(lrw, liw)] gives the number of words used for
           storing real values ([lrw]) and the number of words used
-          for storing integer values ([liw]). * *)
+          for storing integer values ([liw]). *)
 
-      (** Called by Iterative.set_prec_type and when a linear solver is
-          associated with an integrator. *)
       set_prec_type :
         ('lsolver -> Iterative.preconditioning_type -> unit) option;
+      (** Called by Iterative.set_prec_type and when a linear solver is
+          associated with an integrator. *)
     } (* }}} *)
 
   (** Convenience function for constructing a {!ops} value. *)

@@ -84,7 +84,7 @@ type user_data = { p : float array }
 
 (* f routine. Compute f(t,y). *)
 
-let f data t (y : RealArray.t) (ydot : RealArray.t) =
+let f data _ (y : RealArray.t) (ydot : RealArray.t) =
   let p1 = data.p.(0)
   and p2 = data.p.(1)
   and p3 = data.p.(2) in
@@ -140,7 +140,7 @@ let fS : user_data -> RealArray.t Sens.sensrhsfn1 =
 (* EwtSet function. Computes the error weights at the current solution. *)
 
 let atol = Array.of_list [ atol1; atol2; atol3 ]
-let ewt data (y : RealArray.t) (w : RealArray.t) =
+let ewt _ (y : RealArray.t) (w : RealArray.t) =
   let rtol = rtol;
   in
   for i = 0 to 2 do
@@ -239,13 +239,12 @@ let print_final_stats s sensi =
   print_newline ();
 
   if sensi then begin
-    let open Sens in
-    let nfSe     = get_num_rhs_evals s
-    and nfeS     = get_num_rhs_evals_sens s
-    and nsetupsS = get_num_lin_solv_setups s
-    and netfS    = get_num_err_test_fails s
-    and nniS     = get_num_nonlin_solv_iters s
-    and ncfnS    = get_num_nonlin_solv_conv_fails s in
+    let nfSe     = Sens.get_num_rhs_evals s
+    and nfeS     = Sens.get_num_rhs_evals_sens s
+    and nsetupsS = Sens.get_num_lin_solv_setups s
+    and netfS    = Sens.get_num_err_test_fails s
+    and nniS     = Sens.get_num_nonlin_solv_iters s
+    and ncfnS    = Sens.get_num_nonlin_solv_conv_fails s in
     print_string_5d "\nnfSe    = " nfSe;
     print_string_5d "    nfeS     = " nfeS;
     print_string_5d "\nnetfs   = " netfS;
@@ -332,7 +331,7 @@ let main () =
                 ============================\n";
 
   let tout = ref t1 in
-  for iout = 1 to nout do
+  for _ = 1 to nout do
     let t, _ = Cvode.solve_normal cvode_mem !tout y in
     print_output cvode_mem t ydata;
     print_sensi cvode_mem;
@@ -357,7 +356,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

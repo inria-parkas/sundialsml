@@ -7,7 +7,7 @@ let printf = Format.printf
 let fprintf = Format.fprintf
 
 let print_mat out m =
-  let {M.n; M.mu; M.ml; M.smu} = M.dims m in
+  let {M.n; M.mu; M.ml; _} = M.dims m in
   fprintf out "@[<v>";
   for i = 0 to n - 1 do
     fprintf out "@[<h>";

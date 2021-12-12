@@ -708,7 +708,7 @@ exception OperationNotProvided
 (** Lifts a set of operations on a type [t] to a set of operations on a
     generic nvector payload. *)
 module MakeDataOps :
-  functor (Ops : sig
+  functor (_ : sig
     include NVECTOR_OPS
 
     val unwrap : gdata -> t

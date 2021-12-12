@@ -20,8 +20,6 @@
     @idas <node7#SECTION00742000000000000000> Using the band-block-diagonal preconditioner IDABBDPRE
  *)
 
-open Sundials
-
 (** Alias for sessions based on parallel nvectors. *)
 type parallel_bsession =
   (Nvector_parallel.data, Nvector_parallel.kind) Idas.Adjoint.bsession

@@ -95,7 +95,7 @@ let print_header rtol atol linsolver =
  * print_output: print max norm of solution and current solver statistics
  *)
 
-let print_output mem t u linsolver =
+let print_output mem t u =
   let umax = nvmaxnorm u in
 
   let open Ida in
@@ -122,7 +122,7 @@ let print_output mem t u linsolver =
  *    res_i = u'_i - (central difference)_i
  * while for each boundary point, it is res_i = u_i.
  *)
-let res_heat data t u (u' : RealArray.t) res =
+let res_heat data _ u (u' : RealArray.t) res =
   let coeff = data.coeff
   and mm    = data.mm in
 
@@ -182,8 +182,7 @@ let p_setup_heat data jac =
  * containing the inverse diagonal Jacobian elements (previously
  * computed in PrecondHeateq), returning the result in zvec.
  *)
-let p_solve_heat data jac r z delta =
-  nvprod data.pp r z
+let p_solve_heat data _ r z _ = nvprod data.pp r z
 
 (*
  * set_initial_profile: routine to initialize u and u' vectors.
@@ -322,9 +321,9 @@ let main() =
     (* Loop over output times, call IDASolve, and print results. *)
 
     let tout = ref t1 in
-    for iout = 1 to nout do
-      let (tret, flag) = Ida.solve_normal mem !tout wu wu' in
-      print_output mem tret u linsolver;
+    for _ = 1 to nout do
+      let tret, _ = Ida.solve_normal mem !tout wu wu' in
+      print_output mem tret u;
       tout := !tout *. 2.
     done;
 
@@ -356,7 +355,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

@@ -70,7 +70,7 @@ type user_data = {
   }
 
 (* f routine to compute the ODE RHS function f(t,y). *)
-let f ud t (y : RealArray.t) (dy : RealArray.t) =
+let f ud _ (y : RealArray.t) (dy : RealArray.t) =
   RealArray.fill dy 0.0; (* initialize ydot to zero *)
 
   (* iterate over domain, computing all equations *)
@@ -265,7 +265,7 @@ let main () =
   printf "        t      ||u||_rms   ||v||_rms   ||w||_rms\n";
   printf "   ----------------------------------------------\n";
   (try
-     for iout=0 to nt-1 do
+     for _ = 0 to nt-1 do
        (* call integrator *)
        let t, _ = ARKStep.evolve_normal arkode_mem !tout y in
 
@@ -333,7 +333,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

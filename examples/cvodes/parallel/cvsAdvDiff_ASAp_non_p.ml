@@ -111,7 +111,7 @@ type user_data = {
 
 (* Set initial conditions in u vector *)
 
-let set_ic u dx my_length my_base =
+let set_ic u dx _ my_base =
   (* Set pointer to data array and get local length of u. *)
   let udata = local_array u in
   let my_length = Array1.dim udata in
@@ -211,7 +211,7 @@ let print_output data g_val uB =
 
 (* f routine. Compute f(t,u) for forward phase. *)
 
-let f data t ((udata : RealArray.t), _, _) ((dudata : RealArray.t), _, _) =
+let f data _ ((udata : RealArray.t), _, _) ((dudata : RealArray.t), _, _) =
 
   (* Extract MPI info. from data *)
   let comm      = data.comm in
@@ -483,7 +483,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

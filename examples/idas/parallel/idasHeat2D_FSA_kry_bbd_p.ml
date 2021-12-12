@@ -334,7 +334,7 @@ let brecvwait requests ixsub jysub dsizex uext =
  * communication of data in u needed to calculate G.
  *)
 
-let rescomm data tt uu up =
+let rescomm data _ uu _ =
   let uarray,_,_ = uu in
 
   (* Get comm, thispe, subgrid indices, data sizes, extended array uext. *)
@@ -360,7 +360,7 @@ let rescomm data tt uu up =
  *)
 
 
-let reslocal data tres uu up res =
+let reslocal data _ uu up res =
   (* Get subgrid indices, array sizes, extended work array uext. *)
 
   let uext = data.uext in
@@ -384,7 +384,7 @@ let reslocal data tres uu up res =
 
   let offsetu = ref 0 in
   let offsetue = ref (mxsub2 + 1) in
-  for ly = 0 to mysub-1 do
+  for _ = 0 to mysub-1 do
     for lx = 0 to mxsub-1 do
       uext.{!offsetue+lx} <- uuv.{!offsetu+lx}
     done;
@@ -614,13 +614,11 @@ let main () =
   let neq = mx * my in
 
   (* Allocate N-vectors. *)
-
-  let open Nvector_parallel in
-  let uu          = make local_N neq comm 0. in
-  let up          = make local_N neq comm 0. in
-  let res         = make local_N neq comm 0. in
-  let constraints = make local_N neq comm 0. in
-  let id          = make local_N neq comm 0. in
+  let uu          = Nvector_parallel.make local_N neq comm 0. in
+  let up          = Nvector_parallel.make local_N neq comm 0. in
+  let res         = Nvector_parallel.make local_N neq comm 0. in
+  let constraints = Nvector_parallel.make local_N neq comm 0. in
+  let id          = Nvector_parallel.make local_N neq comm 0. in
 
   (* Allocate and initialize the data structure. *)
 
@@ -629,7 +627,7 @@ let main () =
   (* Initialize the uu, up, id, and constraints profiles. *)
 
   set_initial_profile data (unvec uu) (unvec up) (unvec id) (unvec res);
-  Ops.const one constraints;
+  Nvector_parallel.Ops.const one constraints;
 
   let t0 = zero and t1 = 0.01 in
 
@@ -657,8 +655,8 @@ let main () =
     Ida.(init
       (SStolerances (rtol,atol))
       ~lsolver:Spils.(solver (spgmr ~maxl:12 uu)
-                        Ida_bbd.(prec_left ~dqrely:zero
-                                           { mudq; mldq; mukeep; mlkeep }
+                        (Ida_bbd.prec_left ~dqrely:zero
+                                           Ida_bbd.({ mudq; mldq; mukeep; mlkeep })
                                            (reslocal data)))
       (heatres data) ~varid:id t0 uu up)
   in
@@ -667,7 +665,7 @@ let main () =
 
   (* Sensitivity-related settings *)
 
-  let uuS, upS =
+  let uuS, _ =
     match sensi_meth with
     | None -> ([||], [||])
     | Some sensi_meth ->
@@ -731,8 +729,8 @@ let main () =
 
   (* Loop over tout, call IDASolve, print output. *)
   let tout = ref t1 in
-  for iout = 1 to nout do
-    let (tret, _) = Ida.solve_normal mem !tout uu up in
+  for _ = 1 to nout do
+    let tret, _ = Ida.solve_normal mem !tout uu up in
 
     let tret =
       if sensi then Sens.get mem uuS
@@ -762,7 +760,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

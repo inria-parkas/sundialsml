@@ -27,6 +27,7 @@ unset EXAMPLESROOT
 debug_configure=false
 logfile=/dev/null
 bounds_checking=1
+ocaml_warnings='+a-4-9-30-41-42'
 
 configure_command="$0"
 
@@ -711,13 +712,19 @@ else
 	*) ;;
     esac
 
+    case "${ocaml_version}" in
+	4.03.* | 4.04.* | 4.05.*)
+	    ocaml_warnings="${ocaml_warnings}-40" ;;
+	*) ;;
+    esac
+
     Iocaml_inc_path="-isystem ${ocaml_path}"
     ocaml_libpath="${ocaml_path%/}/"
     ocaml_version_info=" (${ocaml_version})"
 fi
 
-ocamlflags="${ocamlflags} -bin-annot"
-ocamloptflags="${ocamloptflags} -bin-annot"
+ocamlflags="${ocamlflags} -w ${ocaml_warnings} -bin-annot"
+ocamloptflags="${ocamloptflags} -w ${ocaml_warnings} -bin-annot"
 
 # Check if .opt variants are available.
 if [ "x$opt_compiler" = x1 ] && \
@@ -1772,10 +1779,12 @@ echo "(** Index values for sparse matrices. *)"\
     > src/sundials/sundials_Index.mli
 if [ "${sundials_indextype}" -eq 64 ]; then
     echo "include module type of Int64" >> src/sundials/sundials_Index.mli
+    echo >> src/sundials/sundials_Index.mli
     echo "(** Type of indexes into sparse matrices. *)" >> src/sundials/sundials_Index.mli
     echo "type index_elt = Bigarray.int64_elt" >> src/sundials/sundials_Index.mli
 else
     echo "include module type of Int32" >> src/sundials/sundials_Index.mli
+    echo >> src/sundials/sundials_Index.mli
     echo "(** Type of indexes into sparse matrices. *)" >> src/sundials/sundials_Index.mli
     echo "type index_elt = Bigarray.int32_elt" >> src/sundials/sundials_Index.mli
 fi

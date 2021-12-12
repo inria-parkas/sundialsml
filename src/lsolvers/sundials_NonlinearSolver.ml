@@ -201,7 +201,7 @@ let set_convtest_fn (type d k s)
   check_compat ();
   match solver with
   | CustomSolver (_, { set_convtest_fn = Some set }) -> set ctfn  (* O/Onls *)
-  | CustomSolver (callbacks, _) -> ()
+  | CustomSolver _ -> ()
   | FixedPointSolver (callbacks, _) | NewtonSolver callbacks      (* O/Cnls *)
       -> (match ctfn with
         | CConvTest cfun ->
@@ -253,13 +253,13 @@ module Sens = struct (* {{{ *)
     | CSensConvTest cfn -> CSensConvTest cfn
     | OConvTest _ -> invalid_arg "conftestfn is oconvtestfn"
 
-  let set_convtest_fn (type d k s v)
+  let set_convtest_fn (type d k s)
                       ({ rawptr; solver; _ } : (d, k, s, [`Sens]) t)
                       (ctfn : ((d, k) Senswrapper.t, s, [`Sens]) convtestfn) =
     check_compat ();
     match solver with
     | CustomSolverSens (_, { set_convtest_fn = Some set }) -> set ctfn
-    | CustomSolverSens (callbacks, _) -> ()
+    | CustomSolverSens _ -> ()
     | FixedPointSolverSens (callbacks, _) | NewtonSolverSens callbacks  (* O/Cnls *)
         -> (match ctfn with
             | CSensConvTest cfun ->
@@ -292,9 +292,9 @@ let set_print_level (type d k s v) ({ rawptr; solver; _ } : (d, k, s, v) t) leve
   | CustomSolverSens (_, { set_print_level = Some f }) -> f level
   | CustomSolver _ -> ()
   | CustomSolverSens _ -> ()
-  | FixedPointSolverSens _ -> c_set_print_level_newton rawptr level
+  | FixedPointSolverSens _ -> c_set_print_level_fixedpoint rawptr level
   | NewtonSolverSens _ -> c_set_print_level_newton rawptr level
-  | FixedPointSolver _ -> c_set_print_level_newton rawptr level
+  | FixedPointSolver _ -> c_set_print_level_fixedpoint rawptr level
   | NewtonSolver _ -> c_set_print_level_newton rawptr level
 
 let set_info_file (type d k s v)

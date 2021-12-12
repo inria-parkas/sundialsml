@@ -15,7 +15,7 @@ let print_with_time t v =
   Sundials.RealArray.iter (Printf.printf "\t% e") v;
   print_newline ()
 
-let f t y yd =
+let f _ y yd =
   yd.{xpos_i} <- x_vel;
   yd.{ypos_i} <- y.{yvel_i};
   yd.{yvel_i} <- gravity
@@ -37,7 +37,7 @@ let lookup_limit x =
     else f (idx + 1)
   in f 0
 
-let g t y gout =
+let g _ y gout =
   let idx = lookup_limit y.{xpos_i} in
   gout.{under_i} <- y.{ypos_i} -. ground.(idx)
 

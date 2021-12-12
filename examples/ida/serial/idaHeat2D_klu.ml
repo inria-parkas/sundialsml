@@ -55,9 +55,7 @@ let total = 4*mgrid+8*(mgrid-2)+(mgrid-4)*(mgrid+4*(mgrid-2))
 type user_data = { mm : int; dx : float; coeff : float }
 
 (* Jacobian matrix setup for mgrid=3  *)
-let jac_heat3 { Ida.jac_y = (yval : RealArray.t);
-                Ida.jac_coef = cj }
-              jacmat =
+let jac_heat3 { Ida.jac_coef = cj } jacmat =
   let set_col = Matrix.Sparse.set_col jacmat in
   let set = Matrix.Sparse.set jacmat in
   let dx = 1.0/.float(mgrid - 1) in
@@ -94,9 +92,7 @@ let jac_heat3 { Ida.jac_y = (yval : RealArray.t);
   set 12 8 1.0
 
 (* Jacobian matrix setup for mgrid>=4  *)
-let jac_heat { Ida.jac_y = (yval : RealArray.t);
-               Ida.jac_coef = cj }
-              jacmat =
+let jac_heat { Ida.jac_coef = cj } jacmat =
   let get_col = Matrix.Sparse.get_col jacmat in
   let set_col = Matrix.Sparse.set_col jacmat in
   let set_data = Matrix.Sparse.set_data jacmat in
@@ -387,7 +383,7 @@ let jac_heat { Ida.jac_y = (yval : RealArray.t);
  *    res_i = u'_i - (central difference)_i
  * while for each boundary point, it is res_i = u_i.
  *)
-let heatres t (u : RealArray.t) (u' : RealArray.t) resval data =
+let heatres _ (u : RealArray.t) (u' : RealArray.t) resval data =
   let mm = data.mm
   and coeff = data.coeff
   in
@@ -467,13 +463,12 @@ let print_header rtol atol =
 
 let print_output mem t u =
   let umax = vmax_norm u in
-  let open Ida in
-  let kused = get_last_order mem
-  and nst   = get_num_steps mem
-  and nni   = get_num_nonlin_solv_iters mem
-  and nre   = get_num_res_evals mem
-  and hused = get_last_step mem
-  and nje   = Dls.get_num_jac_evals mem
+  let kused = Ida.get_last_order mem
+  and nst   = Ida.get_num_steps mem
+  and nni   = Ida.get_num_nonlin_solv_iters mem
+  and nre   = Ida.get_num_res_evals mem
+  and hused = Ida.get_last_step mem
+  and nje   = Ida.Dls.get_num_jac_evals mem
   in
   printf " %5.2f %13.5e  %d  %3d  %3d  %3d  %4d  %9.2e \n"
          t umax kused nst nni nje nre hused
@@ -525,7 +520,7 @@ let main () =
   let m = Matrix.sparse_csc ~nnz neq in
   let mem =
     Ida.(init (SStolerances (rtol, atol))
-              ~lsolver:Dls.(solver ~jac:jacfn (klu wu m))
+              ~lsolver:Ida.Dls.(solver ~jac:jacfn (klu wu m))
               (fun t u u' r -> heatres t u u' r data)
               t0 wu wu')
   in
@@ -541,8 +536,8 @@ let main () =
 
   (* Loop over output times, call IDASolve, and print results. *)
   let tout = ref t1 in
-  for iout = 1 to nout do
-    let (tret, flag) = Ida.solve_normal mem !tout wu wu' in
+  for _ = 1 to nout do
+    let tret, _ = Ida.solve_normal mem !tout wu wu' in
     print_output mem tret u;
     tout := 2. *. !tout
   done;
@@ -567,7 +562,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

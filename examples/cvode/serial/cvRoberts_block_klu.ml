@@ -82,7 +82,7 @@ type user_data = {
  * Functions called by the solver
  *-------------------------------
  *)
-let f { neq; _ } t (y : RealArray.t) (ydot : RealArray.t) =
+let f { neq; _ } _ (y : RealArray.t) (ydot : RealArray.t) =
   let rec dogroup groupj =
     if groupj = neq then ()
     else begin
@@ -278,7 +278,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

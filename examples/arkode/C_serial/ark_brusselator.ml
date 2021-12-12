@@ -74,7 +74,7 @@ let printf = Printf.printf
 let fprintf = Printf.fprintf
 
 (* f routine to compute the ODE RHS function f(t,y). *)
-let f rdata t (y : RealArray.t) (ydot : RealArray.t) =
+let f rdata _ (y : RealArray.t) (ydot : RealArray.t) =
   let a  = rdata.(0) in     (* access data entries *)
   let b  = rdata.(1) in
   let ep = rdata.(2) in
@@ -202,7 +202,7 @@ let main () =
        printf "  %10.6f  %10.6f  %10.6f  %10.6f\n" 0. data.{0} data.{1} data.{2};
        fprintf ufid " %.16e %.16e %.16e %.16e\n" 0. data.{0} data.{1} data.{2}
      end;
-     for iout=0 to nt-1 do
+     for _ = 0 to nt-1 do
        (* call integrator *)
        let t, _ = ARKStep.evolve_normal arkode_mem !tout y in
        (* access/print solution *)
@@ -251,7 +251,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

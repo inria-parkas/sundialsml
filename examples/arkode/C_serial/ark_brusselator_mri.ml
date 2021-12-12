@@ -42,7 +42,7 @@ let printf = Printf.printf
 let fprintf = Printf.fprintf
 
 (* ff routine to compute the fast portion of the ODE RHS. *)
-let ff rdata t (y : RealArray.t) (ydot : RealArray.t) =
+let ff rdata _ (y : RealArray.t) (ydot : RealArray.t) =
   let b  = rdata.(1) in
   let ep = rdata.(2) in
   let w = y.{2} in
@@ -52,7 +52,7 @@ let ff rdata t (y : RealArray.t) (ydot : RealArray.t) =
   ydot.{2} <- (b-.w)/.ep
 
 (* fs routine to compute the slow portion of the ODE RHS. *)
-let fs rdata t (y : RealArray.t) (ydot : RealArray.t) =
+let fs rdata _ (y : RealArray.t) (ydot : RealArray.t) =
   let a  = rdata.(0) in
   let u = y.{0} in
   let v = y.{1} in
@@ -126,7 +126,7 @@ let main () =
   (try
      printf "  %10.6f  %10.6f  %10.6f  %10.6f\n" 0. data.{0} data.{1} data.{2};
      fprintf ufid " %.16e %.16e %.16e %.16e\n" 0. data.{0} data.{1} data.{2};
-     for iout=0 to nt-1 do
+     for _ = 0 to nt-1 do
        (* call integrator *)
        let t, _ = MRIStep.evolve_normal arkode_mem !tout y in
        (* access/print solution *)
@@ -163,7 +163,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

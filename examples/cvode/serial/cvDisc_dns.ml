@@ -33,7 +33,7 @@ type flag = RHS1 | RHS2
  *   flag = RHS1 -> y' = -y
  *   flag = RHS2 -> y' = -5*y
  *)
-let f flag t (y : RealArray.t) (ydot : RealArray.t) =
+let f flag _ (y : RealArray.t) (ydot : RealArray.t) =
   ydot.{0} <-
     match !flag with
     | RHS1 -> -. y.{0}
@@ -248,7 +248,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

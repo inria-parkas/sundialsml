@@ -304,7 +304,7 @@ let set_initial_profiles data u =
 
 (* Routine to send boundary data to neighboring PEs. *)
 
-let bsend comm my_pe isubx isuby dsizex dsizey udata =
+let bsend comm my_pe isubx isuby dsizex _ udata =
   let buf = RealArray.create (nvars*mysub) in
 
   (* If isuby > 0, send data from bottom x-line of u *)
@@ -420,7 +420,7 @@ let brecvwait request isubx isuby dsizex uext =
 (* ucomm routine.  This routine performs all communication
  * between processors of data needed to calculate f. *)
 
-let ucomm data t udata =
+let ucomm data _ udata =
   let comm    = data.comm
   and my_pe   = data.my_pe
   and isubx   = data.isubx
@@ -644,16 +644,15 @@ let print_final_stats s err_con sensi =
   match sensi with
   | None -> ()
   | Some sensi_meth -> begin
-      let open Sens in
-      let nfSe     = get_num_rhs_evals s
-      and nfeS     = get_num_rhs_evals_sens s
-      and nsetupsS = get_num_lin_solv_setups s
+      let nfSe     = Sens.get_num_rhs_evals s
+      and nfeS     = Sens.get_num_rhs_evals_sens s
+      and nsetupsS = Sens.get_num_lin_solv_setups s
       and netfS    = if err_con then get_num_err_test_fails s else 0
       and nniS, ncfnS = match sensi_meth with
-        | Staggered _ | Staggered1 _ ->
-            get_num_nonlin_solv_iters s,
-            get_num_nonlin_solv_conv_fails s
-        | Simultaneous _ -> 0,0
+        | Sens.Staggered _ | Sens.Staggered1 _ ->
+            Sens.get_num_nonlin_solv_iters s,
+            Sens.get_num_nonlin_solv_conv_fails s
+        | Sens.Simultaneous _ -> 0,0
       in
       printf "\n";
       printf "nfSe    = %5d    nfeS     = %5d\n" nfSe nfeS;
@@ -679,10 +678,7 @@ let f data t ((udata : RealArray.t),_,_) ((dudata : RealArray.t),_,_) =
 (* Preconditioner setup routine. Generate and preprocess P. *)
 
 let precond data jacarg jok gamma =
-  let { Cvode.jac_t   = tn;
-        Cvode.jac_y   = ((udata : RealArray.t), _, _);
-      } = jacarg
-  in
+  let { Cvode.jac_y   = ((udata : RealArray.t), _, _); } = jacarg in
   (* Make local copies of pointers in user_data, and of pointer to u's data *)
   let p       = data.p
   and jbd     = data.jbd
@@ -702,7 +698,7 @@ let precond data jacarg jok gamma =
       (* jok = TRUE: Copy Jbd to P *)
       for ly = 0 to mysub - 1 do
         for lx = 0 to mxsub - 1 do
-          Direct.blit jbd.(lx).(ly) p.(lx).(ly)
+          Direct.blit ~src:jbd.(lx).(ly) ~dst:p.(lx).(ly)
         done
       done;
       false
@@ -736,7 +732,7 @@ let precond data jacarg jok gamma =
           set_ijth j 1 2 (-. q2 *. c1 +. q4coef);
           set_ijth j 2 1 (q1 *. c3 -. q2 *. c2);
           set_ijth j 2 2 ((-. q2 *. c1 -. q4coef) +. diag);
-          Direct.blit j a
+          Direct.blit ~src:j ~dst:a
         done
       done;
       true
@@ -761,13 +757,9 @@ let precond data jacarg jok gamma =
 
 (* Preconditioner solve routine *)
 
-let psolve data jac_arg solve_arg ((zdata : RealArray.t), _, _) =
+let psolve data _ solve_arg ((zdata : RealArray.t), _, _) =
   let open Cvode.Spils in
-  let { rhs = ((r : RealArray.t), _, _);
-        gamma = gamma;
-        delta = delta;
-        left = lr } = solve_arg
-  in
+  let { rhs = ((r : RealArray.t), _, _); _ } = solve_arg in
   (* Extract the P and pivot arrays from user_data. *)
   let p       = data.p
   and pivot   = data.pivot
@@ -881,7 +873,7 @@ let main () =
   end;
 
   let tout = ref twohr in
-  for iout = 1 to nout do
+  for _ = 1 to nout do
     let t, _ = Cvode.solve_normal cvode_mem !tout u in
     print_output cvode_mem my_pe comm u t;
     print_sensi cvode_mem;
@@ -906,7 +898,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

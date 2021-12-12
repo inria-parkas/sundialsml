@@ -129,14 +129,14 @@ let ij_vptr_idx i j = i*num_species + j*nsmx
    contains preconditioner blocks, pivot arrays, and problem constants *)
 
 let p =
-  Array.init mx (fun jx ->
-    Array.init my (fun jy ->
+  Array.init mx (fun _ ->
+    Array.init my (fun _ ->
       Dense.create num_species num_species
     ))
 
 let pivot =
-  Array.init mx (fun jx ->
-    Array.init my (fun jy ->
+  Array.init mx (fun _ ->
+    Array.init my (fun _ ->
       let v = LintArray.create num_species in
       Array1.fill v 0;
       v
@@ -296,12 +296,7 @@ let prec_setup_bd { Kinsol.jac_u=cc;
 (* Preconditioner solve routine *)
 let vxy = RealArray.create num_species
 
-let prec_solve_bd { Kinsol.jac_u=cc;
-                    Kinsol.jac_fu=fval;
-                    Kinsol.jac_tmp=ftem}
-                  { Kinsol.Spils.uscale=cscale;
-                    Kinsol.Spils.fscale=fscale }
-                  vv =
+let prec_solve_bd _ _ vv =
   for jx = 0 to mx - 1 do
     for jy = 0 to my - 1 do
       (* For each (jx,jy), solve a linear system of size NUM_SPECIES.
@@ -458,7 +453,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

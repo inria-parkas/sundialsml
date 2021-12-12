@@ -102,7 +102,7 @@ module Diag = struct (* {{{ *)
   external sunml_cvode_diag : ('a, 'k) session -> unit
     = "sunml_cvode_diag"
 
-  let solver session nv =
+  let solver session _ =
     sunml_cvode_diag session;
     session.ls_precfns <- NoPrecFns;
     session.ls_callbacks <- DiagNoCallbacks
@@ -292,8 +292,8 @@ module Dls = struct (* {{{ *)
     | Some m -> m
     | None -> failwith "a direct linear solver is required"
 
-  let solver ?jac ?linsys ls session nv =
-    let LSI.LS ({ rawptr; solver; matrix } as hls) = ls in
+  let solver ?jac ?linsys ls session _ =
+    let LSI.(LS ({ rawptr; solver; matrix } as hls)) = ls in
     let matrix = assert_matrix matrix in
     if Sundials_impl.Version.lt500 && linsys <> None
       then raise Config.NotImplementedBySundialsVersion;
@@ -428,13 +428,13 @@ module Spils = struct (* {{{ *)
     : ('a, 'k) session -> ('m, 'a, 'k) LSI.cptr -> unit
     = "sunml_cvode_spils_set_linear_solver"
 
-  let init_preconditioner solve setup session nv =
+  let init_preconditioner solve setup session _ =
     c_set_preconditioner session (setup <> None);
     session.ls_precfns <- PrecFns { prec_solve_fn = solve;
                                     prec_setup_fn = setup }
 
   let prec_none = LSI.Iterative.(PrecNone,
-                    fun session nv -> session.ls_precfns <- NoPrecFns)
+                    fun session _ -> session.ls_precfns <- NoPrecFns)
 
   let prec_left ?setup solve  = LSI.Iterative.(PrecLeft,
                                             init_preconditioner solve setup)
@@ -446,27 +446,26 @@ module Spils = struct (* {{{ *)
                                             init_preconditioner solve setup)
 
   (* Sundials < 3.0.0 *)
-  let make_compat (type tag)
-        ({ LSI.Iterative.maxl; LSI.Iterative.gs_type } as compat)
-        prec_type
+  let make_compat (type tag) compat prec_type
         (solver_data : ('s, 'nd, 'nk, tag) LSI.solver_data) session =
+    let { LSI.Iterative.maxl; LSI.Iterative.gs_type } = compat in
     match solver_data with
     | LSI.Spgmr ->
         c_spgmr session maxl prec_type;
         (match gs_type with None -> () | Some t -> c_set_gs_type session t);
-        compat.set_gs_type <- old_set_gs_type session;
-        compat.set_prec_type <- old_set_prec_type session
+        LSI.Iterative.(compat.set_gs_type <- old_set_gs_type session);
+        LSI.Iterative.(compat.set_prec_type <- old_set_prec_type session)
     | LSI.Spbcgs ->
         c_spbcgs session maxl prec_type;
-        compat.set_maxl <- old_set_maxl session;
-        compat.set_prec_type <- old_set_prec_type session
+        LSI.Iterative.(compat.set_maxl <- old_set_maxl session);
+        LSI.Iterative.(compat.set_prec_type <- old_set_prec_type session)
     | LSI.Sptfqmr ->
         c_sptfqmr session maxl prec_type;
-        compat.set_maxl <- old_set_maxl session;
-        compat.set_prec_type <- old_set_prec_type session
+        LSI.Iterative.(compat.set_maxl <- old_set_maxl session);
+        LSI.Iterative.(compat.set_prec_type <- old_set_prec_type session)
     | _ -> raise Config.NotImplementedBySundialsVersion
 
-  let solver (type s)
+  let solver
       (LSI.LS ({ LSI.rawptr; LSI.solver; LSI.compat } as hls) as ls)
       ?jac_times_vec ?jac_times_rhs (prec_type, set_prec) session nv =
     let jac_times_setup, jac_times_vec =
@@ -657,9 +656,6 @@ module Spils = struct (* {{{ *)
       c_set_preconditioner session n bandrange.mupper bandrange.mlower;
       session.ls_precfns <- BandedPrecFns
 
-    let prec_none =
-      LSI.Iterative.(PrecNone, fun session nv ->
-                                          session.ls_precfns <- BandedPrecFns)
     let prec_left bandrange =
       LSI.Iterative.(PrecLeft,  init_preconditioner bandrange)
     let prec_right bandrange =
@@ -683,8 +679,7 @@ module Spils = struct (* {{{ *)
   end (* }}} *)
 end (* }}} *)
 
-let matrix_embedded_solver
-    ((LSI.LS ({ LSI.rawptr; LSI.solver; LSI.compat } as hls)) as ls) session nv =
+let matrix_embedded_solver ((LSI.LS ({ LSI.rawptr; _ } as hls)) as ls) session _ =
   if Sundials_impl.Version.lt580
     then raise Config.NotImplementedBySundialsVersion;
   c_set_linear_solver session rawptr None false false;
@@ -721,8 +716,8 @@ let session_finalize s =
    | None -> ()
    | Some nls -> NLSI.detach nls);
   (match s.sensext with
-   | FwdSensExt { fnls_solver = NLS nls } -> NLSI.detach nls
-   | FwdSensExt { fnls_solver = NLS_sens nls } -> NLSI.detach nls
+   | FwdSensExt { fnls_solver = NLSI.NLS nls } -> NLSI.detach nls
+   | FwdSensExt { fnls_solver = NLSI.NLS_sens nls } -> NLSI.detach nls
    | _ -> ());
   c_session_finalize s
 

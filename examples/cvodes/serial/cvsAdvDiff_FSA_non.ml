@@ -79,7 +79,7 @@ type user_data = {
 
 (* f routine. Compute f(t,u). *)
 
-let f data t (u : RealArray.t) (udot : RealArray.t) =
+let f data _ (u : RealArray.t) (udot : RealArray.t) =
   (* Extract needed problem constants from data *)
   let dx = data.dx in
   let hordc = data.p.{0}/.(dx*.dx) in
@@ -201,18 +201,17 @@ let print_final_stats cvode_mem sensi =
   match sensi with
   | None -> ()
   | Some sensi_meth -> begin
-      let open Sens in
-      let nfSe     = get_num_rhs_evals cvode_mem
-      and nfeS     = get_num_rhs_evals_sens cvode_mem
-      and nsetupsS = get_num_lin_solv_setups cvode_mem
-      and netfS    = get_num_err_test_fails cvode_mem
+      let nfSe     = Sens.get_num_rhs_evals cvode_mem
+      and nfeS     = Sens.get_num_rhs_evals_sens cvode_mem
+      and nsetupsS = Sens.get_num_lin_solv_setups cvode_mem
+      and netfS    = Sens.get_num_err_test_fails cvode_mem
       in
       let nniS, ncfnS =
         match sensi_meth with
-        | Staggered _ | Staggered1 _ ->
-            get_num_nonlin_solv_iters cvode_mem,
-            get_num_nonlin_solv_conv_fails cvode_mem
-        | Simultaneous _ -> 0, 0
+        | Sens.Staggered _ | Sens.Staggered1 _ ->
+            Sens.get_num_nonlin_solv_iters cvode_mem,
+            Sens.get_num_nonlin_solv_conv_fails cvode_mem
+        | Sens.Simultaneous _ -> 0, 0
       in
       print_newline ();
       print_string_5d "nfSe    = " nfSe;
@@ -298,7 +297,7 @@ let main () =
   print_string "============================================================\n";
 
   let tout = ref t1 in
-  for iout = 1 to nout do
+  for _ = 1 to nout do
     let t, _ = Cvode.solve_normal cvode_mem !tout u in
     print_output cvode_mem t u;
     print_sensi cvode_mem;
@@ -322,7 +321,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

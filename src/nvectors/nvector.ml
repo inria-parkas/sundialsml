@@ -11,6 +11,8 @@
 (***********************************************************************)
 
 type cnvec
+
+[@@@ocaml.warning "-37"]
 type ('data, 'kind) nvector =
   NV of { payload: 'data;
           cptr: cnvec;
@@ -18,6 +20,7 @@ type ('data, 'kind) nvector =
           clone: ('data, 'kind) t -> ('data, 'kind) t;
         }
 and ('data, 'kind) t = ('data, 'kind) nvector
+[@@@ocaml.warning "+37"]
 
 type 'k serial = (Sundials.RealArray.t, [>`Serial] as 'k) t
 
@@ -142,7 +145,9 @@ module type NVECTOR =
 
 (* Hack to ensure that Sundials.c_init_module is executed so that the global
    exceptions are properly registered. *)
+[@@@ocaml.warning "-32"]
 let e = Sundials.RecoverableFailure
+[@@@ocaml.warning "+32"]
 
 type gdata = ..
 type gdata += RA of Sundials.RealArray.t

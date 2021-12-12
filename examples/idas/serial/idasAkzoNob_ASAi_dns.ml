@@ -67,17 +67,17 @@ type user_data = { k1 : float;
                    h : float; }
 
 let r_power_i base exponent =
-  let go prod expt =
+  let go expt =
     let r = ref 1.0 in
-    for i = 0 to expt - 1 do
+    for _ = 0 to expt - 1 do
       r := !r *. base
     done;
     !r
   in
-  if exponent < 0 then 1. /.go  1.0 (- exponent)
-  else go 1.0 exponent
+  if exponent < 0 then 1. /.go  (- exponent)
+  else go exponent
 
-let res data t (yy : RealArray.t) (yd : RealArray.t) (res : RealArray.t) =
+let res data _ (yy : RealArray.t) (yd : RealArray.t) (res : RealArray.t) =
   let k1 = data.k1
   and k2 = data.k2
   and k3 = data.k3
@@ -120,8 +120,7 @@ let res data t (yy : RealArray.t) (yd : RealArray.t) (res : RealArray.t) =
 (*
  * rhsQ routine. Computes quadrature(t,y).
  *)
-let rhsQ data t yy yp qdot =
-  qdot.{0} <- yy.{0}
+let rhsQ _ _ yy _ qdot = qdot.{0} <- yy.{0}
 
 (*
  * resB routine. Residual for adjoint system.
@@ -190,7 +189,7 @@ let resB : user_data -> RealArray.t Adjoint.bresfn_no_sens =
 (*
  * Print results after backward integration
  *)
-let print_output tfinal yB ypB =
+let print_output _ yB _ =
   if sundials_gte500 then
     printf "dG/dy0: \t%12.4e\n\t\t%12.4e\n\t\t%12.4e\n\t\t%12.4e\n\t\t%12.4e\n"
            yB.{0} yB.{1} yB.{2} yB.{3} yB.{4}
@@ -257,7 +256,7 @@ let main () =
   (* Call IDACreate and IDAInit to initialize IDA memory *)
   let m = Matrix.dense neq in
   let mem = Ida.(init (SStolerances (rtol,atol))
-                      Dls.(solver (dense wyy m))
+                      ~lsolver:Ida.Dls.(solver (dense wyy m))
                       (res data) t0 wyy wyp)
   in
 
@@ -331,7 +330,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

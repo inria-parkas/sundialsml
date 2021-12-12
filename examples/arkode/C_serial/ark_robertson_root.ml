@@ -51,7 +51,7 @@ let sundials_270_or_later =
   | _ -> true
 
 (* f routine to compute the ODE RHS function f(t,y). *)
-let f t (y : RealArray.t) (ydot : RealArray.t) =
+let f _ (y : RealArray.t) (ydot : RealArray.t) =
   let u = y.{0} in   (* access current solution *)
   let v = y.{1} in
   let w = y.{2} in
@@ -62,7 +62,7 @@ let f t (y : RealArray.t) (ydot : RealArray.t) =
   ydot.{2} <- 3.e7*.v*.v
 
 (* g routine to compute the root-finding function g(t,y). *)
-let g t (y : RealArray.t) (gout : RealArray.t) =
+let g _ (y : RealArray.t) (gout : RealArray.t) =
   let u = y.{0} in    (* access current solution *)
   let w = y.{2} in
   gout.{0} <- u -. 0.0001;  (* check for u == 1e-4 *)
@@ -149,7 +149,7 @@ let main () =
   let rootsfound = Roots.create 2 in
   let root i = Roots.int_of_root (Roots.get rootsfound i) in
   (try
-     for iout=0 to nt-1 do
+     for _ = 0 to nt-1 do
        (* call integrator *)
        let t, flag = ARKStep.evolve_normal arkode_mem !tout y_nv in
 
@@ -205,7 +205,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

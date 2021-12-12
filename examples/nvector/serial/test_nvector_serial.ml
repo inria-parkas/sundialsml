@@ -32,7 +32,7 @@ module Nvector_serial_ops =
     let getarray = Nvector.unwrap
     let get = Sundials.RealArray.get
     let set = Sundials.RealArray.set
-    let max_time x t = t
+    let max_time _ t = t
     let sync_device () = ()
   end)
 
@@ -51,7 +51,7 @@ module Nvector_generic_ops =
     let get = Sundials.RealArray.get
     let set = Sundials.RealArray.set
 
-    let max_time x t = t
+    let max_time _ t = t
     let sync_device () = ()
   end
 
@@ -64,7 +64,7 @@ module Nvector_array_ops =
     let getarray = Nvector.unwrap
     let get = Array.get
     let set = Array.set
-    let max_time x t = t
+    let max_time _ t = t
     let sync_device () = ()
   end)
 
@@ -443,7 +443,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

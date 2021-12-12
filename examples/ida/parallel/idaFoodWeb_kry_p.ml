@@ -207,12 +207,12 @@ type user_data =
 let alloc_init_user_data comm local_N system_size thispe npes =
   let rates = Nvector_parallel.make local_N system_size comm 0.
   and pp =
-    Array.init mxsub (fun ix ->
-        Array.init mysub (fun jy ->
+    Array.init mxsub (fun _ ->
+        Array.init mysub (fun _ ->
             RealArray2.create num_species num_species))
   and pivot =
-    Array.init mxsub (fun ix ->
-        Array.init mysub (fun jy ->
+    Array.init mxsub (fun _ ->
+        Array.init mysub (fun _ ->
             LintArray.create num_species))
   in
 
@@ -541,7 +541,7 @@ let web_rates webdata xx yy ((cxy : RealArray.t), cxy_off)
  * for use by the preconditioner setup routine.
  *)
 
-let reslocal webdata tt cc cp res =
+let reslocal webdata _ cc cp res =
   let mxsub =      (webdata.mxsub) in
   let mysub =      (webdata.mysub) in
   let npex =       (webdata.npex) in
@@ -568,7 +568,7 @@ let reslocal webdata tt cc cp res =
   (* Copy local segment of cc vector into the working extended array cext. *)
   let locc = ref 0
   and locce = ref (nsmxsub2 + num_species) in
-  for jy = 0 to mysub-1 do
+  for _ = 0 to mysub-1 do
     for i = 0 to nsmxsub-1 do
       cext.{!locce+i} <- ccdata.{!locc+i}
     done;
@@ -658,7 +658,7 @@ let reslocal webdata tt cc cp res =
  * and receive-waiting, in routines BRecvPost, BSend, BRecvWait.
  *)
 
-let rescomm webdata cc cp =
+let rescomm webdata cc _ =
   (* Get comm, thispe, subgrid indices, data sizes, extended array cext. *)
   let comm = webdata.comm   and thispe = webdata.thispe
   and ixsub = webdata.ixsub and jysub = webdata.jysub
@@ -826,7 +826,7 @@ let precondbd webdata jac =
  * preconditioner PP, to compute the solution of PP * zvec = rvec.
  *)
 
-let psolvebd webdata jac rvec zvec delta =
+let psolvebd webdata _ rvec zvec _ =
   vscale 1.0 rvec zvec;
 
   (* Loop through subgrid and apply preconditioner factors at each point. *)
@@ -897,7 +897,7 @@ let main () =
      the preconditioner routines supplied (Precondbd and PSolvebd).
      maxl (max. Krylov subspace dim.) is set to 16. *)
   let maxl = 16 in
-  let lsolver = Ida.Spils.(spgmr ~maxl cc) in
+  let lsolver = Ida.Spils.spgmr ~maxl cc in
   let mem =
     Ida.(init
       (SStolerances (rtol, atol))
@@ -951,7 +951,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

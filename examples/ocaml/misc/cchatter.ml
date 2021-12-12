@@ -4,7 +4,7 @@ let print_with_time t v =
   Sundials.RealArray.iter (Printf.printf "\t% e") v;
   print_newline ()
 
-let f t y yd =
+let f _ y yd =
   yd.{0} <- if y.{0} >= 0.0 then -1.0 else 1.0
 
 let y = Sundials.RealArray.of_array [| 1.0 |]

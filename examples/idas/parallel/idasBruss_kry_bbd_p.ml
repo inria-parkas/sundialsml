@@ -147,7 +147,7 @@ type user_data =
  * BRecvPost: Start receiving boundary data from neighboring PEs.
  *)
 
-let brecvpost comm my_pe ixsub jysub dsizex dsizey cext =
+let brecvpost comm my_pe ixsub jysub dsizex dsizey _ =
   (* If jysub > 0, receive data for bottom x-line of cext. *)
   let r0 = if jysub <> 0
            then Mpi.ireceive (bytes dsizex) (my_pe-npex) 0 comm
@@ -278,8 +278,8 @@ let bsend comm my_pe ixsub jysub dsizex dsizey (cdata : RealArray.t) =
  * At a given (x,y), evaluate the array of ns reaction terms R.
  *)
 
-let react_rates data xx yy ((uvval : RealArray.t), uvval_off)
-                           (rates : RealArray.t) =
+let react_rates data _ _ ((uvval : RealArray.t), uvval_off)
+                         (rates : RealArray.t) =
   let a = data.a and b = data.b in
 
   rates.{0} <- uvval.{uvval_off}*.uvval.{uvval_off}*.uvval.{uvval_off + 1};
@@ -297,7 +297,7 @@ let react_rates data xx yy ((uvval : RealArray.t), uvval_off)
  * The message-passing uses blocking sends, non-blocking receives,
  * and receive-waiting, in routines brecvpost, bsend, brecvwait.
  *)
-let rescomm data tt uv uvp =
+let rescomm data _ uv _ =
   let (cdata : RealArray.t),_,_ = uv in
 
   (* Get comm, thispe, subgrid indices, data sizes, extended array cext. *)
@@ -334,9 +334,9 @@ let rescomm data tt uv uvp =
  * for use by the preconditioner setup routine.
  *)
 
-let reslocal data tt ((uv : RealArray.t), _, _)
-                     ((uvp : RealArray.t), _, _)
-                     ((rr : RealArray.t), _, _) =
+let reslocal data _ ((uv : RealArray.t), _, _)
+                    ((uvp : RealArray.t), _, _)
+                    ((rr : RealArray.t), _, _) =
   let mxsub =      data.mxsub in
   let mysub =      data.mysub in
   let npex =       data.npex in
@@ -358,7 +358,7 @@ let reslocal data tt ((uv : RealArray.t), _, _)
   (* Copy local segment of uv vector into the working extended array gridext. *)
   let locc = ref 0 in
   let locce = ref (nsmxsub2 + num_species) in
-  for jy = 0 to mysub-1 do
+  for _ = 0 to mysub-1 do
     for i = 0 to nsmxsub-1 do
       gridext.{!locce+i} <- uv.{!locc+i}
     done;
@@ -716,7 +716,7 @@ let print_output mem uv tt data comm =
 (*
  * PrintSol the PE's portion of the solution to a file.
  *)
-let print_sol data mem uv uvp comm =
+let print_sol data _ uv _ _ =
   let thispe = data.thispe in
   let szFilename = Printf.sprintf "ysol%d.txt" thispe in
 
@@ -836,8 +836,8 @@ let main () =
     Ida.(init
       (SStolerances (rtol,atol))
       ~lsolver:Spils.(solver (spgmr ~maxl uv)
-                        Ida_bbd.(prec_left ~dqrely:zero
-                                           { mudq; mldq; mukeep; mlkeep }
+                        (Ida_bbd.prec_left ~dqrely:zero
+                                           Ida_bbd.({ mudq; mldq; mukeep; mlkeep })
                                            (reslocal data)))
       (res data) t0 uv uvp)
   in
@@ -886,7 +886,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

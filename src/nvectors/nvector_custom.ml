@@ -420,94 +420,96 @@ module MakeOps = functor (A : sig
 
       let wl2norm =
         match A.ops.wl2norm with
-        | None -> (fun x w -> raise Nvector.OperationNotProvided)
+        | None -> (fun _ _ -> raise Nvector.OperationNotProvided)
         | Some f -> (fun x w -> f (uv x) (uv w))
 
       let l1norm =
         match A.ops.l1norm with
-        | None -> (fun x -> raise Nvector.OperationNotProvided)
+        | None -> (fun _ -> raise Nvector.OperationNotProvided)
         | Some f -> (fun x -> f (uv x))
 
       let wrmsnormmask =
         match A.ops.wrmsnormmask with
-        | None -> (fun x w id -> raise Nvector.OperationNotProvided)
+        | None -> (fun _ _ _ -> raise Nvector.OperationNotProvided)
         | Some f -> (fun x w id -> f (uv x) (uv w) (uv id))
 
       let constrmask =
         match A.ops.constrmask with
-        | None -> (fun c x m -> raise Nvector.OperationNotProvided)
+        | None -> (fun _ _ _ -> raise Nvector.OperationNotProvided)
         | Some f -> (fun c x m -> f (uv c) (uv x) (uv m))
 
       let minquotient =
         match A.ops.minquotient with
-        | None -> (fun num denom -> raise Nvector.OperationNotProvided)
+        | None -> (fun _ _ -> raise Nvector.OperationNotProvided)
         | Some f -> (fun num denom -> f (uv num) (uv denom))
 
       let space =
         match A.ops.space with
-        | None -> (fun x -> raise Nvector.OperationNotProvided)
+        | None -> (fun _ -> raise Nvector.OperationNotProvided)
         | Some f -> (fun x -> f (uv x))
 
       let getlength a = A.ops.getlength (uv a)
 
+      [@@@warning "-27"]
       let print =
         match A.ops.print with
         | None -> (fun ?logfile _ -> raise Nvector.OperationNotProvided)
         | Some f -> (fun ?logfile x -> f (uv x) logfile)
+      [@@@warning "+27"]
 
       let linearcombination =
         match A.ops.linearcombination with
-        | None -> (fun c x z -> raise Nvector.OperationNotProvided)
+        | None -> (fun _ _ _ -> raise Nvector.OperationNotProvided)
         | Some f -> (fun c x z -> f c (Array.map uv x) (uv z))
 
       let scaleaddmulti =
         match A.ops.scaleaddmulti with
-        | None -> (fun c x y z -> raise Nvector.OperationNotProvided)
+        | None -> (fun _ _ _ _ -> raise Nvector.OperationNotProvided)
         | Some f ->
             (fun c x y z -> f c (uv x) (Array.map uv y) (Array.map uv z))
 
       let dotprodmulti =
         match A.ops.dotprodmulti with
-        | None -> (fun x y d -> raise Nvector.OperationNotProvided)
+        | None -> (fun _ _ _ -> raise Nvector.OperationNotProvided)
         | Some f -> (fun x y d -> f (uv x) (Array.map uv y) d)
 
       let linearsumvectorarray =
         match A.ops.linearsumvectorarray with
-        | None -> (fun a x b y z -> raise Nvector.OperationNotProvided)
+        | None -> (fun _ _ _ _ _ -> raise Nvector.OperationNotProvided)
         | Some f -> (fun a x b y z -> f a (Array.map uv x) b (Array.map uv y)
                                           (Array.map uv z))
 
       let scalevectorarray =
         match A.ops.scalevectorarray with
-        | None -> (fun c x z -> raise Nvector.OperationNotProvided)
+        | None -> (fun _ _ _ -> raise Nvector.OperationNotProvided)
         | Some f -> (fun c x z -> f c (Array.map uv x) (Array.map uv z))
 
       let constvectorarray =
         match A.ops.constvectorarray with
-        | None -> (fun c x -> raise Nvector.OperationNotProvided)
+        | None -> (fun _ _ -> raise Nvector.OperationNotProvided)
         | Some f -> (fun c x -> f c (Array.map uv x))
 
       let wrmsnormvectorarray =
         match A.ops.wrmsnormvectorarray with
-        | None -> (fun x w m -> raise Nvector.OperationNotProvided)
+        | None -> (fun _ _ _ -> raise Nvector.OperationNotProvided)
         | Some f -> (fun x w m -> f (Array.map uv x) (Array.map uv w) m)
 
       let wrmsnormmaskvectorarray =
         match A.ops.wrmsnormmaskvectorarray with
-        | None -> (fun x w id m -> raise Nvector.OperationNotProvided)
+        | None -> (fun _ _ _ _ -> raise Nvector.OperationNotProvided)
         | Some f -> (fun x w id m -> f (Array.map uv x) (Array.map uv w)
                                        (uv id) m)
 
       let scaleaddmultivectorarray =
         match A.ops.scaleaddmultivectorarray with
-        | None -> (fun a x yy zz -> raise Nvector.OperationNotProvided)
+        | None -> (fun _ _ _ _ -> raise Nvector.OperationNotProvided)
         | Some f -> (fun a x yy zz -> f a (Array.map uv x)
                                         (Array.map (Array.map uv) yy)
                                         (Array.map (Array.map uv) zz))
 
       let linearcombinationvectorarray =
         match A.ops.linearcombinationvectorarray with
-        | None -> (fun c xx z -> raise Nvector.OperationNotProvided)
+        | None -> (fun _ _ _ -> raise Nvector.OperationNotProvided)
         | Some f -> (fun c xx z -> f c (Array.map (Array.map uv) xx)
                                        (Array.map uv z))
 
@@ -580,89 +582,91 @@ module MakeOps = functor (A : sig
 
       let wl2norm =
         match A.ops.wl2norm with
-        | None -> (fun x w -> raise Nvector.OperationNotProvided)
+        | None -> (fun _ _ -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
       let l1norm =
         match A.ops.l1norm with
-        | None -> (fun x -> raise Nvector.OperationNotProvided)
+        | None -> (fun _ -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
       let wrmsnormmask =
         match A.ops.wrmsnormmask with
-        | None -> (fun x w id -> raise Nvector.OperationNotProvided)
+        | None -> (fun _ _ _ -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
       let constrmask =
         match A.ops.constrmask with
-        | None -> (fun c x m -> raise Nvector.OperationNotProvided)
+        | None -> (fun _ _ _ -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
       let minquotient =
         match A.ops.minquotient with
-        | None -> (fun num denom -> raise Nvector.OperationNotProvided)
+        | None -> (fun _ _ -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
       let space =
         match A.ops.space with
-        | None -> (fun x -> raise Nvector.OperationNotProvided)
+        | None -> (fun _ -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
       let getlength = A.ops.getlength
 
+      [@@@warning "-27"]
       let print =
         match A.ops.print with
         | None -> (fun ?logfile _ -> raise Nvector.OperationNotProvided)
         | Some f -> (fun ?logfile x -> f x logfile)
+      [@@@warning "+27"]
 
       let linearcombination =
         match A.ops.linearcombination with
-        | None -> (fun c x z -> raise Nvector.OperationNotProvided)
+        | None -> (fun _ _ _ -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
       let scaleaddmulti =
         match A.ops.scaleaddmulti with
-        | None -> (fun c x y z -> raise Nvector.OperationNotProvided)
+        | None -> (fun _ _ _ _ -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
       let dotprodmulti =
         match A.ops.dotprodmulti with
-        | None -> (fun x y d -> raise Nvector.OperationNotProvided)
+        | None -> (fun _ _ _ -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
       let linearsumvectorarray =
         match A.ops.linearsumvectorarray with
-        | None -> (fun a x b y z -> raise Nvector.OperationNotProvided)
+        | None -> (fun _ _ _ _ _ -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
       let scalevectorarray =
         match A.ops.scalevectorarray with
-        | None -> (fun c x z -> raise Nvector.OperationNotProvided)
+        | None -> (fun _ _ _ -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
       let constvectorarray =
         match A.ops.constvectorarray with
-        | None -> (fun c x -> raise Nvector.OperationNotProvided)
+        | None -> (fun _ _ -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
       let wrmsnormvectorarray =
         match A.ops.wrmsnormvectorarray with
-        | None -> (fun x w m -> raise Nvector.OperationNotProvided)
+        | None -> (fun _ _ _ -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
       let wrmsnormmaskvectorarray =
         match A.ops.wrmsnormmaskvectorarray with
-        | None -> (fun x w id m -> raise Nvector.OperationNotProvided)
+        | None -> (fun _ _ _ _ -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
       let scaleaddmultivectorarray =
         match A.ops.scaleaddmultivectorarray with
-        | None -> (fun a x yy zz -> raise Nvector.OperationNotProvided)
+        | None -> (fun _ _ _ _ -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
       let linearcombinationvectorarray =
         match A.ops.linearcombinationvectorarray with
-        | None -> (fun c xx z -> raise Nvector.OperationNotProvided)
+        | None -> (fun _ _ _ -> raise Nvector.OperationNotProvided)
         | Some f -> f
 
       module Local = struct

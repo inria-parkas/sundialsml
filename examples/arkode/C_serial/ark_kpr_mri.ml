@@ -83,7 +83,7 @@ let r t = 0.5 *. cos t
 let s (rpar : RealArray.t) t = cos (rpar.{1} *. t)
 let rdot t = -0.5 *. sin t
 let sdot (rpar : RealArray.t) t = -. rpar.{1} *. sin(rpar.{1} *. t)
-let utrue (rpar : RealArray.t) t = sqrt (1.0 +. r t)
+let utrue _ t = sqrt (1.0 +. r t)
 let vtrue (rpar : RealArray.t) t = sqrt (2.0 +. s rpar t)
 
 let ytrue (rpar : RealArray.t) t (y : RealArray.t) =
@@ -134,12 +134,10 @@ let fn (rpar : RealArray.t) t (y : RealArray.t) (ydot : RealArray.t) =
   ydot.{0} <- g *. tmp1 +. e *. tmp2 +. rdot t /. (2.0 *. u);
   ydot.{1} <- e *. tmp1 -. tmp2 +. sdot rpar t /. (2.0 *. vtrue rpar t)
 
-let f0 (rpar : RealArray.t) t (y : RealArray.t) (ydot : RealArray.t) =
-  RealArray.fill ydot 0.0
+let f0 _ _ _ (ydot : RealArray.t) = RealArray.fill ydot 0.0
 
 let js (rpar : RealArray.t) { MRIStep.jac_t = t;
-                              MRIStep.jac_y = (y : RealArray.t);
-                              MRIStep.jac_fy = (ydot : RealArray.t); _ }
+                              MRIStep.jac_y = (y : RealArray.t); _ }
                             jmat =
   let g = rpar.{0} in
   let e = rpar.{2} in
@@ -154,8 +152,7 @@ let js (rpar : RealArray.t) { MRIStep.jac_t = t;
   DM.set jmat 1 1 0.0
 
 let jn (rpar : RealArray.t) { MRIStep.jac_t = t;
-                              MRIStep.jac_y = (y : RealArray.t);
-                              MRIStep.jac_fy = (ydot : RealArray.t); _ }
+                              MRIStep.jac_y = (y : RealArray.t); _ }
                             jmat =
   let g = rpar.{0} in
   let e = rpar.{2} in
@@ -588,7 +585,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

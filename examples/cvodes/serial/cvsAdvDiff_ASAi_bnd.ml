@@ -100,7 +100,7 @@ type user_data = {
 
 (* f routine. right-hand side of forward ODE. *)
 
-let f data t udata dudata =
+let f data _ udata dudata =
   (* Extract needed constants from data *)
   let hordc = data.hdcoef
   and horac = data.hacoef
@@ -133,7 +133,7 @@ let f data t udata dudata =
 
 (* Jac function. Jacobian of forward ODE. *)
 
-let jac data arg jmat =
+let jac data _ jmat =
   (*
     The components of f = udot that depend on u(i,j) are
     f(i,j), f(i-1,j), f(i+1,j), f(i,j-1), f(i,j+1), with
@@ -192,10 +192,7 @@ let fB data args uBdot =
 
 (* JacB function. Jacobian of backward ODE. *)
 
-let jacb data { Adjoint.jac_t = tB;
-                Adjoint.jac_y = u;
-                Adjoint.jac_yb = uB;
-                Adjoint.jac_fyb = fuB } jb =
+let jacb data _ jb =
 
   (* The Jacobian of the adjoint system is: JB = -J^T *)
   let hordc = data.hdcoef in
@@ -298,7 +295,7 @@ let main () =
 
   (* Perform forward run *)
   printf "\nForward integration\n";
-  let t, ncheck, _ = Adjoint.forward_normal cvode_mem tout u_nvec in
+  let _, ncheck, _ = Adjoint.forward_normal cvode_mem tout u_nvec in
   printf "\nncheck = %d\n" ncheck;
 
   (* Allocate uB *)
@@ -312,7 +309,7 @@ let main () =
     Adjoint.(init_backward cvode_mem
               Cvode.BDF
               (SStolerances (rtolb, atol))
-              ~lsolver:Dls.(solver ~jac:(NoSens (jacb data)) (band uB m))
+              ~lsolver:Dls.(solver ~jac:(Dls.NoSens (jacb data)) (band uB m))
               (NoSens (fB data)) tout uB) in
 
   (* Perform backward integration *)
@@ -336,7 +333,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

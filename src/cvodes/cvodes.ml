@@ -17,7 +17,7 @@ external c_alloc_nvector_array : int -> 'a array
 
 let add_fwdsensext s =
   match s.sensext with
-  | FwdSensExt se -> ()
+  | FwdSensExt _ -> ()
   | BwdSensExt _ -> failwith "Quadrature.add_fwdsensext: internal error"
   | NoSensExt ->
       s.sensext <- FwdSensExt {
@@ -31,7 +31,7 @@ let add_fwdsensext s =
         sensrhsfn         = dummy_sensrhsfn;
         sensrhsfn1        = dummy_sensrhsfn1;
         quadsensrhsfn     = dummy_quadsensrhsfn;
-        fnls_solver       = NoNLS;
+        fnls_solver       = NLSI.NoNLS;
         bsessions         = [];
       }
 
@@ -233,9 +233,9 @@ module Sensitivity = struct (* {{{ *)
 
   let detach_nonlinear_solver_sens se =
     match se.fnls_solver with
-    | NoNLS -> ()
-    | NLS old_nls      -> (NLSI.detach old_nls; se.fnls_solver <- NoNLS)
-    | NLS_sens old_nls -> (NLSI.detach old_nls; se.fnls_solver <- NoNLS)
+    | NLSI.NoNLS -> ()
+    | NLSI.NLS old_nls      -> (NLSI.detach old_nls; se.fnls_solver <- NLSI.NoNLS)
+    | NLSI.NLS_sens old_nls -> (NLSI.detach old_nls; se.fnls_solver <- NLSI.NoNLS)
 
   let set_nonlinear_solver_sens session sm =
     let se = fwdsensext session in
@@ -244,13 +244,13 @@ module Sensitivity = struct (* {{{ *)
     | Simultaneous (Some ({ NLSI.rawptr = nlcptr } as nls)) ->
         (detach_nonlinear_solver_sens se;
          NLSI.attach nls;
-         se.fnls_solver <- NLS_sens nls;
+         se.fnls_solver <- NLSI.NLS_sens nls;
          c_set_nonlinear_solver_sim session nlcptr)
     | Staggered None -> detach_nonlinear_solver_sens se
     | Staggered (Some ({ NLSI.rawptr = nlcptr } as nls)) ->
         (detach_nonlinear_solver_sens se;
          NLSI.attach nls;
-         se.fnls_solver <- NLS_sens nls;
+         se.fnls_solver <- NLSI.NLS_sens nls;
          c_set_nonlinear_solver_stg session nlcptr)
 
     | Staggered1 None -> detach_nonlinear_solver_sens se
@@ -258,7 +258,7 @@ module Sensitivity = struct (* {{{ *)
         (* typing guarantees the CallbackWithNvector convention *)
         (NLSI.attach nls;
          detach_nonlinear_solver_sens se;
-         se.fnls_solver <- NLS nls;
+         se.fnls_solver <- NLSI.NLS nls;
          c_set_nonlinear_solver_stg1 session nlcptr)
 
   let check_sens_params ns {pvals; pbar; plist} =
@@ -656,10 +656,6 @@ module Adjoint = struct (* {{{ *)
   exception BadFinalTime
   exception BadOutputTime
 
-  let optionally f = function
-    | None -> ()
-    | Some x -> f x
-
   type interpolation = IPolynomial | IHermite
 
   external c_init : ('a, 'k) session -> int -> interpolation -> unit
@@ -1044,8 +1040,8 @@ module Adjoint = struct (* {{{ *)
       | Some m -> m
       | None -> failwith "a direct linear solver is required"
 
-    let solver ?jac ?linsys ls bs nv =
-      let LSI.LS ({ rawptr; solver; matrix } as hls) = ls in
+    let solver ?jac ?linsys ls bs _ =
+      let LSI.LS ({ LSI.rawptr; LSI.solver; LSI.matrix } as hls) = ls in
       let session = tosession bs in
       let parent, which = parent_and_which bs in
       let matrix = assert_matrix matrix in
@@ -1168,7 +1164,7 @@ module Adjoint = struct (* {{{ *)
       : ('a, 'k) session -> int -> bool -> unit
       = "sunml_cvodes_adj_set_jac_times_rhsfn"
 
-    let init_preconditioner solve setup bs parent which nv =
+    let init_preconditioner solve setup bs parent which _ =
       c_set_preconditioner parent which (setup <> None) false;
       (tosession bs).ls_precfns <- BPrecFns { prec_solve_fn = solve;
                                               prec_setup_fn = setup }
@@ -1182,7 +1178,7 @@ module Adjoint = struct (* {{{ *)
     let prec_both ?setup solve  = LSI.Iterative.(PrecBoth,
                                     init_preconditioner solve setup)
 
-    let init_preconditioner_with_sens solve setup bs parent which nv =
+    let init_preconditioner_with_sens solve setup bs parent which _ =
       c_set_preconditioner parent which (setup <> None) true;
       (tosession bs).ls_precfns <-
         BPrecFnsSens { prec_solve_fn_sens = solve;
@@ -1207,29 +1203,28 @@ module Adjoint = struct (* {{{ *)
       = "sunml_cvodes_adj_spils_set_linear_solver"
 
     (* Sundials < 3.0.0 *)
-    let make_compat (type tag)
-          ({ LSI.Iterative.maxl; LSI.Iterative.gs_type } as compat)
-          prec_type
+    let make_compat (type tag) compat prec_type
           (solver_data : ('s, 'nd, 'nk, tag) LSI.solver_data) bs =
+      let { LSI.Iterative.maxl; LSI.Iterative.gs_type; _ } = compat in
       let parent, which = parent_and_which bs in
       match solver_data with
       | LSI.Spgmr ->
           c_spgmr parent which maxl prec_type;
           (match gs_type with None -> () | Some t ->
               c_set_gs_type parent which t);
-          compat.set_gs_type <- old_set_gs_type bs;
-          compat.set_prec_type <- old_set_prec_type bs
+          LSI.Iterative.(compat.set_gs_type <- old_set_gs_type bs);
+          LSI.Iterative.(compat.set_prec_type <- old_set_prec_type bs)
       | LSI.Spbcgs ->
           c_spbcgs parent which maxl prec_type;
-          compat.set_maxl <- old_set_maxl bs;
-          compat.set_prec_type <- old_set_prec_type bs
+          LSI.Iterative.(compat.set_maxl <- old_set_maxl bs);
+          LSI.Iterative.(compat.set_prec_type <- old_set_prec_type bs)
       | LSI.Sptfqmr ->
           c_sptfqmr parent which maxl prec_type;
-          compat.set_maxl <- old_set_maxl bs;
-          compat.set_prec_type <- old_set_prec_type bs
+          LSI.Iterative.(compat.set_maxl <- old_set_maxl bs);
+          LSI.Iterative.(compat.set_prec_type <- old_set_prec_type bs)
       | _ -> raise Config.NotImplementedBySundialsVersion
 
-    let solver (type s)
+    let solver
           (LSI.LS ({ LSI.rawptr; LSI.solver; LSI.compat } as hls) as ls)
           ?jac_times_vec ?jac_times_rhs (prec_type, set_prec) bs nv =
       let session = tosession bs in
@@ -1401,8 +1396,6 @@ module Adjoint = struct (* {{{ *)
           bandrange.mupper bandrange.mlower;
         (tosession bs).ls_precfns <- BandedPrecFns
 
-      let prec_none = LSI.Iterative.(PrecNone, fun bs _ _ _ ->
-                                    (tosession bs).ls_precfns <- BandedPrecFns)
       let prec_left bandrange  = LSI.Iterative.(PrecLeft,
                                                 init_preconditioner bandrange)
       let prec_right bandrange = LSI.Iterative.(PrecRight,
@@ -1418,8 +1411,7 @@ module Adjoint = struct (* {{{ *)
     end (* }}} *)
   end (* }}} *)
 
-  let matrix_embedded_solver
-      (LSI.LS ({ LSI.rawptr; LSI.solver; LSI.compat } as hls) as ls) bs nv =
+  let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) bs _ =
     if Sundials_impl.Version.lt580
       then raise Config.NotImplementedBySundialsVersion;
     let session = tosession bs in

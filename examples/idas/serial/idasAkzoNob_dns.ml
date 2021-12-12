@@ -35,15 +35,15 @@ let nvconst = Nvector_serial.DataOps.const
 let nvscale = Nvector_serial.DataOps.scale
 
 let r_power_i base exponent =
-  let go prod expt =
+  let go expt =
     let r = ref 1.0 in
-    for i = 0 to expt - 1 do
+    for _ = 0 to expt - 1 do
       r := !r *. base
     done;
     !r
   in
-  if exponent < 0 then 1. /.go  1.0 (- exponent)
-  else go 1.0 exponent
+  if exponent < 0 then 1. /. go (- exponent)
+  else go exponent
 
 (* Problem Constants *)
 let neq = 6
@@ -72,7 +72,7 @@ type user_data = { k1 : float;
                    h : float;
                  }
 
-let res data t (y : RealArray.t) (yd : RealArray.t) (res : RealArray.t) =
+let res data _ (y : RealArray.t) (yd : RealArray.t) (res : RealArray.t) =
   let k1 = data.k1
   and k2 = data.k2
   and k3 = data.k3
@@ -102,13 +102,12 @@ let res data t (y : RealArray.t) (yd : RealArray.t) (res : RealArray.t) =
 (*
  * rhsQ routine. Computes quadrature(t,y).
  *)
-let rhsQ data t (yy : RealArray.t) yp (qdot : RealArray.t) =
-  qdot.{0} <- yy.{0}
+let rhsQ _ _ (yy : RealArray.t) _ (qdot : RealArray.t) = qdot.{0} <- yy.{0}
 
 let idadense =
   match Config.sundials_version with 2,_,_ -> "IDADENSE" | _ -> "DENSE"
 
-let print_header rtol avtol y =
+let print_header rtol avtol _ =
   print_string "\nidasAkzoNob_dns: Akzo Nobel chemical kinetics DAE serial example problem for IDAS\n";
   printf "Linear solver: %s, Jacobian is computed by IDAS.\n" idadense;
   printf "Tolerance parameters:  rtol = %g   atol = %g\n"
@@ -221,7 +220,7 @@ let main () =
   in
 
   (* FORWARD run. *)
-  for nout = 0 to nf do
+  for _ = 0 to nf do
 
     let (time, _) = Ida.solve_normal mem !tout wyy wyp in
     print_output mem time yy;
@@ -250,7 +249,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

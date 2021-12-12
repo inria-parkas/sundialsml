@@ -293,7 +293,7 @@ let print_final_stats s =
 
 (* Routine to send boundary data to neighboring PEs *)
 
-let bsend comm my_pe isubx isuby dsizex dsizey udata =
+let bsend comm my_pe isubx isuby dsizex _ udata =
   let buf = RealArray.create (nvars*mysub) in
 
   (* If isuby > 0, send data from bottom x-line of u *)
@@ -406,7 +406,7 @@ let brecvwait request isubx isuby dsizex uext =
 (* fucomm routine. This routine performs all inter-processor
    communication of data in u needed to calculate f.         *)
 
-let fucomm data t ((udata : RealArray.t),_,_) =
+let fucomm data _ ((udata : RealArray.t),_,_) =
   let comm    = data.comm
   and my_pe   = data.my_pe
   and isubx   = data.isubx
@@ -584,8 +584,7 @@ let main () =
     Cvode.(init BDF
       (SStolerances (reltol, abstol))
       ~lsolver:Spils.(solver lsolver
-                       BBD.(prec_left { mudq   = mudq;   mldq = mldq;
-                                        mukeep = mukeep; mlkeep = mlkeep }
+                       (BBD.prec_left BBD.({ mudq; mldq; mukeep; mlkeep })
                             (flocal data)))
       (f data) t0 u)
   in
@@ -614,8 +613,8 @@ let main () =
 
     (* In loop over output points, call CVode, print results, test for error *)
     let tout = ref twohr in
-    for iout=1 to nout do
-      let (t, flag) = Cvode.solve_normal cvode_mem !tout u in
+    for _ = 1 to nout do
+      let t, _ = Cvode.solve_normal cvode_mem !tout u in
       print_output cvode_mem my_pe comm u t;
       tout := !tout +. twohr
     done;
@@ -638,7 +637,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

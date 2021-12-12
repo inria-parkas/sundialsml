@@ -658,12 +658,12 @@ struct (* {{{ *)
       nrm.{i} <- sqrt (Local.wsqrsummask xa.(i) wa.(i) id /. float glen)
     done
 
-  let scaleaddmultivectorarray (ra : RealArray.t) (xa : t array)
-                                  (yaa : t array array) (zaa : t array array) =
+  let scaleaddmultivectorarray (_ : RealArray.t) (_ : t array)
+                                  (_ : t array array) (_ : t array array) =
     raise Config.NotImplementedBySundialsVersion
 
-  let linearcombinationvectorarray (ca : RealArray.t) (xaa : t array array)
-                                      (za : t array) =
+  let linearcombinationvectorarray (_ : RealArray.t) (_ : t array array)
+                                      (_ : t array) =
     raise Config.NotImplementedBySundialsVersion
 
 end (* }}} *)

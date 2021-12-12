@@ -63,7 +63,7 @@ type user_data =
  *    res_i = u'_i - (central difference)_i
  * while for each boundary point, it is res_i = u_i.
  *)
-let res_heat data t (u : RealArray.t) (u' : RealArray.t) r =
+let res_heat data _ (u : RealArray.t) (u' : RealArray.t) r =
   let coeff = data.coeff
   and mm    = data.mm in
 
@@ -124,7 +124,7 @@ let p_setup_heat data jac =
  * containing the inverse diagonal Jacobian elements (previously
  * computed in PrecondHeateq), returning the result in zvec.
  *)
-let p_solve_heat data jac rvec zvec delta =
+let p_solve_heat data _ rvec zvec _ =
   nvprod data.pp rvec zvec
 
 (*
@@ -265,8 +265,8 @@ let main () =
   (* Loop over output times, call IDASolve, and print results. *)
 
   let tout = ref t1 in
-  for iout = 1 to nout do
-    let (tret, flag) = Ida.solve_normal mem !tout wu wu' in
+  for _ = 1 to nout do
+    let tret, _ = Ida.solve_normal mem !tout wu wu' in
     print_output mem tret u;
     tout := !tout *. 2.
   done;
@@ -303,8 +303,8 @@ let main () =
 
   (* Loop over output times, call IDASolve, and print results. *)
   let tout = ref t1 in
-  for iout = 1 to nout do
-    let (tret, flag) = Ida.solve_normal mem !tout wu wu' in
+  for _ = 1 to nout do
+    let tret, _ = Ida.solve_normal mem !tout wu wu' in
     print_output mem tret u;
     tout := !tout *. 2.
   done;
@@ -332,7 +332,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

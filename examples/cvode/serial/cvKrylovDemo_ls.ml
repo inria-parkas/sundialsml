@@ -150,7 +150,7 @@ let sqr x = x ** 2.0
 
 (* Allocate memory for data structure of type UserData *)
 
-let alloc_user_data u =
+let alloc_user_data () =
   let new_dmat _ = Densemat.create num_species num_species in
   let new_int1 _  = LintArray.create num_species in
   let new_y_arr elinit _ = Array.init my elinit in
@@ -342,12 +342,7 @@ let f data t (udata : RealArray.t) (dudata : RealArray.t) =
 
 let precond data jacarg jok gamma =
   let open Cvode in
-  let { jac_t   = tn;
-        jac_y   = (udata : RealArray.t);
-        jac_fy  = fudata;
-        jac_tmp = ()
-      } = jacarg
-  in
+  let { jac_y   = (udata : RealArray.t); _ } = jacarg in
 
   (* Make local copies of pointers in user_data, and of pointer to u's data *)
   let p     = data.p
@@ -419,13 +414,9 @@ let precond data jacarg jok gamma =
 
 (* Preconditioner solve routine *)
 
-let psolve data jac_arg solve_arg (zdata : RealArray.t) =
+let psolve data _ solve_arg (zdata : RealArray.t) =
   let open Cvode.Spils in
-  let { rhs = (r : RealArray.t);
-        gamma = gamma;
-        delta = delta;
-        left = lr } = solve_arg
-  in
+  let { rhs = (r : RealArray.t); _ } = solve_arg in
 
   (* Extract the P and pivot arrays from user_data. *)
   let p = data.p
@@ -459,7 +450,7 @@ let main () =
 
   (* Allocate memory, and set problem data, initial values, tolerances *)
   let u = Nvector_serial.make neq 0.0 in
-  let data = alloc_user_data u in
+  let data = alloc_user_data () in
   init_user_data data;
   set_initial_profiles (unvec u) data.dx data.dy;
 
@@ -530,7 +521,7 @@ let main () =
         (* Set modified Gram-Schmidt orthogonalization, preconditioner
            setup and solve routines Precond and PSolve, and the pointer
            to the user-defined block data *)
-        let lsolver = LinearSolver.Iterative.spgmr ~gs_type:ModifiedGS u in
+        let lsolver = LinearSolver.Iterative.(spgmr ~gs_type:ModifiedGS u) in
         option_map
           (LinearSolver.Iterative.set_info_file lsolver ~print_level:true) infofp;
         Cvode.(reinit cvode_mem t0 u
@@ -624,8 +615,8 @@ let main () =
     printf " \n2-species diurnal advection-diffusion problem\n\n";
 
     let tout = ref twohr in
-    for iout = 1 to nout do
-      let (t, _) = Cvode.solve_normal cvode_mem !tout u in
+    for _ = 1 to nout do
+      let t, _ = Cvode.solve_normal cvode_mem !tout u in
       if not monitor then print_output cvode_mem (unvec u) t;
       tout := !tout +. twohr
     done;
@@ -652,7 +643,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

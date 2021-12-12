@@ -381,7 +381,7 @@ let bsend { my_pe; isubx; isuby; comm; request;
 
 (* Routine to finish receiving boundary data from neighboring PEs. *)
 
-let brecvwait { my_pe; isuby; isubx; c1ext; c2ext; request; _ } =
+let brecvwait { isuby; isubx; c1ext; c2ext; request; _ } =
   (* If isuby > 0, wait on communication for bottom x-line *)
   if isuby > 0 then begin
     let recvbuffer0 = Mpi.wait_receive request.(0) in
@@ -515,7 +515,7 @@ let prepare_ext (udata, _, _) ({ c1ext; c2ext; isubx; isuby; _ } as data) =
   brecvwait data
 
 let fcalc t (udot, _, _)
-          ({ isubx; isuby; hdco; haco; dy; om; vdco; c1ext; c2ext } as data)
+            ({ isuby; hdco; haco; dy; om; vdco; c1ext; c2ext; _ } as data)
   =
   (* Access output arrays *)
   let c1dot, _, _ = Nvector_parallel.Any.unwrap (ROArray.get udot 0) in
@@ -596,9 +596,8 @@ let f user_data t u udot =
   fcalc t udot user_data
 
 (* Preconditioner setup routine. Generate and preprocess P. *)
-let precond { isuby; dy; vdco; hdco; q4; p; jbd; pivot; _ }
-            Cvode.{ jac_y = (udata, _, _); _ } jok gamma =
-
+let precond user_data Cvode.{ jac_y = (udata, _, _); _ } jok gamma =
+  let { isuby; dy; vdco; hdco; q4; p; jbd; pivot; _ } = user_data in
   (* Make local copies of pointers in user_data, pointer to u's data,
      and PE index pair *)
   let c1data, _, _ = Nvector_parallel.Any.unwrap (ROArray.get udata 0) in
@@ -655,7 +654,7 @@ let precond { isuby; dy; vdco; hdco; q4; p; jbd; pivot; _ }
 (* Preconditioner solve routine *)
 
 let psolve { p; pivot; _ }
-           Cvode.{ jac_y = udata; _ }
+           _
            Cvode.Spils.{ rhs = r; _ }
            ((zdata, _, _) as z)
   =
@@ -734,8 +733,8 @@ let main () =
 
   (* In loop over output points, call CVode, print results, test for error *)
   let tout = ref twohr in
-  for iout=1 to nout do
-    let (t, flag) = Cvode.solve_normal cvode_mem !tout u in
+  for _ = 1 to nout do
+    let t, _ = Cvode.solve_normal cvode_mem !tout u in
     print_output cvode_mem my_pe comm u t;
     tout := !tout +. twohr
   done;
@@ -756,7 +755,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

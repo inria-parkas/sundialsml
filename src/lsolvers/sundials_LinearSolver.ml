@@ -301,7 +301,8 @@ module Iterative = struct (* {{{ *)
     if Sundials_impl.Version.in_compat_mode2 then compat.set_max_restarts max_restarts
     else c_set_max_restarts rawptr solver max_restarts
 
-  let set_prec_type (LS { rawptr; solver; compat; check_prec_type }) prec_type =
+  let set_prec_type lsolver prec_type =
+    let LS { rawptr; solver; compat; check_prec_type } = lsolver in
     if not (check_prec_type prec_type) then raise IllegalPrecType;
     if Sundials_impl.Version.in_compat_mode2 then compat.set_prec_type prec_type
     else impl_set_prec_type rawptr solver prec_type true
@@ -620,6 +621,7 @@ module Custom = struct (* {{{ *)
     Weak.set wx 0 (Some x);
     wx
 
+  [@@@warning "-45"]
   let make { solver_type = stype;
              solver_id = sid;
              init = finit;
@@ -688,6 +690,7 @@ module Custom = struct (* {{{ *)
        info_file = None;
        attached = false;
      }
+  [@@@warning "+45"]
 
   let make_with_matrix ({ solver_type; _ } as ops) ldata mat =
     if solver_type = MatrixEmbedded
@@ -718,6 +721,7 @@ module Custom = struct (* {{{ *)
       space : ('lsolver -> int * int) option;
     }
 
+  [@@@warning "-45"]
   let make_dls { init = fi; setup = fs0; solve; space = fgws}
                ldata mat =
     (match Config.sundials_version with
@@ -778,6 +782,7 @@ module Custom = struct (* {{{ *)
      info_file = None;
      attached = false;
    }
+  [@@@warning "+45"]
 
 end (* }}} *)
 
@@ -830,7 +835,7 @@ external c_set_zero_guess
   : ('m, 'd, 'k) cptr -> bool -> unit
   = "sunml_lsolver_set_zero_guess"
 
-let set_zero_guess (LS { rawptr; ocaml_callbacks }) onoff =
+let set_zero_guess (LS { rawptr; _ }) onoff =
   c_set_zero_guess rawptr onoff
 
 external c_initialize : ('m, 'd, 'k) cptr -> unit

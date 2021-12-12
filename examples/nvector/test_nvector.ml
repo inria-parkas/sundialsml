@@ -146,9 +146,6 @@ type t = Nvector_ops.t
 
 let (+=) r x = r := !r + x
 let printf = Printf.printf
-let int_of_bool = function
-  | true -> 1
-  | false -> 0
 
 exception TestFailed of int
 
@@ -267,7 +264,7 @@ let test_getlength w myid =
 (* ----------------------------------------------------------------------
  * Test_N_VGetCommunicator Test (without MPI dependency)
  * --------------------------------------------------------------------*)
-let test_getcommunicator w _ myid =
+let test_getcommunicator _ _ myid =
   (* Cannot test without MPI *)
   if myid = 0 then printf "PASSED test -- N_VGetCommunicator\n";
   0
@@ -277,7 +274,7 @@ let test_getcommunicator w _ myid =
  *
  * NOTE: This routine depends on N_VConst to check vector data.
  * --------------------------------------------------------------------*)
-let test_clonevectorarray count w local_length myid =
+let test_clonevectorarray count w _ myid =
   (* clone array of vectors *)
   let start_time = get_time () in
   let _ = Array.init count (fun _ -> Nvector_ops.clone w) in
@@ -1098,7 +1095,7 @@ let test_addconst x z local_length myid =
 (* ----------------------------------------------------------------------
  * N_VDotProd Test
  * --------------------------------------------------------------------*)
-let test_dotprod x y local_length global_length myid =
+let test_dotprod x y _ global_length myid =
   let fails = ref 0 in
 
   (* fill vector data *)
@@ -1221,7 +1218,7 @@ let test_wrmsnormmask x w id local_length global_length myid =
   print_time "N_VWrmsNormMask" (stop_time -. start_time);
   !fails
 
-let test_wrmsnormmask_lt400 x w id local_length global_length myid =
+let test_wrmsnormmask_lt400 x w id local_length _ myid =
   let fails = ref 0 in
 
   let xdata = Nvector_ops.getarray x in
@@ -1927,7 +1924,7 @@ let test_scaleaddmulti x local_length myid =
   and z = Array.init 3 (fun _ -> Nvector_ops.clone x)
   and v = Array.init 3 (fun _ -> Nvector_ops.clone x)
   in
-  let v_len1, v_len2, v_len3 = Array.sub v 0 1, Array.sub v 0 2, v
+  let v_len1, _, v_len3 = Array.sub v 0 1, Array.sub v 0 2, v
   and z_len1 = Array.sub z 0 1
   in
 
@@ -2040,7 +2037,7 @@ let test_scaleaddmulti x local_length myid =
 (* ----------------------------------------------------------------------
  * N_VDotProdMulti Test
  * --------------------------------------------------------------------*)
-let test_dotprodmulti x local_length global_length myid =
+let test_dotprodmulti x _ global_length myid =
   let fails = ref 0
   and dotprods = RealArray.make 3 zero
   in
@@ -2048,7 +2045,7 @@ let test_dotprodmulti x local_length global_length myid =
 
   (* create vectors for testing *)
   let v = Array.init 3 (fun _ -> Nvector_ops.clone x) in
-  let v_len1, v_len2, v_len3 = Array.sub v 0 1, Array.sub v 0 2, v in
+  let v_len1, _, v_len3 = Array.sub v 0 1, Array.sub v 0 2, v in
 
   (* Case 1: d.(0) = z . v.(0), N_VDotProd *)
 
@@ -2817,7 +2814,7 @@ let test_constvectorarray x local_length myid =
 (* ----------------------------------------------------------------------
  * N_VWrmsNormVectorArray Test
  * --------------------------------------------------------------------*)
-let test_wrmsnormvectorarray x local_length myid =
+let test_wrmsnormvectorarray x _ myid =
   let fails = ref 0 in
 
   (* create vectors for testing *)
@@ -4045,7 +4042,7 @@ let test_constrmasklocal c x m local_length myid =
 (* ----------------------------------------------------------------------
  * N_VMinQuotientLocal test
  * --------------------------------------------------------------------*)
-let test_minquotientlocal num denom local_length myid =
+let test_minquotientlocal num denom _ myid =
   let fails = ref 0 in
 
   (*
@@ -4097,21 +4094,21 @@ let test_minquotientlocal num denom local_length myid =
 (* ----------------------------------------------------------------------
  * N_VBufSize test
  * --------------------------------------------------------------------*)
-let test_bufsize x local_length myid =
+let test_bufsize _ _ myid =
   (* Not implemented in Sundials/ML *)
   if myid = 0 then printf "PASSED test -- N_VBufSize\n"; 0
 
 (* ----------------------------------------------------------------------
  * N_VBufPack test
  * --------------------------------------------------------------------*)
-let test_bufpack x local_length myid =
+let test_bufpack _ _ myid =
   (* Not implemented in Sundials/ML *)
   if myid = 0 then printf "PASSED test -- N_VBufPack\n"; 0
 
 (* ----------------------------------------------------------------------
  * N_VBufUnpack test
  * --------------------------------------------------------------------*)
-let test_bufunpack x local_length myid =
+let test_bufunpack _ _ myid =
   (* Not implemented in Sundials/ML *)
   if myid = 0 then printf "PASSED test -- N_VBufUnpack\n"; 0
 

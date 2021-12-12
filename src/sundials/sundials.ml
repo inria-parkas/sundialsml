@@ -57,13 +57,6 @@ module ArrayLike (A : ArrayBaseOps) = struct (* {{{ *)
     done;
     b
 
-  let fold_left f x a =
-    let n = length a in
-    let rec go x i =
-      if i >= n then x
-      else go (f x (get a i)) (i+1)
-    in go x 0
-
   let fold_right f a x =
     let rec go x i =
       if i < 0 then x
@@ -76,24 +69,6 @@ module ArrayLike (A : ArrayBaseOps) = struct (* {{{ *)
     done
 
   let iter f a = iteri (fun _ x -> f x) a
-
-  let mapi f a =
-    let n = length a in
-    let b = create n in
-    for i = 0 to n-1 do
-      set b i (f i (get a i))
-    done;
-    b
-
-  let map f a = mapi (fun _ x -> f x) a
-
-  let mapi_overwrite f a =
-    for i = 0 to length a - 1 do
-      set a i (f i (get a i))
-    done;
-    a
-
-  let map_overwrite f a = mapi_overwrite (fun _ x -> f x) a
 
   let of_array a =
     let n = Array.length a in
@@ -172,14 +147,6 @@ module Roots = struct (* {{{ *)
         (Printf.sprintf
            "Roots.root_of_int32: invalid root event %ld" n)
 
-  let root_of_int = function
-    |  1 -> Rising
-    | -1 -> Falling
-    |  0 -> NoRoot
-    | n ->
-      failwith
-        ("Roots.root_of_int: invalid root event " ^ string_of_int n)
-
   let int32_of_root x =
     match x with
     | NoRoot -> 0l
@@ -255,8 +222,6 @@ module Roots = struct (* {{{ *)
   let make n x = A.make n x
   let copy = A.copy
   let init = A.init
-  let fold_left = A.fold_left
-  let fold_right = A.fold_right
 
   let of_array = A.of_array
   let of_list = A.of_list
@@ -264,8 +229,6 @@ module Roots = struct (* {{{ *)
   let to_list = A.to_list
 
   let fill = A.fill
-  let blitn = A.blitn
-  let blit = A.blit
 
   let rising  roots i = roots.{i} = 1l
   let falling roots i = roots.{i} = -1l

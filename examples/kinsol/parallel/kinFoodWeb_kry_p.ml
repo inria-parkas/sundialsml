@@ -172,12 +172,12 @@ let init_user_data my_pe comm =
   let isuby = my_pe/npex in
   let isubx = my_pe - isuby*npex in
   let data = {
-      p     = Array.init mxsub (fun jx ->
-                Array.init mysub (fun jy ->
+      p     = Array.init mxsub (fun _ ->
+                Array.init mysub (fun _ ->
                   Dense.create num_species num_species
               ));
-      pivot = Array.init mxsub (fun jx ->
-                Array.init mysub (fun jy ->
+      pivot = Array.init mxsub (fun _ ->
+                Array.init mysub (fun _ ->
                   LintArray.make num_species 0));
 
       acoef = RealArray2.make_data num_species num_species;
@@ -234,7 +234,7 @@ let bytes x = header_and_empty_array_size + x * float_cell_size
 
 (* Routine to send boundary data to neighboring PEs *)
 
-let bsend comm my_pe isubx isuby dsizex dsizey (udata : RealArray.t) =
+let bsend comm my_pe isubx isuby dsizex _ (udata : RealArray.t) =
   let buf = RealArray.create (num_species*mysub) in
 
   (* If isuby > 0, send data from bottom x-line of u *)
@@ -398,7 +398,7 @@ let fcalcprpr data (cdata : RealArray.t) (fval : RealArray.t) =
   (* Copy local segment of cc vector into the working extended array cext *)
   let offsetc = ref 0 in
   let offsetce = ref (nsmxsub2 + num_species) in
-  for ly = 0 to mysub - 1 do
+  for _ = 0 to mysub - 1 do
     for i = 0 to nsmxsub - 1 do
       cext.{!offsetce+i} <- cdata.{!offsetc+i}
     done;
@@ -545,12 +545,7 @@ let precondbd data
   done (* end of jy loop *)
 
 (* Preconditioner solve routine *)
-let psolvebd data
-             { Kinsol.jac_u=cc;
-               Kinsol.jac_fu=fval }
-             { Kinsol.Spils.uscale=cscale;
-               Kinsol.Spils.fscale=fscale }
-             (vv, _, _) =
+let psolvebd data _ _ (vv, _, _) =
   for jx = 0 to mxsub - 1 do
     for jy = 0 to mysub - 1 do
       (* For each (jx,jy), solve a linear system of size NUM_SPECIES.
@@ -723,7 +718,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

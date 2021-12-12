@@ -130,7 +130,7 @@ let jac1 { Cvode.jac_y = y } j =
   set 1 0 (-. two *. p1_eta *. y0 *. y1 -. one);
   set 1 1 (p1_eta *. (one -. sqr y0))
 
-let jac2 arg jac =
+let jac2 _287 jac =
   (*
      The components of f(t,y) which depend on y    are
                                                i,j
@@ -286,7 +286,7 @@ let print_output1 t y0 y1 qu hu =
 let print_err_output tol_factor =
   printf "\n\n Error exceeds %g * tolerance \n\n" tol_factor
 
-let f1 t (y : RealArray.t) (ydot : RealArray.t) =
+let f1 _ (y : RealArray.t) (ydot : RealArray.t) =
   let y0 = y.{0} in
   let y1 = y.{1} in
   ydot.{0} <- y1;
@@ -377,7 +377,7 @@ let print_header2 () =
 let print_output2 t erm qu hu =
   printf "%10.3f  %12.4e   %2d   %12.4e\n" t erm qu hu
 
-let f2 t (ydata : RealArray.t) (dydata : RealArray.t) =
+let f2 _ (ydata : RealArray.t) (dydata : RealArray.t) =
   (*
      Excluding boundaries,
 
@@ -435,7 +435,7 @@ let problem2 () =
       print_header2 ();
 
       let tout = ref p2_t1 in
-      for iout = 1 to p2_nout do
+      for _ = 1 to p2_nout do
         let (t, success) =
           try
             snd_true (Cvode.solve_normal cvode_mem !tout y)
@@ -505,7 +505,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

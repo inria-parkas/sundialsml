@@ -160,11 +160,6 @@ let show_nvector (a : RealArray.t) =
 
 let print_nvector a = Printf.printf "%s" (show_nvector a)
 
-let print_with_time t v =
-  Printf.printf "%.15e" t;
-  RealArray.iter (Printf.printf "\t% .15e") v;
-  Printf.printf "\n%!"
-
 (* Problem constants *)
 let r = 1.0                            (* length of rod [m] *)
 let g = 9.8                            (* gravitational acceleration [m/s^2] *)
@@ -206,7 +201,7 @@ let var_types =
     (List.map Ida.VarId.to_float [d; d; d; d; a]))
 
 (* The residual function F.  *)
-let residual t vars vars' res =
+let residual _ vars vars' res =
   let x  = vars.{x_i}  and x'  = vars'.{x_i}
   and y  = vars.{y_i}  and y'  = vars'.{y_i}
   and vx = vars.{vx_i} and vx' = vars'.{vx_i}
@@ -358,7 +353,7 @@ let distance_from_wall vars =
   and y       = vars.{y_i}
   and (wx,wy) = wall in
   x -. y *. (wx /. wy)
-let roots t vars vars' r =
+let roots _ vars _ r =
   r.{0} <- distance_from_wall vars
 
 (* A hand-written function to compute initial conditions from given values for
@@ -446,7 +441,7 @@ let main () =
   let t = ref 0.
   and tnext = ref !dt
   in
-  for i = 1 to frames do
+  for _ = 1 to frames do
     tnext := !t +. !dt;
     while !t < !tnext do
       let (tret, flag) = Ida.solve_normal ida !tnext nv_vars nv_vars' in

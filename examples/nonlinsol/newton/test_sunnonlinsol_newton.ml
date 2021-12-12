@@ -53,7 +53,7 @@ let y3 = 0.369922830745872357
  *            ( 6x  -4  2z )
  *
  * ---------------------------------------------------------------------------*)
-let jac t y j =
+let jac _ y j =
   j.{0,0} <- two*.y.{0};
   j.{1,0} <- two*.y.{1};
   j.{2,0} <- two*.y.{2};
@@ -79,7 +79,7 @@ type 'k integrator_mem_rec = {
 }
 
 (* Proxy for integrator lsetup function *)
-let lsetup imem jbad _ =
+let lsetup imem _ _ =
   (* compute the Jacobian *)
   jac zero (Nvector.unwrap imem.ycur) (Matrix.(Dense.unwrap (unwrap imem.a)));
 
@@ -95,7 +95,7 @@ let lsolve imem b _ =
   NVOps.scale one (Nvector_serial.unwrap imem.x) b
 
 (* Proxy for integrator convergence test function *)
-let conv_test imem y del tol ewt _ =
+let conv_test _ _ del tol ewt _ =
   (* compute the norm of the correction *)
   let delnrm = NVOps.wrmsnorm del ewt in
   if delnrm <= tol then NLS.Success else NLS.Continue
@@ -202,7 +202,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

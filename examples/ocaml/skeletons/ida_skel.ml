@@ -1,7 +1,7 @@
 open Sundials
 
 (* 1. Define a residual function. *)
-let resf t v v' r =
+let resf _t v v' r =
   r.{0} <- v.{2}  -. v'.{0};
   r.{1} <- v.{3}  -. v'.{1};
   r.{2} <- v'.{2} -. v.{4} *. v.{0};
@@ -9,7 +9,7 @@ let resf t v v' r =
   r.{4} <- v.{2}*.v.{2} +. v'.{2}*.v.{0} +. v.{3}*.v'.{1} +. v'.{3}*.v.{1}
 
 (* 2. Optionally define a root function. *)
-let g t v v' gout = gout.{0} <- v.{0} -. v.{1} *. 0.5774
+let g _t v _v' gout = gout.{0} <- v.{0} -. v.{1} *. 0.5774
 
 (* 3. Set vector of initial values.
       The length of this vector determines the problem size. *)

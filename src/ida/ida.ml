@@ -263,8 +263,8 @@ module Dls = struct (* {{{ *)
     | Some m -> m
     | None -> failwith "a direct linear solver is required"
 
-  let solver ?jac ls session nv =
-    let LSI.LS ({ rawptr; solver; matrix } as hls) = ls in
+  let solver ?jac ls session _ =
+    let LSI.(LS ({ rawptr; solver; matrix } as hls)) = ls in
     let matrix = assert_matrix matrix in
     set_ls_callbacks ?jac solver matrix session;
     if Sundials_impl.Version.in_compat_mode2
@@ -388,13 +388,13 @@ module Spils = struct (* {{{ *)
     : ('a, 'k) session -> ('m, 'a, 'k) LSI.cptr -> unit
     = "sunml_ida_spils_set_linear_solver"
 
-  let init_preconditioner solve setup session nv =
+  let init_preconditioner solve setup session _ =
     c_set_preconditioner session (setup <> None);
     session.ls_precfns <- PrecFns { prec_solve_fn = solve;
                                     prec_setup_fn = setup }
 
   let prec_none = LSI.Iterative.(PrecNone,
-                    fun session nv -> session.ls_precfns <- NoPrecFns)
+                    fun session _ -> session.ls_precfns <- NoPrecFns)
 
   let prec_left ?setup solve  = LSI.Iterative.(PrecLeft,
                                             init_preconditioner solve setup)
@@ -406,28 +406,28 @@ module Spils = struct (* {{{ *)
     | PrecRight | PrecBoth -> false
 
   (* Sundials < 3.0.0 *)
-  let make_compat (type tag)
-        ({ LSI.Iterative.maxl; LSI.Iterative.gs_type } as compat)
-        prec_type
+  let make_compat (type tag) compat _
         (solver_data : ('s, 'nd, 'nk, tag) LSI.solver_data) session =
+    let { LSI.Iterative.maxl; LSI.Iterative.gs_type;
+          LSI.Iterative.max_restarts; _ } = compat in
     match solver_data with
     | LSI.Spgmr ->
-        c_spgmr session compat.maxl;
-        (match compat.gs_type with None -> ()
-                                 | Some t -> c_set_gs_type session t);
-        (match compat.max_restarts with None -> ()
-                                   | Some t -> c_set_max_restarts session t);
-        compat.set_gs_type <- old_set_gs_type session;
-        compat.set_max_restarts <- old_set_max_restarts session
+        c_spgmr session maxl;
+        (match gs_type with None -> ()
+                          | Some t -> c_set_gs_type session t);
+        (match max_restarts with None -> ()
+                               | Some t -> c_set_max_restarts session t);
+        LSI.Iterative.(compat.set_gs_type <- old_set_gs_type session);
+        LSI.Iterative.(compat.set_max_restarts <- old_set_max_restarts session)
     | LSI.Spbcgs ->
-        c_spbcgs session compat.maxl;
-        compat.set_maxl <- old_set_maxl session
+        c_spbcgs session maxl;
+        LSI.Iterative.(compat.set_maxl <- old_set_maxl session)
     | LSI.Sptfqmr ->
-        c_sptfqmr session compat.maxl;
-        compat.set_maxl <- old_set_maxl session
+        c_sptfqmr session maxl;
+        LSI.Iterative.(compat.set_maxl <- old_set_maxl session)
     | _ -> raise Config.NotImplementedBySundialsVersion
 
-  let solver (type s)
+  let solver
         (LSI.LS ({ LSI.rawptr; LSI.solver; LSI.compat } as lsolver))
         ?jac_times_vec ?jac_times_res (prec_type, set_prec) session nv =
     let jac_times_setup, jac_times_vec =
@@ -442,7 +442,7 @@ module Spils = struct (* {{{ *)
     if Sundials_impl.Version.in_compat_mode2 then begin
       if jac_times_setup <> None then
         raise Config.NotImplementedBySundialsVersion;
-      lsolver.check_prec_type <- check_prec_type;
+      LSI.(lsolver.check_prec_type <- check_prec_type);
       make_compat compat prec_type solver session;
       session.ls_solver <- LSI.HLS lsolver;
       set_prec session nv;
@@ -451,7 +451,7 @@ module Spils = struct (* {{{ *)
     end else
       if Sundials_impl.Version.in_compat_mode2_3 then c_spils_set_linear_solver session rawptr
       else c_set_linear_solver session rawptr None false;
-      LSI.attach (LS lsolver);
+      LSI.(attach (LS lsolver));
       session.ls_solver <- LSI.HLS lsolver;
       LSI.(impl_set_prec_type rawptr solver prec_type false);
       set_prec session nv;
@@ -571,8 +571,7 @@ module Spils = struct (* {{{ *)
 
 end (* }}} *)
 
-let matrix_embedded_solver
-    (LSI.LS ({ LSI.rawptr; LSI.solver; LSI.compat } as hls) as ls) session nv =
+let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
   if Sundials_impl.Version.lt580
     then raise Config.NotImplementedBySundialsVersion;
   c_set_linear_solver session rawptr None false;

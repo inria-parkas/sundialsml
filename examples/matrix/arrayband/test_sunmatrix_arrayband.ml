@@ -93,7 +93,7 @@ struct
     !failure > 0
 
   let allow_square = ref true
-  let is_square a = !allow_square
+  let is_square _ = !allow_square
 
   let check_vector x y tol =
     let xdata, ydata = Nvector.(unwrap x, unwrap y) in
@@ -223,7 +223,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

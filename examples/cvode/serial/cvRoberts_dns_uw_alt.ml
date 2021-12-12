@@ -58,19 +58,19 @@ let alternate_dense y a =
     let acols = Matrix.Dense.unwrap a in
     Matrix.ArrayDense.getrf (RealArray2.wrap acols) pivots
   in
-  let lsolve { pivots } a x b tol =
+  let lsolve { pivots } a x b _ =
     RealArray.blit ~src:b ~dst:x;
     let acols = Matrix.Dense.unwrap a in
     Matrix.ArrayDense.getrs (RealArray2.wrap acols) pivots x
   in
   let lspace { n } = (0, 2 + n)
   in
-  LinearSolver.Custom.make_dls {
+  LinearSolver.Custom.(make_dls {
       init=None;
       setup=Some lsetup;
       solve=lsolve;
       space=Some lspace;
-    } { n=m; pivots=LintArray.make m 0 } (Matrix.wrap_dense a)
+    }) { n=m; pivots=LintArray.make m 0 } (Matrix.wrap_dense a)
 
 (* Problem Constants *)
 
@@ -88,14 +88,14 @@ let tmult  = 10.0     (* output time factor     *)
 let nout   = 12       (* number of output times *)
 let nroots = 2        (* number of root functions *)
 
-let f t (y : RealArray.t) (yd : RealArray.t) =
+let f _ (y : RealArray.t) (yd : RealArray.t) =
   let yd1 = -0.04 *. y.{0} +. 1.0e4 *. y.{1} *. y.{2} in
   let yd3 = 3.0e7 *. y.{1} *. y.{1} in
   yd.{0} <- yd1;
   yd.{1} <- (-. yd1 -. yd3);
   yd.{2} <- yd3
 
-let g t (y : RealArray.t) (gout : RealArray.t) =
+let g _ (y : RealArray.t) (gout : RealArray.t) =
   gout.{0} <- y.{0} -. 0.0001;
   gout.{1} <- y.{2} -. 0.01
 
@@ -213,7 +213,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

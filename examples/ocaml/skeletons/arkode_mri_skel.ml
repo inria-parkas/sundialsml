@@ -3,13 +3,13 @@ module MRIStep = Arkode.MRIStep
 module ARKStep = Arkode.ARKStep
 
 (* 1. Define right-hand-side functions. *)
-let fslow t y yd = yd.{0} <- y.{1};
-                   yd.{1} <- 0.0
-let ffast t y yd = yd.{0} <- 0.0;
-                   yd.{1} <- -9.81
+let fslow _t y yd = yd.{0} <- y.{1};
+                    yd.{1} <- 0.0
+let ffast _t _y yd = yd.{0} <- 0.0;
+                     yd.{1} <- -9.81
 
 (* 2. Optionally define a root function. *)
-let g t y gout = gout.{0} <- 1.0 -. y.{0}
+let g _t y gout = gout.{0} <- 1.0 -. y.{0}
 
 (* 3. Set vector of initial values.
       The length of this vector determines the problem size. *)

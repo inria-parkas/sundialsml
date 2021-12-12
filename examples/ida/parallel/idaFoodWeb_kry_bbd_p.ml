@@ -330,7 +330,7 @@ let brecvwait request isubx isuby dsizex cext =
  * and receive-waiting, in routines BRecvPost, BSend, BRecvWait.
  *)
 
-let rescomm webdata tt cc cp =
+let rescomm webdata _ cc _ =
   let (cdata,_,_) = cc in
 
   (* Get comm, thispe, subgrid indices, data sizes, extended array cext. *)
@@ -395,8 +395,8 @@ let web_rates webdata x y ((cxy : RealArray.t), cxy_off)
  * for use by the preconditioner setup routine.
  *)
 
-let reslocal webdata tt cc ((cp : RealArray.t), _, _)
-                           ((rr : RealArray.t), _, _) =
+let reslocal webdata _ cc ((cp : RealArray.t), _, _)
+                          ((rr : RealArray.t), _, _) =
   let mxsub =    webdata.mxsub in
   let mysub =    webdata.mysub in
   let npex =     webdata.npex in
@@ -422,7 +422,7 @@ let reslocal webdata tt cc ((cp : RealArray.t), _, _)
 
   let locc = ref 0 in
   let locce = ref (nsmxsub2 + num_species) in
-  for jy = 0 to mysub-1 do
+  for _ = 0 to mysub-1 do
     for i = 0 to nsmxsub-1 do
       cext.{!locce+i} <- cdata.{!locc+i}
     done;
@@ -830,8 +830,8 @@ let main () =
     Ida.(init
       (SStolerances (rtol,atol))
       ~lsolver:Spils.(solver (spgmr ~maxl cc)
-                        Ida_bbd.(prec_left ~dqrely:zero
-                                           { mudq; mldq; mukeep; mlkeep }
+                        (Ida_bbd.prec_left ~dqrely:zero
+                                           Ida_bbd.({ mudq; mldq; mukeep; mlkeep })
                                            (reslocal webdata)))
       (resweb webdata) t0 cc cp)
   in
@@ -878,7 +878,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

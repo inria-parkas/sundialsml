@@ -571,8 +571,8 @@ and ('a, 'kind) bsensext = {
 
 (* Reverse lookup of a session value for a child session, given the pointer
    to the Sundials (child) session. *)
-let revlookup_bsession ({ sensext; _ } : ('d, 'k) session) (child : cvode_mem) =
-  match sensext with
+let revlookup_bsession (s : ('d, 'k) session) (child : cvode_mem) =
+  match s.sensext with
   | FwdSensExt { bsessions } ->
       (match List.find (fun { cvode; _ } -> cvode = child) bsessions with
        | bs -> Some bs

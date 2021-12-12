@@ -1,10 +1,10 @@
 open Sundials
 
 (* 1. Define a right-hand-side function. *)
-let f t y yd = yd.{0} <- y.{1}; yd.{1} <- -9.81
+let f _t y yd = yd.{0} <- y.{1}; yd.{1} <- -9.81
 
 (* 2. Optionally define a root function. *)
-let g t y gout = gout.{0} <- 1.0 -. y.{0}
+let g _t y gout = gout.{0} <- 1.0 -. y.{0}
 
 (* 3. Set vector of initial values.
       The length of this vector determines the problem size. *)

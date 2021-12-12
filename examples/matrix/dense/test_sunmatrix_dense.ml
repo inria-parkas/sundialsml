@@ -49,7 +49,7 @@ struct
 
   let check_matrix a b tol =
     let ca, cb = Matrix.(unwrap a, unwrap b) in
-    let ((ma, na) as sa), ((mb, nb) as sb) = Matrix.Dense.(size ca, size cb) in
+    let ((ma, na) as sa), sb = Matrix.Dense.(size ca, size cb) in
     let adata, bdata = Matrix.Dense.(unwrap ca, unwrap cb) in
     if sa <> sb then
       (printf ">>> ERROR: check_matrix: Different data array lengths @\n"; true)
@@ -204,7 +204,7 @@ let gc_each_rep =
 
 (* Entry point *)
 let _ =
-  for i = 1 to reps do
+  for _ = 1 to reps do
     main ();
     if gc_each_rep then Gc.compact ()
   done;

@@ -49,10 +49,6 @@ exception BadT
 
 exception VectorOpErr
 
-type arkstep = Arkode_impl.arkstep
-type erkstep = Arkode_impl.erkstep
-type mristep = Arkode_impl.mristep
-
 module Common = struct (* {{{ *)
 
   include Arkode_impl.Global
@@ -92,7 +88,7 @@ module Common = struct (* {{{ *)
 
   type ('a, 'k) tolerance =
     | SStolerances of float * float
-    | SVtolerances of float * ('a, 'k) Nvector.nvector
+    | SVtolerances of float * ('a, 'k) Nvector.t
     | WFtolerances of 'a error_weight_fun
 
   let default_tolerances = SStolerances (1.0e-4, 1.0e-9)
@@ -191,12 +187,8 @@ module Spils = struct
     let init_preconditioner bandrange session nv =
       let n = RealArray.length (Nvector.unwrap nv) in
       c_set_preconditioner session n bandrange.mupper bandrange.mlower;
-      session.ls_precfns <- BandedPrecFns
+      Arkode_impl.(session.ls_precfns <- BandedPrecFns)
 
-    let prec_none =
-      LSI.Iterative.(PrecNone,
-                     fun session nv ->
-                            Arkode_impl.(session.ls_precfns <- BandedPrecFns))
     let prec_left bandrange =
       LSI.Iterative.(PrecLeft,  init_preconditioner bandrange)
     let prec_right bandrange =
@@ -207,7 +199,7 @@ module Spils = struct
     type ('k, 's) serial_session =
       (Nvector_serial.data, 'k, 's) Arkode_impl.session
       constraint 'k = [>Nvector_serial.kind]
-      constraint 's = [<arkstep|mristep]
+      constraint 's = [<Arkode_impl.arkstep|Arkode_impl.mristep]
 
     external get_work_space : ('k, 's) Arkode_impl.serial_session -> int * int
       = "sunml_arkode_bandprec_get_work_space"
@@ -238,9 +230,9 @@ module ButcherTable = struct (* {{{ *)
       embedding : (int * RealArray.t) option;
     }
 
-  let check { method_order = q; stages = s;
+  let check { stages = s;
               stage_values = a; stage_times = c;
-              coefficients = b; embedding = d; } =
+              coefficients = b; embedding = d; _ } =
     let m, n = RealArray2.size a in
     if m <> s || n <> s
       then invalid_arg "butcher table: stage_values array has wrong length";
@@ -697,8 +689,8 @@ module ARKStep = struct (* {{{ *)
       | Some m -> m
       | None -> failwith "a direct linear solver is required"
 
-    let solver ?jac ?linsys ls session nv =
-      let LSI.LS ({ rawptr; solver; matrix } as hls) = ls in
+    let solver ?jac ?linsys ls session _ =
+      let LSI.LS ({ LSI.rawptr; LSI.solver; LSI.matrix } as hls) = ls in
       let matrix = assert_matrix matrix in
       if Sundials_impl.Version.lt500 && linsys <> None
         then raise Config.NotImplementedBySundialsVersion;
@@ -844,13 +836,13 @@ module ARKStep = struct (* {{{ *)
       : ('a, 'k) session -> ('m, 'a, 'k) LSI.cptr -> unit
       = "sunml_arkode_spils_set_linear_solver"
 
-    let init_preconditioner solve setup session nv =
+    let init_preconditioner solve setup session _ =
       c_set_preconditioner session (setup <> None);
       session.ls_precfns <- PrecFns { prec_solve_fn = solve;
                                       prec_setup_fn = setup }
 
     let prec_none = LSI.Iterative.(PrecNone,
-                      fun session nv -> session.ls_precfns <- NoPrecFns)
+                      fun session _ -> session.ls_precfns <- NoPrecFns)
 
     let prec_left ?setup solve  = LSI.Iterative.(PrecLeft,
                                               init_preconditioner solve setup)
@@ -862,36 +854,35 @@ module ARKStep = struct (* {{{ *)
                                               init_preconditioner solve setup)
 
     (* Sundials < 3.0.0 *)
-    let make_compat (type tag)
-          ({ LSI.Iterative.maxl; LSI.Iterative.gs_type } as compat)
-          prec_type
+    let make_compat (type tag) compat prec_type
           (solver_data : ('s, 'nd, 'nk, tag) LSI.solver_data) session =
+      let { LSI.Iterative.maxl; LSI.Iterative.gs_type } = compat in
       match solver_data with
       | LSI.Spgmr ->
           c_spgmr session maxl prec_type;
           (match gs_type with None -> () | Some t -> c_set_gs_type session t);
-          compat.set_gs_type <- old_set_gs_type session;
-          compat.set_prec_type <- old_set_prec_type session
+          LSI.Iterative.(compat.set_gs_type <- old_set_gs_type session);
+          LSI.Iterative.(compat.set_prec_type <- old_set_prec_type session)
       | LSI.Spfgmr ->
           c_spfgmr session maxl prec_type;
           (match gs_type with None -> () | Some t -> c_set_gs_type session t);
-          compat.set_gs_type <- old_set_gs_type session;
-          compat.set_prec_type <- old_set_prec_type session
+          LSI.Iterative.(compat.set_gs_type <- old_set_gs_type session);
+          LSI.Iterative.(compat.set_prec_type <- old_set_prec_type session)
       | LSI.Spbcgs ->
           c_spbcgs session maxl prec_type;
-          compat.set_maxl <- old_set_maxl session;
-          compat.set_prec_type <- old_set_prec_type session
+          LSI.Iterative.(compat.set_maxl <- old_set_maxl session);
+          LSI.Iterative.(compat.set_prec_type <- old_set_prec_type session)
       | LSI.Sptfqmr ->
           c_sptfqmr session maxl prec_type;
-          compat.set_maxl <- old_set_maxl session;
-          compat.set_prec_type <- old_set_prec_type session
+          LSI.Iterative.(compat.set_maxl <- old_set_maxl session);
+          LSI.Iterative.(compat.set_prec_type <- old_set_prec_type session)
       | LSI.Pcg ->
           c_pcg session maxl prec_type;
-          compat.set_maxl <- old_set_maxl session;
-          compat.set_prec_type <- old_set_prec_type session
+          LSI.Iterative.(compat.set_maxl <- old_set_maxl session);
+          LSI.Iterative.(compat.set_prec_type <- old_set_prec_type session)
       | _ -> assert false
 
-    let solver (type s)
+    let solver
           (LSI.LS ({ LSI.rawptr; LSI.solver; LSI.compat } as hls) as ls)
           ?jac_times_vec ?jac_times_rhs (prec_type, set_prec) session nv =
       let jac_times_setup, jac_times_vec =
@@ -1033,8 +1024,7 @@ module ARKStep = struct (* {{{ *)
 
   end (* }}} *)
 
-let matrix_embedded_solver
-    (LSI.LS ({ LSI.rawptr; LSI.solver; LSI.compat } as hls) as ls) session nv =
+let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
   if Sundials_impl.Version.lt580
     then raise Config.NotImplementedBySundialsVersion;
   c_set_linear_solver session rawptr None false false;
@@ -1223,7 +1213,7 @@ let matrix_embedded_solver
 
       let solver massfn time_dep
                  (LSI.LS ({ LSI.rawptr; LSI.solver; LSI.matrix } as hls) as ls)
-                 session nv =
+                 session _ =
         let matrix = assert_matrix matrix in
         set_mass_callbacks massfn solver matrix session;
         if Sundials_impl.Version.in_compat_mode2 then make_compat solver matrix session
@@ -1233,24 +1223,6 @@ let matrix_embedded_solver
               c_set_mass_fn session);
         LSI.attach ls;
         session.mass_solver <- LSI.HLS hls
-
-      (* Sundials < 3.0.0 *)
-      let invalidate_callback session =
-        if Sundials_impl.Version.in_compat_mode2 then
-          match session.mass_callbacks with
-          | DlsDenseMassCallback ({ mmat = Some d } as cb, _) ->
-              Matrix.Dense.invalidate d;
-              cb.mmat <- None
-          | DlsBandMassCallback  ({ mmat = Some d } as cb, _) ->
-              Matrix.Band.invalidate d;
-              cb.mmat <- None
-          | SlsKluMassCallback ({ mmat = Some d } as cb, _) ->
-              Matrix.Sparse.invalidate d;
-              cb.mmat <- None
-          | SlsSuperlumtMassCallback ({ mmat = Some d } as cb, _) ->
-              Matrix.Sparse.invalidate d;
-              cb.mmat <- None
-          | _ -> ()
 
       external get_work_space : 'k serial_session -> int * int
           = "sunml_arkode_dls_get_mass_work_space"
@@ -1364,13 +1336,13 @@ let matrix_embedded_solver
           -> unit
         = "sunml_arkode_spils_set_mass_linear_solver"
 
-      let init_preconditioner solve setup session nv =
+      let init_preconditioner solve setup session _ =
         c_set_preconditioner session (setup <> None);
         session.mass_precfns <- MassPrecFns { prec_solve_fn = solve;
                                               prec_setup_fn = setup }
 
       let prec_none = LSI.Iterative.(PrecNone,
-                        fun session nv -> session.mass_precfns <- NoMassPrecFns)
+                        fun session _ -> session.mass_precfns <- NoMassPrecFns)
 
       let prec_left ?setup solve  = LSI.Iterative.(PrecLeft,
                                                 init_preconditioner solve setup)
@@ -1382,36 +1354,35 @@ let matrix_embedded_solver
                                                 init_preconditioner solve setup)
 
       (* Sundials < 3.0.0 *)
-      let make_compat (type tag)
-            ({ LSI.Iterative.maxl; LSI.Iterative.gs_type } as compat)
-            prec_type
+      let make_compat (type tag) compat prec_type
             (solver_data : ('s, 'nd, 'nk, tag) LSI.solver_data) session =
+        let { LSI.Iterative.maxl; LSI.Iterative.gs_type; _ } = compat in
         (match solver_data with
          | LSI.Spgmr ->
              c_spgmr session maxl prec_type;
              (match gs_type with None -> () | Some t -> c_set_gs_type session t);
-             compat.set_gs_type <- old_set_gs_type session;
-             compat.set_prec_type <- old_set_prec_type session
+             LSI.Iterative.(compat.set_gs_type <- old_set_gs_type session);
+             LSI.Iterative.(compat.set_prec_type <- old_set_prec_type session)
          | LSI.Spfgmr ->
              c_spfgmr session maxl prec_type;
              (match gs_type with None -> () | Some t -> c_set_gs_type session t);
-             compat.set_gs_type <- old_set_gs_type session;
-             compat.set_prec_type <- old_set_prec_type session
+             LSI.Iterative.(compat.set_gs_type <- old_set_gs_type session);
+             LSI.Iterative.(compat.set_prec_type <- old_set_prec_type session)
          | LSI.Spbcgs ->
              c_spbcgs session maxl prec_type;
-             compat.set_maxl <- old_set_maxl session;
-             compat.set_prec_type <- old_set_prec_type session
+             LSI.Iterative.(compat.set_maxl <- old_set_maxl session);
+             LSI.Iterative.(compat.set_prec_type <- old_set_prec_type session)
          | LSI.Sptfqmr ->
              c_sptfqmr session maxl prec_type;
-             compat.set_maxl <- old_set_maxl session;
-             compat.set_prec_type <- old_set_prec_type session
+             LSI.Iterative.(compat.set_maxl <- old_set_maxl session);
+             LSI.Iterative.(compat.set_prec_type <- old_set_prec_type session)
          | LSI.Pcg ->
              c_pcg session maxl prec_type;
-             compat.set_maxl <- old_set_maxl session;
-             compat.set_prec_type <- old_set_prec_type session
+             LSI.Iterative.(compat.set_maxl <- old_set_maxl session);
+             LSI.Iterative.(compat.set_prec_type <- old_set_prec_type session)
          | _ -> assert false)
 
-      let solver (type s)
+      let solver
             (LSI.LS { LSI.rawptr; LSI.solver; LSI.compat })
             ?mass_times_setup mass_times_vec time_dep (prec_type, set_prec)
             session nv =
@@ -1512,8 +1483,7 @@ let matrix_embedded_solver
 
     end (* }}} *)
 
-    let matrix_embedded_solver
-        (LSI.LS ({ LSI.rawptr; LSI.solver; LSI.compat } as hls) as ls) session nv =
+    let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
       if Sundials_impl.Version.lt580
         then raise Config.NotImplementedBySundialsVersion;
       c_set_mass_linear_solver session rawptr None false;
@@ -1523,7 +1493,7 @@ let matrix_embedded_solver
   end (* }}} *)
 
   external sv_tolerances
-      : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
+      : ('a, 'k) session -> float -> ('a, 'k) Nvector.t -> unit
       = "sunml_arkode_ark_sv_tolerances"
   external ss_tolerances
       : ('a, 'k) session -> float -> float -> unit
@@ -1541,7 +1511,7 @@ let matrix_embedded_solver
 
   external ress_tolerance  : ('a, 'k) session -> float -> unit
       = "sunml_arkode_ark_ress_tolerance"
-  external resv_tolerance  : ('a, 'k) session -> ('a, 'k) nvector -> unit
+  external resv_tolerance  : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
       = "sunml_arkode_ark_resv_tolerance"
   external resf_tolerance  : ('a, 'k) session -> unit
       = "sunml_arkode_ark_resf_tolerance"
@@ -1602,10 +1572,10 @@ let matrix_embedded_solver
 
   external c_init :
     ('a, 'k) session Weak.t
-    -> bool             (* f_i given *)
-    -> bool             (* f_e given *)
-    -> ('a, 'k) nvector (* y_0 *)
-    -> float            (* t_0 *)
+    -> bool               (* f_i given *)
+    -> bool               (* f_e given *)
+    -> ('a, 'k) Nvector.t (* y_0 *)
+    -> float              (* t_0 *)
     -> (arkstep arkode_mem * c_weak_ref)
     = "sunml_arkode_ark_init"
 
@@ -1624,7 +1594,7 @@ let matrix_embedded_solver
       | Explicit fe ->
           ExplicitOnly,        None,    Some fe, None, None, None, None
       | ImEx (fe, { irhsfn=fi; linearity=l; nlsolver=nls; nlsrhsfn; lsolver=ls }) ->
-          ImplicitAndExplicit, Some fi, Some fe, nls,      None,      ls,   Some l
+          ImplicitAndExplicit, Some fi, Some fe, nls,     nlsrhsfn,   ls,   Some l
     in
     let weakref = Weak.create 1 in
     let arkode_mem, backref = c_init weakref (fi <> None) (fe <> None) y0 t0 in
@@ -1717,7 +1687,7 @@ let matrix_embedded_solver
       = "sunml_arkode_ark_reset"
 
   external c_reinit
-      : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
+      : ('a, 'k) session -> float -> ('a, 'k) Nvector.t -> unit
       = "sunml_arkode_ark_reinit"
 
   let reinit session ?problem ?order ?mass ?roots t0 y0 =
@@ -1777,7 +1747,7 @@ let matrix_embedded_solver
      | Some roots -> root_init session roots)
 
   external c_resize
-      : ('a, 'k) session -> bool -> float -> float -> ('a, 'k) nvector -> unit
+      : ('a, 'k) session -> bool -> float -> float -> ('a, 'k) Nvector.t -> unit
       = "sunml_arkode_ark_resize"
 
   let resize session ?resize_nvec ?lsolver ?mass tol ?restol hscale ynew t0 =
@@ -1799,7 +1769,7 @@ let matrix_embedded_solver
   external get_root_info  : ('a, 'k) session -> Roots.t -> unit
       = "sunml_arkode_ark_get_root_info"
 
-  external c_evolve_normal : ('a, 'k) session -> float -> ('a, 'k) nvector
+  external c_evolve_normal : ('a, 'k) session -> float -> ('a, 'k) Nvector.t
                                 -> float * solver_result
       = "sunml_arkode_ark_evolve_normal"
 
@@ -1807,7 +1777,7 @@ let matrix_embedded_solver
     if Sundials_configuration.safe then s.checkvec y;
     c_evolve_normal s t y
 
-  external c_evolve_one_step : ('a, 'k) session -> float -> ('a, 'k) nvector
+  external c_evolve_one_step : ('a, 'k) session -> float -> ('a, 'k) Nvector.t
                                 -> float * solver_result
       = "sunml_arkode_ark_evolve_one_step"
 
@@ -1816,7 +1786,7 @@ let matrix_embedded_solver
     c_evolve_one_step s t y
 
   external c_get_dky
-      : ('a, 'k) session -> float -> int -> ('a, 'k) nvector -> unit
+      : ('a, 'k) session -> float -> int -> ('a, 'k) Nvector.t -> unit
       = "sunml_arkode_ark_get_dky"
 
   let get_dky s y =
@@ -1890,7 +1860,7 @@ let matrix_embedded_solver
       -> unit
     = "sunml_arkode_ark_compute_state"
 
-  let compute state s ycor yn =
+  let compute_state s ycor yn =
     if Sundials_configuration.safe then (s.checkvec ycor; s.checkvec yn);
     compute_state s ycor yn
 
@@ -2138,7 +2108,7 @@ let matrix_embedded_solver
       = "sunml_arkode_ark_get_tol_scale_factor"
 
   external c_get_err_weights
-      : ('a, 'k) session -> ('a, 'k) nvector -> unit
+      : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
       = "sunml_arkode_ark_get_err_weights"
 
   let get_err_weights s ew =
@@ -2146,7 +2116,7 @@ let matrix_embedded_solver
     c_get_err_weights s ew
 
   external c_get_res_weights
-      : ('a, 'k) session -> ('a, 'k) nvector -> unit
+      : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
       = "sunml_arkode_ark_get_res_weights"
 
   let get_res_weights s rw =
@@ -2154,7 +2124,7 @@ let matrix_embedded_solver
     c_get_res_weights s rw
 
   external c_get_est_local_errors
-      : ('a, 'k) session -> ('a, 'k) nvector -> unit
+      : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
       = "sunml_arkode_ark_get_est_local_errors"
 
   let get_est_local_errors s ew =
@@ -2209,7 +2179,7 @@ module ERKStep = struct (* {{{ *)
     session.rootsfn <- rootsfn
 
   external sv_tolerances
-      : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
+      : ('a, 'k) session -> float -> ('a, 'k) Nvector.t -> unit
       = "sunml_arkode_erk_sv_tolerances"
   external ss_tolerances
       : ('a, 'k) session -> float -> float -> unit
@@ -2233,8 +2203,8 @@ module ERKStep = struct (* {{{ *)
 
   external c_init :
     ('a, 'k) session Weak.t
-    -> ('a, 'k) nvector (* y_0 *)
-    -> float            (* t_0 *)
+    -> ('a, 'k) Nvector.t (* y_0 *)
+    -> float              (* t_0 *)
     -> (erkstep arkode_mem * c_weak_ref)
     = "sunml_arkode_erk_init"
 
@@ -2307,7 +2277,7 @@ module ERKStep = struct (* {{{ *)
       = "sunml_arkode_erk_reset"
 
   external c_reinit
-      : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
+      : ('a, 'k) session -> float -> ('a, 'k) Nvector.t -> unit
       = "sunml_arkode_erk_reinit"
 
   let reinit session ?order ?roots t0 y0 =
@@ -2317,7 +2287,7 @@ module ERKStep = struct (* {{{ *)
     (match roots with Some roots -> root_init session roots| None -> ())
 
   external c_resize
-      : ('a, 'k) session -> bool -> float -> float -> ('a, 'k) nvector -> unit
+      : ('a, 'k) session -> bool -> float -> float -> ('a, 'k) Nvector.t -> unit
       = "sunml_arkode_erk_resize"
 
   let resize session ?resize_nvec tol hscale ynew t0 =
@@ -2330,7 +2300,7 @@ module ERKStep = struct (* {{{ *)
   external get_root_info  : ('a, 'k) session -> Roots.t -> unit
       = "sunml_arkode_erk_get_root_info"
 
-  external c_evolve_normal : ('a, 'k) session -> float -> ('a, 'k) nvector
+  external c_evolve_normal : ('a, 'k) session -> float -> ('a, 'k) Nvector.t
                                 -> float * solver_result
       = "sunml_arkode_erk_evolve_normal"
 
@@ -2338,7 +2308,7 @@ module ERKStep = struct (* {{{ *)
     if Sundials_configuration.safe then s.checkvec y;
     c_evolve_normal s t y
 
-  external c_evolve_one_step : ('a, 'k) session -> float -> ('a, 'k) nvector
+  external c_evolve_one_step : ('a, 'k) session -> float -> ('a, 'k) Nvector.t
                                 -> float * solver_result
       = "sunml_arkode_erk_evolve_one_step"
 
@@ -2347,7 +2317,7 @@ module ERKStep = struct (* {{{ *)
     c_evolve_one_step s t y
 
   external c_get_dky
-      : ('a, 'k) session -> float -> int -> ('a, 'k) nvector -> unit
+      : ('a, 'k) session -> float -> int -> ('a, 'k) Nvector.t -> unit
       = "sunml_arkode_erk_get_dky"
 
   let get_dky s y =
@@ -2560,7 +2530,7 @@ module ERKStep = struct (* {{{ *)
       = "sunml_arkode_erk_get_tol_scale_factor"
 
   external c_get_err_weights
-      : ('a, 'k) session -> ('a, 'k) nvector -> unit
+      : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
       = "sunml_arkode_erk_get_err_weights"
 
   let get_err_weights s ew =
@@ -2568,7 +2538,7 @@ module ERKStep = struct (* {{{ *)
     c_get_err_weights s ew
 
   external c_get_est_local_errors
-      : ('a, 'k) session -> ('a, 'k) nvector -> unit
+      : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
       = "sunml_arkode_erk_get_est_local_errors"
 
   let get_est_local_errors s ew =
@@ -2675,10 +2645,10 @@ module MRIStep = struct (* {{{ *)
       | Some m -> m
       | None -> failwith "a direct linear solver is required"
 
-    let solver ?jac ?linsys ls session nv =
+    let solver ?jac ?linsys ls session _ =
       if Sundials_impl.Version.lt540
         then raise Config.NotImplementedBySundialsVersion;
-      let LSI.LS ({ rawptr; solver; matrix } as hls) = ls in
+      let LSI.LS ({ LSI.rawptr; LSI.solver; LSI.matrix } as hls) = ls in
       let matrix = assert_matrix matrix in
       set_ls_callbacks ?jac ?linsys solver matrix session;
       c_set_linear_solver session rawptr (Some matrix) (jac <> None)
@@ -2711,13 +2681,13 @@ module MRIStep = struct (* {{{ *)
       : ('a, 'k) session -> bool -> unit
       = "sunml_arkode_mri_set_preconditioner"
 
-    let init_preconditioner solve setup session nv =
+    let init_preconditioner solve setup session _ =
       c_set_preconditioner session (setup <> None);
       session.ls_precfns <- PrecFns { prec_solve_fn = solve;
                                       prec_setup_fn = setup }
 
     let prec_none = LSI.Iterative.(PrecNone,
-                      fun session nv -> session.ls_precfns <- NoPrecFns)
+                      fun session _ -> session.ls_precfns <- NoPrecFns)
 
     let prec_left ?setup solve  = LSI.Iterative.(PrecLeft,
                                               init_preconditioner solve setup)
@@ -2728,8 +2698,8 @@ module MRIStep = struct (* {{{ *)
     let prec_both ?setup solve  = LSI.Iterative.(PrecBoth,
                                               init_preconditioner solve setup)
 
-    let solver (type s)
-          (LSI.LS ({ LSI.rawptr; LSI.solver; LSI.compat } as hls) as ls)
+    let solver
+          (LSI.LS ({ LSI.rawptr; LSI.solver; _ } as hls) as ls)
           ?jac_times_vec ?jac_times_rhs (prec_type, set_prec) session nv =
       if Sundials_impl.Version.lt540
         then raise Config.NotImplementedBySundialsVersion;
@@ -2840,8 +2810,7 @@ module MRIStep = struct (* {{{ *)
 
   end (* }}} *)
 
-  let matrix_embedded_solver
-      (LSI.LS ({ LSI.rawptr; LSI.solver; LSI.compat } as hls) as ls) session nv =
+  let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
     if Sundials_impl.Version.lt580
       then raise Config.NotImplementedBySundialsVersion;
     c_set_linear_solver session rawptr None false false;
@@ -2900,7 +2869,8 @@ module MRIStep = struct (* {{{ *)
       : ('d, 'k) I.inner_stepper_cptr -> float -> ('d, 'k) Nvector.t -> unit
       = "sunml_arkode_mri_istepper_add_forcing"
 
-    let add_forcing { I.rawptr; I.icheckvec; _ } t ff =
+    let add_forcing s t ff =
+      let { I.rawptr; I.icheckvec; _ } = s in
       (match icheckvec with
        | None -> invalid_arg "no forcing data"
        | Some cv -> cv ff);
@@ -3005,7 +2975,7 @@ module MRIStep = struct (* {{{ *)
       = "sunml_arkode_mri_set_fixed_step"
 
   external sv_tolerances
-      : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
+      : ('a, 'k) session -> float -> ('a, 'k) Nvector.t -> unit
       = "sunml_arkode_mri_sv_tolerances"
   external ss_tolerances
       : ('a, 'k) session -> float -> float -> unit
@@ -3026,8 +2996,8 @@ module MRIStep = struct (* {{{ *)
   external c_init :
     ('a, 'k) session Weak.t
     -> ('a, 'k) InnerStepper.t
-    -> ('a, 'k) nvector (* y_0 *)
-    -> float            (* t_0 *)
+    -> ('a, 'k) Nvector.t (* y_0 *)
+    -> float              (* t_0 *)
     -> (mristep arkode_mem * c_weak_ref)
     = "sunml_arkode_mri_init"
 
@@ -3164,7 +3134,7 @@ module MRIStep = struct (* {{{ *)
       = "sunml_arkode_mri_reset"
 
   external c_reinit
-      : ('a, 'k) session -> float -> ('a, 'k) nvector -> unit
+      : ('a, 'k) session -> float -> ('a, 'k) Nvector.t -> unit
       = "sunml_arkode_mri_reinit"
 
   let reinit session ?nlsolver ?nlsrhsfn ?lsolver ?roots t0 y0 =
@@ -3187,7 +3157,7 @@ module MRIStep = struct (* {{{ *)
     (match roots with Some roots -> root_init session roots| None -> ())
 
   external c_resize
-      : ('a, 'k) session -> bool -> float -> ('a, 'k) nvector -> unit
+      : ('a, 'k) session -> bool -> float -> ('a, 'k) Nvector.t -> unit
       = "sunml_arkode_mri_resize"
 
   let resize session ?resize_nvec ynew t0 =
@@ -3199,7 +3169,7 @@ module MRIStep = struct (* {{{ *)
   external get_root_info  : ('a, 'k) session -> Roots.t -> unit
       = "sunml_arkode_mri_get_root_info"
 
-  external c_evolve_normal : ('a, 'k) session -> float -> ('a, 'k) nvector
+  external c_evolve_normal : ('a, 'k) session -> float -> ('a, 'k) Nvector.t
                                 -> float * solver_result
       = "sunml_arkode_mri_evolve_normal"
 
@@ -3207,7 +3177,7 @@ module MRIStep = struct (* {{{ *)
     if Sundials_configuration.safe then s.checkvec y;
     c_evolve_normal s t y
 
-  external c_evolve_one_step : ('a, 'k) session -> float -> ('a, 'k) nvector
+  external c_evolve_one_step : ('a, 'k) session -> float -> ('a, 'k) Nvector.t
                                 -> float * solver_result
       = "sunml_arkode_mri_evolve_one_step"
 
@@ -3216,7 +3186,7 @@ module MRIStep = struct (* {{{ *)
     c_evolve_one_step s t y
 
   external c_get_dky
-      : ('a, 'k) session -> float -> int -> ('a, 'k) nvector -> unit
+      : ('a, 'k) session -> float -> int -> ('a, 'k) Nvector.t -> unit
       = "sunml_arkode_mri_get_dky"
 
   let get_dky s y =
@@ -3403,7 +3373,7 @@ module MRIStep = struct (* {{{ *)
       = "sunml_arkode_mri_get_tol_scale_factor"
 
   external c_get_err_weights
-      : ('a, 'k) session -> ('a, 'k) nvector -> unit
+      : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
       = "sunml_arkode_mri_get_err_weights"
 
   let get_err_weights s ew =
@@ -3428,6 +3398,10 @@ module MRIStep = struct (* {{{ *)
   let write_session ?logfile session = c_print_mem session logfile
 
 end (* }}} *)
+
+type arkstep = Arkode_impl.arkstep
+type erkstep = Arkode_impl.erkstep
+type mristep = Arkode_impl.mristep
 
 (* Let C code know about some of the values in this module.  *)
 external c_init_module : exn array -> unit =

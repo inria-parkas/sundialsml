@@ -1,10 +1,10 @@
 
-let f t y yd =
+let f _ y yd =
   yd.(0) <- cos(y.(1));
   yd.(1) <- 1.0;
   yd.(2) <- 0.0
 
-let g t y gout =
+let g _ y gout =
   gout.{0} <- y.(0);
   gout.{1} <- y.(1)
 
