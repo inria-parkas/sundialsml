@@ -647,7 +647,7 @@ let print_final_stats s err_con sensi =
       let nfSe     = Sens.get_num_rhs_evals s
       and nfeS     = Sens.get_num_rhs_evals_sens s
       and nsetupsS = Sens.get_num_lin_solv_setups s
-      and netfS    = if err_con then get_num_err_test_fails s else 0
+      and netfS    = if err_con then Sens.get_num_err_test_fails s else 0
       and nniS, ncfnS = match sensi_meth with
         | Sens.Staggered _ | Sens.Staggered1 _ ->
             Sens.get_num_nonlin_solv_iters s,
