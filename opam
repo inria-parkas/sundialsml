@@ -50,7 +50,8 @@ depopts: [
 depexts: [
     ["libsundials-dev"] {os-family = "debian"}
     ["lapack-devel" "sundials-devel"] {os-distribution = "fedora"}
-    ["epel-release" "lapack-devel" "sundials-devel"] {os-distribution = "centos"}
+    ["epel-release" "lapack-devel" "suitesparse-devel" "sundials-devel"]
+	    {os-distribution = "centos"}
     ["sundials"] {os = "macos" & os-distribution = "homebrew"}
     ["sundials" "SuiteSparse_config"] {os = "macos" & os-distribution = "macports"}
 ]
