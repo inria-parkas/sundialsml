@@ -42,18 +42,10 @@ depends: [
     "ocaml" {>= "4.03.0"}
     "base-bigarray"
     "ocamlfind" {build}
-    "conf-sundials" {build}
+    "conf-sundials" {>= "2" & build}
 ]
 depopts: [
     "mpi"
-]
-depexts: [
-    ["libsundials-dev"] {os-family = "debian"}
-    ["lapack-devel" "sundials-devel"] {os-distribution = "fedora"}
-    ["epel-release" "lapack-devel" "suitesparse-devel" "sundials-devel"]
-	    {os-distribution = "centos"}
-    ["sundials"] {os = "macos" & os-distribution = "homebrew"}
-    ["sundials" "SuiteSparse_config"] {os = "macos" & os-distribution = "macports"}
 ]
 synopsis: "Interface to the Sundials suite of numerical solvers"
 description: """
