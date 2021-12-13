@@ -490,6 +490,9 @@ case ${arch} in
     x86_64)
 	cflags="${cflags} -fPIC"
 	;;
+    aarch64)
+	cflags="${cflags} -fPIC"
+	;;
     *)
         :
 	;;
