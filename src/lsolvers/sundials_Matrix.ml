@@ -23,7 +23,7 @@ let check_valid =
   | _ -> false
 
 (* Must correspond with matrix_ml.h:mat_matrix_content_index *)
-type ('data, 'cptr) matrix_content = {
+type [@warning "-69"] ('data, 'cptr) matrix_content = {
   mutable payload : 'data;
   rawptr  : 'cptr;
   mutable valid : bool;
@@ -1069,7 +1069,7 @@ type (_,_,_,_) id =
 type cmat
 
 (* Must correspond with sundials_matrix_ml.h:mat_matrix_index *)
-type ('k, 'm, 'nd, 'nk) t = {
+type [@warning "-69"] ('k, 'm, 'nd, 'nk) t = {
   payload : 'm;
   rawptr  : cmat;
   id      : ('k, 'm, 'nd, 'nk) id;

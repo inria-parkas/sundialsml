@@ -27,7 +27,7 @@ unset EXAMPLESROOT
 debug_configure=false
 logfile=/dev/null
 bounds_checking=1
-ocaml_warnings='+a-4-9-30-41-42'
+ocaml_warnings='+a-4-9-30-41-42-70'
 
 configure_command="$0"
 

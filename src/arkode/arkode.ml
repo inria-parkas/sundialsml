@@ -2897,7 +2897,7 @@ module MRIStep = struct (* {{{ *)
     type cptr
 
     (* Synchronized with arkode_mri_coupling_index in arkode_ml.h *)
-    type t = {
+    type [@warning "-69"] t = {
       cptr              : cptr;
       nmat              : int;
       stages            : int;
