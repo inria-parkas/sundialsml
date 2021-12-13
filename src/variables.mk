@@ -15,6 +15,9 @@ include ../config
 .ml.cmx:
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) $(SUBDIRS:%=-I %) $(INCLUDES) -c $<
 
+%_impl.mli: %_impl.ml
+	$(OCAMLC) $(OCAMLFLAGS) -w -69 $(SUBDIRS:%=-I %) $(INCLUDES) -i $< > $@
+
 %.o: %.c
 	$(CC) -I $(OCAML_INCLUDE) $(CFLAGS) $(CSUBDIRS) -o $@ -c $<
 
@@ -60,8 +63,7 @@ MLOBJ_MAIN =	sundials/sundials_configuration.cmo	\
 		ida/ida.cmo				\
 		$(ARKODE_MLOBJ_MAIN)
 
-CMI_MAIN = $(filter-out sundials/sundials_configuration.cmi,$(filter-out %_impl.cmi,\
-	    $(MLOBJ_MAIN:.cmo=.cmi)))
+CMI_MAIN = $(filter-out sundials/sundials_configuration.cmi,$(MLOBJ_MAIN:.cmo=.cmi))
 
 ### Objects specific to sundials.cma.
 COBJ_SENS  =	cvodes/cvode_ml_s$(XO)		\

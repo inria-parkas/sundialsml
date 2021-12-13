@@ -7,7 +7,7 @@ default: all
 
 ### Build rules.
 
-.PHONY: all sundials install doc clean distclean
+.PHONY: all sundials install doc clean distclean updateimpl
 
 all: $(INSTALL_CMA) $(INSTALL_CMXA)
 
@@ -351,6 +351,8 @@ uninstall-findlib:
 	@ocamlfind remove sundialsml
 
 ### Misc
+
+updateimpl: $(filter %_impl.mli,$(MLOBJ_MAIN:.cmo=.mli))
 
 depend: .depend
 .depend:

@@ -59,7 +59,6 @@ install install-sys install-doc install-ocamlfind install-findlib:
 uninstall uninstall-sys uninstall-doc uninstall-ocamlfind uninstall-findlib:
 	$(MAKE) -C src $@
 
-
 clean:
 	$(MAKE) -C src $@
 	$(MAKE) -C examples $@
