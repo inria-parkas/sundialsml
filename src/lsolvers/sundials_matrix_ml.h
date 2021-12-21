@@ -31,7 +31,7 @@
 
 	 OCaml			 C
 	-------			---
-    1.  Bigarray		realtype* / sunindextype*
+    1.  Bigarray		sunrealtype* / sunindextype*
 
 	The underlying storage is managed by Bigarrays, it is freed when
 	the corresponding bigarray is collected.

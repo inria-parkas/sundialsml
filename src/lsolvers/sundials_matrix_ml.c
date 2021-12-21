@@ -94,7 +94,7 @@ CAMLprim value sunml_matrix_dense_create(value vm, value vn)
     content->ldata = m*n;
     content->data = REAL_ARRAY(vdata);
     content->cols = NULL;
-    content->cols = (realtype **) malloc(n * sizeof(realtype *));
+    content->cols = (sunrealtype **) malloc(n * sizeof(sunrealtype *));
     if (content->cols == NULL) {
 	free(content);
 	caml_raise_out_of_memory();
@@ -178,7 +178,7 @@ CAMLprim void ml_matrix_dense_set(value vcptr, value vi, value vj, value vv)
 CAMLprim void sunml_matrix_dense_scale_add(value vc, value vcptra, value vcptrb)
 {
     CAMLparam3(vc, vcptra, vcptrb);
-    realtype c = Double_val(vc);
+    sunrealtype c = Double_val(vc);
     sundials_ml_index i, j;
     MAT_CONTENT_DENSE_TYPE contenta = MAT_CONTENT_DENSE(vcptra);
     MAT_CONTENT_DENSE_TYPE contentb = MAT_CONTENT_DENSE(vcptrb);
@@ -200,7 +200,7 @@ CAMLprim void sunml_matrix_dense_scale_add(value vc, value vcptra, value vcptrb)
 CAMLprim void sunml_matrix_dense_scale_addi(value vc, value vcptra)
 {
     CAMLparam2(vc, vcptra);
-    realtype c = Double_val(vc);
+    sunrealtype c = Double_val(vc);
     sundials_ml_index i, j;
     MAT_CONTENT_DENSE_TYPE a = MAT_CONTENT_DENSE(vcptra);
 
@@ -220,7 +220,7 @@ CAMLprim void sunml_matrix_dense_matvec(value vcptra, value vx, value vy)
 {
     CAMLparam3(vcptra, vx, vy);
     sundials_ml_index i, j;
-    realtype *col_j, *xd, *yd;
+    sunrealtype *col_j, *xd, *yd;
     MAT_CONTENT_DENSE_TYPE a = MAT_CONTENT_DENSE(vcptra);
 
     xd = REAL_ARRAY(vx);
@@ -292,7 +292,7 @@ static bool matrix_band_create_vcptr(sundials_ml_index n,
     content->ldim = colSize;
 
     content->cols = NULL;
-    content->cols = (realtype **) malloc(n * sizeof(realtype *));
+    content->cols = (sunrealtype **) malloc(n * sizeof(sunrealtype *));
     if (content->cols == NULL) {
 	free(content);
 	return false;
@@ -320,7 +320,7 @@ static bool matrix_band_realloc(sundials_ml_index n, sundials_ml_index mu,
     MAT_CONTENT_BAND_TYPE content = NULL;
     sundials_ml_index colSize = smu + ml + 1;
     sundials_ml_index j;
-    realtype **newcols;
+    sunrealtype **newcols;
 
     vcptr    = Field(va, RECORD_MAT_MATRIXCONTENT_RAWPTR);
     vpayload = Field(va, RECORD_MAT_MATRIXCONTENT_PAYLOAD);
@@ -331,7 +331,7 @@ static bool matrix_band_realloc(sundials_ml_index n, sundials_ml_index mu,
     vnewdata = caml_ba_alloc_dims(BIGARRAY_FLOAT, 2, NULL, n, colSize);
     caml_ba_fill(vnewdata, caml_copy_double(0.));
 
-    newcols = (realtype **) malloc(n * sizeof(realtype *));
+    newcols = (sunrealtype **) malloc(n * sizeof(sunrealtype *));
     if (newcols == NULL) CAMLreturnT(bool, false);
 
     // Reconfigure the C-side content
@@ -471,7 +471,7 @@ CAMLprim void sunml_matrix_band_copy(value vcptra, value vb)
     CAMLparam2(vcptra, vb);
     CAMLlocal3(vcptrb, vpayloadb, vdatab);
     sundials_ml_index i, j;
-    realtype *A_colj, *B_colj;
+    sunrealtype *A_colj, *B_colj;
     MAT_CONTENT_BAND_TYPE A, B;
 
     vcptrb = Field(vb, RECORD_MAT_MATRIXCONTENT_RAWPTR);
@@ -512,7 +512,7 @@ static int csmat_band_copy(SUNMatrix A, SUNMatrix B)
     CAMLparam0();
     CAMLlocal1(vcontentb);
     sundials_ml_index i, j;
-    realtype *A_colj, *B_colj;
+    sunrealtype *A_colj, *B_colj;
 
     vcontentb = MAT_BACKLINK(B);
 
@@ -543,13 +543,13 @@ static int csmat_band_copy(SUNMatrix A, SUNMatrix B)
 #endif
 
 // Adapted directly from SMScaleAddNew_Band
-static int matrix_band_scale_add_new(realtype c, value va, value vcptrb)
+static int matrix_band_scale_add_new(sunrealtype c, value va, value vcptrb)
 {
     CAMLparam2(va, vcptrb);
     CAMLlocal2(vcptra, voldpayload);
     sundials_ml_index i, j, A_N, A_ml, A_mu, A_s_mu, new_mu, new_ml;
-    realtype **A_cols;
-    realtype *A_colj, *B_colj, *C_colj;
+    sunrealtype **A_cols;
+    sunrealtype *A_colj, *B_colj, *C_colj;
     MAT_CONTENT_BAND_TYPE B, C;
 
     vcptra      = Field(va, RECORD_MAT_MATRIXCONTENT_RAWPTR);
@@ -599,8 +599,8 @@ CAMLprim void sunml_matrix_band_scale_add(value vc, value va, value vcptrb)
 {
     CAMLparam3(vc, va, vcptrb);
     CAMLlocal1(vcptra);
-    realtype c = Double_val(vc);
-    realtype *A_colj, *B_colj;
+    sunrealtype c = Double_val(vc);
+    sunrealtype *A_colj, *B_colj;
     MAT_CONTENT_BAND_TYPE A, B;
     sundials_ml_index i, j;
 
@@ -626,11 +626,11 @@ CAMLprim void sunml_matrix_band_scale_add(value vc, value va, value vcptrb)
 
 #if SUNDIALS_LIB_VERSION >= 300
 // Adapted directly from SMScaleAddNew_Band
-static int csmat_band_scale_add(realtype c, SUNMatrix A, SUNMatrix B)
+static int csmat_band_scale_add(sunrealtype c, SUNMatrix A, SUNMatrix B)
 {
     CAMLparam0();
     sundials_ml_index i, j;
-    realtype *A_colj, *B_colj;
+    sunrealtype *A_colj, *B_colj;
 
     /* Verify that A and B are compatible */
     if ((SM_ROWS_B(A) != SM_ROWS_B(B)) || (SM_COLUMNS_B(A) != SM_COLUMNS_B(B)))
@@ -658,8 +658,8 @@ CAMLprim void sunml_matrix_band_scale_addi(value vc, value va)
 {
     CAMLparam2(vc, va);
     sundials_ml_index i, j;
-    realtype *A_colj;
-    realtype c = Double_val(vc);
+    sunrealtype *A_colj;
+    sunrealtype c = Double_val(vc);
     MAT_CONTENT_BAND_TYPE a = MAT_CONTENT_BAND(va);
 
     // adapted from SUNMatScaleAddI_Band
@@ -677,7 +677,7 @@ CAMLprim void sunml_matrix_band_matvec(value va, value vx, value vy)
 {
     CAMLparam3(va, vx, vy);
     sundials_ml_index i, j, is, ie;
-    realtype *col_j, *xd, *yd;
+    sunrealtype *col_j, *xd, *yd;
     MAT_CONTENT_BAND_TYPE a = MAT_CONTENT_BAND(va);
 
     xd = REAL_ARRAY(vx);
@@ -887,7 +887,7 @@ static void finalize_mat_content_sparse(value vcptra)
 static void zero_sparse(MAT_CONTENT_SPARSE_TYPE A)
 {
     sundials_ml_smat_index i, *indexvals, *indexptrs;
-    realtype *data;
+    sunrealtype *data;
 
     data = A->data;
 #if SUNDIALS_LIB_VERSION >= 270
@@ -919,11 +919,11 @@ static bool matrix_sparse_create_vcptr(sundials_ml_smat_index m,
 
 #if SUNDIALS_LIB_VERSION >= 300
     sundials_ml_smat_index *indexvals, *indexptrs;
-    realtype *data;
+    sunrealtype *data;
     sundials_ml_smat_index np = (sformat == CSC_MAT) ? n : m;
     SUNMatrixContent_Sparse content = NULL;
 
-    data = (realtype *) malloc(nnz * sizeof(realtype));
+    data = (sunrealtype *) malloc(nnz * sizeof(sunrealtype));
     if (data == NULL) CAMLreturnT(bool, false);
 
     indexvals = (sundials_ml_smat_index *)
@@ -1057,8 +1057,8 @@ CAMLprim value sunml_matrix_sparse_from_dense(value vsformat, value vcptrad,
     CAMLparam3(vsformat, vcptrad, vdroptol);
     CAMLlocal2(vr, vcptr);
     int sformat = MAT_FROM_SFORMAT(vsformat);
-    realtype droptol = Double_val(vdroptol);
-    realtype *As_data;
+    sunrealtype droptol = Double_val(vdroptol);
+    sunrealtype *As_data;
 
     sundials_ml_smat_index i, j, nnz, *As_indexvals, *As_indexptrs;
     sundials_ml_smat_index M, N;
@@ -1126,8 +1126,8 @@ CAMLprim value sunml_matrix_sparse_from_band(value vsformat, value vcptrab,
     CAMLparam3(vsformat, vcptrab, vdroptol);
     CAMLlocal2(vr, vcptr);
     int sformat = MAT_FROM_SFORMAT(vsformat);
-    realtype droptol = Double_val(vdroptol);
-    realtype *As_data;
+    sunrealtype droptol = Double_val(vdroptol);
+    sunrealtype *As_data;
 
     sundials_ml_smat_index i, j, nnz, *As_indexptrs, *As_indexvals;
     sundials_ml_smat_index M, N;
@@ -1251,7 +1251,7 @@ static bool matrix_sparse_resize(value va, sundials_ml_smat_index nnz,
     sundials_ml_smat_index old_nnz, i, np;
     sundials_ml_smat_index *old_indexvals, *new_indexvals;
     sundials_ml_smat_index *old_indexptrs, *new_indexptrs;
-    realtype *old_data, *new_data;
+    sunrealtype *old_data, *new_data;
     MAT_CONTENT_SPARSE_TYPE A;
 
     vcptr    = Field(va, RECORD_MAT_MATRIXCONTENT_RAWPTR);
@@ -1274,7 +1274,7 @@ static bool matrix_sparse_resize(value va, sundials_ml_smat_index nnz,
     if (nnz <= 0)
 	nnz = old_indexptrs[np];
 
-    new_data = (realtype *) malloc(nnz * sizeof(realtype));
+    new_data = (sunrealtype *) malloc(nnz * sizeof(sunrealtype));
     if (new_data == NULL) CAMLreturnT(bool, false);
 
     new_indexvals = (sundials_ml_smat_index *)
@@ -1369,7 +1369,7 @@ static bool matrix_sparse_resize(value va, sundials_ml_smat_index nnz,
 }
 
 // Adapted directly from SUNMatScaleAdd_Sparse
-static bool matrix_sparse_scale_add(realtype c, value va, value vcptrb)
+static bool matrix_sparse_scale_add(sunrealtype c, value va, value vcptrb)
 {
     CAMLparam2(va, vcptrb);
     CAMLlocal5(vcptra, vdatac, vidxvalsc, vidxptrsc, vcptrc);
@@ -1377,7 +1377,7 @@ static bool matrix_sparse_scale_add(realtype c, value va, value vcptrb)
     sundials_ml_smat_index j, i, p, newvals, cend, nz;
     bool newmat;
     sundials_ml_smat_index *w, *Ap, *Ai, *Bp, *Bi, *Cp, *Ci;
-    realtype *x, *Ax, *Bx, *Cx;
+    sunrealtype *x, *Ax, *Bx, *Cx;
     sundials_ml_smat_index M, N;
     sundials_ml_smat_index *A_indexptrs, *A_indexvals, *B_indexptrs, *B_indexvals;
     MAT_CONTENT_SPARSE_TYPE A, B;
@@ -1406,7 +1406,7 @@ static bool matrix_sparse_scale_add(realtype c, value va, value vcptrb)
     w = (sundials_ml_smat_index *) malloc(M * sizeof(sundials_ml_smat_index));
     if (w == NULL) CAMLreturnT(int, 0);
 
-    x = (realtype *) malloc(M * sizeof(realtype));
+    x = (sunrealtype *) malloc(M * sizeof(sunrealtype));
     if (x == NULL) {
 	free(w);
 	CAMLreturnT(bool, false);
@@ -1644,7 +1644,7 @@ CAMLprim void sunml_matrix_sparse_scale_add(value vc, value va, value vcptrb)
 }
 
 #if SUNDIALS_LIB_VERSION >= 300
-static int csmat_sparse_scale_add(realtype c, SUNMatrix A, SUNMatrix B)
+static int csmat_sparse_scale_add(sunrealtype c, SUNMatrix A, SUNMatrix B)
 {
     return (matrix_sparse_scale_add(c, MAT_BACKLINK(A),
 	      Field(MAT_BACKLINK(B), RECORD_MAT_MATRIXCONTENT_RAWPTR))
@@ -1653,7 +1653,7 @@ static int csmat_sparse_scale_add(realtype c, SUNMatrix A, SUNMatrix B)
 #endif
 
 // Adapted directly from SUNMatScaleAddI_Sparse
-static bool matrix_sparse_scale_addi(realtype c, value va)
+static bool matrix_sparse_scale_addi(sunrealtype c, value va)
 {
     CAMLparam1(va);
     CAMLlocal2(vcptr, vpayload);
@@ -1661,7 +1661,7 @@ static bool matrix_sparse_scale_addi(realtype c, value va)
     sundials_ml_smat_index j, i, p, nz, cend, newvals;
     bool newmat, found;
     sundials_ml_smat_index *w, *Ap, *Ai, *Cp, *Ci;
-    realtype *x, *Ax, *Cx;
+    sunrealtype *x, *Ax, *Cx;
     sundials_ml_smat_index M, N, *A_indexptrs, *A_indexvals;
     MAT_CONTENT_SPARSE_TYPE A;
 
@@ -1734,7 +1734,7 @@ static bool matrix_sparse_scale_addi(realtype c, value va)
          single column (row) */
       w = (sundials_ml_smat_index *) malloc(M * sizeof(sundials_ml_smat_index));
       if (w == NULL) CAMLreturnT(bool, false);
-      x = (realtype *) malloc(M * sizeof(realtype));
+      x = (sunrealtype *) malloc(M * sizeof(sunrealtype));
       if (x == NULL) {
 	  free(w);
 	  CAMLreturnT(bool, false);
@@ -1792,7 +1792,7 @@ static bool matrix_sparse_scale_addi(realtype c, value va)
 	w = (sundials_ml_smat_index *) malloc(M * sizeof(sundials_ml_smat_index));
 	if (w == NULL) CAMLreturnT(bool, false);
 
-	x = (realtype *) malloc(M * sizeof(realtype));
+	x = (sunrealtype *) malloc(M * sizeof(sunrealtype));
 	if (x == NULL) {
 	    free(w);
 	    CAMLreturnT(bool, false);
@@ -1884,7 +1884,7 @@ CAMLprim void sunml_matrix_sparse_scale_addi(value vc, value va)
 }
 
 #if SUNDIALS_LIB_VERSION >= 300
-static int csmat_sparse_scale_addi(realtype c, SUNMatrix A)
+static int csmat_sparse_scale_addi(sunrealtype c, SUNMatrix A)
 {
     return (matrix_sparse_scale_addi(c, MAT_BACKLINK(A)) ? 0 : 1);
 }
@@ -1898,7 +1898,7 @@ CAMLprim void sunml_matrix_sparse_matvec(value vcptra, value vx, value vy)
     MAT_CONTENT_SPARSE_TYPE A = MAT_CONTENT_SPARSE(vcptra);
     sundials_ml_smat_index i, j;
     sundials_ml_smat_index *Ap, *Ai;
-    realtype *Ax, *xd, *yd;
+    sunrealtype *Ax, *xd, *yd;
 
     xd = REAL_ARRAY(vx);
     yd = REAL_ARRAY(vy);
@@ -2039,7 +2039,7 @@ CAMLprim value sunml_matrix_sparse_space(value vcptr)
 static int csmat_sparse_format_convert(const MAT_CONTENT_SPARSE_TYPE A,
 				       MAT_CONTENT_SPARSE_TYPE B)
 {
-    realtype *Ax, *Bx;
+    sunrealtype *Ax, *Bx;
     sundials_ml_index *Ap, *Aj;
     sundials_ml_index *Bp, *Bi;
     sundials_ml_index n_row, n_col, nnz;
@@ -2444,8 +2444,8 @@ static SUNMatrix csmat_custom_clone(SUNMatrix A);
 static SUNMatrix_ID csmat_custom_getid(SUNMatrix A);
 static int csmat_custom_zero(SUNMatrix A);
 static int csmat_custom_copy(SUNMatrix A, SUNMatrix B);
-static int csmat_custom_scale_add(realtype c, SUNMatrix A, SUNMatrix B);
-static int csmat_custom_scale_addi(realtype c, SUNMatrix A);
+static int csmat_custom_scale_add(sunrealtype c, SUNMatrix A, SUNMatrix B);
+static int csmat_custom_scale_addi(sunrealtype c, SUNMatrix A);
 #if 500 <= SUNDIALS_LIB_VERSION
 static int csmat_custom_matvecsetup(SUNMatrix A);
 #endif
@@ -2613,7 +2613,7 @@ static int csmat_custom_copy(SUNMatrix A, SUNMatrix B)
     CAMLreturnT(int, 0);
 }
 
-static int csmat_custom_scale_add(realtype c, SUNMatrix A, SUNMatrix B)
+static int csmat_custom_scale_add(sunrealtype c, SUNMatrix A, SUNMatrix B)
 {
     CAMLparam0();
     CAMLlocal2(mlop, r);
@@ -2629,7 +2629,7 @@ static int csmat_custom_scale_add(realtype c, SUNMatrix A, SUNMatrix B)
     CAMLreturnT(int, 0);
 }
 
-static int csmat_custom_scale_addi(realtype c, SUNMatrix A)
+static int csmat_custom_scale_addi(sunrealtype c, SUNMatrix A)
 {
     CAMLparam0();
     CAMLlocal2(mlop, r);
@@ -3013,10 +3013,10 @@ CAMLprim value sunml_arraydensematrix_ormqr(value va, value vormqr)
     intnat m = ba->dim[1];
     intnat n = ba->dim[0];
 
-    realtype *beta = REAL_ARRAY(Field(vormqr, 0));
-    realtype *vv   = REAL_ARRAY(Field(vormqr, 1));
-    realtype *vw   = REAL_ARRAY(Field(vormqr, 2));
-    realtype *work = REAL_ARRAY(Field(vormqr, 3));
+    sunrealtype *beta = REAL_ARRAY(Field(vormqr, 0));
+    sunrealtype *vv   = REAL_ARRAY(Field(vormqr, 1));
+    sunrealtype *vw   = REAL_ARRAY(Field(vormqr, 2));
+    sunrealtype *work = REAL_ARRAY(Field(vormqr, 3));
 
 #if SUNDIALS_ML_SAFE == 1
     if (m < n)

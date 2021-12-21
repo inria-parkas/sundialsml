@@ -58,7 +58,7 @@ CAMLprim value sunml_ida_superlumt_get_num_jac_evals(value vida_mem)
 #endif
 
 #if SUNDIALS_LIB_VERSION < 300
-static int jacfn (realtype t, realtype coef,
+static int jacfn (sunrealtype t, sunrealtype coef,
 		  N_Vector y, N_Vector yp, N_Vector res,
 		  SlsMat jac, void *user_data,
 		  N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)

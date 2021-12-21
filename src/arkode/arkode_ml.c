@@ -179,7 +179,7 @@ static int istepper_translate_exception(value exn, recoverability recoverable)
 }
 #endif
 
-static int rhsfn1(realtype t, N_Vector y, N_Vector ydot, void *user_data)
+static int rhsfn1(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
 {
     CAMLparam0();
     CAMLlocal1(session);
@@ -198,7 +198,7 @@ static int rhsfn1(realtype t, N_Vector y, N_Vector ydot, void *user_data)
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
-static int rhsfn2(realtype t, N_Vector y, N_Vector ydot, void *user_data)
+static int rhsfn2(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
 {
     CAMLparam0();
     CAMLlocal1(session);
@@ -218,7 +218,7 @@ static int rhsfn2(realtype t, N_Vector y, N_Vector ydot, void *user_data)
 }
 
 #if 580 <= SUNDIALS_LIB_VERSION
-static int nlsrhsfn(realtype t, N_Vector y, N_Vector ydot, void *user_data)
+static int nlsrhsfn(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
 {
     CAMLparam0();
     CAMLlocal1(session);
@@ -238,7 +238,7 @@ static int nlsrhsfn(realtype t, N_Vector y, N_Vector ydot, void *user_data)
 }
 #endif
 
-static int roots(realtype t, N_Vector y, realtype *gout, void *user_data)
+static int roots(sunrealtype t, N_Vector y, sunrealtype *gout, void *user_data)
 {
     CAMLparam0();
     CAMLlocal1(session);
@@ -263,7 +263,7 @@ static int roots(realtype t, N_Vector y, realtype *gout, void *user_data)
 }
 
 #if 500 <= SUNDIALS_LIB_VERSION
-static int preinnerfn(realtype t, N_Vector *f, int num_vecs, void *user_data)
+static int preinnerfn(sunrealtype t, N_Vector *f, int num_vecs, void *user_data)
 {
     CAMLparam0();
     CAMLlocal1(session);
@@ -289,7 +289,7 @@ static int preinnerfn(realtype t, N_Vector *f, int num_vecs, void *user_data)
 #endif
 
 #if 500 <= SUNDIALS_LIB_VERSION
-static int postinnerfn(realtype t, N_Vector y, void *user_data)
+static int postinnerfn(sunrealtype t, N_Vector y, void *user_data)
 {
     CAMLparam0();
     CAMLlocal1(session);
@@ -310,7 +310,7 @@ static int postinnerfn(realtype t, N_Vector y, void *user_data)
 #endif
 
 #if 500 <= SUNDIALS_LIB_VERSION
-static int stagepredictfn(realtype t, N_Vector zpred, void *user_data)
+static int stagepredictfn(sunrealtype t, N_Vector zpred, void *user_data)
 {
     CAMLparam0();
     CAMLlocal1(session);
@@ -373,11 +373,11 @@ static int resw(N_Vector y, N_Vector rwt, void *user_data)
     CAMLreturnT (int, 0);
 }
 
-static int adaptfn(N_Vector y, realtype t,
-		   realtype h1, realtype h2, realtype h3, 
-		   realtype e1, realtype e2, realtype e3,
+static int adaptfn(N_Vector y, sunrealtype t,
+		   sunrealtype h1, sunrealtype h2, sunrealtype h3, 
+		   sunrealtype e1, sunrealtype e2, sunrealtype e3,
 		   int q, int p, 
-		   realtype *hnew, void *user_data)
+		   sunrealtype *hnew, void *user_data)
 {
     CAMLparam0();
     CAMLlocal1(session);
@@ -411,7 +411,7 @@ static int adaptfn(N_Vector y, realtype t,
     CAMLreturnT(int, 1);
 }
 
-static int stabfn(N_Vector y, realtype t, realtype *hstab, void *user_data)
+static int stabfn(N_Vector y, sunrealtype t, sunrealtype *hstab, void *user_data)
 {
     CAMLparam0();
     CAMLlocal1(session);
@@ -455,7 +455,7 @@ static int resizefn(N_Vector y, N_Vector ytemplate, void *user_data)
 }
 
 #if 270 <= SUNDIALS_LIB_VERSION
-static int poststepfn(realtype t, N_Vector y, void *user_data)
+static int poststepfn(sunrealtype t, N_Vector y, void *user_data)
 {
     CAMLparam0();
     CAMLlocal1(session);
@@ -475,7 +475,7 @@ static int poststepfn(realtype t, N_Vector y, void *user_data)
 }
 #endif
 
-value sunml_arkode_make_jac_arg(realtype t, N_Vector y, N_Vector fy, value tmp)
+value sunml_arkode_make_jac_arg(sunrealtype t, N_Vector y, N_Vector fy, value tmp)
 {
     CAMLparam1(tmp);
     CAMLlocal1(r);
@@ -503,7 +503,7 @@ value sunml_arkode_make_triple_tmp(N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
 
 #if 300 <= SUNDIALS_LIB_VERSION
 
-static int jacfn(realtype t,
+static int jacfn(sunrealtype t,
 		 N_Vector y,
 		 N_Vector fy,	     
 		 SUNMatrix Jac,
@@ -535,7 +535,7 @@ static int jacfn(realtype t,
 
 /* Dense and band Jacobians only work with serial NVectors.  */
 static int jacfn(long int n,
-		 realtype t,
+		 sunrealtype t,
 		 N_Vector y,
 		 N_Vector fy,	     
 		 DlsMat Jac,
@@ -571,7 +571,7 @@ static int jacfn(long int n,
 static int bandjacfn(long int N,
 		     long int mupper,
 		     long int mlower,
-		     realtype t,
+		     sunrealtype t,
 		     N_Vector y,
 		     N_Vector fy,
 		     DlsMat Jac,
@@ -608,14 +608,14 @@ static int bandjacfn(long int N,
 
 #if 500 <= SUNDIALS_LIB_VERSION
 static int linsysfn(
-	realtype t,
+	sunrealtype t,
 	N_Vector y,
 	N_Vector fy,
 	SUNMatrix A,
 	SUNMatrix M,
 	booleantype jok,
 	booleantype *jcur,
-	realtype gamma,
+	sunrealtype gamma,
 	void *user_data,
 	N_Vector tmp1,
 	N_Vector tmp2,
@@ -651,12 +651,12 @@ static int linsysfn(
 }
 #endif
 
-static int precsetupfn(realtype t,
+static int precsetupfn(sunrealtype t,
 		       N_Vector y,
 		       N_Vector fy,
 		       booleantype jok,
 		       booleantype *jcurPtr,
-		       realtype gamma,
+		       sunrealtype gamma,
 		       void *user_data
 #if SUNDIALS_LIB_VERSION < 300
 		       ,
@@ -695,8 +695,8 @@ static int precsetupfn(realtype t,
 }
 
 static value make_spils_solve_arg(N_Vector r,
-				  realtype gamma,
-				  realtype delta,
+				  sunrealtype gamma,
+				  sunrealtype delta,
 				  int lr)
 {
     CAMLparam0();
@@ -713,13 +713,13 @@ static value make_spils_solve_arg(N_Vector r,
     CAMLreturn(v);
 }
 
-static int precsolvefn(realtype t,
+static int precsolvefn(sunrealtype t,
 		       N_Vector y,
 		       N_Vector fy,
 		       N_Vector rvec,
 		       N_Vector z,
-		       realtype gamma,
-		       realtype delta,
+		       sunrealtype gamma,
+		       sunrealtype delta,
 		       int lr,
 		       void *user_data
 #if SUNDIALS_LIB_VERSION < 300
@@ -749,7 +749,7 @@ static int precsolvefn(realtype t,
 
 static int jactimesfn(N_Vector v,
 		      N_Vector Jv,
-		      realtype t,
+		      sunrealtype t,
 		      N_Vector y,
 		      N_Vector fy,
 		      void *user_data,
@@ -775,7 +775,7 @@ static int jactimesfn(N_Vector v,
 }
 
 #if 300 <= SUNDIALS_LIB_VERSION
-static int jacsetupfn(realtype t,
+static int jacsetupfn(sunrealtype t,
 		      N_Vector y,
 		      N_Vector fy,
 		      void *user_data)
@@ -798,7 +798,7 @@ static int jacsetupfn(realtype t,
 #endif
 
 #if 530 <= SUNDIALS_LIB_VERSION
-static int jactimesrhsfn(realtype t, N_Vector y, N_Vector ydot, void *user_data)
+static int jactimesrhsfn(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
 {
     CAMLparam0();
     CAMLlocal2(session, cb);
@@ -1077,7 +1077,7 @@ CAMLprim value sunml_arkode_ark_set_jac_times_rhsfn(value vdata,
 #if 400 <= SUNDIALS_LIB_VERSION
 // hack to work around lack of CVodeGetUserData
 typedef struct {
-  realtype uround;
+  sunrealtype uround;
   void *user_data;
   //...
 } *StartOf_ARKodeMem;
@@ -1197,7 +1197,7 @@ CAMLprim value sunml_arkode_erk_wf_tolerances (value vdata)
 
 #if 300 <= SUNDIALS_LIB_VERSION
 
-static int massfn(realtype t,
+static int massfn(sunrealtype t,
 		  SUNMatrix M,
 		  void *user_data,
 		  N_Vector tmp1,
@@ -1226,7 +1226,7 @@ static int massfn(realtype t,
 #else // SUNDIALS_LIB_VERSION < 300
 
 static int massfn(long int n,
-		  realtype t,
+		  sunrealtype t,
 		  DlsMat M,
 		  void *user_data,
 		  N_Vector tmp1,
@@ -1260,7 +1260,7 @@ static int massfn(long int n,
 static int bandmassfn(long int N,
 		      long int mupper,
 		      long int mlower,
-		      realtype t,
+		      sunrealtype t,
 		      DlsMat M,
 		      void *user_data, 	 
 		      N_Vector tmp1,
@@ -1298,7 +1298,7 @@ static int bandmassfn(long int N,
 
 static int masstimesfn(N_Vector v,
 		       N_Vector Mv,
-		       realtype t,
+		       sunrealtype t,
 		       void *user_data)
 {
     CAMLparam0();
@@ -1320,7 +1320,7 @@ static int masstimesfn(N_Vector v,
 }
 
 #if 300 <= SUNDIALS_LIB_VERSION
-static int masssetupfn(realtype t,
+static int masssetupfn(sunrealtype t,
 		       void *user_data)
 {
     CAMLparam0();
@@ -1338,7 +1338,7 @@ static int masssetupfn(realtype t,
 }
 #endif
 
-static int massprecsetupfn(realtype t,
+static int massprecsetupfn(sunrealtype t,
 			   void *user_data
 #if SUNDIALS_LIB_VERSION < 300
 			   ,
@@ -1371,7 +1371,7 @@ static int massprecsetupfn(realtype t,
 }
 
 static value make_spils_mass_solve_arg(N_Vector r,
-				       realtype delta,
+				       sunrealtype delta,
 				       int lr)
 {
     CAMLparam0();
@@ -1386,10 +1386,10 @@ static value make_spils_mass_solve_arg(N_Vector r,
     CAMLreturn(v);
 }
 
-static int massprecsolvefn(realtype t,
+static int massprecsolvefn(sunrealtype t,
 			   N_Vector rvec,
 			   N_Vector z,
-			   realtype delta,
+			   sunrealtype delta,
 			   int lr,
 			   void *user_data
 #if SUNDIALS_LIB_VERSION < 300
@@ -2020,7 +2020,7 @@ static value ark_solver(value vdata, value nextt, value vy, int onestep)
 {
     CAMLparam3(vdata, nextt, vy);
     CAMLlocal1(ret);
-    realtype tret;
+    sunrealtype tret;
     int flag;
     N_Vector y;
     enum arkode_solver_result_tag result = -1;
@@ -2326,7 +2326,7 @@ CAMLprim value sunml_arkode_ark_get_nonlin_system_data(value varkode_mem)
     CAMLparam1(varkode_mem);
     CAMLlocal1(vnv);
 #if 540 <= SUNDIALS_LIB_VERSION
-    realtype tcur, gamma;
+    sunrealtype tcur, gamma;
     N_Vector zpred, zi, Fi, sdata;
     void *user_data;
 
@@ -2410,10 +2410,10 @@ CAMLprim value sunml_arkode_ark_get_timestepper_stats(value vdata)
     CHECK_FLAG("ARKStepGetTimestepperStats", flag);
 #else
     long int nsteps;
-    realtype hinused;
-    realtype hlast;
-    realtype hcur;
-    realtype tcur;
+    sunrealtype hinused;
+    sunrealtype hlast;
+    sunrealtype hcur;
+    sunrealtype tcur;
 
     flag = ARKodeGetIntegratorStats(ARKODE_MEM_FROM_ML(vdata),
 				    &nsteps,
@@ -2458,10 +2458,10 @@ CAMLprim value sunml_arkode_ark_get_step_stats(value vdata)
     int flag;
 
     long int nsteps;
-    realtype hinused;
-    realtype hlast;
-    realtype hcur;
-    realtype tcur;
+    sunrealtype hinused;
+    sunrealtype hlast;
+    sunrealtype hcur;
+    sunrealtype tcur;
 
 #if 400 <= SUNDIALS_LIB_VERSION
     flag = ARKStepGetStepStats(ARKODE_MEM_FROM_ML(vdata),
@@ -2615,7 +2615,7 @@ static value val_butcher_table(ARKodeButcherTable bt)
     CAMLlocal2(vobt, vod);
     int i, j;
     intnat q, p, stages;
-    realtype **A, *c, *b, *d;
+    sunrealtype **A, *c, *b, *d;
 
     if (bt == NULL) {
 	vobt = Val_none;
@@ -2693,7 +2693,7 @@ CAMLprim value sunml_arkode_ark_get_current_butcher_tables(value varkode_mem)
     CAMLlocal5(vai, vci, vbi, vdi, vodi);
     CAMLlocal5(vae, vce, vbe, vde, vode);
     int s, q, p, i, j;
-    realtype *Ai, *Ae, *ai, *ae;
+    sunrealtype *Ai, *Ae, *ai, *ae;
 
     vai = sunml_sundials_realarray2_create(ARK_S_MAX, ARK_S_MAX);
     vae = sunml_sundials_realarray2_create(ARK_S_MAX, ARK_S_MAX);
@@ -2704,9 +2704,9 @@ CAMLprim value sunml_arkode_ark_get_current_butcher_tables(value varkode_mem)
     vdi = caml_ba_alloc_dims (BIGARRAY_FLOAT, 1, NULL, ARK_S_MAX);
     vde = caml_ba_alloc_dims (BIGARRAY_FLOAT, 1, NULL, ARK_S_MAX);
 
-    Ai = calloc(ARK_S_MAX * ARK_S_MAX, sizeof(realtype));
+    Ai = calloc(ARK_S_MAX * ARK_S_MAX, sizeof(sunrealtype));
     if (Ai == NULL) caml_raise_out_of_memory();
-    Ae = calloc(ARK_S_MAX * ARK_S_MAX, sizeof(realtype));
+    Ae = calloc(ARK_S_MAX * ARK_S_MAX, sizeof(sunrealtype));
     if (Ae ==NULL) {
 	free(Ai);
 	caml_raise_out_of_memory();
@@ -2769,7 +2769,7 @@ CAMLprim value sunml_arkode_ark_get_current_butcher_tables(value varkode_mem)
     CAMLlocal5(vai, vci, vbi, vdi, vodi);
     CAMLlocal1(vae);
     int s, q, p, i, j;
-    realtype *Ai, *Ae, *ai, *ae;
+    sunrealtype *Ai, *Ae, *ai, *ae;
 
     vai = sunml_sundials_realarray2_create(ARK_S_MAX, ARK_S_MAX);
     vae = sunml_sundials_realarray2_create(ARK_S_MAX, ARK_S_MAX);
@@ -2778,9 +2778,9 @@ CAMLprim value sunml_arkode_ark_get_current_butcher_tables(value varkode_mem)
     vdi = caml_ba_alloc_dims (BIGARRAY_FLOAT, 1, NULL, ARK_S_MAX);
     Store_some(vodi, vdi);
 
-    Ai = calloc(ARK_S_MAX * ARK_S_MAX, sizeof(realtype));
+    Ai = calloc(ARK_S_MAX * ARK_S_MAX, sizeof(sunrealtype));
     if (Ai == NULL) caml_raise_out_of_memory();
-    Ae = calloc(ARK_S_MAX * ARK_S_MAX, sizeof(realtype));
+    Ae = calloc(ARK_S_MAX * ARK_S_MAX, sizeof(sunrealtype));
     if (Ae ==NULL) {
 	free(Ai);
 	caml_raise_out_of_memory();
@@ -2884,7 +2884,7 @@ static ARKodeButcherTable butcher_table_val(value vob)
     CAMLparam0();
     ARKodeButcherTable r = NULL;
     CAMLlocal2(vb, vd);
-    realtype *d = NULL;
+    sunrealtype *d = NULL;
     int p = 0;
 
     if (vob != Val_none) {
@@ -3011,8 +3011,8 @@ CAMLprim value sunml_arkode_ark_set_tables(value varkode_mem,
 #else // SUNDIALS_LIB_VERSION < 400
     CAMLlocal4(vbi, vbe, vbembedi, vbembede);
     CAMLlocal1(vd);
-    realtype *Ai = NULL, *Ae = NULL;
-    realtype *ai, *ae, *bembedi = NULL, *bembede = NULL;
+    sunrealtype *Ai = NULL, *Ae = NULL;
+    sunrealtype *ai, *ae, *bembedi = NULL, *bembede = NULL;
     int s, p = 0, q, i, j;
 
     if ((vobi != Val_none) && (vobe != Val_none)) {
@@ -3038,9 +3038,9 @@ CAMLprim value sunml_arkode_ark_set_tables(value varkode_mem,
 	}
 
 	// NB: translate to row-major from column-major
-	Ai = calloc(s * s, sizeof(realtype));
+	Ai = calloc(s * s, sizeof(sunrealtype));
 	if (Ai == NULL) caml_raise_out_of_memory();
-	Ae = calloc(s * s, sizeof(realtype));
+	Ae = calloc(s * s, sizeof(sunrealtype));
 	if (Ae ==NULL) {
 	    free(Ai);
 	    caml_raise_out_of_memory();
@@ -3088,7 +3088,7 @@ CAMLprim value sunml_arkode_ark_set_tables(value varkode_mem,
 	}
 
 	// NB: translate to row-major from column-major
-	Ai = calloc(s * s, sizeof(realtype));
+	Ai = calloc(s * s, sizeof(sunrealtype));
 	if (Ai == NULL) caml_raise_out_of_memory();
 	ai = ARRAY2_DATA(Field(vbi, RECORD_ARKODE_BUTCHER_TABLE_STAGE_VALUES));
 	for (i=0; i < s; i++) {
@@ -3120,7 +3120,7 @@ CAMLprim value sunml_arkode_ark_set_tables(value varkode_mem,
 	}
 
 	// NB: translate to row-major from column-major
-	Ae = calloc(s * s, sizeof(realtype));
+	Ae = calloc(s * s, sizeof(sunrealtype));
 	if (Ae == NULL) caml_raise_out_of_memory();
 	ae = ARRAY2_DATA(Field(vbe, RECORD_ARKODE_BUTCHER_TABLE_STAGE_VALUES));
 	for (i=0; i < s; i++) {
@@ -3195,7 +3195,7 @@ CAMLprim value sunml_arkode_ark_set_adaptivity_method(value varkode_mem, value v
 #endif
 
     } else {
-	realtype adapt_params[3] = { 0 };
+	sunrealtype adapt_params[3] = { 0 };
 
 	vks = Field(Field(vmeth, 0), RECORD_ARKODE_ADAPTIVITY_PARAMS_KS);
 	vorder = Field(Field(vmeth, 0),
@@ -3618,7 +3618,7 @@ CAMLprim value sunml_arkode_ark_get_actual_init_step(value varkode_mem)
     CAMLparam1(varkode_mem);
 
     int flag;
-    realtype v;
+    sunrealtype v;
 
 #if 400 <= SUNDIALS_LIB_VERSION
     flag = ARKStepGetActualInitStep(ARKODE_MEM_FROM_ML(varkode_mem), &v);
@@ -3636,7 +3636,7 @@ CAMLprim value sunml_arkode_ark_get_last_step(value varkode_mem)
     CAMLparam1(varkode_mem);
 
     int flag;
-    realtype v;
+    sunrealtype v;
 
 #if 400 <= SUNDIALS_LIB_VERSION
     flag = ARKStepGetLastStep(ARKODE_MEM_FROM_ML(varkode_mem), &v);
@@ -3654,7 +3654,7 @@ CAMLprim value sunml_arkode_ark_get_current_step(value varkode_mem)
     CAMLparam1(varkode_mem);
 
     int flag;
-    realtype v;
+    sunrealtype v;
 
 #if 400 <= SUNDIALS_LIB_VERSION
     flag = ARKStepGetCurrentStep(ARKODE_MEM_FROM_ML(varkode_mem), &v);
@@ -3672,7 +3672,7 @@ CAMLprim value sunml_arkode_ark_get_current_time(value varkode_mem)
     CAMLparam1(varkode_mem);
 
     int flag;
-    realtype v;
+    sunrealtype v;
 
 #if 400 <= SUNDIALS_LIB_VERSION
     flag = ARKStepGetCurrentTime(ARKODE_MEM_FROM_ML(varkode_mem), &v);
@@ -4452,7 +4452,7 @@ CAMLprim value sunml_arkode_ark_get_tol_scale_factor(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
-    realtype r;
+    sunrealtype r;
 #if 400 <= SUNDIALS_LIB_VERSION
     int flag = ARKStepGetTolScaleFactor(ARKODE_MEM_FROM_ML(varkode_mem), &r);
     CHECK_FLAG("ARKStepGetTolScaleFactor", flag);
@@ -5306,7 +5306,7 @@ static value erk_solver(value vdata, value nextt, value vy, int onestep)
     CAMLparam3(vdata, nextt, vy);
     CAMLlocal1(ret);
 #if 400 <= SUNDIALS_LIB_VERSION
-    realtype tret;
+    sunrealtype tret;
     int flag;
     N_Vector y;
     enum arkode_solver_result_tag result = -1;
@@ -5460,10 +5460,10 @@ CAMLprim value sunml_arkode_erk_get_step_stats(value vdata)
     CAMLlocal1(r);
 #if 400 <= SUNDIALS_LIB_VERSION
     long int nsteps;
-    realtype hinused;
-    realtype hlast;
-    realtype hcur;
-    realtype tcur;
+    sunrealtype hinused;
+    sunrealtype hlast;
+    sunrealtype hcur;
+    sunrealtype tcur;
 
     int flag = ERKStepGetStepStats(ARKODE_MEM_FROM_ML(vdata),
 				   &nsteps,
@@ -5593,7 +5593,7 @@ CAMLprim value sunml_arkode_erk_set_adaptivity_method(value varkode_mem,
 	CHECK_FLAG("ERKStepSetAdaptivityFn", flag);
 
     } else {
-	realtype adapt_params[3] = { 0 };
+	sunrealtype adapt_params[3] = { 0 };
 
 	vks = Field(Field(vmeth, 0), RECORD_ARKODE_ADAPTIVITY_PARAMS_KS);
 	vorder = Field(Field(vmeth, 0),
@@ -5712,7 +5712,7 @@ CAMLprim value sunml_arkode_erk_get_num_steps(value varkode_mem)
 CAMLprim value sunml_arkode_erk_get_actual_init_step(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
-    realtype v = 0.0;
+    sunrealtype v = 0.0;
 
 #if 400 <= SUNDIALS_LIB_VERSION
     int flag = ERKStepGetActualInitStep(ARKODE_MEM_FROM_ML(varkode_mem), &v);
@@ -5727,7 +5727,7 @@ CAMLprim value sunml_arkode_erk_get_actual_init_step(value varkode_mem)
 CAMLprim value sunml_arkode_erk_get_last_step(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
-    realtype v = 0.0;
+    sunrealtype v = 0.0;
 
 #if 400 <= SUNDIALS_LIB_VERSION
     int flag = ERKStepGetLastStep(ARKODE_MEM_FROM_ML(varkode_mem), &v);
@@ -5742,7 +5742,7 @@ CAMLprim value sunml_arkode_erk_get_last_step(value varkode_mem)
 CAMLprim value sunml_arkode_erk_get_current_step(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
-    realtype v = 0.0;
+    sunrealtype v = 0.0;
 
 #if 400 <= SUNDIALS_LIB_VERSION
     int flag = ERKStepGetCurrentStep(ARKODE_MEM_FROM_ML(varkode_mem), &v);
@@ -5757,7 +5757,7 @@ CAMLprim value sunml_arkode_erk_get_current_step(value varkode_mem)
 CAMLprim value sunml_arkode_erk_get_current_time(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
-    realtype v = 0.0;
+    sunrealtype v = 0.0;
 
 #if 400 <= SUNDIALS_LIB_VERSION
     int flag = ERKStepGetCurrentTime(ARKODE_MEM_FROM_ML(varkode_mem), &v);
@@ -5785,7 +5785,7 @@ CAMLprim value sunml_arkode_erk_get_err_weights(value varkode_mem, value verrws)
 CAMLprim value sunml_arkode_erk_get_tol_scale_factor(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
-    realtype r = 0.0;
+    sunrealtype r = 0.0;
 
 #if 400 <= SUNDIALS_LIB_VERSION
     int flag = ERKStepGetTolScaleFactor(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -6505,7 +6505,7 @@ static value mri_solver(value vdata, value nextt, value vy, int onestep)
     CAMLparam3(vdata, nextt, vy);
     CAMLlocal1(ret);
 #if 400 <= SUNDIALS_LIB_VERSION
-    realtype tret;
+    sunrealtype tret;
     int flag;
     N_Vector y;
     enum arkode_solver_result_tag result = -1;
@@ -6781,7 +6781,7 @@ CAMLprim value sunml_arkode_mri_coupling_make(value vargs)
     MRIC->q = q;
     MRIC->p = p;
 
-    MRIC->G = (realtype ***) calloc( nmat, sizeof(realtype**) );
+    MRIC->G = (sunrealtype ***) calloc( nmat, sizeof(sunrealtype**) );
     if (MRIC->G == NULL) {
 	MRIStepCoupling_Free(MRIC);
 	caml_raise_out_of_memory();
@@ -6789,7 +6789,7 @@ CAMLprim value sunml_arkode_mri_coupling_make(value vargs)
 
     // allocate arrays in C
     for (i = 0; i < nmat; i++) {
-	MRIC->G[i] = (realtype **) calloc( stages, sizeof(realtype*) );
+	MRIC->G[i] = (sunrealtype **) calloc( stages, sizeof(sunrealtype*) );
 	if (MRIC->G[i] == NULL) {
 	    MRIStepCoupling_Free(MRIC);
 	    caml_raise_out_of_memory();
@@ -7301,8 +7301,8 @@ static void finalize_sundials_istepper(value vistepper_cptr)
 */
 
 static int istepper_evolvefn(MRIStepInnerStepper stepper,
-			     realtype t0,
-			     realtype tout,
+			     sunrealtype t0,
+			     sunrealtype tout,
 			     N_Vector v)
 {
     CAMLparam0();
@@ -7327,7 +7327,7 @@ static int istepper_evolvefn(MRIStepInnerStepper stepper,
 }
 
 static int istepper_fullrhsfn(MRIStepInnerStepper stepper,
-			      realtype t,
+			      sunrealtype t,
 			      N_Vector v,
 			      N_Vector f,
 			      int mode)
@@ -7370,7 +7370,7 @@ static int istepper_fullrhsfn(MRIStepInnerStepper stepper,
 }
 
 static int istepper_resetfn(MRIStepInnerStepper stepper,
-			    realtype tR,
+			    sunrealtype tR,
 			    N_Vector vR)
 {
     CAMLparam0();
@@ -7494,8 +7494,8 @@ CAMLprim value sunml_arkode_mri_istepper_get_forcing_data(value visteppercptr)
     CAMLparam1(visteppercptr);
     CAMLlocal1(vr);
 #if 580 <= SUNDIALS_LIB_VERSION
-    realtype tshift;
-    realtype tscale;
+    sunrealtype tshift;
+    sunrealtype tscale;
     N_Vector *forcing;
     int nforcing;
 
@@ -7582,7 +7582,7 @@ CAMLprim value sunml_arkode_mri_get_num_steps(value varkode_mem)
 CAMLprim value sunml_arkode_mri_get_last_step(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
-    realtype v = 0.0;
+    sunrealtype v = 0.0;
 
 #if 400 <= SUNDIALS_LIB_VERSION
     int flag = MRIStepGetLastStep(ARKODE_MEM_FROM_ML(varkode_mem), &v);
@@ -7823,7 +7823,7 @@ CAMLprim value sunml_arkode_mri_set_post_inner_fn(value varkode_mem, value vset)
 CAMLprim value sunml_arkode_mri_get_current_time(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
-    realtype v = 0.0;
+    sunrealtype v = 0.0;
 
 #if 400 <= SUNDIALS_LIB_VERSION
     int flag = MRIStepGetCurrentTime(ARKODE_MEM_FROM_ML(varkode_mem), &v);
@@ -7892,7 +7892,7 @@ CAMLprim value sunml_arkode_mri_get_nonlin_system_data(value varkode_mem)
     CAMLparam1(varkode_mem);
     CAMLlocal1(vnv);
 #if 540 <= SUNDIALS_LIB_VERSION
-    realtype tcur, gamma;
+    sunrealtype tcur, gamma;
     N_Vector zpred, zi, Fi, sdata;
     void *user_data;
 
@@ -8070,7 +8070,7 @@ CAMLprim value sunml_arkode_mri_get_current_gamma(value varkode_mem)
 CAMLprim value sunml_arkode_mri_get_tol_scale_factor(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
-    realtype r;
+    sunrealtype r;
 #if 540 <= SUNDIALS_LIB_VERSION
     int flag = MRIStepGetTolScaleFactor(ARKODE_MEM_FROM_ML(varkode_mem), &r);
     CHECK_FLAG("MRIStepGetTolScaleFactor", flag);

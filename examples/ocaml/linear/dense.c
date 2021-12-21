@@ -9,7 +9,7 @@
 #define NROWS 3
 #define NCOLS 3
 
-realtype a_init[NROWS][NCOLS] = {
+sunrealtype a_init[NROWS][NCOLS] = {
     {  1.0,  2.0,  3.0},
     {  2.0, -4.0,  6.0},
     {  3.0, -9.0, -3.0}
@@ -26,7 +26,7 @@ void print_mat(DlsMat m, sundials_ml_index nr, sundials_ml_index nc) {
     }
 }
 
-void print_vec(realtype* m, sundials_ml_index nr) {
+void print_vec(sunrealtype* m, sundials_ml_index nr) {
     int i;
 
     for (i=0; i < nr; ++i) {
@@ -49,7 +49,7 @@ int main(int argc, char** argv)
     DlsMat a = NewDenseMat(NROWS, NCOLS);
     DlsMat b = NewDenseMat(NROWS, NCOLS);
     sundials_ml_index p[NROWS] = { 0.0 };
-    realtype s[NROWS] = { 5.0, 18.0, 6.0 };
+    sunrealtype s[NROWS] = { 5.0, 18.0, 6.0 };
     int i, j;
 
     for (i=0; i < NROWS; ++i) {
@@ -64,8 +64,8 @@ int main(int argc, char** argv)
 
 #if SUNDIALS_LIB_VERSION >= 260
     {
-	realtype x[NCOLS] = { 1.0,  2.0, 3.0 };
-	realtype y[NROWS] = { 0.0 };
+	sunrealtype x[NCOLS] = { 1.0,  2.0, 3.0 };
+	sunrealtype y[NROWS] = { 0.0 };
 	printf("matvec: y=\n");
 	DenseMatvec(a, x, y);
 	print_vec(y, NROWS);

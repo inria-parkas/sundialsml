@@ -165,7 +165,7 @@ CAMLprim value sunml_ida_clear_err_handler_fn(value vdata)
     CAMLreturn (Val_unit);
 }
 
-static int resfn (realtype t, N_Vector y, N_Vector yp,
+static int resfn (sunrealtype t, N_Vector y, N_Vector yp,
 		  N_Vector resval, void *user_data)
 {
     CAMLparam0 ();
@@ -186,7 +186,7 @@ static int resfn (realtype t, N_Vector y, N_Vector yp,
 }
 
 #if 580 <= SUNDIALS_LIB_VERSION
-static int nlsresfn (realtype t, N_Vector y, N_Vector yp,
+static int nlsresfn (sunrealtype t, N_Vector y, N_Vector yp,
 		     N_Vector resval, void *user_data)
 {
     CAMLparam0 ();
@@ -207,7 +207,7 @@ static int nlsresfn (realtype t, N_Vector y, N_Vector yp,
 }
 #endif
 
-value sunml_ida_make_jac_arg(realtype t, realtype coef, N_Vector y, N_Vector yp,
+value sunml_ida_make_jac_arg(sunrealtype t, sunrealtype coef, N_Vector y, N_Vector yp,
 		       N_Vector res, value tmp)
 {
     CAMLparam1(tmp);
@@ -248,8 +248,8 @@ value sunml_ida_make_double_tmp(N_Vector tmp1, N_Vector tmp2)
 }
 
 #if 300 <= SUNDIALS_LIB_VERSION
-static int jacfn (realtype t,
-		  realtype coef,
+static int jacfn (sunrealtype t,
+		  sunrealtype coef,
 		  N_Vector y,
 		  N_Vector yp,
 		  N_Vector res,
@@ -282,8 +282,8 @@ static int jacfn (realtype t,
 
 /* Dense and band Jacobians only work with serial NVectors.  */
 static int jacfn (long int neq,
-		  realtype t,
-		  realtype coef,
+		  sunrealtype t,
+		  sunrealtype coef,
 		  N_Vector y,
 		  N_Vector yp,
 		  N_Vector res,
@@ -321,8 +321,8 @@ static int jacfn (long int neq,
 static int bandjacfn (long int neq,
 		      long int mupper,
 		      long int mlower,
-		      realtype t,
-		      realtype coef,
+		      sunrealtype t,
+		      sunrealtype coef,
 		      N_Vector y,
 		      N_Vector yp,
 		      N_Vector res,
@@ -358,8 +358,8 @@ static int bandjacfn (long int neq,
 
 #endif
 
-static int rootsfn (realtype t, N_Vector y, N_Vector yp,
-		    realtype *gout, void *user_data)
+static int rootsfn (sunrealtype t, N_Vector y, N_Vector yp,
+		    sunrealtype *gout, void *user_data)
 {
     CAMLparam0 ();
     CAMLlocal1 (session);
@@ -402,11 +402,11 @@ static int errw(N_Vector y, N_Vector ewt, void *user_data)
     CAMLreturnT (int, 0);
 }
 
-static int precsetupfn(realtype t,
+static int precsetupfn(sunrealtype t,
 		       N_Vector y,
 		       N_Vector yp,
 		       N_Vector res,
-		       realtype cj,
+		       sunrealtype cj,
 		       void *user_data
 #if SUNDIALS_LIB_VERSION < 300
 		       ,
@@ -434,14 +434,14 @@ static int precsetupfn(realtype t,
 }
 
 static int precsolvefn(
-	realtype t,
+	sunrealtype t,
 	N_Vector y,
 	N_Vector yp,
 	N_Vector res,
 	N_Vector rvec,
 	N_Vector z,
-	realtype cj,
-	realtype delta,
+	sunrealtype cj,
+	sunrealtype delta,
 	void *user_data
 #if SUNDIALS_LIB_VERSION < 300
 	,
@@ -470,13 +470,13 @@ static int precsolvefn(
 }
 
 static int jactimesfn(
-    realtype t,
+    sunrealtype t,
     N_Vector y,
     N_Vector yp,
     N_Vector res,
     N_Vector v,
     N_Vector Jv,
-    realtype cj,
+    sunrealtype cj,
     void *user_data,
     N_Vector tmp1, N_Vector tmp2)
 {
@@ -501,11 +501,11 @@ static int jactimesfn(
 }
 
 #if SUNDIALS_LIB_VERSION >= 300
-static int jacsetupfn(realtype t,
+static int jacsetupfn(sunrealtype t,
 		      N_Vector y,
 		      N_Vector yp,
 		      N_Vector res,
-		      realtype cj,
+		      sunrealtype cj,
 		      void *user_data)
 {
     CAMLparam0();
@@ -526,7 +526,7 @@ static int jacsetupfn(realtype t,
 #endif
 
 #if 530 <= SUNDIALS_LIB_VERSION
-static int jactimesresfn (realtype t, N_Vector y, N_Vector yp,
+static int jactimesresfn (sunrealtype t, N_Vector y, N_Vector yp,
 			  N_Vector resval, void *user_data)
 {
     CAMLparam0 ();
@@ -792,7 +792,7 @@ CAMLprim value sunml_ida_set_jac_times_resfn(value vdata, value vhas_resfn)
 #if 400 <= SUNDIALS_LIB_VERSION
 // hack to work around lack of CVodeGetUserData
 typedef struct {
-  realtype ida_uround;
+  sunrealtype ida_uround;
   IDAResFn ida_res;
   void     *ida_user_data;
   //...
@@ -934,7 +934,7 @@ static value solve (value vdata, value nextt, value vy, value vyp, int onestep)
     CAMLparam4 (vdata, nextt, vy, vyp);
     CAMLlocal1 (ret);
     void *ida_mem = IDA_MEM_FROM_ML (vdata);
-    realtype tret;
+    sunrealtype tret;
     int flag;
     N_Vector y, yp;
     enum ida_solver_result_tag result = -1;
@@ -1047,7 +1047,7 @@ CAMLprim value sunml_ida_set_id (value vida_mem, value vid)
 }
 
 
-static void calc_ic (void *ida_mem, value session, int icopt, realtype tout1,
+static void calc_ic (void *ida_mem, value session, int icopt, sunrealtype tout1,
 		     value vy, value vyp)
 {
     CAMLparam3 (session, vy, vyp);
@@ -1369,10 +1369,10 @@ CAMLprim value sunml_ida_get_integrator_stats(value vdata)
     int qlast;
     int qcur;	 
 
-    realtype hinused;
-    realtype hlast;
-    realtype hcur;
-    realtype tcur;
+    sunrealtype hinused;
+    sunrealtype hlast;
+    sunrealtype hcur;
+    sunrealtype tcur;
 
     flag = IDAGetIntegratorStats(IDA_MEM_FROM_ML(vdata),
 	&nsteps,
@@ -1543,7 +1543,7 @@ CAMLprim value sunml_ida_get_actual_init_step(value vida_mem)
     CAMLparam1(vida_mem);
 
     int flag;
-    realtype v;
+    sunrealtype v;
 
     flag = IDAGetActualInitStep(IDA_MEM_FROM_ML(vida_mem), &v);
     CHECK_FLAG("IDAGetActualInitStep", flag);
@@ -1557,7 +1557,7 @@ CAMLprim value sunml_ida_get_last_step(value vida_mem)
     CAMLlocal1 (tmp);
 
     int flag;
-    realtype v;
+    sunrealtype v;
 
     flag = IDAGetLastStep(IDA_MEM_FROM_ML(vida_mem), &v);
     CHECK_FLAG("IDAGetLastStep", flag);
@@ -1571,7 +1571,7 @@ CAMLprim value sunml_ida_get_current_step(value vida_mem)
     CAMLparam1(vida_mem);
 
     int flag;
-    realtype v;
+    sunrealtype v;
 
     flag = IDAGetCurrentStep(IDA_MEM_FROM_ML(vida_mem), &v);
     CHECK_FLAG("IDAGetCurrentStep", flag);
@@ -1584,7 +1584,7 @@ CAMLprim value sunml_ida_get_current_time(value vida_mem)
     CAMLparam1(vida_mem);
 
     int flag;
-    realtype v;
+    sunrealtype v;
 
     flag = IDAGetCurrentTime(IDA_MEM_FROM_ML(vida_mem), &v);
     CHECK_FLAG("IDAGetCurrentTime", flag);
@@ -1912,7 +1912,7 @@ CAMLprim value sunml_ida_get_tol_scale_factor(value vida_mem)
 {
     CAMLparam1(vida_mem);
 
-    realtype r;
+    sunrealtype r;
     int flag = IDAGetTolScaleFactor(IDA_MEM_FROM_ML(vida_mem), &r);
     CHECK_FLAG("IDAGetTolScaleFactor", flag);
 
@@ -1973,7 +1973,7 @@ CAMLprim value sunml_ida_get_num_g_evals(value vida_mem)
 CAMLprim value sunml_ida_get_current_cj(value vida_mem)
 {
     CAMLparam1(vida_mem);
-    realtype cj;
+    sunrealtype cj;
 
 #if 500 <= SUNDIALS_LIB_VERSION
     int flag = IDAGetCurrentCj(IDA_MEM_FROM_ML(vida_mem), &cj);
@@ -2026,7 +2026,7 @@ CAMLprim value sunml_ida_get_nonlin_system_data(value vida_mem)
     CAMLparam1(vida_mem);
     CAMLlocal1(vnv);
 #if 540 <= SUNDIALS_LIB_VERSION
-    realtype tn, cj;
+    sunrealtype tn, cj;
     N_Vector yypred, yppred, yyn, ypn, res;
     void *user_data;
 

@@ -15,6 +15,7 @@
 #define _NLSOLVER_ML_H__
 
 #include <caml/mlvalues.h>
+#include "../sundials/sundials_ml.h"
 
 #if SUNDIALS_LIB_VERSION >= 400
 #include <sundials/sundials_nonlinearsolver.h>
@@ -66,8 +67,8 @@ struct sunml_nls {
     value callbacks;
 
     int (*orig_setup)(SUNNonlinearSolver, N_Vector, void*);
-    int (*orig_solve)(SUNNonlinearSolver, N_Vector, N_Vector, N_Vector, realtype,
-		      booleantype, void*);
+    int (*orig_solve)(SUNNonlinearSolver, N_Vector, N_Vector, N_Vector,
+		      sunrealtype, booleantype, void*);
     value (*to_value)(void *);
     void* (*from_value)(value);
 

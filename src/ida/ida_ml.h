@@ -28,8 +28,8 @@ void sunml_ida_check_dls_flag(const char *call, int flag);
 void sunml_ida_check_spils_flag(const char *call, int flag);
 #endif
 
-value sunml_ida_make_jac_arg(realtype t, realtype coef, N_Vector y, N_Vector yp,
-		       N_Vector res, value tmp);
+value sunml_ida_make_jac_arg(sunrealtype t, sunrealtype coef, N_Vector y,
+			     N_Vector yp, N_Vector res, value tmp);
 value sunml_ida_make_triple_tmp(N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
 value sunml_ida_make_double_tmp(N_Vector tmp1, N_Vector tmp2);
 

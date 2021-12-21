@@ -502,7 +502,7 @@ static int lsolve_callback_sens(N_Vector y, N_Vector b, void* mem)
 
 #if 400 <= SUNDIALS_LIB_VERSION
 static int convtest_callback(SUNNonlinearSolver nls, N_Vector y, N_Vector del,
-			     realtype tol, N_Vector ewt, void* mem)
+			     sunrealtype tol, N_Vector ewt, void* mem)
 {
     CAMLparam0();
     CAMLlocalN(args, 5);
@@ -545,7 +545,7 @@ static int convtest_callback(SUNNonlinearSolver nls, N_Vector y, N_Vector del,
 
 #if 400 <= SUNDIALS_LIB_VERSION
 static int convtest_callback_sens(SUNNonlinearSolver nls, N_Vector y, N_Vector del,
-				  realtype tol, N_Vector ewt, void* mem)
+				  sunrealtype tol, N_Vector ewt, void* mem)
 {
     CAMLparam0();
     CAMLlocalN(args, 5);
@@ -605,7 +605,7 @@ CAMLprim value sunml_nlsolver_init(value vnls)
 static int sunml_nlsolver_failed_ctestfn(SUNNonlinearSolver nls,
 					 N_Vector y,
 					 N_Vector del,
-					 realtype tol,
+					 sunrealtype tol,
 					 N_Vector ewt,
 					 void* mem)
 {
@@ -619,7 +619,7 @@ static int sunml_nlsolver_failed_ctestfn(SUNNonlinearSolver nls,
 static int sunml_nlsolver_wrapped_ctestfn(SUNNonlinearSolver nls,
 					  N_Vector y,
 					  N_Vector del,
-					  realtype tol,
+					  sunrealtype tol,
 					  N_Vector ewt,
 					  void* mem)
 {
@@ -1163,7 +1163,7 @@ CAMLprim value sunml_nlsolver_call_convtest_fn(value vnls, value vconvtestfn,
     SUNNonlinearSolver nls = NLSOLVER_VAL(vnls);
     N_Vector y   = NVEC_VAL(Field(vargs, 0));
     N_Vector del = NVEC_VAL(Field(vargs, 1));
-    realtype tol = Double_val(Field(vargs, 2));
+    sunrealtype tol = Double_val(Field(vargs, 2));
     N_Vector ewt = NVEC_VAL(Field(vargs, 3));
     void *mem    = from_value(Field(vargs, 4));
 
@@ -1197,7 +1197,7 @@ CAMLprim value sunml_nlsolver_call_convtest_fn_sens(value vnls,
     SUNNonlinearSolver nls = NLSOLVER_VAL(vnls);
     N_Vector y   = SENSWRAPPER(Field(vargs, 0));
     N_Vector del = SENSWRAPPER(Field(vargs, 1));
-    realtype tol = Double_val(Field(vargs, 2));
+    sunrealtype tol = Double_val(Field(vargs, 2));
     N_Vector ewt = SENSWRAPPER(Field(vargs, 3));
     void *mem    = from_value(Field(vargs, 4));
 
@@ -1276,7 +1276,7 @@ done:
 
 static int sunml_nlsolver_wrapped_solve(SUNNonlinearSolver nls,
 					N_Vector y0, N_Vector y,
-					N_Vector w, realtype tol,
+					N_Vector w, sunrealtype tol,
 					booleantype callLSetup, void *mem)
 {
     CAMLparam0();
@@ -1726,7 +1726,7 @@ static int callml_custom_setup_sens(SUNNonlinearSolver nls, N_Vector y, void* me
 
 static int callml_custom_solve(SUNNonlinearSolver nls,
 			       N_Vector y0, N_Vector y, N_Vector w,
-			       realtype tol, booleantype callLSetup, void* mem)
+			       sunrealtype tol, booleantype callLSetup, void* mem)
 {
     CAMLparam0();
     CAMLlocal1(vops);
@@ -1752,7 +1752,7 @@ static int callml_custom_solve(SUNNonlinearSolver nls,
 
 static int callml_custom_solve_sens(SUNNonlinearSolver nls,
 				    N_Vector y0, N_Vector y, N_Vector w,
-				    realtype tol, booleantype callLSetup,
+				    sunrealtype tol, booleantype callLSetup,
 				    void* mem)
 {
     CAMLparam0();

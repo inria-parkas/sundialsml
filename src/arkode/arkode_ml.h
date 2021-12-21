@@ -100,7 +100,7 @@ void sunml_arkode_check_dls_flag(const char *call, int flag);
 void sunml_arkode_check_spils_flag(const char *call, int flag);
 #endif
 
-value sunml_arkode_make_jac_arg(realtype t, N_Vector y, N_Vector fy, value tmp);
+value sunml_arkode_make_jac_arg(sunrealtype t, N_Vector y, N_Vector fy, value tmp);
 value sunml_arkode_make_triple_tmp(N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
 
 #define CHECK_FLAG(call, flag) if (flag != ARK_SUCCESS) \

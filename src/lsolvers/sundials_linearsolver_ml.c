@@ -1004,7 +1004,7 @@ static int callml_custom_setup(SUNLinearSolver ls, SUNMatrix A)
 }
 
 static int callml_custom_solve(SUNLinearSolver ls, SUNMatrix A, N_Vector x,
-                               N_Vector b, realtype tol)
+                               N_Vector b, sunrealtype tol)
 {
     CAMLparam0();
     CAMLlocal2(r, vls);
@@ -1113,7 +1113,7 @@ static int callml_custom_numiters(SUNLinearSolver ls)
     CAMLreturnT(int, Int_val(r));
 }
 
-static realtype callml_custom_resnorm(SUNLinearSolver ls)
+static sunrealtype callml_custom_resnorm(SUNLinearSolver ls)
 {
     CAMLparam0();
     CAMLlocal2(r, vls);
@@ -1123,10 +1123,10 @@ static realtype callml_custom_resnorm(SUNLinearSolver ls)
     if (Is_exception_result (r)) {
 	sunml_warn_discarded_exn (Extract_exception (r),
 					"user-defined res norm handler");
-	CAMLreturnT(realtype, 0.0);
+	CAMLreturnT(sunrealtype, 0.0);
     }
 
-    CAMLreturnT(realtype, Double_val(r));
+    CAMLreturnT(sunrealtype, Double_val(r));
 }
 
 static N_Vector callml_custom_resid(SUNLinearSolver ls)
@@ -1333,7 +1333,7 @@ CAMLprim value sunml_spils_modified_gs(value vv, value vh, value vk, value vp)
     int k = Int_val(vk);
     int i;
     int i0 = SUNMAX(k-p, 0);
-    realtype new_vk_norm;
+    sunrealtype new_vk_norm;
     N_Vector* v;
 
 #if SUNDIALS_ML_SAFE == 1
@@ -1373,7 +1373,7 @@ CAMLprim value sunml_spils_classical_gs(value vargs)
     N_Vector *temp;
     int i;
     int i0 = SUNMAX(k-p, 0);
-    realtype new_vk_norm;
+    sunrealtype new_vk_norm;
     N_Vector* v;
 
     vv = Field(vargs, 0);
@@ -1517,7 +1517,7 @@ static int ocaml_psetup(void *callback_croot)
 }
 
 int ocaml_psolve(void *callback_croot,
-		 N_Vector w, N_Vector z, realtype tol, int lr)
+		 N_Vector w, N_Vector z, sunrealtype tol, int lr)
 {
     CAMLparam0();
     CAMLlocalN (args, 4);

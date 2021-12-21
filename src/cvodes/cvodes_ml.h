@@ -58,7 +58,7 @@
 
 void sunml_cvodes_check_flag(const char *call, int flag, void *cvode_mem);
 
-value sunml_cvodes_make_jac_arg(realtype t, N_Vector y, N_Vector yb,
+value sunml_cvodes_make_jac_arg(sunrealtype t, N_Vector y, N_Vector yb,
 			  N_Vector fyb, value tmp);
 
 // NB: overrides CHECK_FLAG macro in cvode_ml.h

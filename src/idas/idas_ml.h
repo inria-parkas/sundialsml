@@ -60,9 +60,9 @@
 
 void sunml_idas_check_flag(const char *call, int flag, void *ida_mem);
 
-value sunml_idas_make_jac_arg(realtype t, N_Vector y, N_Vector yp,
-                        N_Vector yb, N_Vector ypb, N_Vector resb,
-                        realtype coef, value tmp);
+value sunml_idas_make_jac_arg(sunrealtype t, N_Vector y, N_Vector yp,
+			      N_Vector yb, N_Vector ypb, N_Vector resb,
+			      sunrealtype coef, value tmp);
 
 // NB: overrides CHECK_FLAG macro in ida_ml.h
 #define SCHECK_FLAG(call, flag) if (flag != IDA_SUCCESS) \

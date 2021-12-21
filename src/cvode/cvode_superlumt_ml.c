@@ -59,7 +59,7 @@ CAMLprim value sunml_cvode_superlumt_get_num_jac_evals(value vcvode_mem)
 
 #if SUNDIALS_LIB_VERSION < 300
 static int jacfn(
-	realtype t,
+	sunrealtype t,
 	N_Vector y,
 	N_Vector fy,
 	SlsMat Jac,

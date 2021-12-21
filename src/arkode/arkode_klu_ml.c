@@ -58,7 +58,7 @@ CAMLprim value sunml_arkode_mass_klu_reinit (value varkode_mem,
 #endif
 
 #if SUNDIALS_LIB_VERSION < 300
-static int jacfn(realtype t,
+static int jacfn(sunrealtype t,
 		 N_Vector y,
 		 N_Vector fy,	     
 		 SlsMat Jac,
@@ -164,7 +164,7 @@ CAMLprim value sunml_arkode_klu_get_num_jac_evals(value varkode_mem)
 /* Mass matrix rouintes */
 
 #if SUNDIALS_LIB_VERSION < 300
-static int massfn(realtype t,
+static int massfn(sunrealtype t,
 		  SlsMat M,
 		  void *user_data,
 		  N_Vector tmp1,

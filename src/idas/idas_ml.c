@@ -209,9 +209,9 @@ void sunml_idas_check_flag(const char *call, int flag, void *ida_mem)
 
 /* Callbacks */
 
-value sunml_idas_make_jac_arg(realtype t, N_Vector y, N_Vector yp,
+value sunml_idas_make_jac_arg(sunrealtype t, N_Vector y, N_Vector yp,
 			N_Vector yb, N_Vector ypb, N_Vector resb,
-			realtype coef, value tmp)
+			sunrealtype coef, value tmp)
 {
     CAMLparam1(tmp);
     CAMLlocal1(r);
@@ -229,7 +229,7 @@ value sunml_idas_make_jac_arg(realtype t, N_Vector y, N_Vector yp,
     CAMLreturn(r);
 }
 
-static int quadrhsfn(realtype t, N_Vector y, N_Vector yp, N_Vector rhsQ,
+static int quadrhsfn(sunrealtype t, N_Vector y, N_Vector yp, N_Vector rhsQ,
 		     void *user_data)
 {
     CAMLparam0();
@@ -256,7 +256,7 @@ static int quadrhsfn(realtype t, N_Vector y, N_Vector yp, N_Vector rhsQ,
 }
 
 
-static int sensresfn(int Ns, realtype t,
+static int sensresfn(int Ns, sunrealtype t,
 		     N_Vector y, N_Vector yp, N_Vector resval,
 		     N_Vector *yS, N_Vector *ypS, N_Vector *resvalS,
 		     void *user_data,
@@ -295,7 +295,7 @@ static int sensresfn(int Ns, realtype t,
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
-static int quadsensrhsfn(int ns, realtype t, N_Vector yy, N_Vector yp,
+static int quadsensrhsfn(int ns, sunrealtype t, N_Vector yy, N_Vector yp,
 			 N_Vector *yyS, N_Vector *ypS,
 			 N_Vector rrQ, N_Vector *rhsvalQS,
 			 void *user_data,
@@ -333,7 +333,7 @@ static int quadsensrhsfn(int ns, realtype t, N_Vector yy, N_Vector yp,
 }
 
 
-static int bresfn(realtype t, N_Vector y, N_Vector yp,
+static int bresfn(sunrealtype t, N_Vector y, N_Vector yp,
 		  N_Vector yB, N_Vector ypB,
 		  N_Vector resvalB, void *user_data)
 {
@@ -357,7 +357,7 @@ static int bresfn(realtype t, N_Vector y, N_Vector yp,
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
-static int bresfn_sens(realtype t, N_Vector y, N_Vector yp,
+static int bresfn_sens(sunrealtype t, N_Vector y, N_Vector yp,
 		       N_Vector *yS, N_Vector *ypS,
 		       N_Vector yB, N_Vector ypB,
 		       N_Vector resvalB, void *user_data)
@@ -390,13 +390,13 @@ static int bresfn_sens(realtype t, N_Vector y, N_Vector yp,
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
-static int bprecsetupfn(realtype t,
+static int bprecsetupfn(sunrealtype t,
 			N_Vector yy,
 			N_Vector yp,
 			N_Vector yB,
 			N_Vector ypB,
 			N_Vector resvalB,
-			realtype cjB,
+			sunrealtype cjB,
 			void *user_data
 #if SUNDIALS_LIB_VERSION < 300
 			,
@@ -424,7 +424,7 @@ static int bprecsetupfn(realtype t,
 }
 
 #if SUNDIALS_LIB_VERSION >= 260
-static int bprecsetupfn_sens(realtype t,
+static int bprecsetupfn_sens(sunrealtype t,
 			     N_Vector yy,
 			     N_Vector yp,
 			     N_Vector *yyS,
@@ -432,7 +432,7 @@ static int bprecsetupfn_sens(realtype t,
 			     N_Vector yB,
 			     N_Vector ypB,
 			     N_Vector resvalB,
-			     realtype cjB,
+			     sunrealtype cjB,
 			     void *user_data
 #if SUNDIALS_LIB_VERSION < 300
 			     ,
@@ -469,7 +469,7 @@ static int bprecsetupfn_sens(realtype t,
 }
 #endif
 
-static int bprecsolvefn(realtype t,
+static int bprecsolvefn(sunrealtype t,
 		        N_Vector yy,
 			N_Vector yp,
 			N_Vector yB,
@@ -477,8 +477,8 @@ static int bprecsolvefn(realtype t,
 			N_Vector resvalB,
 			N_Vector rvecB,
 			N_Vector zvecB,
-			realtype cjB,
-			realtype deltaB,
+			sunrealtype cjB,
+			sunrealtype deltaB,
 			void *user_data
 #if SUNDIALS_LIB_VERSION < 300
 			,
@@ -507,7 +507,7 @@ static int bprecsolvefn(realtype t,
 }
 
 #if SUNDIALS_LIB_VERSION >= 260
-static int bprecsolvefn_sens(realtype t,
+static int bprecsolvefn_sens(sunrealtype t,
 			     N_Vector yy,
 			     N_Vector yp,
 			     N_Vector *yyS,
@@ -517,8 +517,8 @@ static int bprecsolvefn_sens(realtype t,
 			     N_Vector resvalB,
 			     N_Vector rvecB,
 			     N_Vector zvecB,
-			     realtype cjB,
-			     realtype deltaB,
+			     sunrealtype cjB,
+			     sunrealtype deltaB,
 			     void *user_data
 #if SUNDIALS_LIB_VERSION < 300
 			     ,
@@ -558,13 +558,13 @@ static int bprecsolvefn_sens(realtype t,
 #endif
 
 #if SUNDIALS_LIB_VERSION >= 300
-static int bjacsetupfn(realtype t,
+static int bjacsetupfn(sunrealtype t,
 		       N_Vector yy,
 		       N_Vector yp,
 		       N_Vector yyB,
 		       N_Vector ypB,
 		       N_Vector resvalB,
-		       realtype cjB,
+		       sunrealtype cjB,
 		       void *user_data)
 {
     CAMLparam0();
@@ -583,7 +583,7 @@ static int bjacsetupfn(realtype t,
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, UNRECOVERABLE));
 }
 
-static int bjacsetupfn_sens(realtype t,
+static int bjacsetupfn_sens(sunrealtype t,
 			    N_Vector yy,
 			    N_Vector yp,
 			    N_Vector *yyS,
@@ -591,7 +591,7 @@ static int bjacsetupfn_sens(realtype t,
 			    N_Vector yyB,
 			    N_Vector ypB,
 			    N_Vector resvalB,
-			    realtype cjB,
+			    sunrealtype cjB,
 			    void *user_data)
 {
     CAMLparam0();
@@ -621,7 +621,7 @@ static int bjacsetupfn_sens(realtype t,
 }
 #endif
 
-static int bjactimesfn(realtype t,
+static int bjactimesfn(sunrealtype t,
 		       N_Vector yy,
 		       N_Vector yp,
 		       N_Vector yyB,
@@ -629,7 +629,7 @@ static int bjactimesfn(realtype t,
 		       N_Vector resvalB,
 		       N_Vector vB,
 		       N_Vector JvB,
-		       realtype cjB,
+		       sunrealtype cjB,
 		       void *user_data,
 		       N_Vector tmp1B,
 		       N_Vector tmp2B)
@@ -655,7 +655,7 @@ static int bjactimesfn(realtype t,
 }
 
 #if SUNDIALS_LIB_VERSION >= 260
-static int bjactimesfn_sens(realtype t,
+static int bjactimesfn_sens(sunrealtype t,
 			    N_Vector yy,
 			    N_Vector yp,
 			    N_Vector *yyS,
@@ -665,7 +665,7 @@ static int bjactimesfn_sens(realtype t,
 			    N_Vector resvalB,
 			    N_Vector vB,
 			    N_Vector JvB,
-			    realtype cjB,
+			    sunrealtype cjB,
 			    void *user_data,
 			    N_Vector tmp1B,
 			    N_Vector tmp2B)
@@ -703,8 +703,8 @@ static int bjactimesfn_sens(realtype t,
 
 #if 300 <= SUNDIALS_LIB_VERSION
 
-static int bjacfn_nosens(realtype t,
-			 realtype cjB,
+static int bjacfn_nosens(sunrealtype t,
+			 sunrealtype cjB,
 			 N_Vector yy,
 			 N_Vector yp,
 			 N_Vector yyB,
@@ -734,8 +734,8 @@ static int bjacfn_nosens(realtype t,
     CAMLreturnT(int, CHECK_EXCEPTION(session, r, RECOVERABLE));
 }
 
-static int bjacfn_withsens(realtype t,
-			   realtype cjB,
+static int bjacfn_withsens(sunrealtype t,
+			   sunrealtype cjB,
 			   N_Vector yy,
 			   N_Vector yp,
 			   N_Vector *yS,
@@ -779,8 +779,8 @@ static int bjacfn_withsens(realtype t,
 
 #else
 static int bjacfn_nosens(long int NeqB,
-			 realtype t,
-			 realtype cjB,
+			 sunrealtype t,
+			 sunrealtype cjB,
 			 N_Vector yy,
 			 N_Vector yp,
 			 N_Vector yyB,
@@ -818,8 +818,8 @@ static int bjacfn_nosens(long int NeqB,
 
 #if SUNDIALS_LIB_VERSION >= 260
 static int bjacfn_withsens(long int NeqB,
-			   realtype t,
-			   realtype cjB,
+			   sunrealtype t,
+			   sunrealtype cjB,
 			   N_Vector yy,
 			   N_Vector yp,
 			   N_Vector *yS,
@@ -871,8 +871,8 @@ static int bjacfn_withsens(long int NeqB,
 static int bbandjacfn_nosens(long int NeqB,
 			     long int mupperb,
 			     long int mlowerb,
-			     realtype t,
-			     realtype cjB,
+			     sunrealtype t,
+			     sunrealtype cjB,
 			     N_Vector yy,
 			     N_Vector yp,
 			     N_Vector yyB,
@@ -912,8 +912,8 @@ static int bbandjacfn_nosens(long int NeqB,
 static int bbandjacfn_withsens(long int NeqB,
 			       long int mupperb,
 			       long int mlowerb,
-			       realtype t,
-			       realtype cjB,
+			       sunrealtype t,
+			       sunrealtype cjB,
 			       N_Vector yy,
 			       N_Vector yp,
 			       N_Vector *yS,
@@ -964,7 +964,7 @@ static int bbandjacfn_withsens(long int NeqB,
 
 #endif
 
-static int bquadrhsfn(realtype t, N_Vector y, N_Vector yp,
+static int bquadrhsfn(sunrealtype t, N_Vector y, N_Vector yp,
 		      N_Vector yB, N_Vector ypB,
 		      N_Vector rhsvalBQ, void *user_data)
 {
@@ -988,7 +988,7 @@ static int bquadrhsfn(realtype t, N_Vector y, N_Vector yp,
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
-static int bquadrhsfn_sens(realtype t, N_Vector y, N_Vector yp,
+static int bquadrhsfn_sens(sunrealtype t, N_Vector y, N_Vector yp,
 			   N_Vector *yS, N_Vector *ypS,
 			   N_Vector yB, N_Vector ypB,
 			   N_Vector rhsvalBQS, void *user_data)
@@ -1023,7 +1023,7 @@ static int bquadrhsfn_sens(realtype t, N_Vector y, N_Vector yp,
 }
 
 #if 530 <= SUNDIALS_LIB_VERSION
-static int bjactimesresfn (realtype t, N_Vector y, N_Vector yp,
+static int bjactimesresfn (sunrealtype t, N_Vector y, N_Vector yp,
 			   N_Vector resval, void *user_data)
 {
     CAMLparam0 ();
@@ -1092,7 +1092,7 @@ CAMLprim value sunml_idas_quad_get(value vdata, value vyq)
 {
     CAMLparam2(vdata, vyq);
     N_Vector yq = NVEC_VAL(vyq);
-    realtype tret;
+    sunrealtype tret;
 
     int flag = IDAGetQuad(IDA_MEM_FROM_ML(vdata), &tret, yq);
     SCHECK_FLAG("IDAGetQuad", flag);
@@ -1202,7 +1202,7 @@ CAMLprim value sunml_idas_quad_get_stats(value vdata)
 #if 400 <= SUNDIALS_LIB_VERSION
 // hack to work around lack of CVodeGetUserData
 typedef struct {
-  realtype ida_uround;
+  sunrealtype ida_uround;
   IDAResFn ida_res;
   void     *ida_user_data;
   //...
@@ -1349,7 +1349,7 @@ CAMLprim value sunml_idas_sens_reinit(value vdata, value vmethod, value vyS0,
     CAMLreturn (Val_unit);
 }
 
-static void sens_calc_ic (void *ida_mem, value session, int icopt, realtype tout1,
+static void sens_calc_ic (void *ida_mem, value session, int icopt, sunrealtype tout1,
 			  value vy, value vyp, value vys, value vyps)
 {
     CAMLparam5 (session, vy, vyp, vys, vyps);
@@ -1423,7 +1423,7 @@ CAMLprim value sunml_idas_sens_get(value vdata, value vys)
 {
     CAMLparam2(vdata, vys);
     N_Vector *ys = sunml_nvector_array_alloc(vys);
-    realtype tret;
+    sunrealtype tret;
 
     int flag = IDAGetSens(IDA_MEM_FROM_ML(vdata), &tret, ys);
     sunml_nvector_array_free(ys);
@@ -1449,7 +1449,7 @@ CAMLprim value sunml_idas_sens_get1(value vdata, value vis, value vys)
 {
     CAMLparam3(vdata, vis, vys);
     N_Vector ys = NVEC_VAL(vys);
-    realtype tret;
+    sunrealtype tret;
 
     int flag = IDAGetSens1(IDA_MEM_FROM_ML(vdata), &tret, Int_val(vis), ys);
     SCHECK_FLAG("IDAGetSens1", flag);
@@ -1536,8 +1536,8 @@ CAMLprim value sunml_idas_sens_set_params(value vdata, value vparams)
     CAMLparam2(vdata, vparams);
     CAMLlocal3(vp, vpbar, vplist);
 
-    realtype *p = NULL;
-    realtype *pbar = NULL;
+    sunrealtype *p = NULL;
+    sunrealtype *pbar = NULL;
     int *plist = NULL;
     int i, ns;
 
@@ -1781,7 +1781,7 @@ CAMLprim value sunml_idas_get_nonlin_system_data_sens(value vida_mem,
     CAMLlocal1(vnv);
 #if 540 <= SUNDIALS_LIB_VERSION
     int ns = Int_val(vns);
-    realtype tn, cj;
+    sunrealtype tn, cj;
     N_Vector *yySpred, *ypSpred, *yySn, *ypSn;
     void *user_data;
 
@@ -1931,7 +1931,7 @@ CAMLprim value sunml_idas_quadsens_get(value vdata, value vyqs)
 {
     CAMLparam2(vdata, vyqs);
     N_Vector *yqs = sunml_nvector_array_alloc(vyqs);
-    realtype tret;
+    sunrealtype tret;
 
     int flag = IDAGetQuadSens(IDA_MEM_FROM_ML(vdata), &tret, yqs);
     sunml_nvector_array_free(yqs);
@@ -1944,7 +1944,7 @@ CAMLprim value sunml_idas_quadsens_get1(value vdata, value vis, value vyqs)
 {
     CAMLparam3(vdata, vis, vyqs);
     N_Vector yqs = NVEC_VAL(vyqs);
-    realtype tret;
+    sunrealtype tret;
 
     int flag = IDAGetQuadSens1(IDA_MEM_FROM_ML(vdata), &tret,
 			       Int_val(vis), yqs);
@@ -2374,7 +2374,7 @@ static value forward_solve(value vdata, value vtout, value vy,
     CAMLlocal1(ret);
     N_Vector y  = NVEC_VAL(vy);
     N_Vector yp = NVEC_VAL(vyp);
-    realtype tret;
+    sunrealtype tret;
     int ncheck;
     enum ida_solver_result_tag solver_result = -1;
 
@@ -2776,7 +2776,7 @@ CAMLprim value sunml_idas_adj_init_backward(value vparent, value weakref,
     int flag, which;
     void *parent = IDA_MEM_FROM_ML(vparent);
 
-    realtype tb0 = Double_val(vtb0);
+    sunrealtype tb0 = Double_val(vtb0);
     N_Vector y0 = NVEC_VAL(vy0);
     N_Vector yp0 = NVEC_VAL(vyp0);
 
@@ -2920,7 +2920,7 @@ CAMLprim value sunml_idas_adj_get(value vparent, value vwhich,
     CAMLparam4(vparent, vwhich, vyB, vypB);
     N_Vector yB = NVEC_VAL(vyB);
     N_Vector ypB = NVEC_VAL(vypB);
-    realtype tret;
+    sunrealtype tret;
 
     int flag = IDAGetB(IDA_MEM_FROM_ML(vparent), Int_val(vwhich),
 		       &tret, yB, ypB);
@@ -2991,7 +2991,7 @@ CAMLprim value sunml_idas_adjquad_get(value vparent, value vwhich, value vyqb)
     CAMLparam3(vparent, vwhich, vyqb);
     CAMLlocal1(r);
     N_Vector yqb = NVEC_VAL(vyqb);
-    realtype tret;
+    sunrealtype tret;
 
     int flag = IDAGetQuadB(IDA_MEM_FROM_ML(vparent), Int_val(vwhich),
 			     &tret, yqb);

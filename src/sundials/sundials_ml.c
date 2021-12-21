@@ -116,7 +116,7 @@ CAMLprim value sundials_ml_weak_get (value ar, value n)
  * We represent these as pairs:
  *	Field(ra, 0) = the underlying 2 dimensional big array
  *		       (for use from within OCaml)
- *	Field(ra, 1) = a custom value giving a realtype ** table pointing into
+ *	Field(ra, 1) = a custom value giving a sunrealtype ** table pointing into
  *		       the columns of the big array (for passing to Sundials)
  */
 
@@ -126,12 +126,12 @@ CAMLprim value sunml_sundials_realarray2_wrap(value vba)
     CAMLlocal2(r, vtable);
 
     struct caml_ba_array *ba = Caml_ba_array_val(vba);
-    realtype *ba_data = ba->data; // ba is invalid after caml_alloc_final
+    sunrealtype *ba_data = ba->data; // ba is invalid after caml_alloc_final
     int nc = ba->dim[0];
     int nr = ba->dim[1];
 
     vtable = caml_alloc_final(nc, NULL, 1, 20);
-    realtype **table = (realtype **)Data_custom_val(vtable);
+    sunrealtype **table = (sunrealtype **)Data_custom_val(vtable);
 
     if (nc > 0) {
 	int j;

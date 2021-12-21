@@ -14,7 +14,7 @@
 
 #define BANDELEM(A,smu,i,j) (A[j][(i)-(j)+(smu)])
 
-void print_mat_data(realtype** m, sundials_ml_index nr, sundials_ml_index nc) {
+void print_mat_data(sunrealtype** m, sundials_ml_index nr, sundials_ml_index nc) {
     int i, j;
 
     for (j=0; j < nr; ++j) {
@@ -25,7 +25,7 @@ void print_mat_data(realtype** m, sundials_ml_index nr, sundials_ml_index nc) {
     }
 }
 
-void zero_mat_data(realtype** m, sundials_ml_index nr, sundials_ml_index nc) {
+void zero_mat_data(sunrealtype** m, sundials_ml_index nr, sundials_ml_index nc) {
     int i, j;
 
     for (j=0; j < nr; ++j) {
@@ -35,7 +35,7 @@ void zero_mat_data(realtype** m, sundials_ml_index nr, sundials_ml_index nc) {
     }
 }
 
-void print_mat(realtype** m,
+void print_mat(sunrealtype** m,
 	       sundials_ml_index n,
 	       sundials_ml_index mu,
 	       sundials_ml_index ml,
@@ -55,7 +55,7 @@ void print_mat(realtype** m,
     }
 }
 
-void print_factored_mat(realtype** m,
+void print_factored_mat(sunrealtype** m,
 			sundials_ml_index n,
 			sundials_ml_index mu,
 			sundials_ml_index ml,
@@ -77,7 +77,7 @@ void print_factored_mat(realtype** m,
     }
 }
 
-void print_vec(realtype* m, sundials_ml_index nr) {
+void print_vec(sunrealtype* m, sundials_ml_index nr) {
     int i;
 
     for (i=0; i < nr; ++i) {
@@ -97,10 +97,10 @@ void print_pivots(sundials_ml_index* m, sundials_ml_index nr) {
 
 int main(int argc, char** argv)
 {
-    realtype **a = newBandMat(SIZE, SMU, ML);
-    realtype **b = newBandMat(SIZE, SMU, ML);
+    sunrealtype **a = newBandMat(SIZE, SMU, ML);
+    sunrealtype **b = newBandMat(SIZE, SMU, ML);
     sundials_ml_index p[SIZE] = { 0.0 };
-    realtype s[SIZE] = { 5.0, 15.0, 31.0, 53.0, 45.0 };
+    sunrealtype s[SIZE] = { 5.0, 15.0, 31.0, 53.0, 45.0 };
 
     zero_mat_data(a, SIZE, SMU + ML + 1);
     zero_mat_data(b, SIZE, SMU + ML + 1);
@@ -135,8 +135,8 @@ int main(int argc, char** argv)
 
 #if SUNDIALS_LIB_VERSION >= 260
     {
-	realtype x[SIZE] = { 1.0,  2.0, 3.0, 4.0, 5.0 };
-	realtype y[SIZE] = { 0.0 };
+	sunrealtype x[SIZE] = { 1.0,  2.0, 3.0, 4.0, 5.0 };
+	sunrealtype y[SIZE] = { 0.0 };
 	printf("matvec: y=\n");
 	bandMatvec(a, x, y, SIZE, MU, ML, SMU);
 	print_vec(y, SIZE);

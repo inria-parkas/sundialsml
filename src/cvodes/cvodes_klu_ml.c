@@ -40,7 +40,7 @@ CAMLprim value sunml_cvodes_klub_init (value vparent_which, value vformat,
 
 #if SUNDIALS_LIB_VERSION < 300
 static int jacfn_nosens( /* CVSlsSparseJacFnB */
-    realtype t,
+    sunrealtype t,
     N_Vector y,
     N_Vector yb,
     N_Vector fyb,
@@ -79,7 +79,7 @@ static int jacfn_nosens( /* CVSlsSparseJacFnB */
 }
 
 static int jacfn_withsens( /* CVSlsSparseJacFnBS */
-    realtype t,
+    sunrealtype t,
     N_Vector y,
     N_Vector *ys,
     N_Vector yb,

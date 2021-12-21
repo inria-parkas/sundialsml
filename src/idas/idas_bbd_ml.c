@@ -33,7 +33,7 @@
 
 /* callbacks */
 
-static int bbbdlocal(sundials_ml_index nlocal, realtype t, N_Vector yy,
+static int bbbdlocal(sundials_ml_index nlocal, sunrealtype t, N_Vector yy,
 		     N_Vector yp, N_Vector yyB, N_Vector ypB, N_Vector glocal,
 		     void *user_data)
 {
@@ -58,7 +58,7 @@ static int bbbdlocal(sundials_ml_index nlocal, realtype t, N_Vector yy,
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
 
-static int bbbdcomm(sundials_ml_index nlocal, realtype t,
+static int bbbdcomm(sundials_ml_index nlocal, sunrealtype t,
 		    N_Vector yy, N_Vector yp,
 		    N_Vector yyB, N_Vector ypB,
 		    void *user_data)

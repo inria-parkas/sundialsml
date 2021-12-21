@@ -222,7 +222,7 @@ int sunml_cvode_translate_exception (value session, value exn,
     CAMLreturnT (int, -1);
 }
 
-static int rhsfn(realtype t, N_Vector y, N_Vector ydot, void *user_data)
+static int rhsfn(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
 {
     CAMLparam0();
     CAMLlocal1(session);
@@ -239,7 +239,7 @@ static int rhsfn(realtype t, N_Vector y, N_Vector ydot, void *user_data)
 }
 
 #if 580 <= SUNDIALS_LIB_VERSION
-static int nlsrhsfn(realtype t, N_Vector y, N_Vector ydot, void *user_data)
+static int nlsrhsfn(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
 {
     CAMLparam0();
     CAMLlocal1(session);
@@ -259,7 +259,7 @@ static int nlsrhsfn(realtype t, N_Vector y, N_Vector ydot, void *user_data)
 }
 #endif
 
-static int roots(realtype t, N_Vector y, realtype *gout, void *user_data)
+static int roots(sunrealtype t, N_Vector y, sunrealtype *gout, void *user_data)
 {
     CAMLparam0();
     CAMLlocal1(session);
@@ -304,7 +304,7 @@ static int errw(N_Vector y, N_Vector ewt, void *user_data)
     CAMLreturnT (int, 0);
 }
 
-value sunml_cvode_make_jac_arg(realtype t, N_Vector y, N_Vector fy, value tmp)
+value sunml_cvode_make_jac_arg(sunrealtype t, N_Vector y, N_Vector fy, value tmp)
 {
     CAMLparam1(tmp);
     CAMLlocal1(r);
@@ -332,7 +332,7 @@ value sunml_cvode_make_triple_tmp(N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
 
 #if 300 <= SUNDIALS_LIB_VERSION
 static int jacfn(
-	realtype t,
+	sunrealtype t,
 	N_Vector y,
 	N_Vector fy,
 	SUNMatrix Jac,
@@ -365,7 +365,7 @@ static int jacfn(
 /* Dense and band Jacobians only work with serial NVectors.  */
 static int jacfn(
 	long int n,
-	realtype t,
+	sunrealtype t,
 	N_Vector y,
 	N_Vector fy,	     
 	DlsMat Jac,
@@ -402,7 +402,7 @@ static int bandjacfn(
 	long int N,
 	long int mupper,
 	long int mlower,
-	realtype t,
+	sunrealtype t,
 	N_Vector y,
 	N_Vector fy,
 	DlsMat Jac,
@@ -438,13 +438,13 @@ static int bandjacfn(
 
 #if 500 <= SUNDIALS_LIB_VERSION
 static int linsysfn(
-	realtype t,
+	sunrealtype t,
 	N_Vector y,
 	N_Vector fy,
 	SUNMatrix M,
 	booleantype jok,
 	booleantype *jcur,
-	realtype gamma,
+	sunrealtype gamma,
 	void *user_data,
 	N_Vector tmp1,
 	N_Vector tmp2,
@@ -479,12 +479,12 @@ static int linsysfn(
 }
 #endif
 
-static int precsetupfn(realtype t,
+static int precsetupfn(sunrealtype t,
 		       N_Vector y,
 		       N_Vector fy,
 		       booleantype jok,
 		       booleantype *jcurPtr,
-		       realtype gamma,
+		       sunrealtype gamma,
 		       void *user_data
 #if SUNDIALS_LIB_VERSION < 300
 		       ,
@@ -524,8 +524,8 @@ static int precsetupfn(realtype t,
 
 static value make_spils_solve_arg(
 	N_Vector r,
-	realtype gamma,
-	realtype delta,
+	sunrealtype gamma,
+	sunrealtype delta,
 	int lr)
 
 {
@@ -544,13 +544,13 @@ static value make_spils_solve_arg(
 }
 
 static int precsolvefn(
-	realtype t,
+	sunrealtype t,
 	N_Vector y,
 	N_Vector fy,
 	N_Vector rvec,
 	N_Vector z,
-	realtype gamma,
-	realtype delta,
+	sunrealtype gamma,
+	sunrealtype delta,
 	int lr,
 	void *user_data
 #if SUNDIALS_LIB_VERSION < 300
@@ -580,7 +580,7 @@ static int precsolvefn(
 
 static int jactimesfn(N_Vector v,
 		      N_Vector Jv,
-		      realtype t,
+		      sunrealtype t,
 		      N_Vector y,
 		      N_Vector fy,
 		      void *user_data,
@@ -606,7 +606,7 @@ static int jactimesfn(N_Vector v,
 }
 
 #if 300 <= SUNDIALS_LIB_VERSION
-static int jacsetupfn(realtype t,
+static int jacsetupfn(sunrealtype t,
 		      N_Vector y,
 		      N_Vector fy,
 		      void *user_data)
@@ -629,7 +629,7 @@ static int jacsetupfn(realtype t,
 #endif
 
 #if 530 <= SUNDIALS_LIB_VERSION
-static int jactimesrhsfn(realtype t, N_Vector y, N_Vector ydot, void *user_data)
+static int jactimesrhsfn(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
 {
     CAMLparam0();
     CAMLlocal2(session, cb);
@@ -651,8 +651,8 @@ static int jactimesrhsfn(realtype t, N_Vector y, N_Vector ydot, void *user_data)
 #endif
 
 #if 530 <= SUNDIALS_LIB_VERSION && !SUNDIALSML_WITHSENS
-int projfn(realtype t, N_Vector ycur, N_Vector corr,
-           realtype epsProj, N_Vector err, void *user_data)
+int projfn(sunrealtype t, N_Vector ycur, N_Vector corr,
+           sunrealtype epsProj, N_Vector err, void *user_data)
 {
     CAMLparam0();
     CAMLlocal2(session, verr);
@@ -904,7 +904,7 @@ CAMLprim value sunml_cvode_set_jac_times_rhsfn(value vdata, value vhas_rhsfn)
 
 // hack to work around lack of CVodeGetUserData
 typedef struct {
-  realtype cv_uround;
+  sunrealtype cv_uround;
   CVRhsFn cv_f;
   void *cv_user_data;
   //...
@@ -1054,7 +1054,7 @@ static value solver(value vdata, value nextt, value vy, int onestep)
 {
     CAMLparam3(vdata, nextt, vy);
     CAMLlocal1(ret);
-    realtype tret;
+    sunrealtype tret;
     int flag;
     N_Vector y;
     enum cvode_solver_result_tag result = -1;
@@ -1395,10 +1395,10 @@ CAMLprim value sunml_cvode_get_integrator_stats(value vdata)
     int qlast;
     int qcur;	 
 
-    realtype hinused;
-    realtype hlast;
-    realtype hcur;
-    realtype tcur;
+    sunrealtype hinused;
+    sunrealtype hlast;
+    sunrealtype hcur;
+    sunrealtype tcur;
 
     flag = CVodeGetIntegratorStats(CVODE_MEM_FROM_ML(vdata),
 	&nsteps,
@@ -1683,7 +1683,7 @@ CAMLprim value sunml_cvode_get_nonlin_system_data(value vcvode_mem)
     CAMLparam1(vcvode_mem);
     CAMLlocal1(vnv);
 #if 540 <= SUNDIALS_LIB_VERSION
-    realtype tn, gamma, rl1;
+    sunrealtype tn, gamma, rl1;
     N_Vector ypred, yn, fn, zn1;
     void *user_data;
 
@@ -1762,7 +1762,7 @@ CAMLprim value sunml_cvode_get_actual_init_step(value vcvode_mem)
     CAMLparam1(vcvode_mem);
 
     int flag;
-    realtype v;
+    sunrealtype v;
 
     flag = CVodeGetActualInitStep(CVODE_MEM_FROM_ML(vcvode_mem), &v);
     CHECK_FLAG("CVodeGetActualInitStep", flag);
@@ -1775,7 +1775,7 @@ CAMLprim value sunml_cvode_get_last_step(value vcvode_mem)
     CAMLparam1(vcvode_mem);
 
     int flag;
-    realtype v;
+    sunrealtype v;
 
     flag = CVodeGetLastStep(CVODE_MEM_FROM_ML(vcvode_mem), &v);
     CHECK_FLAG("CVodeGetLastStep", flag);
@@ -1788,7 +1788,7 @@ CAMLprim value sunml_cvode_get_current_step(value vcvode_mem)
     CAMLparam1(vcvode_mem);
 
     int flag;
-    realtype v;
+    sunrealtype v;
 
     flag = CVodeGetCurrentStep(CVODE_MEM_FROM_ML(vcvode_mem), &v);
     CHECK_FLAG("CVodeGetCurrentStep", flag);
@@ -1801,7 +1801,7 @@ CAMLprim value sunml_cvode_get_current_time(value vcvode_mem)
     CAMLparam1(vcvode_mem);
 
     int flag;
-    realtype v;
+    sunrealtype v;
 
     flag = CVodeGetCurrentTime(CVODE_MEM_FROM_ML(vcvode_mem), &v);
     CHECK_FLAG("CVodeGetCurrentTime", flag);
@@ -2198,7 +2198,7 @@ CAMLprim value sunml_cvode_get_tol_scale_factor(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
 
-    realtype r;
+    sunrealtype r;
     int flag = CVodeGetTolScaleFactor(CVODE_MEM_FROM_ML(vcvode_mem), &r);
     CHECK_FLAG("CVodeGetTolScaleFactor", flag);
 

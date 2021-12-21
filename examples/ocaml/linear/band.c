@@ -44,7 +44,7 @@ void print_factored_mat(DlsMat m) {
     }
 }
 
-void print_vec(realtype* m, sundials_ml_index nr)
+void print_vec(sunrealtype* m, sundials_ml_index nr)
 {
     int i;
 
@@ -69,7 +69,7 @@ int main(int argc, char** argv)
     DlsMat a = NewBandMat(SIZE, MU, ML, SMU);
     DlsMat b = NewBandMat(SIZE, MU, ML, SMU);
     sundials_ml_index p[SIZE] = { 0.0 };
-    realtype s[SIZE] = { 5.0, 15.0, 31.0, 53.0, 45.0 };
+    sunrealtype s[SIZE] = { 5.0, 15.0, 31.0, 53.0, 45.0 };
 
     BAND_ELEM(a,0,0) = 1.0;
     BAND_ELEM(a,0,1) = 2.0;
@@ -95,8 +95,8 @@ int main(int argc, char** argv)
 
 #if SUNDIALS_LIB_VERSION >= 260
     {
-	realtype x[SIZE] = { 1.0,  2.0, 3.0, 4.0, 5.0 };
-	realtype y[SIZE] = { 0.0 };
+	sunrealtype x[SIZE] = { 1.0,  2.0, 3.0, 4.0, 5.0 };
+	sunrealtype y[SIZE] = { 0.0 };
 	printf("matvec: y=\n");
 	BandMatvec(a, x, y);
 	print_vec(y, SIZE);

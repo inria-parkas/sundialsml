@@ -1553,7 +1553,7 @@ CAMLprim value sunml_kinsol_get_func_norm(value vkin_mem)
     CAMLparam1(vkin_mem);
 
     int flag;
-    realtype v;
+    sunrealtype v;
 
     flag = KINGetFuncNorm(KINSOL_MEM_FROM_ML(vkin_mem), &v);
     CHECK_FLAG("KINGetFuncNorm", flag);
@@ -1566,7 +1566,7 @@ CAMLprim value sunml_kinsol_get_step_length(value vkin_mem)
     CAMLparam1(vkin_mem);
 
     int flag;
-    realtype v;
+    sunrealtype v;
 
     flag = KINGetStepLength(KINSOL_MEM_FROM_ML(vkin_mem), &v);
     CHECK_FLAG("KINGetStepLength", flag);

@@ -41,8 +41,8 @@ CAMLprim value sunml_idas_superlumtb_init (value vparent_which,
 
 #if SUNDIALS_LIB_VERSION < 300
 static int jacfn_nosens( /* IDASlsSparseJacFnB */
-	realtype t,
-	realtype cjB,
+	sunrealtype t,
+	sunrealtype cjB,
 	N_Vector yy,
 	N_Vector yp,
 	N_Vector yyB,
@@ -83,8 +83,8 @@ static int jacfn_nosens( /* IDASlsSparseJacFnB */
 }
 
 static int jacfn_withsens( /* IDASlsSparseJacFnB */
-	realtype t,
-	realtype cjB,
+	sunrealtype t,
+	sunrealtype cjB,
 	N_Vector yy,
 	N_Vector yp,
 	N_Vector *ys,

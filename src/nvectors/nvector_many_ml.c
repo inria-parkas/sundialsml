@@ -606,7 +606,7 @@ CAMLprim value SUNML_NVEC_OP(wrmsnorm)(value vx, value vw)
 {
     CAMLparam2(vx, vw);
 #if 500 <= SUNDIALS_LIB_VERSION
-    realtype r = MVAPPEND(N_VWrmsNorm)(NVEC_VAL(vx), NVEC_VAL(vw));
+    sunrealtype r = MVAPPEND(N_VWrmsNorm)(NVEC_VAL(vx), NVEC_VAL(vw));
     CAMLreturn(caml_copy_double(r));
 #else
     CAMLreturn (Val_unit);
@@ -617,7 +617,7 @@ CAMLprim value SUNML_NVEC_OP(wrmsnormmask)(value vx, value vw, value vid)
 {
     CAMLparam3(vx, vw, vid);
 #if 500 <= SUNDIALS_LIB_VERSION
-    realtype r = MVAPPEND(N_VWrmsNormMask)(NVEC_VAL(vx), NVEC_VAL(vw),
+    sunrealtype r = MVAPPEND(N_VWrmsNormMask)(NVEC_VAL(vx), NVEC_VAL(vw),
 					   NVEC_VAL(vid));
     CAMLreturn(caml_copy_double(r));
 #else
@@ -630,7 +630,7 @@ CAMLprim value SUNML_NVEC_OP(dotprod)(value vx, value vy)
 {
     CAMLparam2(vx, vy);
 #if 500 <= SUNDIALS_LIB_VERSION
-    realtype r = MVAPPEND(N_VDotProd)(NVEC_VAL(vx), NVEC_VAL(vy));
+    sunrealtype r = MVAPPEND(N_VDotProd)(NVEC_VAL(vx), NVEC_VAL(vy));
     CAMLreturn(caml_copy_double(r));
 #else
     CAMLreturn (Val_unit);
@@ -641,7 +641,7 @@ CAMLprim value SUNML_NVEC_OP(maxnorm)(value vx)
 {
     CAMLparam1(vx);
 #if 500 <= SUNDIALS_LIB_VERSION
-    realtype r = MVAPPEND(N_VMaxNorm)(NVEC_VAL(vx));
+    sunrealtype r = MVAPPEND(N_VMaxNorm)(NVEC_VAL(vx));
     CAMLreturn(caml_copy_double(r));
 #else
     CAMLreturn (Val_unit);
@@ -652,7 +652,7 @@ CAMLprim value SUNML_NVEC_OP(min)(value vx)
 {
     CAMLparam1(vx);
 #if 500 <= SUNDIALS_LIB_VERSION
-    realtype r = MVAPPEND(N_VMin)(NVEC_VAL(vx));
+    sunrealtype r = MVAPPEND(N_VMin)(NVEC_VAL(vx));
     CAMLreturn(caml_copy_double(r));
 #else
     CAMLreturn (Val_unit);
@@ -664,7 +664,7 @@ CAMLprim value SUNML_NVEC_OP(wl2norm)(value vx, value vw)
 {
     CAMLparam2(vx, vw);
 #if 500 <= SUNDIALS_LIB_VERSION
-    realtype r = MVAPPEND(N_VWL2Norm)(NVEC_VAL(vx), NVEC_VAL(vw));
+    sunrealtype r = MVAPPEND(N_VWL2Norm)(NVEC_VAL(vx), NVEC_VAL(vw));
     CAMLreturn(caml_copy_double(r));
 #else
     CAMLreturn (Val_unit);
@@ -676,7 +676,7 @@ CAMLprim value SUNML_NVEC_OP(l1norm)(value vx)
 {
     CAMLparam1(vx);
 #if 500 <= SUNDIALS_LIB_VERSION
-    realtype r = MVAPPEND(N_VL1Norm)(NVEC_VAL(vx));
+    sunrealtype r = MVAPPEND(N_VL1Norm)(NVEC_VAL(vx));
     CAMLreturn(caml_copy_double(r));
 #else
     CAMLreturn (Val_unit);
@@ -725,7 +725,7 @@ CAMLprim value SUNML_NVEC_OP(minquotient)(value vnum, value vdenom)
 {
     CAMLparam2(vnum, vdenom);
 #if 500 <= SUNDIALS_LIB_VERSION
-    realtype r = MVAPPEND(N_VMinQuotient)(NVEC_VAL(vnum), NVEC_VAL(vdenom));
+    sunrealtype r = MVAPPEND(N_VMinQuotient)(NVEC_VAL(vnum), NVEC_VAL(vdenom));
     CAMLreturn(caml_copy_double(r));
 #else
     CAMLreturn (Val_unit);
@@ -769,7 +769,7 @@ CAMLprim value SUNML_NVEC_OP(linearcombination)(value vac, value vax,
 {
     CAMLparam3(vac, vax, vz);
 #if 500 <= SUNDIALS_LIB_VERSION
-    realtype *ac = REAL_ARRAY(vac);
+    sunrealtype *ac = REAL_ARRAY(vac);
     N_Vector z = NVEC_VAL(vz);
     N_Vector *ax;
     int nvec = sunml_arrays_of_nvectors(&ax, 1, vax);
@@ -786,7 +786,7 @@ CAMLprim value SUNML_NVEC_OP(scaleaddmulti)(value vac, value vx, value vay,
 {
     CAMLparam4(vac, vx, vay, vaz);
 #if 500 <= SUNDIALS_LIB_VERSION
-    realtype *ac = REAL_ARRAY(vac);
+    sunrealtype *ac = REAL_ARRAY(vac);
     N_Vector x = NVEC_VAL(vx);
     N_Vector *a[2];
     int nvec = sunml_arrays_of_nvectors(a, 2, vay, vaz);
@@ -802,7 +802,7 @@ CAMLprim value SUNML_NVEC_OP(dotprodmulti)(value vx, value vay, value vad)
 {
     CAMLparam3(vx, vay, vad);
 #if 500 <= SUNDIALS_LIB_VERSION
-    realtype *ad = REAL_ARRAY(vad);
+    sunrealtype *ad = REAL_ARRAY(vad);
     N_Vector x = NVEC_VAL(vx);
     N_Vector *ay;
     int nvec = sunml_arrays_of_nvectors(&ay, 1, vay);
@@ -836,7 +836,7 @@ CAMLprim value SUNML_NVEC_OP(scalevectorarray)(value vac, value vax,
 {
     CAMLparam3(vac, vax, vaz);
 #if 500 <= SUNDIALS_LIB_VERSION
-    realtype *ac = REAL_ARRAY(vac);
+    sunrealtype *ac = REAL_ARRAY(vac);
     N_Vector *a[2];
     int nvec = sunml_arrays_of_nvectors(a, 2, vax, vaz);
     if (!nvec) caml_raise_out_of_memory();
@@ -866,7 +866,7 @@ CAMLprim value SUNML_NVEC_OP(wrmsnormvectorarray)(value vax, value vaw,
 {
     CAMLparam3(vax, vaw, van);
 #if 500 <= SUNDIALS_LIB_VERSION
-    realtype *an = REAL_ARRAY(van);
+    sunrealtype *an = REAL_ARRAY(van);
     N_Vector *a[2];
     int nvec = sunml_arrays_of_nvectors(a, 2, vax, vaw);
     if (!nvec) caml_raise_out_of_memory();
@@ -882,7 +882,7 @@ CAMLprim value SUNML_NVEC_OP(wrmsnormmaskvectorarray)(value vax, value vaw,
 {
     CAMLparam4(vax, vaw, vi, van);
 #if 500 <= SUNDIALS_LIB_VERSION
-    realtype *an = REAL_ARRAY(van);
+    sunrealtype *an = REAL_ARRAY(van);
     N_Vector i = NVEC_VAL(vi);
     N_Vector *a[2];
     int nvec = sunml_arrays_of_nvectors(a, 2, vax, vaw);
@@ -905,7 +905,7 @@ CAMLprim value SUNML_NVEC_OP(dotprodlocal)(value vx, value vw)
 {
     CAMLparam2(vx, vw);
 #if 500 <= SUNDIALS_LIB_VERSION
-    realtype r = MVAPPEND(N_VDotProdLocal)(NVEC_VAL(vx), NVEC_VAL(vw));
+    sunrealtype r = MVAPPEND(N_VDotProdLocal)(NVEC_VAL(vx), NVEC_VAL(vw));
     CAMLreturn(caml_copy_double(r));
 #else
     CAMLreturn (Val_unit);
@@ -916,7 +916,7 @@ CAMLprim value SUNML_NVEC_OP(maxnormlocal)(value vx)
 {
     CAMLparam1(vx);
 #if 500 <= SUNDIALS_LIB_VERSION
-    realtype r = MVAPPEND(N_VMaxNormLocal)(NVEC_VAL(vx));
+    sunrealtype r = MVAPPEND(N_VMaxNormLocal)(NVEC_VAL(vx));
     CAMLreturn(caml_copy_double(r));
 #else
     CAMLreturn (Val_unit);
@@ -927,7 +927,7 @@ CAMLprim value SUNML_NVEC_OP(minlocal)(value vx)
 {
     CAMLparam1(vx);
 #if 500 <= SUNDIALS_LIB_VERSION
-    realtype r = MVAPPEND(N_VMinLocal)(NVEC_VAL(vx));
+    sunrealtype r = MVAPPEND(N_VMinLocal)(NVEC_VAL(vx));
     CAMLreturn(caml_copy_double(r));
 #else
     CAMLreturn (Val_unit);
@@ -938,7 +938,7 @@ CAMLprim value SUNML_NVEC_OP(l1normlocal)(value vx)
 {
     CAMLparam1(vx);
 #if 500 <= SUNDIALS_LIB_VERSION
-    realtype r = MVAPPEND(N_VL1NormLocal)(NVEC_VAL(vx));
+    sunrealtype r = MVAPPEND(N_VL1NormLocal)(NVEC_VAL(vx));
     CAMLreturn(caml_copy_double(r));
 #else
     CAMLreturn (Val_unit);
@@ -972,7 +972,7 @@ CAMLprim value SUNML_NVEC_OP(minquotientlocal)(value vn, value vd)
 {
     CAMLparam2(vn, vd);
 #if 500 <= SUNDIALS_LIB_VERSION
-    realtype r = MVAPPEND(N_VMinQuotientLocal)(NVEC_VAL(vn), NVEC_VAL(vd));
+    sunrealtype r = MVAPPEND(N_VMinQuotientLocal)(NVEC_VAL(vn), NVEC_VAL(vd));
     CAMLreturn(caml_copy_double(r));
 #else
     CAMLreturn (Val_unit);
@@ -983,7 +983,7 @@ CAMLprim value SUNML_NVEC_OP(wsqrsumlocal)(value vx, value vw)
 {
     CAMLparam2(vx, vw);
 #if 500 <= SUNDIALS_LIB_VERSION
-    realtype r = MVAPPEND(N_VWSqrSumLocal)(NVEC_VAL(vx), NVEC_VAL(vw));
+    sunrealtype r = MVAPPEND(N_VWSqrSumLocal)(NVEC_VAL(vx), NVEC_VAL(vw));
     CAMLreturn(caml_copy_double(r));
 #else
     CAMLreturn (Val_unit);
@@ -994,7 +994,7 @@ CAMLprim value SUNML_NVEC_OP(wsqrsummasklocal)(value vx, value vw, value vid)
 {
     CAMLparam3(vx, vw, vid);
 #if 500 <= SUNDIALS_LIB_VERSION
-    realtype r = MVAPPEND(N_VWSqrSumMaskLocal)(NVEC_VAL(vx), NVEC_VAL(vw),
+    sunrealtype r = MVAPPEND(N_VWSqrSumMaskLocal)(NVEC_VAL(vx), NVEC_VAL(vw),
 					       NVEC_VAL(vid));
     CAMLreturn(caml_copy_double(r));
 #else

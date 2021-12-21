@@ -33,6 +33,10 @@
 #define SUNSQR(A) ((A)*(A))
 #endif
 
+#if SUNDIALS_LIB_VERSION < 600
+#define sunrealtype realtype
+#endif
+
 void sunml_warn_discarded_exn (value exn, const char *context);
 
 /* Sundials and integers
@@ -68,7 +72,7 @@ typedef int sundials_ml_smat_index;
 
 #define INT_ARRAY(v) ((int *)Caml_ba_data_val(v))
 #define LONG_ARRAY(v) ((long int *)Caml_ba_data_val(v))
-#define REAL_ARRAY(v) ((realtype *)Caml_ba_data_val(v))
+#define REAL_ARRAY(v) ((sunrealtype *)Caml_ba_data_val(v))
 
 #define ARRAY1_LEN(v) (Caml_ba_array_val((v))->dim[0])
 
@@ -100,8 +104,8 @@ value sundials_ml_weak_get (value ar, value n);
     } while (0)
 
 #define ARRAY2_BA(v)    (Caml_ba_array_val(Field((v), 0)))
-#define ARRAY2_DATA(v)  ((realtype *)Caml_ba_data_val(Field((v), 0)))
-#define ARRAY2_ACOLS(v) ((realtype **) Data_custom_val(Field((v), 1)))
+#define ARRAY2_DATA(v)  ((sunrealtype *)Caml_ba_data_val(Field((v), 0)))
+#define ARRAY2_ACOLS(v) ((sunrealtype **) Data_custom_val(Field((v), 1)))
 #define ARRAY2_NCOLS(v) (ARRAY2_DATA(v)->dim[0])
 #define ARRAY2_NROWS(v) (ARRAY2_DATA(v)->dim[1])
 

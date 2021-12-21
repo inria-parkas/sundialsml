@@ -9,13 +9,13 @@
 #define NCOLS  3
 #define NZEROS 5
 
-realtype a_init[NROWS][NCOLS] = {
+sunrealtype a_init[NROWS][NCOLS] = {
     {  0.0,  2.0,  0.0},
     {  0.0, -4.0,  0.0},
     {  0.0, -9.0, -3.0}
 };
 
-void print_vec(realtype* m, long int nr)
+void print_vec(sunrealtype* m, long int nr)
 {
     int i;
 
@@ -64,8 +64,8 @@ int main(int argc, char** argv)
 #else
     SlsMat b  = NewSparseMat(NROWS, NCOLS, 2);
 #endif
-    realtype x[NCOLS] = { 2.0, 3.0, 4.0 };
-    realtype y[NROWS];
+    sunrealtype x[NCOLS] = { 2.0, 3.0, 4.0 };
+    sunrealtype y[NROWS];
     int i, j;
 
     for (i=0; i < NROWS; ++i) {
@@ -125,7 +125,7 @@ int main(int argc, char** argv)
 #else
     b->rowvals = realloc(b->rowvals, b->NNZ*sizeof(int));
 #endif
-    b->data    = realloc(b->data, b->NNZ*sizeof(realtype));
+    b->data    = realloc(b->data, b->NNZ*sizeof(sunrealtype));
     printf("set to zero (NNZ=9): b=\n");
     print_mat(b);
     printf("\n");
