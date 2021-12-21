@@ -1,7 +1,7 @@
 #! /bin/sh
 
 sysname='Sundials/ML'
-version=5.8.0
+version=6.0.0
 versionp=0
 contact='tim@tbrk.org'
 
@@ -527,7 +527,9 @@ arkode_cobj_bbd=
 arkode_cobj_sens=
 arkode_subdir=
 arkode_enabled=
-if [ "${sundials_version}" = "SUNDIALS_PACKAGE_VERSION" ]; then
+if [ "${sundials_version}" = "SUNDIALS_PACKAGE_VERSION" ] \
+   || [ "x${sundials_version}" = x ]
+then
     test_stem=__configure_test_file_sundialsversion1
     cat > $test_stem.c <<EOF
 // ${CPP} ${cppflags} ${Isundials_inc_path} -P $test_stem.c
@@ -540,7 +542,9 @@ EOF
     ${debug_configure} || rm -f ./$test_stem.c
 fi
 
-if [ "${sundials_version}" = "SUNDIALS_VERSION" ]; then
+if [ "${sundials_version}" = "SUNDIALS_VERSION" ] \
+   || [ "x${sundials_version}" = x ]
+then
     error="${error}\n\tcould not find sundials_config.h"
     sundials=0
     sundials_version="UNKNOWN"
@@ -595,7 +599,8 @@ else
     # Make sure realtype has the right size.
     test_stem=__configure_test_file__realtype
     test_cmd="$CC ${Isundials_inc_path} -o ${test_stem}${XX} $test_stem.c"
-    cat > $test_stem.c <<EOF
+    if [ ${sundials} -lt 600 ]; then
+	cat > $test_stem.c <<EOF
 /* ${test_cmd} */
 #include <sundials/sundials_types.h>
 int main (int argc, char *argv[])
@@ -603,6 +608,16 @@ int main (int argc, char *argv[])
   return sizeof (realtype) != sizeof (double);
 }
 EOF
+    else
+	cat > $test_stem.c <<EOF
+/* ${test_cmd} */
+#include <sundials/sundials_types.h>
+int main (int argc, char *argv[])
+{
+  return sizeof (sunrealtype) != sizeof (double);
+}
+EOF
+    fi
     if ! eval "${test_cmd}" >>${logfile} 2>&1
     then
         error="${error}\n\tCan't link C code to sundials.  Is sundials installed properly?"
@@ -618,8 +633,19 @@ EOF
 fi
 
 if [ ${sundials} -ge 600 ]; then
-    sundials=0
-    error="${error}\n\tsundials <= 5.x required (${sundials_version} is not yet supported)"
+    sundials_at_least_6_0_0=1
+    sundials_at_least_5_8_0=1
+    sundials_at_least_5_4_0=1
+    sundials_at_least_5_3_0=1
+    sundials_at_least_5_1_0=1
+    sundials_at_least_5_0_0=1
+    sundials_at_least_4_0_0=1
+    sundials_at_least_3_2_0=1
+    sundials_at_least_3_1_2=1
+    sundials_at_least_3_0=1
+    sundials_at_least_2_7=1
+    sundials_at_least_2_6=1
+    sundials_at_least_2_5=1
 elif [ ${sundials} -ge 500 ]; then
     if [ ${sundials} -ge 510 ]; then
 	sundials_at_least_5_1_0=1
@@ -1611,6 +1637,7 @@ cat ${LOG}
 	 s#@version@#${version}#;
 	 s#@versionp@#${versionp}#;
 	 s#@sundials_version@#${sundials_version}#;
+	 s#@sundials_at_least_6_0_0@#${sundials_at_least_6_0_0}#;
 	 s#@sundials_at_least_5_8_0@#${sundials_at_least_5_8_0}#;
 	 s#@sundials_at_least_5_4_0@#${sundials_at_least_5_4_0}#;
 	 s#@sundials_at_least_5_3_0@#${sundials_at_least_5_3_0}#;
