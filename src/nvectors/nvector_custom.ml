@@ -103,8 +103,13 @@ external c_enablescaleaddmultivectorarray_custom     : ('d, 'k) Nvector.t -> boo
 external c_enablelinearcombinationvectorarray_custom : ('d, 'k) Nvector.t -> bool -> bool
   = "sunml_nvec_custom_enablelinearcombinationvectorarray"
 
-external c_make_wrap
-    : 'a nvector_ops -> 'a -> ('a t -> bool) -> ('t -> 't) -> 'a t
+external c_make_wrap :
+         'a nvector_ops
+      -> 'a
+      -> ('a t -> bool)
+      -> ('t -> 't)
+      -> Sundials.Context.t
+      -> 'a t
     = "sunml_nvec_wrap_custom"
 
 let do_enable f nv v =
@@ -150,9 +155,10 @@ let enable
 
 let uv = Nvector.unwrap
 
-let rec make_wrap ops ?(with_fused_ops=false) v =
+let rec make_wrap ops ?context ?(with_fused_ops=false) v =
   let check nv' = ops.check v (uv nv') in
-  let nv = c_make_wrap ops v check (clone ops) in
+  let ctx = Sundials_impl.Context.get context in
+  let nv = c_make_wrap ops v check (clone ops) ctx in
   if with_fused_ops && not (c_enablefusedops_custom nv true)
     then raise Nvector.OperationNotProvided;
   nv
@@ -863,12 +869,14 @@ module Any = struct (* {{{ *)
       -> Nvector.gdata
       -> (Nvector.any -> bool)
       -> (Nvector.any -> Nvector.any)
+      -> Sundials.Context.t
       -> Nvector.any
     = "sunml_nvec_wrap_custom"
 
   let do_enable f nv v = if not (f nv v) then raise Nvector.OperationNotProvided
 
   let rec make_wrap_injected ops
+      ?context
       ?(with_fused_ops=false)
       ?(with_linear_combination=false)
       ?(with_scale_add_multi=false)
@@ -882,7 +890,8 @@ module Any = struct (* {{{ *)
       ?(with_linear_combination_vector_array=false)
       check v
     =
-      let nv = c_make_any_wrap ops v check (clone ops check) in
+      let ctx = Sundials_impl.Context.get context in
+      let nv = c_make_any_wrap ops v check (clone ops check) ctx in
       do_enable c_enablefusedops_custom nv
                 with_fused_ops;
       do_enable c_enablefusedops_custom nv
@@ -910,6 +919,7 @@ module Any = struct (* {{{ *)
       nv
 
   and make_wrap ops ~inject
+      ?context
       ?(with_fused_ops=false)
       ?(with_linear_combination=false)
       ?(with_scale_add_multi=false)
@@ -930,6 +940,7 @@ module Any = struct (* {{{ *)
         ops.check v (uv nv') && Nvector.get_id nv' = Nvector.Custom
       in
       make_wrap_injected ops
+        ?context
         ~with_fused_ops
         ~with_linear_combination
         ~with_scale_add_multi

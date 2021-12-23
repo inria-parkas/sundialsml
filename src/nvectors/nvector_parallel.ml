@@ -8,8 +8,12 @@ type Nvector.gdata += Par of data
 
 exception IncorrectGlobalSize
 
-external c_wrap
-  : (RealArray.t * int * Mpi.communicator) -> (t -> bool) -> (t -> t) -> t
+external c_wrap :
+     (RealArray.t * int * Mpi.communicator)
+  -> (t -> bool)
+  -> (t -> t)
+  -> Context.t
+  -> t
   = "sunml_nvec_wrap_parallel"
 
 (* Selectively enable and disable fused and array operations *)
@@ -40,18 +44,19 @@ let unwrap = Nvector.unwrap
 
 let copydata (a, ng, comm) = (RealArray.copy a, ng, comm)
 
-let rec wrap ?(with_fused_ops=false) ((nl, ng, comm) as v) =
+let rec wrap ?context ?(with_fused_ops=false) ((nl, ng, comm) as v) =
   let nl_len = RealArray.length nl in
   let check nv =
     let (nl', ng', comm') = unwrap nv in
     (nl_len = RealArray.length nl') && (ng <= ng') && (comm == comm')
   in
-  let nv = c_wrap v check clone in
+  let ctx = Sundials_impl.Context.get context in
+  let nv = c_wrap v check clone ctx in
   if with_fused_ops then c_enablefusedops_parallel nv true;
   nv
 
 and clone nv =
-  let nv' = wrap (copydata (unwrap nv)) in
+  let nv' = wrap ~context:(Nvector.context nv) (copydata (unwrap nv)) in
   if Sundials_impl.Version.lt400 then ()
   else begin
     c_enablelinearcombination_parallel nv'
@@ -77,12 +82,12 @@ and clone nv =
   end;
   nv'
 
-let make ?with_fused_ops nl ng comm iv =
-  wrap ?with_fused_ops (RealArray.make nl iv, ng, comm)
+let make ?context ?with_fused_ops nl ng comm iv =
+  wrap ?context ?with_fused_ops (RealArray.make nl iv, ng, comm)
 
 let clone nv =
   let loc, glen, comm = Nvector.unwrap nv in
-  wrap (RealArray.copy loc, glen, comm)
+  wrap ~context:(Nvector.context nv) (RealArray.copy loc, glen, comm)
 
 let pp fmt nv =
   let data, _, _ = Nvector.unwrap nv in
@@ -157,10 +162,12 @@ module Any = struct (* {{{ *)
       -> data
       -> (Nvector.any -> bool)
       -> (Nvector.any -> Nvector.any)
+      -> Context.t
       -> Nvector.any
     = "sunml_nvec_anywrap_parallel"
 
   let rec wrap
+      ?context
       ?(with_fused_ops=false)
       ?(with_linear_combination=false)
       ?(with_scale_add_multi=false)
@@ -184,7 +191,8 @@ module Any = struct (* {{{ *)
             && (Nvector.get_id nv' = Nvector.Parallel)
         | _ -> false
       in
-      let nv = c_any_wrap [%extension_constructor Par] v check clone in
+      let ctx = Sundials_impl.Context.get context in
+      let nv = c_any_wrap [%extension_constructor Par] v check clone ctx in
       if with_fused_ops
         then c_enablefusedops_parallel nv true;
       if with_fused_ops
@@ -216,7 +224,7 @@ module Any = struct (* {{{ *)
             | Par v -> v
             | _ -> assert false
     in
-    let nv' = wrap (copydata v) in
+    let nv' = wrap ~context:(Nvector.context nv) (copydata v) in
     c_enablelinearcombination_parallel nv'
       (Nvector.Ops.has_linearcombination nv);
     c_enablescaleaddmulti_parallel nv'
@@ -240,6 +248,7 @@ module Any = struct (* {{{ *)
     nv'
 
   let make
+      ?context
       ?with_fused_ops
       ?with_linear_combination
       ?with_scale_add_multi
@@ -252,7 +261,8 @@ module Any = struct (* {{{ *)
       ?with_scale_add_multi_vector_array
       ?with_linear_combination_vector_array
       nl ng comm iv
-    = wrap ?with_fused_ops
+    = wrap ?context
+           ?with_fused_ops
            ?with_linear_combination
            ?with_scale_add_multi
            ?with_dot_prod_multi
@@ -1943,7 +1953,6 @@ module DataOps =
     end
   end (* }}} *)
 
-
 (* Let C code know about some of the values in this module.  *)
 external c_init_module : exn array -> unit =
   "sunml_nvector_parallel_init_module"
@@ -1953,3 +1962,4 @@ let _ =
     (* Exceptions must be listed in the same order as
        nvector_parallel_exn_index.  *)
     [|IncorrectGlobalSize|]
+

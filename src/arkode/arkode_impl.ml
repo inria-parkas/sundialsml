@@ -268,6 +268,7 @@ type ('a, 'kind, 'step) session = {
   nroots     : int;
   mutable checkvec     : (('a, 'kind) Nvector.t -> unit);
   mutable uses_resv    : bool;
+  context    : Context.t;
 
   mutable exn_temp     : exn option;
 

@@ -36,7 +36,7 @@ module type MATRIX_TESTS = sig
   type t = (k, m, nd, nk) Matrix.t
   type nvec = (nd, nk) Nvector.t
 
-  val rewrap : m -> t
+  val rewrap : ?context:Sundials.Context.t -> m -> t
   val check_matrix : t -> t -> float -> bool
   val check_matrix_entry : t -> float -> float -> bool
   val is_square : t -> bool

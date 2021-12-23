@@ -155,8 +155,7 @@ let main () =
     init
       (imex
         ~nlsolver:(NonlinearSolver.FixedPoint.make ~acceleration_vectors:fp_m y)
-        ~fi:(fi rdata)
-        (fe rdata))
+        ~fsi:(fi rdata) ~fse:(fe rdata) ())
       (SStolerances (reltol, abstol))
       t0
       y

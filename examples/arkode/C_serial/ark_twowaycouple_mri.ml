@@ -101,9 +101,11 @@ let main () =
      the inital time T0, and the initial dependent variable vector y. *)
   (* Specify slow and fast step sizes *)
   let arkode_mem = MRIStep.(init
-                              InnerStepper.(from_arkstep inner_arkode_mem)
+                              (explicit fs)
                               default_tolerances
-                              fs ~slowstep:hs t0 y) in
+                              InnerStepper.(from_arkstep inner_arkode_mem)
+                              ~slowstep:hs t0 y)
+  in
 
   (*
    * Integrate ODE
@@ -150,12 +152,12 @@ let main () =
 
   (* Print some final statistics *)
   let nsts = MRIStep.get_num_steps arkode_mem in
-  let nfs = MRIStep.get_num_rhs_evals arkode_mem in
+  let nfse, _ = MRIStep.get_num_rhs_evals arkode_mem in
   let nstf = ARKStep.get_num_steps inner_arkode_mem in
   let nff, _ = ARKStep.get_num_rhs_evals inner_arkode_mem in
   printf "\nFinal Solver Statistics:\n";
   printf "   Steps: nsts = %d, nstf = %d\n" nsts nstf;
-  printf "   Total RHS evals:  Fs = %d,  Ff = %d\n" nfs nff
+  printf "   Total RHS evals:  Fs = %d,  Ff = %d\n" nfse nff
 
 (* Check environment variables for extra arguments.  *)
 let reps =

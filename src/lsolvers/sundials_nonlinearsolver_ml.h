@@ -68,7 +68,7 @@ struct sunml_nls {
 
     int (*orig_setup)(SUNNonlinearSolver, N_Vector, void*);
     int (*orig_solve)(SUNNonlinearSolver, N_Vector, N_Vector, N_Vector,
-		      sunrealtype, booleantype, void*);
+		      sunrealtype, sunbooleantype, void*);
     value (*to_value)(void *);
     void* (*from_value)(value);
 
@@ -126,6 +126,7 @@ enum nlsolver_ops_index {
 enum nlsolver_index {
   RECORD_NLSOLVER_RAWPTR	   = 0,
   RECORD_NLSOLVER_SOLVER,
+  RECORD_NLSOLVER_CONTEXT,
   RECORD_NLSOLVER_INFO_FILE,
   RECORD_NLSOLVER_ATTACHED,
   RECORD_NLSOLVER_SIZE

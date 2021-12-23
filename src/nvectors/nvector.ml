@@ -12,12 +12,14 @@
 
 type cnvec
 
+(* Fields must be given in the same order as in nv_index *)
 [@@@ocaml.warning "-37"]
 type ('data, 'kind) nvector =
   NV of { payload: 'data;
           cptr: cnvec;
           check: (('data, 'kind) nvector -> bool);
           clone: ('data, 'kind) t -> ('data, 'kind) t;
+          context: Sundials.Context.t;
         }
 and ('data, 'kind) t = ('data, 'kind) nvector
 [@@@ocaml.warning "+37"]
@@ -25,6 +27,8 @@ and ('data, 'kind) t = ('data, 'kind) nvector
 type 'k serial = (Sundials.RealArray.t, [>`Serial] as 'k) t
 
 let unwrap (NV { payload; _ }) = payload
+
+let context (NV { context; _ }) = context
 
 exception IncompatibleNvector
 
@@ -124,7 +128,7 @@ module type NVECTOR =
     type kind
     type data
     type t = (data, kind) nvector
-    val wrap : ?with_fused_ops:bool -> data -> t
+    val wrap : ?context:Sundials.Context.t -> ?with_fused_ops:bool -> data -> t
     val enable :
          ?with_fused_ops                       : bool
       -> ?with_linear_combination              : bool

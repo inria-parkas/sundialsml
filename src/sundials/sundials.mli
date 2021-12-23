@@ -26,6 +26,35 @@ module Config = Sundials_Config
 (** Index values for sparse matrices. *)
 module Index = Sundials_Index
 
+(** Contexts for creating Sundials values
+
+    Every function that creates a Sundials value (integrator, nvector,
+    linear solver, nonlinear solver, etcetera) does so within a context.
+    All such functions have an optional [?context] argument. When this
+    argument is not given explicitly, it defaults to the context returned
+    by {!default}.
+
+    @cvode <node> SUNContext
+    @since 6.0.0 *)
+module Context : sig
+
+  (** A context required to create Sundials values.
+
+      @cvode <node> SUNContext *)
+  type t = Sundials_impl.Context.t
+
+  (** The default context when creating values.
+
+      @cvode <node> SUNContext_Create *)
+  val default : unit -> t
+
+  (** Create a new context.
+
+      @cvode <node> SUNContext_Create *)
+  val make : unit -> t
+
+end
+
 (** {2:exceptions Exceptions} *)
 
 (** Indicates a recoverable failure within a callback function.

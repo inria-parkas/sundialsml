@@ -98,8 +98,6 @@ module Common = struct (* {{{ *)
     | MaximumOrderPredictor
     | VariableOrderPredictor
     | CutoffOrderPredictor
-    | BootstrapPredictor
-    | MinimumCorrectionPredictor
 
   type adaptivity_params = {
       ks : (float * float * float) option;
@@ -249,35 +247,35 @@ module ButcherTable = struct (* {{{ *)
   type erk_table =
     | HeunEuler_2_1_2
     | BogackiShampine_4_2_3
-    | ARK_4_2_3_Explicit
+    | ARK324L2SA_ERK_4_2_3
     | Zonneveld_5_3_4
-    | ARK_6_3_4_Explicit
+    | ARK436L2SA_ERK_6_3_4
     | SayfyAburub_6_3_4
     | CashKarp_6_4_5
     | Fehlberg_6_4_5
     | DormandPrince_7_4_5
-    | ARK_8_4_5_Explicit
+    | ARK548L2SA_ERK_8_4_5
     | Verner_8_5_6
     | Fehlberg_13_7_8     (* >= 2.7.0 *)
     | Knoth_Wolke_3_3     (* >= 4.0.0 *)
-    | ARK_7_3_4_Explicit  (* >= 5.0.0 *)
-    | ARK_8_4_5b_Explicit (* >= 5.0.0 *)
+    | ARK437L2SA_ERK_7_3_4  (* >= 5.0.0 *)
+    | ARK548L2SAb_ERK_8_4_5 (* >= 5.0.0 *)
 
   type dirk_table =
     | SDIRK_2_1_2
-    | Billington_3_2_3
-    | TRBDF2_3_2_3
+    | Billington_3_3_2
+    | TRBDF2_3_3_2
     | Kvaerno_4_2_3
     | ARK324L2SA_DIRK_4_2_3
     | Cash_5_2_4
     | Cash_5_3_4
     | SDIRK_5_3_4
     | Kvaerno_5_3_4
-    | ARK_6_3_4_Implicit
+    | ARK436L2SA_DIRK_6_3_4
     | Kvaerno_7_4_5
-    | ARK_8_4_5_Implicit
-    | ARK_7_3_4_Implicit
-    | ARK_8_4_5b_Implicit
+    | ARK548L2SA_DIRK_8_4_5
+    | ARK437L2SA_DIRK_7_3_4
+    | ARK548L2SAb_DIRK_8_4_5
 
   type ark_table =
     | ARK_4_2_3
@@ -290,14 +288,14 @@ module ButcherTable = struct (* {{{ *)
       (match v with
        | HeunEuler_2_1_2       -> 0
        | BogackiShampine_4_2_3 -> 1
-       | ARK_4_2_3_Explicit    -> 2
+       | ARK324L2SA_ERK_4_2_3  -> 2
        | Zonneveld_5_3_4       -> 3
-       | ARK_6_3_4_Explicit    -> 4
+       | ARK436L2SA_ERK_6_3_4  -> 4
        | SayfyAburub_6_3_4     -> 5
        | CashKarp_6_4_5        -> 6
        | Fehlberg_6_4_5        -> 7
        | DormandPrince_7_4_5   -> 8
-       | ARK_8_4_5_Explicit    -> 9
+       | ARK548L2SA_ERK_8_4_5  -> 9
        | Verner_8_5_6          -> 10
        | Fehlberg_13_7_8
        | _                     -> raise Config.NotImplementedBySundialsVersion)
@@ -305,14 +303,14 @@ module ButcherTable = struct (* {{{ *)
       (match v with
        | HeunEuler_2_1_2       -> 0
        | BogackiShampine_4_2_3 -> 1
-       | ARK_4_2_3_Explicit    -> 2
+       | ARK324L2SA_ERK_4_2_3  -> 2
        | Zonneveld_5_3_4       -> 3
-       | ARK_6_3_4_Explicit    -> 4
+       | ARK436L2SA_ERK_6_3_4  -> 4
        | SayfyAburub_6_3_4     -> 5
        | CashKarp_6_4_5        -> 6
        | Fehlberg_6_4_5        -> 7
        | DormandPrince_7_4_5   -> 8
-       | ARK_8_4_5_Explicit    -> 9
+       | ARK548L2SA_ERK_8_4_5  -> 9
        | Verner_8_5_6          -> 10
        | Fehlberg_13_7_8       -> 11
        | _                     -> raise Config.NotImplementedBySundialsVersion)
@@ -320,14 +318,14 @@ module ButcherTable = struct (* {{{ *)
       (match v with
        | HeunEuler_2_1_2       -> 0
        | BogackiShampine_4_2_3 -> 1
-       | ARK_4_2_3_Explicit    -> 2
+       | ARK324L2SA_ERK_4_2_3  -> 2
        | Zonneveld_5_3_4       -> 3
-       | ARK_6_3_4_Explicit    -> 4
+       | ARK436L2SA_ERK_6_3_4  -> 4
        | SayfyAburub_6_3_4     -> 5
        | CashKarp_6_4_5        -> 6
        | Fehlberg_6_4_5        -> 7
        | DormandPrince_7_4_5   -> 8
-       | ARK_8_4_5_Explicit    -> 9
+       | ARK548L2SA_ERK_8_4_5  -> 9
        | Verner_8_5_6          -> 10
        | Fehlberg_13_7_8       -> 11
        | Knoth_Wolke_3_3       -> 12
@@ -336,92 +334,92 @@ module ButcherTable = struct (* {{{ *)
       (match v with
        | HeunEuler_2_1_2       -> 0
        | BogackiShampine_4_2_3 -> 1
-       | ARK_4_2_3_Explicit    -> 2
+       | ARK324L2SA_ERK_4_2_3  -> 2
        | Zonneveld_5_3_4       -> 3
-       | ARK_6_3_4_Explicit    -> 4
+       | ARK436L2SA_ERK_6_3_4  -> 4
        | SayfyAburub_6_3_4     -> 5
        | CashKarp_6_4_5        -> 6
        | Fehlberg_6_4_5        -> 7
        | DormandPrince_7_4_5   -> 8
-       | ARK_8_4_5_Explicit    -> 9
+       | ARK548L2SA_ERK_8_4_5  -> 9
        | Verner_8_5_6          -> 10
        | Fehlberg_13_7_8       -> 11
        | Knoth_Wolke_3_3       -> 12
-       | ARK_7_3_4_Explicit    -> 13
-       | ARK_8_4_5b_Explicit   -> 14)
+       | ARK437L2SA_ERK_7_3_4  -> 13
+       | ARK548L2SAb_ERK_8_4_5 -> 14)
 
   let int_of_dirk_table v =
     match Config.sundials_version with
     | 2,5,_ | 2,6,_ ->
       (match v with
-       | SDIRK_2_1_2        -> 11
-       | Billington_3_2_3   -> 12
-       | TRBDF2_3_2_3       -> 13
-       | Kvaerno_4_2_3      -> 14
+       | SDIRK_2_1_2           -> 11
+       | Billington_3_3_2      -> 12
+       | TRBDF2_3_3_2          -> 13
+       | Kvaerno_4_2_3         -> 14
        | ARK324L2SA_DIRK_4_2_3 -> 15
-       | Cash_5_2_4         -> 16
-       | Cash_5_3_4         -> 17
-       | SDIRK_5_3_4        -> 18
-       | Kvaerno_5_3_4      -> 19
-       | ARK_6_3_4_Implicit -> 20
-       | Kvaerno_7_4_5      -> 21
-       | ARK_8_4_5_Implicit -> 22
+       | Cash_5_2_4            -> 16
+       | Cash_5_3_4            -> 17
+       | SDIRK_5_3_4           -> 18
+       | Kvaerno_5_3_4         -> 19
+       | ARK436L2SA_DIRK_6_3_4 -> 20
+       | Kvaerno_7_4_5         -> 21
+       | ARK548L2SA_DIRK_8_4_5 -> 22
        | _                  -> raise Config.NotImplementedBySundialsVersion)
     | 2,7,_ | 3,_,_ ->
       (match v with
-       | SDIRK_2_1_2        -> 12
-       | Billington_3_2_3   -> 13
-       | TRBDF2_3_2_3       -> 14
-       | Kvaerno_4_2_3      -> 15
+       | SDIRK_2_1_2           -> 12
+       | Billington_3_3_2      -> 13
+       | TRBDF2_3_3_2          -> 14
+       | Kvaerno_4_2_3         -> 15
        | ARK324L2SA_DIRK_4_2_3 -> 16
-       | Cash_5_2_4         -> 17
-       | Cash_5_3_4         -> 18
-       | SDIRK_5_3_4        -> 19
-       | Kvaerno_5_3_4      -> 20
-       | ARK_6_3_4_Implicit -> 21
-       | Kvaerno_7_4_5      -> 22
-       | ARK_8_4_5_Implicit -> 23
+       | Cash_5_2_4            -> 17
+       | Cash_5_3_4            -> 18
+       | SDIRK_5_3_4           -> 19
+       | Kvaerno_5_3_4         -> 20
+       | ARK436L2SA_DIRK_6_3_4 -> 21
+       | Kvaerno_7_4_5         -> 22
+       | ARK548L2SA_DIRK_8_4_5 -> 23
        | _                  -> raise Config.NotImplementedBySundialsVersion)
     | 4,_,_ ->
       (match v with
-       | SDIRK_2_1_2        -> 100
-       | Billington_3_2_3   -> 101
-       | TRBDF2_3_2_3       -> 102
-       | Kvaerno_4_2_3      -> 103
+       | SDIRK_2_1_2           -> 100
+       | Billington_3_3_2      -> 101
+       | TRBDF2_3_3_2          -> 102
+       | Kvaerno_4_2_3         -> 103
        | ARK324L2SA_DIRK_4_2_3 -> 104
-       | Cash_5_2_4         -> 105
-       | Cash_5_3_4         -> 106
-       | SDIRK_5_3_4        -> 107
-       | Kvaerno_5_3_4      -> 108
-       | ARK_6_3_4_Implicit -> 109
-       | Kvaerno_7_4_5      -> 110
-       | ARK_8_4_5_Implicit -> 111
+       | Cash_5_2_4            -> 105
+       | Cash_5_3_4            -> 106
+       | SDIRK_5_3_4           -> 107
+       | Kvaerno_5_3_4         -> 108
+       | ARK436L2SA_DIRK_6_3_4 -> 109
+       | Kvaerno_7_4_5         -> 110
+       | ARK548L2SA_DIRK_8_4_5 -> 111
        | _                  -> raise Config.NotImplementedBySundialsVersion)
     | _ ->
       (match v with
-       | SDIRK_2_1_2        -> 100
-       | Billington_3_2_3   -> 101
-       | TRBDF2_3_2_3       -> 102
-       | Kvaerno_4_2_3      -> 103
-       | ARK324L2SA_DIRK_4_2_3 -> 104
-       | Cash_5_2_4         -> 105
-       | Cash_5_3_4         -> 106
-       | SDIRK_5_3_4        -> 107
-       | Kvaerno_5_3_4      -> 108
-       | ARK_6_3_4_Implicit -> 109
-       | Kvaerno_7_4_5      -> 110
-       | ARK_8_4_5_Implicit -> 111
-       | ARK_7_3_4_Implicit -> 112
-       | ARK_8_4_5b_Implicit -> 113)
+       | SDIRK_2_1_2            -> 100
+       | Billington_3_3_2       -> 101
+       | TRBDF2_3_3_2           -> 102
+       | Kvaerno_4_2_3          -> 103
+       | ARK324L2SA_DIRK_4_2_3  -> 104
+       | Cash_5_2_4             -> 105
+       | Cash_5_3_4             -> 106
+       | SDIRK_5_3_4            -> 107
+       | Kvaerno_5_3_4          -> 108
+       | ARK436L2SA_DIRK_6_3_4  -> 109
+       | Kvaerno_7_4_5          -> 110
+       | ARK548L2SA_DIRK_8_4_5  -> 111
+       | ARK437L2SA_DIRK_7_3_4  -> 112
+       | ARK548L2SAb_DIRK_8_4_5 -> 113)
 
   let ints_of_ark_table v =
     match v with
     | ARK_4_2_3 -> (int_of_dirk_table ARK324L2SA_DIRK_4_2_3,
-                    int_of_erk_table ARK_4_2_3_Explicit)
-    | ARK_6_3_4 -> (int_of_dirk_table ARK_6_3_4_Implicit,
-                    int_of_erk_table ARK_6_3_4_Explicit)
-    | ARK_8_4_5 -> (int_of_dirk_table ARK_8_4_5_Implicit,
-                    int_of_erk_table ARK_8_4_5_Explicit)
+                    int_of_erk_table ARK324L2SA_ERK_4_2_3)
+    | ARK_6_3_4 -> (int_of_dirk_table ARK436L2SA_DIRK_6_3_4,
+                    int_of_erk_table ARK436L2SA_ERK_6_3_4)
+    | ARK_8_4_5 -> (int_of_dirk_table ARK548L2SA_DIRK_8_4_5,
+                    int_of_erk_table ARK548L2SA_ERK_8_4_5)
 
   (* }}} *)
 
@@ -495,12 +493,14 @@ module ARKStep = struct (* {{{ *)
     | ImEx of 'd rhsfn * ('d, 'k) implicit_problem
 
   let implicit ?nlsolver ?nlsrhsfn ?lsolver ?linearity fi =
+    if Sundials_impl.Version.lt580 && nlsrhsfn <> None
+      then raise Config.NotImplementedBySundialsVersion;
     Implicit (implicit_problem ?nlsolver ?nlsrhsfn ?lsolver ?linearity fi)
 
   let explicit f = Explicit f
 
-  let imex ?nlsolver ?nlsrhsfn ?lsolver ?linearity ~fi fe =
-    ImEx (fe, implicit_problem ?nlsolver ?nlsrhsfn ?lsolver ?linearity fi)
+  let imex ?nlsolver ?nlsrhsfn ?lsolver ?linearity ~fsi ~fse () =
+    ImEx (fse, implicit_problem ?nlsolver ?nlsrhsfn ?lsolver ?linearity fsi)
 
   external c_root_init : ('a, 'k) session -> int -> unit
       = "sunml_arkode_ark_root_init"
@@ -1576,13 +1576,15 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
     -> bool               (* f_e given *)
     -> ('a, 'k) Nvector.t (* y_0 *)
     -> float              (* t_0 *)
+    -> Context.t          (* ctx *)
     -> (arkstep arkode_mem * c_weak_ref)
-    = "sunml_arkode_ark_init"
+    = "sunml_arkode_ark_init_byte"
+      "sunml_arkode_ark_init"
 
   external c_set_nls_rhs_fn : ('d, 'k) session -> unit
       = "sunml_arkode_ark_set_nls_rhs_fn"
 
-  let init prob tol ?restol ?order ?mass ?(roots=no_roots) t0 y0 =
+  let init ?context prob tol ?restol ?order ?mass ?(roots=no_roots) t0 y0 =
     let (nroots, roots) = roots in
     let checkvec = Nvector.check y0 in
     if Sundials_configuration.safe && nroots < 0
@@ -1597,7 +1599,10 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
           ImplicitAndExplicit, Some fi, Some fe, nls,     nlsrhsfn,   ls,   Some l
     in
     let weakref = Weak.create 1 in
-    let arkode_mem, backref = c_init weakref (fi <> None) (fe <> None) y0 t0 in
+    let ctx = Sundials_impl.Context.get context in
+    let arkode_mem, backref =
+      c_init weakref (fi <> None) (fe <> None) y0 t0 ctx
+    in
     (* arkode_mem and backref have to be immediately captured in a session and
        associated with the finalizer before we do anything else.  *)
     let session = {
@@ -1606,6 +1611,7 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
             nroots       = nroots;
             checkvec     = checkvec;
             uses_resv    = false;
+            context      = ctx;
 
             exn_temp     = None;
 
@@ -1666,7 +1672,7 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
       | _ -> ()
     end;
     (match nlsrhsfn with
-     | None -> () | _ when Sundials_impl.Version.lt580 -> ()
+     | None -> ()
      | Some f -> session.nls_rhsfn <- f;
                  c_set_nls_rhs_fn session);
     (match lsolver with
@@ -1734,7 +1740,7 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
       | _ -> ()
     end);
     (match nlsrhsfn with
-     | None -> () | _ when Sundials_impl.Version.lt580 -> ()
+     | None -> ()
      | Some f -> session.nls_rhsfn <- f;
                  c_set_nls_rhs_fn session);
     (match lsolver with None -> () | Some ls -> ls session y0);
@@ -2205,16 +2211,18 @@ module ERKStep = struct (* {{{ *)
     ('a, 'k) session Weak.t
     -> ('a, 'k) Nvector.t (* y_0 *)
     -> float              (* t_0 *)
+    -> Context.t
     -> (erkstep arkode_mem * c_weak_ref)
     = "sunml_arkode_erk_init"
 
-  let init tol ?order f ?(roots=no_roots) t0 y0 =
+  let init ?context tol ?order f ?(roots=no_roots) t0 y0 =
     let (nroots, roots) = roots in
     let checkvec = Nvector.check y0 in
     if Sundials_configuration.safe && nroots < 0 then
       raise (Invalid_argument "number of root functions is negative");
     let weakref = Weak.create 1 in
-    let arkode_mem, backref = c_init weakref y0 t0 in
+    let ctx = Sundials_impl.Context.get context in
+    let arkode_mem, backref = c_init weakref y0 t0 ctx in
     (* arkode_mem and backref have to be immediately captured in a session and
        associated with the finalizer before we do anything else.  *)
     let session = {
@@ -2223,6 +2231,7 @@ module ERKStep = struct (* {{{ *)
             nroots       = nroots;
             checkvec     = checkvec;
             uses_resv    = false;
+            context      = ctx;
 
             exn_temp     = None;
 
@@ -2585,6 +2594,34 @@ module MRIStep = struct (* {{{ *)
     (Nvector_serial.data, 'k) linear_solver
     constraint 'k = [>Nvector_serial.kind]
 
+  type ('d, 'k) implicit_problem = {
+      irhsfn    : 'd rhsfn;
+      linearity : linearity;
+      nlsolver  : ('d, 'k, ('d, 'k) session, [`Nvec]) Sundials_NonlinearSolver.t option;
+      nlsrhsfn  : 'd rhsfn option;
+      lsolver   : ('d, 'k) linear_solver option;
+    }
+
+  let implicit_problem ?nlsolver ?nlsrhsfn ?lsolver ?(linearity=Nonlinear) fi =
+    { irhsfn = fi; linearity; nlsolver; nlsrhsfn; lsolver }
+
+  type ('d, 'k) problem =
+    | Implicit of ('d, 'k) implicit_problem
+    | Explicit of 'd rhsfn
+    | ImEx of 'd rhsfn * ('d, 'k) implicit_problem
+
+  let implicit ?nlsolver ?nlsrhsfn ?lsolver ?linearity fi =
+    if Sundials_impl.Version.lt580 && nlsrhsfn <> None
+      then raise Config.NotImplementedBySundialsVersion;
+    Implicit (implicit_problem ?nlsolver ?nlsrhsfn ?lsolver ?linearity fi)
+
+  let explicit f = Explicit f
+
+  let imex ?nlsolver ?nlsrhsfn ?lsolver ?linearity ~fsi ~fse () =
+    if Sundials_impl.Version.lt600
+      then raise Config.NotImplementedBySundialsVersion;
+    ImEx (fse, implicit_problem ?nlsolver ?nlsrhsfn ?lsolver ?linearity fsi)
+
   external c_root_init : ('a, 'k) session -> int -> unit
       = "sunml_arkode_mri_root_init"
 
@@ -2829,11 +2866,10 @@ module MRIStep = struct (* {{{ *)
 
     let from_arkstep session = I.{
         rawptr = c_from_arkstep session;
-        istepper = I.ARKStepInnerStepper session;
-        (* (* see: sunml_arkode_mri_istepper_from_arkstep *)
-          if Sundials_impl.Version.lt580
+        istepper =
+          if Sundials_impl.Version.lt600
           then I.ARKStepInnerStepper session
-          else I.SundialsInnerStepper; *)
+          else I.SundialsInnerStepper;
         icheckvec = None;
       }
 
@@ -2848,19 +2884,23 @@ module MRIStep = struct (* {{{ *)
 
     type 'd resetfn = float -> 'd -> unit
 
-    external c_create_inner_stepper
-      : 'd I.inner_stepper_callbacks -> bool -> ('d, 'k) I.inner_stepper_cptr
+    external c_create_inner_stepper :
+           'd I.inner_stepper_callbacks
+        -> bool
+        -> Context.t
+        -> ('d, 'k) I.inner_stepper_cptr
       = "sunml_arkode_mri_istepper_create"
 
-    let make ~evolve_fn ~full_rhs_fn ?reset_fn () =
+    let make ?context ~evolve_fn ~full_rhs_fn ?reset_fn () =
       let reset_fn, has_reset_fn =
         match reset_fn with
         | None -> (fun _ _ -> assert false), false
         | Some f -> f, true
       in
+      let ctx = Sundials_impl.Context.get context in
       let callbacks = { evolve_fn; full_rhs_fn; reset_fn } in
       I.{
-        rawptr = c_create_inner_stepper callbacks has_reset_fn;
+        rawptr = c_create_inner_stepper callbacks has_reset_fn ctx;
         istepper = I.CustomInnerStepper callbacks;
         icheckvec = None;
       }
@@ -2903,7 +2943,8 @@ module MRIStep = struct (* {{{ *)
       stages            : int;
       method_order      : int;
       embedding_order   : int;
-      coupling_matrices : RealArray.t array array;
+      explicit_coupling_matrices : RealArray.t array array option;
+      implicit_coupling_matrices : RealArray.t array array option;
       abscissae          : RealArray.t;
     }
 
@@ -2911,37 +2952,71 @@ module MRIStep = struct (* {{{ *)
     let stages { stages; _ } = stages
     let method_order { method_order; _ } = method_order
     let embedding_order { embedding_order; _ } = embedding_order
-    let coupling_matrices { coupling_matrices; _ } = coupling_matrices
+    let explicit_coupling_matrices { explicit_coupling_matrices; _ }
+      = explicit_coupling_matrices
+    let implicit_coupling_matrices { implicit_coupling_matrices; _ }
+      = implicit_coupling_matrices
     let abscissae { abscissae; _ } = abscissae
 
     external c_make
-      : int * int * int * int * RealArray.t array array * RealArray.t -> cptr
-      = "sunml_arkode_mri_coupling_make"
+      : int       (* nmat *)
+        -> int    (* stages *)
+        -> int    (* q *)
+        -> int    (* p *)
+        -> RealArray.t array array option (* W - explicit *)
+        -> RealArray.t array array option (* G - implicit *)
+        -> RealArray.t (* C *)
+        -> cptr
+      = "sunml_arkode_mri_coupling_make_byte"
+        "sunml_arkode_mri_coupling_make"
 
-    let make ~method_order ~embedding_order g c =
-      let nmat = Array.length g in
+    let make ~method_order ~embedding_order ?explicit ?implicit c =
       let stages = RealArray.length c in
+      let nmat =
+        match explicit, implicit with
+        | None, None -> invalid_arg "no coupling matrix given"
+        | Some w, None -> Array.length w
+        | None, Some g -> Array.length g
+        | Some w, Some g ->
+            let l = Array.length w in
+            if l <> Array.length g
+              then invalid_arg "incompatible coupling matrices";
+            l
+      in
       if nmat < 1 || stages < 1 then invalid_arg "zero-length array";
       let check ra = RealArray.length ra <> stages in
-      if Array.exists (fun gi -> Array.length gi <> stages
-                                 || Array.exists check gi) g
-        then invalid_arg "coupling matrice incompatible with abscissae";
+      Option.iter (fun w ->
+        if Array.exists (fun wi -> Array.length wi <> stages
+                                   || Array.exists check wi) w
+          then invalid_arg "explicit coupling matrice incompatible with abscissae")
+        explicit;
+      Option.iter (fun g ->
+        if Array.exists (fun gi -> Array.length gi <> stages
+                                   || Array.exists check gi) g
+          then invalid_arg "implicit coupling matrice incompatible with abscissae")
+        implicit;
       {
-        cptr = c_make (nmat, stages, method_order, embedding_order, g, c);
+        cptr = c_make nmat stages method_order embedding_order explicit implicit c;
         nmat;
         stages;
         method_order;
         embedding_order;
-        coupling_matrices = g;
+        explicit_coupling_matrices = explicit;
+        implicit_coupling_matrices = implicit;
         abscissae = c;
       }
 
     (* Synchronized with arkode_mri_coupling_table_tag in arkode_ml.h *)
     type coupling_table =
-      | MIS_KW3
+      | KW3
+      | GARK_ERK33a    (* 6.0.0 <= Sundials *)
       | GARK_ERK45a
       | GARK_IRK21a
       | GARK_ESDIRK34a
+      | GARK_ESDIRK46a (* 6.0.0 <= Sundials *)
+      | IMEX_GARK3a    (* 6.0.0 <= Sundials *)
+      | IMEX_GARK3b    (* 6.0.0 <= Sundials *)
+      | IMEX_GARK4     (* 6.0.0 <= Sundials *)
 
     external load_table : coupling_table -> t
       = "sunml_arkode_mri_coupling_load_table"
@@ -2966,7 +3041,6 @@ module MRIStep = struct (* {{{ *)
       c_write s logfile
 
   end (* }}} *)
-
 
   external session_finalize : ('a, 'k) session -> unit
       = "sunml_arkode_mri_session_finalize"
@@ -2994,12 +3068,16 @@ module MRIStep = struct (* {{{ *)
     | WFtolerances ferrw -> (s.errw <- ferrw; wf_tolerances s)
 
   external c_init :
-    ('a, 'k) session Weak.t
+       ('a, 'k) session Weak.t
     -> ('a, 'k) InnerStepper.t
     -> ('a, 'k) Nvector.t (* y_0 *)
     -> float              (* t_0 *)
+    -> bool               (* has implicit rhs *)
+    -> bool               (* has explicit rhs *)
+    -> Context.t
     -> (mristep arkode_mem * c_weak_ref)
-    = "sunml_arkode_mri_init"
+    = "sunml_arkode_mri_init_byte"
+      "sunml_arkode_mri_init"
 
   (* 5.4.0 <= Sundials *)
   external c_set_nonlinear_solver
@@ -3017,41 +3095,32 @@ module MRIStep = struct (* {{{ *)
   external set_coupling : ('d, 'k) session -> Coupling.t -> unit
     = "sunml_arkode_mri_set_coupling"
 
-  external c_set_table
-    : ('d, 'k) session -> int -> ButcherTable.t option -> unit
-    = "sunml_arkode_mri_set_table"
-
-  let set_table s q bt =
-    if Sundials_configuration.safe then ButcherTable.check bt;
-    c_set_table s q (Some bt)
-
-  external c_set_table_num : ('d, 'k) session -> int -> unit
-      = "sunml_arkode_mri_set_table_num"
-
-  let set_table_num s tn =
-    c_set_table_num s (ButcherTable.int_of_erk_table tn)
-
-  let count_option = function None -> 0 | Some _ -> 1
-
-  let init istepper tol
-           ?coupling ?table ?tablenum
-           ?nlsolver ?nlsrhsfn ?lsolver ?linearity slow
-           ~slowstep ?(roots=no_roots) t0 y0 =
+  let init ?context prob tol istepper
+           ?coupling ~slowstep ?(roots=no_roots) t0 y0 =
     if Sundials_impl.Version.lt500
       then raise Config.NotImplementedBySundialsVersion;
     let (nroots, roots) = roots in
     let checkvec = Nvector.check y0 in
-    if Sundials_configuration.safe then begin
-      if nroots < 0 then raise Config.NotImplementedBySundialsVersion;
-      if 1 < count_option coupling + count_option table + count_option tablenum
-      then invalid_arg "more than one coupling or table option"
-    end;
+    if Sundials_configuration.safe && nroots < 0
+      then invalid_arg "number of root functions is negative";
+    let problem, fi, fe, nlsolver, nlsrhsfn, lsolver, lin =
+      match prob with
+      | Implicit { irhsfn=fi; linearity=l; nlsolver=nls; nlsrhsfn; lsolver=ls } ->
+          ImplicitOnly,        Some fi, None,    nls,    nlsrhsfn,    ls,   Some l
+      | Explicit fe ->
+          ExplicitOnly,        None,    Some fe, None, None, None, None
+      | ImEx (fe, { irhsfn=fi; linearity=l; nlsolver=nls; nlsrhsfn; lsolver=ls }) ->
+          ImplicitAndExplicit, Some fi, Some fe, nls,     nlsrhsfn,   ls,   Some l
+    in
     if Sundials_impl.Version.lt540
-        && (nlsolver <> None || lsolver <> None || linearity <> None)
-      then invalid_arg "functions is negative";
+        && (nlsolver <> None || lsolver <> None || lin <> None)
+      then raise Config.NotImplementedBySundialsVersion;
     if istepper.icheckvec <> None then invalid_arg "inner stepper already in use";
     let weakref = Weak.create 1 in
-    let arkode_mem, backref = c_init weakref istepper y0 t0 in
+    let ctx = Sundials_impl.Context.get context in
+    let arkode_mem, backref =
+      c_init weakref istepper y0 t0 (fi <> None) (fe <> None) ctx
+    in
     (* arkode_mem and backref have to be immediately captured in a session and
        associated with the finalizer before we do anything else.  *)
     let session = {
@@ -3060,12 +3129,13 @@ module MRIStep = struct (* {{{ *)
             nroots       = nroots;
             checkvec     = checkvec;
             uses_resv    = false;
+            context      = ctx;
 
             exn_temp     = None;
 
-            problem      = ExplicitOnly; (* ignored for MRIStep *)
-            rhsfn1       = slow;
-            rhsfn2       = dummy_rhsfn2;
+            problem      = problem;
+            rhsfn1       = (match fi with Some f -> f | None -> dummy_rhsfn1);
+            rhsfn2       = (match fe with Some f -> f | None -> dummy_rhsfn2);
 
             rootsfn      = roots;
             errh         = dummy_errh;
@@ -3106,8 +3176,6 @@ module MRIStep = struct (* {{{ *)
     if nroots > 0 then c_root_init session nroots;
     set_tolerances session tol;
     (match coupling with None -> () | Some c -> set_coupling session c);
-    (match table with None -> () | Some (bt, go) -> set_table session go bt);
-    (match tablenum with None -> () | Some n -> set_table_num session n);
     (match nlsolver with
      | Some ({ NLSI.rawptr = nlcptr } as nls) ->
          NLSI.attach nls;
@@ -3115,14 +3183,14 @@ module MRIStep = struct (* {{{ *)
          c_set_nonlinear_solver session nlcptr
      | _ -> ());
     (match nlsrhsfn with
-     | None -> () | _ when Sundials_impl.Version.lt580 -> ()
+     | None -> ()
      | Some f -> session.nls_rhsfn <- f;
                  c_set_nls_rhs_fn session);
     (match lsolver with
      | None -> ()
      | Some ls -> session.linsolver <- Some ls;
                   ls session y0);
-    (match linearity with
+    (match lin with
      | Some (Linear timedepend) -> set_linear session timedepend
      | _ -> ());
     c_set_fixed_step session slowstep;
@@ -3134,12 +3202,49 @@ module MRIStep = struct (* {{{ *)
       = "sunml_arkode_mri_reset"
 
   external c_reinit
-      : ('a, 'k) session -> float -> ('a, 'k) Nvector.t -> unit
+      : ('a, 'k) session -> float
+        -> ('a, 'k) Nvector.t
+        -> bool (* has implicit rhsfn *)
+        -> bool (* has explicit rhsfn *)
+        -> unit
       = "sunml_arkode_mri_reinit"
 
-  let reinit session ?nlsolver ?nlsrhsfn ?lsolver ?roots t0 y0 =
+  external set_nonlinear : ('a, 'k) session -> unit
+    = "sunml_arkode_mri_set_nonlinear"
+
+  let reinit session ?problem ?roots t0 y0 =
     if Sundials_configuration.safe then session.checkvec y0;
-    c_reinit session t0 y0;
+    let lin, nlsolver, nlsrhsfn, lsolver, hasimplicit, hasexplicit =
+      match problem with
+      | None ->
+          let hasi, hase =
+            match session.problem with
+            | ImplicitOnly -> true, false
+            | ExplicitOnly -> false, true
+            | ImplicitAndExplicit -> true, true
+          in
+          None, None, None, None, hasi, hase
+      | Some (Implicit { irhsfn = fi; linearity; nlsolver; nlsrhsfn; lsolver }) ->
+          session.problem <- ImplicitOnly;
+          session.rhsfn1 <- fi;
+          session.rhsfn2 <- dummy_rhsfn2;
+          Some linearity, nlsolver, nlsrhsfn, lsolver, true, false
+      | Some (Explicit fe) ->
+          session.problem <- ExplicitOnly;
+          session.rhsfn1 <- dummy_rhsfn1;
+          session.rhsfn2 <- fe;
+          None, None, None, None, false, true
+      | Some (ImEx (fe, { irhsfn = fi; linearity; nlsolver; nlsrhsfn; lsolver })) ->
+          session.problem <- ImplicitAndExplicit;
+          session.rhsfn1 <- fi;
+          session.rhsfn2 <- fe;
+          Some linearity, nlsolver, nlsrhsfn, lsolver, true, true
+    in
+    c_reinit session t0 y0 hasimplicit hasexplicit;
+    (match lin with
+     | None -> ()
+     | Some Nonlinear -> set_nonlinear session
+     | Some (Linear timedepend) -> set_linear session timedepend);
     (match lsolver with None -> () | Some ls -> ls session y0);
     session.linsolver <- lsolver;
     (match nlsolver with
@@ -3151,7 +3256,7 @@ module MRIStep = struct (* {{{ *)
          c_set_nonlinear_solver session nlcptr
      | _ -> ());
     (match nlsrhsfn with
-     | None -> () | _ when Sundials_impl.Version.lt580 -> ()
+     | None -> ()
      | Some f -> session.nls_rhsfn <- f;
                  c_set_nls_rhs_fn session);
     (match roots with Some roots -> root_init session roots| None -> ())
@@ -3199,8 +3304,18 @@ module MRIStep = struct (* {{{ *)
   external get_num_steps          : ('a, 'k) session -> int
       = "sunml_arkode_mri_get_num_steps"
 
-  external get_num_rhs_evals      : ('a, 'k) session -> int
+  external c_get_num_rhs_evals    : ('a, 'k) session -> int * int
       = "sunml_arkode_mri_get_num_rhs_evals"
+
+  let get_num_rhs_evals s =
+    if Sundials_impl.Version.lt600 then begin
+      let n, _ = c_get_num_rhs_evals s in
+      match s.problem with
+      | ImplicitAndExplicit -> assert false
+      | ImplicitOnly -> 0, n
+      | ExplicitOnly -> n, 0
+    end
+    else c_get_num_rhs_evals s
 
   external get_last_step          : ('a, 'k) session -> float
       = "sunml_arkode_mri_get_last_step"
@@ -3290,9 +3405,6 @@ module MRIStep = struct (* {{{ *)
   let clear_postprocess_step_fn s =
     s.poststepfn <- dummy_poststepfn;
     c_set_postprocess_step_fn s false
-
-  external set_nonlinear : ('a, 'k) session -> unit
-    = "sunml_arkode_mri_set_nonlinear"
 
   external c_set_stage_predict_fn
       : ('d, 'k) session -> bool -> unit

@@ -26,6 +26,7 @@ external c_wrap
   : data
     -> (t -> bool)
     -> (t -> t)
+    -> Context.t
     -> t
   = "sunml_nvec_wrap_mpimany"
 
@@ -51,19 +52,20 @@ external c_enablewrmsnormvectorarray_manyvector     : ('d, 'k) Nvector.t -> bool
 external c_enablewrmsnormmaskvectorarray_manyvector : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_mpimany_enablewrmsnormmaskvectorarray"
 
-let rec wrap_withlen enable_fused_ops ((nvs, _, _) as payload) =
+let rec wrap_withlen ctx enable_fused_ops ((nvs, _, _) as payload) =
   let check nv' =
     let nvs', _, _ = unwrap nv' in
     try ROArray.iter2 Nvector.check nvs nvs'; true
     with Nvector.IncompatibleNvector -> false
   in
-  let nv = c_wrap payload check clone in
+  let nv = c_wrap payload check clone ctx in
   if enable_fused_ops then c_enablefusedops_manyvector nv true;
   nv
 
 and clone nv =
   let nvs, comm, gl = unwrap nv in
-  wrap_withlen false (ROArray.map Nvector.clone nvs, comm, gl)
+  wrap_withlen (Nvector.context nv) false
+               (ROArray.map Nvector.clone nvs, comm, gl)
 
 let subvector_mpi_rank nv =
   match Nvector_parallel.get_communicator nv with
@@ -95,7 +97,7 @@ let check_comms nvs =
   | None -> invalid_arg "communicator not found or specified"
   | Some comm -> comm
 
-let wrap ?(with_fused_ops=false) ?comm nvs =
+let wrap ?context ?(with_fused_ops=false) ?comm nvs =
   if Sundials_impl.Version.lt500
     then raise Config.NotImplementedBySundialsVersion;
   let comm =
@@ -103,7 +105,8 @@ let wrap ?(with_fused_ops=false) ?comm nvs =
     | None -> check_comms nvs
     | Some c -> c
   in
-  wrap_withlen with_fused_ops (nvs, comm, sumlens nvs comm)
+  let ctx = Sundials_impl.Context.get context in
+  wrap_withlen ctx with_fused_ops (nvs, comm, sumlens nvs comm)
 
 let length nv =
   let _, _, glen = unwrap nv in
@@ -790,10 +793,11 @@ module Any = struct (* {{{ *)
       -> data
       -> (Nvector.any -> bool)
       -> (Nvector.any -> Nvector.any)
+      -> Context.t
       -> Nvector.any
     = "sunml_nvec_anywrap_mpimany"
 
-  let rec wrap_with_len enable_fused_ops ((nvs, _, _) as payload) =
+  let rec wrap_with_len ctx enable_fused_ops ((nvs, _, _) as payload) =
     if Sundials_impl.Version.lt500
       then raise Config.NotImplementedBySundialsVersion;
     let check nv' =
@@ -805,7 +809,9 @@ module Any = struct (* {{{ *)
            with Nvector.IncompatibleNvector -> false)
       | _ -> false
     in
-    let nv = c_any_wrap [%extension_constructor MpiMany] payload check clone in
+    let nv =
+      c_any_wrap [%extension_constructor MpiMany] payload check clone ctx
+    in
     if enable_fused_ops then c_enablefusedops_manyvector nv true;
     nv
 
@@ -814,9 +820,10 @@ module Any = struct (* {{{ *)
                         | MpiMany v -> v
                         | _ -> assert false
     in
-    wrap_with_len false (ROArray.map Nvector.clone nvs, gl, comm)
+    wrap_with_len (Nvector.context nv) false
+                  (ROArray.map Nvector.clone nvs, gl, comm)
 
-  let wrap ?(with_fused_ops=false) ?comm nvs =
+  let wrap ?context ?(with_fused_ops=false) ?comm nvs =
     if Sundials_impl.Version.lt500
       then raise Config.NotImplementedBySundialsVersion;
     let comm =
@@ -824,7 +831,8 @@ module Any = struct (* {{{ *)
       | None -> check_comms nvs
       | Some c -> c
     in
-    wrap_with_len with_fused_ops (nvs, comm, sumlens nvs comm)
+    let ctx = Sundials_impl.Context.get context in
+    wrap_with_len ctx with_fused_ops (nvs, comm, sumlens nvs comm)
 
   let unwrap nv =
     match Nvector.unwrap nv with

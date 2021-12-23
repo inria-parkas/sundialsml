@@ -599,13 +599,13 @@ else
     # Make sure realtype has the right size.
     test_stem=__configure_test_file__realtype
     test_cmd="$CC ${Isundials_inc_path} -o ${test_stem}${XX} $test_stem.c"
-    if [ ${sundials} -lt 600 ]; then
+    if [ ${sundials} -ge 600 ]; then
 	cat > $test_stem.c <<EOF
 /* ${test_cmd} */
 #include <sundials/sundials_types.h>
 int main (int argc, char *argv[])
 {
-  return sizeof (realtype) != sizeof (double);
+  return sizeof (sunrealtype) != sizeof (double);
 }
 EOF
     else
@@ -614,7 +614,7 @@ EOF
 #include <sundials/sundials_types.h>
 int main (int argc, char *argv[])
 {
-  return sizeof (sunrealtype) != sizeof (double);
+  return sizeof (realtype) != sizeof (double);
 }
 EOF
     fi
@@ -1288,7 +1288,23 @@ if [ ${enable_mpi:-1} -eq 1 ]; then
 	 ${Lsundials_lib_path} -lsundials_cvode -lsundials_nvecparallel \
 	 ${Lsuperlumt_lib_path} ${Lklu_lib_path} ${libm} ${sparse_libs} \
 	 ${blas_libs} ${lapack_lib}"
-    cat > $test_stem.c <<EOF
+    if [ ${sundials} -ge 600 ]; then
+	cat > $test_stem.c <<EOF
+/* $test_cmd */
+#include <stdio.h>
+#include <sundials/sundials_context.h>
+#include <nvector/nvector_parallel.h>
+int main (int argc, char *argv[])
+{
+  MPI_Comm dummy;
+  SUNContext ctx;
+  SUNContext_Create(NULL, &ctx);
+  (void)N_VNewEmpty_Parallel (dummy, 0, 0, ctx);
+  return 0;
+}
+EOF
+    else
+	cat > $test_stem.c <<EOF
 /* $test_cmd */
 #include <stdio.h>
 #include <nvector/nvector_parallel.h>
@@ -1299,6 +1315,7 @@ int main (int argc, char *argv[])
   return 0;
 }
 EOF
+    fi
     if ! eval "${test_cmd}" >>${logfile} 2>&1;
     then
         sundialsmpi_info='not installed'
@@ -1329,7 +1346,22 @@ nvecmanyvector_info='not available'
 nvecmanyvector_enabled=
 if [ $sundials -ge 500 ]; then
     test_stem=__configure_test_file__nvecmanyvector
-    cat > $test_stem.c <<EOF
+    if [ ${sundials} -ge 600 ]; then
+	cat > $test_stem.c <<EOF
+#include <stdio.h>
+#include <nvector/nvector_serial.h>
+#include <nvector/nvector_manyvector.h>
+int main (int argc, char *argv[])
+{
+  SUNContext ctx;
+  SUNContext_Create(NULL, &ctx);
+  N_Vector s1 = N_VNew_Serial(10, ctx);
+  (void)N_VNew_ManyVector (1, &s1, ctx);
+  return 0;
+}
+EOF
+    else
+	cat > $test_stem.c <<EOF
 #include <stdio.h>
 #include <nvector/nvector_serial.h>
 #include <nvector/nvector_manyvector.h>
@@ -1340,6 +1372,7 @@ int main (int argc, char *argv[])
   return 0;
 }
 EOF
+    fi
     if ! $CC -o $test_stem$XX ${Isundials_inc_path} $test_stem.c \
 	 ${Lsundials_lib_path} -lsundials_nvecserial \
 	 -lsundials_nvecmanyvector ${libm} \
@@ -1364,7 +1397,23 @@ if [ $sundials -ge 500 ] && [ ${ocamlmpi_enabled:-0} -eq 1 ]; then
 	 ${Lsundials_lib_path} \
 	 -lsundials_nvecserial -lsundials_nvecmpimanyvector \
 	 ${libm} ${blas_libs} ${lapack_lib}"
-    cat > $test_stem.c <<EOF
+    if [ ${sundials} -ge 600 ]; then
+	cat > $test_stem.c <<EOF
+/* $test_cmd */
+#include <stdio.h>
+#include <nvector/nvector_serial.h>
+#include <nvector/nvector_mpimanyvector.h>
+int main (int argc, char *argv[])
+{
+  SUNContext ctx;
+  SUNContext_Create(NULL, &ctx);
+  N_Vector s1 = N_VNew_Serial(10, ctx);
+  (void)N_VNew_MPIManyVector (1, &s1, ctx);
+  return 0;
+}
+EOF
+    else
+	cat > $test_stem.c <<EOF
 /* $test_cmd */
 #include <stdio.h>
 #include <nvector/nvector_serial.h>
@@ -1376,6 +1425,7 @@ int main (int argc, char *argv[])
   return 0;
 }
 EOF
+    fi
     if ! eval "${test_cmd}" >>${logfile} 2>&1;
     then
 	nvecmpimanyvector_info='not installed'
@@ -1395,7 +1445,20 @@ nvecpthreads_info='not available'
 nvecpthreads_enabled=
 if [ $sundials -ge 260 ]; then
     test_stem=__configure_test_file__nvecpthreads
-    cat > $test_stem.c <<EOF
+    if [ ${sundials} -ge 600 ]; then
+	cat > $test_stem.c <<EOF
+#include <stdio.h>
+#include <nvector/nvector_pthreads.h>
+int main (int argc, char *argv[])
+{
+  SUNContext ctx;
+  SUNContext_Create(NULL, &ctx);
+  (void)N_VNew_Pthreads (1000, 10, ctx);
+  return 0;
+}
+EOF
+    else
+	cat > $test_stem.c <<EOF
 #include <stdio.h>
 #include <nvector/nvector_pthreads.h>
 int main (int argc, char *argv[])
@@ -1404,6 +1467,7 @@ int main (int argc, char *argv[])
   return 0;
 }
 EOF
+    fi
     if ! $CC -o $test_stem$XX ${Isundials_inc_path} $test_stem.c \
 	 ${Lsundials_lib_path} -lsundials_nvecpthreads -lpthread ${libm} \
        >>${logfile} 2>&1;
@@ -1424,7 +1488,20 @@ nvecopenmp_enabled=
 if [ ${enable_openmp:-1} -eq 1 ]; then
     if [ $sundials -ge 260 ]; then
 	test_stem=__configure_test_file__nvecopenmp
-	cat > $test_stem.c <<EOF
+	if [ ${sundials} -ge 600 ]; then
+	    cat > $test_stem.c <<EOF
+#include <stdio.h>
+#include <nvector/nvector_openmp.h>
+int main (int argc, char *argv[])
+{
+  SUNContext ctx;
+  SUNContext_Create(NULL, &ctx);
+  (void)N_VNew_OpenMP (1000, 10, ctx);
+  return 0;
+}
+EOF
+	else
+	    cat > $test_stem.c <<EOF
 #include <stdio.h>
 #include <nvector/nvector_openmp.h>
 int main (int argc, char *argv[])
@@ -1433,6 +1510,7 @@ int main (int argc, char *argv[])
   return 0;
 }
 EOF
+	fi
 	if ! $CC -o $test_stem$XX ${Isundials_inc_path} $test_stem.c \
 	     ${Lsundials_lib_path} -lsundials_nvecopenmp ${libm} \
 	   >>${logfile} 2>&1;

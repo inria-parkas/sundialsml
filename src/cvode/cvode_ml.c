@@ -442,8 +442,8 @@ static int linsysfn(
 	N_Vector y,
 	N_Vector fy,
 	SUNMatrix M,
-	booleantype jok,
-	booleantype *jcur,
+	sunbooleantype jok,
+	sunbooleantype *jcur,
 	sunrealtype gamma,
 	void *user_data,
 	N_Vector tmp1,
@@ -482,8 +482,8 @@ static int linsysfn(
 static int precsetupfn(sunrealtype t,
 		       N_Vector y,
 		       N_Vector fy,
-		       booleantype jok,
-		       booleantype *jcurPtr,
+		       sunbooleantype jok,
+		       sunbooleantype *jcurPtr,
 		       sunrealtype gamma,
 		       void *user_data
 #if SUNDIALS_LIB_VERSION < 300
@@ -958,10 +958,11 @@ CAMLprim value sunml_cvode_wf_tolerances (value vdata)
 /* basic interface */
 
 /* CVodeCreate() + CVodeInit().  */
-CAMLprim value sunml_cvode_init(value weakref, value lmm, value iter, value initial,
-			        value t0)
+CAMLprim value sunml_cvode_init(value weakref, value lmm, value iter,
+				value initial, value t0, value vctx)
 {
     CAMLparam5(weakref, lmm, iter, initial, t0);
+    CAMLxparam1(vctx);
     CAMLlocal2(r, vcvode_mem);
 
     int flag;
@@ -981,7 +982,9 @@ CAMLprim value sunml_cvode_init(value weakref, value lmm, value iter, value init
 	break;
     }
 
-#if 400 <= SUNDIALS_LIB_VERSION
+#if 600 <= SUNDIALS_LIB_VERSION
+    void *cvode_mem = CVodeCreate(lmm_c, ML_CONTEXT(vctx));
+#elif 400 <= SUNDIALS_LIB_VERSION
     void *cvode_mem = CVodeCreate(lmm_c);
 #else
     void *cvode_mem = CVodeCreate(lmm_c,
@@ -1012,6 +1015,8 @@ CAMLprim value sunml_cvode_init(value weakref, value lmm, value iter, value init
 
     CAMLreturn(r);
 }
+
+BYTE_STUB6(sunml_cvode_init)
 
 /* Set the root function to a generic trampoline and set the number of
  * roots.  */

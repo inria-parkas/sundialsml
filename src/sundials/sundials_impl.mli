@@ -16,5 +16,16 @@ module Version :
     val lt530 : bool
     val lt540 : bool
     val lt580 : bool
+    val lt600 : bool
     val has_nvector_get_id : bool
+  end
+module Context :
+  sig
+    type cptr
+    type t = { cptr : cptr; }
+    external c_make : unit -> cptr = "sunml_context_make"
+    val make : unit -> t
+    val default_context : t Weak.t
+    val default : unit -> t
+    val get : t option -> t
   end

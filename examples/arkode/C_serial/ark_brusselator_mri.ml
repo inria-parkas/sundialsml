@@ -106,9 +106,10 @@ let main () =
      specify the right-hand side functions in y'=fs(t,y)+ff(t,y),
      the inital time T0, and the initial dependent variable vector y. *)
   let arkode_mem = MRIStep.(init
-                              InnerStepper.(from_arkstep inner_arkode_mem)
+                              (explicit (fs rdata))
                               default_tolerances
-                              (fs rdata) ~slowstep:hs t0 y) in
+                              InnerStepper.(from_arkstep inner_arkode_mem)
+                              ~slowstep:hs t0 y) in
 
   (* Open output stream for results, output comment line *)
   let ufid = open_out "ark_brusselator_mri_solution.txt" in
@@ -142,13 +143,13 @@ let main () =
 
   (* Print some final statistics *)
   let nsts = MRIStep.get_num_steps arkode_mem in
-  let nfs = MRIStep.get_num_rhs_evals arkode_mem in
+  let nfse, _ = MRIStep.get_num_rhs_evals arkode_mem in
   let nstf = ARKStep.get_num_steps inner_arkode_mem in
   let nff, _ = ARKStep.get_num_rhs_evals inner_arkode_mem in
 
   printf "\nFinal Solver Statistics:\n";
   printf "   Steps: nsts = %d, nstf = %d\n" nsts nstf;
-  printf "   Total RHS evals:  Fs = %d,  Ff = %d\n" nfs nff
+  printf "   Total RHS evals:  Fs = %d,  Ff = %d\n" nfse nff
 
 (* Check environment variables for extra arguments.  *)
 let reps =

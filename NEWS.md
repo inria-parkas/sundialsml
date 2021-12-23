@@ -1,3 +1,12 @@
+Sundials/ML 6.0.0p0 (December 2021)
+------------------------------------
+Sundials/ML v6.0.0p0 adds support for v6.x of the Sundials Suite of
+numerical solvers.
+
+Notes:
+* Uses SUNContext everywhere at C level, but OCaml user code implicitly uses 
+  a global context and thus does not require changes.
+
 Sundials/ML 5.8.0p0 (December 2021)
 ------------------------------------
 Sundials/ML v5.8.0p0 adds support for v5.x of the Sundials Suite of

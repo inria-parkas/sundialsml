@@ -613,8 +613,8 @@ static int linsysfn(
 	N_Vector fy,
 	SUNMatrix A,
 	SUNMatrix M,
-	booleantype jok,
-	booleantype *jcur,
+	sunbooleantype jok,
+	sunbooleantype *jcur,
 	sunrealtype gamma,
 	void *user_data,
 	N_Vector tmp1,
@@ -654,8 +654,8 @@ static int linsysfn(
 static int precsetupfn(sunrealtype t,
 		       N_Vector y,
 		       N_Vector fy,
-		       booleantype jok,
-		       booleantype *jcurPtr,
+		       sunbooleantype jok,
+		       sunbooleantype *jcurPtr,
 		       sunrealtype gamma,
 		       void *user_data
 #if SUNDIALS_LIB_VERSION < 300
@@ -1872,19 +1872,28 @@ void sunml_arkode_check_flag(const char *call, int flag, void *arkode_mem)
 
 /* ARKStepCreate() */
 CAMLprim value sunml_arkode_ark_init(value weakref, value hasfi, value hasfe,
-			             value y0, value t0)
+			             value y0, value t0, value vctx)
 {
     CAMLparam5(weakref, hasfi, hasfe, y0, t0);
+    CAMLxparam1(vctx);
     CAMLlocal2(r, varkode_mem);
 
     value *backref;
 
 #if 400 <= SUNDIALS_LIB_VERSION
     N_Vector nv_y0 = NVEC_VAL(y0);
+#if 600 <= SUNDIALS_LIB_VERSION
+    void *arkode_mem = ARKStepCreate(Bool_val(hasfe)  ? rhsfn2 : NULL,
+				     Bool_val(hasfi)  ? rhsfn1 : NULL,
+				     Double_val(t0),
+				     nv_y0,
+				     ML_CONTEXT(vctx));
+#else
     void *arkode_mem = ARKStepCreate(Bool_val(hasfe)  ? rhsfn2 : NULL,
 				     Bool_val(hasfi)  ? rhsfn1 : NULL,
 				     Double_val(t0),
 				     nv_y0);
+#endif
 
     if (arkode_mem == NULL)
 	caml_failwith("ARKStepCreate returned NULL");
@@ -1930,6 +1939,8 @@ CAMLprim value sunml_arkode_ark_init(value weakref, value hasfi, value hasfe,
 
     CAMLreturn(r);
 }
+
+BYTE_STUB6(sunml_arkode_ark_init)
 
 /* Set the root function to a generic trampoline and set the number of
  * roots.  */
@@ -5212,14 +5223,20 @@ CAMLprim value sunml_arkode_ark_write_butcher(value varkode_mem, value vlog)
  */
 
 /* ERKStepCreate() */
-CAMLprim value sunml_arkode_erk_init(value weakref, value y0, value t0)
+CAMLprim value sunml_arkode_erk_init(value weakref, value y0, value t0,
+				     value vctx)
 {
-    CAMLparam3(weakref, y0, t0);
+    CAMLparam4(weakref, y0, t0, vctx);
     CAMLlocal2(r, varkode_mem);
 #if 400 <= SUNDIALS_LIB_VERSION
     value *backref;
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    void *arkode_mem = ERKStepCreate(rhsfn1, Double_val(t0), NVEC_VAL(y0),
+				     ML_CONTEXT(vctx));
+#else
     void *arkode_mem = ERKStepCreate(rhsfn1, Double_val(t0), NVEC_VAL(y0));
+#endif
 
     if (arkode_mem == NULL)
 	caml_failwith("ERKStepCreate returned NULL");
@@ -6408,9 +6425,12 @@ CAMLprim value sunml_arkode_erk_write_butcher(value varkode_mem, value vlog)
 
 /* MRIStepCreate() */
 CAMLprim value sunml_arkode_mri_init(value weakref, value vistepper,
-				     value y0, value t0)
+				     value y0, value t0,
+				     value vimplicit, value vexplicit,
+				     value vctx)
 {
-    CAMLparam4(weakref, vistepper, y0, t0);
+    CAMLparam5(weakref, vistepper, y0, t0, vimplicit);
+    CAMLxparam2(vexplicit, vctx);
     CAMLlocal3(r, varkode_mem, vistepper_val);
 #if 500 <= SUNDIALS_LIB_VERSION
     value *backref;
@@ -6421,14 +6441,27 @@ CAMLprim value sunml_arkode_mri_init(value weakref, value vistepper,
     if (Is_block(vistepper_val)
 	&& Tag_val(vistepper_val) == VARIANT_ARKODE_MRI_ISTEPPER_ARKSTEP)
     {
+#if 600 <= SUNDIALS_LIB_VERSION
 	arkode_mem =
-	    MRIStepCreate(rhsfn1, Double_val(t0), NVEC_VAL(y0),
+	    MRIStepCreate(Bool_val(vexplicit) ? rhsfn2 : NULL,
+			  Bool_val(vimplicit) ? rhsfn1 : NULL,
+			  Double_val(t0),
+			  NVEC_VAL(y0),
+			  ARKODE_MEM_FROM_ML(Field(vistepper_val, 0)),
+			  ML_CONTEXT(vctx));
+#else
+	arkode_mem =
+	    MRIStepCreate(Bool_val(vexplicit) ? rhsfn2 : rhsfn1,
+			  Double_val(t0), NVEC_VAL(y0),
 			  MRISTEP_ARKSTEP,
-			  ARKODE_MEM_FROM_ML(Field(vistepper_val, 0)));
+			  ARKODE_MEM_FROM_ML(Field(vistepper_val, 0)),
+			  ML_CONTEXT(vctx));
+#endif
     } else {
-#if 580 <= SUNDIALS_LIB_VERSION
+#if 580 <= SUNDIALS_LIB_VERSION && SUNDIALS_LIB_VERSION < 600
 	arkode_mem =
-	    MRIStepCreate(rhsfn1, Double_val(t0), NVEC_VAL(y0),
+	    MRIStepCreate(Bool_val(vexplicit) ? rhsfn2 : rhsfn1,
+			  Double_val(t0), NVEC_VAL(y0),
 			  MRISTEP_CUSTOM,
 			  ISTEPPER_FROM_ML(vistepper));
 #else
@@ -6457,6 +6490,8 @@ CAMLprim value sunml_arkode_mri_init(value weakref, value vistepper,
     CAMLreturn(r);
 }
 
+BYTE_STUB7(sunml_arkode_mri_init)
+
 /* Set the root function to a generic trampoline and set the number of
  * roots.  */
 CAMLprim value sunml_arkode_mri_root_init (value vdata, value vnroots)
@@ -6474,12 +6509,20 @@ CAMLprim value sunml_arkode_mri_root_init (value vdata, value vnroots)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_arkode_mri_reinit(value vdata, value t0, value y0)
+CAMLprim value sunml_arkode_mri_reinit(value vdata, value t0, value y0,
+				       value vimplicit, value vexplicit)
 {
-    CAMLparam3(vdata, t0, y0);
-#if 500 <= SUNDIALS_LIB_VERSION
+    CAMLparam5(vdata, t0, y0, vimplicit, vexplicit);
+#if 600 <= SUNDIALS_LIB_VERSION
     int flag = MRIStepReInit(ARKODE_MEM_FROM_ML(vdata),
-			     rhsfn1, Double_val(t0), NVEC_VAL(y0));
+			     Bool_val(vexplicit) ? rhsfn2 : NULL,
+			     Bool_val(vimplicit) ? rhsfn1 : NULL,
+			     Double_val(t0), NVEC_VAL(y0));
+    CHECK_FLAG("MRIStepReInit", flag);
+#elif 500 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepReInit(ARKODE_MEM_FROM_ML(vdata),
+			     rhsfn1,
+			     Double_val(t0), NVEC_VAL(y0));
     CHECK_FLAG("MRIStepReInit", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -6670,36 +6713,6 @@ CAMLprim value sunml_arkode_mri_resize(value varkode_mem,
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_arkode_mri_set_table(value varkode_mem,
-					  value vq, value vobt)
-{
-    CAMLparam3(varkode_mem, vq, vobt);
-#if 500 <= SUNDIALS_LIB_VERSION
-    ARKodeButcherTable bt = butcher_table_val(vobt);
-
-    int flag = MRIStepSetTable(ARKODE_MEM_FROM_ML(varkode_mem),
-			       Int_val(vq), bt);
-    CHECK_FLAG("MRIStepSetTable", flag);
-
-    if (bt != NULL) ARKodeButcherTable_Free(bt);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_arkode_mri_set_table_num(value varkode_mem, value vt)
-{
-    CAMLparam2(varkode_mem, vt);
-#if 500 <= SUNDIALS_LIB_VERSION
-    int flag = MRIStepSetTableNum(ARKODE_MEM_FROM_ML(varkode_mem), Int_val(vt));
-    CHECK_FLAG("MRIStepSetTableNum", flag);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-    CAMLreturn (Val_unit);
-}
-
 CAMLprim value sunml_arkode_mri_set_postprocess_step_fn(value varkode_mem,
 							value vhasf)
 {
@@ -6743,33 +6756,46 @@ static void finalize_mri_coupling(value vcptr)
     int i;
 
     if (MRIC != NULL) {
-	for (i = 0; i < MRIC->nmat; i++) {
-	    free(MRIC->G[i]);
-	    MRIC->G[i] = NULL;
+#if 600 <= SUNDIALS_LIB_VERSION
+	if (MRIC->W != NULL) {
+	    for (i = 0; i < MRIC->nmat; i++) {
+		free(MRIC->W[i]);
+		MRIC->W[i] = NULL;
+	    }
+	    free(MRIC->W);
+	    MRIC->W = NULL;
 	}
-	free(MRIC->G);
-	MRIC->G = NULL;
+#endif
+	if (MRIC->G != NULL) {
+	    for (i = 0; i < MRIC->nmat; i++) {
+		free(MRIC->G[i]);
+		MRIC->G[i] = NULL;
+	    }
+	    free(MRIC->G);
+	    MRIC->G = NULL;
+	}
 	free(MRIC);
     }
 }
 #endif
 
-CAMLprim value sunml_arkode_mri_coupling_make(value vargs)
+CAMLprim value sunml_arkode_mri_coupling_make(
+				value vnmat, value vstages, value vq, value vp,
+				value vw, value vg, value vc)
 {
-    CAMLparam1(vargs);
+    CAMLparam5(vnmat, vstages, vq, vp, vw);
+    CAMLxparam2(vg, vc);
     CAMLlocal1(vcptr);
 #if 540 <= SUNDIALS_LIB_VERSION
-    CAMLlocal3(vg, vgi, vc);
+    CAMLlocal1(vi);
     int nmat, stages, q, p;
     int i, j;
     MRIStepCoupling MRIC;
 
-    nmat   = Int_val(Field(vargs, 0));
-    stages = Int_val(Field(vargs, 1));
-    q      = Int_val(Field(vargs, 2));
-    p      = Int_val(Field(vargs, 3));
-    vg     = Field(vargs, 4);
-    vc     = Field(vargs, 5);
+    nmat   = Int_val(vnmat);
+    stages = Int_val(vstages);
+    q      = Int_val(vq);
+    p      = Int_val(vp);
 
     // adapted from MRIStepCoupling_Alloc
 
@@ -6781,26 +6807,59 @@ CAMLprim value sunml_arkode_mri_coupling_make(value vargs)
     MRIC->q = q;
     MRIC->p = p;
 
-    MRIC->G = (sunrealtype ***) calloc( nmat, sizeof(sunrealtype**) );
-    if (MRIC->G == NULL) {
-	MRIStepCoupling_Free(MRIC);
-	caml_raise_out_of_memory();
-    }
+#if 600 <= SUNDIALS_LIB_VERSION
+    if (vw != Val_none) {
+	vw = Some_val(vw);
 
-    // allocate arrays in C
-    for (i = 0; i < nmat; i++) {
-	MRIC->G[i] = (sunrealtype **) calloc( stages, sizeof(sunrealtype*) );
-	if (MRIC->G[i] == NULL) {
+	MRIC->W = (sunrealtype ***) calloc(nmat, sizeof(sunrealtype**));
+	if (MRIC->W == NULL) {
 	    MRIStepCoupling_Free(MRIC);
 	    caml_raise_out_of_memory();
 	}
-    }
 
-    // link nested elements to underlying big arrays
-    for (i = 0; i < nmat; i++) {
-	vgi = Field(vg, i);
-	for (j = 0; j < stages; j++) {
-	    MRIC->G[i][j] = REAL_ARRAY(Field(vgi, j));
+	/* allocate rows of each matrix in W */
+	for (i = 0; i < nmat; i++) {
+	    MRIC->W[i] = (sunrealtype **) calloc(stages, sizeof(sunrealtype*));
+	    if (MRIC->W[i] == NULL) {
+		MRIStepCoupling_Free(MRIC);
+		caml_raise_out_of_memory();
+	    }
+	}
+
+	/* allocate columns of each matrix in W */
+	for (i = 0; i < nmat; i++) {
+	    vi = Field(vw, i);
+	    for (j = 0; j < stages; j++) {
+		MRIC->W[i][j] = REAL_ARRAY(Field(vi, j));
+	    }
+	}
+    }
+#endif
+
+    if (vg != Val_none) {
+	vg = Some_val(vg);
+
+	MRIC->G = (sunrealtype ***) calloc( nmat, sizeof(sunrealtype**) );
+	if (MRIC->G == NULL) {
+	    MRIStepCoupling_Free(MRIC);
+	    caml_raise_out_of_memory();
+	}
+
+	// allocate arrays in C
+	for (i = 0; i < nmat; i++) {
+	    MRIC->G[i] = (sunrealtype **) calloc( stages, sizeof(sunrealtype*) );
+	    if (MRIC->G[i] == NULL) {
+		MRIStepCoupling_Free(MRIC);
+		caml_raise_out_of_memory();
+	    }
+	}
+
+	// link nested elements to underlying big arrays
+	for (i = 0; i < nmat; i++) {
+	    vi = Field(vg, i);
+	    for (j = 0; j < stages; j++) {
+		MRIC->G[i][j] = REAL_ARRAY(Field(vi, j));
+	    }
 	}
     }
 
@@ -6814,28 +6873,56 @@ CAMLprim value sunml_arkode_mri_coupling_make(value vargs)
 #endif
     CAMLreturn(vcptr);
 }
+
+BYTE_STUB7(sunml_arkode_mri_coupling_make)
  
 #if 540 <= SUNDIALS_LIB_VERSION
 // Create an MRIStep.Coupling.t from a C value (ownership transferred to OCaml)
 static value sunml_arkode_mri_coupling_wrap(MRIStepCoupling MRIC)
 {
     CAMLparam0();
-    CAMLlocal5(vr, vcptr, vg, vgi, vc);
+    CAMLlocal5(vr, vcptr, vwg, vc, vi);
+    CAMLlocal2(vow, vog);
     int i, j;
 
     // wrap as bigarrays
     vc = caml_ba_alloc_dims(BIGARRAY_FLOAT | CAML_BA_MANAGED, 1,
 			    MRIC->c, MRIC->stages);
 
-    vg = caml_alloc_tuple(MRIC->nmat);
-    for (i = 0; i < MRIC->nmat; i++) {
-	vgi = caml_alloc_tuple(MRIC->stages);	
-	Store_field(vg, i, vgi);
-	for (j = 0; j < MRIC->stages; j++) {
-	    Store_field(vgi, j,
-		caml_ba_alloc_dims(BIGARRAY_FLOAT | CAML_BA_MANAGED, 1,
-				   MRIC->G[i][j], MRIC->stages));
+#if 600 <= SUNDIALS_LIB_VERSION
+    if (MRIC->W == NULL) {
+	vow = Val_none;
+    } else {
+	vwg = caml_alloc_tuple(MRIC->nmat);
+	for (i = 0; i < MRIC->nmat; i++) {
+	    vi = caml_alloc_tuple(MRIC->stages);	
+	    Store_field(vwg, i, vi);
+	    for (j = 0; j < MRIC->stages; j++) {
+		Store_field(vi, j,
+		    caml_ba_alloc_dims(BIGARRAY_FLOAT | CAML_BA_MANAGED, 1,
+				       MRIC->W[i][j], MRIC->stages));
+	    }
 	}
+	Store_some(vow, vwg);
+    }
+#else
+    vow = Val_none;
+#endif
+
+    if (MRIC->G == NULL) {
+	vog = Val_none;
+    } else {
+	vwg = caml_alloc_tuple(MRIC->nmat);
+	for (i = 0; i < MRIC->nmat; i++) {
+	    vi = caml_alloc_tuple(MRIC->stages);	
+	    Store_field(vwg, i, vi);
+	    for (j = 0; j < MRIC->stages; j++) {
+		Store_field(vi, j,
+		    caml_ba_alloc_dims(BIGARRAY_FLOAT | CAML_BA_MANAGED, 1,
+				       MRIC->G[i][j], MRIC->stages));
+	    }
+	}
+	Store_some(vog, vwg);
     }
 
     vcptr = caml_alloc_final(1, &finalize_mri_coupling, 1, 20);
@@ -6848,7 +6935,8 @@ static value sunml_arkode_mri_coupling_wrap(MRIStepCoupling MRIC)
     Store_field(vr, RECORD_ARKODE_MRI_COUPLING_STAGES, Val_int(MRIC->stages));
     Store_field(vr, RECORD_ARKODE_MRI_COUPLING_METHOD_ORDER, Val_int(MRIC->q));
     Store_field(vr, RECORD_ARKODE_MRI_COUPLING_EMBEDDING, Val_int(MRIC->p));
-    Store_field(vr, RECORD_ARKODE_MRI_COUPLING_MATRICES, vg);
+    Store_field(vr, RECORD_ARKODE_MRI_COUPLING_EXPLICIT_MATRICES, vow);
+    Store_field(vr, RECORD_ARKODE_MRI_COUPLING_IMPLICIT_MATRICES, vog);
     Store_field(vr, RECORD_ARKODE_MRI_COUPLING_ABSCISSAE, vc);
 
     CAMLreturn(vr);
@@ -6864,9 +6952,49 @@ CAMLprim value sunml_arkode_mri_coupling_load_table(value vtable)
     MRIStepCoupling MRIC = NULL;
 
     switch (Int_val(vtable)) {
-    case VARIANT_ARKODE_MRI_COUPLING_MIS_KW3:
+#if 600 <= SUNDIALS_LIB_VERSION
+    case VARIANT_ARKODE_MRI_COUPLING_KW3:
+	imethod = ARKODE_MIS_KW3;
+	break;
+
+    case VARIANT_ARKODE_MRI_COUPLING_GARK_ERK33a:
+	imethod = ARKODE_MRI_GARK_ERK33a;
+	break;
+
+    case VARIANT_ARKODE_MRI_COUPLING_GARK_ERK45a:
+	imethod = ARKODE_MRI_GARK_ERK45a;
+	break;
+
+    case VARIANT_ARKODE_MRI_COUPLING_GARK_IRK21a:
+	imethod = ARKODE_MRI_GARK_IRK21a;
+	break;
+
+    case VARIANT_ARKODE_MRI_COUPLING_GARK_ESDIRK34a:
+	imethod = ARKODE_MRI_GARK_ESDIRK34a;
+	break;
+
+    case VARIANT_ARKODE_MRI_COUPLING_GARK_ESDIRK46a:
+	imethod = ARKODE_MRI_GARK_ESDIRK46a;
+	break;
+
+    case VARIANT_ARKODE_MRI_COUPLING_IMEX_GARK3a:
+	imethod = ARKODE_IMEX_MRI_GARK3a;
+	break;
+
+    case VARIANT_ARKODE_MRI_COUPLING_IMEX_GARK3b:
+	imethod = ARKODE_IMEX_MRI_GARK3b;
+	break;
+
+    case VARIANT_ARKODE_MRI_COUPLING_IMEX_GARK4:
+	imethod = ARKODE_IMEX_MRI_GARK4;
+	break;
+#else
+    case VARIANT_ARKODE_MRI_COUPLING_KW3:
 	imethod = MIS_KW3;
 	break;
+
+    case VARIANT_ARKODE_MRI_COUPLING_GARK_ERK33a:
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 
     case VARIANT_ARKODE_MRI_COUPLING_GARK_ERK45a:
 	imethod = MRI_GARK_ERK45a;
@@ -6879,6 +7007,19 @@ CAMLprim value sunml_arkode_mri_coupling_load_table(value vtable)
     case VARIANT_ARKODE_MRI_COUPLING_GARK_ESDIRK34a:
 	imethod = MRI_GARK_ESDIRK34a;
 	break;
+
+    case VARIANT_ARKODE_MRI_COUPLING_GARK_ERKDIRK46a:
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+
+    case VARIANT_ARKODE_MRI_COUPLING_IMEX_GARK3a:
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+
+    case VARIANT_ARKODE_MRI_COUPLING_IMEX_GARK3b:
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+
+    case VARIANT_ARKODE_MRI_COUPLING_IMEX_GARK4:
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
 
     default:
 	caml_invalid_argument("unexpected error in MRIStep.Coupling.load_table");
@@ -7292,13 +7433,13 @@ static void finalize_istepper(value vistepper_cptr)
     MRIStepInnerStepper_Free(&stepper);
 }
 
-/*
+#if 600 <= SUNDIALS_LIB_VERSION
 static void finalize_sundials_istepper(value vistepper_cptr)
 {
     MRIStepInnerStepper stepper = ISTEPPER(vistepper_cptr);
     MRIStepInnerStepper_Free(&stepper);
 }
-*/
+#endif
 
 static int istepper_evolvefn(MRIStepInnerStepper stepper,
 			     sunrealtype t0,
@@ -7398,17 +7539,7 @@ CAMLprim value sunml_arkode_mri_istepper_from_arkstep(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
     CAMLlocal1(r);
-#if 580 <= SUNDIALS_LIB_VERSION
-/*
- * This code is disabled for the moment.
- * Freeing an InnerStepper requires access to the outer MRI session
- * (see decrement assignments in arkFreeVecArray).
- * This means that the InnerStepper should be GCed before the outer MRI
- * session, but the InnerStepper should not be GCed before the outer MRI
- * session has finished using it...
- *
- */
-/*
+#if 600 <= SUNDIALS_LIB_VERSION
     int flag;
     MRIStepInnerStepper stepper;
 
@@ -7418,8 +7549,6 @@ CAMLprim value sunml_arkode_mri_istepper_from_arkstep(value varkode_mem)
 
     r = caml_alloc_final(1, &finalize_sundials_istepper, 0, 1);
     ISTEPPER(r) = stepper;
-*/
-    r = Val_unit;
 #else
     r = Val_unit;
 #endif
@@ -7427,15 +7556,20 @@ CAMLprim value sunml_arkode_mri_istepper_from_arkstep(value varkode_mem)
 }
 
 CAMLprim value sunml_arkode_mri_istepper_create(value vcallbacks,
-						value vhasresetfn)
+						value vhasresetfn,
+						value vctx)
 {
-    CAMLparam2(vcallbacks, vhasresetfn);
+    CAMLparam3(vcallbacks, vhasresetfn, vctx);
     CAMLlocal1(vistepper);
 #if 580 <= SUNDIALS_LIB_VERSION
     int flag;
     MRIStepInnerStepper stepper;
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    flag = MRIStepInnerStepper_Create(ML_CONTEXT(vctx), &stepper);
+#else
     flag = MRIStepInnerStepper_Create(&stepper);
+#endif
     CHECK_FLAG("MRIStepInnerStepper_Create", flag);
 
     flag = MRIStepInnerStepper_SetEvolveFn(stepper, istepper_evolvefn);
@@ -7599,13 +7733,26 @@ CAMLprim value sunml_arkode_mri_get_num_rhs_evals(value varkode_mem)
     CAMLparam1(varkode_mem);
     CAMLlocal1(vr);
 
-#if 500 <= SUNDIALS_LIB_VERSION
+#if 600 <= SUNDIALS_LIB_VERSION
+    long int nfse, nfsi;
+
+    int flag = MRIStepGetNumRhsEvals(ARKODE_MEM_FROM_ML(varkode_mem),
+				     &nfse, &nfsi);
+    CHECK_FLAG("MRIStepGetNumRhsEvals", flag);
+
+    vr = caml_alloc_tuple(2);
+    Store_field(vr, 0, Val_long(nfse));
+    Store_field(vr, 1, Val_long(nfsi));
+
+#elif 500 <= SUNDIALS_LIB_VERSION
     long int ne;
 
     int flag = MRIStepGetNumRhsEvals(ARKODE_MEM_FROM_ML(varkode_mem), &ne);
     CHECK_FLAG("MRIStepGetNumRhsEvals", flag);
 
-    vr = Val_long(ne);
+    vr = caml_alloc_tuple(2);
+    Store_field(vr, 0, Val_long(ne));
+    Store_field(vr, 1, Val_long(0L));
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif

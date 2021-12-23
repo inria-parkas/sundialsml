@@ -50,6 +50,10 @@ static N_Vector clone_pthreads(N_Vector w)
     /* Create vector operation structure */
     sunml_clone_cnvec_ops(v, w);
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    v->sunctx = w->sunctx;
+#endif
+
     /* Create content */
     content->length      = NV_LENGTH_PT(w);
     content->num_threads = NV_NUM_THREADS_PT(w);
@@ -97,6 +101,10 @@ static N_Vector clone_any_pthreads(N_Vector w)
     /* Create vector operation structure */
     sunml_clone_cnvec_ops(v, w);
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    v->sunctx = w->sunctx;
+#endif
+
     /* Create content */
     content->length   = NV_LENGTH_PT(w);
     content->num_threads = NV_NUM_THREADS_PT(w);
@@ -117,9 +125,10 @@ static N_Vector clone_any_pthreads(N_Vector w)
    N_VNewEmpty_Pthreads */
 CAMLprim value sunml_nvec_wrap_pthreads(value nthreads,
 				        value payload,
-				        value checkfn, value clonefn)
+				        value checkfn, value clonefn,
+					value context)
 {
-    CAMLparam4(nthreads, payload, checkfn, clonefn);
+    CAMLparam5(nthreads, payload, checkfn, clonefn, context);
     CAMLlocal1(vnvec);
 
     N_Vector nv;
@@ -132,6 +141,10 @@ CAMLprim value sunml_nvec_wrap_pthreads(value nthreads,
     if (nv == NULL) caml_raise_out_of_memory();
     ops = (N_Vector_Ops) nv->ops;
     content = (N_VectorContent_Pthreads) nv->content;
+
+#if 600 <= SUNDIALS_LIB_VERSION
+    nv->sunctx = ML_CONTEXT(context);
+#endif
 
     /* Create vector operation structure */
     ops->nvclone           = clone_pthreads;		    /* ours */
@@ -223,14 +236,16 @@ CAMLprim value sunml_nvec_wrap_pthreads(value nthreads,
       (the current clone_empty_pthreads does not manipulate the backlink). */
 CAMLprim value sunml_nvec_anywrap_pthreads(value extconstr,
 					   value nthreads, value payload,
-					   value checkfn, value clonefn)
+					   value checkfn, value clonefn,
+					   value context)
 {
     CAMLparam5(extconstr, nthreads, payload, checkfn, clonefn);
+    CAMLxparam1(context);
     CAMLlocal2(vnv, vwrapped);
     N_Vector nv;
     N_Vector_Ops ops;
 
-    vnv = sunml_nvec_wrap_pthreads(nthreads, payload, checkfn, clonefn);
+    vnv = sunml_nvec_wrap_pthreads(nthreads, payload, checkfn, clonefn, context);
     nv = NVEC_VAL(vnv);
     ops = (N_Vector_Ops) nv->ops;
 
@@ -245,6 +260,8 @@ CAMLprim value sunml_nvec_anywrap_pthreads(value extconstr,
 
     CAMLreturn(vnv);
 }
+
+BYTE_STUB6(sunml_nvec_anywrap_pthreads)
 
 CAMLprim value sunml_nvec_pthreads_num_threads(value va)
 {
@@ -421,7 +438,7 @@ CAMLprim value sunml_nvec_pthreads_invtest(value vx, value vz)
     CAMLparam2(vx, vz);
     N_Vector x = NVEC_VAL(vx);
     N_Vector z = NVEC_VAL(vz);
-    booleantype r = N_VInvTest_Pthreads(x, z);
+    sunbooleantype r = N_VInvTest_Pthreads(x, z);
     CAMLreturn(Val_bool(r));
 }
 
@@ -431,7 +448,7 @@ CAMLprim value sunml_nvec_pthreads_constrmask(value vc, value vx, value vm)
     N_Vector c = NVEC_VAL(vc);
     N_Vector x = NVEC_VAL(vx);
     N_Vector m = NVEC_VAL(vm);
-    booleantype r = N_VConstrMask_Pthreads(c, x, m);
+    sunbooleantype r = N_VConstrMask_Pthreads(c, x, m);
     CAMLreturn(Val_bool(r));
 }
 

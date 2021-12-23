@@ -393,6 +393,7 @@ type ('a, 'kind) session = {
   backref    : c_weak_ref;
   nroots     : int;
   checkvec   : (('a, 'kind) Nvector.t -> unit);
+  context    : Context.t;
 
   mutable exn_temp     : exn option;
 

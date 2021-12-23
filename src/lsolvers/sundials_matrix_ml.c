@@ -2323,10 +2323,10 @@ static SUNMatrix alloc_smat(void *content, value backlink,
     SUNMatrix smat;
 
     /* Alloc memory in C heap */
-    smat = (SUNMatrix)malloc(sizeof(struct csmat));
+    smat = (SUNMatrix)calloc(1, sizeof(struct csmat));
     if (smat == NULL) return NULL;
 
-    smat->ops = (SUNMatrix_Ops)malloc(sizeof(struct _generic_SUNMatrix_Ops));
+    smat->ops = (SUNMatrix_Ops)calloc(1, sizeof(struct _generic_SUNMatrix_Ops));
     if (smat->ops == NULL) { free(smat); return(NULL); }
 
     smat->content = content;
@@ -2398,6 +2398,9 @@ static SUNMatrix csmat_dense_clone(SUNMatrix A)
 	    MAT_CONTENT(Field(vcontentb, RECORD_MAT_MATRIXCONTENT_RAWPTR)),
 	    vcontentb, false);
     csmat_clone_ops(B, A);
+#if 600 <= SUNDIALS_LIB_VERSION
+    B->sunctx = A->sunctx;
+#endif
 
     CAMLreturnT(SUNMatrix, B);
 }
@@ -2416,6 +2419,9 @@ static SUNMatrix csmat_band_clone(SUNMatrix A)
 	    MAT_CONTENT(Field(vcontentb, RECORD_MAT_MATRIXCONTENT_RAWPTR)),
 	    vcontentb, false);
     csmat_clone_ops(B, A);
+#if 600 <= SUNDIALS_LIB_VERSION
+    B->sunctx = A->sunctx;
+#endif
 
     CAMLreturnT(SUNMatrix, B);
 }
@@ -2436,6 +2442,9 @@ static SUNMatrix csmat_sparse_clone(SUNMatrix A)
 	    MAT_CONTENT(Field(vcontentb, RECORD_MAT_MATRIXCONTENT_RAWPTR)),
 	    vcontentb, false);
     csmat_clone_ops(B, A);
+#if 600 <= SUNDIALS_LIB_VERSION
+    B->sunctx = A->sunctx;
+#endif
 
     CAMLreturnT(SUNMatrix, B);
 }
@@ -2455,9 +2464,9 @@ static int csmat_custom_space(SUNMatrix A, long int *lenrw, long int *leniw);
 #endif
 
 CAMLprim value sunml_matrix_wrap(value vid, value vcontent, value vpayload,
-				 value vhasmatvecsetup)
+				 value vhasmatvecsetup, value vcontext)
 {
-    CAMLparam4(vid, vcontent, vpayload, vhasmatvecsetup);
+    CAMLparam5(vid, vcontent, vpayload, vhasmatvecsetup, vcontext);
     CAMLlocal1(vr);
 
 #if 300 <= SUNDIALS_LIB_VERSION
@@ -2475,6 +2484,9 @@ CAMLprim value sunml_matrix_wrap(value vid, value vcontent, value vpayload,
 	smat = alloc_smat(MAT_CONTENT(vcontent), vpayload, false);
     }
     if (smat == NULL) caml_raise_out_of_memory();
+#if 600 <= SUNDIALS_LIB_VERSION
+    smat->sunctx = ML_CONTEXT(vcontext);
+#endif
 
     /* Attach operations */
     switch (mat_id) {
@@ -2574,6 +2586,9 @@ static SUNMatrix csmat_custom_clone(SUNMatrix A)
 
     B = alloc_smat(MAT_OP_TABLE(A), vcontentb, true);
     csmat_clone_ops(B, A);
+#if 600 <= SUNDIALS_LIB_VERSION
+    B->sunctx = A->sunctx;
+#endif
 
     CAMLreturnT(SUNMatrix, B);
 }
@@ -2836,7 +2851,11 @@ CAMLprim value sunml_arraydensematrix_scale(value vc, value va)
     intnat m = ba->dim[1];
     intnat n = ba->dim[0];
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    SUNDlsMat_denseScale(Double_val(vc), ARRAY2_ACOLS(va), m, n);
+#else
     denseScale(Double_val(vc), ARRAY2_ACOLS(va), m, n);
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -2854,7 +2873,11 @@ CAMLprim value sunml_arraydensematrix_add_identity(value va)
 	caml_invalid_argument("matrix not square.");
 #endif
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    SUNDlsMat_denseAddIdentity(ARRAY2_ACOLS(va), m);
+#else
     denseAddIdentity(ARRAY2_ACOLS(va), m);
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -2872,7 +2895,12 @@ CAMLprim value sunml_arraydensematrix_matvec(value va, value vx, value vy)
     if (ARRAY1_LEN(vy) < m)
 	caml_invalid_argument("y array too small.");
 #endif
+#if 600 <= SUNDIALS_LIB_VERSION
+    SUNDlsMat_denseMatvec(ARRAY2_ACOLS(va), REAL_ARRAY(vx),
+			  REAL_ARRAY(vy), m, n);
+#else
     denseMatvec(ARRAY2_ACOLS(va), REAL_ARRAY(vx), REAL_ARRAY(vy), m, n);
+#endif
     CAMLreturn (Val_unit);
 }
 #else
@@ -2895,7 +2923,12 @@ CAMLprim value sunml_arraydensematrix_getrf(value va, value vp)
 	caml_invalid_argument("pivot array too small.");
 #endif
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    sundials_ml_index r = SUNDlsMat_denseGETRF(ARRAY2_ACOLS(va), m, n,
+					       INDEX_ARRAY(vp));
+#else
     sundials_ml_index r = denseGETRF(ARRAY2_ACOLS(va), m, n, INDEX_ARRAY(vp));
+#endif
 
     if (r != 0) {
 	caml_raise_with_arg(MATRIX_EXN_TAG(ZeroDiagonalElement),
@@ -2921,7 +2954,12 @@ CAMLprim value sunml_arraydensematrix_getrs(value va, value vp, value vb)
 	caml_invalid_argument("pivot array too small.");
 #endif
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    SUNDlsMat_denseGETRS(ARRAY2_ACOLS(va), m, INDEX_ARRAY(vp),
+			 REAL_ARRAY(vb));
+#else
     denseGETRS(ARRAY2_ACOLS(va), m, INDEX_ARRAY(vp), REAL_ARRAY(vb));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -2944,7 +2982,12 @@ CAMLprim value sunml_arraydensematrix_getrs_off(value va, value vp,
 	caml_invalid_argument("p is too small.");
 #endif
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    SUNDlsMat_denseGETRS(ARRAY2_ACOLS(va), m, INDEX_ARRAY(vp),
+			 REAL_ARRAY(vb) + boff);
+#else
     denseGETRS(ARRAY2_ACOLS(va), m, INDEX_ARRAY(vp), REAL_ARRAY(vb) + boff);
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -2961,7 +3004,11 @@ CAMLprim value sunml_arraydensematrix_potrf(value va)
 	caml_invalid_argument("matrix not square");
 #endif
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    SUNDlsMat_densePOTRF(ARRAY2_ACOLS(va), m);
+#else
     densePOTRF(ARRAY2_ACOLS(va), m);
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -2980,7 +3027,11 @@ CAMLprim value sunml_arraydensematrix_potrs(value va, value vb)
 	caml_invalid_argument("b is too small.");
 #endif
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    SUNDlsMat_densePOTRS(ARRAY2_ACOLS(va), m, REAL_ARRAY(vb));
+#else
     densePOTRS(ARRAY2_ACOLS(va), m, REAL_ARRAY(vb));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -3001,7 +3052,12 @@ CAMLprim value sunml_arraydensematrix_geqrf(value va, value vbeta, value vv)
 	caml_invalid_argument("work is too small.");
 #endif
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    SUNDlsMat_denseGEQRF(ARRAY2_ACOLS(va), m, n, REAL_ARRAY(vbeta),
+			 REAL_ARRAY(vv));
+#else
     denseGEQRF(ARRAY2_ACOLS(va), m, n, REAL_ARRAY(vbeta), REAL_ARRAY(vv));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -3031,7 +3087,11 @@ CAMLprim value sunml_arraydensematrix_ormqr(value va, value vormqr)
 	caml_invalid_argument("work is too small.");
 #endif
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    SUNDlsMat_denseORMQR(ARRAY2_ACOLS(va), m, n, beta, vv, vw, work);
+#else
     denseORMQR(ARRAY2_ACOLS(va), m, n, beta, vv, vw, work);
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -3064,8 +3124,13 @@ CAMLprim value sunml_arraybandmatrix_copy(value va, value vb, value vsizes)
 	caml_invalid_argument("matrix sizes differ.");
 #endif
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    SUNDlsMat_bandCopy(ARRAY2_ACOLS(va), ARRAY2_ACOLS(vb), am, a_smu, b_smu,
+		       copymu, copyml);
+#else
     bandCopy(ARRAY2_ACOLS(va), ARRAY2_ACOLS(vb), am, a_smu, b_smu,
 	     copymu, copyml);
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -3087,7 +3152,11 @@ CAMLprim value sunml_arraybandmatrix_scale(value vc, value va, value vsizes)
 	caml_invalid_argument("matrix badly sized.");
 #endif
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    SUNDlsMat_bandScale(Double_val(vc), ARRAY2_ACOLS(va), m, mu, ml, smu);
+#else
     bandScale(Double_val(vc), ARRAY2_ACOLS(va), m, mu, ml, smu);
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -3106,7 +3175,11 @@ CAMLprim value sunml_arraybandmatrix_add_identity(value vsmu, value va)
 	caml_invalid_argument("matrix badly sized.");
 #endif
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    SUNDlsMat_bandAddIdentity(ARRAY2_ACOLS(va), m, smu);
+#else
     bandAddIdentity(ARRAY2_ACOLS(va), m, smu);
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -3134,8 +3207,13 @@ CAMLprim value sunml_arraybandmatrix_matvec(value va, value vsizes,
     if (ARRAY1_LEN(vy) < m)
 	caml_invalid_argument("y array too small.");
 #endif
+#if 600 <= SUNDIALS_LIB_VERSION
+    SUNDlsMat_bandMatvec(ARRAY2_ACOLS(va), REAL_ARRAY(vx), REAL_ARRAY(vy),
+			 m, mu, ml, smu);
+#else
     bandMatvec(ARRAY2_ACOLS(va), REAL_ARRAY(vx), REAL_ARRAY(vy),
 	       m, mu, ml, smu);
+#endif
     CAMLreturn (Val_unit);
 }
 #else
@@ -3166,7 +3244,11 @@ CAMLprim value sunml_arraybandmatrix_gbtrf(value va, value vsizes, value vp)
 	caml_invalid_argument("p is too small.");
 #endif
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    SUNDlsMat_bandGBTRF(ARRAY2_ACOLS(va), m, mu, ml, smu, INDEX_ARRAY(vp));
+#else
     bandGBTRF(ARRAY2_ACOLS(va), m, mu, ml, smu, INDEX_ARRAY(vp));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -3191,7 +3273,12 @@ CAMLprim value sunml_arraybandmatrix_gbtrs(value va, value vsizes, value vp, val
 	caml_invalid_argument("b is too small.");
 #endif
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    SUNDlsMat_bandGBTRS(ARRAY2_ACOLS(va), m, smu, ml, INDEX_ARRAY(vp),
+			REAL_ARRAY(vb));
+#else
     bandGBTRS(ARRAY2_ACOLS(va), m, smu, ml, INDEX_ARRAY(vp), REAL_ARRAY(vb));
+#endif
     CAMLreturn (Val_unit);
 }
 

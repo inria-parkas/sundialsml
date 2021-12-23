@@ -865,16 +865,21 @@ CAMLprim value sunml_ida_root_init (value vida_mem, value vnroots)
  * that cleanup in C would be ugly, e.g. we wouldn't be able to reuse
  * c_ida_set_linear_solver() so we have to duplicate it or hack some ad-hoc
  * extensions to that function.  */
-CAMLprim value sunml_ida_init (value weakref, value vt0, value vy, value vyp)
+CAMLprim value sunml_ida_init (value weakref, value vt0, value vy, value vyp,
+			       value vctx)
 {
-    CAMLparam4 (weakref, vy, vyp, vt0);
+    CAMLparam5 (weakref, vy, vyp, vt0, vctx);
     CAMLlocal2 (r, vida_mem);
     int flag;
     N_Vector y, yp;
     void *ida_mem = NULL;
     value *backref = NULL;
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    ida_mem = IDACreate (ML_CONTEXT(vctx));
+#else
     ida_mem = IDACreate ();
+#endif
     if (ida_mem == NULL)
 	caml_failwith ("IDACreate failed");
 

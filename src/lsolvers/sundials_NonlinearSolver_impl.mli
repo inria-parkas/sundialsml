@@ -40,6 +40,7 @@ type ('d, 'k, 's, _) solver =
 and ('d, 'k, 's, 'v) nonlinear_solver = {
   rawptr : ('d, 'k, 's, 'v) cptr;
   solver : ('d, 'k, 's, 'v) solver;
+  context : Sundials.Context.t;
   mutable info_file : Sundials.Logfile.t option;
   mutable attached : bool;
 }

@@ -53,7 +53,7 @@ typedef struct nls_callback_value* p_nls_cbv;
 struct _N_VectorContent_SensWrapper {
   N_Vector* vecs;
   int nvecs;
-  booleantype own_vecs;
+  sunbooleantype own_vecs;
 };
 
 typedef struct _N_VectorContent_SensWrapper *N_VectorContent_SensWrapper;
@@ -419,10 +419,10 @@ static int sys_callback_sens(N_Vector y, N_Vector F, void* mem)
 
 #if 400 <= SUNDIALS_LIB_VERSION
 #if 500 <= SUNDIALS_LIB_VERSION
-static int lsetup_callback(booleantype jbad, booleantype* jcur, void* mem)
+static int lsetup_callback(sunbooleantype jbad, sunbooleantype* jcur, void* mem)
 #else
-static int lsetup_callback(N_Vector y, N_Vector F, booleantype jbad,
-			   booleantype* jcur, void* mem)
+static int lsetup_callback(N_Vector y, N_Vector F, sunbooleantype jbad,
+			   sunbooleantype* jcur, void* mem)
 #endif
 {
     CAMLparam0();
@@ -1277,7 +1277,7 @@ done:
 static int sunml_nlsolver_wrapped_solve(SUNNonlinearSolver nls,
 					N_Vector y0, N_Vector y,
 					N_Vector w, sunrealtype tol,
-					booleantype callLSetup, void *mem)
+					sunbooleantype callLSetup, void *mem)
 {
     CAMLparam0();
     CAMLlocal1(vmem);
@@ -1320,7 +1320,8 @@ static int sunml_nlsolver_wrapped_sysfn(N_Vector y, N_Vector F, void* mem)
 }
 
 #if 500 <= SUNDIALS_LIB_VERSION
-static int sunml_nlsolver_wrapped_lsetupfn(booleantype jbad, booleantype* jcur,
+static int sunml_nlsolver_wrapped_lsetupfn(sunbooleantype jbad,
+					   sunbooleantype* jcur,
 					   void* mem)
 {
     p_nls_cbv cbv = (p_nls_cbv)mem;
@@ -1328,7 +1329,8 @@ static int sunml_nlsolver_wrapped_lsetupfn(booleantype jbad, booleantype* jcur,
 }
 #else
 static int sunml_nlsolver_wrapped_lsetupfn(N_Vector y, N_Vector F,
-					   booleantype jbad, booleantype* jcur,
+					   sunbooleantype jbad,
+					   sunbooleantype* jcur,
 					   void* mem)
 {
     p_nls_cbv cbv = (p_nls_cbv)mem;
@@ -1482,14 +1484,18 @@ static value sunml_nlsolver_wrap_from_value(SUNNonlinearSolver nls)
 
 #endif
 
-CAMLprim value sunml_nlsolver_newton_make(value vy, value vcallbacks)
+CAMLprim value sunml_nlsolver_newton_make(value vy, value vcallbacks, value vctx)
 {
-    CAMLparam2(vy, vcallbacks);
+    CAMLparam3(vy, vcallbacks, vctx);
 #if 400 <= SUNDIALS_LIB_VERSION
     CAMLlocal1(vr);
     N_Vector y = NVEC_VAL(vy);
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    vr = rewrap_nlsolver(SUNNonlinSol_Newton(y, ML_CONTEXT(vctx)), vcallbacks);
+#else
     vr = rewrap_nlsolver(SUNNonlinSol_Newton(y), vcallbacks);
+#endif
     CAMLreturn (vr);
 #else
     CAMLreturn (Val_unit);
@@ -1497,14 +1503,20 @@ CAMLprim value sunml_nlsolver_newton_make(value vy, value vcallbacks)
 }
 
 CAMLprim value sunml_nlsolver_newton_make_sens(value vcount, value vy,
-					       value vcallbacks)
+					       value vcallbacks, value vctx)
 {
-    CAMLparam3(vcount, vy, vcallbacks);
+    CAMLparam4(vcount, vy, vcallbacks, vctx);
 #if 400 <= SUNDIALS_LIB_VERSION
     CAMLlocal1(vr);
     N_Vector y = NVEC_VAL(vy);
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    vr = rewrap_nlsolver(
+	    SUNNonlinSol_NewtonSens(Int_val(vcount), y, ML_CONTEXT(vctx)),
+	    vcallbacks);
+#else
     vr = rewrap_nlsolver(SUNNonlinSol_NewtonSens(Int_val(vcount), y), vcallbacks);
+#endif
     CAMLreturn (vr);
 #else
     CAMLreturn (Val_unit);
@@ -1554,33 +1566,48 @@ CAMLprim value sunml_nlsolver_newton_get_sys_fn(value vnls)
 }
 
 CAMLprim value sunml_nlsolver_fixedpoint_make(value vy, value vm,
-					      value vcallbacks)
+					      value vcallbacks, value vctx)
 {
-    CAMLparam3(vy, vm, vcallbacks);
+    CAMLparam4(vy, vm, vcallbacks, vctx);
 #if 400 <= SUNDIALS_LIB_VERSION
     CAMLlocal1(vr);
     N_Vector y = NVEC_VAL(vy);
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    vr = rewrap_nlsolver(
+	    SUNNonlinSol_FixedPoint(y, Int_val(vm), ML_CONTEXT(vctx)),
+	    vcallbacks);
+#else
     vr = rewrap_nlsolver(
 	    SUNNonlinSol_FixedPoint(y, Int_val(vm)),
 	    vcallbacks);
+#endif
     CAMLreturn (vr);
+
 #else
     CAMLreturn (Val_unit);
 #endif
 }
 
 CAMLprim value sunml_nlsolver_fixedpoint_make_sens(value vcount, value vy,
-						   value vm, value vcallbacks)
+						   value vm, value vcallbacks,
+						   value vctx)
 {
-    CAMLparam4(vcount, vy, vm, vcallbacks);
+    CAMLparam5(vcount, vy, vm, vcallbacks, vctx);
 #if 400 <= SUNDIALS_LIB_VERSION
     CAMLlocal1(vr);
     N_Vector y = NVEC_VAL(vy);
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    vr = rewrap_nlsolver(
+	    SUNNonlinSol_FixedPointSens(Int_val(vcount), y, Int_val(vm),
+					ML_CONTEXT(vctx)),
+	    vcallbacks);
+#else
     vr = rewrap_nlsolver(
 	    SUNNonlinSol_FixedPointSens(Int_val(vcount), y, Int_val(vm)),
 	    vcallbacks);
+#endif
     CAMLreturn (vr);
 #else
     CAMLreturn (Val_unit);
@@ -1726,7 +1753,9 @@ static int callml_custom_setup_sens(SUNNonlinearSolver nls, N_Vector y, void* me
 
 static int callml_custom_solve(SUNNonlinearSolver nls,
 			       N_Vector y0, N_Vector y, N_Vector w,
-			       sunrealtype tol, booleantype callLSetup, void* mem)
+			       sunrealtype tol,
+			       sunbooleantype callLSetup,
+			       void* mem)
 {
     CAMLparam0();
     CAMLlocal1(vops);
@@ -1752,7 +1781,7 @@ static int callml_custom_solve(SUNNonlinearSolver nls,
 
 static int callml_custom_solve_sens(SUNNonlinearSolver nls,
 				    N_Vector y0, N_Vector y, N_Vector w,
-				    sunrealtype tol, booleantype callLSetup,
+				    sunrealtype tol, sunbooleantype callLSetup,
 				    void* mem)
 {
     CAMLparam0();
@@ -2019,9 +2048,10 @@ static int callml_custom_getnumconvfails(SUNNonlinearSolver nls,
     CAMLreturnT(int, CHECK_NLS_EXCEPTION (r, UNRECOVERABLE));
 }
 
-static CAMLprim value custom_make(int sens, value vcallbacks, value vweakops)
+static CAMLprim value custom_make(int sens, value vcallbacks, value vweakops,
+				  value vctx)
 {
-    CAMLparam2(vcallbacks, vweakops);
+    CAMLparam3(vcallbacks, vweakops, vctx);
     CAMLlocal2(vnls, vops);
     SUNNonlinearSolver nls;
     SUNNonlinearSolver_Ops ops;
@@ -2039,6 +2069,9 @@ static CAMLprim value custom_make(int sens, value vcallbacks, value vweakops)
     nls->content = (void *) vweakops;
     caml_register_generational_global_root((value *)&(nls->content));
     nls->ops = ops;
+#if 600 <= SUNDIALS_LIB_VERSION
+    nls->sunctx = ML_CONTEXT(vctx);
+#endif
     WEAK_DEREF(vops, vweakops);
 
     /* Attach operations */
@@ -2091,21 +2124,23 @@ static CAMLprim value custom_make(int sens, value vcallbacks, value vweakops)
 }
 #endif
 
-CAMLprim value sunml_nlsolver_custom_make(value vcallbacks, value vops)
+CAMLprim value sunml_nlsolver_custom_make(value vcallbacks, value vops,
+					  value vctx)
 {
-    CAMLparam2(vcallbacks, vops);
+    CAMLparam3(vcallbacks, vops, vctx);
 #if 400 <= SUNDIALS_LIB_VERSION
-    CAMLreturn (custom_make(0, vcallbacks, vops));
+    CAMLreturn (custom_make(0, vcallbacks, vops, vctx));
 #else
     CAMLreturn (Val_unit);
 #endif
 }
 
-CAMLprim value sunml_nlsolver_custom_make_sens(value vcallbacks, value vops)
+CAMLprim value sunml_nlsolver_custom_make_sens(value vcallbacks, value vops,
+					       value vctx)
 {
-    CAMLparam2(vcallbacks, vops);
+    CAMLparam3(vcallbacks, vops, vctx);
 #if 400 <= SUNDIALS_LIB_VERSION
-    CAMLreturn (custom_make(1, vcallbacks, vops));
+    CAMLreturn (custom_make(1, vcallbacks, vops, vctx));
 #else
     CAMLreturn (Val_unit);
 #endif

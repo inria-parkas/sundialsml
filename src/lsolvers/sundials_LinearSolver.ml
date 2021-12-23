@@ -75,14 +75,18 @@ module Direct = struct (* {{{ *)
   external c_dense
            : 'k Nvector.serial
              -> 'k Matrix.dense
+             -> Sundials.Context.t
              -> (Matrix.Dense.t, Nvector_serial.data, 'k) cptr
     = "sunml_lsolver_dense"
 
-  let dense nvec mat = LS {
-      rawptr = c_dense nvec mat;
+  let dense ?context nvec mat =
+    let ctx = Sundials_impl.Context.get context in
+    LS {
+      rawptr = c_dense nvec mat ctx;
       solver = Dense;
       matrix = Some mat;
       compat = LSI.Iterative.info;
+      context = ctx;
       check_prec_type = (fun _ -> true);
       ocaml_callbacks = empty_ocaml_callbacks ();
       info_file = None;
@@ -92,17 +96,20 @@ module Direct = struct (* {{{ *)
   external c_lapack_dense
            : 'k Nvector.serial
              -> 'k Matrix.dense
+             -> Sundials.Context.t
              -> (Matrix.Dense.t, Nvector_serial.data, 'k) cptr
     = "sunml_lsolver_lapack_dense"
 
-  let lapack_dense nvec mat =
+  let lapack_dense ?context nvec mat =
     if not Config.lapack_enabled
     then raise Config.NotImplementedBySundialsVersion;
+    let ctx = Sundials_impl.Context.get context in
     LS {
-      rawptr = c_lapack_dense nvec mat;
+      rawptr = c_lapack_dense nvec mat ctx;
       solver = LapackDense;
       matrix = Some mat;
       compat = LSI.Iterative.info;
+      context = ctx;
       check_prec_type = (fun _ -> true);
       ocaml_callbacks = empty_ocaml_callbacks ();
       info_file = None;
@@ -112,14 +119,18 @@ module Direct = struct (* {{{ *)
   external c_band
            : 'k Nvector.serial
              -> 'k Matrix.band
+             -> Sundials.Context.t
              -> (Matrix.Band.t, Nvector_serial.data, 'k) cptr
     = "sunml_lsolver_band"
 
-  let band nvec mat = LS {
-      rawptr = c_band nvec mat;
+  let band ?context nvec mat =
+    let ctx = Sundials_impl.Context.get context in
+    LS {
+      rawptr = c_band nvec mat ctx;
       solver = Band;
       matrix = Some mat;
       compat = LSI.Iterative.info;
+      context = ctx;
       check_prec_type = (fun _ -> true);
       ocaml_callbacks = empty_ocaml_callbacks ();
       info_file = None;
@@ -129,17 +140,20 @@ module Direct = struct (* {{{ *)
   external c_lapack_band
            : 'k Nvector.serial
              -> 'k Matrix.band
+             -> Sundials.Context.t
              -> (Matrix.Band.t, Nvector_serial.data, 'k) cptr
     = "sunml_lsolver_lapack_band"
 
-  let lapack_band nvec mat =
+  let lapack_band ?context nvec mat =
     if not Config.lapack_enabled
     then raise Config.NotImplementedBySundialsVersion;
+    let ctx = Sundials_impl.Context.get context in
     LS {
-      rawptr = c_lapack_band nvec mat;
+      rawptr = c_lapack_band nvec mat ctx;
       solver = LapackBand;
       matrix = Some mat;
       compat = LSI.Iterative.info;
+      context = ctx;
       check_prec_type = (fun _ -> true);
       ocaml_callbacks = empty_ocaml_callbacks ();
       info_file = None;
@@ -152,13 +166,15 @@ module Direct = struct (* {{{ *)
     external c_klu
              : 'k Nvector.serial
                -> ('s, 'k) Matrix.sparse
+               -> Sundials.Context.t
                -> ('s Matrix.Sparse.t, Nvector_serial.data, 'k) cptr
       = "sunml_lsolver_klu"
 
-    let make ?ordering nvec mat =
+    let make ?context ?ordering nvec mat =
       if not Config.klu_enabled
       then raise Config.NotImplementedBySundialsVersion;
-      let cptr = c_klu nvec mat in
+      let ctx = Sundials_impl.Context.get context in
+      let cptr = c_klu nvec mat ctx in
       let info =
         if Sundials_impl.Version.in_compat_mode2
         then let r = { (info()) with ordering = ordering } in
@@ -170,6 +186,7 @@ module Direct = struct (* {{{ *)
         solver = Klu info;
         matrix = Some mat;
         compat = LSI.Iterative.info;
+        context = ctx;
         check_prec_type = (fun _ -> true);
         ocaml_callbacks = empty_ocaml_callbacks ();
         info_file = None;
@@ -220,15 +237,17 @@ module Direct = struct (* {{{ *)
              : 'k Nvector.serial
                -> ('s, 'k) Matrix.sparse
                -> int
+               -> Sundials.Context.t
                -> ('s Matrix.Sparse.t, Nvector_serial.data, 'k) cptr
       = "sunml_lsolver_superlumt"
 
-    let make ?ordering ~nthreads nvec mat =
+    let make ?context ?ordering ~nthreads nvec mat =
       if not Config.superlumt_enabled
          || (Sundials_impl.Version.in_compat_mode2
              && not Matrix.(Sparse.is_csc (unwrap mat)))
       then raise Config.NotImplementedBySundialsVersion;
-      let cptr = c_superlumt nvec mat nthreads in
+      let ctx = Sundials_impl.Context.get context in
+      let cptr = c_superlumt nvec mat nthreads ctx in
       let info =
         if Sundials_impl.Version.in_compat_mode2
         then let r = { (info nthreads) with ordering = ordering } in
@@ -240,6 +259,7 @@ module Direct = struct (* {{{ *)
         solver = Superlumt info;
         matrix = Some mat;
         compat = LSI.Iterative.info;
+        context = ctx;
         check_prec_type = (fun _ -> true);
         ocaml_callbacks = empty_ocaml_callbacks ();
         info_file = None;
@@ -334,12 +354,14 @@ module Iterative = struct (* {{{ *)
     | Some x -> x
     | None -> 0
 
-  external c_spbcgs : int -> ('d, 'k) Nvector.t -> ('m, 'nd, 'nk) cptr
+  external c_spbcgs
+    : int -> ('d, 'k) Nvector.t -> Sundials.Context.t -> ('m, 'nd, 'nk) cptr
     = "sunml_lsolver_spbcgs"
 
-  let spbcgs ?maxl nvec =
+  let spbcgs ?context ?maxl nvec =
     let maxl = default maxl in
-    let cptr = c_spbcgs maxl nvec in
+    let ctx = Sundials_impl.Context.get context in
+    let cptr = c_spbcgs maxl nvec ctx in
     let compat =
       if Sundials_impl.Version.in_compat_mode2
       then let r = { info with maxl = maxl } in
@@ -352,18 +374,21 @@ module Iterative = struct (* {{{ *)
       solver = Spbcgs;
       matrix = None;
       compat = compat;
+      context = ctx;
       check_prec_type = (fun _ -> true);
       ocaml_callbacks = empty_ocaml_callbacks ();
       info_file = None;
       attached = false;
     }
 
-  external c_spfgmr : int -> ('d, 'k) Nvector.t -> ('m, 'nd, 'nk) cptr
+  external c_spfgmr
+    : int -> ('d, 'k) Nvector.t -> Sundials.Context.t -> ('m, 'nd, 'nk) cptr
     = "sunml_lsolver_spfgmr"
 
-  let spfgmr ?maxl ?max_restarts ?gs_type nvec =
+  let spfgmr ?context ?maxl ?max_restarts ?gs_type nvec =
     let maxl = default maxl in
-    let cptr = c_spfgmr maxl nvec in
+    let ctx = Sundials_impl.Context.get context in
+    let cptr = c_spfgmr maxl nvec ctx in
     let compat =
       if Sundials_impl.Version.in_compat_mode2
       then begin
@@ -390,18 +415,21 @@ module Iterative = struct (* {{{ *)
       solver = Spfgmr;
       matrix = None;
       compat = compat;
+      context = ctx;
       check_prec_type = (fun _ -> true);
       ocaml_callbacks = empty_ocaml_callbacks ();
       info_file = None;
       attached = false;
     }
 
-  external c_spgmr : int -> ('d, 'k) Nvector.t -> ('m, 'nd, 'nk) cptr
+  external c_spgmr
+    : int -> ('d, 'k) Nvector.t -> Sundials.Context.t -> ('m, 'nd, 'nk) cptr
     = "sunml_lsolver_spgmr"
 
-  let spgmr ?maxl ?max_restarts ?gs_type nvec =
+  let spgmr ?context ?maxl ?max_restarts ?gs_type nvec =
     let maxl = default maxl in
-    let cptr = c_spgmr maxl nvec in
+    let ctx = Sundials_impl.Context.get context in
+    let cptr = c_spgmr maxl nvec ctx in
     let compat =
       if Sundials_impl.Version.in_compat_mode2
       then begin
@@ -428,18 +456,21 @@ module Iterative = struct (* {{{ *)
       solver = Spgmr;
       matrix = None;
       compat = compat;
+      context = ctx;
       check_prec_type = (fun _ -> true);
       ocaml_callbacks = empty_ocaml_callbacks ();
       info_file = None;
       attached = false;
     }
 
-  external c_sptfqmr : int -> ('d, 'k) Nvector.t -> ('m, 'nd, 'nk) cptr
+  external c_sptfqmr
+    : int -> ('d, 'k) Nvector.t -> Sundials.Context.t -> ('m, 'nd, 'nk) cptr
     = "sunml_lsolver_sptfqmr"
 
-  let sptfqmr ?maxl nvec =
+  let sptfqmr ?context ?maxl nvec =
     let maxl = default maxl in
-    let cptr = c_sptfqmr maxl nvec in
+    let ctx = Sundials_impl.Context.get context in
+    let cptr = c_sptfqmr maxl nvec ctx in
     let compat =
       if Sundials_impl.Version.in_compat_mode2
       then let r = { info with maxl = maxl } in
@@ -452,18 +483,21 @@ module Iterative = struct (* {{{ *)
       solver = Sptfqmr;
       matrix = None;
       compat = compat;
+      context = ctx;
       check_prec_type = (fun _ -> true);
       ocaml_callbacks = empty_ocaml_callbacks ();
       info_file = None;
       attached = false;
     }
 
-  external c_pcg : int -> ('d, 'k) Nvector.t -> ('m, 'nd, 'nk) cptr
+  external c_pcg
+    : int -> ('d, 'k) Nvector.t -> Sundials.Context.t -> ('m, 'nd, 'nk) cptr
     = "sunml_lsolver_pcg"
 
-  let pcg ?maxl nvec =
+  let pcg ?context ?maxl nvec =
     let maxl = default maxl in
-    let cptr = c_pcg maxl nvec in
+    let ctx = Sundials_impl.Context.get context in
+    let cptr = c_pcg maxl nvec ctx in
     let compat =
       if Sundials_impl.Version.in_compat_mode2
       then let r = { info with maxl = maxl } in
@@ -475,6 +509,7 @@ module Iterative = struct (* {{{ *)
       solver = Pcg;
       matrix = None;
       compat = compat;
+      context = ctx;
       check_prec_type = (fun _ -> true);
       ocaml_callbacks = empty_ocaml_callbacks ();
       info_file = None;
@@ -636,7 +671,7 @@ module Custom = struct (* {{{ *)
              get_res_id = fget_res_id;
              get_last_flag = fget_last_flag;
              get_work_space = fget_work_space;
-             set_prec_type = fset_prec_type } (ldata : 'lsolver) omat =
+             set_prec_type = fset_prec_type } ?context (ldata : 'lsolver) omat =
     (match Config.sundials_version with
      | 2,_,_ -> raise Config.NotImplementedBySundialsVersion;
      | _ -> ());
@@ -680,11 +715,13 @@ module Custom = struct (* {{{ *)
        })
     in
     let ldata_and_ops = (ldata, ops) in
+    let ctx = Sundials_impl.Context.get context in
     LS {
-       rawptr = c_make_custom stype (weak_wrap ldata_and_ops) only_ops;
+       rawptr = c_make_custom stype (weak_wrap ldata_and_ops) only_ops ctx;
        solver = Custom ldata_and_ops;
        matrix = omat;
        compat = LSI.Iterative.info;
+       context = ctx;
        check_prec_type = (fun _ -> true);
        ocaml_callbacks = empty_ocaml_callbacks ();
        info_file = None;
@@ -692,17 +729,17 @@ module Custom = struct (* {{{ *)
      }
   [@@@warning "+45"]
 
-  let make_with_matrix ({ solver_type; _ } as ops) ldata mat =
+  let make_with_matrix ({ solver_type; _ } as ops) ?context ldata mat =
     if solver_type = MatrixEmbedded
       then invalid_arg "invalid solver_type when matrix is given";
-    make ops ldata (Some mat)
+    make ops ?context ldata (Some mat)
 
-  let make_without_matrix ({ solver_type; _ } as ops) ldata =
+  let make_without_matrix ({ solver_type; _ } as ops) ?context ldata =
     if solver_type = Direct
       then invalid_arg "invalid solver_type when matrix is not given";
     if Sundials_impl.Version.lt580 && solver_type = MatrixEmbedded
       then raise Config.NotImplementedBySundialsVersion;
-    make ops ldata None
+    make ops ?context ldata None
 
   let unwrap (LS { solver } :
         ('m, 'data, 'kind, [>`Custom of 'lsolver]) linear_solver) =
@@ -722,7 +759,7 @@ module Custom = struct (* {{{ *)
     }
 
   [@@@warning "-45"]
-  let make_dls { init = fi; setup = fs0; solve; space = fgws}
+  let make_dls { init = fi; setup = fs0; solve; space = fgws} ?context
                ldata mat =
     (match Config.sundials_version with
      | 2,_,_ -> raise Config.NotImplementedBySundialsVersion;
@@ -772,11 +809,13 @@ module Custom = struct (* {{{ *)
        })
     in
     let ldata_and_ops = (ldata, ops) in
+    let ctx = Sundials_impl.Context.get context in
     LS {
-     rawptr = c_make_custom Direct (weak_wrap ldata_and_ops) only_ops;
+     rawptr = c_make_custom Direct (weak_wrap ldata_and_ops) only_ops ctx;
      solver = Custom ldata_and_ops;
      matrix = Some mat;
      compat = LSI.Iterative.info;
+     context = ctx;
      check_prec_type = (fun _ -> true);
      ocaml_callbacks = empty_ocaml_callbacks ();
      info_file = None;

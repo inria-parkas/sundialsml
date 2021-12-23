@@ -114,7 +114,8 @@ module Direct : sig (* {{{ *)
 
   @nocvode <node> SUNLinSol_Dense *)
   val dense :
-    'k Nvector.serial
+       ?context:Context.t
+    -> 'k Nvector.serial
     -> 'k Matrix.dense
     -> (Matrix.Dense.t, 'k, [`Dls]) serial_t
 
@@ -124,7 +125,8 @@ module Direct : sig (* {{{ *)
 
   @nocvode <node> SUNLinSol_LapackDense *)
   val lapack_dense :
-    'k Nvector.serial
+       ?context:Context.t
+    -> 'k Nvector.serial
     -> 'k Matrix.dense
     -> (Matrix.Dense.t, 'k, [`Dls]) serial_t
 
@@ -136,7 +138,8 @@ module Direct : sig (* {{{ *)
 
   @nocvode <node> SUNLinSol_Band *)
   val band :
-    'k Nvector.serial
+       ?context:Context.t
+    -> 'k Nvector.serial
     -> 'k Matrix.band
     -> (Matrix.Band.t, 'k, [`Dls]) serial_t
 
@@ -146,7 +149,8 @@ module Direct : sig (* {{{ *)
 
   @nocvode <node> SUNLinSol_LapackBand *)
   val lapack_band :
-    'k Nvector.serial
+       ?context:Context.t
+    -> 'k Nvector.serial
     -> 'k Matrix.band
     -> (Matrix.Band.t, 'k, [`Dls]) serial_t
 
@@ -169,7 +173,8 @@ module Direct : sig (* {{{ *)
       @raise Config.NotImplementedBySundialsVersion Solver not available.
       @nocvode <node> SUNLinSol_KLU *)
     val make :
-      ?ordering:ordering
+         ?context:Context.t
+      -> ?ordering:ordering
       -> 'k Nvector.serial
       -> ('s, 'k) Matrix.sparse
       -> ('s Matrix.Sparse.t, 'k, [`Dls|`Klu]) serial_t
@@ -198,7 +203,8 @@ module Direct : sig (* {{{ *)
     @raise Config.NotImplementedBySundialsVersion Solver not available.
     @nocvode <node> SUNLinSol_KLU *)
   val klu :
-    ?ordering:Klu.ordering
+       ?context:Context.t
+    -> ?ordering:Klu.ordering
     -> 'k Nvector.serial
     -> ('s, 'k) Matrix.sparse
     -> ('s Matrix.Sparse.t, 'k, [`Klu|`Dls]) serial_t
@@ -228,7 +234,8 @@ module Direct : sig (* {{{ *)
       @raise Config.NotImplementedBySundialsVersion Solver not available.
       @nocvode <node> SUNLinSol_SuperLUMT *)
     val make :
-      ?ordering:ordering
+         ?context:Context.t
+      -> ?ordering:ordering
       -> nthreads:int
       -> 'k Nvector.serial
       -> ('s, 'k) Matrix.sparse
@@ -252,7 +259,8 @@ module Direct : sig (* {{{ *)
     @raise Config.NotImplementedBySundialsVersion Solver not available.
     @nocvode <node> SUNLinSol_SuperLUMT *)
   val superlumt :
-    ?ordering:Superlumt.ordering
+       ?context:Context.t
+    -> ?ordering:Superlumt.ordering
     -> nthreads:int
     -> 'k Nvector.serial
     -> ('s, 'k) Matrix.sparse
@@ -283,41 +291,50 @@ module Iterative : sig (* {{{ *)
   (** {3:solvers Solvers} *)
 
   (** Krylov iterative solver using the scaled preconditioned biconjugate
-    stabilized (Bi-CGStab) method. The [maxl] arguments gives the maximum
-    dimension of the Krylov subspace (defaults to 5). The nvector argument
-    is used as a template.
+      stabilized (Bi-CGStab) method. The [maxl] arguments gives the maximum
+      dimension of the Krylov subspace (defaults to 5). The nvector argument
+      is used as a template.
 
     @nocvode <node> SUNLinSol_SPBCGS *)
-  val spbcgs : ?maxl:int -> ('d, 'k) Nvector.t
-               -> ('m, 'd, 'k, [`Iter|`Spbcgs]) t
+  val spbcgs :
+       ?context:Context.t
+    -> ?maxl:int
+    -> ('d, 'k) Nvector.t
+    -> ('m, 'd, 'k, [`Iter|`Spbcgs]) t
 
   (** Krylov iterative solver using the scaled preconditioned flexible
-    generalized minimum residual (GMRES) method. The [maxl] arguments gives
-    the maximum dimension of the Krylov subspace (defaults to 5). The
-    nvector argument is used as a template.
+      generalized minimum residual (GMRES) method. The [maxl] arguments gives
+      the maximum dimension of the Krylov subspace (defaults to 5). The
+      nvector argument is used as a template.
 
-    NB: [max_restarts] is ignored by CVODE, CVODES, and ARKODE
-        for {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
+      NB: [max_restarts] is ignored by CVODE, CVODES, and ARKODE
+          for {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
 
     @nocvode <node> SUNLinSol_SPFGMR *)
-  val spfgmr : ?maxl:int -> ?max_restarts:int
-               -> ?gs_type:gramschmidt_type
-               -> ('d, 'k) Nvector.t
-               -> ('m, 'd, 'k, [`Iter|`Spfgmr]) t
+  val spfgmr :
+       ?context:Context.t
+    -> ?maxl:int
+    -> ?max_restarts:int
+    -> ?gs_type:gramschmidt_type
+    -> ('d, 'k) Nvector.t
+    -> ('m, 'd, 'k, [`Iter|`Spfgmr]) t
 
   (** Krylov iterative solver using the scaled preconditioned generalized
-    minimum residual (GMRES) method. The [maxl] arguments gives the maximum
-    dimension of the Krylov subspace (defaults to 5). The nvector argument
-    is used as a template.
+      minimum residual (GMRES) method. The [maxl] arguments gives the maximum
+      dimension of the Krylov subspace (defaults to 5). The nvector argument
+      is used as a template.
 
-    NB: [max_restarts] is ignored by CVODE, CVODES, and ARKODE
-        for {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
+      NB: [max_restarts] is ignored by CVODE, CVODES, and ARKODE
+          for {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
 
     @nocvode <node> SUNLinSol_SPGMR *)
-  val spgmr : ?maxl:int -> ?max_restarts:int
-              -> ?gs_type:gramschmidt_type
-              -> ('d, 'k) Nvector.t
-              -> ('m, 'd, 'k, [`Iter|`Spgmr]) t
+  val spgmr :
+       ?context:Context.t
+    -> ?maxl:int
+    -> ?max_restarts:int
+    -> ?gs_type:gramschmidt_type
+    -> ('d, 'k) Nvector.t
+    -> ('m, 'd, 'k, [`Iter|`Spgmr]) t
 
   (** Krylov iterative with the scaled preconditioned transpose-free
     quasi-minimal residual (SPTFQMR) method. The [maxl] arguments gives the
@@ -325,8 +342,11 @@ module Iterative : sig (* {{{ *)
     argument is used as a template.
 
     @nocvode <node> SUNLinSol_SPTFQMR *)
-  val sptfqmr : ?maxl:int -> ('d, 'k) Nvector.t
-                -> ('m, 'd, 'k, [`Iter|`Sptfqmr]) t
+  val sptfqmr :
+       ?context:Context.t
+    -> ?maxl:int
+    -> ('d, 'k) Nvector.t
+    -> ('m, 'd, 'k, [`Iter|`Sptfqmr]) t
 
   (** Krylov iterative solver using the preconditioned conjugate gradient
     (PCG) method. The [maxl] arguments gives the maximum dimension of the
@@ -334,8 +354,11 @@ module Iterative : sig (* {{{ *)
     template.
 
     @nocvode <node> SUNLinSol_PCG *)
-  val pcg : ?maxl:int -> ('d, 'k) Nvector.t
-            -> ('m, 'd, 'k, [`Iter|`Pcg]) t
+  val pcg :
+       ?context:Context.t
+    -> ?maxl:int
+    -> ('d, 'k) Nvector.t
+    -> ('m, 'd, 'k, [`Iter|`Pcg]) t
 
   (** Low-level routines on arrays. *)
   module Algorithms : sig (* {{{ *)
@@ -671,7 +694,9 @@ module Custom : sig (* {{{ *)
 
     NB: This feature is only available for
         {{!Sundials_Config.sundials_version}Config.sundials_version} >= 3.0.0. *)
-  val make_with_matrix : ('matrix, 'data, 'kind, 'lsolver) ops
+  val make_with_matrix :
+        ('matrix, 'data, 'kind, 'lsolver) ops
+     -> ?context:Context.t
      -> 'lsolver
      -> ('matrixkind, 'matrix, 'data, 'kind) Matrix.t
      -> ('matrix, 'data, 'kind, [`Dls|`Iter|`Custom of 'lsolver]) t
@@ -689,7 +714,9 @@ module Custom : sig (* {{{ *)
       The {{!type:linear_solver_type}MatrixEmbedded} solver_type is only
       available for
       {{!Sundials_Config.sundials_version}Config.sundials_version} >= 5.8.0. *)
-  val make_without_matrix : (unit, 'data, 'kind, 'lsolver) ops
+  val make_without_matrix :
+        (unit, 'data, 'kind, 'lsolver) ops
+     -> ?context:Context.t
      -> 'lsolver
      -> (unit, 'data, 'kind, [`Iter|`MatE|`Custom of 'lsolver]) t
 
@@ -727,9 +754,10 @@ module Custom : sig (* {{{ *)
       NB: This feature is only available for
           {{!Sundials_Config.sundials_version}Config.sundials_version} >= 3.0.0. *)
   val make_dls : ('matrix, 'data, 'kind, 'lsolver) dls_ops
-           -> 'lsolver
-           -> ('matrixkind, 'matrix, 'data, 'kind) Matrix.t
-           -> ('matrix, 'data, 'kind, [`Dls|`Custom of 'lsolver]) t
+    -> ?context:Context.t
+    -> 'lsolver
+    -> ('matrixkind, 'matrix, 'data, 'kind) Matrix.t
+    -> ('matrix, 'data, 'kind, [`Dls|`Custom of 'lsolver]) t
 
 end (* }}} *)
 

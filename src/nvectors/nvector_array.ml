@@ -18,10 +18,10 @@ module type ARRAY_NVECTOR =
     type kind = Nvector_custom.kind
     type t = data Nvector_custom.t
 
-    val array_nvec_ops  : data Nvector_custom.nvector_ops
-    val make            : int -> float -> t
-    val wrap            : ?with_fused_ops:bool -> data -> t
-    val unwrap          : t -> data
+    val array_nvec_ops : data Nvector_custom.nvector_ops
+    val make : ?context:Context.t -> int -> float -> t
+    val wrap : ?context:Context.t -> ?with_fused_ops:bool -> data -> t
+    val unwrap : t -> data
 
     val enable :
          ?with_fused_ops                       : bool
@@ -43,7 +43,8 @@ module type ARRAY_NVECTOR =
       type Nvector.gdata += Arr of data
 
       val wrap :
-           ?with_fused_ops                       : bool
+           ?context                              : Context.t
+        -> ?with_fused_ops                       : bool
         -> ?with_linear_combination              : bool
         -> ?with_scale_add_multi                 : bool
         -> ?with_dot_prod_multi                  : bool
@@ -773,7 +774,7 @@ module Make =
     let wrap = Nvector_custom.make_wrap DataOps.array_nvec_ops
       (* (Nvector.Mutable.add_tracing "::" array_nvec_ops) *)
 
-    let make n e = wrap (A.make n e)
+    let make ?context n e = wrap ?context (A.make n e)
 
     let unwrap = Nvector.unwrap
 
@@ -1515,8 +1516,8 @@ module Array =
             = Some DataOps.Local.wsqrsummask;
     } (* }}} *)
 
-    let make n e =
-      Nvector_custom.make_wrap array_nvec_ops (Array.make n e)
+    let make ?context n e =
+      Nvector_custom.make_wrap array_nvec_ops ?context (Array.make n e)
 
     let wrap = Nvector_custom.make_wrap array_nvec_ops
       (* (Nvector.Mutable.add_tracing "::" array_nvec_ops) *)

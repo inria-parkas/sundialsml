@@ -47,6 +47,7 @@ type ('a, 'k) session = {
   backref : c_weak_ref;
   initvec : ('a, 'k) Nvector.t;
   checkvec : ('a, 'k) Nvector.t -> unit;
+  context : Sundials.Context.t;
   mutable neqs : int;
   mutable exn_temp : exn option;
   mutable sysfn : 'a sysfn;

@@ -21,8 +21,10 @@ let sf = ARKStep.(init (explicit ffast) default_tolerances 0.0 ynv)
 
 (* 5. Create and initialize a solver session. *)
 let slowstep = 0.01
-let s = MRIStep.(init InnerStepper.(from_arkstep sf)
-                      default_tolerances fslow ~roots:(1, g) ~slowstep 0.0 ynv);;
+let s = MRIStep.(init (explicit fslow)
+                      default_tolerances
+                      InnerStepper.(from_arkstep sf)
+                      ~roots:(1, g) ~slowstep 0.0 ynv);;
 
 (* 6. Set optional inputs, e.g.,
       call [set_*] functions to change solver parameters. *)

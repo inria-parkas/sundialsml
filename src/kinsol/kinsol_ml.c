@@ -413,7 +413,7 @@ static int jactimesfn(
 	N_Vector v,
 	N_Vector Jv,
 	N_Vector u,
-	booleantype *new_uu,
+	sunbooleantype *new_uu,
 	void *user_data)
 {
     CAMLparam0();
@@ -695,16 +695,20 @@ CAMLprim value sunml_kinsol_set_constraints(value vkin_mem, value vconstraints)
 
 /* KINCreate() + KINInit().  */
 CAMLprim value sunml_kinsol_init(value weakref, value vtemp,
-			     value vomaxiters, value vomaa)
+			         value vomaxiters, value vomaa, value vctx)
 {
-    CAMLparam4(weakref, vtemp, vomaxiters, vomaa);
+    CAMLparam5(weakref, vtemp, vomaxiters, vomaa, vctx);
     CAMLlocal2(r, vkin_mem);
     int flag;
     value *backref;
     void *kin_mem;
     N_Vector temp;
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    kin_mem = KINCreate(ML_CONTEXT(vctx));
+#else
     kin_mem = KINCreate();
+#endif
     if (kin_mem == NULL)
 	caml_failwith("KINCreate returned NULL");
 

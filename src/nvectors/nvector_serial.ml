@@ -31,17 +31,20 @@ external c_enablelinearcombinationvectorarray_serial : ('d, 'k) Nvector.t -> boo
 
 let unwrap = Nvector.unwrap
 
-external c_wrap : RealArray.t -> (t -> bool) -> (t -> t) -> t
+external c_wrap : RealArray.t -> (t -> bool) -> (t -> t) -> Context.t -> t
   = "sunml_nvec_wrap_serial"
 
-let rec wrap ?(with_fused_ops=false) v =
+let rec wrap ?context ?(with_fused_ops=false) v =
   let len = RealArray.length v in
-  let nv = c_wrap v (fun nv' -> len = RealArray.length (unwrap nv')) clone in
+  let ctx = Sundials_impl.Context.get context in
+  let nv =
+    c_wrap v (fun nv' -> len = RealArray.length (unwrap nv')) clone ctx
+  in
   if with_fused_ops then c_enablefusedops_serial nv true;
   nv
 
 and clone nv =
-  let nv' = wrap (RealArray.copy (unwrap nv)) in
+  let nv' = wrap ~context:(Nvector.context nv) (RealArray.copy (unwrap nv)) in
   if Sundials_impl.Version.lt400 then ()
   else begin
     c_enablelinearcombination_serial nv'
@@ -67,7 +70,8 @@ and clone nv =
   end;
   nv'
 
-let make ?with_fused_ops n iv = wrap ?with_fused_ops (RealArray.make n iv)
+let make ?context ?with_fused_ops n iv =
+  wrap ?context ?with_fused_ops (RealArray.make n iv)
 
 let pp fmt v = RealArray.pp fmt (unwrap v)
 
@@ -119,10 +123,12 @@ module Any = struct (* {{{ *)
       -> RealArray.t
       -> (Nvector.any -> bool)
       -> (Nvector.any -> Nvector.any)
+      -> Context.t
       -> Nvector.any
     = "sunml_nvec_anywrap_serial"
 
   let rec wrap
+      ?context
       ?(with_fused_ops=false)
       ?(with_linear_combination=false)
       ?(with_scale_add_multi=false)
@@ -145,7 +151,10 @@ module Any = struct (* {{{ *)
             len = RealArray.length ra && Nvector.get_id nv' = Nvector.Serial
         | _ -> false
       in
-      let nv = c_any_wrap [%extension_constructor Nvector.RA] v check clone in
+      let ctx = Sundials_impl.Context.get context in
+      let nv =
+        c_any_wrap [%extension_constructor Nvector.RA] v check clone ctx
+      in
       if with_fused_ops
         then c_enablefusedops_serial nv true;
       if with_fused_ops
@@ -177,7 +186,7 @@ module Any = struct (* {{{ *)
             | Nvector.RA v -> v
             | _ -> assert false
     in
-    let nv' = wrap (RealArray.copy v) in
+    let nv' = wrap ~context:(Nvector.context nv) (RealArray.copy v) in
     c_enablelinearcombination_serial nv'
       (Nvector.Ops.has_linearcombination nv);
     c_enablescaleaddmulti_serial nv'
@@ -201,6 +210,7 @@ module Any = struct (* {{{ *)
     nv'
 
   let make
+      ?context
       ?with_fused_ops
       ?with_linear_combination
       ?with_scale_add_multi
@@ -213,7 +223,8 @@ module Any = struct (* {{{ *)
       ?with_scale_add_multi_vector_array
       ?with_linear_combination_vector_array
       n iv
-    = wrap ?with_fused_ops
+    = wrap ?context
+           ?with_fused_ops
            ?with_linear_combination
            ?with_scale_add_multi
            ?with_dot_prod_multi

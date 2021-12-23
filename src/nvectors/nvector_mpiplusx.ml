@@ -26,6 +26,7 @@ external c_wrap
   : Nvector.any * Mpi.communicator * int
     -> (t -> bool)
     -> (t -> t)
+    -> Context.t
     -> t
   = "sunml_nvec_wrap_mpiplusx"
 
@@ -63,7 +64,7 @@ let sumlens comm nv =
   in
   Mpi.(allreduce_int local_length Sum comm)
 
-let rec wrap ?(with_fused_ops=false) comm nv =
+let rec wrap ?context ?(with_fused_ops=false) comm nv =
   if Sundials_impl.Version.lt500
     then raise Config.NotImplementedBySundialsVersion;
   let check mnv' =
@@ -71,13 +72,14 @@ let rec wrap ?(with_fused_ops=false) comm nv =
     try Nvector.check nv nv'; true
     with Nvector.IncompatibleNvector -> false
   in
-  let nv = c_wrap (nv, comm, sumlens comm nv) check clone in
+  let ctx = Sundials_impl.Context.get context in
+  let nv = c_wrap (nv, comm, sumlens comm nv) check clone ctx in
   if with_fused_ops then c_enablefusedops_manyvector nv true;
   nv
 
 and clone mnv =
   let nv, comm = unwrap mnv in
-  wrap comm (Nvector.clone nv)
+  wrap ~context:(Nvector.context mnv) comm (Nvector.clone nv)
 
 let communicator nv = snd (Nvector.unwrap nv)
 
@@ -641,10 +643,11 @@ module Any = struct (* {{{ *)
       -> Nvector.any * Mpi.communicator * int
       -> (Nvector.any -> bool)
       -> (Nvector.any -> Nvector.any)
+      -> Context.t
       -> Nvector.any
     = "sunml_nvec_anywrap_mpimany"
 
-  let rec wrap ?(with_fused_ops=false) comm nv =
+  let rec wrap ?context ?(with_fused_ops=false) comm nv =
     if Sundials_impl.Version.lt500
       then raise Config.NotImplementedBySundialsVersion;
     let check mnv' =
@@ -656,9 +659,10 @@ module Any = struct (* {{{ *)
            with Nvector.IncompatibleNvector -> false)
       | _ -> false
     in
+    let ctx = Sundials_impl.Context.get context in
     let nv = c_any_wrap [%extension_constructor MpiPlusX]
                         (nv, comm, sumlens comm nv)
-                        check clone
+                        check clone ctx
     in
     if with_fused_ops then c_enablefusedops_manyvector nv true;
     nv
@@ -668,7 +672,7 @@ module Any = struct (* {{{ *)
                    | MpiPlusX v -> v
                    | _ -> assert false
     in
-    wrap comm (Nvector.clone nv)
+    wrap ~context:(Nvector.context mnv) comm (Nvector.clone nv)
 
   let unwrap nv =
     match Nvector.unwrap nv with

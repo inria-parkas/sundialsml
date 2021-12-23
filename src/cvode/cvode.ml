@@ -729,9 +729,15 @@ external c_set_nonlinear_solver
     = "sunml_cvode_set_nonlinear_solver"
 
 external c_init
-    : ('a, 'k) session Weak.t -> lmm -> bool -> ('a, 'k) nvector
-      -> float -> (cvode_mem * c_weak_ref)
-    = "sunml_cvode_init"
+    : ('a, 'k) session Weak.t
+      -> lmm
+      -> bool
+      -> ('a, 'k) Nvector.t
+      -> float
+      -> Context.t
+      -> (cvode_mem * c_weak_ref)
+    = "sunml_cvode_init_byte"
+      "sunml_cvode_init"
 
 external c_set_proj_fn : ('d, 'k) session -> unit
     = "sunml_cvode_set_proj_fn"
@@ -739,7 +745,7 @@ external c_set_proj_fn : ('d, 'k) session -> unit
 external c_set_nls_rhs_fn : ('d, 'k) session -> unit
     = "sunml_cvode_set_nls_rhs_fn"
 
-let init lmm tol
+let init ?context lmm tol
           ?(nlsolver : ('data, 'kind, ('data, 'kind) session, [`Nvec])
                           Sundials_NonlinearSolver.t option)
           ?nlsrhsfn
@@ -759,7 +765,8 @@ let init lmm tol
                           | None -> false, dummy_projfn
                           | Some f -> true, f
   in
-  let cvode_mem, backref = c_init weakref lmm iter y0 t0 in
+  let ctx = Sundials_impl.Context.get context in
+  let cvode_mem, backref = c_init weakref lmm iter y0 t0 ctx in
   (* cvode_mem and backref have to be immediately captured in a session and
      associated with the finalizer before we do anything else.  *)
   let session = {
@@ -767,6 +774,7 @@ let init lmm tol
           backref      = backref;
           nroots       = nroots;
           checkvec     = checkvec;
+          context      = ctx;
 
           exn_temp     = None;
 

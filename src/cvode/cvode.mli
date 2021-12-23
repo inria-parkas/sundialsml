@@ -690,6 +690,10 @@ type 'd proj_fn = float -> 'd -> 'd -> float -> 'd option -> unit
     The alternative right-hand-side function for nonlinear system function
     evaluations is only supported for Sundials >= 5.8.0.
 
+    By default, the session is created using the context returned by
+    {!Sundials.Context.default}, but this can be overridden by passing an
+    optional [context] argument.
+
     @cvode <node5#sss:cvodemalloc>   CVodeCreate/CVodeInit
     @cvode <node5#ss:cvrootinit>     CVodeRootInit
     @cvode <node>                    CVodeSetLinearSolver
@@ -701,7 +705,8 @@ type 'd proj_fn = float -> 'd -> 'd -> float -> 'd option -> unit
     @nocvode <node>                  CVodeSetProjFn
     @nocvode <node>                  CVodeSetNlsRhsFn *)
 val init :
-    lmm
+       ?context:Context.t
+    -> lmm
     -> ('data, 'kind) tolerance
     -> ?nlsolver
          : ('data, 'kind, ('data, 'kind) session, [`Nvec])

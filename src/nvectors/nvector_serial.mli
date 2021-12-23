@@ -41,7 +41,7 @@ type t = (data, kind) Nvector.t
 
     @cvode <node5> N_VEnableFusedOps_Serial
     @raise Config.NotImplementedBySundialsVersion Fused and array operations not available. *)
-val make : ?with_fused_ops:bool -> int -> float -> t
+val make : ?context:Context.t -> ?with_fused_ops:bool -> int -> float -> t
 
 (** [wrap a] creates a new serial nvector over the elements of [a].
 
@@ -50,7 +50,7 @@ val make : ?with_fused_ops:bool -> int -> float -> t
 
     @cvode <node5> N_VEnableFusedOps_Serial
     @raise Config.NotImplementedBySundialsVersion Fused and array operations not available. *)
-val wrap : ?with_fused_ops:bool -> RealArray.t -> t
+val wrap : ?context:Context.t -> ?with_fused_ops:bool -> RealArray.t -> t
 
 (** Aliases {!Nvector.unwrap}. *)
 val unwrap : t -> RealArray.t
@@ -122,8 +122,9 @@ module Any : sig (* {{{ *)
       @cvode <node5> N_VEnableLinearCombinationVectorArray_Serial
       @raise Config.NotImplementedBySundialsVersion Fused and array operations not available.
       @since 5.0.0 *)
-  val make :
-       ?with_fused_ops                       : bool
+    val make :
+       ?context                              : Context.t
+    -> ?with_fused_ops                       : bool
     -> ?with_linear_combination              : bool
     -> ?with_scale_add_multi                 : bool
     -> ?with_dot_prod_multi                  : bool
@@ -157,7 +158,8 @@ module Any : sig (* {{{ *)
       @raise Config.NotImplementedBySundialsVersion Fused and array operations not available.
       @since 5.0.0 *)
   val wrap :
-       ?with_fused_ops                       : bool
+       ?context                              : Context.t
+    -> ?with_fused_ops                       : bool
     -> ?with_linear_combination              : bool
     -> ?with_scale_add_multi                 : bool
     -> ?with_dot_prod_multi                  : bool
@@ -207,5 +209,6 @@ module Any : sig (* {{{ *)
     -> ?with_linear_combination_vector_array : bool
     -> Nvector.any
     -> unit
+
 end (* }}} *)
 

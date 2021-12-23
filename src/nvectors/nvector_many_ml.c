@@ -124,6 +124,10 @@ static N_Vector do_clone_many(N_Vector src, enum do_clone_mode clonemode)
 #endif
     sunml_clone_cnvec_ops(dst, src);
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    dst->sunctx = src->sunctx;
+#endif
+
     /* Duplicate the source array and the nvectors that it contains. */
     switch (clonemode) {
     case CLONE_ANY:
@@ -271,9 +275,10 @@ static N_Vector clone_empty_many(N_Vector w)
 #if 500 <= SUNDIALS_LIB_VERSION
 static value do_wrap(value payload,
 		     value checkfn, value clonefn,
-		     booleantype mpiplusx)
+		     value context,
+		     sunbooleantype mpiplusx)
 {
-    CAMLparam3(payload, checkfn, clonefn);
+    CAMLparam4(payload, checkfn, clonefn, context);
     CAMLlocal3(vnvec, vnvs, vglen);
 #ifdef MANYVECTOR_BUILD_WITH_MPI
     CAMLlocal1(vcomm);
@@ -289,6 +294,10 @@ static value do_wrap(value payload,
     if (nv == NULL) caml_raise_out_of_memory();
     ops = (N_Vector_Ops) nv->ops;
     content = (MVAPPEND(N_VectorContent)) nv->content;
+
+#if 600 <= SUNDIALS_LIB_VERSION
+    nv->sunctx = ML_CONTEXT(context);
+#endif
 
     /* Create C-side array and mirror OCaml array */
 #ifdef MANYVECTOR_BUILD_WITH_MPI
@@ -415,15 +424,17 @@ static value do_wrap(value payload,
 		sunml_alloc_caml_nvec(nv, finalize_caml_nvec_many));
     Store_field(vnvec, NVEC_CHECK, checkfn);
     Store_field(vnvec, NVEC_CLONE, clonefn);
+    Store_field(vnvec, NVEC_CONTEXT, context);
 
     CAMLreturn(vnvec);
 }
 #endif
 
-CAMLprim value SUNML_NVEC(wrap)(value payload, value checkfn, value clonefn)
+CAMLprim value SUNML_NVEC(wrap)(value payload, value checkfn, value clonefn,
+				value context)
 {
 #if 500 <= SUNDIALS_LIB_VERSION
-    return do_wrap(payload, checkfn, clonefn, SUNFALSE);
+    return do_wrap(payload, checkfn, clonefn, context, SUNFALSE);
 #else
     return Val_unit;
 #endif
@@ -431,10 +442,11 @@ CAMLprim value SUNML_NVEC(wrap)(value payload, value checkfn, value clonefn)
 
 #ifdef MANYVECTOR_BUILD_WITH_MPI
 CAMLprim value sunml_nvec_wrap_mpiplusx(value payload,
-					value checkfn, value clonefn)
+					value checkfn, value clonefn,
+					value context)
 {
 #if 500 <= SUNDIALS_LIB_VERSION
-    return do_wrap(payload, checkfn, clonefn, SUNTRUE);
+    return do_wrap(payload, checkfn, clonefn, context, SUNTRUE);
 #else
     return Val_unit;
 #endif
@@ -449,14 +461,15 @@ CAMLprim value sunml_nvec_wrap_mpiplusx(value payload,
 #if 500 <= SUNDIALS_LIB_VERSION
 static value do_anywrap(value extconstr, value payload,
 			value checkfn, value clonefn,
-			booleantype mpiplusx)
+			value context,
+			sunbooleantype mpiplusx)
 {
-    CAMLparam4(extconstr, payload, checkfn, clonefn);
+    CAMLparam5(extconstr, payload, checkfn, clonefn, context);
     CAMLlocal2(vnv, vwrapped);
     N_Vector nv;
     N_Vector_Ops ops;
 
-    vnv = do_wrap(payload, checkfn, clonefn, mpiplusx);
+    vnv = do_wrap(payload, checkfn, clonefn, context, mpiplusx);
     nv = NVEC_VAL(vnv);
     ops = (N_Vector_Ops) nv->ops;
 
@@ -480,10 +493,11 @@ static value do_anywrap(value extconstr, value payload,
 #endif
 
 CAMLprim value SUNML_NVEC(anywrap)(value extconstr, value payload,
-			           value checkfn, value clonefn)
+			           value checkfn, value clonefn,
+				   value context)
 {
 #if 500 <= SUNDIALS_LIB_VERSION
-    return do_anywrap(extconstr, payload, checkfn, clonefn, SUNFALSE);
+    return do_anywrap(extconstr, payload, checkfn, clonefn, context, SUNFALSE);
 #else
     return Val_unit;
 #endif
@@ -491,10 +505,11 @@ CAMLprim value SUNML_NVEC(anywrap)(value extconstr, value payload,
 
 #ifdef MANYVECTOR_BUILD_WITH_MPI
 CAMLprim value sunml_nvec_anywrap_mpiplusx(value extconstr, value payload,
-					   value checkfn, value clonefn)
+					   value checkfn, value clonefn,
+					   value context)
 {
 #if 500 <= SUNDIALS_LIB_VERSION
-    return do_anywrap(extconstr, payload, checkfn, clonefn, SUNTRUE);
+    return do_anywrap(extconstr, payload, checkfn, clonefn, context, SUNTRUE);
 #else
     return Val_unit;
 #endif
@@ -698,7 +713,7 @@ CAMLprim value SUNML_NVEC_OP(invtest)(value vx, value vz)
 {
     CAMLparam2(vx, vz);
 #if 500 <= SUNDIALS_LIB_VERSION
-    booleantype r = MVAPPEND(N_VInvTest)(NVEC_VAL(vx), NVEC_VAL(vz));
+    sunbooleantype r = MVAPPEND(N_VInvTest)(NVEC_VAL(vx), NVEC_VAL(vz));
     CAMLreturn(Val_bool(r));
 #else
     CAMLreturn (Val_unit);
@@ -711,7 +726,7 @@ CAMLprim value SUNML_NVEC_OP(constrmask)(value vc, value vx, value vm)
 {
     CAMLparam3(vc, vx, vm);
 #if 500 <= SUNDIALS_LIB_VERSION
-    booleantype r = MVAPPEND(N_VConstrMask)(NVEC_VAL(vc), NVEC_VAL(vx),
+    sunbooleantype r = MVAPPEND(N_VConstrMask)(NVEC_VAL(vc), NVEC_VAL(vx),
 					    NVEC_VAL(vm));
     CAMLreturn(Val_bool(r));
 #else
@@ -949,7 +964,7 @@ CAMLprim value SUNML_NVEC_OP(invtestlocal)(value vx, value vz)
 {
     CAMLparam2(vx, vz);
 #if 500 <= SUNDIALS_LIB_VERSION
-    booleantype r = MVAPPEND(N_VInvTestLocal)(NVEC_VAL(vx), NVEC_VAL(vz));
+    sunbooleantype r = MVAPPEND(N_VInvTestLocal)(NVEC_VAL(vx), NVEC_VAL(vz));
     CAMLreturn(Val_bool(r));
 #else
     CAMLreturn (Val_unit);
@@ -960,7 +975,7 @@ CAMLprim value SUNML_NVEC_OP(constrmasklocal)(value vc, value vx, value vm)
 {
     CAMLparam3(vc, vx, vm);
 #if 500 <= SUNDIALS_LIB_VERSION
-    booleantype r = MVAPPEND(N_VConstrMaskLocal)(NVEC_VAL(vc), NVEC_VAL(vx),
+    sunbooleantype r = MVAPPEND(N_VConstrMaskLocal)(NVEC_VAL(vc), NVEC_VAL(vx),
 						 NVEC_VAL(vm));
     CAMLreturn(Val_bool(r));
 #else

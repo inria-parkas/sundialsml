@@ -48,8 +48,12 @@ type Nvector.gdata += MpiMany of data
     @cvode <node> N_VMake_MPIManyVector
     @cvode <node5> N_VEnableFusedOps_MPIManyVector
     @raise Invalid_arg if an mpi communicator is not specified or found. *)
-val wrap
-  : ?with_fused_ops:bool -> ?comm:Mpi.communicator -> Nvector.any ROArray.t -> t
+val wrap :
+     ?context:Context.t
+  -> ?with_fused_ops:bool
+  -> ?comm:Mpi.communicator
+  -> Nvector.any ROArray.t
+  -> t
 
 (** Aliases {!Nvector.unwrap}. *)
 val unwrap : t -> data
@@ -117,8 +121,12 @@ module Any : sig (* {{{ *)
       @cvode <node> N_VMake_MPIManyVector
       @cvode <node> N_VEnableFusedOps_MPIManyVector
       @raise Invalid_arg if an mpi communicator is not specified or found. *)
-  val wrap
-    : ?with_fused_ops:bool -> ?comm:Mpi.communicator -> Nvector.any ROArray.t -> Nvector.any
+  val wrap :
+       ?context:Context.t
+    -> ?with_fused_ops:bool
+    -> ?comm:Mpi.communicator
+    -> Nvector.any ROArray.t
+    -> Nvector.any
 
   (** Returns the payload of the generic vector if it was constructed with
       {{!Nvector.gdata}MpiMany}, otherwise raises {!Nvector.BadGenericType}. *)

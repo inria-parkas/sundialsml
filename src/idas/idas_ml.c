@@ -2766,8 +2766,8 @@ CAMLprim value sunml_idas_adj_spils_set_linear_solver (value vparent, value vwhi
 }
 
 CAMLprim value sunml_idas_adj_init_backward(value vparent, value weakref,
-					value vtb0, value vy0, value vyp0,
-					value vwithsens)
+					    value vtb0, value vy0, value vyp0,
+					    value vwithsens)
 {
     CAMLparam5(vparent, weakref, vtb0, vy0, vyp0);
     CAMLxparam1(vwithsens);

@@ -29,18 +29,27 @@ external c_enablelinearcombinationvectorarray_pthreads : ('d, 'k) Nvector.t -> b
 
 let unwrap = Nvector.unwrap
 
-external c_wrap : int -> RealArray.t -> (t -> bool) -> (t -> t) -> t
+external c_wrap :
+     int
+  -> RealArray.t
+  -> (t -> bool)
+  -> (t -> t)
+  -> Context.t
+  -> t
   = "sunml_nvec_wrap_pthreads"
 
-let rec wrap ?(with_fused_ops=false) nthreads v =
+let rec wrap ?context ?(with_fused_ops=false) nthreads v =
   let len = RealArray.length v in
   let check nv' = (len = RealArray.length (unwrap nv')) in
-  let nv = c_wrap nthreads v check (clone nthreads) in
+  let ctx = Sundials_impl.Context.get context in
+  let nv = c_wrap nthreads v check (clone nthreads) ctx in
   if with_fused_ops then c_enablefusedops_pthreads nv true;
   nv
 
 and clone nthreads nv =
-  let nv' = wrap nthreads (RealArray.copy (unwrap nv)) in
+  let nv' =
+    wrap ~context:(Nvector.context nv) nthreads (RealArray.copy (unwrap nv))
+  in
   if Sundials_impl.Version.lt400 then ()
   else begin
     c_enablelinearcombination_pthreads nv'
@@ -68,8 +77,8 @@ and clone nthreads nv =
 
 let pp fmt v = RealArray.pp fmt (unwrap v)
 
-let make ?with_fused_ops nthreads n iv =
-  wrap ?with_fused_ops nthreads (RealArray.make n iv)
+let make ?context ?with_fused_ops nthreads n iv =
+  wrap ?context ?with_fused_ops nthreads (RealArray.make n iv)
 
 external num_threads : t -> int
   = "sunml_nvec_pthreads_num_threads"
@@ -123,10 +132,13 @@ module Any = struct (* {{{ *)
       -> RealArray.t
       -> (Nvector.any -> bool)
       -> (Nvector.any -> Nvector.any)
+      -> Context.t
       -> Nvector.any
-    = "sunml_nvec_anywrap_pthreads"
+    = "sunml_nvec_anywrap_pthreads_byte"
+      "sunml_nvec_anywrap_pthreads"
 
   let rec wrap
+      ?context
       ?(with_fused_ops=false)
       ?(with_linear_combination=false)
       ?(with_scale_add_multi=false)
@@ -149,9 +161,10 @@ module Any = struct (* {{{ *)
             len = RealArray.length ra && Nvector.get_id nv = Nvector.Pthreads
         | _ -> false
       in
+      let ctx = Sundials_impl.Context.get context in
       let nv = c_any_wrap [%extension_constructor Nvector.RA]
                           nthreads v
-                          check (clone nthreads)
+                          check (clone nthreads) ctx
       in
       if with_fused_ops
         then c_enablefusedops_pthreads nv true;
@@ -184,7 +197,7 @@ module Any = struct (* {{{ *)
             | Nvector.RA v -> v
             | _ -> assert false
     in
-    let nv' = wrap nthreads (RealArray.copy v) in
+    let nv' = wrap ~context:(Nvector.context nv) nthreads (RealArray.copy v) in
     c_enablelinearcombination_pthreads nv'
       (Nvector.Ops.has_linearcombination nv);
     c_enablescaleaddmulti_pthreads nv'
@@ -208,6 +221,7 @@ module Any = struct (* {{{ *)
     nv'
 
   let make
+      ?context
       ?with_fused_ops
       ?with_linear_combination
       ?with_scale_add_multi
@@ -220,7 +234,8 @@ module Any = struct (* {{{ *)
       ?with_scale_add_multi_vector_array
       ?with_linear_combination_vector_array
       nthreads n iv
-    = wrap ?with_fused_ops
+    = wrap ?context
+           ?with_fused_ops
            ?with_linear_combination
            ?with_scale_add_multi
            ?with_dot_prod_multi

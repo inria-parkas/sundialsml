@@ -529,6 +529,10 @@ type 'd rootsfn = float -> 'd -> 'd -> RealArray.t -> unit
     The alternative residual function for nonlinear system function
     evaluations is only supported for Sundials >= 5.8.0.
 
+    By default, the session is created using the context returned by
+    {!Sundials.Context.default}, but this can be overridden by passing an
+    optional [context] argument.
+
     @ida <node5#sss:idainit>       IDACreate/IDAInit
     @ida <node5#ss:idarootinit>    IDARootInit
     @ida <node>                    IDASetLinearSolver
@@ -540,7 +544,8 @@ type 'd rootsfn = float -> 'd -> 'd -> RealArray.t -> unit
     @ida <node5#sss:idasetid>      IDASetId
     @nocvode <node>                IDASetNlsResFn *)
 val init :
-    ('d, 'kind) tolerance
+       ?context:Context.t
+    -> ('d, 'kind) tolerance
     -> ?nlsolver: ('d, 'kind, ('d, 'kind) session, [`Nvec])
                     Sundials_NonlinearSolver.t
     -> ?nlsresfn:'d resfn

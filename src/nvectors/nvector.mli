@@ -37,6 +37,9 @@ type 'k serial = (Sundials.RealArray.t, [>`Serial] as 'k) t
 (** [unwrap nv] returns the data underlying the nvector [nv]. *)
 val unwrap : ('data, 'kind) t -> 'data
 
+(** Returns the context used to create the nvector. *)
+val context : ('data, 'kind) t -> Sundials.Context.t
+
 (** Raised when an nvector argument is incompatible with a session.
     For example, when a solver session was initialized with an nvector
     having 10 elements, and a later call passes an nvector with only
@@ -315,7 +318,7 @@ module type NVECTOR =
     type t = (data, kind) nvector
 
     (** Wrap data in an nvector. *)
-    val wrap : ?with_fused_ops:bool -> data -> t
+    val wrap : ?context:Sundials.Context.t -> ?with_fused_ops:bool -> data -> t
 
     (** Selectively enable or disable fused and array operations. *)
     val enable :

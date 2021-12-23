@@ -36,6 +36,10 @@
 #include <sundials/sundials_math.h>
 #endif
 
+#if 600 <= SUNDIALS_LIB_VERSION
+#include <sundials/sundials_context.h>
+#endif
+
 value sundials_ml_exn_table = 0;
 
 void sunml_register_exns(enum sundials_exn_set_index index, value exns)
@@ -94,9 +98,15 @@ CAMLprim value sunml_sundials_get_constants (void)
     CAMLlocal1 (r);
 
     r = caml_alloc_tuple (3);
+#if 600 <= SUNDIALS_LIB_VERSION
+    Store_field (r, 0, caml_copy_double(SUN_BIG_REAL));
+    Store_field (r, 1, caml_copy_double(SUN_SMALL_REAL));
+    Store_field (r, 2, caml_copy_double(SUN_UNIT_ROUNDOFF));
+#else
     Store_field (r, 0, caml_copy_double(BIG_REAL));
     Store_field (r, 1, caml_copy_double(SMALL_REAL));
     Store_field (r, 2, caml_copy_double(UNIT_ROUNDOFF));
+#endif
 
     CAMLreturn (r);
 }
@@ -361,4 +371,62 @@ CAMLprim value sunml_sundials_wrap_file(FILE* f)
 
     CAMLreturn (vr);
 }
+
+/* Functions for manipulating contexts */
+
+#if 600 <= SUNDIALS_LIB_VERSION
+static void finalize_context(value vctx)
+{
+    SUNContext ctx = ML_CCONTEXT(vctx);
+    if (ctx != NULL) SUNContext_Free(&ctx);
+}
+#endif
+
+CAMLprim value sunml_context_make(void)
+{
+    CAMLparam0();
+    CAMLlocal1(vctx);
+
+#if 600 <= SUNDIALS_LIB_VERSION
+    SUNContext ctx;
+
+    SUNContext_Create(NULL, &ctx);
+    if (ctx == NULL) caml_raise_out_of_memory();
+
+    vctx = caml_alloc_final(1, &finalize_context, 1, 10);
+    ML_CCONTEXT(vctx) = ctx;
+#else
+    vctx = Val_unit;
+#endif
+
+    CAMLreturn (vctx);
+}
+
+#ifdef MPI_ENABLED
+
+/* Must correspond with camlmpi.h */
+#define Comm_val(comm) (*((MPI_Comm *) &Field(comm, 1)))
+
+CAMLprim value sunml_context_make_parallel(value vcomm)
+{
+    CAMLparam1(vcomm);
+    CAMLlocal1(vctx);
+
+#if 600 <= SUNDIALS_LIB_VERSION
+    SUNContext ctx;
+    MPI_Comm comm = Comm_val(vcomm);
+
+    SUNContext_Create(comm, &ctx);
+    if (ctx == NULL) caml_raise_out_of_memory();
+
+    vctx = caml_alloc_final(1, &finalize_context, 1, 10);
+    ML_CCONTEXT(vctx) = ctx;
+#else
+    vctx = Val_unit;
+#endif
+
+    CAMLreturn (vctx);
+}
+
+#endif
 

@@ -244,7 +244,12 @@ type 'd nvector_ops = { (* {{{ *)
     [make_wrap ops] takes set a set of operations on the data
     type ['d] and yields a function for lifting values of type ['d]
     into ['d] nvectors which can be passed to a solver. *)
-val make_wrap  : 'd nvector_ops -> ?with_fused_ops:bool -> 'd -> 'd t
+val make_wrap :
+     'd nvector_ops
+  -> ?context:Sundials.Context.t
+  -> ?with_fused_ops:bool
+  -> 'd
+  -> 'd t
 
 (** Add tracing to custom operations.
     [add_tracing p ops] modifies a set of {!nvector_ops} so that
@@ -313,6 +318,7 @@ module Any : sig (* {{{ *)
   val make_wrap :
        Nvector.gdata nvector_ops
     -> inject:('d -> Nvector.gdata)
+    -> ?context                              : Sundials.Context.t
     -> ?with_fused_ops                       : bool
     -> ?with_linear_combination              : bool
     -> ?with_scale_add_multi                 : bool

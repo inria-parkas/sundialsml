@@ -125,6 +125,7 @@ type ('a, 'k) session = {
   backref   : c_weak_ref;
   initvec   : ('a, 'k) Nvector.t;   (* for the set_linear_solver call. *)
   checkvec  : (('a, 'k) Nvector.t -> unit);
+  context   : Context.t;
 
   mutable neqs       : int;    (* only valid for 'kind = serial *)
   mutable exn_temp   : exn option;

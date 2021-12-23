@@ -26,31 +26,33 @@ external c_wrap
   : data
     -> (t -> bool)
     -> (t -> t)
+    -> Context.t
     -> t
   = "sunml_nvec_wrap_many"
 
 let unwrap = Nvector.unwrap
 
-let rec wrap_withlen ((nvs, _) as payload) =
+let rec wrap_withlen ctx ((nvs, _) as payload) =
   let check nv' =
     let nvs', _ = unwrap nv' in
     try ROArray.iter2 Nvector.check nvs nvs'; true
     with Nvector.IncompatibleNvector -> false
   in
-  c_wrap payload check clone
+  c_wrap payload check clone ctx
 
 and clone nv =
   let nvs, gl = unwrap nv in
-  wrap_withlen (ROArray.map Nvector.clone nvs, gl)
+  wrap_withlen (Nvector.context nv) (ROArray.map Nvector.clone nvs, gl)
 
 let sumlens =
   let f sum nv = sum + Nvector.Ops.getlength nv in
   ROArray.fold_left f 0
 
-let wrap nvs =
+let wrap ?context nvs =
   if Sundials_impl.Version.lt500
     then raise Config.NotImplementedBySundialsVersion;
-  wrap_withlen (nvs, sumlens nvs)
+  let ctx = Sundials_impl.Context.get context in
+  wrap_withlen ctx (nvs, sumlens nvs)
 
 let length nv = snd (unwrap nv)
 
@@ -675,10 +677,11 @@ module Any = struct (* {{{ *)
       -> data
       -> (Nvector.any -> bool)
       -> (Nvector.any -> Nvector.any)
+      -> Context.t
       -> Nvector.any
     = "sunml_nvec_anywrap_many"
 
-  let rec wrap_with_len ((nvs, _) as payload) =
+  let rec wrap_with_len ctx ((nvs, _) as payload) =
     if Sundials_impl.Version.lt500
       then raise Config.NotImplementedBySundialsVersion;
     let check nv' =
@@ -690,19 +693,20 @@ module Any = struct (* {{{ *)
            with Nvector.IncompatibleNvector -> false)
       | _ -> false
     in
-    c_any_wrap [%extension_constructor Many] payload check clone
+    c_any_wrap [%extension_constructor Many] payload check clone ctx
 
   and clone nv =
     let nvs, gl = match unwrap nv with
                   | Many v -> v
                   | _ -> assert false
     in
-    wrap_with_len (ROArray.map Nvector.clone nvs, gl)
+    wrap_with_len (Nvector.context nv) (ROArray.map Nvector.clone nvs, gl)
 
-  let wrap nvs =
+  let wrap ?context nvs =
     if Sundials_impl.Version.lt500
       then raise Config.NotImplementedBySundialsVersion;
-    wrap_with_len (nvs, sumlens nvs)
+    let ctx = Sundials_impl.Context.get context in
+    wrap_with_len ctx (nvs, sumlens nvs)
 
   let unwrap nv =
     match Nvector.unwrap nv with

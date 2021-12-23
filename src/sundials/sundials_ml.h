@@ -35,6 +35,7 @@
 
 #if SUNDIALS_LIB_VERSION < 600
 #define sunrealtype realtype
+#define sunbooleantype booleantype
 #endif
 
 void sunml_warn_discarded_exn (value exn, const char *context);
@@ -214,6 +215,12 @@ enum sundials_exn_index {
 
 /* Accessing FILE* values */
 #define ML_CFILE(v) (*(FILE **)Data_custom_val(v))
+
+/* Accessing SUNContext values */
+#if 600 <= SUNDIALS_LIB_VERSION
+#define ML_CCONTEXT(v) (*(SUNContext *)Data_custom_val(v))
+#define ML_CONTEXT(v) (ML_CCONTEXT(Field(v, 0)))
+#endif
 
 CAMLprim value sunml_sundials_wrap_file(FILE* f);
 

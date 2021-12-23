@@ -14,6 +14,12 @@ module Config = Sundials_Config
 
 module Index = Sundials_Index
 
+module Context = struct
+  type t = Sundials_impl.Context.t
+  let make = Sundials_impl.Context.make
+  let default = Sundials_impl.Context.default
+end
+
 exception RecoverableFailure
 exception NonPositiveEwt
 

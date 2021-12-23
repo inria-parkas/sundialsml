@@ -903,7 +903,7 @@ let evolve_problem_imex ({ myid; uopt; _ } as udata) (y : Nvector_mpiplusx.t) =
   (* Create the ARK timestepper module *)
   let arkode_mem =
     ARKStep.(init (imex ~nlsolver ?lsolver
-                        ~fi:(reaction udata) (advection udata))
+                        ~fsi:(reaction udata) ~fse:(advection udata) ())
                   (SStolerances (rtol, atol))
                   ~order t0 y)
   in

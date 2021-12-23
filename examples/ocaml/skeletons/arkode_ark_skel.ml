@@ -2,8 +2,8 @@ open Sundials
 module ARKStep = Arkode.ARKStep
 
 (* 1. Define right-hand-side functions. *)
-let fe _t y yd = yd.{0} <- y.{1}
-let fi _t _y yd = yd.{1} <- -9.81
+let fse _t y yd = yd.{0} <- y.{1}
+let fsi _t _y yd = yd.{1} <- -9.81
 
 (* 2. Optionally define a root function. *)
 let g _t y gout = gout.{0} <- 1.0 -. y.{0}
@@ -23,8 +23,7 @@ let s = ARKStep.(
   init
     (imex ~lsolver:Dls.(solver (dense y m))
           ~linearity:(Linear true)
-          ~fi
-          fe)
+          ~fsi ~fse ())
     (SStolerances (1e-4, 1e-9))
     ~roots:(1, g)
     0.0

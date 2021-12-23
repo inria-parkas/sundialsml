@@ -271,6 +271,7 @@ type ('m, 'mk, 'nd, 'nk, 't) linear_solver_data = {
   solver : ('m, 'nd, 'nk, 't) solver_data;
   matrix : ('mk, 'm, 'nd, 'nk) Matrix.t option;
   compat : Iterative.info;
+  context : Sundials.Context.t;
   mutable check_prec_type : Iterative.preconditioning_type -> bool;
   ocaml_callbacks : ('nd, 'nk) ocaml_callbacks Sundials_impl.Vptr.vptr;
   mutable info_file : Logfile.t option;
@@ -327,6 +328,7 @@ external c_make_custom
   : linear_solver_type
     -> ('t * ('m, 'nd, 'nk, 't) Custom.ops) Weak.t
     -> Custom.has_ops
+    -> Sundials.Context.t
     -> ('m, 'nd, 'nk) cptr
   = "sunml_lsolver_make_custom"
 

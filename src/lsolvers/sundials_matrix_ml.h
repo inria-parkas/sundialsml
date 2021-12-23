@@ -164,12 +164,13 @@
 enum mat_matrix_index {
     RECORD_MAT_MATRIX_PAYLOAD   = 0,
     RECORD_MAT_MATRIX_RAWPTR,
+    RECORD_MAT_MATRIX_CONTEXT,
     RECORD_MAT_MATRIX_ID,
     RECORD_MAT_MATRIX_MATOPS,
     RECORD_MAT_MATRIX_SIZE /* This has to come last. */
 };
 
-#if SUNDIALS_LIB_VERSION >= 300
+#if 300 <= SUNDIALS_LIB_VERSION
 
 /* Map a matrix_content.rawptr to a (void *) to a MAT_CONTENT_*_TYPE */
 #define MAT_CONTENT(v) (*(void **)Data_custom_val(v))
@@ -196,7 +197,7 @@ struct csmat {
 // MAT_VAL turns an OCaml Matrix.t into a c-sunmatrix
 #define MAT_VAL(v) (MAT_CVAL(Field(v, RECORD_MAT_MATRIX_RAWPTR)))
 
-#elif SUNDIALS_LIB_VERSION >= 260 // 260 <= SUNDIALS_LIB_VERSION < 300
+#elif 260 <= SUNDIALS_LIB_VERSION // 260 <= SUNDIALS_LIB_VERSION < 300
 #define DLSMAT(v) (*(DlsMat *)Data_custom_val(v))
 #define SLSMAT(v) (*(SlsMat *)Data_custom_val(v))
 

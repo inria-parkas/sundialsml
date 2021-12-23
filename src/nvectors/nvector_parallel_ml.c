@@ -80,6 +80,10 @@ static N_Vector clone_parallel(N_Vector w)
     /* Create vector operation structure */
     sunml_clone_cnvec_ops(v, w);
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    v->sunctx = w->sunctx;
+#endif
+
     /* Attach lengths and communicator */
     content->local_length  = NV_LOCLENGTH_P(w);
     content->global_length = NV_GLOBLENGTH_P(w);
@@ -131,6 +135,10 @@ static N_Vector clone_any_parallel(N_Vector w)
     /* Create vector operation structure */
     sunml_clone_cnvec_ops(v, w);
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    v->sunctx = w->sunctx;
+#endif
+
     /* Attach lengths and communicator */
     content->local_length  = NV_LOCLENGTH_P(w);
     content->global_length = NV_GLOBLENGTH_P(w);
@@ -150,9 +158,10 @@ static N_Vector clone_any_parallel(N_Vector w)
 /* Adapted from sundials-2.5.0/src/nvec_par/nvector_parallel.c:
    N_VNewEmpty_Parallel */
 CAMLprim value sunml_nvec_wrap_parallel(value payload,
-					value checkfn, value clonefn)
+					value checkfn, value clonefn,
+					value context)
 {
-    CAMLparam3(payload, checkfn, clonefn);
+    CAMLparam4(payload, checkfn, clonefn, context);
     CAMLlocal2(vnvec, vlocalba);
 
     N_Vector nv;
@@ -171,7 +180,7 @@ CAMLprim value sunml_nvec_wrap_parallel(value payload,
     /* Compute global length as sum of local lengths */
     sundials_ml_index nsum;
     sundials_ml_index n = local_length;
-    MPI_Allreduce(&n, &nsum, 1, PVEC_INTEGER_MPI_TYPE, MPI_SUM, comm);
+    MPI_Allreduce(&n, &nsum, 1, MPI_SUNINDEXTYPE, MPI_SUM, comm);
     if (nsum != global_length)
         caml_raise_constant(NVECTOR_PARALLEL_EXN (IncorrectGlobalSize));
     }
@@ -182,6 +191,10 @@ CAMLprim value sunml_nvec_wrap_parallel(value payload,
     if (nv == NULL) caml_raise_out_of_memory();
     ops = (N_Vector_Ops) nv->ops;
     content = (N_VectorContent_Parallel) nv->content;
+
+#if 600 <= SUNDIALS_LIB_VERSION
+    nv->sunctx = ML_CONTEXT(context);
+#endif
 
     /* Create vector operation structure */
     ops->nvclone           = clone_parallel;		    /* ours */
@@ -262,6 +275,7 @@ CAMLprim value sunml_nvec_wrap_parallel(value payload,
 		sunml_alloc_caml_nvec(nv, sunml_finalize_caml_nvec));
     Store_field(vnvec, NVEC_CHECK, checkfn);
     Store_field(vnvec, NVEC_CLONE, clonefn);
+    Store_field(vnvec, NVEC_CONTEXT, context);
 
     CAMLreturn(vnvec);
 }
@@ -273,13 +287,14 @@ CAMLprim value sunml_nvec_wrap_parallel(value payload,
       (the current clone_empty_parallel does not manipulate the backlink). */
 CAMLprim value sunml_nvec_anywrap_parallel(value extconstr,
 					   value payload,
-					   value checkfn, value clonefn)
+					   value checkfn, value clonefn,
+					   value context)
 {
-    CAMLparam4(extconstr, payload, checkfn, clonefn);
+    CAMLparam5(extconstr, payload, checkfn, clonefn, context);
     CAMLlocal2(vnv, vwrapped);
     N_Vector nv;
 
-    vnv = sunml_nvec_wrap_parallel(payload, checkfn, clonefn);
+    vnv = sunml_nvec_wrap_parallel(payload, checkfn, clonefn, context);
     nv = NVEC_VAL(vnv);
     nv->ops->nvclone = clone_any_parallel;
 
@@ -458,7 +473,7 @@ CAMLprim value sunml_nvec_par_invtest(value vx, value vz)
     CAMLparam2(vx, vz);
     N_Vector x = NVEC_VAL(vx);
     N_Vector z = NVEC_VAL(vz);
-    booleantype r = N_VInvTest_Parallel(x, z);
+    sunbooleantype r = N_VInvTest_Parallel(x, z);
     CAMLreturn(Val_bool(r));
 }
 
@@ -468,7 +483,7 @@ CAMLprim value sunml_nvec_par_constrmask(value vc, value vx, value vm)
     N_Vector c = NVEC_VAL(vc);
     N_Vector x = NVEC_VAL(vx);
     N_Vector m = NVEC_VAL(vm);
-    booleantype r = N_VConstrMask_Parallel(c, x, m);
+    sunbooleantype r = N_VConstrMask_Parallel(c, x, m);
     CAMLreturn(Val_bool(r));
 }
 
@@ -746,7 +761,7 @@ CAMLprim value sunml_nvec_par_l1normlocal(value vx)
 CAMLprim value sunml_nvec_par_invtestlocal(value vx, value vz)
 {
     CAMLparam2(vx, vz);
-    booleantype r;
+    sunbooleantype r;
 #if 500 <= SUNDIALS_LIB_VERSION
     N_Vector x = NVEC_VAL(vx);
     N_Vector z = NVEC_VAL(vz);
@@ -758,7 +773,7 @@ CAMLprim value sunml_nvec_par_invtestlocal(value vx, value vz)
 CAMLprim value sunml_nvec_par_constrmasklocal(value vc, value vx, value vm)
 {
     CAMLparam3(vc, vx, vm);
-    booleantype r;
+    sunbooleantype r;
 #if 500 <= SUNDIALS_LIB_VERSION
     N_Vector c = NVEC_VAL(vc);
     N_Vector x = NVEC_VAL(vx);

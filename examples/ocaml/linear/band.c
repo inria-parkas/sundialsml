@@ -66,8 +66,13 @@ void print_pivots(sundials_ml_index* m, sundials_ml_index nr)
 
 int main(int argc, char** argv)
 {
+#if 600 <= SUNDIALS_LIB_VERSION
+    DlsMat a = SUNDlsMat_NewBandMat(SIZE, MU, ML, SMU);
+    DlsMat b = SUNDlsMat_NewBandMat(SIZE, MU, ML, SMU);
+#else
     DlsMat a = NewBandMat(SIZE, MU, ML, SMU);
     DlsMat b = NewBandMat(SIZE, MU, ML, SMU);
+#endif
     sundials_ml_index p[SIZE] = { 0.0 };
     sunrealtype s[SIZE] = { 5.0, 15.0, 31.0, 53.0, 45.0 };
 
@@ -98,36 +103,62 @@ int main(int argc, char** argv)
 	sunrealtype x[SIZE] = { 1.0,  2.0, 3.0, 4.0, 5.0 };
 	sunrealtype y[SIZE] = { 0.0 };
 	printf("matvec: y=\n");
+#if 600 <= SUNDIALS_LIB_VERSION
+	SUNDlsMat_BandMatvec(a, x, y);
+#else
 	BandMatvec(a, x, y);
+#endif
 	print_vec(y, SIZE);
 	printf("\n");
     }
 #endif
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    SUNDlsMat_BandCopy(a, b, MU, ML);
+    SUNDlsMat_BandScale(2.0, b);
+#else
     BandCopy(a, b, MU, ML);
     BandScale(2.0, b);
+#endif
     printf("scale copy x2: b=\n");
     print_mat(b);
     printf("\n");
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    SUNDlsMat_bandAddIdentity(b->cols, b->N, b->s_mu);
+#else
     bandAddIdentity(b->cols, b->N, b->s_mu);
+#endif
     printf("add identity: b=\n");
     print_mat(b);
     printf("\n");
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    SUNDlsMat_BandGBTRF(a, p);
+#else
     BandGBTRF(a, p);
+#endif
     printf("getrf: a=\n");
     print_factored_mat(a);
     printf("\n       p=\n");
     print_pivots(p, SIZE);
     printf("\n");
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    SUNDlsMat_BandGBTRS(a, p, s);
+#else
     BandGBTRS(a, p, s);
+#endif
     printf("getrs: s=\n");
     print_vec(s, SIZE);
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    SUNDlsMat_DestroyMat(a);
+    SUNDlsMat_DestroyMat(b);
+#else
     DestroyMat(a);
     DestroyMat(b);
+#endif
 
     return 0;
 }

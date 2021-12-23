@@ -649,6 +649,7 @@ nvectors/nvector_array.cmx : \
     nvectors/nvector.cmx \
     nvectors/nvector_array.cmi
 nvectors/nvector_array.cmi : \
+    sundials/sundials.cmi \
     nvectors/nvector_custom.cmi \
     nvectors/nvector.cmi
 nvectors/nvector_custom.cmo : \
@@ -743,6 +744,7 @@ nvectors/nvector_mpiplusx.cmx : \
     nvectors/nvector.cmx \
     nvectors/nvector_mpiplusx.cmi
 nvectors/nvector_mpiplusx.cmi : \
+    sundials/sundials.cmi \
     nvectors/nvector.cmi
 nvectors/nvector_openmp.cmo : \
     sundials/sundials_impl.cmi \
@@ -864,6 +866,13 @@ sundials/sundials_Config.cmx : \
     sundials/sundials_configuration.cmx \
     sundials/sundials_Config.cmi
 sundials/sundials_Config.cmi :
+sundials/sundials_Context_parallel.cmo : \
+    sundials/sundials_impl.cmi \
+    sundials/sundials_Context_parallel.cmi
+sundials/sundials_Context_parallel.cmx : \
+    sundials/sundials_impl.cmx \
+    sundials/sundials_Context_parallel.cmi
+sundials/sundials_Context_parallel.cmi :
 sundials/sundials_Index.cmo : \
     sundials/sundials_Index.cmi
 sundials/sundials_Index.cmx : \
@@ -935,8 +944,10 @@ arkode_ml.o: arkode/arkode_ml.c arkode/../config.h \
  arkode/../lsolvers/sundials_matrix_ml.h \
  arkode/../lsolvers/sundials_linearsolver_ml.h \
  arkode/../lsolvers/sundials_nonlinearsolver_ml.h \
- arkode/../sundials/sundials_ml.h arkode/../sundials/../config.h \
- arkode/arkode_ml.h arkode/../nvectors/nvector_ml.h \
+ arkode/../lsolvers/../sundials/sundials_ml.h \
+ arkode/../lsolvers/../sundials/../config.h \
+ arkode/../sundials/sundials_ml.h arkode/arkode_ml.h \
+ arkode/../nvectors/nvector_ml.h \
  arkode/../nvectors/../sundials/sundials_ml.h
 arkode_superlumt_ml.o: arkode/arkode_superlumt_ml.c \
  arkode/../sundials/sundials_ml.h arkode/../sundials/../config.h \
@@ -951,10 +962,11 @@ cvode_klu_ml.o: cvode/cvode_klu_ml.c cvode/../sundials/sundials_ml.h \
 cvode_ml.o: cvode/cvode_ml.c cvode/../config.h \
  cvode/../lsolvers/sundials_matrix_ml.h \
  cvode/../lsolvers/sundials_linearsolver_ml.h \
- cvode/../lsolvers/sundials_nonlinearsolver_ml.h cvode/cvode_ml.h \
+ cvode/../lsolvers/sundials_nonlinearsolver_ml.h \
+ cvode/../lsolvers/../sundials/sundials_ml.h \
+ cvode/../lsolvers/../sundials/../config.h cvode/cvode_ml.h \
  cvode/../nvectors/nvector_ml.h \
- cvode/../nvectors/../sundials/sundials_ml.h \
- cvode/../nvectors/../sundials/../config.h
+ cvode/../nvectors/../sundials/sundials_ml.h
 cvode_superlumt_ml.o: cvode/cvode_superlumt_ml.c \
  cvode/../sundials/sundials_ml.h cvode/../sundials/../config.h \
  cvode/cvode_ml.h cvode/../lsolvers/sundials_matrix_ml.h
@@ -970,9 +982,10 @@ cvodes_ml.o: cvodes/cvodes_ml.c cvodes/../config.h \
  cvodes/../lsolvers/sundials_matrix_ml.h \
  cvodes/../lsolvers/sundials_linearsolver_ml.h \
  cvodes/../lsolvers/sundials_nonlinearsolver_ml.h \
- cvodes/../sundials/sundials_ml.h cvodes/../sundials/../config.h \
- cvodes/../cvode/cvode_ml.h cvodes/cvodes_ml.h \
- cvodes/../nvectors/nvector_ml.h \
+ cvodes/../lsolvers/../sundials/sundials_ml.h \
+ cvodes/../lsolvers/../sundials/../config.h \
+ cvodes/../sundials/sundials_ml.h cvodes/../cvode/cvode_ml.h \
+ cvodes/cvodes_ml.h cvodes/../nvectors/nvector_ml.h \
  cvodes/../nvectors/../sundials/sundials_ml.h
 cvodes_superlumt_ml.o: cvodes/cvodes_superlumt_ml.c \
  cvodes/../sundials/sundials_ml.h cvodes/../sundials/../config.h \
@@ -990,6 +1003,7 @@ ida_ml.o: ida/ida_ml.c ida/../config.h ida/ida_ml.h \
  ida/../nvectors/nvector_ml.h ida/../nvectors/../sundials/sundials_ml.h \
  ida/../lsolvers/sundials_matrix_ml.h \
  ida/../lsolvers/sundials_nonlinearsolver_ml.h \
+ ida/../lsolvers/../sundials/sundials_ml.h \
  ida/../lsolvers/sundials_linearsolver_ml.h
 ida_superlumt_ml.o: ida/ida_superlumt_ml.c ida/../sundials/sundials_ml.h \
  ida/../sundials/../config.h ida/ida_ml.h \
@@ -1010,6 +1024,7 @@ idas_ml.o: idas/idas_ml.c idas/../config.h idas/../ida/ida_ml.h \
  idas/../nvectors/../sundials/sundials_ml.h \
  idas/../lsolvers/sundials_linearsolver_ml.h \
  idas/../lsolvers/sundials_nonlinearsolver_ml.h \
+ idas/../lsolvers/../sundials/sundials_ml.h \
  idas/../lsolvers/sundials_matrix_ml.h
 idas_superlumt_ml.o: idas/idas_superlumt_ml.c \
  idas/../sundials/sundials_ml.h idas/../sundials/../config.h \
@@ -1051,7 +1066,8 @@ sundials_nonlinearsolver_ml.o: lsolvers/sundials_nonlinearsolver_ml.c \
  lsolvers/../config.h lsolvers/../sundials/sundials_ml.h \
  lsolvers/../sundials/../config.h lsolvers/../nvectors/nvector_ml.h \
  lsolvers/../nvectors/../sundials/sundials_ml.h \
- lsolvers/../lsolvers/sundials_nonlinearsolver_ml.h
+ lsolvers/../lsolvers/sundials_nonlinearsolver_ml.h \
+ lsolvers/../lsolvers/../sundials/sundials_ml.h
 nvector_many_ml.o: nvectors/nvector_many_ml.c \
  nvectors/../nvectors/nvector_ml.h \
  nvectors/../nvectors/../sundials/sundials_ml.h \

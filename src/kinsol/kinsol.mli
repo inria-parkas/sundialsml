@@ -380,12 +380,17 @@ val matrix_embedded_solver :
      - [tmpl]     a template to initialize the session (e.g., the
                   initial guess vector).
 
+     By default, the session is created using the context returned by
+     {!Sundials.Context.default}, but this can be overridden by passing
+     an optional [context] argument.
+
      @kinsol <node5#sss:kinmalloc>     KINCreate/KINInit
      @kinsol <node5#ss:optin_main> KINSetNumMaxIters
      @nokinsol <node5#ss:optin_main> KINSetMAA
      @kinsol <node5#sss:lin_solv_init> Linear solver specification functions *)
 val init :
-  ?max_iters:int
+     ?context:Context.t
+  -> ?max_iters:int
   -> ?maa:int
   -> ?lsolver:('data, 'kind) linear_solver
   -> 'data sysfn

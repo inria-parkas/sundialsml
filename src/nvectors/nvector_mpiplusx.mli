@@ -40,7 +40,12 @@ type Nvector.gdata += MpiPlusX of data
     @since 5.0.0
     @cvode <node> N_VMake_MPIPlusX
     @cvode <node5> N_VEnableFusedOps_MPIManyVector *)
-val wrap : ?with_fused_ops:bool -> Mpi.communicator -> Nvector.any -> t
+val wrap :
+     ?context:Sundials.Context.t
+  -> ?with_fused_ops:bool
+  -> Mpi.communicator
+  -> Nvector.any
+  -> t
 
 (** Aliases {!Nvector.unwrap}. *)
 val unwrap : t -> data
@@ -96,8 +101,12 @@ module Any : sig
       @since 5.0.0
       @cvode <node> N_VMake_MPIPlusX
       @cvode <node5> N_VEnableFusedOps_MPIManyVector *)
-  val wrap
-    : ?with_fused_ops:bool -> Mpi.communicator -> Nvector.any -> Nvector.any
+  val wrap :
+       ?context:Sundials.Context.t
+    -> ?with_fused_ops:bool
+    -> Mpi.communicator
+    -> Nvector.any
+    -> Nvector.any
 
   (** Returns the payload of the generic vector if it was constructed with
       {{!Nvector.gdata}MpiPlusX}, otherwise raises {!Nvector.BadGenericType}. *)

@@ -128,6 +128,7 @@ type ('a, 'kind, 'step) session = {
   nroots : int;
   mutable checkvec : ('a, 'kind) Nvector.t -> unit;
   mutable uses_resv : bool;
+  context : Sundials.Context.t;
   mutable exn_temp : exn option;
   mutable problem : problem_type;
   mutable rhsfn1 : 'a Global.rhsfn;

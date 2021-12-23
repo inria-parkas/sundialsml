@@ -334,6 +334,7 @@ type ('a,'kind) session = {
   backref    : c_weak_ref;
   nroots     : int;
   checkvec   : (('a, 'kind) Nvector.t -> unit);
+  context    : Context.t;
 
   (* Temporary storage for exceptions raised within callbacks.  *)
   mutable exn_temp   : exn option;

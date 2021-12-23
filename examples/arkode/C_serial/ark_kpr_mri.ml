@@ -45,6 +45,12 @@
  * 5. exp-4/exp-4 (MRI-GARK-ERK45a / ERK-4-4)
  * 6. exp-4/exp-3 (MRI-GARK-ERK45a / ERK-3-3)
  * 7. dirk-3/exp-3 (MRI-GARK-ESDIRK34a / ERK-3-3) -- solve decoupled
+ * 8. ars343/exp-3 (IMEX-MRI3b / ERK-3-3) -- solve decoupled
+ * 9. imexark4/exp-4 (IMEX-MRI4/ ERK-4-4) -- solve decoupled
+ *
+ * We note that once we have methods that are IMEX at the slow time
+ * scale, the nonstiff slow term,  [ r'(t)/(2u) ], can be treated
+ * explicitly.
  *
  * The program should be run with arguments in the following order:
  *   $ a.out solve_type h G w e
@@ -121,6 +127,29 @@ let fs (rpar : RealArray.t) t (y : RealArray.t) (ydot : RealArray.t) =
   ydot.{0} <- g *. tmp1 +. e *. tmp2 +. rdot t /. (2.0 *. u);
   ydot.{1} <- 0.0
 
+(* fse routine to compute the slow portion of the ODE RHS. *)
+let fse (_ : RealArray.t) t (y : RealArray.t) (ydot : RealArray.t) =
+  let u = y.{0} in
+  (* fill in the slow explicit RHS function:
+     [rdot(t)/(2*u)]
+     [      0      ] *)
+  ydot.{0} <- rdot t /. (2.0 *. u);
+  ydot.{1} <- 0.0
+
+(* fsi routine to compute the slow portion of the ODE RHS.(currently same as fse) *)
+let fsi (rpar : RealArray.t) t (y : RealArray.t) (ydot : RealArray.t) =
+  let g = rpar.{0} in
+  let e = rpar.{2} in
+  let u = y.{0} in
+  let v = y.{1} in
+  (* fill in the slow implicit RHS function:
+     [G e]*[(-1+u^2-r(t))/(2*u))]
+     [0 0] [(-2+v^2-s(t))/(2*v)]  *)
+  let tmp1 = (-1.0 +. u *. u -. r t) /. (2.0 *. u) in
+  let tmp2 = (-2.0 +. v *. v -. s rpar t) /. (2.0 *. v) in
+  ydot.{0} <- g *. tmp1 +. e *. tmp2;
+  ydot.{1} <- 0.0
+
 let fn (rpar : RealArray.t) t (y : RealArray.t) (ydot : RealArray.t) =
   let g = rpar.{0} in
   let e = rpar.{2} in
@@ -147,6 +176,21 @@ let js (rpar : RealArray.t) { MRIStep.jac_t = t;
      [G/2 + (G*(1+r(t))+rdot(t))/(2*u^2)   e/2+e*(2+s(t))/(2*v^2)]
      [                 0                             0           ] *)
   DM.set jmat 0 0 (g /. 2.0 +. (g *. (1.0 +. r t) +. rdot t) /. (2.0 *. u *. u));
+  DM.set jmat 0 1 (e /. 2.0 +. e *. (2.0 +. s rpar t) /. (2.0 *. v *. v));
+  DM.set jmat 1 0 0.0;
+  DM.set jmat 1 1 0.0
+
+let jsi (rpar : RealArray.t) { MRIStep.jac_t = t;
+                               MRIStep.jac_y = (y : RealArray.t); _ }
+                             jmat =
+  let g = rpar.{0} in
+  let e = rpar.{2} in
+  let u = y.{0} in
+  let v = y.{1} in
+  (* fill in the Jacobian:
+     [G/2 + (G*(1+r(t)))/(2*u^2)   e/2+e*(2+s(t))/(2*v^2)]
+     [                 0                             0           ] *)
+  DM.set jmat 0 0 (g /. 2.0 +. (g *. (1.0 +. r t)) /. (2.0 *. u *. u));
   DM.set jmat 0 1 (e /. 2.0 +. e *. (2.0 +. s rpar t) /. (2.0 *. v *. v));
   DM.set jmat 1 0 0.0;
   DM.set jmat 1 1 0.0
@@ -200,12 +244,15 @@ let main () =
   (*   h > 0                     *)
   (*   h < 1/|G| (explicit slow) *)
   (*   w >= 1.0                  *)
-  if solve_type < 0 || solve_type > 7
-  then failwith "ERROR: solve_type be an integer in [0,7] \n";
+  if solve_type < 0 || solve_type > 9
+  then failwith "ERROR: solve_type be an integer in [0,9] \n";
   if g >= 0.0
   then failwith "ERROR: G must be a negative real number\n";
 
-  let implicit_slow = solve_type = 4 || solve_type = 7 in
+  let implicit_slow = solve_type = 4 || solve_type = 7
+                      || solve_type = 8 || solve_type = 9
+  in
+  let imex_slow = solve_type = 8 || solve_type = 9 in
 
   if hs <= 0.0 then failwith "ERROR: hs must be in positive\n";
   if hs > 1.0 /. abs_float g && not implicit_slow
@@ -267,6 +314,20 @@ let main () =
       printf "    reltol = %.2e,  abstol = %.2e\n" reltol abstol;
       reltol, abstol
 
+    | 8 ->
+      let reltol = max (hs *. hs *. hs) 1e-10 in
+      let abstol = 1e-11 in
+      printf "    solver: ars343/exp-3 (IMEX-MRI3b / ERK-3-3) -- solve decoupled\n";
+      printf "    reltol = %.2e,  abstol = %.2e\n" reltol abstol;
+      reltol, abstol
+
+    | 9 ->
+      let reltol = max (hs *. hs *. hs *. hs) 1e-14 in
+      let abstol = 1e-14 in
+      printf "    solver: imexark4/exp-4 (IMEX-MRI4 / ERK-4-4) -- solve decoupled\n";
+      printf "    reltol = %.2e,  abstol = %.2e\n" reltol abstol;
+      reltol, abstol
+
     | _ -> assert false;
   in
 
@@ -280,11 +341,12 @@ let main () =
    *)
 
   (* Initialize the fast integrator. Specify the fast right-hand side
-     function in y'=fs(t,y)+ff(t,y), the inital time T0, and the
-     initial dependent variable vector y. *)
+     function in y'=fs(t,y)+ff(t,y) = fse(t,y)+fsi(t,y)+ff(t,y), the inital time T0,
+     and the initial dependent variable vector y. *)
+
   let inner_arkode_mem =
     match solve_type with
-    | 0 | 6 | 7 ->  (* erk-3-3 fast solver *)
+    | 0 | 6 | 7 | 8 ->  (* erk-3-3 fast solver *)
         let inner_arkode_mem =
           ARKStep.(init (explicit (ff rpar)) (SStolerances (reltol, abstol)) t0 y)
         in
@@ -326,7 +388,7 @@ let main () =
         ARKStep.set_tables inner_arkode_mem ~explicit_table ();
         inner_arkode_mem
 
-    | 5 ->  (* erk-4-4 fast solver *)
+    | 5 | 9 ->  (* erk-4-4 fast solver *)
         let inner_arkode_mem =
           ARKStep.(init (explicit (ff rpar)) default_tolerances t0 y)
         in
@@ -408,30 +470,30 @@ let main () =
    *)
 
   (* Initialize the slow integrator. Specify the slow right-hand side
-     function in y'=fs(t,y)+ff(t,y), the inital time T0, the
-     initial dependent variable vector y, and the fast integrator. *)
+     function in y'=fs(t,y)+ff(t,y) = fse(t,y)+fsi(t,y)+ff(t,y), the inital time
+     T0, the initial dependent variable vector y, and the fast integrator. *)
   let arkode_mem = match solve_type with
     | 0 ->  (* KW3 slow solver *)
-        MRIStep.(init (InnerStepper.from_arkstep inner_arkode_mem)
+        MRIStep.(init (explicit (fs rpar))
                       default_tolerances
-                      ~tablenum:Arkode.ButcherTable.Knoth_Wolke_3_3
-                      (fs rpar)
+                      (InnerStepper.from_arkstep inner_arkode_mem)
+                      ~coupling:Coupling.(load_table KW3)
                       ~slowstep:hs
                       t0 y)
 
     | 3 ->  (* KW3 slow solver (full problem) *)
-        MRIStep.(init (InnerStepper.from_arkstep inner_arkode_mem)
+        MRIStep.(init (explicit (fn rpar))
                       default_tolerances
-                      ~tablenum:Arkode.ButcherTable.Knoth_Wolke_3_3
-                      (fn rpar)
+                      (InnerStepper.from_arkstep inner_arkode_mem)
+                      ~coupling:Coupling.(load_table KW3)
                       ~slowstep:hs
                       t0 y)
 
     | 5 | 6 -> (* MRI-GARK-ERK45a slow solver *)
-        MRIStep.(init (InnerStepper.from_arkstep inner_arkode_mem)
+        MRIStep.(init (explicit (fs rpar))
                       default_tolerances
+                      (InnerStepper.from_arkstep inner_arkode_mem)
                       ~coupling:Coupling.(load_table GARK_ERK45a)
-                      (fs rpar)
                       ~slowstep:hs
                       t0 y)
 
@@ -448,34 +510,59 @@ let main () =
             embedding = None;
           }
         in
-        MRIStep.(init (InnerStepper.from_arkstep inner_arkode_mem)
-                      default_tolerances
-                      ~table:(bt, 2)
-                      (f0 rpar)
-                      ~slowstep:hs
-                      t0 y)
+        MRIStep.(init
+          (explicit (f0 rpar))
+          default_tolerances
+          (InnerStepper.from_arkstep inner_arkode_mem)
+          ~coupling:Coupling.(mis_to_mri ~method_order:2 ~embedding_order:0 bt)
+          ~slowstep:hs
+          t0 y)
 
     | 4 ->  (* dirk-2 (trapezoidal), solve-decoupled slow solver *)
         let a_s = Matrix.dense neq in
         let ls_s = LinearSolver.Direct.dense y a_s in
-        MRIStep.(init (InnerStepper.from_arkstep inner_arkode_mem)
-                      (SStolerances (reltol, abstol))
-                      ~coupling:Coupling.(load_table GARK_IRK21a)
-                      ~lsolver:(Dls.solver ~jac:(jn rpar) ls_s)
-                      (fn rpar)
-                      ~slowstep:hs
-                      t0 y)
+        MRIStep.(init
+          (implicit ~lsolver:(Dls.solver ~jac:(jn rpar) ls_s) (fn rpar))
+          (SStolerances (reltol, abstol))
+          (InnerStepper.from_arkstep inner_arkode_mem)
+          ~coupling:Coupling.(load_table GARK_IRK21a)
+          ~slowstep:hs
+          t0 y)
 
     | 7 ->  (* MRI-GARK-ESDIRK34a, solve-decoupled slow solver *)
         let a_s = Matrix.dense neq in
         let ls_s = LinearSolver.Direct.dense y a_s in
-        MRIStep.(init (InnerStepper.from_arkstep inner_arkode_mem)
-                      (SStolerances (reltol, abstol))
-                      ~coupling:Coupling.(load_table GARK_ESDIRK34a)
-                      ~lsolver:(Dls.solver ~jac:(js rpar) ls_s)
-                      (fs rpar)
-                      ~slowstep:hs
-                      t0 y)
+        MRIStep.(init
+          (implicit ~lsolver:(Dls.solver ~jac:(js rpar) ls_s) (fs rpar))
+          (SStolerances (reltol, abstol))
+          (InnerStepper.from_arkstep inner_arkode_mem)
+          ~coupling:Coupling.(load_table GARK_ESDIRK34a)
+          ~slowstep:hs
+          t0 y)
+
+    | 8 ->  (* IMEX-MRI-GARK3b, solve-decoupled slow solver *)
+        let a_s = Matrix.dense neq in
+        let ls_s = LinearSolver.Direct.dense y a_s in
+        MRIStep.(init
+          (imex ~lsolver:(Dls.solver ~jac:(jsi rpar) ls_s)
+                ~fsi:(fsi rpar) ~fse:(fse rpar) ())
+          (SStolerances (reltol, abstol))
+          (InnerStepper.from_arkstep inner_arkode_mem)
+          ~coupling:Coupling.(load_table IMEX_GARK3b)
+          ~slowstep:hs
+          t0 y)
+
+    | 9 ->  (* IMEX-MRI-GARK4, solve-decoupled slow solver *)
+        let a_s = Matrix.dense neq in
+        let ls_s = LinearSolver.Direct.dense y a_s in
+        MRIStep.(init
+          (imex ~lsolver:(Dls.solver ~jac:(jsi rpar) ls_s)
+                ~fsi:(fsi rpar) ~fse:(fse rpar) ())
+          (SStolerances (reltol, abstol))
+          (InnerStepper.from_arkstep inner_arkode_mem)
+          ~coupling:Coupling.(load_table IMEX_GARK4)
+          ~slowstep:hs
+          t0 y)
 
     | _ -> assert false
   in
@@ -541,7 +628,7 @@ let main () =
 
   (* Get some slow integrator statistics *)
   let nsts = MRIStep.get_num_steps arkode_mem in
-  let nfs = MRIStep.get_num_rhs_evals arkode_mem in
+  let nfse, nfsi = MRIStep.get_num_rhs_evals arkode_mem in
 
   (* Get some fast integrator statistics *)
   let nstf = ARKStep.get_num_steps inner_arkode_mem in
@@ -552,10 +639,16 @@ let main () =
   printf "   Steps: nsts = %d, nstf = %d\n" nsts nstf;
   printf "   u error = %.3e, v error = %.3e, total error = %.3e\n"
          uerrtot verrtot errtot;
-  printf "   Total RHS evals:  Fs = %d,  Ff = %d\n" nfs nff;
+  if imex_slow then
+    printf "   Total RHS evals:  Fse = %d, Fsi = %d,  Ff = %d\n" nfse nfsi nff
+  else if implicit_slow then
+    printf "   Total RHS evals:  Fs = %d,  Ff = %d\n" nfsi nff
+  else
+    printf "   Total RHS evals:  Fs = %d,  Ff = %d\n" nfse nff;
 
   (* Get/print slow integrator decoupled implicit solver statistics *)
-  if solve_type = 4 || solve_type = 7 then begin
+  if solve_type = 4 || solve_type = 7 || solve_type = 8 || solve_type = 9 then
+  begin
     let nnis, nncs = MRIStep.get_nonlin_solv_stats arkode_mem in
     let njes = MRIStep.Dls.get_num_jac_evals arkode_mem in
     printf "   Slow Newton iters = %d\n" nnis;

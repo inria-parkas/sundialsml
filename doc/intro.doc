@@ -241,7 +241,7 @@ or
 
 {2:api API Reference}
 
-{!modules: Sundials}
+{!modules: Sundials Sundials_Context_parallel}
 {!modules: Nvector Nvector_serial Nvector_parallel
 	   Nvector_pthreads Nvector_openmp
 	   Nvector_many Nvector_mpimany Nvector_mpiplusx

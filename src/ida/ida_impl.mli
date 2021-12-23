@@ -179,6 +179,7 @@ type ('a, 'kind) session = {
   backref : c_weak_ref;
   nroots : int;
   checkvec : ('a, 'kind) Nvector.t -> unit;
+  context : Sundials.Context.t;
   mutable exn_temp : exn option;
   mutable id_set : bool;
   mutable resfn : 'a resfn;

@@ -253,7 +253,7 @@ let main () =
     init
       (imex ~lsolver:Spils.(solver (spgmr ~maxl:10 y)
                                    ~jac_times_vec:(None, jacvi ud) prec_none)
-            ~fi:(fi ud) (fe ud))
+            ~fsi:(fi ud) ~fse:(fe ud) ())
       (SStolerances (reltol, abstol))
       t0
       y

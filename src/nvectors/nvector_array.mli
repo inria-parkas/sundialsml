@@ -33,17 +33,17 @@ module type ARRAY_NVECTOR =
     type t = data Nvector_custom.t
 
     (** The set of nvector operations on an array. *)
-    val array_nvec_ops  : data Nvector_custom.nvector_ops
+    val array_nvec_ops : data Nvector_custom.nvector_ops
 
     (** [make n x] creates an nvector containing an array
         of [n] elements, each of which is equal to [x]. *)
-    val make            : int -> float -> t
+    val make : ?context:Sundials.Context.t -> int -> float -> t
 
     (** Lifts an array to an nvector. *)
-    val wrap            : ?with_fused_ops:bool -> data -> t
+    val wrap : ?context:Sundials.Context.t -> ?with_fused_ops:bool -> data -> t
 
     (** Returns the array underlying an nvector. *)
-    val unwrap          : t -> data
+    val unwrap : t -> data
 
     (** Selectively enable or disable fused and array operations.
         The [with_fused_ops] argument enables or disables all such operations.
@@ -90,7 +90,8 @@ module type ARRAY_NVECTOR =
           @raise Config.NotImplementedBySundialsVersion Fused and array operations not available.
           @since 2.9.0 *)
       val wrap :
-           ?with_fused_ops                       : bool
+           ?context                              : Sundials.Context.t
+        -> ?with_fused_ops                       : bool
         -> ?with_linear_combination              : bool
         -> ?with_scale_add_multi                 : bool
         -> ?with_dot_prod_multi                  : bool

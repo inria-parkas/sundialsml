@@ -659,7 +659,7 @@ module ArrayDense : sig (* {{{ *)
       {{:OCAML_DOC_ROOT(Bigarray.Array2.html)} Bigarray}.
 
       @cvode <node9#ss:dense> Small dense matrices
-      @cvode <node9#ss:dense> newDenseMat *)
+      @cvode <node9#ss:dense> SUNDlsMat_newDenseMat *)
   type t = RealArray2.t
 
   (** {3:arraydense_basic Basic access} *)
@@ -667,12 +667,12 @@ module ArrayDense : sig (* {{{ *)
   (** [make m n x] returns an [m] by [n] array dense matrix with elements set
       to [x].
 
-      @cvode <node9#ss:dense> newDenseMat *)
+      @cvode <node9#ss:dense> SUNDlsMat_newDenseMat *)
   val make : int -> int -> float -> t
 
   (** [create m n] returns an uninitialized [m] by [n] array dense matrix.
 
-       @cvode <node9#ss:dense> newDenseMat *)
+       @cvode <node9#ss:dense> SUNDlsMat_newDenseMat *)
   val create : int -> int -> t
 
   (** [m, n = size a] returns the numbers of rows [m] and columns [n]
@@ -716,13 +716,13 @@ module ArrayDense : sig (* {{{ *)
 
   (** Fills the matrix with zeros.
 
-      @cvode <node9#ss:dense> SetToZero *)
+      @cvode <node9#ss:dense> SUNDlsMat_SetToZero *)
   val set_to_zero    : t -> unit
 
   (** [blit ~src ~dst] copies the contents of [src] into [dst]. Both
       must have the same size.
 
-      @cvode <node9#ss:dense> denseCopy *)
+      @cvode <node9#ss:dense> SUNDlsMat_denseCopy *)
   val blit  : src:t -> dst:t -> unit
 
   (** [lrw, liw = space a] returns the storage requirements of [a] as
@@ -733,12 +733,12 @@ module ArrayDense : sig (* {{{ *)
 
   (** Increments a square matrix by the identity matrix.
 
-      @cvode <node9#ss:dense> denseAddIdentity *)
+      @cvode <node9#ss:dense> SUNDlsMat_denseAddIdentity *)
   val add_identity : t -> unit
 
   (** Multiplies each element by a constant.
 
-      @cvode <node9#ss:dense> denseScale *)
+      @cvode <node9#ss:dense> SUNDlsMat_denseScale *)
   val scale : float -> t -> unit
 
   (** [getrf a p] performs the LU factorization of the square matrix [a] with
@@ -749,7 +749,7 @@ module ArrayDense : sig (* {{{ *)
       and [j] were swapped (in order, where [p.{0}] swaps against the
       original matrix [a]).
 
-      @cvode <node9#ss:dense> denseGETRF
+      @cvode <node9#ss:dense> SUNDlsMat_denseGETRF
       @raise ZeroDiagonalElement Zero found in matrix diagonal *)
   val getrf : t -> LintArray.t -> unit
 
@@ -757,7 +757,7 @@ module ArrayDense : sig (* {{{ *)
       found by {!getrf}. Both [p] and [b] must have the same number of rows
       as [a].
 
-      @cvode <node9#ss:dense> denseGETRS *)
+      @cvode <node9#ss:dense> SUNDlsMat_denseGETRS *)
   val getrs : t -> LintArray.t -> RealArray.t -> unit
 
   (** Like {!getrs} but stores [b] starting at a given offset. *)
@@ -766,21 +766,21 @@ module ArrayDense : sig (* {{{ *)
 
   (** Performs Cholesky factorization of a real symmetric positive matrix.
 
-      @cvode <node9#ss:dense> densePOTRF *)
+      @cvode <node9#ss:dense> SUNDlsMat_densePOTRF *)
   val potrf : t -> unit
 
   (** [potrs a b] finds the solution of [ax = b] using the Cholesky
       factorization found by {!potrf}. [a] must be an n by n matrix and [b]
       must be of length n.
 
-      @cvode <node9#ss:dense> densePOTRS *)
+      @cvode <node9#ss:dense> SUNDlsMat_densePOTRS *)
   val potrs : t -> RealArray.t -> unit
 
   (** [geqrf a beta work] performs the QR factorization of [a]. [a] must be
       an [m] by [n] matrix, where [m >= n]. The [beta] vector must have
       length [n]. The [work] vector must have length [m].
 
-      @cvode <node9#ss:dense> denseGEQRF *)
+      @cvode <node9#ss:dense> SUNDlsMat_denseGEQRF *)
   val geqrf : t -> RealArray.t -> RealArray.t -> unit
 
   (** [ormqr q beta v w work] computes the product {% w = qv %}. [Q] is
@@ -793,7 +793,7 @@ module ArrayDense : sig (* {{{ *)
       @param v       vector multiplier
       @param w       result vector
       @param work    temporary vector used in the calculation
-      @cvode <node9#ss:dense> denseORMQR *)
+      @cvode <node9#ss:dense> SUNDlsMat_denseORMQR *)
   val ormqr :
     a:t -> beta:RealArray.t -> v:RealArray.t
       -> w:RealArray.t -> work:RealArray.t -> unit
@@ -821,7 +821,7 @@ module ArrayBand : sig (* {{{ *)
       {% $\mathtt{j} \leq \mathtt{i} + \mathtt{smu}$ %} is at
       [a.{i - j + smu, j}].
 
-      @cvode <node9#ss:band> newBandMat *)
+      @cvode <node9#ss:band> SUNDlsMat_newBandMat *)
   type t = RealArray2.t * (smu * mu * ml)
 
   (** {3:arrayband_basic Basic access} *)
@@ -835,13 +835,13 @@ module ArrayBand : sig (* {{{ *)
       {% $\mathtt{smu} = \min(\mathtt{n}-1, \mathtt{mu} + \mathtt{ml})$ %}.
       The extra space is used to store U after a call to {!gbtrf}.
 
-      @cvode <node9#ss:band> newBandMat *)
+      @cvode <node9#ss:band> SUNDlsMat_newBandMat *)
   val make : smu * mu * ml -> int -> float -> t
 
   (** [create smu ml n] returns an uninitialized [n] by [n] band matrix with
       storage upper bandwidth [smu] and lower half-bandwidth [ml].
 
-      @cvode <node9#ss:band> newBandMat *)
+      @cvode <node9#ss:band> SUNDlsMat_newBandMat *)
   val create : smu * mu * ml -> int -> t
 
   (** [m, n = size a] returns the numbers of rows [m] and columns [n] of [a].
@@ -918,7 +918,7 @@ module ArrayBand : sig (* {{{ *)
 
   (** [blit ~src ~dst] copies the contents of [src] into [dst].
 
-      @cvode <node9#ss:band> bandCopy *)
+      @cvode <node9#ss:band> SUNDlsMat_bandCopy *)
   val blit : src:t -> dst:t -> unit
 
   (** [lrw, liw = space a] returns the storage requirements of [a] as
@@ -929,12 +929,12 @@ module ArrayBand : sig (* {{{ *)
 
   (** Increment a square matrix by the identity matrix.
 
-      @cvode <node9#ss:band> bandAddIdentity *)
+      @cvode <node9#ss:band> SUNDlsMat_bandAddIdentity *)
   val add_identity : t -> unit
 
   (** [scale c a] multiplies each element of the band matrix [a] by [c].
 
-      @cvode <node9#ss:band> bandScale *)
+      @cvode <node9#ss:band> SUNDlsMat_bandScale *)
   val scale : float -> t -> unit
 
   (** [gbtrf a p] performs the LU factorization of [a] with partial pivoting
@@ -943,13 +943,13 @@ module ArrayBand : sig (* {{{ *)
       of L is all 1s. U may occupy elements up to bandwidth [smu]
       (rather than to [mu]).
 
-      @cvode <node9#ss:band> bandGBTRF *)
+      @cvode <node9#ss:band> SUNDlsMat_bandGBTRF *)
   val gbtrf : t -> LintArray.t -> unit
 
   (** [gbtrs a p b] finds the solution of [ax = b] using LU factorization.
       Both [p] and [b] must have the same number of rows as [a].
 
-      @cvode <node9#ss:band> bandGBTRS *)
+      @cvode <node9#ss:band> SUNDlsMat_bandGBTRS *)
   val gbtrs : t -> LintArray.t -> RealArray.t -> unit
 
 end (* }}} *)
@@ -978,14 +978,18 @@ type 'nk dense =
     initialized to [0.0]. Optional arguments allow specifying the number of rows
     ([m]) and the initial value ([i]).
 
+    By default, the matrix is created using the context returned by
+    {!Sundials.Context.default}, but this can be overridden by passing
+    an optional [context] argument.
+
     @nocvode <node> SUNDenseMatrix *)
-val dense : ?m:int -> ?i:float -> int -> 'nk dense
+val dense : ?context:Context.t -> ?m:int -> ?i:float -> int -> 'nk dense
 
 (** Creates a (dense) matrix by wrapping an existing dense matrix. The two
     values share the same underlying storage.
 
     @nocvode <node> SUNDenseMatrix *)
-val wrap_dense : Dense.t -> 'nk dense
+val wrap_dense : ?context:Context.t -> Dense.t -> 'nk dense
 
 (** Generic matrix with Band content. *)
 type 'nk band =
@@ -998,15 +1002,30 @@ type 'nk band =
     values [i]. If [mu] is given but not [ml], then [ml] is set to [mu].
     If [mu] is given but not [smu], then [smu] is set to [mu+ml].
 
+    By default, the matrix is created using the context returned by
+    {!Sundials.Context.default}, but this can be overridden by passing
+    an optional [context] argument.
+
     @nocvode <node> SUNBandMatrix
     @nocvode <node> SUNBandMatrixStorage *)
-val band : ?mu:int -> ?smu:int -> ?ml:int -> ?i:float -> int -> 'nk band
+val band :
+  ?context:Context.t
+  -> ?mu:int
+  -> ?smu:int
+  -> ?ml:int
+  -> ?i:float
+  -> int
+  -> 'nk band
 
 (** Creates a (band) matrix by wrapping an existing band matrix. The two
     values share the same underlying storage.
 
+    By default, the matrix is created using the context returned by
+    {!Sundials.Context.default}, but this can be overridden by passing
+    an optional [context] argument.
+
     @nocvode <node> SUNBandMatrix *)
-val wrap_band : Band.t -> 'nk band
+val wrap_band : ?context:Context.t -> Band.t -> 'nk band
 
 (** Generic matrix with Sparse content. *)
 type ('s, 'nk) sparse =
@@ -1018,8 +1037,17 @@ type ('s, 'nk) sparse =
     specifying the number of rows [m], and the number of non-zero
     elements [nnz].
 
+    By default, the matrix is created using the context returned by
+    {!Sundials.Context.default}, but this can be overridden by passing
+    an optional [context] argument.
+
     @nocvode <node> SUNSparseMatrix *)
-val sparse_csc : ?m:int -> ?nnz:int -> int -> (Sparse.csc, 'nk) sparse
+val sparse_csc :
+     ?context:Context.t
+  -> ?m:int
+  -> ?nnz:int
+  -> int
+  -> (Sparse.csc, 'nk) sparse
 
 (** As for {!sparse_csc} but the returned matrix is in {{!Sparse.sformat}CSR}
     format.
@@ -1027,26 +1055,52 @@ val sparse_csc : ?m:int -> ?nnz:int -> int -> (Sparse.csc, 'nk) sparse
     The {{!Sparse.sformat}CSR} format is only available from Sundials 2.7.0
     onwards.
 
+    By default, the matrix is created using the context returned by
+    {!Sundials.Context.default}, but this can be overridden by passing
+    an optional [context] argument.
+
     @nocvode <node> SUNSparseMatrix *)
-val sparse_csr : ?m:int -> ?nnz:int -> int -> (Sparse.csr, 'nk) sparse
+val sparse_csr :
+     ?context:Context.t
+  -> ?m:int
+  -> ?nnz:int
+  -> int
+  -> (Sparse.csr, 'nk) sparse
 
 (** Creates a (sparse) matrix by wrapping an existing sparse matrix. The two
     values share the same underlying storage.
 
+    By default, the matrix is created using the context returned by
+    {!Sundials.Context.default}, but this can be overridden by passing
+    an optional [context] argument.
+
     @nocvode <node> SUNSparseMatrix *)
-val wrap_sparse : 's Sparse.t -> ('s, 'nk) sparse
+val wrap_sparse : ?context:Context.t -> 's Sparse.t -> ('s, 'nk) sparse
 
 (** Generic matrix with array-based dense content. *)
 type 'nk arraydense = (custom, ArrayDense.t, RealArray.t, 'nk) t
 
 (** By default, [arraydense n] returns an [n] by [n] dense matrix with all
     elements initialized to [0.0]. Optional arguments allow specifying the
-    number of rows ([m]) and the initial value ([i]). *)
-val arraydense : ?m:int -> ?i:float -> int -> 'nk arraydense
+    number of rows ([m]) and the initial value ([i]).
+
+    By default, the matrix is created using the context returned by
+    {!Sundials.Context.default}, but this can be overridden by passing
+    an optional [context] argument. *)
+val arraydense :
+     ?context:Context.t
+  -> ?m:int
+  -> ?i:float
+  -> int
+  -> 'nk arraydense
 
 (** Creates an (array-based dense) matrix by wrapping an existing array-based
-    dense matrix. The two values share the same underlying storage. *)
-val wrap_arraydense : ArrayDense.t -> 'nk arraydense
+    dense matrix. The two values share the same underlying storage.
+
+    By default, the matrix is created using the context returned by
+    {!Sundials.Context.default}, but this can be overridden by passing
+    an optional [context] argument. *)
+val wrap_arraydense : ?context:Context.t -> ArrayDense.t -> 'nk arraydense
 
 (** Generic matrix with array-based band content. *)
 type 'nk arrayband = (custom, ArrayBand.t, RealArray.t, 'nk) t
@@ -1059,18 +1113,40 @@ type 'nk arrayband = (custom, ArrayBand.t, RealArray.t, 'nk) t
     otherwise if [smu] is given but not [mu], then [mu] is set to [smu].
     If [ml] is not given, then it is set to [mu].
 
+    By default, the matrix is created using the context returned by
+    {!Sundials.Context.default}, but this can be overridden by passing
+    an optional [context] argument.
+
     @nocvode <node> newBandMat *)
-val arrayband
-  : ?mu:int -> ?smu:int -> ?ml:int -> ?i:float -> int -> 'nk arrayband
+val arrayband :
+     ?context:Context.t
+  -> ?mu:int
+  -> ?smu:int
+  -> ?ml:int
+  -> ?i:float
+  -> int
+  -> 'nk arrayband
 
 (** Creates an (array-based band) matrix by wrapping an existing array-based
-    band matrix. The two values share the same underlying storage. *)
-val wrap_arrayband : ArrayBand.t -> 'nk arrayband
+    band matrix. The two values share the same underlying storage.
+
+    By default, the matrix is created using the context returned by
+    {!Sundials.Context.default}, but this can be overridden by passing
+    an optional [context] argument. *)
+val wrap_arrayband :?context:Context.t ->  ArrayBand.t -> 'nk arrayband
 
 (** Wrap a custom matrix value.
 
+    By default, the matrix is created using the context returned by
+    {!Sundials.Context.default}, but this can be overridden by passing
+    an optional [context] argument.
+
     @nocvode <node> Description of the SUNMatrix module *)
-val wrap_custom : ('m, 'nd) matrix_ops -> 'm -> (custom, 'm, 'nd, 'nk) t
+val wrap_custom :
+     ('m, 'nd) matrix_ops
+  -> ?context:Context.t
+  -> 'm
+  -> (custom, 'm, 'nd, 'nk) t
 
 (** Matrix internal type identifiers.
 

@@ -36,7 +36,7 @@ type Nvector.gdata += Many of data
 (** Creates a many-vector nvector from an array of generic nvectors.
 
     @since 5.0.0 *)
-val wrap : Nvector.any ROArray.t -> t
+val wrap : ?context:Context.t -> Nvector.any ROArray.t -> t
 
 (** Aliases {!Nvector.unwrap}. *)
 val unwrap : t -> data
@@ -87,7 +87,7 @@ module Any : sig (* {{{ *)
   (** Creates a generic nvector from an array of generic nvectors.
 
       @since 5.0.0 *)
-  val wrap : Nvector.any ROArray.t -> Nvector.any
+  val wrap : ?context:Context.t -> Nvector.any ROArray.t -> Nvector.any
 
   (** Returns the payload of the generic vector if it was constructed with
       {{!Nvector.gdata}Many}, otherwise raises {!Nvector.BadGenericType}. *)

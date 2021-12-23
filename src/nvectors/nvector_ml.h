@@ -231,6 +231,7 @@ enum nv_index {
   NVEC_CPTR,
   NVEC_CHECK,
   NVEC_CLONE,
+  NVEC_CONTEXT,
   NVEC_SIZE, /* This has to come last. */
 };
 

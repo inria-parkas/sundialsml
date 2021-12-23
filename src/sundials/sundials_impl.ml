@@ -127,10 +127,41 @@ let lt580 =
   let m, n, _ = Sundials_configuration.sundials_version in
   m < 5 || (m = 5 && n < 8)
 
+let lt600 =
+  let m, _, _ = Sundials_configuration.sundials_version in
+  m < 6
+
 let has_nvector_get_id =
   match Sundials_configuration.sundials_version with
   | 2,n,_ -> n >= 9
   | _ -> true
+
+end
+
+module Context = struct
+
+  type cptr
+
+  type t = { cptr : cptr }
+
+  external c_make : unit -> cptr
+    = "sunml_context_make"
+
+  let make () = { cptr = c_make () }
+
+  let default_context = (Weak.create 1 : t Weak.t)
+
+  let default () =
+    match Weak.get default_context 0 with
+    | Some c -> c
+    | None ->
+        let ctx = make () in
+        Weak.set default_context 0 (Some ctx);
+        ctx
+
+  let get = function
+    | None -> default ()
+    | Some ctx -> ctx
 
 end
 

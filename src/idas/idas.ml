@@ -1466,6 +1466,7 @@ module Adjoint = struct (* {{{ *)
             backref      = backref;
             nroots       = 0;
             checkvec     = checkvec;
+            context      = s.context;
 
             exn_temp     = None;
             id_set       = false;

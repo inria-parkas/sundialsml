@@ -421,8 +421,8 @@ static int bprecsetupfn(
     N_Vector y,
     N_Vector yb,
     N_Vector fyb,
-    booleantype jokb,
-    booleantype *jcurPtrB,
+    sunbooleantype jokb,
+    sunbooleantype *jcurPtrB,
     sunrealtype gammab,
     void *user_data
 #if SUNDIALS_LIB_VERSION < 300
@@ -466,8 +466,8 @@ static int bprecsetupfn_withsens(
     N_Vector *yS,
     N_Vector yb,
     N_Vector fyb,
-    booleantype jokb,
-    booleantype *jcurPtrB,
+    sunbooleantype jokb,
+    sunbooleantype *jcurPtrB,
     sunrealtype gammab,
     void *user_data
 #if SUNDIALS_LIB_VERSION < 300
@@ -895,8 +895,8 @@ static int blinsysfn_nosens(
     N_Vector yb,
     N_Vector fyb,
     SUNMatrix jacb,
-    booleantype jokb,
-    booleantype *jcurb,
+    sunbooleantype jokb,
+    sunbooleantype *jcurb,
     sunrealtype gammab,
     void *user_data,
     N_Vector tmp1b,
@@ -938,8 +938,8 @@ static int blinsysfn_withsens(
     N_Vector yb,
     N_Vector fyb,
     SUNMatrix jacb,
-    booleantype jokb,
-    booleantype *jcurb,
+    sunbooleantype jokb,
+    sunbooleantype *jcurb,
     sunrealtype gammab,
     void *user_data,
     N_Vector tmp1b,

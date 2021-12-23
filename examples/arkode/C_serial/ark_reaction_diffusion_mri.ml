@@ -146,9 +146,11 @@ let main () =
   (* Pass udata to user functions *)
   (* Specify slow and fast step sizes *)
   let arkode_mem = MRIStep.(init
+                              (explicit (fs udata))
+                              default_tolerances
                               InnerStepper.(from_arkstep inner_arkode_mem)
-                              default_tolerances (fs udata)
-                              ~slowstep:hs t0 y) in
+                              ~slowstep:hs t0 y)
+  in
   (* Increase max num steps  *)
   MRIStep.set_max_num_steps arkode_mem 10000;
 
@@ -204,12 +206,12 @@ let main () =
 
   (* Print some final statistics *)
   let nsts = MRIStep.get_num_steps arkode_mem in
-  let nfs = MRIStep.get_num_rhs_evals arkode_mem in
+  let nfse, _ = MRIStep.get_num_rhs_evals arkode_mem in
   let nstf = ARKStep.get_num_steps inner_arkode_mem in
   let nff, _ = ARKStep.get_num_rhs_evals inner_arkode_mem in
   printf "\nFinal Solver Statistics:\n";
   printf "   Steps: nsts = %d, nstf = %d\n" nsts nstf;
-  printf "   Total RHS evals:  Fs = %d,  Ff = %d\n" nfs nff
+  printf "   Total RHS evals:  Fs = %d,  Ff = %d\n" nfse nff
 
 (* Check environment variables for extra arguments.  *)
 let reps =

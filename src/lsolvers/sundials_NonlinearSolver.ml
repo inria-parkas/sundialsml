@@ -434,15 +434,18 @@ let c_call_convtest_fn_sens cconvtestfn =
 
 module Newton = struct (* {{{ *)
 
-  external c_make : ('d, 'k) Nvector.t
-                    -> ('d, 's) callbacks Weak.t
-                    -> ('d, 'k, 's, [`Nvec]) cptr
+  external c_make
+    : ('d, 'k) Nvector.t
+      -> ('d, 's) callbacks Weak.t
+      -> Sundials.Context.t
+      -> ('d, 'k, 's, [`Nvec]) cptr
     = "sunml_nlsolver_newton_make"
 
   external c_make_sens
     : int
       -> ('d, 'k) Nvector.t
       -> (('d, 'k) Senswrapper.t, 's) callbacks Weak.t
+      -> Sundials.Context.t
       -> ('d, 'k, 's, [`Sens]) cptr
     = "sunml_nlsolver_newton_make_sens"
 
@@ -452,20 +455,24 @@ module Newton = struct (* {{{ *)
       -> bool * ((('d, 'k) Nvector.t, 's) c_sysfn * 's c_fromvaluefn) option
     = "sunml_nlsolver_newton_get_sys_fn"
 
-  let make y =
+  let make ?context y =
+    let ctx = Sundials_impl.Context.get context in
     let callbacks = empty_callbacks () in
     {
-      rawptr    = c_make y (weak_wrap callbacks);
+      rawptr    = c_make y (weak_wrap callbacks) ctx;
       solver    = NewtonSolver callbacks;
+      context   = ctx;
       info_file = None;
       attached  = false;
     }
 
-  let make_sens count y =
+  let make_sens ?context count y =
+    let ctx = Sundials_impl.Context.get context in
     let callbacks = empty_callbacks () in
     {
-      rawptr    = c_make_sens count y (weak_wrap callbacks);
+      rawptr    = c_make_sens count y (weak_wrap callbacks) ctx;
       solver    = NewtonSolverSens callbacks;
+      context   = ctx;
       info_file = None;
       attached  = false;
     }
@@ -486,10 +493,12 @@ end (* }}} *)
 
 module FixedPoint = struct (* {{{ *)
 
-  external c_make : ('d, 'k) Nvector.t
-                    -> int
-                    -> ('d, 's) callbacks Weak.t
-                    -> ('d, 'k, 's, [`Nvec]) cptr
+  external c_make
+    : ('d, 'k) Nvector.t
+      -> int
+      -> ('d, 's) callbacks Weak.t
+      -> Sundials.Context.t
+      -> ('d, 'k, 's, [`Nvec]) cptr
     = "sunml_nlsolver_fixedpoint_make"
 
   external c_make_sens
@@ -497,6 +506,7 @@ module FixedPoint = struct (* {{{ *)
       -> ('d, 'k) Nvector.t
       -> int
       -> (('d, 'k) Senswrapper.t, 's) callbacks Weak.t
+      -> Sundials.Context.t
       -> ('d, 'k, 's, [`Sens]) cptr
     = "sunml_nlsolver_fixedpoint_make_sens"
 
@@ -508,20 +518,24 @@ module FixedPoint = struct (* {{{ *)
   external c_set_damping : ('d, 'k, 's, 'v) cptr -> float -> unit
     = "sunml_nlsolver_fixedpoint_set_damping"
 
-  let make ?(acceleration_vectors=0) y =
+  let make ?context ?(acceleration_vectors=0) y =
+    let ctx = Sundials_impl.Context.get context in
     let callbacks = empty_callbacks () in
     {
-      rawptr    = c_make y acceleration_vectors (weak_wrap callbacks);
+      rawptr    = c_make y acceleration_vectors (weak_wrap callbacks) ctx;
       solver    = FixedPointSolver (callbacks, acceleration_vectors);
+      context   = ctx;
       info_file = None;
       attached  = false;
     }
 
-  let make_sens ?(acceleration_vectors=0) count y =
+  let make_sens ?context ?(acceleration_vectors=0) count y =
+    let ctx = Sundials_impl.Context.get context in
     let callbacks = empty_callbacks () in
     {
-      rawptr    = c_make_sens count y acceleration_vectors (weak_wrap callbacks);
+      rawptr = c_make_sens count y acceleration_vectors (weak_wrap callbacks) ctx;
       solver    = FixedPointSolverSens (callbacks, acceleration_vectors);
+      context   = ctx;
       info_file = None;
       attached  = false;
     }
@@ -548,12 +562,14 @@ module Custom = struct (* {{{ *)
   external c_make
     : (('d, 'k) Nvector.t, 's) callbacks Weak.t
       -> (('d, 'k) Nvector.t, 'd, 's, [`Nvec]) ops Weak.t
+      -> Sundials.Context.t
       -> ('d, 'k, 's, [`Nvec]) cptr
     = "sunml_nlsolver_custom_make"
 
   external c_make_sens
     :     (('d, 'k) Senswrapper.t, 's) callbacks Weak.t
        -> (('d, 'k) Senswrapper.t, ('d, 'k) Senswrapper.t, 's, [`Sens]) ops Weak.t
+       -> Sundials.Context.t
        -> ('d, 'k, 's, [`Sens]) cptr
     = "sunml_nlsolver_custom_make_sens"
 
@@ -619,7 +635,7 @@ module Custom = struct (* {{{ *)
   let make ?init ?setup ?set_lsetup_fn ?set_lsolve_fn ?set_convtest_fn
            ?set_max_iters ?set_info_file ?set_print_level
            ?get_num_iters ?get_cur_iter ?get_num_conv_fails
-           ~nls_type ~solve ~set_sys_fn () =
+           ~nls_type ~solve ~set_sys_fn ?context () =
     check_compat ();
     let ops = {
       nls_type;
@@ -638,10 +654,12 @@ module Custom = struct (* {{{ *)
       get_num_conv_fails;
     }
     in
+    let ctx = Sundials_impl.Context.get context in
     let callbacks = empty_callbacks () in
     {
-      rawptr    = c_make (weak_wrap callbacks) (weak_wrap ops);
+      rawptr    = c_make (weak_wrap callbacks) (weak_wrap ops) ctx;
       solver    = CustomSolver (callbacks, ops);
+      context   = ctx;
       info_file = None;
       attached  = false;
     }
@@ -650,7 +668,7 @@ module Custom = struct (* {{{ *)
                 ?init ?setup ?set_lsetup_fn ?set_lsolve_fn ?set_convtest_fn
                 ?set_max_iters ?set_info_file ?set_print_level
                 ?get_num_iters ?get_cur_iter ?get_num_conv_fails
-                ~nls_type ~solve ~set_sys_fn () =
+                ~nls_type ~solve ~set_sys_fn ?context () =
     check_compat ();
     let ops = {
       nls_type;
@@ -669,10 +687,12 @@ module Custom = struct (* {{{ *)
       get_num_conv_fails;
     }
     in
+    let ctx = Sundials_impl.Context.get context in
     let callbacks = empty_callbacks () in
     {
-      rawptr    = c_make_sens (weak_wrap callbacks) (weak_wrap ops);
+      rawptr    = c_make_sens (weak_wrap callbacks) (weak_wrap ops) ctx;
       solver    = CustomSolverSens (callbacks, ops);
+      context   = ctx;
       info_file = None;
       attached  = false;
     }

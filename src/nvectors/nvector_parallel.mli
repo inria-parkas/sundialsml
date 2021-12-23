@@ -48,7 +48,14 @@ exception IncorrectGlobalSize
 
     @cvode <node5> N_VEnableFusedOps_Parallel
     @raise Config.NotImplementedBySundialsVersion Fused and array operations not available. *)
-val make : ?with_fused_ops:bool -> int -> int -> Mpi.communicator -> float -> t
+val make :
+     ?context:Context.t
+  -> ?with_fused_ops:bool
+  -> int
+  -> int
+  -> Mpi.communicator
+  -> float
+  -> t
 
 (** Creates an nvector with a distinct underlying array but that shares the
     original global size and communicator. *)
@@ -61,7 +68,7 @@ val clone : t -> t
 
     @cvode <node5> N_VEnableFusedOps_Parallel
     @raise Config.NotImplementedBySundialsVersion Fused and array operations not available. *)
-val wrap : ?with_fused_ops:bool -> data -> t
+val wrap : ?context:Context.t -> ?with_fused_ops:bool -> data -> t
 
 (** Aliases {!Nvector.unwrap}. *)
 val unwrap : t -> data
@@ -170,7 +177,8 @@ module Any : sig (* {{{ *)
       @raise Config.NotImplementedBySundialsVersion Fused and array operations not available.
       @since 5.0.0 *)
   val make :
-       ?with_fused_ops                       : bool
+       ?context                              : Context.t
+    -> ?with_fused_ops                       : bool
     -> ?with_linear_combination              : bool
     -> ?with_scale_add_multi                 : bool
     -> ?with_dot_prod_multi                  : bool
@@ -206,7 +214,8 @@ module Any : sig (* {{{ *)
       @raise Config.NotImplementedBySundialsVersion Fused and array operations not available.
       @since 5.0.0 *)
   val wrap :
-       ?with_fused_ops                       : bool
+       ?context                              : Context.t
+    -> ?with_fused_ops                       : bool
     -> ?with_linear_combination              : bool
     -> ?with_scale_add_multi                 : bool
     -> ?with_dot_prod_multi                  : bool
@@ -256,5 +265,6 @@ module Any : sig (* {{{ *)
     -> ?with_linear_combination_vector_array : bool
     -> Nvector.any
     -> unit
+
 end (* }}} *)
 

@@ -270,9 +270,9 @@ let main () =
   (* Pass udata to user functions *)
   (* Set the slow step size *)
   let arkode_mem = MRIStep.(init
-                              InnerStepper.(from_arkstep inner_arkode_mem)
+                               (explicit (fs udata))
                                default_tolerances
-                               (fs udata)
+                               InnerStepper.(from_arkstep inner_arkode_mem)
                                ~slowstep:hs
                                t0 y)
   in
@@ -359,7 +359,7 @@ let main () =
   (* Get some slow integrator statistics *)
   let open MRIStep in
   let nsts  = get_num_steps arkode_mem in
-  let nfs   = get_num_rhs_evals arkode_mem in
+  let nfse, _ = get_num_rhs_evals arkode_mem in
 
   (* Get some fast integrator statistics *)
   let nstf    = ARKStep.get_num_steps inner_arkode_mem in
@@ -376,7 +376,7 @@ let main () =
   printf "\nFinal Solver Statistics:\n";
   printf "   Slow Steps: nsts = %d\n" nsts;
   printf "   Fast Steps: nstf = %d (attempted = %d)\n" nstf nstf_a;
-  printf "   Total RHS evals:  Fs = %d,  Ff = %d\n" nfs nffi;
+  printf "   Total RHS evals:  Fs = %d,  Ff = %d\n" nfse nffi;
   printf "   Total number of fast error test failures = %d\n" netf;
   printf "   Total linear solver setups = %d\n" nsetups;
   printf "   Total RHS evals for setting up the linear system = %d\n" nfeLS;

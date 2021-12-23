@@ -1072,6 +1072,7 @@ type cmat
 type [@warning "-69"] ('k, 'm, 'nd, 'nk) t = {
   payload : 'm;
   rawptr  : cmat;
+  context : Context.t;
   id      : ('k, 'm, 'nd, 'nk) id;
   mat_ops : ('m, 'nd) matrix_ops;
 }
@@ -1089,79 +1090,102 @@ type 'nk arraydense = (custom, ArrayDense.t, RealArray.t, 'nk) t
 
 type 'nk arrayband = (custom, ArrayBand.t, RealArray.t, 'nk) t
 
-external c_wrap : ('k, 'm, 'nd, 'nk) id -> 'content_cptr -> 'm -> bool -> cmat
+external c_wrap :
+     ('k, 'm, 'nd, 'nk) id
+  -> 'content_cptr
+  -> 'm
+  -> bool
+  -> Context.t
+  -> cmat
   = "sunml_matrix_wrap"
 
-let wrap_dense (data : Dense.t) = {
+let wrap_dense ?context (data : Dense.t) =
+  let ctx = Sundials_impl.Context.get context in
+  {
     payload = data;
-    rawptr  = c_wrap Dense data.rawptr data false;
+    rawptr  = c_wrap Dense data.rawptr data false ctx;
+    context = ctx;
     id      = Dense;
     mat_ops = Dense.ops;
   }
 
-let dense ?m ?(i=0.0) n =
+let dense ?context ?m ?(i=0.0) n =
   let m = match m with Some m -> m | None -> n in
-  wrap_dense (Dense.make m n i)
+  wrap_dense ?context (Dense.make m n i)
 
-let wrap_band (data : Band.t) = {
+let wrap_band ?context (data : Band.t) =
+  let ctx = Sundials_impl.Context.get context in
+  {
     payload = data;
-    rawptr  = c_wrap Band data.rawptr data false;
+    rawptr  = c_wrap Band data.rawptr data false ctx;
+    context = ctx;
     id      = Band;
     mat_ops = Band.ops;
   }
 
-let band ?(mu=2) ?smu ?ml ?(i=0.0) n =
+let band ?context ?(mu=2) ?smu ?ml ?(i=0.0) n =
   let ml  = match ml with Some ml -> ml | None -> mu in
   let smu = match smu with Some smu -> smu | None -> mu+ml in
-  wrap_band (Band.(make { n; mu; smu; ml } i))
+  wrap_band ?context (Band.(make { n; mu; smu; ml } i))
 
-let wrap_sparse (data : 'f Sparse.t) =
+let wrap_sparse ?context (data : 'f Sparse.t) =
   (match Config.sundials_version with
    | (2,v,_) when v < 6 -> raise Config.NotImplementedBySundialsVersion
    | _ -> ());
+  let ctx = Sundials_impl.Context.get context in
   {
     payload = data;
-    rawptr  = c_wrap Sparse data.rawptr data false;
+    rawptr  = c_wrap Sparse data.rawptr data false ctx;
+    context = ctx;
     id      = Sparse;
     mat_ops = Sparse.ops;
   }
 
-let sparse_csc ?m ?nnz n =
+let sparse_csc ?context ?m ?nnz n =
   let m = match m with Some m -> m | None -> n in
   let nnz = match nnz with Some nnz -> nnz | None -> n / 10 in
-  wrap_sparse Sparse.(make CSC m n nnz)
+  wrap_sparse ?context Sparse.(make CSC m n nnz)
 
-let sparse_csr ?m ?nnz n =
+let sparse_csr ?context ?m ?nnz n =
   let m = match m with Some m -> m | None -> n in
   let nnz = match nnz with Some nnz -> nnz | None -> n / 10 in
-  wrap_sparse Sparse.(make CSR m n nnz)
+  wrap_sparse ?context Sparse.(make CSR m n nnz)
 
-let wrap_custom ops data = {
+let wrap_custom ops ?context data =
+  let ctx = Sundials_impl.Context.get context in
+  {
     payload = data;
-    rawptr  = c_wrap Custom ops data (ops.m_matvec_setup <> None);
+    rawptr  = c_wrap Custom ops data (ops.m_matvec_setup <> None) ctx;
+    context = ctx;
     id      = Custom;
     mat_ops = ops;
   }
 
-let wrap_arraydense data = {
+let wrap_arraydense ?context data =
+  let ctx = Sundials_impl.Context.get context in
+  {
     payload = data;
-    rawptr  = c_wrap ArrayDense ArrayDense.ops data false;
+    rawptr  = c_wrap ArrayDense ArrayDense.ops data false ctx;
+    context = ctx;
     id      = ArrayDense;
     mat_ops = ArrayDense.ops;
   }
 
-let arraydense ?m ?(i=0.0) n =
+let arraydense ?context ?m ?(i=0.0) n =
   let m = match m with Some m -> m | None -> n in
-  wrap_arraydense (ArrayDense.make m n i)
+  wrap_arraydense ?context (ArrayDense.make m n i)
 
-let wrap_arrayband data = {
+let wrap_arrayband ?context data =
+  let ctx = Sundials_impl.Context.get context in
+  {
     payload = data;
-    rawptr  = c_wrap ArrayBand ArrayBand.ops data false;
+    rawptr  = c_wrap ArrayBand ArrayBand.ops data false ctx;
+    context = ctx;
     id      = ArrayBand;
     mat_ops = ArrayBand.ops;
   }
 
-let arrayband ?mu ?smu ?ml ?(i=0.0) n =
+let arrayband ?context ?mu ?smu ?ml ?(i=0.0) n =
   let mu = match mu, smu with
            | None, None  -> 2
            | Some mu, _  -> mu
@@ -1169,7 +1193,7 @@ let arrayband ?mu ?smu ?ml ?(i=0.0) n =
   in
   let ml  = match ml  with Some ml  -> ml  | None -> mu in
   let smu = match smu with Some smu -> smu | None -> mu+ml in
-  wrap_arrayband (ArrayBand.make (smu, mu, ml) n i)
+  wrap_arrayband ?context (ArrayBand.make (smu, mu, ml) n i)
 
 let get_ops { mat_ops } = mat_ops
 

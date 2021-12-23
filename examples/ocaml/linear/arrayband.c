@@ -97,8 +97,13 @@ void print_pivots(sundials_ml_index* m, sundials_ml_index nr) {
 
 int main(int argc, char** argv)
 {
+#if 600 <= SUNDIALS_LIB_VERSION
+    sunrealtype **a = SUNDlsMat_newBandMat(SIZE, SMU, ML);
+    sunrealtype **b = SUNDlsMat_newBandMat(SIZE, SMU, ML);
+#else
     sunrealtype **a = newBandMat(SIZE, SMU, ML);
     sunrealtype **b = newBandMat(SIZE, SMU, ML);
+#endif
     sundials_ml_index p[SIZE] = { 0.0 };
     sunrealtype s[SIZE] = { 5.0, 15.0, 31.0, 53.0, 45.0 };
 
@@ -138,36 +143,62 @@ int main(int argc, char** argv)
 	sunrealtype x[SIZE] = { 1.0,  2.0, 3.0, 4.0, 5.0 };
 	sunrealtype y[SIZE] = { 0.0 };
 	printf("matvec: y=\n");
+#if 600 <= SUNDIALS_LIB_VERSION
+	SUNDlsMat_bandMatvec(a, x, y, SIZE, MU, ML, SMU);
+#else
 	bandMatvec(a, x, y, SIZE, MU, ML, SMU);
+#endif
 	print_vec(y, SIZE);
 	printf("\n");
     }
 #endif
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    SUNDlsMat_bandCopy(a, b, SIZE, SMU, SMU, MU, ML);
+    SUNDlsMat_bandScale(2.0, b, SIZE, MU, ML, SMU);
+#else
     bandCopy(a, b, SIZE, SMU, SMU, MU, ML);
     bandScale(2.0, b, SIZE, MU, ML, SMU);
+#endif
     printf("scale copy x2: b=\n");
     print_mat(b, SIZE, MU, ML, SMU);
     printf("\n");
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    SUNDlsMat_bandAddIdentity(b, SIZE, SMU);
+#else
     bandAddIdentity(b, SIZE, SMU);
+#endif
     printf("add identity: b=\n");
     print_mat(b, SIZE, MU, ML, SMU);
     printf("\n");
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    SUNDlsMat_bandGBTRF(a, SIZE, MU, ML, SMU, p);
+#else
     bandGBTRF(a, SIZE, MU, ML, SMU, p);
+#endif
     printf("getrf: a=\n");
     print_factored_mat(a, SIZE, MU, ML, SMU);
     printf("\n       p=\n");
     print_pivots(p, SIZE);
     printf("\n");
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    SUNDlsMat_bandGBTRS(a, SIZE, SMU, ML, p, s);
+#else
     bandGBTRS(a, SIZE, SMU, ML, p, s);
+#endif
     printf("getrs: s=\n");
     print_vec(s, SIZE);
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    SUNDlsMat_destroyMat(a);
+    SUNDlsMat_destroyMat(b);
+#else
     destroyMat(a);
     destroyMat(b);
+#endif
 
     return 0;
 }

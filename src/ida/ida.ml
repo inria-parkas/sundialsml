@@ -630,15 +630,20 @@ external c_set_nonlinear_solver
       -> unit
     = "sunml_ida_set_nonlinear_solver"
 
-external c_init : ('a, 'k) session Weak.t -> float
-                  -> ('a, 'k) Nvector.t -> ('a, 'k) Nvector.t
-                  -> (ida_mem * c_weak_ref)
+external c_init :
+      ('a, 'k) session Weak.t
+      -> float
+      -> ('a, 'k) Nvector.t
+      -> ('a, 'k) Nvector.t
+      -> Context.t
+      -> (ida_mem * c_weak_ref)
     = "sunml_ida_init"
 
 external c_set_nls_res_fn : ('d, 'k) session -> unit
     = "sunml_ida_set_nls_res_fn"
 
-let init tol ?nlsolver ?nlsresfn ~lsolver resfn ?varid ?(roots=no_roots) t0 y y' =
+let init ?context tol ?nlsolver ?nlsresfn ~lsolver resfn
+         ?varid ?(roots=no_roots) t0 y y' =
   let (nroots, rootsfn) = roots in
   let checkvec = Nvector.check y in
   if Sundials_configuration.safe then
@@ -649,13 +654,15 @@ let init tol ?nlsolver ?nlsresfn ~lsolver resfn ?varid ?(roots=no_roots) t0 y y'
     match nlsolver with
     | Some nls when NLSI.(get_type nls <> RootFind) -> raise IllInput
     | _ -> ());
-  let ida_mem, backref = c_init weakref t0 y y' in
+  let ctx = Sundials_impl.Context.get context in
+  let ida_mem, backref = c_init weakref t0 y y' ctx in
   (* ida_mem and backref have to be immediately captured in a session and
      associated with the finalizer before we do anything else.  *)
   let session = { ida        = ida_mem;
                   backref    = backref;
                   nroots     = nroots;
                   checkvec   = checkvec;
+                  context    = ctx;
 
                   exn_temp   = None;
 

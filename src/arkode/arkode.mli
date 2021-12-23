@@ -142,11 +142,6 @@ module Common : sig (* {{{ *)
                                   stages. *)
     | CutoffOrderPredictor    (** Maximum order for early RK stages and
                                   first-order for later ones. *)
-    | BootstrapPredictor      (** Second-order predictor based only on the
-                                  current step. *)
-    | MinimumCorrectionPredictor
-                              (** Uses all preceding stage information within
-                                  the current step for prediction. *)
 
   (** Internal data required to construct the current nonlinear implicit
       system within a nonlinear solver. *)
@@ -598,26 +593,21 @@ module ButcherTable : sig (* {{{ *)
   type erk_table =
     | HeunEuler_2_1_2       (** Default 2nd order explicit method. *)
     | BogackiShampine_4_2_3 (** Default 3rd order explicit method. *)
-    | ARK_4_2_3_Explicit    (** Explicit portion of default 3rd order additive
-                                method. *)
+    | ARK324L2SA_ERK_4_2_3  (** ARK-4-2-3 ERK method. *)
     | Zonneveld_5_3_4       (** Default 4th order explicit method. *)
-    | ARK_6_3_4_Explicit    (** Explicit portion of default 3rd order additive
-                                method. *)
+    | ARK436L2SA_ERK_6_3_4  (** ARK-6-3-4 ERK method. *)
     | SayfyAburub_6_3_4     (** From Sayfy and Aburub 2002. *)
     | CashKarp_6_4_5        (** Default 5th order explicit method. *)
     | Fehlberg_6_4_5        (** From Fehlberg 1969. *)
     | DormandPrince_7_4_5   (** From Dormand Prince 1980. *)
-    | ARK_8_4_5_Explicit    (** Explicit portion of default 5th order additive
-                                method. *)
+    | ARK548L2SA_ERK_8_4_5  (** ARK-8-4-5 ERK method. *)
     | Verner_8_5_6          (** Default 6th order explicit method. *)
     | Fehlberg_13_7_8       (** Default 8th order explicit method. *)
     | Knoth_Wolke_3_3       (** Default 3rd order slow and fast method
                                 (Sundials >= 4.0.0). *)
-    | ARK_7_3_4_Explicit    (** Explicit portion of the 4th order additive
-                                method from Kennedy and Carpenter 2019.
+    | ARK437L2SA_ERK_7_3_4  (** ARK-7-3-4 ERK method.
                                 (Sundials >= 5.0.0). *)
-    | ARK_8_4_5b_Explicit   (** Explicit portion of the 5th order additive
-                                method from Kennedy and Carpenter 2019.
+    | ARK548L2SAb_ERK_8_4_5 (** ARK-8-4-5b ERK method.
                                 (Sundials >= 5.0.0). *)
 
   (** Implicit Butcher tables
@@ -625,8 +615,8 @@ module ButcherTable : sig (* {{{ *)
       @noarkode <node> Implicit Butcher tables *)
   type dirk_table =
     | SDIRK_2_1_2           (** Default 2nd order implicit method. *)
-    | Billington_3_2_3      (** From Billington 1983. *)
-    | TRBDF2_3_2_3          (** From Billington 1985. *)
+    | Billington_3_3_2      (** From Billington 1983. *)
+    | TRBDF2_3_3_2          (** From Billington 1985. *)
     | Kvaerno_4_2_3         (** From Kvaerno 2004. *)
     | ARK324L2SA_DIRK_4_2_3 (** Default 3rd order implicit method and the
                                 implicit portion of the default 3rd order
@@ -635,18 +625,11 @@ module ButcherTable : sig (* {{{ *)
     | Cash_5_3_4            (** From Cash 1979. *)
     | SDIRK_5_3_4           (** Default 4th order implicit method. *)
     | Kvaerno_5_3_4         (** From Kvaerno 2004. *)
-    | ARK_6_3_4_Implicit    (** Implicit portion of the default 4th order
-                                additive method. *)
+    | ARK436L2SA_DIRK_6_3_4 (** ARK-6-3-4 ESDIRK method *)
     | Kvaerno_7_4_5         (** From Kvaerno 2004. *)
-    | ARK_8_4_5_Implicit    (** Default 5th order method and the implicit
-                                portion of the default 5th order additive
-                                method. *)
-    | ARK_7_3_4_Implicit    (** Implicit portion of the 4th order additive
-                                method from Kennedy and Carpenter 2019.
-                                (Sundials >= 5.0.0). *)
-    | ARK_8_4_5b_Implicit   (** Implicit portion of the 5th order additive
-                                method from Kennedy and Carpenter 2019.
-                                (Sundials >= 5.0.0). *)
+    | ARK548L2SA_DIRK_8_4_5 (** ARK-8-4-5 ESDIRK method. *)
+    | ARK437L2SA_DIRK_7_3_4 (** ARK-7-3-4 ESDIRK method. *)
+    | ARK548L2SAb_DIRK_8_4_5 (** ARK-8-4-5b ESDIRK method. *)
 
   (** Additive Butcher tables
 
@@ -1408,8 +1391,9 @@ module ARKStep : sig (* {{{ *)
     -> ?nlsrhsfn:'data rhsfn
     -> ?lsolver:('data, 'kind) linear_solver
     -> ?linearity: linearity
-    -> fi:'data rhsfn
-    -> 'data rhsfn
+    -> fsi:'data rhsfn
+    -> fse:'data rhsfn
+    -> unit
     -> ('data, 'kind) problem
 
   (** Creates and initializes a session with the solver. The call
@@ -1437,6 +1421,10 @@ module ARKStep : sig (* {{{ *)
       it makes the calls referenced below. The {!evolve_normal} and
       {!evolve_one_step} functions may be called directly.
 
+      By default, the session is created using the context returned by
+      {!Sundials.Context.default}, but this can be overridden by passing
+      an optional [context] argument.
+
       @noarkode <node> ARKStepCreate
       @noarkode <node> ARKStepSetLinear
       @noarkode <node> ARKStepSetNonlinear
@@ -1453,7 +1441,8 @@ module ARKStep : sig (* {{{ *)
       @noarkode <node> ARKStepSetOrder
       @noarkode <node> ARKStepSetNlsRhsFn *)
   val init :
-      ('data, 'kind) problem
+         ?context:Context.t
+      -> ('data, 'kind) problem
       -> ('data, 'kind) tolerance
       -> ?restol:(('data, 'kind) res_tolerance)
       -> ?order:int
@@ -2349,6 +2338,10 @@ module ERKStep : sig (* {{{ *)
       it makes the calls referenced below. The {!evolve_normal} and
       {!evolve_one_step} functions may be called directly.
 
+      By default, the session is created using the context returned by
+      {!Sundials.Context.default}, but this can be overridden by passing
+      an optional [context] argument.
+
       @since 4.0.0
       @noarkode <node> ERKStepCreate
       @noarkode <node> ERKStepSetOrder
@@ -2357,7 +2350,8 @@ module ERKStep : sig (* {{{ *)
       @noarkode <node> ERKStepSVtolerances
       @noarkode <node> ERKStepWFtolerances *)
   val init :
-      ('data, 'kind) tolerance
+         ?context:Context.t
+      -> ('data, 'kind) tolerance
       -> ?order:int
       -> 'data rhsfn
       -> ?roots:(int * 'data rootsfn)
@@ -3244,6 +3238,10 @@ module MRIStep : sig (* {{{ *)
         Inner stepper “content” can be implemented in OCaml using function
         closures.
 
+        By default, the session is created using the context returned by
+        {!Sundials.Context.default}, but this can be overridden by passing
+        an optional [context] argument.
+
         @noarkode <node> MRIStepInnerStepper_Create
         @noarkode <node> MRIStepInnerStepper_Free
         @noarkode <node> MRIStepInnerStepper_SetContent
@@ -3253,7 +3251,8 @@ module MRIStep : sig (* {{{ *)
         @noarkode <node> MRIStepInnerStepper_SetFullResetFn
         @since 5.8.0 *)
     val make :
-         evolve_fn:'d evolvefn
+         ?context:Context.t
+      -> evolve_fn:'d evolvefn
       -> full_rhs_fn:'d full_rhsfn
       -> ?reset_fn:'d resetfn
       -> unit
@@ -3324,9 +3323,13 @@ module MRIStep : sig (* {{{ *)
     (** The accuracy order of the embedding. *)
     val embedding_order   : t -> int
 
-    (** The set of {% $\Gamma^{\{k\}}$ %} matrices as
+    (** The set of explicit coupling matrices {% $\Omega^{\{k\}}$ %} as
         [nmat * stages * stages] floats. *)
-    val coupling_matrices : t -> RealArray.t array array
+    val explicit_coupling_matrices : t -> RealArray.t array array option
+
+    (** The set of implicit coupling matrices {% $\Gamma^{\{k\}}$ %} as
+        [nmat * stages * stages] floats. *)
+    val implicit_coupling_matrices : t -> RealArray.t array array option
 
     (** An array of slow abscissae {% $c^S$ %}. The array has length [stages]. *)
     val abscissae         : t -> RealArray.t
@@ -3334,12 +3337,16 @@ module MRIStep : sig (* {{{ *)
     (** Create a set of coupling coefficients. The values of [nmat] and
         [stages] are obtained from the array lengths.
 
+        At least one of [explicit] or [implicit] must be provided.
+        The [explicit] coupling matrix is not used in Sundials < 6.0.0.
+
         @since 5.4.0
         @noarkode <node> MRIStepCoupling_Create *)
     val make :
          method_order:int
       -> embedding_order:int
-      -> RealArray.t array array
+      -> ?explicit:RealArray.t array array
+      -> ?implicit:RealArray.t array array
       -> RealArray.t
       -> t
 
@@ -3347,10 +3354,26 @@ module MRIStep : sig (* {{{ *)
 
         @noarkode <node> MRIStepCoupling tables *)
     type coupling_table =
-      | MIS_KW3         (** Explicit table of order 3. *)
+      | KW3             (** Explicit table of order 3. *)
+      | GARK_ERK33a     (** Explicit table of order 3.
+                            (Sundials >= 6.0.0) *)
       | GARK_ERK45a     (** Explicit table of order 4. *)
-      | GARK_IRK21a     (** Implicit table of order 2 with implicit solves 1. *)
-      | GARK_ESDIRK34a  (** Implicit table of order 4 with implicit solves 3. *)
+      | GARK_IRK21a     (** Diagonally-implicit, solve-decoupled MRI-GARK
+                            coupling table of order 2 with 1 implicit solve. *)
+      | GARK_ESDIRK34a  (** Diagonally-Implicit, solve-decoupled MRI-GARK
+                            coupling table of order 4 with 3 implicit solves. *)
+      | GARK_ESDIRK46a  (** Diagonnaly-implicit, solve-decoupled MRI-GARK
+                            coupling table of order 4 with 5 implicit solves.
+                            (Sundials >= 6.0.0) *)
+      | IMEX_GARK3a     (** Diagonally-implicit, solve-decoupled IMEX-MRI-GARK
+                            coupling table of order 3 with 2 implicit solves.
+                            (Sundials >= 6.0.0) *)
+      | IMEX_GARK3b     (** Diagonally-implicit, solve-decoupled IMEX-MRI-GARK
+                            coupling table of order 3 with 2 implicit solves.
+                            (Sundials >= 6.0.0) *)
+      | IMEX_GARK4      (** Diagonally-implicit, solve-decoupled IMEX-MRI-GARK
+                            coupling table of order 4 with 5 implicit solves.
+                            (Sundials >= 6.0.0) *)
 
     (** Retrieves a copy of a specific coupling table.
 
@@ -3378,20 +3401,61 @@ module MRIStep : sig (* {{{ *)
 
   (** {2:mrisolver Solver initialization and use} *)
 
-  (** Creates and initializes a session with the solver. The call
-      {[init inner tol ~nlsolver ~nlsrhsfn ~lsolver ~linearity
-             f_s ~slowstep:h_s ~roots:(nroots, g) t0 y0]}
-      has as arguments:
-      - [inner],  an inner stepper to use for the fast integrator,
-      - [tol],    the slow-step integration tolerances,
+  (** The form of the initial value problem. *)
+  type ('d, 'k) problem
+
+  (** Implicit slow right-hand-side function only.
+      The fields are as follows.
       - [nlsolver], the nonlinear solver used for implicit stage solves,
-      - [nlsrhsfn], alternative implicit slow right-hand-side function to
-                    use in nonlinear system function evaluations,
+      - [nlsrhsfn], alternative implicit right-hand-side function to use in
+                    nonlinear system function evaluations,
       - [lsolver], used by [nlsolver]s based on Newton interation.
       - [linearity], specifies whether the implicit slow right-hand side
                      function {% $f^S(t, y)$ %} is linear in {% $y$ %} or
                      nonlinear (the default), and
-      - [f_s],    the slow portion of the right-hand side function,
+      - [f_s], the implicit, slow portion of the right-hand-side function,
+
+      If an [nlsolver] is not specified, then the
+      {{!Sundials_NonlinearSolver.Newton}Newton} module is used by default.
+
+      The alternative implicit right-hand-side function for nonlinear
+      system function evaluations is only supported for Sundials >= 5.8.0. *)
+  val implicit :
+       ?nlsolver : ('data, 'kind, ('data, 'kind) session, [`Nvec])
+                     Sundials_NonlinearSolver.t
+    -> ?nlsrhsfn :'data rhsfn
+    -> ?lsolver : ('data, 'kind) linear_solver
+    -> ?linearity : linearity
+    -> 'data rhsfn
+    -> ('data, 'kind) problem
+
+  (** Explicit slow right-hand-side function only. The argument
+      specifies the explicit portion of the slow right-hand-side problem. *)
+  val explicit : 'data rhsfn -> ('data, 'kind) problem
+
+  (** Slow problem with both implicit and explicit parts. The arguments
+      are as described under {!implicit} and {!explicit}.
+
+      @since 6.0.0 *)
+  val imex :
+       ?nlsolver:('data, 'kind, ('data, 'kind) session, [`Nvec])
+                   Sundials_NonlinearSolver.t
+    -> ?nlsrhsfn:'data rhsfn
+    -> ?lsolver:('data, 'kind) linear_solver
+    -> ?linearity: linearity
+    -> fsi:'data rhsfn
+    -> fse:'data rhsfn
+    -> unit
+    -> ('data, 'kind) problem
+
+  (** Creates and initializes a session with the solver. The call
+      {[init problem tol inner ~slowstep:h_s ~roots:(nroots, g) t0 y0]}
+      has as arguments:
+      - [problem], specifies the problem to solve (see {!problem}),
+      - [tol],    the slow-step integration tolerances,
+      - [inner],  an inner stepper to use for the fast integrator,
+      - [~coupling], use a customized set of slow-to-fast coupling
+                     coefficients,
       - [h_s],    the slow step size,
       - [nroots], the number of root functions,
       - [g],      the root function ([(nroots, g)] defaults to
@@ -3403,16 +3467,6 @@ module MRIStep : sig (* {{{ *)
       This function does everything necessary to initialize a session, i.e.,
       it makes the calls referenced below. The {!evolve_normal} and
       {!evolve_one_step} functions may be called directly.
-
-      At most one of the options below may be specified:
-      - [~coupling], use a customized set of slow-to-fast coupling
-                     coefficients,
-      - [~table], use a customized Butcher table with the given global order
-                  of accuracy for the outer (slow) method, or
-      - [~tablenum], use a specific built-in Butcher table for the outer
-                     (slow) method.
-      One of these options must be specified (correctly) if specifying a
-      linear solver.
 
       If the inner (fast) stepper uses a fixed step size [h_f] that does not
       evenly divide the time interval between the stages of the outer (slow)
@@ -3436,14 +3490,13 @@ module MRIStep : sig (* {{{ *)
       and the [coupling], [nlsolver], [lsolver], and [linearity] arguments are
       not available.
 
-      The alternative implicit right-hand-side function for nonlinear
-      system function evaluations is only supported for Sundials >= 5.8.0.
+      By default, the session is created using the context returned by
+      {!Sundials.Context.default}, but this can be overridden by passing
+      an optional [context] argument.
 
       @since 5.0.0
       @noarkode <node> MRIStepCreate
       @noarkode <node> MRIStepSetCoupling
-      @noarkode <node> MRIStepSetTable
-      @noarkode <node> MRIStepSetTableNum
       @noarkode <node> MRIStepSetLinear
       @noarkode <node> MRIStepSetNonlinear
       @noarkode <node> MRIStepSetLinearSolver
@@ -3455,20 +3508,11 @@ module MRIStep : sig (* {{{ *)
       @noarkode <node> MRIStepWFtolerances
       @noarkode <node> MRIStepSetNlsRhsFn *)
   val init :
-         ('data, 'kind) InnerStepper.t
+         ?context:Context.t
+      -> ('data, 'kind) problem
       -> ('data, 'kind) tolerance
-
+      -> ('data, 'kind) InnerStepper.t
       -> ?coupling:Coupling.t
-      -> ?table:(ButcherTable.t * int)
-      -> ?tablenum:ButcherTable.erk_table
-
-      -> ?nlsolver:('data, 'kind, ('data, 'kind) session, [`Nvec])
-                     Sundials_NonlinearSolver.t
-      -> ?nlsrhsfn :'data rhsfn
-      -> ?lsolver :('data, 'kind) linear_solver
-
-      -> ?linearity:linearity
-      -> 'data rhsfn
       -> slowstep:float
       -> ?roots:(int * 'data rootsfn)
       -> float
@@ -3517,9 +3561,10 @@ module MRIStep : sig (* {{{ *)
 
   (** Reinitializes the solver with new parameters and state values. The
       values of the independent variable, i.e., the simulation time, and the
-      state variables must be given. If given, [roots] specifies a new root
-      finding function. The new problem must have the same size as the
-      previous one. The number of Runge Kutta stages for both the slow and
+      state variables must be given. If given, [problem] specifies new
+      callback functions and solvers, and [roots] specifies a new root finding
+      function. The new problem must have the same size as the previous one.
+      The number of Runge Kutta stages for both the slow and
       fast methods in the new problem must not be larger than that of the
       previous one.
 
@@ -3532,10 +3577,7 @@ module MRIStep : sig (* {{{ *)
       @noarkode <node> MRIStepSetNlsRhsFn *)
   val reinit :
     ('d, 'k) session
-    -> ?nlsolver:('d, 'k, ('d, 'k) session, [`Nvec])
-                   Sundials_NonlinearSolver.t
-    -> ?nlsrhsfn :'d rhsfn
-    -> ?lsolver :('d, 'k) linear_solver
+    -> ?problem:('d, 'k) problem
     -> ?roots:(int * 'd rootsfn)
     -> float
     -> ('d, 'k) Nvector.t
@@ -3835,10 +3877,13 @@ module MRIStep : sig (* {{{ *)
       @noarkode <node> MRIStepGetLastStep *)
   val get_last_step           : ('d, 'k) session -> float
 
-  (** Returns the number of calls to the (outer) right-hand side function.
+  (** The number of calls to the (outer) right-hand-side functions.
+      Returns a pair [nfse, nfsi = get_num_rhs_evals s], where [nfse]
+      is the number of calls to the explicit part and [nfsi] is the number of
+      calls to the implicit part.
 
       @noarkode <node> MRIStepGetNumRhsEvals *)
-  val get_num_rhs_evals       : ('d, 'k) session -> int
+  val get_num_rhs_evals       : ('d, 'k) session -> int * int
 
   (** Returns the the current internal time reached by the solver.
 

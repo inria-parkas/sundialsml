@@ -365,7 +365,10 @@ module Newton : sig (* {{{ *)
       Solves nonlinear systems of the form {% $F(y) = 0$ %}.
 
       @nocvode <node> SUNNonlinSol_Newton *)
-  val make : ('d, 'k) Nvector.t -> ('d, 'k, 's, [`Nvec]) t
+  val make :
+       ?context:Context.t
+    -> ('d, 'k) Nvector.t
+    -> ('d, 'k, 's, [`Nvec]) t
 
   (** Creates a nonlinear solver based on Newton's method for
       sensitivity-enabled integrators.
@@ -380,7 +383,11 @@ module Newton : sig (* {{{ *)
       - [y] is a template for cloning vectors.
 
       @nocvode <node> SUNNonlinSol_NewtonSens *)
-  val make_sens : int -> ('d, 'k) Nvector.t -> ('d, 'k, 's, [`Sens]) t
+  val make_sens :
+       ?context:Context.t
+    -> int
+    -> ('d, 'k) Nvector.t
+    -> ('d, 'k, 's, [`Sens]) t
 
   (** Returns the residual function that defines the nonlinear system.
 
@@ -404,9 +411,11 @@ module FixedPoint : sig (* {{{ *)
       The number of [acceleration_vectors] defaults to zero.
 
       @nocvode <node> SUNNonlinSol_FixedPoint *)
-  val make : ?acceleration_vectors:int
-             -> ('d, 'k) Nvector.t
-             -> ('d, 'k, 's, [`Nvec]) t
+  val make :
+       ?context:Context.t
+    -> ?acceleration_vectors:int
+    -> ('d, 'k) Nvector.t
+    -> ('d, 'k, 's, [`Nvec]) t
 
   (** Creates a nonlinear solver using fixed-point (functional) iteration for
       sensitivity-enabled integrators.
@@ -422,8 +431,12 @@ module FixedPoint : sig (* {{{ *)
       The number of [acceleration_vectors] defaults to zero.
 
       @nocvode <node> SUNNonlinSol_FixedPointSens *)
-  val make_sens : ?acceleration_vectors:int -> int -> ('d, 'k) Nvector.t
-                  -> ('d, 'k, 's, [`Sens]) t
+  val make_sens :
+       ?context:Context.t
+    -> ?acceleration_vectors:int
+    -> int
+    -> ('d, 'k) Nvector.t
+    -> ('d, 'k, 's, [`Sens]) t
 
   (** Returns the residual function that defines the nonlinear system.
 
@@ -508,6 +521,7 @@ module Custom : sig (* {{{ *)
     -> nls_type            : nonlinear_solver_type
     -> solve               : ('d -> 'd -> 'd -> float -> bool -> 's -> unit)
     -> set_sys_fn          : ((('d, 'k) Nvector.t, 's) sysfn -> unit)
+    -> ?context:Context.t
     -> unit
     -> ('d, 'k, 's, [`Nvec]) t
 
@@ -542,6 +556,7 @@ module Custom : sig (* {{{ *)
                               -> ('d, 'k) Senswrapper.t
                               -> float -> bool -> 's -> unit)
     -> set_sys_fn          : ((('d, 'k) Senswrapper.t, 's) sysfn -> unit)
+    -> ?context:Context.t
     -> unit
     -> ('d, 'k, 's, [`Sens]) t
 

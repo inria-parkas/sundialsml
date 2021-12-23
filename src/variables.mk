@@ -107,7 +107,8 @@ COBJ_MPI =	nvectors/nvector_parallel_ml$(XO)	\
 		cvodes/cvodes_bbd_ml$(XO)		\
 		ida/ida_bbd_ml$(XO)			\
 		idas/idas_bbd_ml$(XO)
-MLOBJ_MPI =	nvectors/nvector_parallel.cmo	\
+MLOBJ_MPI =	sundials/sundials_Context_parallel.cmo \
+		nvectors/nvector_parallel.cmo	\
 		$(if $(NVECMANYVECTOR_ENABLED),nvectors/nvector_mpimany.cmo) \
 		$(if $(NVECMANYVECTOR_ENABLED),nvectors/nvector_mpiplusx.cmo) \
 		kinsol/kinsol_bbd.cmo		\
