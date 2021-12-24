@@ -164,7 +164,7 @@ CAMLprim value sunml_cvode_clear_err_handler_fn(value vdata)
     CAMLreturn (Val_unit);
 }
 
-#if defined SUNDIALS_BUILD_WITH_MONITORING && !SUNDIALSML_WITHSENS
+#if defined SUNDIALS_BUILD_WITH_MONITORING && (!SUNDIALSML_WITHSENS || 600 <= SUNDIALS_LIB_VERSION)
 int monitorfn(void *cvode_mem, void *user_data)
 {
     CAMLparam0();
@@ -183,7 +183,7 @@ int monitorfn(void *cvode_mem, void *user_data)
 CAMLprim value sunml_cvode_set_monitor_fn(value vdata, value vset)
 {
     CAMLparam2(vdata, vset);
-#if defined SUNDIALS_BUILD_WITH_MONITORING && !SUNDIALSML_WITHSENS
+#if defined SUNDIALS_BUILD_WITH_MONITORING && (!SUNDIALSML_WITHSENS || 600 <= SUNDIALS_LIB_VERSION)
     int flag = CVodeSetMonitorFn(CVODE_MEM_FROM_ML(vdata),
 				 Bool_val(vset) ? monitorfn : NULL);
     CHECK_FLAG("CVodeSetMonitorFn", flag);
@@ -196,7 +196,7 @@ CAMLprim value sunml_cvode_set_monitor_fn(value vdata, value vset)
 CAMLprim value sunml_cvode_set_monitor_frequency(value vdata, value vfreq)
 {
     CAMLparam2(vdata, vfreq);
-#if defined SUNDIALS_BUILD_WITH_MONITORING && !SUNDIALSML_WITHSENS
+#if defined SUNDIALS_BUILD_WITH_MONITORING && (!SUNDIALSML_WITHSENS || 600 <= SUNDIALS_LIB_VERSION)
     int flag = CVodeSetMonitorFrequency(CVODE_MEM_FROM_ML(vdata),
 					Int_val(vfreq));
     CHECK_FLAG("CVodeSetMonitorFrequency", flag);
@@ -1440,7 +1440,7 @@ CAMLprim value sunml_cvode_get_linear_solver_stats(value vdata)
 {
     CAMLparam1(vdata);
     CAMLlocal1(r);
-#if 530 <= SUNDIALS_LIB_VERSION && !SUNDIALSML_WITHSENS
+#if 530 <= SUNDIALS_LIB_VERSION && (!SUNDIALSML_WITHSENS || 600 <= SUNDIALS_LIB_VERSION)
 
     int flag;
 
