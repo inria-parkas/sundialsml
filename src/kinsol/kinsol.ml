@@ -647,14 +647,23 @@ external get_func_norm : ('a, 'k) session -> float
 external get_step_length : ('a, 'k) session -> float
     = "sunml_kinsol_get_step_length"
 
+(* synchronized with kinsol_ml.h: kinsol_orthaa_tag *)
+type orthaa =
+  | MGS
+  | ICWY
+  | CGS2
+  | DCGS2
+
 external c_init
     :    ('a, 'k) session Weak.t
       -> ('a, 'k) nvector
       -> int option
       -> int option
+      -> orthaa option
       -> Context.t
       -> (kin_mem * c_weak_ref)
-    = "sunml_kinsol_init"
+    = "sunml_kinsol_init_byte"
+      "sunml_kinsol_init"
 
 external c_session_finalize : ('a, 'k) session -> unit
     = "sunml_kinsol_session_finalize"
@@ -663,11 +672,11 @@ let session_finalize s =
   Dls.invalidate_callback s;
   c_session_finalize s
 
-let init ?context ?max_iters ?maa ?lsolver f u0 =
+let init ?context ?max_iters ?maa ?orthaa ?lsolver f u0 =
   let checkvec = Nvector.check u0 in
   let weakref = Weak.create 1 in
   let ctx = Sundials_impl.Context.get context in
-  let kin_mem, backref = c_init weakref u0 max_iters maa ctx
+  let kin_mem, backref = c_init weakref u0 max_iters maa orthaa ctx
   in
   let session = {
           kinsol       = kin_mem;

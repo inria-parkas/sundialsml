@@ -62,6 +62,14 @@ CAMLprim value sunml_kinsol_init_module (value exns)
 {
     CAMLparam1 (exns);
     REGISTER_EXNS (KINSOL, exns);
+
+#if 600 <= SUNDIALS_LIB_VERSION
+    assert((int)VARIANT_KINSOL_ORTHAA_MGS == KIN_ORTH_MGS);
+    assert((int)VARIANT_KINSOL_ORTHAA_ICWY == KIN_ORTH_ICWY);
+    assert((int)VARIANT_KINSOL_ORTHAA_CGS2 == KIN_ORTH_CGS2);
+    assert((int)VARIANT_KINSOL_ORTHAA_DCGS2 == KIN_ORTH_DCGS2);
+#endif
+
     CAMLreturn (Val_unit);
 }
 
@@ -695,9 +703,11 @@ CAMLprim value sunml_kinsol_set_constraints(value vkin_mem, value vconstraints)
 
 /* KINCreate() + KINInit().  */
 CAMLprim value sunml_kinsol_init(value weakref, value vtemp,
-			         value vomaxiters, value vomaa, value vctx)
+			         value vomaxiters, value vomaa, value vorthaa,
+				 value vctx)
 {
-    CAMLparam5(weakref, vtemp, vomaxiters, vomaa, vctx);
+    CAMLparam5(weakref, vtemp, vomaxiters, vomaa, vorthaa);
+    CAMLxparam1(vctx);
     CAMLlocal2(r, vkin_mem);
     int flag;
     value *backref;
@@ -726,6 +736,13 @@ CAMLprim value sunml_kinsol_init(value weakref, value vtemp,
     }
 #endif
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    if (vorthaa != Val_none) {
+	flag = KINSetOrthAA(kin_mem, Int_val(Some_val(vorthaa)));
+	CHECK_FLAG("KINSetOrthAA", flag);
+    }
+#endif
+
     temp = NVEC_VAL(vtemp);
     flag = KINInit(kin_mem, sysfn, temp);
     if (flag != KIN_SUCCESS) {
@@ -750,6 +767,8 @@ CAMLprim value sunml_kinsol_init(value weakref, value vtemp,
 
     CAMLreturn(r);
 }
+
+BYTE_STUB6(sunml_kinsol_init)
 
 CAMLprim value sunml_kinsol_solve(value vdata, value vu, value vstrategy,
 	 		      value vuscale, value vfscale)

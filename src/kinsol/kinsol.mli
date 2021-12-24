@@ -369,11 +369,28 @@ val matrix_embedded_solver :
 
 (** {2:solver Solver initialization and use} *)
 
+(** Orthogonalization routines of the QR factorization portion of Anderson
+    acceleration.
+
+    @nokinsol <node> KINSetOrthAA
+    @since 6.0.0 *)
+type orthaa =
+  | MGS     (** Modified Gram Schmidt (default)
+                {cconst KIN_ORTH_MGS} *)
+  | ICWY    (** Inverse Compact WY Modified Gram Schmidt
+                {cconst KIN_ORTH_ICWY} *)
+  | CGS2    (** Classical Gram Schmidt with Reorthogonalization
+                {cconst KIN_ORTH_CGS2} *)
+  | DCGS2   (** Classical Gram Schmidt with Delayed Reorthogonlization
+                {cconst KIN_ORTH_DCGS2} *)
+
 (** Creates and initializes a session with the Kinsol solver. The call
     [init ~max_lin_iters:mli ~maa:maa ~linsolv:ls f tmpl] has as arguments:
      - [mli], the maximum number of nonlinear iterations allowed,
      - [maa], the size of the Anderson acceleration subspace for the
               {{!strategy}Picard} and {{!strategy}FixedPoint} strategies,
+     - [orthaa], specifies the othogonalization routine to be used in the QR
+                 factorization portion of Anderson acceleration,
      - [ls], the linear solver to use (required for the {{!strategy}Newton},
              {{!strategy}LineSearch}, and {{!strategy}Picard} strategies),
      - [f],       the system function of the nonlinear problem, and,
@@ -384,14 +401,19 @@ val matrix_embedded_solver :
      {!Sundials.Context.default}, but this can be overridden by passing
      an optional [context] argument.
 
-     @kinsol <node5#sss:kinmalloc>     KINCreate/KINInit
+     The [orthaa] argument is ignored in Sundials < 6.0.0.
+
+     @kinsol <node5#sss:kinmalloc> KINCreate
+     @kinsol <node5#sss:kinmalloc> KINInit
      @kinsol <node5#ss:optin_main> KINSetNumMaxIters
      @nokinsol <node5#ss:optin_main> KINSetMAA
+     @nokinsol <node5> KINSetOrthAA
      @kinsol <node5#sss:lin_solv_init> Linear solver specification functions *)
 val init :
      ?context:Context.t
   -> ?max_iters:int
   -> ?maa:int
+  -> ?orthaa:orthaa
   -> ?lsolver:('data, 'kind) linear_solver
   -> 'data sysfn
   -> ('data, 'kind) Nvector.t
