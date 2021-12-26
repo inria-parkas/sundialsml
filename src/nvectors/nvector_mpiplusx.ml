@@ -436,6 +436,27 @@ struct (* {{{ *)
     let wsqrsummask (x : t) (w : t) (id : t) =
       if Sundials_configuration.safe then (check x w; check x id);
       c_wsqrsummask x w id
+
+    external c_dotprodmultilocal
+      : t -> t array -> Sundials.RealArray.t -> unit
+      = "sunml_nvec_mpimany_dotprodmultilocal"
+
+    let dotprodmulti x ya d =
+      if Sundials_impl.Version.lt600
+        then raise Sundials.Config.NotImplementedBySundialsVersion;
+      if Sundials_configuration.safe
+      then (let nv = Sundials.RealArray.length d in
+            same_len' nv ya; Array.iter (check x) ya);
+      c_dotprodmultilocal x ya d
+
+    external c_dotprodmulti_allreduce
+      : t -> Sundials.RealArray.t -> unit
+      = "sunml_nvec_mpimany_dotprodmultiallreduce"
+
+    let dotprodmulti_allreduce x d =
+      if Sundials_impl.Version.lt600
+        then raise Sundials.Config.NotImplementedBySundialsVersion;
+      c_dotprodmulti_allreduce x d
   end
 end (* }}} *)
 
@@ -508,6 +529,15 @@ struct (* {{{ *)
         if rank = 0
         then contrib *. contrib *. float (Nvector.Ops.getlength x)
         else 0.
+
+    let dotprodmulti ((x, _) : t) (ya : t array) (dp : RealArray.t) =
+      let ysub = Array.map fst ya in
+      Nvector.Ops.Local.dotprodmulti x ysub dp
+
+    let dotprodmulti_allreduce ((_, comm) : t) dp =
+      (* Note: ocamlmpi does not provide MPI_IN_PLACE *)
+      Mpi.(allreduce_bigarray1 dp dp Sum comm)
+
   end
 
   let linearsum a ((x, _) : t) b ((y, _) : t) ((z, _) : t) =

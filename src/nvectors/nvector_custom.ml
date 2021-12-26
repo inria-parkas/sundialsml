@@ -77,6 +77,9 @@ type 'a nvector_ops = { (* {{{ *)
   wsqrsum_local      : ('a -> 'a -> float) option;
   wsqrsummask_local  : ('a -> 'a -> 'a -> float) option;
 
+  dotprodmulti_local : ('a -> 'a array -> Sundials.RealArray.t -> unit) option;
+  dotprodmulti_allreduce : ('a -> Sundials.RealArray.t -> unit) option;
+
 } (* }}} *)
 
 (* Selectively enable and disable fused and array operations *)
@@ -193,56 +196,25 @@ and clone ops nv =
 let add_tracing msg ops =
   let pr s = print_string msg; print_endline s in
   let { (* {{{ *)
-      check           = check;
-      clone           = clone;
-      space           = space;
-      getlength       = getlength;
-      print           = print;
-      linearsum       = linearsum;
-      const           = const;
-      prod            = prod;
-      div             = div;
-      scale           = scale;
-      abs             = abs;
-      inv             = inv;
-      addconst        = addconst;
-      maxnorm         = maxnorm;
-      wrmsnorm        = wrmsnorm;
-      min             = min;
+      check; clone; space; getlength; print; linearsum; const; prod; div;
+      scale; abs; inv; addconst; maxnorm; wrmsnorm; min;
 
-      dotprod         = dotprod;
-      compare         = compare;
-      invtest         = invtest;
+      dotprod; compare; invtest;
 
-      wl2norm         = wl2norm;
-      l1norm          = l1norm;
-      wrmsnormmask    = wrmsnormmask;
-      constrmask      = constrmask;
-      minquotient     = minquotient;
+      wl2norm; l1norm; wrmsnormmask; constrmask; minquotient;
 
-      getcommunicator = getcommunicator;
+      getcommunicator;
 
-      linearcombination            = linearcombination;
-      scaleaddmulti                = scaleaddmulti;
-      dotprodmulti                 = dotprodmulti;
+      linearcombination; scaleaddmulti; dotprodmulti;
 
-      linearsumvectorarray         = linearsumvectorarray;
-      scalevectorarray             = scalevectorarray;
-      constvectorarray             = constvectorarray;
-      wrmsnormvectorarray          = wrmsnormvectorarray;
-      wrmsnormmaskvectorarray      = wrmsnormmaskvectorarray;
-      scaleaddmultivectorarray     = scaleaddmultivectorarray;
-      linearcombinationvectorarray = linearcombinationvectorarray;
+      linearsumvectorarray; scalevectorarray; constvectorarray;
+      wrmsnormvectorarray; wrmsnormmaskvectorarray; scaleaddmultivectorarray;
+      linearcombinationvectorarray;
 
-      dotprod_local     = dotprod_local;
-      maxnorm_local     = maxnorm_local;
-      min_local         = min_local;
-      l1norm_local      = l1norm_local;
-      invtest_local     = invtest_local;
-      constrmask_local  = constrmask_local;
-      minquotient_local = minquotient_local;
-      wsqrsum_local     = wsqrsum_local;
-      wsqrsummask_local = wsqrsummask_local;
+      dotprod_local; maxnorm_local; min_local; l1norm_local; invtest_local;
+      constrmask_local; minquotient_local; wsqrsum_local; wsqrsummask_local;
+
+      dotprodmulti_local; dotprodmulti_allreduce;
     } = ops (* }}} *)
   in
   let fo f f' = match f with None -> None | Some f -> Some (f' f) in
@@ -336,6 +308,11 @@ let add_tracing msg ops =
     fo wsqrsum_local (fun f -> fun x w -> pr "wsqrsum_local"; f x w)
   and tr_nvwsqrsummask_local =
     fo wsqrsummask_local (fun f -> fun x w id -> pr "wsqrsummask_local"; f x w id)
+
+  and tr_dotprodmulti_local =
+    fo dotprodmulti_local (fun f -> fun x yy d -> pr "dotprodmulti_local"; f x yy d)
+  and tr_dotprodmulti_allreduce =
+    fo dotprodmulti_allreduce (fun f -> fun x d -> pr "dotprodmulti_allreduce"; f x d)
   (* }}} *)
   in
   {
@@ -390,6 +367,9 @@ let add_tracing msg ops =
       minquotient_local = tr_nvminquotient_local;
       wsqrsum_local     = tr_nvwsqrsum_local;
       wsqrsummask_local = tr_nvwsqrsummask_local;
+
+      dotprodmulti_local = tr_dotprodmulti_local;
+      dotprodmulti_allreduce = tr_dotprodmulti_allreduce;
       (* }}} *)
   }
 
@@ -564,6 +544,16 @@ module MakeOps = functor (A : sig
           match A.ops.wsqrsummask_local with
           | None -> (fun _ _ _ -> raise Nvector.OperationNotProvided)
           | Some f -> (fun x w id -> f (uv x) (uv w) (uv id))
+
+        let dotprodmulti =
+          match A.ops.dotprodmulti_local with
+          | None -> (fun _ _ _ -> raise Nvector.OperationNotProvided)
+          | Some f -> (fun x yy d -> f (uv x) (Array.map uv yy) d)
+
+        let dotprodmulti_allreduce =
+          match A.ops.dotprodmulti_allreduce with
+          | None -> (fun _ _ -> raise Nvector.OperationNotProvided)
+          | Some f -> (fun x d -> f (uv x) d)
       end
     end (* }}} *)
 
@@ -720,6 +710,16 @@ module MakeOps = functor (A : sig
           match A.ops.wsqrsummask_local with
           | None -> (fun _ _ _ -> raise Nvector.OperationNotProvided)
           | Some f -> f
+
+        let dotprodmulti =
+          match A.ops.dotprodmulti_local with
+          | None -> (fun _ _ _ -> raise Nvector.OperationNotProvided)
+          | Some f -> f
+
+        let dotprodmulti_allreduce =
+          match A.ops.dotprodmulti_allreduce with
+          | None -> (fun _ _ -> raise Nvector.OperationNotProvided)
+          | Some f -> f
       end
     end (* }}} *)
   end
@@ -735,56 +735,25 @@ module Any = struct (* {{{ *)
         ~(project:Nvector.gdata -> d) ops
     =
     let { (* {{{ *)
-        check;
-        clone;
-        space;
-        getlength;
-        print;
-        linearsum;
-        const;
-        prod;
-        div;
-        scale;
-        abs;
-        inv;
-        addconst;
-        maxnorm;
-        wrmsnorm;
-        min;
+        check; clone; space; getlength; print; linearsum; const; prod; div;
+        scale; abs; inv; addconst; maxnorm; wrmsnorm; min;
 
-        dotprod;
-        compare;
-        invtest;
+        dotprod; compare; invtest;
 
-        wl2norm;
-        l1norm;
-        wrmsnormmask;
-        constrmask;
-        minquotient;
+        wl2norm; l1norm; wrmsnormmask; constrmask; minquotient;
 
         getcommunicator;
 
-        linearcombination;
-        scaleaddmulti;
-        dotprodmulti;
+        linearcombination; scaleaddmulti; dotprodmulti;
 
-        linearsumvectorarray;
-        scalevectorarray;
-        constvectorarray;
-        wrmsnormvectorarray;
-        wrmsnormmaskvectorarray;
-        scaleaddmultivectorarray;
+        linearsumvectorarray; scalevectorarray; constvectorarray;
+        wrmsnormvectorarray; wrmsnormmaskvectorarray; scaleaddmultivectorarray;
         linearcombinationvectorarray;
 
-        dotprod_local;
-        maxnorm_local;
-        min_local;
-        l1norm_local;
-        invtest_local;
-        constrmask_local;
-        minquotient_local;
-        wsqrsum_local;
-        wsqrsummask_local;
+        dotprod_local; maxnorm_local; min_local; l1norm_local; invtest_local;
+        constrmask_local; minquotient_local; wsqrsum_local; wsqrsummask_local;
+
+        dotprodmulti_local; dotprodmulti_allreduce;
       } = ops (* }}} *)
     in
     let projecta = Array.map project in
@@ -860,6 +829,12 @@ module Any = struct (* {{{ *)
         minquotient_local = lifto minquotient_local double;
         wsqrsum_local     = lifto wsqrsum_local double;
         wsqrsummask_local = lifto wsqrsummask_local triple;
+
+        dotprodmulti_local = lifto dotprodmulti_local
+          (fun f vx vys d -> f (project vx) (projecta vys) d);
+        dotprodmulti_allreduce = lifto dotprodmulti_allreduce
+          (fun f vx d -> f (project vx) d);
+
         (* }}} *)
     }
 

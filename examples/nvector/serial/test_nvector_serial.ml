@@ -130,6 +130,9 @@ module Custom_serial =
       Nvector_custom.minquotient_local = Some Nvector_serial.DataOps.Local.minquotient;
       Nvector_custom.wsqrsum_local     = Some Nvector_serial.DataOps.Local.wsqrsum;
       Nvector_custom.wsqrsummask_local = Some Nvector_serial.DataOps.Local.wsqrsummask;
+
+      Nvector_custom.dotprodmulti_local = Some Nvector_serial.DataOps.Local.dotprodmulti;
+      Nvector_custom.dotprodmulti_allreduce = None;
     } (* }}} *)
   end)
 
@@ -195,6 +198,8 @@ module Custom_array1 =
       Nvector_custom.minquotient_local = Some Nvector_array.DataOps.Local.minquotient;
       Nvector_custom.wsqrsum_local     = Some Nvector_array.DataOps.Local.wsqrsum;
       Nvector_custom.wsqrsummask_local = Some Nvector_array.DataOps.Local.wsqrsummask;
+      Nvector_custom.dotprodmulti_local = Some Nvector_array.DataOps.Local.dotprodmulti;
+      Nvector_custom.dotprodmulti_allreduce = None;
     } (* }}} *)
   end)
 
@@ -293,7 +298,7 @@ let main () =
   in
 
   let print_timing = int_of_string Sys.argv.(2) in
-  let _ = Test.set_timing (print_timing <> 0) true in
+  let _ = Test.set_timing (print_timing <> 0) Test_nvector.compat_neq600 in
 
   if Test_nvector.compat_ge400
   then printf "Testing %s N_Vector \nVector length %d \n" name length
@@ -409,6 +414,13 @@ let main () =
     fails += Test.test_invtestlocal x z length 0;
     fails += Test.test_constrmasklocal x y z length 0;
     fails += Test.test_minquotientlocal x y length 0
+  end;
+
+  (* local fused reduction operations *)
+  if Test_nvector.compat_ge600 then begin
+    printf "\nTesting local fused reduction operations:\n\n";
+    let v = Test.make ~with_fused_ops:true length 0.0 in
+    fails += Test.test_dotprodmultilocal v length 0
   end;
 
   (* XBraid interface operations *)

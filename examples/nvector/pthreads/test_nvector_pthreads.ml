@@ -67,7 +67,7 @@ let main () =
   );
 
   let print_timing = int_of_string Sys.argv.(3) in
-  let _ = Test.set_timing (print_timing <> 0) true in
+  let _ = Test.set_timing (print_timing <> 0) Test_nvector.compat_neq600 in
 
   if Test_nvector.compat_ge400
   then printf "Testing the Pthreads N_Vector \nVector length %d \n\
@@ -185,6 +185,13 @@ let main () =
     fails += Test.test_invtestlocal x z length 0;
     fails += Test.test_constrmasklocal x y z length 0;
     fails += Test.test_minquotientlocal x y length 0
+  end;
+
+  (* local fused reduction operations *)
+  if Test_nvector.compat_ge600 then begin
+    printf "\nTesting local fused reduction operations:\n\n";
+    let v = Nvector_pthreads.make ~with_fused_ops:true nthreads length 0.0 in
+    fails += Test.test_dotprodmultilocal v length 0
   end;
 
   (* XBraid interface operations *)

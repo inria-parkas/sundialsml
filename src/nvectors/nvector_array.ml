@@ -689,6 +689,9 @@ module MakeOps = functor
             a := !a +. (A.get x i *. A.get w i *. A.get x i *. A.get w i)
         done;
         !a
+
+      let dotprodmulti = dotprodmulti
+      let dotprodmulti_allreduce _ _ = raise Nvector.OperationNotProvided
     end
 
     let checkfn wv1 =
@@ -752,6 +755,9 @@ module MakeOps = functor
         Nvector_custom.minquotient_local = Some Local.minquotient;
         Nvector_custom.wsqrsum_local = Some Local.wsqrsum;
         Nvector_custom.wsqrsummask_local = Some Local.wsqrsummask;
+
+        Nvector_custom.dotprodmulti_local = Some Local.dotprodmulti;
+        Nvector_custom.dotprodmulti_allreduce = None;
       } (* }}} *)
   end (* }}} *)
 
@@ -1435,6 +1441,9 @@ module Array =
               a := !a +. (A.get x i *. A.get w i *. A.get x i *. A.get w i)
           done;
           !a
+
+        let dotprodmulti = dotprodmulti
+        let dotprodmulti_allreduce _ _ = raise Nvector.OperationNotProvided
       end
     end (* }}} *)
 
@@ -1514,6 +1523,11 @@ module Array =
 
           Nvector_custom.wsqrsummask_local
             = Some DataOps.Local.wsqrsummask;
+
+          Nvector_custom.dotprodmulti_local
+            = Some DataOps.Local.dotprodmulti;
+
+          Nvector_custom.dotprodmulti_allreduce = None;
     } (* }}} *)
 
     let make ?context n e =

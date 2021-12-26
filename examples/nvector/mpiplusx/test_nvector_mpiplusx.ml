@@ -76,7 +76,9 @@ let main () =
   let global_length = nprocs * local_length in
 
   let print_timing = int_of_string Sys.argv.(2) in
-  let _ = Test.set_timing (print_timing <> 0) (myid = 0) in
+  let _ = Test.set_timing (print_timing <> 0)
+                          (Test_nvector.compat_neq600 && myid = 0)
+  in
 
   if myid = 0 then begin
     printf "Testing the MPIPlusX N_Vector with X being a serial N_Vector\n";
@@ -181,6 +183,16 @@ let main () =
   fails += Test.test_invtestlocal x z local_length myid;
   fails += Test.test_constrmasklocal x y z local_length myid;
   fails += Test.test_minquotientlocal x y local_length myid;
+
+  (* local fused reduction operations *)
+  if Test_nvector.compat_ge600 then begin
+    if myid = 0 then printf "\nTesting local fused reduction operations:\n\n";
+    let v = Nvector_mpiplusx.Ops.clone x in
+    let vany, _ = Nvector_mpiplusx.unwrap v in
+    Nvector_serial.Any.enable ~with_fused_ops:true vany;
+    fails += Test.test_dotprodmultilocal v local_length myid;
+    fails += Test.test_dotprodmultiallreduce v local_length myid
+  end;
 
   (* XBraid interface operations *)
   if myid = 0 then

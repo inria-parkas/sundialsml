@@ -238,6 +238,18 @@ type 'd nvector_ops = { (* {{{ *)
   wsqrsummask_local  : ('d -> 'd -> 'd -> float) option;
   (** [wsqrsummask x w id] calculates the weighted squared sum of [x]
       with weight vector [w] for the elements where [id] is positive. *)
+
+  (* optional single-buffer reduction operations *)
+
+  dotprodmulti_local : ('d -> 'd array -> Sundials.RealArray.t -> unit) option;
+  (** [dotprodmulti_local x yy d] calculates the task-local portion
+      of the dot product of a vector [x] with vectors [yy].
+      I.e., {% $d_j = \sum_{i=0}^{n_{\mathit{local}} - 1} x_i y_{j,i}$ %}. *)
+
+  dotprodmulti_allreduce : ('d -> Sundials.RealArray.t -> unit) option;
+  (** [dotprodmulti_allreduce x d] combines the task-local portions
+      of the dot product of a vector [x] with an array of vectors. *)
+
 } (* }}} *)
 
 (** Instantiation of custom nvectors.

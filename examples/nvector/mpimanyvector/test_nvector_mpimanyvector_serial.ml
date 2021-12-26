@@ -195,6 +195,14 @@ let main () =
   fails += Test.test_constrmasklocal x y z length 0;
   fails += Test.test_minquotientlocal x y length 0;
 
+  (* local fused reduction operations *)
+  if Test_nvector.compat_ge600 then begin
+    if myid = 0 then printf "\nTesting local fused reduction operations:\n\n";
+    let v = Test.make ~with_fused_ops:true local_length 0.0 in
+    fails += Test.test_dotprodmultilocal v local_length myid
+    fails += Test.test_dotprodmultiallreduce v local_length myid
+  end;
+
   (* XBraid interface operations *)
   printf "\nTesting XBraid interface operations:\n\n";
 

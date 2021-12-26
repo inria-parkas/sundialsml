@@ -300,8 +300,18 @@ module type NVECTOR_OPS =
                                   0 & \alpha \le 0
                                 \end{cases} $ %}. *)
       val wsqrsummask  : t -> t -> t -> float
-    end (* }}} *)
 
+      (** [dotprodmulti x y d] calculates
+          [d(j) = x(0)*y(j)(0) + ... + x(n-1)*y(j)(n-1)] for the [nl]
+          task-local elements in the nvectors and where [j] ranges over the
+          array elements. *)
+      val dotprodmulti : t -> t array -> Sundials.RealArray.t -> unit
+
+      (** [dotprodmulti_allreduce x d] combines the task-local portions
+          of the dot product of a vector [x] with {i nv} vectors. *)
+      val dotprodmulti_allreduce : t -> Sundials.RealArray.t -> unit
+
+    end (* }}} *)
   end (* }}} *)
 
 (** Basic structure of a concrete nvector implementation module. *)
@@ -624,6 +634,16 @@ module Ops : sig (* {{{ *)
                                 \end{cases} $ %}. *)
       val wsqrsummask  : ('d, 'k) t -> ('d, 'k) t -> ('d, 'k) t -> float
 
+      (** [dotprodmulti x yy d] calculates the task-local portion
+          of the dot product of a vector [x] with vectors [yy].
+          I.e., {% $d_j = \sum_{i=0}^{n_{\mathit{local}} - 1} x_i y_{j,i}$ %}. *)
+      val dotprodmulti :
+        ('d, 'k) t -> ('d, 'k) t array -> Sundials.RealArray.t -> unit
+
+      (** [dotprodmulti_allreduce x d] combines the task-local portions
+          of the dot product of a vector [x] with an array of vectors. *)
+      val dotprodmulti_allreduce : ('d, 'k) t -> Sundials.RealArray.t -> unit
+
       (** {3:hasnveclop Availability of nvector local operations} *)
 
       (** Indicates whether an nvector supports a local {!dotprod}. *)
@@ -661,6 +681,15 @@ module Ops : sig (* {{{ *)
       (** Indicates whether an nvector supports a local {!wsqrsummask}. *)
       external has_wsqrsummask  : ('d, 'k) t -> bool
         = "sunml_nvec_has_wsqrsummasklocal" [@@noalloc]
+
+      (** Indicates whether an nvector supports a local {!dotprodmulti}. *)
+      external has_dotprodmulti : ('d, 'k) t -> bool
+        = "sunml_nvec_has_dotprodmultilocal" [@@noalloc]
+
+      (** Indicates whether an nvector supports a local
+          {!dotprodmulti_allreduce}. *)
+      external has_dotprodmulti_allreduce  : ('d, 'k) t -> bool
+        = "sunml_nvec_has_dotprodmultiallreduce" [@@noalloc]
 
     end (* }}} *)
 

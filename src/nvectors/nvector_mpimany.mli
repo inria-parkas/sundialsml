@@ -80,7 +80,8 @@ val communicator : t -> Mpi.communicator
     @cvode <node5> N_VEnableScaleVectorArray_MPIManyVector
     @cvode <node5> N_VEnableConstVectorArray_MPIManyVector
     @cvode <node5> N_VEnableWrmsNormVectorArray_MPIManyVector
-    @cvode <node5> N_VEnableWrmsNormMaskVectorArray_MPIManyVector *)
+    @cvode <node5> N_VEnableWrmsNormMaskVectorArray_MPIManyVector
+    @cvode <node5> N_VEnableDotProdMultiLocal_MPIManyVector *)
 val enable :
      ?with_fused_ops                       : bool
   -> ?with_linear_combination              : bool
@@ -91,6 +92,7 @@ val enable :
   -> ?with_const_vector_array              : bool
   -> ?with_wrms_norm_vector_array          : bool
   -> ?with_wrms_norm_mask_vector_array     : bool
+  -> ?with_dot_prod_multi_local            : bool
   -> t
   -> unit
 
@@ -144,6 +146,7 @@ module Any : sig (* {{{ *)
       @cvode <node5> N_VEnableConstVectorArray_MPIManyVector
       @cvode <node5> N_VEnableWrmsNormVectorArray_MPIManyVector
       @cvode <node5> N_VEnableWrmsNormMaskVectorArray_MPIManyVector
+      @cvode <node5> N_VEnableDotProdMultiLocal_MPIManyVector
       @raise Nvector.BadGenericType If not called on an MPIMany nvector *)
   val enable :
        ?with_fused_ops                       : bool
@@ -155,6 +158,7 @@ module Any : sig (* {{{ *)
     -> ?with_const_vector_array              : bool
     -> ?with_wrms_norm_vector_array          : bool
     -> ?with_wrms_norm_mask_vector_array     : bool
+    -> ?with_dot_prod_multi_local            : bool
     -> Nvector.any
     -> unit
 

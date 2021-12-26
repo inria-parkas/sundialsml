@@ -77,6 +77,8 @@ external c_enablewrmsnormvectorarray_manyvector     : ('d, 'k) Nvector.t -> bool
   = "sunml_nvec_many_enablewrmsnormvectorarray"
 external c_enablewrmsnormmaskvectorarray_manyvector : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_many_enablewrmsnormmaskvectorarray"
+external c_enabledotprodmultilocal_manyvector       : ('d, 'k) Nvector.t -> bool -> unit
+  = "sunml_nvec_many_enabledotprodmultilocal"
 
 let do_enable f nv v =
   match v with
@@ -93,6 +95,7 @@ let enable
    ?with_const_vector_array
    ?with_wrms_norm_vector_array
    ?with_wrms_norm_mask_vector_array
+   ?with_dot_prod_multi_local
    nv
   = do_enable c_enablefusedops_manyvector nv
               with_fused_ops;
@@ -111,7 +114,9 @@ let enable
     do_enable c_enablewrmsnormvectorarray_manyvector nv
               with_wrms_norm_vector_array;
     do_enable c_enablewrmsnormmaskvectorarray_manyvector nv
-              with_wrms_norm_mask_vector_array
+              with_wrms_norm_mask_vector_array;
+    do_enable c_enabledotprodmultilocal_manyvector nv
+              with_dot_prod_multi_local
 
 module Ops : Nvector.NVECTOR_OPS with type t = t =
 struct (* {{{ *)
@@ -398,6 +403,20 @@ struct (* {{{ *)
     let wsqrsummask (x : t) (w : t) (id : t) =
       if Sundials_configuration.safe then (check x w; check x id);
       c_wsqrsummask x w id
+
+    external c_dotprodmultilocal
+      : t -> t array -> Sundials.RealArray.t -> unit
+      = "sunml_nvec_many_dotprodmultilocal"
+
+    let dotprodmulti x ya d =
+      if Sundials_impl.Version.lt600
+        then raise Sundials.Config.NotImplementedBySundialsVersion;
+      if Sundials_configuration.safe
+      then (let nv = Sundials.RealArray.length d in
+            same_len' nv ya; Array.iter (check x) ya);
+      c_dotprodmultilocal x ya d
+
+    let dotprodmulti_allreduce _ _ = raise Nvector.OperationNotProvided
   end
 
   let dotprod = Local.dotprod
@@ -491,6 +510,22 @@ struct (* {{{ *)
         sum +. contrib *. contrib *. float n
       in
       ROArray.fold_left3 f 0. x w id
+
+    let dotprodmulti ((x, _) : t) (ya : t array) (dp : RealArray.t) =
+      RealArray.fill dp 0.0;
+      let nvec = Array.length ya in
+      let nsubvecs = ROArray.length (fst ya.(0)) in
+      let ysub = Array.init nvec (fun i -> ROArray.get (fst ya.(i)) 0) in
+      let contrib = RealArray.make nvec 0.0 in
+      for i = 0 to nsubvecs - 1 do
+        if i > 0 then
+          Array.iteri (fun j _ -> ysub.(j) <- ROArray.get (fst ya.(j)) i) ysub;
+        Nvector.Ops.Local.dotprodmulti (ROArray.get x i) ysub contrib;
+        RealArray.iteri (fun j dpj -> dp.{j} <- dpj +. contrib.{j}) dp
+      done
+
+    let dotprodmulti_allreduce _ _ = raise Nvector.OperationNotProvided
+
   end
 
   let linearsum a ((x, _) : t) b ((y, _) : t) ((z, _) : t) =
@@ -723,6 +758,7 @@ module Any = struct (* {{{ *)
      ?with_const_vector_array
      ?with_wrms_norm_vector_array
      ?with_wrms_norm_mask_vector_array
+     ?with_dot_prod_multi_local
      nv
     = if Sundials_impl.Version.lt400
         then raise Config.NotImplementedBySundialsVersion;
@@ -744,7 +780,9 @@ module Any = struct (* {{{ *)
       do_enable c_enablewrmsnormvectorarray_manyvector nv
                 with_wrms_norm_vector_array;
       do_enable c_enablewrmsnormmaskvectorarray_manyvector nv
-                with_wrms_norm_mask_vector_array
+                with_wrms_norm_mask_vector_array;
+      do_enable c_enabledotprodmultilocal_manyvector nv
+                with_dot_prod_multi_local
 
 end (* }}} *)
 

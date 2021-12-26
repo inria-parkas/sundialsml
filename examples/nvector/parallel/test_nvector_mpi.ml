@@ -127,6 +127,10 @@ module Custom_parallel1 =
       Nvector_custom.minquotient_local = Some Nvector_parallel.DataOps.Local.minquotient;
       Nvector_custom.wsqrsum_local     = Some Nvector_parallel.DataOps.Local.wsqrsum;
       Nvector_custom.wsqrsummask_local = Some Nvector_parallel.DataOps.Local.wsqrsummask;
+
+      Nvector_custom.dotprodmulti_local = Some Nvector_parallel.DataOps.Local.dotprodmulti;
+      Nvector_custom.dotprodmulti_allreduce
+                             = Some Nvector_parallel.DataOps.Local.dotprodmulti_allreduce;
     } (* }}} *)
   end)
 
@@ -200,6 +204,10 @@ module Custom_parallel2 =
       Nvector_custom.minquotient_local = Some Nvector_parallel.DataOps.Local.minquotient;
       Nvector_custom.wsqrsum_local     = Some Nvector_parallel.DataOps.Local.wsqrsum;
       Nvector_custom.wsqrsummask_local = Some Nvector_parallel.DataOps.Local.wsqrsummask;
+
+      Nvector_custom.dotprodmulti_local = Some Nvector_parallel.DataOps.Local.dotprodmulti;
+      Nvector_custom.dotprodmulti_allreduce
+                             = Some Nvector_parallel.DataOps.Local.dotprodmulti_allreduce;
     } (* }}} *)
   end)
 
@@ -298,7 +306,36 @@ let main () =
                        let global_length = global_length
                 end)))
     else ("parallel (MPI)", (module
-      MakeTest (Nvector_parallel)
+      MakeTest (struct
+                  include Nvector_parallel
+                  let enable
+                    ?with_fused_ops
+                    ?with_linear_combination
+                    ?with_scale_add_multi
+                    ?with_dot_prod_multi
+                    ?with_linear_sum_vector_array
+                    ?with_scale_vector_array
+                    ?with_const_vector_array
+                    ?with_wrms_norm_vector_array
+                    ?with_wrms_norm_mask_vector_array
+                    ?with_scale_add_multi_vector_array
+                    ?with_linear_combination_vector_array
+                    nv =
+                      enable ?with_fused_ops
+                             ?with_linear_combination
+                             ?with_scale_add_multi
+                             ?with_dot_prod_multi
+                             ?with_linear_sum_vector_array
+                             ?with_scale_vector_array
+                             ?with_const_vector_array
+                             ?with_wrms_norm_vector_array
+                             ?with_wrms_norm_mask_vector_array
+                             ?with_scale_add_multi_vector_array
+                             ?with_linear_combination_vector_array
+                             nv
+
+                end
+               )
                (struct let id = Nvector.Parallel
                        let comm = comm
                        let global_length = global_length
@@ -306,7 +343,9 @@ let main () =
   in
 
   let print_timing = int_of_string Sys.argv.(2) in
-  let _ = Test.set_timing (print_timing <> 0) (myid = 0) in
+  let _ = Test.set_timing (print_timing <> 0)
+                          (Test_nvector.compat_neq600 && myid = 0)
+  in
 
   (* Create vectors *)
   if Test_nvector.compat_ge400 && myid = 0 then begin
@@ -434,6 +473,14 @@ let main () =
     fails += Test.test_invtestlocal x z local_length myid;
     fails += Test.test_constrmasklocal x y z local_length myid;
     fails += Test.test_minquotientlocal x y local_length myid
+  end;
+
+  (* local fused reduction operations *)
+  if Test_nvector.compat_ge600 then begin
+    if myid = 0 then printf "\nTesting local fused reduction operations:\n\n";
+    let v = Test.make ~with_fused_ops:true local_length 0.0 in
+    fails += Test.test_dotprodmultilocal v local_length myid;
+    fails += Test.test_dotprodmultiallreduce v local_length myid
   end;
 
   (* XBraid interface operations *)

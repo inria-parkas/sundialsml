@@ -440,6 +440,11 @@ CAMLprim value sunml_nvec_wrap_serial(value payload,
     ops->nvwsqrsumlocal     = N_VWSqrSumLocal_Serial;
     ops->nvwsqrsummasklocal = N_VWSqrSumMaskLocal_Serial;
 #endif
+#if 600 <= SUNDIALS_LIB_VERSION
+    /* single buffer reduction operations */
+    ops->nvdotprodmultilocal = N_VDotProdMulti_Serial;
+    ops->nvdotprodmultiallreduce = NULL;
+#endif
 
     /* Create content */
     content->length   = length;
@@ -578,6 +583,12 @@ static int callml_vscaleaddmultivectorarray(int nvec, int nsum, sunrealtype* a,
 					    N_Vector** Z);
 static int callml_vlinearcombinationvectorarray(int nvec, int nsum, sunrealtype* c,
 						N_Vector** X, N_Vector* Z);
+#endif
+
+#if 600 <= SUNDIALS_LIB_VERSION
+static int callml_nvdotprodmultilocal(int nvec, N_Vector x, N_Vector *Y,
+				      sunrealtype *d);
+static int callml_nvdotprodmultiallreduce(int nvec, N_Vector x, sunrealtype *d);
 #endif
 
 /* Custom vector reduction operators */
@@ -721,6 +732,16 @@ CAMLprim value sunml_nvec_wrap_custom(value mlops, value payload,
     ops->nvwsqrsummasklocal = NULL;
     if (HAS_OP(mlops, NVECTOR_OPS_NVWSQRSUMMASK_LOCAL))
 	ops->nvwsqrsummasklocal = callml_vwsqrsummasklocal;
+#endif
+#if 600 <= SUNDIALS_LIB_VERSION
+    /* single buffer reduction operations */
+    ops->nvdotprodmultilocal = NULL;
+    if (HAS_OP(mlops, NVECTOR_OPS_NVDOTPRODMULTI_LOCAL))
+	ops->nvdotprodmultilocal = callml_nvdotprodmultilocal;
+
+    ops->nvdotprodmultiallreduce = NULL;
+    if (HAS_OP(mlops, NVECTOR_OPS_NVDOTPRODMULTI_ALLREDUCE))
+	ops->nvdotprodmultiallreduce = callml_nvdotprodmultiallreduce;
 #endif
 #if 530 <= SUNDIALS_LIB_VERSION
     ops->nvprint	   = NULL;
@@ -1684,6 +1705,54 @@ static sunrealtype callml_vwsqrsummasklocal(N_Vector x, N_Vector w, N_Vector id)
 					"user-defined wsqrsummasklocal");
 
     CAMLreturnT(sunrealtype, Bool_val(r));
+}
+#endif
+
+#if 600 <= SUNDIALS_LIB_VERSION
+static int callml_nvdotprodmultilocal(int nvec, N_Vector x, N_Vector *Y,
+				      sunrealtype *d)
+{
+    CAMLparam0();
+    CAMLlocal3(mlop, vy, vd);
+    intnat nv = nvec;
+
+    if (nvec <= 0) CAMLreturnT(int, 1);
+
+    mlop = GET_SOME_OP(x, NVECTOR_OPS_NVDOTPRODMULTI_LOCAL);
+    vy = sunml_wrap_to_nvector_table(nvec, Y);
+    vd = caml_ba_alloc(BIGARRAY_FLOAT, 1, d, &nv);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback3_exn (mlop, NVEC_BACKLINK(x), vy, vd);
+    if (Is_exception_result (r)) {
+	sunml_warn_discarded_exn (Extract_exception (r),
+					"user-defined dotprodmultilocal");
+	CAMLreturnT(int, 0);
+    }
+
+    CAMLreturnT(int, 1);
+}
+
+static int callml_nvdotprodmultiallreduce(int nvec, N_Vector x, sunrealtype *d)
+{
+    CAMLparam0();
+    CAMLlocal2(mlop, vd);
+    intnat nv = nvec;
+
+    if (nvec <= 0) CAMLreturnT(int, 1);
+
+    mlop = GET_SOME_OP(x, NVECTOR_OPS_NVDOTPRODMULTI_ALLREDUCE);
+    vd = caml_ba_alloc(BIGARRAY_FLOAT, 1, d, &nv);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback2_exn (mlop, NVEC_BACKLINK(x), vd);
+    if (Is_exception_result (r)) {
+	sunml_warn_discarded_exn (Extract_exception (r),
+					"user-defined dotprodallreduce");
+	CAMLreturnT(int, 0);
+    }
+
+    CAMLreturnT(int, 1);
 }
 #endif
 
@@ -2791,6 +2860,28 @@ CAMLprim value sunml_nvec_has_wsqrsummasklocal(value vx)
     CAMLreturn(Val_bool(r));
 }
 
+CAMLprim value sunml_nvec_has_dotprodmultilocal(value vx)
+{
+    CAMLparam1(vx);
+    sunbooleantype r = 0;
+#if 500 <= SUNDIALS_LIB_VERSION
+    N_Vector x = NVEC_VAL(vx);
+    r = (x->ops->nvdotprodmultilocal != NULL);
+#endif
+    CAMLreturn(Val_bool(r));
+}
+
+CAMLprim value sunml_nvec_has_dotprodmultiallreduce(value vx)
+{
+    CAMLparam1(vx);
+    sunbooleantype r = 0;
+#if 500 <= SUNDIALS_LIB_VERSION
+    N_Vector x = NVEC_VAL(vx);
+    r = (x->ops->nvdotprodmultiallreduce != NULL);
+#endif
+    CAMLreturn(Val_bool(r));
+}
+
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
  * Interface to underlying generic nvector functions */
 
@@ -3303,5 +3394,40 @@ CAMLprim value sunml_nvec_wsqrsummasklocal(value vx, value vw, value vid)
     r = N_VWSqrSumMaskLocal(x, NVEC_VAL(vw), NVEC_VAL(vid));
 #endif
     CAMLreturn(caml_copy_double(r));
+}
+
+CAMLprim value sunml_nvec_dotprodmultilocal(value vx, value vay, value vd)
+{
+    CAMLparam3(vx, vay, vd);
+#if 600 <= SUNDIALS_LIB_VERSION
+    N_Vector x = NVEC_VAL(vx);
+    sunrealtype *d = REAL_ARRAY(vd);
+    N_Vector *ay = NULL;
+    int nvec;
+
+    if (x->ops->nvdotprodmultilocal == NULL)
+	caml_raise_constant(NVEC_EXN(OperationNotProvided));
+
+    nvec = sunml_arrays_of_nvectors(&ay, 1, vay);
+    N_VDotProdMultiLocal(nvec, NVEC_VAL(vx), ay, d);
+    free(ay);
+#endif
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim value sunml_nvec_dotprodmultiallreduce(value vx, value vd)
+{
+    CAMLparam2(vx, vd);
+#if 600 <= SUNDIALS_LIB_VERSION
+    N_Vector x = NVEC_VAL(vx);
+    sunrealtype *d = REAL_ARRAY(vd);
+    int nvec_total = (Caml_ba_array_val(vd))->dim[0];
+
+    if (x->ops->nvdotprodmultiallreduce == NULL)
+	caml_raise_constant(NVEC_EXN(OperationNotProvided));
+
+    N_VDotProdMultiAllReduce(nvec_total, NVEC_VAL(vx), d);
+#endif
+    CAMLreturn(Val_unit);
 }
 

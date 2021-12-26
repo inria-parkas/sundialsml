@@ -42,24 +42,29 @@
 open Sundials
 
 let compat_ge400 =
-  (match Config.sundials_version with
-   | 2,_,_ | 3,_,_ -> false | _ -> true)
+  let n, _, _ = Config.sundials_version in
+  n >= 4
 
 let compat_ge500 =
-  (match Config.sundials_version with
-   | 2,_,_ | 3,_,_ | 4,_,_ -> false | _ -> true)
+  let n, _, _ = Config.sundials_version in
+  n >= 5
 
 let compat_ge540 =
-  (match Config.sundials_version with
-   | 2,_,_ | 3,_,_ | 4,_,_ -> false
-   | 5,n,_ when n < 4 -> false
-   | _ -> true)
+  let n, m, _ = Config.sundials_version in
+  (n = 5 && m >= 4) || n >= 6
 
 let compat_ge570 =
-  (match Config.sundials_version with
-   | 2,_,_ | 3,_,_ | 4,_,_ -> false
-   | 5,n,_ when n < 7 -> false
-   | _ -> true)
+  let n, m, _ = Config.sundials_version in
+  (n = 5 && m >= 7) || n >= 6
+
+let compat_ge600 =
+  let n, _, _ = Config.sundials_version in
+  n >= 6
+
+let compat_neq600 =
+  match Config.sundials_version with
+  | 6, 0, 0 -> false
+  | _ -> true
 
 let print_passed s =
   if compat_ge400
@@ -134,6 +139,9 @@ module type TEST = sig (* {{{ *)
   val test_invtestlocal     : t -> t -> int -> int -> int
   val test_constrmasklocal  : t -> t -> t -> int -> int -> int
   val test_minquotientlocal : t -> t -> int -> int -> int
+
+  val test_dotprodmultilocal : t -> int -> int -> int
+  val test_dotprodmultiallreduce : t -> int -> int -> int
 
   val test_bufsize   : t -> int -> int -> int
   val test_bufpack   : t -> int -> int -> int
@@ -4088,6 +4096,180 @@ let test_minquotientlocal num denom _ myid =
   (* find max time across all processes *)
   print_time "N_VMinQuotientLocal"
     (Nvector_ops.max_time num (stop_time -. start_time));
+
+  !fails
+
+(* ----------------------------------------------------------------------
+ * N_VDotProdMultiLocal Test
+ * --------------------------------------------------------------------*)
+let test_dotprodmultilocal x local_length myid =
+  let fails = ref 0 in
+  let dotprods = RealArray.make 3 0.0 in
+  let dotprods1 = RealArray.make 1 0.0 in
+
+  (* create vectors for testing *)
+  let v = Array.init 3 (fun _ -> Nvector_ops.clone x) in
+  let v1 = Array.sub v 0 1 in
+
+  (*
+   * Case 1: d[0] = z . V[0], N_VDotProd
+   *)
+
+  (* fill vector data *)
+  Nvector_ops.const 2.0 x;
+  Nvector_ops.const 0.5 v1.(0);
+
+  let start_time = get_time () in
+  Nvector_ops.Local.dotprodmulti x v1 dotprods1;
+  Nvector_ops.sync_device ();
+  let stop_time = get_time () in
+
+  (* dotprod[0] should equal the local vector length *)
+  if not (fneq dotprods1.{0} (float local_length))
+  then (printf ">>> FAILED test -- N_VDotProdMultiLocal Case 1, Proc %d \n" myid;
+        fails += 1)
+  else if myid = 0 then printf "PASSED test -- N_VDotProdMultiLocal Case 1 \n";
+
+  (* find max time across all processes *)
+  print_time "N_VDotProdMultiLocal"
+    (Nvector_ops.max_time x (stop_time -. start_time));
+
+  (*
+   * Case 2: d[i] = z . V[i], N_VDotProd
+   *)
+
+  (* fill vector data *)
+  Nvector_ops.const 2.0 x;
+  Nvector_ops.const (-0.5) v.(0);
+  Nvector_ops.const 0.5 v.(1);
+  Nvector_ops.const 1.0 v.(2);
+
+  let start_time = get_time () in
+  Nvector_ops.Local.dotprodmulti x v dotprods;
+  Nvector_ops.sync_device ();
+  let stop_time = get_time () in
+
+  (* dotprod[i] should equal -1, +1, and 2 times the local vector length *)
+  if ((if fneq dotprods.{0} (float (-1 * local_length)) then false
+                                                        else (fails += 1; true))
+     || (if fneq dotprods.{1} (float local_length) then false
+                                                   else (fails += 1; true))
+
+     || (if fneq dotprods.{2} (float (2 * local_length)) then false
+                                                         else (fails += 1; true)))
+  then printf ">>> FAILED test -- N_VDotProdMultiLocal Case 2, Proc %d \n" myid
+  else if myid = 0 then printf "PASSED test -- N_VDotProdMultiLocal Case 2 \n";
+
+  (* find max time across all processes *)
+  print_time "N_VDotProdMultiLocal"
+    (Nvector_ops.max_time x (stop_time -. start_time));
+
+  !fails
+
+(* ----------------------------------------------------------------------
+ * N_VDotProdMultiAllReduce Test
+ * --------------------------------------------------------------------*)
+let test_dotprodmultiallreduce x local_length myid =
+  let fails = ref 0 in
+  let dotprods = RealArray.make 3 0.0 in
+  let dotprods1 = RealArray.make 1 0.0 in
+
+  (* get global length *)
+  let global_length = Nvector_ops.getlength x in
+
+  (* create vectors for testing *)
+  let v = Array.init 3 (fun _ -> Nvector_ops.clone x) in
+  let v1 = Array.sub v 0 1 in
+
+  (*
+   * Case 1: d[0] = z . V[0], N_VDotProd
+   *)
+
+  (* fill vector data *)
+  Nvector_ops.const 2.0 x;
+  Nvector_ops.const 0.5 v1.(0);
+
+  let start_time = get_time () in
+  Nvector_ops.Local.dotprodmulti x v1 dotprods1;
+  Nvector_ops.sync_device ();
+  let stop_time = get_time () in
+
+  (* dotprod[0] should equal the local vector length *)
+  if not (fneq dotprods1.{0} (float local_length))
+  then (printf ">>> FAILED test -- N_VDotProdMultiAllReduce Case 1, Proc %d \n" myid;
+        fails += 1)
+  else if myid = 0 then printf "PASSED test -- N_VDotProdMultiAllReduce Case 1 \n";
+
+  (* find max time across all processes *)
+  print_time "N_VDotProdMultiAllReduce"
+    (Nvector_ops.max_time x (stop_time -. start_time));
+
+  (* perform the global reduction *)
+  let start_time = get_time () in
+  Nvector_ops.Local.dotprodmulti_allreduce x dotprods1;
+  Nvector_ops.sync_device ();
+  let stop_time = get_time () in
+
+  (* dotprod[0] should equal the global vector length *)
+  if not (fneq dotprods1.{0} (float global_length))
+  then (printf ">>> FAILED test -- N_VDotProdMultiAllReduce Case 1, Proc %d \n" myid;
+        fails += 1)
+  else if myid = 0 then printf "PASSED test -- N_VDotProdMultiAllReduce Case 1 \n";
+
+  (* find max time across all processes *)
+  print_time "N_VDotProdMultiAllReduce"
+    (Nvector_ops.max_time x (stop_time -. start_time));
+
+  (*
+   * Case 2: d[i] = z . V[i], N_VDotProd
+   *)
+
+  (* fill vector data *)
+  Nvector_ops.const 2.0 x;
+  Nvector_ops.const (-0.5) v.(0);
+  Nvector_ops.const 0.5 v.(1);
+  Nvector_ops.const 1.0 v.(2);
+
+  let start_time = get_time () in
+  Nvector_ops.Local.dotprodmulti x v dotprods;
+  Nvector_ops.sync_device ();
+  let stop_time = get_time () in
+
+  (* dotprod[i] should equal -1, +1, and 2 times the local vector length *)
+  if ((if fneq dotprods.{0} (float (-1 * local_length)) then false
+                                                        else (fails += 1; true))
+     || (if fneq dotprods.{1} (float local_length) then false
+                                                   else (fails += 1; true))
+
+     || (if fneq dotprods.{2} (float (2 * local_length)) then false
+                                                         else (fails += 1; true)))
+  then printf ">>> FAILED test -- N_VDotProdMultiLocal Case 2, Proc %d \n" myid
+  else if myid = 0 then printf "PASSED test -- N_VDotProdMultiLocal Case 2 \n";
+
+  (* find max time across all processes *)
+  print_time "N_VDotProdMultiAllReduce"
+    (Nvector_ops.max_time x (stop_time -. start_time));
+
+  (* perform the global reduction *)
+  let start_time = get_time () in
+  Nvector_ops.Local.dotprodmulti_allreduce x dotprods;
+  Nvector_ops.sync_device ();
+  let stop_time = get_time () in
+
+  (* dotprod[i] should equal -1, +1, and 2 times the global vector length *)
+  if ((if fneq dotprods.{0} (float (-1 * global_length)) then false
+                                                        else (fails += 1; true))
+     || (if fneq dotprods.{1} (float global_length) then false
+                                                   else (fails += 1; true))
+
+     || (if fneq dotprods.{2} (float (2 * global_length)) then false
+                                                         else (fails += 1; true)))
+  then printf ">>> FAILED test -- N_VDotProdMultiAllReduce Case 2, Proc %d \n" myid
+  else if myid = 0 then printf "PASSED test -- N_VDotProdMultiAllReduce Case 2 \n";
+
+  (* find max time across all processes *)
+  print_time "N_VDotProdMultiAllReduce"
+    (Nvector_ops.max_time x (stop_time -. start_time));
 
   !fails
 

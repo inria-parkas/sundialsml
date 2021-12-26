@@ -58,7 +58,8 @@ val num_subvectors : t -> int
     @cvode <node5> N_VEnableScaleVectorArray_ManyVector
     @cvode <node5> N_VEnableConstVectorArray_ManyVector
     @cvode <node5> N_VEnableWrmsNormVectorArray_ManyVector
-    @cvode <node5> N_VEnableWrmsNormMaskVectorArray_ManyVector *)
+    @cvode <node5> N_VEnableWrmsNormMaskVectorArray_ManyVector
+    @cvode <node5> N_VEnableDotProdMultiLocal_ManyVector *)
 val enable :
      ?with_fused_ops                       : bool
   -> ?with_linear_combination              : bool
@@ -69,6 +70,7 @@ val enable :
   -> ?with_const_vector_array              : bool
   -> ?with_wrms_norm_vector_array          : bool
   -> ?with_wrms_norm_mask_vector_array     : bool
+  -> ?with_dot_prod_multi_local            : bool
   -> t
   -> unit
 
@@ -105,6 +107,7 @@ module Any : sig (* {{{ *)
       @cvode <node5> N_VEnableConstVectorArray_ManyVector
       @cvode <node5> N_VEnableWrmsNormVectorArray_ManyVector
       @cvode <node5> N_VEnableWrmsNormMaskVectorArray_ManyVector
+      @cvode <node5> N_VEnableDotProdMultiLocal_ManyVector
       @raise Nvector.BadGenericType If not called on a many nvector *)
   val enable :
        ?with_fused_ops                       : bool
@@ -116,6 +119,7 @@ module Any : sig (* {{{ *)
     -> ?with_const_vector_array              : bool
     -> ?with_wrms_norm_vector_array          : bool
     -> ?with_wrms_norm_mask_vector_array     : bool
+    -> ?with_dot_prod_multi_local            : bool
     -> Nvector.any
     -> unit
 

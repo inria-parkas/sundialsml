@@ -257,6 +257,11 @@ CAMLprim value sunml_nvec_wrap_parallel(value payload,
     ops->nvwsqrsumlocal     = N_VWSqrSumLocal_Parallel;
     ops->nvwsqrsummasklocal = N_VWSqrSumMaskLocal_Parallel;
 #endif
+#if 600 <= SUNDIALS_LIB_VERSION
+    /* single buffer reduction operations */
+    ops->nvdotprodmultilocal = N_VDotProdMultiLocal_Parallel;
+    ops->nvdotprodmultiallreduce = N_VDotProdMultiAllReduce_Parallel;
+#endif
 #if 530 <= SUNDIALS_LIB_VERSION
     ops->nvprint	    = N_VPrint_Parallel;
     ops->nvprintfile	    = N_VPrintFile_Parallel;
@@ -820,6 +825,30 @@ CAMLprim value sunml_nvec_par_wsqrsummasklocal(value vx, value vw, value vid)
     CAMLreturn(caml_copy_double(r));
 }
 
+CAMLprim value sunml_nvec_par_dotprodmultilocal(value vx, value vay, value vd)
+{
+    CAMLparam3(vx, vay, vd);
+#if 600 <= SUNDIALS_LIB_VERSION
+    sunrealtype *d = REAL_ARRAY(vd);
+    N_Vector *ay = NULL;
+    int nvec = sunml_arrays_of_nvectors(&ay, 1, vay);
+    N_VDotProdMultiLocal_Parallel(nvec, NVEC_VAL(vx), ay, d);
+    free(ay);
+#endif
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim value sunml_nvec_par_dotprodmultiallreduce(value vx, value vd)
+{
+    CAMLparam2(vx, vd);
+#if 600 <= SUNDIALS_LIB_VERSION
+    sunrealtype *d = REAL_ARRAY(vd);
+    int nvec_total = (Caml_ba_array_val(vd))->dim[0];
+    N_VDotProdMultiAllReduce_Parallel(nvec_total, NVEC_VAL(vx), d);
+#endif
+    CAMLreturn(Val_unit);
+}
+
 /** Selectively activate fused and array operations for serial nvectors */
 
 CAMLprim value sunml_nvec_par_enablefusedops(value vx, value vv)
@@ -940,6 +969,17 @@ CAMLprim value sunml_nvec_par_enablelinearcombinationvectorarray(value vx,
     CAMLparam2(vx, vv);
 #if 400 <= SUNDIALS_LIB_VERSION
     N_VEnableLinearCombinationVectorArray_Parallel(NVEC_VAL(vx), Bool_val(vv));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_nvec_par_enabledotprodmultilocal(value vx, value vv)
+{
+    CAMLparam2(vx, vv);
+#if 600 <= SUNDIALS_LIB_VERSION
+    N_VEnableDotProdMultiLocal_Parallel(NVEC_VAL(vx), Bool_val(vv));
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif

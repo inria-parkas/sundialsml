@@ -101,7 +101,9 @@ let main () =
   let global_length = nprocs * (loclen1 + loclen2) in
 
   let print_timing = int_of_string Sys.argv.(3) in
-  let _ = Test.set_timing (print_timing <> 0) (myid = 0) in
+  let _ = Test.set_timing (print_timing <> 0)
+                          (Test_nvector.compat_neq600 && myid = 0)
+  in
 
   if myid = 0 then begin
     printf "Testing the MPIManyVector (parallel, shared comm) N_Vector\n";
@@ -211,6 +213,15 @@ let main () =
   fails += Test.test_invtestlocal x z local_length myid;
   fails += Test.test_constrmasklocal x y z local_length myid;
   fails += Test.test_minquotientlocal x y local_length myid;
+
+  (* local fused reduction operations *)
+  if Test_nvector.compat_ge600 then begin
+    if myid = 0 then printf "\nTesting local fused reduction operations:\n\n";
+    let v = Nvector_mpimany.Ops.clone x in
+    Nvector_mpimany.enable ~with_fused_ops:true v;
+    fails += Test.test_dotprodmultilocal v local_length myid;
+    fails += Test.test_dotprodmultiallreduce v local_length myid
+  end;
 
   (* XBraid interface operations *)
   if myid = 0 then printf "\nTesting XBraid interface operations:\n\n";

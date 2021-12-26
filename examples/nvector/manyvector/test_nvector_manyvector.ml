@@ -87,7 +87,7 @@ let main () =
   let length = len1 + len2 in
 
   let print_timing = int_of_string Sys.argv.(3) in
-  let _ = Test.set_timing (print_timing <> 0) true in
+  let _ = Test.set_timing (print_timing <> 0) Test_nvector.compat_neq600 in
 
   printf "Testing ManyVector (serial) N_Vector \n";
   printf "Vector lengths: %d %d \n" len1 len2;
@@ -190,6 +190,14 @@ let main () =
   fails += Test.test_invtestlocal x z length 0;
   fails += Test.test_constrmasklocal x y z length 0;
   fails += Test.test_minquotientlocal x y length 0;
+
+  (* local fused reduction operations *)
+  if Test_nvector.compat_ge600 then begin
+    printf "\nTesting local fused reduction operations:\n\n";
+    let v = Nvector_many.Ops.clone x in
+    Nvector_many.enable ~with_fused_ops:true v;
+    fails += Test.test_dotprodmultilocal v length 0
+  end;
 
   (* XBraid interface operations *)
   printf "\nTesting XBraid interface operations:\n\n";

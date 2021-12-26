@@ -39,6 +39,8 @@ external c_enablescaleaddmultivectorarray_parallel     : ('d, 'k) Nvector.t -> b
   = "sunml_nvec_par_enablescaleaddmultivectorarray"
 external c_enablelinearcombinationvectorarray_parallel : ('d, 'k) Nvector.t -> bool -> unit
   = "sunml_nvec_par_enablelinearcombinationvectorarray"
+external c_enabledotprodmultilocal_parallel            : ('d, 'k) Nvector.t -> bool -> unit
+  = "sunml_nvec_par_enabledotprodmultilocal"
 
 let unwrap = Nvector.unwrap
 
@@ -127,6 +129,7 @@ let enable
    ?with_wrms_norm_mask_vector_array
    ?with_scale_add_multi_vector_array
    ?with_linear_combination_vector_array
+   ?with_dot_prod_multi_local
    nv
   = do_enable c_enablefusedops_parallel nv
               with_fused_ops;
@@ -149,7 +152,9 @@ let enable
     do_enable c_enablescaleaddmultivectorarray_parallel nv
               with_scale_add_multi_vector_array;
     do_enable c_enablelinearcombinationvectorarray_parallel nv
-              with_linear_combination_vector_array
+              with_linear_combination_vector_array;
+    do_enable c_enabledotprodmultilocal_parallel nv
+              with_dot_prod_multi_local
 
 external hide_communicator
   : Mpi.communicator -> Nvector_custom.communicator
@@ -179,6 +184,7 @@ module Any = struct (* {{{ *)
       ?(with_wrms_norm_mask_vector_array=false)
       ?(with_scale_add_multi_vector_array=false)
       ?(with_linear_combination_vector_array=false)
+      ?(with_dot_prod_multi_local=true)
       ((nl, ng, comm) as v)
     =
       if not Sundials_impl.Version.has_nvector_get_id
@@ -217,6 +223,8 @@ module Any = struct (* {{{ *)
         then c_enablescaleaddmultivectorarray_parallel nv true;
       if with_linear_combination_vector_array
         then c_enablelinearcombinationvectorarray_parallel nv true;
+      if not with_dot_prod_multi_local
+        then c_enabledotprodmultilocal_parallel nv false;
       nv
 
   and clone nv =
@@ -245,6 +253,8 @@ module Any = struct (* {{{ *)
       (Nvector.Ops.has_scaleaddmultivectorarray nv);
     c_enablelinearcombinationvectorarray_parallel nv'
       (Nvector.Ops.has_linearcombinationvectorarray nv);
+    c_enabledotprodmultilocal_parallel nv'
+      (Nvector.Ops.Local.has_dotprodmulti nv);
     nv'
 
   let make
@@ -260,6 +270,7 @@ module Any = struct (* {{{ *)
       ?with_wrms_norm_mask_vector_array
       ?with_scale_add_multi_vector_array
       ?with_linear_combination_vector_array
+      ?with_dot_prod_multi_local
       nl ng comm iv
     = wrap ?context
            ?with_fused_ops
@@ -273,6 +284,7 @@ module Any = struct (* {{{ *)
            ?with_wrms_norm_mask_vector_array
            ?with_scale_add_multi_vector_array
            ?with_linear_combination_vector_array
+           ?with_dot_prod_multi_local
            (RealArray.make nl iv, ng, comm)
 
   let unwrap nv =
@@ -292,6 +304,7 @@ module Any = struct (* {{{ *)
      ?with_wrms_norm_mask_vector_array
      ?with_scale_add_multi_vector_array
      ?with_linear_combination_vector_array
+     ?with_dot_prod_multi_local
      nv
     = if Sundials_impl.Version.lt400
         then raise Config.NotImplementedBySundialsVersion;
@@ -317,7 +330,9 @@ module Any = struct (* {{{ *)
       do_enable c_enablescaleaddmultivectorarray_parallel nv
                 with_scale_add_multi_vector_array;
       do_enable c_enablelinearcombinationvectorarray_parallel nv
-                with_linear_combination_vector_array
+                with_linear_combination_vector_array;
+      do_enable c_enabledotprodmultilocal_parallel nv
+                with_dot_prod_multi_local
 
 end (* }}} *)
 
@@ -676,6 +691,27 @@ module Ops = struct (* {{{ *)
         then raise Config.NotImplementedBySundialsVersion;
       if Sundials_configuration.safe then (check x w; check x id);
       c_wsqrsummask x w id
+
+    external c_dotprodmultilocal
+      : t -> t array -> Sundials.RealArray.t -> unit
+      = "sunml_nvec_par_dotprodmultilocal"
+
+    let dotprodmulti x ya d =
+      if Sundials_impl.Version.lt600
+        then raise Sundials.Config.NotImplementedBySundialsVersion;
+      if Sundials_configuration.safe
+      then (let nv = Sundials.RealArray.length d in
+            same_len' nv ya; Array.iter (check x) ya);
+      c_dotprodmultilocal x ya d
+
+    external c_dotprodmulti_allreduce
+      : t -> Sundials.RealArray.t -> unit
+      = "sunml_nvec_par_dotprodmultiallreduce"
+
+    let dotprodmulti_allreduce x d =
+      if Sundials_impl.Version.lt600
+        then raise Sundials.Config.NotImplementedBySundialsVersion;
+      c_dotprodmulti_allreduce x d
   end
 end (* }}} *)
 
@@ -1308,6 +1344,22 @@ module MakeOps =
             a := !a +. (A.get x i *. A.get w i *. A.get x i *. A.get w i)
         done;
         !a
+
+      let dotprodmulti (xd, _, _) ya (dp : RealArray.t) =
+        let n = A.length xd in
+        let nvec = Array.length ya in
+        for i = 0 to nvec - 1 do
+          let yd, _, _ = ya.(i) in
+          dp.{i} <- 0.0;
+          for j = 0 to n - 1 do
+            dp.{i} <- dp.{i} +. A.get xd j *. A.get yd j
+          done
+        done
+
+      let dotprodmulti_allreduce (_, _, comm) (dp : RealArray.t) =
+        (* Note: ocamlmpi does not provide MPI_IN_PLACE *)
+        Mpi.(allreduce_bigarray1 dp dp Sum comm)
+
     end
   end (* }}} *)
 
@@ -1950,6 +2002,22 @@ module DataOps =
             a := !a +. (A.get x i *. A.get w i *. A.get x i *. A.get w i)
         done;
         !a
+
+      let dotprodmulti ((x : d), _, _) ya (dp : RealArray.t) =
+        let n = A.dim x in
+        let nvec = Array.length ya in
+        for i = 0 to nvec - 1 do
+          let (y : d), _, _ = ya.(i) in
+          dp.{i} <- 0.0;
+          for j = 0 to n - 1 do
+            dp.{i} <- dp.{i} +. A.get x j *. A.get y j
+          done
+        done
+
+      let dotprodmulti_allreduce (_, _, comm) (dp : RealArray.t) =
+        (* Note: ocamlmpi does not provide MPI_IN_PLACE *)
+        Mpi.(allreduce_bigarray1 dp dp Sum comm)
+
     end
   end (* }}} *)
 

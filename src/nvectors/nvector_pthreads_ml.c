@@ -208,6 +208,11 @@ CAMLprim value sunml_nvec_wrap_pthreads(value nthreads,
     ops->nvwsqrsumlocal     = N_VWSqrSumLocal_Pthreads;
     ops->nvwsqrsummasklocal = N_VWSqrSumMaskLocal_Pthreads;
 #endif
+#if 600 <= SUNDIALS_LIB_VERSION
+    /* single buffer reduction operations */
+    ops->nvdotprodmultilocal = N_VDotProdMulti_Pthreads;
+    ops->nvdotprodmultiallreduce = NULL;
+#endif
 #if 530 <= SUNDIALS_LIB_VERSION
     ops->nvprint	    = N_VPrint_Pthreads;
     ops->nvprintfile	    = N_VPrintFile_Pthreads;

@@ -111,15 +111,17 @@ module type NVECTOR_OPS =
       : Sundials.RealArray.t -> t array array -> t array -> unit
 
     module Local : sig
-      val dotprod     : t -> t -> float
-      val maxnorm     : t -> float
-      val min         : t -> float
-      val l1norm      : t -> float
-      val invtest     : t -> t -> bool
-      val constrmask  : t -> t -> t -> bool
-      val minquotient : t -> t -> float
-      val wsqrsum     : t -> t -> float
-      val wsqrsummask : t -> t -> t -> float
+      val dotprod      : t -> t -> float
+      val maxnorm      : t -> float
+      val min          : t -> float
+      val l1norm       : t -> float
+      val invtest      : t -> t -> bool
+      val constrmask   : t -> t -> t -> bool
+      val minquotient  : t -> t -> float
+      val wsqrsum      : t -> t -> float
+      val wsqrsummask  : t -> t -> t -> float
+      val dotprodmulti : t -> t array -> Sundials.RealArray.t -> unit
+      val dotprodmulti_allreduce : t -> Sundials.RealArray.t -> unit
     end
   end (* }}} *)
 
@@ -228,6 +230,9 @@ struct (* {{{ *)
     let minquotient x y = Ops.Local.minquotient (uw x) (uw y)
     let wsqrsum x y = Ops.Local.wsqrsum (uw x) (uw y)
     let wsqrsummask x y z = Ops.Local.wsqrsummask (uw x) (uw y) (uw z)
+
+    let dotprodmulti x ya d = Ops.Local.dotprodmulti (uw x) (uwa ya) d
+    let dotprodmulti_allreduce x d = Ops.Local.dotprodmulti_allreduce (uw x) d
   end
 end (* }}} *)
 
@@ -631,6 +636,27 @@ module Ops =
         if Sundials_configuration.safe then (check x w; check x id);
         c_wsqrsummask x w id
 
+      external c_dotprodmultilocal
+        : ('d, 'k) t -> ('d, 'k) t array -> Sundials.RealArray.t -> unit
+        = "sunml_nvec_dotprodmultilocal"
+
+      let dotprodmulti x ya d =
+        if Sundials_impl.Version.lt600
+          then raise Sundials.Config.NotImplementedBySundialsVersion;
+        if Sundials_configuration.safe
+        then (let nv = Sundials.RealArray.length d in
+              same_len' nv ya; Array.iter (check x) ya);
+        c_dotprodmultilocal x ya d
+
+      external c_dotprodmulti_allreduce
+        : ('d, 'k) t -> Sundials.RealArray.t -> unit
+        = "sunml_nvec_dotprodmultiallreduce"
+
+      let dotprodmulti_allreduce x d =
+        if Sundials_impl.Version.lt600
+          then raise Sundials.Config.NotImplementedBySundialsVersion;
+        c_dotprodmulti_allreduce x d
+
       external has_dotprod      : ('d, 'k) t -> bool
         = "sunml_nvec_has_dotprodlocal" [@@noalloc]
       external has_maxnorm      : ('d, 'k) t -> bool
@@ -649,6 +675,10 @@ module Ops =
         = "sunml_nvec_has_wsqrsumlocal" [@@noalloc]
       external has_wsqrsummask  : ('d, 'k) t -> bool
         = "sunml_nvec_has_wsqrsummasklocal" [@@noalloc]
+      external has_dotprodmulti  : ('d, 'k) t -> bool
+        = "sunml_nvec_has_dotprodmultilocal" [@@noalloc]
+      external has_dotprodmulti_allreduce  : ('d, 'k) t -> bool
+        = "sunml_nvec_has_dotprodmultiallreduce" [@@noalloc]
     end
   end (* }}} *)
 

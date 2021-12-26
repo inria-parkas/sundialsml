@@ -599,6 +599,9 @@ module Ops = struct (* {{{ *)
         then raise Config.NotImplementedBySundialsVersion;
       if Sundials_configuration.safe then (check x w; check x id);
       c_wsqrsummask x w id
+
+    let dotprodmulti = dotprodmulti
+    let dotprodmulti_allreduce _ _ = raise Nvector.OperationNotProvided
   end
 end (* }}} *)
 

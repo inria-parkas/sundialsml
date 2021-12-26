@@ -586,7 +586,11 @@ struct (* {{{ *)
         then raise Config.NotImplementedBySundialsVersion;
       if Sundials_configuration.safe then (check x w; check x id);
       c_wsqrsummask x w id
+
+    let dotprodmulti = dotprodmulti
+    let dotprodmulti_allreduce _ _ = raise Nvector.OperationNotProvided
   end
+
 end (* }}} *)
 
 (* (* Too slow! *)
@@ -1174,6 +1178,9 @@ module DataOps =
             a := !a +. (A.get x i *. A.get w i *. A.get x i *. A.get w i)
         done;
         !a
+
+      let dotprodmulti = dotprodmulti
+      let dotprodmulti_allreduce _ _ = raise Nvector.OperationNotProvided
     end
   end (* }}} *)
 

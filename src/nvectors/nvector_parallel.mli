@@ -115,6 +115,7 @@ val hide_communicator : Mpi.communicator -> Nvector_custom.communicator
     @cvode <node5> N_VEnableWrmsNormMaskVectorArray_Parallel
     @cvode <node5> N_VEnableScaleAddMultiVectorArray_Parallel
     @cvode <node5> N_VEnableLinearCombinationVectorArray_Parallel
+    @cvode <node5> N_VEnableDotProdMultiLocal_Parallel
     @raise Config.NotImplementedBySundialsVersion Fused and array operations not available. *)
 val enable :
      ?with_fused_ops                       : bool
@@ -128,6 +129,7 @@ val enable :
   -> ?with_wrms_norm_mask_vector_array     : bool
   -> ?with_scale_add_multi_vector_array    : bool
   -> ?with_linear_combination_vector_array : bool
+  -> ?with_dot_prod_multi_local            : bool
   -> t
   -> unit
 
@@ -189,6 +191,7 @@ module Any : sig (* {{{ *)
     -> ?with_wrms_norm_mask_vector_array     : bool
     -> ?with_scale_add_multi_vector_array    : bool
     -> ?with_linear_combination_vector_array : bool
+    -> ?with_dot_prod_multi_local            : bool
     -> int
     -> int
     -> Mpi.communicator
@@ -211,6 +214,7 @@ module Any : sig (* {{{ *)
       @cvode <node5> N_VEnableWrmsNormMaskVectorArray_Parallel
       @cvode <node5> N_VEnableScaleAddMultiVectorArray_Parallel
       @cvode <node5> N_VEnableLinearCombinationVectorArray_Parallel
+      @cvode <node5> N_VEnableDotProdMultiLocal_Parallel
       @raise Config.NotImplementedBySundialsVersion Fused and array operations not available.
       @since 5.0.0 *)
   val wrap :
@@ -226,6 +230,7 @@ module Any : sig (* {{{ *)
     -> ?with_wrms_norm_mask_vector_array     : bool
     -> ?with_scale_add_multi_vector_array    : bool
     -> ?with_linear_combination_vector_array : bool
+    -> ?with_dot_prod_multi_local            : bool
     -> data
     -> Nvector.any
 
@@ -249,6 +254,7 @@ module Any : sig (* {{{ *)
       @cvode <node5> N_VEnableWrmsNormMaskVectorArray_Parallel
       @cvode <node5> N_VEnableScaleAddMultiVectorArray_Parallel
       @cvode <node5> N_VEnableLinearCombinationVectorArray_Parallel
+      @cvode <node5> N_VEnableDotProdMultiLocal_Parallel
       @raise Nvector.BadGenericType If not called on a parallel nvector
       @raise Config.NotImplementedBySundialsVersion Fused and array operations not available. *)
   val enable :
@@ -263,6 +269,7 @@ module Any : sig (* {{{ *)
     -> ?with_wrms_norm_mask_vector_array     : bool
     -> ?with_scale_add_multi_vector_array    : bool
     -> ?with_linear_combination_vector_array : bool
+    -> ?with_dot_prod_multi_local            : bool
     -> Nvector.any
     -> unit
 

@@ -409,6 +409,16 @@ static value do_wrap(value payload,
     ops->nvwsqrsumlocal     = MVAPPEND(N_VWSqrSumLocal);
     ops->nvwsqrsummasklocal = MVAPPEND(N_VWSqrSumMaskLocal);
 
+#if 600 <= SUNDIALS_LIB_VERSION
+    /* single buffer reduction operations */
+    ops->nvdotprodmultilocal = MVAPPEND(N_VDotProdMultiLocal);
+#ifdef MANYVECTOR_BUILD_WITH_MPI
+    ops->nvdotprodmultiallreduce = N_VDotProdMultiAllReduce_MPIManyVector;
+#else
+    ops->nvdotprodmultiallreduce = NULL;
+#endif
+#endif
+
     /* Create content */
     content->num_subvectors = num_subvectors;
     content->own_data = SUNFALSE;
@@ -1017,6 +1027,34 @@ CAMLprim value SUNML_NVEC_OP(wsqrsummasklocal)(value vx, value vw, value vid)
 #endif
 }
 
+CAMLprim value SUNML_NVEC_OP(dotprodmultilocal)(value vx, value vay, value vd)
+{
+    CAMLparam3(vx, vay, vd);
+#if 600 <= SUNDIALS_LIB_VERSION
+    sunrealtype *d = REAL_ARRAY(vd);
+    N_Vector *ay = NULL;
+    int nvec = sunml_arrays_of_nvectors(&ay, 1, vay);
+
+    MVAPPEND(N_VDotProdMultiLocal)(nvec, NVEC_VAL(vx), ay, d);
+    free(ay);
+#endif
+    CAMLreturn(Val_unit);
+}
+
+#ifdef MANYVECTOR_BUILD_WITH_MPI
+CAMLprim value SUNML_NVEC_OP(dotprodmultiallreduce)(value vx, value vd)
+{
+    CAMLparam2(vx, vd);
+#if 600 <= SUNDIALS_LIB_VERSION
+    sunrealtype *d = REAL_ARRAY(vd);
+    int nvec_total = (Caml_ba_array_val(vd))->dim[0];
+
+    MVAPPEND(N_VDotProdMultiAllReduce)(nvec_total, NVEC_VAL(vx), d);
+#endif
+    CAMLreturn(Val_unit);
+}
+#endif
+
 /** Selectively activate fused and array operations for many nvectors */
 
 CAMLprim value SUNML_NVEC_OP(enablefusedops)(value vx, value vv)
@@ -1112,6 +1150,17 @@ CAMLprim value SUNML_NVEC_OP(enablewrmsnormmaskvectorarray)(value vx, value vv)
     CAMLparam2(vx, vv);
 #if 500 <= SUNDIALS_LIB_VERSION
     MVAPPEND(N_VEnableWrmsNormMaskVectorArray)(NVEC_VAL(vx), Bool_val(vv));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value SUNML_NVEC_OP(enabledotprodmultilocal)(value vx, value vv)
+{
+    CAMLparam2(vx, vv);
+#if 600 <= SUNDIALS_LIB_VERSION
+    MVAPPEND(N_VEnableDotProdMultiLocal)(NVEC_VAL(vx), Bool_val(vv));
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif

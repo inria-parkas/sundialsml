@@ -234,6 +234,11 @@ CAMLprim value sunml_nvec_wrap_openmp(value nthreads,
     ops->nvwsqrsumlocal     = N_VWSqrSumLocal_OpenMP;
     ops->nvwsqrsummasklocal = N_VWSqrSumMaskLocal_OpenMP;
 #endif
+#if 600 <= SUNDIALS_LIB_VERSION
+    /* single buffer reduction operations */
+    ops->nvdotprodmultilocal = N_VDotProdMulti_OpenMP;
+    ops->nvdotprodmultiallreduce = NULL;
+#endif
 #if 530 <= SUNDIALS_LIB_VERSION
     ops->nvprint	    = N_VPrint_OpenMP;
     ops->nvprintfile	    = N_VPrintFile_OpenMP;
