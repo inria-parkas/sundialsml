@@ -25,5 +25,5 @@
 (** Create a new context.
 
     @cvode <node> SUNContext_Create *)
-val make : Mpi.communicator -> Sundials_Context.t
+val make : Mpi.communicator -> Sundials.Context.t
 

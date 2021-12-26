@@ -872,7 +872,8 @@ sundials/sundials_Context_parallel.cmo : \
 sundials/sundials_Context_parallel.cmx : \
     sundials/sundials_impl.cmx \
     sundials/sundials_Context_parallel.cmi
-sundials/sundials_Context_parallel.cmi :
+sundials/sundials_Context_parallel.cmi : \
+    sundials/sundials.cmi
 sundials/sundials_Index.cmo : \
     sundials/sundials_Index.cmi
 sundials/sundials_Index.cmx : \
