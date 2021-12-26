@@ -81,6 +81,8 @@ type user_data = {
   hdcoef : float;
   hacoef : float;
   vdcoef : float;
+
+  profiler : Sundials.Profiler.t;
 }
 
 (* f routine. Compute f(t,u). *)
@@ -91,7 +93,7 @@ let f data _ (udata : RealArray.t) (dudata : RealArray.t) =
   and horac = data.hacoef
   and verdc = data.vdcoef
   in
-
+  Sundials.Profiler.start data.profiler "f";
   (* Loop over all grid points. *)
   for j = 1 to my do
     for i = 1 to mx do
@@ -110,9 +112,9 @@ let f data _ (udata : RealArray.t) (dudata : RealArray.t) =
       and vdiff = verdc *. (uup -. two *. uij +. udn)
       in
       dudata.{(j-1)+(i-1)*my} <- hdiff +. hadv +. vdiff
-
     done
-  done
+  done;
+  Sundials.Profiler.finish data.profiler "f"
 
 (* Jacobian routine. Compute J(t,u). *)
 
@@ -196,8 +198,10 @@ let print_final_stats s =
   (match Config.sundials_version with 2,_,_ -> printf " \n" | _ -> ())
 
 let main () =
+  let context = Sundials.Context.make () in
+
   (* Create a serial vector *)
-  let u = Nvector_serial.make neq 0.0 in (* Allocate u vector *)
+  let u = Nvector_serial.make ~context neq 0.0 in (* Allocate u vector *)
 
   let reltol = zero  (* Set the tolerances *)
   and abstol = atol
@@ -211,6 +215,7 @@ let main () =
     hdcoef = one /. (dx *. dx);
     hacoef = half /. (two *. dx);
     vdcoef = one /. (dy *. dy);
+    profiler = Sundials.Context.get_profiler context;
   } in
 
   set_ic (unwrap u) data;  (* Initialize u vector *)
@@ -222,10 +227,11 @@ let main () =
    * the initial dependent variable vector u. *)
   (* Call CVBand to specify the CVBAND band linear solver *)
   (* Set the user-supplied Jacobian routine Jac *)
-  let mjac = Matrix.(band ~mu:my ~smu:(2*my) neq) in
-  let lsolver = Cvode.Dls.(solver ~jac:(jac data) (band u mjac))
+  let mjac = Matrix.(band ~context ~mu:my ~smu:(2*my) neq) in
+  let lsolver = Cvode.Dls.(solver ~jac:(jac data) (band ~context u mjac))
   in
-  let cvode_mem = Cvode.(init BDF ~lsolver
+  let cvode_mem = Cvode.(init ~context
+                             BDF ~lsolver
                              (SStolerances (reltol, abstol))
                              (f data) t0 u)
   in
@@ -244,8 +250,9 @@ let main () =
     tout := !tout +. dtout
   done;
 
-  print_final_stats cvode_mem  (* Print some final statistics   *)
-
+  print_final_stats cvode_mem;  (* Print some final statistics   *)
+  flush stdout;
+  Sundials.Profiler.print data.profiler (Logfile.stdout)
 
 (* Check environment variables for extra arguments.  *)
 let reps =

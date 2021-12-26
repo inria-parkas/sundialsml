@@ -372,6 +372,60 @@ CAMLprim value sunml_sundials_wrap_file(FILE* f)
     CAMLreturn (vr);
 }
 
+/* Functions for profiling */
+
+#if 600 <= SUNDIALS_LIB_VERSION && defined(SUNDIALS_BUILD_WITH_PROFILING)
+static void finalize_profiler(value vprofiler)
+{
+    SUNProfiler profiler = ML_PROFILER(vprofiler);
+    if (profiler != NULL) SUNProfiler_Free(&profiler);
+}
+#endif
+
+CAMLprim value sunml_profiler_make(value vname)
+{
+    CAMLparam1(vname);
+    CAMLlocal1(vprofiler);
+
+#if 600 <= SUNDIALS_LIB_VERSION && defined(SUNDIALS_BUILD_WITH_PROFILING)
+    SUNProfiler profiler = NULL;
+
+    SUNProfiler_Create(NULL, String_val(vname), &profiler);
+    if (profiler == NULL) caml_raise_out_of_memory();
+
+    vprofiler = caml_alloc_final(1, &finalize_profiler, 1, 10);
+    ML_PROFILER(vprofiler) = profiler;
+#else
+    vprofiler = Val_unit;
+#endif
+
+    CAMLreturn(vprofiler);
+}
+
+CAMLprim void sunml_profiler_begin(value vprofiler, value vname)
+{
+#if 600 <= SUNDIALS_LIB_VERSION && defined(SUNDIALS_BUILD_WITH_PROFILING)
+    SUNProfiler_Begin(ML_PROFILER(vprofiler), String_val(vname));
+#endif
+}
+
+CAMLprim void sunml_profiler_end(value vprofiler, value vname)
+{
+#if 600 <= SUNDIALS_LIB_VERSION && defined(SUNDIALS_BUILD_WITH_PROFILING)
+    SUNProfiler_End(ML_PROFILER(vprofiler), String_val(vname));
+#endif
+}
+
+CAMLprim void sunml_profiler_print(value vprofiler, value vfile)
+{
+    CAMLparam2(vprofiler, vfile);
+#if 600 <= SUNDIALS_LIB_VERSION && defined(SUNDIALS_BUILD_WITH_PROFILING)
+    FILE *file = ML_CFILE(vfile);
+    SUNProfiler_Print(ML_PROFILER(vprofiler), file);
+#endif
+    CAMLreturn0;
+}
+
 /* Functions for manipulating contexts */
 
 #if 600 <= SUNDIALS_LIB_VERSION
@@ -402,10 +456,40 @@ CAMLprim value sunml_context_make(void)
     CAMLreturn (vctx);
 }
 
+CAMLprim void sunml_context_set_profiler(value vctx, value vprofiler)
+{
+    CAMLparam2(vctx, vprofiler);
+#if 600 <= SUNDIALS_LIB_VERSION && defined(SUNDIALS_BUILD_WITH_PROFILING)
+    SUNContext_SetProfiler(ML_CCONTEXT(vctx), ML_PROFILER(vprofiler));
+#endif
+    CAMLreturn0;
+}
+
 #ifdef MPI_ENABLED
 
 /* Must correspond with camlmpi.h */
 #define Comm_val(comm) (*((MPI_Comm *) &Field(comm, 1)))
+
+CAMLprim value sunml_profiler_make(value vcomm, value vname)
+{
+    CAMLparam2(vcomm, vname);
+    CAMLlocal1(vprofiler);
+
+#if 600 <= SUNDIALS_LIB_VERSION && defined(SUNDIALS_BUILD_WITH_PROFILING)
+    SUNProfiler profiler = NULL;
+    MPI_Comm comm = Comm_val(vcomm);
+
+    SUNProfiler_Create(comm, String_val(vname), &profiler);
+    if (profiler == NULL) caml_raise_out_of_memory();
+
+    vprofiler = caml_alloc_final(1, &finalize_profiler, 1, 10);
+    ML_PROFILER(vprofiler) = profiler;
+#else
+    vprofiler = Val_unit;
+#endif
+
+    CAMLreturn(vprofiler);
+}
 
 CAMLprim value sunml_context_make_parallel(value vcomm)
 {

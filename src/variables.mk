@@ -43,7 +43,6 @@ MLOBJ_MAIN =	sundials/sundials_configuration.cmo	\
 		sundials/sundials_RealArray2.cmo	\
 		sundials/sundials_LintArray.cmo		\
 		sundials/sundials_ROArray.cmo		\
-		sundials/sundials_Logfile.cmo		\
 	     	sundials/sundials.cmo			\
 		nvectors/nvector.cmo			\
 		nvectors/nvector_serial.cmo		\
@@ -107,7 +106,7 @@ COBJ_MPI =	nvectors/nvector_parallel_ml$(XO)	\
 		cvodes/cvodes_bbd_ml$(XO)		\
 		ida/ida_bbd_ml$(XO)			\
 		idas/idas_bbd_ml$(XO)
-MLOBJ_MPI =	sundials/sundials_Context_parallel.cmo \
+MLOBJ_MPI =	sundials/sundials_parallel.cmo \
 		nvectors/nvector_parallel.cmo	\
 		$(if $(NVECMANYVECTOR_ENABLED),nvectors/nvector_mpimany.cmo) \
 		$(if $(NVECMANYVECTOR_ENABLED),nvectors/nvector_mpiplusx.cmo) \

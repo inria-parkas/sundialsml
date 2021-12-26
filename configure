@@ -1113,6 +1113,62 @@ else
     monitoring_enabled=0
 fi
 
+# Check for profiling support
+profiling_enabled=
+if [ ${sundials} -ge 600 ]; then
+    test_stem=__configure_test_file__profiling
+    cat > $test_stem.c <<EOF
+// ${CPP} ${cppflags} ${Isundials_inc_path} -P $test_stem.c
+#include "sundials/sundials_config.h"
+#ifdef SUNDIALS_BUILD_WITH_PROFILING
+1
+#else
+0
+#endif
+EOF
+    profiling_enabled=$(${CPP} ${cppflags} ${Isundials_inc_path} \
+			    -P $test_stem.c 2>>${logfile} \
+			| tail -1)
+    printf "Sundials profiling enabled?: %s\n" "${profiling_enabled}" >>${logfile}
+    ${debug_configure} || rm -f ./${test_stem}.c
+    case "${profiling_enabled}" in
+	1) ;;
+	0) ;;
+	*) error="${error}\\n\\terror interpreting sundials_config.h"
+	   error="${error} (SUNDIALS_BUILD_WITH_PROFILING)" ;;
+    esac
+else
+    profiling_enabled=0
+fi
+
+# Check for caliper profiling support
+caliper_enabled=
+if [ ${sundials} -ge 600 ]; then
+    test_stem=__configure_test_file__caliper
+    cat > $test_stem.c <<EOF
+// ${CPP} ${cppflags} ${Isundials_inc_path} -P $test_stem.c
+#include "sundials/sundials_config.h"
+#ifdef SUNDIALS_CALIPER_ENABLED
+1
+#else
+0
+#endif
+EOF
+    caliper_enabled=$(${CPP} ${cppflags} ${Isundials_inc_path} \
+			    -P $test_stem.c 2>>${logfile} \
+			| tail -1)
+    printf "Sundials caliper enabled?: %s\n" "${caliper_enabled}" >>${logfile}
+    ${debug_configure} || rm -f ./${test_stem}.c
+    case "${caliper_enabled}" in
+	1) ;;
+	0) ;;
+	*) error="${error}\\n\\terror interpreting sundials_config.h"
+	   error="${error} (SUNDIALS_CALIPER_ENABLED)" ;;
+    esac
+else
+    caliper_enabled=0
+fi
+
 # Check for SUPERLUMT and KLU
 sparse_libs=
 
@@ -1845,6 +1901,16 @@ if [ "x${monitoring_enabled}" = x1 ]; then
     echo "let monitoring_enabled = true" >> src/sundials/sundials_configuration.ml
 else
     echo "let monitoring_enabled = false"  >> src/sundials/sundials_configuration.ml
+fi
+if [ "x${profiling_enabled}" = x1 ]; then
+    echo "let profiling_enabled = true" >> src/sundials/sundials_configuration.ml
+else
+    echo "let profiling_enabled = false"  >> src/sundials/sundials_configuration.ml
+fi
+if [ "x${caliper_enabled}" = x1 ]; then
+    echo "let caliper_enabled = true" >> src/sundials/sundials_configuration.ml
+else
+    echo "let caliper_enabled = false"  >> src/sundials/sundials_configuration.ml
 fi
 if [ "x${ocamlmpi_enabled}" = x ]; then
     echo "let mpi_enabled = false" >> src/sundials/sundials_configuration.ml

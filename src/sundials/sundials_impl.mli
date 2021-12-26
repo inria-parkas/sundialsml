@@ -19,13 +19,34 @@ module Version :
     val lt600 : bool
     val has_nvector_get_id : bool
   end
+module Logfile :
+  sig
+    type t
+    external c_stderr : unit -> t = "sunml_sundials_stderr"
+    external c_stdout : unit -> t = "sunml_sundials_stdout"
+    external fopen : string -> bool -> t = "sunml_sundials_fopen"
+    val stderr : t
+    val stdout : t
+    val openfile : ?trunc:bool -> string -> t
+    external output_string : t -> string -> unit = "sunml_sundials_write"
+    external output_bytes : t -> bytes -> unit = "sunml_sundials_write"
+    external flush : t -> unit = "sunml_sundials_fflush"
+    external close : t -> unit = "sunml_sundials_close"
+  end
+module Profiler :
+  sig type t external make : string -> t = "sunml_profiler_make" end
 module Context :
   sig
     type cptr
-    type t = { cptr : cptr; }
+    type t = { cptr : cptr; mutable profiler : Profiler.t option; }
+    exception ExternalProfilerInUse
     external c_make : unit -> cptr = "sunml_context_make"
-    val make : unit -> t
+    external c_set_profiler : cptr -> Profiler.t -> unit
+      = "sunml_context_set_profiler"
+    val set_profiler : t -> Profiler.t -> unit
+    val make : ?profiler:Profiler.t -> unit -> t
     val default_context : t Weak.t
     val default : unit -> t
     val get : t option -> t
+    val get_profiler : t -> Profiler.t
   end

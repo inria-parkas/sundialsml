@@ -4,37 +4,36 @@
 (*                                                                     *)
 (*  Timothy Bourke (Inria), Jun Inoue (Inria), and Marc Pouzet (LIENS) *)
 (*                                                                     *)
-(*  Copyright 2018 Institut National de Recherche en Informatique et   *)
+(*  Copyright 2021 Institut National de Recherche en Informatique et   *)
 (*  en Automatique.  All rights reserved.  This file is distributed    *)
 (*  under a New BSD License, refer to the file LICENSE.                *)
 (*                                                                     *)
 (***********************************************************************)
 
-type t
+module Profiler = struct
+  module I = Sundials_impl.Profiler
 
-external c_stderr : unit -> t
-  = "sunml_sundials_stderr"
+  external make : Mpi.communicator -> string -> I.t
+    = "sunml_profiler_make_parallel"
 
-external c_stdout : unit -> t
-  = "sunml_sundials_stdout"
+end
 
-external fopen : string -> bool -> t
-  = "sunml_sundials_fopen"
+module Context = struct
 
-let stderr = c_stderr ()
-let stdout = c_stdout ()
+  module I = Sundials_impl.Context
 
-let openfile ?(trunc=false) fpath = fopen fpath trunc
+  external c_make : Mpi.communicator -> I.cptr
+    = "sunml_context_make_parallel"
 
-external output_string : t -> string -> unit
-  = "sunml_sundials_write"
+  let make ?profiler comm =
+    let ctx = { I.cptr = c_make comm; I.profiler = None } in
+    (match profiler with
+     | Some p -> Sundials.Context.set_profiler ctx p
+     | None ->
+         if not Sundials_configuration.caliper_enabled
+         then Sundials.Context.set_profiler ctx
+                (Profiler.make comm "SUNContext Default"));
+    ctx
 
-external output_bytes : t -> bytes -> unit
-  = "sunml_sundials_write"
-
-external flush : t -> unit
-  = "sunml_sundials_fflush"
-
-external close : t -> unit
-  = "sunml_sundials_close"
+end
 

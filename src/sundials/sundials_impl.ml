@@ -138,16 +138,72 @@ let has_nvector_get_id =
 
 end
 
+module Logfile = struct
+  type t
+
+  external c_stderr : unit -> t
+    = "sunml_sundials_stderr"
+
+  external c_stdout : unit -> t
+    = "sunml_sundials_stdout"
+
+  external fopen : string -> bool -> t
+    = "sunml_sundials_fopen"
+
+  let stderr = c_stderr ()
+  let stdout = c_stdout ()
+
+  let openfile ?(trunc=false) fpath = fopen fpath trunc
+
+  external output_string : t -> string -> unit
+    = "sunml_sundials_write"
+
+  external output_bytes : t -> bytes -> unit
+    = "sunml_sundials_write"
+
+  external flush : t -> unit
+    = "sunml_sundials_fflush"
+
+  external close : t -> unit
+    = "sunml_sundials_close"
+end
+
+module Profiler = struct
+  type t
+
+  external make : string -> t
+    = "sunml_profiler_make"
+end
+
 module Context = struct
 
   type cptr
 
-  type t = { cptr : cptr }
+  type t = {
+    cptr : cptr;
+    mutable profiler : Profiler.t option;
+  }
+
+  exception ExternalProfilerInUse
 
   external c_make : unit -> cptr
     = "sunml_context_make"
 
-  let make () = { cptr = c_make () }
+  external c_set_profiler : cptr -> Profiler.t -> unit
+    = "sunml_context_set_profiler"
+
+  let set_profiler ({ cptr; _ } as context) profiler =
+    c_set_profiler cptr profiler;
+    context.profiler <- Some profiler
+
+  let make ?profiler () =
+    let ctx = { cptr = c_make (); profiler = None } in
+    (match profiler with
+     | Some p -> set_profiler ctx p
+     | None ->
+         if not Sundials_configuration.caliper_enabled
+         then set_profiler ctx (Profiler.make "SUNContext Default"));
+    ctx
 
   let default_context = (Weak.create 1 : t Weak.t)
 
@@ -162,6 +218,11 @@ module Context = struct
   let get = function
     | None -> default ()
     | Some ctx -> ctx
+
+  let get_profiler { profiler; _ } =
+    match profiler with
+    | Some p -> p
+    | None -> raise ExternalProfilerInUse
 
 end
 

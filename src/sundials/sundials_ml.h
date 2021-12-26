@@ -216,6 +216,11 @@ enum sundials_exn_index {
 /* Accessing FILE* values */
 #define ML_CFILE(v) (*(FILE **)Data_custom_val(v))
 
+/* Accessing SUNProfilter values */
+#if 600 <= SUNDIALS_LIB_VERSION
+#define ML_PROFILER(v) (*(SUNProfiler *)Data_custom_val(v))
+#endif
+
 /* Accessing SUNContext values */
 #if 600 <= SUNDIALS_LIB_VERSION
 #define ML_CCONTEXT(v) (*(SUNContext *)Data_custom_val(v))

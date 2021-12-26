@@ -26,6 +26,89 @@ module Config = Sundials_Config
 (** Index values for sparse matrices. *)
 module Index = Sundials_Index
 
+(** A rudimentary interface to C streams for logging in Sundials.
+
+    Files for error and diagnostic information. File values are passed
+    to functions like {!Cvode.set_error_file} and {!Kinsol.set_info_file} to
+    log solver errors and diagnostics. *)
+module Logfile : sig (* {{{ *)
+
+  (** An open log file. *)
+  type t = Sundials_impl.Logfile.t
+
+  (** The stderr file. *)
+  val stderr : t
+
+  (** The stdout file. *)
+  val stdout : t
+
+  (** Opens the named file. When [trunc] is false, the default, writes are
+      appended to the file. When [trunc] is true, the opened file is
+      truncated to zero length. Files are closed on garbage collection. *)
+  val openfile : ?trunc:bool -> string -> t
+
+  (** Writes the given string to an open log file. *)
+  val output_string : t -> string -> unit
+
+  (** Writes the given byte sequence to an open log file. *)
+  val output_bytes : t -> bytes -> unit
+
+  (** Flushes the given file. *)
+  val flush : t -> unit
+
+  (** Closes the given file. *)
+  val close : t -> unit
+
+end (* }}} *)
+
+(** Performance profiling
+
+    The underlying Sundials library must be built with
+    {cconst SUNDIALS_BUILD_WITH_PROFILING} set to on. Profiling is
+    light-weight but can still reduce performance.
+
+    The {cconst SUNPROFILER_PRINT} environment variable determines whether
+    profiler information is printed when a context is freed (by the garbage
+    collector).
+
+    The profiling functions (silently) do nothing when profiling is not
+    available.
+
+    @cvode <node> SUNProfiler
+    @since 6.0.0 *)
+module Profiler : sig (* {{{ *)
+
+  (** A Sundials profiler.
+
+      @cvode <node> SUNProfiler *)
+  type t = Sundials_impl.Profiler.t
+
+  (** Indicates whether the underlying library was built with profiling
+      enabled. *)
+  val enabled : bool
+
+  (** Creates a new profiler with the given name.
+
+      @cvode <node> SUNProfiler_Create *)
+  val make : string -> t
+
+  (** Starts timing the region indicated by the given name.
+
+      @cvode <node> SUNProfiler_Begin *)
+  external start : t -> string -> unit = "sunml_profiler_begin" [@@noalloc]
+
+  (** Ends timing the region indicated by the given name.
+
+      @cvode <node> SUNProfiler_End *)
+  external finish : t -> string -> unit = "sunml_profiler_end" [@@noalloc]
+
+  (** Prints out a profiling summary.
+
+      @cvode <node> SUNProfiler_Print *)
+  val print : t -> Logfile.t -> unit
+
+end (* }}} *)
+
 (** Contexts for creating Sundials values
 
     Every function that creates a Sundials value (integrator, nvector,
@@ -36,7 +119,7 @@ module Index = Sundials_Index
 
     @cvode <node> SUNContext
     @since 6.0.0 *)
-module Context : sig
+module Context : sig (* {{{ *)
 
   (** A context required to create Sundials values.
 
@@ -48,12 +131,27 @@ module Context : sig
       @cvode <node> SUNContext_Create *)
   val default : unit -> t
 
-  (** Create a new context.
+  (** Create a new context, optionally specifying the profiler to use.
 
       @cvode <node> SUNContext_Create *)
-  val make : unit -> t
+  val make : ?profiler:Profiler.t -> unit -> t
 
-end
+  (** Indicates that an external library (i.e., caliper) is being use for
+      profiling. *)
+  exception ExternalProfilerInUse
+
+  (** Return the profiler associated with a context.
+
+      @cvode <node> SUNContext_GetProfiler
+      @raise ExternalProfilerInUse If an external library is used for profiling *)
+  val get_profiler : t -> Profiler.t
+
+  (** Sets the profiler associated with a context.
+
+      @cvode <node> SUNContext_SetProfiler *)
+  val set_profiler : t -> Profiler.t -> unit
+
+end (* }}} *)
 
 (** {2:exceptions Exceptions} *)
 
@@ -332,13 +430,6 @@ module LinearSolver = Sundials_LinearSolver
 
 (** Generic nonlinear solvers. *)
 module NonlinearSolver = Sundials_NonlinearSolver
-
-(** {2:results Solver results and error reporting} *)
-
-(** Files for error and diagnostic information. File values are passed
-    to functions like {!Cvode.set_error_file} and {!Kinsol.set_info_file} to
-    log solver errors and diagnostics. *)
-module Logfile = Sundials_Logfile
 
 (** Shared definitions and miscellaneous utility functions. *)
 module Util : sig (* {{{ *)

@@ -14,10 +14,46 @@ module Config = Sundials_Config
 
 module Index = Sundials_Index
 
+module Logfile = struct
+  type t = Sundials_impl.Logfile.t
+
+  let stderr   = Sundials_impl.Logfile.stderr
+  let stdout   = Sundials_impl.Logfile.stdout
+  let openfile = Sundials_impl.Logfile.openfile
+
+  let output_string = Sundials_impl.Logfile.output_string
+  let output_bytes  = Sundials_impl.Logfile.output_bytes
+
+  let flush = Sundials_impl.Logfile.flush
+  let close = Sundials_impl.Logfile.close
+end
+
+module Profiler = struct
+  type t = Sundials_impl.Profiler.t
+
+  let enabled = Sundials_configuration.profiling_enabled
+
+  external make : string -> t
+    = "sunml_profiler_make"
+
+  external start : t -> string -> unit
+    = "sunml_profiler_begin" [@@noalloc]
+
+  external finish : t -> string -> unit
+    = "sunml_profiler_end" [@@noalloc]
+
+  external print : t -> Logfile.t -> unit
+    = "sunml_profiler_print"
+end
+
 module Context = struct
   type t = Sundials_impl.Context.t
-  let make = Sundials_impl.Context.make
+  exception ExternalProfilerInUse = Sundials_impl.Context.ExternalProfilerInUse
+  let make    = Sundials_impl.Context.make
   let default = Sundials_impl.Context.default
+
+  let get_profiler = Sundials_impl.Context.get_profiler
+  let set_profiler = Sundials_impl.Context.set_profiler
 end
 
 exception RecoverableFailure
@@ -388,8 +424,6 @@ module Constraint = struct (* {{{ *)
     | GtZero        -> 2.0
     | LtZero        -> -2.0
 end (* }}} *)
-
-module Logfile = Sundials_Logfile
 
 module Matrix = Sundials_Matrix
 
