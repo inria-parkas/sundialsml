@@ -6451,8 +6451,7 @@ CAMLprim value sunml_arkode_mri_init(value weakref, value vistepper,
 	    MRIStepCreate(Bool_val(vexplicit) ? rhsfn2 : rhsfn1,
 			  Double_val(t0), NVEC_VAL(y0),
 			  MRISTEP_ARKSTEP,
-			  ARKODE_MEM_FROM_ML(Field(vistepper_val, 0)),
-			  ML_CONTEXT(vctx));
+			  ARKODE_MEM_FROM_ML(Field(vistepper_val, 0)));
 #endif
     } else {
 #if 600 <= SUNDIALS_LIB_VERSION
@@ -7013,7 +7012,7 @@ CAMLprim value sunml_arkode_mri_coupling_load_table(value vtable)
 	imethod = MRI_GARK_ESDIRK34a;
 	break;
 
-    case VARIANT_ARKODE_MRI_COUPLING_GARK_ERKDIRK46a:
+    case VARIANT_ARKODE_MRI_COUPLING_GARK_ESDIRK46a:
 	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 
     case VARIANT_ARKODE_MRI_COUPLING_IMEX_GARK3a:

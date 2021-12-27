@@ -2864,7 +2864,7 @@ CAMLprim value sunml_nvec_has_dotprodmultilocal(value vx)
 {
     CAMLparam1(vx);
     sunbooleantype r = 0;
-#if 500 <= SUNDIALS_LIB_VERSION
+#if 600 <= SUNDIALS_LIB_VERSION
     N_Vector x = NVEC_VAL(vx);
     r = (x->ops->nvdotprodmultilocal != NULL);
 #endif
@@ -2875,7 +2875,7 @@ CAMLprim value sunml_nvec_has_dotprodmultiallreduce(value vx)
 {
     CAMLparam1(vx);
     sunbooleantype r = 0;
-#if 500 <= SUNDIALS_LIB_VERSION
+#if 600 <= SUNDIALS_LIB_VERSION
     N_Vector x = NVEC_VAL(vx);
     r = (x->ops->nvdotprodmultiallreduce != NULL);
 #endif
