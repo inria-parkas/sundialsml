@@ -6445,13 +6445,7 @@ CAMLprim value sunml_arkode_mri_init(value weakref, value vistepper,
 	&& Tag_val(vistepper_val) == VARIANT_ARKODE_MRI_ISTEPPER_ARKSTEP)
     {
 #if 600 <= SUNDIALS_LIB_VERSION
-	arkode_mem =
-	    MRIStepCreate(Bool_val(vexplicit) ? rhsfn2 : NULL,
-			  Bool_val(vimplicit) ? rhsfn1 : NULL,
-			  Double_val(t0),
-			  NVEC_VAL(y0),
-			  ARKODE_MEM_FROM_ML(Field(vistepper_val, 0)),
-			  ML_CONTEXT(vctx));
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #else
 	arkode_mem =
 	    MRIStepCreate(Bool_val(vexplicit) ? rhsfn2 : rhsfn1,
@@ -6461,7 +6455,15 @@ CAMLprim value sunml_arkode_mri_init(value weakref, value vistepper,
 			  ML_CONTEXT(vctx));
 #endif
     } else {
-#if 580 <= SUNDIALS_LIB_VERSION && SUNDIALS_LIB_VERSION < 600
+#if 600 <= SUNDIALS_LIB_VERSION
+	arkode_mem =
+	    MRIStepCreate(Bool_val(vexplicit) ? rhsfn2 : NULL,
+			  Bool_val(vimplicit) ? rhsfn1 : NULL,
+			  Double_val(t0),
+			  NVEC_VAL(y0),
+			  ISTEPPER_FROM_ML(vistepper),
+			  ML_CONTEXT(vctx));
+#elif 580 <= SUNDIALS_LIB_VERSION
 	arkode_mem =
 	    MRIStepCreate(Bool_val(vexplicit) ? rhsfn2 : rhsfn1,
 			  Double_val(t0), NVEC_VAL(y0),
