@@ -31,14 +31,19 @@ EXAMPLES_SINCE_5_4_0 = ark_kpr_mri.ml
 
 EXAMPLES_SINCE_5_8_0 = ark_analytic_mels.ml
 
+EXAMPLES_SINCE_6_0_0 = ark_brusselator1D_imexmri.ml
+
 EXAMPLES = $(EXAMPLES_SINCE_2_5)				\
 	   $(if $(AT_LEAST_4_0_0),$(EXAMPLES_SINCE_4_0_0))	\
 	   $(if $(AT_LEAST_5_0_0),$(EXAMPLES_SINCE_5_0_0))	\
 	   $(if $(AT_LEAST_5_4_0),$(EXAMPLES_SINCE_5_4_0))	\
-	   $(if $(AT_LEAST_5_8_0),$(EXAMPLES_SINCE_5_8_0))
+	   $(if $(AT_LEAST_5_8_0),$(EXAMPLES_SINCE_5_8_0))      \
+	   $(if $(AT_LEAST_6_0_0),$(EXAMPLES_SINCE_6_0_0))
 
 FILES_TO_CLEAN = bruss_mesh.txt bruss_u.txt bruss_v.txt bruss_w.txt \
 		 heat1D.txt heat_mesh.txt solution.txt \
 		 mesh.txt u.txt v.txt w.txt
 
 include ../../examples.mk
+
+$(eval $(call EXECUTION_RULE,ark_brusselator1D_imexmri,$$< 0 0.1))

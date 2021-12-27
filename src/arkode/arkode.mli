@@ -3381,7 +3381,10 @@ module MRIStep : sig (* {{{ *)
         @noarkode <node> MRIStepCoupling_LoadTable *)
     val load_table : coupling_table -> t
 
-    (** Create a new coupling table from a slow Butcher table. *)
+    (** Create a new coupling table from a slow Butcher table.
+
+        @since 5.4.0
+        @noarkode <node> MRIStepCoupling_MIStoMRI *)
     val mis_to_mri :
          method_order:int
       -> embedding_order:int
