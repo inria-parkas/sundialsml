@@ -2895,7 +2895,7 @@ CAMLprim value sunml_arkode_butcher_table_load_dirk(value vmethod)
 #if 400 <= SUNDIALS_LIB_VERSION
 static ARKodeButcherTable butcher_table_val(value vob)
 {
-    CAMLparam0();
+    CAMLparam1(vob);
     ARKodeButcherTable r = NULL;
     CAMLlocal2(vb, vd);
     sunrealtype *d = NULL;

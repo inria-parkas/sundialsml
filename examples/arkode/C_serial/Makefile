@@ -42,7 +42,14 @@ EXAMPLES = $(EXAMPLES_SINCE_2_5)				\
 
 FILES_TO_CLEAN = bruss_mesh.txt bruss_u.txt bruss_v.txt bruss_w.txt \
 		 heat1D.txt heat_mesh.txt solution.txt \
-		 mesh.txt u.txt v.txt w.txt
+		 mesh.txt u.txt v.txt w.txt \
+		 bruss1D_u_*.txt bruss1D_v_*.txt bruss1D_w_*.txt \
+		 bruss_FEM_u.txt bruss_FEM_v.txt bruss_FEM_w.txt \
+		 bruss_FEM_mesh.txt bruss1D_mesh.txt \
+		 ark_onewaycouple_mri_solution.txt \
+		 ark_twowaycouple_mri_solution.txt \
+		 ark_brusselator_mri_solution.txt \
+		 ark_kpr_mri_solution.txt
 
 include ../../examples.mk
 

@@ -3021,12 +3021,16 @@ module MRIStep = struct (* {{{ *)
     external load_table : coupling_table -> t
       = "sunml_arkode_mri_coupling_load_table"
 
-    external c_mis_to_mri : int -> int -> ButcherTable.t -> t
+    external c_mis_to_mri
+      : ButcherTable.t option
+        -> int (* q *)
+        -> int (* p *)
+        -> t
       = "sunml_arkode_mri_coupling_mistomri"
 
     let mis_to_mri ~method_order ~embedding_order bt =
       if Sundials_configuration.safe then ButcherTable.check bt;
-      c_mis_to_mri method_order embedding_order bt
+      c_mis_to_mri (Some bt) method_order embedding_order
 
     external copy : t -> t
       = "sunml_arkode_mri_coupling_copy"

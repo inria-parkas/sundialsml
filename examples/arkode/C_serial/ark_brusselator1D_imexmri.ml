@@ -581,7 +581,7 @@ let main () =
         stage_times = RealArray.of_list [ 0.0; 0.5; 1.0 ];
         coefficients = RealArray.of_list
                          [ 1.0 /. 6.0; 2.0 /. 3.0; 1.0 /. 6.0 ];
-        embedding = Some (2, RealArray.of_list [ 0.0; 1.0 ] );
+        embedding = Some (2, RealArray.of_list [ 0.0; 1.0; 0.0 ] );
       } in
       ARKStep.set_tables inner_arkode_mem ~explicit_table ();
       inner_arkode_mem
@@ -643,11 +643,11 @@ let main () =
         method_order = 2;
         stages = 2;
         stage_values = RealArray2.of_lists [
-          [ 0.0; 0.25 ];
-          [ 0.0; 0.00 ];
+          [ 0.0; 2.0/.3.0 ];
+          [ 0.0;   0.0    ];
         ];
-        stage_times = RealArray.of_list [ 0.25; 0.75 ];
-        coefficients = RealArray.of_list [ 0.0; 2.0 /. 3.0 ];
+        stage_times = RealArray.of_list [ 0.0; 2.0 /. 3.0 ];
+        coefficients = RealArray.of_list [ 0.25; 0.75 ];
         embedding = None;
       } in
       let coupling =
