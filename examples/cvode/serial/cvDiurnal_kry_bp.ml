@@ -39,6 +39,10 @@ let unwrap = Nvector.unwrap
 
 let printf = Printf.printf
 
+let lt600 =
+  let n, _, _ = Sundials.Config.sundials_version in
+  n < 6
+
 (* Problem Constants *)
 
 let zero  = 0.0
@@ -357,7 +361,8 @@ let main () =
     print_final_stats cvode_mem
   in (* End of jpre loop *)
 
-  jpre_loop Cvode.Spils.PrecLeft  "PREC_LEFT";
+  jpre_loop Cvode.Spils.PrecLeft
+    (if lt600 then "PREC_LEFT" else "SUN_PREC_LEFT");
 
   (* On second run, re-initialize u, the solver, and CVSPGMR *)
   set_initial_profiles (unwrap u) data.dx data.dy;
@@ -387,7 +392,8 @@ let main () =
   printf "\n\n-------------------------------------------------------";
   printf "------------\n";
 
-  jpre_loop Cvode.Spils.PrecRight "PREC_RIGHT"
+  jpre_loop Cvode.Spils.PrecRight
+    (if lt600 then "PREC_RIGHT" else "SUN_PREC_RIGHT")
 
 (* Check environment variables for extra arguments.  *)
 let reps =

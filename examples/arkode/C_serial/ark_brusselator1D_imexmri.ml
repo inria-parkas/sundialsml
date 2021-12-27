@@ -804,20 +804,22 @@ let main () =
   end;
 
   (* Get/print slow integrator decoupled implicit solver statistics *)
-  if solve_type > 1 then
+  if solve_type > 1 then begin
     let nnis, nncs = MRIStep.get_nonlin_solv_stats arkode_mem in
     let njes = MRIStep.Dls.get_num_jac_evals arkode_mem in
-    (printf "   Slow Newton iters = %d\n" nnis;
-     printf "   Slow Newton conv fails = %d\n" nncs;
-     printf "   Slow Jacobian evals = %d\n" njes);
+    printf "   Slow Newton iters = %d\n" nnis;
+    printf "   Slow Newton conv fails = %d\n" nncs;
+    printf "   Slow Jacobian evals = %d\n" njes
+  end;
 
   (* Get/print fast integrator implicit solver statistics *)
-  if solve_type=0 || solve_type=1 || solve_type=3 || solve_type=5 || solve_type=7 then
+  if solve_type=0 || solve_type=1 || solve_type=3 || solve_type=5 || solve_type=7 then begin
     let nnif, nncf = ARKStep.get_nonlin_solv_stats inner_arkode_mem in
     let njef = ARKStep.Dls.get_num_jac_evals inner_arkode_mem in
-    (printf "   Fast Newton iters = %d\n" nnif;
-     printf "   Fast Newton conv fails = %d\n" nncf;
-     printf "   Fast Jacobian evals = %d\n" njef)
+    printf "   Fast Newton iters = %d\n" nnif;
+    printf "   Fast Newton conv fails = %d\n" nncf;
+    printf "   Fast Jacobian evals = %d\n" njef
+  end
 
 (* Check environment variables for extra arguments.  *)
 let reps =

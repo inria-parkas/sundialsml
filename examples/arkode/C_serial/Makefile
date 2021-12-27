@@ -46,4 +46,4 @@ FILES_TO_CLEAN = bruss_mesh.txt bruss_u.txt bruss_v.txt bruss_w.txt \
 
 include ../../examples.mk
 
-$(eval $(call EXECUTION_RULE,ark_brusselator1D_imexmri,$$< 0 0.1))
+$(eval $(call EXECUTION_RULE,ark_brusselator1D_imexmri,$$< 0 0.006))

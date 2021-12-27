@@ -60,6 +60,10 @@ open Sundials
 module BBD = Cvode_bbd
 open Bigarray
 
+let lt600 =
+  let n, _, _ = Config.sundials_version in
+  n < 6
+
 let local_array = Nvector_parallel.local_array
 let slice = Array1.sub
 let printf = Printf.printf
@@ -609,7 +613,8 @@ let main () =
     if my_pe = 0 then
       printf "\n\nPreconditioner type is:  jpre = %s\n\n"
              (if jpre = Cvode.Spils.PrecLeft
-              then "PREC_LEFT" else "PREC_RIGHT");
+              then (if lt600 then "PREC_LEFT" else "SUN_PREC_LEFT")
+              else (if lt600 then "PREC_RIGHT" else "SUN_PREC_RIGHT"));
 
     (* In loop over output points, call CVode, print results, test for error *)
     let tout = ref twohr in

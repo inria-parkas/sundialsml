@@ -32,6 +32,14 @@
 open Sundials
 let printf = Printf.printf
 
+let ge580 =
+  let n, m, _ = Config.sundials_version in
+  n > 5 || (n = 5 && m >= 8)
+
+let ge600 =
+  let n, _, _ = Config.sundials_version in
+  n >= 6
+
 (* problem constants *)
 let neq          = 3 (* number of equations *)
 
@@ -56,6 +64,19 @@ let pi           = 3.1415926535898 (* real pi   *)
 let xtrue = half
 let ytrue = one
 let ztrue = -. pi /. six
+
+let int_of_orthaa = function
+  | Kinsol.MGS -> 0
+  | Kinsol.ICWY -> 1
+  | Kinsol.CGS2 -> 2
+  | Kinsol.DCGS2 -> 3
+
+let orthaa_of_int = function
+  | 0 -> Kinsol.MGS
+  | 1 -> Kinsol.ICWY
+  | 2 -> Kinsol.CGS2
+  | 3 -> Kinsol.DCGS2
+  | _ -> failwith "invalid orthaa type"
 
 (* -----------------------------------------------------------------------------
  * Nonlinear system
@@ -111,21 +132,44 @@ let check_ans (data : RealArray.t) tol =
  * Main program
  * ---------------------------------------------------------------------------*)
 let main () =
-  let tol = 100.0 *. sqrt Config.unit_roundoff in
-  let mxiter = if Sundials_impl.Version.lt580 then 10 else 30 in
+  let a_tol = ref (100.0 *. sqrt Config.unit_roundoff) in
+  let a_mxiter = ref (if Sundials_impl.Version.lt580 then 10 else 30) in
+  let a_maa = ref 0 in          (* no acceleration *)
+  let a_delay_aa = ref 0 in     (* no delay *)
+  let a_damping_fp = ref 1.0 in (* no FP damping *)
+  let a_damping_aa = ref 1.0 in (* no damping *)
+  let a_orth_aa = ref 0 in      (* MGS *)
+  Arg.(parse
+    [
+      "--tol", Set_float a_tol,
+      "nonlinear solver tolerance\n";
 
-  (* Check if a acceleration/dampling values were provided *)
-  let maa =
-    if Array.length Sys.argv > 1 then int_of_string Sys.argv.(1)
-    else 0 (* no acceleration *)
-  in
-  let damping_aa =
-    if Array.length Sys.argv > 1 then float_of_string Sys.argv.(2)
-    else 1.0 (* no damping *)
-  in
+      "--maxiter", Set_int a_mxiter,
+      "max number of nonlinear iterations\n";
 
-  let delay_aa = 0 in     (* no delay *)
-  let damping_fp = 1.0 in (* no FP damping *)
+      "--m_aa", Set_int a_maa,
+      "number of Anderson acceleration vectors\n";
+
+      "--delay_aa", Set_int a_delay_aa,
+      "Anderson acceleration delay\n";
+
+      "--damping_fp", Set_float a_damping_fp,
+      "fixed point damping parameter\n";
+
+      "--damping_aa", Set_float a_damping_aa,
+      "Anderson acceleration damping parameter\n";
+
+      "---orth_aa", Set_int a_orth_aa,
+      "Anderson acceleration orthogonalization method\n"
+    ] (fun _ -> ()) "\n Command line options:\n");
+
+  let tol = !a_tol in
+  let mxiter = !a_mxiter in
+  let maa = !a_maa in
+  let delay_aa = !a_delay_aa in
+  let damping_fp = !a_damping_fp in
+  let damping_aa = !a_damping_aa in
+  let orthaa = orthaa_of_int !a_orth_aa in
 
   (* -------------------------
    * Print problem description
@@ -140,18 +184,26 @@ let main () =
   printf "    y = %g\n" ytrue;
   printf "    z = %g\n" ztrue;
   printf "Solution method: Anderson accelerated fixed point iteration.\n";
-  if Sundials_impl.Version.lt580 then begin
-    printf "    tolerance = %g\n" tol;
-    printf "    max iters = %d\n" mxiter;
-    printf "    accel vec = %d\n" maa;
-    printf "    damping   = %g\n" damping_aa
-  end else begin
+  if ge600 then begin
+    printf "    tolerance    = %g\n" tol;
+    printf "    max iters    = %d\n" mxiter;
+    printf "    m_aa         = %d\n" maa;
+    printf "    delay_aa     = %d\n" delay_aa;
+    printf "    damping_aa   = %g\n" damping_aa;
+    printf "    damping_fp   = %g\n" damping_fp;
+    printf "    orth routine = %d\n" (int_of_orthaa orthaa)
+  end else if ge580 then begin
     printf "    tolerance  = %g\n" tol;
     printf "    max iters  = %d\n" mxiter;
     printf "    m_aa       = %d\n" maa;
     printf "    delay_aa   = %d\n" delay_aa;
     printf "    damping_aa = %g\n" damping_aa;
     printf "    damping_fp = %g\n" damping_fp
+  end else begin
+    printf "    tolerance = %g\n" tol;
+    printf "    max iters = %d\n" mxiter;
+    printf "    accel vec = %d\n" maa;
+    printf "    damping   = %g\n" damping_aa
   end;
 
   (* --------------------------------------
@@ -167,7 +219,7 @@ let main () =
 
   (* Set number of prior residuals used in Anderson acceleration *)
   (* Set maximum number of iterations *)
-  let kmem = Kinsol.init ~max_iters:mxiter ~maa fpfunction u in
+  let kmem = Kinsol.init ~max_iters:mxiter ~orthaa ~maa fpfunction u in
 
   (* -------------------
    * Set optional inputs

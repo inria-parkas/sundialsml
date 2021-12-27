@@ -104,6 +104,10 @@ module Densemat = Matrix.ArrayDense
 open Bigarray
 let unwrap = Nvector.unwrap
 
+let lt600 =
+  let n, _, _ = Sundials.Config.sundials_version in
+  n < 6
+
 let printf = Printf.printf
 let sqr x = x *. x
 
@@ -786,10 +790,13 @@ let print_intro () =
 
 let print_header jpre gstype =
   printf "\n\nPreconditioner type is           jpre = %s\n"
-    (if jpre = ARKStep.Spils.PrecLeft then "PREC_LEFT" else "PREC_RIGHT");
+    (if jpre = ARKStep.Spils.PrecLeft
+     then (if lt600 then "PREC_LEFT" else "SUN_PREC_LEFT")
+     else (if lt600 then "PREC_RIGHT" else "SUN_PREC_RIGHT"));
   printf"\nGram-Schmidt method type is    gstype = %s\n\n\n"
     (if gstype = ARKStep.Spils.ModifiedGS
-     then "MODIFIED_GS" else "CLASSICAL_GS")
+     then (if lt600 then "MODIFIED_GS" else "SUN_MODIFIED_GS")
+     else (if lt600 then "CLASSICAL_GS" else "SUN_CLASSICAL_GS"))
 
 let print_all_species (cdata : RealArray.t) ns mxns t =
   printf "c values at t = %g:\n\n" t;

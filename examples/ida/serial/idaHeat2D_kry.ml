@@ -35,6 +35,10 @@
 
 open Sundials
 
+let lt600 =
+  let n, _, _ = Config.sundials_version in
+  n < 6
+
 (* Problem Constants *)
 let nout  = 11
 let mgrid = 10
@@ -257,7 +261,9 @@ let main () =
 
   (* Print case number, output table heading, and initial line of table. *)
 
-  printf "\n\nCase 1: gsytpe = MODIFIED_GS\n";
+  if lt600
+  then printf "\n\nCase 1: gsytpe = MODIFIED_GS\n"
+  else printf "\n\nCase 1: gsytpe = SUN_MODIFIED_GS\n";
   printf "\n   Output Summary (umax = max-norm of solution) \n\n";
   printf "  time     umax       k  nst  nni  nje   nre   nreLS    h      npe nps\n" ;
   printf "----------------------------------------------------------------------\n";
@@ -296,7 +302,9 @@ let main () =
   Ida.Spils.(set_gs_type lsolver ClassicalGS);
 
   (* Print case number, output table heading, and initial line of table. *)
-  printf "\n\nCase 2: gstype = CLASSICAL_GS\n";
+  if lt600
+  then printf "\n\nCase 2: gstype = CLASSICAL_GS\n"
+  else printf "\n\nCase 2: gstype = SUN_CLASSICAL_GS\n";
   printf "\n   Output Summary (umax = max-norm of solution) \n\n";
   printf "  time     umax       k  nst  nni  nje   nre   nreLS    h      npe nps\n" ;
   printf "----------------------------------------------------------------------\n";
