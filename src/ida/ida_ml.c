@@ -792,6 +792,9 @@ CAMLprim value sunml_ida_set_jac_times_resfn(value vdata, value vhas_resfn)
 #if 400 <= SUNDIALS_LIB_VERSION
 // hack to work around lack of CVodeGetUserData
 typedef struct {
+#if 600 <= SUNDIALS_LIB_VERSION
+  SUNContext ida_sunctx;
+#endif
   sunrealtype ida_uround;
   IDAResFn ida_res;
   void     *ida_user_data;

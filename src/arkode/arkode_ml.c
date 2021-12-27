@@ -1077,6 +1077,9 @@ CAMLprim value sunml_arkode_ark_set_jac_times_rhsfn(value vdata,
 #if 400 <= SUNDIALS_LIB_VERSION
 // hack to work around lack of CVodeGetUserData
 typedef struct {
+#if 600 <= SUNDIALS_LIB_VERSION
+  SUNContext sunctx;
+#endif
   sunrealtype uround;
   void *user_data;
   //...

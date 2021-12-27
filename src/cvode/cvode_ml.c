@@ -904,6 +904,9 @@ CAMLprim value sunml_cvode_set_jac_times_rhsfn(value vdata, value vhas_rhsfn)
 
 // hack to work around lack of CVodeGetUserData
 typedef struct {
+#if 600 <= SUNDIALS_LIB_VERSION
+  SUNContext cv_sunctx;
+#endif
   sunrealtype cv_uround;
   CVRhsFn cv_f;
   void *cv_user_data;

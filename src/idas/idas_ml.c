@@ -1202,6 +1202,9 @@ CAMLprim value sunml_idas_quad_get_stats(value vdata)
 #if 400 <= SUNDIALS_LIB_VERSION
 // hack to work around lack of CVodeGetUserData
 typedef struct {
+#if 600 <= SUNDIALS_LIB_VERSION
+  SUNContext ida_sunctx;
+#endif
   sunrealtype ida_uround;
   IDAResFn ida_res;
   void     *ida_user_data;

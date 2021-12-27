@@ -1089,6 +1089,9 @@ CAMLprim value sunml_cvodes_quad_get_err_weights(value vdata, value veqweight)
 #if 400 <= SUNDIALS_LIB_VERSION
 // hack to work around lack of CVodeGetUserData
 typedef struct {
+#if 600 <= SUNDIALS_LIB_VERSION
+  SUNContext cv_sunctx;
+#endif
   sunrealtype cv_uround;
   CVRhsFn cv_f;
   void *cv_user_data;
