@@ -507,7 +507,7 @@ esac
 ml_cppflags="-P -traditional-cpp"
 case `uname -s` in
     Darwin*)
-	ml_cppflags="${ml_cppflags} -Wno-invalid-pp-token"
+	ml_cppflags="${ml_cppflags} -x c -Wno-invalid-pp-token"
 	;;
     *)
 	ml_cppflags="${ml_cppflags} -x c"

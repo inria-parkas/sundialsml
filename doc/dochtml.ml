@@ -10,6 +10,8 @@
 (*                                                                     *)
 (***********************************************************************)
 
+[@@@ocaml.warning "-7"]
+
 (**
  Custom tags for the ocamldoc comments:
     @cvode          link to Sundials CVODE documentation
@@ -43,7 +45,7 @@ let broken_sundials_link div_class doc_root page anchor title =
       <a href=\"%s%s.html%s\">%s</a></div></li>"
     div_class doc_root page anchor title
 
-let sundials_link div_class doc_root page anchor title =
+let sundials_link div_class _doc_root _page _anchor title =
   Printf.sprintf
     "<li><div class=\"sundials %s\">\
       <span class=\"seesundials\">See sundials: </span>%s</div></li>"
@@ -58,7 +60,7 @@ struct
     val rex = Str.regexp "<\\([^#>]*\\)\\(#[^)]*\\)?> \\(.*\\)"
 
     val variables = [
-      ("version", let major, minor, patch, binding = Sundials_configuration.version in
+      ("version", let major, minor, patch, _binding = Sundials_configuration.version in
                   Printf.sprintf "%d.%d.%d" major minor patch)
     ]
 
@@ -76,7 +78,7 @@ struct
       (page, anchor, title)
 
     method private html_of_missing t =
-      let (page, anchor, title) = self#split_text t in
+      let (_page, _anchor, title) = self#split_text t in
       Printf.sprintf
         "<div class=\"sundials\"><span class=\"seesundials\">See sundials: </span>%s</div>"
         title
@@ -192,7 +194,7 @@ struct
       try
         match List.assoc tag custom_functions, text with
         | (Simple f, [Odoc_info.Raw s]) -> Buffer.add_string b (f s)
-        | (Simple f, _) ->
+        | (Simple _, _) ->
             Odoc_info.warning (Printf.sprintf 
               "custom tags (%s) must be followed by plain text." tag)
         | (Full f, _) -> f b text
