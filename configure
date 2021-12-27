@@ -199,6 +199,8 @@ END_HELP_TEXT
 	LAPACKLIB="${value}";;
     SUNDIALS_EXAMPLES_DIR)
 	SUNDIALS_EXAMPLES_DIR="${value}";;
+    CC)
+	CC="${value}";;
     CPPFLAGS)
 	CPPFLAGS="${value}";;
     CFLAGS)
@@ -246,10 +248,11 @@ elif [ -f /etc/arch-release ]; then
 
 elif [ -f /etc/alpine-release ]; then
     distribution=alpine
-
 else
-    distribution=unknown
-
+    case $(uname -s) in
+	Darwin) distribution=macos ;;
+	*) distribution=unknown ;;
+    esac
 fi
 
 case "${os_distribution}" in
@@ -327,6 +330,9 @@ if [ x"${KLU_INCLUDE_DIR}" != x ]; then
 elif [ "${distribution}" = debian ] || [ "${distribution}" = centos ]; then
     klu_inc_path="/usr/include/suitesparse/"
     Iklu_inc_path="-isystem ${klu_inc_path}"
+elif [ "${distribution}" = macos ]; then
+    klu_inc_path="/usr/local/include/"
+    Iklu_inc_path="-isystem ${klu_inc_path}"
 fi
 if [ x"${KLU_LIBRARY_DIR}" != x ]; then
     klu_lib_path="${KLU_LIBRARY_DIR%/}"
@@ -368,7 +374,7 @@ if [ x"${MATHJAX}" != x ]; then
 fi
 
 CC=${CC:-cc}
-CPP=${CPP:-cc -E}
+CPP=${CPP:-${CC} -E}
 LAPACKLIB=${LAPACKLIB:-"-llapack"}
 error=""
 
@@ -390,7 +396,7 @@ if [ "x${prefix}" = x ]; then
 	    fi
 	    if [ "x${sundials_inc_path}" = x ]; then
 		sundials_inc_path="${prefix}include/"
-		Isundials_inc_path="-isystem I${sundials_inc_path}"
+		Isundials_inc_path="-isystem ${sundials_inc_path}"
 	    fi
 	    if [ "x${superlumt_lib_path}" = x ]; then
 		superlumt_lib_path="${prefix}lib/"
