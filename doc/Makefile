@@ -49,7 +49,7 @@ DOC_SOURCES=$(filter-out %_impl.cmi, $(CMI_MAIN))			\
 html/index.html: OCAML_DOC_ROOT="$(OCAML_DOC_ROOT_DEFAULT)"
 html/index.html: INCLUDES += $(MPI_INCLUDES)
 html/index.html: html $(SUNDIALS_DOCS) intro.doc
-	$(OCAMLDOC) -g $(SUNDIALS_DOCS) $(INCLUDES) $(SUBDIRS:%=-I ../src/%) \
+	$(OCAMLDOC) -html -g $(SUNDIALS_DOCS) $(INCLUDES) $(SUBDIRS:%=-I ../src/%) \
 	    -charset utf-8						     \
 	    -short-functors						     \
 	    -colorize-code						     \
