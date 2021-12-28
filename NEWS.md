@@ -6,6 +6,9 @@ numerical solvers.
 Notes:
 * Uses SUNContext everywhere at C level, but OCaml user code implicitly uses 
   a global context and thus does not require changes.
+* Supports SUNProfiler for library and in OCaml routines.
+* Restores links to the (also restored) online Sundials docs.
+* Supports implicit and imex features in Arkode.MRIStep.
 
 Sundials/ML 5.8.0p0 (December 2021)
 ------------------------------------
