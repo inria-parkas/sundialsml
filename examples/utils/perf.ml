@@ -1,5 +1,5 @@
 let synopsis =
-"perf -r <min time> <command>
+  {|perf -r <min time> <command>
 
      Determine the number of reps needed for <command> to take at least
      about <min time> (wall-clock time, in seconds; fractional value
@@ -10,8 +10,7 @@ perf -m <reps file> <n> <command>
 
      Take <n> measurements of the execution time (wall-clock time) of
      <command> with NUM_REPS set to the value recorded in <reps file>.
-     <reps file> should contain the output of a previous run of perf -r.
-"
+     <reps file> should contain the output of a previous run of perf -r.|}
 let (@@) f x = f x
 let init_stop_watch executable args =
   let dev_null =
@@ -52,7 +51,7 @@ let init_stop_watch executable args =
        failwith ("Command " ^ cmd ()
                  ^ " killed by signal "
                  ^ string_of_int n)
-    | Unix.WSTOPPED n ->
+    | Unix.WSTOPPED _ ->
        failwith ("Command stopped by signal - execution time "
                  ^ "measurement is compromised.")
   in
@@ -127,7 +126,7 @@ let determine_reps min_time executable args =
 let measure_performance reps n executable args =
   let measure = init_stop_watch executable (Array.of_list args) in
   Printf.printf "# NUM_REPS=%d\n" reps; flush stdout;
-  for i = 1 to n do
+  for _ = 1 to n do
     let t = measure reps in
     Printf.printf "%.2f\n" t; flush stdout;
   done

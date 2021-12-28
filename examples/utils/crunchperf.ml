@@ -1,7 +1,7 @@
 (* Separated from perf.ml since updating the formatting shouldn't
    require re-running performance measurements.  *)
 let synopsis =
-  "crunchperf -c <ocaml> <sundials> <name>
+  {|crunchperf -c <ocaml> <sundials> <name>
 
      Combine timing results from previous runs of perf.  <ocaml> should
      list time for OCaml code, <sundials> the time for C code, and <name>
@@ -47,8 +47,7 @@ crunchperf --conf <file>
 
      Print the recorded confidence level: note this is the
      complement of the P-value, so if <file> came from
-     crunchperf -i 0.05, then the reported confidence level is 95%.
-"
+     crunchperf -i 0.05, then the reported confidence level is 95%.|}
 
 (* Helpers *)
 
@@ -241,7 +240,7 @@ let parse_error l msg =
   failwith (l.file ^ ":" ^ string_of_int l.line ^ ": " ^ msg)
 
 let load_raw_lines ~expect_ids records lines =
-  let insert l _ reps cmed ml c _ name _ =
+  let insert l _ reps _cmed ml c _ name _ =
     try let r = Hashtbl.find records name in
       if reps <> r.reps then parse_error l "inconsistent reps field";
       r.ml_times <- ml::r.ml_times;
@@ -294,7 +293,7 @@ let load paths =
           load_intv_lines confidence intv_records lines
       | l::lines when l.str = header_with_id ->
          load_raw_lines ~expect_ids:true raw_records lines
-      | l::lines -> load_raw_lines ~expect_ids:false raw_records lines
+      | _::lines -> load_raw_lines ~expect_ids:false raw_records lines
       | [] -> Printf.fprintf stderr "Warning: %s is empty\n" path)
      paths;
   if Hashtbl.length intv_records = 0
@@ -333,6 +332,7 @@ let rank_sums xs ys =
   let rank_sum = Array.fold_left (fun a (_, r) -> a +. !r) 0. in
   (rank_sum xs, rank_sum ys)
 
+(*
 (* FIXME: This is really slow because it re-launches octave over and
    over.  *)
 let u_test ?(side="<>") xs ys =
@@ -357,6 +357,7 @@ let u_test ?(side="<>") xs ys =
     close_in pipe;
     ret
   with e -> (close_in pipe; raise e)
+*)
 
 let find_octave_path () =
   let path = try Unix.getenv "OCTAVE_CLI"
@@ -371,7 +372,7 @@ let find_octave_path () =
      | Unix.WEXITED 141 -> (* pipe error *)
         failwith (Printf.sprintf "Can't invoke octave; could be a version issue")
      | _ -> raise Not_found)
-  with e ->
+  with _ ->
     failwith
       (Printf.sprintf
          "Error: Can't find octave at path %s; install GNU octave and/or point OCTAVE_CLI to the octave-cli binary, and try again."
@@ -635,7 +636,7 @@ let recover_reps file =
 let print_confidence file =
   match load [file] with
   | RawData _ -> failwith "bad input: no P-value recorded"
-  | IntvData (pvalue, records) ->
+  | IntvData (pvalue, _records) ->
      Printf.printf "%g" ((1. -. pvalue) *. 100.)
 
 let check_external_deps deps =
