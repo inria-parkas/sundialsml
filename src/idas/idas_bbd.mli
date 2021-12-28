@@ -97,7 +97,7 @@ val reinit : parallel_bsession -> ?dqrely:float -> int -> int -> unit
 (** Returns the sizes of the real and integer workspaces used by the
     BBD preconditioner.
 
-    @idais IDABBDPrecGetWorkSpace
+    @idas IDABBDPrecGetWorkSpace
     @return ([real_size], [integer_size]) *)
 val get_work_space : parallel_bsession -> int * int
 

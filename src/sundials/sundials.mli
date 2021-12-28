@@ -431,7 +431,8 @@ module Matrix = Sundials_Matrix
 (** Generic linear solvers.
 
     Sundials provides a set of functions for instantiating linear solvers from
-    two families: {!module:Direct} and {!module:Iterative}. Any instance may
+    two families: {!module:Sundials_LinearSolver.Direct} and
+    {!module:Sundials_LinearSolver.Iterative}. Any instance may
     be associated with at most one solver session.
 
     @linsol <SUNLinSol_API_link.html#the-sunlinearsolver-api> The SUNLinearSolver API
@@ -442,7 +443,8 @@ module LinearSolver = Sundials_LinearSolver
 (** Generic nonlinear solvers.
 
     Sundials provides generic nonlinear solvers of two main types:
-    {!module:Newton} and {!module:FixedPoint}. An instance of a nonlinear
+    {!module:Sundials_NonlinearSolver.Newton} and
+    {!module:Sundials_NonlinearSolver.FixedPoint}. An instance of a nonlinear
     solver may only be associated with at most one integrator session at
     a time.
 

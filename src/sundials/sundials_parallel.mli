@@ -18,29 +18,29 @@
 
 (** Performance profiling using MPI
 
-    @cvode <node> SUNProfiler
+    @profiler SUNProfiler
     @since 6.0.0 *)
 module Profiler : sig
 
   (** Creates a new profiler with the given name.
 
-      @cvode <node> SUNProfiler_Create *)
+      @profiler SUNProfiler_Create *)
   val make : Mpi.communicator -> string -> Sundials.Profiler.t
 
 end
 
 (** Contexts for creating Sundials values using MPI
 
-    Provides an alternative to {!Sundials_context.make} that allows
+    Provides an alternative to {!Sundials.Context.make} that allows
     specifying an MPI communciator.
 
-    @cvode <node> SUNContext
+    @context SUNContext
     @since 6.0.0 *)
 module Context : sig
 
   (** Create a new context.
 
-      @cvode <node> SUNContext_Create *)
+      @context SUNContext_Create *)
   val make :
        ?profiler:Sundials.Profiler.t
     -> Mpi.communicator
