@@ -981,7 +981,8 @@ CAMLprim value sunml_nvec_par_enabledotprodmultilocal(value vx, value vv)
 #if 600 <= SUNDIALS_LIB_VERSION
     N_VEnableDotProdMultiLocal_Parallel(NVEC_VAL(vx), Bool_val(vv));
 #else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+    if (Bool_val(vv))
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn (Val_unit);
 }
