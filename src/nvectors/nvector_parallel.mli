@@ -13,11 +13,11 @@
 
 (** The standard parallel nvectors of Sundials (requires MPI).
 
+    @nvector <NVector_links.html#the-nvector-parallel-module> The NVECTOR_PARALLEL Module
     @version VERSION()
     @author Timothy Bourke (Inria/ENS)
     @author Jun Inoue (Inria/ENS)
-    @author Marc Pouzet (UPMC/ENS/Inria)
-    @cvode <node7#ss:nvec_par> NVECTOR_PARALLEL *)
+    @author Marc Pouzet (UPMC/ENS/Inria) *)
 
 open Sundials
 
@@ -46,7 +46,8 @@ exception IncorrectGlobalSize
     The optional argument enables the fused and array operations for a given
     nvector (they are disabled by default).
 
-    @cvode <node5> N_VEnableFusedOps_Parallel
+    @nvector N_VNew_Parallel
+    @nvector N_VEnableFusedOps_Parallel
     @raise Config.NotImplementedBySundialsVersion Fused and array operations not available. *)
 val make :
      ?context:Context.t
@@ -66,7 +67,8 @@ val clone : t -> t
     The optional arguments permit to enable all the fused and array operations
     for a given nvector (they are disabled by default).
 
-    @cvode <node5> N_VEnableFusedOps_Parallel
+    @nvector N_VMake_Parallel
+    @nvector N_VEnableFusedOps_Parallel
     @raise Config.NotImplementedBySundialsVersion Fused and array operations not available. *)
 val wrap : ?context:Context.t -> ?with_fused_ops:bool -> data -> t
 
@@ -93,7 +95,7 @@ val communicator : t -> Mpi.communicator
 
 (** Return the communicator associated with any nvector.
 
-    @nocvode <node> N_VGetCommunicator
+    @nvector N_VGetCommunicator
     @since 5.0.0 *)
 val get_communicator : ('d, 'k) Nvector.t -> Mpi.communicator option
 
@@ -103,20 +105,20 @@ val hide_communicator : Mpi.communicator -> Nvector_custom.communicator
 (** Selectively enable or disable fused and array operations.
     The [with_fused_ops] argument enables or disables all such operations.
 
-    @since 4.0.0
-    @cvode <node5> N_VEnableFusedOps_Parallel
-    @cvode <node5> N_VEnableLinearCombination_Parallel
-    @cvode <node5> N_VEnableScaleAddMulti_Parallel
-    @cvode <node5> N_VEnableDotProdMulti_Parallel
-    @cvode <node5> N_VEnableLinearSumVectorArray_Parallel
-    @cvode <node5> N_VEnableScaleVectorArray_Parallel
-    @cvode <node5> N_VEnableConstVectorArray_Parallel
-    @cvode <node5> N_VEnableWrmsNormVectorArray_Parallel
-    @cvode <node5> N_VEnableWrmsNormMaskVectorArray_Parallel
-    @cvode <node5> N_VEnableScaleAddMultiVectorArray_Parallel
-    @cvode <node5> N_VEnableLinearCombinationVectorArray_Parallel
-    @cvode <node5> N_VEnableDotProdMultiLocal_Parallel
-    @raise Config.NotImplementedBySundialsVersion Fused and array operations not available. *)
+    @nvector N_VEnableFusedOps_Parallel
+    @nvector N_VEnableLinearCombination_Parallel
+    @nvector N_VEnableScaleAddMulti_Parallel
+    @nvector N_VEnableDotProdMulti_Parallel
+    @nvector N_VEnableLinearSumVectorArray_Parallel
+    @nvector N_VEnableScaleVectorArray_Parallel
+    @nvector N_VEnableConstVectorArray_Parallel
+    @nvector N_VEnableWrmsNormVectorArray_Parallel
+    @nvector N_VEnableWrmsNormMaskVectorArray_Parallel
+    @nvector N_VEnableScaleAddMultiVectorArray_Parallel
+    @nvector N_VEnableLinearCombinationVectorArray_Parallel
+    @nvector N_VEnableDotProdMultiLocal_Parallel
+    @raise Config.NotImplementedBySundialsVersion Fused and array operations not available.
+    @since 4.0.0 *)
 val enable :
      ?with_fused_ops                       : bool
   -> ?with_linear_combination              : bool
@@ -165,17 +167,18 @@ module Any : sig (* {{{ *)
       The optional argument enables the fused and array operations for a given
       nvector (they are disabled by default).
 
-      @cvode <node5> N_VEnableFusedOps_Parallel
-      @cvode <node5> N_VEnableLinearCombination_Parallel
-      @cvode <node5> N_VEnableScaleAddMulti_Parallel
-      @cvode <node5> N_VEnableDotProdMulti_Parallel
-      @cvode <node5> N_VEnableLinearSumVectorArray_Parallel
-      @cvode <node5> N_VEnableScaleVectorArray_Parallel
-      @cvode <node5> N_VEnableConstVectorArray_Parallel
-      @cvode <node5> N_VEnableWrmsNormVectorArray_Parallel
-      @cvode <node5> N_VEnableWrmsNormMaskVectorArray_Parallel
-      @cvode <node5> N_VEnableScaleAddMultiVectorArray_Parallel
-      @cvode <node5> N_VEnableLinearCombinationVectorArray_Parallel
+      @nvector N_VNew_Parallel
+      @nvector N_VEnableFusedOps_Parallel
+      @nvector N_VEnableLinearCombination_Parallel
+      @nvector N_VEnableScaleAddMulti_Parallel
+      @nvector N_VEnableDotProdMulti_Parallel
+      @nvector N_VEnableLinearSumVectorArray_Parallel
+      @nvector N_VEnableScaleVectorArray_Parallel
+      @nvector N_VEnableConstVectorArray_Parallel
+      @nvector N_VEnableWrmsNormVectorArray_Parallel
+      @nvector N_VEnableWrmsNormMaskVectorArray_Parallel
+      @nvector N_VEnableScaleAddMultiVectorArray_Parallel
+      @nvector N_VEnableLinearCombinationVectorArray_Parallel
       @raise Config.NotImplementedBySundialsVersion Fused and array operations not available.
       @since 5.0.0 *)
   val make :
@@ -203,18 +206,19 @@ module Any : sig (* {{{ *)
       The optional arguments permit to enable all the fused and array operations
       for a given nvector (they are disabled by default).
 
-      @cvode <node5> N_VEnableFusedOps_Parallel
-      @cvode <node5> N_VEnableLinearCombination_Parallel
-      @cvode <node5> N_VEnableScaleAddMulti_Parallel
-      @cvode <node5> N_VEnableDotProdMulti_Parallel
-      @cvode <node5> N_VEnableLinearSumVectorArray_Parallel
-      @cvode <node5> N_VEnableScaleVectorArray_Parallel
-      @cvode <node5> N_VEnableConstVectorArray_Parallel
-      @cvode <node5> N_VEnableWrmsNormVectorArray_Parallel
-      @cvode <node5> N_VEnableWrmsNormMaskVectorArray_Parallel
-      @cvode <node5> N_VEnableScaleAddMultiVectorArray_Parallel
-      @cvode <node5> N_VEnableLinearCombinationVectorArray_Parallel
-      @cvode <node5> N_VEnableDotProdMultiLocal_Parallel
+      @nvector N_VMake_Parallel
+      @nvector N_VEnableFusedOps_Parallel
+      @nvector N_VEnableLinearCombination_Parallel
+      @nvector N_VEnableScaleAddMulti_Parallel
+      @nvector N_VEnableDotProdMulti_Parallel
+      @nvector N_VEnableLinearSumVectorArray_Parallel
+      @nvector N_VEnableScaleVectorArray_Parallel
+      @nvector N_VEnableConstVectorArray_Parallel
+      @nvector N_VEnableWrmsNormVectorArray_Parallel
+      @nvector N_VEnableWrmsNormMaskVectorArray_Parallel
+      @nvector N_VEnableScaleAddMultiVectorArray_Parallel
+      @nvector N_VEnableLinearCombinationVectorArray_Parallel
+      @nvector N_VEnableDotProdMultiLocal_Parallel
       @raise Config.NotImplementedBySundialsVersion Fused and array operations not available.
       @since 5.0.0 *)
   val wrap :
@@ -242,21 +246,21 @@ module Any : sig (* {{{ *)
   (** Selectively enable or disable fused and array operations.
       The [with_fused_ops] argument enables or disables all such operations.
 
-      @since 4.0.0
-      @cvode <node5> N_VEnableFusedOps_Parallel
-      @cvode <node5> N_VEnableLinearCombination_Parallel
-      @cvode <node5> N_VEnableScaleAddMulti_Parallel
-      @cvode <node5> N_VEnableDotProdMulti_Parallel
-      @cvode <node5> N_VEnableLinearSumVectorArray_Parallel
-      @cvode <node5> N_VEnableScaleVectorArray_Parallel
-      @cvode <node5> N_VEnableConstVectorArray_Parallel
-      @cvode <node5> N_VEnableWrmsNormVectorArray_Parallel
-      @cvode <node5> N_VEnableWrmsNormMaskVectorArray_Parallel
-      @cvode <node5> N_VEnableScaleAddMultiVectorArray_Parallel
-      @cvode <node5> N_VEnableLinearCombinationVectorArray_Parallel
-      @cvode <node5> N_VEnableDotProdMultiLocal_Parallel
+      @nvector N_VEnableFusedOps_Parallel
+      @nvector N_VEnableLinearCombination_Parallel
+      @nvector N_VEnableScaleAddMulti_Parallel
+      @nvector N_VEnableDotProdMulti_Parallel
+      @nvector N_VEnableLinearSumVectorArray_Parallel
+      @nvector N_VEnableScaleVectorArray_Parallel
+      @nvector N_VEnableConstVectorArray_Parallel
+      @nvector N_VEnableWrmsNormVectorArray_Parallel
+      @nvector N_VEnableWrmsNormMaskVectorArray_Parallel
+      @nvector N_VEnableScaleAddMultiVectorArray_Parallel
+      @nvector N_VEnableLinearCombinationVectorArray_Parallel
+      @nvector N_VEnableDotProdMultiLocal_Parallel
       @raise Nvector.BadGenericType If not called on a parallel nvector
-      @raise Config.NotImplementedBySundialsVersion Fused and array operations not available. *)
+      @raise Config.NotImplementedBySundialsVersion Fused and array operations not available.
+      @since 4.0.0 *)
   val enable :
        ?with_fused_ops                       : bool
     -> ?with_linear_combination              : bool

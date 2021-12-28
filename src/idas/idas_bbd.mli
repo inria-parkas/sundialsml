@@ -17,7 +17,7 @@
     @author Timothy Bourke (Inria/ENS)
     @author Jun Inoue (Inria/ENS)
     @author Marc Pouzet (UPMC/ENS/Inria)
-    @idas <node7#SECTION00742000000000000000> Using the band-block-diagonal preconditioner IDABBDPRE
+    @idas <Usage/ADJ.html?highlight=IDABBDPrecReInitB#using-the-band-block-diagonal-preconditioner-for-backward-problems> Using the band-block-diagonal preconditioner for backward problems
  *)
 
 (** Alias for sessions based on parallel nvectors. *)
@@ -55,7 +55,7 @@ type bandwidths = Ida_bbd.bandwidths =
     Raising {!Sundials.RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.
 
-    @idas <node7#SECTION00742200000000000000> IDABBDLocalFnB *)
+    @idas_adj IDABBDLocalFnB *)
 type local_fn = Nvector_parallel.data Idas.Adjoint.bresfn_args
                 -> Nvector_parallel.data
                 -> unit
@@ -69,7 +69,7 @@ type local_fn = Nvector_parallel.data Idas.Adjoint.bresfn_args
     Raising {!Sundials.RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.
 
-    @idas <node7#SECTION00742200000000000000> IDABBDCommFnB *)
+    @idas_adj IDABBDCommFnB *)
 type comm_fn = Nvector_parallel.data Idas.Adjoint.bresfn_args
                -> unit
 
@@ -78,8 +78,7 @@ type comm_fn = Nvector_parallel.data Idas.Adjoint.bresfn_args
     [?dqrely], which specifies the relative increment in components of
     [y], and {!bandwidths}.
 
-    @idas <node7#sss:lin_solv_b> IDASpgmrB
-    @idas <node7#SECTION00742100000000000000> IDABBDPrecInitB *)
+    @idas_adj IDABBDPrecInitB *)
 val prec_left : ?dqrely:float
                 -> bandwidths
                 -> ?comm:comm_fn
@@ -92,19 +91,19 @@ val prec_left : ?dqrely:float
     the upper-half and lower-half bandwidths of the difference quotient
     Jacobian approximation.
 
-    @idas <node7#SECTION00742000000000000000> IDABBDPrecReInitB *)
+    @idas_adj IDABBDPrecReInitB *)
 val reinit : parallel_bsession -> ?dqrely:float -> int -> int -> unit
 
 (** Returns the sizes of the real and integer workspaces used by the
     BBD preconditioner.
 
-    @ida <node7#SECTION00742000000000000000> IDABBDPrecGetWorkSpace
+    @idais IDABBDPrecGetWorkSpace
     @return ([real_size], [integer_size]) *)
 val get_work_space : parallel_bsession -> int * int
 
 (** Returns the number of calls to the right-hand side function due to
     finite difference banded Jacobian approximation in the setup function.
 
-    @ida <node7#SECTION00742000000000000000> IDABBDPrecGetNumGfnEvals *)
+    @idas IDABBDPrecGetNumGfnEvals *)
 val get_num_gfn_evals : parallel_bsession -> int
 

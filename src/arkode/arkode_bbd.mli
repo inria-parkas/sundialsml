@@ -17,7 +17,7 @@
     @author Timothy Bourke (Inria/ENS)
     @author Jun Inoue (Inria/ENS)
     @author Marc Pouzet (UPMC/ENS/Inria)
-    @noarkode <node5#sss:arkbbdpre> Parallel band-block-diagonal preconditioner module *)
+    @arkode <Usage/ARKStep_c_interface/Preconditioners.html#a-parallel-band-block-diagonal-preconditioner-module> Parallel band-block-diagonal preconditioner module *)
 
 (** Alias for sessions based on parallel nvectors. *)
 type 'step parallel_session =
@@ -50,7 +50,7 @@ type bandwidths = Arkode_impl.ArkodeBbdTypes.bandwidths =
     Raising {!Sundials.RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.
 
-    @noarkode <node5#sss:arkbbdpre> ARKLocalFn *)
+    @arkode_precond ARKLocalFn *)
 type local_fn = float -> Nvector_parallel.data -> Nvector_parallel.data -> unit
 
 (** Functions that perform the interprocess communication necessary
@@ -61,7 +61,7 @@ type local_fn = float -> Nvector_parallel.data -> Nvector_parallel.data -> unit
     Raising {!Sundials.RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.
 
-    @noarkode <node5#sss:arkbbdpre> ARKCommFn *)
+    @arkode_precond ARKCommFn *)
 type comm_fn = float -> Nvector_parallel.data -> unit
 
 (** Left preconditioning using the Parallel Band-Block-Diagonal
@@ -72,7 +72,7 @@ type comm_fn = float -> Nvector_parallel.data -> unit
     NB: Band-Block-Diagonal preconditioners may not be used for problems
     involving a non-identity mass matrix.
 
-    @noarkode <node5#sss:arkbbdpre> ARKBBDPrecInit *)
+    @arkode_precond ARKBBDPrecInit *)
 val prec_left : ?dqrely:float
                 -> bandwidths
                 -> ?comm:comm_fn
@@ -84,7 +84,7 @@ val prec_left : ?dqrely:float
     [?dqrely], which specifies the relative increment in components of
     [y], and {!bandwidths}.
 
-    @noarkode <node5#sss:arkbbdpre> ARKBBDPrecInit *)
+    @arkode_precond ARKBBDPrecInit *)
 val prec_right : ?dqrely:float
                  -> bandwidths
                  -> ?comm:comm_fn
@@ -96,7 +96,7 @@ val prec_right : ?dqrely:float
     The difference quotient operation is controlled by [?dqrely],
     the relative increment in components of [y], and {!bandwidths}.
 
-    @noarkode <node5#sss:arkbbdpre> ARKBBDPrecInit *)
+    @arkode_precond ARKBBDPrecInit *)
 val prec_both : ?dqrely:float
                 -> bandwidths
                  -> ?comm:comm_fn
@@ -109,19 +109,19 @@ val prec_both : ?dqrely:float
     the upper-half and lower-half bandwidths of the difference quotient
     Jacobian approximation.
 
-    @noarkode <node5#sss:arkbbdpre> ARKBBDPrecReInit *)
+    @arkode_precond ARKBBDPrecReInit *)
 val reinit : 's parallel_session -> ?dqrely:float -> int -> int -> unit
 
 (** Returns the sizes of the real and integer workspaces used by the
     BBD preconditioner.
 
-    @noarkode <node5#sss:arkbbdpre> ARKBBDPrecGetWorkSpace
+    @arkode_precond ARKBBDPrecGetWorkSpace
     @return ([real_size], [integer_size]) *)
 val get_work_space : 's parallel_session -> int * int
 
 (** Returns the number of calls to the right-hand side function due to
     finite difference banded Jacobian approximation in the setup function.
 
-    @noarkode <node5#sss:arkbbdpre> ARKBBDPrecGetNumGfnEvals *)
+    @arkode_precond ARKBBDPrecGetNumGfnEvals *)
 val get_num_gfn_evals : 's parallel_session -> int
 

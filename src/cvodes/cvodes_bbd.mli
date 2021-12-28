@@ -17,7 +17,7 @@
     @author Timothy Bourke (Inria/ENS)
     @author Jun Inoue (Inria/ENS)
     @author Marc Pouzet (UPMC/ENS/Inria)
-    @cvodes <node7#SECTION00742000000000000000> Using the band-block-diagonal preconditioner CVBBDPRE
+    @cvodes <Usage/ADJ.html?highlight=CVBBDPrecInitB#using-the-band-block-diagonal-preconditioner-cvbbdpre> Using the band-block-diagonal preconditioner CVBBDPRE
  *)
 
 (** Alias for sessions based on parallel nvectors. *)
@@ -53,7 +53,7 @@ type bandwidths = Cvode_bbd.bandwidths =
     Raising {!Sundials.RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.
 
-    @cvodes <node7#SECTION00742200000000000000> CVBBDLocalFnB *)
+    @cvodes_adj CVBBDLocalFnB *)
 type local_fn = Nvector_parallel.data Cvodes.Adjoint.brhsfn_args
                 -> Nvector_parallel.data
                 -> unit
@@ -65,7 +65,7 @@ type local_fn = Nvector_parallel.data Cvodes.Adjoint.brhsfn_args
     Raising {!Sundials.RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.
 
-    @cvodes <node7#SECTION00742200000000000000> CVBBDCommFnB *)
+    @cvodes_adj CVBBDCommFnB *)
 type comm_fn = Nvector_parallel.data Cvodes.Adjoint.brhsfn_args -> unit
 
 (** Left preconditioning using the Parallel Band-Block-Diagonal
@@ -73,7 +73,7 @@ type comm_fn = Nvector_parallel.data Cvodes.Adjoint.brhsfn_args -> unit
     [?dqrely], which specifies the relative increment in components of
     [y], and {!bandwidths}.
 
-    @cvodes <node7#SECTION00742100000000000000> CVBBDPrecInitB *)
+    @cvodes_adj CVBBDPrecInitB *)
 val prec_left : ?dqrely:float
                 -> bandwidths
                 -> ?comm:comm_fn
@@ -85,7 +85,7 @@ val prec_left : ?dqrely:float
     [?dqrely], which specifies the relative increment in components of
     [y], and {!bandwidths}.
 
-    @cvodes <node7#SECTION00742100000000000000> CVBBDPrecInitB *)
+    @cvodes_adj CVBBDPrecInitB *)
 val prec_right : ?dqrely:float
                  -> bandwidths
                  -> ?comm:comm_fn
@@ -97,7 +97,7 @@ val prec_right : ?dqrely:float
     The difference quotient operation is controlled by [?dqrely],
     the relative increment in components of [y], and {!bandwidths}.
 
-    @cvodes <node7#SECTION00742100000000000000> CVBBDPrecInitB *)
+    @cvodes_adj CVBBDPrecInitB *)
 val prec_both : ?dqrely:float
                 -> bandwidths
                 -> ?comm:comm_fn
@@ -110,19 +110,19 @@ val prec_both : ?dqrely:float
     the upper-half and lower-half bandwidths of the difference quotient
     Jacobian approximation.
 
-    @cvodes <node7#SECTION00742000000000000000> CVBBDPrecReInitB *)
+    @cvodes_adj CVBBDPrecReInitB *)
 val reinit : parallel_bsession -> ?dqrely:float -> int -> int -> unit
 
 (** Returns the sizes of the real and integer workspaces used by the
     BBD preconditioner.
 
-    @cvode <node7#SECTION00742000000000000000> CVBBDPrecGetWorkSpace
+    @cvodes CVBBDPrecGetWorkSpace
     @return ([real_size], [integer_size]) *)
 val get_work_space : parallel_bsession -> int * int
 
 (** Returns the number of calls to the right-hand side function due to
     finite difference banded Jacobian approximation in the setup function.
 
-    @cvode <node7#SECTION00742000000000000000> CVBBDPrecGetNumGfnEvals *)
+    @cvodes CVBBDPrecGetNumGfnEvals *)
 val get_num_gfn_evals : parallel_bsession -> int
 

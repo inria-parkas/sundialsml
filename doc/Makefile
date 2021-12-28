@@ -7,12 +7,7 @@ doc: html/index.html
 
 DOCHTML_PP=$(CPP) $(ML_CPPFLAGS)
 DOCHTML_PLUGIN_PP=$(DOCHTML_PP)						\
-                  -DCVODE_DOC_ROOT=\"$(CVODE_DOC_ROOT_DEFAULT)\"	\
-                  -DCVODES_DOC_ROOT=\"$(CVODES_DOC_ROOT_DEFAULT)\"	\
-                  -DARKODE_DOC_ROOT=\"$(ARKODE_DOC_ROOT_DEFAULT)\"	\
-                  -DIDA_DOC_ROOT=\"$(IDA_DOC_ROOT_DEFAULT)\"		\
-                  -DIDAS_DOC_ROOT=\"$(IDAS_DOC_ROOT_DEFAULT)\"		\
-                  -DKINSOL_DOC_ROOT=\"$(KINSOL_DOC_ROOT_DEFAULT)\"	\
+                  -DSUNDIALS_DOC_ROOT=\"$(SUNDIALS_DOC_ROOT_DEFAULT)\"	\
                   -DMATHJAX_URL=\"$(MATHJAX_URL_DEFAULT)\"
 dochtml.cmo: INCLUDES += -I +ocamldoc -I ../src/sundials
 dochtml.cmo: OCAMLFLAGS += -pp '$(DOCHTML_PLUGIN_PP)'
@@ -35,12 +30,7 @@ sundials_docs.cmxs: ../src/sundials/sundials_configuration.cmx dochtml.cmx
 	@echo 1>&2 "first by typing 'make' at the root of the source tree."
 	@false
 
-DOC_URLS=$(if $(CVODE_DOC_ROOT),-cvode-doc-root "$(CVODE_DOC_ROOT)")	\
-	 $(if $(CVODES_DOC_ROOT),-cvodes-doc-root "$(CVODES_DOC_ROOT)")	\
-	 $(if $(ARKODE_DOC_ROOT),-arkode-doc-root "$(ARKODE_DOC_ROOT)")	\
-	 $(if $(IDA_DOC_ROOT),-ida-doc-root "$(IDA_DOC_ROOT)")		\
-	 $(if $(IDAS_DOC_ROOT),-idas-doc-root "$(IDAS_DOC_ROOT)")	\
-	 $(if $(KINSOL_DOC_ROOT),-kinsol-doc-root "$(KINSOL_DOC_ROOT)")	\
+DOC_URLS=$(if $(SUNDIALS_DOC_ROOT),-sundials-doc-root "$(SUNDIALS_DOC_ROOT)") \
 	 $(if $(MATHJAX_URL),-mathjax "$(MATHJAX_URL)")
 DOC_SOURCES=$(filter-out %_impl.cmi, $(CMI_MAIN))			\
 	    $(CMI_SENS) $(if $(MPI_ENABLED), $(CMI_MPI))		\

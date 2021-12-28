@@ -4,7 +4,7 @@
 (*                                                                     *)
 (*  Timothy Bourke (Inria), Jun Inoue (Inria), and Marc Pouzet (LIENS) *)
 (*                                                                     *)
-(*  Copyright 2014 Institut National de Recherche en Informatique et   *)
+(*  Copyright 2021 Institut National de Recherche en Informatique et   *)
 (*  en Automatique.  All rights reserved.  This file is distributed    *)
 (*  under a New BSD License, refer to the file LICENSE.                *)
 (*                                                                     *)
@@ -14,20 +14,40 @@
 
 (**
  Custom tags for the ocamldoc comments:
+    @sundials       link to Sundials documentation
+    @profiler       link to Sundials Profiler module documentation
+    @context        link to Sundials Context module documentation
     @cvode          link to Sundials CVODE documentation
     @cvodes         link to Sundials CVODES documentation
+    @cvodes_quad    link to Sundials CVODES Quadrature documentation
+    @cvodes_sens    link to Sundials CVODES Sensitivity documentation
+    @cvodes_adj     link to Sundials CVODES Adjoint documentation
     @arkode         link to Sundials ARKODE documentation
+    @arkode_ark     link to Sundials ARKODE ARKStep documentation
+    @arkode_erk     link to Sundials ARKODE ERKStep documentation
+    @arkode_mri     link to Sundials ARKODE MRIStep documentation
+    @arkode_bt      link to Sundials ARKODE Butcher Table documentation
+    @arkode_user    link to Sundials ARKODE User-supplied functions documentation
+    @arkode_precond link to Sundials ARKODE Preconditioners documentation
+    @arkode_innerstepper link to Sundials ARKODE Innerstepper documentation
+    @arkode_coupling link to Sundials ARKODE Coupling documentation
     @ida            link to Sundials IDA documentation
     @idas           link to Sundials IDAS documentation
+    @idas_quad      link to Sundials IDAS Quadrature documentation
+    @idas_sens      link to Sundials IDAS Sensitivity documentation
+    @idas_adj       link to Sundials IDAS Adjoint documentation
     @kinsol         link to Sundials KINSOL documentation
+    @nvector        link to Sundials NVECTOR documentation
+    @matrix         link to Sundials MATRIX documentation
+    @matrix_data    link to Sundials MATRIX data-specific documentation
+    @linsol         link to Sundials Linear Solver documentation
+    @linsol_module  link to Sundials Linear Solver module documentation
+    @nonlinsol         link to Sundials Nonlinear Solver documentation
+    @nonlinsol_module  link to Sundials Nonlinear Solver module documentation
+    @nodoc          No link is possible
  *)
 
-let cvode_doc_root = ref CVODE_DOC_ROOT
-let cvodes_doc_root = ref CVODES_DOC_ROOT
-let arkode_doc_root = ref ARKODE_DOC_ROOT
-let ida_doc_root = ref IDA_DOC_ROOT
-let idas_doc_root = ref IDAS_DOC_ROOT
-let kinsol_doc_root = ref KINSOL_DOC_ROOT
+let sundials_doc_root = ref SUNDIALS_DOC_ROOT
 
 let mathjax_url = ref MATHJAX_URL (* directory containing MathJax.js *)
 
@@ -38,18 +58,12 @@ type custom_type =
     Simple of (string -> string)
   | Full of (Buffer.t -> Odoc_info.text -> unit)
 
-let broken_sundials_link div_class doc_root page anchor title =
+let sundials_link div_class doc_root page anchor title =
   Printf.sprintf
-    "<li><div class=\"sundials %s\">\
-      <span class=\"seesundials\">See sundials: </span>\
-      <a href=\"%s%s.html%s\">%s</a></div></li>"
+    "<li class=\"sundials %s\">\
+      <span class=\"seesundials\">See Sundials: </span>\
+      <a href=\"%s%s%s\">%s</a></li>"
     div_class doc_root page anchor title
-
-let sundials_link div_class _doc_root _page _anchor title =
-  Printf.sprintf
-    "<li><div class=\"sundials %s\">\
-      <span class=\"seesundials\">See sundials: </span>%s</div></li>"
-    div_class title
 
 module Generator (G : Odoc_html.Html_generator) =
 struct
@@ -64,10 +78,11 @@ struct
                   Printf.sprintf "%d.%d.%d" major minor patch)
     ]
 
-    method private split_text (t:Odoc_info.text) =
+    method private split_text ?(page="Usage/index.html") (t:Odoc_info.text) =
       let s = Odoc_info.text_string_of_text t in
       if not (Str.string_match rex s 0) then
-        failwith "Bad parse!"
+        let first_word = List.hd (Str.split (Str.regexp " +") s) in
+        (page, "#c." ^ first_word, s)
       else
         let page = Str.matched_group 1 s
         and anchor = try
@@ -75,37 +90,151 @@ struct
             with Not_found -> ""
         and title = Str.matched_group 3 s
         in
-      (page, anchor, title)
+        (page, anchor, title)
 
     method private html_of_missing t =
       let (_page, _anchor, title) = self#split_text t in
       Printf.sprintf
-        "<div class=\"sundials\"><span class=\"seesundials\">See sundials: </span>%s</div>"
+        "<li class=\"sundials nodoc\">\
+          <span class=\"seesundials\">See Sundials: </span>%s\
+         </li>"
         title
+
+    method private html_of_sundials t =
+      let (page, anchor, title) = self#split_text t in
+      sundials_link "sundials" (!sundials_doc_root ^ "sundials/") page anchor title
+
+    method private html_of_profiler t =
+      let (page, anchor, title) = self#split_text ~page:"Profiling_link.html" t in
+      sundials_link "sundials" (!sundials_doc_root ^ "sundials/") page anchor title
+
+    method private html_of_context t =
+      let (page, anchor, title) = self#split_text ~page:"SUNContext_link.html" t in
+      sundials_link "sundials" (!sundials_doc_root ^ "sundials/") page anchor title
 
     method private html_of_cvode t =
       let (page, anchor, title) = self#split_text t in
-      sundials_link "cvode" !cvode_doc_root page anchor title
+      sundials_link "cvode" (!sundials_doc_root ^ "cvode/") page anchor title
 
     method private html_of_cvodes t =
-      let (page, anchor, title) = self#split_text t in
-      sundials_link "cvodes" !cvodes_doc_root page anchor title
+      let (page, anchor, title) = self#split_text ~page:"Usage/SIM.html" t in
+      sundials_link "cvodes" (!sundials_doc_root ^ "cvodes/") page anchor title
+
+    method private html_of_cvodes_quad t =
+      let (page, anchor, title) = self#split_text ~page:"Usage/SIM.html" t in
+      sundials_link "cvodes" (!sundials_doc_root ^ "cvodes/") page anchor title
+
+    method private html_of_cvodes_sens t =
+      let (page, anchor, title) = self#split_text ~page:"Usage/FSA.html" t in
+      sundials_link "cvodes" (!sundials_doc_root ^ "cvodes/") page anchor title
+
+    method private html_of_cvodes_adj t =
+      let (page, anchor, title) = self#split_text ~page:"Usage/ADJ.html" t in
+      sundials_link "cvodes" (!sundials_doc_root ^ "cvodes/") page anchor title
 
     method private html_of_arkode t =
       let (page, anchor, title) = self#split_text t in
-      sundials_link "arkode" !arkode_doc_root page anchor title
+      sundials_link "arkode" (!sundials_doc_root ^ "arkode/") page anchor title
+
+    method private html_of_arkode_ark t =
+      let (page, anchor, title) =
+        self#split_text ~page:"Usage/ARKStep_c_interface/User_callable.html" t
+      in
+      sundials_link "arkode" (!sundials_doc_root ^ "arkode/") page anchor title
+
+    method private html_of_arkode_erk t =
+      let (page, anchor, title) =
+        self#split_text ~page:"Usage/ERKStep_c_interface/User_callable.html" t
+      in
+      sundials_link "arkode" (!sundials_doc_root ^ "arkode/") page anchor title
+
+    method private html_of_arkode_mri t =
+      let (page, anchor, title) =
+        self#split_text ~page:"Usage/MRIStep_c_interface/User_callable.html" t
+      in
+      sundials_link "arkode" (!sundials_doc_root ^ "arkode/") page anchor title
+
+    method private html_of_arkode_bt t =
+      let (page, anchor, title) =
+        self#split_text ~page:"ARKodeButcherTable_link.html" t
+      in
+      sundials_link "arkode" (!sundials_doc_root ^ "arkode/") page anchor title
+
+    method private html_of_arkode_user t =
+      let (page, anchor, title) =
+        self#split_text ~page:"Usage/User_supplied.html" t
+      in
+      sundials_link "arkode" (!sundials_doc_root ^ "arkode/") page anchor title
+
+    method private html_of_arkode_precond t =
+      let (page, anchor, title) =
+        self#split_text ~page:"Usage/ARKStep_c_interface/Preconditioners.html" t
+      in
+      sundials_link "arkode" (!sundials_doc_root ^ "arkode/") page anchor title
+
+    method private html_of_arkode_innerstepper t =
+      let (page, anchor, title) =
+        self#split_text ~page:"Usage/MRIStep_c_interface/Custom_Inner_Stepper/Description.html" t
+      in
+      sundials_link "arkode" (!sundials_doc_root ^ "arkode/") page anchor title
+
+    method private html_of_arkode_coupling t =
+      let (page, anchor, title) =
+        self#split_text ~page:"Usage/MRIStep_c_interface/MRIStepCoupling.html" t
+      in
+      sundials_link "arkode" (!sundials_doc_root ^ "arkode/") page anchor title
 
     method private html_of_ida t =
       let (page, anchor, title) = self#split_text t in
-      sundials_link "ida" !ida_doc_root page anchor title
+      sundials_link "ida" (!sundials_doc_root ^ "ida/") page anchor title
 
     method private html_of_idas t =
-      let (page, anchor, title) = self#split_text t in
-      sundials_link "idas" !idas_doc_root page anchor title
+      let (page, anchor, title) = self#split_text ~page:"Usage/SIM.html" t in
+      sundials_link "idas" (!sundials_doc_root ^ "idas/") page anchor title
+
+    method private html_of_idas_quad t =
+      let (page, anchor, title) = self#split_text ~page:"Usage/SIM.html" t in
+      sundials_link "idas" (!sundials_doc_root ^ "idas/") page anchor title
+
+    method private html_of_idas_sens t =
+      let (page, anchor, title) = self#split_text ~page:"Usage/FSA.html" t in
+      sundials_link "idas" (!sundials_doc_root ^ "idas/") page anchor title
+
+    method private html_of_idas_adj t =
+      let (page, anchor, title) = self#split_text ~page:"Usage/ADJ.html" t in
+      sundials_link "idas" (!sundials_doc_root ^ "idas/") page anchor title
 
     method private html_of_kinsol t =
       let (page, anchor, title) = self#split_text t in
-      sundials_link "kinsol" !kinsol_doc_root page anchor title
+      sundials_link "kinsol" (!sundials_doc_root ^ "kinsol/") page anchor title
+
+    method private html_of_nvector t =
+      let (page, anchor, title) = self#split_text ~page:"NVector_links.html" t in
+      sundials_link "nvector" (!sundials_doc_root ^ "nvectors/") page anchor title
+
+    method private html_of_matrix t =
+      let (page, anchor, title) = self#split_text ~page:"SUNMatrix_API_link.html" t in
+      sundials_link "matrix" (!sundials_doc_root ^ "sunmatrix/") page anchor title
+
+    method private html_of_matrix_data t =
+      let (page, anchor, title) = self#split_text ~page:"SUNMatrix_links.html" t in
+      sundials_link "matrix" (!sundials_doc_root ^ "sunmatrix/") page anchor title
+
+    method private html_of_linsol t =
+      let (page, anchor, title) = self#split_text ~page:"SUNLinSol_API_link.html" t in
+      sundials_link "linsol" (!sundials_doc_root ^ "sunlinsol/") page anchor title
+
+    method private html_of_linsol_module t =
+      let (page, anchor, title) = self#split_text ~page:"SUNLinSol_links.html" t in
+      sundials_link "linsol" (!sundials_doc_root ^ "sunlinsol/") page anchor title
+
+    method private html_of_nonlinsol t =
+      let (page, anchor, title) = self#split_text ~page:"SUNNonlinSol_API_link.html" t in
+      sundials_link "nonlinsol" (!sundials_doc_root ^ "sunnonlinsol/") page anchor title
+
+    method private html_of_nonlinsol_module t =
+      let (page, anchor, title) = self#split_text ~page:"SUNNonlinSol_links.html" t in
+      sundials_link "nonlinsol" (!sundials_doc_root ^ "sunnonlinsol/") page anchor title
 
     val divrex = Str.regexp " *\\(open\\|close\\) *\\(.*\\)"
 
@@ -219,18 +348,37 @@ struct
       Buffer.add_string b s
 
     initializer
+      tag_functions <- ("sundials", self#html_of_sundials) :: tag_functions;
+      tag_functions <- ("profiler", self#html_of_profiler) :: tag_functions;
+      tag_functions <- ("context", self#html_of_context) :: tag_functions;
       tag_functions <- ("cvode",    self#html_of_cvode) :: tag_functions;
-      tag_functions <- ("nocvode",  self#html_of_missing) :: tag_functions;
       tag_functions <- ("cvodes",   self#html_of_cvodes) :: tag_functions;
-      tag_functions <- ("nocvodes", self#html_of_missing) :: tag_functions;
+      tag_functions <- ("cvodes_quad", self#html_of_cvodes_quad) :: tag_functions;
+      tag_functions <- ("cvodes_sens", self#html_of_cvodes_sens) :: tag_functions;
+      tag_functions <- ("cvodes_adj",  self#html_of_cvodes_adj)  :: tag_functions;
       tag_functions <- ("arkode",   self#html_of_arkode) :: tag_functions;
-      tag_functions <- ("noarkode", self#html_of_missing) :: tag_functions;
+      tag_functions <- ("arkode_ark", self#html_of_arkode_ark) :: tag_functions;
+      tag_functions <- ("arkode_erk", self#html_of_arkode_erk) :: tag_functions;
+      tag_functions <- ("arkode_mri", self#html_of_arkode_mri) :: tag_functions;
+      tag_functions <- ("arkode_bt",  self#html_of_arkode_bt) :: tag_functions;
+      tag_functions <- ("arkode_user",self#html_of_arkode_user) :: tag_functions;
+      tag_functions <- ("arkode_precond",self#html_of_arkode_precond) :: tag_functions;
+      tag_functions <- ("arkode_innerstepper",self#html_of_arkode_innerstepper) :: tag_functions;
+      tag_functions <- ("arkode_coupling",self#html_of_arkode_coupling) :: tag_functions;
       tag_functions <- ("ida",      self#html_of_ida) :: tag_functions;
-      tag_functions <- ("noida",    self#html_of_missing) :: tag_functions;
       tag_functions <- ("idas",     self#html_of_idas) :: tag_functions;
-      tag_functions <- ("noidas",   self#html_of_missing) :: tag_functions;
+      tag_functions <- ("idas_quad", self#html_of_idas_quad) :: tag_functions;
+      tag_functions <- ("idas_sens", self#html_of_idas_sens) :: tag_functions;
+      tag_functions <- ("idas_adj",  self#html_of_idas_adj)  :: tag_functions;
       tag_functions <- ("kinsol",   self#html_of_kinsol) :: tag_functions;
-      tag_functions <- ("nokinsol", self#html_of_missing) :: tag_functions;
+      tag_functions <- ("nvector",  self#html_of_nvector) :: tag_functions;
+      tag_functions <- ("matrix",   self#html_of_matrix) :: tag_functions;
+      tag_functions <- ("matrix_data", self#html_of_matrix_data) :: tag_functions;
+      tag_functions <- ("linsol",        self#html_of_linsol) :: tag_functions;
+      tag_functions <- ("linsol_module", self#html_of_linsol_module) :: tag_functions;
+      tag_functions <- ("nonlinsol",        self#html_of_nonlinsol) :: tag_functions;
+      tag_functions <- ("nonlinsol_module", self#html_of_nonlinsol_module) :: tag_functions;
+      tag_functions <- ("nodoc",   self#html_of_missing) :: tag_functions;
 
       custom_functions <- ("div",      Simple self#html_of_div)      ::
                           ("var",      Simple self#html_of_var)      ::
@@ -246,35 +394,15 @@ end
 
 let _  = Odoc_html.charset := "utf-8"
 
-let option_cvode_doc_root =
-  ("-cvode-doc-root", Arg.String (fun d -> cvode_doc_root := d), 
-   "<dir>  specify the root url for the Sundials CVODE documentation.")
-let option_cvodes_doc_root =
-  ("-cvodes-doc-root", Arg.String (fun d -> cvodes_doc_root := d), 
-   "<dir>  specify the root url for the Sundials CVODES documentation.")
-let option_arkode_doc_root =
-  ("-arkode-doc-root", Arg.String (fun d -> arkode_doc_root := d), 
-   "<dir>  specify the root url for the Sundials ARKODE documentation.")
-let option_ida_doc_root =
-  ("-ida-doc-root", Arg.String (fun d -> ida_doc_root := d), 
-   "<dir>  specify the root url for the Sundials IDA documentation.")
-let option_idas_doc_root =
-  ("-idas-doc-root", Arg.String (fun d -> idas_doc_root := d), 
-   "<dir>  specify the root url for the Sundials IDAS documentation.")
-let option_kinsol_doc_root =
-  ("-kinsol-doc-root", Arg.String (fun d -> kinsol_doc_root := d), 
-   "<dir>  specify the root url for the Sundials KINSOL documentation.")
+let option_sundials_doc_root =
+  ("-sundials-doc-root", Arg.String (fun d -> sundials_doc_root := d), 
+   "<dir>  specify the root url for the Sundials documentation.")
 let option_mathjax_url =
   ("-mathjax", Arg.String (fun d -> mathjax_url := d), 
    "<url>  specify the root url for MathJax.")
 
 let _ =
-  Odoc_args.add_option option_cvode_doc_root;
-  Odoc_args.add_option option_cvodes_doc_root;
-  Odoc_args.add_option option_arkode_doc_root;
-  Odoc_args.add_option option_ida_doc_root;
-  Odoc_args.add_option option_idas_doc_root;
-  Odoc_args.add_option option_kinsol_doc_root;
+  Odoc_args.add_option option_sundials_doc_root;
   Odoc_args.add_option option_mathjax_url;
   Odoc_args.extend_html_generator (module Generator : Odoc_gen.Html_functor)
 

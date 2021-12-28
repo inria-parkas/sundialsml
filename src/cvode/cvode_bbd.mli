@@ -17,7 +17,7 @@
     @author Timothy Bourke (Inria/ENS)
     @author Jun Inoue (Inria/ENS)
     @author Marc Pouzet (UPMC/ENS/Inria)
-    @cvode <node5#sss:cvbbdpre> Parallel band-block-diagonal preconditioner module *)
+    @cvode <Usage/index.html#a-parallel-band-block-diagonal-preconditioner-module> Parallel band-block-diagonal preconditioner module *)
 
 (** Alias for sessions based on parallel nvectors. *)
 type parallel_session =
@@ -66,7 +66,7 @@ type comm_fn = float -> Nvector_parallel.data -> unit
     [?dqrely], which specifies the relative increment in components of
     [y], and {!bandwidths}.
 
-    @cvode <node5#sss:cvbbdpre> CVBBDPrecInit *)
+    @cvode CVBBDPrecInit *)
 val prec_left : ?dqrely:float
                 -> bandwidths
                 -> ?comm:comm_fn
@@ -78,7 +78,7 @@ val prec_left : ?dqrely:float
     [?dqrely], which specifies the relative increment in components of
     [y], and {!bandwidths}.
 
-    @cvode <node5#sss:cvbbdpre> CVBBDPrecInit *)
+    @cvode CVBBDPrecInit *)
 val prec_right : ?dqrely:float
                  -> bandwidths
                  -> ?comm:comm_fn
@@ -90,7 +90,7 @@ val prec_right : ?dqrely:float
     The difference quotient operation is controlled by [?dqrely],
     the relative increment in components of [y], and {!bandwidths}.
 
-    @cvode <node5#sss:cvbbdpre> CVBBDPrecInit *)
+    @cvode CVBBDPrecInit *)
 val prec_both : ?dqrely:float
                 -> bandwidths
                  -> ?comm:comm_fn
@@ -103,19 +103,19 @@ val prec_both : ?dqrely:float
     the upper-half and lower-half bandwidths of the difference quotient
     Jacobian approximation.
 
-    @cvode <node5#sss:cvbbdpre> CVBBDPrecReInit *)
+    @cvode CVBBDPrecReInit *)
 val reinit : parallel_session -> ?dqrely:float -> int -> int -> unit
 
 (** Returns the sizes of the real and integer workspaces used by the
     BBD preconditioner.
 
-    @cvode <node5#sss:cvbbdpre> CVBBDPrecGetWorkSpace
+    @cvode CVBBDPrecGetWorkSpace
     @return ([real_size], [integer_size]) *)
 val get_work_space : parallel_session -> int * int
 
 (** Returns the number of calls to the right-hand side function due to
     finite difference banded Jacobian approximation in the setup function.
 
-    @cvode <node5#sss:cvbbdpre> CVBBDPrecGetNumGfnEvals *)
+    @cvode CVBBDPrecGetNumGfnEvals *)
 val get_num_gfn_evals : parallel_session -> int
 

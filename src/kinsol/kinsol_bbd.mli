@@ -17,7 +17,7 @@
     @author Timothy Bourke (Inria/ENS)
     @author Jun Inoue (Inria/ENS)
     @author Marc Pouzet (UPMC/ENS/Inria)
-    @kinsol <node5#sss:kinbbdpre> Parallel band-block-diagonal preconditioner module *)
+    @kinsol <Usage/index.html#a-parallel-band-block-diagonal-preconditioner-module> Parallel band-block-diagonal preconditioner module *)
 
 (** Alias for sessions based on parallel nvectors. *)
 type parallel_session =
@@ -47,7 +47,7 @@ type bandwidths =
     Raising {!Sundials.RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.
 
-    @kinsol <node5#sss:kinbbdpre> KINLocalFn *)
+    @nodoc KINLocalFn *)
 type local_fn = Nvector_parallel.data -> Nvector_parallel.data -> unit
 
 (** Functions that perform the interprocess communication necessary
@@ -57,7 +57,7 @@ type local_fn = Nvector_parallel.data -> Nvector_parallel.data -> unit
     Raising {!Sundials.RecoverableFailure} signals a recoverable error.
     Other exceptions signal unrecoverable errors.
 
-    @kinsol <node5#sss:kinbbdpre> KINCommFn *)
+    @nodoc KINCommFn *)
 type comm_fn = Nvector_parallel.data -> unit
 
 (** Right preconditioning using the Parallel Band-Block-Diagonal
@@ -65,8 +65,7 @@ type comm_fn = Nvector_parallel.data -> unit
     [?dqrely], which specifies the relative increment in components of
     [y], and {!bandwidths}.
 
-    @kinsol <node5#sss:lin_solv_init> KINSpgmr
-    @kinsol <node5#sss:kinbbdpre> KINBBDPrecInit *)
+    @kinsol KINBBDPrecInit *)
 val prec_right : ?dqrely:float
                  -> bandwidths
                  -> ?comm:comm_fn
@@ -76,13 +75,13 @@ val prec_right : ?dqrely:float
 (** Returns the sizes of the real and integer workspaces used by the
     BBD preconditioner.
 
-    @kinsol <node5#sss:kinbbdpre> KINBBDPrecGetWorkSpace
+    @kinsol KINBBDPrecGetWorkSpace
     @return ([real_size], [integer_size]) *)
 val get_work_space : parallel_session -> int * int
 
 (** Returns the number of calls to the right-hand side function due to
     finite difference banded Jacobian approximation in the setup function.
 
-    @kinsol <node5#sss:kinbbdpre> KINBBDPrecGetNumGfnEvals *)
+    @kinsol KINBBDPrecGetNumGfnEvals *)
 val get_num_gfn_evals : parallel_session -> int
 

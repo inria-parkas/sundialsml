@@ -14,9 +14,9 @@
 (** The standard mpiplusx nvectors of Sundials. They couple an nvector with an
     mpi communicator.
 
+    @nvector <NVector_links.html#the-nvector-mpiplusx-module> The NVECTOR_MPIPLUSX Module
     @version VERSION()
     @author Timothy Bourke (Inria/ENS)
-    @nocvode <node> NVECTOR_MPIPLUSX
     @since 5.0.0 *)
 
 (** The data in underlying nvectors is exposed as an array of wrapped values
@@ -37,9 +37,9 @@ type Nvector.gdata += MpiPlusX of data
     An optional argument permits to enable all the fused and array operations
     for a given nvector (they are disabled by default).
 
-    @since 5.0.0
-    @cvode <node> N_VMake_MPIPlusX
-    @cvode <node5> N_VEnableFusedOps_MPIManyVector *)
+    @nvector N_VMake_MPIPlusX
+    @nvector N_VEnableFusedOps_MPIManyVector
+    @since 5.0.0 *)
 val wrap :
      ?context:Sundials.Context.t
   -> ?with_fused_ops:bool
@@ -58,15 +58,15 @@ val communicator : t -> Mpi.communicator
 (** Selectively enable or disable fused and array operations.
     The [with_fused_ops] argument enables or disables all such operations.
 
-    @cvode <node5> N_VEnableFusedOps_MPIManyVector
-    @cvode <node5> N_VEnableLinearCombination_MPIManyVector
-    @cvode <node5> N_VEnableScaleAddMulti_MPIManyVector
-    @cvode <node5> N_VEnableDotProdMulti_MPIManyVector
-    @cvode <node5> N_VEnableLinearSumVectorArray_MPIManyVector
-    @cvode <node5> N_VEnableScaleVectorArray_MPIManyVector
-    @cvode <node5> N_VEnableConstVectorArray_MPIManyVector
-    @cvode <node5> N_VEnableWrmsNormVectorArray_MPIManyVector
-    @cvode <node5> N_VEnableWrmsNormMaskVectorArray_MPIManyVector *)
+    @nvector N_VEnableFusedOps_MPIManyVector
+    @nvector N_VEnableLinearCombination_MPIManyVector
+    @nvector N_VEnableScaleAddMulti_MPIManyVector
+    @nvector N_VEnableDotProdMulti_MPIManyVector
+    @nvector N_VEnableLinearSumVectorArray_MPIManyVector
+    @nvector N_VEnableScaleVectorArray_MPIManyVector
+    @nvector N_VEnableConstVectorArray_MPIManyVector
+    @nvector N_VEnableWrmsNormVectorArray_MPIManyVector
+    @nvector N_VEnableWrmsNormMaskVectorArray_MPIManyVector *)
 val enable :
      ?with_fused_ops                       : bool
   -> ?with_linear_combination              : bool
@@ -98,9 +98,9 @@ module Any : sig
       An optional argument permits to enable all the fused and array
       operations for a given nvector (they are disabled by default).
 
-      @since 5.0.0
-      @cvode <node> N_VMake_MPIPlusX
-      @cvode <node5> N_VEnableFusedOps_MPIManyVector *)
+      @nvector N_VMake_MPIPlusX
+      @nvector N_VEnableFusedOps_MPIManyVector
+      @since 5.0.0 *)
   val wrap :
        ?context:Sundials.Context.t
     -> ?with_fused_ops:bool
@@ -115,15 +115,15 @@ module Any : sig
   (** Selectively enable or disable fused and array operations.
       The [with_fused_ops] argument enables or disables all such operations.
 
-      @cvode <node5> N_VEnableFusedOps_MPIManyVector
-      @cvode <node5> N_VEnableLinearCombination_MPIManyVector
-      @cvode <node5> N_VEnableScaleAddMulti_MPIManyVector
-      @cvode <node5> N_VEnableDotProdMulti_MPIManyVector
-      @cvode <node5> N_VEnableLinearSumVectorArray_MPIManyVector
-      @cvode <node5> N_VEnableScaleVectorArray_MPIManyVector
-      @cvode <node5> N_VEnableConstVectorArray_MPIManyVector
-      @cvode <node5> N_VEnableWrmsNormVectorArray_MPIManyVector
-      @cvode <node5> N_VEnableWrmsNormMaskVectorArray_MPIManyVector
+      @nvector N_VEnableFusedOps_MPIManyVector
+      @nvector N_VEnableLinearCombination_MPIManyVector
+      @nvector N_VEnableScaleAddMulti_MPIManyVector
+      @nvector N_VEnableDotProdMulti_MPIManyVector
+      @nvector N_VEnableLinearSumVectorArray_MPIManyVector
+      @nvector N_VEnableScaleVectorArray_MPIManyVector
+      @nvector N_VEnableConstVectorArray_MPIManyVector
+      @nvector N_VEnableWrmsNormVectorArray_MPIManyVector
+      @nvector N_VEnableWrmsNormMaskVectorArray_MPIManyVector
       @raise Nvector.BadGenericType If not called on an MPIMany nvector *)
   val enable :
        ?with_fused_ops                       : bool

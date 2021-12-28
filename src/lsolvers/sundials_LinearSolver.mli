@@ -22,7 +22,8 @@
     @author Jun Inoue (Inria/ENS)
     @author Marc Pouzet (UPMC/ENS/Inria)
 
-    @nocvode <node> Description of the SUNLinearSolver module
+    @linsol <SUNLinSol_API_link.html#the-sunlinearsolver-api> The SUNLinearSolver API
+    @linsol <index.html#linear-algebraic-solvers> Linear Algebraic Solvers
     @since 3.0.0 *)
 
 open Sundials
@@ -38,8 +39,7 @@ open Sundials
     {!Ida.Spils.solver}, etc., before being
     attached to a session via [init] or [reinit].
 
-  @nocvode <node> Description of the SUNLinearSolver module
-  @nocvode <node> SUNLinearSolver *)
+  @linsol SUNLinearSolver *)
 type ('matrix, 'data, 'kind, 'tag) t
   = ('matrix, 'data, 'kind, 'tag) Sundials_LinearSolver_impl.linear_solver
 
@@ -112,7 +112,7 @@ module Direct : sig (* {{{ *)
     The matrix is used internally after the linear solver is attached to a
     session.
 
-  @nocvode <node> SUNLinSol_Dense *)
+  @linsol_module SUNLinSol_Dense *)
   val dense :
        ?context:Context.t
     -> 'k Nvector.serial
@@ -123,7 +123,7 @@ module Direct : sig (* {{{ *)
       See {!dense}. Only available if
       {{!Sundials_Config.lapack_enabled}Config.lapack_enabled}.
 
-  @nocvode <node> SUNLinSol_LapackDense *)
+  @linsol_module SUNLinSol_LapackDense *)
   val lapack_dense :
        ?context:Context.t
     -> 'k Nvector.serial
@@ -136,7 +136,7 @@ module Direct : sig (* {{{ *)
     The matrix is used internally after the linear solver is attached to a
     session.
 
-  @nocvode <node> SUNLinSol_Band *)
+  @linsol_module SUNLinSol_Band *)
   val band :
        ?context:Context.t
     -> 'k Nvector.serial
@@ -147,7 +147,7 @@ module Direct : sig (* {{{ *)
       See {!band}.
       Only available if {{!Sundials_Config.lapack_enabled}Config.lapack_enabled}.
 
-  @nocvode <node> SUNLinSol_LapackBand *)
+  @linsol_module SUNLinSol_LapackBand *)
   val lapack_band :
        ?context:Context.t
     -> 'k Nvector.serial
@@ -171,7 +171,7 @@ module Direct : sig (* {{{ *)
       session.
 
       @raise Config.NotImplementedBySundialsVersion Solver not available.
-      @nocvode <node> SUNLinSol_KLU *)
+      @linsol_module SUNLinSol_KLU *)
     val make :
          ?context:Context.t
       -> ?ordering:ordering
@@ -185,13 +185,13 @@ module Direct : sig (* {{{ *)
       number of non-zeros if [nnz] if given. New symbolic and numeric
       factorizations will be completed at the next solver step.
 
-      @nocvode <node> SUNLinSol_KLUReInit *)
+      @linsol_module SUNLinSol_KLUReInit *)
     val reinit : ('s Matrix.Sparse.t, 'k, [>`Klu]) serial_t
                  -> ('s, 'k) Matrix.sparse -> ?nnz:int -> unit -> unit
 
     (** Sets the ordering algorithm used to minimize fill-in.
 
-      @nocvode <node> SUNLinSol_KLUSetOrdering *)
+      @linsol_module SUNLinSol_KLUSetOrdering *)
     val set_ordering : ('s Matrix.Sparse.t, 'k, [>`Klu]) serial_t
                        -> ordering -> unit
 
@@ -201,7 +201,7 @@ module Direct : sig (* {{{ *)
     See {!Klu.make}.
 
     @raise Config.NotImplementedBySundialsVersion Solver not available.
-    @nocvode <node> SUNLinSol_KLU *)
+    @linsol_module SUNLinSol_KLU *)
   val klu :
        ?context:Context.t
     -> ?ordering:Klu.ordering
@@ -232,7 +232,7 @@ module Direct : sig (* {{{ *)
           {{!Sundials_Config.sundials_version}Config.sundials_version} >= 3.0.0.
 
       @raise Config.NotImplementedBySundialsVersion Solver not available.
-      @nocvode <node> SUNLinSol_SuperLUMT *)
+      @linsol_module SUNLinSol_SuperLUMT *)
     val make :
          ?context:Context.t
       -> ?ordering:ordering
@@ -243,7 +243,7 @@ module Direct : sig (* {{{ *)
 
     (** Sets the ordering algorithm used to minimize fill-in.
 
-      @nocvode <node> SUNLinSol_SuperLUMTSetOrdering *)
+      @linsol_module SUNLinSol_SuperLUMTSetOrdering *)
     val set_ordering : ('s Matrix.Sparse.t, 'k, [>`Slu]) serial_t
                        -> ordering -> unit
 
@@ -257,7 +257,7 @@ module Direct : sig (* {{{ *)
         {{!Sundials_Config.sundials_version}Config.sundials_version} >= 3.0.0.
 
     @raise Config.NotImplementedBySundialsVersion Solver not available.
-    @nocvode <node> SUNLinSol_SuperLUMT *)
+    @linsol_module SUNLinSol_SuperLUMT *)
   val superlumt :
        ?context:Context.t
     -> ?ordering:Superlumt.ordering
@@ -278,15 +278,13 @@ module Iterative : sig (* {{{ *)
 
   (** {3:solvers Types} *)
 
-  (** The type of Gram-Schmidt orthogonalization in iterative linear solvers.
-
-    @nocvode <node> ModifiedGS/ClassicalGS *)
+  (** The type of Gram-Schmidt orthogonalization in iterative linear solvers. *)
   type gramschmidt_type =
     Sundials_LinearSolver_impl.Iterative.gramschmidt_type =
     | ModifiedGS   (** Modified Gram-Schmidt orthogonalization
-                       {cconst MODIFIED_GS} *)
+                       {cconst SUNLS_MODIFIED_GS} *)
     | ClassicalGS  (** Classical Gram Schmidt orthogonalization
-                       {cconst CLASSICAL_GS} *)
+                       {cconst SUNLS_CLASSICAL_GS} *)
 
   (** {3:solvers Solvers} *)
 
@@ -295,7 +293,7 @@ module Iterative : sig (* {{{ *)
       dimension of the Krylov subspace (defaults to 5). The nvector argument
       is used as a template.
 
-    @nocvode <node> SUNLinSol_SPBCGS *)
+    @linsol_module SUNLinSol_SPBCGS *)
   val spbcgs :
        ?context:Context.t
     -> ?maxl:int
@@ -310,7 +308,7 @@ module Iterative : sig (* {{{ *)
       NB: [max_restarts] is ignored by CVODE, CVODES, and ARKODE
           for {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
 
-    @nocvode <node> SUNLinSol_SPFGMR *)
+    @linsol_module SUNLinSol_SPFGMR *)
   val spfgmr :
        ?context:Context.t
     -> ?maxl:int
@@ -327,7 +325,7 @@ module Iterative : sig (* {{{ *)
       NB: [max_restarts] is ignored by CVODE, CVODES, and ARKODE
           for {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
 
-    @nocvode <node> SUNLinSol_SPGMR *)
+    @linsol_module SUNLinSol_SPGMR *)
   val spgmr :
        ?context:Context.t
     -> ?maxl:int
@@ -341,7 +339,7 @@ module Iterative : sig (* {{{ *)
     maximum dimension of the Krylov subspace (defaults to 5). The nvector
     argument is used as a template.
 
-    @nocvode <node> SUNLinSol_SPTFQMR *)
+    @linsol_module SUNLinSol_SPTFQMR *)
   val sptfqmr :
        ?context:Context.t
     -> ?maxl:int
@@ -353,7 +351,7 @@ module Iterative : sig (* {{{ *)
     Krylov subspace (defaults to 5). The nvector argument is used as a
     template.
 
-    @nocvode <node> SUNLinSol_PCG *)
+    @linsol_module SUNLinSol_PCG *)
   val pcg :
        ?context:Context.t
     -> ?maxl:int
@@ -365,13 +363,7 @@ module Iterative : sig (* {{{ *)
 
     (** Scaled Preconditioned Iterative Linear Solvers routines.
 
-      Global constants and general purpose solver routines.
-
-      @version VERSION()
-      @author Timothy Bourke (Inria/ENS)
-      @author Jun Inoue (Inria/ENS)
-      @author Marc Pouzet (UPMC/ENS/Inria)
-      @cvode <node9#s:spils>  The SPILS Modules *)
+      Global constants and general purpose solver routines. *)
 
     (** Performs a QR factorization of a Hessenberg matrix.
       The call [qr_fact n h q factored], where [h] is the [n+1] by [n]
@@ -460,16 +452,16 @@ module Iterative : sig (* {{{ *)
 
   (** Updates the number of linear solver iterations to allow.
 
-    @nocvode <node> SUNLinSol_SPBCGSSetMaxl
-    @nocvode <node> SUNLinSol_SPTFQMRSetMaxl
-    @nocvode <node> SUNLinSol_PCGSetMaxl *)
+    @linsol_module SUNLinSol_SPBCGSSetMaxl
+    @linsol_module SUNLinSol_SPTFQMRSetMaxl
+    @linsol_module SUNLinSol_PCGSetMaxl *)
   val set_maxl : ('m, 'd, 'k, [< `Iter|`Spbcgs|`Sptfqmr|`Pcg]) t
                  -> int -> unit
 
   (** Sets the Gram-Schmidt orthogonalization to use.
 
-    @nocvode <node> SUNLinSol_SPGMRSetGSType
-    @nocvode <node> SUNLinSol_SPFGMRSetGSType *)
+    @linsol_module SUNLinSol_SPGMRSetGSType
+    @linsol_module SUNLinSol_SPFGMRSetGSType *)
   val set_gs_type : ('m, 'd, 'k, [< `Iter|`Spfgmr|`Spgmr]) t
                     -> gramschmidt_type -> unit
 
@@ -478,14 +470,12 @@ module Iterative : sig (* {{{ *)
     NB: This feature is not supported by CVODE, CVODES, and ARKODE
         for {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
 
-    @nocvode <node> SUNLinSol_SPGMRSetMaxRestarts
-    @nocvode <node> SUNLinSol_SPFGMRSetMaxRestarts *)
+    @linsol_module SUNLinSol_SPGMRSetMaxRestarts
+    @linsol_module SUNLinSol_SPFGMRSetMaxRestarts *)
   val set_max_restarts : ('m, 'd, 'k, [< `Iter|`Spfgmr|`Spgmr]) t
                          -> int -> unit
 
-  (** The type of preconditioning in Krylov solvers.
-
-    @nocvode <node> Preconditioning *)
+  (** The type of preconditioning in Krylov solvers. *)
   type preconditioning_type =
     Sundials_LinearSolver_impl.Iterative.preconditioning_type =
     | PrecNone    (** No preconditioning *)
@@ -502,11 +492,11 @@ module Iterative : sig (* {{{ *)
     {!IllegalPrecType} if the given type is not allowed by the
     underlying solver.
 
-    @nocvode <node> SUNLinSol_PCGSetPrecType
-    @nocvode <node> SUNLinSol_SPBCGSSetPrecType
-    @nocvode <node> SUNLinSol_SPFGMRSetPrecType
-    @nocvode <node> SUNLinSol_SPGMRSetPrecType
-    @nocvode <node> SUNLinSol_SPTFQMRSetPrecType *)
+    @linsol_module SUNLinSol_PCGSetPrecType
+    @linsol_module SUNLinSol_SPBCGSSetPrecType
+    @linsol_module SUNLinSol_SPFGMRSetPrecType
+    @linsol_module SUNLinSol_SPGMRSetPrecType
+    @linsol_module SUNLinSol_SPTFQMRSetPrecType *)
   val set_prec_type : ('m, 'd, 'k, [>`Iter]) t
                       -> preconditioning_type -> unit
 
@@ -517,11 +507,11 @@ module Iterative : sig (* {{{ *)
       Sundials must be built with {cconst SUNDIALS_BUILD_WITH_MONITORING} to
       use this function.
 
-      @nocvode <node> SUNLinSolSetInfoFile_PCG
-      @nocvode <node> SUNLinSolSetInfoFile_SPBCGS
-      @nocvode <node> SUNLinSolSetInfoFile_SPFGMR
-      @nocvode <node> SUNLinSolSetInfoFile_SPGMR
-      @nocvode <node> SUNLinSolSetInfoFile_SPTFQMR
+      @linsol_module SUNLinSolSetInfoFile_PCG
+      @linsol_module SUNLinSolSetInfoFile_SPBCGS
+      @linsol_module SUNLinSolSetInfoFile_SPFGMR
+      @linsol_module SUNLinSolSetInfoFile_SPGMR
+      @linsol_module SUNLinSolSetInfoFile_SPTFQMR
       @since 5.3.0 *)
   val set_info_file
     : ('m, 'd, 'k, [>`Iter]) t -> ?print_level:bool -> Sundials.Logfile.t -> unit
@@ -533,11 +523,11 @@ module Iterative : sig (* {{{ *)
       Sundials must be built with {cconst SUNDIALS_BUILD_WITH_MONITORING} to
       use this function.
 
-      @nocvode <node> SUNLinSolSetPrintLevel_PCG
-      @nocvode <node> SUNLinSolSetPrintLevel_SPBCGS
-      @nocvode <node> SUNLinSolSetPrintLevel_SPFGMR
-      @nocvode <node> SUNLinSolSetPrintLevel_SPGMR
-      @nocvode <node> SUNLinSolSetPrintLevel_SPTFQMR
+      @linsol_module SUNLinSolSetPrintLevel_PCG
+      @linsol_module SUNLinSolSetPrintLevel_SPBCGS
+      @linsol_module SUNLinSolSetPrintLevel_SPFGMR
+      @linsol_module SUNLinSolSetPrintLevel_SPGMR
+      @linsol_module SUNLinSolSetPrintLevel_SPTFQMR
       @since 5.3.0 *)
   val set_print_level : ('m, 'd, 'k, [>`Iter]) t -> bool -> unit
 
@@ -765,12 +755,12 @@ end (* }}} *)
 
 (** Set the linear solver's problem-specific {!atimesfn}.
 
-    @nocvode <node> SUNLinSolSetATimes *)
+    @linsol SUNLinSolSetATimes *)
 val set_atimes : ('m, 'd, 'k, 't) t -> 'd atimesfn -> unit
 
 (** Set the linear solver's preconditioner routines.
 
-    @nocvode <node> SUNLinSolSetPreconditioner *)
+    @linsol SUNLinSolSetPreconditioner *)
 val set_preconditioner :
     ('m, 'd, 'k, 't) t
   -> psetupfn
@@ -789,7 +779,7 @@ val set_preconditioner :
     Note that the underlying data structures may be used directly by the
     linear solver, i.e., without a copy.
 
-    @nocvode <node> SUNLinSolSetScalingVectors *)
+    @linsol SUNLinSolSetScalingVectors *)
 val set_scaling_vectors :
      ('m, 'd, 'k, 't) t
   -> ('d, 'k) Nvector.t
@@ -800,7 +790,7 @@ val set_scaling_vectors :
     guess.
 
     @since 5.8.0
-    @nocvode <node> SUNLinSolSetZeroGuess *)
+    @linsol SUNLinSolSetZeroGuess *)
 val set_zero_guess :
      ('m, 'd, 'k, 't) t
   -> bool
@@ -808,13 +798,13 @@ val set_zero_guess :
 
 (** Initializes a linear solver.
 
-    @nocvode <node> SUNLinSolInitialize *)
+    @linsol SUNLinSolInitialize *)
 val init : ('m, 'd, 'k, 't) t -> unit
 
 (** Instruct the linear solver to prepare to solve using an updated
     system matrix.
 
-    @nocvode <node> SUNLinSolSetup *)
+    @linsol SUNLinSolSetup *)
 val setup : ('m, 'd, 'k, 't) t -> ('a, 'm, 'd, 'k) Matrix.t -> unit
 
 (** Solve a linear system.
@@ -827,7 +817,7 @@ val setup : ('m, 'd, 'k, 't) t -> ('a, 'm, 'd, 'k) Matrix.t -> unit
     Iterative solvesr attempt to respect the weighted 2-norm tolerance,
     [tol].
 
-    @nocvode <node> SUNLinSolSolve *)
+    @linsol SUNLinSolSolve *)
 val solve :
      ('m, 'd, 'k, 't) t
   -> ('a, 'm, 'd, 'k) Matrix.t
@@ -838,12 +828,12 @@ val solve :
 
 (** The number of linear iterations performed in the last {!solve} call.
 
-    @nocvode <node> SUNLinNumIters *)
+    @linsol SUNLinSolNumIters *)
 val get_num_iters : ('m, 'd, 'k, 't) t -> int
 
 (** The final residual norm from the last {!solve} call.
 
-    @nocvode <node> SUNLinResNorm *)
+    @linsol SUNLinSolResNorm *)
 val get_res_norm : ('m, 'd, 'k, 't) t -> float
 
 (** The preconditioned initial residual vector.
@@ -854,23 +844,23 @@ val get_res_norm : ('m, 'd, 'k, 't) t -> float
     The linear solver may return a reference to its internal array, i.e., it
     may not return a copy.
 
-    @nocvode <node> SUNLinResNorm *)
+    @linsol SUNLinSolResNorm *)
 val get_res_id : ('m, 'd, 'k, 't) t -> 'd
 
 (** Returns the type of the linear solver.
 
-    @nocvode <node> SUNLinSolGetType *)
+    @linsol SUNLinSolGetType *)
 val get_type : ('m, 'd, 'k, 't) t -> linear_solver_type
 
 (** Returns the identifier of the linear solver.
 
-    @nocvode <node> SUNLinSolGetID
+    @linsol SUNLinSolGetID
     @since 5.0.0 *)
 val get_id : ('m, 'd, 'k, 't) t -> linear_solver_id
 
 (** Returns an indication of the last error encountered by a linear solver.
 
-    @nocvode <node> SUNLinSolGetLastFlag
+    @linsol SUNLinSolGetLastFlag
     @since 5.0.0 *)
 val get_last_flag : ('m, 'd, 'k, 't) t -> int
 
@@ -879,7 +869,7 @@ val get_last_flag : ('m, 'd, 'k, 't) t -> int
     storing real values ([lrw]) and the number of words used
     for storing integer values ([liw]).
 
-    @nocvode <node> SUNLinSpace *)
+    @linsol SUNLinSolSpace *)
 val get_work_space : ('m, 'd, 'k, 't) t -> int * int
 
 (** {2:exceptions Exceptions} *)
@@ -892,7 +882,9 @@ exception InvalidLinearSolver
 
 (** Raised on an unrecoverable failure in a linear solver. The argument is
     [true] for a recoverable failure and [false] for an unrecoverable one.
-    {cconst SUNLS_PACKAGE_FAIL_REC/_UNREC} *)
+
+    @nodoc SUNLS_PACKAGE_FAIL_REC
+    @nodoc SUNLS_PACKAGE_FAIL_UNREC *)
 exception UnrecoverableFailure of bool
 
 (** Raised when creating a linear solver if the given matrix is not square. *)
@@ -913,48 +905,66 @@ exception LinearSolverInUse
 
 (** Indicates failure of an atimes function. The argument is [true] for a
     recoverable failure and [false] for an unrecoverable one.
-    {cconst SUNLS_ATIMES_FAIL_REC/_UNREC} *)
+
+    @nodoc SUNLS_ATIMES_FAIL_REC
+    @nodoc SUNLS_ATIMES_FAIL_UNREC *)
 exception ATimesFailure of bool
 
 (** Indicates failure of a preconditioner setup routine. The argument is
     [true] for a recoverable failure and [false] for an unrecoverable one.
-    {cconst SUNLS_PSET_FAIL_REC/_UNREC} *)
+
+    @nodoc SUNLS_PSET_FAIL_REC
+    @nodoc SUNLS_PSET_FAIL_UNREC *)
 exception PSetFailure of bool
 
 (** Indicates failure of a preconditioner solver. The argument is [true] for a
     recoverable failure and [false] for an unrecoverable one.
-    {cconst SUNLS_PSOLVE_FAIL_REC/_UNREC} *)
+
+    @nodoc SUNLS_PSOLVE_FAIL_REC
+    @nodoc SUNLS_PSOLVE_FAIL_UNREC *)
 exception PSolveFailure of bool
 
-(** Indicates failure of a Gram-Schmidt routine. {cconst SUNLS_GS_FAIL} *)
+(** Indicates failure of a Gram-Schmidt routine.
+
+    @nodoc SUNLS_GS_FAIL *)
 exception GSFailure
 
 (** Indicates that the QR solution found a singular result.
-    {cconst SUNLS_QRSOL_FAIL} *)
+
+    @nodoc SUNLS_QRSOL_FAIL *)
 exception QRSolFailure
 
 (** An error occurred in a vector operation.
-    {cconst SUNLS_VECTOROP_ERR} *)
+
+    @nodoc SUNLS_VECTOROP_ERR *)
 exception VectorOpError
 
 (** Indicates that the residual is reduced but without convergence to the
-    desired tolerance. {cconst SUNLS_RES_REDUCED} *)
+    desired tolerance.
+
+    @nodoc SUNLS_RES_REDUCED *)
 exception ResReduced
 
-(** Indicates that a solver failed to converge. {cconst SUNLS_CONV_FAIL} *)
+(** Indicates that a solver failed to converge.
+
+    @nodoc SUNLS_CONV_FAIL *)
 exception ConvFailure
 
 (** Indicates that QR factorization encountered a singular matrix.
-    {cconst SUNLS_QRFACT_FAIL} *)
+
+    @nodoc SUNLS_QRFACT_FAIL *)
 exception QRfactFailure
 
 (** Indicates that LU factorization encountered a singular matrix.
-    {cconst SUNLS_LUFACT_FAIL} *)
+
+    @nodoc SUNLS_LUFACT_FAIL *)
 exception LUfactFailure
 
 (** Indicates failure in an external linear solver package. The argument
     is [true] for a recoverable failure and [false] for an unrecoverable one.
-    {cconst SUNLS_PACKAGE_FAIL_REC/_UNREC} *)
+
+    @nodoc SUNLS_PACKAGE_FAIL_REC
+    @nodoc SUNLS_PACKAGE_FAIL_UNREC *)
 exception PackageFailure of bool
 
 (** Raised by {!Iterative.set_prec_type} if the given type is not allowed. *)

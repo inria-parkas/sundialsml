@@ -13,11 +13,11 @@
 
 (** Standard serial nvectors of Sundials.
 
+    @nvector <NVector_links.html#the-nvector-serial-module> The NVECTOR_SERIAL Module
     @version VERSION()
     @author Timothy Bourke (Inria/ENS)
     @author Jun Inoue (Inria/ENS)
-    @author Marc Pouzet (UPMC/ENS/Inria)
-    @cvode <node7#ss:nvec_ser> NVECTOR_SERIAL *)
+    @author Marc Pouzet (UPMC/ENS/Inria) *)
 
 open Sundials
 
@@ -39,7 +39,8 @@ type t = (data, kind) Nvector.t
     The optional argument enables the fused and array operations for a given
     nvector (they are disabled by default).
 
-    @cvode <node5> N_VEnableFusedOps_Serial
+    @nvector N_VNew_Serial
+    @nvector N_VEnableFusedOps_Serial
     @raise Config.NotImplementedBySundialsVersion Fused and array operations not available. *)
 val make : ?context:Context.t -> ?with_fused_ops:bool -> int -> float -> t
 
@@ -48,7 +49,8 @@ val make : ?context:Context.t -> ?with_fused_ops:bool -> int -> float -> t
     The optional arguments permit to enable all the fused and array operations
     for a given nvector (they are disabled by default).
 
-    @cvode <node5> N_VEnableFusedOps_Serial
+    @nvector N_VMake_Serial
+    @nvector N_VEnableFusedOps_Serial
     @raise Config.NotImplementedBySundialsVersion Fused and array operations not available. *)
 val wrap : ?context:Context.t -> ?with_fused_ops:bool -> RealArray.t -> t
 
@@ -63,19 +65,19 @@ val pp : Format.formatter -> t -> unit
 (** Selectively enable or disable fused and array operations.
     The [with_fused_ops] argument enables or disables all such operations.
 
-    @since 4.0.0
-    @cvode <node5> N_VEnableFusedOps_Serial
-    @cvode <node5> N_VEnableLinearCombination_Serial
-    @cvode <node5> N_VEnableScaleAddMulti_Serial
-    @cvode <node5> N_VEnableDotProdMulti_Serial
-    @cvode <node5> N_VEnableLinearSumVectorArray_Serial
-    @cvode <node5> N_VEnableScaleVectorArray_Serial
-    @cvode <node5> N_VEnableConstVectorArray_Serial
-    @cvode <node5> N_VEnableWrmsNormVectorArray_Serial
-    @cvode <node5> N_VEnableWrmsNormMaskVectorArray_Serial
-    @cvode <node5> N_VEnableScaleAddMultiVectorArray_Serial
-    @cvode <node5> N_VEnableLinearCombinationVectorArray_Serial
-    @raise Config.NotImplementedBySundialsVersion Fused and array operations not available. *)
+    @nvector N_VEnableFusedOps_Serial
+    @nvector N_VEnableLinearCombination_Serial
+    @nvector N_VEnableScaleAddMulti_Serial
+    @nvector N_VEnableDotProdMulti_Serial
+    @nvector N_VEnableLinearSumVectorArray_Serial
+    @nvector N_VEnableScaleVectorArray_Serial
+    @nvector N_VEnableConstVectorArray_Serial
+    @nvector N_VEnableWrmsNormVectorArray_Serial
+    @nvector N_VEnableWrmsNormMaskVectorArray_Serial
+    @nvector N_VEnableScaleAddMultiVectorArray_Serial
+    @nvector N_VEnableLinearCombinationVectorArray_Serial
+    @raise Config.NotImplementedBySundialsVersion Fused and array operations not available.
+    @since 4.0.0 *)
 val enable :
      ?with_fused_ops                       : bool
   -> ?with_linear_combination              : bool
@@ -109,17 +111,18 @@ module Any : sig (* {{{ *)
       The optional arguments permit to enable fused and array operations for
       a given nvector (they are disabled by default).
 
-      @cvode <node5> N_VEnableFusedOps_Serial
-      @cvode <node5> N_VEnableLinearCombination_Serial
-      @cvode <node5> N_VEnableScaleAddMulti_Serial
-      @cvode <node5> N_VEnableDotProdMulti_Serial
-      @cvode <node5> N_VEnableLinearSumVectorArray_Serial
-      @cvode <node5> N_VEnableScaleVectorArray_Serial
-      @cvode <node5> N_VEnableConstVectorArray_Serial
-      @cvode <node5> N_VEnableWrmsNormVectorArray_Serial
-      @cvode <node5> N_VEnableWrmsNormMaskVectorArray_Serial
-      @cvode <node5> N_VEnableScaleAddMultiVectorArray_Serial
-      @cvode <node5> N_VEnableLinearCombinationVectorArray_Serial
+      @nvector N_VNew_Serial
+      @nvector N_VEnableFusedOps_Serial
+      @nvector N_VEnableLinearCombination_Serial
+      @nvector N_VEnableScaleAddMulti_Serial
+      @nvector N_VEnableDotProdMulti_Serial
+      @nvector N_VEnableLinearSumVectorArray_Serial
+      @nvector N_VEnableScaleVectorArray_Serial
+      @nvector N_VEnableConstVectorArray_Serial
+      @nvector N_VEnableWrmsNormVectorArray_Serial
+      @nvector N_VEnableWrmsNormMaskVectorArray_Serial
+      @nvector N_VEnableScaleAddMultiVectorArray_Serial
+      @nvector N_VEnableLinearCombinationVectorArray_Serial
       @raise Config.NotImplementedBySundialsVersion Fused and array operations not available.
       @since 5.0.0 *)
     val make :
@@ -144,17 +147,18 @@ module Any : sig (* {{{ *)
       The optional arguments permit to enable fused and array operations for
       a given nvector (they are disabled by default).
 
-      @cvode <node5> N_VEnableFusedOps_Serial
-      @cvode <node5> N_VEnableLinearCombination_Serial
-      @cvode <node5> N_VEnableScaleAddMulti_Serial
-      @cvode <node5> N_VEnableDotProdMulti_Serial
-      @cvode <node5> N_VEnableLinearSumVectorArray_Serial
-      @cvode <node5> N_VEnableScaleVectorArray_Serial
-      @cvode <node5> N_VEnableConstVectorArray_Serial
-      @cvode <node5> N_VEnableWrmsNormVectorArray_Serial
-      @cvode <node5> N_VEnableWrmsNormMaskVectorArray_Serial
-      @cvode <node5> N_VEnableScaleAddMultiVectorArray_Serial
-      @cvode <node5> N_VEnableLinearCombinationVectorArray_Serial
+      @nvector N_VMake_Serial
+      @nvector N_VEnableFusedOps_Serial
+      @nvector N_VEnableLinearCombination_Serial
+      @nvector N_VEnableScaleAddMulti_Serial
+      @nvector N_VEnableDotProdMulti_Serial
+      @nvector N_VEnableLinearSumVectorArray_Serial
+      @nvector N_VEnableScaleVectorArray_Serial
+      @nvector N_VEnableConstVectorArray_Serial
+      @nvector N_VEnableWrmsNormVectorArray_Serial
+      @nvector N_VEnableWrmsNormMaskVectorArray_Serial
+      @nvector N_VEnableScaleAddMultiVectorArray_Serial
+      @nvector N_VEnableLinearCombinationVectorArray_Serial
       @raise Config.NotImplementedBySundialsVersion Fused and array operations not available.
       @since 5.0.0 *)
   val wrap :
@@ -181,20 +185,20 @@ module Any : sig (* {{{ *)
   (** Selectively enable or disable fused and array operations.
       The [with_fused_ops] argument enables or disables all such operations.
 
-      @since 4.0.0
-      @cvode <node5> N_VEnableFusedOps_Serial
-      @cvode <node5> N_VEnableLinearCombination_Serial
-      @cvode <node5> N_VEnableScaleAddMulti_Serial
-      @cvode <node5> N_VEnableDotProdMulti_Serial
-      @cvode <node5> N_VEnableLinearSumVectorArray_Serial
-      @cvode <node5> N_VEnableScaleVectorArray_Serial
-      @cvode <node5> N_VEnableConstVectorArray_Serial
-      @cvode <node5> N_VEnableWrmsNormVectorArray_Serial
-      @cvode <node5> N_VEnableWrmsNormMaskVectorArray_Serial
-      @cvode <node5> N_VEnableScaleAddMultiVectorArray_Serial
-      @cvode <node5> N_VEnableLinearCombinationVectorArray_Serial
+      @nvector N_VEnableFusedOps_Serial
+      @nvector N_VEnableLinearCombination_Serial
+      @nvector N_VEnableScaleAddMulti_Serial
+      @nvector N_VEnableDotProdMulti_Serial
+      @nvector N_VEnableLinearSumVectorArray_Serial
+      @nvector N_VEnableScaleVectorArray_Serial
+      @nvector N_VEnableConstVectorArray_Serial
+      @nvector N_VEnableWrmsNormVectorArray_Serial
+      @nvector N_VEnableWrmsNormMaskVectorArray_Serial
+      @nvector N_VEnableScaleAddMultiVectorArray_Serial
+      @nvector N_VEnableLinearCombinationVectorArray_Serial
       @raise Nvector.BadGenericType If not called on a serial nvector
-      @raise Config.NotImplementedBySundialsVersion Fused and array operations not available. *)
+      @raise Config.NotImplementedBySundialsVersion Fused and array operations not available.
+      @since 4.0.0 *)
   val enable :
        ?with_fused_ops                       : bool
     -> ?with_linear_combination              : bool

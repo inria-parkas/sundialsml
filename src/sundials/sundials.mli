@@ -64,23 +64,23 @@ end (* }}} *)
 (** Performance profiling
 
     The underlying Sundials library must be built with
-    {cconst SUNDIALS_BUILD_WITH_PROFILING} set to on. Profiling is
+    [SUNDIALS_BUILD_WITH_PROFILING] set to on. Profiling is
     light-weight but can still reduce performance.
 
-    The {cconst SUNPROFILER_PRINT} environment variable determines whether
+    The [SUNPROFILER_PRINT] environment variable determines whether
     profiler information is printed when a context is freed (by the garbage
     collector).
 
     The profiling functions (silently) do nothing when profiling is not
     available.
 
-    @cvode <node> SUNProfiler
+    @profiler SUNProfiler
     @since 6.0.0 *)
 module Profiler : sig (* {{{ *)
 
   (** A Sundials profiler.
 
-      @cvode <node> SUNProfiler *)
+      @profiler SUNProfiler *)
   type t = Sundials_impl.Profiler.t
 
   (** Indicates whether the underlying library was built with profiling
@@ -89,22 +89,22 @@ module Profiler : sig (* {{{ *)
 
   (** Creates a new profiler with the given name.
 
-      @cvode <node> SUNProfiler_Create *)
+      @profiler SUNProfiler_Create *)
   val make : string -> t
 
   (** Starts timing the region indicated by the given name.
 
-      @cvode <node> SUNProfiler_Begin *)
+      @profiler SUNProfiler_Begin *)
   external start : t -> string -> unit = "sunml_profiler_begin" [@@noalloc]
 
   (** Ends timing the region indicated by the given name.
 
-      @cvode <node> SUNProfiler_End *)
+      @profiler SUNProfiler_End *)
   external finish : t -> string -> unit = "sunml_profiler_end" [@@noalloc]
 
   (** Prints out a profiling summary.
 
-      @cvode <node> SUNProfiler_Print *)
+      @profiler SUNProfiler_Print *)
   val print : t -> Logfile.t -> unit
 
 end (* }}} *)
@@ -117,23 +117,23 @@ end (* }}} *)
     argument is not given explicitly, it defaults to the context returned
     by {!default}.
 
-    @cvode <node> SUNContext
+    @context SUNContext
     @since 6.0.0 *)
 module Context : sig (* {{{ *)
 
   (** A context required to create Sundials values.
 
-      @cvode <node> SUNContext *)
+      @context SUNContext *)
   type t = Sundials_impl.Context.t
 
   (** The default context when creating values.
 
-      @cvode <node> SUNContext_Create *)
+      @context SUNContext_Create *)
   val default : unit -> t
 
   (** Create a new context, optionally specifying the profiler to use.
 
-      @cvode <node> SUNContext_Create *)
+      @context SUNContext_Create *)
   val make : ?profiler:Profiler.t -> unit -> t
 
   (** Indicates that an external library (i.e., caliper) is being use for
@@ -142,13 +142,13 @@ module Context : sig (* {{{ *)
 
   (** Return the profiler associated with a context.
 
-      @cvode <node> SUNContext_GetProfiler
+      @context SUNContext_GetProfiler
       @raise ExternalProfilerInUse If an external library is used for profiling *)
   val get_profiler : t -> Profiler.t
 
   (** Sets the profiler associated with a context.
 
-      @cvode <node> SUNContext_SetProfiler *)
+      @context SUNContext_SetProfiler *)
   val set_profiler : t -> Profiler.t -> unit
 
 end (* }}} *)
@@ -197,8 +197,8 @@ module Roots : sig (* {{{ *)
   type t
 
   (** Values indicating the status of root functions.
-      @cvode <node5#sss:optout_root> CVodeGetRootInfo
-      @ida <node5#sss:optout_root> IdaGetRootInfo *)
+      @cvode CVodeGetRootInfo
+      @ida IdaGetRootInfo *)
   type r =
     | NoRoot      (** No root was found on the corresponding function (0). *)
     | Rising      (** The corresponding root function is increasing (1). *)
@@ -303,8 +303,8 @@ module RootDirs : sig (* {{{ *)
 
   (** Values indicating which types of roots are sought.
 
-      @cvode <node5#sss:optin_root> CVodeSetRootDirection
-      @ida <node5#sss:optin_root> IdaSetRootDirection *)
+      @cvode CVodeSetRootDirection
+      @ida IdaSetRootDirection *)
   type d =
     | Increasing              (** Only look for rising zero-crossings. *)
     | Decreasing              (** Only look for falling zero-crossings. *)
@@ -385,8 +385,8 @@ end (* }}} *)
     the constants passed to {!Ida.set_constraints} and
     {!Kinsol.set_constraints}.
 
-    @ida <node5#sss:optin_main> IDASetConstraints
-    @kinsol <node5#ss:optin_main> KINSetConstraints *)
+    @ida IDASetConstraints
+    @kinsol KINSetConstraints *)
 module Constraint : sig (* {{{ *)
   (** The constant [0.0]. *)
   val unconstrained : float
@@ -422,13 +422,35 @@ end (* }}} *)
 
 (** {2:matlin Matrices, Linear Solvers, and Nonlinear Solvers} *)
 
-(** Generic matrices. *)
+(** Generic matrices.
+
+    @matrix <index.html#matrix-data-structures> Matrix Data Structures
+    @since 3.0.0 *)
 module Matrix = Sundials_Matrix
 
-(** Generic linear solvers. *)
+(** Generic linear solvers.
+
+    Sundials provides a set of functions for instantiating linear solvers from
+    two families: {!module:Direct} and {!module:Iterative}. Any instance may
+    be associated with at most one solver session.
+
+    @linsol <SUNLinSol_API_link.html#the-sunlinearsolver-api> The SUNLinearSolver API
+    @linsol <index.html#linear-algebraic-solvers> Linear Algebraic Solvers
+    @since 3.0.0 *)
 module LinearSolver = Sundials_LinearSolver
 
-(** Generic nonlinear solvers. *)
+(** Generic nonlinear solvers.
+
+    Sundials provides generic nonlinear solvers of two main types:
+    {!module:Newton} and {!module:FixedPoint}. An instance of a nonlinear
+    solver may only be associated with at most one integrator session at
+    a time.
+
+    This module supports calling both Sundials and custom OCaml nonlinear
+    solvers from both Sundials integrators and OCaml applications.
+
+    @nonlinsol <SUNNonlinSol_API_link.html#the-sunnonlinearsolver-api> The SUNNonlinearSolver API
+    @since 4.0.0 *)
 module NonlinearSolver = Sundials_NonlinearSolver
 
 (** Shared definitions and miscellaneous utility functions. *)
@@ -438,9 +460,9 @@ module Util : sig (* {{{ *)
       See {!Cvode.set_err_handler_fn}, {!Ida.set_err_handler_fn}, and
       {!Kinsol.set_err_handler_fn}.
 
-      @cvode <node5#ss:ehFn> CVodeErrHandlerFn
-      @ida <node5#ss:ehFn> IDAErrHandlerFn
-      @kinsol <node5#ss:ehFn> KINErrHandlerFn *)
+      @cvode CVodeErrHandlerFn
+      @ida IDAErrHandlerFn
+      @kinsol KINErrHandlerFn *)
   type error_details = {
       error_code : int;
       module_name : string;        (** IDA, CVODE, CVSPGMR, etc. *)
@@ -465,8 +487,8 @@ module Util : sig (* {{{ *)
       where either is {{:OCAML_DOC_ROOT(Float.html)} Float.infinity}
       or {{:OCAML_DOC_ROOT(Float.html)} Float.nan}.
 
-      @nocvode <node> SUNRCompare
-      @nocvode <node> SUNRCompareTol
+      @nodoc SUNRCompare
+      @nodoc SUNRCompareTol
       @since 5.8.0 *)
   val compare_float : ?tol:float -> float -> float -> bool
 

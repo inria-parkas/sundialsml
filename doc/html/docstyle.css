@@ -339,13 +339,13 @@ table.typetable td:nth-child(4) {
                                   padding-left: 0em; }
 table.typetable td:nth-child(5) code { font-size: 0.82em; color: lightgray; }
 
-div.sundials {
+li.sundials {
   padding-top: 0ex;
   font-size: 0.82em;
   color: gray;
 }
-div.raisedexceptions + div.sundials { padding-top: 2ex; }
-div.sundials + div.sundials > span.seesundials { visibility: hidden; }
+div.raisedexceptions + li.sundials { padding-top: 2ex; }
+li.sundials + li.sundials > span.seesundials { visibility: hidden; }
 
 img { max-width: 100%;
       height: auto;

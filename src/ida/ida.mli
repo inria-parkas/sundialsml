@@ -53,7 +53,7 @@ open Sundials
 #include "../../examples/ocaml/skeletons/ida_skel.ml"
     ]}
 
-    @ida <node5#ss:skeleton_sim> Skeleton of main program
+    @ida <Usage/index.html#a-skeleton-of-the-users-main-program> Skeleton of main program
  *)
 type ('d, 'k) session = ('d, 'k) Ida_impl.session
 
@@ -65,7 +65,7 @@ type 'k serial_session = (RealArray.t, 'k) session
 
 (** Linear solvers used by Ida.
 
-    @ida <node5#sss:lin_solv_init> Linear Solver Specification Functions *)
+    @ida <Usage/index.html#linear-solver-interface-functions> Linear solver interface functions *)
 type ('data, 'kind) linear_solver = ('data, 'kind) Ida_impl.linear_solver
 
 (** Alias for linear solvers that are restricted to serial nvectors. *)
@@ -81,10 +81,10 @@ type 'd triple = 'd * 'd * 'd
 
 (** Arguments common to Jacobian callback functions.
 
-    @noida <node5> IDALsJacFn
-    @noida <node5> IDALsJacTimesVecFn
-    @noida <node5> IDALsPrecSolveFn
-    @noida <node5> IDALsPrecSetupFn *)
+    @ida IDALsJacFn
+    @ida IDALsJacTimesVecFn
+    @ida IDALsPrecSolveFn
+    @ida IDALsPrecSetupFn *)
 type ('t, 'd) jacobian_arg = ('t, 'd) Ida_impl.jacobian_arg =
   {
     jac_t    : float;        (** The independent variable. *)
@@ -112,13 +112,10 @@ type ('t, 'd) jacobian_arg = ('t, 'd) Ida_impl.jacobian_arg =
     {warning [y], [y'], and [r] should not be accessed after the function
              returns.}
 
-    @ida <node5#ss:resFn> IDAResFn *)
+    @ida IDAResFn *)
 type 'd resfn = float -> 'd -> 'd -> 'd -> unit
 
-(** Direct Linear Solvers operating on dense, banded and sparse matrices.
-
-    @ida <node5#sss:optin_dls> Direct linear solvers optional input functions
-    @ida <node5#sss:optout_dls> Direct linear solvers optional output functions *)
+(** Direct Linear Solvers operating on dense, banded and sparse matrices. *)
 module Dls : sig (* {{{ *)
   include module type of Sundials_LinearSolver.Direct
 
@@ -139,7 +136,7 @@ module Dls : sig (* {{{ *)
       {warning Neither the elements of [arg] nor the matrix [jm] should
                be accessed after the function has returned.}
 
-      @ida <node5#ss:djacFn> IDALsJacFn *)
+      @ida IDALsJacFn *)
   type 'm jac_fn = (RealArray.t triple, RealArray.t) jacobian_arg -> 'm -> unit
 
   (** Create an Ida-specific linear solver from a Jacobian approximation
@@ -149,8 +146,8 @@ module Dls : sig (* {{{ *)
       used), but must be provided for other solvers (or [Invalid_argument] is
       raised).
 
-      @nocvode <node> IDASetLinearSolver
-      @nocvode <node> IDASetJacFn *)
+      @ida IDASetLinearSolver
+      @ida IDASetJacFn *)
   val solver :
     ?jac:'m jac_fn ->
     ('m, RealArray.t, 'kind, [>`Dls]) LinearSolver.t ->
@@ -161,7 +158,7 @@ module Dls : sig (* {{{ *)
   (** Returns the sizes of the real and integer workspaces used by a direct
       linear solver.
 
-      @ida <node5#sss:optout_dls> IDAGetLinWorkSpace
+      @ida IDAGetLinWorkSpace
       @return ([real_size], [integer_size]) *)
   val get_work_space : 'k serial_session -> int * int
 
@@ -169,21 +166,18 @@ module Dls : sig (* {{{ *)
   (** Returns the number of calls made by a direct linear solver to the
       Jacobian approximation function.
 
-      @ida <node5#sss:optout_dls> IDAGetNumJacEvals *)
+      @ida IDAGetNumJacEvals *)
   val get_num_jac_evals : 'k serial_session -> int
 
   (** Returns the number of calls to the residual callback due to
       the finite difference Jacobian approximation.
 
-      @ida <node5#sss:optout_dls> IDAGetNumLinResEvals *)
+      @ida IDAGetNumLinResEvals *)
   val get_num_lin_res_evals : 'k serial_session -> int
 
 end (* }}} *)
 
-(** Scaled Preconditioned Iterative Linear Solvers.
-
-    @ida <node5#sss:optin_spils> Iterative linear solvers optional input functions.
-    @ida <node5#sss:optout_spils> Iterative linear solvers optional output functions. *)
+(** Scaled Preconditioned Iterative Linear Solvers. *)
 module Spils : sig (* {{{ *)
   include module type of Sundials_LinearSolver.Iterative
 
@@ -211,7 +205,7 @@ module Spils : sig (* {{{ *)
       {warning The elements of [jac], [r], and [z] should not
                be accessed after the function has returned.}
 
-      @ida <node5#ss:psolveFn> IDALsPrecSolveFn *)
+      @ida IDALsPrecSolveFn *)
   type 'd prec_solve_fn =
     (unit, 'd) jacobian_arg
     -> 'd
@@ -229,7 +223,7 @@ module Spils : sig (* {{{ *)
       {warning The elements of the argument should not be accessed after the
                function has returned.}
 
-      @ida <node5#ss:precondFn> IDALsPrecSetupFn *)
+      @ida IDALsPrecSetupFn *)
   type 'd prec_setup_fn = (unit, 'd) jacobian_arg -> unit
 
   (** Specifies a preconditioner and its callback functions.
@@ -239,9 +233,9 @@ module Spils : sig (* {{{ *)
       The {!prec_solve_fn} is mandatory. The {!prec_setup_fn} can be
       omitted if not needed.
 
-      @ida <node5> IDASetPreconditioner
-      @ida <node5> IDALsPrecSolveFn
-      @ida <node5> IDALsPrecSetupFn *)
+      @ida IDASetPreconditioner
+      @ida IDALsPrecSolveFn
+      @ida IDALsPrecSetupFn *)
   type ('d, 'k) preconditioner = ('d, 'k) Ida_impl.SpilsTypes.preconditioner
 
   (** No preconditioning.  *)
@@ -267,7 +261,7 @@ module Spils : sig (* {{{ *)
       {warning The elements of [arg] should not be accessed after the
                function has returned.}
 
-      @nocvode <node> IDALsJacTimesSetupFn *)
+      @ida IDALsJacTimesSetupFn *)
   type 'd jac_times_setup_fn = (unit, 'd) jacobian_arg -> unit
 
   (** Callback functions that compute the Jacobian times a vector. In the
@@ -282,7 +276,7 @@ module Spils : sig (* {{{ *)
       {warning Neither the elements of [arg] nor [v] or [jv] should be
                accessed after the function has returned.}
 
-      @ida <node5#ss:jtimesFn> IDALsJacTimesVecFn *)
+      @ida IDALsJacTimesVecFn *)
   type 'd jac_times_vec_fn =
     ('d double, 'd) jacobian_arg
     -> 'd
@@ -303,9 +297,9 @@ module Spils : sig (* {{{ *)
       NB: a [jac_times_res] function is not supported in
           {{!Sundials_Config.sundials_version}Config.sundials_version} < 5.3.0.
 
-      @nocvode <node> IDASetLinearSolver
-      @nocvode <node> IDASetJacTimes
-      @nocvode <node> IDASetJacTimesResFn *)
+      @ida IDASetLinearSolver
+      @ida IDASetJacTimes
+      @ida IDASetJacTimesResFn *)
   val solver :
     ('m, 'd, 'k, [>`Iter]) LinearSolver.t
     -> ?jac_times_vec:'d jac_times_setup_fn option * 'd jac_times_vec_fn
@@ -319,7 +313,7 @@ module Spils : sig (* {{{ *)
       constant is reduced from the Newton iteration test constant.
       This factor must be >= 0; passing 0 specifies the default (0.05).
 
-      @ida <node5> IDASetEpsLin *)
+      @ida IDASetEpsLin *)
   val set_eps_lin : ('d, 'k) session -> float -> unit
 
   (** Sets the factor for converting from the integrator tolerance (WRMS
@@ -332,8 +326,8 @@ module Spils : sig (* {{{ *)
       If it is less than zero, then the square root of the dot product of a
       state vector full of ones with itself is used.
 
-      @since 5.4.0
-      @noarkode <node> IDASetLSNormFactor *)
+      @ida IDASetLSNormFactor
+      @since 5.4.0 *)
   val set_ls_norm_factor : ('d, 'k) session -> float -> unit
 
   (** Enables or disables scaling of the linear system solution to account
@@ -341,8 +335,8 @@ module Spils : sig (* {{{ *)
       Linear solution scaling is enabled by default when a matrix-based
       linear solver is attached.
 
-      @since 5.2.0
-      @noida <node5> IDASetLinearSolutionScaling *)
+      @ida IDASetLinearSolutionScaling
+      @since 5.2.0 *)
   val set_linear_solution_scaling : ('d, 'k) session -> bool -> unit
 
   (** Sets the increment factor ([dqincfac]) to use in the difference-quotient
@@ -358,7 +352,7 @@ module Spils : sig (* {{{ *)
       {% $\sigma = \sqrt{N} \mathtt{dqincfac}$ %},
       and {% $N$ %} is the number of equations in the DAE system.
 
-      @ida <node5> IDASetIncrementFactor *)
+      @ida IDASetIncrementFactor *)
   val set_increment_factor : ('d, 'k) session -> float -> unit
 
   (** {3:stats Solver statistics} *)
@@ -366,49 +360,49 @@ module Spils : sig (* {{{ *)
   (** Returns the sizes of the real and integer workspaces used by the spils
       linear solver.
 
-      @ida <node5#sss:optout_spils> IDAGetLinWorkSpace
+      @ida IDAGetLinWorkSpace
       @return ([real_size], [integer_size]) *)
   val get_work_space       : ('d, 'k) session -> int * int
 
   (** Returns the cumulative number of linear iterations.
 
-      @ida <node5#sss:optout_spils> IDAGetNumLinIters *)
+      @ida IDAGetNumLinIters *)
   val get_num_lin_iters    : ('d, 'k) session -> int
 
   (** Returns the cumulative number of linear convergence failures.
 
-      @ida <node5#sss:optout_spils> IDAGetNumLinConvFails *)
+      @ida IDAGetNumLinConvFails *)
   val get_num_lin_conv_fails   : ('d, 'k) session -> int
 
   (** Returns the number of calls to the setup function.
 
-      @ida <node5#sss:optout_spils> IDAGetNumPrecEvals *)
+      @ida IDAGetNumPrecEvals *)
   val get_num_prec_evals   : ('d, 'k) session -> int
 
   (** Returns the cumulative number of calls to the preconditioner solve
       function.
 
-      @ida <node5#sss:optout_spils> IDAGetNumPrecSolves *)
+      @ida IDAGetNumPrecSolves *)
   val get_num_prec_solves  : ('d, 'k) session -> int
 
   (** Returns the cumulative number of calls to the Jacobian-vector
       setup function.
 
-      @since 3.0.0
-      @noida <node> IDAGetNumJTSetupEvals *)
+      @ida IDAGetNumJTSetupEvals
+      @since 3.0.0 *)
   val get_num_jtsetup_evals : ('d, 'k) session -> int
 
   (** Returns the cumulative number of calls to the Jacobian-vector
       function.
 
-      @ida <node5#sss:optout_spils> IDAGetNumJtimesEvals *)
+      @ida IDAGetNumJtimesEvals *)
   val get_num_jtimes_evals : ('d, 'k) session -> int
 
   (** Returns the number of calls to the residual callback for
       finite difference Jacobian-vector product approximation. This counter is
       only updated if the default difference quotient function is used.
 
-      @ida <node5#sss:optout_spils> IDAGetNumLinResEvals *)
+      @ida IDAGetNumLinResEvals *)
   val get_num_lin_res_evals    : ('d, 'k) session -> int
 
   (** {3:lowlevel Low-level solver manipulation}
@@ -420,9 +414,9 @@ module Spils : sig (* {{{ *)
 
   (** Change the preconditioner functions.
 
-      @ida <node5#sss:optin_spils> IDASetPreconditioner
-      @ida <node5#ss:psolveFn> IDALsPrecSolveFn
-      @ida <node5#ss:precondFn> IDALsPrecSetupFn *)
+      @ida IDASetPreconditioner
+      @ida IDALsPrecSolveFn
+      @ida IDALsPrecSetupFn *)
    val set_preconditioner :
      ('d,'k) session
      -> ?setup:'d prec_setup_fn
@@ -434,8 +428,8 @@ module Spils : sig (* {{{ *)
       NB: the [jac_times_setup] argument is not supported in
           {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
 
-      @ida <node5#sss:optin_spils> IDASetJacTimes
-      @ida <node5#ss:jtimesFn> IDALsJacTimesVecFn *)
+      @ida IDASetJacTimes
+      @ida IDALsJacTimesVecFn *)
   val set_jac_times :
     ('d,'k) session
     -> ?jac_times_setup:'d jac_times_setup_fn
@@ -445,15 +439,15 @@ module Spils : sig (* {{{ *)
   (** Remove a Jacobian-times-vector function and use the default
       implementation.
 
-      @ida <node5#sss:optin_spils> IDASetJacTimes
-      @ida <node5#ss:jtimesFn> IDAJacTimesVecFn *)
+      @ida IDASetJacTimes
+      @ida IDAJacTimesVecFn *)
   val clear_jac_times : ('d, 'k) session -> unit
 end (* }}} *)
 
 (** Create an IDA-specific linear solver from a generic matrix embedded
     solver.
 
-    @noida <node> IDASetLinearSolver
+    @ida IDASetLinearSolver
     @since 5.8.0 *)
 val matrix_embedded_solver :
        (unit, 'data, 'kind, [>`MatE]) LinearSolver.t
@@ -494,7 +488,7 @@ val default_tolerances : ('data, 'kind) tolerance
     {warning [y], [y'], and [gout] should not be accessed after the function
              has returned.}
 
-    @ida <node5#ss:rootFn> IDARootFn *)
+    @ida IDARootFn *)
 type 'd rootsfn = float -> 'd -> 'd -> RealArray.t -> unit
 
 (** Creates and initializes a session with the solver. The call
@@ -533,16 +527,17 @@ type 'd rootsfn = float -> 'd -> 'd -> RealArray.t -> unit
     {!Sundials.Context.default}, but this can be overridden by passing an
     optional [context] argument.
 
-    @ida <node5#sss:idainit>       IDACreate/IDAInit
-    @ida <node5#ss:idarootinit>    IDARootInit
-    @ida <node>                    IDASetLinearSolver
-    @ida <node>                    IDASetNonlinearSolver
-    @ida <node5#sss:idatolerances> IDASStolerances
-    @ida <node5#sss:idatolerances> IDASVtolerances
-    @ida <node5#sss:idatolerances> IDAWFtolerances
-    @ida <node5#ss:ewtsetFn>       IDAEwtFn
-    @ida <node5#sss:idasetid>      IDASetId
-    @nocvode <node>                IDASetNlsResFn *)
+    @ida IDACreate
+    @ida IDAInit
+    @ida IDARootInit
+    @ida IDASetLinearSolver
+    @ida IDASetNonlinearSolver
+    @ida IDASStolerances
+    @ida IDASVtolerances
+    @ida IDAWFtolerances
+    @ida IDAEwtFn
+    @ida IDASetId
+    @ida IDASetNlsResFn *)
 val init :
        ?context:Context.t
     -> ('d, 'kind) tolerance
@@ -567,7 +562,7 @@ val no_roots : (int * 'd rootsfn)
     supressing local error tests. See {!calc_ic_ya_yd'} and
     {!set_suppress_alg}.
 
-    @ida <node5#sss:idasetid> IDASetId *)
+    @ida IDASetId *)
 module VarId :
   sig (* {{{ *)
     (** The constant [0.0]. *)
@@ -596,7 +591,7 @@ module VarId :
     These classifications are required by {!calc_ic_ya_yd'} and
     {!set_suppress_alg}. See also {!VarId}.
 
-    @ida <node5#sss:optin_main> IDASetId *)
+    @ida IDASetId *)
 val set_id : ('d, 'k) session -> ('d,'k) Nvector.t -> unit
 
 (** Indicates whether or not to ignore algebraic variables in the local error
@@ -606,8 +601,8 @@ val set_id : ('d, 'k) session -> ('d,'k) Nvector.t -> unit
     for DAE systems of index 1 and {i encouraged} for systems of index 2 or
     more.
 
-    @ida <node5#sss:optin_main> IDASetId
-    @ida <node5#sss:optin_main> IDASetSuppressAlg *)
+    @ida IDASetId
+    @ida IDASetSuppressAlg *)
 val set_suppress_alg : ('d, 'k) session
                        -> ?varid:('d, 'k) Nvector.t -> bool -> unit
 
@@ -619,8 +614,8 @@ val set_suppress_alg : ('d, 'k) session
     A {!reinit} is required before calling this function after
     {!solve_normal} or {!solve_one_step}.
 
-    @ida <node5#ss:idacalcic> IDACalcIC (IDA_Y_INIT)
-    @ida <node5#sss:optout_iccalc> IDAGetConsistentIC
+    @ida IDACalcIC (IDA_Y_INIT)
+    @ida IDAGetConsistentIC
     @raise IdNotSet Variable ids have not been set (see {!set_id}). *)
 val calc_ic_y : ('d, 'k) session -> ?y:('d, 'k) Nvector.t -> float -> unit
 
@@ -636,9 +631,9 @@ val calc_ic_y : ('d, 'k) session -> ?y:('d, 'k) Nvector.t -> float -> unit
     requested. A {!reinit} is required before calling this function after
     {!solve_normal} or {!solve_one_step}.
 
-    @ida <node5#ss:idacalcic> IDACalcIC (IDA_YA_YDP_INIT)
-    @ida <node5#sss:optin_main> IDASetId
-    @ida <node5#sss:optout_iccalc> IDAGetConsistentIC
+    @ida IDACalcIC (IDA_YA_YDP_INIT)
+    @ida IDASetId
+    @ida IDAGetConsistentIC
     @raise IdNotSet Variable ids have not been set (see {!set_id}). *)
 val calc_ic_ya_yd' :
   ('d, 'k) session
@@ -651,60 +646,60 @@ val calc_ic_ya_yd' :
 (** Specifies the positive constant in the nonlinear convergence test
     of the initial condition calculation.
 
-    @noida <node5#sss:initoptin> IDASetNonlinConvCoefIC
-    @ida <node5#ss:idacalcic> IDACalcIC *)
+    @ida IDASetNonlinConvCoefIC
+    @ida IDACalcIC *)
 val set_nonlin_conv_coef_ic : ('d, 'k) session -> float -> unit
 
 (** Specifies the maximum number of steps taken in attempting to reach
     a given output time in the initial condition calculation.
 
-    @noida <node5#sss:initoptin> IDASetMaxNumStepsIC
-    @ida <node5#ss:idacalcic> IDACalcIC (IDA_YA_YDP_INIT) *)
+    @ida IDASetMaxNumStepsIC
+    @ida IDACalcIC (IDA_YA_YDP_INIT) *)
 val set_max_num_steps_ic : ('d, 'k) session -> int -> unit
 
 (** Specifies the maximum number of approximate Jacobian or preconditioner
     evaluations allowed when the Newton iteration appears to be slowly
     converging.
 
-    @noida <node5#sss:initoptin> IDASetMaxNumJacsIC
-    @ida <node5#ss:idacalcic> IDACalcIC *)
+    @ida IDASetMaxNumJacsIC
+    @ida IDACalcIC *)
 val set_max_num_jacs_ic : ('d, 'k) session -> int -> unit
 
 (** Specifies the maximum number of Newton iterations allowed in any one
     attempt to calculate initial conditions.
 
-    @noida <node5#sss:initoptin> IDASetMaxNumItersIC
-    @ida <node5#ss:idacalcic> IDACalcIC *)
+    @ida IDASetMaxNumItersIC
+    @ida IDACalcIC *)
 val set_max_num_iters_ic : ('d, 'k) session -> int -> unit
 
 (** Specifies the maximum number of linesearch backtracks allowed in any
     Newton iteration, when solving the initial conditions calculation
     problem.
 
-    @since 2.7.0
+    @ida IDASetMaxBacksIC
+    @ida IDACalcIC
     @raise Config.NotImplementedBySundialsVersion Feature not available.
-    @noida <node5#sss:initoptin> IDASetMaxBacksIC
-    @ida <node5#ss:idacalcic> IDACalcIC *)
+    @since 2.7.0 *)
 val set_max_backs_ic : ('d, 'k) session -> int -> unit
 
 (** Enables ([true]) or disables ([false]) the linesearch algorithm
     in the initial condition calculation.
 
-    @noida <node5#sss:initoptin> IDASetLineSearchOffIC
-    @ida <node5#ss:idacalcic> IDACalcIC *)
+    @ida IDASetLineSearchOffIC
+    @ida IDACalcIC *)
 val set_line_search_ic : ('d, 'k) session -> bool -> unit
 
 (** Specifies a positive lower bound on the Newton step in the initial condition
     calculation.
 
-    @noida <node5#sss:initoptin> IDASetStepToleranceIC
-    @ida <node5#ss:idacalcic> IDACalcIC *)
+    @ida IDASetStepToleranceIC
+    @ida IDACalcIC *)
 val set_step_tolerance_ic : ('d, 'k) session -> float -> unit
 
 (** Returns the number of backtrack operations during {!calc_ic_ya_yd'} or
     {!calc_ic_y}.
 
-    @ida <node5#sss:optout_iccalc> IDAGetNumBacktrackOps *)
+    @ida IDAGetNumBacktrackOps *)
 val get_num_backtrack_ops : ('d, 'k) session -> int
 
 (** {2:solver Solution} *)
@@ -712,7 +707,7 @@ val get_num_backtrack_ops : ('d, 'k) session -> int
 (** Values returned by the step functions. Failures are indicated by
     exceptions.
 
-    @ida <node5#sss:ida> IDASolve *)
+    @ida IDASolve *)
 type solver_result =
   | Success             (** The solution was advanced. {cconst IDA_SUCCESS} *)
   | RootsFound          (** A root was found. See {!get_root_info}.
@@ -730,7 +725,7 @@ type solver_result =
     It returns [tret], the time reached by the solver, which will be equal to
     [tout] if no errors occur, and, [r], a {!solver_result}.
 
-    @ida <node5#sss:idasolve> IDASolve (IDA_NORMAL)
+    @ida IDASolve (IDA_NORMAL)
     @raise IllInput Missing or illegal solver inputs.
     @raise TooMuchWork The requested time could not be reached in [mxstep] internal steps.
     @raise TooMuchAccuracy The requested accuracy could not be satisfied.
@@ -749,7 +744,7 @@ val solve_normal : ('d, 'k) session -> float
 
 (** Like {!solve_normal} but returns after one internal solver step.
 
-    @ida <node5#sss:idasolve> IDASolve (IDA_ONE_STEP) *)
+    @ida IDASolve (IDA_ONE_STEP) *)
 val solve_one_step : ('d, 'k) session -> float
                      -> ('d, 'k) Nvector.t -> ('d, 'k) Nvector.t
                      -> float * solver_result
@@ -766,7 +761,7 @@ val solve_one_step : ('d, 'k) session -> float
     This function may only be called after a successful return from either
     {!solve_normal} or {!solve_one_step}.
 
-    @ida <node5#sss:optin_root> IDAGetDky
+    @ida IDAGetDky
     @raise BadT [t] is not in the interval {% $[t_n - h_u, t_n]$%}.
     @raise BadK [k] is not in the range 0, 1, ..., $q_u$. *)
 val get_dky : ('d, 'k) session -> ('d, 'k) Nvector.t -> float -> int -> unit
@@ -781,10 +776,10 @@ val get_dky : ('d, 'k) session -> ('d, 'k) Nvector.t -> float -> int -> unit
     and the alternative residual function for nonlinear system function
     iterations.
 
-    @ida <node5#sss:cvreinit> IDAReInit
-    @ida <node>               IDASetLinearSolver
-    @ida <node>               IDASetNonlinearSolver
-    @ida <node>               IDASetNlsResFn *)
+    @ida IDAReInit
+    @ida IDASetLinearSolver
+    @ida IDASetNonlinearSolver
+    @ida IDASetNlsResFn *)
 val reinit :
   ('d, 'k) session
   -> ?nlsolver:('d, 'k, ('d, 'k) session, [`Nvec]) Sundials_NonlinearSolver.t
@@ -801,166 +796,164 @@ val reinit :
 
 (** Set the integration tolerances.
 
-    @ida <node5#sss:idatolerances> IDASStolerances
-    @ida <node5#sss:idatolerances> IDASVtolerances
-    @ida <node5#sss:idatolerances> IDAWFtolerances
-    @ida <node5#ss:ewtsetFn>       IDAEwtFn *)
+    @ida IDASStolerances
+    @ida IDASVtolerances
+    @ida IDAWFtolerances
+    @ida IDAEwtFn *)
 val set_tolerances : ('d, 'k) session -> ('d, 'k) tolerance -> unit
 
 (** Configure the default error handler to write messages to a file.
     By default it writes to Logfile.stderr.
 
-    @ida <node5#sss:optin_main> IDASetErrFile *)
+    @ida IDASetErrFile *)
 val set_error_file : ('d, 'k) session -> Logfile.t -> unit
 
 (** Specifies a custom function for handling error messages.
     The handler must not fail: any exceptions are trapped and discarded.
 
-    @ida <node5#sss:optin_main> IDASetErrHandlerFn
-    @ida <node5#ss:ehFn> IDAErrHandlerFn *)
+    @ida IDASetErrHandlerFn
+    @ida IDAErrHandlerFn *)
 val set_err_handler_fn
   : ('d, 'k) session -> (Util.error_details -> unit) -> unit
 
 (** Restores the default error handling function.
 
-    @ida <node5#sss:optin_main> IDASetErrHandlerFn *)
+    @ida IDASetErrHandlerFn *)
 val clear_err_handler_fn : ('d, 'k) session -> unit
 
 (** Specifies the maximum order of the linear multistep method.
 
-    @ida <node5#sss:optin_main> IDASetMaxOrd *)
+    @ida IDASetMaxOrd *)
 val set_max_ord : ('d, 'k) session -> int -> unit
 
 (** Specifies the maximum number of steps taken in attempting to reach
     a given output time.
 
-    @ida <node5#sss:optin_main> IDASetMaxNumSteps *)
+    @ida IDASetMaxNumSteps *)
 val set_max_num_steps : ('d, 'k) session -> int -> unit
 
 (** Specifies the initial step size.
 
-    @ida <node5#sss:optin_main> IDASetInitStep *)
+    @ida IDASetInitStep *)
 val set_init_step : ('d, 'k) session -> float -> unit
 
 (** Specifies an upper bound on the magnitude of the step size.
 
-    @ida <node5#sss:optin_main> IDASetMaxStep *)
+    @ida IDASetMaxStep *)
 val set_max_step : ('d, 'k) session -> float -> unit
 
 (** Limits the value of the independent variable [t] when solving.
     By default no stop time is imposed.
 
-    @ida <node5#sss:optin_main> IDASetStopTime *)
+    @ida IDASetStopTime *)
 val set_stop_time : ('d, 'k) session -> float -> unit
 
 (** Specifies the maximum number of error test failures permitted in attempting
     one step.
 
-    @ida <node5#sss:optin_main> IDASetMaxErrTestFails *)
+    @ida IDASetMaxErrTestFails *)
 val set_max_err_test_fails : ('d, 'k) session -> int -> unit
 
 (** Specifies the maximum number of nonlinear solver iterations permitted per
     step.
 
-    @ida <node5#sss:optin_main> IDASetMaxNonlinIters *)
+    @ida IDASetMaxNonlinIters *)
 val set_max_nonlin_iters : ('d, 'k) session -> int -> unit
 
 (** Specifies the maximum number of nonlinear solver convergence failures
     permitted during one step.
 
-    @ida <node5#sss:optin_main> IDASetMaxConvFails *)
+    @ida IDASetMaxConvFails *)
 val set_max_conv_fails : ('d, 'k) session -> int -> unit
 
 (** Specifies the safety factor used in the nonlinear convergence test.
 
-    @ida <node5#sss:optin_main> IDASetNonlinConvCoef
-    @ida <node3#ss:ivp_sol> IVP Solution *)
+    @ida IDASetNonlinConvCoef *)
 val set_nonlin_conv_coef : ('d, 'k) session -> float -> unit
 
 (** Specifies a vector defining inequality constraints for each
     component of the solution vector [u].  See {!Sundials.Constraint}.
 
-    @ida <node5#sss:optin_main> IDASetConstraints *)
+    @ida IDASetConstraints *)
 val set_constraints : ('d, 'k) session -> ('d, 'k) Nvector.t -> unit
 
 (** Disables constraint checking.
 
-    @noida <node> IDASetConstraints *)
+    @ida IDASetConstraints *)
 val clear_constraints : ('d, 'k) session -> unit
 
 (** {2:get Querying the solver (optional output functions)} *)
 
 (** Returns the sizes of the real and integer workspaces.
 
-    @ida <node5#sss:optout_main> IDAGetWorkSpace
+    @ida IDAGetWorkSpace
     @return ([real_size], [integer_size]) *)
 val get_work_space          : ('d, 'k) session -> int * int
 
 (** Returns the cumulative number of internal solver steps.
 
-    @ida <node5#sss:optout_main> IDAGetNumSteps *)
+    @ida IDAGetNumSteps *)
 val get_num_steps           : ('d, 'k) session -> int
 
 (** Returns the number of calls to the residual function.
 
-    @ida <node5#sss:optout_main> IDAGetNumResEvals *)
+    @ida IDAGetNumResEvals *)
 val get_num_res_evals       : ('d, 'k) session -> int
 
 (** Returns the number of calls made to the linear solver's setup function.
 
-    @ida <node5#sss:optout_main> IDAGetNumLinSolvSetups *)
+    @ida IDAGetNumLinSolvSetups *)
 val get_num_lin_solv_setups : ('d, 'k) session -> int
 
 (** Returns the number of local error test failures that have occurred.
 
-    @ida <node5#sss:optout_main> IDAGetNumErrTestFails *)
+    @ida IDAGetNumErrTestFails *)
 val get_num_err_test_fails  : ('d, 'k) session -> int
 
 (** Returns the integration method order used during the last internal step.
 
-    @ida <node5#sss:optout_main> IDAGetLastOrder *)
+    @ida IDAGetLastOrder *)
 val get_last_order          : ('d, 'k) session -> int
 
 (** Returns the integration method order to be used on the next internal step.
 
-    @ida <node5#sss:optout_main> IDAGetCurrentOrder *)
+    @ida IDAGetCurrentOrder *)
 val get_current_order       : ('d, 'k) session -> int
 
 (** Returns the integration step size taken on the last internal step.
 
-    @ida <node5#sss:optout_main> IDAGetLastStep *)
+    @ida IDAGetLastStep *)
 val get_last_step           : ('d, 'k) session -> float
 
 (** Returns the integration step size to be attempted on the next internal step.
 
-    @ida <node5#sss:optout_main> IDAGetCurrentStep *)
+    @ida IDAGetCurrentStep *)
 val get_current_step        : ('d, 'k) session -> float
 
 (** Returns the the value of the integration step size used on the first step.
 
-    @ida <node5#sss:optout_main> IDAGetActualInitStep *)
+    @ida IDAGetActualInitStep *)
 val get_actual_init_step    : ('d, 'k) session -> float
 
 (** Returns the the current internal time reached by the solver.
 
-    @ida <node5#sss:optout_main> IDAGetCurrentTime *)
+    @ida IDAGetCurrentTime *)
 val get_current_time        : ('d, 'k) session -> float
 
 (** Returns a suggested factor by which the user's tolerances should be scaled
     when too much accuracy has been requested for some internal step.
 
-    @ida <node5#sss:optout_main> IDAGetTolScaleFactor *)
+    @ida IDAGetTolScaleFactor *)
 val get_tol_scale_factor : ('d, 'k) session -> float
 
 (** Returns the solution error weights at the current time.
 
-    @ida <node5#sss:optout_main> IDAGetErrWeights
-    @ida <node3#ss:ivp_sol> IVP solution (W_i) *)
+    @ida IDAGetErrWeights *)
 val get_err_weights : ('d, 'k) session -> ('d, 'k) Nvector.t -> unit
 
 (** Returns the vector of estimated local errors.
 
-    @ida <node5#sss:optout_main> IDAGetEstLocalErrors *)
+    @ida IDAGetEstLocalErrors *)
 val get_est_local_errors : ('d, 'k) session -> ('d, 'k) Nvector.t -> unit
 
 (** Summaries of integrator statistics. *)
@@ -989,30 +982,30 @@ type integrator_stats = {
 
 (** Returns the integrator statistics as a group.
 
-    @ida <node5#sss:optout_main> IDAGetIntegratorStats *)
+    @ida IDAGetIntegratorStats *)
 val get_integrator_stats    : ('d, 'k) session -> integrator_stats
 
 (** Prints the integrator statistics on the given channel.
 
-    @ida <node5#sss:optout_main> IDAGetIntegratorStats *)
+    @ida IDAGetIntegratorStats *)
 val print_integrator_stats  : ('d, 'k) session -> out_channel -> unit
 
 
 (** Returns the cumulative number of nonlinear (functional or Newton)
     iterations.
 
-    @ida <node5#sss:optout_main> IDAGetNumNonlinSolvIters *)
+    @ida IDAGetNumNonlinSolvIters *)
 val get_num_nonlin_solv_iters : ('d, 'k) session -> int
 
 (** Returns the cumulative number of nonlinear convergence failures.
 
-    @ida <node5#sss:optout_main> IDAGetNumNonlinSolvConvFails *)
+    @ida IDAGetNumNonlinSolvConvFails *)
 val get_num_nonlin_solv_conv_fails : ('d, 'k) session -> int
 
 (** Returns both the numbers of nonlinear iterations performed [nniters] and
     nonlinear convergence failures [nncfails].
 
-    @ida <node5#sss:optout_main> IDAGetNonlinSolvStats
+    @ida IDAGetNonlinSolvStats
     @return ([nniters], [nncfails]) *)
 val get_nonlin_solv_stats : ('d, 'k) session -> int *int
 
@@ -1021,19 +1014,19 @@ val get_nonlin_solv_stats : ('d, 'k) session -> int *int
 (** [set_root_direction s dir] specifies the direction of zero-crossings to be
     located and returned. [dir] may contain one entry for each root function.
 
-    @ida <node5#sss:optin_root> IDASetRootDirection *)
+    @ida IDASetRootDirection *)
 val set_root_direction : ('d, 'k) session -> RootDirs.d array -> unit
 
 (** Like {!set_root_direction} but specifies a single direction for all root
     functions.
 
-    @ida <node5#sss:optin_root> IDASetRootDirection *)
+    @ida IDASetRootDirection *)
 val set_all_root_directions : ('d, 'k) session -> RootDirs.d -> unit
 
 (** Disables issuing a warning if some root function appears to be identically
     zero at the beginning of the integration.
 
-    @ida <node5#sss:optin_root> IDASetNoInactiveRootWarn *)
+    @ida IDASetNoInactiveRootWarn *)
 val set_no_inactive_root_warn : ('d, 'k) session -> unit
 
 (** Returns the number of root functions. *)
@@ -1041,13 +1034,13 @@ val get_num_roots : ('d, 'k) session -> int
 
 (** Fills an array showing which functions were found to have a root.
 
-    @ida <node5#sss:optout_root> IDAGetRootInfo *)
+    @ida IDAGetRootInfo *)
 val get_root_info : ('d, 'k) session -> Roots.t -> unit
 
 (** Returns the cumulative number of calls made to the user-supplied root
     function g.
 
-    @ida <node5#sss:optout_root> IDAGetNumGEvals *)
+    @ida IDAGetNumGEvals *)
 val get_num_g_evals : ('d, 'k) session -> int
 
 (** {2:nls Advanced nonlinear solver functions}
@@ -1058,22 +1051,22 @@ val get_num_g_evals : ('d, 'k) session -> int
 (** Returns the scalar {% $c_j$ %}, which is proportional to the inverse of
     the step size.
 
-    @since 5.0.0
-    @noida <node5> IDAGetCurrentCj *)
+    @ida IDAGetCurrentCj
+    @since 5.0.0 *)
 val get_current_cj : ('d, 'k) session -> float
 
 (** Returns the current {% $y$ %} vector. This vector provides direct access
     to the data within the integrator.
 
-    @since 5.0.0
-    @noida <node5> IDAGetCurrentY *)
+    @ida IDAGetCurrentY
+    @since 5.0.0 *)
 val get_current_y : ('d, 'k) session -> 'd
 
 (** Returns the current {% $\dot{y}$ %} vector. This vector provides direct
     access to the data within the integrator.
 
-    @since 5.0.0
-    @noida <node5> IDAGetCurrentYp *)
+    @ida IDAGetCurrentYp
+    @since 5.0.0 *)
 val get_current_yp : ('d, 'k) session -> 'd
 
 (** Internal data required to construct the current nonlinear implicit
@@ -1117,21 +1110,21 @@ type 'd nonlin_system_data = {
     linear solver, then the vectors [yyn], [ypn], and [res] are only current
     after an evaluation of the nonlinear system function.
 
-    @since 5.4.0
-    @noida <node> IDAGetNonlinearSystemData *)
+    @ida IDAGetNonlinearSystemData
+    @since 5.4.0 *)
 val get_nonlin_system_data : ('d, 'k) session -> 'd nonlin_system_data
 
 (** Computes the current {% $y$ %} vector from a correction vector.
 
-    @since 5.0.0
-    @noida <node5> IDAComputeY *)
+    @ida IDAComputeY
+    @since 5.0.0 *)
 val compute_y
   : ('d, 'k) session -> ycor:('d, 'k) Nvector.t -> y:('d, 'k) Nvector.t -> unit
 
 (** Computes the current {% $\dot{y}$ %} vector from a correction vector.
 
-    @since 5.0.0
-    @noida <node5> IDAComputeYp *)
+    @ida IDAComputeYp
+    @since 5.0.0 *)
 val compute_yp
   : ('d, 'k) session -> ycor:('d, 'k) Nvector.t -> yp:('d, 'k) Nvector.t -> unit
 
@@ -1142,34 +1135,34 @@ val compute_yp
     linear solver initialization function failed, or a root was found both at
     [t] and very near [t].
 
-    @ida <node5#sss:idasolve> IDA_ILL_INPUT *)
+    @ida <Constants_link.html> IDA_ILL_INPUT *)
 exception IllInput
 
 (** The requested time could not be reached in [mxstep] internal steps.
     See {!set_max_num_steps}
 
-    @ida <node5#sss:idasolve> IDA_TOO_MUCH_WORK *)
+    @ida <Constants_link.html> IDA_TOO_MUCH_WORK *)
 exception TooMuchWork
 
 (** The requested accuracy could not be satisfied.
 
-    @ida <node5#sss:idasolve> IDA_TOO_MUCH_ACC *)
+    @ida <Constants_link.html> IDA_TOO_MUCH_ACC *)
 exception TooMuchAccuracy
 
 (** Too many error test failures within a step. See {!set_max_err_test_fails}.
 
-    @ida <node5#sss:idasolve> IDA_ERR_FAIL *)
+    @ida <Constants_link.html> IDA_ERR_FAIL *)
 exception ErrFailure
 
 (** Too many convergence test failures within a step,
     or Newton convergence failed. See {!set_max_conv_fails}.
 
-    @ida <node5#sss:idasolve> IDA_CONV_FAIL *)
+    @ida <Constants_link.html> IDA_CONV_FAIL *)
 exception ConvergenceFailure
 
 (** Linear solver initialization failed.
 
-    @ida <node5#sss:idasolve> IDA_LINIT_FAIL *)
+    @ida <Constants_link.html> IDA_LINIT_FAIL *)
 exception LinearInitFailure
 
 (** Linear solver setup failed in an unrecoverable manner.
@@ -1180,8 +1173,8 @@ exception LinearInitFailure
     or
     {!Sundials_LinearSolver.PackageFailure}.
 
-    @noida <node> IDAGetLastLinFlag
-    @ida <node5#sss:idasolve> IDA_LSETUP_FAIL *)
+    @ida IDAGetLastLinFlag
+    @ida <Constants_link.html> IDA_LSETUP_FAIL *)
 exception LinearSetupFailure of exn option
 
 (** Linear solver solution failed in an unrecoverable manner.
@@ -1195,82 +1188,82 @@ exception LinearSetupFailure of exn option
     or
     {!Sundials_LinearSolver.PackageFailure}.
 
-    @noida <node> IDAGetLastLinFlag
-    @ida <node5#sss:idasolve> IDA_LSOLVE_FAIL *)
+    @ida IDAGetLastLinFlag
+    @ida <Constants_link.html> IDA_LSOLVE_FAIL *)
 exception LinearSolveFailure of exn option
 
 (** The nonlinear solver failed in a general way.
 
-    @since 5.0.0
-    @nocvode <node5#sss:cvode> CV_NLS_FAIL *)
+    @ida <Constants_link.html> CV_NLS_FAIL
+    @since 5.0.0 *)
 exception NonlinearSolverFailure
 
 (** Nonlinear solver initialization failed.
 
-    @noida <node5> IDA_NLS_INIT_FAIL *)
+    @ida <Constants_link.html> IDA_NLS_INIT_FAIL *)
 exception NonlinearInitFailure
 
 (** Nonlinear solver setup failed in an unrecoverable manner.
 
-    @noida <node5> IDA_NLS_SETUP_FAIL *)
+    @ida <Constants_link.html> IDA_NLS_SETUP_FAIL *)
 exception NonlinearSetupFailure
 
 (** Nonlinear solver setup failed in a recoverable manner.
 
-    @noida <node5> IDA_NLS_SETUP_RECVR *)
+    @ida <Constants_link.html> IDA_NLS_SETUP_RECVR *)
 exception NonlinearSetupRecoverable
 
 (** The residual function failed in an unrecoverable manner.
 
-    @ida <node5#ss:idasolve> IDA_RES_FAIL *)
+    @ida <Constants_link.html> IDA_RES_FAIL *)
 exception ResFuncFailure
 
 (** The residual function had a recoverable error when first called.
 
-    @ida <node5#ss:idacalcic> IDA_FIRST_RES_FAIL *)
+    @ida <Constants_link.html> IDA_FIRST_RES_FAIL *)
 exception FirstResFuncFailure
 
 (** Too many convergence test failures, or unable to estimate the initial step
     size, due to repeated recoverable errors in the residual function.
 
-    @ida <node5#sss:idasolve> IDA_REP_RES_ERR *)
+    @ida <Constants_link.html> IDA_REP_RES_ERR *)
 exception RepeatedResFuncFailure
 
 (** The rootfinding function failed.
 
-    @ida <node5#sss:idasolve> IDA_RTFUNC_FAIL *)
+    @ida <Constants_link.html> IDA_RTFUNC_FAIL *)
 exception RootFuncFailure
 
 (** No solution satisfying the inequality constraints could be found.
 
-    @ida <node5#ss:idacalcic> IDA_CONSTR_FAIL *)
+    @ida <Constants_link.html> IDA_CONSTR_FAIL *)
 exception ConstraintFailure
 
 (** Linesearch could not find a solution with a step larger than steptol in
     weighted RMS norm.
 
-    @ida <node5#ss:idacalcic> IDA_LINESEARCH_FAIL *)
+    @ida <Constants_link.html> IDA_LINESEARCH_FAIL *)
 exception LinesearchFailure
 
 (** A recoverable error occurred in a callback but no recovery was possible.
 
-    @ida <node5#ss:idacalcic> IDA_NO_RECOVERY *)
+    @ida <Constants_link.html> IDA_NO_RECOVERY *)
 exception NoRecovery
 
 (** A component of the error weight vector, either for the input value or a
     corrected value, is zero.
 
-    @ida <node5#ss:idacalcic> IDA_BAD_EWT *)
+    @ida <Constants_link.html> IDA_BAD_EWT *)
 exception BadEwt
 
 (** Raised by {!get_dky} for invalid order values.
 
-    @ida <node5#ss:optional_dky> IDAGetDky (IDA_BAD_K) *)
+    @ida IDAGetDky (IDA_BAD_K) *)
 exception BadK
 
 (** Raised by {!get_dky} for invalid time values.
 
-    @ida <node5#ss:optional_dky> IDAGetDky (IDA_BAD_T) *)
+    @ida IDAGetDky (IDA_BAD_T) *)
 exception BadT
 
 (** Variable ids are required but not set. See {!set_id}. *)
@@ -1278,6 +1271,6 @@ exception IdNotSet
 
 (** A fused vector operation failed.
 
-    @nocvode <node> IDA_VECTOROP_ERR *)
+    @ida <Constants_link.html> IDA_VECTOROP_ERR *)
 exception VectorOpErr
 

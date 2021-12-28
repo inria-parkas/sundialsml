@@ -18,7 +18,7 @@
     @author Jun Inoue (Inria/ENS)
     @author Marc Pouzet (UPMC/ENS/Inria)
 
-    @nocvode <node> Description of the SUNMatrix module
+    @matrix <index.html> Matrix Data Structures
     @since 3.0.0 *)
 
 open Sundials
@@ -32,7 +32,7 @@ open Sundials
     - ['m] represents the matrix data manipulated by the operations;
     - ['d] is the type of the vector arguments to [m_matvec].
 
-    @nocvode <node> Description of the SUNMatrix module *)
+    @matrix <SUNMatrix_API_link.html#description-of-the-sunmatrix-modules> Description of the SUNMatrix modules *)
 type ('m, 'd) matrix_ops = { (* {{{ *)
   m_clone     : 'm -> 'm;
   (** Create a new, distinct matrix from an existing one without
@@ -80,14 +80,14 @@ exception ZeroDiagonalElement of int
 
 (** {2:content Matrix content} *)
 
-(** Dense matrices *)
+(** Dense matrices
+
+    @matrix_data <SUNMatrix_links.html#the-sunmatrix-dense-module> The SUNMATRIX_DENSE module *)
 module Dense : sig (* {{{ *)
 
   (** A dense matrix. Values of this type are typically passed to linear
       solver callback functions (like {!Cvode.Dls.jac_fn},
-      {!Ida.Dls.jac_fn}, and {!Kinsol.Dls.jac_fn}).
-
-      @nocvode <node> The SUNMatrix_Dense implementation *)
+      {!Ida.Dls.jac_fn}, and {!Kinsol.Dls.jac_fn}). *)
   type t
 
   (** {3:dense_basic Basic access} *)
@@ -95,21 +95,21 @@ module Dense : sig (* {{{ *)
   (** [make m n x] returns an [m] by [n] dense matrix with elements set
       to [x].
 
-      @nocvode <node> SUNDenseMatrix *)
+      @matrix_data SUNDenseMatrix *)
   val make : int -> int -> float -> t
 
   (** [create m n] returns an uninitialized [m] by [n] dense matrix.
 
-      @nocvode <node> SUNDenseMatrix *)
+      @matrix_data SUNDenseMatrix *)
   val create : int -> int -> t
 
   (** [m, n = size a] returns the numbers of rows [m] and columns [n]
       of [a].
 
-      @nocvode <node> SM_ROWS_D
-      @nocvode <node> SM_COLUMNS_D
-      @nocvode <node> SUNDenseMatrix_Rows
-      @nocvode <node> SUNDenseMatrix_Columns *)
+      @matrix_data SM_ROWS_D
+      @matrix_data SM_COLUMNS_D
+      @matrix_data SUNDenseMatrix_Rows
+      @matrix_data SUNDenseMatrix_Columns *)
   val size : t -> int * int
 
   (* TOPLEVEL-PRINTER: Matrix.Dense.pp *)
@@ -132,18 +132,18 @@ module Dense : sig (* {{{ *)
 
   (** [get a i j] returns the value at row [i] and column [j] of [a].
 
-      @nocvode <node> SM_ELEMENT_D *)
+      @matrix_data SM_ELEMENT_D *)
   val get : t -> int -> int -> float
 
   (** [set a i j v] sets the value at row [i] and column [j] of [a] to [v].
 
-      @nocvode <node> SM_ELEMENT_D *)
+      @matrix_data SM_ELEMENT_D *)
   val set : t -> int -> int -> float -> unit
 
   (** [update a i j f] sets the value at row [i] and column [j] of [a]
       to [f v].
 
-      @nocvode <node> SM_ELEMENT_D *)
+      @matrix_data SM_ELEMENT_D *)
   val update : t -> int -> int -> (float -> float) -> unit
 
   (** Direct access to the underlying storage array, which is accessed
@@ -153,7 +153,7 @@ module Dense : sig (* {{{ *)
       potentially unsafe and {b must} only be used when the underlying
       storage is valid, which will be the case in callbacks.
 
-      @nocvode <node> SM_CONTENT_D *)
+      @matrix_data SM_CONTENT_D *)
   val unwrap : t -> RealArray2.data
 
   (** {3:dense_ops Operations} *)
@@ -163,40 +163,34 @@ module Dense : sig (* {{{ *)
 
   (** [scale_add c A B] calculates $A = cA + B$.
 
-      @nocvode <node> SUNMatScaleAdd
-      @nocvode <node> SUNMatScaleAdd_Dense *)
+      @matrix SUNMatScaleAdd (SUNMatScaleAdd_Dense) *)
   val scale_add : float -> t -> t -> unit
 
   (** [scale_addi c A] calculates $A = cA + I$.
 
-      @nocvode <node> SUNMatScaleAddI
-      @nocvode <node> SUNMatScaleAddI_Dense *)
+      @matrix SUNMatScaleAddI (SUNMatScaleAddI_Dense) *)
   val scale_addi : float -> t -> unit
 
   (** The call [matvec a x y] computes the matrix-vector product $y = Ax$.
 
-      @nocvode <node> SUNMatMatvec
-      @nocvode <node> SUNMatMatvec_Dense *)
+      @matrix SUNMatMatvec (SUNMatMatvec_Dense) *)
   val matvec : t -> RealArray.t -> RealArray.t -> unit
 
   (** Fills a matrix with zeros.
 
-      @nocvode <node> SUNMatZero
-      @nocvode <node> SUNMatZero_Dense *)
+      @matrix SUNMatZero (SUNMatZero_Dense) *)
   val set_to_zero : t -> unit
 
   (** [blit ~src ~dst] copies the contents of [src] into [dst]. Both
       must have the same size.
 
-      @nocvode <node> SUNMatCopy
-      @nocvode <node> SUNMatCopy_Dense *)
+      @matrix SUNMatCopy (SUNMatCopy_Dense) *)
   val blit : src:t -> dst:t -> unit
 
   (** [lrw, liw = space a] returns the storage requirements of [a] as
       [lrw] realtype words and [liw] integer words.
 
-      @nocvode <node> SUNMatSpace
-      @nocvode <node> SUNMatSpace_Dense *)
+      @matrix SUNMatSpace (SUNMatSpace_Dense) *)
   val space : t -> int * int
 
   (** {3:dense_lowlevel Low-level details} *)
@@ -208,14 +202,14 @@ module Dense : sig (* {{{ *)
 
 end (* }}} *)
 
-(** Banded matrices *)
+(** Banded matrices
+
+    @matrix <SUNMatrix_links.html#the-sunmatrix-band-module> The SUNMATRIX_BAND Module *)
 module Band : sig (* {{{ *)
 
   (** A band matrix. Values of this type are typically passed to linear
       solver callback functions (like {!Cvode.Dls.jac_fn},
-      {!Ida.Dls.jac_fn}, and {!Kinsol.Dls.jac_fn}).
-
-      @nocvode <node> The SUNMatrix_Band implementation *)
+      {!Ida.Dls.jac_fn}, and {!Kinsol.Dls.jac_fn}). *)
   type t
 
   (** Band matrix dimensions. If the result will not be LU factored then
@@ -234,34 +228,34 @@ module Band : sig (* {{{ *)
   (** Returns a band matrix with the given {!dimensions} and all elements
       initialized to the given value.
 
-      @nocvode <node> SUNBandMatrixStorage *)
+      @matrix_data SUNBandMatrixStorage *)
   val make : dimensions -> float -> t
 
   (** Returns an uninitialized band matrix with the given {!dimensions}.
 
-      @nocvode <node> SUNBandMatrixStorage *)
+      @matrix_data SUNBandMatrixStorage *)
   val create : dimensions -> t
 
   (** [m, n = size a] returns the numbers of rows [m] and columns [n] of [a].
       
       NB: [m] and [n] are always equal for band matrices.
 
-      @nocvode <node> SM_ROWS_B
-      @nocvode <node> SM_COLUMNS_B
-      @nocvode <node> SUNBandMatrix_Rows
-      @nocvode <node> SUNBandMatrix_Columns *)
+      @matrix_data SM_ROWS_B
+      @matrix_data SM_COLUMNS_B
+      @matrix_data SUNBandMatrix_Rows
+      @matrix_data SUNBandMatrix_Columns *)
   val size : t -> int * int
 
   (** Returns the dimensions of a band matrix.
 
-      @nocvode <node> SM_COLUMNS_B
-      @nocvode <node> SM_UBAND_B
-      @nocvode <node> SM_SUBAND_B
-      @nocvode <node> SM_LBAND_B
-      @nocvode <node> SUNBandMatrix_Columns
-      @nocvode <node> SUNBandMatrix_UpperBandwidth
-      @nocvode <node> SUNBandMatrix_StoredUpperBandwidth
-      @nocvode <node> SUNBandMatrix_LowerBandwidth *)
+      @matrix_data SM_COLUMNS_B
+      @matrix_data SM_UBAND_B
+      @matrix_data SM_SUBAND_B
+      @matrix_data SM_LBAND_B
+      @matrix_data SUNBandMatrix_Columns
+      @matrix_data SUNBandMatrix_UpperBandwidth
+      @matrix_data SUNBandMatrix_StoredUpperBandwidth
+      @matrix_data SUNBandMatrix_LowerBandwidth *)
   val dims : t -> dimensions
 
   (* TOPLEVEL-PRINTER: Matrix.Band.pp *)
@@ -287,7 +281,7 @@ module Band : sig (* {{{ *)
       {% $\mathtt{i} \leq \mathtt{j} + \mathtt{ml}$ %} and
       {% $\mathtt{j} \leq \mathtt{i} + \mathtt{smu}$ %} are valid.
 
-      @nocvode <node> SM_ELEMENT_B *)
+      @matrix_data SM_ELEMENT_B *)
   val get : t -> int -> int -> float
 
   (** [set a i j v] sets the value at row [i] and column [j] of [a] to [v].
@@ -295,7 +289,7 @@ module Band : sig (* {{{ *)
       {% $\mathtt{i} \leq \mathtt{j} + \mathtt{ml}$ %} and
       {% $\mathtt{j} \leq \mathtt{i} + \mathtt{smu}$ %} are valid.
 
-      @nocvode <node> SM_ELEMENT_B *)
+      @matrix_data SM_ELEMENT_B *)
   val set : t -> int -> int -> float -> unit
 
   (** [update a i j f] sets the value at row [i] and column [j] of [a]
@@ -303,7 +297,7 @@ module Band : sig (* {{{ *)
       {% $\mathtt{i} \leq \mathtt{j} + \mathtt{ml}$ %} and
       {% $\mathtt{j} \leq \mathtt{i} + \mathtt{smu}$ %} are valid.
 
-      @nocvode <node> SM_ELEMENT_B *)
+      @matrix_data SM_ELEMENT_B *)
   val update : t -> int -> int -> (float -> float) -> unit
 
   (** Direct access to the underlying storage array, which is accessed
@@ -322,7 +316,7 @@ module Band : sig (* {{{ *)
       potentially unsafe and {b must} only be used when the underlying
       storage is valid, which will be the case in callbacks.
 
-      @nocvode <node> SM_CONTENT_B *)
+      @matrix_data SM_CONTENT_B *)
   val unwrap : t -> RealArray2.data
 
   (** {3:band_ops Operations} *)
@@ -336,26 +330,22 @@ module Band : sig (* {{{ *)
       will replace the underlying storage of its first matrix argument if
       the second matrix has a strictly larger bandwidth.
 
-      @nocvode <node> SUNMatScaleAdd
-      @nocvode <node> SUNMatScaleAdd_Band *)
+      @matrix SUNMatScaleAdd (SUNMatScaleAdd_Band) *)
   val scale_add : float -> t -> t -> unit
 
   (** [scale_addi c A] calculates $A = cA + I$.
 
-      @nocvode <node> SUNMatScaleAddI
-      @nocvode <node> SUNMatScaleAddI_Band *)
+      @matrix SUNMatScaleAddI (SUNMatScaleAddI_Band) *)
   val scale_addi : float -> t -> unit
 
   (** The call [matvec a x y] computes the matrix-vector product $y = Ax$.
 
-      @nocvode <node> SUNMatMatvec
-      @nocvode <node> SUNMatMatvec_Band *)
+      @matrix SUNMatMatvec (SUNMatMatvec_Band) *)
   val matvec : t -> RealArray.t -> RealArray.t -> unit
 
   (** Fills a matrix with zeros.
 
-      @nocvode <node> SUNMatZero
-      @nocvode <node> SUNMatZero_Band *)
+      @matrix SUNMatZero (SUNMatZero_Band) *)
   val set_to_zero : t -> unit
 
   (** [blit ~src ~dst] copies the contents of [src] into [dst]. Both
@@ -365,15 +355,13 @@ module Band : sig (* {{{ *)
       will replace the underlying storage of its second matrix argument if
       the first matrix has a strictly larger bandwidth.
 
-      @nocvode <node> SUNMatCopy
-      @nocvode <node> SUNMatCopy_Band *)
+      @matrix SUNMatCopy (SUNMatCopy_Band) *)
   val blit : src:t -> dst:t -> unit
 
   (** [lrw, liw = space a] returns the storage requirements of [a] as
       [lrw] realtype words and [liw] integer words.
 
-      @nocvode <node> SUNMatSpace
-      @nocvode <node> SUNMatSpace_Band *)
+      @matrix SUNMatSpace (SUNMatSpace_Band) *)
   val space : t -> int * int
 
   (** {3:band_lowlevel Low-level details} *)
@@ -385,7 +373,9 @@ module Band : sig (* {{{ *)
 
 end (* }}} *)
 
-(** Sparse matrices *)
+(** Sparse matrices
+
+    @matrix <SUNMatrix_links.html#the-sunmatrix-sparse-module> The SUNMATRIX_SPARSE Module *)
 module Sparse : sig (* {{{ *)
 
   type csc (** Compressed-sparse-column format. *)
@@ -403,9 +393,7 @@ module Sparse : sig (* {{{ *)
 
       The type argument specifies the storage format, either
       {{!csc}compressed-sparse-column format} or
-      {{!csr}compressed-sparse-row format}.
-
-      @nocvode <node> The SUNMatrix_Sparse implementation *)
+      {{!csr}compressed-sparse-row format}. *)
   type 's t
 
   (** Array of row or column indices *)
@@ -422,7 +410,7 @@ module Sparse : sig (* {{{ *)
       The {{!sformat}CSR} format is only available from Sundials 2.7.0
       onwards.
 
-      @nocvode <node> SUNSparseMatrix *)
+      @matrix_data SUNSparseMatrix *)
   val make : 's sformat -> int -> int -> int -> 's t
 
   (** Creates a sparse matrix in in the specified format from a dense matrix
@@ -431,7 +419,7 @@ module Sparse : sig (* {{{ *)
       The {{!sformat}CSR} format is only available from Sundials 2.7.0
       onwards.
 
-      @nocvode <node> SUNSparseFromDenseMatrix *)
+      @matrix_data SUNSparseFromDenseMatrix *)
   val from_dense : 's sformat -> float -> Dense.t -> 's t
 
   (** Creates a sparse matrix in the specified format from a band matrix by
@@ -440,7 +428,7 @@ module Sparse : sig (* {{{ *)
       The {{!sformat}CSR} format is only available from Sundials 2.7.0
       onwards.
 
-      @nocvode <node> SUNSparseFromBandMatrix *)
+      @matrix_data SUNSparseFromBandMatrix *)
   val from_band : 's sformat -> float -> Band.t -> 's t
 
   (** Return the matrix format. *)
@@ -454,20 +442,20 @@ module Sparse : sig (* {{{ *)
   (** [m, n = size a] returns the numbers of rows [m] and columns [n]
       of [a].
 
-      @nocvode <node> SM_ROWS_S
-      @nocvode <node> SM_COLUMNS_S
-      @nocvode <node> SUNSparseMatrix_Rows
-      @nocvode <node> SUNSparseMatrix_Columns *)
+      @matrix_data SM_ROWS_S
+      @matrix_data SM_COLUMNS_S
+      @matrix_data SUNSparseMatrix_Rows
+      @matrix_data SUNSparseMatrix_Columns *)
   val size : 's t -> int * int
 
   (** [nnz, np = dims m] returns the allocated number of nonzeros [nnz] and
       of the number [np] of columns (for csc) or rows (for csr) in the
       matrix [m].
 
-      @nocvode <node> SM_NNZ_S
-      @nocvode <node> SM_NP_S
-      @nocvode <node> SUNSparseMatrix_NNZ
-      @nocvode <node> SUNSparseMatrix_NP *)
+      @matrix_data SM_NNZ_S
+      @matrix_data SM_NP_S
+      @matrix_data SUNSparseMatrix_NNZ
+      @matrix_data SUNSparseMatrix_NP *)
   val dims : 's t -> int * int
 
   (* TOPLEVEL-PRINTER: Matrix.Sparse.pp *)
@@ -529,9 +517,9 @@ module Sparse : sig (* {{{ *)
       {!scale_add}, {!scale_addi}, {!blit}, and {!resize} functions are
       used.
 
-      @nocvode <node> SM_INDEXVALS_S
-      @nocvode <node> SM_INDEXPTRS_S
-      @nocvode <node> SM_DATA_S
+      @matrix_data SM_INDEXVALS_S
+      @matrix_data SM_INDEXPTRS_S
+      @matrix_data SM_DATA_S
   *)
   val unwrap : 's t -> index_array * index_array * RealArray.t
 
@@ -542,8 +530,8 @@ module Sparse : sig (* {{{ *)
       matrix argument. In this case, any previously 'unwrapped' array is no
       longer associated with the matrix storage.
 
-      @nocvode <node> SUNSparseMatrix_Realloc
-      @nocvode <node> SUNSparseMatrix_Reallocate *)
+      @matrix_data SUNSparseMatrix_Realloc
+      @matrix_data SUNSparseMatrix_Reallocate *)
   val resize : ?nnz:int -> 's t -> unit
 
   (** {3:sparse_ops Operations} *)
@@ -559,8 +547,7 @@ module Sparse : sig (* {{{ *)
       In this case, any previously 'unwrapped' array is no longer associated
       with the matrix storage.
 
-      @nocvode <node> SUNMatScaleAdd
-      @nocvode <node> SUNMatScaleAdd_Sparse *)
+      @matrix SUNMatScaleAdd (SUNMatScaleAdd_Sparse) *)
   val scale_add    : float -> 's t -> 's t -> unit
 
   (** [scale_addi c A] calculates $A = cA + I$.
@@ -571,20 +558,17 @@ module Sparse : sig (* {{{ *)
       case, any previously 'unwrapped' array is no longer associated with
       the matrix storage.
 
-      @nocvode <node> SUNMatScaleAddI
-      @nocvode <node> SUNMatScaleAddI_Sparse *)
+      @matrix SUNMatScaleAddI (SUNMatScaleAddI_Sparse) *)
   val scale_addi   : float -> 's t -> unit
 
   (** The call [matvec a x y] computes the matrix-vector product $y = Ax$.
 
-      @nocvode <node> SUNMatMatvec
-      @nocvode <node> SUNMatMatvec_Sparse *)
+      @matrix SUNMatMatvec (SUNMatMatvec_Sparse) *)
   val matvec : 's t -> RealArray.t -> RealArray.t -> unit
 
   (** Fills a matrix with zeros.
 
-      @nocvode <node> SUNMatZero
-      @nocvode <node> SUNMatZero_Sparse *)
+      @matrix SUNMatZero (SUNMatZero_Sparse) *)
   val set_to_zero : 's t -> unit
 
   (** [blit ~src ~dst] copies the contents of [src] into [dst]. Both
@@ -596,29 +580,27 @@ module Sparse : sig (* {{{ *)
       In this case, any previously 'unwrapped' array is no longer associated
       with the matrix storage.
 
-      @nocvode <node> SUNMatCopy
-      @nocvode <node> SUNMatCopy_Sparse *)
+      @matrix SUNMatCopy (SUNMatCopy_Sparse) *)
   val blit : src:'s t -> dst:'s t -> unit
 
   (** Create a new sparse matrix in {{!sformat}CSR} format from the contents
       of an existing one in {{!sformat}CSC} format.
 
       @since 5.2.0
-      @nocvode <node> SUNSparseMatrix_ToCSR *)
+      @matrix_data SUNSparseMatrix_ToCSR *)
   val copy_to_csr : csc t -> csr t
 
   (** Create a new sparse matrix in {{!sformat}CSC} format from the contents
       of an existing one in {{!sformat}CSR} format.
 
       @since 5.2.0
-      @nocvode <node> SUNSparseMatrix_ToCSC *)
+      @matrix_data SUNSparseMatrix_ToCSC *)
   val copy_to_csc : csr t -> csc t
 
   (** [lrw, liw = space a] returns the storage requirements of [a] as
       [lrw] realtype words and [liw] integer words.
 
-      @nocvode <node> SUNMatSpace
-      @nocvode <node> SUNMatSpace_Sparse *)
+      @matrix SUNMatSpace (SUNMatSpace_Sparse) *)
   val space : 's t -> int * int
 
   (** {3:sparse_lowlevel Low-level details} *)
@@ -652,14 +634,13 @@ end (* }}} *)
 (** {2:array Arrays as matrices} *)
 
 (** General purpose dense matrix operations on arrays.
-    @cvode <node9#ss:dense> The DENSE Module *)
+    @nodoc The DENSE Module *)
 module ArrayDense : sig (* {{{ *)
 
   (** A dense matrix accessible directly through a
       {{:OCAML_DOC_ROOT(Bigarray.Array2.html)} Bigarray}.
 
-      @cvode <node9#ss:dense> Small dense matrices
-      @cvode <node9#ss:dense> SUNDlsMat_newDenseMat *)
+      @nodoc SUNDlsMat_newDenseMat *)
   type t = RealArray2.t
 
   (** {3:arraydense_basic Basic access} *)
@@ -667,12 +648,12 @@ module ArrayDense : sig (* {{{ *)
   (** [make m n x] returns an [m] by [n] array dense matrix with elements set
       to [x].
 
-      @cvode <node9#ss:dense> SUNDlsMat_newDenseMat *)
+      @nodoc SUNDlsMat_newDenseMat *)
   val make : int -> int -> float -> t
 
   (** [create m n] returns an uninitialized [m] by [n] array dense matrix.
 
-       @cvode <node9#ss:dense> SUNDlsMat_newDenseMat *)
+       @nodoc SUNDlsMat_newDenseMat *)
   val create : int -> int -> t
 
   (** [m, n = size a] returns the numbers of rows [m] and columns [n]
@@ -710,19 +691,19 @@ module ArrayDense : sig (* {{{ *)
 
   (** The call [matvec a x y] computes the matrix-vector product $y = Ax$.
 
-      @nocvode <node9#ss:dense> denseMatvec
+      @nodoc denseMatvec
       @since 2.6.0 *)
   val matvec : t -> RealArray.t -> RealArray.t -> unit
 
   (** Fills the matrix with zeros.
 
-      @cvode <node9#ss:dense> SUNDlsMat_SetToZero *)
+      @nodoc SUNDlsMat_SetToZero *)
   val set_to_zero    : t -> unit
 
   (** [blit ~src ~dst] copies the contents of [src] into [dst]. Both
       must have the same size.
 
-      @cvode <node9#ss:dense> SUNDlsMat_denseCopy *)
+      @nodoc SUNDlsMat_denseCopy *)
   val blit  : src:t -> dst:t -> unit
 
   (** [lrw, liw = space a] returns the storage requirements of [a] as
@@ -733,12 +714,12 @@ module ArrayDense : sig (* {{{ *)
 
   (** Increments a square matrix by the identity matrix.
 
-      @cvode <node9#ss:dense> SUNDlsMat_denseAddIdentity *)
+      @nodoc SUNDlsMat_denseAddIdentity *)
   val add_identity : t -> unit
 
   (** Multiplies each element by a constant.
 
-      @cvode <node9#ss:dense> SUNDlsMat_denseScale *)
+      @nodoc SUNDlsMat_denseScale *)
   val scale : float -> t -> unit
 
   (** [getrf a p] performs the LU factorization of the square matrix [a] with
@@ -749,7 +730,7 @@ module ArrayDense : sig (* {{{ *)
       and [j] were swapped (in order, where [p.{0}] swaps against the
       original matrix [a]).
 
-      @cvode <node9#ss:dense> SUNDlsMat_denseGETRF
+      @nodoc SUNDlsMat_denseGETRF
       @raise ZeroDiagonalElement Zero found in matrix diagonal *)
   val getrf : t -> LintArray.t -> unit
 
@@ -757,7 +738,7 @@ module ArrayDense : sig (* {{{ *)
       found by {!getrf}. Both [p] and [b] must have the same number of rows
       as [a].
 
-      @cvode <node9#ss:dense> SUNDlsMat_denseGETRS *)
+      @nodoc SUNDlsMat_denseGETRS *)
   val getrs : t -> LintArray.t -> RealArray.t -> unit
 
   (** Like {!getrs} but stores [b] starting at a given offset. *)
@@ -766,21 +747,21 @@ module ArrayDense : sig (* {{{ *)
 
   (** Performs Cholesky factorization of a real symmetric positive matrix.
 
-      @cvode <node9#ss:dense> SUNDlsMat_densePOTRF *)
+      @nodoc SUNDlsMat_densePOTRF *)
   val potrf : t -> unit
 
   (** [potrs a b] finds the solution of [ax = b] using the Cholesky
       factorization found by {!potrf}. [a] must be an n by n matrix and [b]
       must be of length n.
 
-      @cvode <node9#ss:dense> SUNDlsMat_densePOTRS *)
+      @nodoc SUNDlsMat_densePOTRS *)
   val potrs : t -> RealArray.t -> unit
 
   (** [geqrf a beta work] performs the QR factorization of [a]. [a] must be
       an [m] by [n] matrix, where [m >= n]. The [beta] vector must have
       length [n]. The [work] vector must have length [m].
 
-      @cvode <node9#ss:dense> SUNDlsMat_denseGEQRF *)
+      @nodoc SUNDlsMat_denseGEQRF *)
   val geqrf : t -> RealArray.t -> RealArray.t -> unit
 
   (** [ormqr q beta v w work] computes the product {% w = qv %}. [Q] is
@@ -793,7 +774,7 @@ module ArrayDense : sig (* {{{ *)
       @param v       vector multiplier
       @param w       result vector
       @param work    temporary vector used in the calculation
-      @cvode <node9#ss:dense> SUNDlsMat_denseORMQR *)
+      @nodoc SUNDlsMat_denseORMQR *)
   val ormqr :
     a:t -> beta:RealArray.t -> v:RealArray.t
       -> w:RealArray.t -> work:RealArray.t -> unit
@@ -801,7 +782,7 @@ module ArrayDense : sig (* {{{ *)
 end (* }}} *)
 
 (** General-purpose band matrix operations on arrays.
-    @cvode <node9#ss:band> The BAND Module *)
+    @nodoc The BAND Module *)
 module ArrayBand : sig (* {{{ *)
 
   type smu = int (** Storage upper-bandwidth. *)
@@ -821,7 +802,7 @@ module ArrayBand : sig (* {{{ *)
       {% $\mathtt{j} \leq \mathtt{i} + \mathtt{smu}$ %} is at
       [a.{i - j + smu, j}].
 
-      @cvode <node9#ss:band> SUNDlsMat_newBandMat *)
+      @nodoc SUNDlsMat_newBandMat *)
   type t = RealArray2.t * (smu * mu * ml)
 
   (** {3:arrayband_basic Basic access} *)
@@ -835,13 +816,13 @@ module ArrayBand : sig (* {{{ *)
       {% $\mathtt{smu} = \min(\mathtt{n}-1, \mathtt{mu} + \mathtt{ml})$ %}.
       The extra space is used to store U after a call to {!gbtrf}.
 
-      @cvode <node9#ss:band> SUNDlsMat_newBandMat *)
+      @nodoc SUNDlsMat_newBandMat *)
   val make : smu * mu * ml -> int -> float -> t
 
   (** [create smu ml n] returns an uninitialized [n] by [n] band matrix with
       storage upper bandwidth [smu] and lower half-bandwidth [ml].
 
-      @cvode <node9#ss:band> SUNDlsMat_newBandMat *)
+      @nodoc SUNDlsMat_newBandMat *)
   val create : smu * mu * ml -> int -> t
 
   (** [m, n = size a] returns the numbers of rows [m] and columns [n] of [a].
@@ -908,17 +889,17 @@ module ArrayBand : sig (* {{{ *)
 
   (** The call [matvec a x y] computes the matrix-vector product $y = Ax$.
 
-      @nocvode <node9#ss:band> bandMatvec *)
+      @nodoc SUNDlsMat_bandMatvec *)
   val matvec : t -> RealArray.t -> RealArray.t -> unit
 
   (** Fills the matrix with zeros.
 
-      @nocvode <node9> SetToZero *)
+      @nodoc SUNDlsMat_SetToZero *)
   val set_to_zero : t -> unit
 
   (** [blit ~src ~dst] copies the contents of [src] into [dst].
 
-      @cvode <node9#ss:band> SUNDlsMat_bandCopy *)
+      @nodoc SUNDlsMat_bandCopy *)
   val blit : src:t -> dst:t -> unit
 
   (** [lrw, liw = space a] returns the storage requirements of [a] as
@@ -929,12 +910,12 @@ module ArrayBand : sig (* {{{ *)
 
   (** Increment a square matrix by the identity matrix.
 
-      @cvode <node9#ss:band> SUNDlsMat_bandAddIdentity *)
+      @nodoc SUNDlsMat_bandAddIdentity *)
   val add_identity : t -> unit
 
   (** [scale c a] multiplies each element of the band matrix [a] by [c].
 
-      @cvode <node9#ss:band> SUNDlsMat_bandScale *)
+      @nodoc SUNDlsMat_bandScale *)
   val scale : float -> t -> unit
 
   (** [gbtrf a p] performs the LU factorization of [a] with partial pivoting
@@ -943,13 +924,13 @@ module ArrayBand : sig (* {{{ *)
       of L is all 1s. U may occupy elements up to bandwidth [smu]
       (rather than to [mu]).
 
-      @cvode <node9#ss:band> SUNDlsMat_bandGBTRF *)
+      @nodoc SUNDlsMat_bandGBTRF *)
   val gbtrf : t -> LintArray.t -> unit
 
   (** [gbtrs a p b] finds the solution of [ax = b] using LU factorization.
       Both [p] and [b] must have the same number of rows as [a].
 
-      @cvode <node9#ss:band> SUNDlsMat_bandGBTRS *)
+      @nodoc SUNDlsMat_bandGBTRS *)
   val gbtrs : t -> LintArray.t -> RealArray.t -> unit
 
 end (* }}} *)
@@ -967,7 +948,7 @@ type custom
     arguments track the compatiblity of the {{!matrix_ops}m_matvec} vector
     parameters.
 
-    @nocvode <node> SUNMatrix *)
+    @matrix SUNMatrix *)
 type ('k, 'm, 'nd, 'nk) t
 
 (** Generic matrix with Dense content. *)
@@ -982,13 +963,13 @@ type 'nk dense =
     {!Sundials.Context.default}, but this can be overridden by passing
     an optional [context] argument.
 
-    @nocvode <node> SUNDenseMatrix *)
+    @matrix_data SUNDenseMatrix *)
 val dense : ?context:Context.t -> ?m:int -> ?i:float -> int -> 'nk dense
 
 (** Creates a (dense) matrix by wrapping an existing dense matrix. The two
     values share the same underlying storage.
 
-    @nocvode <node> SUNDenseMatrix *)
+    @matrix_data SUNDenseMatrix *)
 val wrap_dense : ?context:Context.t -> Dense.t -> 'nk dense
 
 (** Generic matrix with Band content. *)
@@ -1006,8 +987,8 @@ type 'nk band =
     {!Sundials.Context.default}, but this can be overridden by passing
     an optional [context] argument.
 
-    @nocvode <node> SUNBandMatrix
-    @nocvode <node> SUNBandMatrixStorage *)
+    @matrix_data SUNBandMatrix
+    @matrix_data SUNBandMatrixStorage *)
 val band :
   ?context:Context.t
   -> ?mu:int
@@ -1024,7 +1005,7 @@ val band :
     {!Sundials.Context.default}, but this can be overridden by passing
     an optional [context] argument.
 
-    @nocvode <node> SUNBandMatrix *)
+    @matrix_data SUNBandMatrix *)
 val wrap_band : ?context:Context.t -> Band.t -> 'nk band
 
 (** Generic matrix with Sparse content. *)
@@ -1041,7 +1022,7 @@ type ('s, 'nk) sparse =
     {!Sundials.Context.default}, but this can be overridden by passing
     an optional [context] argument.
 
-    @nocvode <node> SUNSparseMatrix *)
+    @matrix_data SUNSparseMatrix *)
 val sparse_csc :
      ?context:Context.t
   -> ?m:int
@@ -1059,7 +1040,7 @@ val sparse_csc :
     {!Sundials.Context.default}, but this can be overridden by passing
     an optional [context] argument.
 
-    @nocvode <node> SUNSparseMatrix *)
+    @matrix_data SUNSparseMatrix *)
 val sparse_csr :
      ?context:Context.t
   -> ?m:int
@@ -1074,7 +1055,7 @@ val sparse_csr :
     {!Sundials.Context.default}, but this can be overridden by passing
     an optional [context] argument.
 
-    @nocvode <node> SUNSparseMatrix *)
+    @matrix_data SUNSparseMatrix *)
 val wrap_sparse : ?context:Context.t -> 's Sparse.t -> ('s, 'nk) sparse
 
 (** Generic matrix with array-based dense content. *)
@@ -1086,7 +1067,9 @@ type 'nk arraydense = (custom, ArrayDense.t, RealArray.t, 'nk) t
 
     By default, the matrix is created using the context returned by
     {!Sundials.Context.default}, but this can be overridden by passing
-    an optional [context] argument. *)
+    an optional [context] argument.
+
+    @nodoc SUNDlsMat_newDenseMat *)
 val arraydense :
      ?context:Context.t
   -> ?m:int
@@ -1099,7 +1082,9 @@ val arraydense :
 
     By default, the matrix is created using the context returned by
     {!Sundials.Context.default}, but this can be overridden by passing
-    an optional [context] argument. *)
+    an optional [context] argument.
+
+    @nodoc SUNDlsMat_newDenseMat *)
 val wrap_arraydense : ?context:Context.t -> ArrayDense.t -> 'nk arraydense
 
 (** Generic matrix with array-based band content. *)
@@ -1117,7 +1102,7 @@ type 'nk arrayband = (custom, ArrayBand.t, RealArray.t, 'nk) t
     {!Sundials.Context.default}, but this can be overridden by passing
     an optional [context] argument.
 
-    @nocvode <node> newBandMat *)
+    @nodoc SUNDlsMat_newBandMat *)
 val arrayband :
      ?context:Context.t
   -> ?mu:int
@@ -1141,7 +1126,7 @@ val wrap_arrayband :?context:Context.t ->  ArrayBand.t -> 'nk arrayband
     {!Sundials.Context.default}, but this can be overridden by passing
     an optional [context] argument.
 
-    @nocvode <node> Description of the SUNMatrix module *)
+    @matrix <SUNMatrix_API_link.html#description-of-the-sunmatrix-operations> Description of the SUNMATRIX operations *)
 val wrap_custom :
      ('m, 'nd) matrix_ops
   -> ?context:Context.t
@@ -1150,7 +1135,7 @@ val wrap_custom :
 
 (** Matrix internal type identifiers.
 
-    @nocvode <node> SUNMatrix_ID *)
+    @matrix SUNMatGetID *)
 type (_,_,_,_) id =
   | Dense : (standard, Dense.t, Nvector_serial.data, [>Nvector_serial.kind]) id
   | Band  : (standard, Band.t, Nvector_serial.data, [>Nvector_serial.kind]) id
@@ -1164,76 +1149,74 @@ val get_ops : ('k, 'm, 'nd, 'nk) t -> ('m, 'nd) matrix_ops
 
 (** Return the internal type identifier of a matrix.
 
-    @nocvode <node> SUNMatGetID *)
+    @matrix SUNMatGetID *)
 val get_id : ('k, 'm, 'nd, 'nk) t -> ('k, 'm, 'nd, 'nk) id
 
 (** Direct access to the underlying storage array, which is accessed
-    column first (unlike in {!Dense.get}, {!Band.get}, and {!Sparse.get}).
-
-    @nocvode <node> SM_CONTENT_B *)
+    column first (unlike in {!Dense.get}, {!Band.get}, and {!Sparse.get}). *)
 val unwrap : ('k, 'm, 'nd, 'nk) t -> 'm
 
 (** {3:generic_ops Operations} *)
 
 (** [scale_add c A B] calculates $A = cA + B$.
 
-    @nocvode <node> SUNMatScaleAdd *)
+    @matrix SUNMatScaleAdd *)
 val scale_add : float -> ('k, 'm, 'nd, 'nk) t -> ('k, 'm, 'nd, 'nk) t -> unit
 
 (** [scale_addi c A] calculates $A = cA + I$.
 
-    @nocvode <node> SUNMatScaleAddI *)
+    @matrix SUNMatScaleAddI *)
 val scale_addi : float -> ('k, 'm, 'nd, 'nk) t -> unit
 
 (** Perform any setup required before a matrix-vector product.
 
-    @nocvode <node> SUNMatMatvecSetup
+    @matrix SUNMatMatvecSetup
     @since 5.0.0 *)
 val matvec_setup : ('k, 'm, 'nd, 'nk) t -> unit
 
 (** The call [matvec a x y] computes the matrix-vector product $y = Ax$.
 
-    @nocvode <node> SUNMatMatvec *)
+    @matrix SUNMatMatvec *)
 val matvec :
   ('k, 'm, 'nd, 'nk) t -> ('nd, 'nk) Nvector.t
                        -> ('nd, 'nk) Nvector.t -> unit
 
 (** Fills a matrix with zeros.
 
-    @nocvode <node> SUNMatZero *)
+    @matrix SUNMatZero *)
 val set_to_zero : ('k, 'm, 'nd, 'nk) t -> unit
 
 (** [blit ~src ~dst] copies the contents of [src] into [dst]. Both
     must have the same size.
 
-    @nocvode <node> SUNMatCopy *)
+    @matrix SUNMatCopy *)
 val blit : src:('k, 'm, 'nd, 'nk) t -> dst:('k, 'm, 'nd, 'nk) t -> unit
 
 (** [lrw, liw = space a] returns the storage requirements of [a] as
     [lrw] realtype words and [liw] integer words.
 
-    @nocvode <node> SUNMatSpace *)
+    @matrix SUNMatSpace *)
 val space : ('k, 'm, 'nd, 'nk) t -> int * int
 
 (** Prints a dense matrix to the given log file.
 
     NB: Not supported in {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
 
-    @nocvode <node> SUNDenseMatrix_Print *)
+    @matrix_data SUNDenseMatrix_Print *)
 val print_dense : 'nk dense -> Logfile.t -> unit
 
 (** Prints a band matrix to the given log file.
 
     NB: Not supported in {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
 
-    @nocvode <node> SUNBandMatrix_Print *)
+    @matrix_data SUNBandMatrix_Print *)
 val print_band : 'nk band -> Logfile.t -> unit
 
 (** Prints a sparse matrix to the given log file.
 
     NB: Not supported in {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
 
-    @nocvode <node> SUNSparseMatrix_Print *)
+    @matrix_data SUNSparseMatrix_Print *)
 val print_sparse : ('s, 'nk) sparse -> Logfile.t -> unit
 
 (** Pretty-print a generic matrix using the

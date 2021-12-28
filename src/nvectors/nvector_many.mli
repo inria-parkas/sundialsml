@@ -13,9 +13,9 @@
 
 (** The standard many-vector nvectors of Sundials.
 
+    @nvector <NVector_links.html#the-nvector-manyvector-module> The NVECTOR_MANYVECTOR Module
     @version VERSION()
     @author Timothy Bourke (Inria/ENS)
-    @nocvode <node> NVECTOR_MANYVECTOR
     @since 5.0.0 *)
 
 open Sundials
@@ -35,6 +35,7 @@ type Nvector.gdata += Many of data
 
 (** Creates a many-vector nvector from an array of generic nvectors.
 
+    @nvector N_VNew_ManyVector
     @since 5.0.0 *)
 val wrap : ?context:Context.t -> Nvector.any ROArray.t -> t
 
@@ -50,16 +51,16 @@ val num_subvectors : t -> int
 (** Selectively enable or disable fused and array operations.
     The [with_fused_ops] argument enables or disables all such operations.
 
-    @cvode <node5> N_VEnableFusedOps_ManyVector
-    @cvode <node5> N_VEnableLinearCombination_ManyVector
-    @cvode <node5> N_VEnableScaleAddMulti_ManyVector
-    @cvode <node5> N_VEnableDotProdMulti_ManyVector
-    @cvode <node5> N_VEnableLinearSumVectorArray_ManyVector
-    @cvode <node5> N_VEnableScaleVectorArray_ManyVector
-    @cvode <node5> N_VEnableConstVectorArray_ManyVector
-    @cvode <node5> N_VEnableWrmsNormVectorArray_ManyVector
-    @cvode <node5> N_VEnableWrmsNormMaskVectorArray_ManyVector
-    @cvode <node5> N_VEnableDotProdMultiLocal_ManyVector *)
+    @nvector N_VEnableFusedOps_ManyVector
+    @nvector N_VEnableLinearCombination_ManyVector
+    @nvector N_VEnableScaleAddMulti_ManyVector
+    @nvector N_VEnableDotProdMulti_ManyVector
+    @nvector N_VEnableLinearSumVectorArray_ManyVector
+    @nvector N_VEnableScaleVectorArray_ManyVector
+    @nvector N_VEnableConstVectorArray_ManyVector
+    @nvector N_VEnableWrmsNormVectorArray_ManyVector
+    @nvector N_VEnableWrmsNormMaskVectorArray_ManyVector
+    @nvector N_VEnableDotProdMultiLocal_ManyVector *)
 val enable :
      ?with_fused_ops                       : bool
   -> ?with_linear_combination              : bool
@@ -88,6 +89,7 @@ module Any : sig (* {{{ *)
 
   (** Creates a generic nvector from an array of generic nvectors.
 
+      @nvector N_VNew_ManyVector
       @since 5.0.0 *)
   val wrap : ?context:Context.t -> Nvector.any ROArray.t -> Nvector.any
 
@@ -98,16 +100,16 @@ module Any : sig (* {{{ *)
   (** Selectively enable or disable fused and array operations.
       The [with_fused_ops] argument enables or disables all such operations.
 
-      @cvode <node5> N_VEnableFusedOps_ManyVector
-      @cvode <node5> N_VEnableLinearCombination_ManyVector
-      @cvode <node5> N_VEnableScaleAddMulti_ManyVector
-      @cvode <node5> N_VEnableDotProdMulti_ManyVector
-      @cvode <node5> N_VEnableLinearSumVectorArray_ManyVector
-      @cvode <node5> N_VEnableScaleVectorArray_ManyVector
-      @cvode <node5> N_VEnableConstVectorArray_ManyVector
-      @cvode <node5> N_VEnableWrmsNormVectorArray_ManyVector
-      @cvode <node5> N_VEnableWrmsNormMaskVectorArray_ManyVector
-      @cvode <node5> N_VEnableDotProdMultiLocal_ManyVector
+      @nvector N_VEnableFusedOps_ManyVector
+      @nvector N_VEnableLinearCombination_ManyVector
+      @nvector N_VEnableScaleAddMulti_ManyVector
+      @nvector N_VEnableDotProdMulti_ManyVector
+      @nvector N_VEnableLinearSumVectorArray_ManyVector
+      @nvector N_VEnableScaleVectorArray_ManyVector
+      @nvector N_VEnableConstVectorArray_ManyVector
+      @nvector N_VEnableWrmsNormVectorArray_ManyVector
+      @nvector N_VEnableWrmsNormMaskVectorArray_ManyVector
+      @nvector N_VEnableDotProdMultiLocal_ManyVector
       @raise Nvector.BadGenericType If not called on a many nvector *)
   val enable :
        ?with_fused_ops                       : bool

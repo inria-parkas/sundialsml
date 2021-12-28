@@ -13,11 +13,11 @@
 
 (** The Pthreads nvectors of Sundials (requires pthreads).
 
+    @nvector <NVector_links.html#the-nvector-pthreads-module> The NVECTOR_PTHREADS Module
     @version VERSION()
     @author Timothy Bourke (Inria/ENS)
     @author Jun Inoue (Inria/ENS)
-    @author Marc Pouzet (UPMC/ENS/Inria)
-    @cvode <node7#ss:nvec_par> NVECTOR_PARALLEL *)
+    @author Marc Pouzet (UPMC/ENS/Inria) *)
 
 open Sundials
 
@@ -38,7 +38,8 @@ type t = (data, kind) Nvector.t
     The optional argument enables the fused and array operations for a given
     nvector (they are disabled by default).
 
-    @cvode <node5> N_VEnableFusedOps_Pthreads
+    @nvector N_VNew_Pthreads
+    @nvector N_VEnableFusedOps_Pthreads
     @raise Config.NotImplementedBySundialsVersion Fused and array operations not available. *)
 val make :
      ?context:Context.t
@@ -54,7 +55,8 @@ val make :
     The optional arguments permit to enable all the fused and array operations
     for a given nvector (they are disabled by default).
 
-    @cvode <node5> N_VEnableFusedOps_Pthreads
+    @nvector N_VMake_Pthreads
+    @nvector N_VEnableFusedOps_Pthreads
     @raise Config.NotImplementedBySundialsVersion Fused and array operations not available. *)
 val wrap :
      ?context:Context.t
@@ -77,19 +79,19 @@ val num_threads : t -> int
 (** Selectively enable or disable fused and array operations.
     The [with_fused_ops] argument enables or disables all such operations.
 
-    @since 4.0.0
-    @cvode <node5> N_VEnableFusedOps_Pthreads
-    @cvode <node5> N_VEnableLinearCombination_Pthreads
-    @cvode <node5> N_VEnableScaleAddMulti_Pthreads
-    @cvode <node5> N_VEnableDotProdMulti_Pthreads
-    @cvode <node5> N_VEnableLinearSumVectorArray_Pthreads
-    @cvode <node5> N_VEnableScaleVectorArray_Pthreads
-    @cvode <node5> N_VEnableConstVectorArray_Pthreads
-    @cvode <node5> N_VEnableWrmsNormVectorArray_Pthreads
-    @cvode <node5> N_VEnableWrmsNormMaskVectorArray_Pthreads
-    @cvode <node5> N_VEnableScaleAddMultiVectorArray_Pthreads
-    @cvode <node5> N_VEnableLinearCombinationVectorArray_Pthreads
-    @raise Config.NotImplementedBySundialsVersion Fused and array operations not available. *)
+    @nvector N_VEnableFusedOps_Pthreads
+    @nvector N_VEnableLinearCombination_Pthreads
+    @nvector N_VEnableScaleAddMulti_Pthreads
+    @nvector N_VEnableDotProdMulti_Pthreads
+    @nvector N_VEnableLinearSumVectorArray_Pthreads
+    @nvector N_VEnableScaleVectorArray_Pthreads
+    @nvector N_VEnableConstVectorArray_Pthreads
+    @nvector N_VEnableWrmsNormVectorArray_Pthreads
+    @nvector N_VEnableWrmsNormMaskVectorArray_Pthreads
+    @nvector N_VEnableScaleAddMultiVectorArray_Pthreads
+    @nvector N_VEnableLinearCombinationVectorArray_Pthreads
+    @raise Config.NotImplementedBySundialsVersion Fused and array operations not available.
+    @since 4.0.0 *)
 val enable :
      ?with_fused_ops                       : bool
   -> ?with_linear_combination              : bool
@@ -120,17 +122,18 @@ module Any : sig (* {{{ *)
       The optional argument enables the fused and array operations for a given
       nvector (they are disabled by default).
 
-      @cvode <node5> N_VEnableFusedOps_Pthreads
-      @cvode <node5> N_VEnableLinearCombination_Pthreads
-      @cvode <node5> N_VEnableScaleAddMulti_Pthreads
-      @cvode <node5> N_VEnableDotProdMulti_Pthreads
-      @cvode <node5> N_VEnableLinearSumVectorArray_Pthreads
-      @cvode <node5> N_VEnableScaleVectorArray_Pthreads
-      @cvode <node5> N_VEnableConstVectorArray_Pthreads
-      @cvode <node5> N_VEnableWrmsNormVectorArray_Pthreads
-      @cvode <node5> N_VEnableWrmsNormMaskVectorArray_Pthreads
-      @cvode <node5> N_VEnableScaleAddMultiVectorArray_Pthreads
-      @cvode <node5> N_VEnableLinearCombinationVectorArray_Pthreads
+      @nvector N_VNew_Pthreads
+      @nvector N_VEnableFusedOps_Pthreads
+      @nvector N_VEnableLinearCombination_Pthreads
+      @nvector N_VEnableScaleAddMulti_Pthreads
+      @nvector N_VEnableDotProdMulti_Pthreads
+      @nvector N_VEnableLinearSumVectorArray_Pthreads
+      @nvector N_VEnableScaleVectorArray_Pthreads
+      @nvector N_VEnableConstVectorArray_Pthreads
+      @nvector N_VEnableWrmsNormVectorArray_Pthreads
+      @nvector N_VEnableWrmsNormMaskVectorArray_Pthreads
+      @nvector N_VEnableScaleAddMultiVectorArray_Pthreads
+      @nvector N_VEnableLinearCombinationVectorArray_Pthreads
       @raise Config.NotImplementedBySundialsVersion Fused and array operations not available.
       @since 5.0.0 *)
   val make :
@@ -157,17 +160,18 @@ module Any : sig (* {{{ *)
       The optional arguments permit to enable all the fused and array operations
       for a given nvector (they are disabled by default).
 
-      @cvode <node5> N_VEnableFusedOps_Pthreads
-      @cvode <node5> N_VEnableLinearCombination_Pthreads
-      @cvode <node5> N_VEnableScaleAddMulti_Pthreads
-      @cvode <node5> N_VEnableDotProdMulti_Pthreads
-      @cvode <node5> N_VEnableLinearSumVectorArray_Pthreads
-      @cvode <node5> N_VEnableScaleVectorArray_Pthreads
-      @cvode <node5> N_VEnableConstVectorArray_Pthreads
-      @cvode <node5> N_VEnableWrmsNormVectorArray_Pthreads
-      @cvode <node5> N_VEnableWrmsNormMaskVectorArray_Pthreads
-      @cvode <node5> N_VEnableScaleAddMultiVectorArray_Pthreads
-      @cvode <node5> N_VEnableLinearCombinationVectorArray_Pthreads
+      @nvector N_VMake_Pthreads
+      @nvector N_VEnableFusedOps_Pthreads
+      @nvector N_VEnableLinearCombination_Pthreads
+      @nvector N_VEnableScaleAddMulti_Pthreads
+      @nvector N_VEnableDotProdMulti_Pthreads
+      @nvector N_VEnableLinearSumVectorArray_Pthreads
+      @nvector N_VEnableScaleVectorArray_Pthreads
+      @nvector N_VEnableConstVectorArray_Pthreads
+      @nvector N_VEnableWrmsNormVectorArray_Pthreads
+      @nvector N_VEnableWrmsNormMaskVectorArray_Pthreads
+      @nvector N_VEnableScaleAddMultiVectorArray_Pthreads
+      @nvector N_VEnableLinearCombinationVectorArray_Pthreads
       @raise Config.NotImplementedBySundialsVersion Fused and array operations not available.
       @since 5.0.0 *)
   val wrap :
@@ -195,20 +199,20 @@ module Any : sig (* {{{ *)
   (** Selectively enable or disable fused and array operations.
       The [with_fused_ops] argument enables or disables all such operations.
 
-      @since 4.0.0
-      @cvode <node5> N_VEnableFusedOps_Pthreads
-      @cvode <node5> N_VEnableLinearCombination_Pthreads
-      @cvode <node5> N_VEnableScaleAddMulti_Pthreads
-      @cvode <node5> N_VEnableDotProdMulti_Pthreads
-      @cvode <node5> N_VEnableLinearSumVectorArray_Pthreads
-      @cvode <node5> N_VEnableScaleVectorArray_Pthreads
-      @cvode <node5> N_VEnableConstVectorArray_Pthreads
-      @cvode <node5> N_VEnableWrmsNormVectorArray_Pthreads
-      @cvode <node5> N_VEnableWrmsNormMaskVectorArray_Pthreads
-      @cvode <node5> N_VEnableScaleAddMultiVectorArray_Pthreads
-      @cvode <node5> N_VEnableLinearCombinationVectorArray_Pthreads
+      @nvector N_VEnableFusedOps_Pthreads
+      @nvector N_VEnableLinearCombination_Pthreads
+      @nvector N_VEnableScaleAddMulti_Pthreads
+      @nvector N_VEnableDotProdMulti_Pthreads
+      @nvector N_VEnableLinearSumVectorArray_Pthreads
+      @nvector N_VEnableScaleVectorArray_Pthreads
+      @nvector N_VEnableConstVectorArray_Pthreads
+      @nvector N_VEnableWrmsNormVectorArray_Pthreads
+      @nvector N_VEnableWrmsNormMaskVectorArray_Pthreads
+      @nvector N_VEnableScaleAddMultiVectorArray_Pthreads
+      @nvector N_VEnableLinearCombinationVectorArray_Pthreads
       @raise Nvector.BadGenericType If not called on a pthreads nvector
-      @raise Config.NotImplementedBySundialsVersion Fused and array operations not available. *)
+      @raise Config.NotImplementedBySundialsVersion Fused and array operations not available.
+      @since 4.0.0 *)
   val enable :
        ?with_fused_ops                       : bool
     -> ?with_linear_combination              : bool

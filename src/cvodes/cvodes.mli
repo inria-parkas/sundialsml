@@ -49,8 +49,8 @@ type ('data, 'kind) session = ('data, 'kind) Cvode.session
     these variables are calculated more efficiently since they are excluded
     from the nonlinear solution stage.
 
-    @cvodes <node5#SECTION00570000000000000000> Integration of pure quadrature equations
-    @cvodes <node3#s:quad> Pure quadrature integration *)
+    @cvodes <Usage/SIM.html#integration-of-pure-quadrature-equations> Integration of pure quadrature equations
+    @cvodes <Mathematics_link.html#pure-quadrature-integration> Pure Quadrature Integration *)
 module Quadrature : sig (* {{{ *)
   (** {2:init Initialization and access} *)
 
@@ -68,20 +68,20 @@ module Quadrature : sig (* {{{ *)
       {warning [y] and [yQ'] should not be accessed after the function
                returns.}
 
-      @cvodes <node5#ss:user_fct_quad> CVQuadRhsFn *)
+      @cvodes_quad CVQuadRhsFn *)
   type 'd quadrhsfn = float -> 'd -> 'd -> unit
 
   (** Activates the integration of quadrature equations. The vector
       gives the initial value of $y_Q$.
 
-      @cvodes <node5#ss:quad_malloc> CVodeQuadInit *)
+      @cvodes_quad CVodeQuadInit *)
   val init : ('d, 'k) Cvode.session -> 'd quadrhsfn
                 -> ('d, 'k) Nvector.t -> unit
 
   (** Reinitializes the integration of quadrature equations. The vector
       gives a new value for $y_Q$.
 
-      @cvodes <node5#ss:quad_malloc> CVodeQuadReInit *)
+      @cvodes_quad CVodeQuadReInit *)
   val reinit : ('d, 'k) Cvode.session -> ('d, 'k) Nvector.t -> unit
 
   (** Returns the quadrature solutions and time reached after a successful
@@ -89,7 +89,7 @@ module Quadrature : sig (* {{{ *)
       either {!Cvode.solve_normal} or {!Cvode.solve_one_step} and the
       value of the independent variable is returned.
 
-      @cvodes <node5#ss:quad_get> CVodeGetQuad *)
+      @cvodes_quad CVodeGetQuad *)
   val get : ('d, 'k) Cvode.session -> ('d, 'k) Nvector.t -> float
 
   (** Returns the interpolated solution or derivatives of quadrature
@@ -106,7 +106,7 @@ module Quadrature : sig (* {{{ *)
       This function may only be called after a successful return from either
       {!Cvode.solve_normal} or {!Cvode.solve_one_step}.
 
-      @cvodes <node5#ss:quad_get> CVodeGetQuadDky
+      @cvodes_quad CVodeGetQuadDky
       @raise BadT [t] is not in the interval {% $[t_n - h_u, t_n]$%}.
       @raise BadK [k] is not in the range 0, 1, ..., $q_u$. *)
   val get_dky : ('d, 'k) Cvode.session -> ('d, 'k) Nvector.t -> float -> int -> unit
@@ -124,34 +124,34 @@ module Quadrature : sig (* {{{ *)
 
   (** Specify how to use quadrature variables in step size control.
 
-      @cvodes <node5#ss:quad_optional_input> CVodeSetQuadErrCon
-      @cvodes <node5#ss:quad_optional_input> CVodeQuadSStolerances
-      @cvodes <node5#ss:quad_optional_input> CVodeQuadSVtolerances *)
+      @cvodes_quad CVodeSetQuadErrCon
+      @cvodes_quad CVodeQuadSStolerances
+      @cvodes_quad CVodeQuadSVtolerances *)
   val set_tolerances : ('d, 'k) Cvode.session -> ('d, 'k) tolerance -> unit
 
   (** {2:get Querying the solver (optional output functions)} *)
 
   (** Returns the number of calls to the quadrature function.
 
-      @cvodes <node5#ss:quad_optional_output> CVodeGetQuadNumRhsEvals *)
+      @cvodes_quad CVodeGetQuadNumRhsEvals *)
   val get_num_rhs_evals       : ('d, 'k) Cvode.session -> int
 
   (** Returns the number of local error test failures that have occurred
       due to quadrature variables.
 
-      @cvodes <node5#ss:quad_optional_output> CVodeGetQuadNumErrTestFails *)
+      @cvodes_quad CVodeGetQuadNumErrTestFails *)
   val get_num_err_test_fails  : ('d, 'k) Cvode.session -> int
 
   (** Returns the quadrature error weights at the current time.
 
-      @cvodes <node5#ss:quad_optional_output> CVodeGetQuadErrWeights *)
+      @cvodes_quad CVodeGetQuadErrWeights *)
   val get_err_weights : ('d, 'k) Cvode.session -> ('d, 'k) Nvector.t -> unit
 
   (** Returns quadrature-related statistics. These are the
       number of calls to the quadrature function ([nfqevals]) and the number
       of error test failures due to quadrature variables ([nqetfails]).
 
-      @cvodes <node5#ss:quad_optional_output> CVodeGetQuadStats
+      @cvodes_quad CVodeGetQuadStats
       @return ([nfqevals], [nqetfails]) *)
   val get_stats : ('d, 'k) Cvode.session -> int * int
 
@@ -159,17 +159,17 @@ module Quadrature : sig (* {{{ *)
 
   (** Quadrature integration was not initialized.
 
-      @cvodes <node5#ss:quad_get> CV_NO_QUAD *)
+      @cvodes <Constants_link.html> CV_NO_QUAD *)
   exception QuadNotInitialized
 
   (** The quadrature function failed in an unrecoverable manner.
 
-      @cvodes <node5#SECTION00572000000000000000> CV_QRHSFUNC_FAIL *)
+      @cvodes <Constants_link.html> CV_QRHSFUNC_FAIL *)
   exception QuadRhsFuncFailure
 
   (** The quadrature function failed at the first call.
 
-      @cvodes <node5#SECTION00572000000000000000> CV_FIRST_QRHSFUNC_ERR *)
+      @cvodes <Constants_link.html> CV_FIRST_QRHSFUNC_ERR *)
   exception FirstQuadRhsFuncFailure
 
   (** Convergence test failures occurred too many times due to repeated
@@ -178,7 +178,7 @@ module Quadrature : sig (* {{{ *)
       estimation of an initial step size (if quadrature variables are
       included in error tests).
 
-      @cvodes <node5#SECTION00572000000000000000> CV_REPTD_QRHSFUNC_ERR *)
+      @cvodes <Constants_link.html> CV_REPTD_QRHSFUNC_ERR *)
   exception RepeatedQuadRhsFuncFailure
 
   (** The quadrature function had a recoverable error, but no
@@ -186,7 +186,7 @@ module Quadrature : sig (* {{{ *)
       if the quadrature function fails recoverably after an error test failed
       while at order one.
 
-      @cvodes <node5#SECTION00572000000000000000> CV_UNREC_QRHSFUNC_ERR *)
+      @cvodes <Constants_link.html> CV_UNREC_QRHSFUNC_ERR *)
   exception UnrecoverableQuadRhsFuncFailure
 end (* }}} *)
 
@@ -211,9 +211,9 @@ end (* }}} *)
       {- {{:#get}Querying the solver}}
       {- {{:#exceptions}Exceptions}}}
 
-    @cvodes <node6#ss:forward_usage> Enhanced skeleton for sensitivity analysis
-    @cvodes <node6#s:forward> Using CVODES for Forward Sensitivity Analysis
-    @cvodes <node3#ss:fwd_sensi> Forward sensitivity analysis *)
+    @cvodes <Usage/FSA.html#using-cvodes-for-forward-sensitivity-analysis> Using CVODES for Forward Sensitivity Analysis
+    @cvodes <Usage/FSA.html#a-skeleton-of-the-users-main-program> Enhanced skeleton for sensitivity analysis
+    @cvodes <Mathematics_link.html#forward-sensitivity-analysis> Forward sensitivity analysis *)
 module Sensitivity : sig (* {{{ *)
   (** {2:init Initialization} *)
 
@@ -250,7 +250,7 @@ module Sensitivity : sig (* {{{ *)
       {warning The vectors in the function arguments should not
                be accessed after the function returns.}
 
-      @cvodes <node6#ss:user_fct_fwd> CVSensRhsFn *)
+      @cvodes_sens CVSensRhsFn *)
   type 'd sensrhsfn_all = 'd sensrhsfn_args
                         -> 'd array
                         -> 'd array
@@ -274,7 +274,7 @@ module Sensitivity : sig (* {{{ *)
       {warning The vectors in the function arguments should not
                be accessed after the function returns.}
 
-      @cvodes <node6#ss:user_fct_fwd> CVSensRhs1Fn *)
+      @cvodes_sens CVSensRhs1Fn *)
   and 'd sensrhsfn1 = int
                     -> 'd sensrhsfn_args
                     -> 'd
@@ -287,24 +287,24 @@ module Sensitivity : sig (* {{{ *)
       (** Calculate sensitivity functions all at once. The argument [None]
           specifies an internal difference quotient routine.
 
-          @cvodes <node6#ss:sensi_malloc> CVodeSensInit
-          @cvodes <node6#ss:user_fct_fwd> CVSensRhsFn *)
+          @cvodes_sens CVodeSensInit
+          @cvodes_sens CVSensRhsFn *)
 
     | OneByOne of 'd sensrhsfn1 option
       (** Calculate sensitivity functions one parameter at a time. The
           argument [None] specifies an internal difference quotient routine.
 
-          @cvodes <node6#ss:sensi_malloc> CVodeSensInit1
-          @cvodes <node6#ss:user_fct_fwd> CVSensRhs1Fn *)
+          @cvodes_sens CVodeSensInit1
+          @cvodes_sens CVSensRhs1Fn *)
 
   (** Specifies a sensitivity solution method. The method specification may
       optionally include the nonlinear solver to be used for corrections.
 
-      @cvodes <node6#ss:sensi_malloc> CVodeSensInit
-      @cvodes <node6#ss:sensi_malloc> CVodeSensInit1
-      @cvodes <node6> CVodeSetNonlinearSolverSensSim
-      @cvodes <node6> CVodeSetNonlinearSolverSensStg
-      @cvodes <node6> CVodeSetNonlinearSolverSensStg1 *)
+      @cvodes_sens CVodeSensInit
+      @cvodes_sens CVodeSensInit1
+      @cvodes_sens CVodeSetNonlinearSolverSensSim
+      @cvodes_sens CVodeSetNonlinearSolverSensStg
+      @cvodes_sens CVodeSetNonlinearSolverSensStg1 *)
   type ('d, 'k) sens_method =
       Simultaneous of
         (('d, 'k, ('d, 'k) Cvode.session, [`Sens]) Sundials.NonlinearSolver.t) option
@@ -336,7 +336,7 @@ module Sensitivity : sig (* {{{ *)
         ignored.
       - [pbar] is always meaningful and optional.
 
-      @cvodes <node6#ss:sens_optional_input> CVodeSetSensParams *)
+      @cvodes_sens CVodeSetSensParams *)
   type sens_params = {
       pvals  : RealArray.t option;
       (** An array of $N_p$ parameters $p$ in $f(t, y, p)$.  If
@@ -383,12 +383,12 @@ module Sensitivity : sig (* {{{ *)
       {!Sensitivity.Quadrature.init}, then [sens_params] must be
       given with [pvals] set to non-[None].
 
-      @cvodes <node6#ss:sensi_malloc> CVodeSensInit
-      @cvodes <node6#ss:sensi_malloc> CVodeSensInit1
-      @cvodes <node6#ss:sens_optional_input> CVodeSetSensParams
-      @cvodes <node6#sss:cvfwdtolerances> CVodeSensSStolerances
-      @cvodes <node6#sss:cvfwdtolerances> CVodeSensSVtolerances
-      @cvodes <node6#sss:cvfwdtolerances> CVodeSensEEtolerances *)
+      @cvodes_sens CVodeSensInit
+      @cvodes_sens CVodeSensInit1
+      @cvodes_sens CVodeSetSensParams
+      @cvodes_sens CVodeSensSStolerances
+      @cvodes_sens CVodeSensSVtolerances
+      @cvodes_sens CVodeSensEEtolerances *)
   val init : ('d, 'k) Cvode.session
              -> ('d, 'k) tolerance
              -> ('d, 'k) sens_method
@@ -399,20 +399,20 @@ module Sensitivity : sig (* {{{ *)
 
   (** Reinitializes the forward sensitivity computation.
 
-      @cvodes <node6#ss:sensi_malloc> CVodeSensReInit *)
+      @cvodes_sens CVodeSensReInit *)
   val reinit : ('d, 'k) Cvode.session -> ('d, 'k) sens_method
                     -> ('d, 'k) Nvector.t array -> unit
 
   (** Deactivates forward sensitivity calculations without deallocating
       memory. Sensitivities can be reactivated with {!reinit}.
 
-      @cvodes <node6#ss:sensi_malloc> CVodeSensToggleOff *)
+      @cvodes_sens CVodeSensToggleOff *)
   val toggle_off : ('d, 'k) Cvode.session -> unit
 
   (** Deactivates forward sensitivity calculations with memory
       deallocation.
 
-      @cvodes <node6#ss:cvodesensfree> CVodeSensFree *)
+      @cvodes_sens CVodeSensFree *)
   val turn_off : ('d, 'k) Cvode.session -> unit
 
   (** Support for quadrature sensitivity equations.
@@ -424,8 +424,7 @@ module Sensitivity : sig (* {{{ *)
       This mechanism allows, in particular, the calculation of the
       sensitivities of the ‘pure’ {!Cvodes.Quadrature} variables, $y_Q$.
 
-      @cvodes <node3#SECTION00364000000000000000> Quadratures depending on forward sensitivities
-      @cvodes <node6#SECTION00640000000000000000> Integration of quadrature equations depending on forward sensitivities *)
+      @cvodes <Usage/FSA.html#integration-of-quadrature-equations-depending-on-forward-sensitivities> Integration of quadratures equations depending on forward sensitivities *)
   module Quadrature : sig (* {{{ *)
     (** {2:init Initialization} *)
 
@@ -462,7 +461,7 @@ module Sensitivity : sig (* {{{ *)
         {warning The vectors in the function arguments should not
                  be accessed after the function returns.}
 
-       @cvodes <node6#ss:user_fct_quad_sens> CVodeQuadSensRhsFn *)
+       @cvodes_sens CVodeQuadSensRhsFn *)
     type 'd quadsensrhsfn = 'd quadsensrhsfn_args -> 'd array -> unit
 
     (** Activate the integration of quadrature sensitivities.  The
@@ -477,14 +476,14 @@ module Sensitivity : sig (* {{{ *)
         have been invoked with a [sens_params] whose [pvals] is
         non-[None].
 
-        @cvodes <node6#ss:quad_sens_init> CVodeQuadSensInit
+        @cvodes_sens CVodeQuadSensInit
         @raise QuadNotInitialized {!Quadrature.init} has not been called. *)
     val init : ('d, 'k) Cvode.session -> ?fqs:'d quadsensrhsfn
              -> ('d, 'k) Nvector.t array -> unit
 
     (** Reinitializes the quadrature sensitivity integration.
 
-        @cvodes <node6#ss:quad_sens_init> CVodeQuadSensReInit *)
+        @cvodes_sens CVodeQuadSensReInit *)
     val reinit : ('d, 'k) Cvode.session -> ('d, 'k) Nvector.t array -> unit
 
     (** {2:tols Tolerance specification} *)
@@ -506,10 +505,10 @@ module Sensitivity : sig (* {{{ *)
 
     (** Specify how to use quadrature sensitivities in step size control.
 
-        @cvodes <node6#ss:quad_sens_optional_input> CVodeSetQuadSensErrCon
-        @cvodes <node6#ss:quad_sens_optional_input> CVodeQuadSensSStolerances
-        @cvodes <node6#ss:quad_sens_optional_input> CVodeQuadSensSVtolerances
-        @cvodes <node6#ss:quad_sens_optional_input> CVodeQuadSensEEtolerances *)
+        @cvodes_sens CVodeSetQuadSensErrCon
+        @cvodes_sens CVodeQuadSensSStolerances
+        @cvodes_sens CVodeQuadSensSVtolerances
+        @cvodes_sens CVodeQuadSensEEtolerances *)
     val set_tolerances : ('d, 'k) Cvode.session
                           -> ('d, 'k) tolerance -> unit
 
@@ -521,14 +520,14 @@ module Sensitivity : sig (* {{{ *)
         {!Cvode.solve_one_step} and the value of the independent variable
         is returned.
 
-        @cvodes <node6#ss:quad_sens_get> CVodeGetQuadSens *)
+        @cvodes_sens CVodeGetQuadSens *)
     val get : ('d, 'k) Cvode.session -> ('d, 'k) Nvector.t array -> float
 
     (** Returns a single quadrature sensitivity vector after a successful
         solver step. Like {!get}, but the argument [i] specifies a specific
         vector to return.
 
-        @cvodes <node6#ss:quad_sens_get> CVodeGetQuadSens1
+        @cvodes_sens CVodeGetQuadSens1
         @raise BadIS The index is not in the allowed range. *)
     val get1 : ('d, 'k) Cvode.session -> ('d, 'k) Nvector.t -> int -> float
 
@@ -545,7 +544,7 @@ module Sensitivity : sig (* {{{ *)
         {% $0 \leq \mathtt{k} \leq q_u$%}—where $q_u$ denotes
         {!Cvode.get_last_order}.
 
-        @cvodes <node6#ss:quad_sens_get> CVodeGetQuadSensDky
+        @cvodes_sens CVodeGetQuadSensDky
         @raise BadIS The index is not in the allowed range.
         @raise BadK [k] is not in the range 0, 1, ..., [qlast].
         @raise BadT [t] is not in the allowed range. *)
@@ -557,7 +556,7 @@ module Sensitivity : sig (* {{{ *)
         [get_dky s dksq t k i] is like
         {!get_dky} but restricted to the [i]th sensitivity solution vector.
 
-        @cvodes <node6#ss:quad_sens_get> CVodeGetQuadSensDky1
+        @cvodes_sens CVodeGetQuadSensDky1
         @raise BadK [k] is not in the range 0, 1, ..., [qlast].
         @raise BadT [t] is not in the allowed range. *)
     val get_dky1 : ('d, 'k) Cvode.session -> ('d, 'k) Nvector.t
@@ -568,18 +567,18 @@ module Sensitivity : sig (* {{{ *)
     (** Returns the number of calls to the quadrature right-hand side
         function.
 
-        @cvodes <node6#ss:quad_sens_optional_output> CVodeGetQuadSensNumRhsEvals *)
+        @cvodes_sens CVodeGetQuadSensNumRhsEvals *)
     val get_num_rhs_evals       : ('d, 'k) Cvode.session -> int
 
     (** Returns the number of local error test failures due to quadrature
         variables.
 
-        @cvodes <node6#ss:quad_sens_optional_output> CVodeGetQuadSensNumErrTestFails *)
+        @cvodes_sens CVodeGetQuadSensNumErrTestFails *)
     val get_num_err_test_fails  : ('d, 'k) Cvode.session -> int
 
     (** Returns the quadrature error weights at the current time.
 
-        @cvodes <node6#ss:quad_sens_optional_output> CVodeGetQuadSensErrWeights *)
+        @cvodes_sens CVodeGetQuadSensErrWeights *)
     val get_err_weights
           : ('d, 'k) Cvode.session -> ('d, 'k) Nvector.t array -> unit
 
@@ -588,7 +587,7 @@ module Sensitivity : sig (* {{{ *)
         number of error test failures due to quadrature variables
         ([nqetfails]).
 
-        @cvodes <node6#ss:quad_sens_optional_output> CVodeGetQuadSensStats
+        @cvodes_sens CVodeGetQuadSensStats
         @return ([nfqevals], [nqetfails]) *)
     val get_stats : ('d, 'k) Cvode.session -> int * int
 
@@ -596,18 +595,18 @@ module Sensitivity : sig (* {{{ *)
 
     (** Quadrature integration was not initialized.
 
-        @cvodes <node5#SECTION00642000000000000000> CV_NO_QUAD_SENS *)
+        @cvodes <Constants_link.html> CV_NO_QUAD_SENS *)
     exception QuadSensNotInitialized
 
     (** The sensitivity quadrature function failed in an unrecoverable
         manner.
 
-        @cvodes <node6#SECTION00642000000000000000> CV_QSRHSFUNC_FAIL *)
+        @cvodes <Constants_link.html> CV_QSRHSFUNC_FAIL *)
     exception QuadSensRhsFuncFailure
 
     (** The sensitivity quadrature function failed at the first call.
 
-        @cvodes <node6#SECTION00642000000000000000> CV_FIRST_QSRHSFUNC_ERR *)
+        @cvodes <Constants_link.html> CV_FIRST_QSRHSFUNC_ERR *)
     exception FirstQuadSensRhsFuncFailure
 
     (** Convergence test failures occurred too many times due to repeated
@@ -616,7 +615,7 @@ module Sensitivity : sig (* {{{ *)
         during the estimation of an initial step size (if quadrature
         variables are included in error tests).
 
-        @cvodes <node6#SECTION00642000000000000000> CV_REPTD_QSRHSFUNC_ERR *)
+        @cvodes <Constants_link.html> CV_REPTD_QSRHSFUNC_ERR *)
     exception RepeatedQuadSensRhsFuncFailure
 
     (** The sensitivity quadrature function had a recoverable error, but no
@@ -624,7 +623,7 @@ module Sensitivity : sig (* {{{ *)
         only if the quadrature function fails recoverably after an error
         test failed while at order one.
 
-        @cvodes <node6#SECTION00642000000000000000> CV_UNREC_QSRHSFUNC_ERR *)
+        @cvodes <Constants_link.html> CV_UNREC_QSRHSFUNC_ERR *)
     exception UnrecoverableQuadSensRhsFuncFailure
   end (* }}} *)
 
@@ -635,7 +634,7 @@ module Sensitivity : sig (* {{{ *)
       either {!Cvode.solve_normal} or {!Cvode.solve_one_step} and the
       value of the independent variable is returned.
 
-      @cvodes <node6#ss:sensi_get> CVodeGetSens *)
+      @cvodes_sens CVodeGetSens *)
   val get : ('d, 'k) Cvode.session -> ('d, 'k) Nvector.t array -> float
 
   (** Returns the interpolated solution or derivatives of the sensitivity
@@ -652,7 +651,7 @@ module Sensitivity : sig (* {{{ *)
       This function may only be called after a successful return from either
       {!Cvode.solve_normal} or {!Cvode.solve_one_step}.
 
-      @cvodes <node6#ss:sensi_get> CVodeGetSensDky
+      @cvodes_sens CVodeGetSensDky
       @raise BadT [t] is not in the interval {% $[t_n - h_u, t_n]$%}.
       @raise BadK [k] is not in the range 0, 1, ..., $q_u$. *)
   val get_dky : ('d, 'k) Cvode.session -> ('d, 'k) Nvector.t array
@@ -664,7 +663,7 @@ module Sensitivity : sig (* {{{ *)
       {!Cvode.solve_one_step} and the value of the independent variable is
       returned.
 
-      @cvodes <node6#ss:sensi_get> CVodeGetSens1
+      @cvodes_sens CVodeGetSens1
       @raise BadIS The index [i] is not in the allowed range. *)
   val get1 : ('d, 'k) Cvode.session -> ('d, 'k) Nvector.t -> int -> float
 
@@ -672,7 +671,7 @@ module Sensitivity : sig (* {{{ *)
       sensitivity solution vector. [get_dky s dks t k i] is like {!get_dky}
       but restricted to the [i]th sensitivity solution vector.
 
-      @cvodes <node6#ss:sensi_get> CVodeGetSensDky1
+      @cvodes_sens CVodeGetSensDky1
       @raise BadIS The index [i] is not in the allowed range.
       @raise BadK [k] is not in the range 0, 1, ..., [qlast].
       @raise BadT [t] is not in the allowed range. *)
@@ -686,15 +685,15 @@ module Sensitivity : sig (* {{{ *)
       {b NB}: Unlike the other [set_tolerances] functions in [Cvodes], this
       one does {b not} call {!set_err_con} (which defaults to [false]).
 
-      @cvodes <node6#sss:cvfwdtolerances> CVodeSensSStolerances
-      @cvodes <node6#ss:cvfwdtolerances> CVodeSensSVtolerances
-      @cvodes <node6#ss:cvfwdtolerances> CVodeSensEEtolerances *)
+      @cvodes_sens CVodeSensSStolerances
+      @cvodes_sens CVodeSensSVtolerances
+      @cvodes_sens CVodeSensEEtolerances *)
   val set_tolerances : ('d, 'k) Cvode.session -> ('d, 'k) tolerance -> unit
 
   (** Sets whether sensitivity variables are used in the error control
       mechanism. The default is [false].
 
-      @cvodes <node5#ss:sens_optional_input> CVodeSetSensErrCon *)
+      @cvodes_sens CVodeSetSensErrCon *)
   val set_err_con : ('d, 'k) Cvode.session -> bool -> unit
 
   (** A difference quotient strategy. See {!set_dq_method}. *)
@@ -707,40 +706,39 @@ module Sensitivity : sig (* {{{ *)
       to switch between simultaneous or separate approximations of the two
       terms in the sensitivity right-hand side.
 
-      @cvodes <node6#ss:sens_optional_input> CVodeSetSensDQMethod
-      @cvodes <node3#ss:fwd_sensi> Forward Sensitivity Analysis *)
+      @cvodes_sens CVodeSetSensDQMethod *)
   val set_dq_method : ('d, 'k) Cvode.session -> dq_method -> float -> unit
 
   (** Sets the maximum number of nonlinear solver iterations for
       sensitivity variables permitted per step.
 
-      @cvodes <node6#ss:sens_optional_input> CVodeSetSensMaxNonlinIters *)
+      @cvodes_sens CVodeSetSensMaxNonlinIters *)
   val set_max_nonlin_iters : ('d, 'k) Cvode.session -> int -> unit
 
   (** {2:get Querying the solver (optional output functions)} *)
 
   (** Returns the number of calls to the sensitivity function.
 
-      @cvodes <node6#ss:sens_optional_output> CVodeGetSensNumRhsEvals *)
+      @cvodes_sens CVodeGetSensNumRhsEvals *)
   val get_num_rhs_evals       : ('d, 'k) Cvode.session -> int
 
   (** Returns the number of calls to the right-hand side function due
       to the internal finite difference approximation of the sensitivity
       equations.
 
-      @cvodes <node6#ss:sens_optional_output> CVodeGetNumRhsEvalsSens *)
+      @cvodes_sens CVodeGetNumRhsEvalsSens *)
   val get_num_rhs_evals_sens  : ('d, 'k) Cvode.session -> int
 
   (** Returns the number of local error test failures for the sensitivity
       variables that have occurred.
 
-      @cvodes <node6#ss:sens_optional_output> CVodeGetSensNumErrTestFails *)
+      @cvodes_sens CVodeGetSensNumErrTestFails *)
   val get_num_err_test_fails  : ('d, 'k) Cvode.session -> int
 
   (** Returns the number of calls made to the linear solver's setup function
       due to forward sensitivity calculations.
 
-      @cvodes <node6#ss:sens_optional_output> CVodeGetSensNumLinSolvSetups *)
+      @cvodes_sens CVodeGetSensNumLinSolvSetups *)
   val get_num_lin_solv_setups : ('d, 'k) Cvode.session -> int
 
   (** Summaries of sensitivity stats. *)
@@ -759,33 +757,33 @@ module Sensitivity : sig (* {{{ *)
 
   (** Returns the sensitivity-related statistics as a group.
 
-      @cvodes <node6#ss:sens_optional_output> CVodeGetSensStats *)
+      @cvodes_sens CVodeGetSensStats *)
   val get_stats : ('d, 'k) Cvode.session -> sensitivity_stats
 
   (** Returns the sensitivity error weights at the current time.
 
-      @cvodes <node6#ss:sens_optional_output> CVodeGetSensErrWeights
-      @cvodes <node3#e:errwt> IVP solution (W_i, Eq. (2.7)) *)
+      @cvodes_sens CVodeGetSensErrWeights
+      @cvodes <Mathematics_link.html#equation-cvodes-errwt> IVP solution (W_i) *)
   val get_err_weights : ('d, 'k) Cvode.session
                           -> ('d, 'k) Nvector.t array -> unit
 
   (** Returns the cumulative number of nonlinear iterations performed for
       sensitivity calculations.
 
-      @cvodes <node6#ss:sens_optional_output> CVodeGetSensNumNonlinSolvIters *)
+      @cvodes_sens CVodeGetSensNumNonlinSolvIters *)
   val get_num_nonlin_solv_iters : ('d, 'k) Cvode.session -> int
 
   (** Returns the cumulative number of nonlinear convergence failures
       during sensitivity calculations.
 
-      @cvodes <node6#ss:sens_optional_output> CVodeGetSensNumNonlinSolvConvFails *)
+      @cvodes_sens CVodeGetSensNumNonlinSolvConvFails *)
   val get_num_nonlin_solv_conv_fails : ('d, 'k) Cvode.session -> int
 
   (** Returns both the numbers of nonlinear iterations performed [nniters]
       and nonlinear convergence failures [nncfails] during sensitivity
       calculations.
 
-      @cvodes <node6#ss:sens_optional_output> CVodeGetSensNonlinSolvStats
+      @cvodes_sens CVodeGetSensNonlinSolvStats
       @return ([nniters], [nncfails]) *)
   val get_nonlin_solv_stats : ('d, 'k) Cvode.session -> int * int
 
@@ -793,22 +791,22 @@ module Sensitivity : sig (* {{{ *)
       iterations for each sensitivity equation separately in the [Staggered1]
       case.
 
-      @cvodes <node6#ss:sens_optional_output> CVodeGetStgrSensNumNonlinSolvIters *)
+      @cvodes_sens CVodeGetStgrSensNumNonlinSolvIters *)
   val get_num_stgr_nonlin_solv_iters : ('d, 'k) Cvode.session
                                        -> LintArray.t -> unit
 
   (** Returns the cumulative number of nonlinear convergence failures
       for each sensitivity equation separately in the [Staggered1] case.
 
-      @cvodes <node6#ss:sens_optional_output> CVodeGetStgrSensNumNonlinSolvConvFails *)
+      @cvodes_sens CVodeGetStgrSensNumNonlinSolvConvFails *)
   val get_num_stgr_nonlin_solv_conv_fails : ('d, 'k) Cvode.session
                                             -> LintArray.t -> unit
 
   (** Returns the current sensitivity state vector array. The vectors in the
       returned array provide direct access to the data within the integrator.
 
-      @since 5.0.0
-      @cvodes <node> CVodeGetCurrentStateSens *)
+      @cvodes_sens CVodeGetCurrentStateSens
+      @since 5.0.0 *)
   val get_current_state_sens : ('d, 'k) session -> 'd array
 
   (** Internal data required to construct the current nonlinear implicit
@@ -841,8 +839,8 @@ module Sensitivity : sig (* {{{ *)
       to be filled in. They are only current after an evaluation of the
       nonlinear system function.
 
-      @since 5.4.0
-      @nocvode <node> CVodeGetNonlinearSystemDataSens *)
+      @cvodes_sens CVodeGetNonlinearSystemDataSens
+      @since 5.4.0 *)
   val get_nonlin_system_data : ('d, 'k) session -> 'd nonlin_system_data
 
   (** Computes the current sensitivity vector for all sensitivities using
@@ -852,8 +850,8 @@ module Sensitivity : sig (* {{{ *)
       {% $\mathit{yS}^n = \mathit{yS}_{\mathit{pred}}
                             + \mathit{yS}_{\mathit{cor}}$ %}.
 
-      @since 5.4.0
-      @nocvode <node> CVodeComputeStateSens *)
+      @cvodes_sens CVodeComputeStateSens
+      @since 5.4.0 *)
   val compute_state : ('d, 'k) session
                       -> ('d, 'k) Nvector.t array
                       -> ('d, 'k) Nvector.t array
@@ -866,8 +864,8 @@ module Sensitivity : sig (* {{{ *)
       {% $\mathit{yS}^n_i = \mathit{yS}_{i,\mathit{pred}}
                             + \mathit{yS}_{i,\mathit{cor}}$ %}.
 
-      @since 5.4.0
-      @nocvode <node> CVodeComputeStateSens1 *)
+      @cvodes_sens CVodeComputeStateSens1
+      @since 5.4.0 *)
   val compute_state1 : ('d, 'k) session
                        -> int
                        -> ('d, 'k) Nvector.t
@@ -877,44 +875,44 @@ module Sensitivity : sig (* {{{ *)
   (** Returns the index of the current sensitivity solve when using
       the {{!sens_method}Staggered1} method.
 
-      @since 5.0.0
-      @cvodes <node> CVodeGetCurrentSensSolveIndex *)
+      @cvodes_sens CVodeGetCurrentSensSolveIndex
+      @since 5.0.0 *)
   val get_current_sens_solve_index : ('d, 'k) session -> int
 
   (** {2:exceptions Exceptions} *)
 
   (** Sensitivity analysis was not initialized.
 
-      @cvodes <node5#ss:sensi_get> CV_NO_SENS *)
+      @cvodes <Constants_link.html> CV_NO_SENS *)
   exception SensNotInitialized
 
   (** The sensitivity function failed in an unrecoverable manner.
 
-      @cvodes <node6#SECTION00623000000000000000> CV_SRHSFUNC_FAIL *)
+      @cvodes <Constants_link.html> CV_SRHSFUNC_FAIL *)
   exception SensRhsFuncFailure
 
   (** The sensitivity function had a recoverable error when first called.
 
-      @cvodes <node6#SECTION00623000000000000000> CV_FIRST_SRHSFUNC_ERR *)
+      @cvodes <Constants_link.html> CV_FIRST_SRHSFUNC_ERR *)
   exception FirstSensRhsFuncFailure
 
   (** Too many convergence test failures, or unable to estimate the initial
       step size, due to repeated recoverable errors in the sensitivity
       function.
 
-      @cvodes <node6#SECTION00623000000000000000> CV_REPTD_SRHSFUNC_ERR *)
+      @cvodes <Constants_link.html> CV_REPTD_SRHSFUNC_ERR *)
   exception RepeatedSensRhsFuncFailure
 
   (** The sensitivity function had a recoverable error, but no recovery was
       possible. This error can only occur after an error test failure at
       order one.
 
-    @cvodes <node6#SECTION00623000000000000000> CV_UNREC_SRHSFUNC_ERR *)
+    @cvodes <Constants_link.html> CV_UNREC_SRHSFUNC_ERR *)
   exception UnrecoverableSensRhsFuncFailure
 
   (** The index passed to identify a particular sensitivity is invalid.
 
-      @cvodes <node6> CV_BAD_IS *)
+      @cvodes <Constants_link.html> CV_BAD_IS *)
   exception BadSensIdentifier
 end (* }}} *)
 
@@ -938,14 +936,14 @@ end (* }}} *)
       {- {{:#get}Querying the solver}}
       {- {{:#exceptions}Exceptions}}}
 
-    @cvodes <node7#ss:skeleton_adj> Enhanced Skeleton for Adjoint Sensitivity Analysis
-    @cvodes <node7#s:adjoint> Using CVODES for Adjoint Sensitivity Analysis
-    @cvodes <node3#ss:adj_sensi> Adjoint sensitivity analysis *)
+    @cvodes <Usage/ADJ.html#using-cvodes-for-adjoint-sensitivity-analysis> Using CVODES for Adjoint Sensitivity Analysis
+    @cvodes <Usage/ADJ.html#a-skeleton-of-the-users-main-program> Enhanced Skeleton for Adjoint Sensitivity Analysis
+    @cvodes <Mathematics_link.html#adjoint-sensitivity-analysis> Adjoint sensitivity analysis *)
 module Adjoint : sig (* {{{ *)
   (** A backward session with the CVODES solver. Multiple backward sessions
       may be associated with a single parent session.
 
-      @cvodes <node7#sss:cvinitb> Backward problem initialization functions *)
+      @cvodes <Usage/ADJ.html#adjoint-sensitivity-allocation-and-deallocation-functions> Adjoint sensitivity allocation and deallocation functions *)
   type ('data, 'kind) bsession = ('data, 'kind) Cvode_impl.AdjointTypes.bsession
 
   (** Alias for backward sessions based on serial nvectors. *)
@@ -956,7 +954,7 @@ module Adjoint : sig (* {{{ *)
 
   (** Specifies the type of interpolation to use between checkpoints.
 
-      @cvodes <node3#ss:checkpointing> Checkpointing scheme *)
+      @cvodes <Mathematics_link.html#checkpointing-scheme> Checkpointing scheme *)
   type interpolation = IPolynomial (** {cconst CV_POLYNOMIAL} *)
                      | IHermite    (** {cconst CV_HERMITE} *)
 
@@ -964,7 +962,7 @@ module Adjoint : sig (* {{{ *)
       of integration steps between consecutive checkpoints, and the type of
       variable-degree interpolation.
 
-      @cvodes <node7#sss:cvadjinit> CVodeAdjInit *)
+      @cvodes_adj CVodeAdjInit *)
   val init : ('d, 'k) Cvode.session -> int -> interpolation -> unit
 
   (** Integrates the forward problem over an interval and saves
@@ -976,7 +974,7 @@ module Adjoint : sig (* {{{ *)
       has reached or just passed the [tout] parameter {cconst CV_NORMAL},
       it then interpolates to approximate [y(tout)].
 
-      @cvodes <node7#sss:cvsolvef> CVodeF
+      @cvodes_adj CVodeF
       @raise Cvode.IllInput           One of the inputs is invalid.
       @raise Cvode.TooMuchWork        Could not reach [tout] in [mxstep] steps
       @raise Cvode.TooMuchAccuracy    Could not satisfy the demanded accuracy
@@ -999,7 +997,7 @@ module Adjoint : sig (* {{{ *)
       whether [tout] was reached. The solver takes one step
       {cconst CV_ONE_STEP} and returns the solution reached.
 
-      @cvodes <node7#sss:cvsolvef> CVodeF
+      @cvodes_adj CVodeF
       @raise Cvode.IllInput           One of the inputs is invalid.
       @raise Cvode.TooMuchWork        Could not reach [tout] in [mxstep] steps
       @raise Cvode.TooMuchAccuracy    Could not satisfy the demanded accuracy
@@ -1018,7 +1016,7 @@ module Adjoint : sig (* {{{ *)
 
   (** Linear solvers used in backward problems.
 
-      @cvodes <node7#sss:lin_solv_b> Linear Solver Initialization Functions *)
+      @cvodes_adj <Usage/SIM.html#cvodes-usage-sim-user-callable-lin-solv-init> Linear solver interface functions *)
   type ('data, 'kind) linear_solver =
           ('data, 'kind) Cvode_impl.AdjointTypes.linear_solver
 
@@ -1032,10 +1030,10 @@ module Adjoint : sig (* {{{ *)
 
   (** Arguments common to Jacobian callback functions.
 
-      @cvodes <node7> CVodeLsJacFnB
-      @cvodes <node7> CVodeJacTimesVecFnB
-      @cvodes <node7> CVodeLsPrecSolveFnB
-      @cvodes <node7> CVodeLsPrecSetupFnB *)
+      @cvodes_adj CVodeLsJacFnB
+      @cvodes_adj CVodeJacTimesVecFnB
+      @cvodes_adj CVodeLsPrecSolveFnB
+      @cvodes_adj CVodeLsPrecSetupFnB *)
   type ('t, 'd) jacobian_arg = ('t, 'd) Cvode_impl.AdjointTypes.jacobian_arg =
     {
       jac_t   : float;        (** The independent variable. *)
@@ -1050,13 +1048,13 @@ module Adjoint : sig (* {{{ *)
     (** A linear solver based on Jacobian approximation by difference
         quotients.
 
-        @cvodes <node7#sss:lin_solv_b> CVDiagB *)
+        @cvodes_adj CVDiagB *)
     val solver : ('data, 'kind) linear_solver
 
     (** Returns the sizes of the real and integer workspaces used by the
         Diagonal linear solver.
 
-        @cvodes <node5#sss:optout_diag> CVDiagGetWorkSpace
+        @cvodes_adj CVDiagGetWorkSpace
         @return ([real_size], [integer_size]) *)
     val get_work_space : ('d, 'k) bsession -> int * int
 
@@ -1064,7 +1062,7 @@ module Adjoint : sig (* {{{ *)
         function due to finite difference Jacobian approximation in the
         Diagonal linear solver.
 
-        @cvodes <node5#sss:optout_diag> CVDiagGetNumRhsEvals *)
+        @cvodes_adj CVDiagGetNumRhsEvals *)
     val get_num_rhs_evals : ('d, 'k) bsession -> int
   end (* }}} *)
 
@@ -1089,7 +1087,7 @@ module Adjoint : sig (* {{{ *)
         {warning Neither the elements of [arg] nor the matrix [jm] should
                  be accessed after the function has returned.}
 
-        @cvodes <node7#ss:densejac_b> CVodeLsJacFnB *)
+        @cvodes_adj CVodeLsJacFnB *)
     type 'm jac_fn_no_sens =
       (RealArray.t triple, RealArray.t) jacobian_arg -> 'm -> unit
 
@@ -1111,7 +1109,7 @@ module Adjoint : sig (* {{{ *)
         {warning Neither the elements of [arg], [s] nor the matrix [jm]
                  should be accessed after the function has returned.}
 
-        @nocvodes <node7> CVodeLsJacFnBS *)
+        @cvodes_adj CVodeLsJacFnBS *)
     type 'm jac_fn_with_sens =
       (RealArray.t triple, RealArray.t) jacobian_arg
       -> RealArray.t array
@@ -1121,8 +1119,8 @@ module Adjoint : sig (* {{{ *)
     (** Callback functions that compute dense approximations to a Jacobian
         matrix.
 
-        @cvodes <node5>   CVodeLsJacFnB
-        @nocvodes <node5> CVodeLsJacFnBS *)
+        @cvodes_adj CVodeLsJacFnB
+        @cvodes_adj CVodeLsJacFnBS *)
     type 'm jac_fn =
         NoSens of 'm jac_fn_no_sens
         (** Does not depend on forward sensitivities. *)
@@ -1132,8 +1130,8 @@ module Adjoint : sig (* {{{ *)
     (** Function to compute the linear system matrix or an approximation to it
         without forward sensitivities. See {!linsys_fn} for details.
 
-        @since 5.0.0
-        @nocvode <node> CVLsLinSysFnB *)
+        @cvodes_adj CVLsLinSysFnB
+        @since 5.0.0 *)
     type 'm linsys_fn_no_sens =
       (RealArray.t triple, RealArray.t) jacobian_arg
       -> 'm
@@ -1144,8 +1142,8 @@ module Adjoint : sig (* {{{ *)
     (** Function to compute the linear system matrix or an approximation to it
         with forward sensitivities. See {!linsys_fn} for details.
 
-        @since 5.0.0
-        @nocvode <node> CVLsLinSysFnBS *)
+        @cvodes_adj CVLsLinSysFnBS
+        @since 5.0.0 *)
     type 'm linsys_fn_with_sens =
       (RealArray.t triple, RealArray.t) jacobian_arg
       -> RealArray.t array
@@ -1175,9 +1173,9 @@ module Adjoint : sig (* {{{ *)
         {warning Neither the Jacobian argument elements nor the matrix [m]
                  should be accessed after the function has returned.}
 
-        @since 5.0.0
-        @nocvodes <node> CVLsLinSysFnB
-        @nocvodes <node> CVLsLinSysFnBS *)
+        @cvodes_adj CVLsLinSysFnB
+        @cvodes_adj CVLsLinSysFnBS
+        @since 5.0.0 *)
     type 'm linsys_fn =
         LNoSens of 'm linsys_fn_no_sens
         (** Does not depend on forward sensitivities. *)
@@ -1196,11 +1194,11 @@ module Adjoint : sig (* {{{ *)
         function that calls [jac] to compute {% $M_B$ %}. This feature is only
         available in Sundials >= 5.0.0.
 
-        @nocvode <node> CVodeSetLinearSolverB
-        @nocvode <node> CVodeSetJacFnB
-        @nocvode <node> CVodeSetJacFnBS
-        @nocvode <node> CVodeSetLinSysFnB
-        @nocvode <node> CVodeSetLinSysFnBS *)
+        @cvodes_adj CVodeSetLinearSolverB
+        @cvodes_adj CVodeSetJacFnB
+        @cvodes_adj CVodeSetJacFnBS
+        @cvodes_adj CVodeSetLinSysFnB
+        @cvodes_adj CVodeSetLinSysFnBS *)
     val solver :
       ?jac:'m jac_fn ->
       ?linsys:'m linsys_fn ->
@@ -1212,32 +1210,31 @@ module Adjoint : sig (* {{{ *)
     (** Returns the sizes of the real and integer workspaces used by a direct
         linear solver.
 
-        @cvode <node5#sss:optout_dls> CVodeGetLinWorkSpace
-        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
+        @cvodes CVodeGetLinWorkSpace
+        @cvodes_adj CVodeGetAdjCVodeBmem
         @return ([real_size], [integer_size]) *)
     val get_work_space : 'k serial_bsession -> int * int
 
     (** Returns the number of calls made by a direct linear solver to the
         Jacobian approximation function.
 
-        @cvode <node5#sss:optout_dls> CVodeGetNumJacEvals
-        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+        @cvodes CVodeGetNumJacEvals
+        @cvodes_adj CVodeGetAdjCVodeBmem *)
     val get_num_jac_evals : 'k serial_bsession -> int
 
     (** Returns the number of calls to the right-hand side callback due to
         the finite difference Jacobian approximation.
 
-        @cvode <node5#sss:optout_dls> CVodeGetNumLinRhsEvals
-        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+        @cvodes CVodeGetNumLinRhsEvals
+        @cvodes_adj CVodeGetAdjCVodeBmem *)
     val get_num_lin_rhs_evals : 'k serial_bsession -> int
 
   end (* }}} *)
 
   (** Scaled Preconditioned Iterative Linear Solvers.
 
-      @cvodes <node7#ss:optional_output_b> Optional output functions for the backward problem.
-      @cvodes <node7#ss:psolve_b> CVodePrecSolveFnB
-      @cvodes <node7#ss:psetup_b> CVodePrecSetupFnB *)
+      @cvodes_adj CVodePrecSolveFnB
+      @cvodes_adj CVodePrecSetupFnB *)
   module Spils : sig (* {{{ *)
     include module type of Sundials_LinearSolver.Iterative
 
@@ -1245,7 +1242,7 @@ module Adjoint : sig (* {{{ *)
 
     (** Arguments passed to the preconditioner solver function.
 
-        @cvode <node7#ss:psolve_b> CVodePrecSolveFnB *)
+        @cvodes_adj CVodePrecSolveFnB *)
     type 'd prec_solve_arg =
       {
         rhs   : 'd;         (** Right-hand side vector of the linear system. *)
@@ -1272,7 +1269,7 @@ module Adjoint : sig (* {{{ *)
         {warning The elements of [jac], [arg], and [z] should not be
         accessed after the function has returned.}
 
-        @cvodes <node7#ss:psolve_b> CVodePrecSolveFnB *)
+        @cvodes_adj CVodePrecSolveFnB *)
     type 'd prec_solve_fn =
       (unit, 'd) jacobian_arg
       -> 'd prec_solve_arg
@@ -1296,7 +1293,7 @@ module Adjoint : sig (* {{{ *)
         {warning The elements of [jac], [arg], [s], and [z] should not be
                  accessed after the function has returned.}
 
-        @nocvodes <node7#ss:psolve_bs> CVodePrecSolveFnBS *)
+        @cvodes_adj CVodePrecSolveFnBS *)
     type 'd prec_solve_fn_with_sens =
       (unit, 'd) jacobian_arg
       -> 'd prec_solve_arg
@@ -1322,7 +1319,7 @@ module Adjoint : sig (* {{{ *)
         {warning The elements of [jac] should not be accessed after the
                  function has returned.}
 
-        @cvodes <node7#ss:psetup_b> CVodePrecSetupFnB *)
+        @cvodes_adj CVodePrecSetupFnB *)
     type 'd prec_setup_fn =
       (unit, 'd) jacobian_arg
       -> bool
@@ -1348,7 +1345,7 @@ module Adjoint : sig (* {{{ *)
         {warning The elements of [jac] should not be accessed after the
                  function has returned.}
 
-        @nocvodes <node7#ss:psetup_bs> CVodePrecSetupFnBS *)
+        @cvodes_adj CVodePrecSetupFnBS *)
     type 'd prec_setup_fn_with_sens =
       (unit, 'd) jacobian_arg
       -> 'd array
@@ -1364,11 +1361,11 @@ module Adjoint : sig (* {{{ *)
         The {!prec_solve_fn} is mandatory. The {!prec_setup_fn} can
         be omitted if not needed.
 
-        @cvodes <node7#SECTION00728400000000000000> CVodeSetPreconditionerB
-        @cvodes <node7#ss:psolve_b> CVodePrecSolveFnB
-        @cvodes <node7#ss:psetup_b> CVodePrecSetupFnB
-        @nocvodes <node7#ss:psolve_bs> CVodePrecSolveFnBS
-        @nocvodes <node7#ss:psetup_bs> CVodePrecSetupFnBS *)
+        @cvodes_adj CVodeSetPreconditionerB
+        @cvodes_adj CVodePrecSolveFnB
+        @cvodes_adj CVodePrecSetupFnB
+        @cvodes_adj CVodePrecSolveFnBS
+        @cvodes_adj CVodePrecSetupFnBS *)
     type ('d, 'k) preconditioner =
       ('d, 'k) Cvode_impl.AdjointTypes.SpilsTypes.preconditioner
 
@@ -1430,19 +1427,19 @@ module Adjoint : sig (* {{{ *)
           generates a banded approximation to the Jacobian with [br.mlower]
           sub-diagonals and [br.mupper] super-diagonals.
 
-          @cvode <node7#SECTION00741000000000000000> CVBandPrecInitB *)
+          @cvodes_adj CVBandPrecInitB *)
       val prec_left : bandrange -> (Nvector_serial.data,
                                     [>Nvector_serial.kind]) preconditioner
 
       (** Like {!prec_left} but preconditions from the right.
 
-          @cvode <node7#SECTION00741000000000000000> CVBandPrecInitB *)
+          @cvodes_adj CVBandPrecInitB *)
       val prec_right : bandrange -> (Nvector_serial.data,
                                      [>Nvector_serial.kind]) preconditioner
 
       (** Like {!prec_left} but preconditions from both sides.
 
-          @cvode <node7#SECTION00741000000000000000> CVBandPrecInitB *)
+          @cvodes_adj CVBandPrecInitB *)
       val prec_both : bandrange -> (Nvector_serial.data,
                                     [>Nvector_serial.kind]) preconditioner
 
@@ -1451,8 +1448,8 @@ module Adjoint : sig (* {{{ *)
       (** Returns the sizes of the real and integer workspaces
           used by the banded preconditioner module.
 
-          @cvodes <node5#sss:cvbandpre> CVBandPrecGetWorkSpace
-          @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
+          @cvodes_adj CVBandPrecGetWorkSpace
+          @cvodes_adj CVodeGetAdjCVodeBmem
           @return ([real_size], [integer_size]) *)
       val get_work_space : 'k serial_bsession -> int * int
 
@@ -1460,8 +1457,8 @@ module Adjoint : sig (* {{{ *)
           difference banded Jacobian approximation. This counter is only updated
           if the default difference quotient function is used.
 
-          @cvodes <node5#sss:cvbandpre> CVBandPrecGetNumRhsEvals
-          @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+          @cvodes_adj CVBandPrecGetNumRhsEvals
+          @cvodes_adj CVodeGetAdjCVodeBmem *)
       val get_num_rhs_evals : 'k serial_bsession -> int
     end (* }}} *)
 
@@ -1478,8 +1475,8 @@ module Adjoint : sig (* {{{ *)
         {warning The elements of [arg] should not be accessed after the
                  function has returned.}
 
-        @nocvode <node> CVodeSetJacTimesB
-        @nocvode <node> CVodeJacTimesSetupFnB *)
+        @cvodes_adj CVodeSetJacTimesB
+        @cvodes_adj CVodeJacTimesSetupFnB *)
     type 'd jac_times_setup_fn_no_sens = (unit, 'd) jacobian_arg -> unit
 
     (** Callback functions that preprocess or evaluate Jacobian-related
@@ -1493,8 +1490,8 @@ module Adjoint : sig (* {{{ *)
         {warning The elements of [arg] should not be accessed after the
                  function has returned.}
 
-        @nocvode <node> CVodeSetJacTimesBS
-        @nocvode <node> CVodeJacTimesSetupFnBS *)
+        @cvodes_adj CVodeSetJacTimesBS
+        @cvodes_adj CVodeJacTimesSetupFnBS *)
     type 'd jac_times_setup_fn_with_sens =
       (unit, 'd) jacobian_arg -> 'd array -> unit
 
@@ -1512,7 +1509,7 @@ module Adjoint : sig (* {{{ *)
         {warning Neither the elements of [arg] nor [v] or [jv] should be
                  accessed after the function has returned.}
 
-        @cvodes <node7#ss:jtimesv_b> CVodeJacTimesVecFnB *)
+        @cvodes_adj CVodeJacTimesVecFnB *)
     type 'd jac_times_vec_fn_no_sens =
       ('d, 'd) jacobian_arg
       -> 'd
@@ -1534,7 +1531,7 @@ module Adjoint : sig (* {{{ *)
         {warning Neither the elements of [arg], [s], [v], nor [jv] should be
                  accessed after the function has returned.}
 
-        @nocvodes <node7#ss:jtimesv_bs> CVodeJacTimesVecFnBS *)
+        @cvodes_adj CVodeJacTimesVecFnBS *)
     type 'd jac_times_vec_fn_with_sens =
       ('d, 'd) jacobian_arg
       -> 'd array
@@ -1544,10 +1541,10 @@ module Adjoint : sig (* {{{ *)
 
     (** Callback functions that compute the Jacobian times a vector.
 
-        @cvodes <node7#ss:jtimesv_b> CVodeJacTimesSetupFnB
-        @nocvodes <node7#ss:jtimesv_bs> CVodeJacTimesSetupFnBS
-        @cvodes <node7#ss:jtimesv_b> CVodeJacTimesVecFnB
-        @nocvodes <node7#ss:jtimesv_bs> CVodeJacTimesVecFnBS *)
+        @cvodes_adj CVodeJacTimesSetupFnB
+        @cvodes_adj CVodeJacTimesSetupFnBS
+        @cvodes_adj CVodeJacTimesVecFnB
+        @cvodes_adj CVodeJacTimesVecFnBS *)
     type 'd jac_times_vec_fn =
       | NoSens of 'd jac_times_setup_fn_no_sens option
                   * 'd jac_times_vec_fn_no_sens
@@ -1570,10 +1567,10 @@ module Adjoint : sig (* {{{ *)
         NB: a [jac_times_rhs] function is not supported in
             {{!Sundials_Config.sundials_version}Config.sundials_version} < 5.3.0.
 
-        @nocvode <node> CVodeSetLinearSolverB
-        @nocvode <node> CVodeSetJacTimesB
-        @nocvode <node> CVodeSetJacTimesBS
-        @nocvode <node> CVodeSetJacTimesRhsFnB *)
+        @cvodes_adj CVodeSetLinearSolverB
+        @cvodes_adj CVodeSetJacTimesB
+        @cvodes_adj CVodeSetJacTimesBS
+        @cvodes_adj CVodeSetJacTimesRhsFnB *)
     val solver :
       ('m, 'd, 'k, 'f) LinearSolver.t
       -> ?jac_times_vec:'d jac_times_vec_fn
@@ -1588,7 +1585,7 @@ module Adjoint : sig (* {{{ *)
         If the integer argument is less than or equal to 0, a default value
         of 50 is used.
 
-        @nocvodes <node5> CVodeSetJacEvalFrequency
+        @cvodes_adj CVodeSetJacEvalFrequency
         @since 4.0.0 *)
     val set_jac_eval_frequency : ('d, 'k) bsession -> int -> unit
 
@@ -1597,7 +1594,7 @@ module Adjoint : sig (* {{{ *)
         negative values force recomputation at each Newton step, and zero
         values reset to the default (20).
 
-        @nocvode <node> CVodeSetLSetupFrequency
+        @cvodes_adj CVodeSetLSetupFrequency
         @since 5.4.0 *)
     val set_lsetup_frequency : ('d, 'k) bsession -> int -> unit
 
@@ -1605,7 +1602,7 @@ module Adjoint : sig (* {{{ *)
         constant is reduced from the Newton iteration test constant.
         This factor must be >= 0; passing 0 specifies the default (0.05).
 
-        @cvodes <node7#SECTION00728400000000000000> CVodeSetEpsLinB *)
+        @cvodes_adj CVodeSetEpsLinB *)
     val set_eps_lin : ('d, 'k) bsession -> float -> unit
 
     (** Sets the factor for converting from the integrator tolerance (WRMS
@@ -1618,8 +1615,8 @@ module Adjoint : sig (* {{{ *)
         If it is less than zero, then the square root of the dot product of a
         state vector full of ones with itself is used.
 
-        @since 5.4.0
-        @nocvodes <node> CVodeSetLSNormFactorB *)
+        @cvodes_adj CVodeSetLSNormFactorB
+        @since 5.4.0 *)
     val set_ls_norm_factor : ('d, 'k) bsession -> float -> unit
 
     (** Enables or disables scaling of the linear system solution to account
@@ -1627,8 +1624,8 @@ module Adjoint : sig (* {{{ *)
         scaling is enabled by default when a matrix-based linear solver is
         attached.
 
-        @since 5.2.0
-        @cvodes <node5> CVodeSetLinearSolutionScalingB *)
+        @cvodes_adj CVodeSetLinearSolutionScalingB
+        @since 5.2.0 *)
     val set_linear_solution_scaling : ('d, 'k) bsession -> bool -> unit
 
     (** {3:stats Solver statistics} *)
@@ -1636,58 +1633,58 @@ module Adjoint : sig (* {{{ *)
     (** Returns the sizes of the real and integer workspaces used by the spils
         linear solver.
 
-        @cvodes <node5#sss:optout_spils> CVodeGetWorkSpace
-        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
+        @cvodes_adj CVodeGetWorkSpace
+        @cvodes_adj CVodeGetAdjCVodeBmem
         @return ([real_size], [integer_size]) *)
     val get_work_space       : ('d, 'k) bsession -> int * int
 
     (** Returns the cumulative number of linear iterations.
 
-        @cvodes <node5#sss:optout_spils> CVodeGetNumLinIters
-        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+        @cvodes_adj CVodeGetNumLinIters
+        @cvodes_adj CVodeGetAdjCVodeBmem *)
     val get_num_lin_iters    : ('d, 'k) bsession -> int
 
     (** Returns the cumulative number of linear convergence failures.
 
-        @cvodes <node5#sss:optout_spils> CVodeGetNumLinConvFails
-        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+        @cvodes_adj CVodeGetNumLinConvFails
+        @cvodes_adj CVodeGetAdjCVodeBmem *)
     val get_num_lin_conv_fails   : ('d, 'k) bsession -> int
 
     (** Returns the cumulative number of calls to the setup function with
         [jok=false].
 
-        @cvodes <node5#sss:optout_spils> CVodeGetNumPrecEvals
-        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+        @cvodes_adj CVodeGetNumPrecEvals
+        @cvodes_adj CVodeGetAdjCVodeBmem *)
     val get_num_prec_evals   : ('d, 'k) bsession -> int
 
     (** Returns the cumulative number of calls to the preconditioner solve
         function.
 
-        @cvodes <node5#sss:optout_spils> CVodeGetNumPrecSolves
-        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+        @cvodes_adj CVodeGetNumPrecSolves
+        @cvodes_adj CVodeGetAdjCVodeBmem *)
     val get_num_prec_solves  : ('d, 'k) bsession -> int
 
     (** Returns the cumulative number of calls to the Jacobian-vector
         setup function.
 
-        @since 3.0.0
-        @nocvode <node> CVodeGetNumJTSetupEvals
-        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+        @cvodes_adj CVodeGetNumJTSetupEvals
+        @cvodes_adj CVodeGetAdjCVodeBmem
+        @since 3.0.0 *)
     val get_num_jtsetup_evals : ('d, 'k) bsession -> int
 
     (** Returns the cumulative number of calls to the Jacobian-vector
         function.
 
-        @cvodes <node5#sss:optout_spils> CVodeGetNumJtimesEvals
-        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+        @cvodes_adj CVodeGetNumJtimesEvals
+        @cvodes_adj CVodeGetAdjCVodeBmem *)
     val get_num_jtimes_evals : ('d, 'k) bsession -> int
 
     (** Returns the number of calls to the right-hand side callback for
         finite difference Jacobian-vector product approximation. This counter is
         only updated if the default difference quotient function is used.
 
-        @cvodes <node5#sss:optout_spils> CVodeGetNumLinRhsEvals
-        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+        @cvodes_adj CVodeGetNumLinRhsEvals
+        @cvodes_adj CVodeGetAdjCVodeBmem *)
     val get_num_lin_rhs_evals    : ('d, 'k) bsession -> int
 
     (** {3:lowlevel Low-level solver manipulation}
@@ -1700,9 +1697,9 @@ module Adjoint : sig (* {{{ *)
     (** Change the preconditioner functions without using forward
         sensitivities.
 
-        @cvodes <node7#SECTION00728400000000000000> CVodeSetPreconditionerB
-        @cvodes <node7#ss:psolve_b> CVodePrecSolveFnB
-        @cvodes <node7#ss:psetup_b> CVodePrecSetupFnB *)
+        @cvodes_adj CVodeSetPreconditionerB
+        @cvodes_adj CVodePrecSolveFnB
+        @cvodes_adj CVodePrecSetupFnB *)
     val set_preconditioner :
       ('d,'k) bsession
       -> ?setup:'d prec_setup_fn
@@ -1711,9 +1708,9 @@ module Adjoint : sig (* {{{ *)
 
     (** Change the preconditioner functions using forward sensitivities.
 
-        @nocvodes <node7> CVodeSetPreconditionerBS
-        @nocvodes <node7#ss:psolve_bs> CVodePrecSolveFnBS
-        @nocvodes <node7#ss:psetup_bs> CVodePrecSetupFnBS *)
+        @cvodes_adj CVodeSetPreconditionerBS
+        @cvodes_adj CVodePrecSolveFnBS
+        @cvodes_adj CVodePrecSetupFnBS *)
     val set_preconditioner_with_sens :
       ('d,'k) bsession
       -> ?setup:'d prec_setup_fn_with_sens
@@ -1722,10 +1719,10 @@ module Adjoint : sig (* {{{ *)
 
     (** Change the Jacobian-times-vector function.
 
-        @cvodes <node7#SECTION00728400000000000000> CVodeSetJacTimesVecFnB
-        @nocvodes <node7> CVodeSetJacTimesVecFnBS
-        @cvodes <node7#ss:jtimesv_b> CVodeJacTimesVecFnB
-        @nocvodes <node7#ss:jtimesv_bs> CVodeJacTimesVecFnBS *)
+        @cvodes_adj CVodeSetJacTimesVecFnB
+        @cvodes_adj CVodeSetJacTimesVecFnBS
+        @cvodes_adj CVodeJacTimesVecFnB
+        @cvodes_adj CVodeJacTimesVecFnBS *)
     val set_jac_times :
       ('d,'k) bsession
       -> 'd jac_times_vec_fn
@@ -1734,7 +1731,7 @@ module Adjoint : sig (* {{{ *)
     (** Remove a Jacobian-times-vector function and use the default
         implementation.
 
-        @cvodes <node7#SECTION00728400000000000000> CVodeSetJacTimesVecFnB *)
+        @cvodes_adj CVodeSetJacTimesVecFnB *)
     val clear_jac_times : ('d, 'k) bsession -> unit
 
   end (* }}} *)
@@ -1742,7 +1739,7 @@ module Adjoint : sig (* {{{ *)
   (** Create a CVode-specific linear solver from a generic matrix embedded
       solver.
 
-      @nocvode <node> CVodeSetLinearSolver
+      @cvodes_adj CVodeSetLinearSolver
       @since 5.8.0 *)
   val matrix_embedded_solver :
          (unit, 'data, 'kind, [>`MatE]) LinearSolver.t
@@ -1776,8 +1773,7 @@ module Adjoint : sig (* {{{ *)
       {warning The vectors in the function arguments should not
                be accessed after the function returns.}
 
-      @cvodes <node7#ss:ODErhs_b> CVRhsFnB
-      @cvodes <node3#e:adj_eqns> Eq 2.19, Adjoint sensitivity analysis *)
+      @cvodes_adj CVRhsFnB *)
   type 'd brhsfn_no_sens = 'd brhsfn_args -> 'd -> unit
 
   (** Backward functions with forward sensitivities. They are passed the
@@ -1794,8 +1790,7 @@ module Adjoint : sig (* {{{ *)
       {warning The vectors in the function arguments should not
                be accessed after the function returns.}
 
-      @cvodes <node7#ss:ODErhs_bs> CVRhsFnBS
-      @cvodes <node3#e:adj1_eqns> Eq 2.21, Adjoint sensitivity analysis *)
+      @cvodes_adj CVRhsFnBS *)
   type 'd brhsfn_with_sens = 'd brhsfn_args -> 'd array -> 'd -> unit
 
   (** Functions that evaluate the right-hand side of a backward ODE system
@@ -1841,14 +1836,14 @@ module Adjoint : sig (* {{{ *)
       {!Cvode.IllInput} for Sundials < 4.0.0) exception on the first call to
       {!backward_normal} or {!backward_one_step}.
 
-      @cvodes <node7#sss:cvinitb> CVodeCreateB
-      @cvodes <node7#sss:cvinitb> CVodeInitB
-      @cvodes <node7#sss:cvinitb> CVodeInitBS
-      @cvodes <node>              CVodeSetLinearSolverB
-      @cvodes <node>              CVodeSetNonlinearSolverB
-      @cvodes <node7#sss:cvtolerances_b> CVodeSStolerancesB
-      @cvodes <node7#sss:cvtolerances_b> CVodeSVtolerancesB
-      @cvodes <node7#sss:cvtolerances_b> CVodeSVtolerancesB
+      @cvodes_adj CVodeCreateB
+      @cvodes_adj CVodeInitB
+      @cvodes_adj CVodeInitBS
+      @cvodes_adj CVodeSetLinearSolverB
+      @cvodes_adj CVodeSetNonlinearSolverB
+      @cvodes_adj CVodeSStolerancesB
+      @cvodes_adj CVodeSVtolerancesB
+      @cvodes_adj CVodeSVtolerancesB
       @raise AdjointNotInitialized The {!init} function has not been called.
       @raise BadFinalTime The final time is outside the interval over which the forward problem was solved. *)
   val init_backward :
@@ -1865,7 +1860,7 @@ module Adjoint : sig (* {{{ *)
   (** Support for backward quadrature equations that may or may
       not depend on forward sensitivities.
 
-      @cvodes <node7#SECTION007210000000000000000> Backward integration of quadrature equations *)
+      @cvodes_adj <Usage/ADJ.html#backward-integration-of-quadrature-equations> Backward integration of quadrature equations *)
   module Quadrature : sig (* {{{ *)
     (** {2:init Initialization} *)
 
@@ -1896,7 +1891,7 @@ module Adjoint : sig (* {{{ *)
         {warning The vectors in the function arguments should not
                  be accessed after the function returns.}
 
-        @cvodes <node7#ss:ODErhs_quad_b> CVQuadRhsFnB *)
+        @cvodes_adj CVQuadRhsFnB *)
     type 'd bquadrhsfn_no_sens = 'd bquadrhsfn_args -> 'd -> unit
 
     (** Functions defining backward quadrature variables with forward
@@ -1914,7 +1909,7 @@ module Adjoint : sig (* {{{ *)
         {warning The vectors in the function arguments should not
                  be accessed after the function returns.}
 
-        @cvodes <node7#ss:ODErhs_quad_sens_B> CVQuadRhsFnBS *)
+        @cvodes_adj CVQuadRhsFnBS *)
     type 'd bquadrhsfn_with_sens =
       'd bquadrhsfn_args -> 'd array -> 'd -> unit
 
@@ -1931,15 +1926,15 @@ module Adjoint : sig (* {{{ *)
         the backward quadrature equations, and a vector giving the values
         of the quadrature variables at [tB0].
 
-        @cvodes <node6#sss:cvquadinitb> CVodeQuadInitB
-        @cvodes <node6#sss:cvquadinitb> CVodeQuadInitBS *)
+        @cvodes_adj CVodeQuadInitB
+        @cvodes_adj CVodeQuadInitBS *)
     val init : ('d, 'k) bsession -> 'd bquadrhsfn
              -> ('d, 'k) Nvector.t -> unit
 
     (** This function reinitializes the integration of quadrature equations
         during the backward phase.
 
-        @cvodes <node6#ss:quad_sens_init> CVodeQuadReInitB *)
+        @cvodes_adj CVodeQuadReInitB *)
     val reinit : ('d, 'k) bsession -> ('d, 'k) Nvector.t -> unit
 
     (** {2:tols Tolerance specification} *)
@@ -1957,9 +1952,9 @@ module Adjoint : sig (* {{{ *)
 
     (** Specify how to use quadrature variables in step size control.
 
-        @cvodes <node5#ss:quad_optional_input> CVodeSetQuadErrCon
-        @cvodes <node5#ss:quad_optional_input> CVodeQuadSStolerances
-        @cvodes <node5#ss:quad_optional_input> CVodeQuadSVtolerances *)
+        @cvodes_adj CVodeSetQuadErrCon
+        @cvodes_adj CVodeQuadSStolerances
+        @cvodes_adj CVodeQuadSVtolerances *)
     val set_tolerances : ('d, 'k) bsession -> ('d, 'k) tolerance -> unit
 
     (** {2:quadout Output functions} *)
@@ -1970,31 +1965,31 @@ module Adjoint : sig (* {{{ *)
         {!backward_one_step} and the value of the independent variable
         is returned.
 
-      @cvodes <node7#sss:quad_get_b> CVodeGetQuadB *)
+      @cvodes_adj CVodeGetQuadB *)
     val get : ('d, 'k) bsession -> ('d, 'k) Nvector.t -> float
 
     (** {2:get Querying the solver (optional output functions)}
 
-        @cvodes <node7#sss:quad_optional_input_B> Optional input/output functions for backward quadrature integration *)
+        @cvodes_adj <Usage/ADJ.html#optional-input-output-functions-for-backward-quadrature-integration> Optional input/output functions for backward quadrature integration *)
 
     (** Returns the number of calls to the backward quadrature right-hand
         side function.
 
-        @cvodes <node5#ss:quad_optional_output> CVodeGetQuadNumRhsEvals
-        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+        @cvodes_adj CVodeGetQuadNumRhsEvals
+        @cvodes_adj CVodeGetAdjCVodeBmem *)
     val get_num_rhs_evals       : ('d, 'k) bsession -> int
 
     (** Returns the number of local error test failures due to quadrature
         variables.
 
-        @cvodes <node5#ss:quad_optional_output> CVodeGetQuadNumErrTestFails
-        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+        @cvodes_adj CVodeGetQuadNumErrTestFails
+        @cvodes_adj CVodeGetAdjCVodeBmem *)
     val get_num_err_test_fails  : ('d, 'k) bsession -> int
 
     (** Returns the quadrature error weights at the current time.
 
-        @cvodes <node5#ss:quad_optional_output> CVodeGetQuadErrWeights
-        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+        @cvodes_adj CVodeGetQuadErrWeights
+        @cvodes_adj CVodeGetAdjCVodeBmem *)
     val get_err_weights : ('d, 'k) bsession -> ('d, 'k) Nvector.t -> unit
 
     (** Returns quadrature-related statistics. These are the
@@ -2002,8 +1997,8 @@ module Adjoint : sig (* {{{ *)
         number of error test failures due to quadrature variables
         ([nqetfails]).
 
-        @cvodes <node5#ss:quad_optional_output> CVodeGetQuadStats
-        @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
+        @cvodes_adj CVodeGetQuadStats
+        @cvodes_adj CVodeGetAdjCVodeBmem
         @return ([nfqevals], [nqetfails]) *)
     val get_stats : ('d, 'k) bsession -> int * int
   end (* }}} *)
@@ -2011,7 +2006,7 @@ module Adjoint : sig (* {{{ *)
   (** Integrates a backward ODE system over an interval. The solver takes
       internal steps until it has reached or just passed the specified value.
 
-      @cvodes <node7#sss:cvsolveb> CVodeB (CV_NORMAL)
+      @cvodes_adj CVodeB (CV_NORMAL)
       @raise AdjointNotInitialized    The {!init} function has not been called.
       @raise NoBackwardProblem        The {!init_backward} function has not been called.
       @raise NoForwardCall            Neither {!forward_normal} nor {!forward_one_step} has been called.
@@ -2029,13 +2024,13 @@ module Adjoint : sig (* {{{ *)
 
   (** Like {!backward_normal} but returns after one internal solver step.
 
-      @cvodes <node7#sss:cvsolveb> CVodeB (CV_ONE_STEP) *)
+      @cvodes_adj CVodeB (CV_ONE_STEP) *)
   val backward_one_step : ('d, 'k) Cvode.session -> float -> unit
 
   (** Fills the given vector with the solution of the backward ODE problem at
       the returned time, interpolating if necessary.
 
-      @cvodes <node7#sss:cvsolveb> CVodeGetB *)
+      @cvodes_adj CVodeGetB *)
   val get : ('d, 'k) bsession -> ('d, 'k) Nvector.t -> float
 
   (** Returns the interpolated solution or derivatives.
@@ -2051,8 +2046,8 @@ module Adjoint : sig (* {{{ *)
       This function may only be called after a successful return from either
       {!backward_normal} or {!backward_one_step}.
 
-      @cvodes <node5#ss:optional_dky> CVodeGetDky
-      @cvodes <node5#ss:optional_dky> CVodeGetAdjIDABmem
+      @cvodes_adj CVodeGetDky
+      @cvodes_adj CVodeGetAdjIDABmem
       @raise BadT [t] is not in the interval {% $[t_n - h_u, t_n]$%}.
       @raise BadK [k] is not in the range 0, 1, ..., $q_u$. *)
   val get_dky
@@ -2061,7 +2056,7 @@ module Adjoint : sig (* {{{ *)
   (** Fills the vector with the interpolated forward solution at the
       given time during a backward simulation.
 
-      @nocvodes <node5#ss:get_adjy> CVodeGetAdjY *)
+      @cvodes_adj CVodeGetAdjY *)
   val get_y : ('d, 'k) Cvode.session -> ('d, 'k) Nvector.t  -> float -> unit
 
   (** Reinitializes the backward problem with new parameters and state
@@ -2069,9 +2064,9 @@ module Adjoint : sig (* {{{ *)
       time, and the state variables must be given. It is also possible to
       change the solution method (and linear solver).
 
-      @cvodes <node7#sss:cvinitb> CVodeReInitB
-      @cvode <node>               CVodeSetLinearSolverB
-      @cvode <node>               CVodeSetNonlinearSolverB
+      @cvodes_adj CVodeReInitB
+      @cvodes_adj CVodeSetLinearSolverB
+      @cvodes_adj CVodeSetNonlinearSolverB
       @raise AdjointNotInitialized The {!init} function has not been called.
       @raise BadFinalTime The final time is not within the forward problem solution interval. *)
   val reinit :
@@ -2087,189 +2082,190 @@ module Adjoint : sig (* {{{ *)
   (** Cancels the storage of sensitivity checkpointing data during forward
       solution (with {!forward_normal} or {!forward_one_step}).
 
-      @cvodes <node7#SECTION00727000000000000000> CVodeAdjSetNoSensi *)
+      @cvodes_adj CVodeAdjSetNoSensi *)
   val set_no_sensitivity : ('d, 'k) Cvode.session -> unit
 
   (** Sets the integration tolerances for the backward problem.
 
-      @cvodes <node7#sss:cvtolerances_b> CVodeSStolerancesB
-      @cvodes <node7#sss:cvtolerances_b> CVodeSVtolerancesB *)
+      @cvodes_adj CVodeSStolerancesB
+      @cvodes_adj CVodeSVtolerancesB *)
   val set_tolerances : ('d, 'k) bsession -> ('d, 'k) tolerance -> unit
 
   (** Specifies the maximum order of the linear multistep method.
 
-      @cvodes <node7#ss:optional_input_b> CVodeSetMaxOrdB *)
+      @cvodes_adj CVodeSetMaxOrdB *)
   val set_max_ord : ('d, 'k) bsession -> int -> unit
 
   (** Specifies the maximum number of steps taken in attempting to reach
       a given output time.
 
-      @cvodes <node7#ss:optional_input_b> CVodeSetMaxNumStepsB *)
+      @cvodes_adj CVodeSetMaxNumStepsB *)
   val set_max_num_steps : ('d, 'k) bsession -> int -> unit
 
   (** Specifies the initial step size.
 
-      @cvodes <node7#ss:optional_input_b> CVodeSetInitStepB *)
+      @cvodes_adj CVodeSetInitStepB *)
   val set_init_step : ('d, 'k) bsession -> float -> unit
 
   (** Specifies a lower bound on the magnitude of the step size.
 
-      @cvodes <node7#ss:optional_input_b> CVodeSetMinStepB *)
+      @cvodes_adj CVodeSetMinStepB *)
   val set_min_step : ('d, 'k) bsession -> float -> unit
 
   (** Specifies an upper bound on the magnitude of the step size.
 
-      @cvodes <node7#ss:optional_input_b> CVodeSetMaxStepB *)
+      @cvodes_adj CVodeSetMaxStepB *)
   val set_max_step : ('d, 'k) bsession -> float -> unit
 
   (** Indicates whether the BDF stability limit detection algorithm should be
       used.
 
-      @cvode <node7#ss:optional_input_b> CVodeSetStabLimDet *)
+      @cvodes CVodeSetStabLimDet
+      @cvodes_adj CVodeGetAdjCVodeBmem *)
   val set_stab_lim_det : ('d, 'k) bsession -> bool -> unit
 
   (** Specifies a vector defining inequality constraints for each
       component of the solution vector [y].  See {!Sundials.Constraint}.
 
-      @nocvodes <node> CVodeSetConstraintsB *)
+      @cvodes_adj CVodeSetConstraintsB *)
   val set_constraints : ('d, 'k) bsession -> ('d, 'k) Nvector.t -> unit
 
   (** Disables constraint checking.
 
-      @nocvodes <node> CVodeSetConstraints *)
+      @cvodes_adj CVodeSetConstraints *)
   val clear_constraints : ('d, 'k) bsession -> unit
 
   (** {2:get Querying the solver (optional output functions)} *)
 
   (** Returns the real and integer workspace sizes.
 
-      @cvodes <node5#sss:optout_main> CVodeGetWorkSpace
-      @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
+      @cvodes_adj CVodeGetWorkSpace
+      @cvodes_adj CVodeGetAdjCVodeBmem
       @return ([real_size], [integer_size]) *)
   val get_work_space          : ('d, 'k) bsession -> int * int
 
   (** Returns the cumulative number of internal steps taken by the solver.
 
-      @cvodes <node5#sss:optout_main> CVodeGetNumSteps
-      @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+      @cvodes_adj CVodeGetNumSteps
+      @cvodes_adj CVodeGetAdjCVodeBmem *)
   val get_num_steps           : ('d, 'k) bsession -> int
 
   (** Returns the number of calls to the backward right-hand side function.
 
-      @cvodes <node5#sss:optout_main> CVodeGetNumRhsEvals
-      @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+      @cvodes_adj CVodeGetNumRhsEvals
+      @cvodes_adj CVodeGetAdjCVodeBmem *)
   val get_num_rhs_evals       : ('d, 'k) bsession -> int
 
   (** Returns the number of calls made to the linear solver's setup function.
 
-      @cvodes <node5#sss:optout_main> CVodeGetNumLinSolvSetups
-      @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+      @cvodes_adj CVodeGetNumLinSolvSetups
+      @cvodes_adj CVodeGetAdjCVodeBmem *)
   val get_num_lin_solv_setups : ('d, 'k) bsession -> int
 
   (** Returns the number of local error test failures that have occurred.
 
-      @cvodes <node5#sss:optout_main> CVodeGetNumErrTestFails
-      @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+      @cvodes_adj CVodeGetNumErrTestFails
+      @cvodes_adj CVodeGetAdjCVodeBmem *)
   val get_num_err_test_fails  : ('d, 'k) bsession -> int
 
   (** Returns the integration method order used during the last internal step.
 
-      @cvodes <node5#sss:optout_main> CVodeGetLastOrder
-      @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+      @cvodes_adj CVodeGetLastOrder
+      @cvodes_adj CVodeGetAdjCVodeBmem *)
   val get_last_order          : ('d, 'k) bsession -> int
 
   (** Returns the integration method order to be used on the next internal
       step.
 
-      @cvodes <node5#sss:optout_main> CVodeGetCurrentOrder
-      @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+      @cvodes_adj CVodeGetCurrentOrder
+      @cvodes_adj CVodeGetAdjCVodeBmem *)
   val get_current_order       : ('d, 'k) bsession -> int
 
   (** Returns the integration step size taken on the last internal step.
 
-      @cvodes <node5#sss:optout_main> CVodeGetLastStep
-      @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+      @cvodes_adj CVodeGetLastStep
+      @cvodes_adj CVodeGetAdjCVodeBmem *)
   val get_last_step           : ('d, 'k) bsession -> float
 
   (** Returns the integration step size to be attempted on the next internal
       step.
 
-      @cvodes <node5#sss:optout_main> CVodeGetCurrentStep
-      @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+      @cvodes_adj CVodeGetCurrentStep
+      @cvodes_adj CVodeGetAdjCVodeBmem *)
   val get_current_step        : ('d, 'k) bsession -> float
 
   (** Returns the the value of the integration step size used on the first
       step.
 
-      @cvodes <node5#sss:optout_main> CVodeGetActualInitStep
-      @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+      @cvodes_adj CVodeGetActualInitStep
+      @cvodes_adj CVodeGetAdjCVodeBmem *)
   val get_actual_init_step    : ('d, 'k) bsession -> float
 
   (** Returns the the current internal time reached by the solver.
 
-      @cvodes <node5#sss:optout_main> CVodeGetCurrentTime
-      @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+      @cvodes_adj CVodeGetCurrentTime
+      @cvodes_adj CVodeGetAdjCVodeBmem *)
   val get_current_time        : ('d, 'k) bsession -> float
 
   (** Returns the number of order reductions dictated by the BDF stability
       limit detection algorithm.
 
-      @cvodes <node5#sss:optout_main> CVodeGetNumStabLimOrderReds
-      @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
-      @cvodes <node3#s:bdf_stab> BDF stability limit detection *)
+      @cvodes_adj CVodeGetNumStabLimOrderReds
+      @cvodes_adj CVodeGetAdjCVodeBmem
+      @cvodes_adj <Mathematics_link.html#bdf-stability-limit-detection> BDF stability limit detection *)
   val get_num_stab_lim_order_reds : ('d, 'k) bsession -> int
 
   (** Returns a suggested factor by which the user's tolerances should be
       scaled when too much accuracy has been requested for some internal
       step.
 
-      @cvodes <node5#sss:optout_main> CVodeGetTolScaleFactor
-      @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+      @cvodes_adj CVodeGetTolScaleFactor
+      @cvodes_adj CVodeGetAdjCVodeBmem *)
   val get_tol_scale_factor : ('d, 'k) bsession -> float
 
   (** Returns the solution error weights at the current time.
 
-      @cvodes <node5#sss:optout_main> CVodeGetErrWeights
-      @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
-      @cvodes <node3#ss:ivp_sol> IVP solution (W_i) *)
+      @cvodes_adj CVodeGetErrWeights
+      @cvodes_adj CVodeGetAdjCVodeBmem
+      @cvodes_adj <Mathematics_link.html#equation-cvodes-errwt> IVP solution (W_i) *)
   val get_err_weights : ('d, 'k) bsession -> ('d, 'k) Nvector.t -> unit
 
   (** Returns the vector of estimated local errors.
 
-      @cvodes <node5#sss:optout_main> CVodeGetEstLocalErrors
-      @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+      @cvodes_adj CVodeGetEstLocalErrors
+      @cvodes_adj CVodeGetAdjCVodeBmem *)
   val get_est_local_errors : ('d, 'k) bsession -> ('d, 'k) Nvector.t -> unit
 
   (** Returns the integrator statistics as a group.
 
-      @cvodes <node5#sss:optout_main> CVodeGetIntegratorStats
-      @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+      @cvodes_adj CVodeGetIntegratorStats
+      @cvodes_adj CVodeGetAdjCVodeBmem *)
   val get_integrator_stats    : ('d, 'k) bsession -> Cvode.integrator_stats
 
   (** Prints the integrator statistics on the given channel.
 
-      @cvodes <node5#sss:optout_main> CVodeGetIntegratorStats
-      @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+      @cvodes_adj CVodeGetIntegratorStats
+      @cvodes_adj CVodeGetAdjCVodeBmem *)
   val print_integrator_stats  : ('d, 'k) bsession -> out_channel -> unit
 
   (** Returns the cumulative number of nonlinear (functional or Newton)
       iterations.
 
-      @cvodes <node5#sss:optout_main> CVodeGetNumNonlinSolvIters
-      @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+      @cvodes_adj CVodeGetNumNonlinSolvIters
+      @cvodes_adj CVodeGetAdjCVodeBmem *)
   val get_num_nonlin_solv_iters : ('d, 'k) bsession -> int
 
   (** Returns the cumulative number of nonlinear convergence failures.
 
-      @cvodes <node5#sss:optout_main> CVodeGetNumNonlinSolvConvFails
-      @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem *)
+      @cvodes_adj CVodeGetNumNonlinSolvConvFails
+      @cvodes_adj CVodeGetAdjCVodeBmem *)
   val get_num_nonlin_solv_conv_fails : ('d, 'k) bsession -> int
 
   (** Returns both the numbers of nonlinear iterations performed [nniters] and
       nonlinear convergence failures [nncfails].
 
-      @cvode <node5#sss:optout_main> CVodeGetNonlinSolvStats
-      @cvodes <node7#ss:optional_output_b> CVodeGetAdjCVodeBmem
+      @cvodes CVodeGetNonlinSolvStats
+      @cvodes_adj CVodeGetAdjCVodeBmem
       @return ([nniters], [nncfails]) *)
   val get_nonlin_solv_stats : ('d, 'k) bsession -> int *int
 
@@ -2277,35 +2273,35 @@ module Adjoint : sig (* {{{ *)
 
   (** Adjoint sensitivity analysis was not initialized.
 
-      @cvodes <node7#sss:cvsolvef> CV_NO_ADJ *)
+      @cvodes <Constants_link.html> CV_NO_ADJ *)
   exception AdjointNotInitialized
 
   (** Neither {!forward_normal} nor {!forward_one_step} has been called.
 
-      @cvodes <node7#sss:cvsolveb> CV_NO_FWD *)
+      @cvodes <Constants_link.html> CV_NO_FWD *)
   exception NoForwardCall
 
   (** Reinitialization of the forward problem failed at the first checkpoint
       (corresponding to the initial time of the forward problem).
 
-      @cvodes <node7#sss:cvsolveb> CV_REIFWD_FAIL *)
+      @cvodes <Constants_link.html> CV_REIFWD_FAIL *)
   exception ForwardReinitFailure
 
   (** An error occured when integrating the forward problem from a
       checkpoint.
 
-      @cvodes <node7#sss:cvsolveb> CV_FWD_FAIL *)
+      @cvodes <Constants_link.html> CV_FWD_FAIL *)
   exception ForwardFailure
 
   (** No backward problem has been created.
 
-      @cvodes <node7#sss:cvsolveb> CV_NO_BCK *)
+      @cvodes <Constants_link.html> CV_NO_BCK *)
   exception NoBackwardProblem
 
   (** The final time was outside the interval over which the forward
       problem was solved.
 
-      @cvodes <node7#sss:cvinitb> CV_BAD_TB0 *)
+      @cvodes <Constants_link.html> CV_BAD_TB0 *)
   exception BadFinalTime
 
 end (* }}} *)

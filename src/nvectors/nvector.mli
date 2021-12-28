@@ -25,7 +25,7 @@
     It is needed because some linear solvers make additional
     assumptions about the underlying vector representation.
 
-    @cvode <node7#s:nvector> N_Vector *)
+    @nvector <NVector_API_link.html#description-of-the-nvector-modules> N_Vector *)
 type ('data, 'kind) t
 
 (** An alias for {!t}. *)
@@ -79,7 +79,7 @@ val get_id : ('data, 'kind) t -> nvector_id
 
 (** {2:vecops Vector operations}
 
-    @cvode <node7> Description of the NVECTOR module. *)
+    @nvector <NVector_API_link.html#description-of-the-nvector-operations> Description of the NVECTOR operations *)
 
 open Sundials
 

@@ -13,11 +13,11 @@
 
 (** An interface for creating custom nvectors in OCaml.
 
+    @nvector <NVector_API_link.html#implementing-a-custom-nvector> Implementing a custom NVECTOR
     @version VERSION()
     @author Timothy Bourke (Inria/ENS)
     @author Jun Inoue (Inria/ENS)
-    @author Marc Pouzet (UPMC/ENS/Inria)
-    @cvode <node7#s:nvector> The NVECTOR Module *)
+    @author Marc Pouzet (UPMC/ENS/Inria) *)
 
 (** Represents an nvector manipulated by operations written in OCaml. Note that
     such operations entail the additional runtime cost of an OCaml callback. *)
@@ -47,7 +47,7 @@ type communicator
     the speed advantages of providing a single callback that handles many
     values at once but allocates more heap memory and multiple callbacks.
 
-    @cvode <node7#s:nvector> _generic_N_Vector_Ops *)
+    @nvector <NVector_API_link.html#description-of-the-nvector-operations> Description of the NVECTOR operations *)
 type 'd nvector_ops = { (* {{{ *)
   check           : 'd -> 'd ->  bool;
   (** Returns [true] if the vectors are compatible. See {!Nvector.check}. *)

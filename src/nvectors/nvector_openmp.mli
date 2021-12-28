@@ -13,11 +13,11 @@
 
 (** The OpenMP nvectors of Sundials (requires OpenMP).
 
+    @nvector <NVector_links.html#the-nvector-openmp-module> The NVECTOR_OPENMP Module
     @version VERSION()
     @author Timothy Bourke (Inria/ENS)
     @author Jun Inoue (Inria/ENS)
-    @author Marc Pouzet (UPMC/ENS/Inria)
-    @cvode <node7#ss:nvec_par> NVECTOR_PARALLEL *)
+    @author Marc Pouzet (UPMC/ENS/Inria) *)
 
 open Sundials
 
@@ -38,7 +38,8 @@ type t = (data, kind) Nvector.t
     The optional arguments permit to enable all the fused and array operations
     for a given nvector (they are disabled by default).
 
-    @cvode <node5> N_VEnableFusedOps_OpenMP
+    @nvector N_VNew_OpenMP
+    @nvector N_VEnableFusedOps_OpenMP
     @raise Config.NotImplementedBySundialsVersion Fused and array operations not available. *)
 val make :
      ?context:Context.t
@@ -54,7 +55,8 @@ val make :
     The optional arguments permit to enable all the fused and array operations
     for a given nvector (they are disabled by default).
 
-    @cvode <node5> N_VEnableFusedOps_OpenMP
+    @nvector N_VMake_OpenMP
+    @nvector N_VEnableFusedOps_OpenMP
     @raise Config.NotImplementedBySundialsVersion Fused and array operations not available. *)
 val wrap :
      ?context:Context.t
@@ -77,19 +79,19 @@ val num_threads : t -> int
 (** Selectively enable or disable fused and array operations.
     The [with_fused_ops] argument enables or disables all such operations.
 
-    @since 4.0.0
-    @cvode <node5> N_VEnableFusedOps_OpenMP
-    @cvode <node5> N_VEnableLinearCombination_OpenMP
-    @cvode <node5> N_VEnableScaleAddMulti_OpenMP
-    @cvode <node5> N_VEnableDotProdMulti_OpenMP
-    @cvode <node5> N_VEnableLinearSumVectorArray_OpenMP
-    @cvode <node5> N_VEnableScaleVectorArray_OpenMP
-    @cvode <node5> N_VEnableConstVectorArray_OpenMP
-    @cvode <node5> N_VEnableWrmsNormVectorArray_OpenMP
-    @cvode <node5> N_VEnableWrmsNormMaskVectorArray_OpenMP
-    @cvode <node5> N_VEnableScaleAddMultiVectorArray_OpenMP
-    @cvode <node5> N_VEnableLinearCombinationVectorArray_OpenMP
-    @raise Config.NotImplementedBySundialsVersion Fused and array operations not available. *)
+    @nvector N_VEnableFusedOps_OpenMP
+    @nvector N_VEnableLinearCombination_OpenMP
+    @nvector N_VEnableScaleAddMulti_OpenMP
+    @nvector N_VEnableDotProdMulti_OpenMP
+    @nvector N_VEnableLinearSumVectorArray_OpenMP
+    @nvector N_VEnableScaleVectorArray_OpenMP
+    @nvector N_VEnableConstVectorArray_OpenMP
+    @nvector N_VEnableWrmsNormVectorArray_OpenMP
+    @nvector N_VEnableWrmsNormMaskVectorArray_OpenMP
+    @nvector N_VEnableScaleAddMultiVectorArray_OpenMP
+    @nvector N_VEnableLinearCombinationVectorArray_OpenMP
+    @raise Config.NotImplementedBySundialsVersion Fused and array operations not available.
+    @since 4.0.0 *)
 val enable :
      ?with_fused_ops                       : bool
   -> ?with_linear_combination              : bool
@@ -120,17 +122,18 @@ module Any : sig (* {{{ *)
       The optional arguments permit to enable all the fused and array operations
       for a given nvector (they are disabled by default).
 
-      @cvode <node5> N_VEnableFusedOps_OpenMP
-      @cvode <node5> N_VEnableLinearCombination_OpenMP
-      @cvode <node5> N_VEnableScaleAddMulti_OpenMP
-      @cvode <node5> N_VEnableDotProdMulti_OpenMP
-      @cvode <node5> N_VEnableLinearSumVectorArray_OpenMP
-      @cvode <node5> N_VEnableScaleVectorArray_OpenMP
-      @cvode <node5> N_VEnableConstVectorArray_OpenMP
-      @cvode <node5> N_VEnableWrmsNormVectorArray_OpenMP
-      @cvode <node5> N_VEnableWrmsNormMaskVectorArray_OpenMP
-      @cvode <node5> N_VEnableScaleAddMultiVectorArray_OpenMP
-      @cvode <node5> N_VEnableLinearCombinationVectorArray_OpenMP
+      @nvector N_VNew_OpenMP
+      @nvector N_VEnableFusedOps_OpenMP
+      @nvector N_VEnableLinearCombination_OpenMP
+      @nvector N_VEnableScaleAddMulti_OpenMP
+      @nvector N_VEnableDotProdMulti_OpenMP
+      @nvector N_VEnableLinearSumVectorArray_OpenMP
+      @nvector N_VEnableScaleVectorArray_OpenMP
+      @nvector N_VEnableConstVectorArray_OpenMP
+      @nvector N_VEnableWrmsNormVectorArray_OpenMP
+      @nvector N_VEnableWrmsNormMaskVectorArray_OpenMP
+      @nvector N_VEnableScaleAddMultiVectorArray_OpenMP
+      @nvector N_VEnableLinearCombinationVectorArray_OpenMP
       @raise Config.NotImplementedBySundialsVersion Fused and array operations not available.
       @since 5.0.0 *)
   val make :
@@ -157,17 +160,18 @@ module Any : sig (* {{{ *)
       The optional arguments permit to enable all the fused and array operations
       for a given nvector (they are disabled by default).
 
-      @cvode <node5> N_VEnableFusedOps_OpenMP
-      @cvode <node5> N_VEnableLinearCombination_OpenMP
-      @cvode <node5> N_VEnableScaleAddMulti_OpenMP
-      @cvode <node5> N_VEnableDotProdMulti_OpenMP
-      @cvode <node5> N_VEnableLinearSumVectorArray_OpenMP
-      @cvode <node5> N_VEnableScaleVectorArray_OpenMP
-      @cvode <node5> N_VEnableConstVectorArray_OpenMP
-      @cvode <node5> N_VEnableWrmsNormVectorArray_OpenMP
-      @cvode <node5> N_VEnableWrmsNormMaskVectorArray_OpenMP
-      @cvode <node5> N_VEnableScaleAddMultiVectorArray_OpenMP
-      @cvode <node5> N_VEnableLinearCombinationVectorArray_OpenMP
+      @nvector N_VMake_OpenMP
+      @nvector N_VEnableFusedOps_OpenMP
+      @nvector N_VEnableLinearCombination_OpenMP
+      @nvector N_VEnableScaleAddMulti_OpenMP
+      @nvector N_VEnableDotProdMulti_OpenMP
+      @nvector N_VEnableLinearSumVectorArray_OpenMP
+      @nvector N_VEnableScaleVectorArray_OpenMP
+      @nvector N_VEnableConstVectorArray_OpenMP
+      @nvector N_VEnableWrmsNormVectorArray_OpenMP
+      @nvector N_VEnableWrmsNormMaskVectorArray_OpenMP
+      @nvector N_VEnableScaleAddMultiVectorArray_OpenMP
+      @nvector N_VEnableLinearCombinationVectorArray_OpenMP
       @raise Config.NotImplementedBySundialsVersion Fused and array operations not available.
       @since 5.0.0 *)
   val wrap :
@@ -195,20 +199,20 @@ module Any : sig (* {{{ *)
   (** Selectively enable or disable fused and array operations.
       The [with_fused_ops] argument enables or disables all such operations.
 
-      @since 4.0.0
-      @cvode <node5> N_VEnableFusedOps_OpenMP
-      @cvode <node5> N_VEnableLinearCombination_OpenMP
-      @cvode <node5> N_VEnableScaleAddMulti_OpenMP
-      @cvode <node5> N_VEnableDotProdMulti_OpenMP
-      @cvode <node5> N_VEnableLinearSumVectorArray_OpenMP
-      @cvode <node5> N_VEnableScaleVectorArray_OpenMP
-      @cvode <node5> N_VEnableConstVectorArray_OpenMP
-      @cvode <node5> N_VEnableWrmsNormVectorArray_OpenMP
-      @cvode <node5> N_VEnableWrmsNormMaskVectorArray_OpenMP
-      @cvode <node5> N_VEnableScaleAddMultiVectorArray_OpenMP
-      @cvode <node5> N_VEnableLinearCombinationVectorArray_OpenMP
+      @nvector N_VEnableFusedOps_OpenMP
+      @nvector N_VEnableLinearCombination_OpenMP
+      @nvector N_VEnableScaleAddMulti_OpenMP
+      @nvector N_VEnableDotProdMulti_OpenMP
+      @nvector N_VEnableLinearSumVectorArray_OpenMP
+      @nvector N_VEnableScaleVectorArray_OpenMP
+      @nvector N_VEnableConstVectorArray_OpenMP
+      @nvector N_VEnableWrmsNormVectorArray_OpenMP
+      @nvector N_VEnableWrmsNormMaskVectorArray_OpenMP
+      @nvector N_VEnableScaleAddMultiVectorArray_OpenMP
+      @nvector N_VEnableLinearCombinationVectorArray_OpenMP
       @raise Nvector.BadGenericType If not called on an OpenMP nvector
-      @raise Config.NotImplementedBySundialsVersion Fused and array operations not available. *)
+      @raise Config.NotImplementedBySundialsVersion Fused and array operations not available.
+      @since 4.0.0 *)
   val enable :
        ?with_fused_ops                       : bool
     -> ?with_linear_combination              : bool
