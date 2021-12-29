@@ -2970,6 +2970,10 @@ module MRIStep = struct (* {{{ *)
       = "sunml_arkode_mri_coupling_make_byte"
         "sunml_arkode_mri_coupling_make"
 
+    let option_iter f = function
+      | None -> ()
+      | Some x -> f x
+
     let make ~method_order ~embedding_order ?explicit ?implicit c =
       let stages = RealArray.length c in
       let nmat =
@@ -2985,12 +2989,12 @@ module MRIStep = struct (* {{{ *)
       in
       if nmat < 1 || stages < 1 then invalid_arg "zero-length array";
       let check ra = RealArray.length ra <> stages in
-      Option.iter (fun w ->
+      option_iter (fun w ->
         if Array.exists (fun wi -> Array.length wi <> stages
                                    || Array.exists check wi) w
           then invalid_arg "explicit coupling matrice incompatible with abscissae")
         explicit;
-      Option.iter (fun g ->
+      option_iter (fun g ->
         if Array.exists (fun gi -> Array.length gi <> stages
                                    || Array.exists check gi) g
           then invalid_arg "implicit coupling matrice incompatible with abscissae")
