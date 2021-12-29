@@ -314,7 +314,7 @@ For {b Debian}-based systems, we found the following worked:
     {{:http://crd-legacy.lbl.gov/~xiaoye/SuperLU/superlu_mt_3.1.tar.gz}download}
     and build SuperLU/MT 3.1.}
     {- {v mkdir build; cd build v}}
-    {- {v cmake -Wno-dev ../sundials-5.8.0 \
+    {- {v cmake -Wno-dev ../sundials-6.0.0 \
 -DCMAKE_BUILD_TYPE=Release \
 -DOPENMP_ENABLE=1 \
 -DPTHREAD_ENABLE=1 \
@@ -350,7 +350,7 @@ For {b macOS}, we found the following worked:
        and build SuperLU/MT.}
     {- {v mkdir build; cd build v}}
     {- For OpenMP, the gcc compiler is required:
-       {v cmake -Wno-dev ../sundials-5.8.0 \
+       {v cmake -Wno-dev ../sundials-6.0.0 \
 -DCMAKE_BUILD_TYPE=Release \
 -DCMAKE_C_COMPILER=gcc-11 \
 -DOPENMP_ENABLE=1 \
