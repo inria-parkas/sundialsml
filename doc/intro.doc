@@ -85,7 +85,7 @@ into lowercase. For instance, [IdaSetErrHandlerFn], becomes
 
 Constants are replaced by variant types in most cases. They are renamed by
 conversion to {e CamlCase} and the removal of underscores. For instance,
-[PREC_NONE] becomes
+[SUN_PREC_NONE] becomes
 {{!Sundials_LinearSolver.Iterative.preconditioning_type}PrecNone}.
 The names chosen for exceptions sometimes differ from the corresponding return
 code names when this improves consistency or comprehensibility.
@@ -95,7 +95,7 @@ For instance, the return codes [CV_FIRST_RHSFUNC_ERR] and
 becomes {!Cvodes.Sensitivity.BadSensIdentifier}.
 
 Rather than duplicate the comprehensive
-{{:https://computation.llnl.gov/casc/sundials/documentation/documentation.html}
+{{:https://sundials.readthedocs.io/en/latest/index.html}
 Sundials user manuals}, this documentation provides brief summaries
 with references to the original texts and underlying functions.
 
@@ -255,7 +255,7 @@ or
 
 The dependencies of Sundials/ML are
 - {{:http://caml.inria.fr/ocaml/}OCaml} {b 4.03.0 or greater},
-- {{:http://computation.llnl.gov/casc/sundials/}Sundials} {b {var version}}
+- {{:https://computing.llnl.gov/projects/sundials}Sundials} {b {var version}}
   (compiles with version back to 2.7.0 with less features),
 - {e Optionally}:
   {{:https://forge.ocamlcore.org/projects/ocamlmpi/}OCamlMPI} {b 1.05}.
@@ -275,6 +275,7 @@ the underlying library (see {!Sundials.Config}).
 
 {ol
     {- {i Optionally} run [opam install mpi].}
+    {- Run [opam depext sundialsml].}
     {- Run [opam install sundialsml].}
 }
 
@@ -295,7 +296,7 @@ After installing Sundials, retry [opam install sundialsml].
 {3:sundials Manually Building and Installing Sundials}
 
 First
-{{:https://computation.llnl.gov/projects/sundials/sundials-software}download}
+{{:https://computing.llnl.gov/projects/sundials/sundials-software}download}
 the Sundials source code.
 It must be compiled with 64-bit floats (the default: {i
 --with-precision=double}) and the C compiler must provide 32-bit
@@ -328,7 +329,7 @@ For {b Debian}-based systems, we found the following worked:
 -DSUPERLUMT_LIBRARY_DIR=<full-path-to>/SuperLU_MT_3.1/lib \
 -DSUPERLUMT_INCLUDE_DIR=<full-path-to>/SuperLU_MT_3.1/SRC \
 -DSUPERLUMT_LIBRARIES=-lblas v}}
-    {- Build and install Sundials by running [make install].}
+    {- Build and install Sundials by running [make -j install].}
     {- Change to the Sundials/ML source directory and run
 	{v ./configure v}
 	Adding, if necessary,
@@ -390,7 +391,7 @@ Building Sundials/ML from source is a three step process:
 	    {- macOS: [brew install sundials] / [port install sundials]}
 	}}
     {- Run [configure] to find and check dependencies.}
-    {- Run [make install] or [make install-findlib] to build and
+    {- Run [make -j install] or [make -j install-findlib] to build and
        install the library.}
 }
 
@@ -400,7 +401,7 @@ arguments (like {i --prefix=...}) and variables (like
 
 OCaml reimplementations of the standard Sundials examples are provided in
 the [examples/] subdirectory.
-The library's behaviour can be tested via [make tests.opt.log] which runs the OCaml
+The library's behaviour can be tested via [make -j tests.opt.log] which runs the OCaml
 versions and compares their outputs against those of the original C
 versions: they should be identical.
 The library's performance can be analyzed via [make perf-intv.opt.pdf] which
