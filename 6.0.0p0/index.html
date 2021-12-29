@@ -138,7 +138,7 @@ into lowercase. For instance, <code class="code"><span class="constructor">IdaSe
 
 <p>Constants are replaced by variant types in most cases. They are renamed by
 conversion to <em>CamlCase</em> and the removal of underscores. For instance,
-<code class="code"><span class="constructor">PREC_NONE</span></code> becomes
+<code class="code"><span class="constructor">SUN_PREC_NONE</span></code> becomes
 <a href="Sundials_LinearSolver.Iterative.html#TYPEpreconditioning_type">PrecNone</a>.
 The names chosen for exceptions sometimes differ from the corresponding return
 code names when this improves consistency or comprehensibility.
@@ -148,7 +148,7 @@ For instance, the return codes <code class="code"><span class="constructor">CV_F
 becomes <a href="Cvodes.Sensitivity.html#EXCEPTIONBadSensIdentifier"><code class="code"><span class="constructor">Cvodes</span>.<span class="constructor">Sensitivity</span>.<span class="constructor">BadSensIdentifier</span></code></a>.</p>
 
 <p>Rather than duplicate the comprehensive
-<a href="https://computation.llnl.gov/casc/sundials/documentation/documentation.html">
+<a href="https://sundials.readthedocs.io/en/latest/index.html">
 Sundials user manuals</a>, this documentation provides brief summaries
 with references to the original texts and underlying functions.</p>
 
@@ -441,7 +441,7 @@ or
 <p>The dependencies of Sundials/ML are</p>
 <ul>
 <li><a href="http://caml.inria.fr/ocaml/">OCaml</a> <b>4.03.0 or greater</b>,</li>
-<li><a href="http://computation.llnl.gov/casc/sundials/">Sundials</a> <b>6.0.0</b>
+<li><a href="https://computing.llnl.gov/projects/sundials">Sundials</a> <b>6.0.0</b>
   (compiles with version back to 2.7.0 with less features),</li>
 <li><em>Optionally</em>:
   <a href="https://forge.ocamlcore.org/projects/ocamlmpi/">OCamlMPI</a> <b>1.05</b>.</li>
@@ -460,6 +460,7 @@ the underlying library (see <a href="Sundials.Config.html"><code class="code"><s
 
 <OL>
 <li><i>Optionally</i> run <code class="code">opam&nbsp;install&nbsp;mpi</code>.</li>
+<li>Run <code class="code">opam&nbsp;depext&nbsp;sundialsml</code>.</li>
 <li>Run <code class="code">opam&nbsp;install&nbsp;sundialsml</code>.</li>
 </OL>
 
@@ -479,7 +480,7 @@ After installing Sundials, retry <code class="code">opam&nbsp;install&nbsp;sundi
 
 <h4 id="sundials">Manually Building and Installing Sundials</h4>
 <p>First
-<a href="https://computation.llnl.gov/projects/sundials/sundials-software">download</a>
+<a href="https://computing.llnl.gov/projects/sundials/sundials-software">download</a>
 the Sundials source code.
 It must be compiled with 64-bit floats (the default: <i>--with-precision=double</i>) and the C compiler must provide 32-bit
 <code class="code">int</code>s.</p>
@@ -511,7 +512,7 @@ library to work.</p>
 -DSUPERLUMT_LIBRARY_DIR=&lt;full-path-to&gt;/SuperLU_MT_3.1/lib \
 -DSUPERLUMT_INCLUDE_DIR=&lt;full-path-to&gt;/SuperLU_MT_3.1/SRC \
 -DSUPERLUMT_LIBRARIES=-lblas</pre></li>
-<li>Build and install Sundials by running <code class="code">make&nbsp;install</code>.</li>
+<li>Build and install Sundials by running <code class="code">make&nbsp;-j&nbsp;install</code>.</li>
 <li>Change to the Sundials/ML source directory and run
 	<pre class="verbatim">./configure</pre>
 	Adding, if necessary,
@@ -573,7 +574,7 @@ are only enabled if Sundials was built with them and OCamlMPI is available.</p>
 </ul>
 </li>
 <li>Run <code class="code">configure</code> to find and check dependencies.</li>
-<li>Run <code class="code">make&nbsp;install</code> or <code class="code">make&nbsp;install-findlib</code> to build and
+<li>Run <code class="code">make&nbsp;-j&nbsp;install</code> or <code class="code">make&nbsp;-j&nbsp;install-findlib</code> to build and
        install the library.</li>
 </OL>
 
@@ -583,7 +584,7 @@ arguments (like <i>--prefix=...</i>) and variables (like
 
 <p>OCaml reimplementations of the standard Sundials examples are provided in
 the <code class="code">examples/</code> subdirectory.
-The library's behaviour can be tested via <code class="code">make&nbsp;tests.opt.log</code> which runs the OCaml
+The library's behaviour can be tested via <code class="code">make&nbsp;-j&nbsp;tests.opt.log</code> which runs the OCaml
 versions and compares their outputs against those of the original C
 versions: they should be identical.
 The library's performance can be analyzed via <code class="code">make&nbsp;perf-intv.opt.pdf</code> which
