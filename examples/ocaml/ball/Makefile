@@ -2,7 +2,11 @@ include ../../../config
 
 SRCROOT = ../../../src
 
-all: $(if $(OCAML_GRAPHICS_PATH),ball.byte ball.opt)
+all: $(if $(OCAML_GRAPHICS_PATH),ball.byte ball.opt, nographics)
+
+nographics:
+	@echo "This example requires the OCaml graphics package."
+	@echo "(try: opam install graphics, then rerun configure/make.)"
 
 ball.byte: showball.cmi showball.cmo ball.ml
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ $(INCLUDES) \

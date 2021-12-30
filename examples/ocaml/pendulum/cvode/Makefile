@@ -2,10 +2,14 @@ include ../../../../config
 
 SRCROOT = ../../../../src
 
-all: $(if $(OCAML_GRAPHICS_PATH),pendulum.byte pendulum.opt)
+all: $(if $(OCAML_GRAPHICS_PATH),pendulum.byte pendulum.opt,nographics)
 
 test-pendulum: pendulum.opt
 	./$< $(PARAMS)
+
+nographics:
+	@echo "This example requires the OCaml graphics package."
+	@echo "(try: opam install graphics, then rerun configure/make.)"
 
 pendulum.byte: showpendulum.ml pendulum.ml
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ -dllpath $(SRCROOT) $(INCLUDES) \
