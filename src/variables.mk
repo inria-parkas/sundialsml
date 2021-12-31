@@ -62,7 +62,8 @@ MLOBJ_MAIN =	sundials/sundials_configuration.cmo	\
 		ida/ida.cmo				\
 		$(ARKODE_MLOBJ_MAIN)
 
-CMI_MAIN = $(filter-out sundials/sundials_configuration.cmi,$(MLOBJ_MAIN:.cmo=.cmi))
+CMI_MAIN = $(filter-out sundials/sundials_configuration.cmi \
+	   	%_impl.cmi,$(MLOBJ_MAIN:.cmo=.cmi))
 
 ### Objects specific to sundials.cma.
 COBJ_SENS  =	cvodes/cvode_ml_s$(XO)		\
