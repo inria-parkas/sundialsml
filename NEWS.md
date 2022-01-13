@@ -1,3 +1,7 @@
+Sundials/ML 6.1.0p0 (January 2021)
+----------------------------------
+Minor tweaks and fixes. Bump version to follow latest Sundials release.
+
 Sundials/ML 6.0.0p0 (December 2021)
 ------------------------------------
 Sundials/ML v6.0.0p0 adds support for v6.x of the Sundials Suite of
