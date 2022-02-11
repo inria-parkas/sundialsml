@@ -237,7 +237,7 @@ value sunml_wrap_session_pointer(void *sun_mem)
     CAMLlocal1(vmem);
 
     vmem = caml_alloc_final(1, finalize_session_pointer, 1, 15);
-    Custom_ops_val(vmem)->compare = compare_session_pointers;
+    ((struct custom_operations*)vmem)->compare = compare_session_pointers;
 
     SUNML_MEM(vmem) = sun_mem;
 
