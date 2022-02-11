@@ -196,7 +196,12 @@ value *sunml_sundials_malloc_value(value v)
     header_t *block;
     block = (header_t *)malloc(Bhsize_wosize(1));
     if (block == NULL) return NULL;
+#if OCAML_VERSION < 41200
     *block = Make_header(1, 0, Caml_black);
+#else
+    // see notes in ocaml/runtime/caml/address_class.h
+    *block = Caml_out_of_heap_header(1, 0);
+#endif
     Field(Val_hp(block), 0) = v;
     caml_register_generational_global_root (Op_hp(block));
     return Op_hp(block);
