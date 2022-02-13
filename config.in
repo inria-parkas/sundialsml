@@ -98,6 +98,7 @@ define common
 endef
 
 OCAML_VERSION = @ocaml_version@
+OCAML_VERSION_STRING = @ocaml_version_string@
 OCAMLC ?= @ocamlc@
 OCAMLFLAGS += -no-alias-deps @ocamlflags@
 OCAML_INCLUDE := $(shell $(OCAMLC) -where)

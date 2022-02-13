@@ -739,32 +739,37 @@ else
     sundials_indextype=64
 fi
 
+set_ocaml_version () {
+    ocaml_version="$((10000 * $1 + 100 * $2 + $3))"
+}
+
 # Check for OCaml installation (and version)
-ocaml_path=`${OCAMLBIN}ocamlc -where`
-ocaml_version=`${OCAMLBIN}ocamlc -version`
+ocaml_path=$("${OCAMLBIN}ocamlc" -where)
+ocaml_version_string=$("${OCAMLBIN}ocamlc" -version)
+# shellcheck disable=SC2181
 if [ $? -ne 0 ]; then
     error="${error}\n\tcould not find ocamlc"
     ocaml_path='NOT FOUND'
-    ocaml_version=''
+    ocaml_version=0
+    ocaml_version_string=''
     ocaml_version_info=''
     Iocaml_inc_path=''
     ocaml_libpath=''
 else
-    case "${ocaml_version}" in
-	[0-3].*.* | 4.00.* | 4.01.* | 4.02.0 | 4.02.1 | 4.02.2 | 4.02.3)
-	    error="${error}\\n\\tocaml >= 4.03.0 required" ;;
-	*) ;;
-    esac
+    # shellcheck disable=SC2046
+    set_ocaml_version $(ocamlc -version | cut -d + -f 1 | tr '.' ' ')
 
-    case "${ocaml_version}" in
-	4.03.* | 4.04.* | 4.05.*)
-	    ocaml_warnings="${ocaml_warnings}-40" ;;
-	*) ;;
-    esac
+    if [ $ocaml_version -le 40203 ]; then
+	    error="${error}\\n\\tocaml >= 4.03.0 required"
+    fi
+
+    if [ $ocaml_version -lt 40600 ]; then
+	    ocaml_warnings="${ocaml_warnings}-40"
+    fi
 
     Iocaml_inc_path="-isystem ${ocaml_path}"
     ocaml_libpath="${ocaml_path%/}/"
-    ocaml_version_info=" (${ocaml_version})"
+    ocaml_version_info=" (${ocaml_version_string})"
 fi
 
 ocamlflags="${ocamlflags} -w ${ocaml_warnings} -bin-annot"
@@ -772,8 +777,8 @@ ocamloptflags="${ocamloptflags} -w ${ocaml_warnings} -bin-annot"
 
 # Check if .opt variants are available.
 if [ "x$opt_compiler" = x1 ] && \
-       ([ -x ${OCAMLBIN}ocamlc.opt ] \
-        || which ${OCAMLBIN}ocamlc.opt >>${logfile} 2>&1)
+       ([ -x "${OCAMLBIN}ocamlc.opt" ] \
+        || which "${OCAMLBIN}ocamlc.opt" >>${logfile} 2>&1)
 then
     ocamlc="${OCAMLBIN}ocamlc.opt"
 else
@@ -781,8 +786,8 @@ else
 fi
 
 if [ "x$opt_compiler" = x1 ] && \
-       ([ -x ${OCAMLBIN}ocamlopt.opt ] \
-        || which ${OCAMLBIN}ocamlopt.opt >>${logfile} 2>&1)
+       ([ -x "${OCAMLBIN}ocamlopt.opt" ] \
+        || which "${OCAMLBIN}ocamlopt.opt" >>${logfile} 2>&1)
 then
     ocamlopt="${OCAMLBIN}ocamlopt.opt"
 else
@@ -790,8 +795,8 @@ else
 fi
 
 if [ "x$opt_compiler" = x1 ] && \
-       ([ -x ${OCAMLBIN}ocamldoc.opt ] \
-        || which ${OCAMLBIN}ocamldoc.opt >>${logfile} 2>&1)
+       ([ -x "${OCAMLBIN}ocamldoc.opt" ] \
+        || which "${OCAMLBIN}ocamldoc.opt" >>${logfile} 2>&1)
 then
     ocamldoc="${OCAMLBIN}ocamldoc.opt"
     ocamldoc_plugin=".cmxs"
@@ -801,8 +806,8 @@ else
 fi
 
 if [ "x$opt_compiler" = x1 ] && \
-       ([ -x ${OCAMLBIN}ocamldep.opt ] \
-        || which ${OCAMLBIN}ocamldep.opt >>${logfile} 2>&1)
+       ([ -x "${OCAMLBIN}ocamldep.opt" ] \
+        || which "${OCAMLBIN}ocamldep.opt" >>${logfile} 2>&1)
 then
     ocamldep="${OCAMLBIN}ocamldep.opt"
 else
@@ -1820,6 +1825,7 @@ cat ${LOG}
 	 s#@ocamlmklibflags@#${ocamlmklibflags}#;
 	 s#@bounds_checking@#${bounds_checking}#;
 	 s#@ocaml_version@#${ocaml_version}#;
+	 s#@ocaml_version_string@#${ocaml_version_string}#;
 	 s#@ocamlc@#${ocamlc}#;
 	 s#@ocamlopt@#${ocamlopt}#;
 	 s#@ocamldoc@#${ocamldoc}#;

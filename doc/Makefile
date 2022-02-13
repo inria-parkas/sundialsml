@@ -58,7 +58,7 @@ html:
 	mkdir $@
 
 C_TITLE=C ($(CC) $(filter-out -I% -DNDEBUG=1,$(CFLAGS)))
-NATIVE_TITLE=OCaml ($(OCAML_VERSION)) native code performance over $(C_TITLE)
+NATIVE_TITLE=OCaml ($(OCAML_VERSION_STRING)) native code performance over $(C_TITLE)
 CONFIDENCE=$(shell ../examples/utils/crunchperf --conf ../examples/perf-intv.opt.log)
 
 html/perf.opt.png: ../examples/perf.opt.log

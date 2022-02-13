@@ -146,8 +146,8 @@ reps: $(foreach s,$(SUBDIRS),$s/reps)
 
 C_TITLE=C ($(CC) $(filter-out -I% $(OCAML_INC_PATH) -DNDEBUG=1 \
 			      $(KLU_INC_PATH) $(SUPERLUMT_INC_PATH),$(CFLAGS)))
-NATIVE_TITLE='OCaml ($(OCAML_VERSION)) native code performance over $(C_TITLE)'
-BYTE_TITLE  ='OCaml ($(OCAML_VERSION)) byte code performance over $(C_TITLE)'
+NATIVE_TITLE='OCaml ($(OCAML_VERSION_STRING)) native code performance over $(C_TITLE)'
+BYTE_TITLE  ='OCaml ($(OCAML_VERSION_STRING)) byte code performance over $(C_TITLE)'
 CONF_TITLE=", `$(UTILS)/crunchperf --conf $(1)`% confidence"
 
 PLOTTYPES=jpg png pngcairo pdf eps

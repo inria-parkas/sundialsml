@@ -307,9 +307,9 @@ perf-intv.byte.log perf-intv.opt.log: perf-intv.%.log: perf-intv.%.cache      \
 	@cat $@
 
 ifeq ($(bounds_checking),0)
-OCAML_CONFIG=$(OCAML_VERSION), -unsafe
+OCAML_CONFIG=$(OCAML_VERSION_STRING), -unsafe
 else
-OCAML_CONFIG=$(OCAML_VERSION)
+OCAML_CONFIG=$(OCAML_VERSION_STRING)
 endif
 C_TITLE=C ($(CC) $(filter-out -I% -DNDEBUG=1,$(CFLAGS)))
 NATIVE_TITLE='OCaml ($(OCAML_CONFIG)) native code performance over $(C_TITLE)'
