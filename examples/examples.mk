@@ -148,7 +148,7 @@ $(SERIAL_EXAMPLES:.ml=.byte): %.byte: $(SRC)/$(USELIB).cma $(EXTRA_DEPS) %.ml
 	    $(INCLUDES) -I $(SRC) -dllpath $(SRC)	\
 	    $(SUBDIRS:%=-I $(SRC)/%)			\
 	    $(LIB_PATH:%=-ccopt %)			\
-	    bigarray.cma unix.cma $^
+	    $(BIGARRAY_CMA) unix.cma $^
 
 $(SERIAL_EXAMPLES:.ml=.opt): %.opt: $(SRC)/$(USELIB).cmxa \
 				    $(EXTRA_DEPS:.cmo=.cmx) %.ml
@@ -156,7 +156,7 @@ $(SERIAL_EXAMPLES:.ml=.opt): %.opt: $(SRC)/$(USELIB).cmxa \
 	    $(INCLUDES) -I $(SRC)		\
 	    $(SUBDIRS:%=-I $(SRC)/%)		\
 	    $(LIB_PATH:%=-ccopt %)		\
-	    bigarray.cmxa unix.cmxa $^
+	    $(BIGARRAY_CMXA) unix.cmxa $^
 
 # MPI
 $(MPI_EXAMPLES:.ml=.byte): %.byte: $(SRC)/$(USELIB).cma		\
@@ -167,7 +167,7 @@ $(MPI_EXAMPLES:.ml=.byte): %.byte: $(SRC)/$(USELIB).cma		\
 	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC) -dllpath $(SRC)	\
 	    $(SUBDIRS:%=-I $(SRC)/%)					\
 	    $(LIB_PATH:%=-ccopt %)					\
-	    bigarray.cma unix.cma mpi.cma $^
+	    $(BIGARRAY_CMA) unix.cma mpi.cma $^
 
 $(MPI_EXAMPLES:.ml=.opt): %.opt: $(SRC)/$(USELIB).cmxa		\
 				 $(SRC)/sundials_mpi.cmxa	\
@@ -177,7 +177,7 @@ $(MPI_EXAMPLES:.ml=.opt): %.opt: $(SRC)/$(USELIB).cmxa		\
 	    $(INCLUDES) $(MPI_INCLUDES) -I $(SRC)	\
 	    $(SUBDIRS:%=-I $(SRC)/%)			\
 	    $(LIB_PATH:%=-ccopt %)			\
-	    bigarray.cmxa unix.cmxa mpi.cmxa $^
+	    $(BIGARRAY_CMXA) unix.cmxa mpi.cmxa $^
 
 # OpenMP
 $(OPENMP_EXAMPLES:.ml=.byte): %.byte: $(SRC)/$(USELIB).cma		\
@@ -188,7 +188,7 @@ $(OPENMP_EXAMPLES:.ml=.byte): %.byte: $(SRC)/$(USELIB).cma		\
 	    $(INCLUDES) -I $(SRC) -dllpath $(SRC)			\
 	    $(SUBDIRS:%=-I $(SRC)/%)					\
 	    $(LIB_PATH:%=-ccopt %)					\
-	    bigarray.cma unix.cma $^
+	    $(BIGARRAY_CMA) unix.cma $^
 
 $(OPENMP_EXAMPLES:.ml=.opt): %.opt: $(SRC)/$(USELIB).cmxa	\
 				    $(SRC)/sundials_openmp.cmxa	\
@@ -198,7 +198,7 @@ $(OPENMP_EXAMPLES:.ml=.opt): %.opt: $(SRC)/$(USELIB).cmxa	\
 	    $(INCLUDES) -I $(SRC)		\
 	    $(SUBDIRS:%=-I $(SRC)/%)		\
 	    $(LIB_PATH:%=-ccopt %)		\
-	    bigarray.cmxa unix.cmxa $^
+	    $(BIGARRAY_CMXA) unix.cmxa $^
 
 # pthreads
 $(PTHREADS_EXAMPLES:.ml=.byte): %.byte: $(SRC)/$(USELIB).cma		\
@@ -207,7 +207,7 @@ $(PTHREADS_EXAMPLES:.ml=.byte): %.byte: $(SRC)/$(USELIB).cma		\
 	$(OCAMLC) $(OCAMLFLAGS) -o $@					\
 	    $(INCLUDES) -I $(SRC) -dllpath $(SRC) $(SUBDIRS:%=-I $(SRC)/%) \
 	    $(LIB_PATH:%=-ccopt %)					\
-	    bigarray.cma unix.cma $^
+	    $(BIGARRAY_CMA) unix.cma $^
 
 $(PTHREADS_EXAMPLES:.ml=.opt): %.opt: $(SRC)/$(USELIB).cmxa		\
 				      $(SRC)/sundials_pthreads.cmxa	\
@@ -217,7 +217,7 @@ $(PTHREADS_EXAMPLES:.ml=.opt): %.opt: $(SRC)/$(USELIB).cmxa		\
 	    $(INCLUDES) -I $(SRC)	\
 	    $(SUBDIRS:%=-I $(SRC)/%)	\
 	    $(LIB_PATH:%=-ccopt %)	\
-	    bigarray.cmxa unix.cmxa $^
+	    $(BIGARRAY_CMXA) unix.cmxa $^
 
 # opam inserts opam's and the system's stublibs directory into
 # CAML_LD_LIBRARY_PATH, which has higher precdence than -dllpath.

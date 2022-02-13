@@ -141,6 +141,14 @@ OCAMLDOC_PLUGIN ?= @ocamldoc_plugin@
 OCAMLMKLIB ?= @OCAMLBIN@ocamlmklib -ocamlc "$(OCAMLC) $(OCAMLFLAGS)" -ocamlopt "$(OCAMLOPT) $(OCAMLOPTFLAGS)"
 OCAMLMKLIBFLAGS ?= @ocamlmklibflags@ -verbose
 
+ifeq ($(shell [ $(OCAML_VERSION) -lt 40700 ] && echo true),true)
+BIGARRAY_CMA = bigarray.cma
+BIGARRAY_CMXA = bigarray.cmxa
+else
+BIGARRAY_CMA =
+BIGARRAY_CMXA =
+endif
+
 ENABLE_SHARED = @enable_shared@
 
 GNUPLOT = gnuplot

@@ -1,6 +1,6 @@
 (* Compile with:
     ocamlc -o ramp.byte -I +sundials -dllpath +sundials \
-           bigarray.cma unix.cma sundials.cma ramp.ml
+           unix.cma sundials.cma ramp.ml
  *)
 
 type mode = RampingUp | Flat | RampingDown

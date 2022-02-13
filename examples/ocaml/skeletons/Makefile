@@ -60,10 +60,10 @@ distclean: clean
 .ml.byte:
 	$(OCAMLC) $(OCAMLFLAGS) -o $@ -dllpath $(SRCROOT) $(INCLUDES) \
 	    -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) \
-	    bigarray.cma sundials.cma $<
+	    $(BIGARRAY_CMA) sundials.cma $<
 
 .ml.opt:
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ $(INCLUDES) \
 	    -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) $(LIB_PATH:%=-ccopt %) \
-	    bigarray.cmxa sundials.cmxa $<
+	    $(BIGARRAY_CMXA) sundials.cmxa $<
 

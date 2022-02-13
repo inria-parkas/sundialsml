@@ -1,6 +1,6 @@
 (* Compile with:
     ocamlc -o ls_badmem.byte -I +sundials -dllpath +sundials \
-           bigarray.cma unix.cma sundials.cma ls_badmem.ml
+              unix.cma sundials.cma ls_badmem.ml
  *)
 
 let printf = Printf.printf
