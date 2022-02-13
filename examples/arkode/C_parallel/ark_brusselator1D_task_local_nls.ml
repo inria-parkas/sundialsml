@@ -679,10 +679,10 @@ let setup_problem () =
 
     "--k",
     Unit (fun () ->
-            k1 := Float.of_string Sys.argv.(!Arg.current);
-            k2 := Float.of_string Sys.argv.(!Arg.current + 1);
-            k3 := Float.of_string Sys.argv.(!Arg.current + 2);
-            k4 := Float.of_string Sys.argv.(!Arg.current + 3);
+            k1 := float_of_string Sys.argv.(!Arg.current);
+            k2 := float_of_string Sys.argv.(!Arg.current + 1);
+            k3 := float_of_string Sys.argv.(!Arg.current + 2);
+            k4 := float_of_string Sys.argv.(!Arg.current + 3);
             Arg.current := !Arg.current + 4),
     "<double> reaction rate\n";
 
