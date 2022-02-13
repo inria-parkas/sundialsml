@@ -231,14 +231,25 @@ static int compare_session_pointers(value vmem1, value vmem2)
     return (mem1 != mem2);
 }
 
+static struct custom_operations session_pointer_ops = {
+    .identifier   = "sunml_session_pointer",
+    .finalize     = finalize_session_pointer,
+    .compare      = compare_session_pointers,
+    .hash         = custom_hash_default,
+    .serialize    = custom_serialize_default,
+    .deserialize  = custom_deserialize_default,
+    .compare_ext  = custom_compare_ext_default,
+#if 40800 <= OCAML_VERSION
+    .fixed_length = custom_fixed_length_default,
+#endif
+};
+
 value sunml_wrap_session_pointer(void *sun_mem)
 {
     CAMLparam0();
     CAMLlocal1(vmem);
 
-    vmem = caml_alloc_final(1, finalize_session_pointer, 1, 15);
-    ((struct custom_operations*)vmem)->compare = compare_session_pointers;
-
+    vmem = caml_alloc_custom(&session_pointer_ops, sizeof(value), 1, 15);
     SUNML_MEM(vmem) = sun_mem;
 
     CAMLreturn(vmem);
