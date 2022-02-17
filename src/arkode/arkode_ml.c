@@ -4860,7 +4860,7 @@ CAMLprim value sunml_arkode_ark_get_num_lin_conv_fails(value varkode_mem)
     CAMLreturn(Val_long(r));
 }
 
-#if 300 <= SUNDIALS_LIB_VERSION && SUNDIALS_LIB_VERSION <= 301
+#if 300 <= SUNDIALS_LIB_VERSION && SUNDIALS_LIB_VERSION < 311
 int ARKSpilsGetNumMTSetups(void *arkode_mem, long int *nmtsetups);
 #endif
 
