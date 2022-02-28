@@ -13,6 +13,20 @@
 
 #include "../config.h"
 
+#include <caml/mlvalues.h>
+#include <caml/alloc.h>
+#include <caml/memory.h>
+#include <caml/callback.h>
+#include <caml/custom.h>
+#include <caml/fail.h>
+#include <caml/bigarray.h>
+
+#if 41400 <= OCAML_VERSION
+// caml/compatibility.h defines a macro 'initialize' in order to show a
+// deprecated warning, but Sundials uses 'initialize' as a field name.
+#undef initialize
+#endif
+
 #include "../sundials/sundials_ml.h"
 #include "../nvectors/nvector_ml.h"
 #include "../lsolvers/sundials_linearsolver_ml.h"
@@ -50,14 +64,6 @@
 
 #include <sundials/sundials_math.h>
 #include <sundials/sundials_iterative.h>
-
-#include <caml/mlvalues.h>
-#include <caml/alloc.h>
-#include <caml/memory.h>
-#include <caml/callback.h>
-#include <caml/custom.h>
-#include <caml/fail.h>
-#include <caml/bigarray.h>
 
 #define MAX_ERRMSG_LEN 256
 
