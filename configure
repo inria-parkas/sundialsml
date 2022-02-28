@@ -740,7 +740,10 @@ else
 fi
 
 set_ocaml_version () {
-    ocaml_version="$((10000 * $1 + 100 * $2 + $3))"
+    # expr may be antiquated but it can handle leading zeros, e.g.,
+    # for OCaml 4.08.00 -> 10000 * 4 + 100 * 08 + 0.
+    # shellcheck disable=SC2003
+    ocaml_version="$(expr 10000 '*' "$1" + 100 '*' "$2" + "$3")"
 }
 
 # Check for OCaml installation (and version)
