@@ -1,3 +1,8 @@
+Sundials/ML 6.1.1p0 (February 2021)
+-----------------------------------
+* Fix compilation under OCaml 4.14
+* Compiles under OCaml 5.0.0+trunk but examples segfault
+
 Sundials/ML 6.1.0p0 (January 2021)
 ----------------------------------
 Minor tweaks and fixes. Bump version to follow latest Sundials release.
