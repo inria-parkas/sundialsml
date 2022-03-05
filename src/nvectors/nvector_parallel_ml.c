@@ -171,7 +171,7 @@ CAMLprim value sunml_nvec_wrap_parallel(value payload,
     sundials_ml_index local_length, global_length;
 
     vlocalba      = Field(payload, 0);
-    local_length  = (Caml_ba_array_val(vlocalba))->dim[0];
+    local_length  = ARRAY1_LEN(vlocalba);
     global_length = Index_val(Field(payload, 1));
     comm          = Comm_val(Field(payload, 2));
 
@@ -843,7 +843,7 @@ CAMLprim value sunml_nvec_par_dotprodmultiallreduce(value vx, value vd)
     CAMLparam2(vx, vd);
 #if 600 <= SUNDIALS_LIB_VERSION
     sunrealtype *d = REAL_ARRAY(vd);
-    int nvec_total = (Caml_ba_array_val(vd))->dim[0];
+    int nvec_total = ARRAY1_LEN(vd);
     N_VDotProdMultiAllReduce_Parallel(nvec_total, NVEC_VAL(vx), d);
 #endif
     CAMLreturn(Val_unit);

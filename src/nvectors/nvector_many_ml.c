@@ -1047,7 +1047,7 @@ CAMLprim value SUNML_NVEC_OP(dotprodmultiallreduce)(value vx, value vd)
     CAMLparam2(vx, vd);
 #if 600 <= SUNDIALS_LIB_VERSION
     sunrealtype *d = REAL_ARRAY(vd);
-    int nvec_total = (Caml_ba_array_val(vd))->dim[0];
+    int nvec_total = ARRAY1_LEN(vd);
 
     MVAPPEND(N_VDotProdMultiAllReduce)(nvec_total, NVEC_VAL(vx), d);
 #endif

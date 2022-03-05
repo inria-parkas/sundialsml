@@ -1375,7 +1375,7 @@ CAMLprim value sunml_cvode_get_root_info(value vdata, value roots)
 {
     CAMLparam2(vdata, roots);
 
-    int roots_l = Caml_ba_array_val(roots)->dim[0];
+    int roots_l = ARRAY1_LEN(roots);
     int *roots_d = INT_ARRAY(roots);
 
     if (roots_l < CVODE_NROOTS_FROM_ML(vdata)) {
@@ -1528,7 +1528,7 @@ CAMLprim value sunml_cvode_set_root_direction(value vdata, value rootdirs)
 {
     CAMLparam2(vdata, rootdirs);
 
-    int rootdirs_l = Caml_ba_array_val(rootdirs)->dim[0];
+    int rootdirs_l = ARRAY1_LEN(rootdirs);
     int *rootdirs_d = INT_ARRAY(rootdirs);
 
     if (rootdirs_l < CVODE_NROOTS_FROM_ML(vdata)) {

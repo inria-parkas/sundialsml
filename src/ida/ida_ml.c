@@ -1349,7 +1349,7 @@ CAMLprim value sunml_ida_get_root_info(value vdata, value roots)
 {
     CAMLparam2(vdata, roots);
 
-    int roots_l = Caml_ba_array_val(roots)->dim[0];
+    int roots_l = ARRAY1_LEN(roots);
     int *roots_d = INT_ARRAY(roots);
 
     if (roots_l < IDA_NROOTS_FROM_ML(vdata)) {
@@ -1427,7 +1427,7 @@ CAMLprim value sunml_ida_set_root_direction(value vdata, value rootdirs)
 {
     CAMLparam2(vdata, rootdirs);
 
-    int rootdirs_l = Caml_ba_array_val(rootdirs)->dim[0];
+    int rootdirs_l = ARRAY1_LEN(rootdirs);
     int *rootdirs_d = INT_ARRAY(rootdirs);
 
     if (rootdirs_l < IDA_NROOTS_FROM_ML(vdata)) {

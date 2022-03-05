@@ -160,7 +160,7 @@ CAMLprim value sunml_nvec_wrap_openmp(value nthreads,
     N_Vector nv;
     N_Vector_Ops ops;
     N_VectorContent_OpenMP content;
-    long int length = (Caml_ba_array_val(payload))->dim[0];
+    long int length = ARRAY1_LEN(payload);
 
     /* Create vector */
     nv = sunml_alloc_cnvec(sizeof(struct _N_VectorContent_OpenMP), payload);
