@@ -11,8 +11,6 @@
  *                                                                     *
  ***********************************************************************/
 
-#define CAML_NAME_SPACE
-
 #include "../config.h"
 
 #include "../sundials/sundials_ml.h"

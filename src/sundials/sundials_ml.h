@@ -38,6 +38,8 @@
 #define sunbooleantype booleantype
 #endif
 
+#define CAML_NAME_SPACE
+
 void sunml_warn_discarded_exn (value exn, const char *context);
 
 /* Sundials and integers
