@@ -760,7 +760,7 @@ if [ $? -ne 0 ]; then
     ocaml_libpath=''
 else
     # shellcheck disable=SC2046
-    set_ocaml_version $(ocamlc -version | cut -d + -f 1 | tr '.' ' ')
+    set_ocaml_version $(ocamlc -version | cut -d "~" -f 1 | cut -d + -f 1 | tr '.' ' ')
 
     if [ $ocaml_version -le 40203 ]; then
 	    error="${error}\\n\\tocaml >= 4.03.0 required"
