@@ -13,6 +13,15 @@
 
 #include "../config.h"
 
+#define CAML_NAME_SPACE
+
+#include <caml/mlvalues.h>
+#include <caml/alloc.h>
+#include <caml/memory.h>
+#include <caml/callback.h>
+#include <caml/custom.h>
+#include <caml/fail.h>
+
 #include "../sundials/sundials_ml.h"
 #include "../nvectors/nvector_ml.h"
 #include "../lsolvers/sundials_nonlinearsolver_ml.h"
@@ -65,13 +74,6 @@ typedef struct _N_VectorContent_SensWrapper *N_VectorContent_SensWrapper;
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #endif
-
-#include <caml/mlvalues.h>
-#include <caml/alloc.h>
-#include <caml/memory.h>
-#include <caml/callback.h>
-#include <caml/custom.h>
-#include <caml/fail.h>
 
 #define MAX_ERRMSG_LEN 256
 

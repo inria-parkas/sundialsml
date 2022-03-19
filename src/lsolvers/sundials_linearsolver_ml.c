@@ -13,6 +13,8 @@
 
 #include "../config.h"
 
+#define CAML_NAME_SPACE
+
 #include <caml/mlvalues.h>
 #include <caml/alloc.h>
 #include <caml/memory.h>
@@ -20,12 +22,6 @@
 #include <caml/custom.h>
 #include <caml/fail.h>
 #include <caml/bigarray.h>
-
-#if 41400 <= OCAML_VERSION
-// caml/compatibility.h defines a macro 'initialize' in order to show a
-// deprecated warning, but Sundials uses 'initialize' as a field name.
-#undef initialize
-#endif
 
 #include "../sundials/sundials_ml.h"
 #include "../nvectors/nvector_ml.h"
