@@ -468,7 +468,7 @@ if [ "x${cflags}" = x ]; then    # Don't touch CFLAGS if explicitly given.
         if [ "x$enable_debug" = x1 ]; then
             cflags="-O0 -Wall -Werror -g3"
         else
-            cflags="$optflags -Wall -Werror "
+            cflags="$optflags -Wall -Werror -Wno-error=deprecated-declarations"
         fi
     else
         echo "<info> Your C compiler seems to be different from gcc.  Make"
