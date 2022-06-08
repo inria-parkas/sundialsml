@@ -977,9 +977,16 @@ CAMLprim void sunml_nlsolver_set_info_file_newton(value vnls, value vfile)
 {
     CAMLparam2(vnls, vfile);
 #if 530 <= SUNDIALS_LIB_VERSION
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated"
+
     int flag = SUNNonlinSolSetInfoFile_Newton(NLSOLVER_VAL(vnls),
 					      ML_CFILE(vfile));
     NLS_CHECK_FLAG("SUNNonlinSolSetInfofile_Newton", flag);
+
+#pragma GCC diagnostic pop
+
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
@@ -990,9 +997,16 @@ CAMLprim void sunml_nlsolver_set_info_file_fixedpoint(value vnls, value vfile)
 {
     CAMLparam2(vnls, vfile);
 #if 530 <= SUNDIALS_LIB_VERSION
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated"
+
     int flag = SUNNonlinSolSetInfoFile_FixedPoint(NLSOLVER_VAL(vnls),
 						  ML_CFILE(vfile));
     NLS_CHECK_FLAG("SUNNonlinSolSetInfofile_FixedPoint", flag);
+
+#pragma GCC diagnostic pop
+
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
@@ -1003,9 +1017,16 @@ CAMLprim void sunml_nlsolver_set_print_level_newton(value vnls, value vlevel)
 {
     CAMLparam2(vnls, vlevel);
 #if 530 <= SUNDIALS_LIB_VERSION
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated"
+
     int flag = SUNNonlinSolSetPrintLevel_Newton(NLSOLVER_VAL(vnls),
 					        Int_val(vlevel));
     NLS_CHECK_FLAG("SUNNonlinSolSetPrintLevel_Newton", flag);
+
+#pragma GCC diagnostic pop
+
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
@@ -1016,9 +1037,16 @@ CAMLprim void sunml_nlsolver_set_print_level_fixedpoint(value vnls, value vlevel
 {
     CAMLparam2(vnls, vlevel);
 #if 530 <= SUNDIALS_LIB_VERSION
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated"
+
     int flag = SUNNonlinSolSetPrintLevel_FixedPoint(NLSOLVER_VAL(vnls),
 						    Int_val(vlevel));
     NLS_CHECK_FLAG("SUNNonlinSolSetPrintLevel_FixedPoint", flag);
+
+#pragma GCC diagnostic pop
+
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif

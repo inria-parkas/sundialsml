@@ -1959,6 +1959,9 @@ CAMLprim void sunml_lsolver_set_info_file(value vcptr, value vsolver,
     FILE *file = ML_CFILE(vfile);
     int flag;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated"
+
     switch (Int_val(vsolver)) {
     case VARIANT_LSOLVER_SOLVER_DATA_SPFGMR:
 	flag = SUNLinSolSetInfoFile_SPFGMR(lsolv, file);
@@ -1988,6 +1991,8 @@ CAMLprim void sunml_lsolver_set_info_file(value vcptr, value vsolver,
     default:
 	caml_failwith(interrmsg);
     }
+
+#pragma GCC diagnostic pop
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
@@ -2003,6 +2008,9 @@ CAMLprim void sunml_lsolver_set_print_level(value vcptr, value vsolver,
     const char* interrmsg = "internal error in sunml_lsolver_set_print_level";
     int level = Int_val(vlevel);
     int flag;
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated"
 
     switch (Int_val(vsolver)) {
     case VARIANT_LSOLVER_SOLVER_DATA_SPFGMR:
@@ -2033,6 +2041,9 @@ CAMLprim void sunml_lsolver_set_print_level(value vcptr, value vsolver,
     default:
 	caml_failwith(interrmsg);
     }
+
+#pragma GCC diagnostic pop
+
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif

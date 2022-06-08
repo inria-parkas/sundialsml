@@ -2544,8 +2544,15 @@ CAMLprim value sunml_arkode_ark_set_diagnostics(value vdata, value vfile)
     CAMLparam2(vdata, vfile);
 
 #if 400 <= SUNDIALS_LIB_VERSION
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated"
+
     int flag = ARKStepSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), ML_CFILE(vfile));
     CHECK_FLAG("ARKStepSetDiagnostics", flag);
+
+#pragma GCC diagnostic pop
+
 #else
     int flag = ARKodeSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), ML_CFILE(vfile));
     CHECK_FLAG("ARKodeSetDiagnostics", flag);
@@ -2559,8 +2566,15 @@ CAMLprim value sunml_arkode_ark_clear_diagnostics(value vdata)
     CAMLparam1(vdata);
 
 #if 400 <= SUNDIALS_LIB_VERSION
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated"
+
     int flag = ARKStepSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), NULL);
     CHECK_FLAG("ARKStepSetDiagnostics", flag);
+
+#pragma GCC diagnostic pop
+
 #else
     int flag = ARKodeSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), NULL);
     CHECK_FLAG("ARKodeSetDiagnostics", flag);
@@ -5932,8 +5946,15 @@ CAMLprim value sunml_arkode_erk_set_diagnostics(value vdata, value vfile)
     CAMLparam2(vdata, vfile);
 
 #if 400 <= SUNDIALS_LIB_VERSION
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated"
+
     int flag = ERKStepSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), ML_CFILE(vfile));
     CHECK_FLAG("ERKStepSetDiagnostics", flag);
+
+#pragma GCC diagnostic pop
+
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
@@ -5946,8 +5967,15 @@ CAMLprim value sunml_arkode_erk_clear_diagnostics(value vdata)
     CAMLparam1(vdata);
 
 #if 400 <= SUNDIALS_LIB_VERSION
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated"
+
     int flag = ERKStepSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), NULL);
     CHECK_FLAG("ERKStepSetDiagnostics", flag);
+
+#pragma GCC diagnostic pop
+
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
@@ -7817,8 +7845,15 @@ CAMLprim value sunml_arkode_mri_set_diagnostics(value vdata, value vfile)
     CAMLparam2(vdata, vfile);
 
 #if 400 <= SUNDIALS_LIB_VERSION
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated"
+
     int flag = MRIStepSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), ML_CFILE(vfile));
     CHECK_FLAG("MRIStepSetDiagnostics", flag);
+
+#pragma GCC diagnostic pop
+
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
@@ -7831,8 +7866,15 @@ CAMLprim value sunml_arkode_mri_clear_diagnostics(value vdata)
     CAMLparam1(vdata);
 
 #if 400 <= SUNDIALS_LIB_VERSION
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated"
+
     int flag = MRIStepSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), NULL);
     CHECK_FLAG("MRIStepSetDiagnostics", flag);
+
+#pragma GCC diagnostic pop
+
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
