@@ -35,16 +35,25 @@ module Logfile :
   end
 module Profiler :
   sig type t external make : string -> t = "sunml_profiler_make" end
+module Logger : sig type t end
 module Context :
   sig
     type cptr
-    type t = { cptr : cptr; mutable profiler : Profiler.t option; }
+    type t = {
+      cptr : cptr;
+      mutable profiler : Profiler.t option;
+      mutable logger : Logger.t;
+    }
     exception ExternalProfilerInUse
-    external c_make : unit -> cptr = "sunml_context_make"
+    external c_make : unit -> cptr * Logger.t = "sunml_context_make"
     external c_set_profiler : cptr -> Profiler.t -> unit
       = "sunml_context_set_profiler"
     val set_profiler : t -> Profiler.t -> unit
-    val make : ?profiler:Profiler.t -> unit -> t
+    external c_set_logger : cptr -> Logger.t -> unit
+      = "sunml_context_set_logger"
+    val set_logger : t -> Logger.t -> unit
+    val get_logger : t -> Logger.t
+    val make : ?profiler:Profiler.t -> ?logger:Logger.t -> unit -> t
     val default_context : t Weak.t
     val default : unit -> t
     val get : t option -> t

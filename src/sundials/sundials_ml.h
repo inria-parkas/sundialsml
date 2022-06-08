@@ -231,6 +231,21 @@ enum sundials_exn_index {
 #define ML_PROFILER(v) (*(SUNProfiler *)Data_custom_val(v))
 #endif
 
+/* Accessing SUNLogger values */
+#if 620 <= SUNDIALS_LIB_VERSION
+#define ML_LOGGER(v) (*(SUNLogger *)Data_custom_val(v))
+#define SUNML_HAS_LOGGING 0 < SUNDIALS_LOGGING_LEVEL
+#else
+#define SUNML_HAS_LOGGING 0
+#endif
+
+enum sundials_logger_level_tag {
+  VARIANT_SUNDIALS_LOGGER_LEVEL_ERROR = 0,
+  VARIANT_SUNDIALS_LOGGER_LEVEL_WARNING,
+  VARIANT_SUNDIALS_LOGGER_LEVEL_INFO,
+  VARIANT_SUNDIALS_LOGGER_LEVEL_DEBUG,
+};
+
 /* Accessing SUNContext values */
 #if 600 <= SUNDIALS_LIB_VERSION
 #define ML_CCONTEXT(v) (*(SUNContext *)Data_custom_val(v))

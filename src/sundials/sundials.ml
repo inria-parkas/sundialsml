@@ -46,6 +46,61 @@ module Profiler = struct
     = "sunml_profiler_print"
 end
 
+module Logger = struct
+
+  type t = Sundials_impl.Logger.t
+
+  (* synchronized with sundials_ml.h: sundials_logger_level_tag *)
+  type level =
+    | Error
+    | Warning
+    | Info
+    | Debug
+
+  external get_logging_level : unit -> level option
+    = "sunml_logger_get_logging_level"
+
+  let logging_level = get_logging_level ()
+
+  external set_error_filename : t -> string -> unit
+    = "sunml_logger_set_error_filename"
+
+  external set_warning_filename : t -> string -> unit
+    = "sunml_logger_set_warning_filename"
+
+  external set_info_filename : t -> string -> unit
+    = "sunml_logger_set_info_filename"
+
+  external set_debug_filename : t -> string -> unit
+    = "sunml_logger_set_debug_filename"
+
+  external c_make : unit -> t
+    = "sunml_logger_create"
+
+  external make_from_env : unit -> t
+    = "sunml_logger_create_from_env"
+
+  let make ?error_filename ?warning_filename ?info_filename ?debug_filename () =
+    let lg = c_make () in
+    (match error_filename   with Some f -> set_error_filename   lg f | None -> ());
+    (match warning_filename with Some f -> set_warning_filename lg f | None -> ());
+    (match info_filename    with Some f -> set_info_filename    lg f | None -> ());
+    (match debug_filename   with Some f -> set_debug_filename   lg f | None -> ());
+    lg
+
+  external c_queue_msg : t -> level -> string -> string -> string -> unit
+    = "sunml_logger_queue_msg"
+
+  let queue_msg lg lvl ~scope ~label msg_txt =
+    c_queue_msg lg lvl scope label msg_txt
+
+  external c_flush : t -> level option -> unit
+    = "sunml_logger_flush"
+
+  let flush ?level lg = c_flush lg level
+
+end
+
 module Context = struct
   type t = Sundials_impl.Context.t
   exception ExternalProfilerInUse = Sundials_impl.Context.ExternalProfilerInUse
@@ -54,6 +109,9 @@ module Context = struct
 
   let get_profiler = Sundials_impl.Context.get_profiler
   let set_profiler = Sundials_impl.Context.set_profiler
+
+  let get_logger = Sundials_impl.Context.get_logger
+  let set_logger = Sundials_impl.Context.set_logger
 end
 
 exception RecoverableFailure

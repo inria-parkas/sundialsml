@@ -109,6 +109,103 @@ module Profiler : sig (* {{{ *)
 
 end (* }}} *)
 
+(** Status logging
+
+    The underlying Sundials library must be built with
+    [SUNDIALS_LOGGING_LEVEL] greater than zero.
+
+    The logging functions (silently) do nothing when logging is not
+    available.
+
+    @logger SUNLogger
+    @since 6.2.0 *)
+module Logger : sig (* {{{ *)
+
+  (** A Sundials logger.
+
+      @logger SUNLogger *)
+  type t = Sundials_impl.Logger.t
+
+  (** Identifies the logging level to use for a given message
+      ({cconst SUNLogLevel}) or that was set when the underlying library was
+      compiled.
+
+     @logger SUNLogLevel
+     @logger <#enabling-logging> SUNDIALS_LOGGING_LEVEL *)
+  type level =
+    | Error     (** Error-level logging messages
+        {cconst SUN_LOGLEVEL_ERROR}/{cconst SUNDIALS_LOGGING_ERROR} *)
+    | Warning   (** Warning-level logging messages
+        {cconst SUN_LOGLEVEL_WARNING}/{cconst SUNDIALS_LOGGING_WARNING} *)
+    | Info      (** Info-level logging messages
+        {cconst SUN_LOGLEVEL_INFO}/{cconst SUNDIALS_LOGGING_INFO} *)
+    | Debug     (** Debug-level logging messages
+        {cconst SUN_LOGLEVEL_DEBUG}/{cconst SUNDIALS_LOGGING_DEBUG} *)
+
+  (** Indicates what level of debugging was specified when the underlying
+      library was compiled. Returns {!None} if logging is not enabled.
+
+     @logger <#enabling-logging> SUNDIALS_LOGGING_LEVEL *)
+  val logging_level : level option
+
+  (** Creates a new logger.
+
+      @logger SUNLogger_Create
+      @logger SUNLogger_SetErrorFilename
+      @logger SUNLogger_SetWarningFilename
+      @logger SUNLogger_SetInfoFilename
+      @logger SUNLogger_SetDebugFilename *)
+  val make :
+       ?error_filename:string
+    -> ?warning_filename:string
+    -> ?info_filename:string
+    -> ?debug_filename:string
+    -> unit
+    -> t
+
+  (** Creates a new logger and opens the output streams/files from
+      environment variables. The environment variables are:
+      {cconst SUNLOGGER_ERROR_FILENAME}
+      {cconst SUNLOGGER_WARNING_FILENAME}
+      {cconst SUNLOGGER_INFO_FILENAME}
+      {cconst SUNLOGGER_DEBUG_FILENAME}.
+
+      @logger SUNLogger_CreateFromEnv *)
+  val make_from_env : unit -> t
+
+  (** Sets the filename for error output.
+
+      @logger SUNLogger_SetErrorFilename *)
+  val set_error_filename : t -> string -> unit
+
+  (** Sets the filename for warning output.
+
+      @logger SUNLogger_SetWarningFilename *)
+  val set_warning_filename : t -> string -> unit
+
+  (** Sets the filename for info output.
+
+      @logger SUNLogger_SetInfoFilename *)
+  val set_info_filename : t -> string -> unit
+
+  (** Sets the filename for debug output.
+
+      @logger SUNLogger_SetDebugFilename *)
+  val set_debug_filename : t -> string -> unit
+
+  (** Queues a message to the output log level.
+
+      @logger SUNLogger_QueueMsg *)
+  val queue_msg : t -> level -> scope:string -> label:string -> string -> unit
+
+  (** Flush the message queue(s). If [level] is not explicitly given, then all
+      queues are flushed ({cconst SUN_LOGLEVEL_ALL}).
+
+      @logger SUNLogger_Flush *)
+  val flush : ?level:level -> t -> unit
+
+end (* }}} *)
+
 (** Contexts for creating Sundials values
 
     Every function that creates a Sundials value (integrator, nvector,
@@ -133,8 +230,10 @@ module Context : sig (* {{{ *)
 
   (** Create a new context, optionally specifying the profiler to use.
 
-      @context SUNContext_Create *)
-  val make : ?profiler:Profiler.t -> unit -> t
+      @context SUNContext_Create
+      @context SUNContext_SetProfiler
+      @context SUNContext_SetLogger *)
+  val make : ?profiler:Profiler.t -> ?logger:Logger.t -> unit -> t
 
   (** Indicates that an external library (i.e., caliper) is being use for
       profiling. *)
@@ -150,6 +249,16 @@ module Context : sig (* {{{ *)
 
       @context SUNContext_SetProfiler *)
   val set_profiler : t -> Profiler.t -> unit
+
+  (** Return the logger associated with a context.
+
+      @context SUNContext_GetLogger *)
+  val get_logger : t -> Logger.t
+
+  (** Sets the logger associated with a context.
+
+      @context SUNContext_SetLogger *)
+  val set_logger : t -> Logger.t -> unit
 
 end (* }}} *)
 

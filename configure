@@ -1188,6 +1188,24 @@ else
     caliper_enabled=0
 fi
 
+# Check for logging support
+logging_level=
+if [ ${sundials} -ge 620 ]; then
+    test_stem=__configure_test_file__logging
+    cat > $test_stem.c <<EOF
+// ${CPP} ${cppflags} ${Isundials_inc_path} -P $test_stem.c
+#include "sundials/sundials_config.h"
+SUNDIALS_LOGGING_LEVEL
+EOF
+    logging_level=$(${CPP} ${cppflags} ${Isundials_inc_path} \
+			    -P $test_stem.c 2>>${logfile} \
+			| tail -1)
+    printf "Sundials logging level: %s\n" "${logging_level}" >>${logfile}
+    ${debug_configure} || rm -f ./${test_stem}.c
+else
+    logging_level=0
+fi
+
 # Check for SUPERLUMT and KLU
 sparse_libs=
 
@@ -1751,6 +1769,7 @@ fi
 printf "\n"                                                           >> ${LOG}
 printf "  Architecture          ${arch}\n"                            >> ${LOG}
 [ "x$enable_debug" = x1 ] && printf "  Debugging\t\tENABLED\n"        >> ${LOG}
+[ "$logging_level" -gt 0 ] && printf "  Logging Level\t\t${logging_level}\n" >> ${LOG}
 printf "\n"                                                           >> ${LOG}
 printf "Installation paths\n"                                         >> ${LOG}
 printf "  prefix:               ${prefix}\n"                          >> ${LOG}

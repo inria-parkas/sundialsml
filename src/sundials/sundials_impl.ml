@@ -175,6 +175,10 @@ module Profiler = struct
     = "sunml_profiler_make"
 end
 
+module Logger = struct
+  type t
+end
+
 module Context = struct
 
   type cptr
@@ -182,11 +186,12 @@ module Context = struct
   type t = {
     cptr : cptr;
     mutable profiler : Profiler.t option;
+    mutable logger : Logger.t;
   }
 
   exception ExternalProfilerInUse
 
-  external c_make : unit -> cptr
+  external c_make : unit -> cptr * Logger.t
     = "sunml_context_make"
 
   external c_set_profiler : cptr -> Profiler.t -> unit
@@ -196,13 +201,24 @@ module Context = struct
     c_set_profiler cptr profiler;
     context.profiler <- Some profiler
 
-  let make ?profiler () =
-    let ctx = { cptr = c_make (); profiler = None } in
+  external c_set_logger : cptr -> Logger.t -> unit
+    = "sunml_context_set_logger"
+
+  let set_logger ({ cptr; _ } as context) logger =
+    c_set_logger cptr logger;
+    context.logger <- logger
+
+  let get_logger { logger; _} = logger
+
+  let make ?profiler ?logger () =
+    let cptr, original_logger = c_make () in
+    let ctx = { cptr; profiler = None; logger = original_logger } in
     (match profiler with
      | Some p -> set_profiler ctx p
      | None ->
          if not Sundials_configuration.caliper_enabled
          then set_profiler ctx (Profiler.make "SUNContext Default"));
+    (match logger with Some l -> set_logger ctx l | None -> ());
     ctx
 
   let default_context = (Weak.create 1 : t Weak.t)

@@ -29,6 +29,26 @@ module Profiler : sig
 
 end
 
+(** Logging using MPI
+
+    @logger SUNLogger
+    @since 6.2.0 *)
+module Logger : sig
+
+  (** Creates a new logger. The integer arguments specifies the rank used for
+      output (use {v -1 v} to print from all ranks).
+
+      @logger <#enabling-logging> SUNDIALS_LOGGING_ENABLE_MPI
+      @logger SUNLogger_Create *)
+  val make : Mpi.communicator -> int -> Sundials.Logger.t
+
+  (** Get the output rank for the logger.
+
+      @logger SUNLogger_GetOutputRank *)
+  val get_output_rank : Sundials.Logger.t -> int
+
+end
+
 (** Contexts for creating Sundials values using MPI
 
     Provides an alternative to {!Sundials.Context.make} that allows

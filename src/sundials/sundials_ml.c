@@ -402,17 +402,17 @@ CAMLprim value sunml_sundials_stdout(value vunit)
 CAMLprim value sunml_sundials_wrap_file(FILE* f)
 {
     CAMLparam0();
-    CAMLlocal1(vr);
+    CAMLlocal2(vro, vr);
 
     if (f == NULL) {
-	vr = Val_none;
+	vro = Val_none;
     } else {
 	vr = caml_alloc_final(1, NULL, 0, 1);
 	ML_CFILE(vr) = f;
-	Store_some(vr, vr);
+	Store_some(vro, vr);
     }
 
-    CAMLreturn (vr);
+    CAMLreturn (vro);
 }
 
 /* Functions for profiling */
@@ -469,6 +469,193 @@ CAMLprim void sunml_profiler_print(value vprofiler, value vfile)
     CAMLreturn0;
 }
 
+/* Functions for logging */
+
+#if SUNML_HAS_LOGGING
+static void finalize_logger(value vlogger)
+{
+    SUNLogger logger = ML_LOGGER(vlogger);
+    if (logger != NULL) SUNLogger_Destroy(&logger);
+}
+#endif
+
+#if SUNML_HAS_LOGGING
+static value sunml_logger_wrap(SUNLogger logger)
+{
+    CAMLparam0();
+    CAMLlocal1(vlogger);
+
+#if SUNML_HAS_LOGGING
+    vlogger = caml_alloc_final(1, &finalize_logger, 1, 10);
+    ML_LOGGER(vlogger) = logger;
+#else
+    vlogger = Val_unit;
+#endif
+
+    CAMLreturn(vlogger);
+}
+#endif
+
+CAMLprim value sunml_logger_create(void)
+{
+    CAMLparam0();
+    CAMLlocal1(vlogger);
+#if SUNML_HAS_LOGGING
+    SUNLogger logger = NULL;
+    int retval = SUNLogger_Create(NULL, -1, &logger);
+    if (retval < 0) caml_raise_out_of_memory();
+    vlogger = sunml_logger_wrap(logger);
+#else
+    vlogger = Val_unit;
+#endif
+    CAMLreturn(vlogger);
+}
+
+CAMLprim value sunml_logger_create_from_env(void)
+{
+    CAMLparam0();
+    CAMLlocal1(vlogger);
+#if SUNML_HAS_LOGGING
+    SUNLogger logger = NULL;
+    int retval = SUNLogger_CreateFromEnv(NULL, &logger);
+    if (retval < 0) caml_raise_out_of_memory();
+    vlogger = sunml_logger_wrap(logger);
+#else
+    vlogger = Val_unit;
+#endif
+    CAMLreturn(vlogger);
+}
+
+CAMLprim value sunml_logger_get_logging_level(void)
+{
+    CAMLparam0();
+    CAMLlocal2(vro, vr);
+
+#if SUNML_HAS_LOGGING
+    switch (SUNDIALS_LOGGING_LEVEL) {
+    case 1: // SUNDIALS_LOGGING_ERROR
+	vr = VARIANT_SUNDIALS_LOGGER_LEVEL_ERROR;
+	break;
+
+    case 2: // SUNDIALS_LOGGING_WARNING
+	vr = VARIANT_SUNDIALS_LOGGER_LEVEL_WARNING;
+	break;
+
+    case 3: // SUNDIALS_LOGGING_INFO
+	vr = VARIANT_SUNDIALS_LOGGER_LEVEL_INFO;
+	break;
+
+    case 4: // SUNDIALS_LOGGING_DEBUG
+    default: /* or bigger */
+	vr = VARIANT_SUNDIALS_LOGGER_LEVEL_DEBUG;
+    }
+    Store_some(vro, vr);
+#else
+    vro = Val_none;
+#endif
+
+    CAMLreturn(vro);
+}
+
+CAMLprim void sunml_logger_set_error_filename(value vlogger, value vfilename)
+{
+    CAMLparam2(vlogger, vfilename);
+#if SUNML_HAS_LOGGING
+    int retval = SUNLogger_SetErrorFilename(ML_LOGGER(vlogger),
+					    String_val(vfilename));
+    if (retval < 0) caml_failwith("SUNLogger_SetErrorFilename");
+#endif
+    CAMLreturn0;
+}
+
+CAMLprim void sunml_logger_set_warning_filename(value vlogger, value vfilename)
+{
+    CAMLparam2(vlogger, vfilename);
+#if SUNML_HAS_LOGGING
+    int retval = SUNLogger_SetWarningFilename(ML_LOGGER(vlogger),
+					      String_val(vfilename));
+    if (retval < 0) caml_failwith("SUNLogger_SetWarningFilename");
+#endif
+    CAMLreturn0;
+}
+
+CAMLprim void sunml_logger_set_info_filename(value vlogger, value vfilename)
+{
+    CAMLparam2(vlogger, vfilename);
+#if SUNML_HAS_LOGGING
+    int retval = SUNLogger_SetInfoFilename(ML_LOGGER(vlogger),
+					   String_val(vfilename));
+    if (retval < 0) caml_failwith("SUNLogger_SetInfoFilename");
+#endif
+    CAMLreturn0;
+}
+
+CAMLprim void sunml_logger_set_debug_filename(value vlogger, value vfilename)
+{
+    CAMLparam2(vlogger, vfilename);
+#if SUNML_HAS_LOGGING
+    int retval = SUNLogger_SetDebugFilename(ML_LOGGER(vlogger),
+					    String_val(vfilename));
+    if (retval < 0) caml_failwith("SUNLogger_SetDebugFilename");
+#endif
+    CAMLreturn0;
+}
+
+#if SUNML_HAS_LOGGING
+static SUNLogLevel logger_level_from_val(value vlevel)
+{
+    switch(vlevel) {
+    case VARIANT_SUNDIALS_LOGGER_LEVEL_ERROR:
+	return SUN_LOGLEVEL_ERROR;
+
+    case VARIANT_SUNDIALS_LOGGER_LEVEL_WARNING:
+	return SUN_LOGLEVEL_WARNING;
+
+    case VARIANT_SUNDIALS_LOGGER_LEVEL_INFO:
+	return SUN_LOGLEVEL_INFO;
+
+    case VARIANT_SUNDIALS_LOGGER_LEVEL_DEBUG:
+	return SUN_LOGLEVEL_DEBUG;
+
+    default:
+	return SUN_LOGLEVEL_ERROR;
+    }
+}
+#endif
+
+CAMLprim void sunml_logger_queue_msg(value vlogger, value vlevel, value vscope,
+				     value vlabel, value vmsg_txt)
+{
+    CAMLparam5(vlogger, vlevel, vscope, vlabel, vmsg_txt);
+#if SUNML_HAS_LOGGING
+    int retval = SUNLogger_QueueMsg(ML_LOGGER(vlogger),
+				    logger_level_from_val(vlevel),
+				    String_val(vscope),
+				    String_val(vlabel),
+				    String_val(vmsg_txt));
+    if (retval < 0) caml_failwith("SUNLogger_QueueMsg");
+#endif
+    CAMLreturn0;
+}
+
+CAMLprim void sunml_logger_flush(value vlogger, value volevel)
+{
+    CAMLparam2(vlogger, volevel);
+#if SUNML_HAS_LOGGING
+    SUNLogLevel lvl;
+
+    if (volevel == Val_none) {
+	lvl = SUN_LOGLEVEL_ALL;
+    } else {
+	lvl = logger_level_from_val(Some_val(volevel));
+    }
+
+    int retval = SUNLogger_Flush(ML_LOGGER(vlogger), lvl);
+    if (retval < 0) caml_failwith("SUNLogger_Flush");
+#endif
+    CAMLreturn0;
+}
+
 /* Functions for manipulating contexts */
 
 #if 600 <= SUNDIALS_LIB_VERSION
@@ -479,10 +666,23 @@ static void finalize_context(value vctx)
 }
 #endif
 
+// hack to appropriate logger
+// must match definition in src/sundials/sundials_context_impl.h
+#if SUNML_HAS_LOGGING
+typedef struct {
+  SUNProfiler profiler;
+  booleantype own_profiler;
+  SUNLogger logger;
+  booleantype own_logger;
+} *StartOf_Context;
+#endif
+
 CAMLprim value sunml_context_make(void)
 {
     CAMLparam0();
-    CAMLlocal1(vctx);
+    CAMLlocal3(vctx, vlogger, vr);
+    vctx = Val_unit;
+    vlogger = Val_unit;
 
 #if 600 <= SUNDIALS_LIB_VERSION
     SUNContext ctx;
@@ -492,11 +692,17 @@ CAMLprim value sunml_context_make(void)
 
     vctx = caml_alloc_final(1, &finalize_context, 1, 10);
     ML_CCONTEXT(vctx) = ctx;
-#else
-    vctx = Val_unit;
+#endif
+#if SUNML_HAS_LOGGING
+    ((StartOf_Context)ctx)->own_logger = 0;
+    vlogger = sunml_logger_wrap(((StartOf_Context)ctx)->logger);
 #endif
 
-    CAMLreturn (vctx);
+    vr = caml_alloc_tuple(2);
+    Store_field(vr, 0, vctx);
+    Store_field(vr, 1, vlogger);
+
+    CAMLreturn (vr);
 }
 
 CAMLprim void sunml_context_set_profiler(value vctx, value vprofiler)
@@ -508,12 +714,21 @@ CAMLprim void sunml_context_set_profiler(value vctx, value vprofiler)
     CAMLreturn0;
 }
 
+CAMLprim void sunml_context_set_logger(value vctx, value vlogger)
+{
+    CAMLparam2(vctx, vlogger);
+#if SUNML_HAS_LOGGING
+    SUNContext_SetLogger(ML_CCONTEXT(vctx), ML_LOGGER(vlogger));
+#endif
+    CAMLreturn0;
+}
+
 #ifdef MPI_ENABLED
 
 /* Must correspond with camlmpi.h */
 #define Comm_val(comm) (*((MPI_Comm *) &Field(comm, 1)))
 
-CAMLprim value sunml_profiler_make(value vcomm, value vname)
+CAMLprim value sunml_profiler_create_parallel(value vcomm, value vname)
 {
     CAMLparam2(vcomm, vname);
     CAMLlocal1(vprofiler);
@@ -534,10 +749,45 @@ CAMLprim value sunml_profiler_make(value vcomm, value vname)
     CAMLreturn(vprofiler);
 }
 
-CAMLprim value sunml_context_make_parallel(value vcomm)
+CAMLprim value sunml_logger_create_parallel(value vcomm, value vrank)
+{
+    CAMLparam2(vcomm, vrank);
+    CAMLlocal1(vlogger);
+#if SUNML_HAS_LOGGING
+    SUNLogger logger = NULL;
+    MPI_Comm comm = Comm_val(vcomm);
+
+    int retval = SUNLogger_Create(comm, Int_val(vrank), &logger);
+    if (retval < 0) caml_raise_out_of_memory();
+    vlogger = sunml_logger_wrap(logger);
+#else
+    vlogger = Val_unit;
+#endif
+    CAMLreturn(vlogger);
+}
+
+CAMLprim value sunml_logger_get_output_rank(value vlogger)
+{
+    CAMLparam2(vcomm, vrank);
+    CAMLlocal1(vlogger);
+    int output_rank = 0;
+
+#if SUNML_HAS_LOGGING
+    int retval = SUNLogger_GetOutputRank(ML_LOGGER(vlogger), &output_rank);
+    if (retval < 0) caml_failwith("SUNLogger_GetOutputRank");
+#else
+    caml_failwith("SUNLogger_GetOutputRank (logging not enabled)");
+#endif
+
+    CAMLreturn(Val_int(output_rank));
+}
+
+CAMLprim value sunml_context_create_parallel(value vcomm)
 {
     CAMLparam1(vcomm);
-    CAMLlocal1(vctx);
+    CAMLlocal3(vctx, vlogger, vr);
+    vctx = Val_unit;
+    vlogger = Val_unit;
 
 #if 600 <= SUNDIALS_LIB_VERSION
     SUNContext ctx;
@@ -548,11 +798,17 @@ CAMLprim value sunml_context_make_parallel(value vcomm)
 
     vctx = caml_alloc_final(1, &finalize_context, 1, 10);
     ML_CCONTEXT(vctx) = ctx;
-#else
-    vctx = Val_unit;
+#endif
+#if SUNML_HAS_LOGGING
+    ((StartOf_Context)ctx)->own_logger = 0;
+    vlogger = sunml_logger_wrap(((StartOf_Context)ctx)->logger);
 #endif
 
-    CAMLreturn (vctx);
+    vr = caml_alloc_tuple(2);
+    Store_field(vr, 0, vctx);
+    Store_field(vr, 1, vlogger);
+
+    CAMLreturn (vr);
 }
 
 #endif

@@ -16,6 +16,7 @@
  Custom tags for the ocamldoc comments:
     @sundials       link to Sundials documentation
     @profiler       link to Sundials Profiler module documentation
+    @logger         link to Sundials Logger module documentation
     @context        link to Sundials Context module documentation
     @cvode          link to Sundials CVODE documentation
     @cvodes         link to Sundials CVODES documentation
@@ -106,6 +107,10 @@ struct
 
     method private html_of_profiler t =
       let (page, anchor, title) = self#split_text ~page:"Profiling_link.html" t in
+      sundials_link "sundials" (!sundials_doc_root ^ "sundials/") page anchor title
+
+    method private html_of_logger t =
+      let (page, anchor, title) = self#split_text ~page:"Logging_link.html" t in
       sundials_link "sundials" (!sundials_doc_root ^ "sundials/") page anchor title
 
     method private html_of_context t =
@@ -350,6 +355,7 @@ struct
     initializer
       tag_functions <- ("sundials", self#html_of_sundials) :: tag_functions;
       tag_functions <- ("profiler", self#html_of_profiler) :: tag_functions;
+      tag_functions <- ("logger", self#html_of_logger) :: tag_functions;
       tag_functions <- ("context", self#html_of_context) :: tag_functions;
       tag_functions <- ("cvode",    self#html_of_cvode) :: tag_functions;
       tag_functions <- ("cvodes",   self#html_of_cvodes) :: tag_functions;

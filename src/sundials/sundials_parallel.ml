@@ -14,7 +14,18 @@ module Profiler = struct
   module I = Sundials_impl.Profiler
 
   external make : Mpi.communicator -> string -> I.t
-    = "sunml_profiler_make_parallel"
+    = "sunml_profiler_create_parallel"
+
+end
+
+module Logger = struct
+  module I = Sundials_impl.Logger
+
+  external make : Mpi.communicator -> int -> I.t
+    = "sunml_logger_create_parallel"
+
+  external get_output_rank : I.t -> int
+    = "sunml_logger_get_output_rank"
 
 end
 
@@ -22,17 +33,21 @@ module Context = struct
 
   module I = Sundials_impl.Context
 
-  external c_make : Mpi.communicator -> I.cptr
-    = "sunml_context_make_parallel"
+  external c_make : Mpi.communicator -> I.cptr * Logger.t
+    = "sunml_context_create_parallel"
 
-  let make ?profiler comm =
-    let ctx = { I.cptr = c_make comm; I.profiler = None } in
+  let make ?profiler ?logger comm =
+    let cptr, original_logger = c_make comm in
+    let ctx = { I.cptr = c_make comm; I.profiler = None;
+                I.logger = original_logger }
+    in
     (match profiler with
      | Some p -> Sundials.Context.set_profiler ctx p
      | None ->
          if not Sundials_configuration.caliper_enabled
          then Sundials.Context.set_profiler ctx
                 (Profiler.make comm "SUNContext Default"));
+    (match logger with Some l -> Sundials.Context.set_logger ctx l | None -> ());
     ctx
 
 end
