@@ -198,8 +198,38 @@ let main () =
   in
   set_ic u dx local_N my_base;  (* Initialize u vector *)
 
+  let context = Sundials.Context.make () in
+
+  (* This requires that SUNDIALS was configured with the CMake options
+       SUNDIALS_LOGGING_LEVEL=n
+    where n is one of:
+       1 --> log only errors,
+       2 --> log errors + warnings,
+       3 --> log errors + warnings + info output
+       4 --> all of the above plus debugging output like internal integrator values
+       5 --> all of the above and even more
+    SUNDIALS will only log up to the max level n, but a lesser level can
+    be configured at runtime by only providing output files for the
+    desired levels. We will enable all logging here on the condition
+    that SUNDIALS was built with the correct logging level enabled. *)
+  (match Sundials.Logger.logging_level with
+   | None -> ()
+   | Some lvl ->
+       let lvl_implies lvl' filename =
+         if Sundials.Logger.level_implies lvl lvl' then Some filename else None
+       in
+       let error_filename = lvl_implies Sundials.Logger.Error "stderr" in
+       let warning_filename = lvl_implies Sundials.Logger.Warning "stderr" in
+       let info_filename = lvl_implies Sundials.Logger.Info "cvAdvDiff_diag_p.info.log" in
+       let debug_filename = lvl_implies Sundials.Logger.Debug "stderr" in
+       let logger = Sundials.Logger.make ?error_filename ?warning_filename
+                                         ?info_filename ?debug_filename ()
+       in
+       Sundials.Context.set_logger context logger);
+
   let nlsolver = NonlinearSolver.FixedPoint.make u in
-  let cvode_mem = Cvode.(init Adams
+  let cvode_mem = Cvode.(init ~context
+                              Adams
                               (SStolerances (reltol, abstol))
                               ~nlsolver
                               (f data) t0 u)

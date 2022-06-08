@@ -62,6 +62,14 @@ module Logger = struct
 
   let logging_level = get_logging_level ()
 
+  let level_implies lvl1 lvl2 =
+    lvl1 = lvl2 || (match lvl1, lvl2 with
+                    | Warning, Error
+                    | Info, Error
+                    | Info, Warning
+                    | Debug, _ -> true
+                    | _ -> false)
+
   external set_error_filename : t -> string -> unit
     = "sunml_logger_set_error_filename"
 

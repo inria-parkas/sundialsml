@@ -142,6 +142,10 @@ module Logger : sig (* {{{ *)
     | Debug     (** Debug-level logging messages
         {cconst SUN_LOGLEVEL_DEBUG}/{cconst SUNDIALS_LOGGING_DEBUG} *)
 
+  (** Returns true if the first level implies the second. For instance,
+      [level_implies Warning Error = true]. *)
+  val level_implies : level -> level -> bool
+
   (** Indicates what level of debugging was specified when the underlying
       library was compiled. Returns {!None} if logging is not enabled.
 
