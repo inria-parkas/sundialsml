@@ -32,6 +32,10 @@
 
 #include "sundials_ml.h"
 
+#if 300 <= SUNDIALS_LIB_VERSION
+#include <sundials/sundials_version.h>
+#endif
+
 #if 580 <= SUNDIALS_LIB_VERSION
 #include <sundials/sundials_math.h>
 #endif
@@ -187,6 +191,29 @@ CAMLprim int sunml_sundials_compare_tol(value va, value vb, value vtol)
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn(vr);
+}
+
+CAMLprim value sunml_sundials_get_version_number(void)
+{
+    CAMLparam0();
+    CAMLlocal2(vro, vr);
+    vro = Val_none;
+#if 300 <= SUNDIALS_LIB_VERSION
+    int major = 0, minor = 0, patch = 0;
+    char label[100] = "01234";
+
+    if (SUNDIALSGetVersionNumber(&major, &minor, &patch, label,
+				 sizeof label / sizeof label[0]) == 0) {
+	vr = caml_alloc_tuple(RECORD_SUNDIALS_VERSION_NUMBER_SIZE);
+	Store_field(vr, RECORD_SUNDIALS_VERSION_NUMBER_MAJOR, Val_int(major));
+	Store_field(vr, RECORD_SUNDIALS_VERSION_NUMBER_MINOR, Val_int(minor));
+	Store_field(vr, RECORD_SUNDIALS_VERSION_NUMBER_PATCH, Val_int(patch));
+	Store_field(vr, RECORD_SUNDIALS_VERSION_NUMBER_LABEL, caml_copy_string(label));
+	Store_some(vro, vr);
+    }
+#else
+#endif
+    CAMLreturn(vro);
 }
 
 /* Functions for storing OCaml values in the C heap. */

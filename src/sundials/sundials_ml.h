@@ -161,6 +161,14 @@ enum sundials_exn_set_index {
     SUNDIALS_NUM_EXN_SETS
 };
 
+enum sundials_version_number_index {
+  RECORD_SUNDIALS_VERSION_NUMBER_MAJOR = 0,
+  RECORD_SUNDIALS_VERSION_NUMBER_MINOR,
+  RECORD_SUNDIALS_VERSION_NUMBER_PATCH,
+  RECORD_SUNDIALS_VERSION_NUMBER_LABEL,
+  RECORD_SUNDIALS_VERSION_NUMBER_SIZE
+};
+
 /* Set a field in sundials_ml_exn_table */
 void sunml_register_exns (enum sundials_exn_set_index index, value exns);
 

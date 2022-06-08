@@ -31,3 +31,26 @@ external c_get_constants
 
 let big_real, small_real, unit_roundoff = c_get_constants ()
 
+(* synchronized with sundials_ml.h: sundials_version_number_index *)
+type [@warning "-69"] sundials_version_number = {
+      major : int;
+      minor : int;
+      patch : int;
+      label : string;
+  }
+
+external c_get_version_number : unit -> sundials_version_number option
+  = "sunml_sundials_get_version_number"
+
+let _ =
+  (* Sundials version at compilation *)
+  let cmajor, cminor, cpatch, _ = version in
+  (* Sundials version at runtime *)
+  match c_get_version_number () with
+  | Some { major; minor; patch; _ } when major <> cmajor || minor <> cminor ->
+      failwith (Printf.sprintf
+        "Sundials/ML was compiled for Sundials %d.%d.%d but Sundials %d.%d.%d is installed."
+        cmajor cminor cpatch
+         major  minor  patch)
+  | _ -> ()
+
