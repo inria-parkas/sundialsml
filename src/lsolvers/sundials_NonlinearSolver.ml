@@ -105,6 +105,18 @@ external c_get_cur_iter  : ('d, 'k, 's, 'v) cptr -> int
 external c_get_num_conv_fails : ('d, 'k, 's, 'v) cptr -> int
   = "sunml_nlsolver_get_num_conv_fails"
 
+external c_set_info_file_fixedpoint : ('d, 'k, 's, 'v) cptr -> Logfile.t -> unit
+  = "sunml_nlsolver_set_info_file_fixedpoint"
+
+external c_set_info_file_newton : ('d, 'k, 's, 'v) cptr -> Logfile.t -> unit
+  = "sunml_nlsolver_set_info_file_newton"
+
+external c_set_print_level_fixedpoint : ('d, 'k, 's, 'v) cptr -> int -> unit
+  = "sunml_nlsolver_set_print_level_fixedpoint"
+
+external c_set_print_level_newton : ('d, 'k, 's, 'v) cptr -> int -> unit
+  = "sunml_nlsolver_set_print_level_newton"
+
 (* - - - OCaml invoking init/setup/solve - - - *)
 
 let uw = Nvector.unwrap
@@ -270,6 +282,36 @@ let set_max_iters (type d k s v) ({ rawptr; solver; _ } : (d, k, s, v) t) i =
   | NewtonSolverSens _ -> c_set_max_iters rawptr i
   | FixedPointSolver _ -> c_set_max_iters rawptr i
   | NewtonSolver _ -> c_set_max_iters rawptr i
+
+let set_print_level (type d k s v) ({ rawptr; solver; _ } : (d, k, s, v) t) level =
+  if Sundials_impl.Version.lt530
+    then raise Config.NotImplementedBySundialsVersion;
+  let level = if level then 1 else 0 in
+  match solver with
+  | CustomSolver     (_, { set_print_level = Some f }) -> f level
+  | CustomSolverSens (_, { set_print_level = Some f }) -> f level
+  | CustomSolver _ -> ()
+  | CustomSolverSens _ -> ()
+  | FixedPointSolverSens _ -> c_set_print_level_fixedpoint rawptr level
+  | NewtonSolverSens _ -> c_set_print_level_newton rawptr level
+  | FixedPointSolver _ -> c_set_print_level_fixedpoint rawptr level
+  | NewtonSolver _ -> c_set_print_level_newton rawptr level
+
+let set_info_file (type d k s v)
+                  ({ rawptr; solver; _ } as s : (d, k, s, v) t) ?print_level file =
+  if Sundials_impl.Version.lt530
+    then raise Config.NotImplementedBySundialsVersion;
+  s.info_file <- Some file;
+  (match solver with
+   | CustomSolver     (_, { set_info_file = Some f }) -> f file
+   | CustomSolverSens (_, { set_info_file = Some f }) -> f file
+   | CustomSolver _ -> ()
+   | CustomSolverSens _ -> ()
+   | FixedPointSolverSens _ -> c_set_info_file_fixedpoint rawptr file
+   | FixedPointSolver _ -> c_set_info_file_fixedpoint rawptr file
+   | NewtonSolverSens _ -> c_set_info_file_newton rawptr file
+   | NewtonSolver _ -> c_set_info_file_newton rawptr file);
+  (match print_level with None -> () | Some level -> set_print_level s level)
 
 let get_num_iters (type d k s v) ({ rawptr; solver; _ } : (d, k, s, v) t) =
   check_compat ();
@@ -591,7 +633,8 @@ module Custom = struct (* {{{ *)
   (* Create custom solvers from given functions *)
 
   let make ?init ?setup ?set_lsetup_fn ?set_lsolve_fn ?set_convtest_fn
-           ?set_max_iters ?get_num_iters ?get_cur_iter ?get_num_conv_fails
+           ?set_max_iters ?set_info_file ?set_print_level
+           ?get_num_iters ?get_cur_iter ?get_num_conv_fails
            ~nls_type ~solve ~set_sys_fn ?context () =
     check_compat ();
     let ops = {
@@ -604,6 +647,8 @@ module Custom = struct (* {{{ *)
       set_lsolve_fn;
       set_convtest_fn;
       set_max_iters;
+      set_info_file;
+      set_print_level;
       get_num_iters;
       get_cur_iter;
       get_num_conv_fails;
@@ -621,7 +666,8 @@ module Custom = struct (* {{{ *)
 
   let make_sens
                 ?init ?setup ?set_lsetup_fn ?set_lsolve_fn ?set_convtest_fn
-                ?set_max_iters ?get_num_iters ?get_cur_iter ?get_num_conv_fails
+                ?set_max_iters ?set_info_file ?set_print_level
+                ?get_num_iters ?get_cur_iter ?get_num_conv_fails
                 ~nls_type ~solve ~set_sys_fn ?context () =
     check_compat ();
     let ops = {
@@ -634,6 +680,8 @@ module Custom = struct (* {{{ *)
       set_lsolve_fn;
       set_convtest_fn;
       set_max_iters;
+      set_info_file;
+      set_print_level;
       get_num_iters;
       get_cur_iter;
       get_num_conv_fails;

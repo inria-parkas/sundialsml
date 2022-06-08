@@ -1272,6 +1272,16 @@ CAMLprim value sunml_kinsol_set_error_file(value vdata, value vfile)
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_kinsol_set_info_file(value vdata, value vfile)
+{
+    CAMLparam2(vdata, vfile);
+
+    int flag = KINSetInfoFile(KINSOL_MEM_FROM_ML(vdata), ML_CFILE(vfile));
+    CHECK_FLAG("KINSetInfoFile", flag);
+
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value sunml_kinsol_set_print_level(value vkin_mem, value vplvl)
 {
     CAMLparam2(vkin_mem, vplvl);

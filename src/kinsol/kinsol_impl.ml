@@ -135,6 +135,7 @@ type ('a, 'k) session = {
   mutable infoh      : infoh;
 
   mutable error_file : Logfile.t option;
+  mutable info_file  : Logfile.t option;
 
   mutable ls_solver    : LSI.held_linear_solver;
   mutable ls_callbacks : ('a, 'k) linsolv_callbacks;

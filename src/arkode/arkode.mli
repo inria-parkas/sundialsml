@@ -1601,6 +1601,12 @@ module ARKStep : sig (* {{{ *)
       @arkode_ark ARKStepSetDefaults *)
   val set_defaults : ('d, 'k) session -> unit
 
+  (** Write step adaptivity and solver diagnostics on the standard output
+      (or given file).
+
+      @arkode_ark ARKStepSetDiagnostics *)
+  val set_diagnostics : ?logfile:Logfile.t -> ('d, 'k) session -> unit
+
   (** Specifies the interpolation module used for output value interpolation
       and implicit method predictors.
 
@@ -1614,6 +1620,11 @@ module ARKStep : sig (* {{{ *)
       @arkode_ark ARKStepSetInterpolantDegree
       @since 5.2.0 *)
   val set_interpolant_degree : ('d, 'k) session -> int -> unit
+
+  (** Do not write step adaptivity or solver diagnostics of a file.
+
+      @arkode_ark ARKStepSetDiagnostics *)
+  val clear_diagnostics : ('d, 'k) session -> unit
 
   (** Configure the default error handler to write messages to a file.
       By default it writes to Logfile.stderr.
@@ -2438,6 +2449,12 @@ module ERKStep : sig (* {{{ *)
       @arkode_erk ERKStepSetDefaults *)
   val set_defaults : ('d, 'k) session -> unit
 
+  (** Write step adaptivity and solver diagnostics on the standard output
+      (or given file).
+
+      @arkode_erk ERKStepSetDiagnostics *)
+  val set_diagnostics : ?logfile:Logfile.t -> ('d, 'k) session -> unit
+
   (** Specifies the interpolation module used for output value interpolation
       and implicit method predictors.
 
@@ -2451,6 +2468,11 @@ module ERKStep : sig (* {{{ *)
       @arkode_erk ERKStepSetInterpolantDegree
       @since 5.2.0 *)
   val set_interpolant_degree : ('d, 'k) session -> int -> unit
+
+  (** Do not write step adaptivity or solver diagnostics of a file.
+
+      @arkode_erk ERKStepSetDiagnostics *)
+  val clear_diagnostics : ('d, 'k) session -> unit
 
   (** Configure the default error handler to write messages to a file.
       By default it writes to Logfile.stderr.
@@ -3585,6 +3607,17 @@ module MRIStep : sig (* {{{ *)
       @arkode_mri MRIStepSetInterpolantDegree
       @since 5.2.0 *)
   val set_interpolant_degree : ('d, 'k) session -> int -> unit
+
+  (** Write step adaptivity and solver diagnostics on the standard output
+      (or given file).
+
+      @arkode_mri MRIStepSetDiagnostics *)
+  val set_diagnostics : ?logfile:Logfile.t -> ('d, 'k) session -> unit
+
+  (** Do not write step adaptivity or solver diagnostics of a file.
+
+      @arkode_mri MRIStepSetDiagnostics *)
+  val clear_diagnostics : ('d, 'k) session -> unit
 
   (** Configure the default error handler to write messages to a file.
       By default it writes to Logfile.stderr.

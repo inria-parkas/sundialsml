@@ -73,6 +73,8 @@ and ('nv, 'd, 's, 'v) ops = {
   set_lsolve_fn : (('nv, 's) lsolvefn -> unit) option;
   set_convtest_fn : (('d, 's, 'v) convtestfn -> unit) option;
   set_max_iters : (int -> unit) option;
+  set_info_file : (Sundials.Logfile.t -> unit) option;
+  set_print_level : (int -> unit) option;
   get_num_iters : (unit -> int) option;
   get_cur_iter : (unit -> int) option;
   get_num_conv_fails : (unit -> int) option;

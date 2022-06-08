@@ -500,6 +500,37 @@ module Iterative : sig (* {{{ *)
   val set_prec_type : ('m, 'd, 'k, [>`Iter]) t
                       -> preconditioning_type -> unit
 
+  (** Sets the output file for informative (non-error) messages. The default
+      is to send such messages to stdout.
+      The optional argument is a convenience for invoking {!set_print_level}.
+
+      Sundials must be built with {cconst SUNDIALS_BUILD_WITH_MONITORING} to
+      use this function.
+
+      @linsol_module SUNLinSolSetInfoFile_PCG
+      @linsol_module SUNLinSolSetInfoFile_SPBCGS
+      @linsol_module SUNLinSolSetInfoFile_SPFGMR
+      @linsol_module SUNLinSolSetInfoFile_SPGMR
+      @linsol_module SUNLinSolSetInfoFile_SPTFQMR
+      @since 5.3.0 *)
+  val set_info_file
+    : ('m, 'd, 'k, [>`Iter]) t -> ?print_level:bool -> Sundials.Logfile.t -> unit
+
+  (** Sets the level of output verbosity. When [false] (the default) no
+      information is printed, when [true] the residual norm is printed for
+      each linear iteration.
+
+      Sundials must be built with {cconst SUNDIALS_BUILD_WITH_MONITORING} to
+      use this function.
+
+      @linsol_module SUNLinSolSetPrintLevel_PCG
+      @linsol_module SUNLinSolSetPrintLevel_SPBCGS
+      @linsol_module SUNLinSolSetPrintLevel_SPFGMR
+      @linsol_module SUNLinSolSetPrintLevel_SPGMR
+      @linsol_module SUNLinSolSetPrintLevel_SPTFQMR
+      @since 5.3.0 *)
+  val set_print_level : ('m, 'd, 'k, [>`Iter]) t -> bool -> unit
+
 end (* }}} *)
 
 (** Custom linear solvers. *)
