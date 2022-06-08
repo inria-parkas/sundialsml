@@ -2539,36 +2539,6 @@ CAMLprim value sunml_arkode_ark_set_error_file(value vdata, value vfile)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_arkode_ark_set_diagnostics(value vdata, value vfile)
-{
-    CAMLparam2(vdata, vfile);
-
-#if 400 <= SUNDIALS_LIB_VERSION
-    int flag = ARKStepSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), ML_CFILE(vfile));
-    CHECK_FLAG("ARKStepSetDiagnostics", flag);
-#else
-    int flag = ARKodeSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), ML_CFILE(vfile));
-    CHECK_FLAG("ARKodeSetDiagnostics", flag);
-#endif
-
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_arkode_ark_clear_diagnostics(value vdata)
-{
-    CAMLparam1(vdata);
-
-#if 400 <= SUNDIALS_LIB_VERSION
-    int flag = ARKStepSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), NULL);
-    CHECK_FLAG("ARKStepSetDiagnostics", flag);
-#else
-    int flag = ARKodeSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), NULL);
-    CHECK_FLAG("ARKodeSetDiagnostics", flag);
-#endif
-
-    CAMLreturn (Val_unit);
-}
-
 CAMLprim value sunml_arkode_ark_set_root_direction(value vdata, value rootdirs)
 {
     CAMLparam2(vdata, rootdirs);
@@ -5926,35 +5896,6 @@ CAMLprim value sunml_arkode_erk_set_defaults(value varkode_mem)
     CAMLreturn (Val_unit);
 }
 
-
-CAMLprim value sunml_arkode_erk_set_diagnostics(value vdata, value vfile)
-{
-    CAMLparam2(vdata, vfile);
-
-#if 400 <= SUNDIALS_LIB_VERSION
-    int flag = ERKStepSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), ML_CFILE(vfile));
-    CHECK_FLAG("ERKStepSetDiagnostics", flag);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_arkode_erk_clear_diagnostics(value vdata)
-{
-    CAMLparam1(vdata);
-
-#if 400 <= SUNDIALS_LIB_VERSION
-    int flag = ERKStepSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), NULL);
-    CHECK_FLAG("ERKStepSetDiagnostics", flag);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-
-    CAMLreturn (Val_unit);
-}
-
 CAMLprim value sunml_arkode_erk_set_error_file(value vdata, value vfile)
 {
     CAMLparam2(vdata, vfile);
@@ -7805,34 +7746,6 @@ CAMLprim value sunml_arkode_mri_set_interpolant_degree(value varkode_mem,
     int flag = MRIStepSetInterpolantDegree(ARKODE_MEM_FROM_ML(varkode_mem),
 					   Int_val(vinterpdegree));
     CHECK_FLAG("MRIStepSetInterpolantDegree", flag);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_arkode_mri_set_diagnostics(value vdata, value vfile)
-{
-    CAMLparam2(vdata, vfile);
-
-#if 400 <= SUNDIALS_LIB_VERSION
-    int flag = MRIStepSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), ML_CFILE(vfile));
-    CHECK_FLAG("MRIStepSetDiagnostics", flag);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_arkode_mri_clear_diagnostics(value vdata)
-{
-    CAMLparam1(vdata);
-
-#if 400 <= SUNDIALS_LIB_VERSION
-    int flag = MRIStepSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), NULL);
-    CHECK_FLAG("MRIStepSetDiagnostics", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif

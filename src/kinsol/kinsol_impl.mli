@@ -54,7 +54,6 @@ type ('a, 'k) session = {
   mutable errh : errh;
   mutable infoh : infoh;
   mutable error_file : Sundials.Logfile.t option;
-  mutable info_file : Sundials.Logfile.t option;
   mutable ls_solver : LSI.held_linear_solver;
   mutable ls_callbacks : ('a, 'k) linsolv_callbacks;
   mutable ls_precfns : 'a linsolv_precfns;

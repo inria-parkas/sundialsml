@@ -666,14 +666,6 @@ type print_level =
     @kinsol KINSetPrintLevel *)
 val set_print_level : ('d, 'k) session -> print_level -> unit
 
-(** Write informational (non-error) messages to the given file.
-    By default they are written to Logfile.stdout.
-    The optional argument is a convenience for invoking {!set_print_level}.
-
-    @kinsol KINSetInfoFile *)
-val set_info_file
-      : ('d, 'k) session -> ?print_level:print_level -> Logfile.t -> unit
-
 (** Specifies a custom function for handling informational (non-error) messages.
     The [error_code] field of {{!Sundials.Util.error_details}Util.error_details}
     is [0] for such messages.

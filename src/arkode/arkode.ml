@@ -1887,16 +1887,6 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
   let print_step_stats s oc =
     print_step_stats oc (get_step_stats s)
 
-  external c_set_diagnostics : ('a, 'k) session -> Logfile.t -> unit
-      = "sunml_arkode_ark_set_diagnostics"
-
-  let set_diagnostics ?(logfile=Logfile.stdout) s =
-    s.diag_file <- Some logfile;
-    c_set_diagnostics s logfile
-
-  external clear_diagnostics : ('a, 'k) session -> unit
-      = "sunml_arkode_ark_clear_diagnostics"
-
   external c_set_error_file : ('a, 'k) session -> Logfile.t -> unit
       = "sunml_arkode_ark_set_error_file"
 
@@ -2392,16 +2382,6 @@ module ERKStep = struct (* {{{ *)
 
   let print_step_stats s oc =
     print_step_stats oc (get_step_stats s)
-
-  external c_set_diagnostics : ('a, 'k) session -> Logfile.t -> unit
-      = "sunml_arkode_erk_set_diagnostics"
-
-  let set_diagnostics ?(logfile=Logfile.stdout) s =
-    s.diag_file <- Some logfile;
-    c_set_diagnostics s logfile
-
-  external clear_diagnostics : ('a, 'k) session -> unit
-      = "sunml_arkode_erk_clear_diagnostics"
 
   external set_interpolant_type : ('d, 'k) session -> interpolant_type -> unit
       = "sunml_arkode_erk_set_interpolant_type"
@@ -3330,16 +3310,6 @@ module MRIStep = struct (* {{{ *)
 
   external get_current_time       : ('a, 'k) session -> float
       = "sunml_arkode_mri_get_current_time"
-
-  external c_set_diagnostics : ('a, 'k) session -> Logfile.t -> unit
-      = "sunml_arkode_mri_set_diagnostics"
-
-  let set_diagnostics ?(logfile=Logfile.stdout) s =
-    s.diag_file <- Some logfile;
-    c_set_diagnostics s logfile
-
-  external clear_diagnostics : ('a, 'k) session -> unit
-      = "sunml_arkode_mri_clear_diagnostics"
 
   external c_set_error_file : ('a, 'k) session -> Logfile.t -> unit
       = "sunml_arkode_mri_set_error_file"

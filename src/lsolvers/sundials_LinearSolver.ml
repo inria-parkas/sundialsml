@@ -327,29 +327,6 @@ module Iterative = struct (* {{{ *)
     if Sundials_impl.Version.in_compat_mode2 then compat.set_prec_type prec_type
     else impl_set_prec_type rawptr solver prec_type true
 
-  external c_set_print_level
-   : ('m, 'nd, 'nk) cptr
-     -> ('m, 'nd, 'nk, [> `Iter]) solver_data
-     -> int
-     -> unit
-   = "sunml_lsolver_set_print_level"
-
-  let set_print_level (LS { rawptr; solver; _ }) level =
-    c_set_print_level rawptr solver (if level then 1 else 0)
-
-  external c_set_info_file
-   : ('m, 'nd, 'nk) cptr
-     -> ('m, 'nd, 'nk, [> `Iter]) solver_data
-     -> Logfile.t
-     -> unit
-   = "sunml_lsolver_set_info_file"
-
-  let set_info_file (LS ({ rawptr; solver; _ } as lsdata)) ?print_level file =
-    lsdata.info_file <- Some file;
-    c_set_info_file rawptr solver file;
-    (match print_level with None -> ()
-     | Some level -> c_set_print_level rawptr solver (if level then 1 else 0))
-
   let default = function
     | Some x -> x
     | None -> 0

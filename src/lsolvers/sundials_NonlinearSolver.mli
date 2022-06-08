@@ -310,31 +310,6 @@ end (* }}} *)
     @nonlinsol SUNNonlinSolSetMaxIters *)
 val set_max_iters : ('d, 'k, 's, 'v) t -> int -> unit
 
-(** Sets the output file for informative (non-error) messages. The default
-    is to send such messages to stdout.
-    The optional argument is a convenience for invoking {!set_print_level}.
-
-    Sundials must be built with {cconst SUNDIALS_BUILD_WITH_MONITORING} to
-    use this function.
-
-    @nonlinsol_module SUNNonlinSolSetInfoFile_Newton
-    @nonlinsol_module SUNNonlinSolSetInfoFile_FixedPoint
-    @since 5.3.0 *)
-val set_info_file
-  : ('d, 'k, 's, 'v) t -> ?print_level:bool -> Sundials.Logfile.t -> unit
-
-(** Sets the level of output verbosity. When [false] (the default) no
-    information is printed, when [true] the residual norm is printed for
-    each nonlinear iteration.
-
-    Sundials must be built with {cconst SUNDIALS_BUILD_WITH_MONITORING} to
-    use this function.
-
-    @nonlinsol_module SUNNonlinSolSetPrintLevel_Newton
-    @nonlinsol_module SUNNonlinSolSetPrintLevel_FixedPoint
-    @since 5.3.0 *)
-val set_print_level : ('d, 'k, 's, 'v) t -> bool -> unit
-
 (** {2:nlsget Get functions} *)
 
 (** Returns the number of nonlinear solver iterations in the most recent solve.
@@ -481,11 +456,6 @@ module Custom : sig (* {{{ *)
 
       - [set_max_iters]: sets the maximum number of iterations.
 
-      - [set_info_file]: sets a logfile for informational messages.
-
-      - [set_print_level]: sets the level of verbosity for informational
-                           messages (0 = none).
-
       - [get_num_iters]: returns the number of iterations in the most recent
                          solve.
 
@@ -512,8 +482,6 @@ module Custom : sig (* {{{ *)
     -> ?set_lsolve_fn      : ((('d, 'k) Nvector.t, 's) lsolvefn -> unit)
     -> ?set_convtest_fn    : (('d, 's, [`Nvec]) convtestfn -> unit)
     -> ?set_max_iters      : (int  -> unit)
-    -> ?set_info_file      : (Logfile.t -> unit)
-    -> ?set_print_level    : (int -> unit)
     -> ?get_num_iters      : (unit -> int)
     -> ?get_cur_iter       : (unit -> int)
     -> ?get_num_conv_fails : (unit -> int)
@@ -544,8 +512,6 @@ module Custom : sig (* {{{ *)
     -> ?set_lsolve_fn      : ((('d, 'k) Senswrapper.t, 's) lsolvefn -> unit)
     -> ?set_convtest_fn    : ((('d, 'k) Senswrapper.t, 's, [`Sens]) convtestfn -> unit)
     -> ?set_max_iters      : (int  -> unit)
-    -> ?set_info_file      : (Logfile.t -> unit)
-    -> ?set_print_level    : (int -> unit)
     -> ?get_num_iters      : (unit -> int)
     -> ?get_cur_iter       : (unit -> int)
     -> ?get_num_conv_fails : (unit -> int)
