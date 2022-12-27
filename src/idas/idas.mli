@@ -2115,6 +2115,15 @@ module Adjoint : sig (* {{{ *)
       @return ([nniters], [nncfails]) *)
   val get_nonlin_solv_stats : ('d, 'k) bsession -> int * int
 
+  (** Outputs all of the integrator, nonlinear solver, linear solver, and other
+      statistics.
+
+      @idas_adj IDAPrintAllStats
+      @idas_adj IDAGetAdjIDABmem
+      @since 6.2.0 *)
+  val print_all_stats
+        : ('d, 'k) bsession -> Logfile.t -> Sundials.output_format -> unit
+
   (** {2:exceptions Exceptions} *)
 
   (** Adjoint sensitivity analysis was not initialized.

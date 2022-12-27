@@ -2184,6 +2184,14 @@ module ARKStep : sig (* {{{ *)
       @arkode_ark ARKStepGetStepStats *)
   val get_step_stats           : ('d, 'k) session -> step_stats
 
+  (** Outputs all of the integrator, nonlinear solver, linear solver, and other
+      statistics.
+
+      @cvode ARKStepPrintAllStats
+      @since 6.2.0 *)
+  val print_all_stats
+        : ('d, 'k) session -> Logfile.t -> Sundials.output_format -> unit
+
   (** Prints time-stepper statistics on the given channel.
 
       @arkode_ark ARKStepGetTimestepperStats *)
@@ -2780,6 +2788,14 @@ module ERKStep : sig (* {{{ *)
 
       @arkode_erk ERKStepGetStepStats *)
   val get_step_stats           : ('d, 'k) session -> step_stats
+
+  (** Outputs all of the integrator, nonlinear solver, linear solver, and other
+      statistics.
+
+      @cvode ERKStepPrintAllStats
+      @since 6.2.0 *)
+  val print_all_stats
+        : ('d, 'k) session -> Logfile.t -> Sundials.output_format -> unit
 
   (** Prints time-stepper statistics on the given channel.
 
@@ -3961,6 +3977,14 @@ module MRIStep : sig (* {{{ *)
       @arkode_mri MRIStepGetErrWeights
       @since 5.4.0 *)
   val get_err_weights : ('d, 'k) session -> ('d, 'k) Nvector.t -> unit
+
+  (** Outputs all of the integrator, nonlinear solver, linear solver, and other
+      statistics.
+
+      @cvode MRIStepPrintAllStats
+      @since 6.2.0 *)
+  val print_all_stats
+        : ('d, 'k) session -> Logfile.t -> Sundials.output_format -> unit
 
   (** {3:mrigetimplicit Implicit solver optional output functions} *)
 

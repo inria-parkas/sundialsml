@@ -1213,7 +1213,15 @@ val get_num_nonlin_solv_conv_fails : ('d, 'k) session -> int
 
     @cvode CVodeGetNonlinSolvStats
     @return ([nniters], [nncfails]) *)
-val get_nonlin_solv_stats : ('d, 'k) session -> int *int
+val get_nonlin_solv_stats : ('d, 'k) session -> int * int
+
+(** Outputs all of the integrator, nonlinear solver, linear solver, and other
+    statistics.
+
+    @cvode CVodePrintAllStats
+    @since 6.2.0 *)
+val print_all_stats
+      : ('d, 'k) session -> Logfile.t -> Sundials.output_format -> unit
 
 (** {2:roots Additional root-finding functions} *)
 

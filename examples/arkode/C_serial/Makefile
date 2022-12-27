@@ -49,7 +49,8 @@ FILES_TO_CLEAN = bruss_mesh.txt bruss_u.txt bruss_v.txt bruss_w.txt \
 		 ark_onewaycouple_mri_solution.txt \
 		 ark_twowaycouple_mri_solution.txt \
 		 ark_brusselator_mri_solution.txt \
-		 ark_kpr_mri_solution.txt
+		 ark_kpr_mri_solution.txt \
+		 ark_robertson_stats.csv ark_analytic_nonlin_stats.csv
 
 include ../../examples.mk
 

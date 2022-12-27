@@ -2252,6 +2252,19 @@ CAMLprim value sunml_cvode_get_nonlin_solv_stats(value vcvode_mem)
     CAMLreturn(r);
 }
 
+CAMLprim void sunml_cvode_print_all_stats(value vcvode_mem,
+					  value vfile, value voutformat)
+{
+    CAMLparam3(vcvode_mem, vfile, voutformat);
+
+    int flag = CVodePrintAllStats(CVODE_MEM_FROM_ML(vcvode_mem),
+				  ML_CFILE(vfile),
+				  SUNML_OUTPUT_FORMAT(voutformat));
+    CHECK_FLAG("CVodePrintAllStats", flag);
+
+    CAMLreturn0;
+}
+
 CAMLprim value sunml_cvode_get_num_g_evals(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);

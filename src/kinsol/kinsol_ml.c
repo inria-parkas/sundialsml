@@ -1603,3 +1603,16 @@ CAMLprim value sunml_kinsol_get_step_length(value vkin_mem)
     CAMLreturn(caml_copy_double(v));
 }
 
+CAMLprim void sunml_kinsol_print_all_stats(value vkin_mem,
+					   value vfile, value voutformat)
+{
+    CAMLparam3(vkin_mem, vfile, voutformat);
+
+    int flag = KINPrintAllStats(KINSOL_MEM_FROM_ML(vkin_mem),
+				ML_CFILE(vfile),
+				SUNML_OUTPUT_FORMAT(voutformat));
+    CHECK_FLAG("KINPrintAllStats", flag);
+
+    CAMLreturn0;
+}
+

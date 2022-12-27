@@ -128,6 +128,11 @@ end
 exception RecoverableFailure
 exception NonPositiveEwt
 
+(* synchronized with sundials_ml.h: sundials_output_format_tag *)
+type output_format =
+  | OutputTable
+  | OutputCSV
+
 type 'f cfun = 'f Sundials_impl.Callback.cfun
 
 let invoke = Sundials_impl.Callback.invoke

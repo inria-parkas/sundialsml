@@ -919,6 +919,10 @@ external get_num_nonlin_solv_conv_fails : ('a, 'k) session -> int
 external get_nonlin_solv_stats          : ('a, 'k) session -> int * int
     = "sunml_ida_get_nonlin_solv_stats"
 
+external print_all_stats
+    : ('d, 'k) session -> Logfile.t -> Sundials.output_format -> unit
+    = "sunml_ida_print_all_stats"
+
 external get_num_g_evals                : ('a, 'k) session -> int
     = "sunml_ida_get_num_g_evals"
 

@@ -1602,6 +1602,9 @@ module Adjoint = struct (* {{{ *)
   let get_nonlin_solv_stats bs =
     Ida.get_nonlin_solv_stats (tosession bs)
 
+  let print_all_stats bs =
+    Ida.print_all_stats (tosession bs)
+
   module Quadrature = struct (* {{{ *)
     include QuadratureTypes
 

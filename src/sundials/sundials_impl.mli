@@ -17,6 +17,7 @@ module Version :
     val lt540 : bool
     val lt580 : bool
     val lt600 : bool
+    val lt620 : bool
     val has_nvector_get_id : bool
   end
 module Logfile :

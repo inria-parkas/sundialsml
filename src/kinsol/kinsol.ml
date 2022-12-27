@@ -647,6 +647,10 @@ external get_func_norm : ('a, 'k) session -> float
 external get_step_length : ('a, 'k) session -> float
     = "sunml_kinsol_get_step_length"
 
+external print_all_stats
+    : ('d, 'k) session -> Logfile.t -> Sundials.output_format -> unit
+    = "sunml_kinsol_print_all_stats"
+
 (* synchronized with kinsol_ml.h: kinsol_orthaa_tag *)
 type orthaa =
   | MGS

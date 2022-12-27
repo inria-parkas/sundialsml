@@ -2524,6 +2524,19 @@ CAMLprim value sunml_arkode_ark_get_step_stats(value vdata)
     CAMLreturn(r);
 }
 
+CAMLprim void sunml_arkode_ark_print_all_stats(value vdata,
+					       value vfile, value voutformat)
+{
+    CAMLparam3(vdata, vfile, voutformat);
+
+    int flag = ARKStepPrintAllStats(ARKODE_MEM_FROM_ML(vdata),
+				    ML_CFILE(vfile),
+				    SUNML_OUTPUT_FORMAT(voutformat));
+    CHECK_FLAG("ARKStepPrintAllStats", flag);
+
+    CAMLreturn0;
+}
+
 CAMLprim value sunml_arkode_ark_set_error_file(value vdata, value vfile)
 {
     CAMLparam2(vdata, vfile);
@@ -5541,6 +5554,19 @@ CAMLprim value sunml_arkode_erk_get_step_stats(value vdata)
     CAMLreturn(r);
 }
 
+CAMLprim void sunml_arkode_erk_print_all_stats(value vdata,
+					       value vfile, value voutformat)
+{
+    CAMLparam3(vdata, vfile, voutformat);
+
+    int flag = ERKStepPrintAllStats(ARKODE_MEM_FROM_ML(vdata),
+				    ML_CFILE(vfile),
+				    SUNML_OUTPUT_FORMAT(voutformat));
+    CHECK_FLAG("ERKStepPrintAllStats", flag);
+
+    CAMLreturn0;
+}
+
 CAMLprim value sunml_arkode_erk_set_root_direction(value vdata, value rootdirs)
 {
     CAMLparam2(vdata, rootdirs);
@@ -8336,6 +8362,19 @@ CAMLprim value sunml_arkode_mri_get_err_weights(value varkode_mem, value verrws)
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn (Val_unit);
+}
+
+CAMLprim void sunml_arkode_mri_print_all_stats(value vdata,
+					       value vfile, value voutformat)
+{
+    CAMLparam3(vdata, vfile, voutformat);
+
+    int flag = MRIStepPrintAllStats(ARKODE_MEM_FROM_ML(vdata),
+				    ML_CFILE(vfile),
+				    SUNML_OUTPUT_FORMAT(voutformat));
+    CHECK_FLAG("MRIStepPrintAllStats", flag);
+
+    CAMLreturn0;
 }
 
 CAMLprim value sunml_arkode_mri_get_num_lin_solv_setups(value varkode_mem)

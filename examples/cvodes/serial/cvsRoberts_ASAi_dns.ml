@@ -216,7 +216,8 @@ let print_output1 time t y yB =
   printf "tout:       %12.4e\n" t;
   printf "lambda(t):  %12.4e %12.4e %12.4e\n" (ith yB 1) (ith yB 2) (ith yB 3);
   printf "y(t):       %12.4e %12.4e %12.4e\n" (ith y 1) (ith y 2) (ith y 3);
-  printf "--------------------------------------------------------\n\n"
+  printf "--------------------------------------------------------\n";
+  if Sundials_impl.Version.lt620 then print_newline ()
 
 (* Print results after backward integration *)
 
@@ -237,7 +238,8 @@ let print_output tfinal y yB qB =
                                  (ith y 1) (ith y 2) (ith y 3);
        printf "dG/dp:      %12.4e %12.4e %12.4e\n"
                                  (-.(ith qB 1)) (-.(ith qB 2)) (-.(ith qB 3)));
-  printf "--------------------------------------------------------\n\n"
+  printf "--------------------------------------------------------\n";
+  if Sundials_impl.Version.lt620 then print_newline ()
 
 let print_head tB0 =
   printf "Backward integration from tB0 = %12.4e\n\n" tB0
@@ -307,7 +309,15 @@ let main () =
 
   printf "--------------------------------------------------------\n";
   printf "G:          %12.4e \n" (ith qdata 1);
-  printf "--------------------------------------------------------\n\n";
+  printf "--------------------------------------------------------\n";
+  if Sundials_impl.Version.lt620 then print_newline ()
+  else begin
+    printf "\nFinal Statistics:\n";
+    Cvode.print_all_stats cvode_mem Logfile.stdout Sundials.OutputTable;
+    let fid = Logfile.openfile "cvsRoberts_ASAi_dns_fwd_stats.csv" in
+    Cvode.print_all_stats cvode_mem fid Sundials.OutputCSV;
+    Logfile.close fid
+  end;
 
   (* Initialize yB *)
   let yBdata = RealArray.of_list [ zero; zero; zero ] in
@@ -360,7 +370,8 @@ let main () =
 
   (match Config.sundials_version with
    | 2,5,_ -> printf "done ( nst = %d )\n"  nstB
-   | _     -> printf "Done ( nst = %d )\n"  nstB);
+   | _     -> if Sundials_impl.Version.lt620
+              then printf "Done ( nst = %d )\n" nstB);
 
   ignore (Adj.get cvode_memB yB);
   let time = QuadAdj.get cvode_memB qB in
@@ -369,6 +380,15 @@ let main () =
   (match Config.sundials_version with
    | 2,5,_ -> print_output tb1 ydata yBdata qBdata
    | _     -> print_output time ydata yBdata qBdata);
+
+  if not Sundials_impl.Version.lt620 then begin
+    printf "\nFinal Statistics:\n";
+    Adj.print_all_stats cvode_memB Logfile.stdout Sundials.OutputTable;
+    let fid = Logfile.openfile "cvsRoberts_ASAi_dns_bkw1_stats.csv" in
+    Adj.print_all_stats cvode_memB fid Sundials.OutputCSV;
+    Logfile.close fid;
+    print_newline ()
+  end;
 
   (* Reinitialize backward phase (new tB0) *)
 
@@ -402,7 +422,8 @@ let main () =
 
   (match Config.sundials_version with
    | 2,5,_ -> printf "done ( nst = %d )\n"  nstB
-   | _     -> printf "Done ( nst = %d )\n"  nstB);
+   | _     -> if Sundials_impl.Version.lt620
+              then printf "Done ( nst = %d )\n" nstB);
 
   ignore (Adj.get cvode_memB yB);
   let time = QuadAdj.get cvode_memB qB in
@@ -412,7 +433,14 @@ let main () =
    | 2,5,_ -> print_output tb2 ydata yBdata qBdata
    | _     -> print_output time ydata yBdata qBdata);
 
-  printf "Free memory\n\n"
+  if Sundials_impl.Version.lt620 then printf "Free memory\n\n"
+  else begin
+    printf "\nFinal Statistics:\n";
+    Adj.print_all_stats cvode_memB Logfile.stdout Sundials.OutputTable;
+    let fid = Logfile.openfile "cvsRoberts_ASAi_dns_bkw2_stats.csv" in
+    Adj.print_all_stats cvode_memB fid Sundials.OutputCSV;
+    Logfile.close fid
+  end
 
 (* Check environment variables for extra arguments.  *)
 let reps =

@@ -151,26 +151,34 @@ let main () =
   close_out ufid;
 
   (* Print some final statistics *)
-  let open ARKStep in
-  let nst      = get_num_steps arkode_mem in
-  let nst_a    = get_num_step_attempts arkode_mem in
-  let nfe, nfi = get_num_rhs_evals arkode_mem in
-  let nsetups  = get_num_lin_solv_setups arkode_mem in
-  let netf     = get_num_err_test_fails arkode_mem in
-  let nni      = get_num_nonlin_solv_iters arkode_mem in
-  let ncfn     = get_num_nonlin_solv_conv_fails arkode_mem in
-  let nje      = Dls.get_num_jac_evals arkode_mem in
-  let nfeLS    = Dls.get_num_lin_rhs_evals arkode_mem in
+  if Sundials_impl.Version.lt620 then begin
+    let open ARKStep in
+    let nst      = get_num_steps arkode_mem in
+    let nst_a    = get_num_step_attempts arkode_mem in
+    let nfe, nfi = get_num_rhs_evals arkode_mem in
+    let nsetups  = get_num_lin_solv_setups arkode_mem in
+    let netf     = get_num_err_test_fails arkode_mem in
+    let nni      = get_num_nonlin_solv_iters arkode_mem in
+    let ncfn     = get_num_nonlin_solv_conv_fails arkode_mem in
+    let nje      = Dls.get_num_jac_evals arkode_mem in
+    let nfeLS    = Dls.get_num_lin_rhs_evals arkode_mem in
 
-  printf "\nFinal Solver Statistics:\n";
-  printf "   Internal solver steps = %d (attempted = %d)\n" nst nst_a;
-  printf "   Total RHS evals:  Fe = %d,  Fi = %d\n" nfe nfi;
-  printf "   Total linear solver setups = %d\n" nsetups;
-  printf "   Total RHS evals for setting up the linear system = %d\n" nfeLS;
-  printf "   Total number of Jacobian evaluations = %d\n" nje;
-  printf "   Total number of Newton iterations = %d\n" nni;
-  printf "   Total number of nonlinear solver convergence failures = %d\n" ncfn;
-  printf "   Total number of error test failures = %d\n" netf
+    printf "\nFinal Solver Statistics:\n";
+    printf "   Internal solver steps = %d (attempted = %d)\n" nst nst_a;
+    printf "   Total RHS evals:  Fe = %d,  Fi = %d\n" nfe nfi;
+    printf "   Total linear solver setups = %d\n" nsetups;
+    printf "   Total RHS evals for setting up the linear system = %d\n" nfeLS;
+    printf "   Total number of Jacobian evaluations = %d\n" nje;
+    printf "   Total number of Newton iterations = %d\n" nni;
+    printf "   Total number of nonlinear solver convergence failures = %d\n" ncfn;
+    printf "   Total number of error test failures = %d\n" netf
+  end else begin
+    printf "\nFinal Statistics:\n";
+    ARKStep.print_all_stats arkode_mem Logfile.stdout Sundials.OutputTable;
+    let fid = Logfile.openfile "ark_robertson_stats.csv" in
+    ARKStep.print_all_stats arkode_mem fid Sundials.OutputCSV;
+    Logfile.close fid
+  end
 
 (* Check environment variables for extra arguments.  *)
 let reps =

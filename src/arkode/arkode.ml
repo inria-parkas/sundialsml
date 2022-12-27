@@ -1816,6 +1816,10 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
   external get_step_stats : ('a, 'k) session -> step_stats
       = "sunml_arkode_ark_get_step_stats"
 
+  external print_all_stats
+      : ('d, 'k) session -> Logfile.t -> Sundials.output_format -> unit
+      = "sunml_arkode_ark_print_all_stats"
+
   external get_work_space         : ('a, 'k) session -> int * int
       = "sunml_arkode_ark_get_work_space"
 
@@ -2349,6 +2353,10 @@ module ERKStep = struct (* {{{ *)
 
   external get_step_stats : ('a, 'k) session -> step_stats
       = "sunml_arkode_erk_get_step_stats"
+
+  external print_all_stats
+      : ('d, 'k) session -> Logfile.t -> Sundials.output_format -> unit
+      = "sunml_arkode_erk_print_all_stats"
 
   external get_work_space         : ('a, 'k) session -> int * int
       = "sunml_arkode_erk_get_work_space"
@@ -3505,6 +3513,10 @@ module MRIStep = struct (* {{{ *)
   let get_err_weights s ew =
     if Sundials_configuration.safe then s.checkvec ew;
     c_get_err_weights s ew
+
+  external print_all_stats
+      : ('d, 'k) session -> Logfile.t -> Sundials.output_format -> unit
+      = "sunml_arkode_mri_print_all_stats"
 
   external get_num_lin_solv_setups : ('a, 'k) session -> int
       = "sunml_arkode_mri_get_num_lin_solv_setups"

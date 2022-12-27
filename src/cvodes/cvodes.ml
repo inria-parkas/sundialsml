@@ -1613,6 +1613,9 @@ module Adjoint = struct (* {{{ *)
   let get_nonlin_solv_stats bs =
     Cvode.get_nonlin_solv_stats (tosession bs)
 
+  let print_all_stats bs =
+    Cvode.print_all_stats (tosession bs)
+
   module Quadrature =
     struct
       include QuadratureTypes

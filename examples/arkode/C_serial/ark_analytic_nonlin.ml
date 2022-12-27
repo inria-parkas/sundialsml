@@ -96,16 +96,24 @@ let main () =
   close_out ufid;
 
   (* Get/print some final statistics *)
-  let open ERKStep in
-  let nst      = get_num_steps arkode_mem in
-  let nst_a    = get_num_step_attempts arkode_mem in
-  let nfe      = get_num_rhs_evals arkode_mem in
-  let netf     = get_num_err_test_fails arkode_mem in
+  if Sundials_impl.Version.lt620 then begin
+    let open ERKStep in
+    let nst      = get_num_steps arkode_mem in
+    let nst_a    = get_num_step_attempts arkode_mem in
+    let nfe      = get_num_rhs_evals arkode_mem in
+    let netf     = get_num_err_test_fails arkode_mem in
 
-  printf "\nFinal Solver Statistics:\n";
-  printf "   Internal solver steps = %d (attempted = %d)\n" nst nst_a;
-  printf "   Total RHS evals = %d\n" nfe;
-  printf "   Total number of error test failures = %d\n\n" netf
+    printf "\nFinal Solver Statistics:\n";
+    printf "   Internal solver steps = %d (attempted = %d)\n" nst nst_a;
+    printf "   Total RHS evals = %d\n" nfe;
+    printf "   Total number of error test failures = %d\n\n" netf
+  end else begin
+    printf "\nFinal Statistics:\n";
+    ERKStep.print_all_stats arkode_mem Logfile.stdout Sundials.OutputTable;
+    let fid = Logfile.openfile "ark_analytic_nonlin_stats.csv" in
+    ERKStep.print_all_stats arkode_mem fid Sundials.OutputCSV;
+    Logfile.close fid
+  end
 
 (* Check environment variables for extra arguments.  *)
 let reps =

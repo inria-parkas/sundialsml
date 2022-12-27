@@ -1976,7 +1976,19 @@ CAMLprim value sunml_ida_get_num_g_evals(value vida_mem)
 
     CAMLreturn(Val_long(r));
 }
+ 
+CAMLprim void sunml_ida_print_all_stats(value vida_mem,
+					value vfile, value voutformat)
+{
+    CAMLparam3(vida_mem, vfile, voutformat);
 
+    int flag = IDAPrintAllStats(IDA_MEM_FROM_ML(vida_mem),
+				ML_CFILE(vfile),
+				SUNML_OUTPUT_FORMAT(voutformat));
+    CHECK_FLAG("IDAPrintAllStats", flag);
+
+    CAMLreturn0;
+}
 
 CAMLprim value sunml_ida_get_current_cj(value vida_mem)
 {

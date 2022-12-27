@@ -1009,6 +1009,14 @@ val get_num_nonlin_solv_conv_fails : ('d, 'k) session -> int
     @return ([nniters], [nncfails]) *)
 val get_nonlin_solv_stats : ('d, 'k) session -> int *int
 
+(** Outputs all of the integrator, nonlinear solver, linear solver, and other
+    statistics.
+
+    @ida IDAPrintAllStats
+    @since 6.2.0 *)
+val print_all_stats
+      : ('d, 'k) session -> Logfile.t -> Sundials.output_format -> unit
+
 (** {2:roots Additional root-finding functions} *)
 
 (** [set_root_direction s dir] specifies the direction of zero-crossings to be

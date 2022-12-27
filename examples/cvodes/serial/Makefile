@@ -21,6 +21,10 @@ EXAMPLES = cvsAdvDiff_ASAi_bnd.ml \
 	   $(if $(AT_LEAST_3_2_0),cvsRoberts_FSA_dns_constraints.ml) \
 	   $(if $(AT_LEAST_3_2_0),cvsRoberts_ASAi_dns_constraints.ml)
 
+FILES_TO_CLEAN = cvsRoberts_ASAi_dns_fwd_stats.csv \
+		 cvsRoberts_ASAi_dns_bkw1_stats.csv \
+		 cvsRoberts_ASAi_dns_bkw2_stats.csv
+
 include ../../examples.mk
 
 test:

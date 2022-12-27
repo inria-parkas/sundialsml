@@ -251,8 +251,9 @@ let print_output tfinal yB _ qB =
          (-.qB.{0}) (-.qB.{1}) (-.qB.{2});
   printf "lambda(t0): %12.4e %12.4e %12.4e\n"
          yB.{0} yB.{1} yB.{2};
-  printf "--------------------------------------------------------\n\n"
-
+  if Sundials_impl.Version.lt620
+  then printf "--------------------------------------------------------\n\n"
+  else printf "--------------------------------------------------------\n"
 
 (*
  *--------------------------------------------------------------------
@@ -319,7 +320,8 @@ let main () =
   Adjoint.(init ida_mem steps IHermite);
 
   (* Perform forward run *)
-  print_string "Forward integration ... ";
+  if Sundials_impl.Version.lt620 then print_string "Forward integration ... "
+  else print_string "Forward integration ...\n";
 
   (* Integrate till TB1 and get the solution (y, y') at that time. *)
   let _ = Adjoint.forward_normal ida_mem tb1 wyy wyp in
@@ -334,15 +336,24 @@ let main () =
   (* Continue integrating till TOUT is reached. *)
   let _ = Adjoint.forward_normal ida_mem tout wyy wyp in
 
-  let nst = Ida.get_num_steps ida_mem in
-
-  printf "done ( nst = %d )\n" nst;
+  if Sundials_impl.Version.lt620 then
+    let nst = Ida.get_num_steps ida_mem in
+    printf "done ( nst = %d )\n" nst;
 
   let _ = Quad.get ida_mem wq in
 
   print_string "--------------------------------------------------------\n";
   printf "G:          %12.4e \n" q.{0};
-  print_string "--------------------------------------------------------\n\n";
+  print_string "--------------------------------------------------------\n";
+
+  if Sundials_impl.Version.lt620 then print_newline ()
+  else begin
+    printf "\nFinal Statistics:\n";
+    Ida.print_all_stats ida_mem Logfile.stdout Sundials.OutputTable;
+    let fid = Logfile.openfile "idasRoberts_ASAi_dns_fwd_stats.csv" in
+    Ida.print_all_stats ida_mem fid Sundials.OutputCSV;
+    Logfile.close fid
+  end;
 
   (* Create BACKWARD problem. *)
 
@@ -364,7 +375,9 @@ let main () =
   let abstolQB = atolq in
 
   (* Create and allocate IDAS memory for backward run *)
-  print_string "Create and allocate IDAS memory for backward run\n";
+  if Sundials_impl.Version.lt620
+  then print_string "Create and allocate IDAS memory for backward run\n"
+  else print_string "\nCreate and allocate IDAS memory for backward run\n";
 
   let wyB  = wrap yB
   and wypB = wrap ypB
@@ -391,12 +404,14 @@ let main () =
   AdjQuad.(set_tolerances indexB (SStolerances (reltolB, abstolQB)));
 
   (* Backward Integration *)
-  print_string "Backward integration ... ";
+  if Sundials_impl.Version.lt620 then print_string "Backward integration ... "
+  else print_string "Backward integration ...\n";
 
   Adjoint.backward_normal ida_mem t0;
 
-  let nstB = Adjoint.get_num_steps indexB in
-  printf "done ( nst = %d )\n" nstB;
+  if Sundials_impl.Version.lt620 then
+    let nstB = Adjoint.get_num_steps indexB in
+    printf "done ( nst = %d )\n" nstB;
 
   let _ = Adjoint.get indexB wyB wypB in
 
@@ -404,9 +419,18 @@ let main () =
 
   print_output tb2 yB ypB qB;
 
+  if not Sundials_impl.Version.lt620 then begin
+    printf "\nFinal Statistics:\n";
+    Adjoint.print_all_stats indexB Logfile.stdout Sundials.OutputTable;
+    let fid = Logfile.openfile "idasRoberts_ASAi_dns_bkw1_stats.csv" in
+    Adjoint.print_all_stats indexB fid Sundials.OutputCSV;
+    Logfile.close fid
+  end;
 
   (* Reinitialize backward phase and start from a different time (TB1). *)
-  print_string "Re-initialize IDAS memory for backward run\n";
+  if Sundials_impl.Version.lt620
+  then print_string "Re-initialize IDAS memory for backward run\n"
+  else print_string "\nRe-initialize IDAS memory for backward run\n";
 
   (* Both algebraic part from y and the entire y' are computed by IDACalcIC. *)
   yB.{0} <- 0.0;
@@ -445,13 +469,13 @@ let main () =
   Adjoint.set_id indexB (wrap id);
   Adjoint.calc_ic indexB t1b wyyTB1 wypTB1 ~yb:wyyTB1 ~yb':wypTB1;
 
-  print_string "Backward integration ... ";
+  if Sundials_impl.Version.lt620 then print_string "Backward integration ... ";
 
   let _ = Adjoint.backward_normal ida_mem t0 in
 
-  let nstB = Adjoint.get_num_steps indexB in
-
-  printf "done ( nst = %d )\n" nstB;
+  if Sundials_impl.Version.lt620 then
+    let nstB = Adjoint.get_num_steps indexB in
+    printf "done ( nst = %d )\n" nstB;
 
   let _ = Adjoint.get indexB wyB wypB in
 
@@ -459,7 +483,14 @@ let main () =
 
   print_output tb1 yB ypB qB;
 
-  print_string "Free memory\n\n"
+  if Sundials_impl.Version.lt620 then print_string "Free memory\n\n"
+  else begin
+    printf "\nFinal Statistics:\n";
+    Adjoint.print_all_stats indexB Logfile.stdout Sundials.OutputTable;
+    let fid = Logfile.openfile "idasRoberts_ASAi_dns_bkw1_stats.csv" in
+    Adjoint.print_all_stats indexB fid Sundials.OutputCSV;
+    Logfile.close fid
+  end
 
 
 (* Check environment variables for extra arguments.  *)

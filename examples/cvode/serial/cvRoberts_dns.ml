@@ -165,7 +165,11 @@ let main () =
   done;
 
   (* Print some final statistics *)
-  print_final_stats cvode_mem
+  if Sundials_impl.Version.lt620 then print_final_stats cvode_mem
+  else begin
+    printf "\nFinal Statistics:\n";
+    Cvode.print_all_stats cvode_mem Logfile.stdout Sundials.OutputTable
+  end
 
 (* Check environment variables for extra arguments.  *)
 let reps =

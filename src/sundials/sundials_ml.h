@@ -226,6 +226,18 @@ enum sundials_exn_index {
 /* Accessing FILE* values */
 #define ML_CFILE(v) (*(FILE **)Data_custom_val(v))
 
+/* SUNOutputFormat values */
+enum sundials_output_format_tag {
+  VARIANT_SUNDIALS_OUTPUTFORMAT_TABLE = 0,
+  VARIANT_SUNDIALS_OUTPUTFORMAT_CSV,
+};
+
+#if 620 <= SUNDIALS_LIB_VERSION
+#define SUNML_OUTPUT_FORMAT(v) \
+    ((v == VARIANT_SUNDIALS_OUTPUTFORMAT_CSV) \
+	? SUN_OUTPUTFORMAT_CSV : SUN_OUTPUTFORMAT_TABLE)
+#endif
+
 /* Accessing SUNProfilter values */
 #if 600 <= SUNDIALS_LIB_VERSION
 #define ML_PROFILER(v) (*(SUNProfiler *)Data_custom_val(v))

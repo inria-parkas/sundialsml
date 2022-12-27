@@ -285,6 +285,15 @@ exception NonPositiveEwt
 
 (** {2:values Generic values} *)
 
+(** Specifies the output format for statistics. See
+    {!Cvode.print_all_stats}, {!Ida.print_all_stats},
+    {!Kinsol.print_all_stats}, {!Arkode.ARKStep.print_all_stats},
+    {!Arkode.MRIStep.print_all_stats}, or {!Arkode.ERKStep.print_all_stats}. *)
+type output_format =
+  | OutputTable     (* A table of values ({cconst SUN_OUTPUTFORMAT_TABLE}) *)
+  | OutputCSV       (* Comma-separated list of key and value pairs
+                       ({cconst SUN_OUTPUTFORMAT_CSV}) *)
+
 (** A callback function into the underlying library. *)
 type 'f cfun = 'f Sundials_impl.Callback.cfun
 

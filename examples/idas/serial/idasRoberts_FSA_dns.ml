@@ -396,7 +396,21 @@ let main () =
       printf "dG/dp1: %11.4e\n" (unwrap yQS.(2)).{0});
 
   (* Print final statistics *)
-  print_final_stats ida_mem (sensi <> None)
+  if Sundials_impl.Version.lt620 then print_final_stats ida_mem (sensi <> None)
+  else begin
+    printf "\nFinal Statistics:\n";
+    Ida.print_all_stats ida_mem Logfile.stdout Sundials.OutputTable;
+    let fid = Logfile.openfile
+      ("idaRoberts_FSA_dns_stats" ^ (
+        match sensi with None -> ""
+        | Some sensi_meth ->
+           (if sensi_meth = Sens.Simultaneous
+            then "_-sensi_sim" else "_-sensi_stg")
+           ^ (if err_con then "_t" else "_f")) ^ ".csv")
+    in
+    Ida.print_all_stats ida_mem fid Sundials.OutputCSV;
+    Logfile.close fid
+  end
 
 
 (* Check environment variables for extra arguments.  *)

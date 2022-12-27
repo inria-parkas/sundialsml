@@ -12,6 +12,14 @@ EXAMPLES = idasRoberts_FSA_dns.ml	\
 	   $(if $(and $(AT_LEAST_2_7),$(SUPERLUMT_ENABLED)),idasRoberts_ASAi_sps.ml) \
 	   $(if $(and $(AT_LEAST_2_7),$(SUPERLUMT_ENABLED)),idasRoberts_FSA_sps.ml)
 
+FILES_TO_CLEAN = idasRoberts_ASAi_dns_fwd_stats.csv \
+		 idasRoberts_ASAi_dns_bkw1_stats.csv \
+		 idaRoberts_FSA_dns_stats.cvs \
+		 idaRoberts_FSA_dns_stats_-sensi_sim_t.cvs \
+		 idaRoberts_FSA_dns_stats_-sensi_sim_f.cvs \
+		 idaRoberts_FSA_dns_stats_-sensi_stg_t.cvs \
+		 idaRoberts_FSA_dns_stats_-sensi_stg_f.cvs
+
 include ../../examples.mk
 
 # Gives different results at anything other than -O0...

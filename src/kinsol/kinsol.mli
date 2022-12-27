@@ -765,6 +765,13 @@ val get_func_norm : ('d, 'k) session -> float
     @kinsol KINGetStepLength *)
 val get_step_length : ('d, 'k) session -> float
 
+(** Outputs all of the nonlinear solver, linear solver, and other statistics.
+
+    @cvode KINPrintAllStats
+    @since 6.2.0 *)
+val print_all_stats
+      : ('d, 'k) session -> Logfile.t -> Sundials.output_format -> unit
+
 (** {2:exceptions Exceptions} *)
 
 (** An input parameter was invalid.

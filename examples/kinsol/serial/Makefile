@@ -33,6 +33,8 @@ ENABLED_EXAMPLES = $(EXAMPLES_SINCE_2_5)			\
 	   	   $(if $(AT_LEAST_5_1_0),$(EXAMPLES_SINCE_5_1_0)) \
 	   	   $(if $(AT_LEAST_5_4_0),$(EXAMPLES_SINCE_5_4_0))
 
+FILES_TO_CLEAN = kinRoboKin_dns_stats.csv
+
 include ../../examples.mk
 
 $(eval $(call EXECUTION_RULE,kinRoboKin_dns_alt,$$<,kinRoboKin_dns))
