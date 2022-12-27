@@ -1918,6 +1918,17 @@ module ARKStep : sig (* {{{ *)
       @arkode_ark ARKStepSetMaxConvFails *)
   val set_max_conv_fails : ('d, 'k) session -> int -> unit
 
+  (** Specifies if implicit stage derivatives are deduced without
+      evaluating {% $f^I$ %}. If [false], the stage derivative is obtained
+      by evaluating {% $f^I$ %} with the stage solution returned by the
+      nonlinear solver. If [true], the stage derivative is deduced without an
+      additional evaluation of {% $f^I$ %}.
+
+      @arkode_ark ARKStepSetDeduceImplicitRhs
+      @arkode <Mathematics_link.html#nonlinear-solver-methods> Nonlinear solver methods
+      @since 6.2.0 *)
+  val set_deduce_implicit_rhs : ('d, 'k) session -> bool -> unit
+
   (** A function to be called {e after} the predictor algorithm to update the
       predictor.
 
@@ -3659,6 +3670,13 @@ module MRIStep : sig (* {{{ *)
       @arkode_mri MRIStepSetMaxNumSteps *)
   val set_max_num_steps : ('d, 'k) session -> int -> unit
 
+  (** Select the default MRI method of a given order. The default is 3.
+      An order less than 3 or greater than 4 will result in using the default.
+
+      @arkode_mri MRIStepSetOrder
+      @since 6.2.0 *)
+  val set_order : ('d, 'k) session -> int -> unit
+
   (** Limits the value of the independent variable [t] when solving.
       By default no stop time is imposed.
 
@@ -3833,6 +3851,16 @@ module MRIStep : sig (* {{{ *)
       @since 5.4.0 *)
   val set_max_nonlin_iters : ('d, 'k) session -> int -> unit
 
+  (** Specifies if implicit stage derivatives are deduced without
+      evaluating {% $f^I$ %}. If [false], the stage derivative is obtained
+      by evaluating {% $f^I$ %} with the stage solution returned by the
+      nonlinear solver. If [true], the stage derivative is deduced without an
+      additional evaluation of {% $f^I$ %}.
+
+      @arkode_mri MRIStepSetDeduceImplicitRhs
+      @arkode <Mathematics_link.html#nonlinear-solver-methods> Nonlinear solver methods
+      @since 6.2.0 *)
+  val set_deduce_implicit_rhs : ('d, 'k) session -> bool -> unit
 
   (** {2:mriget Querying the solver (optional output functions)} *)
 

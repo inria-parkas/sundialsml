@@ -3868,6 +3868,22 @@ CAMLprim value sunml_arkode_ark_set_max_conv_fails(value varkode_mem, value maxn
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_arkode_ark_set_deduce_implicit_rhs(value varkode_mem,
+							value vdeduce)
+{
+    CAMLparam2(varkode_mem, vdeduce);
+
+#if 620 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepSetDeduceImplicitRhs(ARKODE_MEM_FROM_ML(varkode_mem),
+					   Bool_val(vdeduce));
+    CHECK_FLAG("ARKStepSetDeduceImplicitRhs", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value sunml_arkode_ark_set_stage_predict_fn(value varkode_mem,
 						     value vset)
 {
@@ -6780,6 +6796,22 @@ CAMLprim value sunml_arkode_mri_set_nls_rhs_fn(value varkode_mem)
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_arkode_mri_set_deduce_implicit_rhs(value varkode_mem,
+							value vdeduce)
+{
+    CAMLparam2(varkode_mem, vdeduce);
+
+#if 620 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepSetDeduceImplicitRhs(ARKODE_MEM_FROM_ML(varkode_mem),
+					   Bool_val(vdeduce));
+    CHECK_FLAG("MRIStepSetDeduceImplicitRhs", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
 /* MRIStep: StepCoupling */
 
 #define ML_MRI_COUPLING(v) (*(MRIStepCoupling *)Data_custom_val(v))
@@ -7967,6 +7999,20 @@ CAMLprim value sunml_arkode_mri_set_max_num_steps(value varkode_mem, value mxste
     int flag = MRIStepSetMaxNumSteps(ARKODE_MEM_FROM_ML(varkode_mem),
 				     Long_val(mxsteps));
     CHECK_FLAG("MRIStepSetMaxNumSteps", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_mri_set_order(value varkode_mem, value vord)
+{
+    CAMLparam2(varkode_mem, vord);
+
+#if 620 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepSetOrder(ARKODE_MEM_FROM_ML(varkode_mem), Int_val(vord));
+    CHECK_FLAG("MRIStepSetOrder", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif

@@ -2050,6 +2050,8 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
       = "sunml_arkode_ark_set_max_nonlin_iters"
   external set_max_conv_fails     : ('a, 'k) session -> int -> unit
       = "sunml_arkode_ark_set_max_conv_fails"
+  external set_deduce_implicit_rhs : ('a, 'k) session -> bool -> unit
+      = "sunml_arkode_ark_set_deduce_implicit_rhs"
   external set_nonlin_conv_coef   : ('a, 'k) session -> float -> unit
       = "sunml_arkode_ark_set_nonlin_conv_coef"
   external set_constraints      : ('a, 'k) session -> ('a, 'k) Nvector.t -> unit
@@ -3378,6 +3380,8 @@ module MRIStep = struct (* {{{ *)
       = "sunml_arkode_mri_set_max_hnil_warns"
   external set_max_num_steps      : ('a, 'k) session -> int -> unit
       = "sunml_arkode_mri_set_max_num_steps"
+  external set_order              : ('a, 'k) session -> int -> unit
+      = "sunml_arkode_mri_set_order"
   external set_stop_time          : ('a, 'k) session -> float -> unit
       = "sunml_arkode_mri_set_stop_time"
 
@@ -3485,6 +3489,8 @@ module MRIStep = struct (* {{{ *)
       = "sunml_arkode_mri_set_predictor_method"
   external set_max_nonlin_iters   : ('a, 'k) session -> int -> unit
       = "sunml_arkode_mri_set_max_nonlin_iters"
+  external set_deduce_implicit_rhs : ('a, 'k) session -> bool -> unit
+      = "sunml_arkode_mri_set_deduce_implicit_rhs"
 
   external get_current_gamma : ('d, 'k) session -> float
       = "sunml_arkode_mri_get_current_gamma"
