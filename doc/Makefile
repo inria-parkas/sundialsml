@@ -100,7 +100,7 @@ uninstall:
 	-$(RMDIR) $(DOCDIR)html
 	-$(RMDIR) $(DOCDIR)
 
-distclean clean:
+cleanall distclean clean:
 	-@$(RM) -f html/*.html sundials_docs.cmxs sundials_docs.cma
 	-@$(RM) -f dochtml.cmo dochtml.cmx dochtml.cmi dochtml.cmt dochtml.o
 

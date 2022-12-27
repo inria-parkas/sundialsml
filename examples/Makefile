@@ -205,11 +205,11 @@ $(foreach t,$(PLOTTYPES),perf-intv.byte.$t): perf-intv.byte.log
 ocaml:
 	${MAKE} -C ocaml
 
-distclean: clean-utils
+cleanall distclean: clean-utils
 	@for s in ${ALL_SUBDIRS}; do		\
-		${MAKE} -C $$s distclean;	\
+		${MAKE} -C $$s $@;		\
 	done
-	@${MAKE} -C ocaml distclean
+	@${MAKE} -C ocaml cleanall
 
 clean: clean-utils
 	@for s in ${ALL_SUBDIRS}; do		\

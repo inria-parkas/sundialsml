@@ -50,7 +50,7 @@ clean:
 	-@rm -f $(EXAMPLES:.byte=.annot) $(EXAMPLES)
 	-@rm -f intro1.out intro2.out
 
-distclean: clean
+cleanall distclean: clean
 	-@rm -f $(EXAMPLES) $(EXAMPLES:.byte=.opt)
 
 # #

@@ -29,6 +29,6 @@ clean:
 	-@rm -f dpendulum.annot dpendulum.cmt dpendulum.cmti
 	-@rm -f dpendulum.cmi dpendulum.cmo dpendulum.cmx dpendulum.o
 
-distclean: clean
+cleanall distclean: clean
 	-@rm -f dpendulum.byte dpendulum.opt
 

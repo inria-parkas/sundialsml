@@ -41,6 +41,6 @@ clean:
 	-@rm -f ball.cmt ball.cmti
 	-@rm -f showball.annot ball.annot
 
-distclean: clean
+cleanall distclean: clean
 	-@rm -f ball.byte ball.opt
 

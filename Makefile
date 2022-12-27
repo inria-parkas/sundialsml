@@ -63,7 +63,7 @@ clean:
 	$(MAKE) -C src $@
 	$(MAKE) -C examples $@
 
-distclean:
+cleanall distclean:
 	$(MAKE) -C doc $@
 	$(MAKE) -C src $@
 	$(MAKE) -C examples $@
@@ -72,5 +72,6 @@ distclean:
 cleandoc:
 	$(MAKE) -C doc clean
 
-.PHONY: all test doc clean distclean cleandoc install install-sys install-doc \
+.PHONY: all test doc clean cleanall distclean cleandoc \
+	install install-sys install-doc \
 	install-ocamlfind install-findlib

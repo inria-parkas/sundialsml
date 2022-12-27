@@ -479,7 +479,7 @@ endef
 # Generate a default version.
 $(eval $(call EXECUTION_RULE,%,$$<))
 
-distclean: clean
+cleanall distclean: clean
 	-@rm -f $(ALL_EXAMPLES:.ml=.reps)
 clean:
 	-@rm -f $(foreach p,$(ALL_EXAMPLES:.ml=),valgrind-$p.*)

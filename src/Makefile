@@ -7,7 +7,7 @@ default: all
 
 ### Build rules.
 
-.PHONY: all sundials install doc clean distclean updateimpl
+.PHONY: all sundials install doc clean cleanall distclean updateimpl
 
 all: $(INSTALL_CMA) $(INSTALL_CMXA)
 
@@ -376,7 +376,7 @@ clean:
 	-@$(RM) -f $(foreach file,$(ALL_CMA:.cma=$(XS)),dllml$(file))
 	-@$(RM) -f $(STUBLIBS)
 
-distclean: clean
+cleanall distclean: clean
 	-@$(RM) -f META
 	-@$(RM) -f sundials/sundials_Index.mli sundials/sundials_Index.ml
 	-@$(RM) -f config.h sundials/sundials_configuration.ml

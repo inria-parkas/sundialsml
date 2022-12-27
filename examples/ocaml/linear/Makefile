@@ -72,7 +72,7 @@ clean:
 	-@rm -f $(EXAMPLES:.byte=.opt.log) $(CEXAMPLES:.exe=.opt.diff)
 	-@rm -f $(CEXAMPLES:.exe=.exe.log)
 
-distclean: clean
+cleanall distclean: clean
 	-@rm -f $(EXAMPLES) $(EXAMPLES:.byte=.opt) $(CEXAMPLES)
 
 # #

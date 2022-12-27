@@ -35,6 +35,6 @@ clean:
 	-@rm -f pendulum.cmi pendulum.cmo pendulum.cmx pendulum.o
 	-@rm -f pendulum.cmt pendulum.cmti
 
-distclean: clean
+cleanall distclean: clean
 	-@rm -f pendulum.byte pendulum.opt
 

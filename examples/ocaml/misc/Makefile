@@ -30,7 +30,7 @@ clean:
 	-@rm -f $(EXAMPLES:.byte=.o) $(EXAMPLES:.byte=.cmi)
 	-@rm -f $(EXAMPLES:.byte=.annot)
 
-distclean: clean
+cleanall distclean: clean
 	-@rm -f $(EXAMPLES) $(EXAMPLES:.byte=.opt)
 
 # #

@@ -53,7 +53,7 @@ clean:
 	-@rm -f simplependulum.o
 	-@rm -f simplependulum.cmt simplependulum.cmti simplependulum.annot 
 
-distclean: clean
+cleanall distclean: clean
 	-@rm -f pendulum.byte pendulum.opt
 	-@rm -f simplependulum.byte simplependulum.opt
 
