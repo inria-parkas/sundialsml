@@ -107,6 +107,12 @@ module Profiler : sig (* {{{ *)
       @profiler SUNProfiler_Print *)
   val print : t -> Logfile.t -> unit
 
+  (** Reset the region timings and counters to zero.
+
+      @profiler SUNProfiler_Reset
+      @since 6.2.0 *)
+  val reset : t -> unit
+
 end (* }}} *)
 
 (** Status logging

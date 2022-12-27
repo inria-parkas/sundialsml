@@ -469,6 +469,15 @@ CAMLprim void sunml_profiler_print(value vprofiler, value vfile)
     CAMLreturn0;
 }
 
+CAMLprim void sunml_profiler_reset(value vprofiler)
+{
+    CAMLparam1(vprofiler);
+#if 620 <= SUNDIALS_LIB_VERSION && defined(SUNDIALS_BUILD_WITH_PROFILING)
+    SUNProfiler_Reset(ML_PROFILER(vprofiler));
+#endif
+    CAMLreturn0;
+}
+
 /* Functions for logging */
 
 #if SUNML_HAS_LOGGING

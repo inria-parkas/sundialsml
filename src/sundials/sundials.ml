@@ -44,6 +44,9 @@ module Profiler = struct
 
   external print : t -> Logfile.t -> unit
     = "sunml_profiler_print"
+
+  external reset : t -> unit
+    = "sunml_profiler_reset"
 end
 
 module Logger = struct
