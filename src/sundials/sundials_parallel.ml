@@ -33,12 +33,12 @@ module Context = struct
 
   module I = Sundials_impl.Context
 
-  external c_make : Mpi.communicator -> I.cptr * Logger.t
+  external c_make : Mpi.communicator -> I.cptr * Sundials_impl.Logger.t
     = "sunml_context_create_parallel"
 
   let make ?profiler ?logger comm =
     let cptr, original_logger = c_make comm in
-    let ctx = { I.cptr = c_make comm; I.profiler = None;
+    let ctx = { I.cptr = cptr; I.profiler = None;
                 I.logger = original_logger }
     in
     (match profiler with

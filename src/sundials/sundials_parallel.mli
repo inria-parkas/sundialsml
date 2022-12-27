@@ -63,6 +63,7 @@ module Context : sig
       @context SUNContext_Create *)
   val make :
        ?profiler:Sundials.Profiler.t
+    -> ?logger:Sundials.Logger.t
     -> Mpi.communicator
     -> Sundials.Context.t
 
