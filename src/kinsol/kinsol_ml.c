@@ -1278,6 +1278,7 @@ CAMLprim value sunml_kinsol_set_info_file(value vdata, value vfile)
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated"
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
     int flag = KINSetInfoFile(KINSOL_MEM_FROM_ML(vdata), ML_CFILE(vfile));
     CHECK_FLAG("KINSetInfoFile", flag);

@@ -980,6 +980,7 @@ CAMLprim void sunml_nlsolver_set_info_file_newton(value vnls, value vfile)
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated"
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
     int flag = SUNNonlinSolSetInfoFile_Newton(NLSOLVER_VAL(vnls),
 					      ML_CFILE(vfile));
@@ -1000,6 +1001,7 @@ CAMLprim void sunml_nlsolver_set_info_file_fixedpoint(value vnls, value vfile)
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated"
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
     int flag = SUNNonlinSolSetInfoFile_FixedPoint(NLSOLVER_VAL(vnls),
 						  ML_CFILE(vfile));
@@ -1020,6 +1022,7 @@ CAMLprim void sunml_nlsolver_set_print_level_newton(value vnls, value vlevel)
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated"
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
     int flag = SUNNonlinSolSetPrintLevel_Newton(NLSOLVER_VAL(vnls),
 					        Int_val(vlevel));
@@ -1040,6 +1043,7 @@ CAMLprim void sunml_nlsolver_set_print_level_fixedpoint(value vnls, value vlevel
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated"
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
     int flag = SUNNonlinSolSetPrintLevel_FixedPoint(NLSOLVER_VAL(vnls),
 						    Int_val(vlevel));

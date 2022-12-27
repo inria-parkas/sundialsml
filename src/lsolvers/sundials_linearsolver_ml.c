@@ -1961,6 +1961,7 @@ CAMLprim void sunml_lsolver_set_info_file(value vcptr, value vsolver,
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated"
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
     switch (Int_val(vsolver)) {
     case VARIANT_LSOLVER_SOLVER_DATA_SPFGMR:
@@ -2011,6 +2012,7 @@ CAMLprim void sunml_lsolver_set_print_level(value vcptr, value vsolver,
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated"
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
     switch (Int_val(vsolver)) {
     case VARIANT_LSOLVER_SOLVER_DATA_SPFGMR:

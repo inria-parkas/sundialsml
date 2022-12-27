@@ -2547,6 +2547,7 @@ CAMLprim value sunml_arkode_ark_set_diagnostics(value vdata, value vfile)
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated"
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
     int flag = ARKStepSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), ML_CFILE(vfile));
     CHECK_FLAG("ARKStepSetDiagnostics", flag);
@@ -2569,6 +2570,7 @@ CAMLprim value sunml_arkode_ark_clear_diagnostics(value vdata)
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated"
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
     int flag = ARKStepSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), NULL);
     CHECK_FLAG("ARKStepSetDiagnostics", flag);
@@ -5949,6 +5951,7 @@ CAMLprim value sunml_arkode_erk_set_diagnostics(value vdata, value vfile)
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated"
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
     int flag = ERKStepSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), ML_CFILE(vfile));
     CHECK_FLAG("ERKStepSetDiagnostics", flag);
@@ -5970,6 +5973,7 @@ CAMLprim value sunml_arkode_erk_clear_diagnostics(value vdata)
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated"
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
     int flag = ERKStepSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), NULL);
     CHECK_FLAG("ERKStepSetDiagnostics", flag);
@@ -7848,6 +7852,7 @@ CAMLprim value sunml_arkode_mri_set_diagnostics(value vdata, value vfile)
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated"
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
     int flag = MRIStepSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), ML_CFILE(vfile));
     CHECK_FLAG("MRIStepSetDiagnostics", flag);
@@ -7869,6 +7874,7 @@ CAMLprim value sunml_arkode_mri_clear_diagnostics(value vdata)
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated"
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
     int flag = MRIStepSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), NULL);
     CHECK_FLAG("MRIStepSetDiagnostics", flag);
