@@ -361,6 +361,9 @@ module Sensitivity = struct (* {{{ *)
   external get_num_err_test_fails : ('a, 'k) session -> int
     = "sunml_idas_sens_get_num_err_test_fails"
 
+  external get_num_step_solve_fails : ('a, 'k) session -> int
+    = "sunml_idas_sens_get_num_step_solve_fails"
+
   external get_num_lin_solv_setups : ('a, 'k) session -> int
     = "sunml_idas_sens_get_num_lin_solv_setups"
 
@@ -1565,6 +1568,9 @@ module Adjoint = struct (* {{{ *)
 
   let get_num_err_test_fails bs =
     Ida.get_num_err_test_fails (tosession bs)
+
+  let get_num_step_solve_fails bs =
+    Ida.get_num_step_solve_fails (tosession bs)
 
   let get_last_order bs = Ida.get_last_order (tosession bs)
 

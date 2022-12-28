@@ -370,7 +370,7 @@ let print_final_stats mem =
   and nni   = get_num_nonlin_solv_iters mem
   and nre   = get_num_res_evals mem
   and netf  = get_num_err_test_fails mem
-  and ncfn  = get_num_nonlin_solv_conv_fails mem
+  and nnf   = get_num_nonlin_solv_conv_fails mem
   and nje   = Dls.get_num_jac_evals mem
   and nreLS = Dls.get_num_lin_res_evals mem in
 
@@ -381,7 +381,10 @@ let print_final_stats mem =
   printf "Number of Jacobian evaluations     = %d\n" nje;
   printf "Number of nonlinear iterations     = %d\n" nni;
   printf "Number of error test failures      = %d\n" netf;
-  printf "Number of nonlinear conv. failures = %d\n" ncfn
+  printf "Number of nonlinear conv. failures = %d\n" nnf;
+  if not Sundials_impl.Version.lt620 then
+    let ncfn = get_num_step_solve_fails mem in
+    printf "Number of step solver failures     = %d\n" ncfn
 
 let main () =
   let webdata = init_user_data ()

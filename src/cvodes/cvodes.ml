@@ -395,6 +395,19 @@ module Sensitivity = struct (* {{{ *)
   external get_num_err_test_fails : ('a, 'k) session -> int
       = "sunml_cvodes_sens_get_num_err_test_fails"
 
+  external get_num_step_solve_fails : ('a, 'k) session -> int
+      = "sunml_cvodes_sens_get_num_step_solve_fails"
+
+  external c_get_num_step_stgr_solve_fails
+      : ('a, 'k) session -> LintArray.t -> unit
+      = "sunml_cvodes_sens_get_num_step_stgr_solve_fails"
+
+  let get_num_step_stgr_solve_fails s r =
+    if Sundials_configuration.safe && Bigarray.Array1.dim r <> num_sensitivities s
+    then invalid_arg ("get_num_step_stgr_solv_fails: wrong number of "^
+                      "sensitivity vectors");
+    c_get_num_step_stgr_solve_fails s r
+
   external get_num_lin_solv_setups : ('a, 'k) session -> int
       = "sunml_cvodes_sens_get_num_lin_solv_setups"
 
@@ -1573,6 +1586,9 @@ module Adjoint = struct (* {{{ *)
 
   let get_num_err_test_fails bs =
     Cvode.get_num_err_test_fails (tosession bs)
+
+  let get_num_step_solve_fails bs =
+    Cvode.get_num_step_solve_fails (tosession bs)
 
   let get_last_order bs = Cvode.get_last_order (tosession bs)
 

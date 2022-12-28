@@ -2499,6 +2499,39 @@ CAMLprim value sunml_cvodes_sens_get_num_err_test_fails(value vdata)
     CAMLreturn(Val_long(v));
 }
 
+CAMLprim value sunml_cvodes_sens_get_num_step_solve_fails(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+    long int v;
+
+#if 620 <= SUNDIALS_LIB_VERSION
+    int flag;
+    flag = CVodeGetNumStepSensSolveFails(CVODE_MEM_FROM_ML(vcvode_mem), &v);
+    CHECK_FLAG("CVodeGetNumStepSensSolveFails", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(Val_long(v));
+}
+
+CAMLprim void sunml_cvodes_sens_get_num_step_stgr_solve_fails(value vcvode_mem,
+							      value vnfails)
+{
+    CAMLparam2(vcvode_mem, vnfails);
+
+#if 620 <= SUNDIALS_LIB_VERSION
+    int flag;
+    flag = CVodeGetNumStepStgrSensSolveFails(CVODE_MEM_FROM_ML(vcvode_mem),
+					     LONG_ARRAY(vnfails));
+    CHECK_FLAG("CVodeGetNumStepStgrSensSolveFails", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn0;
+}
+
 CAMLprim value sunml_cvodes_sens_get_num_lin_solv_setups(value vdata)
 {
     CAMLparam1(vdata);

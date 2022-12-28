@@ -735,6 +735,22 @@ module Sensitivity : sig (* {{{ *)
       @cvodes_sens CVodeGetSensNumErrTestFails *)
   val get_num_err_test_fails  : ('d, 'k) Cvode.session -> int
 
+  (** Returns the number of failed steps due to a sensitivity nonlinear
+      solver failure.
+
+      @cvodes_sens CVodeGetNumStepSensSolveFails
+      @since 6.2.0 *)
+  val get_num_step_solve_fails : ('d, 'k) Cvode.session -> int
+
+  (** Returns the number of failed steps due to staggered sensitivity
+      nonlinear solver failures for each sensitivity equation separately.
+      The results are only valid in the {{!sens_method}Staggered1} case.
+
+      @cvodes_sens CVodeGetNumStepStgrSensSolveFails
+      @since 6.2.0 *)
+  val get_num_step_stgr_solve_fails
+      : ('d, 'k) Cvode.session -> LintArray.t -> unit
+
   (** Returns the number of calls made to the linear solver's setup function
       due to forward sensitivity calculations.
 
@@ -2167,6 +2183,13 @@ module Adjoint : sig (* {{{ *)
       @cvodes_adj CVodeGetNumErrTestFails
       @cvodes_adj CVodeGetAdjCVodeBmem *)
   val get_num_err_test_fails  : ('d, 'k) bsession -> int
+
+  (** Returns the number of failed steps due to a nonlinear solver failure.
+
+      @cvode CVodeGetNumStepSolveFails
+      @cvodes_adj CVodeGetAdjCVodeBmem
+      @since 6.2.0 *)
+  val get_num_step_solve_fails : ('d, 'k) bsession -> int
 
   (** Returns the integration method order used during the last internal step.
 

@@ -2056,6 +2056,12 @@ module ARKStep : sig (* {{{ *)
       @arkode_ark ARKStepGetNumErrTestFails *)
   val get_num_err_test_fails  : ('d, 'k) session -> int
 
+  (** Returns the number of failed steps due to a nonlinear solver failure.
+
+      @cvode ARKStepGetNumStepSolveFails
+      @since 6.2.0 *)
+  val get_num_step_solve_fails : ('d, 'k) session -> int
+
   (** Returns the integration step size taken on the last successful internal
       step.
 
@@ -3904,6 +3910,12 @@ module MRIStep : sig (* {{{ *)
 
       @arkode_mri MRIStepGetNumRhsEvals *)
   val get_num_rhs_evals       : ('d, 'k) session -> int * int
+
+  (** Returns the number of failed steps due to a nonlinear solver failure.
+
+      @cvode MRIStepGetNumStepSolveFails
+      @since 6.2.0 *)
+  val get_num_step_solve_fails : ('d, 'k) session -> int
 
   (** Returns the the current internal time reached by the solver.
 

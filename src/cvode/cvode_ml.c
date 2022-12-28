@@ -1642,6 +1642,22 @@ CAMLprim value sunml_cvode_get_num_err_test_fails(value vcvode_mem)
     CAMLreturn(Val_long(v));
 }
 
+CAMLprim value sunml_cvode_get_num_step_solve_fails(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+    long int v;
+
+#if 620 <= SUNDIALS_LIB_VERSION
+    int flag;
+    flag = CVodeGetNumStepSolveFails(CVODE_MEM_FROM_ML(vcvode_mem), &v);
+    CHECK_FLAG("CVodeGetNumStepSolveFails", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(Val_long(v));
+}
+
 CAMLprim value sunml_cvode_get_last_order(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);

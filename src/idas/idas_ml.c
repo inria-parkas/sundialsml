@@ -1654,6 +1654,22 @@ CAMLprim value sunml_idas_sens_get_num_err_test_fails(value vdata)
     CAMLreturn(Val_long(v));
 }
 
+CAMLprim value sunml_idas_sens_get_num_step_solve_fails(value vdata)
+{
+    CAMLparam1(vdata);
+    long int v;
+
+#if 620 <= SUNDIALS_LIB_VERSION
+    int flag;
+    flag = IDAGetNumStepSensSolveFails(IDA_MEM_FROM_ML(vdata), &v);
+    CHECK_FLAG("IDAGetNumStepSensSolveFails", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(Val_long(v));
+}
+
 CAMLprim value sunml_idas_sens_get_num_lin_solv_setups(value vdata)
 {
     CAMLparam1(vdata);

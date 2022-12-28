@@ -1520,6 +1520,22 @@ CAMLprim value sunml_ida_get_num_err_test_fails(value vida_mem)
     CAMLreturn(Val_long(v));
 }
 
+CAMLprim value sunml_ida_get_num_step_solve_fails(value vida_mem)
+{
+    CAMLparam1(vida_mem);
+    long int v;
+
+#if 620 <= SUNDIALS_LIB_VERSION
+    int flag;
+    flag = IDAGetNumStepSolveFails(IDA_MEM_FROM_ML(vida_mem), &v);
+    CHECK_FLAG("IDAGetNumStepSolveFails", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(Val_long(v));
+}
+
 CAMLprim value sunml_ida_get_last_order(value vida_mem)
 {
     CAMLparam1(vida_mem);

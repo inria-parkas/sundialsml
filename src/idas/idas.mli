@@ -715,6 +715,13 @@ module Sensitivity : sig (* {{{ *)
       @idas_sens IDAGetSensNumErrTestFails *)
   val get_num_err_test_fails : ('d, 'k) Ida.session -> int
 
+  (** Returns the number of failed steps due to a sensitivity nonlinear
+      solver failure.
+
+      @cvodes_sens IDAGetNumStepSensSolveFails
+      @since 6.2.0 *)
+  val get_num_step_solve_fails : ('d, 'k) Ida.session -> int
+
   (** Returns the number of calls made to the linear solver's setup function
       due to forward sensitivity calculations.
 
@@ -2020,6 +2027,13 @@ module Adjoint : sig (* {{{ *)
       @idas_adj IDAGetNumErrTestFails
       @idas_adj IDAGetAdjIDABmem *)
   val get_num_err_test_fails : ('d, 'k) bsession -> int
+
+  (** Returns the number of failed steps due to a nonlinear solver failure.
+
+      @cvode IDAGetNumStepSolveFails
+      @cvodes_adj IDAGetAdjCVodeBmem
+      @since 6.2.0 *)
+  val get_num_step_solve_fails : ('d, 'k) bsession -> int
 
   (** Returns the integration method order used during the last internal step.
 

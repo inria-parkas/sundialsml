@@ -1844,6 +1844,9 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
   external get_num_err_test_fails : ('a, 'k) session -> int
       = "sunml_arkode_ark_get_num_err_test_fails"
 
+  external get_num_step_solve_fails : ('a, 'k) session -> int
+      = "sunml_arkode_ark_get_num_step_solve_fails"
+
   external get_actual_init_step   : ('a, 'k) session -> float
       = "sunml_arkode_ark_get_actual_init_step"
 
@@ -3334,6 +3337,9 @@ module MRIStep = struct (* {{{ *)
       | ExplicitOnly -> n, 0
     end
     else c_get_num_rhs_evals s
+
+  external get_num_step_solve_fails : ('a, 'k) session -> int
+      = "sunml_arkode_mri_get_num_step_solve_fails"
 
   external get_last_step          : ('a, 'k) session -> float
       = "sunml_arkode_mri_get_last_step"

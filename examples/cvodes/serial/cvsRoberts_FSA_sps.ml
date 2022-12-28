@@ -243,8 +243,9 @@ let print_final_stats s sensi =
   and nni     = get_num_nonlin_solv_iters s
   and nnf     = get_num_nonlin_solv_conv_fails s
   and ncfn    = get_num_step_solve_fails s
+  and nje     = Dls.get_num_jac_evals s
   in
-  if Sundials.Version.lt620 then begin
+  if Sundials_impl.Version.lt620 then begin
     print_string "\nFinal Statistics\n\n";
     print_string_5d "nst     = " nst;
     print_string_5d "\n\nnfe     = " nfe;
@@ -270,7 +271,7 @@ let print_final_stats s sensi =
     and nnfS     = Sens.get_num_nonlin_solv_conv_fails s
     and ncfnS    = Sens.get_num_step_solve_fails s
     in
-    if Sundials.Version.lt620 then begin
+    if Sundials_impl.Version.lt620 then begin
       print_string_5d "\nnfSe    = " nfSe;
       print_string_5d "    nfeS     = " nfeS;
       print_string_5d "\nnetfs   = " netfS;
@@ -286,10 +287,10 @@ let print_final_stats s sensi =
     end
   end;
 
-  let nje   = Dls.get_num_jac_evals s
-  in
-  print_string_5d "\nnje    = " nje;
-  print_newline ()
+  if Sundials_impl.Version.lt620 then begin
+    print_string_5d "\nnje    = " nje;
+    print_newline ()
+  end
 
 (*
  *--------------------------------------------------------------------
@@ -319,7 +320,7 @@ let main () =
                 (f data) t0 y)
   in
 
-  if Sundials.Version.lt620
+  if Sundials_impl.Version.lt620
   then print_string "\n3-species chemical kinetics problem\n"
   else print_string " \n3-species kinetics problem\n";
 

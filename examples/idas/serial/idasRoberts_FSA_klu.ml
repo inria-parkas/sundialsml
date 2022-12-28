@@ -269,7 +269,7 @@ let print_final_stats ida_mem sensi =
   and nsetups = get_num_lin_solv_setups ida_mem
   and netf    = get_num_err_test_fails ida_mem
   and nni     = get_num_nonlin_solv_iters ida_mem
-  and ncfn    = get_num_nonlin_solv_conv_fails ida_mem
+  and nnf     = get_num_nonlin_solv_conv_fails ida_mem
   in
 
   let sens_stats =
@@ -278,12 +278,12 @@ let print_final_stats ida_mem sensi =
       and nfeS     = Sens.get_num_res_evals_sens ida_mem
       and nsetupsS = Sens.get_num_lin_solv_setups ida_mem
       and netfS    = Sens.get_num_err_test_fails ida_mem
-      and nniS, ncfnS =
+      and nniS, nnfS =
         try
           Sens.get_num_nonlin_solv_iters ida_mem,
           Sens.get_num_nonlin_solv_conv_fails ida_mem
         with Failure _ -> 0,0
-      in lazy (nfSe, nfeS, nsetupsS, netfS, nniS, ncfnS)
+      in lazy (nfSe, nfeS, nsetupsS, netfS, nniS, nnfS)
     else
       lazy (failwith "bug in C code transcribed to OCaml")
   in
@@ -292,16 +292,35 @@ let print_final_stats ida_mem sensi =
   printf "nst     = %5d\n\n" nst;
   printf "nfe     = %5d\n"   nfe;
   printf "netf    = %5d    nsetups  = %5d\n" netf nsetups;
-  printf "nni     = %5d    ncfn     = %5d\n" nni ncfn;
+  if Sundials_impl.Version.lt620 then
+    printf "nni     = %5d    ncfn     = %5d\n" nni nnf
+  else begin
+    printf "nni     = %5d    nnf      = %5d\n" nni nnf;
+    let ncfn = get_num_step_solve_fails ida_mem in
+    printf "ncfn    = %5d\n" ncfn
+  end;
 
   if sensi then
     begin
-      let (nfSe, nfeS, nsetupsS, netfS, nniS, ncfnS) = Lazy.force sens_stats in
+      let (nfSe, nfeS, nsetupsS, netfS, nniS, nnfS) = Lazy.force sens_stats in
       print_string "\n";
       printf "nfSe    = %5d    nfeS     = %5d\n" nfSe nfeS;
       printf "netfs   = %5d    nsetupsS = %5d\n" netfS nsetupsS;
-      printf "nniS    = %5d    ncfnS    = %5d\n" nniS ncfnS
-    end
+      if Sundials_impl.Version.lt620 then
+        printf "nniS    = %5d    ncfnS    = %5d\n" nniS nnfS
+      else begin
+        printf "nniS    = %5d    nnfS     = %5d\n" nniS nnfS;
+        let ncfnS = Sens.get_num_step_solve_fails ida_mem in
+        printf "ncfnS   = %5d\n" ncfnS
+      end
+    end;
+
+  if not Sundials_impl.Version.lt620 then begin
+    print_newline ();
+    let nje = Dls.get_num_jac_evals ida_mem in
+    let nfeLS = Dls.get_num_lin_res_evals ida_mem in
+    printf "nje    = %5d    nfeLS     = %5d\n" nje nfeLS
+  end
 
 let main () =
   let sensi, err_con = process_args () in

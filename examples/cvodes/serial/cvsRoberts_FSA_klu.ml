@@ -241,16 +241,26 @@ let print_final_stats s sensi =
   and nsetups = get_num_lin_solv_setups s
   and netf    = get_num_err_test_fails s
   and nni     = get_num_nonlin_solv_iters s
-  and ncfn    = get_num_nonlin_solv_conv_fails s
+  and nnf     = get_num_nonlin_solv_conv_fails s
+  and nje     = Dls.get_num_jac_evals s
   in
-  print_string "\nFinal Statistics\n\n";
-  print_string_5d "nst     = " nst;
-  print_string_5d "\n\nnfe     = " nfe;
-  print_string_5d "\nnetf    = " netf;
-  print_string_5d "    nsetups  = " nsetups;
-  print_string_5d "\nnni     = " nni;
-  print_string_5d "    ncfn     = " ncfn;
-  print_newline ();
+  if Sundials_impl.Version.lt620 then begin
+    print_string "\nFinal Statistics\n\n";
+    print_string_5d "nst     = " nst;
+    print_string_5d "\n\nnfe     = " nfe;
+    print_string_5d "\nnetf    = " netf;
+    print_string_5d "    nsetups  = " nsetups;
+    print_string_5d "\nnni     = " nni;
+    print_string_5d "    ncfn     = " nnf;
+    print_newline ();
+  end else begin
+    let ncfn = get_num_step_solve_fails s in
+    printf "\nFinal Statistics:\n";
+    printf "nst = %-6d nfe = %-6d nsetups = %-6d nje = %d\n"
+           nst nfe nsetups nje;
+    printf "nni = %-6d nnf = %-6d netf = %-6d    ncfn = %-6d\n\n"
+           nni nnf netf ncfn
+  end;
 
   if sensi then begin
     let nfSe     = Sens.get_num_rhs_evals s
@@ -258,21 +268,28 @@ let print_final_stats s sensi =
     and nsetupsS = Sens.get_num_lin_solv_setups s
     and netfS    = Sens.get_num_err_test_fails s
     and nniS     = Sens.get_num_nonlin_solv_iters s
-    and ncfnS    = Sens.get_num_nonlin_solv_conv_fails s
+    and nnfS     = Sens.get_num_nonlin_solv_conv_fails s
     in
-    print_string_5d "\nnfSe    = " nfSe;
-    print_string_5d "    nfeS     = " nfeS;
-    print_string_5d "\nnetfs   = " netfS;
-    print_string_5d "    nsetupsS = " nsetupsS;
-    print_string_5d "\nnniS    = " nniS;
-    print_string_5d "    ncfnS    = " ncfnS;
-    print_newline ()
+    if Sundials_impl.Version.lt620 then begin
+      print_string_5d "\nnfSe    = " nfSe;
+      print_string_5d "    nfeS     = " nfeS;
+      print_string_5d "\nnetfs   = " netfS;
+      print_string_5d "    nsetupsS = " nsetupsS;
+      print_string_5d "\nnniS    = " nniS;
+      print_string_5d "    ncfnS    = " nnfS;
+      print_newline ()
+    end else begin
+      let ncfnS = get_num_step_solve_fails s in
+      printf "nfSe = %-6d nfeS = %-6d nsetupsS = %-6d\n" nfSe nfeS nsetupsS;
+      printf "nniS = %-6d nnfS = %-6d netfS = %-6d ncfnS = %-6d\n\n"
+             nniS nnfS netfS ncfnS
+    end
   end;
 
-  let nje   = Dls.get_num_jac_evals s
-  in
-  print_string_5d "\nnje    = " nje;
-  print_newline ()
+  if Sundials_impl.Version.lt620 then begin
+    print_string_5d "\nnje    = " nje;
+    print_newline ()
+  end
 
 (*
  *--------------------------------------------------------------------

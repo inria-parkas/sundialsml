@@ -919,6 +919,9 @@ external get_num_lin_solv_setups : ('a, 'k) session -> int
 external get_num_err_test_fails : ('a, 'k) session -> int
     = "sunml_cvode_get_num_err_test_fails"
 
+external get_num_step_solve_fails : ('a, 'k) session -> int
+    = "sunml_cvode_get_num_step_solve_fails"
+
 external get_last_order         : ('a, 'k) session -> int
     = "sunml_cvode_get_last_order"
 

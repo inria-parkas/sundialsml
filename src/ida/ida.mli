@@ -910,6 +910,12 @@ val get_num_lin_solv_setups : ('d, 'k) session -> int
     @ida IDAGetNumErrTestFails *)
 val get_num_err_test_fails  : ('d, 'k) session -> int
 
+(** Returns the number of failed steps due to a nonlinear solver failure.
+
+    @cvode IDAGetNumStepSolveFails
+    @since 6.2.0 *)
+val get_num_step_solve_fails : ('d, 'k) session -> int
+
 (** Returns the integration method order used during the last internal step.
 
     @ida IDAGetLastOrder *)

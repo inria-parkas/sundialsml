@@ -3656,6 +3656,22 @@ CAMLprim value sunml_arkode_ark_get_num_err_test_fails(value varkode_mem)
     CAMLreturn(Val_long(v));
 }
 
+CAMLprim value sunml_arkode_ark_get_num_step_solve_fails(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    long int v;
+
+#if 620 <= SUNDIALS_LIB_VERSION
+    int flag;
+    flag = ARKStepGetNumStepSolveFails(ARKODE_MEM_FROM_ML(varkode_mem), &v);
+    CHECK_FLAG("ARKStepGetNumStepSolveFails", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(Val_long(v));
+}
+
 CAMLprim value sunml_arkode_ark_get_actual_init_step(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
@@ -7852,6 +7868,22 @@ CAMLprim value sunml_arkode_mri_get_num_rhs_evals(value varkode_mem)
 #endif
 
     CAMLreturn(vr);
+}
+
+CAMLprim value sunml_arkode_mri_get_num_step_solve_fails(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    long int v;
+
+#if 620 <= SUNDIALS_LIB_VERSION
+    int flag;
+    flag = MRIStepGetNumStepSolveFails(ARKODE_MEM_FROM_ML(varkode_mem), &v);
+    CHECK_FLAG("MRIStepGetNumStepSolveFails", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(Val_long(v));
 }
 
 /* optional inputs for MRIStep */

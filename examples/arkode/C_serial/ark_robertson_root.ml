@@ -176,7 +176,7 @@ let main () =
   let nsetups  = get_num_lin_solv_setups arkode_mem in
   let netf     = get_num_err_test_fails arkode_mem in
   let nni      = get_num_nonlin_solv_iters arkode_mem in
-  let ncfn     = get_num_nonlin_solv_conv_fails arkode_mem in
+  let nnf      = get_num_nonlin_solv_conv_fails arkode_mem in
   let nje      = Dls.get_num_jac_evals arkode_mem in
   let nfeLS    = Dls.get_num_lin_rhs_evals arkode_mem in
   let nge      = get_num_g_evals arkode_mem in
@@ -189,8 +189,11 @@ let main () =
   printf "   Total number of Jacobian evaluations = %d\n" nje;
   printf "   Total number of Newton iterations = %d\n" nni;
   printf "   Total root-function g evals = %d\n" nge;
-  printf "   Total number of nonlinear solver convergence failures = %d\n" ncfn;
-  printf "   Total number of error test failures = %d\n" netf
+  printf "   Total number of nonlinear solver convergence failures = %d\n" nnf;
+  printf "   Total number of error test failures = %d\n" netf;
+  if not Sundials_impl.Version.lt620 then
+    let ncfn = get_num_step_solve_fails arkode_mem in
+    printf "   Total number of failed steps from solver failure = %d\n" ncfn
 
 (* Check environment variables for extra arguments.  *)
 let reps =

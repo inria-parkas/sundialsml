@@ -81,7 +81,7 @@ and print_final_stats ida =
   and nje  = Dls.get_num_jac_evals ida
   and nni  = get_num_nonlin_solv_iters ida
   and netf = get_num_err_test_fails ida
-  and ncfn = get_num_nonlin_solv_conv_fails ida
+  and nnf  = get_num_nonlin_solv_conv_fails ida
   and nge  = get_num_g_evals ida
   in
   printf "\nFinal Run Statistics: \n\n";
@@ -90,7 +90,10 @@ and print_final_stats ida =
   printf "Number of Jacobian evaluations     = %d\n" nje;
   printf "Number of nonlinear iterations     = %d\n" nni;
   printf "Number of error test failures      = %d\n" netf;
-  printf "Number of nonlinear conv. failures = %d\n" ncfn;
+  printf "Number of nonlinear conv. failures = %d\n" nnf;
+  if not Sundials_impl.Version.lt620 then
+    let ncfn = get_num_step_solve_fails ida in
+    printf "Number of step solver failures     = %d\n" ncfn;
   printf "Number of root fn. evaluations     = %d\n" nge
 
 and print_root_info root_f1 root_f2 =
