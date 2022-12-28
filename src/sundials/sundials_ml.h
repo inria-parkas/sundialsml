@@ -234,7 +234,7 @@ enum sundials_output_format_tag {
 
 #if 620 <= SUNDIALS_LIB_VERSION
 #define SUNML_OUTPUT_FORMAT(v) \
-    ((v == VARIANT_SUNDIALS_OUTPUTFORMAT_CSV) \
+    ((Int_val(v) == VARIANT_SUNDIALS_OUTPUTFORMAT_CSV) \
 	? SUN_OUTPUTFORMAT_CSV : SUN_OUTPUTFORMAT_TABLE)
 #endif
 
