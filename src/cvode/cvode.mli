@@ -806,7 +806,7 @@ val reinit :
   -> ('d, 'k) Nvector.t
   -> unit
 
-(** {2:set Modifying the solver (optional input functions)} *)
+(** {2:set Modifying the solver} *)
 
 (** Sets the integration tolerances.
 
@@ -864,6 +864,9 @@ val set_monitor_frequency : ('d, 'k) session -> int -> unit
     @since 5.3.0 *)
 val clear_monitor_fn : ('d, 'k) session -> unit
 
+
+(** {3:set_main Main solver optional input functions} *)
+
 (** Specifies the maximum order of the linear multistep method.
 
     @cvode CVodeSetMaxOrd *)
@@ -915,6 +918,19 @@ val set_stop_time : ('d, 'k) session -> float -> unit
     @cvode CVodeSetMaxErrTestFails *)
 val set_max_err_test_fails : ('d, 'k) session -> int -> unit
 
+(** Specifies a vector defining inequality constraints for each
+    component of the solution vector [y].  See {!Sundials.Constraint}.
+
+    @cvode CVodeSetConstraints *)
+val set_constraints : ('d, 'k) session -> ('d, 'k) Nvector.t -> unit
+
+(** Disables constraint checking.
+
+    @cvode CVodeSetConstraints *)
+val clear_constraints : ('d, 'k) session -> unit
+
+(** {3:set_nls Nonlinear solver interface optional input functions} *)
+
 (** Specifies the maximum number of nonlinear solver iterations permitted per
     step.
 
@@ -932,16 +948,7 @@ val set_max_conv_fails : ('d, 'k) session -> int -> unit
     @cvode CVodeSetNonlinConvCoef *)
 val set_nonlin_conv_coef : ('d, 'k) session -> float -> unit
 
-(** Specifies a vector defining inequality constraints for each
-    component of the solution vector [y].  See {!Sundials.Constraint}.
-
-    @cvode CVodeSetConstraints *)
-val set_constraints : ('d, 'k) session -> ('d, 'k) Nvector.t -> unit
-
-(** Disables constraint checking.
-
-    @cvode CVodeSetConstraints *)
-val clear_constraints : ('d, 'k) session -> unit
+(** {3:set_proj Projection optional input functions} *)
 
 (** Enables or disables projection of the error estimate by the projection
     function.

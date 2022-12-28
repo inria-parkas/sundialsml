@@ -792,7 +792,7 @@ val reinit :
   -> ('d, 'k) Nvector.t
   -> unit
 
-(** {2:set Modifying the solver (optional input functions)} *)
+(** {2:set Modifying the solver} *)
 
 (** Set the integration tolerances.
 
@@ -801,6 +801,19 @@ val reinit :
     @ida IDAWFtolerances
     @ida IDAEwtFn *)
 val set_tolerances : ('d, 'k) session -> ('d, 'k) tolerance -> unit
+
+(** Specifies a vector defining inequality constraints for each
+    component of the solution vector [u].  See {!Sundials.Constraint}.
+
+    @ida IDASetConstraints *)
+val set_constraints : ('d, 'k) session -> ('d, 'k) Nvector.t -> unit
+
+(** Disables constraint checking.
+
+    @ida IDASetConstraints *)
+val clear_constraints : ('d, 'k) session -> unit
+
+(** {3:set_main Main solver optional input functions} *)
 
 (** Configure the default error handler to write messages to a file.
     By default it writes to Logfile.stderr.
@@ -854,6 +867,8 @@ val set_stop_time : ('d, 'k) session -> float -> unit
     @ida IDASetMaxErrTestFails *)
 val set_max_err_test_fails : ('d, 'k) session -> int -> unit
 
+(** {3:set_nls Nonlinear solver interface optional input functions} *)
+
 (** Specifies the maximum number of nonlinear solver iterations permitted per
     step.
 
@@ -870,17 +885,6 @@ val set_max_conv_fails : ('d, 'k) session -> int -> unit
 
     @ida IDASetNonlinConvCoef *)
 val set_nonlin_conv_coef : ('d, 'k) session -> float -> unit
-
-(** Specifies a vector defining inequality constraints for each
-    component of the solution vector [u].  See {!Sundials.Constraint}.
-
-    @ida IDASetConstraints *)
-val set_constraints : ('d, 'k) session -> ('d, 'k) Nvector.t -> unit
-
-(** Disables constraint checking.
-
-    @ida IDASetConstraints *)
-val clear_constraints : ('d, 'k) session -> unit
 
 (** {2:get Querying the solver (optional output functions)} *)
 
