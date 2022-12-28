@@ -1462,6 +1462,9 @@ static value rewrap_nlsolver(SUNNonlinearSolver nls0, value vcallbacks)
 
     nls->content = nls0->content;
     nls->ops = nls0->ops;
+#if 600 <= SUNDIALS_LIB_VERSION
+    nls->sunctx = nls0->sunctx;
+#endif
     free(nls0);
 
     snls = NLS_EXTENDED(nls);
