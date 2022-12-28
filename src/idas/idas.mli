@@ -1372,44 +1372,6 @@ module Adjoint : sig (* {{{ *)
       -> ('d, 'k) preconditioner
       -> ('d, 'k) linear_solver
 
-    (** {3:set Solver parameters} *)
-
-    (** Sets the factor by which the Krylov linear solver's convergence test
-        constant is reduced from the Newton iteration test constant.
-        This factor must be >= 0; passing 0 specifies the default (0.05).
-
-        @idas_adj IDASetEpsLinB *)
-    val set_eps_lin : ('d, 'k) bsession -> float -> unit
-
-    (** Sets the factor for converting from the integrator tolerance (WRMS
-        norm) to the linear solver tolerance (L2 norm). That is,
-        {% $\mathit{tol}_{\mathsf{L2}} =
-            \mathit{fact}\cdot\mathit{tol}_{\mathsf{WRMS}}$ %}.
-        The given value is used directly if it is greater than zero.
-        If it is zero (the default), then the square root of the state
-        vector length is used.
-        If it is less than zero, then the square root of the dot product of a
-        state vector full of ones with itself is used.
-
-        @idas_adj IDAStepSetLSNormFactorB
-        @since 5.4.0 *)
-    val set_ls_norm_factor : ('d, 'k) bsession -> float -> unit
-
-    (** Enables or disables scaling of the linear system solution to account
-        for a change in {% $\gamma$ %} in the linear system. Linear solution
-        scaling is enabled by default when a matrix-based linear solver is
-        attached.
-
-        @idas_adj IDASetLinearSolutionScalingB
-        @since 5.2.0 *)
-    val set_linear_solution_scaling : ('d, 'k) bsession -> bool -> unit
-
-    (** Sets the increment factor ([dqincfac]) to use in the difference-quotient
-        approximation for the backward problem.
-
-        @idas IDASetIncrementFactorB *)
-    val set_increment_factor : ('d, 'k) bsession -> float -> unit
-
     (** {3:stats Solver statistics} *)
 
     (** Returns the sizes of the real and integer workspaces used by the
@@ -1994,6 +1956,42 @@ module Adjoint : sig (* {{{ *)
 
       @idas_adj IDASetConstraints *)
   val clear_constraints : ('d, 'k) bsession -> unit
+
+  (** Sets the factor by which the Krylov linear solver's convergence test
+      constant is reduced from the Newton iteration test constant.
+      This factor must be >= 0; passing 0 specifies the default (0.05).
+
+      @idas_adj IDASetEpsLinB *)
+  val set_eps_lin : ('d, 'k) bsession -> float -> unit
+
+  (** Sets the factor for converting from the integrator tolerance (WRMS
+      norm) to the linear solver tolerance (L2 norm). That is,
+      {% $\mathit{tol}_{\mathsf{L2}} =
+          \mathit{fact}\cdot\mathit{tol}_{\mathsf{WRMS}}$ %}.
+      The given value is used directly if it is greater than zero.
+      If it is zero (the default), then the square root of the state
+      vector length is used.
+      If it is less than zero, then the square root of the dot product of a
+      state vector full of ones with itself is used.
+
+      @idas_adj IDAStepSetLSNormFactorB
+      @since 5.4.0 *)
+  val set_ls_norm_factor : ('d, 'k) bsession -> float -> unit
+
+  (** Enables or disables scaling of the linear system solution to account
+      for a change in {% $\gamma$ %} in the linear system. Linear solution
+      scaling is enabled by default when a matrix-based linear solver is
+      attached.
+
+      @idas_adj IDASetLinearSolutionScalingB
+      @since 5.2.0 *)
+  val set_linear_solution_scaling : ('d, 'k) bsession -> bool -> unit
+
+  (** Sets the increment factor ([dqincfac]) to use in the difference-quotient
+      approximation for the backward problem.
+
+      @idas IDASetIncrementFactorB *)
+  val set_increment_factor : ('d, 'k) bsession -> float -> unit
 
   (** {2:get Querying the solver (optional output functions)} *)
 

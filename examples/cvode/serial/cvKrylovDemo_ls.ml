@@ -608,7 +608,7 @@ let main () =
         | 2 -> -1.0            (* compute with dot product *)
         | _ ->  0.0            (* use the default *)
       in
-      Cvode.Spils.set_ls_norm_factor cvode_mem nrmfact
+      Cvode.set_ls_norm_factor cvode_mem nrmfact
     end;
 
     (* In loop over output points, call CVode, print results, test for error *)

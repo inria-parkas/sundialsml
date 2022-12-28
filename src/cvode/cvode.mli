@@ -425,56 +425,6 @@ module Spils : sig (* {{{ *)
     -> ('d, 'k) preconditioner
     -> ('d, 'k) linear_solver
 
-  (** {3:set Solver parameters} *)
-
-  (** Sets the maximum number of time steps to wait before recomputation of
-      the Jacobian or recommendation to update the preconditioner.
-      If the integer argument is less than or equal to 0, a default value of
-      50 is used.
-
-      @cvode CVodeSetJacEvalFrequency
-      @since 4.0.0 *)
-  val set_jac_eval_frequency : ('d, 'k) session -> int -> unit
-
-  (** Specifies the frequency of calls to the linear solver setup routine.
-      Positive values specify the number of time steps between setup calls,
-      negative values force recomputation at each Newton step, and zero values
-      reset to the default (20).
-
-      @cvode CVodeSetLSetupFrequency
-      @since 5.4.0 *)
-  val set_lsetup_frequency : ('d, 'k) session -> int -> unit
-
-  (** Enables or disables scaling of the linear system solution to account
-      for a change in {% $\gamma$ %} in the linear system.
-      Linear solution scaling is enabled by default when a matrix-based
-      linear solver is attached.
-
-      @since 5.2.0
-      @cvode CVodeSetLinearSolutionScaling *)
-  val set_linear_solution_scaling : ('d, 'k) session -> bool -> unit
-
-  (** Sets the factor by which the Krylov linear solver's convergence test
-      constant is reduced from the Newton iteration test constant.
-      This factor must be >= 0; passing 0 specifies the default (0.05).
-
-      @cvode CVodeSetEpsLin *)
-  val set_eps_lin : ('d, 'k) session -> float -> unit
-
-  (** Sets the factor for converting from the integrator tolerance (WRMS
-      norm) to the linear solver tolerance (L2 norm). That is,
-      {% $\mathit{tol}_{\mathsf{L2}} =
-          \mathit{fact}\cdot\mathit{tol}_{\mathsf{WRMS}}$ %}.
-      The given value is used directly if it is greater than zero.
-      If it is zero (the default), then the square root of the state
-      vector length is used.
-      If it is less than zero, then the square root of the dot product of a
-      state vector full of ones with itself is used.
-
-      @cvode CVodeSetLSNormFactor
-      @since 5.4.0 *)
-  val set_ls_norm_factor : ('d, 'k) session -> float -> unit
-
   (** {3:stats Solver statistics} *)
 
   (** Returns the sizes of the real and integer workspaces used by the spils
@@ -927,6 +877,56 @@ val set_constraints : ('d, 'k) session -> ('d, 'k) Nvector.t -> unit
 
     @cvode CVodeSetConstraints *)
 val clear_constraints : ('d, 'k) session -> unit
+
+(** {3:set_ls Linear solver interface optional input functions} *)
+
+(** Specifies the frequency of calls to the linear solver setup routine.
+    Positive values specify the number of time steps between setup calls,
+    negative values force recomputation at each Newton step, and zero values
+    reset to the default (20).
+
+    @cvode CVodeSetLSetupFrequency
+    @since 5.4.0 *)
+val set_lsetup_frequency : ('d, 'k) session -> int -> unit
+
+(** Sets the maximum number of time steps to wait before recomputation of
+    the Jacobian or recommendation to update the preconditioner.
+    If the integer argument is less than or equal to 0, a default value of
+    50 is used.
+
+    @cvode CVodeSetJacEvalFrequency
+    @since 4.0.0 *)
+val set_jac_eval_frequency : ('d, 'k) session -> int -> unit
+
+(** Enables or disables scaling of the linear system solution to account
+    for a change in {% $\gamma$ %} in the linear system.
+    Linear solution scaling is enabled by default when a matrix-based
+    linear solver is attached.
+
+    @since 5.2.0
+    @cvode CVodeSetLinearSolutionScaling *)
+val set_linear_solution_scaling : ('d, 'k) session -> bool -> unit
+
+(** Sets the factor by which the Krylov linear solver's convergence test
+    constant is reduced from the Newton iteration test constant.
+    This factor must be >= 0; passing 0 specifies the default (0.05).
+
+    @cvode CVodeSetEpsLin *)
+val set_eps_lin : ('d, 'k) session -> float -> unit
+
+(** Sets the factor for converting from the integrator tolerance (WRMS
+    norm) to the linear solver tolerance (L2 norm). That is,
+    {% $\mathit{tol}_{\mathsf{L2}} =
+        \mathit{fact}\cdot\mathit{tol}_{\mathsf{WRMS}}$ %}.
+    The given value is used directly if it is greater than zero.
+    If it is zero (the default), then the square root of the state
+    vector length is used.
+    If it is less than zero, then the square root of the dot product of a
+    state vector full of ones with itself is used.
+
+    @cvode CVodeSetLSNormFactor
+    @since 5.4.0 *)
+val set_ls_norm_factor : ('d, 'k) session -> float -> unit
 
 (** {3:set_nls Nonlinear solver interface optional input functions} *)
 

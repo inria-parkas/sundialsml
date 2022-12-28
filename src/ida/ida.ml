@@ -493,26 +493,6 @@ module Spils = struct (* {{{ *)
                                   prec_solve_fn = solve }
     | _ -> raise LinearSolver.InvalidLinearSolver
 
-  external set_eps_lin            : ('a, 'k) session -> float -> unit
-      = "sunml_ida_set_eps_lin"
-
-  let set_eps_lin s epsl =
-    if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
-    set_eps_lin s epsl
-
-  external set_ls_norm_factor : ('d, 'k) session -> float -> unit
-    = "sunml_ida_set_ls_norm_factor"
-
-  external set_linear_solution_scaling : ('d, 'k) session -> bool -> unit
-      = "sunml_ida_set_linear_solution_scaling"
-
-  external set_increment_factor   : ('a, 'k) session -> float -> unit
-      = "sunml_ida_set_increment_factor"
-
-  let set_increment_factor s dqincfac =
-    if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
-    set_increment_factor s dqincfac
-
   external get_num_lin_iters      : ('a, 'k) session -> int
       = "sunml_ida_get_num_lin_iters"
 
@@ -857,6 +837,26 @@ external clear_err_handler_fn  : ('a, 'k) session -> unit
 let clear_err_handler_fn s =
   s.errh <- dummy_errh;
   clear_err_handler_fn s
+
+external set_eps_lin            : ('a, 'k) session -> float -> unit
+    = "sunml_ida_set_eps_lin"
+
+let set_eps_lin s epsl =
+  if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
+  set_eps_lin s epsl
+
+external set_ls_norm_factor : ('d, 'k) session -> float -> unit
+  = "sunml_ida_set_ls_norm_factor"
+
+external set_linear_solution_scaling : ('d, 'k) session -> bool -> unit
+    = "sunml_ida_set_linear_solution_scaling"
+
+external set_increment_factor   : ('a, 'k) session -> float -> unit
+    = "sunml_ida_set_increment_factor"
+
+let set_increment_factor s dqincfac =
+  if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
+  set_increment_factor s dqincfac
 
 external set_max_ord            : ('a, 'k) session -> int -> unit
     = "sunml_ida_set_max_ord"

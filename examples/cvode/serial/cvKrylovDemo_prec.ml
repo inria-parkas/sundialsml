@@ -891,7 +891,7 @@ let main () =
         (f wdata) t0 c)
   in
   wdata.cvode_mem <- Some cvode_mem;
-  Cvode.Spils.set_eps_lin cvode_mem delt;
+  Cvode.set_eps_lin cvode_mem delt;
 
   let ns   = wdata.ns
   and mxns = wdata.mxns

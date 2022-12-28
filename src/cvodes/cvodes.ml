@@ -1341,35 +1341,6 @@ module Adjoint = struct (* {{{ *)
           (tosession bs).ls_callbacks <- BSpilsCallbackWithSens (None, None)
       | _ -> raise LinearSolver.InvalidLinearSolver
 
-    external set_eps_lin : ('a, 'k) session -> int -> float -> unit
-        = "sunml_cvodes_adj_set_eps_lin"
-
-    let set_eps_lin bs epsl =
-      let parent, which = parent_and_which bs in
-      if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils (tosession bs);
-      set_eps_lin parent which epsl
-
-    external set_ls_norm_factor : ('a, 'k) session -> int -> float -> unit
-        = "sunml_cvodes_adj_set_ls_norm_factor"
-
-    let set_ls_norm_factor bs fac =
-      let parent, which = parent_and_which bs in
-      set_ls_norm_factor parent which fac
-
-    external c_set_linear_solution_scaling
-      : ('d, 'k) session -> int -> bool -> unit
-      = "sunml_cvodes_adj_set_linear_solution_scaling"
-
-    let set_linear_solution_scaling bs onoff =
-      let parent, which = parent_and_which bs in
-      c_set_linear_solution_scaling parent which onoff
-
-    let set_jac_eval_frequency bs =
-      Cvode.Spils.set_jac_eval_frequency (tosession bs)
-
-    let set_lsetup_frequency bs =
-      Cvode.Spils.set_lsetup_frequency (tosession bs)
-
     let get_work_space bs =
       Cvode.Spils.get_work_space (tosession bs)
 
@@ -1574,6 +1545,35 @@ module Adjoint = struct (* {{{ *)
     (match lsolver with
      | None -> ()
      | Some linsolv -> linsolv bs yb0)
+
+  external set_eps_lin : ('a, 'k) session -> int -> float -> unit
+      = "sunml_cvodes_adj_set_eps_lin"
+
+  let set_eps_lin bs epsl =
+    let parent, which = parent_and_which bs in
+    if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils (tosession bs);
+    set_eps_lin parent which epsl
+
+  external set_ls_norm_factor : ('a, 'k) session -> int -> float -> unit
+      = "sunml_cvodes_adj_set_ls_norm_factor"
+
+  let set_ls_norm_factor bs fac =
+    let parent, which = parent_and_which bs in
+    set_ls_norm_factor parent which fac
+
+  external c_set_linear_solution_scaling
+    : ('d, 'k) session -> int -> bool -> unit
+    = "sunml_cvodes_adj_set_linear_solution_scaling"
+
+  let set_linear_solution_scaling bs onoff =
+    let parent, which = parent_and_which bs in
+    c_set_linear_solution_scaling parent which onoff
+
+  let set_jac_eval_frequency bs =
+    Cvode.set_jac_eval_frequency (tosession bs)
+
+  let set_lsetup_frequency bs =
+    Cvode.set_lsetup_frequency (tosession bs)
 
   let get_work_space bs = Cvode.get_work_space (tosession bs)
 

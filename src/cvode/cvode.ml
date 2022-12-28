@@ -532,29 +532,6 @@ module Spils = struct (* {{{ *)
                                   prec_solve_fn = solve }
     | _ -> raise LinearSolver.InvalidLinearSolver
 
-  external set_jac_eval_frequency : ('a, 'k) session -> int -> unit
-      = "sunml_cvode_set_jac_eval_frequency"
-
-  let set_jac_eval_frequency s maxsteps =
-    if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
-    set_jac_eval_frequency s maxsteps
-
-  external set_lsetup_frequency   : ('a, 'k) session -> int -> unit
-      = "sunml_cvode_set_lsetup_frequency"
-
-  external set_linear_solution_scaling : ('d, 'k) session -> bool -> unit
-    = "sunml_cvode_set_linear_solution_scaling"
-
-  external set_eps_lin            : ('a, 'k) session -> float -> unit
-      = "sunml_cvode_set_eps_lin"
-
-  let set_eps_lin s epsl =
-    if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
-    set_eps_lin s epsl
-
-  external set_ls_norm_factor : ('d, 'k) session -> float -> unit
-      = "sunml_cvode_set_ls_norm_factor"
-
   external get_num_lin_iters      : ('a, 'k) session -> int
       = "sunml_cvode_get_num_lin_iters"
 
@@ -930,6 +907,29 @@ external get_current_order      : ('a, 'k) session -> int
 
 external get_current_state : ('d, 'k) session -> 'd
     = "sunml_cvode_get_current_state"
+
+external set_jac_eval_frequency : ('a, 'k) session -> int -> unit
+    = "sunml_cvode_set_jac_eval_frequency"
+
+let set_jac_eval_frequency s maxsteps =
+  if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
+  set_jac_eval_frequency s maxsteps
+
+external set_lsetup_frequency   : ('a, 'k) session -> int -> unit
+    = "sunml_cvode_set_lsetup_frequency"
+
+external set_linear_solution_scaling : ('d, 'k) session -> bool -> unit
+  = "sunml_cvode_set_linear_solution_scaling"
+
+external set_eps_lin            : ('a, 'k) session -> float -> unit
+    = "sunml_cvode_set_eps_lin"
+
+let set_eps_lin s epsl =
+  if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
+  set_eps_lin s epsl
+
+external set_ls_norm_factor : ('d, 'k) session -> float -> unit
+    = "sunml_cvode_set_ls_norm_factor"
 
 (* must correspond to cvode_nonlin_system_data_index in cvode_ml.h *)
 type 'd nonlin_system_data = {

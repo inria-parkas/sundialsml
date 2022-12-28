@@ -1353,37 +1353,6 @@ module Adjoint = struct (* {{{ *)
           (tosession bs).ls_callbacks <- BSpilsCallbackSens (None, None)
       | _ -> raise LinearSolver.InvalidLinearSolver
 
-    external set_eps_lin : ('a, 'k) session -> int -> float -> unit
-        = "sunml_idas_adj_set_eps_lin"
-
-    let set_eps_lin bs epsl =
-      if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils (tosession bs);
-      let parent, which = parent_and_which bs in
-      set_eps_lin parent which epsl
-
-    external set_ls_norm_factor : ('a, 'k) session -> int -> float -> unit
-        = "sunml_idas_adj_set_ls_norm_factor"
-
-    let set_ls_norm_factor bs fac =
-      let parent, which = parent_and_which bs in
-      set_ls_norm_factor parent which fac
-
-    external c_set_linear_solution_scaling
-        : ('d, 'k) session -> int -> bool -> unit
-        = "sunml_idas_adj_set_linear_solution_scaling"
-
-    let set_linear_solution_scaling bs onoff =
-      let parent, which = parent_and_which bs in
-      c_set_linear_solution_scaling parent which onoff
-
-    external set_increment_factor : ('a, 'k) session -> int -> float -> unit
-        = "sunml_idas_adj_set_increment_factor"
-
-    let set_increment_factor bs dqincfac =
-      if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils (tosession bs);
-      let parent, which = parent_and_which bs in
-      set_increment_factor parent which dqincfac
-
     let get_work_space bs =
       Ida.Spils.get_work_space (tosession bs)
 
@@ -1610,6 +1579,37 @@ module Adjoint = struct (* {{{ *)
 
   let print_all_stats bs =
     Ida.print_all_stats (tosession bs)
+
+  external set_eps_lin : ('a, 'k) session -> int -> float -> unit
+      = "sunml_idas_adj_set_eps_lin"
+
+  let set_eps_lin bs epsl =
+    if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils (tosession bs);
+    let parent, which = parent_and_which bs in
+    set_eps_lin parent which epsl
+
+  external set_ls_norm_factor : ('a, 'k) session -> int -> float -> unit
+      = "sunml_idas_adj_set_ls_norm_factor"
+
+  let set_ls_norm_factor bs fac =
+    let parent, which = parent_and_which bs in
+    set_ls_norm_factor parent which fac
+
+  external c_set_linear_solution_scaling
+      : ('d, 'k) session -> int -> bool -> unit
+      = "sunml_idas_adj_set_linear_solution_scaling"
+
+  let set_linear_solution_scaling bs onoff =
+    let parent, which = parent_and_which bs in
+    c_set_linear_solution_scaling parent which onoff
+
+  external set_increment_factor : ('a, 'k) session -> int -> float -> unit
+      = "sunml_idas_adj_set_increment_factor"
+
+  let set_increment_factor bs dqincfac =
+    if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils (tosession bs);
+    let parent, which = parent_and_which bs in
+    set_increment_factor parent which dqincfac
 
   module Quadrature = struct (* {{{ *)
     include QuadratureTypes
