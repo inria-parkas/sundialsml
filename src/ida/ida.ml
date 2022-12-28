@@ -877,6 +877,22 @@ external set_max_conv_fails     : ('a, 'k) session -> int -> unit
 external set_nonlin_conv_coef   : ('a, 'k) session -> float -> unit
     = "sunml_ida_set_nonlin_conv_coef"
 
+external c_set_eta_fixed_step_bounds
+    : ('d, 'k) session -> float -> float -> unit
+    = "sunml_ida_set_eta_fixed_step_bounds"
+let set_eta_fixed_step_bounds s ~min ~max () =
+  c_set_eta_fixed_step_bounds s min max
+external set_eta_min                      : ('d, 'k) session -> float -> unit
+    = "sunml_ida_set_eta_min"
+external set_eta_max                      : ('d, 'k) session -> float -> unit
+    = "sunml_ida_set_eta_max"
+external set_eta_low                      : ('d, 'k) session -> float -> unit
+    = "sunml_ida_set_eta_low"
+external set_eta_min_err_fail             : ('d, 'k) session -> float -> unit
+    = "sunml_ida_set_eta_min_err_fail"
+external set_eta_conv_fail                : ('d, 'k) session -> float -> unit
+    = "sunml_ida_set_eta_conv_fail"
+
 external set_root_direction'   : ('a, 'k) session -> RootDirs.t -> unit
     = "sunml_ida_set_root_direction"
 

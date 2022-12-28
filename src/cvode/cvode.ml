@@ -1059,6 +1059,30 @@ external set_max_conv_fails     : ('a, 'k) session -> int -> unit
 external set_nonlin_conv_coef   : ('a, 'k) session -> float -> unit
     = "sunml_cvode_set_nonlin_conv_coef"
 
+external c_set_eta_fixed_step_bounds
+    : ('d, 'k) session -> float -> float -> unit
+    = "sunml_cvode_set_eta_fixed_step_bounds"
+let set_eta_fixed_step_bounds s ~min ~max () =
+  c_set_eta_fixed_step_bounds s min max
+external set_eta_max_first_step           : ('d, 'k) session -> float -> unit
+    = "sunml_cvode_set_eta_max_first_step"
+external set_eta_max_early_step           : ('d, 'k) session -> float -> unit
+    = "sunml_cvode_set_eta_max_early_step"
+external set_num_steps_eta_max_early_step : ('d, 'k) session -> int -> unit
+    = "sunml_cvode_set_num_steps_eta_max_early_step"
+external set_eta_min                      : ('d, 'k) session -> float -> unit
+    = "sunml_cvode_set_eta_min"
+external set_eta_max                      : ('d, 'k) session -> float -> unit
+    = "sunml_cvode_set_eta_max"
+external set_eta_min_err_fail             : ('d, 'k) session -> float -> unit
+    = "sunml_cvode_set_eta_min_err_fail"
+external set_eta_max_err_fail             : ('d, 'k) session -> float -> unit
+    = "sunml_cvode_set_eta_max_err_fail"
+external set_num_fails_eta_max_err_fail   : ('d, 'k) session -> int -> unit
+    = "sunml_cvode_set_num_fails_eta_max_err_fail"
+external set_eta_conv_fail                : ('d, 'k) session -> float -> unit
+    = "sunml_cvode_set_eta_conv_fail"
+
 external c_set_constraints : ('a,'k) session -> ('a,'k) Nvector.t -> unit
   = "sunml_cvode_set_constraints"
 

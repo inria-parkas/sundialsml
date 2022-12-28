@@ -1964,6 +1964,138 @@ CAMLprim value sunml_cvode_set_nonlin_conv_coef(value vcvode_mem, value nlscoef)
     CAMLreturn (Val_unit);
 }
 
+CAMLprim void sunml_cvode_set_eta_fixed_step_bounds(value vcvode_mem,
+						    value vmin, value vmax)
+{
+    CAMLparam3(vcvode_mem, vmin, vmax);
+#if 620 <= SUNDIALS_LIB_VERSION
+    int flag = CVodeSetEtaFixedStepBounds(CVODE_MEM_FROM_ML(vcvode_mem),
+					  Double_val(vmin),
+					  Double_val(vmin));
+    CHECK_FLAG("CVodeSetEtaFixedStepBounds", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn0;
+}
+
+CAMLprim void sunml_cvode_set_eta_max_first_step(value vcvode_mem, value varg)
+{
+    CAMLparam2(vcvode_mem, varg);
+#if 620 <= SUNDIALS_LIB_VERSION
+    int flag = CVodeSetEtaMaxFirstStep(CVODE_MEM_FROM_ML(vcvode_mem),
+				       Double_val(varg));
+    CHECK_FLAG("CVodeSetEtaMaxFirstStep", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn0;
+}
+
+CAMLprim void sunml_cvode_set_eta_max_early_step(value vcvode_mem, value varg)
+{
+    CAMLparam2(vcvode_mem, varg);
+#if 620 <= SUNDIALS_LIB_VERSION
+    int flag = CVodeSetEtaMaxEarlyStep(CVODE_MEM_FROM_ML(vcvode_mem),
+				       Double_val(varg));
+    CHECK_FLAG("", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn0;
+}
+
+CAMLprim void sunml_cvode_set_num_steps_eta_max_early_step(value vcvode_mem,
+						           value varg)
+{
+    CAMLparam2(vcvode_mem, varg);
+#if 620 <= SUNDIALS_LIB_VERSION
+    int flag = CVodeSetNumStepsEtaMaxEarlyStep(CVODE_MEM_FROM_ML(vcvode_mem),
+					       Int_val(varg));
+    CHECK_FLAG("CVodeSetNumStepsEtaMaxEarlyStep", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn0;
+}
+
+CAMLprim void sunml_cvode_set_eta_min(value vcvode_mem, value varg)
+{
+    CAMLparam2(vcvode_mem, varg);
+#if 620 <= SUNDIALS_LIB_VERSION
+    int flag = CVodeSetEtaMin(CVODE_MEM_FROM_ML(vcvode_mem), Double_val(varg));
+    CHECK_FLAG("CVodeSetEtaMin", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn0;
+}
+
+CAMLprim void sunml_cvode_set_eta_max(value vcvode_mem, value varg)
+{
+    CAMLparam2(vcvode_mem, varg);
+#if 620 <= SUNDIALS_LIB_VERSION
+    int flag = CVodeSetEtaMax(CVODE_MEM_FROM_ML(vcvode_mem), Double_val(varg));
+    CHECK_FLAG("CVodeSetEtaMax", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn0;
+}
+
+CAMLprim void sunml_cvode_set_eta_min_err_fail(value vcvode_mem, value varg)
+{
+    CAMLparam2(vcvode_mem, varg);
+#if 620 <= SUNDIALS_LIB_VERSION
+    int flag = CVodeSetEtaMinErrFail(CVODE_MEM_FROM_ML(vcvode_mem),
+				     Double_val(varg));
+    CHECK_FLAG("CVodeSetEtaMinErrFail", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn0;
+}
+
+CAMLprim void sunml_cvode_set_eta_max_err_fail(value vcvode_mem, value varg)
+{
+    CAMLparam2(vcvode_mem, varg);
+#if 620 <= SUNDIALS_LIB_VERSION
+    int flag = CVodeSetEtaMaxErrFail(CVODE_MEM_FROM_ML(vcvode_mem),
+				     Double_val(varg));
+    CHECK_FLAG("CVodeSetEtaMaxErrFail", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn0;
+}
+
+CAMLprim void sunml_cvode_set_num_fails_eta_max_err_fail(value vcvode_mem,
+							 value varg)
+{
+    CAMLparam2(vcvode_mem, varg);
+#if 620 <= SUNDIALS_LIB_VERSION
+    int flag = CVodeSetNumFailsEtaMaxErrFail(CVODE_MEM_FROM_ML(vcvode_mem),
+					     Int_val(varg));
+    CHECK_FLAG("CVodeSetNumFailsEtaMaxErrFail", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn0;
+}
+
+CAMLprim void sunml_cvode_set_eta_conv_fail(value vcvode_mem, value varg)
+{
+    CAMLparam2(vcvode_mem, varg);
+#if 620 <= SUNDIALS_LIB_VERSION
+    int flag = CVodeSetEtaConvFail(CVODE_MEM_FROM_ML(vcvode_mem),
+				   Double_val(varg));
+    CHECK_FLAG("CVodeSetEtaConvFail", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn0;
+}
+
 CAMLprim value sunml_cvode_set_constraints (value vcvode_mem, value vconstraints)
 {
     CAMLparam2(vcvode_mem, vconstraints);

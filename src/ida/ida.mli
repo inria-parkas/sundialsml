@@ -886,6 +886,61 @@ val set_max_conv_fails : ('d, 'k) session -> int -> unit
     @ida IDASetNonlinConvCoef *)
 val set_nonlin_conv_coef : ('d, 'k) session -> float -> unit
 
+(** {3:set_tsa Time step adaptivity optional input functions} *)
+
+(** Specifies the lower {% $\eta_\mathrm{min\_fx}$ %} and
+    upper {% $\eta_\mathrm{max\_fx}$ %} bounds in which the step size will
+    remain unchanged. The default values are {% $\eta_\mathrm{min\_fx} = 1$ %}
+    and {% $\eta_\mathrm{max\_fx} = 2$ %}.
+    If the step size change factor satisfies,
+    {% $\eta_\mathrm{min\_fx} < \eta < \eta_\mathrm{max\_fx}$ %},
+    the current step size is retained.
+
+    If [min < 0] or [min >= 1], the default minimum value is used.
+    If [max < 1], the default maximum value is used.
+
+    @cvode IDASetEtaFixedStepBounds
+    @since 6.2.0 *)
+val set_eta_fixed_step_bounds
+      : ('d, 'k) session -> min:float -> max:float -> unit -> unit
+
+(** Specifies the minimum step size reduction factor, {% $\eta_\mathrm{min}$ %}.
+    If the argument is [<= 0] or [>= 1], the default value of 0.5 is used.
+
+    @cvode IDASetEtaMin
+    @since 6.2.0 *)
+val set_eta_min                      : ('d, 'k) session -> float -> unit
+
+(** Specifies the maximum step size growth factor, {% $\eta_\mathrm{max}$ %}.
+    The default value is 2.
+
+    @cvode IDASetEtaMax
+    @since 6.2.0 *)
+val set_eta_max                      : ('d, 'k) session -> float -> unit
+
+(** Specifies the maximum step size reduction factor, {% $\eta_\mathrm{low}$ %}.
+    If the argument is [< 0] or [> 1], the default value of 0.9 is used.
+
+    @cvode IDASetEtaLow
+    @since 6.2.0 *)
+val set_eta_low                      : ('d, 'k) session -> float -> unit
+
+(** Specifies the minimum step size reduction factor after an error test
+    failure, {% $\eta_\mathrm{min\_ef}$ %}.
+    If the argument is [<= 0] or [>= 1], the default value of 0.25 is used.
+
+    @cvode IDASetEtaMinErrFail
+    @since 6.2.0 *)
+val set_eta_min_err_fail             : ('d, 'k) session -> float -> unit
+
+(** Specifies the step size factor after a nonlinear solver convergence
+    failure, {% $\eta_\mathrm{cf}$ %}.
+    If the argument is [<= 0] or [>= 1], the default value of 0.25 is used.
+
+    @cvode IDASetEtaConvFail
+    @since 6.2.0 *)
+val set_eta_conv_fail                : ('d, 'k) session -> float -> unit
+
 (** {2:get Querying the solver (optional output functions)} *)
 
 (** Returns the sizes of the real and integer workspaces.

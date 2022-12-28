@@ -864,7 +864,6 @@ val set_monitor_frequency : ('d, 'k) session -> int -> unit
     @since 5.3.0 *)
 val clear_monitor_fn : ('d, 'k) session -> unit
 
-
 (** {3:set_main Main solver optional input functions} *)
 
 (** Specifies the maximum order of the linear multistep method.
@@ -947,6 +946,94 @@ val set_max_conv_fails : ('d, 'k) session -> int -> unit
 
     @cvode CVodeSetNonlinConvCoef *)
 val set_nonlin_conv_coef : ('d, 'k) session -> float -> unit
+
+(** {3:set_tsa Time step adaptivity optional input functions} *)
+
+(** Specifies the lower {% $\eta_\mathrm{min\_fx}$ %} and
+    upper {% $\eta_\mathrm{max\_fx}$ %} bounds in which the step size will
+    remain unchanged. The default values are {% $\eta_\mathrm{min\_fx} = 0$ %}
+    and {% $\eta_\mathrm{max\_fx} = 1.5$ %}.
+    If the step size change factor satisfies,
+    {% $\eta_\mathrm{min\_fx} < \eta < \eta_\mathrm{max\_fx}$ %},
+    the current step size is retained.
+
+    If [min < 0] or [min >= 1], the default minimum value is used.
+    If [max < 1], the default maximum value is used.
+
+    @cvode CVodeSetEtaFixedStepBounds
+    @since 6.2.0 *)
+val set_eta_fixed_step_bounds
+      : ('d, 'k) session -> min:float -> max:float -> unit -> unit
+
+(** Specifies the maximum step size factor after the first time step
+    {% $\eta_\mathrm{max\_fs}$ %}.
+    If the argument is [<= 1], the default value of {% $10^4$ %} is used.
+
+    @cvode CVodeSetEtaMaxFirstStep
+    @since 6.2.0 *)
+val set_eta_max_first_step           : ('d, 'k) session -> float -> unit
+
+(** Specifies the maximum step size factor for steps early in the integration,
+    {% $\eta_\mathrm{max\_es}$ %}.
+    If the argument is [<= 1], the default value of 10 is used.
+
+    @cvode CVodeSetEtaMaxEarlyStep
+    @since 6.2.0 *)
+val set_eta_max_early_step           : ('d, 'k) session -> float -> unit
+
+(** Specifies the number of steps to use the early integration maximum step
+    size factor. If the argument is [< 0], the default value of 10 is used.
+
+    @cvode CVodeSetNumStepsEtaMaxEarlyStep
+    @since 6.2.0 *)
+val set_num_steps_eta_max_early_step : ('d, 'k) session -> int -> unit
+
+(** Specifies the minimum step size factor, {% $\eta_\mathrm{min\_gs}$ %}.
+    If the argument is [<= 0] or [>= 1], the default value of 1.0 is used.
+
+    @cvode CVodeSetEtaMin
+    @since 6.2.0 *)
+val set_eta_min                      : ('d, 'k) session -> float -> unit
+
+(** Specifies the maximum step size factor, {% $\eta_\mathrm{max\_gs}$ %}.
+    If the argument is [<= 1], the default value of 10 is used.
+
+    @cvode CVodeSetEtaMax
+    @since 6.2.0 *)
+val set_eta_max                      : ('d, 'k) session -> float -> unit
+
+(** Specifies the minimum step size factor after an error test failure,
+    {% $\eta_\mathrm{min\_ef}$ %}.
+    If the argument is [<= 0] or [>= 1], the default value of 0.1 is used.
+
+    @cvode CVodeSetEtaMinErrFail
+    @since 6.2.0 *)
+val set_eta_min_err_fail             : ('d, 'k) session -> float -> unit
+
+(** Specifies the maximum step size factor after multiple error test failures,
+    {% $\eta_\mathrm{max\_ef}$ %}.
+    If the argument is [<= 0] or [>= 1], the default value of 0.2 is used.
+
+    @cvode CVodeSetEtaMaxErrFail
+    @since 6.2.0 *)
+val set_eta_max_err_fail             : ('d, 'k) session -> float -> unit
+
+(** Specifies the number of error test failures necessary to enforce the
+    maximum step size factor.
+    If the argument is [< 0], the default value of 2 is used.
+    If the argument is [0], the value set by {!set_eta_max} is used.
+
+    @cvode CVodeSetNumFailsEtaMaxErrFail
+    @since 6.2.0 *)
+val set_num_fails_eta_max_err_fail   : ('d, 'k) session -> int -> unit
+
+(** Specifies the step size factor after a nonlinear solver failure,
+    {% $\eta_\mathrm{cf}$ %}.
+    If the argument is [<= 0] or [>= 1], the default value of 0.25 is used.
+
+    @cvode CVodeSetEtaConvFail
+    @since 6.2.0 *)
+val set_eta_conv_fail                : ('d, 'k) session -> float -> unit
 
 (** {3:set_proj Projection optional input functions} *)
 

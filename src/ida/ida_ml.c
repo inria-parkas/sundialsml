@@ -1627,6 +1627,81 @@ CAMLprim value sunml_ida_set_nonlin_conv_coef_ic(value vida_mem, value vcoef)
     CAMLreturn (Val_unit);
 }
 
+CAMLprim void sunml_ida_set_eta_fixed_step_bounds(value vida_mem,
+						  value vmin, value vmax)
+{
+    CAMLparam3(vida_mem, vmin, vmax);
+#if 620 <= SUNDIALS_LIB_VERSION
+    int flag = IDASetEtaFixedStepBounds(IDA_MEM_FROM_ML(vida_mem),
+					Double_val(vmin),
+					Double_val(vmin));
+    CHECK_FLAG("IDASetEtaFixedStepBounds", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn0;
+}
+
+CAMLprim void sunml_ida_set_eta_min(value vida_mem, value varg)
+{
+    CAMLparam2(vida_mem, varg);
+#if 620 <= SUNDIALS_LIB_VERSION
+    int flag = IDASetEtaMin(IDA_MEM_FROM_ML(vida_mem), Double_val(varg));
+    CHECK_FLAG("IDASetEtaMin", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn0;
+}
+
+CAMLprim void sunml_ida_set_eta_max(value vida_mem, value varg)
+{
+    CAMLparam2(vida_mem, varg);
+#if 620 <= SUNDIALS_LIB_VERSION
+    int flag = IDASetEtaMax(IDA_MEM_FROM_ML(vida_mem), Double_val(varg));
+    CHECK_FLAG("IDASetEtaMax", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn0;
+}
+
+CAMLprim void sunml_ida_set_eta_low(value vida_mem, value varg)
+{
+    CAMLparam2(vida_mem, varg);
+#if 620 <= SUNDIALS_LIB_VERSION
+    int flag = IDASetEtaLow(IDA_MEM_FROM_ML(vida_mem), Double_val(varg));
+    CHECK_FLAG("IDASetEtaLow", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn0;
+}
+
+CAMLprim void sunml_ida_set_eta_min_err_fail(value vida_mem, value varg)
+{
+    CAMLparam2(vida_mem, varg);
+#if 620 <= SUNDIALS_LIB_VERSION
+    int flag = IDASetEtaMinErrFail(IDA_MEM_FROM_ML(vida_mem), Double_val(varg));
+    CHECK_FLAG("IDASetEtaMinErrFail", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn0;
+}
+
+CAMLprim void sunml_ida_set_eta_conv_fail(value vida_mem, value varg)
+{
+    CAMLparam2(vida_mem, varg);
+#if 620 <= SUNDIALS_LIB_VERSION
+    int flag = IDASetEtaConvFail(IDA_MEM_FROM_ML(vida_mem), Double_val(varg));
+    CHECK_FLAG("IDASetEtaConvFail", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn0;
+}
+
 CAMLprim value sunml_ida_set_max_num_steps_ic(value vida_mem, value vmaxnh)
 {
     CAMLparam2(vida_mem, vmaxnh);
