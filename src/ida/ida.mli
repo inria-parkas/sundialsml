@@ -807,6 +807,12 @@ val set_init_step : ('d, 'k) session -> float -> unit
     @ida IDASetMaxStep *)
 val set_max_step : ('d, 'k) session -> float -> unit
 
+(** Specifies the minimum absolute value of the step size.
+
+    @ida IDASetMinStep
+    @since 6.2.0 *)
+val set_min_step: ('d, 'k) session -> float -> unit
+
 (** Limits the value of the independent variable [t] when solving.
     By default no stop time is imposed.
 
@@ -820,6 +826,20 @@ val set_stop_time : ('d, 'k) session -> float -> unit
 val set_max_err_test_fails : ('d, 'k) session -> int -> unit
 
 (** {3:set_nls Linear solver interface optional input functions} *)
+
+(** Specifies the parameter {% $\delta_\mathrm{cj}$ %} that determines the
+    bounds on changes that require a linear solver setup call.
+    If {% $\frac{\mathrm{cj}_\mathrm{current}}{\mathrm{cj}_\mathrm{previous}}
+           < \frac{1 - \delta_\mathrm{cj}}{1 + \delta_\mathrm{cj}} $ %}
+    or {% $\frac{\mathrm{cj}_\mathrm{current}}{\mathrm{cj}_\mathrm{previous}}
+           > \frac{1 + \delta_\mathrm{cj}}{1 - \delta_\mathrm{cj}} $ %}, the
+    linear setup function is called.
+    If the argument is [< 0] or [>= 1], then the default value of 0.25 is
+    used.
+
+    @ida IDASetDeltaCjLSetup
+    @since 6.2.0 *)
+val set_delta_cj_lsetup : ('d, 'k) session -> float -> unit
 
 (** Sets the factor by which the Krylov linear solver's convergence test
     constant is reduced from the Newton iteration test constant.

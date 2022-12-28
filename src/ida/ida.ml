@@ -838,8 +838,11 @@ let clear_err_handler_fn s =
   s.errh <- dummy_errh;
   clear_err_handler_fn s
 
+external set_delta_cj_lsetup    : ('d, 'k) session -> float -> unit
+  = "sunml_ida_set_delta_cj_lsetup"
+
 external set_eps_lin            : ('a, 'k) session -> float -> unit
-    = "sunml_ida_set_eps_lin"
+  = "sunml_ida_set_eps_lin"
 
 let set_eps_lin s epsl =
   if Sundials_impl.Version.in_compat_mode2_3 then ls_check_spils s;
@@ -866,6 +869,8 @@ external set_init_step          : ('a, 'k) session -> float -> unit
     = "sunml_ida_set_init_step"
 external set_max_step           : ('a, 'k) session -> float -> unit
     = "sunml_ida_set_max_step"
+external set_min_step           : ('a, 'k) session -> float -> unit
+    = "sunml_ida_set_min_step"
 external set_stop_time          : ('a, 'k) session -> float -> unit
     = "sunml_ida_set_stop_time"
 external set_max_err_test_fails : ('a, 'k) session -> int -> unit

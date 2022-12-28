@@ -880,6 +880,27 @@ val clear_constraints : ('d, 'k) session -> unit
 
 (** {3:set_ls Linear solver interface optional input functions} *)
 
+(** Specifies the maximum allowed {% $\gamma$ %} change that does not require
+    a linear solver setup call.
+    If {% $\left| \frac{\gamma_\mathrm{current}}{\gamma_\mathrm{previous}}
+    - 1 \right| > \mathrm{dgmax}_\mathrm{lsetup}$ %}, the linear solver setup
+    function is called.
+    If the argument is [< 0], the default value of 0.3 is used.
+
+    @cvode CVodeSetDeltaGammaMaxLSetup
+    @since 6.2.0 *)
+val set_delta_gamma_max_lsetup : ('d, 'k) session -> float -> unit
+
+(** Specifies the maximum allowed {% $\gamma$ %} change after a nonlinear
+    solver failure that requires updating the Jacobian or preconditioner.
+    If {% $\gamma_\mathrm{current} < \mathrm{dgmax}_\mathrm{jbad}$ %}, the
+    Jacobian evaluation and/or preconditioner setup functions will be called.
+    If the argument is [< 0], the default value of 0.2 is used.
+
+    @cvode CVodeSetDeltaGammaMaxBadJac
+    @since 6.2.0 *)
+val set_delta_gamma_max_bad_jac : ('d, 'k) session -> float -> unit
+
 (** Specifies the frequency of calls to the linear solver setup routine.
     Positive values specify the number of time steps between setup calls,
     negative values force recomputation at each Newton step, and zero values

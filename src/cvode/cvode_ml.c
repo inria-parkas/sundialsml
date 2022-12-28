@@ -2244,6 +2244,36 @@ CAMLprim value sunml_cvode_spils_set_gs_type(value vcvode_mem, value vgstype)
     CAMLreturn (Val_unit);
 }
 
+CAMLprim void sunml_cvode_set_delta_gamma_max_lsetup(value vcvode_mem, value varg)
+{
+    CAMLparam2(vcvode_mem, varg);
+
+#if 620 <= SUNDIALS_LIB_VERSION
+    int flag = CVodeSetDeltaGammaMaxLSetup(CVODE_MEM_FROM_ML(vcvode_mem),
+					   Double_val(varg));
+    CHECK_LS_FLAG("CVodeSetDeltaGammaMaxLSetup", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn0;
+}
+
+CAMLprim void sunml_cvode_set_delta_gamma_max_bad_jac(value vcvode_mem, value varg)
+{
+    CAMLparam2(vcvode_mem, varg);
+
+#if 620 <= SUNDIALS_LIB_VERSION
+    int flag = CVodeSetDeltaGammaMaxBadJac(CVODE_MEM_FROM_ML(vcvode_mem),
+					   Double_val(varg));
+    CHECK_LS_FLAG("CVodeSetDeltaGammaMaxBadJac", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn0;
+}
+
 CAMLprim value sunml_cvode_set_jac_eval_frequency(value vcvode_mem,
 						  value vfreq)
 {

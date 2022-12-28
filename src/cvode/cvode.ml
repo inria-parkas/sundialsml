@@ -908,6 +908,12 @@ external get_current_order      : ('a, 'k) session -> int
 external get_current_state : ('d, 'k) session -> 'd
     = "sunml_cvode_get_current_state"
 
+external set_delta_gamma_max_lsetup : ('d, 'k) session -> float -> unit
+    = "sunml_cvode_set_delta_gamma_max_lsetup"
+
+external set_delta_gamma_max_bad_jac : ('d, 'k) session -> float -> unit
+    = "sunml_cvode_set_delta_gamma_max_bad_jac"
+
 external set_jac_eval_frequency : ('a, 'k) session -> int -> unit
     = "sunml_cvode_set_jac_eval_frequency"
 
