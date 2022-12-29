@@ -69,6 +69,11 @@ type linear_solver_id =
   | Sptfqmr            (* {cconst SUNLINEARSOLVER_SPTFQMR} *)
   | Superludist        (* {cconst SUNLINEARSOLVER_SUPERLUDIST} *)
   | Superlumt          (* {cconst SUNLINEARSOLVER_SUPERLUMT} *)
+  | CuSolverSp_batchQR (* {cconst SUNLINEARSOLVER_CUSOLVERSP_BATCHQR} *)
+  | MagmaDense         (* {cconst SUNLINEARSOLVER_MAGMADENSE} *)
+  | OneMKLDense        (* {cconst SUNLINEARSOLVER_ONEMKLDENSE} *)
+  | Gingko             (* {cconst SUNLINEARSOLVER_GINKGO} *)
+  | KokkosDense        (* {cconst SUNLINEARSOLVER_KOKKOSDENSE} *)
   | Custom             (* {cconst SUNLINEARSOLVER_CUSTOM} *)
 
 (** {3:callbacks Callback Routines} *)

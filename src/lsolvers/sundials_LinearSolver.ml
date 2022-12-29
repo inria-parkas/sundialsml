@@ -62,6 +62,11 @@ type linear_solver_id = LSI.linear_solver_id =
   | Sptfqmr
   | Superludist
   | Superlumt
+  | CuSolverSp_batchQR
+  | MagmaDense
+  | OneMKLDense
+  | Gingko
+  | KokkosDense
   | Custom
 
 exception LinearSolverInUse = LSI.LinearSolverInUse

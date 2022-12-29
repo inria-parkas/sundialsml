@@ -17,6 +17,11 @@ type linear_solver_id =
   | Sptfqmr
   | Superludist
   | Superlumt
+  | CuSolverSp_batchQR
+  | MagmaDense
+  | OneMKLDense
+  | Gingko
+  | KokkosDense
   | Custom
 module Klu :
   sig

@@ -1770,7 +1770,29 @@ CAMLprim value sunml_lsolver_get_id(value vcptr)
 	case SUNLINEARSOLVER_SUPERLUMT:
             result = VARIANT_LSOLVER_ID_SUPERLUMT;
             break;
+#if 570 <= SUNDIALS_LIB_VERSION
+	case SUNLINEARSOLVER_MAGMADENSE:
+	    snprintf(exmsg, MAX_ERRMSG_LEN,
+		"get_id: SUNLINEARSOLVER_MAGMADENSE is not supported");
+	    caml_failwith(exmsg);
+#endif
+#if 580 <= SUNDIALS_LIB_VERSION
+	case SUNLINEARSOLVER_ONEMKLDENSE:
+	    snprintf(exmsg, MAX_ERRMSG_LEN,
+		"get_id: SUNLINEARSOLVER_ONEMKLDENSE is not supported");
+	    caml_failwith(exmsg);
+#endif
+#if 640 <= SUNDIALS_LIB_VERSION
+	case SUNLINEARSOLVER_GINKGO:
+	    snprintf(exmsg, MAX_ERRMSG_LEN,
+		"get_id: SUNLINEARSOLVER_GINKGO is not supported");
+	    caml_failwith(exmsg);
 
+	case SUNLINEARSOLVER_KOKKOSDENSE:
+	    snprintf(exmsg, MAX_ERRMSG_LEN,
+		"get_id: SUNLINEARSOLVER_KOKKOSDENSE is not supported");
+	    caml_failwith(exmsg);
+#endif
 	case SUNLINEARSOLVER_CUSTOM:
             result = VARIANT_LSOLVER_ID_CUSTOM;
             break;
