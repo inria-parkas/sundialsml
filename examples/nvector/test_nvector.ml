@@ -1135,25 +1135,74 @@ let test_maxnorm x local_length myid =
 
   let xdata = Nvector_ops.getarray x in
 
-  (* fill vector data *)
-  for i=0 to local_length-1 do
-    Nvector_ops.set xdata i neg_one
-  done;
-  Nvector_ops.set xdata (local_length-1) neg_two;
+  if Sundials_impl.Version.lt640 then begin
 
-  let start_time = get_time () in
-  let ans = Nvector_ops.maxnorm x in
-  let stop_time = get_time () in
+    (* fill vector data *)
+    for i=0 to local_length-1 do
+      Nvector_ops.set xdata i neg_one
+    done;
+    Nvector_ops.set xdata (local_length-1) neg_two;
 
-  (* ans should equal 2 *)
-  if (ans < zero || not (fneq ans two)) then (
-    printf ">>> FAILED test -- N_VMaxNorm Proc %d \n" myid;
-    print_time "N_VMaxNorm" (stop_time -. start_time);
-    fails += 1
-  ) else if myid = 0 then (
-    print_passed "N_VMaxNorm";
-    print_time "N_VMaxNorm" (stop_time -. start_time)
-  );
+    let start_time = get_time () in
+    let ans = Nvector_ops.maxnorm x in
+    let stop_time = get_time () in
+
+    (* ans should equal 2 *)
+    if (ans < zero || not (fneq ans two)) then (
+      printf ">>> FAILED test -- N_VMaxNorm Proc %d \n" myid;
+      print_time "N_VMaxNorm" (stop_time -. start_time);
+      fails += 1
+    ) else if myid = 0 then (
+      print_passed "N_VMaxNorm";
+      print_time "N_VMaxNorm" (stop_time -. start_time)
+    )
+
+  end else begin
+    (* Case 1: zero vector *)
+
+    (* fill vector data *)
+    for i=0 to local_length-1 do
+      Nvector_ops.set xdata i zero
+    done;
+
+    let start_time = get_time () in
+    let ans = Nvector_ops.maxnorm x in
+    let stop_time = get_time () in
+
+    (* ans should equal 0 *)
+    if (ans < zero || ans >= Sundials.Config.small_real) then (
+      printf ">>> FAILED test -- N_VMaxNorm Case 1, Proc %d \n" myid;
+      print_time "N_VMaxNorm" (stop_time -. start_time);
+      fails += 1
+    ) else if myid = 0 then (
+      printf "PASSED test -- N_VMaxNorm Case 1\n";
+      print_time "N_VMaxNorm" (stop_time -. start_time));
+
+    (* Case 2: general vector *)
+
+    (* reset failure *)
+
+    (* fill vector data *)
+    for i=0 to local_length-1 do
+      Nvector_ops.set xdata i neg_half
+    done;
+    if myid = 0
+    then Nvector_ops.set xdata (local_length - 1) neg_two
+    else Nvector_ops.set xdata (local_length - 1) one;
+
+    let start_time = get_time () in
+    let ans = Nvector_ops.maxnorm x in
+    let stop_time = get_time () in
+
+    (* ans should equal 2 *)
+    if ans < zero || not (fneq ans two) then (
+      printf ">>> FAILED test -- N_VMaxNorm Case 2, Proc %d \n" myid;
+      print_time "N_VMaxNorm" (stop_time -. start_time);
+      fails += 1
+    ) else if myid = 0 then (
+      printf "PASSED test -- N_VMaxNorm Case 2\n";
+      print_time "N_VMaxNorm" (stop_time -. start_time))
+  end;
 
   !fails
 

@@ -135,6 +135,10 @@ let lt620 =
   let m, n, _ = Sundials_configuration.sundials_version in
   m < 6 || (m = 6 && n < 2)
 
+let lt640 =
+  let m, n, _ = Sundials_configuration.sundials_version in
+  m < 6 || (m = 6 && n < 4)
+
 let has_nvector_get_id =
   match Sundials_configuration.sundials_version with
   | 2,n,_ -> n >= 9
