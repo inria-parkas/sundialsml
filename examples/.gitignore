@@ -2,6 +2,7 @@
 */parallel/grad*.m
 arkode/C_serial/*.txt
 arkode/C_openmp/*.txt
+cvodes/serial/cvsPendulum_dns*.txt
 */*/*.sundials.c
 */*/*.sundials
 */*/*.cache

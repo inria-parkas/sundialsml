@@ -19,7 +19,9 @@ EXAMPLES = cvsAdvDiff_ASAi_bnd.ml \
 		      $(OK_CVodeGetSensNumNonlinSolvIters)),cvsRoberts_FSA_sps.ml) \
 	   $(if $(AT_LEAST_3_1_2),cvsRoberts_FSA_dns_Switch.ml) \
 	   $(if $(AT_LEAST_3_2_0),cvsRoberts_FSA_dns_constraints.ml) \
-	   $(if $(AT_LEAST_3_2_0),cvsRoberts_ASAi_dns_constraints.ml)
+	   $(if $(AT_LEAST_3_2_0),cvsRoberts_ASAi_dns_constraints.ml) \
+	   $(if $(AT_LEAST_6_2_0),cvsParticle_dns.ml) \
+	   $(if $(AT_LEAST_6_2_0),cvsPendulum_dns.ml)
 
 FILES_TO_CLEAN = cvsRoberts_ASAi_dns_fwd_stats.csv \
 		 cvsRoberts_ASAi_dns_bkw1_stats.csv \
@@ -29,7 +31,9 @@ FILES_TO_CLEAN = cvsRoberts_ASAi_dns_fwd_stats.csv \
 		 cvsRoberts_FSA_dns_stats_-sensi_stg_t.csv \
 		 cvsRoberts_FSA_dns_stats_-sensi_stg_f.csv \
 		 cvsRoberts_FSA_dns_stats_-sensi_stg1_t.csv \
-		 cvsRoberts_FSA_dns_stats_-sensi_stg1_f.csv
+		 cvsRoberts_FSA_dns_stats_-sensi_stg1_f.csv \
+		 cvsPendulum_dns_ref.txt \
+		 cvsPendulum_dns_rtol_*.txt
 
 include ../../examples.mk
 

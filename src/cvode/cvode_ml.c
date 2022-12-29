@@ -650,7 +650,7 @@ static int jactimesrhsfn(sunrealtype t, N_Vector y, N_Vector ydot, void *user_da
 }
 #endif
 
-#if 530 <= SUNDIALS_LIB_VERSION && !SUNDIALSML_WITHSENS
+#if (530 <= SUNDIALS_LIB_VERSION && !SUNDIALSML_WITHSENS) || 620 <= SUNDIALS_LIB_VERSION
 int projfn(sunrealtype t, N_Vector ycur, N_Vector corr,
            sunrealtype epsProj, N_Vector err, void *user_data)
 {
@@ -1250,7 +1250,7 @@ void sunml_cvode_check_flag(const char *call, int flag, void *cvode_mem)
 	case CV_NLS_FAIL:
 	    caml_raise_constant(CVODE_EXN(NonlinearFailure));
 #endif
-#if 530 <= SUNDIALS_LIB_VERSION && !SUNDIALSML_WITHSENS
+#if (530 <= SUNDIALS_LIB_VERSION && !SUNDIALSML_WITHSENS) || 620 <= SUNDIALS_LIB_VERSION
 	case CV_PROJFUNC_FAIL:
 	    caml_raise_constant(CVODE_EXN(ProjFuncFailure));
 
@@ -2124,7 +2124,7 @@ CAMLprim value sunml_cvode_clear_constraints (value vcvode_mem)
 CAMLprim value sunml_cvode_set_proj_fn(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
-#if 530 <= SUNDIALS_LIB_VERSION && !SUNDIALSML_WITHSENS
+#if (530 <= SUNDIALS_LIB_VERSION && !SUNDIALSML_WITHSENS) || 620 <= SUNDIALS_LIB_VERSION
     int flag;
 
     flag = CVodeSetProjFn(CVODE_MEM_FROM_ML (vcvode_mem), projfn);
@@ -2152,7 +2152,7 @@ CAMLprim value sunml_cvode_set_nls_rhs_fn(value vcvode_mem)
 CAMLprim value sunml_cvode_set_proj_err_est(value vcvode_mem, value vonoff)
 {
     CAMLparam2(vcvode_mem, vonoff);
-#if 530 <= SUNDIALS_LIB_VERSION && !SUNDIALSML_WITHSENS
+#if (530 <= SUNDIALS_LIB_VERSION && !SUNDIALSML_WITHSENS) || 620 <= SUNDIALS_LIB_VERSION
     int flag;
 
     flag = CVodeSetProjErrEst(CVODE_MEM_FROM_ML (vcvode_mem), Bool_val(vonoff));
@@ -2166,7 +2166,7 @@ CAMLprim value sunml_cvode_set_proj_err_est(value vcvode_mem, value vonoff)
 CAMLprim value sunml_cvode_set_proj_frequency(value vcvode_mem, value vfreq)
 {
     CAMLparam2(vcvode_mem, vfreq);
-#if 530 <= SUNDIALS_LIB_VERSION && !SUNDIALSML_WITHSENS
+#if (530 <= SUNDIALS_LIB_VERSION && !SUNDIALSML_WITHSENS) || 620 <= SUNDIALS_LIB_VERSION
     int flag;
 
     flag = CVodeSetProjFrequency(CVODE_MEM_FROM_ML (vcvode_mem), Int_val(vfreq));
@@ -2180,7 +2180,7 @@ CAMLprim value sunml_cvode_set_proj_frequency(value vcvode_mem, value vfreq)
 CAMLprim value sunml_cvode_set_max_num_proj_fails(value vcvode_mem, value vmfails)
 {
     CAMLparam2(vcvode_mem, vmfails);
-#if 530 <= SUNDIALS_LIB_VERSION && !SUNDIALSML_WITHSENS
+#if (530 <= SUNDIALS_LIB_VERSION && !SUNDIALSML_WITHSENS) || 620 <= SUNDIALS_LIB_VERSION
     int flag;
 
     flag = CVodeSetMaxNumProjFails(CVODE_MEM_FROM_ML (vcvode_mem),
@@ -2195,7 +2195,7 @@ CAMLprim value sunml_cvode_set_max_num_proj_fails(value vcvode_mem, value vmfail
 CAMLprim value sunml_cvode_set_eps_proj(value vcvode_mem, value veps)
 {
     CAMLparam2(vcvode_mem, veps);
-#if 530 <= SUNDIALS_LIB_VERSION && !SUNDIALSML_WITHSENS
+#if (530 <= SUNDIALS_LIB_VERSION && !SUNDIALSML_WITHSENS) || 620 <= SUNDIALS_LIB_VERSION
     int flag;
 
     flag = CVodeSetEpsProj(CVODE_MEM_FROM_ML (vcvode_mem), Double_val(veps));
@@ -2209,7 +2209,7 @@ CAMLprim value sunml_cvode_set_eps_proj(value vcvode_mem, value veps)
 CAMLprim value sunml_cvode_set_proj_fail_eta(value vcvode_mem, value veps)
 {
     CAMLparam2(vcvode_mem, veps);
-#if 530 <= SUNDIALS_LIB_VERSION && !SUNDIALSML_WITHSENS
+#if (530 <= SUNDIALS_LIB_VERSION && !SUNDIALSML_WITHSENS) || 620 <= SUNDIALS_LIB_VERSION
     int flag;
 
     flag = CVodeSetProjFailEta(CVODE_MEM_FROM_ML (vcvode_mem), Double_val(veps));
@@ -2458,7 +2458,7 @@ CAMLprim value sunml_cvode_get_num_proj_evals(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
     long int nproj;
-#if 530 <= SUNDIALS_LIB_VERSION && !SUNDIALSML_WITHSENS
+#if (530 <= SUNDIALS_LIB_VERSION && !SUNDIALSML_WITHSENS) || 620 <= SUNDIALS_LIB_VERSION
     int flag;
 
     flag = CVodeGetNumProjEvals(CVODE_MEM_FROM_ML (vcvode_mem), &nproj);
@@ -2473,7 +2473,7 @@ CAMLprim value sunml_cvode_get_num_proj_fails(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
     long int npfails;
-#if 530 <= SUNDIALS_LIB_VERSION && !SUNDIALSML_WITHSENS
+#if (530 <= SUNDIALS_LIB_VERSION && !SUNDIALSML_WITHSENS) || 620 <= SUNDIALS_LIB_VERSION
     int flag;
 
     flag = CVodeGetNumProjFails(CVODE_MEM_FROM_ML (vcvode_mem), &npfails);
