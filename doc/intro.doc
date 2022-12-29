@@ -23,8 +23,8 @@ and
 It provides an OCaml interface to most features of Sundials
 version {b {var version}}.
 There is no support for nvectors based on CUDA, Hypre ParVector, PETSC,
-RAJA, Trilinos, HIP, or SYCLC; nor for linear solvers requiring CUDA,
-PETSCSNES, MAGMA, or SuperLU_DIST; nor for XBraid.
+RAJA, Trilinos, HIP, SYCLC, or Kokkos; nor for linear solvers requiring CUDA,
+PETSCSNES, MAGMA, SuperLU_DIST, Kokkos, or Ginkgo; nor for XBraid.
 These features require libraries that are not available
 in OCaml—{{:mailto:tim\@tbrk.org}contact us} if you need them.
 
