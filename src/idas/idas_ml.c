@@ -1200,6 +1200,7 @@ CAMLprim value sunml_idas_quad_get_stats(value vdata)
 /* sensitivity interface */
 
 #if 400 <= SUNDIALS_LIB_VERSION
+#if SUNDIALS_LIB_VERSION < 630
 // hack to work around lack of CVodeGetUserData
 typedef struct {
 #if 600 <= SUNDIALS_LIB_VERSION
@@ -1210,12 +1211,17 @@ typedef struct {
   void     *ida_user_data;
   //...
 } *StartOf_IDAMem;
+#endif
 
 static value sunml_idas_session_to_value(void *ida_mem)
 {
     value session;
-    // void *user_data = IDAGetUserData(ida_mem);
+#if 630 <= SUNDIALS_LIB_VERSION
+    void *user_data = NULL;
+    IDAGetUserData(ida_mem, &user_data);
+#else
     void *user_data = ((StartOf_IDAMem)ida_mem)->ida_user_data;
+#endif
 
     WEAK_DEREF (session, *(value*)user_data);
     return session;
@@ -1236,9 +1242,15 @@ static value sunml_idas_bsession_to_value(void *ida_mem)
     // A CVodeGetUserDataB function would not help, since we do not know
     // what the `which` value is.
 
-    // void *user_data = CVodeGetUserData(cvode_mem);
+#if 630 <= SUNDIALS_LIB_VERSION
+    void *parent = NULL;
+    void *parent_mem = NULL;
+    IDAGetUserData(ida_mem, &parent);
+    IDAGetUserData(parent, &parent_mem);
+#else
     void *parent = ((StartOf_IDAMem)ida_mem)->ida_user_data;
     void *parent_mem = ((StartOf_IDAMem)parent)->ida_user_data;
+#endif
     WEAK_DEREF (vparent, *(value*)parent_mem);
     vchildptr = sunml_wrap_session_pointer(ida_mem);
 

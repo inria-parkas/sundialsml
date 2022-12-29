@@ -1087,6 +1087,8 @@ CAMLprim value sunml_cvodes_quad_get_err_weights(value vdata, value veqweight)
 /* sensitivity interface */
 
 #if 400 <= SUNDIALS_LIB_VERSION
+
+#if SUNDIALS_LIB_VERSION < 630
 // hack to work around lack of CVodeGetUserData
 typedef struct {
 #if 600 <= SUNDIALS_LIB_VERSION
@@ -1097,12 +1099,17 @@ typedef struct {
   void *cv_user_data;
   //...
 } *StartOf_CVodeMem;
+#endif
 
 static value sunml_cvodes_session_to_value(void *cvode_mem)
 {
     value session;
-    // void *user_data = CVodeGetUserData(cvode_mem);
+#if 630 <= SUNDIALS_LIB_VERSION
+    void *user_data = NULL;
+    CVodeGetUserData(cvode_mem, &user_data);
+#else
     void *user_data = ((StartOf_CVodeMem)cvode_mem)->cv_user_data;
+#endif
 
     WEAK_DEREF (session, *(value*)user_data);
     return session;
@@ -1123,9 +1130,15 @@ static value sunml_cvodes_bsession_to_value(void *cvode_mem)
     // A CVodeGetUserDataB function would not help, since we do not know
     // what the `which` value is.
 
-    // void *user_data = CVodeGetUserData(cvode_mem);
+#if 630 <= SUNDIALS_LIB_VERSION
+    void *parent = NULL;
+    void *parent_mem = NULL;
+    CVodeGetUserData(cvode_mem, &parent);
+    CVodeGetUserData(parent, &parent_mem);
+#else
     void *parent = ((StartOf_CVodeMem)cvode_mem)->cv_user_data;
     void *parent_mem = ((StartOf_CVodeMem)parent)->cv_user_data;
+#endif
     WEAK_DEREF (vparent, *(value*)parent_mem);
     vchildptr = sunml_wrap_session_pointer(cvode_mem);
 

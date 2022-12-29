@@ -1075,6 +1075,8 @@ CAMLprim value sunml_arkode_ark_set_jac_times_rhsfn(value vdata,
 }
 
 #if 400 <= SUNDIALS_LIB_VERSION
+
+#if SUNDIALS_LIB_VERSION < 630
 // hack to work around lack of CVodeGetUserData
 typedef struct {
 #if 600 <= SUNDIALS_LIB_VERSION
@@ -1084,12 +1086,17 @@ typedef struct {
   void *user_data;
   //...
 } *StartOf_ARKodeMem;
+#endif
 
 static value sunml_arkode_ark_session_to_value(void *arkode_mem)
 {
     value session;
-    // void *user_data = ARKStepGetUserData(arkode_mem);
+#if 630 <= SUNDIALS_LIB_VERSION
+    void *user_data = NULL;
+    ARKStepGetUserData(arkode_mem, &user_data);
+#else
     void *user_data = ((StartOf_ARKodeMem)arkode_mem)->user_data;
+#endif
 
     WEAK_DEREF (session, *(value*)user_data);
     return session;
@@ -1105,8 +1112,12 @@ static void* sunml_arkode_session_from_value(value varkode_mem)
 static value sunml_arkode_mri_session_to_value(void *arkode_mem)
 {
     value session;
-    // void *user_data = MRIStepGetUserData(arkode_mem);
+#if 630 <= SUNDIALS_LIB_VERSION
+    void *user_data = NULL;
+    MRIStepGetUserData(arkode_mem, &user_data);
+#else
     void *user_data = ((StartOf_ARKodeMem)arkode_mem)->user_data;
+#endif
 
     WEAK_DEREF (session, *(value*)user_data);
     return session;

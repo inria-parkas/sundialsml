@@ -790,6 +790,7 @@ CAMLprim value sunml_ida_set_jac_times_resfn(value vdata, value vhas_resfn)
 }
 
 #if 400 <= SUNDIALS_LIB_VERSION
+#if SUNDIALS_LIB_VERSION < 630
 // hack to work around lack of CVodeGetUserData
 typedef struct {
 #if 600 <= SUNDIALS_LIB_VERSION
@@ -800,12 +801,17 @@ typedef struct {
   void     *ida_user_data;
   //...
 } *StartOf_IDAMem;
+#endif
 
 static value sunml_ida_session_to_value(void *ida_mem)
 {
     value session;
-    // void *user_data = IDAGetUserData(ida_mem);
+#if 630 <= SUNDIALS_LIB_VERSION
+    void *user_data = NULL;
+    IDAGetUserData(ida_mem, &user_data);
+#else
     void *user_data = ((StartOf_IDAMem)ida_mem)->ida_user_data;
+#endif
 
     WEAK_DEREF (session, *(value*)user_data);
     return session;
