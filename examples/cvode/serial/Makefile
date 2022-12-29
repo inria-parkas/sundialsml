@@ -15,7 +15,7 @@ EXAMPLES_SINCE_2_5 = cvAdvDiff_bnd.ml \
 		     cvKrylovDemo_ls.ml \
 		     cvKrylovDemo_prec.ml \
 		     $(if $(KLU_ENABLED),cvRoberts_klu.ml) \
-		     $(if $(SUPERLUMT_ENABLED),cvRoberts_sps.ml) \
+		     $(if $(SUPERLUMT_ENABLED),cvRoberts_sps.ml)
 
 EXAMPLES_SINCE_3_0 =	cvDiurnal_kry_alt.ml \
  			cvRoberts_dns_uw_alt.ml
@@ -37,7 +37,8 @@ EXAMPLES = $(EXAMPLES_SINCE_2_5)				\
 	   $(if $(AT_LEAST_3_2_0),$(EXAMPLES_SINCE_3_2_0))	\
 	   $(if $(AT_LEAST_5_1_0),$(EXAMPLES_SINCE_5_1_0))	\
 	   $(if $(AT_LEAST_5_3_0),$(EXAMPLES_SINCE_5_3_0))	\
-	   $(if $(AT_LEAST_5_8_0),$(EXAMPLES_SINCE_5_8_0))
+	   $(if $(AT_LEAST_5_8_0),$(EXAMPLES_SINCE_5_8_0))	\
+	   $(if $(AT_LEAST_6_3_0),cvRocket_dns.ml)
 
 LAPACK_EXAMPLES = cvAdvDiff_bndL.ml \
 		  cvRoberts_dnsL.ml
