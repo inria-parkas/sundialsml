@@ -626,6 +626,15 @@ module ButcherTable : sig (* {{{ *)
     | ARK548L2SA_DIRK_8_4_5 (** ARK-8-4-5 ESDIRK method. *)
     | ARK437L2SA_DIRK_7_3_4 (** ARK-7-3-4 ESDIRK method. *)
     | ARK548L2SAb_DIRK_8_4_5 (** ARK-8-4-5b ESDIRK method. *)
+    | ESDIRK324L2SA_4_2_3   (** Kennedy & Carpenter 2016: ESDIRK3(2)4L[2]SA *)
+    | ESDIRK325L2SA_5_2_3   (** Kennedy & Carpenter 2016: ESDIRK3(2)5L[2]SA *)
+    | ESDIRK32I5L2SA_5_2_3  (** Kennedy & Carpenter 2016: ESDIRK3(2I)5L[2]SA *)
+    | ESDIRK436L2SA_6_3_4   (** Kennedy & Carpenter 2016: ESDIRK4(3)6L[2]SA *)
+    | ESDIRK43I6L2SA_6_3_4  (** Kennedy & Carpenter 2016: ESDIRK4(3I)6L[2]SA *)
+    | QESDIRK436L2SA_6_3_4  (** Kennedy & Carpenter 2016: QESDIRK4(3)6L[2]SA *)
+    | ESDIRK437L2SA_7_3_4   (** Kennedy & Carpenter 2016: ESDIRK4(3)7L[2]SA *)
+    | ESDIRK547L2SA_7_4_5   (** Kennedy & Carpenter 2016: ESDIRK5(4)7L[2]SA *)
+    | ESDIRK547L2SA2_7_4_5  (** Kennedy & Carpenter 2016: ESDIRK5(4)7L[2]SA2 *)
 
   (** Additive Butcher tables
 

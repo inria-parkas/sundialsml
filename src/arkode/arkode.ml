@@ -276,6 +276,15 @@ module ButcherTable = struct (* {{{ *)
     | ARK548L2SA_DIRK_8_4_5
     | ARK437L2SA_DIRK_7_3_4
     | ARK548L2SAb_DIRK_8_4_5
+    | ESDIRK324L2SA_4_2_3
+    | ESDIRK325L2SA_5_2_3
+    | ESDIRK32I5L2SA_5_2_3
+    | ESDIRK436L2SA_6_3_4
+    | ESDIRK43I6L2SA_6_3_4
+    | QESDIRK436L2SA_6_3_4
+    | ESDIRK437L2SA_7_3_4
+    | ESDIRK547L2SA_7_4_5
+    | ESDIRK547L2SA2_7_4_5
 
   type ark_table =
     | ARK_4_2_3
@@ -395,6 +404,23 @@ module ButcherTable = struct (* {{{ *)
        | Kvaerno_7_4_5         -> 110
        | ARK548L2SA_DIRK_8_4_5 -> 111
        | _                  -> raise Config.NotImplementedBySundialsVersion)
+    | 5,_,_ | 6,0,_ | 6,1,_ | 6,2,_ ->
+      (match v with
+       | SDIRK_2_1_2            -> 100
+       | Billington_3_3_2       -> 101
+       | TRBDF2_3_3_2           -> 102
+       | Kvaerno_4_2_3          -> 103
+       | ARK324L2SA_DIRK_4_2_3  -> 104
+       | Cash_5_2_4             -> 105
+       | Cash_5_3_4             -> 106
+       | SDIRK_5_3_4            -> 107
+       | Kvaerno_5_3_4          -> 108
+       | ARK436L2SA_DIRK_6_3_4  -> 109
+       | Kvaerno_7_4_5          -> 110
+       | ARK548L2SA_DIRK_8_4_5  -> 111
+       | ARK437L2SA_DIRK_7_3_4  -> 112
+       | ARK548L2SAb_DIRK_8_4_5 -> 113
+       | _                  -> raise Config.NotImplementedBySundialsVersion)
     | _ ->
       (match v with
        | SDIRK_2_1_2            -> 100
@@ -410,7 +436,16 @@ module ButcherTable = struct (* {{{ *)
        | Kvaerno_7_4_5          -> 110
        | ARK548L2SA_DIRK_8_4_5  -> 111
        | ARK437L2SA_DIRK_7_3_4  -> 112
-       | ARK548L2SAb_DIRK_8_4_5 -> 113)
+       | ARK548L2SAb_DIRK_8_4_5 -> 113
+       | ESDIRK324L2SA_4_2_3    -> 114
+       | ESDIRK325L2SA_5_2_3    -> 115
+       | ESDIRK32I5L2SA_5_2_3   -> 116
+       | ESDIRK436L2SA_6_3_4    -> 117
+       | ESDIRK43I6L2SA_6_3_4   -> 118
+       | QESDIRK436L2SA_6_3_4   -> 119
+       | ESDIRK437L2SA_7_3_4    -> 120
+       | ESDIRK547L2SA_7_4_5    -> 121
+       | ESDIRK547L2SA2_7_4_5   -> 122)
 
   let ints_of_ark_table v =
     match v with
