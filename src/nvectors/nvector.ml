@@ -47,7 +47,10 @@ type nvector_id =
   | ParHyp
   | PETSc
   | CUDA
+  | HIP
+  | SYCL
   | RAJA
+  | Kokkos
   | OpenMPdev
   | Trilinos
   | ManyVector

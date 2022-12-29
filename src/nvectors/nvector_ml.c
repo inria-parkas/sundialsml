@@ -209,6 +209,21 @@ CAMLprim value sunml_nvec_get_id(value vx)
 	    vr = Val_int(VARIANT_NVECTOR_ID_TAG_MPIPLUSX);
 	    break;
 #endif
+#if 560 <= SUNDIALS_LIB_VERSION
+	case SUNDIALS_NVEC_HIP:
+	  vr = Val_int(VARIANT_NVECTOR_ID_TAG_HIP);
+	  break;
+#endif
+#if 570 <= SUNDIALS_LIB_VERSION
+	case SUNDIALS_NVEC_SYCL:
+	  vr = Val_int(VARIANT_NVECTOR_ID_TAG_SYCL);
+	  break;
+#endif
+#if 640 <= SUNDIALS_LIB_VERSION
+	case SUNDIALS_NVEC_KOKKOS:
+	  vr = Val_int(VARIANT_NVECTOR_ID_TAG_KOKKOS);
+	  break;
+#endif
 	case SUNDIALS_NVEC_CUSTOM:
 	default:
 	    vr = Val_int(VARIANT_NVECTOR_ID_TAG_CUSTOM);
