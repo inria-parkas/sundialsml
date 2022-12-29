@@ -237,7 +237,14 @@ let main () =
         iout := nout
   done;
 
-  print_final_stats ida_mem
+  if Sundials_impl.Version.lt620 then print_final_stats ida_mem
+  else begin
+    printf "\nFinal Statistics:\n";
+    Ida.print_all_stats ida_mem Logfile.stdout Sundials.OutputTable;
+    let fid = Logfile.openfile "idaRoberts_dns_stats.csv" in
+    Ida.print_all_stats ida_mem fid Sundials.OutputCSV;
+    Logfile.close fid
+  end
 
 (* Check environment variables for extra arguments.  *)
 let reps =

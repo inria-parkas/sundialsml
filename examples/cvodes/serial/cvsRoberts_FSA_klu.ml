@@ -98,7 +98,7 @@ let f data _ (y : RealArray.t) (ydot : RealArray.t) =
 
 (* Jacobian routine. Compute J(t,y). *)
 
-let jac data {Cvode.jac_y = (y : RealArray.t)} smat =
+let jac_lt620 data {Cvode.jac_y = (y : RealArray.t)} smat =
   let set_col = Matrix.Sparse.set_col smat in
   let set = Matrix.Sparse.set smat in
   let p1 = data.p.(0)
@@ -123,6 +123,35 @@ let jac data {Cvode.jac_y = (y : RealArray.t)} smat =
   set 6 0 (p2 *. y.{1});
   set 7 1 (-.p2 *. y.{1});
   set 8 2 0.00
+
+let jac data {Cvode.jac_y = (y : RealArray.t)} smat =
+  let set_col = Matrix.Sparse.set_col smat in
+  let set = Matrix.Sparse.set smat in
+  let p1 = data.p.(0)
+  and p2 = data.p.(1)
+  and p3 = data.p.(2)
+  in
+  Matrix.Sparse.set_to_zero smat;
+
+  (* first column entries start at data[0], two entries (rows 0 and 1) *)
+  set_col 0 0;
+  set 0 0 (-.p1);
+  set 1 1  p1;
+
+  (* second column entries start at data[2], three entries (rows 0, 1, and 2) *)
+  set_col 1 2;
+  set 2 0 (p2 *. y.{2});
+  set 3 1 (-.p2 *. y.{2} -. 2.0 *. p3 *. y.{1});
+  set 4 2 (2.0 *. p3 *. y.{1});
+
+  (* third column entries start at data[5], two entries (rows 0 and 1) *)
+  set_col 2 5;
+
+  set 5 0 (p2 *. y.{1});
+  set 6 1 (-.p2 *. y.{1});
+
+  (* number of non-zeros *)
+  set_col 3 7
 
 (* fS routine. Compute sensitivity r.h.s. *)
 
@@ -279,7 +308,7 @@ let print_final_stats s sensi =
       print_string_5d "    ncfnS    = " nnfS;
       print_newline ()
     end else begin
-      let ncfnS = get_num_step_solve_fails s in
+      let ncfnS = Sens.get_num_step_solve_fails s in
       printf "nfSe = %-6d nfeS = %-6d nsetupsS = %-6d\n" nfSe nfeS nsetupsS;
       printf "nniS = %-6d nnfS = %-6d netfS = %-6d ncfnS = %-6d\n\n"
              nniS nnfS netfS ncfnS
@@ -311,14 +340,17 @@ let main () =
   (* Create CVODES object *)
   let nnz = neq * neq in
   let m = Matrix.sparse_csc ~nnz neq in
+  let jac = (if Sundials_impl.Version.lt620 then jac_lt620 else jac) data in
   let cvode_mem =
     Cvode.(init BDF
                 (WFtolerances (ewt data))
-                ~lsolver:Dls.(solver ~jac:(jac data) (klu y m))
+                ~lsolver:Dls.(solver ~jac (klu y m))
                 (f data) t0 y)
   in
 
-  print_string "\n3-species chemical kinetics problem\n";
+  if Sundials_impl.Version.lt620
+  then print_string "\n3-species chemical kinetics problem\n"
+  else print_string " \n3-species kinetics problem\n";
 
   (* Sensitivity-related settings *)
   let print_sensi =

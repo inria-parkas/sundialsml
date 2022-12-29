@@ -336,9 +336,10 @@ let main () =
   (* Continue integrating till TOUT is reached. *)
   let _ = Adjoint.forward_normal ida_mem tout wyy wyp in
 
-  if Sundials_impl.Version.lt620 then
+  if Sundials_impl.Version.lt620 then begin
     let nst = Ida.get_num_steps ida_mem in
-    printf "done ( nst = %d )\n" nst;
+    printf "done ( nst = %d )\n" nst
+  end;
 
   let _ = Quad.get ida_mem wq in
 
@@ -349,7 +350,9 @@ let main () =
   if Sundials_impl.Version.lt620 then print_newline ()
   else begin
     printf "\nFinal Statistics:\n";
+    flush stdout;
     Ida.print_all_stats ida_mem Logfile.stdout Sundials.OutputTable;
+    Logfile.flush Logfile.stdout;
     let fid = Logfile.openfile "idasRoberts_ASAi_dns_fwd_stats.csv" in
     Ida.print_all_stats ida_mem fid Sundials.OutputCSV;
     Logfile.close fid
@@ -409,9 +412,10 @@ let main () =
 
   Adjoint.backward_normal ida_mem t0;
 
-  if Sundials_impl.Version.lt620 then
+  if Sundials_impl.Version.lt620 then begin
     let nstB = Adjoint.get_num_steps indexB in
-    printf "done ( nst = %d )\n" nstB;
+    printf "done ( nst = %d )\n" nstB
+  end;
 
   let _ = Adjoint.get indexB wyB wypB in
 
@@ -421,7 +425,9 @@ let main () =
 
   if not Sundials_impl.Version.lt620 then begin
     printf "\nFinal Statistics:\n";
+    flush stdout;
     Adjoint.print_all_stats indexB Logfile.stdout Sundials.OutputTable;
+    Logfile.flush Logfile.stdout;
     let fid = Logfile.openfile "idasRoberts_ASAi_dns_bkw1_stats.csv" in
     Adjoint.print_all_stats indexB fid Sundials.OutputCSV;
     Logfile.close fid
@@ -473,9 +479,10 @@ let main () =
 
   let _ = Adjoint.backward_normal ida_mem t0 in
 
-  if Sundials_impl.Version.lt620 then
+  if Sundials_impl.Version.lt620 then begin
     let nstB = Adjoint.get_num_steps indexB in
-    printf "done ( nst = %d )\n" nstB;
+    printf "done ( nst = %d )\n" nstB
+  end;
 
   let _ = Adjoint.get indexB wyB wypB in
 
@@ -486,7 +493,9 @@ let main () =
   if Sundials_impl.Version.lt620 then print_string "Free memory\n\n"
   else begin
     printf "\nFinal Statistics:\n";
+    flush stdout;
     Adjoint.print_all_stats indexB Logfile.stdout Sundials.OutputTable;
+    Logfile.flush Logfile.stdout;
     let fid = Logfile.openfile "idasRoberts_ASAi_dns_bkw1_stats.csv" in
     Adjoint.print_all_stats indexB fid Sundials.OutputCSV;
     Logfile.close fid

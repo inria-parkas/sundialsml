@@ -133,16 +133,24 @@ let print_final_stats s =
   and nsetups = get_num_lin_solv_setups s
   and netf    = get_num_err_test_fails s
   and nni     = get_num_nonlin_solv_iters s
-  and ncfn    = get_num_nonlin_solv_conv_fails s
+  and nnf     = get_num_nonlin_solv_conv_fails s
   and nfeLS   = Dls.get_num_lin_rhs_evals s
   and nje     = Dls.get_num_jac_evals s
   and nge     = get_num_g_evals s
   in
   printf "\nFinal Statistics:\n";
-  printf "nst = %-6d nfe  = %-6d nsetups = %-6d nfeLS = %-6d nje = %d\n"
-    nst nfe nsetups nfeLS nje;
-  printf "nni = %-6d ncfn = %-6d netf = %-6d nge = %d\n \n"
-    nni ncfn netf nge
+  if Sundials_impl.Version.lt620 then begin
+    printf "nst = %-6d nfe  = %-6d nsetups = %-6d nfeLS = %-6d nje = %d\n"
+      nst nfe nsetups nfeLS nje;
+    printf "nni = %-6d ncfn = %-6d netf = %-6d nge = %d\n \n"
+      nni nnf netf nge
+  end else begin
+    let ncfn = get_num_step_solve_fails s in
+    printf "nst = %-6d nfe = %-6d nsetups = %-6d nfeLS = %-6d nje = %d\n"
+      nst nfe nsetups nfeLS nje;
+    printf "nni = %-6d nnf = %-6d netf = %-6d    ncfn = %-6d  nge = %d\n\n"
+      nni nnf netf ncfn nge
+  end
 
 let main () =
   (* Create serial vector of length NEQ for I.C. *)

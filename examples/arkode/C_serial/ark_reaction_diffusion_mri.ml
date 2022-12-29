@@ -209,9 +209,28 @@ let main () =
   let nfse, _ = MRIStep.get_num_rhs_evals arkode_mem in
   let nstf = ARKStep.get_num_steps inner_arkode_mem in
   let nff, _ = ARKStep.get_num_rhs_evals inner_arkode_mem in
-  printf "\nFinal Solver Statistics:\n";
-  printf "   Steps: nsts = %d, nstf = %d\n" nsts nstf;
-  printf "   Total RHS evals:  Fs = %d,  Ff = %d\n" nfse nff
+  if Sundials_impl.Version.lt620 then begin
+    printf "\nFinal Solver Statistics:\n";
+    printf "   Steps: nsts = %d, nstf = %d\n" nsts nstf;
+    printf "   Total RHS evals:  Fs = %d,  Ff = %d\n" nfse nff
+  end else begin
+    printf "\nFinal Slow Statistics:\n";
+    flush stdout;
+    MRIStep.print_all_stats arkode_mem Logfile.stdout Sundials.OutputTable;
+    Logfile.flush Logfile.stdout;
+    printf "\nFinal Fast Statistics:\n";
+    flush stdout;
+    ARKStep.print_all_stats inner_arkode_mem Logfile.stdout Sundials.OutputTable;
+    Logfile.flush Logfile.stdout;
+
+    let fid = Logfile.openfile "ark_reaction_diffusion_mri_slow_stats.csv" in
+    MRIStep.print_all_stats arkode_mem fid Sundials.OutputCSV;
+    Logfile.close fid;
+
+    let fid = Logfile.openfile "ark_reaction_diffusion_mri_fast_stats.csv" in
+    ARKStep.print_all_stats inner_arkode_mem fid Sundials.OutputCSV;
+    Logfile.close fid
+  end
 
 (* Check environment variables for extra arguments.  *)
 let reps =

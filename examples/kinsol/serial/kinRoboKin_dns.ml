@@ -253,7 +253,7 @@ let main () =
   (* Print final statistics to screen and file *)
   if Sundials_impl.Version.lt620 then print_final_stats kmem
   else begin
-    printf "\nFinal Statistics:\n";
+    printf "\nFinal statsistics:\n";
     Kinsol.print_all_stats kmem Logfile.stdout Sundials.OutputTable;
     let fid = Logfile.openfile "kinRoboKin_dns_stats.csv" in
     Kinsol.print_all_stats kmem fid Sundials.OutputCSV;

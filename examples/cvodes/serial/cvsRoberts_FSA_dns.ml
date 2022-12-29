@@ -287,7 +287,9 @@ let main () =
                 (f data) t0 y)
   in
 
-  print_string "\n3-species chemical kinetics problem\n";
+  if Sundials_impl.Version.lt620
+  then print_string "\n3-species chemical kinetics problem\n"
+  else print_string " \n3-species kinetics problem\n";
 
   (* Sensitivity-related settings *)
   let print_sensi =
@@ -340,7 +342,22 @@ let main () =
   done;
 
   (* Print final statistics *)
-  print_final_stats cvode_mem (sensi<>None)
+  if Sundials_impl.Version.lt620
+  then print_final_stats cvode_mem (sensi<>None)
+  else begin
+    print_string "\nFinal Statistics:\n";
+    Cvode.print_all_stats cvode_mem Logfile.stdout Sundials.OutputTable;
+    let fid = Logfile.openfile
+      ("cvsRoberts_FSA_dns_stats" ^ (
+        match sensi with None -> ""
+        | Some (Sens.Simultaneous _) -> "_-sensi_sim"
+        | Some (Sens.Staggered _) -> "_-sensi_stg"
+        | Some (Sens.Staggered1 _) -> "_-sensi_stg1")
+           ^ (if err_con then "_t" else "_f") ^ ".csv")
+    in
+    Cvode.print_all_stats cvode_mem fid Sundials.OutputCSV;
+    Logfile.close fid
+  end
 
 (* Check environment variables for extra arguments.  *)
 let reps =

@@ -36,10 +36,14 @@ module Logfile : sig (* {{{ *)
   (** An open log file. *)
   type t = Sundials_impl.Logfile.t
 
-  (** The stderr file. *)
+  (** The stderr file.
+      This log file has its own buffer, distinct from that of
+      {!Pervasives.stderr}; take care to flush before and after. *)
   val stderr : t
 
-  (** The stdout file. *)
+  (** The stdout file.
+      This log file has its own buffer, distinct from that of
+      {!Pervasives.stdout}; take care to flush before and after. *)
   val stdout : t
 
   (** Opens the named file. When [trunc] is false, the default, writes are

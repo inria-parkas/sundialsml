@@ -401,7 +401,7 @@ let main () =
     printf "\nFinal Statistics:\n";
     Ida.print_all_stats ida_mem Logfile.stdout Sundials.OutputTable;
     let fid = Logfile.openfile
-      ("idaRoberts_FSA_dns_stats" ^ (
+      ("idasRoberts_FSA_dns_stats" ^ (
         match sensi with None -> ""
         | Some sensi_meth ->
            (if sensi_meth = Sens.Simultaneous

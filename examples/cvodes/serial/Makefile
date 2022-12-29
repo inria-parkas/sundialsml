@@ -23,7 +23,13 @@ EXAMPLES = cvsAdvDiff_ASAi_bnd.ml \
 
 FILES_TO_CLEAN = cvsRoberts_ASAi_dns_fwd_stats.csv \
 		 cvsRoberts_ASAi_dns_bkw1_stats.csv \
-		 cvsRoberts_ASAi_dns_bkw2_stats.csv
+		 cvsRoberts_ASAi_dns_bkw2_stats.csv \
+		 cvsRoberts_FSA_dns_stats_-sensi_sim_t.csv \
+		 cvsRoberts_FSA_dns_stats_-sensi_sim_f.csv \
+		 cvsRoberts_FSA_dns_stats_-sensi_stg_t.csv \
+		 cvsRoberts_FSA_dns_stats_-sensi_stg_f.csv \
+		 cvsRoberts_FSA_dns_stats_-sensi_stg1_t.csv \
+		 cvsRoberts_FSA_dns_stats_-sensi_stg1_f.csv
 
 include ../../examples.mk
 

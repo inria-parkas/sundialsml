@@ -294,7 +294,14 @@ let main () =
   print_output ydata;
 
   (* Print final statistics and free memory *)
-  print_final_stats kmem
+  if Sundials_impl.Version.lt620 then print_final_stats kmem
+  else begin
+    printf "\nFinal statsistics:\n";
+    Kinsol.print_all_stats kmem Logfile.stdout Sundials.OutputTable;
+    let fid = Logfile.openfile "kinRoboKin_dns_stats.csv" in
+    Kinsol.print_all_stats kmem fid Sundials.OutputCSV;
+    Logfile.close fid
+  end
 
 (* Check environment variables for extra arguments.  *)
 let reps =

@@ -25,7 +25,7 @@ EXAMPLES = $(EXAMPLES_SINCE_2_5)				\
 	   $(if $(AT_LEAST_3_0),$(EXAMPLES_SINCE_3_0))		\
 	   $(if $(AT_LEAST_5_8_0),$(EXAMPLES_SINCE_5_8_0))
 
-FILE_TO_CLEAN = idaRoberts_dns_stats.csv
+FILES_TO_CLEAN = idaRoberts_dns_stats.csv
 
 include ../../examples.mk
 

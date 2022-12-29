@@ -14,11 +14,11 @@ EXAMPLES = idasRoberts_FSA_dns.ml	\
 
 FILES_TO_CLEAN = idasRoberts_ASAi_dns_fwd_stats.csv \
 		 idasRoberts_ASAi_dns_bkw1_stats.csv \
-		 idaRoberts_FSA_dns_stats.cvs \
-		 idaRoberts_FSA_dns_stats_-sensi_sim_t.cvs \
-		 idaRoberts_FSA_dns_stats_-sensi_sim_f.cvs \
-		 idaRoberts_FSA_dns_stats_-sensi_stg_t.cvs \
-		 idaRoberts_FSA_dns_stats_-sensi_stg_f.cvs
+		 idasRoberts_FSA_dns_stats.cvs \
+		 idasRoberts_FSA_dns_stats_-sensi_sim_t.csv \
+		 idasRoberts_FSA_dns_stats_-sensi_sim_f.csv \
+		 idasRoberts_FSA_dns_stats_-sensi_stg_t.csv \
+		 idasRoberts_FSA_dns_stats_-sensi_stg_f.csv
 
 include ../../examples.mk
 

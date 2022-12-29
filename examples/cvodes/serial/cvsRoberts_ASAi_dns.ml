@@ -303,8 +303,11 @@ let main () =
   let _, ncheck, _ = Adj.forward_normal cvode_mem tout y in
   let nst = Cvode.get_num_steps cvode_mem in
 
-  printf "done ( nst = %d )\n" nst;
-  printf "\nncheck = %d\n\n"  ncheck;
+  if Sundials_impl.Version.lt620
+  then begin
+    printf "done ( nst = %d )\n" nst;
+    printf "\nncheck = %d\n\n"  ncheck
+  end else printf "done (ncheck = %d)\n" ncheck;
   ignore (Quad.get cvode_mem q);
 
   printf "--------------------------------------------------------\n";
@@ -313,7 +316,9 @@ let main () =
   if Sundials_impl.Version.lt620 then print_newline ()
   else begin
     printf "\nFinal Statistics:\n";
+    flush stdout;
     Cvode.print_all_stats cvode_mem Logfile.stdout Sundials.OutputTable;
+    Logfile.flush Logfile.stdout;
     let fid = Logfile.openfile "cvsRoberts_ASAi_dns_fwd_stats.csv" in
     Cvode.print_all_stats cvode_mem fid Sundials.OutputCSV;
     Logfile.close fid
@@ -337,7 +342,9 @@ let main () =
   let abstolQB = atolq in
 
   (* Create and allocate CVODES memory for backward run *)
-  printf "Create and allocate CVODES memory for backward run\n";
+  if Sundials_impl.Version.lt620
+  then printf "Create and allocate CVODES memory for backward run\n"
+  else printf "\nCreate and allocate CVODES memory for backward run\n";
 
   let m = Matrix.dense neq in
   let cvode_memB =
@@ -383,7 +390,9 @@ let main () =
 
   if not Sundials_impl.Version.lt620 then begin
     printf "\nFinal Statistics:\n";
+    flush stdout;
     Adj.print_all_stats cvode_memB Logfile.stdout Sundials.OutputTable;
+    Logfile.flush Logfile.stdout;
     let fid = Logfile.openfile "cvsRoberts_ASAi_dns_bkw1_stats.csv" in
     Adj.print_all_stats cvode_memB fid Sundials.OutputCSV;
     Logfile.close fid;
@@ -436,7 +445,9 @@ let main () =
   if Sundials_impl.Version.lt620 then printf "Free memory\n\n"
   else begin
     printf "\nFinal Statistics:\n";
+    flush stdout;
     Adj.print_all_stats cvode_memB Logfile.stdout Sundials.OutputTable;
+    Logfile.flush Logfile.stdout;
     let fid = Logfile.openfile "cvsRoberts_ASAi_dns_bkw2_stats.csv" in
     Adj.print_all_stats cvode_memB fid Sundials.OutputCSV;
     Logfile.close fid

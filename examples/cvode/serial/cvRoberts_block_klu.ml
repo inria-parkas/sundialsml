@@ -170,13 +170,17 @@ let print_final_stats cvode_mem =
   let nje      = Dls.get_num_jac_evals cvode_mem in
   let nge      = get_num_g_evals cvode_mem in
   printf "\nFinal Statistics:\n";
-  printf "nst = %-6d nfe  = %-6d nsetups = %-6d nje = %d\n" nst nfe nsetups nje;
   if Sundials_impl.Version.lt620
-  then printf "nni = %-6d ncfn = %-6d netf = %-6d    nge = %d\n \n"
-       nni nnf netf nge
-  else let ncfn   = get_num_step_solve_fails cvode_mem in
-       printf "nni = %-6d nnf = %-6d netf = %-6d    ncfn = %-6d nge = %d\n\n"
-              nni nnf netf ncfn nge
+  then begin
+    printf "nst = %-6d nfe  = %-6d nsetups = %-6d nje = %d\n" nst nfe nsetups nje;
+    printf "nni = %-6d ncfn = %-6d netf = %-6d    nge = %d\n \n"
+           nni nnf netf nge
+  end else begin
+    let ncfn   = get_num_step_solve_fails cvode_mem in
+    printf "nst = %-6d nfe = %-6d nsetups = %-6d nje = %d\n" nst nfe nsetups nje;
+    printf "nni = %-6d nnf = %-6d netf = %-6d    ncfn = %-6d nge = %d\n\n"
+           nni nnf netf ncfn nge
+  end
 
 (*
  *-------------------------------

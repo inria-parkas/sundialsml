@@ -184,6 +184,8 @@ let main () =
 
   (* Specify stiff interpolant *)
   if sungte500 then ARKStep.(set_interpolant_type arkode_mem Lagrange);
+  if not Sundials_impl.Version.lt620
+  then ARKStep.set_deduce_implicit_rhs arkode_mem true;
 
   (* Open output stream for results, output comment line *)
   let ufid = open_out "solution.txt" in
@@ -224,7 +226,7 @@ let main () =
   let nsetups  = get_num_lin_solv_setups arkode_mem in
   let netf     = get_num_err_test_fails arkode_mem in
   let nni      = get_num_nonlin_solv_iters arkode_mem in
-  let ncfn     = get_num_nonlin_solv_conv_fails arkode_mem in
+  let nnf      = get_num_nonlin_solv_conv_fails arkode_mem in
   let nje      = Dls.get_num_jac_evals arkode_mem in
   let nfeLS    = Dls.get_num_lin_rhs_evals arkode_mem in
 
@@ -235,8 +237,15 @@ let main () =
   printf "   Total RHS evals for setting up the linear system = %d\n" nfeLS;
   printf "   Total number of Jacobian evaluations = %d\n" nje;
   printf "   Total number of Newton iterations = %d\n" nni;
-  printf "   Total number of linear solver convergence failures = %d\n" ncfn;
-  printf "   Total number of error test failures = %d\n\n" netf
+  if Sundials_impl.Version.lt620 then begin
+    printf "   Total number of linear solver convergence failures = %d\n" nnf;
+    printf "   Total number of error test failures = %d\n\n" netf
+  end else begin
+    let ncfn = get_num_step_solve_fails arkode_mem in
+    printf "   Total number of nonlinear solver convergence failures = %d\n" nnf;
+    printf "   Total number of error test failures = %d\n" netf;
+    printf "   Total number of failed steps from solver failure = %d\n" ncfn
+  end
 
 (* Check environment variables for extra arguments.  *)
 let reps =

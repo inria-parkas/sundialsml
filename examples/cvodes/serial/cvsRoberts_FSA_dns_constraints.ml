@@ -265,7 +265,7 @@ let print_final_stats s sensi =
       print_string_5d "    ncfnS    = " nnfS;
       print_newline ()
     end else begin
-      let ncfnS = get_num_step_solve_fails s in
+      let ncfnS = Sens.get_num_step_solve_fails s in
       printf "nfSe = %-6d nfeS = %-6d nsetupsS = %-6d\n" nfSe nfeS nsetupsS;
       printf "nniS = %-6d nnfS = %-6d netfS = %-6d ncfnS = %-6d\n\n"
              nniS nnfS netfS ncfnS
@@ -305,7 +305,9 @@ let main () =
   in
   Cvode.set_constraints cvode_mem (Nvector_serial.make neq Constraint.geq_zero);
 
-  print_string "\n3-species chemical kinetics problem\n";
+  if Sundials_impl.Version.lt620
+  then print_string "\n3-species chemical kinetics problem\n"
+  else print_string " \n3-species kinetics problem\n";
 
   (* Sensitivity-related settings *)
   let print_sensi =
