@@ -2,7 +2,7 @@
 
 sysname='Sundials/ML'
 version=6.2.0
-versionp=1
+versionp=0
 contact='tim@tbrk.org'
 
 unset prefix
