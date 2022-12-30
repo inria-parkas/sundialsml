@@ -467,6 +467,12 @@ module ButcherTable = struct (* {{{ *)
   let load_erk v = c_load_erk (int_of_erk_table v)
   let load_dirk v = c_load_dirk (int_of_dirk_table v)
 
+  external load_erk_by_name : string -> t option
+    = "sunml_arkode_butcher_table_load_erk_by_name"
+
+  external load_dirk_by_name : string -> t option
+    = "sunml_arkode_butcher_table_load_dirk_by_name"
+
   external c_write : t -> Logfile.t -> unit
     = "sunml_arkode_butcher_table_write"
 
@@ -2024,6 +2030,20 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
   let set_ark_table_num s v =
     c_set_table_num s (ButcherTable.ints_of_ark_table v)
 
+  external c_set_table_name
+      : ('d, 'k) session -> string -> string -> unit
+      = "sunml_arkode_ark_set_table_name"
+
+  let set_table_name s ?itable ?etable () =
+    let itable, etable =
+      match itable, etable with
+      | None, None -> invalid_arg "set_table_names requires at least one table"
+      | Some i, None -> i, "ARKODE_ERK_NONE"
+      | None, Some e -> "ARKODE_DIRK_NONE", e
+      | Some i, Some e -> i, e
+    in
+    c_set_table_name s itable etable
+
   external c_set_adaptivity_method
       : ('d, 'k) session -> 'd adaptivity_method -> unit
       = "sunml_arkode_ark_set_adaptivity_method"
@@ -2491,6 +2511,9 @@ module ERKStep = struct (* {{{ *)
 
   let set_table_num s v =
     c_set_table_num s (ButcherTable.int_of_erk_table v)
+
+  external set_table_name : ('d, 'k) session -> string -> unit
+      = "sunml_arkode_erk_set_table_name"
 
   external c_set_adaptivity_method
       : ('d, 'k) session -> 'd adaptivity_method -> unit

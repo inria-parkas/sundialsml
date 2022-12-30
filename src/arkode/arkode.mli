@@ -655,9 +655,23 @@ module ButcherTable : sig (* {{{ *)
 
   (** Retrieves a diagonally-implicit Butcher table.
 
+      @arkode_bt ARKodeButcherTable_LoadERKByName
+      @arkode <Butcher_link.html#butcher> Appendix: Butcher Tables
+      @since 6.4.0 *)
+  val load_erk_by_name : string -> t option
+
+  (** Retrieves a diagonally-implicit Butcher table.
+
       @arkode_bt ARKodeButcherTable_LoadDIRK
       @since 4.0.0 *)
   val load_dirk : dirk_table -> t
+
+  (** Retrieves a diagonally-implicit Butcher table.
+
+      @arkode_bt ARKodeButcherTable_LoadDIRKByName
+      @arkode <Butcher_link.html#butcher> Appendix: Butcher Tables
+      @since 6.4.0 *)
+  val load_dirk_by_name : string -> t option
 
   (** Writes a Butcher table on the standard output (or given file).
 
@@ -1805,6 +1819,27 @@ module ARKStep : sig (* {{{ *)
       @raise IllInput If $f_I$ is not already specified. *)
   val set_dirk_table_num : ('d, 'k) session -> ButcherTable.dirk_table -> unit
 
+  (** Use specific built-in Butcher tables for the ERK, DIRK, or ARK method.
+
+      If both tables are specified, the names should match an existing
+      implicit/explicit pair from the list of additive butcher tables;
+      {!set_imex} is automatically called.
+
+      If only [itable] is specified, then {!set_implicit} is automatically
+      called.
+
+      If only [etable] is specified, then {!set_explicit} is automatically
+      called.
+
+      @arkode_ark ARKStepSetTableName
+      @arkode <Butcher_link.html#butcher-additive> Additive Butcher tables
+      @arkode_ark ARKStepSetImEx
+      @arkode_ark ARKStepSetImplicit
+      @arkode_ark ARKStepSetExplicit
+      @since 6.4.0 *)
+  val set_table_name
+    : ('d, 'k) session -> ?itable:string -> ?etable:string -> unit -> unit
+
   (** {3:arkadapt Optional inputs for time step adaptivity} *)
 
   (** Specifies the method and associated parameters used for time step
@@ -2596,6 +2631,13 @@ module ERKStep : sig (* {{{ *)
 
       @arkode_erk ERKStepSetTableNum *)
   val set_table_num : ('d, 'k) session -> ButcherTable.erk_table -> unit
+
+  (** Use a specific built-in Butcher table for integration.
+
+      @arkode_erk ERKStepSetTableName
+      @arkode <Butcher_link.html#butcher-explicit> Explicit Butcher tables
+      @since 6.4.0 *)
+  val set_table_name : ('d, 'k) session -> string -> unit
 
   (** {3:erksetadap Optional inputs for time step adaptivity} *)
 

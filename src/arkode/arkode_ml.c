@@ -2932,6 +2932,38 @@ CAMLprim value sunml_arkode_butcher_table_load_dirk(value vmethod)
     CAMLreturn(vbt);
 }
 
+CAMLprim value sunml_arkode_butcher_table_load_erk_by_name(value vmethod)
+{
+    CAMLparam1(vmethod);
+    CAMLlocal1(vobt);
+
+#if 640 <= SUNDIALS_LIB_VERSION
+    ARKodeButcherTable bt;
+    bt = ARKodeButcherTable_LoadERKByName(String_val(vmethod));
+    vobt = val_butcher_table(bt);
+    ARKodeButcherTable_Free(bt);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(vobt);
+}
+
+CAMLprim value sunml_arkode_butcher_table_load_dirk_by_name(value vmethod)
+{
+    CAMLparam1(vmethod);
+    CAMLlocal1(vobt);
+
+#if 640 <= SUNDIALS_LIB_VERSION
+    ARKodeButcherTable bt;
+    bt = ARKodeButcherTable_LoadDIRKByName(String_val(vmethod));
+    vobt = val_butcher_table(bt);
+    ARKodeButcherTable_Free(bt);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(vobt);
+}
+
 #if 400 <= SUNDIALS_LIB_VERSION
 static ARKodeButcherTable butcher_table_val(value vob)
 {
@@ -3225,6 +3257,23 @@ CAMLprim value sunml_arkode_ark_set_table_num(value varkode_mem, value vnums)
 #endif
 
     CAMLreturn (Val_unit);
+}
+
+CAMLprim void sunml_arkode_ark_set_table_name(value varkode_mem,
+					      value vitable, value vetable)
+{
+    CAMLparam3(varkode_mem, vitable, vetable);
+    int flag;
+
+#if 640 <= SUNDIALS_LIB_VERSION
+    flag = ARKStepSetTableName(ARKODE_MEM_FROM_ML(varkode_mem),
+	    String_val(vitable), String_val(vetable));
+    CHECK_FLAG("ARKStepSetTableName", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn0;
 }
 
 CAMLprim value sunml_arkode_ark_set_adaptivity_method(value varkode_mem, value vmeth)
@@ -5680,6 +5729,22 @@ CAMLprim value sunml_arkode_erk_set_table_num(value varkode_mem, value vnum)
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn (Val_unit);
+}
+
+CAMLprim void sunml_arkode_erk_set_table_name(value varkode_mem, value vetable)
+{
+    CAMLparam2(varkode_mem, vetable);
+    int flag;
+
+#if 640 <= SUNDIALS_LIB_VERSION
+    flag = ERKStepSetTableName(ARKODE_MEM_FROM_ML(varkode_mem),
+			       String_val(vetable));
+    CHECK_FLAG("ERKStepSetTableName", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn0;
 }
 
 CAMLprim value sunml_arkode_erk_set_adaptivity_method(value varkode_mem,
