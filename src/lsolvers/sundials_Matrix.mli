@@ -1139,7 +1139,8 @@ val wrap_custom :
 type (_,_,_,_) id =
   | Dense : (standard, Dense.t, Nvector_serial.data, [>Nvector_serial.kind]) id
   | Band  : (standard, Band.t, Nvector_serial.data, [>Nvector_serial.kind]) id
-  | Sparse : (standard, 's Sparse.t, Nvector_serial.data, [>Nvector_serial.kind]) id
+  | SparseCSC : (standard, Sparse.csc Sparse.t, Nvector_serial.data, [>Nvector_serial.kind]) id
+  | SparseCSR : (standard, Sparse.csr Sparse.t, Nvector_serial.data, [>Nvector_serial.kind]) id
   | Custom : (custom, 'm, 'nd, 'nk) id
   | ArrayDense : (custom, ArrayDense.t, RealArray.t, 'nk) id
   | ArrayBand  : (custom, ArrayBand.t, RealArray.t, 'nk) id

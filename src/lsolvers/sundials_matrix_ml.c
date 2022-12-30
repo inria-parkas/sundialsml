@@ -2537,7 +2537,8 @@ CAMLprim value sunml_matrix_wrap(value vid, value vcontent, value vpayload,
 	smat->ops->space       = SUNMatSpace_Band;
 	break;
 
-    case MATRIX_ID_SPARSE:
+    case MATRIX_ID_SPARSE_CSC:
+    case MATRIX_ID_SPARSE_CSR:
 	smat->ops->clone       = csmat_sparse_clone;      // ours
 	smat->ops->destroy     = free_smat;  // ours (only called for c clones)
 	smat->ops->getid       = SUNMatGetID_Sparse;

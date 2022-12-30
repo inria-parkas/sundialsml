@@ -238,7 +238,8 @@ CAMLprim value sunml_matrix_band_wrap(DlsMat a);
 enum mat_matrix_id_tag {
     MATRIX_ID_DENSE = 0,
     MATRIX_ID_BAND,
-    MATRIX_ID_SPARSE,
+    MATRIX_ID_SPARSE_CSC,
+    MATRIX_ID_SPARSE_CSR,
     MATRIX_ID_CUSTOM,	    /* This and following are all custom matrices. */
     MATRIX_ID_ARRAYDENSE,
     MATRIX_ID_ARRAYBAND,

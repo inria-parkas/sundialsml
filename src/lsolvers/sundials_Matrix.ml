@@ -1061,7 +1061,8 @@ type custom
 type (_,_,_,_) id =
   | Dense : (standard, Dense.t, Nvector_serial.data, [>Nvector_serial.kind]) id
   | Band  : (standard, Band.t, Nvector_serial.data, [>Nvector_serial.kind]) id
-  | Sparse : (standard, 's Sparse.t, Nvector_serial.data, [>Nvector_serial.kind]) id
+  | SparseCSC : (standard, Sparse.csc Sparse.t, Nvector_serial.data, [>Nvector_serial.kind]) id
+  | SparseCSR : (standard, Sparse.csr Sparse.t, Nvector_serial.data, [>Nvector_serial.kind]) id
   | Custom : (custom, 'm, 'nd, 'nk) id
   | ArrayDense : (custom, ArrayDense.t, RealArray.t, 'nk) id
   | ArrayBand  : (custom, ArrayBand.t, RealArray.t, 'nk) id
@@ -1125,15 +1126,20 @@ let band ?context ?(mu=2) ?smu ?ml ?(i=0.0) n =
   let smu = match smu with Some smu -> smu | None -> mu+ml in
   wrap_band ?context (Band.(make { n; mu; smu; ml } i))
 
-let wrap_sparse ?context (data : 'f Sparse.t) =
+let wrap_sparse (type sf) ?context (data : sf Sparse.t) =
   (match Config.sundials_version with
    | (2,v,_) when v < 6 -> raise Config.NotImplementedBySundialsVersion
    | _ -> ());
+  let sparse_id : (standard, sf Sparse.t, Nvector_serial.data, [>Nvector_serial.kind]) id =
+    match Sparse.sformat data with
+    | Sparse.CSC -> SparseCSC
+    | Sparse.CSR -> SparseCSR
+  in
   let ctx = Sundials_impl.Context.get context in
   {
     payload = data;
-    rawptr  = c_wrap Sparse data.rawptr data false ctx;
-    id      = Sparse;
+    rawptr  = c_wrap sparse_id data.rawptr data false ctx;
+    id      = sparse_id;
     mat_ops = Sparse.ops;
   }
 
@@ -1267,7 +1273,8 @@ let pp (type k m nd nk) fmt ({ id; payload } : (k, m, nd, nk) t) =
   match id with
   | Dense  -> Dense.pp fmt payload
   | Band   -> Band.pp fmt payload
-  | Sparse -> Sparse.pp fmt payload
+  | SparseCSC -> Sparse.pp fmt payload
+  | SparseCSR -> Sparse.pp fmt payload
   | Custom -> Format.pp_print_string fmt "<custom matrix>"
   | ArrayDense -> ArrayDense.pp fmt payload
   | ArrayBand  -> ArrayBand.pp fmt payload
