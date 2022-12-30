@@ -249,6 +249,14 @@ p {
   hyphens: auto;
 }
 
+ul li {
+  text-align: left;
+}
+
+ol li {
+  text-align: left;
+}
+
 div#intro p {
   max-width: inherit;
 }
