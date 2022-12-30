@@ -203,25 +203,24 @@ enum sundials_exn_index {
 #define VPTRCROOT(x) (*(value **)Data_custom_val(Field(x, 1)))
 
 /* Callback functions are passed from OCaml to C by basically the same
- * mechanism as exceptions, but since callbacks are very frequently
- * accessed, we register them each as a separate generational global
+ * mechanism as exceptions. We register each as a separate generational global
  * root.
  *
- * Each module defines a file-local variable named callbacks, of type
- * value[num_callbacks], and an enum type for indexing this array with
+ * Each module defines a file-local variable named ocaml_values, of type
+ * value[NUM_OCAML_VALUES], and an enum type for indexing this array with
  * prefix IX_.
  */
-#define REGISTER_CALLBACKS(cbs)						\
+#define REGISTER_OCAML_VALUES(cbs)					\
     do {								\
 	int _i;								\
-	assert (Wosize_val (cbs) == NUM_CALLBACKS);			\
-	for (_i = 0; _i < NUM_CALLBACKS; ++_i) {			\
-	    callbacks[_i] = Field (cbs, _i);				\
-	    caml_register_generational_global_root (&callbacks[_i]);	\
+	assert (Wosize_val (cbs) == NUM_OCAML_VALUES);			\
+	for (_i = 0; _i < NUM_OCAML_VALUES; ++_i) {			\
+	    ocaml_values[_i] = Field (cbs, _i);				\
+	    caml_register_generational_global_root (&ocaml_values[_i]);	\
 	}								\
     } while (0)
 
-#define CAML_FN(fcn) (callbacks[IX_ ## fcn])
+#define OCAML_VALUE(fcn) (ocaml_values[IX_ ## fcn])
 
 /* Accessing FILE* values */
 #define ML_CFILE(v) (*(FILE **)Data_custom_val(v))
