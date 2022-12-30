@@ -1072,7 +1072,6 @@ type cmat
 type [@warning "-69"] ('k, 'm, 'nd, 'nk) t = {
   payload : 'm;
   rawptr  : cmat;
-  context : Context.t;
   id      : ('k, 'm, 'nd, 'nk) id;
   mat_ops : ('m, 'nd) matrix_ops;
 }
@@ -1104,7 +1103,6 @@ let wrap_dense ?context (data : Dense.t) =
   {
     payload = data;
     rawptr  = c_wrap Dense data.rawptr data false ctx;
-    context = ctx;
     id      = Dense;
     mat_ops = Dense.ops;
   }
@@ -1118,7 +1116,6 @@ let wrap_band ?context (data : Band.t) =
   {
     payload = data;
     rawptr  = c_wrap Band data.rawptr data false ctx;
-    context = ctx;
     id      = Band;
     mat_ops = Band.ops;
   }
@@ -1136,7 +1133,6 @@ let wrap_sparse ?context (data : 'f Sparse.t) =
   {
     payload = data;
     rawptr  = c_wrap Sparse data.rawptr data false ctx;
-    context = ctx;
     id      = Sparse;
     mat_ops = Sparse.ops;
   }
@@ -1156,7 +1152,6 @@ let wrap_custom ops ?context data =
   {
     payload = data;
     rawptr  = c_wrap Custom (ops, Custom) data (ops.m_matvec_setup <> None) ctx;
-    context = ctx;
     id      = Custom;
     mat_ops = ops;
   }
@@ -1166,7 +1161,6 @@ let wrap_arraydense ?context data =
   {
     payload = data;
     rawptr  = c_wrap ArrayDense (ArrayDense.ops, ArrayDense) data false ctx;
-    context = ctx;
     id      = ArrayDense;
     mat_ops = ArrayDense.ops;
   }
@@ -1180,7 +1174,6 @@ let wrap_arrayband ?context data =
   {
     payload = data;
     rawptr  = c_wrap ArrayBand (ArrayBand.ops, ArrayBand) data false ctx;
-    context = ctx;
     id      = ArrayBand;
     mat_ops = ArrayBand.ops;
   }

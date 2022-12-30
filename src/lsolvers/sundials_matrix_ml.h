@@ -165,7 +165,6 @@
 enum mat_matrix_index {
     RECORD_MAT_MATRIX_PAYLOAD   = 0,
     RECORD_MAT_MATRIX_RAWPTR,
-    RECORD_MAT_MATRIX_CONTEXT,
     RECORD_MAT_MATRIX_ID,
     RECORD_MAT_MATRIX_MATOPS,
     RECORD_MAT_MATRIX_SIZE /* This has to come last. */
@@ -188,10 +187,12 @@ enum mat_matrix_index {
 struct csmat {
     struct _generic_SUNMatrix smat;
     value backlink;
+    value context;
 };
 
 // Return the OCaml version of the sunmatrix payload
 #define MAT_BACKLINK(smat) (((struct csmat *)smat)->backlink)
+#define MAT_CONTEXT(smat) (((struct csmat *)smat)->context)
 
 /* Map a Matrix.rawptr to a SUNMatrix */
 #define MAT_CVAL(v) (*(SUNMatrix *)Data_custom_val(v))

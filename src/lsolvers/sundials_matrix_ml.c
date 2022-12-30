@@ -2317,7 +2317,7 @@ CAMLprim void sunml_matrix_sparse_set_to_zero(value vcptr)
  *  sparse  | MAT_CONTENT_SPARSE_TYPE	    Sparse.t (matrix_content)
  *  custom  | matrix_ops record		    'm (custom data)
  */
-static SUNMatrix alloc_smat(void *content, value backlink,
+static SUNMatrix alloc_smat(void *content, value backlink, value context,
 			    bool content_is_value)
 {
     SUNMatrix smat;
@@ -2335,6 +2335,9 @@ static SUNMatrix alloc_smat(void *content, value backlink,
 
     MAT_BACKLINK(smat) = backlink;
     caml_register_generational_global_root(&MAT_BACKLINK(smat));
+
+    MAT_CONTEXT(smat) = context;
+    caml_register_generational_global_root(&MAT_CONTEXT(smat));
 
     return smat;
 }
@@ -2358,6 +2361,7 @@ static SUNMatrix alloc_smat(void *content, value backlink,
 static void free_smat(SUNMatrix smat)
 {
     caml_remove_generational_global_root(&MAT_BACKLINK(smat));
+    caml_remove_generational_global_root(&MAT_CONTEXT(smat));
     // smat->content is not owned by the sunmatrix
     free(smat->ops);
     free(smat);
@@ -2409,7 +2413,7 @@ static SUNMatrix csmat_dense_clone(SUNMatrix A)
 
     B = alloc_smat(
 	    MAT_CONTENT(Field(vcontentb, RECORD_MAT_MATRIXCONTENT_RAWPTR)),
-	    vcontentb, false);
+	    vcontentb, MAT_CONTEXT(A), false);
     csmat_clone_ops(B, A);
 #if 600 <= SUNDIALS_LIB_VERSION
     B->sunctx = A->sunctx;
@@ -2430,7 +2434,7 @@ static SUNMatrix csmat_band_clone(SUNMatrix A)
 
     B = alloc_smat(
 	    MAT_CONTENT(Field(vcontentb, RECORD_MAT_MATRIXCONTENT_RAWPTR)),
-	    vcontentb, false);
+	    vcontentb, MAT_CONTEXT(A), false);
     csmat_clone_ops(B, A);
 #if 600 <= SUNDIALS_LIB_VERSION
     B->sunctx = A->sunctx;
@@ -2453,7 +2457,7 @@ static SUNMatrix csmat_sparse_clone(SUNMatrix A)
 
     B = alloc_smat(
 	    MAT_CONTENT(Field(vcontentb, RECORD_MAT_MATRIXCONTENT_RAWPTR)),
-	    vcontentb, false);
+	    vcontentb, MAT_CONTEXT(A), false);
     csmat_clone_ops(B, A);
 #if 600 <= SUNDIALS_LIB_VERSION
     B->sunctx = A->sunctx;
@@ -2492,9 +2496,9 @@ CAMLprim value sunml_matrix_wrap(value vid, value vcontent, value vpayload,
 
     /* Create matrix */
     if (content_is_value) {
-	smat = alloc_smat((void *)vcontent, vpayload, true);
+	smat = alloc_smat((void *)vcontent, vpayload, vcontext, true);
     } else {
-	smat = alloc_smat(MAT_CONTENT(vcontent), vpayload, false);
+	smat = alloc_smat(MAT_CONTENT(vcontent), vpayload, vcontext, false);
     }
     if (smat == NULL) caml_raise_out_of_memory();
 #if 600 <= SUNDIALS_LIB_VERSION
@@ -2597,7 +2601,7 @@ static SUNMatrix csmat_custom_clone(SUNMatrix A)
     if (Is_exception_result (vcontentb))
 	CAMLreturnT(SUNMatrix, NULL);
 
-    B = alloc_smat(MAT_CUSTOM_CONTENT(A), vcontentb, true);
+    B = alloc_smat(MAT_CUSTOM_CONTENT(A), vcontentb, MAT_CONTEXT(A), true);
     csmat_clone_ops(B, A);
 #if 600 <= SUNDIALS_LIB_VERSION
     B->sunctx = A->sunctx;
