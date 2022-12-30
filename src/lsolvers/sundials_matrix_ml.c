@@ -2339,7 +2339,20 @@ static SUNMatrix alloc_smat(void *content, value backlink,
     return smat;
 }
 
-#define MAT_OP_TABLE(smat)  ((smat)->content)
+/*
+ * For custom matrices (Custom.t, ArrayDense.t, ArrayBand.t) only, the
+ * content field stores an OCaml pair
+ *	((ops : ('m, 'd) matrix_ops), (id : ('k, 'm, 'nd, 'nk) id))
+ *
+ * MAT_CUSTOM_CONTENT accesses the pair.
+ * MAT_OP_TABLE accesses the first element of the pair.
+ * MAT_OCAML_ID accesses the second element of the pair.
+ *
+ * GET_OP returns specific fields within the first element of the pair.
+ */
+#define MAT_CUSTOM_CONTENT(smat)  ((smat)->content)
+#define MAT_OP_TABLE(smat) (Field((value)MAT_CUSTOM_CONTENT(smat), 0))
+#define MAT_OCAML_ID(smat) (Field((value)MAT_CUSTOM_CONTENT(smat), 1))
 #define GET_OP(smat, x) (Field((value)MAT_OP_TABLE(smat), x))
 
 static void free_smat(SUNMatrix smat)
@@ -2352,7 +2365,7 @@ static void free_smat(SUNMatrix smat)
 
 static void free_custom_smat(SUNMatrix smat)
 {
-    caml_remove_generational_global_root((value *)&MAT_OP_TABLE(smat));
+    caml_remove_generational_global_root((value *)&MAT_CUSTOM_CONTENT(smat));
     free_smat(smat);
 }
 
@@ -2584,7 +2597,7 @@ static SUNMatrix csmat_custom_clone(SUNMatrix A)
     if (Is_exception_result (vcontentb))
 	CAMLreturnT(SUNMatrix, NULL);
 
-    B = alloc_smat(MAT_OP_TABLE(A), vcontentb, true);
+    B = alloc_smat(MAT_CUSTOM_CONTENT(A), vcontentb, true);
     csmat_clone_ops(B, A);
 #if 600 <= SUNDIALS_LIB_VERSION
     B->sunctx = A->sunctx;

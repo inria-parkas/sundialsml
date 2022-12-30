@@ -97,9 +97,10 @@
     Custom Matrix.t's
     -----------------
     The payload is the value being wrapped. The content field is set to point
-    to a Value containing the OCaml callback table, it is also registered as a
-    global root. The user must ensure the callbacks do not hold references to
-    any particular matrix, for otherwise that matrix is never reclaimed.
+    to a Value containing the OCaml callback table and the OCaml matrix id,
+    it is also registered as a global root. The user must ensure the
+    callbacks do not hold references to any particular matrix, for
+    otherwise that matrix is never reclaimed.
 
     Sundials creation/cloning of SUNMatrix's
     ----------------------------------------

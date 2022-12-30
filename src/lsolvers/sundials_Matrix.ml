@@ -1155,7 +1155,7 @@ let wrap_custom ops ?context data =
   let ctx = Sundials_impl.Context.get context in
   {
     payload = data;
-    rawptr  = c_wrap Custom ops data (ops.m_matvec_setup <> None) ctx;
+    rawptr  = c_wrap Custom (ops, Custom) data (ops.m_matvec_setup <> None) ctx;
     context = ctx;
     id      = Custom;
     mat_ops = ops;
@@ -1165,7 +1165,7 @@ let wrap_arraydense ?context data =
   let ctx = Sundials_impl.Context.get context in
   {
     payload = data;
-    rawptr  = c_wrap ArrayDense ArrayDense.ops data false ctx;
+    rawptr  = c_wrap ArrayDense (ArrayDense.ops, ArrayDense) data false ctx;
     context = ctx;
     id      = ArrayDense;
     mat_ops = ArrayDense.ops;
@@ -1179,7 +1179,7 @@ let wrap_arrayband ?context data =
   let ctx = Sundials_impl.Context.get context in
   {
     payload = data;
-    rawptr  = c_wrap ArrayBand ArrayBand.ops data false ctx;
+    rawptr  = c_wrap ArrayBand (ArrayBand.ops, ArrayBand) data false ctx;
     context = ctx;
     id      = ArrayBand;
     mat_ops = ArrayBand.ops;
