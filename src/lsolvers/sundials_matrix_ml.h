@@ -230,6 +230,11 @@ CAMLprim value sunml_matrix_band_wrap(DlsMat a);
 
 #endif
 
+#if 650 <= SUNDIALS_LIB_VERSION
+/* Share the data of an arbitrary SUNMatrix with a new Matrix.any OCaml value. */
+CAMLprim value sunml_matrix_wrap_any(SUNMatrix A);
+#endif
+
 // Convert Sundials CSC_MAT=0 and CSR_MAT=1 constants into
 // Matrix.Sparse.sformat values
 #define MAT_TO_SFORMAT(x) (Val_int(x))

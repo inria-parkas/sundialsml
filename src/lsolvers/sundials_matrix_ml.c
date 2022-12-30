@@ -52,10 +52,20 @@
 extern CAMLprim value caml_ba_blit(value vsrc, value vdst);
 extern CAMLprim value caml_ba_fill(value vb, value vinit);
 
-CAMLprim void sunml_mat_init_module (value exns)
+enum ocaml_values_index {
+    IX_dense_ops = 0,
+    IX_band_ops,
+    IX_sparse_ops,
+    NUM_OCAML_VALUES
+};
+
+static value ocaml_values[NUM_OCAML_VALUES];
+
+CAMLprim void sunml_mat_init_module (value exns, value matrix_ops)
 {
     CAMLparam1 (exns);
     REGISTER_EXNS (MATRIX, exns);
+    REGISTER_OCAML_VALUES (matrix_ops);
     CAMLreturn0;
 }
 
@@ -2587,6 +2597,99 @@ CAMLprim value sunml_matrix_wrap(value vid, value vcontent, value vpayload,
 #endif
     CAMLreturn(vr);
 }
+
+#if 650 <= SUNDIALS_LIB_VERSION
+CAMLprim value sunml_matrix_wrap_any(SUNMatrix A)
+{
+    CAMLparam0();
+    CAMLlocal4(vr, vmat, vid, vrawptr);
+
+    // Create a new SUNMatrix value that shares its data with the
+    // original one.
+
+    SUNMatrix B = NULL;
+    vmat = caml_alloc_tuple(RECORD_MAT_MATRIX_SIZE);
+    Store_field(vmat, RECORD_MAT_MATRIX_PAYLOAD, MAT_BACKLINK(A));
+
+    switch (SUNMatGetID(A)) {
+	case SUNMATRIX_DENSE:
+	case SUNMATRIX_BAND:
+	case SUNMATRIX_SPARSE:
+	    vrawptr = caml_alloc_final(1, finalize_caml_smat, 1, 20);
+	    B = alloc_smat(A->content, MAT_BACKLINK(A),
+			   MAT_CONTEXT(A), false);
+	    break;
+
+	case SUNMATRIX_CUSTOM:
+	    vrawptr = caml_alloc_final(1, finalize_caml_custom_smat, 1, 20);
+	    B = alloc_smat(MAT_CUSTOM_CONTENT(A), MAT_BACKLINK(A),
+			   MAT_CONTEXT(A), true);
+	    break;
+
+	case SUNMATRIX_MAGMADENSE:
+	case SUNMATRIX_ONEMKLDENSE:
+	case SUNMATRIX_SLUNRLOC:
+	case SUNMATRIX_CUSPARSE:
+	case SUNMATRIX_GINKGO:
+	case SUNMATRIX_KOKKOSDENSE:
+	    caml_failwith("sunml_matrix_wrap_any: unexpected id");
+    }
+    MAT_CVAL(vrawptr) = B;
+    Store_field(vmat, RECORD_MAT_MATRIX_RAWPTR, vrawptr);
+    csmat_clone_ops(B, A);
+
+    // Decode the fields to create an "any" matrix.
+    enum mat_matrix_id_tag matid;
+    switch (SUNMatGetID(B)) {
+	case SUNMATRIX_DENSE:
+	    Store_field(vmat, RECORD_MAT_MATRIX_ID, MATRIX_ID_DENSE);
+	    Store_field(vmat, RECORD_MAT_MATRIX_MATOPS, OCAML_VALUE(dense_ops));
+	    matid = MATRIX_ID_DENSE;
+	    break;
+
+	case SUNMATRIX_BAND:
+	    Store_field(vmat, RECORD_MAT_MATRIX_ID, MATRIX_ID_BAND);
+	    Store_field(vmat, RECORD_MAT_MATRIX_MATOPS, OCAML_VALUE(band_ops));
+	    matid = MATRIX_ID_BAND;
+	    break;
+
+	case SUNMATRIX_SPARSE:
+	    switch (SM_SPARSETYPE_S(B)) {
+	    case CSC_MAT:
+		matid = MATRIX_ID_SPARSE_CSC;
+		break;
+	    case CSR_MAT:
+		matid = MATRIX_ID_SPARSE_CSR;
+		break;
+	    default:
+		caml_failwith("sunml_matrix_wrap_any: unexpected sparse type");
+	    }
+	    Store_field(vmat, RECORD_MAT_MATRIX_ID, matid);
+	    Store_field(vmat, RECORD_MAT_MATRIX_MATOPS, OCAML_VALUE(sparse_ops));
+	    break;
+
+	case SUNMATRIX_CUSTOM:
+	    vid = MAT_OCAML_ID(B);
+	    Store_field(vmat, RECORD_MAT_MATRIX_ID, vid);
+	    Store_field(vmat, RECORD_MAT_MATRIX_MATOPS, MAT_OP_TABLE(B));
+	    matid = Int_val(vid);
+	    break;
+
+	case SUNMATRIX_MAGMADENSE:
+	case SUNMATRIX_ONEMKLDENSE:
+	case SUNMATRIX_SLUNRLOC:
+	case SUNMATRIX_CUSPARSE:
+	case SUNMATRIX_GINKGO:
+	case SUNMATRIX_KOKKOSDENSE:
+	    caml_failwith("sunml_matrix_wrap_any: unexpected id");
+    }
+
+    vr = caml_alloc(1, matid);
+    Store_field(vr, 0, vmat);
+
+    CAMLreturn(vr);
+}
+#endif
 
 #if 300 <= SUNDIALS_LIB_VERSION
 

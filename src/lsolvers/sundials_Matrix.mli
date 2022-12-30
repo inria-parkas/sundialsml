@@ -951,6 +951,20 @@ type custom
     @matrix SUNMatrix *)
 type ('k, 'm, 'nd, 'nk) t
 
+(** A generic matrix of any type. *)
+type (_, _) any =
+  | ADense : (standard, Dense.t, Nvector_serial.data, [>Nvector_serial.kind]) t
+             -> (Nvector_serial.data, [>Nvector_serial.kind]) any
+  | ABand  : (standard, Band.t, Nvector_serial.data, [>Nvector_serial.kind]) t
+             -> (Nvector_serial.data, [>Nvector_serial.kind]) any
+  | ASparseCSC : (standard, Sparse.csc Sparse.t, Nvector_serial.data, [>Nvector_serial.kind]) t
+                 -> (Nvector_serial.data, [>Nvector_serial.kind]) any
+  | ASparseCSR : (standard, Sparse.csr Sparse.t, Nvector_serial.data, [>Nvector_serial.kind]) t
+                 -> (Nvector_serial.data, [>Nvector_serial.kind]) any
+  | ACustom : (custom, 'm, 'nd, 'nk) t -> ('nd, 'nk) any
+  | AArrayDense : (custom, ArrayDense.t, RealArray.t, 'nk) t -> (RealArray.t, 'nk) any
+  | AArrayBand  : (custom, ArrayBand.t, RealArray.t, 'nk) t -> (RealArray.t, 'nk) any
+
 (** Generic matrix with Dense content. *)
 type 'nk dense =
   (standard, Dense.t, Nvector_serial.data, [>Nvector_serial.kind] as 'nk) t

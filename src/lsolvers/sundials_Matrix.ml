@@ -1077,6 +1077,20 @@ type [@warning "-69"] ('k, 'm, 'nd, 'nk) t = {
   mat_ops : ('m, 'nd) matrix_ops;
 }
 
+(* The labels must also correspond with sundials_matrix_ml.h:mat_matrix_id_tag *)
+type (_, _) any =
+  | ADense : (standard, Dense.t, Nvector_serial.data, [>Nvector_serial.kind]) t
+             -> (Nvector_serial.data, [>Nvector_serial.kind]) any
+  | ABand  : (standard, Band.t, Nvector_serial.data, [>Nvector_serial.kind]) t
+             -> (Nvector_serial.data, [>Nvector_serial.kind]) any
+  | ASparseCSC : (standard, Sparse.csc Sparse.t, Nvector_serial.data, [>Nvector_serial.kind]) t
+                 -> (Nvector_serial.data, [>Nvector_serial.kind]) any
+  | ASparseCSR : (standard, Sparse.csr Sparse.t, Nvector_serial.data, [>Nvector_serial.kind]) t
+                 -> (Nvector_serial.data, [>Nvector_serial.kind]) any
+  | ACustom : (custom, 'm, 'nd, 'nk) t -> ('nd, 'nk) any
+  | AArrayDense : (custom, ArrayDense.t, RealArray.t, 'nk) t -> (RealArray.t, 'nk) any
+  | AArrayBand  : (custom, ArrayBand.t, RealArray.t, 'nk) t -> (RealArray.t, 'nk) any
+
 type 'nk dense =
   (standard, Dense.t, Nvector_serial.data, [>Nvector_serial.kind] as 'nk) t
 
@@ -1280,7 +1294,12 @@ let pp (type k m nd nk) fmt ({ id; payload } : (k, m, nd, nk) t) =
   | ArrayBand  -> ArrayBand.pp fmt payload
 
 (* Let C code know about some of the values in this module.  *)
-external c_init_module : exn array -> unit =
+external c_init_module
+  : exn array
+    -> (  (Dense.t, Sundials.RealArray.t) matrix_ops
+        * (Band.t, Sundials.RealArray.t) matrix_ops
+        * ('a Sparse.t, Sundials.RealArray.t) matrix_ops)
+    -> unit =
   "sunml_mat_init_module"
 
 let _ =
@@ -1291,4 +1310,5 @@ let _ =
       IncompatibleArguments;
       ZeroDiagonalElement 0;
     |]
+    (Dense.ops, Band.ops, Sparse.ops)
 
