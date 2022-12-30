@@ -1102,6 +1102,37 @@ val get_nonlin_solv_stats : ('d, 'k) session -> int *int
 val print_all_stats
       : ('d, 'k) session -> Logfile.t -> Sundials.output_format -> unit
 
+(** {3:idagetls Linear solver interface} *)
+
+(** Returns the internal Jacobian matrix of the DAE residual function.
+    This function is only provided for debugging, the returned matrix
+    should not be modified.
+
+    @cvode IDAGetJac
+    @since 6.5.0 *)
+val get_jac : ('d, 'k) session -> ('d, 'k) Matrix.any option
+
+(** Returns the {% $c_j$ %} value used to compute the internal Jacobian
+    matrix of the DAE residual function.
+
+    @cvode IDAGetJacCj
+    @since 6.5.0 *)
+val get_jac_cj : ('d, 'k) session -> float
+
+(** Returns the time at which the internal Jacobian matrix of the DAE
+    residual function was evaluated.
+
+    @cvode IDAGetJacTime
+    @since 6.5.0 *)
+val get_jac_time : ('d, 'k) session -> float
+
+(** Returns the value of the internal step counter at which the internal
+    Jacobian matrix of the DAE residual function was evaluated.
+
+    @cvode IDAGetJacNumSteps
+    @since 6.5.0 *)
+val get_jac_num_steps : ('d, 'k) session -> int
+
 (** {2:roots Additional root-finding functions} *)
 
 (** [set_root_direction s dir] specifies the direction of zero-crossings to be

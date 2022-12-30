@@ -1177,6 +1177,14 @@ external print_all_stats
 external get_num_g_evals                : ('a, 'k) session -> int
     = "sunml_cvode_get_num_g_evals"
 
+external get_jac : ('d, 'k) session -> ('d, 'k) Matrix.any option
+    = "sunml_cvode_get_jac"
+
+external get_jac_time : ('d, 'k) session -> float
+    = "sunml_cvode_get_jac_time"
+
+external get_jac_num_steps : ('d, 'k) session -> int
+    = "sunml_cvode_get_jac_num_steps"
 
 (* Let C code know about some of the values in this module.  *)
 external c_init_module : exn array -> unit =

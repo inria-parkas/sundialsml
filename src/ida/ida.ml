@@ -950,6 +950,18 @@ external print_all_stats
 external get_num_g_evals                : ('a, 'k) session -> int
     = "sunml_ida_get_num_g_evals"
 
+external get_jac : ('d, 'k) session -> ('d, 'k) Matrix.any option
+    = "sunml_ida_get_jac"
+
+external get_jac_cj : ('d, 'k) session -> float
+    = "sunml_ida_get_jac_cj"
+
+external get_jac_time : ('d, 'k) session -> float
+    = "sunml_ida_get_jac_time"
+
+external get_jac_num_steps : ('d, 'k) session -> int
+    = "sunml_ida_get_jac_num_steps"
+
 external get_current_cj : ('d, 'k) session -> float
     = "sunml_ida_get_current_cj"
 external get_current_y  : ('d, 'k) session -> 'd

@@ -1293,6 +1293,16 @@ let pp (type k m nd nk) fmt ({ id; payload } : (k, m, nd, nk) t) =
   | ArrayDense -> ArrayDense.pp fmt payload
   | ArrayBand  -> ArrayBand.pp fmt payload
 
+let pp_any (type nd nk) fmt (am : (nd, nk) any) =
+  match am with
+  | ADense m -> pp fmt m
+  | ABand m -> pp fmt m
+  | ASparseCSC m -> pp fmt m
+  | ASparseCSR m -> pp fmt m
+  | ACustom m -> pp fmt m
+  | AArrayDense m -> pp fmt m
+  | AArrayBand  m -> pp fmt m
+
 (* Let C code know about some of the values in this module.  *)
 external c_init_module
   : exn array

@@ -2233,6 +2233,15 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
 
   let write_session ?logfile session = c_print_mem session logfile
 
+  external get_jac : ('d, 'k) session -> ('d, 'k) Matrix.any option
+      = "sunml_arkode_ark_get_jac"
+
+  external get_jac_time : ('d, 'k) session -> float
+      = "sunml_arkode_ark_get_jac_time"
+
+  external get_jac_num_steps : ('d, 'k) session -> int
+      = "sunml_arkode_ark_get_jac_num_steps"
+
 end (* }}} *)
 
 module ERKStep = struct (* {{{ *)
@@ -3598,6 +3607,15 @@ module MRIStep = struct (* {{{ *)
       = "sunml_arkode_mri_print_mem"
 
   let write_session ?logfile session = c_print_mem session logfile
+
+  external get_jac : ('d, 'k) session -> ('d, 'k) Matrix.any option
+      = "sunml_arkode_mri_get_jac"
+
+  external get_jac_time : ('d, 'k) session -> float
+      = "sunml_arkode_mri_get_jac_time"
+
+  external get_jac_num_steps : ('d, 'k) session -> int
+      = "sunml_arkode_mri_get_jac_num_steps"
 
 end (* }}} *)
 

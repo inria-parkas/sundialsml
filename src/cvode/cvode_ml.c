@@ -1839,6 +1839,60 @@ CAMLprim value sunml_cvode_get_current_time(value vcvode_mem)
     CAMLreturn(caml_copy_double(v));
 }
 
+CAMLprim value sunml_cvode_get_jac(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+    CAMLlocal2(vr, vm);
+
+#if 650 <= SUNDIALS_LIB_VERSION
+    SUNMatrix j;
+    int flag = CVodeGetJac(CVODE_MEM_FROM_ML(vcvode_mem), &j);
+    CHECK_FLAG("CVodeGetJac", flag);
+    if (j == NULL) {
+	vr = Val_none;
+    } else {
+	vm = sunml_matrix_wrap_any(j);
+	Store_some(vr, vm);
+    }
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(vr);
+}
+
+CAMLprim value sunml_cvode_get_jac_time(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+    CAMLlocal1(vr);
+
+#if 650 <= SUNDIALS_LIB_VERSION
+    sunrealtype tj = 0.0;
+    int flag = CVodeGetJacTime(CVODE_MEM_FROM_ML(vcvode_mem), &tj);
+    CHECK_FLAG("CVodeGetJacTime", flag);
+    vr = caml_copy_double(tj);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(vr);
+}
+
+CAMLprim value sunml_cvode_get_jac_num_steps(value vcvode_mem)
+{
+    CAMLparam1(vcvode_mem);
+    long int nstj = 0;
+
+#if 650 <= SUNDIALS_LIB_VERSION
+    int flag = CVodeGetJacNumSteps(CVODE_MEM_FROM_ML(vcvode_mem), &nstj);
+    CHECK_FLAG("CVodeGetJacNumSteps", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(Val_int(nstj));
+}
+
 CAMLprim value sunml_cvode_set_max_ord(value vcvode_mem, value maxord)
 {
     CAMLparam2(vcvode_mem, maxord);

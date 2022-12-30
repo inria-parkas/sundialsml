@@ -632,7 +632,10 @@ and main_with_type : type s. int -> int -> s Matrix.Sparse.sformat -> unit
               exit 1);
 
   (* SUNMatrix Tests *)
-  fails += Test.test_sunmatgetid a Matrix.Sparse 0;
+  fails += Test.test_sunmatgetid a
+              (match mattype with
+               | Matrix.Sparse.CSC -> Matrix.SparseCSC
+               | Matrix.Sparse.CSR -> Matrix.SparseCSR) 0;
   fails += Test.test_sunmatclone a 0;
   fails += Test.test_sunmatcopy a 0;
   fails += Test.test_sunmatzero a 0;

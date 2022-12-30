@@ -3499,6 +3499,60 @@ CAMLprim value sunml_arkode_ark_set_postprocess_step_fn(value varkode_mem,
  * Boiler plate definitions for ARKStep interface.
  */
 
+CAMLprim value sunml_arkode_ark_get_jac(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    CAMLlocal2(vr, vm);
+
+#if 650 <= SUNDIALS_LIB_VERSION
+    SUNMatrix j;
+    int flag = ARKStepGetJac(ARKODE_MEM_FROM_ML(varkode_mem), &j);
+    CHECK_FLAG("ARKStepGetJac", flag);
+    if (j == NULL) {
+	vr = Val_none;
+    } else {
+	vm = sunml_matrix_wrap_any(j);
+	Store_some(vr, vm);
+    }
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(vr);
+}
+
+CAMLprim value sunml_arkode_ark_get_jac_time(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    CAMLlocal1(vr);
+
+#if 650 <= SUNDIALS_LIB_VERSION
+    sunrealtype tj = 0.0;
+    int flag = ARKStepGetJacTime(ARKODE_MEM_FROM_ML(varkode_mem), &tj);
+    CHECK_FLAG("ARKStepGetJacTime", flag);
+    vr = caml_copy_double(tj);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(vr);
+}
+
+CAMLprim value sunml_arkode_ark_get_jac_num_steps(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    long int nstj = 0;
+
+#if 650 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepGetJacNumSteps(ARKODE_MEM_FROM_ML(varkode_mem), &nstj);
+    CHECK_FLAG("ARKStepGetJacNumSteps", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(Val_int(nstj));
+}
+
 CAMLprim value sunml_arkode_ark_print_mem(value varkode_mem, value volog)
 {
     CAMLparam2(varkode_mem, volog);
@@ -7841,6 +7895,60 @@ CAMLprim value sunml_arkode_mri_istepper_get_forcing_data(value visteppercptr)
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * Boiler plate definitions for MRIStep interface.
  */
+
+CAMLprim value sunml_arkode_mri_get_jac(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    CAMLlocal2(vr, vm);
+
+#if 650 <= SUNDIALS_LIB_VERSION
+    SUNMatrix j;
+    int flag = MRIStepGetJac(ARKODE_MEM_FROM_ML(varkode_mem), &j);
+    CHECK_FLAG("MRIStepGetJac", flag);
+    if (j == NULL) {
+	vr = Val_none;
+    } else {
+	vm = sunml_matrix_wrap_any(j);
+	Store_some(vr, vm);
+    }
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(vr);
+}
+
+CAMLprim value sunml_arkode_mri_get_jac_time(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    CAMLlocal1(vr);
+
+#if 650 <= SUNDIALS_LIB_VERSION
+    sunrealtype tj = 0.0;
+    int flag = MRIStepGetJacTime(ARKODE_MEM_FROM_ML(varkode_mem), &tj);
+    CHECK_FLAG("MRIStepGetJacTime", flag);
+    vr = caml_copy_double(tj);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(vr);
+}
+
+CAMLprim value sunml_arkode_mri_get_jac_num_steps(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    long int nstj = 0;
+
+#if 650 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepGetJacNumSteps(ARKODE_MEM_FROM_ML(varkode_mem), &nstj);
+    CHECK_FLAG("MRIStepGetJacNumSteps", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(Val_int(nstj));
+}
 
 CAMLprim value sunml_arkode_mri_print_mem(value varkode_mem, value volog)
 {

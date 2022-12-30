@@ -1622,6 +1622,77 @@ CAMLprim value sunml_ida_get_current_time(value vida_mem)
     CAMLreturn(caml_copy_double(v));
 }
 
+CAMLprim value sunml_ida_get_jac(value vida_mem)
+{
+    CAMLparam1(vida_mem);
+    CAMLlocal2(vr, vm);
+
+#if 650 <= SUNDIALS_LIB_VERSION
+    SUNMatrix j;
+    int flag = IDAGetJac(IDA_MEM_FROM_ML(vida_mem), &j);
+    CHECK_FLAG("IDAGetJac", flag);
+    if (j == NULL) {
+	vr = Val_none;
+    } else {
+	vm = sunml_matrix_wrap_any(j);
+	Store_some(vr, vm);
+    }
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(vr);
+}
+
+CAMLprim value sunml_ida_get_jac_cj(value vida_mem)
+{
+    CAMLparam1(vida_mem);
+    CAMLlocal1(vr);
+
+#if 650 <= SUNDIALS_LIB_VERSION
+    sunrealtype cj = 0.0;
+    int flag = IDAGetJacCj(IDA_MEM_FROM_ML(vida_mem), &cj);
+    CHECK_FLAG("IDAGetJacCj", flag);
+    vr = caml_copy_double(cj);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(vr);
+}
+
+CAMLprim value sunml_ida_get_jac_time(value vida_mem)
+{
+    CAMLparam1(vida_mem);
+    CAMLlocal1(vr);
+
+#if 650 <= SUNDIALS_LIB_VERSION
+    sunrealtype tj = 0.0;
+    int flag = IDAGetJacTime(IDA_MEM_FROM_ML(vida_mem), &tj);
+    CHECK_FLAG("IDAGetJacTime", flag);
+    vr = caml_copy_double(tj);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(vr);
+}
+
+CAMLprim value sunml_ida_get_jac_num_steps(value vida_mem)
+{
+    CAMLparam1(vida_mem);
+    long int nstj = 0;
+
+#if 650 <= SUNDIALS_LIB_VERSION
+    int flag = IDAGetJacNumSteps(IDA_MEM_FROM_ML(vida_mem), &nstj);
+    CHECK_FLAG("IDAGetJacNumSteps", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(Val_int(nstj));
+}
+
 CAMLprim value sunml_ida_set_nonlin_conv_coef_ic(value vida_mem, value vcoef)
 {
     CAMLparam2(vida_mem, vcoef);

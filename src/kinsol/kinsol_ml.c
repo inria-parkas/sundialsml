@@ -1603,6 +1603,43 @@ CAMLprim value sunml_kinsol_get_step_length(value vkin_mem)
     CAMLreturn(caml_copy_double(v));
 }
 
+CAMLprim value sunml_kinsol_get_jac(value vkin_mem)
+{
+    CAMLparam1(vkin_mem);
+    CAMLlocal2(vr, vm);
+
+#if 650 <= SUNDIALS_LIB_VERSION
+    SUNMatrix j;
+    int flag = KINGetJac(KINSOL_MEM_FROM_ML(vkin_mem), &j);
+    CHECK_FLAG("KINGetJac", flag);
+    if (j == NULL) {
+	vr = Val_none;
+    } else {
+	vm = sunml_matrix_wrap_any(j);
+	Store_some(vr, vm);
+    }
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(vr);
+}
+
+CAMLprim value sunml_kinsol_get_jac_num_iters(value vkin_mem)
+{
+    CAMLparam1(vkin_mem);
+    long int nstj = 0;
+
+#if 650 <= SUNDIALS_LIB_VERSION
+    int flag = KINGetJacNumIters(KINSOL_MEM_FROM_ML(vkin_mem), &nstj);
+    CHECK_FLAG("KINGetJacNumIters", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(Val_int(nstj));
+}
+
 CAMLprim void sunml_kinsol_print_all_stats(value vkin_mem,
 					   value vfile, value voutformat)
 {

@@ -651,6 +651,12 @@ external print_all_stats
     : ('d, 'k) session -> Logfile.t -> Sundials.output_format -> unit
     = "sunml_kinsol_print_all_stats"
 
+external get_jac : ('d, 'k) session -> ('d, 'k) Matrix.any option
+    = "sunml_kinsol_get_jac"
+
+external get_jac_num_iters : ('d, 'k) session -> int
+    = "sunml_kinsol_get_jac_num_iters"
+
 (* synchronized with kinsol_ml.h: kinsol_orthaa_tag *)
 type orthaa =
   | MGS

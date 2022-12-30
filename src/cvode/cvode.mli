@@ -1387,6 +1387,30 @@ val get_num_proj_evals : ('d, 'k) session -> int
     @cvode CVodeGetNumProjFails *)
 val get_num_proj_fails : ('d, 'k) session -> int
 
+(** {3:cvodegetls Linear solver interface} *)
+
+(** Returns the internal Jacobian matrix of the ODE right-hand-side function.
+    This function is only provided for debugging, the returned matrix
+    should not be modified.
+
+    @cvode CVodeGetJac
+    @since 6.5.0 *)
+val get_jac : ('d, 'k) session -> ('d, 'k) Matrix.any option
+
+(** Returns the time at which the internal Jacobian matrix of the ODE
+    right-hand-side function was evaluated.
+
+    @cvode CVodeGetJacTime
+    @since 6.5.0 *)
+val get_jac_time : ('d, 'k) session -> float
+
+(** Returns the value of the internal step counter at which the internal
+    Jacobian matrix of the ODE right-hand-side function was evaluated.
+
+    @cvode CVodeGetJacNumSteps
+    @since 6.5.0 *)
+val get_jac_num_steps : ('d, 'k) session -> int
+
 (** {2:exceptions Exceptions} *)
 
 (** Raised on missing or illegal solver inputs. Also raised if an element

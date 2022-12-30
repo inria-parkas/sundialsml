@@ -772,6 +772,23 @@ val get_step_length : ('d, 'k) session -> float
 val print_all_stats
       : ('d, 'k) session -> Logfile.t -> Sundials.output_format -> unit
 
+(** {3:cvodegetls Linear solver interface} *)
+
+(** Returns the internal Jacobian matrix of the nonlinear system function.
+    This function is only provided for debugging, the returned matrix
+    should not be modified.
+
+    @cvode KINGetJac
+    @since 6.5.0 *)
+val get_jac : ('d, 'k) session -> ('d, 'k) Matrix.any option
+
+(** Returns the nonlinear iteration number at which the Jacobian was
+    evaluated.
+
+    @cvode KINGetJacNumIters
+    @since 6.5.0 *)
+val get_jac_num_iters : ('d, 'k) session -> int
+
 (** {2:exceptions Exceptions} *)
 
 (** An input parameter was invalid.

@@ -2257,6 +2257,32 @@ module ARKStep : sig (* {{{ *)
       @arkode_ark ARKStepPrintMem *)
   val write_session  : ?logfile:Logfile.t -> ('d, 'k) session -> unit
 
+  (** {3:arkgetls Linear solver optional output functions} *)
+
+  (** Returns the internal Jacobian matrix of the ODE implicit
+      right-hand-side function.
+      This function is only provided for debugging, the returned matrix
+      should not be modified.
+
+      @arkode_ark ARKStepGetJac
+      @since 6.5.0 *)
+  val get_jac : ('d, 'k) session -> ('d, 'k) Matrix.any option
+
+  (** Returns the time at which the internal Jacobian matrix of the ODE
+      implicit right-hand-side function was evaluated.
+
+      @arkode_ark ARKStepGetJacTime
+      @since 6.5.0 *)
+  val get_jac_time : ('d, 'k) session -> float
+
+  (** Returns the value of the internal step counter at which the internal
+      Jacobian matrix of the ODE implicit right-hand-side function was
+      evaluated.
+
+      @arkode_ark ARKStepGetJacNumSteps
+      @since 6.5.0 *)
+  val get_jac_num_steps : ('d, 'k) session -> int
+
   (** {3:arkgetimplicit Implicit solver optional output functions} *)
 
   (** Returns the number of calls made to the linear solver's setup function.
@@ -4084,6 +4110,32 @@ module MRIStep : sig (* {{{ *)
 
       @arkode_mri MRIStepPrintMem *)
   val write_session  : ?logfile:Logfile.t -> ('d, 'k) session -> unit
+
+  (** {3:mrigetls Linear solver optional output functions} *)
+
+  (** Returns a copy of the internal Jacobian matrix of the ODE implicit
+      slow right-hand-side function.
+      This function is only provided for debugging, the returned matrix
+      should not be modified.
+
+      @arkode_mri MRIStepGetJac
+      @since 6.5.0 *)
+  val get_jac : ('d, 'k) session -> ('d, 'k) Matrix.any option
+
+  (** Returns the time at which the internal Jacobian matrix of the ODE
+      implicit slow right-hand-side function was evaluated.
+
+      @arkode_mri MRIStepGetJacTime
+      @since 6.5.0 *)
+  val get_jac_time : ('d, 'k) session -> float
+
+  (** Returns the value of the internal step counter at which the internal
+      Jacobian matrix of the ODE implicit slow right-hand-side function was
+      evaluated.
+
+      @arkode_mri MRIStepGetJacNumSteps
+      @since 6.5.0 *)
+  val get_jac_num_steps : ('d, 'k) session -> int
 
   (** {2:mriroots Additional root-finding functions} *)
 
