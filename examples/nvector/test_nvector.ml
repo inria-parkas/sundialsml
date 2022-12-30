@@ -229,14 +229,17 @@ let int_of_nvector_id = function
   | Nvector.ParHyp        -> 4
   | Nvector.PETSc         -> 5
   | Nvector.CUDA          -> 6
-  | Nvector.RAJA          -> 7
-  | Nvector.OpenMPdev     -> 8
-  | Nvector.Trilinos      -> 9
-  | Nvector.ManyVector    -> 10
-  | Nvector.MpiManyVector -> 11
-  | Nvector.MpiPlusX      -> 12
+  | Nvector.HIP           -> 7
+  | Nvector.SYCL          -> 8
+  | Nvector.RAJA          -> 9
+  | Nvector.Kokkos        -> 10
+  | Nvector.OpenMPdev     -> 11
+  | Nvector.Trilinos      -> 12
+  | Nvector.ManyVector    -> 13
+  | Nvector.MpiManyVector -> 14
+  | Nvector.MpiPlusX      -> 15
   | Nvector.Custom        ->
-      if Sundials_impl.Version.lt500 then 9 else 13
+      if Sundials_impl.Version.lt500 then 9 else 16
 
 let test_getvectorid x id myid =
   if Nvector_ops.get_id x <> id then (
