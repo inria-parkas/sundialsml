@@ -29,21 +29,6 @@
 
 #include "kinsol_ml.h"
 
-enum callback_index {
-    IX_call_bbdlocal = 0,
-    IX_call_bbdcomm,
-    NUM_CALLBACKS
-};
-
-static value callbacks[NUM_CALLBACKS];
-
-CAMLprim value c_kinsol_bbd_init_module (value cbs)
-{
-    CAMLparam1 (cbs);
-    REGISTER_CALLBACKS (cbs);
-    CAMLreturn (Val_unit);
-}
-
 /* Sundials 2.5.0 User's Guide incorrectly states that KINLocalFn
  * returns void.  The comment in kinsol_bbdpre.h says it should return
  * 0 for success, non-zero otherwise.  */
