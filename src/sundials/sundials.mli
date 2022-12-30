@@ -38,12 +38,12 @@ module Logfile : sig (* {{{ *)
 
   (** The stderr file.
       This log file has its own buffer, distinct from that of
-      {!Pervasives.stderr}; take care to flush before and after. *)
+      [Stdlib.stderr]; take care to flush before and after. *)
   val stderr : t
 
   (** The stdout file.
       This log file has its own buffer, distinct from that of
-      {!Pervasives.stdout}; take care to flush before and after. *)
+      [Stdlib.stdout]; take care to flush before and after. *)
   val stdout : t
 
   (** Opens the named file. When [trunc] is false, the default, writes are
@@ -157,7 +157,7 @@ module Logger : sig (* {{{ *)
   val level_implies : level -> level -> bool
 
   (** Indicates what level of debugging was specified when the underlying
-      library was compiled. Returns {!None} if logging is not enabled.
+      library was compiled. Returns [None] if logging is not enabled.
 
      @logger <#enabling-logging> SUNDIALS_LOGGING_LEVEL *)
   val logging_level : level option
