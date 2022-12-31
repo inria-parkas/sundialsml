@@ -54,7 +54,7 @@ void sunml_register_exns(enum sundials_exn_set_index index, value exns)
 	int i;
 	r = caml_alloc_small (SUNDIALS_NUM_EXN_SETS, 0);
         for (i = 0; i < SUNDIALS_NUM_EXN_SETS; ++i)
-	    Field (r, i) = 0;
+	    Field (r, i) = Val_unit;
 	Store_field (r, index, exns);
 	sundials_ml_exn_table = r;
 	caml_register_generational_global_root (&sundials_ml_exn_table);
