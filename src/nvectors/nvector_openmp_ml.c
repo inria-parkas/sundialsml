@@ -222,6 +222,9 @@ CAMLprim value sunml_nvec_wrap_openmp(value nthreads,
 
 #if 500 <= SUNDIALS_LIB_VERSION
     ops->nvgetlength	    = N_VGetLength_OpenMP;
+#if 650 <= SUNDIALS_LIB_VERSION
+    ops->nvgetlocallength   = N_VGetLength_OpenMP;
+#endif
     ops->nvgetcommunicator  = NULL;
 
     ops->nvdotprodlocal     = N_VDotProd_OpenMP;

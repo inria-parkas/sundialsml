@@ -245,6 +245,9 @@ CAMLprim value sunml_nvec_wrap_parallel(value payload,
 
 #if 500 <= SUNDIALS_LIB_VERSION
     ops->nvgetlength	    = N_VGetLength_Parallel;
+#if 650 <= SUNDIALS_LIB_VERSION
+    ops->nvgetlocallength   = N_VGetLocalLength_Parallel;
+#endif
     ops->nvgetcommunicator  = N_VGetCommunicator_Parallel;
 
     ops->nvdotprodlocal     = N_VDotProdLocal_Parallel;
@@ -522,6 +525,18 @@ CAMLprim value sunml_nvec_par_getlength(value vx)
     CAMLlocal1(r);
 #if 500 <= SUNDIALS_LIB_VERSION
     r = Val_int(N_VGetLength_Parallel(NVEC_VAL(vx)));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(r);
+}
+
+CAMLprim value sunml_nvec_par_getlocallength(value vx)
+{
+    CAMLparam1(vx);
+    CAMLlocal1(r);
+#if 650 <= SUNDIALS_LIB_VERSION
+    r = Val_int(N_VGetLocalLength_Parallel(NVEC_VAL(vx)));
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif

@@ -78,6 +78,7 @@ module Custom_serial =
       Nvector_custom.clone        = Nvector_serial.DataOps.clone;
       Nvector_custom.space        = Some Nvector_serial.DataOps.space;
       Nvector_custom.getlength    = Nvector_serial.DataOps.getlength;
+      Nvector_custom.getlocallength = Some Nvector_serial.DataOps.getlocallength;
       Nvector_custom.getcommunicator = None;
       Nvector_custom.print
         = Some (fun d logfile -> Nvector_serial.DataOps.print ?logfile d);
@@ -146,6 +147,7 @@ module Custom_array1 =
       Nvector_custom.clone        = Nvector_array.DataOps.clone;
       Nvector_custom.space        = Some Nvector_array.DataOps.space;
       Nvector_custom.getlength    = Nvector_array.DataOps.getlength;
+      Nvector_custom.getlocallength = Some Nvector_array.DataOps.getlocallength;
       Nvector_custom.getcommunicator = None;
       Nvector_custom.print
         = Some (fun d logfile -> Nvector_array.DataOps.print ?logfile d);

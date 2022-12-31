@@ -65,6 +65,10 @@ type 'd nvector_ops = { (* {{{ *)
   (** Returns the number of "active" entries. This value is cumulative
       across all processes in a parallel environment. *)
 
+  getlocallength  : ('d -> int) option;
+  (** Returns the number of "active" entries. This value should correspond
+      with the length of the local array. *)
+
   print           : ('d -> Sundials.Logfile.t option -> unit) option;
   (** Print to the given logfile (stdout, by default). *)
 

@@ -439,6 +439,9 @@ CAMLprim value sunml_nvec_wrap_serial(value payload,
 
 #if 500 <= SUNDIALS_LIB_VERSION
     ops->nvgetlength	    = N_VGetLength_Serial;
+#if 650 <= SUNDIALS_LIB_VERSION
+    ops->nvgetlocallength   = N_VGetLength_Serial;
+#endif
 #if 530 <= SUNDIALS_LIB_VERSION
     ops->nvprint	   = N_VPrint_Serial;
     ops->nvprintfile	   = N_VPrintFile_Serial;
@@ -542,6 +545,9 @@ static N_Vector callml_vclone(N_Vector w);
 static void callml_vspace(N_Vector v, sundials_ml_index *lrw, sundials_ml_index *liw);
 #if 500 <= SUNDIALS_LIB_VERSION
 static sundials_ml_index callml_vgetlength(N_Vector v);
+#endif
+#if 650 <= SUNDIALS_LIB_VERSION
+static sundials_ml_index callml_vgetlocallength(N_Vector v);
 #endif
 #if 530 <= SUNDIALS_LIB_VERSION
 static void callml_vprint(N_Vector v);
@@ -708,6 +714,12 @@ CAMLprim value sunml_nvec_wrap_custom(value mlops, value payload,
 #if 500 <= SUNDIALS_LIB_VERSION
     ops->nvgetlength	    = callml_vgetlength;
 
+#if 650 <= SUNDIALS_LIB_VERSION
+    ops->nvgetlocallength   = NULL;
+    if (HAS_OP(mlops, NVECTOR_OPS_NVGETLOCALLENGTH))
+	ops->nvgetlocallength = callml_vgetlocallength;
+#endif
+
     ops->nvgetcommunicator  = NULL;
     if (HAS_OP(mlops, NVECTOR_OPS_NVGETCOMMUNICATOR))
 	ops->nvgetcommunicator = callml_vgetcommunicator;
@@ -859,6 +871,28 @@ static sundials_ml_index callml_vgetlength(N_Vector v)
     if (Is_exception_result (r)) {
 	sunml_warn_discarded_exn (Extract_exception (r),
 					"user-defined getlength");
+	fputs ("Sundials/ML has no sensible value to return to Sundials, "
+	       "and incorrect values risk memory corruption.  Abort.", stderr);
+	fflush (stderr);
+	abort ();
+    }
+
+    CAMLreturnT(sundials_ml_index, Int_val(r));
+}
+#endif
+
+#if 650 <= SUNDIALS_LIB_VERSION
+static sundials_ml_index callml_vgetlocallength(N_Vector v)
+{
+    CAMLparam0();
+    CAMLlocal1(mlop);
+    mlop = GET_SOME_OP(v, NVECTOR_OPS_NVGETLOCALLENGTH);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback_exn (mlop, NVEC_BACKLINK(v));
+    if (Is_exception_result (r)) {
+	sunml_warn_discarded_exn (Extract_exception (r),
+					"user-defined getlocallength");
 	fputs ("Sundials/ML has no sensible value to return to Sundials, "
 	       "and incorrect values risk memory corruption.  Abort.", stderr);
 	fflush (stderr);
@@ -3084,6 +3118,18 @@ CAMLprim value sunml_nvec_getlength(value vx)
     CAMLlocal1(r);
 #if 500 <= SUNDIALS_LIB_VERSION
     r = Val_int(N_VGetLength(NVEC_VAL(vx)));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(r);
+}
+
+CAMLprim value sunml_nvec_getlocallength(value vx)
+{
+    CAMLparam1(vx);
+    CAMLlocal1(r);
+#if 650 <= SUNDIALS_LIB_VERSION
+    r = Val_int(N_VGetLocalLength(NVEC_VAL(vx)));
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif

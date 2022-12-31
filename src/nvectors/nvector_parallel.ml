@@ -465,6 +465,9 @@ module Ops = struct (* {{{ *)
   external getlength  : t -> int
     = "sunml_nvec_par_getlength"
 
+  external getlocallength  : t -> int
+    = "sunml_nvec_par_getlocallength"
+
   external c_print_file : t -> Logfile.t option -> unit
     = "sunml_nvec_par_print_file"
 
@@ -921,6 +924,8 @@ module MakeOps =
     let space (_, ng, comm) = (ng, 2 * Mpi.comm_size comm)
 
     let getlength (_, ng, _) = ng
+
+    let getlocallength (x, _, _) = A.length x
 
     let print ?(logfile=Logfile.stdout) (x, _, _) =
       for i = 0 to A.length x - 1 do
@@ -1579,6 +1584,8 @@ module DataOps =
     let space (_, ng, comm) = (ng, 2 * Mpi.comm_size comm)
 
     let getlength (_, ng, _) = ng
+
+    let getlocallength (x, _, _) = RealArray.length x
 
     let print ?(logfile=Logfile.stdout) (x, _, _) =
       for i = 0 to A.dim x - 1 do

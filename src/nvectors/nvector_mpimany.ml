@@ -262,6 +262,8 @@ struct (* {{{ *)
   external getlength      : t -> int
     = "sunml_nvec_mpimany_getlength" [@@noalloc]
 
+  let getlocallength _ = raise Nvector.OperationNotProvided
+
   external c_print_file : t -> Logfile.t option -> unit
     = "sunml_nvec_mpimany_print_file"
 
@@ -714,6 +716,8 @@ struct (* {{{ *)
     ROArray.fold_left f (0, 0) x
 
   let getlength ((_, _, gx) : t) = gx
+
+  let getlocallength _ = raise Nvector.OperationNotProvided
 
   let print ?logfile ((x, _, _) : t) =
     ROArray.iter (Nvector.Ops.print ?logfile) x

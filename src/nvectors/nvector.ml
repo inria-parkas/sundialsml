@@ -89,6 +89,7 @@ module type NVECTOR_OPS =
 
     val space        : t -> int * int
     val getlength    : t -> int
+    val getlocallength : t -> int
     val print        : ?logfile:Sundials.Logfile.t -> t -> unit
 
     val linearcombination
@@ -204,6 +205,7 @@ struct (* {{{ *)
 
   let space x = Ops.space (uw x)
   let getlength x = Ops.getlength (uw x)
+  let getlocallength x = Ops.getlocallength (uw x)
   let print ?logfile x = Ops.print ?logfile (uw x)
 
   let linearcombination a xa y = Ops.linearcombination a (uwa xa) (uw y)
@@ -386,6 +388,10 @@ module Ops =
     external getlength
       : ('d, 'k) t -> int
       = "sunml_nvec_getlength"
+
+    external getlocallength
+      : ('d, 'k) t -> int
+      = "sunml_nvec_getlocallength"
 
     external c_print_file
       : ('d, 'k) t -> Sundials.Logfile.t option -> unit

@@ -196,6 +196,9 @@ CAMLprim value sunml_nvec_wrap_pthreads(value nthreads,
 
 #if 500 <= SUNDIALS_LIB_VERSION
     ops->nvgetlength	    = N_VGetLength_Pthreads;
+#if 650 <= SUNDIALS_LIB_VERSION
+    ops->nvgetlocallength   = N_VGetLength_Pthreads;
+#endif
     ops->nvgetcommunicator  = NULL;
 
     ops->nvdotprodlocal     = N_VDotProd_Pthreads;

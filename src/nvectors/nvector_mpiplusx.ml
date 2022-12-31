@@ -223,6 +223,8 @@ struct (* {{{ *)
   external getlength      : t -> int
     = "sunml_nvec_mpimany_getlength" [@@noalloc]
 
+  let getlocallength _ = raise Nvector.OperationNotProvided
+
   external c_print_file : t -> Sundials.Logfile.t option -> unit
     = "sunml_nvec_mpimany_print_file"
 
@@ -554,6 +556,8 @@ struct (* {{{ *)
     Mpi.(allreduce_float lmax Max comm)
 
   let getlength ((x, comm) : t) = sumlens comm x
+
+  let getlocallength _ = raise Nvector.OperationNotProvided
 
   let print ?logfile ((x, _) : t) = Nvector.Ops.print ?logfile x
 

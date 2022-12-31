@@ -171,6 +171,11 @@ module type NVECTOR_OPS =
        @since 5.0.0 *)
     val getlength : t -> int
 
+    (** Returns the number of "active" entries stored locally.
+
+       @since 6.5.0 *)
+    val getlocallength : t -> int
+
     (** Prints to the given logfile (stdout, by default).
 
         @since 5.3.0 *)
@@ -439,6 +444,11 @@ module Ops : sig (* {{{ *)
 
        @since 5.0.0 *)
     val getlength : ('d, 'k) t -> int
+
+    (** Returns the number of "active" entries stored locally.
+
+       @since 6.5.0 *)
+    val getlocallength : ('d, 'k) t -> int
 
     (** Prints to the given logfile (stdout, by default).
 

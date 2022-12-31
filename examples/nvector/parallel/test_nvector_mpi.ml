@@ -75,6 +75,7 @@ module Custom_parallel1 =
       Nvector_custom.clone        = Nvector_parallel.DataOps.clone;
       Nvector_custom.space        = Some Nvector_parallel.DataOps.space;
       Nvector_custom.getlength    = Nvector_parallel.DataOps.getlength;
+      Nvector_custom.getlocallength = Some Nvector_parallel.DataOps.getlocallength;
       Nvector_custom.getcommunicator = None;
       Nvector_custom.print
         = Some (fun d logfile -> Nvector_parallel.DataOps.print ?logfile d);
@@ -157,6 +158,7 @@ module Custom_parallel2 =
       Nvector_custom.clone        = DataOps.clone;
       Nvector_custom.space        = Some DataOps.space;
       Nvector_custom.getlength    = Nvector_parallel.DataOps.getlength;
+      Nvector_custom.getlocallength = Some Nvector_parallel.DataOps.getlocallength;
       Nvector_custom.getcommunicator = None;
       Nvector_custom.print
         = Some (fun d logfile -> Nvector_parallel.DataOps.print ?logfile d);

@@ -412,6 +412,8 @@ struct (* {{{ *)
   external getlength      : t -> int
     = "sunml_nvec_ser_getlength"
 
+  let getlocallength = getlength
+
   external c_print_file : t -> Logfile.t option -> unit
     = "sunml_nvec_ser_print_file"
 
@@ -805,6 +807,8 @@ module DataOps =
     let space (x : t) = (A.dim x, 1)
 
     let getlength (x : t) = A.dim x
+
+    let getlocallength = getlength
 
     let print ?(logfile=Logfile.stdout) (x : t) =
       for i = 0 to A.dim x - 1 do

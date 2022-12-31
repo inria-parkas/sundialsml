@@ -21,6 +21,7 @@ type 'a nvector_ops = { (* {{{ *)
   clone           : 'a -> 'a;
   space           : ('a -> (int * int)) option;
   getlength       : 'a -> int;
+  getlocallength  : ('a -> int) option;
   print           : ('a -> Sundials.Logfile.t option-> unit) option;
   linearsum       : float -> 'a -> float -> 'a -> 'a -> unit;
   const           : float -> 'a -> unit;
@@ -196,8 +197,8 @@ and clone ops nv =
 let add_tracing msg ops =
   let pr s = print_string msg; print_endline s in
   let { (* {{{ *)
-      check; clone; space; getlength; print; linearsum; const; prod; div;
-      scale; abs; inv; addconst; maxnorm; wrmsnorm; min;
+      check; clone; space; getlength; getlocallength; print; linearsum;
+      const; prod; div; scale; abs; inv; addconst; maxnorm; wrmsnorm; min;
 
       dotprod; compare; invtest;
 
@@ -229,6 +230,8 @@ let add_tracing msg ops =
   (* ... {{{ *)
   and tr_nvspace = fo space (fun f -> fun a -> (pr "space"; f a))
   and tr_nvgetlength a = pr "getlength"; getlength a
+  and tr_nvgetlocallength =
+    fo getlocallength (fun f -> fun x -> pr "getlocallength"; f x)
   and tr_nvprint = match print with None -> None
                    | Some f -> Some (fun a lf -> pr "print"; f a lf);
   and tr_nvlinearsum a x b y z = pr "linearsum"; linearsum a x b y z
@@ -321,6 +324,7 @@ let add_tracing msg ops =
       clone           = tr_nvclone;
       space           = tr_nvspace;
       getlength       = tr_nvgetlength;
+      getlocallength  = tr_nvgetlocallength;
       print           = tr_nvprint;
       linearsum       = tr_nvlinearsum;
       const           = tr_nvconst;
@@ -435,6 +439,11 @@ module MakeOps = functor (A : sig
         | Some f -> (fun x -> f (uv x))
 
       let getlength a = A.ops.getlength (uv a)
+
+      let getlocallength =
+        match A.ops.getlocallength with
+        | None -> (fun _ -> raise Nvector.OperationNotProvided)
+        | Some f -> (fun x -> f (uv x))
 
       [@@@warning "-27"]
       let print =
@@ -608,6 +617,11 @@ module MakeOps = functor (A : sig
 
       let getlength = A.ops.getlength
 
+      let getlocallength =
+        match A.ops.getlocallength with
+        | None -> (fun _ -> raise Nvector.OperationNotProvided)
+        | Some f -> f
+
       [@@@warning "-27"]
       let print =
         match A.ops.print with
@@ -735,8 +749,8 @@ module Any = struct (* {{{ *)
         ~(project:Nvector.gdata -> d) ops
     =
     let { (* {{{ *)
-        check; clone; space; getlength; print; linearsum; const; prod; div;
-        scale; abs; inv; addconst; maxnorm; wrmsnorm; min;
+        check; clone; space; getlength; getlocallength; print; linearsum;
+        const; prod; div; scale; abs; inv; addconst; maxnorm; wrmsnorm; min;
 
         dotprod; compare; invtest;
 
@@ -768,6 +782,8 @@ module Any = struct (* {{{ *)
         clone        = (fun v -> inject (clone (project v)));
         space        = option_map single space;
         getlength    = single getlength;
+        getlocallength = (match getlocallength with None -> None
+                          | Some f -> Some (fun v -> f (project v)));
         print        = (match print with None -> None
                        | Some f -> Some (fun v lf -> f (project v) lf));
         linearsum    = (fun c1 v1 c2 v2 vr -> linearsum c1 (project v1)

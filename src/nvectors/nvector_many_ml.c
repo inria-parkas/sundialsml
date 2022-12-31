@@ -353,6 +353,9 @@ static value do_wrap(value payload,
     ops->nvsetarraypointer = NULL;
 #endif
     ops->nvgetlength	   = MVAPPEND(N_VGetLength);
+#if 650 <= SUNDIALS_LIB_VERSION
+    ops->nvgetlocallength  = NULL;
+#endif
 #if 580 <= SUNDIALS_LIB_VERSION
     ops->nvprint	   = MVAPPEND(N_VPrint);
     ops->nvprintfile	   = MVAPPEND(N_VPrintFile);

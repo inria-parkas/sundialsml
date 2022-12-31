@@ -425,6 +425,8 @@ module Ops = struct (* {{{ *)
   external getlength : t -> int
     = "sunml_nvec_pthreads_getlength"
 
+  let getlocallength = getlength
+
   external c_print_file : t -> Logfile.t option -> unit
     = "sunml_nvec_pthreads_print_file"
 
