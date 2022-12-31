@@ -58,7 +58,8 @@ cleanall distclean: clean
 .SUFFIXES : .ml .byte .opt
 
 .ml.byte:
-	$(OCAMLC) $(OCAMLFLAGS) -o $@ -dllpath $(SRCROOT) $(INCLUDES) \
+	$(OCAMLC) $(OCAMLFLAGS) -o $@ -dllpath $(SRCROOT) \
+	    $(INCLUDES) $(EXAMPLE_INCLUDES) \
 	    -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) \
 	    $(BIGARRAY_CMA) sundials.cma $<
 

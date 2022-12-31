@@ -9,14 +9,14 @@ nographics:
 	@echo "(try: opam install graphics, then rerun configure/make.)"
 
 ball.byte: showball.cmi showball.cmo ball.ml
-	$(OCAMLC) $(OCAMLFLAGS) -o $@ $(INCLUDES) \
+	$(OCAMLC) $(OCAMLFLAGS) -o $@ $(INCLUDES) $(EXAMPLE_INCLUDES) \
 	    -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) -dllpath $(SRCROOT) \
 	    -I "$(OCAML_GRAPHICS_PATH)" \
 	    unix.cma $(BIGARRAY_CMA) graphics.cma \
 	    sundials.cma showball.cmo ball.ml
 
 ball.opt: showball.cmi showball.cmx ball.ml
-	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ $(INCLUDES) \
+	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ $(INCLUDES) $(EXAMPLE_INCLUDES) \
 	    -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) $(LIB_PATH:%=-ccopt %) \
 	    -I "$(OCAML_GRAPHICS_PATH)" \
 	    unix.cmxa $(BIGARRAY_CMXA) graphics.cmxa \
@@ -26,7 +26,7 @@ showball.cmi : showball.mli
 	$(OCAMLC) $(OCAMLFLAGS) $^
 
 showball.cmo : showball.ml showball.cmi
-	$(OCAMLC) $(OCAMLFLAGS) -I $(OCAML_GRAPHICS_PATH) \
+	$(OCAMLC) $(OCAMLFLAGS) $(EXAMPLE_INCLUDES) -I $(OCAML_GRAPHICS_PATH) \
 	    unix.cma graphics.cma -c $<
 
 showball.cmx : showball.ml showball.cmi

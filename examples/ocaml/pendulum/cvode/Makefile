@@ -12,7 +12,8 @@ nographics:
 	@echo "(try: opam install graphics, then rerun configure/make.)"
 
 pendulum.byte: showpendulum.ml pendulum.ml
-	$(OCAMLC) $(OCAMLFLAGS) -o $@ -dllpath $(SRCROOT) $(INCLUDES) \
+	$(OCAMLC) $(OCAMLFLAGS) -o $@ -dllpath $(SRCROOT) \
+	    $(INCLUDES) $(EXAMPLE_INCLUDES) \
 	    -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) \
 	    -I "$(OCAML_GRAPHICS_PATH)" \
 	    unix.cma $(BIGARRAY_CMA) graphics.cma sundials.cma \
@@ -20,7 +21,8 @@ pendulum.byte: showpendulum.ml pendulum.ml
 
 pendulum.opt: showpendulum.cmx pendulum.ml
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
-	    $(INCLUDES) -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) \
+	    $(INCLUDES) $(EXAMPLE_INCLUDES) \
+	    -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) \
 	    $(LIB_PATH:%=-ccopt %) -I "$(OCAML_GRAPHICS_PATH)" \
 	    unix.cmxa $(BIGARRAY_CMXA) graphics.cmxa sundials.cmxa \
 	    showpendulum.ml pendulum.ml

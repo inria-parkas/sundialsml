@@ -84,12 +84,12 @@ cleanall distclean: clean
 	cc -o $@ $(CFLAGS) $(CVODE_CFLAGS) $< $(LIB_PATH) $(CVODE_LDFLAGS)
 
 .ml.byte:
-	$(OCAMLC) $(OCAMLFLAGS) -o $@ $(INCLUDES) \
+	$(OCAMLC) $(OCAMLFLAGS) -o $@ $(INCLUDES) $(EXAMPLE_INCLUDES) \
 	    -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) -dllpath $(SRCROOT) \
 	    $(BIGARRAY_CMA) unix.cma sundials.cma $<
 
 .ml.opt:
-	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ $(INCLUDES) \
+	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ $(INCLUDES) $(EXAMPLE_INCLUDES) \
 	    -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) $(LIB_PATH:%=-ccopt %) \
 	    $(BIGARRAY_CMXA) unix.cmxa sundials.cmxa $<
 

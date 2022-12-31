@@ -119,10 +119,10 @@ tests.opt.log tests.byte.log: tests.%.log: $(C_EXAMPLES) \
 UTILS=utils
 
 $(UTILS)/perf: $(UTILS)/perf.ml
-	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ unix.cmxa $<
+	$(OCAMLOPT) $(OCAMLOPTFLAGS) $(EXAMPLE_INCLUDES) -o $@ unix.cmxa $<
 
 $(UTILS)/crunchperf: $(UTILS)/crunchperf.ml
-	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ str.cmxa unix.cmxa $<
+	$(OCAMLOPT) $(OCAMLOPTFLAGS) $(EXAMPLE_INCLUDES) -o $@ str.cmxa unix.cmxa $<
 
 perf.opt.log perf.byte.log: perf.%.log: $(C_EXAMPLES)			   \
 				$(UTILS)/perf $(UTILS)/crunchperf	   \

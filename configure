@@ -1748,6 +1748,12 @@ else
     ocaml_graphics_path=
 fi
 
+# Unix library
+ocaml_unix_path="$(ocamlfind query unix 2> /dev/null)"
+if [ "x${ocaml_unix_path}" = x ]; then
+    warning="${warning}\n\tThe examples cannot run without the Unix library."
+fi
+
 # Show a summary
 
 LOG=config.log
@@ -1891,6 +1897,7 @@ cat ${LOG}
 	 s#@mpirun@#${mpirun}#;
 	 s#@mathjax@#${mathjax%/}#;
 	 s#@ocaml_graphics_path@#${ocaml_graphics_path%/}#;
+	 s#@ocaml_unix_path@#${ocaml_unix_path%/}#;
 	 s#@c_suppress_warnings@#${c_suppress_warnings}#;
 	 s#@XA@#${XA}#;
 	 s#@XO@#${XO}#;

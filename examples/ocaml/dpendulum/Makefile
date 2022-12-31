@@ -12,7 +12,8 @@ nographics:
 	@echo "(try: opam install graphics, then rerun configure/make.)"
 
 dpendulum.byte: dpendulum.ml
-	$(OCAMLC) $(OCAMLFLAGS) -o $@ -dllpath $(SRCROOT) $(INCLUDES) \
+	$(OCAMLC) $(OCAMLFLAGS) -o $@ -dllpath $(SRCROOT) \
+	    $(INCLUDES) $(EXAMPLE_INCLUDES) \
 	    -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) \
 	    -I "$(OCAML_GRAPHICS_PATH)" \
 	    unix.cma $(BIGARRAY_CMA) graphics.cma sundials.cma \
@@ -21,7 +22,8 @@ dpendulum.byte: dpendulum.ml
 dpendulum.opt: dpendulum.ml
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ \
 	    $(INCLUDES) -I $(SRCROOT) $(SUBDIRS:%=-I $(SRCROOT)/%) \
-	    $(LIB_PATH:%=-ccopt %) -I "$(OCAML_GRAPHICS_PATH)" \
+ 	    $(EXAMPLE_INCLUDES) $(LIB_PATH:%=-ccopt %) \
+	    -I "$(OCAML_GRAPHICS_PATH)" \
 	    unix.cmxa $(BIGARRAY_CMXA) graphics.cmxa sundials.cmxa \
 	    dpendulum.ml
 

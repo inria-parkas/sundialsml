@@ -157,8 +157,15 @@ ENABLE_SHARED = @enable_shared@
 GNUPLOT = gnuplot
 
 OCAML_GRAPHICS_PATH = @ocaml_graphics_path@
+OCAML_UNIX_PATH = @ocaml_unix_path@
 
 EXAMPLESROOT = @EXAMPLESROOT@
+
+ifeq ($(shell [ $(OCAML_VERSION) -lt 50000 ] && echo true),true)
+EXAMPLE_INCLUDES=
+else
+EXAMPLE_INCLUDES=$(OCAML_UNIX_PATH:%=-I %)
+endif
 
 SUBDIRS = sundials nvectors lsolvers cvode cvodes ida idas \
 	  @arkode_subdir@ kinsol
