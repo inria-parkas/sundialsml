@@ -2275,6 +2275,7 @@ CAMLprim value sunml_arkode_ark_session_finalize(value vdata)
     if (ARKODE_MEM_FROM_ML(vdata) != NULL) {
 	void *arkode_mem = ARKODE_MEM_FROM_ML(vdata);
 	value *backref = ARKODE_BACKREF_FROM_ML(vdata);
+	Store_field(vdata, RECORD_ARKODE_SESSION_BACKREF, Val_unit);
 #if 400 <= SUNDIALS_LIB_VERSION
 	ARKStepFree(&arkode_mem);
 #else
@@ -5585,6 +5586,7 @@ CAMLprim value sunml_arkode_erk_session_finalize(value vdata)
     if (ARKODE_MEM_FROM_ML(vdata) != NULL) {
 	void *arkode_mem = ARKODE_MEM_FROM_ML(vdata);
 	value *backref = ARKODE_BACKREF_FROM_ML(vdata);
+	Store_field(vdata, RECORD_ARKODE_SESSION_BACKREF, Val_unit);
 	ERKStepFree(&arkode_mem);
 	sunml_sundials_free_value(backref);
     }
@@ -6856,6 +6858,7 @@ CAMLprim value sunml_arkode_mri_session_finalize(value vdata)
     if (ARKODE_MEM_FROM_ML(vdata) != NULL) {
 	void *arkode_mem = ARKODE_MEM_FROM_ML(vdata);
 	value *backref = ARKODE_BACKREF_FROM_ML(vdata);
+	Store_field(vdata, RECORD_ARKODE_SESSION_BACKREF, Val_unit);
 	MRIStepFree(&arkode_mem);
 	sunml_sundials_free_value(backref);
     }

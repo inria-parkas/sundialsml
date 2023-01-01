@@ -1003,6 +1003,7 @@ CAMLprim value sunml_kinsol_session_finalize(value vdata)
     if (KINSOL_MEM_FROM_ML(vdata) != NULL) {
 	void *kin_mem = KINSOL_MEM_FROM_ML(vdata);
 	value *backref = KINSOL_BACKREF_FROM_ML(vdata);
+	Store_field(vdata, RECORD_KINSOL_SESSION_BACKREF, Val_unit);
 	KINFree(&kin_mem);
 	sunml_sundials_free_value(backref);
     }

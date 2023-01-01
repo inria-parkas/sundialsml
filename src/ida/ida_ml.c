@@ -1333,6 +1333,7 @@ CAMLprim value sunml_ida_session_finalize(value vdata)
     if (IDA_MEM_FROM_ML(vdata) != NULL) {
 	void *ida_mem = IDA_MEM_FROM_ML(vdata);
 	value *backref = IDA_BACKREF_FROM_ML(vdata);
+	Store_field(vdata, RECORD_IDA_SESSION_BACKREF, Val_unit);
 	IDAFree(&ida_mem);
 	sunml_sundials_free_value(backref);
     }

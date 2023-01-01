@@ -1359,6 +1359,7 @@ CAMLprim value sunml_cvode_session_finalize(value vdata)
     if (CVODE_MEM_FROM_ML(vdata) != NULL) {
 	void *cvode_mem = CVODE_MEM_FROM_ML(vdata);
 	value *backref = CVODE_BACKREF_FROM_ML(vdata);
+	Store_field(vdata, RECORD_CVODE_SESSION_BACKREF, Val_unit);
 	CVodeFree(&cvode_mem);
 	sunml_sundials_free_value(backref);
     }
