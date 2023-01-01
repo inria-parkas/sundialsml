@@ -155,7 +155,7 @@ CAMLprim value sunml_nvec_wrap_openmp(value nthreads,
 				      value context)
 {
     CAMLparam5(nthreads, payload, checkfn, clonefn, context);
-    CAMLlocal1(vnvec);
+    CAMLlocal2(vnvec, vnv_cptr);
 
     N_Vector nv;
     N_Vector_Ops ops;
@@ -165,6 +165,7 @@ CAMLprim value sunml_nvec_wrap_openmp(value nthreads,
     /* Create vector */
     nv = sunml_alloc_cnvec(sizeof(struct _N_VectorContent_OpenMP), payload);
     if (nv == NULL) caml_raise_out_of_memory();
+    vnv_cptr = sunml_alloc_caml_nvec(nv, sunml_finalize_caml_nvec);
     ops = (N_Vector_Ops) nv->ops;
     content = (N_VectorContent_OpenMP) nv->content;
 
@@ -255,8 +256,7 @@ CAMLprim value sunml_nvec_wrap_openmp(value nthreads,
 
     vnvec = NVEC_ALLOC();
     Store_field(vnvec, NVEC_PAYLOAD, payload);
-    Store_field(vnvec, NVEC_CPTR,
-		sunml_alloc_caml_nvec(nv, sunml_finalize_caml_nvec));
+    Store_field(vnvec, NVEC_CPTR, vnv_cptr);
     Store_field(vnvec, NVEC_CHECK, checkfn);
     Store_field(vnvec, NVEC_CLONE, clonefn);
 

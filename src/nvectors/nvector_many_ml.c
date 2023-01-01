@@ -279,7 +279,7 @@ static value do_wrap(value payload,
 		     sunbooleantype mpiplusx)
 {
     CAMLparam4(payload, checkfn, clonefn, context);
-    CAMLlocal3(vnvec, vnvs, vglen);
+    CAMLlocal4(vnvec, vnvs, vglen, vnv_cptr);
 #ifdef MANYVECTOR_BUILD_WITH_MPI
     CAMLlocal1(vcomm);
 #endif
@@ -292,6 +292,7 @@ static value do_wrap(value payload,
     /* Create vector */
     nv = sunml_alloc_cnvec(sizeof *content, payload);
     if (nv == NULL) caml_raise_out_of_memory();
+    vnv_cptr = sunml_alloc_caml_nvec(nv, finalize_caml_nvec_many);
     ops = (N_Vector_Ops) nv->ops;
     content = (MVAPPEND(N_VectorContent)) nv->content;
 
@@ -433,8 +434,7 @@ static value do_wrap(value payload,
 
     vnvec = NVEC_ALLOC();
     Store_field(vnvec, NVEC_PAYLOAD, payload);
-    Store_field(vnvec, NVEC_CPTR,
-		sunml_alloc_caml_nvec(nv, finalize_caml_nvec_many));
+    Store_field(vnvec, NVEC_CPTR, vnv_cptr);
     Store_field(vnvec, NVEC_CHECK, checkfn);
     Store_field(vnvec, NVEC_CLONE, clonefn);
     Store_field(vnvec, NVEC_CONTEXT, context);
