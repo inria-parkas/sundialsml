@@ -503,9 +503,9 @@ CAMLprim value sunml_nvec_anywrap_serial(value extconstr,
 
     vwrapped = caml_alloc_tuple(2);
     Store_field(vwrapped, 0, extconstr);
-    Store_field(vwrapped, 1, NVEC_BACKLINK(nv));
+    Store_field(vwrapped, 1, payload);
 
-    Store_field(vnv, 0, vwrapped);
+    Store_field(vnv, NVEC_PAYLOAD, vwrapped);
     caml_modify_generational_global_root(&NVEC_BACKLINK(nv), vwrapped);
 
     CAMLreturn(vnv);
