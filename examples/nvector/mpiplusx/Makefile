@@ -6,8 +6,10 @@ USELIB ?= sundials_no_sens
 SRCROOT=../../..
 SUBDIR=nvector/mpiplusx
 
+# Skip under OCaml 5.0.0 due to ocaml/ocaml#11865
 MPI_EXAMPLES = \
-	$(if $(AT_LEAST_5_0_0), test_nvector_mpiplusx.ml)
+	$(if $(AT_LEAST_5_0_0), $(if $(OCAML_VERSION_5_0_0),, \
+						test_nvector_mpiplusx.ml))
 
 include ../nvector.mk
 

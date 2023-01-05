@@ -167,6 +167,10 @@ else
 EXAMPLE_INCLUDES=$(OCAML_UNIX_PATH:%=-I %)
 endif
 
+ifeq ($(shell [ $(OCAML_VERSION) -eq 50000 ] && echo true),true)
+OCAML_VERSION_5_0_0=1
+endif
+
 SUBDIRS = sundials nvectors lsolvers cvode cvodes ida idas \
 	  @arkode_subdir@ kinsol
 
