@@ -2684,7 +2684,10 @@ CAMLprim value sunml_matrix_wrap_any(SUNMatrix A)
 	    caml_failwith("sunml_matrix_wrap_any: unexpected id");
     }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
     vr = caml_alloc(1, matid);
+#pragma GCC diagnostic pop
     Store_field(vr, 0, vmat);
 
     CAMLreturn(vr);
