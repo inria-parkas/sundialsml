@@ -260,6 +260,10 @@ The dependencies of Sundials/ML are
 - {e Optionally}:
   {{:https://forge.ocamlcore.org/projects/ocamlmpi/}OCamlMPI} {b 1.05}.
 
+Sundials/ML runs under OCaml 5.x, but does not yet protect against race
+conditions on internal data structures for sessions, nvectors, etcetera. Use
+with care!
+
 Normally, to install Sundials/ML, you need only type
 [opam install sundialsml].
 
