@@ -722,7 +722,8 @@ val solve_one_step : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
     {!get_last_order}.
 
     This function may only be called after a successful return from either
-    {!solve_normal} or {!solve_one_step}.
+    {!solve_normal} or {!solve_one_step}. Note that {!solve_normal} make take
+    several “internal” steps, but that [get_dky] only spans the last one.
 
     @cvode CVodeGetDky
     @raise BadT [t] is not in the interval {% $[t_n - h_u, t_n]$%}.
