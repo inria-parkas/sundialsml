@@ -1,7 +1,7 @@
 #!/bin/sh
 
 PREFIX="${PREFIX:-/usr/local}"
-SOLVERS="nvector sunmatrix sunlinsol arkode cvode cvodes ida idas kinsol"
+SOLVERS="nvector sunmatrix sunlinsol sunmemory sunnonlinsol arkode cvode cvodes ida idas kinsol templates utilities"
 
 DO_RM="rm -f"
 RM="echo ${DO_RM}"
@@ -34,6 +34,7 @@ if [ "$STOP" -eq 1 ]; then
 fi
 
 $RM -r "${PREFIX}/include/sundials"
+$RM -r "${PREFIX}/lib/cmake/sundials"
 
 for s in $SOLVERS
 do
