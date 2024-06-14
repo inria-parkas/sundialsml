@@ -230,14 +230,17 @@ value *sunml_sundials_malloc_value(value v)
     *block = Caml_out_of_heap_header(1, 0);
 #endif
     Field(Val_hp(block), 0) = v;
-    caml_register_generational_global_root (Op_hp(block));
-    return Op_hp(block);
+    // the explicit casts discard the volatile qualifiers; since these
+    // values are not in the OCaml heap
+    // see: https://github.com/ocaml/ocaml/issues/11426#issuecomment-1505369111
+    caml_register_generational_global_root ((value *)Op_hp(block));
+    return ((value *)Op_hp(block));
 }
 
 void sunml_sundials_free_value(value *pv)
 {
     caml_remove_generational_global_root (pv);
-    free (Hp_op(pv));
+    free ((value *)Hp_op(pv));
 }
 
 /* Functions for storing pointers to integrators (cvode_mem, ida_mem, etc.) */
