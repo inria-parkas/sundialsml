@@ -119,6 +119,9 @@ external c_set_print_level_newton : ('d, 'k, 's, 'v) cptr -> int -> unit
 
 (* - - - OCaml invoking init/setup/solve - - - *)
 
+external finalize_nls : unit (*session*) -> unit = "finalize_nls"
+let _ = Callback.register "finalize_nls" finalize_nls
+
 let uw = Nvector.unwrap
 
 let init (type v) ({ rawptr; solver } : ('d, 'k, 's, v) t) =

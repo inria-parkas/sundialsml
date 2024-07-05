@@ -24,6 +24,8 @@ type ('data, 'kind) nvector =
 and ('data, 'kind) t = ('data, 'kind) nvector
 [@@@ocaml.warning "+37"]
 
+let _ = Callback.register "mlfinalise_register" Gc.finalise
+
 type 'k serial = (Sundials.RealArray.t, [>`Serial] as 'k) t
 
 let unwrap (NV { payload; _ }) = payload

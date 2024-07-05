@@ -6992,8 +6992,9 @@ CAMLprim value sunml_arkode_mri_set_deduce_implicit_rhs(value varkode_mem,
 #define ML_MRI_COUPLING(v) (*(MRIStepCoupling *)Data_custom_val(v))
 
 #if 540 <= SUNDIALS_LIB_VERSION
-static void finalize_mri_coupling(value vcptr)
+CAMLprim value finalize_mri_coupling(value vcptr)
 {
+  CAMLparam1(vcptr);
 
     MRIStepCoupling MRIC = ML_MRI_COUPLING(vcptr);
     int i;
@@ -7019,6 +7020,7 @@ static void finalize_mri_coupling(value vcptr)
 	}
 	free(MRIC);
     }
+  CAMLreturn(Val_unit);
 }
 #endif
 
@@ -7109,7 +7111,8 @@ CAMLprim value sunml_arkode_mri_coupling_make(
     MRIC->c = REAL_ARRAY(vc);
 
     // Create a cptr wrapper
-    vcptr = caml_alloc_final(1, &finalize_mri_coupling, 1, 20);
+    vcptr = caml_alloc_final(1, custom_finalize_default, 1, 20);
+    caml_callback2(*caml_named_value("mlfinalise_register"), *caml_named_value("finalize_mri_coupling"), vcptr);
     ML_MRI_COUPLING(vcptr) = MRIC;
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -7168,7 +7171,8 @@ static value sunml_arkode_mri_coupling_wrap(MRIStepCoupling MRIC)
 	Store_some(vog, vwg);
     }
 
-    vcptr = caml_alloc_final(1, &finalize_mri_coupling, 1, 20);
+    vcptr = caml_alloc_final(1, custom_finalize_default, 1, 20);
+    caml_callback2(*caml_named_value("mlfinalise_register"), *caml_named_value("finalize_mri_coupling"), vcptr);
     ML_MRI_COUPLING(vcptr) = MRIC;
 
     // create the record
@@ -7665,8 +7669,9 @@ CAMLprim value sunml_arkode_mri_set_stage_predict_fn(value varkode_mem,
  */
 
 #if 580 <= SUNDIALS_LIB_VERSION
-static void finalize_istepper(value vistepper_cptr)
+CAMLprim value finalize_istepper(value vistepper_cptr)
 {
+  CAMLparam1(vistepper_cptr);
     MRIStepInnerStepper stepper = ISTEPPER(vistepper_cptr);
 
     value *pvcallbacks = NULL;
@@ -7674,13 +7679,16 @@ static void finalize_istepper(value vistepper_cptr)
     if (pvcallbacks != NULL) sunml_sundials_free_value(pvcallbacks);
 
     MRIStepInnerStepper_Free(&stepper);
+  CAMLreturn(Val_unit);
 }
 
 #if 600 <= SUNDIALS_LIB_VERSION
-static void finalize_sundials_istepper(value vistepper_cptr)
+CAMLprim value finalize_sundials_istepper(value vistepper_cptr)
 {
+  CAMLparam1(vistepper_cptr);
     MRIStepInnerStepper stepper = ISTEPPER(vistepper_cptr);
     MRIStepInnerStepper_Free(&stepper);
+  CAMLreturn(Val_unit);
 }
 #endif
 
@@ -7790,7 +7798,8 @@ CAMLprim value sunml_arkode_mri_istepper_from_arkstep(value varkode_mem)
 					    &stepper);
     CHECK_FLAG("ARKStepCreateMRIStepInnerStepper", flag);
 
-    r = caml_alloc_final(1, &finalize_sundials_istepper, 0, 1);
+    r = caml_alloc_final(1, custom_finalize_default, 0, 1);
+    caml_callback2(*caml_named_value("mlfinalise_register"), *caml_named_value("finalize_sundials_istepper"), r);
     ISTEPPER(r) = stepper;
 #else
     r = Val_unit;
@@ -7846,7 +7855,8 @@ CAMLprim value sunml_arkode_mri_istepper_create(value vcallbacks,
 	sunml_arkode_check_flag("MRIStepInnerStepper_SetContent", flag, NULL);
     }
 
-    vistepper = caml_alloc_final(1, &finalize_istepper, 0, 1);
+    vistepper = caml_alloc_final(1, custom_finalize_default, 0, 1);
+    caml_callback2(*caml_named_value("mlfinalise_register"), *caml_named_value("finalize_istepper"), vistepper);
     ISTEPPER(vistepper) = stepper;
 #endif
     CAMLreturn(vistepper);

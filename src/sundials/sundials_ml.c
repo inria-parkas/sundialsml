@@ -245,10 +245,12 @@ void sunml_sundials_free_value(value *pv)
 
 /* Functions for storing pointers to integrators (cvode_mem, ida_mem, etc.) */
 
-static void finalize_session_pointer(value vmem) {
+CAMLprim value finalize_session_pointer(value vmem) {
     // there is nothing to finalize, but a distinct function is necessary
     // because caml_final_custom_operations uses the address of this
     // function as a key to find the custom operations table.
+  CAMLparam1(vmem);
+  CAMLreturn(Val_unit);
 }
 
 static int compare_session_pointers(value vmem1, value vmem2)
@@ -263,7 +265,7 @@ static int compare_session_pointers(value vmem1, value vmem2)
 
 static struct custom_operations session_pointer_ops = {
     .identifier   = "sunml_session_pointer",
-    .finalize     = finalize_session_pointer,
+    .finalize     = custom_finalize_default, // finalize_session_pointer,
     .compare      = compare_session_pointers,
     .hash         = custom_hash_default,
     .serialize    = custom_serialize_default,
@@ -280,6 +282,7 @@ value sunml_wrap_session_pointer(void *sun_mem)
     CAMLlocal1(vmem);
 
     vmem = caml_alloc_custom(&session_pointer_ops, sizeof(value), 1, 15);
+    caml_callback2(*caml_named_value("mlfinalise_register"), *caml_named_value("finalize_session_pointer"), vmem);
     SUNML_MEM(vmem) = sun_mem;
 
     CAMLreturn(vmem);
@@ -287,13 +290,15 @@ value sunml_wrap_session_pointer(void *sun_mem)
 
 /* Functions for sharing OCaml values with C. */
 
-static void sunml_finalize_vptr(value cptr)
+CAMLprim value sunml_finalize_vptr(value cptr)
 {
+    CAMLparam1(cptr);
     value *croot = (*(value **)Data_custom_val(cptr));
     if (croot != NULL) {
 	caml_remove_generational_global_root(croot);
 	free(croot);
     }
+    CAMLreturn(Val_unit);
 }
 
 CAMLprim value sunml_make_vptr(value v)
@@ -303,7 +308,8 @@ CAMLprim value sunml_make_vptr(value v)
     value *croot;
 
     // create the croot and wrap it
-    cptr = caml_alloc_final(1, &sunml_finalize_vptr, 1, 20);
+    cptr = caml_alloc_final(1, custom_finalize_default, 1, 20);
+    caml_callback2(*caml_named_value("mlfinalise_register"), *caml_named_value("sunml_finalize_vptr"), cptr);
     croot = malloc(sizeof(value));
     (*(value **)Data_custom_val(cptr)) = croot;
     if (croot == NULL) caml_raise_out_of_memory();
@@ -320,13 +326,15 @@ CAMLprim value sunml_make_vptr(value v)
 
 /* Functions for manipulating FILE pointers. */
 
-static void finalize_cfile(value vf)
+CAMLprim value finalize_cfile(value vf)
 {
+  CAMLparam1(vf);
     FILE *file = ML_CFILE(vf);
 
     if (file != NULL) {
 	fclose(file);
     }
+    CAMLreturn(Val_unit);
 }
 
 CAMLprim value sunml_sundials_fopen(value vpath, value vtrunc)
@@ -342,7 +350,8 @@ CAMLprim value sunml_sundials_fopen(value vpath, value vtrunc)
 	caml_failwith(strerror(errno));
     }
 
-    vr = caml_alloc_final(1, &finalize_cfile, 1, 10);
+    vr = caml_alloc_final(1, custom_finalize_default, 1, 10);
+    caml_callback2(*caml_named_value("mlfinalise_register"), *caml_named_value("finalize_cfile"), vr);
     ML_CFILE(vr) = file;
 
     CAMLreturn (vr);
@@ -421,10 +430,12 @@ CAMLprim value sunml_sundials_wrap_file(FILE* f)
 /* Functions for profiling */
 
 #if 600 <= SUNDIALS_LIB_VERSION && defined(SUNDIALS_BUILD_WITH_PROFILING)
-static void finalize_profiler(value vprofiler)
+CAMLprim value finalize_profiler(value vprofiler)
 {
+  CAMLparam1(vprofiler);
     SUNProfiler profiler = ML_PROFILER(vprofiler);
     if (profiler != NULL) SUNProfiler_Free(&profiler);
+    CAMLreturn(Val_unit);
 }
 #endif
 
@@ -439,7 +450,8 @@ CAMLprim value sunml_profiler_make(value vname)
     SUNProfiler_Create(NULL, String_val(vname), &profiler);
     if (profiler == NULL) caml_raise_out_of_memory();
 
-    vprofiler = caml_alloc_final(1, &finalize_profiler, 1, 10);
+    vprofiler = caml_alloc_final(1, custom_finalize_default, 1, 10);
+    caml_callback2(*caml_named_value("mlfinalise_register"), *caml_named_value("finalize_profiler"), vprofiler);
     ML_PROFILER(vprofiler) = profiler;
 #else
     vprofiler = Val_unit;
@@ -484,13 +496,15 @@ CAMLprim void sunml_profiler_reset(value vprofiler)
 /* Functions for logging */
 
 #if SUNML_HAS_LOGGING
-static void finalize_logger(value vlogger)
+CAMLprim value finalize_logger(value vlogger)
 {
+  CAMLparam1(vlogger);
     SUNLogger logger = ML_LOGGER(vlogger);
     if (logger != NULL) SUNLogger_Destroy(&logger);
+    CAMLreturn(Val_unit);
 }
 #endif
-
+//////////////////////// des choses bizarres se passe ici (prepocessing)
 #if SUNML_HAS_LOGGING
 static value sunml_logger_wrap(SUNLogger logger)
 {
@@ -498,7 +512,8 @@ static value sunml_logger_wrap(SUNLogger logger)
     CAMLlocal1(vlogger);
 
 #if SUNML_HAS_LOGGING
-    vlogger = caml_alloc_final(1, &finalize_logger, 1, 10);
+    vlogger = caml_alloc_final(1, custom_finalize_default, 1, 10);
+    caml_callback2(*caml_named_value("mlfinalise_register"), *caml_named_value("finalize_logger"), vlogger);
     ML_LOGGER(vlogger) = logger;
 #else
     vlogger = Val_unit;
@@ -671,10 +686,12 @@ CAMLprim void sunml_logger_flush(value vlogger, value volevel)
 /* Functions for manipulating contexts */
 
 #if 600 <= SUNDIALS_LIB_VERSION
-static void finalize_context(value vctx)
+CAMLprim value finalize_context(value vctx)
 {
+  CAMLparam1(vctx);
     SUNContext ctx = ML_CCONTEXT(vctx);
     if (ctx != NULL) SUNContext_Free(&ctx);
+    CAMLreturn(Val_unit);
 }
 #endif
 
@@ -702,7 +719,8 @@ CAMLprim value sunml_context_make(void)
     SUNContext_Create(NULL, &ctx);
     if (ctx == NULL) caml_raise_out_of_memory();
 
-    vctx = caml_alloc_final(1, &finalize_context, 1, 10);
+    vctx = caml_alloc_final(1, custom_finalize_default, 1, 10);
+    caml_callback2(*caml_named_value("mlfinalise_register"), *caml_named_value("finalize_context"), vctx);
     ML_CCONTEXT(vctx) = ctx;
 #endif
 #if SUNML_HAS_LOGGING
@@ -752,7 +770,8 @@ CAMLprim value sunml_profiler_create_parallel(value vcomm, value vname)
     SUNProfiler_Create(comm, String_val(vname), &profiler);
     if (profiler == NULL) caml_raise_out_of_memory();
 
-    vprofiler = caml_alloc_final(1, &finalize_profiler, 1, 10);
+    vprofiler = caml_alloc_final(1, custom_finalize_default, 1, 10);
+    caml_callback2(*caml_named_value("mlfinalise_register"), *caml_named_value("finalize_profiler"), vprofiler);
     ML_PROFILER(vprofiler) = profiler;
 #else
     vprofiler = Val_unit;
@@ -808,7 +827,8 @@ CAMLprim value sunml_context_create_parallel(value vcomm)
     SUNContext_Create(comm, &ctx);
     if (ctx == NULL) caml_raise_out_of_memory();
 
-    vctx = caml_alloc_final(1, &finalize_context, 1, 10);
+    vctx = caml_alloc_final(1, &custom_finalize_default, 1, 10);
+    caml_callback2(*caml_named_value("mlfinalise_register"), *caml_named_value("finalize_context"), vctx);
     ML_CCONTEXT(vctx) = ctx;
 #endif
 #if SUNML_HAS_LOGGING

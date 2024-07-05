@@ -49,6 +49,13 @@ exception BadT
 
 exception VectorOpErr
 
+external finalize_mri_coupling : unit (*session*) -> unit = "finalize_mri_coupling"
+let _ = Callback.register "finalize_mri_coupling" finalize_mri_coupling
+external finalize_sundials_istepper : unit (*session*) -> unit = "finalize_sundials_istepper"
+let _ = Callback.register "finalize_sundials_istepper" finalize_sundials_istepper
+external finalize_istepper : unit (*session*) -> unit = "finalize_istepper"
+let _ = Callback.register "finalize_istepper" finalize_istepper
+
 module Common = struct (* {{{ *)
 
   include Arkode_impl.Global

@@ -58,12 +58,13 @@ static mlsize_t nvec_rough_size =
     + sizeof(struct _generic_N_Vector_Ops)
     + 4 * sizeof(void *);
 
-CAMLprim value sunml_alloc_caml_nvec(N_Vector nv, void (*finalizer)(value))
+CAMLprim value sunml_alloc_caml_nvec(N_Vector nv, value finalizer)
 {
-    CAMLparam0();
+    CAMLparam1(finalizer);
     CAMLlocal1(r);
 
-    r = caml_alloc_final(1, finalizer, 1, 30);
+    r = caml_alloc_final(1, custom_finalize_default, 1, 30);
+    caml_callback2(*caml_named_value("mlfinalise_register"), finalizer, r);
     NVEC_CVAL(r) = nv;
 
     CAMLreturn(r);
@@ -382,7 +383,7 @@ CAMLprim value sunml_nvec_wrap_serial(value payload,
     /* Create vector */
     nv = sunml_alloc_cnvec(sizeof(struct _N_VectorContent_Serial), payload);
     if (nv == NULL) caml_raise_out_of_memory();
-    vnv_cptr = sunml_alloc_caml_nvec(nv, sunml_finalize_caml_nvec);
+    vnv_cptr = sunml_alloc_caml_nvec(nv, *caml_named_value("sunml_finalize_caml_nvec"));
     ops = (N_Vector_Ops) nv->ops;
     content = (N_VectorContent_Serial) nv->content;
 
@@ -528,9 +529,11 @@ static void free_custom_cnvec(N_Vector v)
     sunml_free_cnvec(v);
 }
 
-static void finalize_custom_caml_nvec(value vnv)
+CAMLprim value finalize_custom_caml_nvec(value vnv)
 {
+    CAMLparam1(vnv);
     free_custom_cnvec (NVEC_CVAL(vnv));
+    CAMLreturn(Val_unit);
 }
 
 #if SUNDIALS_LIB_VERSION >= 270
@@ -639,7 +642,7 @@ CAMLprim value sunml_nvec_wrap_custom(value mlops, value payload,
     /* Create vector */
     nv = sunml_alloc_cnvec(0, payload);
     if (nv == NULL) caml_raise_out_of_memory();
-    vnv_cptr = sunml_alloc_caml_nvec(nv, finalize_custom_caml_nvec);
+    vnv_cptr = sunml_alloc_caml_nvec(nv, *caml_named_value("finalize_custom_caml_nvec"));
     ops = (N_Vector_Ops) nv->ops;
 
 #if 600 <= SUNDIALS_LIB_VERSION

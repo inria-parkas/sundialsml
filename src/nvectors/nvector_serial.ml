@@ -31,6 +31,9 @@ external c_enablelinearcombinationvectorarray_serial : ('d, 'k) Nvector.t -> boo
 
 let unwrap = Nvector.unwrap
 
+external sunml_finalize_caml_nvec : unit (*cnvec*) -> unit = "sunml_finalize_caml_nvec"
+let _ = Callback.register "sunml_finalize_caml_nvec" sunml_finalize_caml_nvec
+
 external c_wrap : RealArray.t -> (t -> bool) -> (t -> t) -> Context.t -> t
   = "sunml_nvec_wrap_serial"
 

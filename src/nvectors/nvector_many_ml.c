@@ -73,9 +73,11 @@ static void free_cnvec_many(N_Vector nv)
     free(nv);
 }
 
-static void finalize_caml_nvec_many (value vnv)
+CAMLprim value finalize_caml_nvec_many (value vnv)
 {
+    CAMLparam1(vnv);
     free_cnvec_many(NVEC_CVAL (vnv));
+    CAMLreturn(Val_unit);
 }
 
 /* Creation from Sundials/C.  */
@@ -292,7 +294,7 @@ static value do_wrap(value payload,
     /* Create vector */
     nv = sunml_alloc_cnvec(sizeof *content, payload);
     if (nv == NULL) caml_raise_out_of_memory();
-    vnv_cptr = sunml_alloc_caml_nvec(nv, finalize_caml_nvec_many);
+    vnv_cptr = sunml_alloc_caml_nvec(nv, *caml_named_value("finalize_caml_nvec_many"));
     ops = (N_Vector_Ops) nv->ops;
     content = (MVAPPEND(N_VectorContent)) nv->content;
 

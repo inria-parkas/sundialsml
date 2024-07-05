@@ -254,7 +254,7 @@ enum nv_index {
 // Internal functions
 N_Vector sunml_alloc_cnvec(size_t content_size, value backlink);
 void sunml_clone_cnvec_ops(N_Vector dst, N_Vector src);
-CAMLprim value sunml_alloc_caml_nvec(N_Vector nv, void (*finalizer)(value));
+CAMLprim value sunml_alloc_caml_nvec(N_Vector nv, value finalizer);
 void sunml_free_cnvec(N_Vector nv);
 CAMLprim void sunml_finalize_caml_nvec(value vnv);
 

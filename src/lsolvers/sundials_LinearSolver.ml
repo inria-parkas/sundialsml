@@ -35,6 +35,11 @@ exception IllegalPrecType
 exception InternalFailure of (string * int)
 exception ZeroInDiagonal of int
 
+external finalize_custom_lsolver : unit (*linearsolver*) -> unit = "finalize_custom_lsolver"
+let _ = Callback.register "finalize_custom_lsolver" finalize_custom_lsolver
+external finalize_lsolver : unit (*linearsolver*) -> unit = "finalize_lsolver"
+let _ = Callback.register "finalize_lsolver" finalize_lsolver
+
 type ('mat, 'data, 'kind, 'tag) t = ('mat, 'data, 'kind, 'tag) linear_solver
 
 (** Alias for linear solvers that are restricted to serial nvectors. *)

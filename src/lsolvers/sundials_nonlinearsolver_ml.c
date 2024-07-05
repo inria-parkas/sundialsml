@@ -1058,11 +1058,13 @@ CAMLprim void sunml_nlsolver_set_print_level_fixedpoint(value vnls, value vlevel
 }
 
 #if 400 <= SUNDIALS_LIB_VERSION
-static void finalize_nls(value vnls)
+CAMLprim value finalize_nls(value vnls)
 {
+  CAMLparam1(vnls);
     SUNNonlinearSolver nls = NLSOLVER_VAL(vnls);
     caml_remove_generational_global_root(&NLS_CALLBACKS(nls));
     SUNNonlinSolFree(nls);
+    CAMLreturn(Val_unit);
 }
 #endif
 
@@ -1496,7 +1498,8 @@ static value rewrap_nlsolver(SUNNonlinearSolver nls0, value vcallbacks)
     }
 
     // Setup the OCaml-side
-    vr = caml_alloc_final(1, &finalize_nls, 1, 20);
+    vr = caml_alloc_final(1, custom_finalize_default, 1, 20);
+    caml_callback2(*caml_named_value("mlfinalise_register"), *caml_named_value("finalize_nls,"), vr);
     NLSOLVER_VAL(vr) = nls;
 
     CAMLreturn (vr);
@@ -2154,7 +2157,8 @@ static CAMLprim value custom_make(int sens, value vcallbacks, value vweakops,
     NLS_CALLBACKS(nls) = vcallbacks;
     caml_register_generational_global_root(&NLS_CALLBACKS(nls));
 
-    vnls = caml_alloc_final(1, &finalize_nls, 1, 20);
+    vnls = caml_alloc_final(1, custom_finalize_default, 1, 20);
+    caml_callback2(*caml_named_value("mlfinalise_register"), *caml_named_value("finalize_nls,"), vnls);
     NLSOLVER_VAL(vnls) = nls;
 
     CAMLreturn (vnls);

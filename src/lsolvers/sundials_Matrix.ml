@@ -48,6 +48,17 @@ type ('m, 'd) matrix_ops = {
   m_space        : 'm -> int * int;
 }
 
+external finalize_mat_content_dense : unit (*session*) -> unit = "finalize_mat_content_dense"
+let _ = Callback.register "finalize_mat_content_dense" finalize_mat_content_dense
+external finalize_mat_content_band : unit (*session*) -> unit = "finalize_mat_content_band"
+let _ = Callback.register "finalize_mat_content_band" finalize_mat_content_band
+external finalize_mat_content_sparse : unit (*session*) -> unit = "finalize_mat_content_sparse"
+let _ = Callback.register "finalize_mat_content_sparse" finalize_mat_content_sparse
+external finalize_caml_smat : unit (*session*) -> unit = "finalize_caml_smat"
+let _ = Callback.register "finalize_caml_smat" finalize_caml_smat
+external finalize_caml_custom_smat : unit (*session*) -> unit = "finalize_caml_custom_smat"
+let _ = Callback.register "finalize_caml_custom_smat" finalize_caml_custom_smat
+
 module Dense = struct (* {{{ *)
 
   type data = RealArray2.data

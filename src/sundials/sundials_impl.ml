@@ -67,6 +67,11 @@ end = struct
   type 'a vcptr
   type 'a vptr = 'a * 'a vcptr
 
+  external sunml_finalize_vptr : 'a vcptr -> unit = "sunml_finalize_vptr"
+  let _ = Callback.register "sunml_finalize_vptr" sunml_finalize_vptr
+  external finalize_session_pointer : unit (*session*) -> unit = "finalize_session_pointer"
+  let _ = Callback.register "finalize_session_pointer" finalize_session_pointer
+
   external make : 'a -> 'a vptr
     = "sunml_make_vptr"
 

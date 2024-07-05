@@ -116,6 +116,9 @@ external c_make_wrap :
       -> 'a t
     = "sunml_nvec_wrap_custom"
 
+external finalize_custom_caml_nvec : unit (*cnvec*) -> unit = "finalize_custom_caml_nvec"
+let _ = Callback.register "finalize_custom_caml_nvec" finalize_custom_caml_nvec
+
 let do_enable f nv v =
   match v with
   | None -> ()

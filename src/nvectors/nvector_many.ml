@@ -32,6 +32,9 @@ external c_wrap
 
 let unwrap = Nvector.unwrap
 
+external finalize_caml_nvec_many : unit (*cnvec*) -> unit = "finalize_caml_nvec_many"
+let _ = Callback.register "finalize_caml_nvec_many" finalize_caml_nvec_many
+
 let rec wrap_withlen ctx ((nvs, _) as payload) =
   let check nv' =
     let nvs', _ = unwrap nv' in

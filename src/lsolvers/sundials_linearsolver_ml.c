@@ -154,19 +154,23 @@ value sunml_lsolver_exception_from_flag(int linflag)
  * Linear Solver cptrs
  */
 #if 300 <= SUNDIALS_LIB_VERSION
-static void finalize_lsolver(value vls)
+CAMLprim value finalize_lsolver(value vls)
 {
+  CAMLparam1(vls);
     SUNLinearSolver ls = LSOLVER_VAL(vls);
     if (ls) SUNLinSolFree(ls);
+  CAMLreturn(Val_unit);
 }
 
-static void finalize_custom_lsolver(value vls)
+CAMLprim value finalize_custom_lsolver(value vls)
 {
+  CAMLparam1(vls);
     SUNLinearSolver ls = LSOLVER_VAL(vls);
     if (ls) {
 	caml_remove_generational_global_root((void *)&(ls->content));
 	SUNLinSolFree(ls);
     }
+  CAMLreturn(Val_unit);
 }
 
 static value alloc_lsolver(SUNLinearSolver ls, int custom)
@@ -174,8 +178,10 @@ static value alloc_lsolver(SUNLinearSolver ls, int custom)
     CAMLparam0();
     CAMLlocal1(vcptr);
 
-    vcptr = caml_alloc_final(1,
-		custom ? &finalize_custom_lsolver : &finalize_lsolver, 1, 20);
+    vcptr = caml_alloc_final(1, custom_finalize_default, 1, 20);
+    caml_callback2(*caml_named_value("mlfinalise_register"),
+        *caml_named_value(custom ? "finalize_custom_lsolver" : "finalize_lsolver"),
+        vcptr);
     LSOLVER_VAL(vcptr) = ls;
 
     CAMLreturn(vcptr);

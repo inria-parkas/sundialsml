@@ -112,6 +112,17 @@ module Logger = struct
 
 end
 
+external finalize_context : unit (*session*) -> unit = "finalize_context"
+let _ = Callback.register "finalize_context" finalize_context
+external finalize_cfile : unit (*session*) -> unit = "finalize_cfile"
+let _ = Callback.register "finalize_cfile" finalize_cfile
+(*
+external finalize_profiler : unit (*session*) -> unit = "finalize_profiler"
+let _ = Callback.register "finalize_profiler" finalize_profiler
+external finalize_logger : unit (*session*) -> unit = "finalize_logger"
+let _ = Callback.register "finalize_logger" finalize_logger
+*)
+
 module Context = struct
   type t = Sundials_impl.Context.t
   exception ExternalProfilerInUse = Sundials_impl.Context.ExternalProfilerInUse

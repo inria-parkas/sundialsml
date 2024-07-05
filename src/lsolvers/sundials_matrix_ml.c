@@ -73,14 +73,16 @@ CAMLprim void sunml_mat_init_module (value exns, value matrix_ops)
  * Matrix.Dense
  */
 
-static void finalize_mat_content_dense(value va)
+CAMLprim value finalize_mat_content_dense(value va)
 {
+  CAMLparam1(va);
     MAT_CONTENT_DENSE_TYPE content = MAT_CONTENT_DENSE(va);
 
     if (content->cols != NULL)
 	free(content->cols);
     free(content);
     // A->data is destroyed by the associated bigarray finalizer
+  CAMLreturn(Val_unit);
 }
 
 CAMLprim value sunml_matrix_dense_create(value vm, value vn)
@@ -118,7 +120,8 @@ CAMLprim value sunml_matrix_dense_create(value vm, value vn)
 #endif
 
     // Setup the OCaml-side
-    vcptr = caml_alloc_final(1, &finalize_mat_content_dense, 1, 20);
+    vcptr = caml_alloc_final(1, custom_finalize_default, 1, 20);
+    caml_callback2(*caml_named_value("mlfinalise_register"), *caml_named_value("finalize_mat_content_dense"), vcptr);
     MAT_CONTENT_DENSE(vcptr) = content;
 
     vr = caml_alloc_tuple(RECORD_MAT_MATRIXCONTENT_SIZE);
@@ -266,14 +269,16 @@ CAMLprim value sunml_matrix_dense_space(value vcptr)
  * Matrix.Band
  */
 
-static void finalize_mat_content_band(value vcptra)
+CAMLprim value finalize_mat_content_band(value vcptra)
 {
+  CAMLparam1(vcptra);
     MAT_CONTENT_BAND_TYPE content = MAT_CONTENT_BAND(vcptra);
 
     if (content->cols != NULL)
 	free(content->cols);
     free(content);
     // content->data is destroyed by the associated bigarray finalizer
+  CAMLreturn(Val_unit);
 }
 
 static bool matrix_band_create_vcptr(sundials_ml_index n,
@@ -314,7 +319,8 @@ static bool matrix_band_create_vcptr(sundials_ml_index n,
 #endif
 
     // Setup the OCaml-side
-    *pvcptr = caml_alloc_final(1, &finalize_mat_content_band, 1, 20);
+    *pvcptr = caml_alloc_final(1, custom_finalize_default, 1, 20);
+    caml_callback2(*caml_named_value("mlfinalise_register"), *caml_named_value("finalize_mat_content_band"), *pvcptr);
     MAT_CONTENT_BAND(*pvcptr) = content;
 
     return true;
@@ -876,8 +882,9 @@ CAMLprim void sunml_matrix_sparse_set_to_zero(value vcptr)
 }
 #else
 
-static void finalize_mat_content_sparse(value vcptra)
+CAMLprim value finalize_mat_content_sparse(value vcptra)
 {
+  CAMLparam1(vcptra);
     MAT_CONTENT_SPARSE_TYPE content = MAT_CONTENT_SPARSE(vcptra);
 
 #if SUNDIALS_LIB_VERSION >= 300
@@ -892,6 +899,7 @@ static void finalize_mat_content_sparse(value vcptra)
     DestroySparseMat(content);
 
 #endif
+  CAMLreturn(Val_unit);
 }
 
 static void zero_sparse(MAT_CONTENT_SPARSE_TYPE A)
@@ -991,7 +999,8 @@ static bool matrix_sparse_create_vcptr(sundials_ml_smat_index m,
     zero_sparse(content); // reproduce effect of callocs in Sundials code
 
     // Setup the OCaml-side
-    *pvcptr = caml_alloc_final(1, &finalize_mat_content_sparse, 1, 20);
+    *pvcptr = caml_alloc_final(1, custom_finalize_default, 1, 20);
+    caml_callback2(*caml_named_value("mlfinalise_register"), *caml_named_value("finalize_mat_content_sparse"), *pvcptr);
     MAT_CONTENT_SPARSE(*pvcptr) = content;
 
 #else // SUNDIALS_LIB_VERSION < 300 (As per c_sparsematrix_new_sparse_mat)
@@ -1012,7 +1021,8 @@ static bool matrix_sparse_create_vcptr(sundials_ml_smat_index m,
 #endif
     *pvdata = caml_ba_alloc_dims(BIGARRAY_FLOAT, 1, a->data, a->NNZ);
 
-    *pvcptr = caml_alloc_final(1, finalize_mat_content_sparse, 1, 20);
+    *pvcptr = caml_alloc_final(1, custom_finalize_default, 1, 20);
+    caml_callback2(*caml_named_value("mlfinalise_register"), *caml_named_value("finalize_mat_content_sparse"), *pvcptr);
     SLSMAT(*pvcptr) = a;
 
 #endif
@@ -2383,14 +2393,18 @@ static void free_custom_smat(SUNMatrix smat)
     free_smat(smat);
 }
 
-static void finalize_caml_smat(value vsmat)
+CAMLprim value finalize_caml_smat(value vsmat)
 {
+  CAMLparam1(vsmat);
     free_smat(MAT_CVAL(vsmat));
+  CAMLreturn(Val_unit);
 }
 
-static void finalize_caml_custom_smat(value vsmat)
+CAMLprim value finalize_caml_custom_smat(value vsmat)
 {
+  CAMLparam1(vsmat);
     free_custom_smat(MAT_CVAL(vsmat));
+  CAMLreturn(Val_unit);
 }
 
 static void csmat_clone_ops(SUNMatrix dst, SUNMatrix src)
@@ -2585,11 +2599,10 @@ CAMLprim value sunml_matrix_wrap(value vid, value vcontent, value vpayload,
     }
 
     // Setup the OCaml-side
-    vr = caml_alloc_final(1,
-	    content_is_value
-		? &finalize_caml_custom_smat
-		: &finalize_caml_smat,
-	    1, 20);
+    vr = caml_alloc_final(1, custom_finalize_default, 1, 20);
+    caml_callback2(*caml_named_value("mlfinalise_register"),
+        *caml_named_value(content_is_value ? "finalize_caml_custom_smat" : "finalize_caml_smat"),
+        vr);
     MAT_CVAL(vr) = smat;
 
 #else // SUNDIALS_LIB_VERSION < 300
@@ -2615,13 +2628,15 @@ CAMLprim value sunml_matrix_wrap_any(SUNMatrix A)
 	case SUNMATRIX_DENSE:
 	case SUNMATRIX_BAND:
 	case SUNMATRIX_SPARSE:
-	    vrawptr = caml_alloc_final(1, finalize_caml_smat, 1, 20);
+	    vrawptr = caml_alloc_final(1, custom_finalize_default, 1, 20);
+      caml_callback2(*caml_named_value("mlfinalise_register"), *caml_named_value("finalize_caml_smat"), vrawptr);
 	    B = alloc_smat(A->content, MAT_BACKLINK(A),
 			   MAT_CONTEXT(A), false);
 	    break;
 
 	case SUNMATRIX_CUSTOM:
-	    vrawptr = caml_alloc_final(1, finalize_caml_custom_smat, 1, 20);
+	    vrawptr = caml_alloc_final(1, custom_finalize_default, 1, 20);
+      caml_callback2(*caml_named_value("mlfinalise_register"), *caml_named_value("finalize_caml_custom_smat"), vrawptr);
 	    B = alloc_smat(MAT_CUSTOM_CONTENT(A), MAT_BACKLINK(A),
 			   MAT_CONTEXT(A), true);
 	    break;
