@@ -690,6 +690,7 @@ This documentation uses {{:https://jonathan.protzenko.fr/}J. Protzenko}'s
 
 We are grateful for direct contributions to this library from
 {ul
+    {- L. Bailly}
     {- {{:http://gallium.inria.fr/~scherer/}G. Scherer}}
     {- {{:http://www.lix.polytechnique.fr/~ghorbal/}K. Ghorbal}}
 }
