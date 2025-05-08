@@ -1261,7 +1261,7 @@ static value sunml_idas_bsession_to_value(void *ida_mem)
     assert (vsession != Val_none);
     vsession = Some_val(vsession);
 
-    return vsession;
+    CAMLreturn (vsession);
 }
 
 static void* sunml_idas_session_from_value(value vida_mem)

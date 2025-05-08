@@ -1149,7 +1149,7 @@ static value sunml_cvodes_bsession_to_value(void *cvode_mem)
     assert (vsession != Val_none);
     vsession = Some_val(vsession);
 
-    return vsession;
+    CAMLreturn (vsession);
 }
 
 static void* sunml_cvodes_session_from_value(value vcvode_mem)
