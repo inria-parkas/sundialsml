@@ -2685,7 +2685,9 @@ CAMLprim value sunml_matrix_wrap_any(SUNMatrix A)
     }
 
 #pragma GCC diagnostic push
+#if __GNUC__ && !__clang__
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
     vr = caml_alloc(1, matid);
 #pragma GCC diagnostic pop
     Store_field(vr, 0, vmat);
