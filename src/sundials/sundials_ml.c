@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <stdlib.h>	// RAND_MAX, rand, srand
 
 #include <sundials/sundials_config.h>
 #include <sundials/sundials_types.h>
@@ -201,6 +202,21 @@ CAMLprim int sunml_sundials_compare_tol(value va, value vb, value vtol)
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn(vr);
+}
+
+CAMLprim value sunml_get_rand_max(void)
+{
+    return Val_int (RAND_MAX);
+}
+
+CAMLprim value sunml_rand(void)
+{
+    return Val_int (rand());
+}
+
+CAMLprim void sunml_srand(value seed)
+{
+    srand((unsigned int)Int_val(seed));
 }
 
 #if defined(SUNDIALS_HAVE_POSIX_TIMERS) && defined(_POSIX_TIMERS)

@@ -2,11 +2,9 @@
 # wrapper around examples.mk that adds build rules for
 # test_matrix.ml.
 
-EXTRA_DEPS = test_matrix_ml.o test_matrix.cmo
+EXTRA_DEPS = test_matrix.cmo
 
 FILES_TO_CLEAN=test_matrix.ml		\
-	       test_matrix_ml.c		\
-	       test_matrix_ml.o		\
 	       test_matrix.o		\
 	       test_matrix.annot	\
 	       test_matrix.cmi		\
@@ -21,8 +19,6 @@ include ../../examples.mk
 
 # use local copies to avoid problems with make -j
 test_matrix.ml: ../test_matrix.ml
-	cp $< $@ && chmod ugo-w $@
-test_matrix_ml.c: ../test_matrix_ml.c
 	cp $< $@ && chmod ugo-w $@
 
 test_matrix.cmo: test_matrix.ml

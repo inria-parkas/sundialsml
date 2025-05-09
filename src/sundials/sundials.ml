@@ -525,6 +525,13 @@ module Util = struct (* {{{ *)
   let compare_float ?(tol=10.0 *. Config.unit_roundoff) a b =
     c_compare_float a b tol = 0
 
+  external c_get_rand_max : unit -> int = "sunml_get_rand_max"
+  let rand_max = c_get_rand_max ()
+
+  external rand : unit -> int = "sunml_rand"
+
+  external srand : int -> unit = "sunml_srand"
+
   external get_time_precision : unit -> (int * float) option
     = "sunml_get_timing_precision"
 

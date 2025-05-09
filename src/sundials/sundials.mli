@@ -626,6 +626,17 @@ module Util : sig (* {{{ *)
       @since 5.8.0 *)
   val compare_float : ?tol:float -> float -> float -> bool
 
+  (** The (inclusive) upper bound on values returned from {!rand}. *)
+  val rand_max : int
+
+  (** Returns a random integer between 0 and {!rand_max} inclusive using
+      the standard C library. *)
+  external rand : unit -> int = "sunml_rand"
+
+  (** Resets the seed used to generate the sequence of numbers returned by
+      {!rand}. *)
+  external srand : int -> unit = "sunml_srand"
+
   (* Returns [None] if POSIX timers are not available, otherwise returns the
      timer resolution [(n, f)], meaning that [n] nanoseconds are represented
      by the floating-point value [f]. *)

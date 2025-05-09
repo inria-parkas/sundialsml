@@ -53,10 +53,8 @@ let fneq a b tol =
   else if (abs_float (a -. b) /. abs_float b) > tol then 1
   else 0
 
-external rand : unit -> int = "ml_rand"
-external rand_max : unit -> int = "ml_rand_max"
-
-let rand_max = rand_max ()
+let rand = Sundials.Util.rand
+let rand_max = Sundials.Util.rand_max
 
 module Test (M : MATRIX_TESTS) (NV : Nvector.NVECTOR_OPS with type t = M.nvec) =
 struct (* Extends all the way to the end of file.  *)
