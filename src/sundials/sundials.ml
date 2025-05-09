@@ -519,11 +519,11 @@ module Util = struct (* {{{ *)
 
   let floata = format_float "%a"
 
-  external c_compare_float : float -> float -> float -> int
+  external c_compare_float : float -> float -> float -> bool
       = "sunml_sundials_compare_tol"
 
   let compare_float ?(tol=10.0 *. Config.unit_roundoff) a b =
-    c_compare_float a b tol = 0
+    c_compare_float a b tol
 
   external c_get_rand_max : unit -> int = "sunml_get_rand_max"
   let rand_max = c_get_rand_max ()

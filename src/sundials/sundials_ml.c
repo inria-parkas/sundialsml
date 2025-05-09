@@ -191,13 +191,13 @@ CAMLprim void sunml_crash (value msg)
     CAMLreturn0;
 }
 
-CAMLprim int sunml_sundials_compare_tol(value va, value vb, value vtol)
+CAMLprim value sunml_sundials_compare_tol(value va, value vb, value vtol)
 {
     CAMLparam3(va, vb, vtol);
     CAMLlocal1(vr);
 #if 580 <= SUNDIALS_LIB_VERSION
     int r = SUNRCompareTol(Double_val(va), Double_val(vb), Double_val(vtol));
-    vr = Int_val(r);
+    vr = (r == 0 ? Val_true : Val_false);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
