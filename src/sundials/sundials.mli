@@ -626,5 +626,17 @@ module Util : sig (* {{{ *)
       @since 5.8.0 *)
   val compare_float : ?tol:float -> float -> float -> bool
 
+  (* Returns [None] if POSIX timers are not available, otherwise returns the
+     timer resolution [(n, f)], meaning that [n] nanoseconds are represented
+     by the floating-point value [f]. *)
+  external get_time_precision : unit -> (int * float) option
+    = "sunml_get_timing_precision"
+
+  (* Returns the current value of a monotonic timer in the precision given by
+     {!get_time_precision}, or 0 if POSIX timers are not available. Allows
+     measuring an interval by taking the difference of two monotonic times. *)
+  external get_monotonic_time : unit -> (float [@unboxed])
+    = "sunml_get_time_byte" "sunml_get_time"
+
 end (* }}} *)
 

@@ -71,12 +71,10 @@ let print_time format time =
   if !print_time_flag then
     printf format time
 
-external get_time : unit -> float = "get_time"
-external set_timing : bool -> float = "SetTiming"
+let get_time = Sundials.Util.get_monotonic_time
 
 let set_timing b =
-  print_time_flag := b;
-  set_timing b
+  print_time_flag := b
 
 let clone a = M.rewrap (Matrix.((get_ops a).m_clone (unwrap a)))
 

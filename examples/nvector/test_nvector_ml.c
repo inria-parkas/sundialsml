@@ -44,54 +44,6 @@
  * Private functions
  * ====================================================================*/
 
-#if defined( SUNDIALS_HAVE_POSIX_TIMERS) && defined(_POSIX_TIMERS)
-time_t base_time_tv_sec = 0; /* Base time; makes time values returned
-				by get_time easier to read when
-				printed since they will be zero
-				based.
-			     */
-#endif
-
-CAMLprim value SetTiming(value onoff)
-{
-    CAMLparam1 (onoff);
-    CAMLlocal2 (r, precision);
-
-#if defined( SUNDIALS_HAVE_POSIX_TIMERS) && defined(_POSIX_TIMERS)
-    struct timespec spec;
-    clock_gettime( CLOCK_MONOTONIC_RAW, &spec );
-    base_time_tv_sec = spec.tv_sec;
-
-    clock_getres(CLOCK_MONOTONIC_RAW, &spec);
-
-    precision = caml_alloc_tuple(2);
-    Store_field(precision, 0, Val_int(spec.tv_nsec));
-    Store_field(precision, 1,
-		caml_copy_double((double)(spec.tv_nsec) / 1E9));
-    r = caml_alloc_tuple(1);
-    Store_field(r, 0, precision); // Some (precision)
-#else
-    r = Val_int(0); // None
-#endif
-    CAMLreturn (r);
-}
-
-/* ----------------------------------------------------------------------
- * Timer
- * --------------------------------------------------------------------*/
-CAMLprim value get_time ()
-{
-    CAMLparam0 ();
-#if defined( SUNDIALS_HAVE_POSIX_TIMERS) && defined(_POSIX_TIMERS)
-    struct timespec spec;  
-    clock_gettime( CLOCK_MONOTONIC_RAW, &spec );
-    double time = (double)(spec.tv_sec - base_time_tv_sec) + ((double)(spec.tv_nsec) / 1E9);
-#else
-    double time = 0;
-#endif
-    CAMLreturn (caml_copy_double (time));
-}
-
 /* Misc. */
 CAMLprim value stdc_version ()
 {

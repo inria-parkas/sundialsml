@@ -525,6 +525,12 @@ module Util = struct (* {{{ *)
   let compare_float ?(tol=10.0 *. Config.unit_roundoff) a b =
     c_compare_float a b tol = 0
 
+  external get_time_precision : unit -> (int * float) option
+    = "sunml_get_timing_precision"
+
+  external get_monotonic_time : unit -> (float [@unboxed])
+    = "sunml_get_time_byte" "sunml_get_time"
+
 end (* }}} *)
 
 external c_init_module :

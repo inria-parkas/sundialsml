@@ -191,13 +191,10 @@ let print_time name time =
     then printf "%s Time: %22.15e \n \n" name time
     else printf "    %s Time: %22.15e \n \n" name time
 
-external get_time : unit -> float = "get_time"
-
-(* May return: tick precision (in nanoseconds, as float) *)
-external set_timing : bool -> (int * float) option = "SetTiming"
+let get_time = Sundials.Util.get_monotonic_time
 
 let set_timing b showres =
-  (match set_timing b with
+  (match Sundials.Util.get_time_precision () with
    | Some (n, f) ->
      if compat_ge400 && showres
      then printf "Timer resolution: %d ns = %g s\n" n f

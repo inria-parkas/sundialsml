@@ -44,6 +44,11 @@
 #include <sundials/sundials_context.h>
 #endif
 
+#include <unistd.h>
+#if defined(SUNDIALS_HAVE_POSIX_TIMERS) && defined(_POSIX_TIMERS)
+#include <time.h>
+#endif
+
 value sundials_ml_exn_table = 0;
 
 void sunml_register_exns(enum sundials_exn_set_index index, value exns)
@@ -191,6 +196,53 @@ CAMLprim int sunml_sundials_compare_tol(value va, value vb, value vtol)
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn(vr);
+}
+
+#if defined(SUNDIALS_HAVE_POSIX_TIMERS) && defined(_POSIX_TIMERS)
+static time_t base_time_tv_sec = 0; /* Base time; makes time values returned by
+				       sunml_get_time easier to read when printed
+				       since they will be zero based. */
+#endif
+
+CAMLprim value sunml_get_timing_precision(void)
+{
+    CAMLparam0 ();
+    CAMLlocal2 (r, precision);
+
+#if defined(SUNDIALS_HAVE_POSIX_TIMERS) && defined(_POSIX_TIMERS)
+    struct timespec spec;
+    clock_gettime( CLOCK_MONOTONIC_RAW, &spec );
+    base_time_tv_sec = spec.tv_sec;
+
+    clock_getres(CLOCK_MONOTONIC_RAW, &spec);
+
+    precision = caml_alloc_tuple(2);
+    Store_field(precision, 0, Val_int(spec.tv_nsec));
+    Store_field(precision, 1,
+		caml_copy_double((double)(spec.tv_nsec) / 1E9));
+    r = caml_alloc_tuple(1);
+    Store_field(r, 0, precision); // Some (precision)
+#else
+    r = Val_int(0); // None
+#endif
+    CAMLreturn (r);
+}
+
+CAMLprim double sunml_get_time(void)
+{
+#if defined( SUNDIALS_HAVE_POSIX_TIMERS) && defined(_POSIX_TIMERS)
+    struct timespec spec;  
+    clock_gettime( CLOCK_MONOTONIC_RAW, &spec );
+    double time = (double)(spec.tv_sec - base_time_tv_sec) + ((double)(spec.tv_nsec) / 1E9);
+#else
+    double time = 0;
+#endif
+    return time;
+}
+
+CAMLprim value sunml_get_time_byte(void)
+{
+    return caml_copy_double (sunml_get_time());
 }
 
 CAMLprim value sunml_sundials_get_version_number(void)
