@@ -849,7 +849,7 @@ val get_res_norm : ('m, 'd, 'k, 't) t -> float
     The linear solver may return a reference to its internal array, i.e., it
     may not return a copy.
 
-    @linsol SUNLinSolResNorm *)
+    @linsol SUNLinSolResid *)
 val get_res_id : ('m, 'd, 'k, 't) t -> 'd
 
 (** Returns the type of the linear solver.
