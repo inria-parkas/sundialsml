@@ -63,6 +63,9 @@ val small_real : float
     @cvode <node5#s:types> Data Types *)
 val unit_roundoff : float
 
+(** The version of C used when compiling the library. *)
+val stdc_version : int
+
 (** Raised for features that are not available in the installed version of
     the underlying sundials library. See {!sundials_version}. *)
 exception NotImplementedBySundialsVersion

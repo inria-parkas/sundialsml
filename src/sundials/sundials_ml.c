@@ -106,7 +106,7 @@ CAMLprim value sunml_sundials_get_constants (void)
     CAMLparam0 ();
     CAMLlocal1 (r);
 
-    r = caml_alloc_tuple (3);
+    r = caml_alloc_tuple (4);
 #if 600 <= SUNDIALS_LIB_VERSION
     Store_field (r, 0, caml_copy_double(SUN_BIG_REAL));
     Store_field (r, 1, caml_copy_double(SUN_SMALL_REAL));
@@ -115,6 +115,11 @@ CAMLprim value sunml_sundials_get_constants (void)
     Store_field (r, 0, caml_copy_double(BIG_REAL));
     Store_field (r, 1, caml_copy_double(SMALL_REAL));
     Store_field (r, 2, caml_copy_double(UNIT_ROUNDOFF));
+#endif
+#ifdef __STDC_VERSION__
+    Store_field (r, 3, Val_int(__STDC_VERSION__));
+#else
+    Store_field (r, 3, Val_int(0));
 #endif
 
     CAMLreturn (r);

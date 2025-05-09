@@ -32,19 +32,6 @@
  * Private functions
  * ====================================================================*/
 
-/* Misc. */
-CAMLprim value stdc_version ()
-{
-    CAMLparam0 ();
-
-    /* C89 compilers don't define this, in which case it's replaced by
-     * 0 in #if directives, which is what we're emulating here.  */
-#ifndef __STDC_VERSION__
-#define __STDC_VERSION__ 0
-#endif
-    CAMLreturn (Val_int (__STDC_VERSION__));
-}
-
 CAMLprim value ml_rand ()
 {
     CAMLparam0 ();

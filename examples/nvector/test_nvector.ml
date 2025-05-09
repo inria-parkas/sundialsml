@@ -167,11 +167,10 @@ let one = 1.0
 let two = 2.0
 
 (* NAN and floating point "equality" check, failure update macro *)
-external stdc_version : unit -> int = "stdc_version"
 let isnan (x : float) = x <> x
 
 let fneqtol =
-  if stdc_version () >= 199901 then
+  if Sundials.Config.stdc_version >= 199901 then
     (fun a b tol ->
       not (isnan a || abs_float (a -. b) /. abs_float b > tol))
   else

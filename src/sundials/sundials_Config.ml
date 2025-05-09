@@ -27,9 +27,9 @@ let monitoring_enabled = Sundials_configuration.monitoring_enabled
    a few parameters from the C side.  *)
 
 external c_get_constants
-  : unit -> float * float * float = "sunml_sundials_get_constants"
+  : unit -> float * float * float * int = "sunml_sundials_get_constants"
 
-let big_real, small_real, unit_roundoff = c_get_constants ()
+let big_real, small_real, unit_roundoff, stdc_version = c_get_constants ()
 
 (* synchronized with sundials_ml.h: sundials_version_number_index *)
 type [@warning "-69"] sundials_version_number = {
