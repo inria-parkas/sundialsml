@@ -1836,7 +1836,7 @@ CAMLprim value sunml_lsolver_set_preconditioner(value vcptr, value vcroot)
 #if 300 <= SUNDIALS_LIB_VERSION
     int flag = SUNLinSolSetPreconditioner(LSOLVER_VAL(vcptr), VPTRCROOT(vcroot),
 					  ocaml_psetup, ocaml_psolve);
-    CHECK_FLAG("SUNLinSolSetATimes", flag);
+    CHECK_FLAG("SUNLinSolSetPreconditioner", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
