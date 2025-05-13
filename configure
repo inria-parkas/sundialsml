@@ -1078,7 +1078,11 @@ if [ $sundials -gt 0 ]; then
 #ifdef SUNDIALS_BLAS_LAPACK
 1
 #else
+#if defined(SUNDIALS_SUNLINSOL_LAPACKBAND) || defined(SUNDIALS_SUNLINSOL_LAPACKDENSE)
+1
+#else
 0
+#endif
 #endif
 EOF
     else

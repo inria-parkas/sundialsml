@@ -55,7 +55,7 @@ let nout   = 12       (* number of output times *)
 let nroots = 2        (* number of root functions *)
 let zero   = 0.0
 
-let f t (y : RealArray.t) (yd : RealArray.t) =
+let f _t (y : RealArray.t) (yd : RealArray.t) =
   let yd1 = -0.04 *. y.{0} +. 1.0e4 *. y.{1} *. y.{2}
   and yd3 = 3.0e7 *. y.{1} *. y.{1}
   in
@@ -63,7 +63,7 @@ let f t (y : RealArray.t) (yd : RealArray.t) =
   yd.{1} <- (-. yd1 -. yd3);
   yd.{2} <- yd3
 
-let g t (y : RealArray.t) (gout : RealArray.t) =
+let g _t (y : RealArray.t) (gout : RealArray.t) =
   gout.{0} <- y.{0} -. 0.0001;
   gout.{1} <- y.{2} -. 0.01
 
@@ -94,18 +94,24 @@ let print_final_stats s =
   and nni     = get_num_nonlin_solv_iters s
   and nnf     = get_num_nonlin_solv_conv_fails s
   and nje     = Dls.get_num_jac_evals s
-  and nfeLS   = Dls.get_num_rhs_evals s
+  and nfeLS   = Dls.get_num_lin_rhs_evals s
   and nge     = get_num_g_evals s
   in
   printf "\nFinal Statistics:\n";
-  printf "nst = %-6d nfe  = %-6d nsetups = %-6d nfeLS = %-6d nje = %d\n"
-    nst nfe nsetups nfeLS nje;
   if Sundials_impl.Version.lt620
-  then printf "nni = %-6d ncfn = %-6d netf = %-6d nge = %d\n \n"
-       nni nnf netf nge
-  else let ncfn = get_num_step_solve_fails cvode_mem in
-       printf "nni = %-6d nnf = %-6d netf = %-6d    ncfn = %-6d nge = %d\n\n"
-              nni nnf netf ncfn nge
+  then begin
+    printf "nst = %-6d nfe  = %-6d nsetups = %-6d nfeLS = %-6d nje = %d\n"
+      nst nfe nsetups nfeLS nje;
+    printf "nni = %-6d ncfn = %-6d netf = %-6d nge = %d\n \n"
+      nni nnf netf nge
+  end
+  else begin
+    printf "nst = %-6d nfe = %-6d nsetups = %-6d nfeLS = %-6d nje = %d\n"
+      nst nfe nsetups nfeLS nje;
+    let ncfn = get_num_step_solve_fails s in
+    printf "nni = %-6d nnf = %-6d netf = %-6d    ncfn = %-6d  nge = %d\n\n"
+           nni nnf netf ncfn nge
+  end
 
 let main () =
   (* Create serial vector of length NEQ for I.C. and abstol *)

@@ -85,7 +85,7 @@ type user_data = {
 
 (* f routine. Compute f(t,u). *)
 
-let f data t (udata : RealArray.t) (dudata : RealArray.t) =
+let f data _t (udata : RealArray.t) (dudata : RealArray.t) =
   (* Extract needed constants from data *)
   let hordc = data.hdcoef
   and horac = data.hacoef
@@ -116,7 +116,7 @@ let f data t (udata : RealArray.t) (dudata : RealArray.t) =
 
 (* Jacobian routine. Compute J(t,u). *)
 
-let jac data arg jmat =
+let jac data _arg jmat =
   (*
     The components of f = udot that depend on u(i,j) are
     f(i,j), f(i-1,j), f(i+1,j), f(i,j-1), f(i,j+1), with
@@ -186,7 +186,7 @@ let print_final_stats s =
   and nni     = get_num_nonlin_solv_iters s
   and ncfn    = get_num_nonlin_solv_conv_fails s
   and nje     = Dls.get_num_jac_evals s
-  and nfeLS   = Dls.get_num_rhs_evals s
+  and nfeLS   = Dls.get_num_lin_rhs_evals s
   in
   printf "\nFinal Statistics:\n";
   printf "nst = %-6d nfe  = %-6d nsetups = %-6d nfeLS = %-6d nje = %d\n"
@@ -233,8 +233,8 @@ let main () =
   print_header reltol abstol (vmax_norm u);
 
   let tout = ref t1 in
-  for iout = 1 to nout do
-    let (t, flag) = Cvode.solve_normal cvode_mem !tout u
+  for _iout = 1 to nout do
+    let (t, _flag) = Cvode.solve_normal cvode_mem !tout u
     in
     let nst = Cvode.get_num_steps cvode_mem in
 
