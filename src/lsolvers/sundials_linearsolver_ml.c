@@ -483,9 +483,11 @@ CAMLprim void sunml_lsolver_set_prec_type(value vcptr, value vsolver,
 
 #if 300 <= SUNDIALS_LIB_VERSION
     const char* interrmsg = "internal error in sunml_lsolver_set_prec_type";
-    int old_pretype = SUN_PREC_NONE;
     int pretype = sunml_lsolver_precond_type(vpretype);
     SUNLinearSolver lsolv = LSOLVER_VAL(vcptr);
+
+#if SUNDIALS_LIB_VERSION < 530
+    int old_pretype = SUN_PREC_NONE;
 
     if (Bool_val(vdocheck)) {
 	switch (Int_val(vsolver)) {
@@ -521,6 +523,7 @@ CAMLprim void sunml_lsolver_set_prec_type(value vcptr, value vsolver,
 	if ((old_pretype == SUN_PREC_NONE) && (pretype != SUN_PREC_NONE))
 	    caml_raise_constant(LSOLVER_EXN(IllegalPrecType));
     }
+#endif
 
     // ignore returned values
     switch (Int_val(vsolver)) {
