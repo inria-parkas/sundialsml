@@ -1,0 +1,2 @@
+test_sunlinsol_spgmr_parallel.sundials
+test_sunlinsol_spgmr_parallel.sundials.c

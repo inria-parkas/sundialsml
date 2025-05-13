@@ -60,6 +60,18 @@ GEN_SUBDIRS=$(foreach m,cvode cvodes ida idas kinsol,			\
 	       $(foreach v,						\
 	   	   fixedpoint newton,					\
 		   nonlinsol/$v))					\
+	    $(if $(or $(1),$(AT_LEAST_3_0)),				\
+	       $(foreach v,						\
+		   spbcgs/serial spgmr/serial pcg/serial		\
+		   spfgmr/serial sptfqmr/serial				\
+		   dense lapackdense band lapackband			\
+		   klu superlumt					\
+		   $(if $(or $(1),$(MPI_ENABLED)),spbcgs/parallel)	\
+		   $(if $(or $(1),$(MPI_ENABLED)),spgmr/parallel)	\
+		   $(if $(or $(1),$(MPI_ENABLED)),pcg/parallel)	\
+		   $(if $(or $(1),$(MPI_ENABLED)),spfgmr/parallel)	\
+		   $(if $(or $(1),$(MPI_ENABLED)),sptfqmr/parallel),	\
+		   linsol/$v))						\
 	    $(if $(or $(1),$(AT_LEAST_2_7)),				\
 	       $(if $(or $(1),$(OPENMP_ENABLED)),idas/C_openmp))
 
@@ -69,10 +81,10 @@ SUBDIRS=$(call GEN_SUBDIRS)          # Just the enabled ones.
 # Nvector, Matrix, and Nonlinear solver examples are unsuitable for
 # performance comparisons, so filter them out unless
 # PERF_FORCE_NONLINSOL/PERF_FORCE_NVECTORS/PERF_FORCE_MATRICES are nonempty.
-SUBDIRS_NONLINSOL=$(if $(PERF_FORCE_MATRICES),$(SUBDIRS),\
-		 $(filter-out nonlinsol/%,$(SUBDIRS)))
-SUBDIRS_MAT=$(if $(PERF_FORCE_MATRICES),$(SUBDIRS_NONLINSOL),\
-		 $(filter-out matrix/%,$(SUBDIRS_NONLINSOL)))
+SUBDIRS_SKIP=$(if $(PERF_FORCE_MATRICES),$(SUBDIRS),\
+		 $(filter-out linsol/%,$(filter-out nonlinsol/%,$(SUBDIRS))))
+SUBDIRS_MAT=$(if $(PERF_FORCE_MATRICES),$(SUBDIRS_SKIP),\
+		 $(filter-out matrix/%,$(SUBDIRS_SKIP)))
 PERF_SUBDIRS=$(if $(PERF_FORCE_NVECTORS),$(SUBDIRS_MAT),\
 		  $(filter-out nvector/%,$(SUBDIRS_MAT)))
 
