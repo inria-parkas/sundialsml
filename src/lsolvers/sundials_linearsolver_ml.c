@@ -1583,7 +1583,7 @@ static int ocaml_atimes(void *callback_croot, N_Vector v, N_Vector z)
     CAMLparam0();
     CAMLlocalN (args, 2);
 
-    value *croot = VPTRCROOT(callback_croot);
+    value *croot = callback_croot;
 
     args[0] = NVEC_BACKLINK(v);
     args[1] = NVEC_BACKLINK(z);
@@ -1592,20 +1592,20 @@ static int ocaml_atimes(void *callback_croot, N_Vector v, N_Vector z)
     value r = caml_callbackN_exn
 	(Field(*croot, RECORD_LSOLVER_OCAML_CALLBACKS_ATIMES), 2, args);
 
-    CAMLreturnT(int, CHECK_EXCEPTION(r));
+    CAMLreturnT(int, CHECK_EXCEPTION_SUCCESS(r));
 }
 
 static int ocaml_psetup(void *callback_croot)
 {
     CAMLparam0();
 
-    value *croot = VPTRCROOT(callback_croot);
+    value *croot = callback_croot;
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callback_exn
 	(Field(*croot, RECORD_LSOLVER_OCAML_CALLBACKS_PSETUP), Val_unit);
 
-    CAMLreturnT(int, CHECK_EXCEPTION(r));
+    CAMLreturnT(int, CHECK_EXCEPTION_SUCCESS(r));
 }
 
 int ocaml_psolve(void *callback_croot,
@@ -1614,7 +1614,7 @@ int ocaml_psolve(void *callback_croot,
     CAMLparam0();
     CAMLlocalN (args, 4);
 
-    value *croot = VPTRCROOT(callback_croot);
+    value *croot = callback_croot;
 
     args[0] = NVEC_BACKLINK(w);
     args[1] = NVEC_BACKLINK(z);
@@ -1625,7 +1625,7 @@ int ocaml_psolve(void *callback_croot,
     value r = caml_callbackN_exn
 	(Field(*croot, RECORD_LSOLVER_OCAML_CALLBACKS_PSOLVE), 4, args);
 
-    CAMLreturnT(int, CHECK_EXCEPTION(r));
+    CAMLreturnT(int, CHECK_EXCEPTION_SUCCESS(r));
 }
 #endif
 
