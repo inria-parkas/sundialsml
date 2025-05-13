@@ -98,6 +98,7 @@ value sundials_ml_weak_get (value ar, value n);
 #if OCAML_VERSION < 41200
 #define Val_none (Val_int(0))
 #define Some_val(v) (Field((v), 0))
+#define Is_none(v) ((v) == Val_none)
 #endif
 
 #define Store_some(dest, v)			\

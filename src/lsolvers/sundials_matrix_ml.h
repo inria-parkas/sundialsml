@@ -198,6 +198,7 @@ struct csmat {
 #define MAT_CVAL(v) (*(SUNMatrix *)Data_custom_val(v))
 // MAT_VAL turns an OCaml Matrix.t into a c-sunmatrix
 #define MAT_VAL(v) (MAT_CVAL(Field(v, RECORD_MAT_MATRIX_RAWPTR)))
+#define MAT_OVAL(v) ((Is_none(v)) ? NULL : MAT_VAL(Some_val(v)))
 
 #elif 260 <= SUNDIALS_LIB_VERSION // 260 <= SUNDIALS_LIB_VERSION < 300
 #define DLSMAT(v) (*(DlsMat *)Data_custom_val(v))

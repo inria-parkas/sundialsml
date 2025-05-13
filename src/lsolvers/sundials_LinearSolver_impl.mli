@@ -75,8 +75,8 @@ module Custom :
       = "sunml_lsolver_call_psolve"
     type ('matrix, 'data, 'kind, 't) ops = {
       init : 't -> unit;
-      setup : 't -> 'matrix -> unit;
-      solve : 't -> 'matrix -> 'data -> 'data -> float -> unit;
+      setup : 't -> 'matrix option -> unit;
+      solve : 't -> 'matrix option -> 'data -> 'data -> float -> unit;
       set_atimes : 't -> ('data, 'kind) atimes_with_data -> unit;
       set_preconditioner :
         't -> ('data, 'kind) precond_with_data -> bool -> bool -> unit;

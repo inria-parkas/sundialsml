@@ -57,7 +57,7 @@ type matrix_embedded_ls_content = {
 }
 
 (* linear solve routine *)
-let matrix_embedded_ls_solve content () (x : RealArray.t) (b : RealArray.t) _ =
+let matrix_embedded_ls_solve content _m (x : RealArray.t) (b : RealArray.t) _ =
   let { lambda; arkode_mem } = content in
   match arkode_mem with
   | None ->

@@ -64,7 +64,7 @@ type matrix_embedded_ls_content = {
 }
 
 (* linear solve routine *)
-let matrix_embedded_ls_solve content () (x : RealArray.t) (b : RealArray.t) _ =
+let matrix_embedded_ls_solve content _m (x : RealArray.t) (b : RealArray.t) _ =
   let { alpha; ida_mem } = content in
   match ida_mem with
   | None -> failwith "linear solver not properly configure"

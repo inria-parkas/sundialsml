@@ -55,7 +55,7 @@ type matrix_embedded_ls_content = {
 }
 
 (* linear solve routine *)
-let matrix_embedded_ls_solve content () (x : RealArray.t) (b : RealArray.t) _ =
+let matrix_embedded_ls_solve content _m (x : RealArray.t) (b : RealArray.t) _ =
   let { lambda; cvode_mem } = content in
   match cvode_mem with
   | None -> failwith "linear solver not properly configure"

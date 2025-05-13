@@ -588,10 +588,10 @@ module Custom : sig (* {{{ *)
       init : ('lsolver -> unit) option;
       (** Performs linear solver initalization. *)
 
-      setup : ('lsolver -> 'matrix -> unit) option;
+      setup : ('lsolver -> 'matrix option -> unit) option;
       (** Performs linear solver setup. *)
 
-      solve : 'lsolver -> 'matrix -> 'data -> 'data -> float -> unit;
+      solve : 'lsolver -> 'matrix option -> 'data -> 'data -> float -> unit;
       (** The call [solve ls a x b tol] should solve the linear system
           {% $Ax = b$ %}.
 
@@ -664,7 +664,7 @@ module Custom : sig (* {{{ *)
   val make_ops :
        ?solver_id : linear_solver_id
     -> ?init : ('lsolver -> unit)
-    -> ?setup : ('lsolver -> 'matrix -> unit)
+    -> ?setup : ('lsolver -> 'matrix option -> unit)
     -> ?set_atimes : ('lsolver -> ('data, 'kind) atimesfn -> unit)
     -> ?set_preconditioner : ('lsolver -> psetupfn option -> ('data, 'kind) psolvefn option -> unit)
     -> ?set_scaling_vectors : ('lsolver -> 'data option -> 'data option -> unit)
@@ -676,7 +676,7 @@ module Custom : sig (* {{{ *)
     -> ?get_work_space : ('lsolver -> int * int)
     -> ?set_prec_type : ('lsolver -> Iterative.preconditioning_type -> unit)
     -> solver_type : linear_solver_type
-    -> solve : ('lsolver -> 'matrix -> 'data -> 'data -> float -> unit)
+    -> solve : ('lsolver -> 'matrix option -> 'data -> 'data -> float -> unit)
     -> unit
     -> ('matrix, 'data, 'kind, 'lsolver) ops
 
@@ -806,26 +806,27 @@ val set_zero_guess :
     @linsol SUNLinSolInitialize *)
 val init : ('m, 'd, 'k, 't) t -> unit
 
-(** Instruct the linear solver to prepare to solve using an updated
-    system matrix.
+(** Instruct the linear solver to prepare to solve, possibly using an updated
+    system matrix. Matrix-free solvers, e.g., iterative ones, do not require
+    the matrix.
 
     @linsol SUNLinSolSetup *)
-val setup : ('m, 'd, 'k, 't) t -> ('a, 'm, 'd, 'k) Matrix.t -> unit
+val setup : ('m, 'd, 'k, 't) t -> ('a, 'm, 'd, 'k) Matrix.t option -> unit
 
 (** Solve a linear system.
     The call [solve ls a x b tol] solves the linear system
     {% $Ax = b$ %}.
 
     Direct solvers ignore [tol].
-    Matrix-free solvers ignore [a], relying instead on the function passed to
-    {!set_atimes}.
+    Matrix-free solvers do not require [a], relying instead on the function
+    passed to {!set_atimes}.
     Iterative solvesr attempt to respect the weighted 2-norm tolerance,
     [tol].
 
     @linsol SUNLinSolSolve *)
 val solve :
      ('m, 'd, 'k, 't) t
-  -> ('a, 'm, 'd, 'k) Matrix.t
+  -> ('a, 'm, 'd, 'k) Matrix.t option
   -> ('d, 'k) Nvector.t
   -> ('d, 'k) Nvector.t
   -> float

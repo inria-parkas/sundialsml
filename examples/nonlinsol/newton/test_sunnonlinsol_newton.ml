@@ -84,14 +84,14 @@ let lsetup imem _ _ =
   jac zero (Nvector.unwrap imem.ycur) (Matrix.(Dense.unwrap (unwrap imem.a)));
 
   (* setup the linear solver *)
-  LS.setup imem.ls imem.a;
+  LS.setup imem.ls (Some imem.a);
 
   (* update Jacobian status *)
   true
 
 (* Proxy for integrator lsolve function *)
 let lsolve imem b _ =
-  LS.solve imem.ls imem.a imem.x (Nvector_serial.wrap b) zero;
+  LS.solve imem.ls (Some imem.a) imem.x (Nvector_serial.wrap b) zero;
   NVOps.scale one (Nvector_serial.unwrap imem.x) b
 
 (* Proxy for integrator convergence test function *)

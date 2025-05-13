@@ -165,9 +165,9 @@ module Custom = struct (* {{{ *)
   type ('matrix, 'data, 'kind, 't) ops = {
     init : 't -> unit;
 
-    setup : 't -> 'matrix -> unit;
+    setup : 't -> 'matrix option -> unit;
 
-    solve : 't -> 'matrix -> 'data -> 'data -> float -> unit;
+    solve : 't -> 'matrix option -> 'data -> 'data -> float -> unit;
 
     set_atimes : 't -> ('data, 'kind) atimes_with_data -> unit;
 

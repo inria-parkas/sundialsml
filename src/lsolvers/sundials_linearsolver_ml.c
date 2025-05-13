@@ -1066,11 +1066,13 @@ static int callml_custom_initialize(SUNLinearSolver ls)
 static int callml_custom_setup(SUNLinearSolver ls, SUNMatrix A)
 {
     CAMLparam0();
-    CAMLlocal2(r, vls);
+    CAMLlocal3(r, vls, vom);
+
+    vom = Val_none;
+    if (A != NULL) Store_some(vom, MAT_BACKLINK(A));
 
     WEAK_DEREF (vls, LSOLV_WEAK_OPS_AND_DATA(ls));
-    r = caml_callback2_exn(GET_OP(vls, SETUP), LSOLV_DATA(vls),
-	    (A == NULL) ? Val_unit : MAT_BACKLINK(A));
+    r = caml_callback2_exn(GET_OP(vls, SETUP), LSOLV_DATA(vls), vom);
 
     CAMLreturnT(int, CHECK_EXCEPTION_SUCCESS(r));
 }
@@ -1085,7 +1087,8 @@ static int callml_custom_solve(SUNLinearSolver ls, SUNMatrix A, N_Vector x,
     WEAK_DEREF (vls, LSOLV_WEAK_OPS_AND_DATA(ls));
 
     args[0] = LSOLV_DATA(vls);
-    args[1] = (A == NULL) ? Val_unit : MAT_BACKLINK(A);
+    args[1] = Val_none;
+    if (A != NULL) Store_some(args[1], MAT_BACKLINK(A));
     args[2] = NVEC_BACKLINK(x);
     args[3] = NVEC_BACKLINK(b);
     args[4] = caml_copy_double(tol);
@@ -1639,6 +1642,7 @@ static void sunml_lsolver_check_flag(const char *call, int flag)
     switch (flag) {
 #if 400 <= SUNDIALS_LIB_VERSION
 	case SUNLS_ILL_INPUT:
+	case SUNLS_MEM_NULL: // e.g., matrix = NULL for Dense linear solver
 	    caml_invalid_argument(call);
 
 	case SUNLS_MEM_FAIL:
@@ -1881,11 +1885,11 @@ CAMLprim value sunml_lsolver_initialize(value vcptr)
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value sunml_lsolver_setup(value vcptr, value vm)
+CAMLprim value sunml_lsolver_setup(value vcptr, value vomat)
 {
-    CAMLparam1(vcptr);
+    CAMLparam2(vcptr, vomat);
 #if 300 <= SUNDIALS_LIB_VERSION
-    int flag = SUNLinSolSetup(LSOLVER_VAL(vcptr), MAT_VAL(vm));
+    int flag = SUNLinSolSetup(LSOLVER_VAL(vcptr), MAT_OVAL(vomat));
     CHECK_FLAG("SUNLinSolSetup", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
@@ -1893,12 +1897,12 @@ CAMLprim value sunml_lsolver_setup(value vcptr, value vm)
     CAMLreturn(Val_unit);
 }
 
-CAMLprim value sunml_lsolver_solve(value vcptr, value va, value vx,
+CAMLprim value sunml_lsolver_solve(value vcptr, value voa, value vx,
 				   value vb, value vtol)
 {
-    CAMLparam5(vcptr, va, vx, vb, vtol);
+    CAMLparam5(vcptr, voa, vx, vb, vtol);
 #if 300 <= SUNDIALS_LIB_VERSION
-    int flag = SUNLinSolSolve(LSOLVER_VAL(vcptr), MAT_VAL(va), NVEC_VAL(vx),
+    int flag = SUNLinSolSolve(LSOLVER_VAL(vcptr), MAT_OVAL(voa), NVEC_VAL(vx),
 			      NVEC_VAL(vb), Double_val(vtol));
     CHECK_FLAG("SUNLinSolSolve", flag);
 #else

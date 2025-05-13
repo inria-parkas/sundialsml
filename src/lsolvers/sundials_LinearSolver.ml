@@ -585,9 +585,9 @@ module Custom = struct (* {{{ *)
 
       init : ('lsolver -> unit) option;
 
-      setup : ('lsolver -> 'matrix -> unit) option;
+      setup : ('lsolver -> 'matrix option -> unit) option;
 
-      solve : 'lsolver -> 'matrix -> 'data -> 'data -> float -> unit;
+      solve : 'lsolver -> 'matrix option -> 'data -> 'data -> float -> unit;
 
       set_atimes
       : ('lsolver -> ('data, 'kind) atimesfn -> unit) option;
@@ -676,7 +676,7 @@ module Custom = struct (* {{{ *)
              get_res_id = fget_res_id;
              get_last_flag = fget_last_flag;
              get_work_space = fget_work_space;
-             set_prec_type = fset_prec_type } ?context (ldata : 'lsolver) omat =
+             set_prec_type = fset_prec_type } ?context ldata omat =
     (match Config.sundials_version with
      | 2,_,_ -> raise Config.NotImplementedBySundialsVersion;
      | _ -> ());
@@ -721,7 +721,7 @@ module Custom = struct (* {{{ *)
     in
     let ldata_and_ops = (ldata, ops) in
     let ctx = Sundials_impl.Context.get context in
-    LS {
+    (LS {
        rawptr = c_make_custom stype (weak_wrap ldata_and_ops) only_ops ctx;
        solver = Custom ldata_and_ops;
        matrix = omat;
@@ -731,10 +731,10 @@ module Custom = struct (* {{{ *)
        ocaml_callbacks = empty_ocaml_callbacks ();
        info_file = None;
        attached = false;
-     }
+     })
   [@@@warning "+45"]
 
-  let make_with_matrix ({ solver_type; _ } as ops) ?context ldata mat =
+  let make_with_matrix ({ solver_type; _ } as ops) ?context ldata (mat : 'matrix) =
     if solver_type = MatrixEmbedded
       then invalid_arg "invalid solver_type when matrix is given";
     make ops ?context ldata (Some mat)
@@ -764,7 +764,7 @@ module Custom = struct (* {{{ *)
     }
 
   [@@@warning "-45"]
-  let make_dls { init = fi; setup = fs0; solve; space = fgws} ?context
+  let make_dls { init = fi; setup = fs0; solve = fsolve; space = fgws} ?context
                ldata mat =
     (match Config.sundials_version with
      | 2,_,_ -> raise Config.NotImplementedBySundialsVersion;
@@ -775,8 +775,8 @@ module Custom = struct (* {{{ *)
                 | Some f -> f);
         setup = (match fs0 with
                  | None -> (fun _ _ -> ())
-                 | Some f -> f);
-        solve;
+                 | Some f -> (fun ls omat -> f ls (Option.get omat)));
+        solve = (fun ls omat v1 v2 -> fsolve ls (Option.get omat) v1 v2);
         set_atimes = (fun _ _ ->
           failwith "internal error: Direct.Custom.set_atimes");
         set_preconditioner = (fun _ _ ->
@@ -887,14 +887,17 @@ external c_initialize : ('m, 'd, 'k) cptr -> unit
 
 let init (LS { rawptr }) = c_initialize rawptr
 
-external c_setup : ('m, 'nd, 'nk) cptr -> ('a, 'm, 'd, 'k) Matrix.t -> unit
+external c_setup :
+     ('m, 'nd, 'nk) cptr
+  -> ('a, 'm, 'd, 'k) Matrix.t option
+  -> unit
   = "sunml_lsolver_setup"
 
 let setup (LS { rawptr }) = c_setup rawptr
 
 external c_solve :
      ('m, 'd, 'k) cptr
-  -> ('a, 'm, 'd, 'k) Matrix.t
+  -> ('a, 'm, 'd, 'k) Matrix.t option
   -> ('d, 'k) Nvector.t
   -> ('d, 'k) Nvector.t
   -> float

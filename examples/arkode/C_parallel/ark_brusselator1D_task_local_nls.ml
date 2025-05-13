@@ -308,10 +308,10 @@ let task_local_lsolve
     done;
 
     (* setup the linear system *)
-    LinearSolver.setup ls jac;
+    LinearSolver.setup ls (Some jac);
 
     (* solve the linear system *)
-    LinearSolver.solve ls jac b_node b_node 0.0;
+    LinearSolver.solve ls (Some jac) b_node b_node 0.0;
 
     (* set just the portion of the vector 'b' for this mesh node *)
     for j = 0 to nvar - 1 do
@@ -569,7 +569,7 @@ let psetup { nvar; nxl = n; k2; k3; k4; k6; linear_system; _ }
     MD.scale_addi (-. gamma) pdata;
 
     (* setup the linear system Pz = r *)
-    LinearSolver.setup ls p;
+    LinearSolver.setup ls (Some p);
 
     (* indicate that J is now current *)
     true
@@ -587,7 +587,7 @@ let psolve { linear_system; _ } _
   let r_local = Nvector_serial.(wrap (Any.unwrap r)) in
 
   (* solve the task-local linear system Pz = r *)
-  LinearSolver.solve ls p z_local r_local 0.0
+  LinearSolver.solve ls (Some p) z_local r_local 0.0
 
 (* --------------------------------------------------------------
  * Utility functions
