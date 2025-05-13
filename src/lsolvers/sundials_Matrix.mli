@@ -237,7 +237,7 @@ module Band : sig (* {{{ *)
   val create : dimensions -> t
 
   (** [m, n = size a] returns the numbers of rows [m] and columns [n] of [a].
-      
+
       NB: [m] and [n] are always equal for band matrices.
 
       @matrix_data SM_ROWS_B

@@ -60,8 +60,8 @@ module Dense = struct (* {{{ *)
 
   let create i j =
     if Sundials_configuration.safe then begin
-      if i <= 0 then invalid_arg "i";
-      if j <= 0 then invalid_arg "j"
+      if i <= 0 then invalid_arg "number of rows";
+      if j <= 0 then invalid_arg "number of cols"
     end;
     c_create i j
 
@@ -449,9 +449,9 @@ module Sparse = struct (* {{{ *)
 
   let make (type s) (sformat : s sformat) m n nnz =
     if Sundials_configuration.safe then begin
-      if m <= 0 then invalid_arg "m";
-      if n <= 0 then invalid_arg "n";
-      if nnz < 0 then invalid_arg "nnz"
+      if m <= 0 then invalid_arg "number of rows";
+      if n <= 0 then invalid_arg "number of columns";
+      if nnz < 0 then invalid_arg "number of non-zeros"
     end;
     if Sundials_configuration.safe then
       (match Config.sundials_version, sformat with
