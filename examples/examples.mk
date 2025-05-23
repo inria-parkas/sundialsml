@@ -75,6 +75,8 @@ SUNDIALSLIB_DEPS=$(foreach x,$(SUNDIALSLIB),$(SRC)/$x)
 
 UTILS=$(SRCROOT)/examples/utils
 
+comma:= ,
+
 ## Testing correctness
 
 tests.byte: $(ENABLED_EXAMPLES:.ml=.byte)
@@ -443,22 +445,27 @@ $(ALL_EXAMPLES:.ml=.sundials.c): %.sundials.c: $(C_EXAMPLES)		     \
 
 $(SERIAL_EXAMPLES:.ml=.sundials): %.sundials: %.sundials.c $(SRCROOT)/config
 	$(CC) -o $@ -I $(EXAMPLESROOT)/$(C_SUBDIR) \
-	    $(EG_CFLAGS) $< $(LIB_PATH) $(EG_LDFLAGS) $(LAPACK_LIB)
+	    $(EG_CFLAGS) $< \
+	    $(LIB_PATH) $(patsubst -L%,-Wl$(comma)-rpath$(comma)%,$(LIB_PATH)) \
+	    $(EG_LDFLAGS) $(LAPACK_LIB)
 
 $(MPI_EXAMPLES:.ml=.sundials): %.sundials: %.sundials.c $(SRCROOT)/config
 	$(MPICC) -o $@ -I $(EXAMPLESROOT)/$(C_SUBDIR) \
 	    $(EG_CFLAGS) $(EG_CFLAGS_MPI) -DUSES_MPI=1 $< \
-	    $(LIB_PATH) $(EG_LDFLAGS) $(LAPACK_LIB) $(MPI_LIBLINK)
+	    $(LIB_PATH) $(patsubst -L%,-Wl$(comma)-rpath$(comma)%,$(LIB_PATH)) \
+	    $(EG_LDFLAGS) $(LAPACK_LIB) $(MPI_LIBLINK)
 
 $(OPENMP_EXAMPLES:.ml=.sundials): %.sundials: %.sundials.c $(SRCROOT)/config
 	$(CC) $(CFLAGS_OPENMP) -o $@ -I $(EXAMPLESROOT)/$(C_SUBDIR) \
-	    $(EG_CFLAGS) $< $(LIB_PATH) $(EG_LDFLAGS) \
-	    $(LAPACK_LIB) $(OPENMP_LIBLINK)
+	    $(EG_CFLAGS) $< \
+	    $(LIB_PATH) $(patsubst -L%,-Wl$(comma)-rpath$(comma)%,$(LIB_PATH)) \
+	    $(EG_LDFLAGS) $(LAPACK_LIB) $(OPENMP_LIBLINK)
 
 $(PTHREADS_EXAMPLES:.ml=.sundials): %.sundials: %.sundials.c $(SRCROOT)/config
 	$(CC) -o $@ -I $(EXAMPLESROOT)/$(C_SUBDIR) \
-	    $(EG_CFLAGS) $< $(LIB_PATH) $(EG_LDFLAGS) \
-	    $(LAPACK_LIB) $(PTHREADS_LIBLINK)
+	    $(EG_CFLAGS) $< \
+	    $(LIB_PATH) $(patsubst -L%,-Wl$(comma)-rpath$(comma)%,$(LIB_PATH)) \
+	    $(EG_LDFLAGS) $(LAPACK_LIB) $(PTHREADS_LIBLINK)
 
 ## Misc
 
