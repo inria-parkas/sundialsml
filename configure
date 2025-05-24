@@ -791,6 +791,11 @@ else
 	    ocaml_warnings="${ocaml_warnings}-40"
     fi
 
+    if [ $ocaml_version -ge 50000 ] && [ $ocaml_version -lt 50400 ]; then
+	msg="5.0 <= OCaml < 5.4: risk of deadlock (issue #11865)"
+	warning="${warning}\n\t${msg}"
+    fi
+
     Iocaml_inc_path="-isystem ${ocaml_path}"
     ocaml_libpath="${ocaml_path%/}/"
     ocaml_version_info=" (${ocaml_version_string})"
