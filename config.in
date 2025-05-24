@@ -8,6 +8,7 @@ VERSIONP = @versionp@
 
 SUNDIALS_VERSION = @sundials_version@
 
+AT_LEAST_6_6_0 = @sundials_at_least_6_6_0@
 AT_LEAST_6_4_0 = @sundials_at_least_6_4_0@
 AT_LEAST_6_3_0 = @sundials_at_least_6_3_0@
 AT_LEAST_6_2_0 = @sundials_at_least_6_2_0@

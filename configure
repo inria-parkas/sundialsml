@@ -1,7 +1,7 @@
 #! /bin/sh
 
 sysname='Sundials/ML'
-version=6.5.1
+version=6.6.1
 versionp=0
 contact='tim@tbrk.org'
 
@@ -602,7 +602,10 @@ else
 	6.4.*) sundials=640 ;;
 	6.5.0) sundials=650 ;;
 	6.5.1) sundials=651 ;;
-	6.*)   sundials=650 ;;
+	6.6.0) sundials=660 ;;
+	6.6.1) sundials=661 ;;
+	6.6.2) sundials=662 ;;
+	6.*)   sundials=670 ;;
 	7.*)   sundials=700 ;;
 	8.*)   sundials=800 ;;
 	9.*)   sundials=900 ;;
@@ -646,11 +649,8 @@ EOF
 fi
 
 if [ ${sundials} -ge 600 ]; then
-    if [ ${sundials} -ge 651 ]; then
-	sundials_at_least_6_5_1=1
-    fi
-    if [ ${sundials} -ge 650 ]; then
-	sundials_at_least_6_5_0=1
+    if [ ${sundials} -ge 660 ]; then
+	sundials_at_least_6_6_0=1
     fi
     if [ ${sundials} -ge 640 ]; then
 	sundials_at_least_6_4_0=1
@@ -1841,8 +1841,7 @@ cat ${LOG}
 	 s#@version@#${version}#;
 	 s#@versionp@#${versionp}#;
 	 s#@sundials_version@#${sundials_version}#;
-	 s#@sundials_at_least_6_5_1@#${sundials_at_least_6_5_1}#;
-	 s#@sundials_at_least_6_5_0@#${sundials_at_least_6_5_0}#;
+	 s#@sundials_at_least_6_6_0@#${sundials_at_least_6_6_0}#;
 	 s#@sundials_at_least_6_4_0@#${sundials_at_least_6_4_0}#;
 	 s#@sundials_at_least_6_3_0@#${sundials_at_least_6_3_0}#;
 	 s#@sundials_at_least_6_2_0@#${sundials_at_least_6_2_0}#;
