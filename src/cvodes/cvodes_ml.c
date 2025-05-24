@@ -2528,7 +2528,7 @@ CAMLprim value sunml_cvodes_sens_get_num_step_solve_fails(value vcvode_mem)
     CAMLreturn(Val_long(v));
 }
 
-CAMLprim void sunml_cvodes_sens_get_num_step_stgr_solve_fails(value vcvode_mem,
+CAMLprim value sunml_cvodes_sens_get_num_step_stgr_solve_fails(value vcvode_mem,
 							      value vnfails)
 {
     CAMLparam2(vcvode_mem, vnfails);
@@ -2542,7 +2542,7 @@ CAMLprim void sunml_cvodes_sens_get_num_step_stgr_solve_fails(value vcvode_mem,
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value sunml_cvodes_sens_get_num_lin_solv_setups(value vdata)
@@ -2729,7 +2729,7 @@ CAMLprim value sunml_cvodes_get_nonlin_system_data_sens(value vcvode_mem,
     CAMLreturn(vnv);
 }
 
-CAMLprim void sunml_cvodes_compute_state_sens(value vcvode_mem,
+CAMLprim value sunml_cvodes_compute_state_sens(value vcvode_mem,
 					       value vyscor, value vysz)
 {
     CAMLparam3(vcvode_mem, vyscor, vysz);
@@ -2752,10 +2752,10 @@ CAMLprim void sunml_cvodes_compute_state_sens(value vcvode_mem,
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_cvodes_compute_state_sens1(value vcvode_mem, value vidx,
+CAMLprim value sunml_cvodes_compute_state_sens1(value vcvode_mem, value vidx,
 						value vycor, value vyz)
 {
     CAMLparam4(vcvode_mem, vidx, vycor, vyz);
@@ -2767,7 +2767,7 @@ CAMLprim void sunml_cvodes_compute_state_sens1(value vcvode_mem, value vidx,
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 /* sensitivity/quadrature interface */

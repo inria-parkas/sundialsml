@@ -1744,7 +1744,7 @@ CAMLprim value sunml_cvode_get_nonlin_system_data(value vcvode_mem)
     CAMLreturn(vnv);
 }
 
-CAMLprim void sunml_cvode_compute_state(value vcvode_mem,
+CAMLprim value sunml_cvode_compute_state(value vcvode_mem,
 					 value vycor, value vyz)
 {
     CAMLparam3(vcvode_mem, vycor, vyz);
@@ -1755,7 +1755,7 @@ CAMLprim void sunml_cvode_compute_state(value vcvode_mem,
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value sunml_cvode_get_current_gamma(value vcvode_mem)
@@ -2037,7 +2037,7 @@ CAMLprim value sunml_cvode_set_nonlin_conv_coef(value vcvode_mem, value nlscoef)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_cvode_set_eta_fixed_step_bounds(value vcvode_mem,
+CAMLprim value sunml_cvode_set_eta_fixed_step_bounds(value vcvode_mem,
 						    value vmin, value vmax)
 {
     CAMLparam3(vcvode_mem, vmin, vmax);
@@ -2049,10 +2049,10 @@ CAMLprim void sunml_cvode_set_eta_fixed_step_bounds(value vcvode_mem,
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_cvode_set_eta_max_first_step(value vcvode_mem, value varg)
+CAMLprim value sunml_cvode_set_eta_max_first_step(value vcvode_mem, value varg)
 {
     CAMLparam2(vcvode_mem, varg);
 #if 620 <= SUNDIALS_LIB_VERSION
@@ -2062,10 +2062,10 @@ CAMLprim void sunml_cvode_set_eta_max_first_step(value vcvode_mem, value varg)
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_cvode_set_eta_max_early_step(value vcvode_mem, value varg)
+CAMLprim value sunml_cvode_set_eta_max_early_step(value vcvode_mem, value varg)
 {
     CAMLparam2(vcvode_mem, varg);
 #if 620 <= SUNDIALS_LIB_VERSION
@@ -2075,11 +2075,11 @@ CAMLprim void sunml_cvode_set_eta_max_early_step(value vcvode_mem, value varg)
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_cvode_set_num_steps_eta_max_early_step(value vcvode_mem,
-						           value varg)
+CAMLprim value sunml_cvode_set_num_steps_eta_max_early_step(value vcvode_mem,
+						            value varg)
 {
     CAMLparam2(vcvode_mem, varg);
 #if 620 <= SUNDIALS_LIB_VERSION
@@ -2089,10 +2089,10 @@ CAMLprim void sunml_cvode_set_num_steps_eta_max_early_step(value vcvode_mem,
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_cvode_set_eta_min(value vcvode_mem, value varg)
+CAMLprim value sunml_cvode_set_eta_min(value vcvode_mem, value varg)
 {
     CAMLparam2(vcvode_mem, varg);
 #if 620 <= SUNDIALS_LIB_VERSION
@@ -2101,10 +2101,10 @@ CAMLprim void sunml_cvode_set_eta_min(value vcvode_mem, value varg)
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_cvode_set_eta_max(value vcvode_mem, value varg)
+CAMLprim value sunml_cvode_set_eta_max(value vcvode_mem, value varg)
 {
     CAMLparam2(vcvode_mem, varg);
 #if 620 <= SUNDIALS_LIB_VERSION
@@ -2113,10 +2113,10 @@ CAMLprim void sunml_cvode_set_eta_max(value vcvode_mem, value varg)
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_cvode_set_eta_min_err_fail(value vcvode_mem, value varg)
+CAMLprim value sunml_cvode_set_eta_min_err_fail(value vcvode_mem, value varg)
 {
     CAMLparam2(vcvode_mem, varg);
 #if 620 <= SUNDIALS_LIB_VERSION
@@ -2126,10 +2126,10 @@ CAMLprim void sunml_cvode_set_eta_min_err_fail(value vcvode_mem, value varg)
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_cvode_set_eta_max_err_fail(value vcvode_mem, value varg)
+CAMLprim value sunml_cvode_set_eta_max_err_fail(value vcvode_mem, value varg)
 {
     CAMLparam2(vcvode_mem, varg);
 #if 620 <= SUNDIALS_LIB_VERSION
@@ -2139,11 +2139,11 @@ CAMLprim void sunml_cvode_set_eta_max_err_fail(value vcvode_mem, value varg)
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_cvode_set_num_fails_eta_max_err_fail(value vcvode_mem,
-							 value varg)
+CAMLprim value sunml_cvode_set_num_fails_eta_max_err_fail(value vcvode_mem,
+							  value varg)
 {
     CAMLparam2(vcvode_mem, varg);
 #if 620 <= SUNDIALS_LIB_VERSION
@@ -2153,10 +2153,10 @@ CAMLprim void sunml_cvode_set_num_fails_eta_max_err_fail(value vcvode_mem,
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_cvode_set_eta_conv_fail(value vcvode_mem, value varg)
+CAMLprim value sunml_cvode_set_eta_conv_fail(value vcvode_mem, value varg)
 {
     CAMLparam2(vcvode_mem, varg);
 #if 620 <= SUNDIALS_LIB_VERSION
@@ -2166,7 +2166,7 @@ CAMLprim void sunml_cvode_set_eta_conv_fail(value vcvode_mem, value varg)
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value sunml_cvode_set_constraints (value vcvode_mem, value vconstraints)
@@ -2317,7 +2317,7 @@ CAMLprim value sunml_cvode_spils_set_gs_type(value vcvode_mem, value vgstype)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_cvode_set_delta_gamma_max_lsetup(value vcvode_mem, value varg)
+CAMLprim value sunml_cvode_set_delta_gamma_max_lsetup(value vcvode_mem, value varg)
 {
     CAMLparam2(vcvode_mem, varg);
 
@@ -2329,10 +2329,10 @@ CAMLprim void sunml_cvode_set_delta_gamma_max_lsetup(value vcvode_mem, value var
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_cvode_set_delta_gamma_max_bad_jac(value vcvode_mem, value varg)
+CAMLprim value sunml_cvode_set_delta_gamma_max_bad_jac(value vcvode_mem, value varg)
 {
     CAMLparam2(vcvode_mem, varg);
 
@@ -2344,7 +2344,7 @@ CAMLprim void sunml_cvode_set_delta_gamma_max_bad_jac(value vcvode_mem, value va
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value sunml_cvode_set_jac_eval_frequency(value vcvode_mem,
@@ -2503,8 +2503,8 @@ CAMLprim value sunml_cvode_get_nonlin_solv_stats(value vcvode_mem)
     CAMLreturn(r);
 }
 
-CAMLprim void sunml_cvode_print_all_stats(value vcvode_mem,
-					  value vfile, value voutformat)
+CAMLprim value sunml_cvode_print_all_stats(value vcvode_mem,
+					   value vfile, value voutformat)
 {
     CAMLparam3(vcvode_mem, vfile, voutformat);
 
@@ -2513,7 +2513,7 @@ CAMLprim void sunml_cvode_print_all_stats(value vcvode_mem,
 				  SUNML_OUTPUT_FORMAT(voutformat));
     CHECK_FLAG("CVodePrintAllStats", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value sunml_cvode_get_num_g_evals(value vcvode_mem)

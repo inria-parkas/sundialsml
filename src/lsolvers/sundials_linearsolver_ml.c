@@ -67,7 +67,7 @@
 #define SUN_PREC_NONE PREC_NONE
 #endif
 
-CAMLprim void sunml_lsolver_init_module (value exns)
+CAMLprim value sunml_lsolver_init_module (value exns)
 {
     CAMLparam1 (exns);
     REGISTER_EXNS (LSOLVER, exns);
@@ -85,7 +85,7 @@ CAMLprim void sunml_lsolver_init_module (value exns)
     assert((int)VARIANT_LSOLVER_TYPE_MATRIX_EMBEDDED
 	    == SUNLINEARSOLVER_MATRIX_EMBEDDED);
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 value sunml_lsolver_exception_from_flag(int linflag)
@@ -345,7 +345,7 @@ CAMLprim value sunml_lsolver_klu(value vnvec, value vsmat, value vctx)
 #endif
 }
 
-CAMLprim void sunml_lsolver_klu_reinit(value vcptr, value vsmat)
+CAMLprim value sunml_lsolver_klu_reinit(value vcptr, value vsmat)
 {
     CAMLparam2(vcptr, vsmat);
 #if   400 <= SUNDIALS_LIB_VERSION && defined SUNDIALS_ML_KLU
@@ -358,10 +358,10 @@ CAMLprim void sunml_lsolver_klu_reinit(value vcptr, value vsmat)
     // reinit is done at ML level; nnz arg is ignored when reinit_type = 2
     SUNKLUReInit(LSOLVER_VAL(vcptr), MAT_VAL(vsmat), 0, 2);
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_lsolver_klu_set_ordering(value vcptr, value vordering)
+CAMLprim value sunml_lsolver_klu_set_ordering(value vcptr, value vordering)
 {
     CAMLparam2(vcptr, vordering);
 #if   400 <= SUNDIALS_LIB_VERSION && defined SUNDIALS_ML_KLU
@@ -371,7 +371,7 @@ CAMLprim void sunml_lsolver_klu_set_ordering(value vcptr, value vordering)
     // ignore return value
     SUNKLUSetOrdering(LSOLVER_VAL(vcptr), Int_val(vordering));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value sunml_lsolver_superlumt(value vnvec, value vsmat,
@@ -407,7 +407,7 @@ CAMLprim value sunml_lsolver_superlumt(value vnvec, value vsmat,
 #endif
 }
 
-CAMLprim void sunml_lsolver_superlumt_set_ordering(value vcptr, value vordering)
+CAMLprim value sunml_lsolver_superlumt_set_ordering(value vcptr, value vordering)
 {
     CAMLparam2(vcptr, vordering);
 #if   400 <= SUNDIALS_LIB_VERSION && defined SUNDIALS_ML_SUPERLUMT
@@ -415,7 +415,7 @@ CAMLprim void sunml_lsolver_superlumt_set_ordering(value vcptr, value vordering)
 #elif 300 <= SUNDIALS_LIB_VERSION && defined SUNDIALS_ML_SUPERLUMT
     SUNSuperLUMTSetOrdering(LSOLVER_VAL(vcptr), Int_val(vordering));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -476,8 +476,8 @@ int sunml_lsolver_gs_type(value vgstype)
     return -1;
 }
 
-CAMLprim void sunml_lsolver_set_prec_type(value vcptr, value vsolver,
-	value vpretype, value vdocheck)
+CAMLprim value sunml_lsolver_set_prec_type(value vcptr, value vsolver,
+	                                   value vpretype, value vdocheck)
 {
     CAMLparam4(vcptr, vsolver, vpretype, vdocheck);
 
@@ -573,10 +573,10 @@ CAMLprim void sunml_lsolver_set_prec_type(value vcptr, value vsolver,
     }
 #endif
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_lsolver_set_maxl(value vcptr, value vsolver, value vmaxl)
+CAMLprim value sunml_lsolver_set_maxl(value vcptr, value vsolver, value vmaxl)
 {
     CAMLparam3(vcptr, vsolver, vmaxl);
 
@@ -617,10 +617,10 @@ CAMLprim void sunml_lsolver_set_maxl(value vcptr, value vsolver, value vmaxl)
     }
 #endif
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_lsolver_set_gs_type(value vcptr, value vsolver, value vgst)
+CAMLprim value sunml_lsolver_set_gs_type(value vcptr, value vsolver, value vgst)
 {
     CAMLparam3(vcptr, vsolver, vgst);
 
@@ -655,10 +655,10 @@ CAMLprim void sunml_lsolver_set_gs_type(value vcptr, value vsolver, value vgst)
     }
 #endif
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_lsolver_set_max_restarts(value vcptr, value vsolver,
+CAMLprim value sunml_lsolver_set_max_restarts(value vcptr, value vsolver,
 	value vmaxr)
 {
     CAMLparam3(vcptr, vsolver, vmaxr);
@@ -692,7 +692,7 @@ CAMLprim void sunml_lsolver_set_max_restarts(value vcptr, value vsolver,
     }
 #endif
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value sunml_lsolver_spbcgs(value vmaxl, value vnvec, value vctx)
@@ -1978,7 +1978,7 @@ CAMLprim value sunml_lsolver_space(value vcptr)
     CAMLreturn(r);
 }
 
-CAMLprim void sunml_lsolver_set_info_file(value vcptr, value vsolver,
+CAMLprim value sunml_lsolver_set_info_file(value vcptr, value vsolver,
 					  value vfile)
 {
     CAMLparam3(vcptr, vsolver, vfile);
@@ -2026,10 +2026,10 @@ CAMLprim void sunml_lsolver_set_info_file(value vcptr, value vsolver,
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_lsolver_set_print_level(value vcptr, value vsolver,
+CAMLprim value sunml_lsolver_set_print_level(value vcptr, value vsolver,
 					    value vlevel)
 {
     CAMLparam3(vcptr, vsolver, vlevel);
@@ -2078,6 +2078,6 @@ CAMLprim void sunml_lsolver_set_print_level(value vcptr, value vsolver,
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 

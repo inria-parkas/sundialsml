@@ -87,8 +87,8 @@ void sunml_warn_discarded_exn (value exn, const char *context)
 static value weak_get = 0;
 #endif
 
-CAMLprim void sunml_sundials_init_module (value vwarn_discarded_exn,
-				      value vweak_get, value exns)
+CAMLprim value sunml_sundials_init_module (value vwarn_discarded_exn,
+				           value vweak_get, value exns)
 {
     CAMLparam2 (vweak_get, exns);
     REGISTER_EXNS (SUNDIALS, exns);
@@ -99,7 +99,7 @@ CAMLprim void sunml_sundials_init_module (value vwarn_discarded_exn,
     warn_discarded_exn = vwarn_discarded_exn;
     caml_register_generational_global_root (&warn_discarded_exn);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value sunml_sundials_get_constants (void)
@@ -421,7 +421,7 @@ CAMLprim value sunml_sundials_fopen(value vpath, value vtrunc)
     CAMLreturn (vr);
 }
 
-CAMLprim void sunml_sundials_write(value vfile, value vdata)
+CAMLprim value sunml_sundials_write(value vfile, value vdata)
 {
     CAMLparam2(vfile, vdata);
     FILE *file = ML_CFILE(vfile);
@@ -433,7 +433,7 @@ CAMLprim void sunml_sundials_write(value vfile, value vdata)
     w = fwrite(Bp_val(vdata), 1, len, file);
 #endif
     if (w < len) caml_failwith(strerror(errno));
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value sunml_sundials_fflush(value vfile)
@@ -535,23 +535,23 @@ CAMLprim void sunml_profiler_end(value vprofiler, value vname)
 #endif
 }
 
-CAMLprim void sunml_profiler_print(value vprofiler, value vfile)
+CAMLprim value sunml_profiler_print(value vprofiler, value vfile)
 {
     CAMLparam2(vprofiler, vfile);
 #if 600 <= SUNDIALS_LIB_VERSION && defined(SUNDIALS_BUILD_WITH_PROFILING)
     FILE *file = ML_CFILE(vfile);
     SUNProfiler_Print(ML_PROFILER(vprofiler), file);
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_profiler_reset(value vprofiler)
+CAMLprim value sunml_profiler_reset(value vprofiler)
 {
     CAMLparam1(vprofiler);
 #if 620 <= SUNDIALS_LIB_VERSION && defined(SUNDIALS_BUILD_WITH_PROFILING)
     SUNProfiler_Reset(ML_PROFILER(vprofiler));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 /* Functions for logging */
@@ -642,7 +642,7 @@ CAMLprim value sunml_logger_get_logging_level(void)
     CAMLreturn(vro);
 }
 
-CAMLprim void sunml_logger_set_error_filename(value vlogger, value vfilename)
+CAMLprim value sunml_logger_set_error_filename(value vlogger, value vfilename)
 {
     CAMLparam2(vlogger, vfilename);
 #if SUNML_HAS_LOGGING
@@ -650,10 +650,10 @@ CAMLprim void sunml_logger_set_error_filename(value vlogger, value vfilename)
 					    String_val(vfilename));
     if (retval < 0) caml_failwith("SUNLogger_SetErrorFilename");
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_logger_set_warning_filename(value vlogger, value vfilename)
+CAMLprim value sunml_logger_set_warning_filename(value vlogger, value vfilename)
 {
     CAMLparam2(vlogger, vfilename);
 #if SUNML_HAS_LOGGING
@@ -661,10 +661,10 @@ CAMLprim void sunml_logger_set_warning_filename(value vlogger, value vfilename)
 					      String_val(vfilename));
     if (retval < 0) caml_failwith("SUNLogger_SetWarningFilename");
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_logger_set_info_filename(value vlogger, value vfilename)
+CAMLprim value sunml_logger_set_info_filename(value vlogger, value vfilename)
 {
     CAMLparam2(vlogger, vfilename);
 #if SUNML_HAS_LOGGING
@@ -672,10 +672,10 @@ CAMLprim void sunml_logger_set_info_filename(value vlogger, value vfilename)
 					   String_val(vfilename));
     if (retval < 0) caml_failwith("SUNLogger_SetInfoFilename");
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_logger_set_debug_filename(value vlogger, value vfilename)
+CAMLprim value sunml_logger_set_debug_filename(value vlogger, value vfilename)
 {
     CAMLparam2(vlogger, vfilename);
 #if SUNML_HAS_LOGGING
@@ -683,7 +683,7 @@ CAMLprim void sunml_logger_set_debug_filename(value vlogger, value vfilename)
 					    String_val(vfilename));
     if (retval < 0) caml_failwith("SUNLogger_SetDebugFilename");
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 #if SUNML_HAS_LOGGING
@@ -708,7 +708,7 @@ static SUNLogLevel logger_level_from_val(value vlevel)
 }
 #endif
 
-CAMLprim void sunml_logger_queue_msg(value vlogger, value vlevel, value vscope,
+CAMLprim value sunml_logger_queue_msg(value vlogger, value vlevel, value vscope,
 				     value vlabel, value vmsg_txt)
 {
     CAMLparam5(vlogger, vlevel, vscope, vlabel, vmsg_txt);
@@ -720,10 +720,10 @@ CAMLprim void sunml_logger_queue_msg(value vlogger, value vlevel, value vscope,
 				    String_val(vmsg_txt));
     if (retval < 0) caml_failwith("SUNLogger_QueueMsg");
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_logger_flush(value vlogger, value volevel)
+CAMLprim value sunml_logger_flush(value vlogger, value volevel)
 {
     CAMLparam2(vlogger, volevel);
 #if SUNML_HAS_LOGGING
@@ -738,7 +738,7 @@ CAMLprim void sunml_logger_flush(value vlogger, value volevel)
     int retval = SUNLogger_Flush(ML_LOGGER(vlogger), lvl);
     if (retval < 0) caml_failwith("SUNLogger_Flush");
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 /* Functions for manipulating contexts */
@@ -790,22 +790,22 @@ CAMLprim value sunml_context_make(void)
     CAMLreturn (vr);
 }
 
-CAMLprim void sunml_context_set_profiler(value vctx, value vprofiler)
+CAMLprim value sunml_context_set_profiler(value vctx, value vprofiler)
 {
     CAMLparam2(vctx, vprofiler);
 #if 600 <= SUNDIALS_LIB_VERSION && defined(SUNDIALS_BUILD_WITH_PROFILING)
     SUNContext_SetProfiler(ML_CCONTEXT(vctx), ML_PROFILER(vprofiler));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_context_set_logger(value vctx, value vlogger)
+CAMLprim value sunml_context_set_logger(value vctx, value vlogger)
 {
     CAMLparam2(vctx, vlogger);
 #if SUNML_HAS_LOGGING
     SUNContext_SetLogger(ML_CCONTEXT(vctx), ML_LOGGER(vlogger));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 #ifdef MPI_ENABLED

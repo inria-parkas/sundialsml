@@ -1641,8 +1641,8 @@ CAMLprim value sunml_kinsol_get_jac_num_iters(value vkin_mem)
     CAMLreturn(Val_int(nstj));
 }
 
-CAMLprim void sunml_kinsol_print_all_stats(value vkin_mem,
-					   value vfile, value voutformat)
+CAMLprim value sunml_kinsol_print_all_stats(value vkin_mem,
+					    value vfile, value voutformat)
 {
     CAMLparam3(vkin_mem, vfile, voutformat);
 
@@ -1651,6 +1651,6 @@ CAMLprim void sunml_kinsol_print_all_stats(value vkin_mem,
 				SUNML_OUTPUT_FORMAT(voutformat));
     CHECK_FLAG("KINPrintAllStats", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 

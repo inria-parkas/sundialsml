@@ -2380,7 +2380,7 @@ CAMLprim value sunml_arkode_ark_get_nonlin_system_data(value varkode_mem)
     CAMLreturn(vnv);
 }
 
-CAMLprim void sunml_arkode_ark_compute_state(value varkode_mem,
+CAMLprim value sunml_arkode_ark_compute_state(value varkode_mem,
 					      value vzcor, value vz)
 {
     CAMLparam3(varkode_mem, vzcor, vz);
@@ -2391,7 +2391,7 @@ CAMLprim void sunml_arkode_ark_compute_state(value varkode_mem,
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value sunml_arkode_ark_get_current_gamma(value varkode_mem)
@@ -2536,7 +2536,7 @@ CAMLprim value sunml_arkode_ark_get_step_stats(value vdata)
     CAMLreturn(r);
 }
 
-CAMLprim void sunml_arkode_ark_print_all_stats(value vdata,
+CAMLprim value sunml_arkode_ark_print_all_stats(value vdata,
 					       value vfile, value voutformat)
 {
     CAMLparam3(vdata, vfile, voutformat);
@@ -2546,7 +2546,7 @@ CAMLprim void sunml_arkode_ark_print_all_stats(value vdata,
 				    SUNML_OUTPUT_FORMAT(voutformat));
     CHECK_FLAG("ARKStepPrintAllStats", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value sunml_arkode_ark_set_error_file(value vdata, value vfile)
@@ -3260,7 +3260,7 @@ CAMLprim value sunml_arkode_ark_set_table_num(value varkode_mem, value vnums)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_arkode_ark_set_table_name(value varkode_mem,
+CAMLprim value sunml_arkode_ark_set_table_name(value varkode_mem,
 					      value vitable, value vetable)
 {
     CAMLparam3(varkode_mem, vitable, vetable);
@@ -3274,7 +3274,7 @@ CAMLprim void sunml_arkode_ark_set_table_name(value varkode_mem,
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value sunml_arkode_ark_set_adaptivity_method(value varkode_mem, value vmeth)
@@ -3961,7 +3961,7 @@ CAMLprim value sunml_arkode_ark_set_stop_time(value varkode_mem, value tstop)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_ark_clear_stop_time(value varkode_mem)
+CAMLprim value sunml_arkode_ark_clear_stop_time(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 #if 651 <= SUNDIALS_LIB_VERSION
@@ -5698,7 +5698,7 @@ CAMLprim value sunml_arkode_erk_get_step_stats(value vdata)
     CAMLreturn(r);
 }
 
-CAMLprim void sunml_arkode_erk_print_all_stats(value vdata,
+CAMLprim value sunml_arkode_erk_print_all_stats(value vdata,
 					       value vfile, value voutformat)
 {
     CAMLparam3(vdata, vfile, voutformat);
@@ -5708,7 +5708,7 @@ CAMLprim void sunml_arkode_erk_print_all_stats(value vdata,
 				    SUNML_OUTPUT_FORMAT(voutformat));
     CHECK_FLAG("ERKStepPrintAllStats", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value sunml_arkode_erk_set_root_direction(value vdata, value rootdirs)
@@ -5799,7 +5799,7 @@ CAMLprim value sunml_arkode_erk_set_table_num(value varkode_mem, value vnum)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_arkode_erk_set_table_name(value varkode_mem, value vetable)
+CAMLprim value sunml_arkode_erk_set_table_name(value varkode_mem, value vetable)
 {
     CAMLparam2(varkode_mem, vetable);
     int flag;
@@ -5812,7 +5812,7 @@ CAMLprim void sunml_arkode_erk_set_table_name(value varkode_mem, value vetable)
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value sunml_arkode_erk_set_adaptivity_method(value varkode_mem,
@@ -6351,7 +6351,7 @@ CAMLprim value sunml_arkode_erk_set_stop_time(value varkode_mem, value tstop)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_erk_clear_stop_time(value varkode_mem)
+CAMLprim value sunml_arkode_erk_clear_stop_time(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 #if 651 <= SUNDIALS_LIB_VERSION
@@ -8446,7 +8446,7 @@ CAMLprim value sunml_arkode_mri_get_nonlin_system_data(value varkode_mem)
     CAMLreturn(vnv);
 }
 
-CAMLprim void sunml_arkode_mri_compute_state(value varkode_mem,
+CAMLprim value sunml_arkode_mri_compute_state(value varkode_mem,
 					      value vzcor, value vz)
 {
     CAMLparam3(varkode_mem, vzcor, vz);
@@ -8457,7 +8457,7 @@ CAMLprim void sunml_arkode_mri_compute_state(value varkode_mem,
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value sunml_arkode_mri_set_no_inactive_root_warn(value varkode_mem)
@@ -8619,7 +8619,7 @@ CAMLprim value sunml_arkode_mri_get_err_weights(value varkode_mem, value verrws)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_arkode_mri_print_all_stats(value vdata,
+CAMLprim value sunml_arkode_mri_print_all_stats(value vdata,
 					       value vfile, value voutformat)
 {
     CAMLparam3(vdata, vfile, voutformat);
@@ -8629,7 +8629,7 @@ CAMLprim void sunml_arkode_mri_print_all_stats(value vdata,
 				    SUNML_OUTPUT_FORMAT(voutformat));
     CHECK_FLAG("MRIStepPrintAllStats", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value sunml_arkode_mri_get_num_lin_solv_setups(value varkode_mem)

@@ -61,12 +61,12 @@ enum ocaml_values_index {
 
 static value ocaml_values[NUM_OCAML_VALUES];
 
-CAMLprim void sunml_mat_init_module (value exns, value matrix_ops)
+CAMLprim value sunml_mat_init_module (value exns, value matrix_ops)
 {
     CAMLparam1 (exns);
     REGISTER_EXNS (MATRIX, exns);
     REGISTER_OCAML_VALUES (matrix_ops);
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -168,7 +168,7 @@ CAMLprim value ml_matrix_dense_get(value vcptr, value vi, value vj)
 */
 
 /*
-CAMLprim void ml_matrix_dense_set(value vcptr, value vi, value vj, value vv)
+CAMLprim value ml_matrix_dense_set(value vcptr, value vi, value vj, value vv)
 {
     CAMLparam4(vcptr, vi, vj, vv);
     sundials_ml_index i = Index_val(vi);
@@ -181,11 +181,11 @@ CAMLprim void ml_matrix_dense_set(value vcptr, value vi, value vj, value vv)
 #endif
 
     m->cols[j][i] = Double_val(vv);
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 */
 
-CAMLprim void sunml_matrix_dense_scale_add(value vc, value vcptra, value vcptrb)
+CAMLprim value sunml_matrix_dense_scale_add(value vc, value vcptra, value vcptrb)
 {
     CAMLparam3(vc, vcptra, vcptrb);
     sunrealtype c = Double_val(vc);
@@ -204,10 +204,10 @@ CAMLprim void sunml_matrix_dense_scale_add(value vc, value vcptra, value vcptrb)
 	    contenta->cols[j][i] =
 		c * contenta->cols[j][i] + contentb->cols[j][i];
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_matrix_dense_scale_addi(value vc, value vcptra)
+CAMLprim value sunml_matrix_dense_scale_addi(value vc, value vcptra)
 {
     CAMLparam2(vc, vcptra);
     sunrealtype c = Double_val(vc);
@@ -223,10 +223,10 @@ CAMLprim void sunml_matrix_dense_scale_addi(value vc, value vcptra)
 		a->cols[j][i] += 1.0;
 	}
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_matrix_dense_matvec(value vcptra, value vx, value vy)
+CAMLprim value sunml_matrix_dense_matvec(value vcptra, value vx, value vy)
 {
     CAMLparam3(vcptra, vx, vy);
     sundials_ml_index i, j;
@@ -245,7 +245,7 @@ CAMLprim void sunml_matrix_dense_matvec(value vcptra, value vx, value vy)
 	    yd[i] += col_j[i] * xd[j];
     }
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value sunml_matrix_dense_space(value vcptr)
@@ -457,7 +457,7 @@ CAMLprim value ml_matrix_band_get(value vcptr, value vi, value vj)
 */
 
 /*
-CAMLprim void ml_matrix_band_set(value vcptr, value vi, value vj, value v)
+CAMLprim value ml_matrix_band_set(value vcptr, value vi, value vj, value v)
 {
     CAMLparam4(vcptr, vi, vj, v);
     sundials_ml_index i = Index_val(vi);
@@ -471,12 +471,12 @@ CAMLprim void ml_matrix_band_set(value vcptr, value vi, value vj, value v)
 #endif
 
     m->cols[j][ii] = Double_val(v);
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 */
 
 // Adapted directly from SUNMatCopy_Band
-CAMLprim void sunml_matrix_band_copy(value vcptra, value vb)
+CAMLprim value sunml_matrix_band_copy(value vcptra, value vb)
 {
     CAMLparam2(vcptra, vb);
     CAMLlocal3(vcptrb, vpayloadb, vdatab);
@@ -512,7 +512,7 @@ CAMLprim void sunml_matrix_band_copy(value vcptra, value vb)
 	    B_colj[i] = A_colj[i];
     }
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 #if SUNDIALS_LIB_VERSION >= 300
@@ -605,7 +605,7 @@ static int matrix_band_scale_add_new(sunrealtype c, value va, value vcptrb)
     CAMLreturnT(int, 0); // success
 }
 
-CAMLprim void sunml_matrix_band_scale_add(value vc, value va, value vcptrb)
+CAMLprim value sunml_matrix_band_scale_add(value vc, value va, value vcptrb)
 {
     CAMLparam3(vc, va, vcptrb);
     CAMLlocal1(vcptra);
@@ -631,7 +631,7 @@ CAMLprim void sunml_matrix_band_scale_add(value vc, value va, value vcptrb)
 	}
     }
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 #if SUNDIALS_LIB_VERSION >= 300
@@ -664,7 +664,7 @@ static int csmat_band_scale_add(sunrealtype c, SUNMatrix A, SUNMatrix B)
 }
 #endif
 
-CAMLprim void sunml_matrix_band_scale_addi(value vc, value va)
+CAMLprim value sunml_matrix_band_scale_addi(value vc, value va)
 {
     CAMLparam2(vc, va);
     sundials_ml_index i, j;
@@ -680,10 +680,10 @@ CAMLprim void sunml_matrix_band_scale_addi(value vc, value va)
 	a->cols[j][a->s_mu] += 1.0;
     }
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_matrix_band_matvec(value va, value vx, value vy)
+CAMLprim value sunml_matrix_band_matvec(value va, value vx, value vy)
 {
     CAMLparam3(va, vx, vy);
     sundials_ml_index i, j, is, ie;
@@ -704,7 +704,7 @@ CAMLprim void sunml_matrix_band_matvec(value va, value vx, value vy)
 	    yd[i] += col_j[i-j]*xd[j];
     }
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 #if SUNDIALS_LIB_VERSION < 300
@@ -791,34 +791,34 @@ CAMLprim value sunml_matrix_sparse_dims(value vcptr)
     CAMLreturn(Val_unit);
 }
 
-CAMLprim void sunml_matrix_sparse_scale_add(value vc, value va, value vcptrb)
+CAMLprim value sunml_matrix_sparse_scale_add(value vc, value va, value vcptrb)
 {
     CAMLparam3(vc, va, vcptrb);
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_matrix_sparse_scale_addi(value vc, value va)
+CAMLprim value sunml_matrix_sparse_scale_addi(value vc, value va)
 {
     CAMLparam2(vc, va);
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_matrix_sparse_matvec(value vcptra, value vx, value vy)
+CAMLprim value sunml_matrix_sparse_matvec(value vcptra, value vx, value vy)
 {
     CAMLparam3(vcptra, vx, vy);
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_matrix_sparse_resize(value va, value vnnz, value vcopy)
+CAMLprim value sunml_matrix_sparse_resize(value va, value vnnz, value vcopy)
 {
     CAMLparam3(va, vnnz, vcopy);
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_matrix_sparse_copy(value vcptra, value vb)
+CAMLprim value sunml_matrix_sparse_copy(value vcptra, value vb)
 {
     CAMLparam2(vcptra, vb);
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value sunml_matrix_sparse_space(value vcptr)
@@ -827,10 +827,10 @@ CAMLprim value sunml_matrix_sparse_space(value vcptr)
     CAMLreturn(Val_unit);
 }
 
-CAMLprim void sunml_matrix_sparse_set_idx(value vcptr, value vj, value vidx)
+CAMLprim value sunml_matrix_sparse_set_idx(value vcptr, value vj, value vidx)
 {
     CAMLparam3(vcptr, vj, vidx);
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value sunml_matrix_sparse_get_idx(value vcptr, value vj)
@@ -839,10 +839,10 @@ CAMLprim value sunml_matrix_sparse_get_idx(value vcptr, value vj)
     CAMLreturn(Val_unit);
 }
 
-CAMLprim void sunml_matrix_sparse_set_data(value vcptr, value vj, value vv)
+CAMLprim value sunml_matrix_sparse_set_data(value vcptr, value vj, value vv)
 {
     CAMLparam3(vcptr, vj, vv);
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value sunml_matrix_sparse_get_val(value vcptr, value vj)
@@ -851,10 +851,10 @@ CAMLprim value sunml_matrix_sparse_get_val(value vcptr, value vj)
     CAMLreturn(Val_unit);
 }
 
-CAMLprim void sunml_matrix_sparse_set_val(value vcptr, value vj, value vv)
+CAMLprim value sunml_matrix_sparse_set_val(value vcptr, value vj, value vv)
 {
     CAMLparam3(vcptr, vj, vv);
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value sunml_matrix_sparse_get_data(value vcptr, value vj)
@@ -869,10 +869,10 @@ CAMLprim value sunml_matrix_sparse_rewrap(value vm)
     CAMLreturn(Val_unit);
 }
 
-CAMLprim void sunml_matrix_sparse_set_to_zero(value vcptr)
+CAMLprim value sunml_matrix_sparse_set_to_zero(value vcptr)
 {
     CAMLparam1(vcptr);
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 #else
 
@@ -1608,7 +1608,7 @@ static bool matrix_sparse_scale_add(sunrealtype c, value va, value vcptrb)
 }
 
 #if false
-CAMLprim void ml_debug_sparse(value va)
+CAMLprim value ml_debug_sparse(value va)
 {
     CAMLparam1(va);
     CAMLlocal5(vpayload, vidxvals, vidxptrs, vdata, vcptr);
@@ -1641,16 +1641,16 @@ CAMLprim void ml_debug_sparse(value va)
 	    (void *)vdata, (void *)ba->data, ba->dim[0], (void *)A->data);
     fflush(stdout);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 #endif
 
-CAMLprim void sunml_matrix_sparse_scale_add(value vc, value va, value vcptrb)
+CAMLprim value sunml_matrix_sparse_scale_add(value vc, value va, value vcptrb)
 {
     CAMLparam3(vc, va, vcptrb);
     if (! matrix_sparse_scale_add(Double_val(vc), va, vcptrb) )
 	caml_raise_out_of_memory();
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 #if SUNDIALS_LIB_VERSION >= 300
@@ -1885,12 +1885,12 @@ static bool matrix_sparse_scale_addi(sunrealtype c, value va)
     CAMLreturnT(bool, true);
 }
 
-CAMLprim void sunml_matrix_sparse_scale_addi(value vc, value va)
+CAMLprim value sunml_matrix_sparse_scale_addi(value vc, value va)
 {
     CAMLparam2(vc, va);
     if (! matrix_sparse_scale_addi(Double_val(vc), va))
 	caml_raise_out_of_memory();
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 #if SUNDIALS_LIB_VERSION >= 300
@@ -1902,7 +1902,7 @@ static int csmat_sparse_scale_addi(sunrealtype c, SUNMatrix A)
 
 // Adapted directly from SUNMatMatvec_Sparse, Matvec_SparseCSC, and
 // Matvec_SparseCSR
-CAMLprim void sunml_matrix_sparse_matvec(value vcptra, value vx, value vy)
+CAMLprim value sunml_matrix_sparse_matvec(value vcptra, value vx, value vy)
 {
     CAMLparam3(vcptra, vx, vy);
     MAT_CONTENT_SPARSE_TYPE A = MAT_CONTENT_SPARSE(vcptra);
@@ -1943,15 +1943,15 @@ CAMLprim void sunml_matrix_sparse_matvec(value vcptra, value vx, value vy)
 	}
     }
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_matrix_sparse_resize(value va, value vnnz, value vcopy)
+CAMLprim value sunml_matrix_sparse_resize(value va, value vnnz, value vcopy)
 {
     CAMLparam3(va, vnnz, vcopy);
     if (! matrix_sparse_resize(va, SmatIndex_val(vnnz), Bool_val(vcopy), 1))
 	caml_raise_out_of_memory();
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 // Adapted directly from SUNMatCopy_Sparse
@@ -2010,12 +2010,12 @@ static bool matrix_sparse_copy(value vcptra, value vb)
     CAMLreturnT(bool, true);
 }
 
-CAMLprim void sunml_matrix_sparse_copy(value vcptra, value vb)
+CAMLprim value sunml_matrix_sparse_copy(value vcptra, value vb)
 {
     CAMLparam2(vcptra, vb);
     if (! matrix_sparse_copy(vcptra, vb))
 	caml_raise_out_of_memory();
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 #if SUNDIALS_LIB_VERSION >= 300
@@ -2152,7 +2152,7 @@ CAMLprim value sunml_matrix_sparse_tocsc(value vcptra)
 }
 
 // Sundials < 3.0.0
-CAMLprim void sunml_matrix_sparse_set_idx(value vcptr, value vj, value vidx)
+CAMLprim value sunml_matrix_sparse_set_idx(value vcptr, value vj, value vidx)
 {
     CAMLparam3(vcptr, vj, vidx);
     MAT_CONTENT_SPARSE_TYPE content = MAT_CONTENT_SPARSE(vcptr);
@@ -2168,7 +2168,7 @@ CAMLprim void sunml_matrix_sparse_set_idx(value vcptr, value vj, value vidx)
     content->rowvals[j] = SmatIndex_val(vidx);
 #endif
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 // Sundials < 3.0.0
@@ -2193,7 +2193,7 @@ CAMLprim value sunml_matrix_sparse_get_idx(value vcptr, value vj)
 }
 
 // Sundials < 3.0.0
-CAMLprim void sunml_matrix_sparse_set_data(value vcptr, value vj, value vv)
+CAMLprim value sunml_matrix_sparse_set_data(value vcptr, value vj, value vv)
 {
     CAMLparam3(vcptr, vj, vv);
     MAT_CONTENT_SPARSE_TYPE content = MAT_CONTENT_SPARSE(vcptr);
@@ -2205,7 +2205,7 @@ CAMLprim void sunml_matrix_sparse_set_data(value vcptr, value vj, value vv)
 
     content->data[j] = Double_val(vv);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 // Sundials < 3.0.0
@@ -2223,7 +2223,7 @@ CAMLprim value sunml_matrix_sparse_get_val(value vcptr, value vj)
 }
 
 // Sundials < 3.0.0
-CAMLprim void sunml_matrix_sparse_set_val(value vcptr, value vj, value vv)
+CAMLprim value sunml_matrix_sparse_set_val(value vcptr, value vj, value vv)
 {
     CAMLparam3(vcptr, vj, vv);
     MAT_CONTENT_SPARSE_TYPE content = MAT_CONTENT_SPARSE(vcptr);
@@ -2235,7 +2235,7 @@ CAMLprim void sunml_matrix_sparse_set_val(value vcptr, value vj, value vv)
 
     content->indexvals[j] = SmatIndex_val(vv);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 // Sundials < 3.0.0
@@ -2301,7 +2301,7 @@ CAMLprim value sunml_matrix_sparse_wrap(SlsMat a)
 
 
 // Sundials < 3.0.0
-CAMLprim void sunml_matrix_sparse_set_to_zero(value vcptr)
+CAMLprim value sunml_matrix_sparse_set_to_zero(value vcptr)
 {
     CAMLparam1(vcptr);
     MAT_CONTENT_SPARSE_TYPE content = MAT_CONTENT_SPARSE(vcptr);
@@ -2309,7 +2309,7 @@ CAMLprim void sunml_matrix_sparse_set_to_zero(value vcptr)
     /* Perform operation */
     zero_sparse(content);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 #endif
@@ -2837,7 +2837,7 @@ static int csmat_custom_space(SUNMatrix A, long int *lenrw, long int *leniw)
 }
 #endif
 
-CAMLprim void sunml_matrix_scale_add(value vc, value va, value vb)
+CAMLprim value sunml_matrix_scale_add(value vc, value va, value vb)
 {
     CAMLparam3(vc, va, vb);
 #if 300 <= SUNDIALS_LIB_VERSION
@@ -2846,10 +2846,10 @@ CAMLprim void sunml_matrix_scale_add(value vc, value va, value vb)
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_matrix_scale_addi(value vc, value va)
+CAMLprim value sunml_matrix_scale_addi(value vc, value va)
 {
     CAMLparam2(vc, va);
 #if 300 <= SUNDIALS_LIB_VERSION
@@ -2858,10 +2858,10 @@ CAMLprim void sunml_matrix_scale_addi(value vc, value va)
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_matrix_matvecsetup(value va)
+CAMLprim value sunml_matrix_matvecsetup(value va)
 {
     CAMLparam1(va);
 #if 500 <= SUNDIALS_LIB_VERSION
@@ -2874,10 +2874,10 @@ CAMLprim void sunml_matrix_matvecsetup(value va)
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_matrix_matvec(value va, value vx, value vy)
+CAMLprim value sunml_matrix_matvec(value va, value vx, value vy)
 {
     CAMLparam3(va, vx, vy);
 #if 300 <= SUNDIALS_LIB_VERSION
@@ -2886,10 +2886,10 @@ CAMLprim void sunml_matrix_matvec(value va, value vx, value vy)
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_matrix_zero(value va)
+CAMLprim value sunml_matrix_zero(value va)
 {
     CAMLparam1(va);
 #if 300 <= SUNDIALS_LIB_VERSION
@@ -2898,10 +2898,10 @@ CAMLprim void sunml_matrix_zero(value va)
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_matrix_copy(value va, value vb)
+CAMLprim value sunml_matrix_copy(value va, value vb)
 {
     CAMLparam2(va, vb);
 #if 300 <= SUNDIALS_LIB_VERSION
@@ -2910,7 +2910,7 @@ CAMLprim void sunml_matrix_copy(value va, value vb)
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value sunml_matrix_space(value va)
@@ -2932,7 +2932,7 @@ CAMLprim value sunml_matrix_space(value va)
     CAMLreturn(vr);
 }
 
-CAMLprim void sunml_matrix_print_dense(value vm, value vfile)
+CAMLprim value sunml_matrix_print_dense(value vm, value vfile)
 {
     CAMLparam2(vm, vfile);
 #if 300 <= SUNDIALS_LIB_VERSION
@@ -2940,10 +2940,10 @@ CAMLprim void sunml_matrix_print_dense(value vm, value vfile)
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_matrix_print_band(value vm, value vfile)
+CAMLprim value sunml_matrix_print_band(value vm, value vfile)
 {
     CAMLparam2(vm, vfile);
 #if 300 <= SUNDIALS_LIB_VERSION
@@ -2951,10 +2951,10 @@ CAMLprim void sunml_matrix_print_band(value vm, value vfile)
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_matrix_print_sparse(value vm, value vfile)
+CAMLprim value sunml_matrix_print_sparse(value vm, value vfile)
 {
     CAMLparam2(vm, vfile);
 #if 300 <= SUNDIALS_LIB_VERSION
@@ -2962,7 +2962,7 @@ CAMLprim void sunml_matrix_print_sparse(value vm, value vfile)
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *

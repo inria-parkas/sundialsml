@@ -1705,8 +1705,8 @@ CAMLprim value sunml_ida_set_nonlin_conv_coef_ic(value vida_mem, value vcoef)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_ida_set_eta_fixed_step_bounds(value vida_mem,
-						  value vmin, value vmax)
+CAMLprim value sunml_ida_set_eta_fixed_step_bounds(value vida_mem,
+						   value vmin, value vmax)
 {
     CAMLparam3(vida_mem, vmin, vmax);
 #if 620 <= SUNDIALS_LIB_VERSION
@@ -1717,10 +1717,10 @@ CAMLprim void sunml_ida_set_eta_fixed_step_bounds(value vida_mem,
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_ida_set_eta_min(value vida_mem, value varg)
+CAMLprim value sunml_ida_set_eta_min(value vida_mem, value varg)
 {
     CAMLparam2(vida_mem, varg);
 #if 620 <= SUNDIALS_LIB_VERSION
@@ -1729,10 +1729,10 @@ CAMLprim void sunml_ida_set_eta_min(value vida_mem, value varg)
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_ida_set_eta_max(value vida_mem, value varg)
+CAMLprim value sunml_ida_set_eta_max(value vida_mem, value varg)
 {
     CAMLparam2(vida_mem, varg);
 #if 620 <= SUNDIALS_LIB_VERSION
@@ -1741,10 +1741,10 @@ CAMLprim void sunml_ida_set_eta_max(value vida_mem, value varg)
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_ida_set_eta_low(value vida_mem, value varg)
+CAMLprim value sunml_ida_set_eta_low(value vida_mem, value varg)
 {
     CAMLparam2(vida_mem, varg);
 #if 620 <= SUNDIALS_LIB_VERSION
@@ -1753,10 +1753,10 @@ CAMLprim void sunml_ida_set_eta_low(value vida_mem, value varg)
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_ida_set_eta_min_err_fail(value vida_mem, value varg)
+CAMLprim value sunml_ida_set_eta_min_err_fail(value vida_mem, value varg)
 {
     CAMLparam2(vida_mem, varg);
 #if 620 <= SUNDIALS_LIB_VERSION
@@ -1765,10 +1765,10 @@ CAMLprim void sunml_ida_set_eta_min_err_fail(value vida_mem, value varg)
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_ida_set_eta_conv_fail(value vida_mem, value varg)
+CAMLprim value sunml_ida_set_eta_conv_fail(value vida_mem, value varg)
 {
     CAMLparam2(vida_mem, varg);
 #if 620 <= SUNDIALS_LIB_VERSION
@@ -1777,7 +1777,7 @@ CAMLprim void sunml_ida_set_eta_conv_fail(value vida_mem, value varg)
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value sunml_ida_set_max_num_steps_ic(value vida_mem, value vmaxnh)
@@ -2032,7 +2032,7 @@ CAMLprim value sunml_ida_spils_set_max_restarts(value vida_mem, value vmaxr)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_ida_set_delta_cj_lsetup(value vida_mem, value varg)
+CAMLprim value sunml_ida_set_delta_cj_lsetup(value vida_mem, value varg)
 {
     CAMLparam2(vida_mem, varg);
 
@@ -2043,7 +2043,7 @@ CAMLprim void sunml_ida_set_delta_cj_lsetup(value vida_mem, value varg)
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value sunml_ida_set_eps_lin(value vida_mem, value eplifac)
@@ -2185,7 +2185,7 @@ CAMLprim value sunml_ida_get_num_g_evals(value vida_mem)
     CAMLreturn(Val_long(r));
 }
  
-CAMLprim void sunml_ida_print_all_stats(value vida_mem,
+CAMLprim value sunml_ida_print_all_stats(value vida_mem,
 					value vfile, value voutformat)
 {
     CAMLparam3(vida_mem, vfile, voutformat);
@@ -2195,7 +2195,7 @@ CAMLprim void sunml_ida_print_all_stats(value vida_mem,
 				SUNML_OUTPUT_FORMAT(voutformat));
     CHECK_FLAG("IDAPrintAllStats", flag);
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value sunml_ida_get_current_cj(value vida_mem)

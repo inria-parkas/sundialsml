@@ -258,11 +258,11 @@ static int translate_exception(value exn, recoverability recoverable)
      : 0)
 #endif
 
-CAMLprim void sunml_nlsolver_init_module (value exns)
+CAMLprim value sunml_nlsolver_init_module (value exns)
 {
     CAMLparam1 (exns);
     REGISTER_EXNS (NLSOLVER, exns);
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 #if 400 <= SUNDIALS_LIB_VERSION
@@ -973,7 +973,7 @@ CAMLprim value sunml_nlsolver_get_num_conv_fails(value vnls)
     CAMLreturn (Val_long(nconvfails));
 }
 
-CAMLprim void sunml_nlsolver_set_info_file_newton(value vnls, value vfile)
+CAMLprim value sunml_nlsolver_set_info_file_newton(value vnls, value vfile)
 {
     CAMLparam2(vnls, vfile);
 #if 530 <= SUNDIALS_LIB_VERSION
@@ -991,10 +991,10 @@ CAMLprim void sunml_nlsolver_set_info_file_newton(value vnls, value vfile)
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_nlsolver_set_info_file_fixedpoint(value vnls, value vfile)
+CAMLprim value sunml_nlsolver_set_info_file_fixedpoint(value vnls, value vfile)
 {
     CAMLparam2(vnls, vfile);
 #if 530 <= SUNDIALS_LIB_VERSION
@@ -1012,10 +1012,10 @@ CAMLprim void sunml_nlsolver_set_info_file_fixedpoint(value vnls, value vfile)
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_nlsolver_set_print_level_newton(value vnls, value vlevel)
+CAMLprim value sunml_nlsolver_set_print_level_newton(value vnls, value vlevel)
 {
     CAMLparam2(vnls, vlevel);
 #if 530 <= SUNDIALS_LIB_VERSION
@@ -1033,10 +1033,10 @@ CAMLprim void sunml_nlsolver_set_print_level_newton(value vnls, value vlevel)
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_nlsolver_set_print_level_fixedpoint(value vnls, value vlevel)
+CAMLprim value sunml_nlsolver_set_print_level_fixedpoint(value vnls, value vlevel)
 {
     CAMLparam2(vnls, vlevel);
 #if 530 <= SUNDIALS_LIB_VERSION
@@ -1054,7 +1054,7 @@ CAMLprim void sunml_nlsolver_set_print_level_fixedpoint(value vnls, value vlevel
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 #if 400 <= SUNDIALS_LIB_VERSION
