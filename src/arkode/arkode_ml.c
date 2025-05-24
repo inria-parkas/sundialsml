@@ -3961,6 +3961,18 @@ CAMLprim value sunml_arkode_ark_set_stop_time(value varkode_mem, value tstop)
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_ark_clear_stop_time(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+#if 651 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepClearStopTime(ARKODE_MEM_FROM_ML(varkode_mem));
+    CHECK_FLAG("ARKStepClearStopTime", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value sunml_arkode_ark_set_max_err_test_fails(value varkode_mem, value maxnef)
 {
     CAMLparam2(varkode_mem, maxnef);
@@ -6339,6 +6351,18 @@ CAMLprim value sunml_arkode_erk_set_stop_time(value varkode_mem, value tstop)
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_erk_clear_stop_time(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+#if 651 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepClearStopTime(ARKODE_MEM_FROM_ML(varkode_mem));
+    CHECK_FLAG("ERKStepClearStopTime", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value sunml_arkode_erk_set_max_err_test_fails(value varkode_mem, value maxnef)
 {
     CAMLparam2(varkode_mem, maxnef);
@@ -8277,6 +8301,18 @@ CAMLprim value sunml_arkode_mri_set_stop_time(value varkode_mem, value tstop)
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
 
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_mri_clear_stop_time(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+#if 651 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepClearStopTime(ARKODE_MEM_FROM_ML(varkode_mem));
+    CHECK_FLAG("MRIStepClearStopTime", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 

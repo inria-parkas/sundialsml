@@ -862,6 +862,12 @@ val set_max_step : ('d, 'k) session -> float -> unit
     @cvode CVodeSetStopTime *)
 val set_stop_time : ('d, 'k) session -> float -> unit
 
+(** Disables any stop time previously set with {!set_stop_time}.
+
+    @cvode CVodeClearStopTime
+    @since 6.5.1 *)
+val clear_stop_time : ('d, 'k) session -> unit
+
 (** Specifies the maximum number of error test failures permitted in attempting
     one step.
 

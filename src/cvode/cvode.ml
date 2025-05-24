@@ -1056,6 +1056,8 @@ external set_max_step           : ('a, 'k) session -> float -> unit
     = "sunml_cvode_set_max_step"
 external set_stop_time          : ('a, 'k) session -> float -> unit
     = "sunml_cvode_set_stop_time"
+external clear_stop_time        : ('a, 'k) session -> unit
+    = "sunml_cvode_clear_stop_time"
 external set_max_err_test_fails : ('a, 'k) session -> int -> unit
     = "sunml_cvode_set_max_err_test_fails"
 external set_max_nonlin_iters   : ('a, 'k) session -> int -> unit

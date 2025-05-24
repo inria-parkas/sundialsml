@@ -1904,7 +1904,7 @@ CAMLprim value sunml_ida_set_max_step(value vida_mem, value hmax)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim void sunml_ida_set_min_step(value vida_mem, value hmin)
+CAMLprim value sunml_ida_set_min_step(value vida_mem, value hmin)
 {
     CAMLparam2(vida_mem, hmin);
 
@@ -1915,17 +1915,28 @@ CAMLprim void sunml_ida_set_min_step(value vida_mem, value hmin)
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
 
-    CAMLreturn0;
+    CAMLreturn (Val_unit);
 }
 
 CAMLprim value sunml_ida_set_stop_time(value vida_mem, value tstop)
 {
     CAMLparam2(vida_mem, tstop);
 
-
     int flag = IDASetStopTime(IDA_MEM_FROM_ML(vida_mem), Double_val(tstop));
     CHECK_FLAG("IDASetStopTime", flag);
 
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_ida_clear_stop_time(value vida_mem)
+{
+    CAMLparam1(vida_mem);
+#if 651 <= SUNDIALS_LIB_VERSION
+    int flag = IDAClearStopTime(IDA_MEM_FROM_ML(vida_mem));
+    CHECK_FLAG("IDAClearStopTime", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 

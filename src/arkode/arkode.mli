@@ -1731,6 +1731,12 @@ module ARKStep : sig (* {{{ *)
       @arkode_ark ARKStepSetStopTime *)
   val set_stop_time : ('d, 'k) session -> float -> unit
 
+  (** Disables any stop time previously set with {!set_stop_time}.
+
+      @cvode ARKStepClearStopTime
+      @since 6.5.1 *)
+  val clear_stop_time : ('d, 'k) session -> unit
+
   (** {3:arksetivp Optional inputs for IVP method selection} *)
 
   (** Enables both the implicit and explicit portions of a problem.
@@ -2642,6 +2648,12 @@ module ERKStep : sig (* {{{ *)
 
       @arkode_erk ERKStepSetStopTime *)
   val set_stop_time : ('d, 'k) session -> float -> unit
+
+  (** Disables any stop time previously set with {!set_stop_time}.
+
+      @cvode ERKStepClearStopTime
+      @since 6.5.1 *)
+  val clear_stop_time : ('d, 'k) session -> unit
 
   (** {3:erksetivp Optional inputs for IVP method selection} *)
 
@@ -3781,6 +3793,12 @@ module MRIStep : sig (* {{{ *)
 
       @arkode_mri MRIStepSetStopTime *)
   val set_stop_time : ('d, 'k) session -> float -> unit
+
+  (** Disables any stop time previously set with {!set_stop_time}.
+
+      @cvode MRIStepClearStopTime
+      @since 6.5.1 *)
+  val clear_stop_time : ('d, 'k) session -> unit
 
   (** A function to be called {e before} each inner integration. This function
       may be used, for instance, to perform communications or memory transfers
