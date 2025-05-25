@@ -8,6 +8,7 @@ EXAMPLES = cvode_skel.byte  \
 	   ida_skel.byte    \
 	   arkode_ark_skel.byte \
 	   arkode_erk_skel.byte \
+	   $(if $(AT_LEAST_6_0_0),arkode_sprk_skel.byte) \
 	   arkode_mri_skel.byte \
 	   kinsol_skel.byte
 
@@ -28,6 +29,9 @@ arkode_ark_skel.opt:  arkode_ark_skel.ml
 
 arkode_erk_skel.byte: arkode_erk_skel.ml
 arkode_erk_skel.opt:  arkode_erk_skel.ml
+
+arkode_sprk_skel.byte: arkode_sprk_skel.ml
+arkode_sprk_skel.opt:  arkode_sprk_skel.ml
 
 arkode_mri_skel.byte: arkode_mri_skel.ml
 arkode_mri_skel.opt:  arkode_mri_skel.ml

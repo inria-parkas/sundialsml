@@ -1672,6 +1672,7 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
             stabfn       = dummy_stabfn;
             resizefn     = dummy_resizefn;
             poststepfn   = dummy_poststepfn;
+            poststagefn  = dummy_poststagefn;
             stagepredictfn = dummy_stagepredictfn;
             preinnerfn   = dummy_preinnerfn;
             postinnerfn  = dummy_postinnerfn;
@@ -2326,6 +2327,7 @@ module ERKStep = struct (* {{{ *)
             stabfn       = dummy_stabfn;
             resizefn     = dummy_resizefn;
             poststepfn   = dummy_poststepfn;
+            poststagefn  = dummy_poststagefn;
             stagepredictfn = dummy_stagepredictfn;
             preinnerfn   = dummy_preinnerfn;
             postinnerfn  = dummy_postinnerfn;
@@ -2660,6 +2662,318 @@ module ERKStep = struct (* {{{ *)
       = "sunml_arkode_erk_print_mem"
 
   let write_session ?logfile session = c_print_mem session logfile
+
+end (* }}} *)
+
+module SPRKStep = struct (* {{{ *)
+  open Arkode_impl
+  include Common
+
+  module MethodTable = struct (* {{{ *)
+
+    type t = {
+        method_order : int;
+        stages : int;
+        coefficients  : RealArray.t;
+        coefficients' : RealArray.t;
+      }
+
+    let check { stages = s; coefficients = c1; coefficients' = c2; _ } =
+      if RealArray.length c1 <> s
+        then invalid_arg "sprk table: coefficients array length != stages";
+      if RealArray.length c2 <> s
+        then invalid_arg "sprk table: coefficients' array length != stages"
+
+    type method_id =
+      | Euler_1_1
+      | Leapfrog_2_2
+      | Pseudo_Leapfrog_2_2
+      | Ruth_3_3
+      | McLachlan_2_2
+      | McLachlan_3_3
+      | Candy_Rozmus_4_4
+      | Mclachlan_4_4
+      | Mclachlan_5_6
+      | Yoshida_6_8
+      | Suzuki_Umeno_8_16
+      | Sofroniou_10_36
+
+    external load : method_id -> t
+      = "sunml_arkode_sprk_table_load"
+
+    external load_by_name  : string -> t option
+      = "sunml_arkode_sprk_table_load_by_name"
+
+    let copy { method_order; stages; coefficients; coefficients' } =
+      { method_order; stages;
+        coefficients = RealArray.copy coefficients;
+        coefficients' = RealArray.copy coefficients' }
+
+    external c_write : t -> Logfile.t -> unit
+      = "sunml_arkode_sprk_table_write"
+
+    let write ?(logfile=Logfile.stdout) st =
+      if Sundials_configuration.safe then check st;
+      c_write st logfile
+
+    let space { stages; _ } = (2, stages * 2)
+
+    external to_butcher : t -> ButcherTable.t * ButcherTable.t
+      = "sunml_arkode_sprk_table_to_butcher"
+
+  end (* }}} *)
+
+  type ('d, 'k) session = ('d, 'k, sprkstep) Arkode_impl.session
+
+  external c_root_init : ('a, 'k) session -> int -> unit
+      = "sunml_arkode_sprk_root_init"
+
+  let root_init session (nroots, rootsfn) =
+    c_root_init session nroots;
+    session.rootsfn <- rootsfn
+
+  external c_set_order : ('a, 'k) session -> int -> unit
+    = "sunml_arkode_sprk_set_order"
+
+  external set_fixed_step : ('a, 'k) session -> float -> unit
+      = "sunml_arkode_sprk_set_fixed_step"
+
+  external session_finalize : ('a, 'k) session -> unit
+      = "sunml_arkode_sprk_session_finalize"
+
+  external c_init :
+    ('a, 'k) session Weak.t
+    -> ('a, 'k) Nvector.t (* y_0 *)
+    -> float              (* t_0 *)
+    -> Context.t
+    -> (sprkstep arkode_mem * c_weak_ref)
+    = "sunml_arkode_sprk_init"
+
+  let init ?context ~step ?order ~f1 ~f2 ?(roots=no_roots) t0 y0 =
+    let (nroots, roots) = roots in
+    let checkvec = Nvector.check y0 in
+    if Sundials_configuration.safe && nroots < 0 then
+      raise (Invalid_argument "number of root functions is negative");
+    let weakref = Weak.create 1 in
+    let ctx = Sundials_impl.Context.get context in
+    let arkode_mem, backref = c_init weakref y0 t0 ctx in
+    (* arkode_mem and backref have to be immediately captured in a session and
+       associated with the finalizer before we do anything else.  *)
+    let session = {
+            arkode       = arkode_mem;
+            backref      = backref;
+            nroots       = nroots;
+            checkvec     = checkvec;
+            uses_resv    = false;
+            context      = ctx;
+
+            exn_temp     = None;
+
+            problem      = ExplicitOnly;
+            rhsfn1       = f1;
+            rhsfn2       = f2;
+
+            rootsfn      = roots;
+            errh         = dummy_errh;
+            errw         = dummy_errw;
+            resw         = dummy_resw;
+
+            error_file   = None;
+            diag_file    = None;
+
+            adaptfn        = dummy_adaptfn;
+            stabfn         = dummy_stabfn;
+            resizefn       = dummy_resizefn;
+            poststepfn     = dummy_poststepfn;
+            poststagefn    = dummy_poststagefn;
+            stagepredictfn = dummy_stagepredictfn;
+            preinnerfn     = dummy_preinnerfn;
+            postinnerfn    = dummy_postinnerfn;
+            preinnerarray  = empty_preinnerarray ();
+
+            linsolver      = None;
+            ls_solver      = LSI.NoHLS;
+            ls_callbacks   = NoCallbacks;
+            ls_precfns     = NoPrecFns;
+
+            mass_solver    = LSI.NoHLS;
+            mass_callbacks = NoMassCallbacks;
+            mass_precfns   = NoMassPrecFns;
+
+            nls_solver     = None;
+            nls_rhsfn      = dummy_nlsrhsfn;
+
+            inner_session  = None;
+          } in
+    Gc.finalise session_finalize session;
+    Weak.set weakref 0 (Some session);
+    (* Now the session is safe to use.  If any of the following fails and raises
+       an exception, the GC will take care of freeing arkode_mem and backref.  *)
+    if nroots > 0 then
+      c_root_init session nroots;
+    set_fixed_step session step;
+    (match order with Some o -> c_set_order session o | None -> ());
+    session
+
+  let get_num_roots { nroots } = nroots
+
+  external reset : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
+      = "sunml_arkode_sprk_reset"
+
+  external c_reinit
+      : ('a, 'k) session -> float -> ('a, 'k) Nvector.t -> unit
+      = "sunml_arkode_sprk_reinit"
+
+  let reinit session ?order ?roots ?f1 ?f2 t0 y0 =
+    if Sundials_configuration.safe then session.checkvec y0;
+    c_reinit session t0 y0;
+    (match order with Some o -> c_set_order session o | None -> ());
+    (match roots with Some roots -> root_init session roots| None -> ());
+    (match f1 with Some f1 -> session.rhsfn1 <- f1 | None -> ());
+    (match f2 with Some f2 -> session.rhsfn2 <- f2 | None -> ())
+
+  external get_root_info  : ('a, 'k) session -> Roots.t -> unit
+      = "sunml_arkode_sprk_get_root_info"
+
+  external c_evolve_normal : ('a, 'k) session -> float -> ('a, 'k) Nvector.t
+                                -> float * solver_result
+      = "sunml_arkode_sprk_evolve_normal"
+
+  let evolve_normal s t y =
+    if Sundials_configuration.safe then s.checkvec y;
+    c_evolve_normal s t y
+
+  external c_evolve_one_step : ('a, 'k) session -> float -> ('a, 'k) Nvector.t
+                                -> float * solver_result
+      = "sunml_arkode_sprk_evolve_one_step"
+
+  let evolve_one_step s t y =
+    if Sundials_configuration.safe then s.checkvec y;
+    c_evolve_one_step s t y
+
+  external c_get_dky
+      : ('a, 'k) session -> float -> int -> ('a, 'k) Nvector.t -> unit
+      = "sunml_arkode_sprk_get_dky"
+
+  let get_dky s y =
+    if Sundials_configuration.safe then s.checkvec y;
+    fun t k -> c_get_dky s t k y
+
+  external get_step_stats : ('a, 'k) session -> step_stats
+      = "sunml_arkode_sprk_get_step_stats"
+
+  external print_all_stats
+      : ('d, 'k) session -> Logfile.t -> Sundials.output_format -> unit
+      = "sunml_arkode_sprk_print_all_stats"
+
+  external get_num_steps          : ('a, 'k) session -> int
+      = "sunml_arkode_sprk_get_num_steps"
+
+  external get_num_step_attempts  : ('d, 'k) session -> int
+      = "sunml_arkode_sprk_get_num_step_attempts"
+
+  external get_num_rhs_evals      : ('a, 'k) session -> int * int
+      = "sunml_arkode_sprk_get_num_rhs_evals"
+
+  external get_last_step          : ('a, 'k) session -> float
+      = "sunml_arkode_sprk_get_last_step"
+
+  external get_current_step       : ('a, 'k) session -> float
+      = "sunml_arkode_sprk_get_current_step"
+
+  external get_current_time       : ('a, 'k) session -> float
+      = "sunml_arkode_sprk_get_current_time"
+
+  let print_step_stats s oc =
+    print_step_stats oc (get_step_stats s)
+
+  external set_interpolant_type : ('d, 'k) session -> interpolant_type -> unit
+      = "sunml_arkode_sprk_set_interpolant_type"
+
+  external set_interpolant_degree : ('d, 'k) session -> int -> unit
+      = "sunml_arkode_sprk_set_interpolant_degree"
+
+  external c_set_error_file : ('a, 'k) session -> Logfile.t -> unit
+      = "sunml_arkode_sprk_set_error_file"
+
+  let set_error_file s f =
+    s.error_file <- Some f;
+    c_set_error_file s f
+
+  external c_set_err_handler_fn  : ('a, 'k) session -> unit
+      = "sunml_arkode_sprk_set_err_handler_fn"
+
+  let set_err_handler_fn s ferrh =
+    s.errh <- ferrh;
+    c_set_err_handler_fn s
+
+  external clear_err_handler_fn  : ('a, 'k) session -> unit
+      = "sunml_arkode_sprk_clear_err_handler_fn"
+
+  let clear_err_handler_fn s =
+    s.errh <- dummy_errh;
+    clear_err_handler_fn s
+
+  external set_defaults           : ('a, 'k) session -> unit
+      = "sunml_arkode_sprk_set_defaults"
+  external set_stop_time          : ('a, 'k) session -> float -> unit
+      = "sunml_arkode_sprk_set_stop_time"
+(*
+  external clear_stop_time        : ('a, 'k) session -> unit
+      = "sunml_arkode_sprk_clear_stop_time"
+ *)
+
+  external set_method : ('d, 'k) session -> MethodTable.t -> unit
+      = "sunml_arkode_sprk_set_method"
+  external set_method_name : ('d, 'k) session -> string -> unit
+      = "sunml_arkode_sprk_set_method_name"
+  external set_use_compensated_sums : ('d, 'k) session -> bool -> unit
+      = "sunml_arkode_sprk_set_use_compensated_sums"
+  external get_current_method : ('d, 'k) session -> MethodTable.t
+      = "sunml_arkode_sprk_get_current_method"
+
+  external c_set_postprocess_step_fn : ('a, 'k) session -> bool -> unit
+      = "sunml_arkode_sprk_set_postprocess_step_fn"
+
+  let set_postprocess_step_fn s fn =
+    s.poststepfn <- fn;
+    c_set_postprocess_step_fn s true
+
+  let clear_postprocess_step_fn s =
+    s.poststepfn <- dummy_poststepfn;
+    c_set_postprocess_step_fn s false
+
+  external c_set_postprocess_stage_fn : ('a, 'k) session -> bool -> unit
+      = "sunml_arkode_sprk_set_postprocess_stage_fn"
+
+  let set_postprocess_stage_fn s fn =
+    s.poststagefn <- fn;
+    c_set_postprocess_stage_fn s true
+
+  let clear_postprocess_stage_fn s =
+    s.poststagefn <- dummy_poststagefn;
+    c_set_postprocess_stage_fn s false
+
+  external c_set_root_direction   : ('a, 'k) session -> RootDirs.t -> unit
+      = "sunml_arkode_sprk_set_root_direction"
+
+  let set_root_direction s rda =
+    c_set_root_direction s (RootDirs.copy (get_num_roots s) rda)
+
+  let set_all_root_directions s rd =
+    c_set_root_direction s (RootDirs.make (get_num_roots s) rd)
+
+  external set_no_inactive_root_warn      : ('a, 'k) session -> unit
+      = "sunml_arkode_sprk_set_no_inactive_root_warn"
+
+  external get_current_state : ('d, 'k) session -> 'd
+      = "sunml_arkode_sprk_get_current_state"
+
+  external c_write_parameters : ('d, 'k) session -> Logfile.t -> unit
+      = "sunml_arkode_sprk_write_parameters"
+
+  let write_parameters ?(logfile=Logfile.stdout) s =
+    c_write_parameters s logfile
 
 end (* }}} *)
 
@@ -3241,6 +3555,7 @@ module MRIStep = struct (* {{{ *)
             stabfn       = dummy_stabfn;
             resizefn     = dummy_resizefn;
             poststepfn   = dummy_poststepfn;
+            poststagefn  = dummy_poststagefn;
             stagepredictfn = dummy_stagepredictfn;
             preinnerfn   = dummy_preinnerfn;
             postinnerfn  = dummy_postinnerfn;
@@ -3625,9 +3940,10 @@ module MRIStep = struct (* {{{ *)
 
 end (* }}} *)
 
-type arkstep = Arkode_impl.arkstep
-type erkstep = Arkode_impl.erkstep
-type mristep = Arkode_impl.mristep
+type arkstep  = Arkode_impl.arkstep
+type erkstep  = Arkode_impl.erkstep
+type sprkstep = Arkode_impl.sprkstep
+type mristep  = Arkode_impl.mristep
 
 (* Let C code know about some of the values in this module.  *)
 external c_init_module : exn array -> unit =

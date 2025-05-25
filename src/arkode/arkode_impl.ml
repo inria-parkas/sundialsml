@@ -201,9 +201,10 @@ end
 type 'step arkode_mem
 type c_weak_ref
 
-type arkstep = [`ARKStep]
-type erkstep = [`ERKStep]
-type mristep = [`MRIStep]
+type arkstep  = [`ARKStep]
+type erkstep  = [`ERKStep]
+type sprkstep = [`SPRKStep]
+type mristep  = [`MRIStep]
 
 module Global = struct
 
@@ -226,7 +227,7 @@ module Global = struct
   type 'd adaptivity_fn = float -> 'd -> adaptivity_args -> float
   type 'd stability_fn = float -> 'd -> float
   type 'd resize_fn = 'd -> 'd -> unit
-  type 'd postprocess_step_fn = float -> 'd -> unit
+  type 'd postprocess_fn = float -> 'd -> unit
   type 'd stage_predict_fn = float -> 'd -> unit
   type 'd pre_inner_fn = float -> 'd array -> unit
   type 'd post_inner_fn = float -> 'd -> unit
@@ -287,7 +288,8 @@ type ('a, 'kind, 'step) session = {
   mutable adaptfn      : 'a adaptivity_fn;
   mutable stabfn       : 'a stability_fn;
   mutable resizefn     : 'a resize_fn;
-  mutable poststepfn   : 'a postprocess_step_fn;
+  mutable poststepfn   : 'a postprocess_fn;
+  mutable poststagefn  : 'a postprocess_fn;
   mutable stagepredictfn : 'a stage_predict_fn (* ARK only *);
   mutable preinnerfn   : 'a pre_inner_fn;  (* MRI only *)
   mutable postinnerfn  : 'a post_inner_fn; (* MRI only *)
@@ -557,6 +559,8 @@ let dummy_resizefn _ _ =
   Sundials_impl.crash "Internal error: dummy_resizefn called\n"
 let dummy_poststepfn _ _ =
   Sundials_impl.crash "Internal error: dummy_poststepfn called\n"
+let dummy_poststagefn _ _ =
+  Sundials_impl.crash "Internal error: dummy_poststagefn called\n"
 let dummy_stagepredictfn _ _ =
   Sundials_impl.crash "Internal error: dummy_stagepredictfn called\n"
 let dummy_preinnerfn _ _ =

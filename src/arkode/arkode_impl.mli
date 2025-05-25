@@ -89,6 +89,7 @@ type 'step arkode_mem
 type c_weak_ref
 type arkstep = [ `ARKStep ]
 type erkstep = [ `ERKStep ]
+type sprkstep = [ `SPRKStep ]
 type mristep = [ `MRIStep ]
 module Global :
   sig
@@ -109,7 +110,7 @@ module Global :
     type 'd adaptivity_fn = float -> 'd -> adaptivity_args -> float
     type 'd stability_fn = float -> 'd -> float
     type 'd resize_fn = 'd -> 'd -> unit
-    type 'd postprocess_step_fn = float -> 'd -> unit
+    type 'd postprocess_fn = float -> 'd -> unit
     type 'd stage_predict_fn = float -> 'd -> unit
     type 'd pre_inner_fn = float -> 'd array -> unit
     type 'd post_inner_fn = float -> 'd -> unit
@@ -142,7 +143,8 @@ type ('a, 'kind, 'step) session = {
   mutable adaptfn : 'a Global.adaptivity_fn;
   mutable stabfn : 'a Global.stability_fn;
   mutable resizefn : 'a Global.resize_fn;
-  mutable poststepfn : 'a Global.postprocess_step_fn;
+  mutable poststepfn : 'a Global.postprocess_fn;
+  mutable poststagefn : 'a Global.postprocess_fn;
   mutable stagepredictfn : 'a Global.stage_predict_fn;
   mutable preinnerfn : 'a Global.pre_inner_fn;
   mutable postinnerfn : 'a Global.post_inner_fn;
@@ -307,6 +309,7 @@ val dummy_adaptfn : 'a -> 'b -> 'c -> 'd
 val dummy_stabfn : 'a -> 'b -> 'c
 val dummy_resizefn : 'a -> 'b -> 'c
 val dummy_poststepfn : 'a -> 'b -> 'c
+val dummy_poststagefn : 'a -> 'b -> 'c
 val dummy_stagepredictfn : 'a -> 'b -> 'c
 val dummy_preinnerfn : 'a -> 'b -> 'c
 val dummy_postinnerfn : 'a -> 'b -> 'c

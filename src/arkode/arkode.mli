@@ -35,6 +35,7 @@
       {- {{:#generic}Generic constants and types}}
       {- {{:#MODULEARKStep}The ARKStep time-stepping module}}
       {- {{:#MODULEERKStep}The ERKStep time-stepping module}}
+      {- {{:#MODULESPRKStep}The SPRKStep time-stepping module}}
       {- {{:#MODULEMRIStep}The MRIStep time-stepping module}}
       {- {{:#exceptions}Exceptions}}}
 
@@ -53,6 +54,9 @@ type arkstep = Arkode_impl.arkstep
 (** Type argument representing the ERKStep time-stepping module. *)
 type erkstep = Arkode_impl.erkstep
 
+(** Type argument representing the SPRKStep time-stepping module. *)
+type sprkstep = Arkode_impl.sprkstep
+
 (** Type argument representing the MRIStep time-stepping module. *)
 type mristep = Arkode_impl.mristep
 
@@ -65,6 +69,7 @@ module Common : sig (* {{{ *)
 
       @arkode_ark ARKStepEvolve
       @arkode_erk ERKStepEvolve
+      @arkode_sprk SPRKStepEvolve
       @arkode_mri MRIStepEvolve *)
   type solver_result =
     | Success             (** The solution was advanced. {cconst ARK_SUCCESS} *)
@@ -289,8 +294,8 @@ module Common : sig (* {{{ *)
       - [t], the value of the independent variable, and
       - [y], the value of the dependent variable vector {% $y(t)$%}.
 
-      @arkode_user ARKPostprocessStepFn *)
-  type 'd postprocess_step_fn = float -> 'd -> unit
+      @arkode_user ARKPostprocessFn *)
+  type 'd postprocess_fn = float -> 'd -> unit
 
   (** {2:lsolvers Common Linear Solver Definitions}
 
@@ -1518,8 +1523,8 @@ module ARKStep : sig (* {{{ *)
       {!evolve_normal} or {!evolve_one_step}.
 
       @arkode_ark ARKStepGetDky
-      @raise BadT [t] is not in the interval {% $[t_n - h_n, t_n]$%}.
-      @raise BadK [k] is not in the range \{0, 1, ..., dord\}. *)
+      @raise BadT [t] is not in the interval {% $[t_n - h_n, t_n]$ %}.
+      @raise BadK [k] is not in the range {% $\{0, 1, ..., dord\}$ %}. *)
   val get_dky : ('d, 'k) session -> ('d, 'k) Nvector.t -> float -> int -> unit
 
   (** Reinitializes the solver with new parameters and state values. The
@@ -1733,7 +1738,7 @@ module ARKStep : sig (* {{{ *)
 
   (** Disables any stop time previously set with {!set_stop_time}.
 
-      @cvode ARKStepClearStopTime
+      @arkode_ark ARKStepClearStopTime
       @since 6.5.1 *)
   val clear_stop_time : ('d, 'k) session -> unit
 
@@ -2054,7 +2059,7 @@ module ARKStep : sig (* {{{ *)
       @arkode_ark ARKStepSetPostprocessStepFn
       @raise Config.NotImplementedBySundialsVersion Post processing not available
       @since 2.7.0 *)
-  val set_postprocess_step_fn : ('d, 'k) session -> 'd postprocess_step_fn -> unit
+  val set_postprocess_step_fn : ('d, 'k) session -> 'd postprocess_fn -> unit
 
   (** Clear the post processing step function.
 
@@ -2108,7 +2113,7 @@ module ARKStep : sig (* {{{ *)
 
   (** Returns the number of failed steps due to a nonlinear solver failure.
 
-      @cvode ARKStepGetNumStepSolveFails
+      @arkode_ark ARKStepGetNumStepSolveFails
       @since 6.2.0 *)
   val get_num_step_solve_fails : ('d, 'k) session -> int
 
@@ -2243,7 +2248,7 @@ module ARKStep : sig (* {{{ *)
   (** Outputs all of the integrator, nonlinear solver, linear solver, and other
       statistics.
 
-      @cvode ARKStepPrintAllStats
+      @arkode_ark ARKStepPrintAllStats
       @since 6.2.0 *)
   val print_all_stats
         : ('d, 'k) session -> Logfile.t -> Sundials.output_format -> unit
@@ -2479,7 +2484,7 @@ module ERKStep : sig (* {{{ *)
 
       @arkode_erk ERKStepGetDky
       @raise BadT [t] is not in the interval {% $[t_n - h_n, t_n]$%}.
-      @raise BadK [k] is not in the range \{0, 1, ..., dord\}. *)
+      @raise BadK [k] is not in the range {% $\{0, 1, ..., dord\}$ %}. *)
   val get_dky : ('d, 'k) session -> ('d, 'k) Nvector.t -> float -> int -> unit
 
   (** Reinitializes the solver with new parameters and state values. The
@@ -2651,7 +2656,7 @@ module ERKStep : sig (* {{{ *)
 
   (** Disables any stop time previously set with {!set_stop_time}.
 
-      @cvode ERKStepClearStopTime
+      @arkode_erk ERKStepClearStopTime
       @since 6.5.1 *)
   val clear_stop_time : ('d, 'k) session -> unit
 
@@ -2762,7 +2767,7 @@ module ERKStep : sig (* {{{ *)
   (** Set a post processing step function.
 
       @arkode_erk ERKStepSetPostprocessStepFn *)
-  val set_postprocess_step_fn : ('d, 'k) session -> 'd postprocess_step_fn -> unit
+  val set_postprocess_step_fn : ('d, 'k) session -> 'd postprocess_fn -> unit
 
   (** Clear the post processing step function.
 
@@ -2887,7 +2892,7 @@ module ERKStep : sig (* {{{ *)
   (** Outputs all of the integrator, nonlinear solver, linear solver, and other
       statistics.
 
-      @cvode ERKStepPrintAllStats
+      @arkode_erk ERKStepPrintAllStats
       @since 6.2.0 *)
   val print_all_stats
         : ('d, 'k) session -> Logfile.t -> Sundials.output_format -> unit
@@ -2959,6 +2964,473 @@ module ERKStep : sig (* {{{ *)
       @arkode_erk ERKStepWriteButcher
       @since 4.1.0 *)
   val write_butcher : ?logfile:Logfile.t -> ('d, 'k) session -> unit
+
+end (* }}} *)
+
+(** SPRKStep Time-Stepping Module providing symplectic partitioned Runge-Kutta
+    methods.
+
+    This module solves problems of the form
+    {% \dot{p} = f_1(t, q) = \frac{\partial V(t, q)}{\partial q} %},
+    {% \dot{q} = f_2(t, p) = \frac{\partial T(t, p)}{\partial p} %},
+    {% $p(t_0) = p_0$%}, {% $q(t_0) = q_0$%} where the system Hamiltonian
+    {% H(t, p, q) = T(t, p) + V(t, q) %} is separable.
+
+    Its interface is structured as follows.
+    {ol
+      {- {{:#sprksolver}Solver initialization and use}}
+      {- {{:#sprkset}Modifying the solver}}
+      {- {{:#sprkget}Querying the solver}}
+      {- {{:#sprkroots}Additional root finding functions}}}
+
+    @arkode <Usage/SPRKStep_c_interface/index.html#using-the-sprkstep-time-stepping-module> Using the SPRKStep time-stepping module *)
+module SPRKStep : sig (* {{{ *)
+
+  include module type of Common
+
+  (** SPRK Method tables *)
+  module MethodTable : sig (* {{{ *)
+
+    (** A pair of butcher tables defining a SPRK method of order $q$.
+
+        {% $B$ %} contains the coefficients of the explciit table.
+
+        {% $B \equiv \begin{array}{c|c}
+                       c & A \\ \hline
+                         & b
+                      \end{array}
+              = \begin{array}{ c|cccc}
+                  c_1    & 0      & \cdots & 0       & 0 \\
+                  c_2    & a_1    & 0      & \cdots  & \vdots \\
+                  \vdots & \vdots & \ddots & \ddots  & \vdots \\
+                  c_s    & a_1    & \cdots & a_{s-1} & 0 \\
+                         & a_1    & \cdots & a_{s-1} & a_s
+                \end{array}$ %}
+
+        {% $\hat B$ %} contains the coefficients of the diagonally implicit table.
+
+        {% $\hat B \equiv \begin{array}{c|c}
+                       \hat c & \hat A \\ \hline
+                              & \hat b
+                      \end{array}
+              = \begin{array}{ c|cccc}
+                  \hat c_1    & \hat a_1 & \cdots   & 0       & 0 \\
+                  \hat c_2    & \hat a_1 & \hat a_2 & \cdots  & \vdots \\
+                  \vdots      & \vdots   & \ddots   & \ddots  & \vdots \\
+                  \hat c_s    & \hat a_1 & \hat a_2 & \cdots  & \hat a_s \\
+                              & \hat a_1 & \hat a_2 & \cdots  & \hat a_s
+                \end{array}$ %}
+
+        @arkode_bt ARKodeSPRKTable *)
+    type t = {
+        method_order : int;           (** Method order of accuracy ({% $q$ %}). *)
+        stages : int;                 (** Number of stages ({% $s$ %}). *)
+        coefficients  : RealArray.t;  (** Array of length [stages] of
+                                          explicit Butcher table coefficients
+                                          ([coefficients.{i}] = {% $a_{i+1}$ %}). *)
+        coefficients' : RealArray.t;  (** Array of length [stages] of
+                                          diagonally-implicit Butcher table coefficients
+                                          ([coefficients'.{i}] = {% $\hat{a}_{i+1}$ %}). *)
+      }
+
+    (** Symplectic Partitioned Butcher Tables
+        (the value names end with the number of stages and the order)
+
+       @arkode <Butcher_link.html#symplectic-partitioned-butcher-tables> Symplectic Partitioned Butcher Tables
+      *)
+    type method_id =
+      | Euler_1_1             (** (default 1st order) Classic Symplectic Euler method. *)
+      | Leapfrog_2_2          (** (default 2nd order) Classic Leapfrog/Verlet method. *)
+      | Pseudo_Leapfrog_2_2   (** Classic Pseudo Leapfrog/Verlet method. *)
+      | Ruth_3_3              (** 3rd order method given by Ruth. *)
+      | McLachlan_2_2         (** 2nd order method given by McLachlan. *)
+      | McLachlan_3_3         (** (default) 3rd order method given by McLachlan. *)
+      | Candy_Rozmus_4_4      (** 4th order method given by Candy and Rozmus. *)
+      | Mclachlan_4_4         (** (default) 4th order method given by McLachlan. *)
+      | Mclachlan_5_6         (** (default) 5th order method given by McLachlan. *)
+      | Yoshida_6_8           (** (default) 6th order method given by Yoshida. *)
+      | Suzuki_Umeno_8_16     (** (default) 8th order method given by Suzuki and Umeno. *)
+      | Sofroniou_10_36       (** (default) 10th order method given by Sofroniou and Spaletta. *)
+
+    (** Retrieves the SPRK table for the given {!method_id}.
+
+        @arkode_bt ARKodeSPRKTable_Load
+        @since 6.6.0 *)
+    val load  : method_id -> t
+
+    (** Retrieves the SPRK table for the specified method name.
+
+        @arkode_bt ARKodeSPRKTable_LoadByName
+        @since 6.6.0 *)
+    val load_by_name  : string -> t option
+
+    (** Copies a table.
+
+        @arkode_bt ARKodeSPRKTable_Copy
+        @since 6.6.0 *)
+    val copy : t -> t
+
+    (** Writes a SPRK table on the standard output (or given file).
+
+        @arkode_bt ARKodeSPRKTable_Write
+        @since 6.6.0 *)
+    val write : ?logfile:Logfile.t -> t -> unit
+
+    (** Returns the integer and real workspace sizes required by a table.
+
+        @arkode_bt ARKodeSPRKTable_Space
+        @since 6.6.0 *)
+    val space : t -> int * int
+
+    (** Converts to explicit and diagionally-implicit Butcher tables.
+
+        @arkode_bt ARKodeSPRKTable_ToButcher
+        @since 6.6.0 *)
+    val to_butcher : t -> ButcherTable.t * ButcherTable.t
+
+  end (* }}} *)
+
+  (** A session with the SPRKStep time-stepping solver.
+
+      An example session with SPRKStep ({openfile arkode_sprk_skel.ml}): {[
+#include "../../examples/ocaml/skeletons/arkode_sprk_skel.ml"
+      ]}
+
+      @arkode_sprk <Usage/SPRKStep_c_interface/Skeleton.html#a-skeleton-of-the-user-s-main-program> Skeleton of main program *)
+  type ('d, 'k) session = ('d, 'k, sprkstep) Arkode_impl.session
+
+  (** {2:sprksolver Solver initialization and use} *)
+
+  (** Creates and initializes a session with the solver. The call
+      {[init tol ~order f ~roots:(nroots, g) t0 y0]}
+      has as arguments:
+      - [step],   the fixed time step size,
+      - [order],  the order of accuracy for the integration method,
+      - [f1],     the function definiting {% f_1(t, q) = \frac{\partial V(t, q)}{\partial q} %},
+      - [f2],     the function definiting {% f_2(t, p) = \frac{\partial T(t, p)}{\partial p} %},
+      - [nroots], the number of root functions,
+      - [g],      the root function ([(nroots, g)] defaults to
+                  {!Common.no_roots}),
+      - [t0],     the initial value of the independent variable, and
+      - [y0],     a vector of initial values for both $p$ and $q$ variables.
+
+      This function does everything necessary to initialize a session, i.e.,
+      it makes the calls referenced below. The {!evolve_normal} and
+      {!evolve_one_step} functions may be called directly.
+
+      NB: The same, full vector is passed to both [f1] and [f2], but [f1]
+      should only modify the $q$ variables and [f2] should only modify the $p$
+      variables.
+
+      By default, the session is created using the context returned by
+      {!Sundials.Context.default}, but this can be overridden by passing
+      an optional [context] argument.
+
+      @arkode_sprk SPRKStepCreate
+      @arkode_sprk SPRKStepSetOrder
+      @arkode_sprk SPRKStepRootInit
+      @arkode_sprk SPRKStepSetFixedStep
+      @since 6.6.0 *)
+  val init :
+         ?context:Context.t
+      -> step:float
+      -> ?order:int
+      -> f1:'data rhsfn
+      -> f2:'data rhsfn
+      -> ?roots:(int * 'data rootsfn)
+      -> float
+      -> ('data, 'kind) Nvector.t
+      -> ('data, 'kind) session
+
+  (** Integrates an ODE system over an interval. The call
+      [tret, r = evolve_normal s tout yout] has as arguments
+      - [s], a solver session,
+      - [tout], the next time at which a solution is desired, and,
+      - [yout], a vector to store the computed solution.
+
+      It returns [tret], the time reached by the solver, which will be equal to
+      [tout] if no errors occur, and, [r], a {!Common.solver_result}.
+
+      To avoid a loss of accuracy due to interpolation, call {!set_stop_time}
+      before calling an evolve function. Once {{!solver_result}StopTimeReached}
+      is returned, a new call to {!set_stop_time} is required to reactivate
+      this functionality. Interpolated results may not necessarily conserve the
+      Hamiltonian.
+
+      @arkode_sprk SPRKStepEvolve (ARK_NORMAL)
+      @raise IllInput Missing or illegal solver inputs.
+      @raise TooMuchWork The requested time could not be reached in [mxstep] internal steps.
+      @raise ErrFailure Too many error test failures within a step or at the minimum step size.
+      @raise RhsFuncFailure Unrecoverable failure in one of the RHS functions.
+      @raise FirstRhsFuncFailure Initial unrecoverable failure in one of the RHS functions.
+      @raise RepeatedRhsFuncFailure Too many convergence test failures, or unable to estimate the initial step size, due to repeated recoverable errors in one of the right-hand side functions.
+      @raise UnrecoverableRhsFuncFailure One of the right-hand side functions had a recoverable error, but no recovery was possible. This error can only occur after an error test failure at order one.
+      @raise RootFuncFailure Failure in the rootfinding function [g]. *)
+  val evolve_normal : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
+                          -> float * solver_result
+
+  (** Like {!evolve_normal} but returns after one internal solver step.
+
+      The [tout] argument is used only on the first call and only to determine
+      the direction and a rough scale of the independent variable.
+
+      @arkode_sprk SPRKStepEvolve (ARK_ONE_STEP) *)
+  val evolve_one_step : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
+                          -> float * solver_result
+
+  (** Returns the interpolated solution or derivatives.
+      [get_dky s dky t k] computes the [k]th derivative of the function
+        at time [t], i.e., {% y^{(k)}(t) %},
+      and stores it in [dky]. The arguments must satisfy
+      {% $t_n - h_n \leq \mathtt{t} \leq t_n$%}—where $t_n$
+      denotes {!get_current_time} and $h_n$ denotes {!get_last_step},—
+      and {% $0 \leq \mathtt{k} \leq \mathit{kmax}$ %},
+      where {% $\mathit{kmax} = 5 %} for Hermite interpolants and
+      {% $\mathit{kmax} = 3 %} for Lagrange interpolants.
+
+      This function may only be called after a successful return from either
+      {!evolve_normal} or {!evolve_one_step}.
+
+      @arkode_sprk SPRKStepGetDky
+      @raise BadT [t] is not in the interval {% $[t_n - h_n, t_n]$%}.
+      @raise BadK [k] is not in the range {% $\{0, 1, ..., \mathit{kmax}\}$ %}. *)
+  val get_dky : ('d, 'k) session -> ('d, 'k) Nvector.t -> float -> int -> unit
+
+  (** Reinitializes the solver with new parameters and state values. The
+      values of the independent variable, i.e., the simulation time, and the
+      state variables must be given. If given, [order] changes the order of
+      accuracy, and [roots] specifies a new root finding function. The new
+      problem must have the same size as the previous one.
+
+      The allowed values for [order] are as for {!init}.
+
+      {warning Prior to Sundials 7.3.0, this function causes a segmentation
+      fault unless compensated sums are in use ({!set_use_compensated_sums}). }
+
+      @arkode_sprk SPRKStepReInit
+      @arkode_sprk SPRKStepRootInit
+      @arkode_sprk SPRKStepSetOrder *)
+  val reinit :
+    ('d, 'k) session
+    -> ?order:int
+    -> ?roots:(int * 'd rootsfn)
+    -> ?f1:'d rhsfn
+    -> ?f2:'d rhsfn
+    -> float
+    -> ('d, 'k) Nvector.t
+    -> unit
+
+  (** Resets the state to the given independent variable value and dependent
+      variable vector. All internal counter values are retained. Any stop time
+      value is forgotten and thus {!set_stop_time} should be called again if
+      needed.
+
+      Note: by default, the next call to {!evolve_normal} or {!evolve_one_step}
+      will use the step size calculated prior to the reset.
+
+      {warning Prior to Sundials 7.3.0, this function causes a segmentation
+      fault unless compensated sums are in use ({!set_use_compensated_sums}). }
+
+      @arkode_sprk SPRKStepReset *)
+  val reset : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
+
+  (** {2:sprkset Modifying the solver} *)
+
+  (** Resets all optional input parameters to their default values. Neither
+      the problem-defining functions nor the root-finding functions are
+      changed.
+
+      @arkode_sprk SPRKStepSetDefaults *)
+  val set_defaults : ('d, 'k) session -> unit
+
+  (** Specifies the interpolation module used for output value interpolation
+      and implicit method predictors.
+
+      @arkode_sprk SPRKStepSetInterpolantType *)
+  val set_interpolant_type : ('d, 'k) session -> interpolant_type -> unit
+
+  (** Specifies the degree of the polynomial interpolant used for output
+      values and implicit method predictors. The argument must be between 0 and
+      5 inclusive.
+
+      @arkode_sprk SPRKStepSetInterpolantDegree *)
+  val set_interpolant_degree : ('d, 'k) session -> int -> unit
+
+  (** Configure the default error handler to write messages to a file.
+      By default it writes to Logfile.stderr.
+
+      @arkode_sprk SPRKStepSetErrFile *)
+  val set_error_file : ('d, 'k) session -> Logfile.t -> unit
+
+  (** Specifies a custom function for handling error messages.
+      The handler must not fail: any exceptions are trapped and discarded.
+
+      @arkode_sprk SPRKStepSetErrHandlerFn
+      @arkode_user ARKErrHandlerFn *)
+  val set_err_handler_fn
+    : ('d, 'k) session -> (Util.error_details -> unit) -> unit
+
+  (** Restores the default error handling function.
+
+      @arkode_sprk SPRKStepSetErrHandlerFn *)
+  val clear_err_handler_fn : ('d, 'k) session -> unit
+
+  (** Sets the time step.
+
+      @arkode_sprk SPRKStepSetFixedStep *)
+  val set_fixed_step : ('d, 'k) session -> float -> unit
+
+  (** Limits the value of the independent variable [t] when solving.
+      By default no stop time is imposed.
+
+      @arkode_sprk SPRKStepSetStopTime *)
+  val set_stop_time : ('d, 'k) session -> float -> unit
+
+(*
+  (** Disables any stop time previously set with {!set_stop_time}.
+
+      @arkode_sprk SPRKStepClearStopTime *)
+  val clear_stop_time : ('d, 'k) session -> unit
+ *)
+
+  (** {3:sprksetivp Optional inputs for IVP method selection} *)
+
+  (** Specifies the SPRK method.
+
+      @arkode_sprk SPRKStepSetMethod *)
+  val set_method : ('d, 'k) session -> MethodTable.t -> unit
+
+  (** Specifies the SPRK method by its name.
+
+      @arkode_sprk SPRKStepSetMethodName *)
+  val set_method_name : ('d, 'k) session -> string -> unit
+
+  (** Specifies whether the compensated summation (and the incremental form)
+      should be used wher applicable. This feature requires two extra vector
+      operations per stage and an additional five per time step. It also
+      requires storing one extra vector. However, it is much more robust to
+      roundoff error accumulation.
+
+      @arkode_sprk SPRKStepSetUseCompensatedSums *)
+  val set_use_compensated_sums : ('d, 'k) session -> bool -> unit
+
+  (** {3:sprksetadap Optional inputs for time step adaptivity} *)
+
+  (** Set a post processing step function.
+
+      @arkode_sprk SPRKStepSetPostprocessStepFn *)
+  val set_postprocess_step_fn : ('d, 'k) session -> 'd postprocess_fn -> unit
+
+  (** Clear the post processing step function.
+
+      @arkode_sprk SPRKStepSetPostprocessStepFn *)
+  val clear_postprocess_step_fn : ('d, 'k) session -> unit
+
+  (** Set a post processing stage function.
+
+      @arkode_sprk SPRKStepSetPostprocessStageFn *)
+  val set_postprocess_stage_fn : ('d, 'k) session -> 'd postprocess_fn -> unit
+
+  (** Clear the post processing stage function.
+
+      @arkode_sprk SPRKStepSetPostprocessStageFn *)
+  val clear_postprocess_stage_fn : ('d, 'k) session -> unit
+
+  (** {2:sprkget Querying the solver} *)
+
+  (** Returns the SPRK method coefficient table currently in use by the solver.
+
+      @arkode_sprk SPRKStepGetCurrentMethod *)
+  val get_current_method : ('d, 'k) session -> MethodTable.t
+
+  (** Returns the current state vector. This vector provides direct access to
+      the data within the integrator.
+
+      @arkode_sprk SPRKStepGetCurrentState *)
+  val get_current_state : ('d, 'k) session -> 'd
+
+  (** Returns the cumulative number of internal steps taken by the solver.
+
+      @arkode_sprk SPRKStepGetNumSteps *)
+  val get_num_steps           : ('d, 'k) session -> int
+
+  (** Returns the cumulative number of steps attempted by the solver.
+
+      @arkode_sprk SPRKStepGetNumStepAttempts *)
+  val get_num_step_attempts   : ('d, 'k) session -> int
+
+  (** Returns the number of calls to the right-hand side functions $f_1$ and
+      $f_2$.
+
+      @arkode_sprk SPRKStepGetNumRhsEvals *)
+  val get_num_rhs_evals       : ('d, 'k) session -> int * int
+
+  (** Returns the integration step size taken on the last successful internal
+      step.
+
+      @arkode_sprk SPRKStepGetLastStep *)
+  val get_last_step           : ('d, 'k) session -> float
+
+  (** Returns the integration step size to be attempted on the next internal
+      step.
+
+      @arkode_sprk SPRKStepGetCurrentStep *)
+  val get_current_step        : ('d, 'k) session -> float
+
+  (** Returns the the current internal time reached by the solver.
+
+      @arkode_sprk SPRKStepGetCurrentTime *)
+  val get_current_time        : ('d, 'k) session -> float
+
+  (** Returns a grouped set of integrator statistics.
+
+      @arkode_sprk SPRKStepGetStepStats *)
+  val get_step_stats           : ('d, 'k) session -> step_stats
+
+  (** Prints integrator statistics on the given channel.
+
+      @arkode_sprk SPRKStepGetStepStats *)
+  val print_step_stats  : ('d, 'k) session -> out_channel -> unit
+
+  (** Outputs all of the integrator statistics.
+
+      @arkode_sprk SPRKStepPrintAllStats *)
+  val print_all_stats
+        : ('d, 'k) session -> Logfile.t -> Sundials.output_format -> unit
+
+  (** {2:sprkroots Additional root-finding functions} *)
+
+  (** [set_root_direction s dir] specifies the direction of zero-crossings to
+      be located and returned. [dir] may contain one entry for each root
+      function.
+
+      @arkode_sprk SPRKStepSetRootDirection *)
+  val set_root_direction : ('d, 'k) session -> RootDirs.d array -> unit
+
+  (** Like {!set_root_direction} but specifies a single direction for all root
+      functions.
+
+      @arkode_sprk SPRKStepSetRootDirection *)
+  val set_all_root_directions : ('d, 'k) session -> RootDirs.d -> unit
+
+  (** Disables issuing a warning if some root function appears to be
+      identically zero at the beginning of the integration.
+
+      @arkode_sprk SPRKStepSetNoInactiveRootWarn *)
+  val set_no_inactive_root_warn : ('d, 'k) session -> unit
+
+  (** Returns the number of root functions. *)
+  val get_num_roots : ('d, 'k) session -> int
+
+  (** Fills an array showing which functions were found to have a root.
+
+      @arkode_sprk SPRKStepGetRootInfo *)
+  val get_root_info : ('d, 'k) session -> Roots.t -> unit
+
+  (** Outputs all the solver parameters on the standard output (or given file).
+
+      @arkode_sprk SPRKStepWriteParameters *)
+  val write_parameters : ?logfile:Logfile.t -> ('d, 'k) session -> unit
 
 end (* }}} *)
 
@@ -3653,8 +4125,8 @@ module MRIStep : sig (* {{{ *)
       {!evolve_normal} or {!evolve_one_step}.
 
       @arkode_mri MRIStepGetDky
-      @raise BadT [t] is not in the interval {% $[t_n - h_n, t_n]$%}.
-      @raise BadK [k] is not in the range \{0, 1, ..., dord\}. *)
+      @raise BadT [t] is not in the interval {% $[t_n - h_n, t_n]$ %}.
+      @raise BadK [k] is not in the range {% $\{0, 1, ..., dord\}$ %}. *)
   val get_dky : ('d, 'k) session -> ('d, 'k) Nvector.t -> float -> int -> unit
 
   (** Reinitializes the solver with new parameters and state values. The
@@ -3796,7 +4268,7 @@ module MRIStep : sig (* {{{ *)
 
   (** Disables any stop time previously set with {!set_stop_time}.
 
-      @cvode MRIStepClearStopTime
+      @arkode_mri MRIStepClearStopTime
       @since 6.5.1 *)
   val clear_stop_time : ('d, 'k) session -> unit
 
@@ -3861,7 +4333,7 @@ module MRIStep : sig (* {{{ *)
   (** Set a post processing step function.
 
       @arkode_mri MRIStepSetPostprocessStepFn *)
-  val set_postprocess_step_fn : ('d, 'k) session -> 'd postprocess_step_fn -> unit
+  val set_postprocess_step_fn : ('d, 'k) session -> 'd postprocess_fn -> unit
 
   (** Clear the post processing step function.
 
@@ -4008,7 +4480,7 @@ module MRIStep : sig (* {{{ *)
 
   (** Returns the number of failed steps due to a nonlinear solver failure.
 
-      @cvode MRIStepGetNumStepSolveFails
+      @arkode_mri MRIStepGetNumStepSolveFails
       @since 6.2.0 *)
   val get_num_step_solve_fails : ('d, 'k) session -> int
 
@@ -4088,7 +4560,7 @@ module MRIStep : sig (* {{{ *)
   (** Outputs all of the integrator, nonlinear solver, linear solver, and other
       statistics.
 
-      @cvode MRIStepPrintAllStats
+      @arkode_mri MRIStepPrintAllStats
       @since 6.2.0 *)
   val print_all_stats
         : ('d, 'k) session -> Logfile.t -> Sundials.output_format -> unit

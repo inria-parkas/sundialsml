@@ -26,6 +26,7 @@
     @arkode         link to Sundials ARKODE documentation
     @arkode_ark     link to Sundials ARKODE ARKStep documentation
     @arkode_erk     link to Sundials ARKODE ERKStep documentation
+    @arkode_sprk    link to Sundials ARKODE SPRKStep documentation
     @arkode_mri     link to Sundials ARKODE MRIStep documentation
     @arkode_bt      link to Sundials ARKODE Butcher Table documentation
     @arkode_user    link to Sundials ARKODE User-supplied functions documentation
@@ -150,6 +151,12 @@ struct
     method private html_of_arkode_erk t =
       let (page, anchor, title) =
         self#split_text ~page:"Usage/ERKStep_c_interface/User_callable.html" t
+      in
+      sundials_link "arkode" (!sundials_doc_root ^ "arkode/") page anchor title
+
+    method private html_of_arkode_sprk t =
+      let (page, anchor, title) =
+        self#split_text ~page:"Usage/SPRKStep_c_interface/User_callable.html" t
       in
       sundials_link "arkode" (!sundials_doc_root ^ "arkode/") page anchor title
 
@@ -365,6 +372,7 @@ struct
       tag_functions <- ("arkode",   self#html_of_arkode) :: tag_functions;
       tag_functions <- ("arkode_ark", self#html_of_arkode_ark) :: tag_functions;
       tag_functions <- ("arkode_erk", self#html_of_arkode_erk) :: tag_functions;
+      tag_functions <- ("arkode_sprk", self#html_of_arkode_sprk) :: tag_functions;
       tag_functions <- ("arkode_mri", self#html_of_arkode_mri) :: tag_functions;
       tag_functions <- ("arkode_bt",  self#html_of_arkode_bt) :: tag_functions;
       tag_functions <- ("arkode_user",self#html_of_arkode_user) :: tag_functions;
