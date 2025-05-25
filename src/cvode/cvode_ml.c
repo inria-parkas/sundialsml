@@ -2507,11 +2507,14 @@ CAMLprim value sunml_cvode_print_all_stats(value vcvode_mem,
 					   value vfile, value voutformat)
 {
     CAMLparam3(vcvode_mem, vfile, voutformat);
-
+#if 620 <= SUNDIALS_LIB_VERSION
     int flag = CVodePrintAllStats(CVODE_MEM_FROM_ML(vcvode_mem),
 				  ML_CFILE(vfile),
 				  SUNML_OUTPUT_FORMAT(voutformat));
     CHECK_FLAG("CVodePrintAllStats", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
 
     CAMLreturn (Val_unit);
 }

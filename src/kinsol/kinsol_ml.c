@@ -1646,10 +1646,14 @@ CAMLprim value sunml_kinsol_print_all_stats(value vkin_mem,
 {
     CAMLparam3(vkin_mem, vfile, voutformat);
 
+#if 620 <= SUNDIALS_LIB_VERSION
     int flag = KINPrintAllStats(KINSOL_MEM_FROM_ML(vkin_mem),
 				ML_CFILE(vfile),
 				SUNML_OUTPUT_FORMAT(voutformat));
     CHECK_FLAG("KINPrintAllStats", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
 
     CAMLreturn (Val_unit);
 }
