@@ -34,7 +34,8 @@ EXAMPLES_SINCE_5_8_0 = ark_analytic_mels.ml
 EXAMPLES_SINCE_6_0_0 = ark_brusselator1D_imexmri.ml
 
 EXAMPLES_SINCE_6_6_0 = ark_conserved_exp_entropy_ark.ml \
-		       ark_conserved_exp_entropy_erk.ml
+		       ark_conserved_exp_entropy_erk.ml \
+		       ark_damped_harmonic_symplectic.ml
 
 EXAMPLES = $(EXAMPLES_SINCE_2_5)				\
 	   $(if $(AT_LEAST_4_0_0),$(EXAMPLES_SINCE_4_0_0))	\
