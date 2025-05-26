@@ -33,12 +33,16 @@ EXAMPLES_SINCE_5_8_0 = ark_analytic_mels.ml
 
 EXAMPLES_SINCE_6_0_0 = ark_brusselator1D_imexmri.ml
 
+EXAMPLES_SINCE_6_6_0 = ark_conserved_exp_entropy_ark.ml \
+		       ark_conserved_exp_entropy_erk.ml
+
 EXAMPLES = $(EXAMPLES_SINCE_2_5)				\
 	   $(if $(AT_LEAST_4_0_0),$(EXAMPLES_SINCE_4_0_0))	\
 	   $(if $(AT_LEAST_5_0_0),$(EXAMPLES_SINCE_5_0_0))	\
 	   $(if $(AT_LEAST_5_4_0),$(EXAMPLES_SINCE_5_4_0))	\
 	   $(if $(AT_LEAST_5_8_0),$(EXAMPLES_SINCE_5_8_0))      \
-	   $(if $(AT_LEAST_6_0_0),$(EXAMPLES_SINCE_6_0_0))
+	   $(if $(AT_LEAST_6_0_0),$(EXAMPLES_SINCE_6_0_0))	\
+	   $(if $(AT_LEAST_6_6_0),$(EXAMPLES_SINCE_6_6_0))
 
 FILES_TO_CLEAN = bruss_mesh.txt bruss_u.txt bruss_v.txt bruss_w.txt \
 		 heat1D.txt heat_mesh.txt solution.txt \
@@ -52,7 +56,8 @@ FILES_TO_CLEAN = bruss_mesh.txt bruss_u.txt bruss_v.txt bruss_w.txt \
 		 ark_kpr_mri_solution.txt \
 		 ark_robertson_stats.csv ark_analytic_nonlin_stats.csv \
 	    	 ark_reaction_diffusion_mri_slow_stats.csv \
-	    	 ark_reaction_diffusion_mri_fast_stats.csv
+	    	 ark_reaction_diffusion_mri_fast_stats.csv \
+  		 ark_conserved_exp_entropy_ark.txt
 
 include ../../examples.mk
 

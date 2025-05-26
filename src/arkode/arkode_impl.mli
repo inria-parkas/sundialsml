@@ -114,6 +114,8 @@ module Global :
     type 'd stage_predict_fn = float -> 'd -> unit
     type 'd pre_inner_fn = float -> 'd array -> unit
     type 'd post_inner_fn = float -> 'd -> unit
+    type 'd relax_fn = 'd -> float
+    type 'd relax_jac_fn = 'd -> 'd -> unit
   end
 type ('d, 'k) inner_stepper_cptr
 type fullrhs_mode = Start | End | Other
@@ -160,6 +162,8 @@ type ('a, 'kind, 'step) session = {
     ('a, 'kind, ('a, 'kind, 'step) session, [ `Nvec ]) NLSI.nonlinear_solver
     option;
   mutable nls_rhsfn : 'a Global.rhsfn;
+  mutable relax_fn : 'a Global.relax_fn;
+  mutable relax_jac_fn : 'a Global.relax_jac_fn;
   mutable inner_session : ('a, 'kind) inner_stepper option;
 }
 and problem_type = ImplicitOnly | ExplicitOnly | ImplicitAndExplicit
@@ -313,3 +317,5 @@ val dummy_poststagefn : 'a -> 'b -> 'c
 val dummy_stagepredictfn : 'a -> 'b -> 'c
 val dummy_preinnerfn : 'a -> 'b -> 'c
 val dummy_postinnerfn : 'a -> 'b -> 'c
+val dummy_relax_fn : 'a -> 'b
+val dummy_relax_jac_fn : 'a -> 'b -> 'c

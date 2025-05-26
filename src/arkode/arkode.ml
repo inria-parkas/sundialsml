@@ -52,6 +52,12 @@ exception BadT
 
 exception VectorOpErr
 
+(* relaxation exceptions *)
+exception RelaxationFailure
+exception NoRelaxation
+exception RelaxationFuncFailure
+exception RelaxationJacFuncFailure
+
 module Common = struct (* {{{ *)
 
   include Arkode_impl.Global
@@ -115,6 +121,11 @@ module Common = struct (* {{{ *)
     | ImplicitGustafsson of adaptivity_params
     | ImExGustafsson of adaptivity_params
     | AdaptivityFn of 'd adaptivity_fn
+
+  (* must correspond to arkode_relax_solver_tag in arkode_ml.h *)
+  type relax_solver =
+    | Brent
+    | Newton
 
   (* must correspond to arkode_nonlin_system_data_index in arkode_ml.h *)
   type 'd nonlin_system_data = {
@@ -1536,6 +1547,65 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
 
   end (* }}} *)
 
+  module Relax = struct (* {{{ *)
+
+    external c_set_relax_fn : ('d, 'k) session -> bool -> unit
+      = "sunml_arkode_ark_set_relax_fn"
+
+    let enable s fn jacfn =
+      s.relax_fn <- fn;
+      s.relax_jac_fn <- jacfn;
+      c_set_relax_fn s true
+
+    let disable s =
+      s.relax_fn <- dummy_relax_fn;
+      s.relax_jac_fn <- dummy_relax_jac_fn;
+      c_set_relax_fn s false
+
+    external set_eta_fail : ('d, 'k) session -> float -> unit
+      = "sunml_arkode_ark_set_relax_eta_fail"
+
+    external set_lower_bound : ('d, 'k) session -> float -> unit
+      = "sunml_arkode_ark_set_relax_lower_bound"
+
+    external set_upper_bound : ('d, 'k) session -> float -> unit
+      = "sunml_arkode_ark_set_relax_upper_bound"
+
+    external set_max_fails : ('d, 'k) session -> int -> unit
+      = "sunml_arkode_ark_set_relax_max_fails"
+
+    external set_max_iters : ('d, 'k) session -> int ->unit
+      = "sunml_arkode_ark_set_relax_max_iters"
+
+    external set_solver : ('d, 'k) session -> relax_solver -> unit
+      = "sunml_arkode_ark_set_relax_solver"
+
+    external set_res_tol : ('d, 'k) session -> float -> unit
+      = "sunml_arkode_ark_set_relax_res_tol"
+
+    external set_tol : ('d, 'k) session -> rel:float -> abs:float -> unit
+      = "sunml_arkode_ark_set_relax_tol"
+
+    external get_num_fn_evals : ('d, 'k) session -> int
+      = "sunml_arkode_ark_get_num_relax_fn_evals"
+
+    external get_num_jac_evals : ('d, 'k) session -> int
+      = "sunml_arkode_ark_get_num_relax_jac_evals"
+
+    external get_num_fails : ('d, 'k) session -> int
+      = "sunml_arkode_ark_get_num_relax_fails"
+
+    external get_num_bound_fails : ('d, 'k) session -> int
+      = "sunml_arkode_ark_get_num_relax_bound_fails"
+
+    external get_num_solve_fails : ('d, 'k) session -> int
+      = "sunml_arkode_ark_get_num_relax_solve_fails"
+
+    external get_num_solve_iters : ('d, 'k) session -> int
+      = "sunml_arkode_ark_get_num_relax_solve_iters"
+
+  end (* }}} *)
+
   external sv_tolerances
       : ('a, 'k) session -> float -> ('a, 'k) Nvector.t -> unit
       = "sunml_arkode_ark_sv_tolerances"
@@ -1628,7 +1698,7 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
   external c_set_nls_rhs_fn : ('d, 'k) session -> unit
       = "sunml_arkode_ark_set_nls_rhs_fn"
 
-  let init ?context prob tol ?restol ?order ?mass ?(roots=no_roots) t0 y0 =
+  let init ?context prob tol ?restol ?order ?mass ?relax ?(roots=no_roots) t0 y0 =
     let (nroots, roots) = roots in
     let checkvec = Nvector.check y0 in
     if Sundials_configuration.safe && nroots < 0
@@ -1693,6 +1763,9 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
             nls_solver     = None;
             nls_rhsfn      = dummy_nlsrhsfn;
 
+            relax_fn       = (match relax with None -> dummy_relax_fn | Some (f, _) -> f);
+            relax_jac_fn   = (match relax with None -> dummy_relax_jac_fn | Some (_, f) -> f);
+
             inner_session  = None;
           } in
     Gc.finalise session_finalize session;
@@ -1730,6 +1803,7 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
     (match restol with Some rtol -> set_res_tolerance session rtol | None -> ());
     (match order with Some o -> c_set_order session o | None -> ());
     (match mass with Some msolver -> msolver session y0 | None -> ());
+    (match relax with Some _ -> Relax.c_set_relax_fn session true | None -> ());
     session
 
   let get_num_roots { nroots } = nroots
@@ -2256,6 +2330,65 @@ module ERKStep = struct (* {{{ *)
 
   type ('d, 'k) session = ('d, 'k, erkstep) Arkode_impl.session
 
+  module Relax = struct (* {{{ *)
+
+    external c_set_relax_fn : ('d, 'k) session -> bool -> unit
+      = "sunml_arkode_erk_set_relax_fn"
+
+    let enable s fn jacfn =
+      s.relax_fn <- fn;
+      s.relax_jac_fn <- jacfn;
+      c_set_relax_fn s true
+
+    let disable s =
+      s.relax_fn <- dummy_relax_fn;
+      s.relax_jac_fn <- dummy_relax_jac_fn;
+      c_set_relax_fn s false
+
+    external set_eta_fail : ('d, 'k) session -> float -> unit
+      = "sunml_arkode_erk_set_relax_eta_fail"
+
+    external set_lower_bound : ('d, 'k) session -> float -> unit
+      = "sunml_arkode_erk_set_relax_lower_bound"
+
+    external set_upper_bound : ('d, 'k) session -> float -> unit
+      = "sunml_arkode_erk_set_relax_upper_bound"
+
+    external set_max_fails : ('d, 'k) session -> int -> unit
+      = "sunml_arkode_erk_set_relax_max_fails"
+
+    external set_max_iters : ('d, 'k) session -> int ->unit
+      = "sunml_arkode_erk_set_relax_max_iters"
+
+    external set_solver : ('d, 'k) session -> relax_solver -> unit
+      = "sunml_arkode_erk_set_relax_solver"
+
+    external set_res_tol : ('d, 'k) session -> float -> unit
+      = "sunml_arkode_erk_set_relax_res_tol"
+
+    external set_tol : ('d, 'k) session -> rel:float -> abs:float -> unit
+      = "sunml_arkode_erk_set_relax_tol"
+
+    external get_num_fn_evals : ('d, 'k) session -> int
+      = "sunml_arkode_erk_get_num_relax_fn_evals"
+
+    external get_num_jac_evals : ('d, 'k) session -> int
+      = "sunml_arkode_erk_get_num_relax_jac_evals"
+
+    external get_num_fails : ('d, 'k) session -> int
+      = "sunml_arkode_erk_get_num_relax_fails"
+
+    external get_num_bound_fails : ('d, 'k) session -> int
+      = "sunml_arkode_erk_get_num_relax_bound_fails"
+
+    external get_num_solve_fails : ('d, 'k) session -> int
+      = "sunml_arkode_erk_get_num_relax_solve_fails"
+
+    external get_num_solve_iters : ('d, 'k) session -> int
+      = "sunml_arkode_erk_get_num_relax_solve_iters"
+
+  end (* }}} *)
+
   external c_root_init : ('a, 'k) session -> int -> unit
       = "sunml_arkode_erk_root_init"
 
@@ -2294,7 +2427,7 @@ module ERKStep = struct (* {{{ *)
     -> (erkstep arkode_mem * c_weak_ref)
     = "sunml_arkode_erk_init"
 
-  let init ?context tol ?order f ?(roots=no_roots) t0 y0 =
+  let init ?context tol ?order f ?relax ?(roots=no_roots) t0 y0 =
     let (nroots, roots) = roots in
     let checkvec = Nvector.check y0 in
     if Sundials_configuration.safe && nroots < 0 then
@@ -2348,6 +2481,9 @@ module ERKStep = struct (* {{{ *)
             nls_solver     = None;
             nls_rhsfn      = dummy_nlsrhsfn;
 
+            relax_fn       = (match relax with None -> dummy_relax_fn | Some (f, _) -> f);
+            relax_jac_fn   = (match relax with None -> dummy_relax_jac_fn | Some (_, f) -> f);
+
             inner_session  = None;
           } in
     Gc.finalise session_finalize session;
@@ -2358,6 +2494,7 @@ module ERKStep = struct (* {{{ *)
       c_root_init session nroots;
     set_tolerances session tol;
     (match order with Some o -> c_set_order session o | None -> ());
+    (match relax with Some _ -> Relax.c_set_relax_fn session true | None -> ());
     session
 
   let get_num_roots { nroots } = nroots
@@ -2805,6 +2942,9 @@ module SPRKStep = struct (* {{{ *)
 
             nls_solver     = None;
             nls_rhsfn      = dummy_nlsrhsfn;
+
+            relax_fn       = dummy_relax_fn;
+            relax_jac_fn   = dummy_relax_jac_fn;
 
             inner_session  = None;
           } in
@@ -3576,6 +3716,9 @@ module MRIStep = struct (* {{{ *)
             nls_solver     = None;
             nls_rhsfn      = dummy_nlsrhsfn;
 
+            relax_fn       = dummy_relax_fn;
+            relax_jac_fn   = dummy_relax_jac_fn;
+
             inner_session  = Some istepper;
           } in
     Gc.finalise session_finalize session;
@@ -3986,4 +4129,8 @@ let _ =
       BadK;
       BadT;
       VectorOpErr;
+      RelaxationFailure;
+      NoRelaxation;
+      RelaxationFuncFailure;
+      RelaxationJacFuncFailure;
     |]

@@ -152,7 +152,7 @@ CAMLprim value sunml_arkode_ark_clear_err_handler_fn(value vdata)
 }
 
 int sunml_arkode_translate_exception (value session, value exn,
-			        recoverability recoverable)
+				      recoverability recoverable)
 {
     CAMLparam2(session, exn);
     CAMLlocal1(bucket);
@@ -818,6 +818,52 @@ static int jactimesrhsfn(sunrealtype t, N_Vector y, N_Vector ydot, void *user_da
 
     /* NB: Don't trigger GC while processing this return value!  */
     value r = caml_callbackN_exn(cb, 3, args);
+
+    CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
+}
+#endif
+
+#if 660 <= SUNDIALS_LIB_VERSION
+static int relaxfn(N_Vector y, sunrealtype *rr, void *user_data)
+{
+    CAMLparam0();
+    CAMLlocal1(session);
+    CAMLlocalN(args, 1);
+
+    value *backref = user_data;
+    WEAK_DEREF (session, *backref);
+
+    args[0] = NVEC_BACKLINK (y);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn(
+		Field(session, RECORD_ARKODE_SESSION_RELAX_FN), 1, args);
+
+    /* Update r; leave it unchanged if an error occurred.  */
+    if (!Is_exception_result (r)) {
+	*rr = Double_val (r);
+	CAMLreturnT(int, 0);
+    }
+
+    r = Extract_exception (r);
+    CAMLreturnT(int, sunml_arkode_translate_exception (session, r, RECOVERABLE));
+}
+
+static int relaxjacfn(N_Vector y, N_Vector j, void *user_data)
+{
+    CAMLparam0();
+    CAMLlocal1(session);
+    CAMLlocalN(args, 2);
+
+    value *backref = user_data;
+    WEAK_DEREF (session, *backref);
+
+    args[0] = NVEC_BACKLINK (y);
+    args[1] = NVEC_BACKLINK (j);
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callbackN_exn(
+		Field(session, RECORD_ARKODE_SESSION_RELAX_JAC_FN), 2, args);
 
     CAMLreturnT(int, CHECK_EXCEPTION (session, r, RECOVERABLE));
 }
@@ -1753,6 +1799,20 @@ static value sunml_stepper_exception_from_flag(int flag)
 	    Store_some(vro, ARKODE_EXN(VectorOpErr));
 	    break;
 
+#if 660 <= SUNDIALS_LIB_VERSION
+	case ARK_RELAX_FAIL:
+	    Store_some(vro, ARKODE_EXN(RelaxationFailure));
+	    break;
+
+	case ARK_RELAX_FUNC_FAIL:
+	    Store_some(vro, ARKODE_EXN(RelaxationFuncFailure));
+	    break;
+
+	case ARK_RELAX_JAC_FAIL:
+	    Store_some(vro, ARKODE_EXN(RelaxationFuncFailure));
+	    break;
+#endif
+
 	default:
 	    vro = Val_none;
     }
@@ -1902,6 +1962,21 @@ void sunml_arkode_check_flag(const char *call, int flag, void *arkode_mem)
 	case ARK_INVALID_TABLE:
 	    caml_raise_constant(ARKODE_EXN(InvalidTable));
 #endif
+
+#if 660 <= SUNDIALS_LIB_VERSION
+	case ARK_RELAX_FAIL:
+	    caml_raise_constant(ARKODE_EXN(RelaxationFailure));
+
+	case ARK_RELAX_MEM_NULL:
+	    caml_raise_constant(ARKODE_EXN(NoRelaxation));
+
+	case ARK_RELAX_FUNC_FAIL:
+	    caml_raise_constant(ARKODE_EXN(RelaxationFuncFailure));
+
+	case ARK_RELAX_JAC_FAIL:
+	    caml_raise_constant(ARKODE_EXN(RelaxationFuncFailure));
+#endif
+
 
 	default:
 #if 400 <= SUNDIALS_LIB_VERSION
@@ -3537,6 +3612,24 @@ CAMLprim value sunml_arkode_ark_set_postprocess_step_fn(value varkode_mem,
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_arkode_ark_set_relax_fn(value varkode_mem, value venable)
+{
+    CAMLparam2(varkode_mem, venable);
+
+#if 660 <= SUNDIALS_LIB_VERSION
+    int flag;
+
+    flag = ARKStepSetRelaxFn(ARKODE_MEM_FROM_ML(varkode_mem),
+			     (Bool_val(venable) ? relaxfn : NULL),
+			     (Bool_val(venable) ? relaxjacfn : NULL));
+    CHECK_FLAG("ARKStepSetRelaxFn", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * Boiler plate definitions for ARKStep interface.
  */
@@ -4687,6 +4780,230 @@ CAMLprim value sunml_arkode_spils_set_mass_prec_type(value varkode_mem,
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
     CAMLreturn (Val_unit);
+}
+
+/* relaxation */
+
+CAMLprim value sunml_arkode_ark_set_relax_eta_fail(value varkode_mem, value vv)
+{
+    CAMLparam2(varkode_mem, vv);
+
+#if 660 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepSetRelaxEtaFail(ARKODE_MEM_FROM_ML(varkode_mem),
+				      Double_val(vv));
+    CHECK_FLAG("ARKStepSetRelaxEtaFail", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_ark_set_relax_lower_bound(value varkode_mem, value vv)
+{
+    CAMLparam2(varkode_mem, vv);
+
+#if 660 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepSetRelaxLowerBound(ARKODE_MEM_FROM_ML(varkode_mem),
+					 Double_val(vv));
+    CHECK_FLAG("ARKStepSetRelaxLowerBound", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_ark_set_relax_upper_bound(value varkode_mem, value vv)
+{
+    CAMLparam2(varkode_mem, vv);
+
+#if 660 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepSetRelaxUpperBound(ARKODE_MEM_FROM_ML(varkode_mem),
+					 Double_val(vv));
+    CHECK_FLAG("ARKStepSetRelaxUpperBound", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_ark_set_relax_max_fails(value varkode_mem, value vv)
+{
+    CAMLparam2(varkode_mem, vv);
+
+#if 660 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepSetRelaxMaxFails(ARKODE_MEM_FROM_ML(varkode_mem), Int_val(vv));
+    CHECK_FLAG("ARKStepSetRelaxMaxFails", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_ark_set_relax_max_iters(value varkode_mem, value vv)
+{
+    CAMLparam2(varkode_mem, vv);
+
+#if 660 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepSetRelaxMaxIters(ARKODE_MEM_FROM_ML(varkode_mem), Int_val(vv));
+    CHECK_FLAG("ARKStepSetRelaxMaxIters", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_ark_set_relax_solver(value varkode_mem, value vv)
+{
+    CAMLparam2(varkode_mem, vv);
+
+#if 660 <= SUNDIALS_LIB_VERSION
+    ARKRelaxSolver solver;
+    int flag;
+
+    switch (Int_val(vv)) {
+	case VARIANT_ARKODE_RELAX_SOLVER_BRENT:
+	    solver = ARK_RELAX_BRENT;
+	    break;
+	case VARIANT_ARKODE_RELAX_SOLVER_NEWTON:
+	    solver = ARK_RELAX_NEWTON;
+	    break;
+	default:
+	    caml_failwith("internal error: Relax.set_solver");
+    }
+
+    flag = ARKStepSetRelaxSolver(ARKODE_MEM_FROM_ML(varkode_mem), solver);
+    CHECK_FLAG("ARKStepSetRelaxSolver", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_ark_set_relax_res_tol(value varkode_mem, value vv)
+{
+    CAMLparam2(varkode_mem, vv);
+
+#if 660 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepSetRelaxResTol(ARKODE_MEM_FROM_ML(varkode_mem),
+				     Double_val(vv));
+    CHECK_FLAG("ARKStepSetRelaxResTol", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_ark_set_relax_tol(value varkode_mem,
+					      value vrel, value vabs)
+{
+    CAMLparam3(varkode_mem, vrel, vabs);
+
+#if 660 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepSetRelaxTol(ARKODE_MEM_FROM_ML(varkode_mem),
+				  Double_val(vrel), Double_val(vabs));
+    CHECK_FLAG("ARKStepSetRelaxTol", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_ark_get_num_relax_fn_evals(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    long int r = 0;
+
+#if 660 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepGetNumRelaxFnEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    CHECK_FLAG("ARKStepGetNumRelaxFnEvals", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_int(r));
+}
+
+CAMLprim value sunml_arkode_ark_get_num_relax_jac_evals(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    long int r = 0;
+
+#if 660 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepGetNumRelaxJacEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    CHECK_FLAG("ARKStepGetNumRelaxJacEvals", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_int(r));
+}
+
+CAMLprim value sunml_arkode_ark_get_num_relax_fails(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    long int r = 0;
+
+#if 660 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepGetNumRelaxFails(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    CHECK_FLAG("ARKStepGetNumRelaxFails", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_int(r));
+}
+
+CAMLprim value sunml_arkode_ark_get_num_relax_bound_fails(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    long int r = 0;
+
+#if 660 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepGetNumRelaxBoundFails(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    CHECK_FLAG("ARKStepGetNumRelaxBoundFails", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_int(r));
+}
+
+CAMLprim value sunml_arkode_ark_get_num_relax_solve_fails(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    long int r = 0;
+
+#if 660 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepGetNumRelaxSolveFails(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    CHECK_FLAG("ARKStepGetNumRelaxSolveFails", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_int(r));
+}
+
+CAMLprim value sunml_arkode_ark_get_num_relax_solve_iters(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    long int r = 0;
+
+#if 660 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepGetNumRelaxSolveIters(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    CHECK_FLAG("ARKStepGetNumRelaxSolveIters", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_int(r));
 }
 
 /* statistic accessor functions */
@@ -5933,6 +6250,24 @@ CAMLprim value sunml_arkode_erk_set_postprocess_step_fn(value varkode_mem,
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_arkode_erk_set_relax_fn(value varkode_mem, value venable)
+{
+    CAMLparam2(varkode_mem, venable);
+
+#if 660 <= SUNDIALS_LIB_VERSION
+    int flag;
+
+    flag = ERKStepSetRelaxFn(ARKODE_MEM_FROM_ML(varkode_mem),
+			     (Bool_val(venable) ? relaxfn : NULL),
+			     (Bool_val(venable) ? relaxjacfn : NULL));
+    CHECK_FLAG("ERKStepSetRelaxFn", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * Boiler plate definitions for ERKStep interface.
  */
@@ -6709,6 +7044,230 @@ CAMLprim value sunml_arkode_erk_write_butcher(value varkode_mem, value vlog)
 #endif
 
     CAMLreturn(Val_unit);
+}
+
+/* relaxation */
+
+CAMLprim value sunml_arkode_erk_set_relax_eta_fail(value varkode_mem, value vv)
+{
+    CAMLparam2(varkode_mem, vv);
+
+#if 660 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetRelaxEtaFail(ARKODE_MEM_FROM_ML(varkode_mem),
+				      Double_val(vv));
+    CHECK_FLAG("ERKStepSetRelaxEtaFail", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_set_relax_lower_bound(value varkode_mem, value vv)
+{
+    CAMLparam2(varkode_mem, vv);
+
+#if 660 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetRelaxLowerBound(ARKODE_MEM_FROM_ML(varkode_mem),
+					 Double_val(vv));
+    CHECK_FLAG("ERKStepSetRelaxLowerBound", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_set_relax_upper_bound(value varkode_mem, value vv)
+{
+    CAMLparam2(varkode_mem, vv);
+
+#if 660 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetRelaxUpperBound(ARKODE_MEM_FROM_ML(varkode_mem),
+					 Double_val(vv));
+    CHECK_FLAG("ERKStepSetRelaxUpperBound", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_set_relax_max_fails(value varkode_mem, value vv)
+{
+    CAMLparam2(varkode_mem, vv);
+
+#if 660 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetRelaxMaxFails(ARKODE_MEM_FROM_ML(varkode_mem), Int_val(vv));
+    CHECK_FLAG("ERKStepSetRelaxMaxFails", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_set_relax_max_iters(value varkode_mem, value vv)
+{
+    CAMLparam2(varkode_mem, vv);
+
+#if 660 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetRelaxMaxIters(ARKODE_MEM_FROM_ML(varkode_mem), Int_val(vv));
+    CHECK_FLAG("ERKStepSetRelaxMaxIters", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_set_relax_solver(value varkode_mem, value vv)
+{
+    CAMLparam2(varkode_mem, vv);
+
+#if 660 <= SUNDIALS_LIB_VERSION
+    ARKRelaxSolver solver;
+    int flag;
+
+    switch (Int_val(vv)) {
+	case VARIANT_ARKODE_RELAX_SOLVER_BRENT:
+	    solver = ARK_RELAX_BRENT;
+	    break;
+	case VARIANT_ARKODE_RELAX_SOLVER_NEWTON:
+	    solver = ARK_RELAX_NEWTON;
+	    break;
+	default:
+	    caml_failwith("internal error: Relax.set_solver");
+    }
+
+    flag = ERKStepSetRelaxSolver(ARKODE_MEM_FROM_ML(varkode_mem), solver);
+    CHECK_FLAG("ERKStepSetRelaxSolver", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_set_relax_res_tol(value varkode_mem, value vv)
+{
+    CAMLparam2(varkode_mem, vv);
+
+#if 660 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetRelaxResTol(ARKODE_MEM_FROM_ML(varkode_mem),
+				     Double_val(vv));
+    CHECK_FLAG("ERKStepSetRelaxResTol", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_set_relax_tol(value varkode_mem,
+					      value vrel, value vabs)
+{
+    CAMLparam3(varkode_mem, vrel, vabs);
+
+#if 660 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetRelaxTol(ARKODE_MEM_FROM_ML(varkode_mem),
+				  Double_val(vrel), Double_val(vabs));
+    CHECK_FLAG("ERKStepSetRelaxTol", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_get_num_relax_fn_evals(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    long int r = 0;
+
+#if 660 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepGetNumRelaxFnEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    CHECK_FLAG("ERKStepGetNumRelaxFnEvals", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_int(r));
+}
+
+CAMLprim value sunml_arkode_erk_get_num_relax_jac_evals(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    long int r = 0;
+
+#if 660 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepGetNumRelaxJacEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    CHECK_FLAG("ERKStepGetNumRelaxJacEvals", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_int(r));
+}
+
+CAMLprim value sunml_arkode_erk_get_num_relax_fails(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    long int r = 0;
+
+#if 660 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepGetNumRelaxFails(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    CHECK_FLAG("ERKStepGetNumRelaxFails", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_int(r));
+}
+
+CAMLprim value sunml_arkode_erk_get_num_relax_bound_fails(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    long int r = 0;
+
+#if 660 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepGetNumRelaxBoundFails(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    CHECK_FLAG("ERKStepGetNumRelaxBoundFails", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_int(r));
+}
+
+CAMLprim value sunml_arkode_erk_get_num_relax_solve_fails(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    long int r = 0;
+
+#if 660 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepGetNumRelaxSolveFails(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    CHECK_FLAG("ERKStepGetNumRelaxSolveFails", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_int(r));
+}
+
+CAMLprim value sunml_arkode_erk_get_num_relax_solve_iters(value varkode_mem)
+{
+    CAMLparam1(varkode_mem);
+    long int r = 0;
+
+#if 660 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepGetNumRelaxSolveIters(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    CHECK_FLAG("ERKStepGetNumRelaxSolveIters", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_int(r));
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *

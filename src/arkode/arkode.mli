@@ -250,6 +250,13 @@ module Common : sig (* {{{ *)
     | AdaptivityFn of 'd adaptivity_fn
           (** A custom time-step adaptivity function. *)
 
+  (** Non-linear solver to use for relaxation.
+
+      @arkode <Usage/ARKStep_c_interface/Relaxation.html#c.ARKStepSetRelaxSolver> ARKRelaxSolver *)
+  type relax_solver =
+    | Brent
+    | Newton
+
   (** {3:callbacks Callback functions} *)
 
   (** Right-hand side functions for calculating ODE derivatives. They are passed
@@ -317,6 +324,29 @@ module Common : sig (* {{{ *)
       jac_fy  : 'd;           (** The derivative vector {% $f_I(t, y)$%}. *)
       jac_tmp : 't            (** Workspace data. *)
     }
+
+  (** Relaxation function that computes the conservative or dissipative
+      function {% $\Xi(y)$ %}.
+      The arguments are
+      - [y], the value of the dependent variable vector {% $y(t)$ %}, and
+      - [r], the value of {% $\Xi(y)$ %}.
+
+      {warning [y] and [r] should not be accessed after the function
+               has returns.}
+
+      @arkode_user ARKRelaxFn *)
+  type 'd relax_fn = 'd -> float
+
+  (** Relaxation Jacobian function that computes {% $\Xi'(y)$ %}.
+      The arguments are
+      - [y], the value of the dependent variable vector {% $y(t)$ %}, and
+      - [j], the value of {% $\Xi'(y)$ %}.
+
+      {warning [y] and [r] should not be accessed after the function
+               has returns.}
+
+      @arkode_user ARKRelaxJacFn *)
+  type 'd relax_jac_fn = 'd -> 'd -> unit
 
 end (* }}} *)
 
@@ -737,7 +767,8 @@ end (* }}} *)
       {- {{:#arksolver}Solver initialization and use}}
       {- {{:#arkset}Modifying the solver}}
       {- {{:#arkget}Querying the solver}}
-      {- {{:#arkroots}Additional root finding functions}}}
+      {- {{:#arkroots}Additional root finding functions}}
+      {- {{:#arkrelax}Relaxation Methods}}}
 
     @arkode <Usage/ARKStep_c_interface/index.html#using-the-arkstep-time-stepping-module> Using the ARKStep time-stepping module *)
 module ARKStep : sig (* {{{ *)
@@ -1417,7 +1448,7 @@ module ARKStep : sig (* {{{ *)
     -> ('data, 'kind) problem
 
   (** Creates and initializes a session with the solver. The call
-      {[init problem tol ~restol ~order ~mass:msolver ~roots:(nroots, g) t0 y0]}
+      {[init problem tol ~restol ~order ~mass:msolver ~relax:(rfn, rjfn) ~roots:(nroots, g) t0 y0]}
       has as arguments:
       - [problem], specifies the problem to solve (see {!problem}),
       - [tol],     the integration tolerances,
@@ -1425,6 +1456,8 @@ module ARKStep : sig (* {{{ *)
       - [order],   the order of accuracy for the integration method,
       - [msolver], a linear mass matrix solver is required only if the problem
                    involves a non-identity mass matrix,
+      - [rfn, rjfn], enables relaxation with the given functions
+                     (see {!Relax.enable}),
       - [nroots],  the number of root functions,
       - [g],       the root function ([(nroots, g)] defaults to
                    {!Common.no_roots}),
@@ -1450,6 +1483,7 @@ module ARKStep : sig (* {{{ *)
       @arkode_ark ARKStepSetNonlinear
       @arkode_ark ARKStepSetLinearSolver
       @arkode_ark ARKStepSetMassLinearSolver
+      @arkode_ark ARKStepSetRelaxFn
       @arkode_ark ARKStepSetNonlinearSolver
       @arkode_ark ARKStepRootInit
       @arkode_ark ARKStepSStolerances
@@ -1467,6 +1501,7 @@ module ARKStep : sig (* {{{ *)
       -> ?restol:(('data, 'kind) res_tolerance)
       -> ?order:int
       -> ?mass:('data, 'kind) Mass.solver
+      -> ?relax:('data relax_fn * 'data relax_jac_fn)
       -> ?roots:(int * 'data rootsfn)
       -> float
       -> ('data, 'kind) Nvector.t
@@ -2268,6 +2303,18 @@ module ARKStep : sig (* {{{ *)
       @arkode_ark ARKStepPrintMem *)
   val write_session  : ?logfile:Logfile.t -> ('d, 'k) session -> unit
 
+  (** Outputs all the solver parameters on the standard output (or given file).
+
+      @arkode_ark ARKStepWriteParameters
+      @since 4.1.0 *)
+  val write_parameters : ?logfile:Logfile.t -> ('d, 'k) session -> unit
+
+  (** Outputs the current butcher table on the standard output (or given file).
+
+      @arkode_ark ARKStepWriteButcher
+      @since 4.1.0 *)
+  val write_butcher : ?logfile:Logfile.t -> ('d, 'k) session -> unit
+
   (** {3:arkgetls Linear solver optional output functions} *)
 
   (** Returns the internal Jacobian matrix of the ODE implicit
@@ -2321,6 +2368,12 @@ module ARKStep : sig (* {{{ *)
       @return ([nniters], [nncfails]) *)
   val get_nonlin_solv_stats : ('d, 'k) session -> int * int
 
+  (** Returns the cumulative number of test failures.
+
+      @arkode_ark ARKStepGetNumConstrFails
+      @since 5.0.0 *)
+  val get_num_constr_fails : ('d, 'k) session -> int
+
   (** {2:arkroots Additional root-finding functions} *)
 
   (** [set_root_direction s dir] specifies the direction of zero-crossings to
@@ -2356,23 +2409,164 @@ module ARKStep : sig (* {{{ *)
       @arkode_ark ARKStepGetNumGEvals *)
   val get_num_g_evals : ('d, 'k) session -> int
 
-  (** Returns the cumulative number of test failures.
+  (** {2:arkrelax Relaxation Methods}
 
-      @arkode_ark ARKStepGetNumConstrFails
-      @since 5.0.0 *)
-  val get_num_constr_fails : ('d, 'k) session -> int
+      Relaxation methods ensure dissipation or preservation of the global
+      function by calculating a relaxed solution.
 
-  (** Outputs all the solver parameters on the standard output (or given file).
+      @arkode <Mathematics_link.html#relaxation-methods> Relaxation methods
+      @since 6.6.0 *)
+  module Relax : sig (* {{{ *)
 
-      @arkode_ark ARKStepWriteParameters
-      @since 4.1.0 *)
-  val write_parameters : ?logfile:Logfile.t -> ('d, 'k) session -> unit
+    (** Enables relaxation for the given solver session (see also: {!init})
 
-  (** Outputs the current butcher table on the standard output (or given file).
+        @arkode_ark ARKStepSetRelaxFn
+        @since 6.6.0 *)
+    val enable : ('d, 'k) session -> 'd relax_fn -> 'd relax_jac_fn -> unit
 
-      @arkode_ark ARKStepWriteButcher
-      @since 4.1.0 *)
-  val write_butcher : ?logfile:Logfile.t -> ('d, 'k) session -> unit
+    (** Disables relaxation for the given solver session.
+
+        @arkode_ark ARKStepSetRelaxFn
+        @since 6.6.0 *)
+    val disable : ('d, 'k) session -> unit
+
+    (** Sets the step size reduction factor applied after a failed relaxation
+        application. If the argument is outside of the range [0, 1], the
+        default of 0.25 is used.
+
+        @arkode_ark ARKStepSetRelaxEtaFail
+        @raise NoRelaxation Relaxation is not enabled.
+        @since 6.6.0 *)
+    val set_eta_fail : ('d, 'k) session -> float -> unit
+
+    (** Sets the smallest acceptable value for the relaxation parameter.
+        Values smaller than the lower bound will result in a failed relaxation
+        application and the step will be repeated with a smaller step size
+        (set by {!set_eta_fail}).
+        If the arguemnt is outside the range [0, 1], the default of 0.8 is used.
+
+        @arkode_ark ARKStepSetRelaxLowerBound
+        @raise NoRelaxation Relaxation is not enabled.
+        @since 6.6.0 *)
+    val set_lower_bound : ('d, 'k) session -> float -> unit
+
+    (** Sets the largest acceptable value for the relaxation parameter.
+        Values larger than the upper bound will result in a failed relaxation
+        application and the step will be repeated with a smaller step size
+        (set by {!set_eta_fail}).
+        If the argument is <= 1, the default of 1.2 is used.
+
+        @arkode_ark ARKStepSetRelaxUpperBound
+        @raise NoRelaxation Relaxation is not enabled.
+        @since 6.6.0 *)
+    val set_upper_bound : ('d, 'k) session -> float -> unit
+
+    (** Sets the maximum number of times relaxation can fail within a
+        step attempt before integration fails.
+        If the argument is <= 0, the default of 10 is used.
+
+        @arkode_ark ARKStepSetRelaxMaxFails
+        @raise NoRelaxation Relaxation is not enabled.
+        @since 6.6.0 *)
+    val set_max_fails : ('d, 'k) session -> int -> unit
+
+    (** Sets the maximum number of nonlinear iterations allowed when solving
+        for the relaxation parameter.
+        If the maximum number of iterations is reached before meeting the
+        solve tolerance ({!set_res_tol} and {!set_tol}), the step is repeated
+        with a smaller step size (determined by {!set_eta_fail}).
+        If the argument is <= 0, the default of 10 is used.
+
+        @arkode_ark ARKStepSetRelaxMaxIters
+        @raise NoRelaxation Relaxation is not enabled.
+        @since 6.6.0 *)
+    val set_max_iters : ('d, 'k) session -> int ->unit
+
+    (** Sets the nonlinear solver method for computing the relaxation
+        parameter. The default is {{!relax_solver}Newton}.
+
+        @arkode_ark ARKStepSetRelaxSolver
+        @raise NoRelaxation Relaxation is not enabled.
+        @since 6.6.0 *)
+    val set_solver : ('d, 'k) session -> relax_solver -> unit
+
+    (** Sets the nonlinear solver residual tolerance.
+        If the residual or iteration update tolerance is not reached within
+        the maximum number of iterations (see {!set_max_iters}), the step will
+        be repeated with a smaller step size (set by {!set_eta_fail}).
+        If the argument is <= 0, the default of {% $4\epsilon$ %}, where
+        {% $\epsilon$ %} is the floating-point precision, will be used.
+
+        @arkode_ark ARKStepSetRelaxResTol
+        @raise NoRelaxation Relaxation is not enabled.
+        @since 6.6.0 *)
+    val set_res_tol : ('d, 'k) session -> float -> unit
+
+    (** Sets the nonlinear solver relative and absolute tolerance on changes
+        in iterates.
+        If the residual or iteration update tolerance is not reached within
+        the maximum number of iterations (see {!set_max_iters}), the step will
+        be repeated with a smaller step size (set by {!set_eta_fail}).
+        If the argument is <= 0, the defaults of {% $4\epsilon$ %} and {%
+        $10^{-14}$ %}, where {% $\epsilon$ %} is the floating-point precision,
+        will be used.
+
+        @arkode_ark ARKStepSetRelaxTol
+        @raise NoRelaxation Relaxation is not enabled.
+        @since 6.6.0 *)
+    val set_tol : ('d, 'k) session -> rel:float -> abs:float -> unit
+
+    (** Returns the number of times the provided relaxation function was
+        evaluated.
+
+        @arkode_ark ARKStepGetNumRelaxFnEvals
+        @raise NoRelaxation Relaxation is not enabled.
+        @since 6.6.0 *)
+    val get_num_fn_evals : ('d, 'k) session -> int
+
+    (** Returns the number of times the provided relaxation Jacobian was
+        evaluated.
+
+        @arkode_ark ARKStepGetNumRelaxJacEvals
+        @raise NoRelaxation Relaxation is not enabled.
+        @since 6.6.0 *)
+    val get_num_jac_evals : ('d, 'k) session -> int
+
+    (** Returns the total number of times applying relaxation failed.
+        The counter includes the sum of the number of nonlinear solver
+        failures (see {!get_num_solve_fails}) and the number of failures due
+        an unacceptable relaxation value.
+
+        @arkode_ark ARKStepGetNumRelaxFails
+        @raise NoRelaxation Relaxation is not enabled.
+        @since 6.6.0 *)
+    val get_num_fails : ('d, 'k) session -> int
+
+    (** Returns the number of times the relaxation parameter was deemed
+        unacceptable.
+
+        @arkode_ark ARKStepGetNumRelaxBoundFails
+        @raise NoRelaxation Relaxation is not enabled.
+        @since 6.6.0 *)
+    val get_num_bound_fails : ('d, 'k) session -> int
+
+    (** Returns the number of times the relaxation parameter nonlinear solver
+        failed.
+
+        @arkode_ark ARKStepGetNumRelaxSolveFails
+        @raise NoRelaxation Relaxation is not enabled.
+        @since 6.6.0 *)
+    val get_num_solve_fails : ('d, 'k) session -> int
+
+    (** Returns the number of relaxation parameter nonlinear solver
+        iterations.
+
+        @arkode_ark ARKStepGetNumRelaxSolveIters
+        @raise NoRelaxation Relaxation is not enabled.
+        @since 6.6.0 *)
+    val get_num_solve_iters : ('d, 'k) session -> int
+
+  end (* }}} *)
 
 end (* }}} *)
 
@@ -2386,7 +2580,8 @@ end (* }}} *)
       {- {{:#erksolver}Solver initialization and use}}
       {- {{:#erkset}Modifying the solver}}
       {- {{:#erkget}Querying the solver}}
-      {- {{:#erkroots}Additional root finding functions}}}
+      {- {{:#erkroots}Additional root finding functions}}
+      {- {{:#erkrelax}Relaxation Methods}}}
 
     @arkode <Usage/ERKStep_c_interface/index.html#using-the-erkstep-time-stepping-module> Using the ERKStep time-stepping module *)
 module ERKStep : sig (* {{{ *)
@@ -2405,11 +2600,13 @@ module ERKStep : sig (* {{{ *)
   (** {2:erksolver Solver initialization and use} *)
 
   (** Creates and initializes a session with the solver. The call
-      {[init tol ~order f ~roots:(nroots, g) t0 y0]}
+      {[init tol ~order f ~relax:(rfn, rjfn) ~roots:(nroots, g) t0 y0]}
       has as arguments:
       - [tol],    the integration tolerances,
       - [order],  the order of accuracy for the integration method,
       - [f],      the ODE right-hand side function,
+      - [rfn, rjfn], enables relaxation with the given functions
+                     (see {!Relax.enable}),
       - [nroots], the number of root functions,
       - [g],      the root function ([(nroots, g)] defaults to
                   {!Common.no_roots}),
@@ -2431,12 +2628,14 @@ module ERKStep : sig (* {{{ *)
       @arkode_erk ERKStepSStolerances
       @arkode_erk ERKStepSVtolerances
       @arkode_erk ERKStepWFtolerances
+      @arkode_erk ERKStepSetRelaxFn
       @since 4.0.0 *)
   val init :
          ?context:Context.t
       -> ('data, 'kind) tolerance
       -> ?order:int
       -> 'data rhsfn
+      -> ?relax:('data relax_fn * 'data relax_jac_fn)
       -> ?roots:(int * 'data rootsfn)
       -> float
       -> ('data, 'kind) Nvector.t
@@ -2865,6 +3064,12 @@ module ERKStep : sig (* {{{ *)
       @arkode_erk ERKStepGetEstLocalErrors *)
   val get_est_local_errors : ('d, 'k) session -> ('d, 'k) Nvector.t -> unit
 
+  (** Returns the cumulative number of test failures.
+
+      @arkode_erk ERKStepGetNumConstrFails
+      @since 5.0.0 *)
+  val get_num_constr_fails : ('d, 'k) session -> int
+
   (** Summaries of time-stepper statistics. *)
   type timestepper_stats = {
       exp_steps : int;
@@ -2912,6 +3117,18 @@ module ERKStep : sig (* {{{ *)
       @arkode_erk ERKStepPrintMem *)
   val write_session  : ?logfile:Logfile.t -> ('d, 'k) session -> unit
 
+  (** Outputs all the solver parameters on the standard output (or given file).
+
+      @arkode_erk ERKStepWriteParameters
+      @since 4.1.0 *)
+  val write_parameters : ?logfile:Logfile.t -> ('d, 'k) session -> unit
+
+  (** Outputs the current butcher table on the standard output (or given file).
+
+      @arkode_erk ERKStepWriteButcher
+      @since 4.1.0 *)
+  val write_butcher : ?logfile:Logfile.t -> ('d, 'k) session -> unit
+
   (** {2:erkroots Additional root-finding functions} *)
 
   (** [set_root_direction s dir] specifies the direction of zero-crossings to
@@ -2947,23 +3164,164 @@ module ERKStep : sig (* {{{ *)
       @arkode_erk ERKStepGetNumGEvals *)
   val get_num_g_evals : ('d, 'k) session -> int
 
-  (** Returns the cumulative number of test failures.
+  (** {2:arkrelax Relaxation Methods}
 
-      @arkode_erk ERKStepGetNumConstrFails
-      @since 5.0.0 *)
-  val get_num_constr_fails : ('d, 'k) session -> int
+      Relaxation methods ensure dissipation or preservation of the global
+      function by calculating a relaxed solution.
 
-  (** Outputs all the solver parameters on the standard output (or given file).
+      @arkode <Mathematics_link.html#relaxation-methods> Relaxation methods
+      @since 6.6.0 *)
+  module Relax : sig (* {{{ *)
 
-      @arkode_erk ERKStepWriteParameters
-      @since 4.1.0 *)
-  val write_parameters : ?logfile:Logfile.t -> ('d, 'k) session -> unit
+    (** Enables relaxation for the given solver session (see also: {!init})
 
-  (** Outputs the current butcher table on the standard output (or given file).
+        @arkode_erk ERKStepSetRelaxFn
+        @since 6.6.0 *)
+    val enable : ('d, 'k) session -> 'd relax_fn -> 'd relax_jac_fn -> unit
 
-      @arkode_erk ERKStepWriteButcher
-      @since 4.1.0 *)
-  val write_butcher : ?logfile:Logfile.t -> ('d, 'k) session -> unit
+    (** Disables relaxation for the given solver session.
+
+        @arkode_erk ERKStepSetRelaxFn
+        @since 6.6.0 *)
+    val disable : ('d, 'k) session -> unit
+
+    (** Sets the step size reduction factor applied after a failed relaxation
+        application. If the argument is outside of the range [0, 1], the
+        default of 0.25 is used.
+
+        @arkode_erk ERKStepSetRelaxEtaFail
+        @raise NoRelaxation Relaxation is not enabled.
+        @since 6.6.0 *)
+    val set_eta_fail : ('d, 'k) session -> float -> unit
+
+    (** Sets the smallest acceptable value for the relaxation parameter.
+        Values smaller than the lower bound will result in a failed relaxation
+        application and the step will be repeated with a smaller step size
+        (set by {!set_eta_fail}).
+        If the arguemnt is outside the range [0, 1], the default of 0.8 is used.
+
+        @arkode_erk ERKStepSetRelaxLowerBound
+        @raise NoRelaxation Relaxation is not enabled.
+        @since 6.6.0 *)
+    val set_lower_bound : ('d, 'k) session -> float -> unit
+
+    (** Sets the largest acceptable value for the relaxation parameter.
+        Values larger than the upper bound will result in a failed relaxation
+        application and the step will be repeated with a smaller step size
+        (set by {!set_eta_fail}).
+        If the argument is <= 1, the default of 1.2 is used.
+
+        @arkode_erk ERKStepSetRelaxUpperBound
+        @raise NoRelaxation Relaxation is not enabled.
+        @since 6.6.0 *)
+    val set_upper_bound : ('d, 'k) session -> float -> unit
+
+    (** Sets the maximum number of times relaxation can fail within a
+        step attempt before integration fails.
+        If the argument is <= 0, the default of 10 is used.
+
+        @arkode_erk ERKStepSetRelaxMaxFails
+        @raise NoRelaxation Relaxation is not enabled.
+        @since 6.6.0 *)
+    val set_max_fails : ('d, 'k) session -> int -> unit
+
+    (** Sets the maximum number of nonlinear iterations allowed when solving
+        for the relaxation parameter.
+        If the maximum number of iterations is reached before meeting the
+        solve tolerance ({!set_res_tol} and {!set_tol}), the step is repeated
+        with a smaller step size (determined by {!set_eta_fail}).
+        If the argument is <= 0, the default of 10 is used.
+
+        @arkode_erk ERKStepSetRelaxMaxIters
+        @raise NoRelaxation Relaxation is not enabled.
+        @since 6.6.0 *)
+    val set_max_iters : ('d, 'k) session -> int ->unit
+
+    (** Sets the nonlinear solver method for computing the relaxation
+        parameter. The default is {{!relax_solver}Newton}.
+
+        @arkode_erk ERKStepSetRelaxSolver
+        @raise NoRelaxation Relaxation is not enabled.
+        @since 6.6.0 *)
+    val set_solver : ('d, 'k) session -> relax_solver -> unit
+
+    (** Sets the nonlinear solver residual tolerance.
+        If the residual or iteration update tolerance is not reached within
+        the maximum number of iterations (see {!set_max_iters}), the step will
+        be repeated with a smaller step size (set by {!set_eta_fail}).
+        If the argument is <= 0, the default of {% $4\epsilon$ %}, where
+        {% $\epsilon$ %} is the floating-point precision, will be used.
+
+        @arkode_erk ERKStepSetRelaxResTol
+        @raise NoRelaxation Relaxation is not enabled.
+        @since 6.6.0 *)
+    val set_res_tol : ('d, 'k) session -> float -> unit
+
+    (** Sets the nonlinear solver relative and absolute tolerance on changes
+        in iterates.
+        If the residual or iteration update tolerance is not reached within
+        the maximum number of iterations (see {!set_max_iters}), the step will
+        be repeated with a smaller step size (set by {!set_eta_fail}).
+        If the argument is <= 0, the defaults of {% $4\epsilon$ %} and {%
+        $10^{-14}$ %}, where {% $\epsilon$ %} is the floating-point precision,
+        will be used.
+
+        @arkode_erk ERKStepSetRelaxTol
+        @raise NoRelaxation Relaxation is not enabled.
+        @since 6.6.0 *)
+    val set_tol : ('d, 'k) session -> rel:float -> abs:float -> unit
+
+    (** Returns the number of times the provided relaxation function was
+        evaluated.
+
+        @arkode_erk ERKStepGetNumRelaxFnEvals
+        @raise NoRelaxation Relaxation is not enabled.
+        @since 6.6.0 *)
+    val get_num_fn_evals : ('d, 'k) session -> int
+
+    (** Returns the number of times the provided relaxation Jacobian was
+        evaluated.
+
+        @arkode_erk ERKStepGetNumRelaxJacEvals
+        @raise NoRelaxation Relaxation is not enabled.
+        @since 6.6.0 *)
+    val get_num_jac_evals : ('d, 'k) session -> int
+
+    (** Returns the total number of times applying relaxation failed.
+        The counter includes the sum of the number of nonlinear solver
+        failures (see {!get_num_solve_fails}) and the number of failures due
+        an unacceptable relaxation value.
+
+        @arkode_erk ERKStepGetNumRelaxFails
+        @raise NoRelaxation Relaxation is not enabled.
+        @since 6.6.0 *)
+    val get_num_fails : ('d, 'k) session -> int
+
+    (** Returns the number of times the relaxation parameter was deemed
+        unacceptable.
+
+        @arkode_erk ERKStepGetNumRelaxBoundFails
+        @raise NoRelaxation Relaxation is not enabled.
+        @since 6.6.0 *)
+    val get_num_bound_fails : ('d, 'k) session -> int
+
+    (** Returns the number of times the relaxation parameter nonlinear solver
+        failed.
+
+        @arkode_erk ERKStepGetNumRelaxSolveFails
+        @raise NoRelaxation Relaxation is not enabled.
+        @since 6.6.0 *)
+    val get_num_solve_fails : ('d, 'k) session -> int
+
+    (** Returns the number of relaxation parameter nonlinear solver
+        iterations.
+
+        @arkode_erk ERKStepGetNumRelaxSolveIters
+        @raise NoRelaxation Relaxation is not enabled.
+        @since 6.6.0 *)
+    val get_num_solve_iters : ('d, 'k) session -> int
+
+  end (* }}} *)
 
 end (* }}} *)
 
@@ -4874,4 +5232,24 @@ exception BadT
 
     @arkode <Constants_link.html> ARK_VECTOROP_ERR *)
 exception VectorOpErr
+
+(** The computation of the relaxation parameter failed.
+
+    @arkode <Constants_link.html> ARK_RELAX_FAIL *)
+exception RelaxationFailure
+
+(** Relaxation is not enabled for the given session.
+
+    @arkode <Constants_link.html> ARK_RELAX_MEM_NULL *)
+exception NoRelaxation
+
+(** The relaxation function returned an unrecoverable error.
+
+    @arkode <Constants_link.html> ARK_RELAX_FUNC_FAIL *)
+exception RelaxationFuncFailure
+
+(** The relaxation Jacobian function returned an unrecoverable error.
+
+    @arkode <Constants_link.html> ARK_RELAX_JAC_FAIL *)
+exception RelaxationJacFuncFailure
 

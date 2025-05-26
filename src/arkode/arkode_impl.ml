@@ -231,6 +231,8 @@ module Global = struct
   type 'd stage_predict_fn = float -> 'd -> unit
   type 'd pre_inner_fn = float -> 'd array -> unit
   type 'd post_inner_fn = float -> 'd -> unit
+  type 'd relax_fn = 'd -> float
+  type 'd relax_jac_fn = 'd -> 'd -> unit
 end
 
 (* Inner steppers *)
@@ -310,6 +312,10 @@ type ('a, 'kind, 'step) session = {
   mutable nls_solver     : ('a, 'kind, ('a, 'kind, 'step) session, [`Nvec])
                            NLSI.nonlinear_solver option;
   mutable nls_rhsfn      : 'a rhsfn;
+
+  (* ARK and ERK only *)
+  mutable relax_fn       : 'a relax_fn;
+  mutable relax_jac_fn   : 'a relax_jac_fn;
 
   (* MRI only *)
   mutable inner_session  : ('a, 'kind) inner_stepper option;
@@ -567,4 +573,8 @@ let dummy_preinnerfn _ _ =
   Sundials_impl.crash "Internal error: dummy_preinnerfn called\n"
 let dummy_postinnerfn _ _ =
   Sundials_impl.crash "Internal error: dummy_postinnerfn called\n"
+let dummy_relax_fn _ =
+  Sundials_impl.crash "Internal error: dummy_relax_fn called\n"
+let dummy_relax_jac_fn _ _ =
+  Sundials_impl.crash "Internal error: dummy_relax_jac_fn called\n"
 
