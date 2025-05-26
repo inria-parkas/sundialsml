@@ -3036,6 +3036,9 @@ module SPRKStep = struct (* {{{ *)
   external set_interpolant_degree : ('d, 'k) session -> int -> unit
       = "sunml_arkode_sprk_set_interpolant_degree"
 
+  external set_max_num_steps      : ('a, 'k) session -> int -> unit
+      = "sunml_arkode_sprk_set_max_num_steps"
+
   external c_set_error_file : ('a, 'k) session -> Logfile.t -> unit
       = "sunml_arkode_sprk_set_error_file"
 

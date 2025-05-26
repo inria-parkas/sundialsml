@@ -8032,6 +8032,21 @@ CAMLprim value sunml_arkode_sprk_set_interpolant_type(value varkode_mem,
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_arkode_sprk_set_max_num_steps(value varkode_mem, value mxsteps)
+{
+    CAMLparam2(varkode_mem, mxsteps);
+
+#if 660 <= SUNDIALS_LIB_VERSION
+    int flag = SPRKStepSetMaxNumSteps(ARKODE_MEM_FROM_ML(varkode_mem),
+				      Long_val(mxsteps));
+    CHECK_FLAG("SPRKStepSetMaxNumSteps", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value sunml_arkode_sprk_set_interpolant_degree(value varkode_mem,
 						        value vinterpdegree)
 {

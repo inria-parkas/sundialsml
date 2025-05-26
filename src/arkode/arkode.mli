@@ -3614,6 +3614,12 @@ module SPRKStep : sig (* {{{ *)
       @arkode_sprk SPRKStepSetInterpolantDegree *)
   val set_interpolant_degree : ('d, 'k) session -> int -> unit
 
+  (** Specifies the maximum number of steps taken in attempting to reach
+      a given output time.
+
+      @arkode_sprk SPRKStepSetMaxNumSteps *)
+  val set_max_num_steps : ('d, 'k) session -> int -> unit
+
   (** Configure the default error handler to write messages to a file.
       By default it writes to Logfile.stderr.
 
