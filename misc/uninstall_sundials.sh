@@ -1,7 +1,7 @@
 #!/bin/sh
 
 PREFIX="${PREFIX:-/usr/local}"
-SOLVERS="nvector sunmatrix sunlinsol sunmemory sunnonlinsol arkode cvode cvodes ida idas kinsol templates utilities"
+SOLVERS="nvector sunmatrix sunmemory sunlinsol sunnonlinsol arkode cvode cvodes ida idas kinsol templates utilities"
 
 DO_RM="rm -f"
 RM="echo ${DO_RM}"
