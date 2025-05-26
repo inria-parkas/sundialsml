@@ -174,9 +174,9 @@ let main () =
     printf "   Total number of error test failures = %d\n" netf
   end else begin
     printf "\nFinal Statistics:\n";
-    ARKStep.print_all_stats arkode_mem Logfile.stdout Sundials.OutputTable;
+    ARKStep.print_all_stats arkode_mem Sundials.OutputTable;
     let fid = Logfile.openfile "ark_robertson_stats.csv" in
-    ARKStep.print_all_stats arkode_mem fid Sundials.OutputCSV;
+    ARKStep.print_all_stats ~logfile:fid arkode_mem Sundials.OutputCSV;
     Logfile.close fid
   end
 

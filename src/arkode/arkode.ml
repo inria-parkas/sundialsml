@@ -1935,9 +1935,11 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
   external get_step_stats : ('a, 'k) session -> step_stats
       = "sunml_arkode_ark_get_step_stats"
 
-  external print_all_stats
+  external c_print_all_stats
       : ('d, 'k) session -> Logfile.t -> Sundials.output_format -> unit
       = "sunml_arkode_ark_print_all_stats"
+  let print_all_stats ?(logfile=Sundials.Logfile.stdout) s fmt =
+    c_print_all_stats s logfile fmt
 
   external get_work_space         : ('a, 'k) session -> int * int
       = "sunml_arkode_ark_get_work_space"
@@ -2565,9 +2567,11 @@ module ERKStep = struct (* {{{ *)
   external get_step_stats : ('a, 'k) session -> step_stats
       = "sunml_arkode_erk_get_step_stats"
 
-  external print_all_stats
+  external c_print_all_stats
       : ('d, 'k) session -> Logfile.t -> Sundials.output_format -> unit
       = "sunml_arkode_erk_print_all_stats"
+  let print_all_stats ?(logfile=Sundials.Logfile.stdout) s fmt =
+    c_print_all_stats s logfile fmt
 
   external get_work_space         : ('a, 'k) session -> int * int
       = "sunml_arkode_erk_get_work_space"
@@ -3005,9 +3009,11 @@ module SPRKStep = struct (* {{{ *)
   external get_step_stats : ('a, 'k) session -> step_stats
       = "sunml_arkode_sprk_get_step_stats"
 
-  external print_all_stats
+  external c_print_all_stats
       : ('d, 'k) session -> Logfile.t -> Sundials.output_format -> unit
       = "sunml_arkode_sprk_print_all_stats"
+  let print_all_stats ?(logfile=Sundials.Logfile.stdout) s fmt =
+    c_print_all_stats s logfile fmt
 
   external get_num_steps          : ('a, 'k) session -> int
       = "sunml_arkode_sprk_get_num_steps"
@@ -4057,9 +4063,11 @@ module MRIStep = struct (* {{{ *)
     if Sundials_configuration.safe then s.checkvec ew;
     c_get_err_weights s ew
 
-  external print_all_stats
+  external c_print_all_stats
       : ('d, 'k) session -> Logfile.t -> Sundials.output_format -> unit
       = "sunml_arkode_mri_print_all_stats"
+  let print_all_stats ?(logfile=Sundials.Logfile.stdout) s fmt =
+    c_print_all_stats s logfile fmt
 
   external get_num_lin_solv_setups : ('a, 'k) session -> int
       = "sunml_arkode_mri_get_num_lin_solv_setups"

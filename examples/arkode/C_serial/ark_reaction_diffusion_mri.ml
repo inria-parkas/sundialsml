@@ -216,19 +216,19 @@ let main () =
   end else begin
     printf "\nFinal Slow Statistics:\n";
     flush stdout;
-    MRIStep.print_all_stats arkode_mem Logfile.stdout Sundials.OutputTable;
+    MRIStep.print_all_stats arkode_mem Sundials.OutputTable;
     Logfile.flush Logfile.stdout;
     printf "\nFinal Fast Statistics:\n";
     flush stdout;
-    ARKStep.print_all_stats inner_arkode_mem Logfile.stdout Sundials.OutputTable;
+    ARKStep.print_all_stats inner_arkode_mem Sundials.OutputTable;
     Logfile.flush Logfile.stdout;
 
     let fid = Logfile.openfile "ark_reaction_diffusion_mri_slow_stats.csv" in
-    MRIStep.print_all_stats arkode_mem fid Sundials.OutputCSV;
+    MRIStep.print_all_stats ~logfile:fid arkode_mem Sundials.OutputCSV;
     Logfile.close fid;
 
     let fid = Logfile.openfile "ark_reaction_diffusion_mri_fast_stats.csv" in
-    ARKStep.print_all_stats inner_arkode_mem fid Sundials.OutputCSV;
+    ARKStep.print_all_stats ~logfile:fid inner_arkode_mem Sundials.OutputCSV;
     Logfile.close fid
   end
 

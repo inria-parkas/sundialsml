@@ -2286,7 +2286,7 @@ module ARKStep : sig (* {{{ *)
       @arkode_ark ARKStepPrintAllStats
       @since 6.2.0 *)
   val print_all_stats
-        : ('d, 'k) session -> Logfile.t -> Sundials.output_format -> unit
+        : ?logfile:Logfile.t -> ('d, 'k) session -> Sundials.output_format -> unit
 
   (** Prints time-stepper statistics on the given channel.
 
@@ -3100,7 +3100,7 @@ module ERKStep : sig (* {{{ *)
       @arkode_erk ERKStepPrintAllStats
       @since 6.2.0 *)
   val print_all_stats
-        : ('d, 'k) session -> Logfile.t -> Sundials.output_format -> unit
+        : ?logfile:Logfile.t -> ('d, 'k) session -> Sundials.output_format -> unit
 
   (** Prints time-stepper statistics on the given channel.
 
@@ -3760,7 +3760,7 @@ module SPRKStep : sig (* {{{ *)
 
       @arkode_sprk SPRKStepPrintAllStats *)
   val print_all_stats
-        : ('d, 'k) session -> Logfile.t -> Sundials.output_format -> unit
+        : ?logfile:Logfile.t -> ('d, 'k) session -> Sundials.output_format -> unit
 
   (** {2:sprkroots Additional root-finding functions} *)
 
@@ -4927,7 +4927,7 @@ module MRIStep : sig (* {{{ *)
       @arkode_mri MRIStepPrintAllStats
       @since 6.2.0 *)
   val print_all_stats
-        : ('d, 'k) session -> Logfile.t -> Sundials.output_format -> unit
+        : ?logfile:Logfile.t -> ('d, 'k) session -> Sundials.output_format -> unit
 
   (** {3:mrigetimplicit Implicit solver optional output functions} *)
 
