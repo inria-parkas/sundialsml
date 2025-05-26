@@ -44,7 +44,7 @@ external c_get_version_number : unit -> sundials_version_number option
 
 let _ =
   (* Sundials version at compilation *)
-  let cmajor, cminor, cpatch, _ = version in
+  let cmajor, cminor, cpatch = sundials_version in
   (* Sundials version at runtime *)
   match c_get_version_number () with
   | Some { major; minor; patch; _ } when major <> cmajor || minor <> cminor ->
