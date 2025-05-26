@@ -35,6 +35,7 @@ EXAMPLES_SINCE_6_0_0 = ark_brusselator1D_imexmri.ml
 
 EXAMPLES_SINCE_6_6_0 = ark_conserved_exp_entropy_ark.ml \
 		       ark_conserved_exp_entropy_erk.ml \
+		       ark_harmonic_symplectic.ml	\
 		       ark_damped_harmonic_symplectic.ml
 
 EXAMPLES = $(EXAMPLES_SINCE_2_5)				\
