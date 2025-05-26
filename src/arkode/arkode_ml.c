@@ -1718,10 +1718,29 @@ static value sunml_stepper_exception_from_flag(int flag)
 	    Store_some(vro, ARKODE_EXN(RootFuncFailure));
 	    break;
 
+#if SUNDIALS_LIB_VERSION < 520
 	case ARK_POSTPROCESS_FAIL:
 	    Store_some(vro, ARKODE_EXN(PostprocStepFailure));
 	    break;
+#else
+	case ARK_POSTPROCESS_STEP_FAIL:
+	    Store_some(vro, ARKODE_EXN(PostprocStepFailure));
+	    break;
 
+	case ARK_POSTPROCESS_STAGE_FAIL:
+	    Store_some(vro, ARKODE_EXN(PostprocStageFailure));
+	    break;
+#endif
+#if 520 <= SUNDIALS_LIB_VERSION
+	case ARK_USER_PREDICT_FAIL:
+	    Store_some(vro, ARKODE_EXN(UserPredictFailure));
+	    break;
+#endif
+#if 540 <= SUNDIALS_LIB_VERSION
+	case ARK_INVALID_TABLE:
+	    Store_some(vro, ARKODE_EXN(InvalidTable));
+	    break;
+#endif
 	case ARK_BAD_K:
 	    Store_some(vro, ARKODE_EXN(BadK));
 	    break;
@@ -1836,9 +1855,16 @@ void sunml_arkode_check_flag(const char *call, int flag, void *arkode_mem)
 	case ARK_RTFUNC_FAIL:
 	    caml_raise_constant(ARKODE_EXN(RootFuncFailure));
 
-#if 270 <= SUNDIALS_LIB_VERSION
+#if 270 <= SUNDIALS_LIB_VERSION && SUNDIALS_LIB_VERSION < 520
 	case ARK_POSTPROCESS_FAIL:
 	    caml_raise_constant(ARKODE_EXN(PostprocStepFailure));
+#endif
+#if 520 <= SUNDIALS_LIB_VERSION
+	case ARK_POSTPROCESS_STEP_FAIL:
+	    caml_raise_constant(ARKODE_EXN(PostprocStepFailure));
+
+	case ARK_POSTPROCESS_STAGE_FAIL:
+	    caml_raise_constant(ARKODE_EXN(PostprocStageFailure));
 #endif
 
 	case ARK_BAD_K:
@@ -1867,6 +1893,14 @@ void sunml_arkode_check_flag(const char *call, int flag, void *arkode_mem)
 	    // NB: Only MRIStep should return this error
 	    va = sunml_arkode_mri_innerstep_exception(arkode_mem);
 	    caml_raise_with_arg(ARKODE_EXN_TAG(InnerStepFail), va);
+#endif
+#if 520 <= SUNDIALS_LIB_VERSION
+	case ARK_USER_PREDICT_FAIL:
+	    caml_raise_constant(ARKODE_EXN(UserPredictFailure));
+#endif
+#if 540 <= SUNDIALS_LIB_VERSION
+	case ARK_INVALID_TABLE:
+	    caml_raise_constant(ARKODE_EXN(InvalidTable));
 #endif
 
 	default:

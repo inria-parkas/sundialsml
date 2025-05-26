@@ -4839,8 +4839,24 @@ exception RootFuncFailure
 
 (** The postprocess step function failed.
 
-    @arkode <Constants_link.html> ARK_POSTPROCESS_FAIL *)
+    @arkode <Constants_link.html> ARK_POSTPROCESS_STEP_FAIL *)
 exception PostprocStepFailure
+
+(** The postprocess step function failed.
+
+    @arkode <Constants_link.html> ARK_POSTPROCESS_STAGE_FAIL *)
+exception PostprocStageFailure
+
+(** The function provided to {!ARKStep.set_stage_predict_fn} or
+    {!MRIStep.set_stage_predict_fn} raised an exception.
+
+    @arkode <Constants_link.html> ARK_USER_PREDICT_FAIL *)
+exception UserPredictFailure
+
+(** An invalid Butcher or MRI table was encountered.
+
+    @arkode <Constants_link.html> ARK_INVALID_TABLE *)
+exception InvalidTable
 
 (** Raised by {!ARKStep.get_dky}, {!ERKStep.get_dky}, and
     {!MRIStep.get_dky} for invalid order values.

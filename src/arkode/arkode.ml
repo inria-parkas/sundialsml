@@ -42,6 +42,9 @@ exception RepeatedRhsFuncFailure
 exception UnrecoverableRhsFuncFailure
 exception RootFuncFailure
 exception PostprocStepFailure
+exception PostprocStageFailure
+exception UserPredictFailure
+exception InvalidTable
 
 (* get_dky exceptions *)
 exception BadK
@@ -3977,6 +3980,9 @@ let _ =
       UnrecoverableRhsFuncFailure;
       RootFuncFailure;
       PostprocStepFailure;
+      PostprocStageFailure;
+      UserPredictFailure;
+      InvalidTable;
       BadK;
       BadT;
       VectorOpErr;
