@@ -1784,6 +1784,13 @@ module ARKStep : sig (* {{{ *)
       @since 6.5.1 *)
   val clear_stop_time : ('d, 'k) session -> unit
 
+  (** Specifies whether the output solution should be interpolated ([true]) or
+      copied ([false], default) when the stop time is reached.
+
+      @cvode ARKStepSetInterpolateStopTime
+      @since 6.6.0 *)
+  val set_interpolate_stop_time : ('d, 'k) session -> bool -> unit
+
   (** {3:arksetivp Optional inputs for IVP method selection} *)
 
   (** Enables both the implicit and explicit portions of a problem.
@@ -2865,6 +2872,13 @@ module ERKStep : sig (* {{{ *)
       @arkode_erk ERKStepClearStopTime
       @since 6.5.1 *)
   val clear_stop_time : ('d, 'k) session -> unit
+
+  (** Specifies whether the output solution should be interpolated ([true]) or
+      copied ([false], default) when the stop time is reached.
+
+      @cvode ERKStepSetInterpolateStopTime
+      @since 6.6.0 *)
+  val set_interpolate_stop_time : ('d, 'k) session -> bool -> unit
 
   (** {3:erksetivp Optional inputs for IVP method selection} *)
 
@@ -4642,6 +4656,13 @@ module MRIStep : sig (* {{{ *)
       @arkode_mri MRIStepClearStopTime
       @since 6.5.1 *)
   val clear_stop_time : ('d, 'k) session -> unit
+
+  (** Specifies whether the output solution should be interpolated ([true]) or
+      copied ([false], default) when the stop time is reached.
+
+      @cvode MRISetInterpolateStopTime
+      @since 6.6.0 *)
+  val set_interpolate_stop_time : ('d, 'k) session -> bool -> unit
 
   (** A function to be called {e before} each inner integration. This function
       may be used, for instance, to perform communications or memory transfers

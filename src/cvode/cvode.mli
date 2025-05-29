@@ -862,6 +862,13 @@ val set_max_step : ('d, 'k) session -> float -> unit
     @cvode CVodeSetStopTime *)
 val set_stop_time : ('d, 'k) session -> float -> unit
 
+(** Specifies whether the output solution should be interpolated ([true]) or
+    copied ([false], default) when the stop time is reached.
+
+    @cvode CVodeSetInterpolateStopTime
+    @since 6.6.0 *)
+val set_interpolate_stop_time : ('d, 'k) session -> bool -> unit
+
 (** Disables any stop time previously set with {!set_stop_time}.
 
     @cvode CVodeClearStopTime

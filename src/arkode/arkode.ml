@@ -2186,6 +2186,8 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
       = "sunml_arkode_ark_set_stop_time"
   external clear_stop_time        : ('a, 'k) session -> unit
       = "sunml_arkode_ark_clear_stop_time"
+  external set_interpolate_stop_time : ('a, 'k) session -> bool -> unit
+      = "sunml_arkode_ark_set_interpolate_stop_time"
   external set_optimal_params     : ('a, 'k) session -> unit
       = "sunml_arkode_ark_set_optimal_params"
   external set_max_err_test_fails : ('a, 'k) session -> int -> unit
@@ -2715,6 +2717,8 @@ module ERKStep = struct (* {{{ *)
       = "sunml_arkode_erk_set_stop_time"
   external clear_stop_time        : ('a, 'k) session -> unit
       = "sunml_arkode_erk_clear_stop_time"
+  external set_interpolate_stop_time : ('a, 'k) session -> bool -> unit
+      = "sunml_arkode_erk_set_interpolate_stop_time"
   external set_max_err_test_fails : ('a, 'k) session -> int -> unit
       = "sunml_arkode_erk_set_max_err_test_fails"
   external set_cfl_fraction       : ('a, 'k) session -> float -> unit
@@ -3939,6 +3943,8 @@ module MRIStep = struct (* {{{ *)
       = "sunml_arkode_mri_set_order"
   external set_stop_time          : ('a, 'k) session -> float -> unit
       = "sunml_arkode_mri_set_stop_time"
+  external set_interpolate_stop_time : ('a, 'k) session -> bool -> unit
+      = "sunml_arkode_mri_set_interpolate_stop_time"
   external clear_stop_time        : ('a, 'k) session -> unit
       = "sunml_arkode_mri_clear_stop_time"
 

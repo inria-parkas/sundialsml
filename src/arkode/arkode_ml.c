@@ -4107,6 +4107,20 @@ CAMLprim value sunml_arkode_ark_clear_stop_time(value varkode_mem)
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_arkode_ark_set_interpolate_stop_time(value varkode_mem,
+							  value vinterp)
+{
+    CAMLparam2(varkode_mem, vinterp);
+#if 660 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepSetInterpolateStopTime(ARKODE_MEM_FROM_ML(varkode_mem),
+					     Bool_val(vinterp));
+    CHECK_FLAG("ARKStepSetInterpolateStopTime", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value sunml_arkode_ark_set_max_err_test_fails(value varkode_mem, value maxnef)
 {
     CAMLparam2(varkode_mem, maxnef);
@@ -6726,6 +6740,20 @@ CAMLprim value sunml_arkode_erk_set_stop_time(value varkode_mem, value tstop)
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
 
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_set_interpolate_stop_time(value varkode_mem,
+							  value vinterp)
+{
+    CAMLparam2(varkode_mem, vinterp);
+#if 660 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetInterpolateStopTime(ARKODE_MEM_FROM_ML(varkode_mem),
+					     Bool_val(vinterp));
+    CHECK_FLAG("ERKStepSetInterpolateStopTime", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
     CAMLreturn (Val_unit);
 }
 
@@ -9756,6 +9784,20 @@ CAMLprim value sunml_arkode_mri_clear_stop_time(value varkode_mem)
 #if 651 <= SUNDIALS_LIB_VERSION
     int flag = MRIStepClearStopTime(ARKODE_MEM_FROM_ML(varkode_mem));
     CHECK_FLAG("MRIStepClearStopTime", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_mri_set_interpolate_stop_time(value varkode_mem,
+						 	  value vinterp)
+{
+    CAMLparam2(varkode_mem, vinterp);
+#if 660 <= SUNDIALS_LIB_VERSION
+    int flag = MRIStepSetInterpolateStopTime(ARKODE_MEM_FROM_ML(varkode_mem),
+					     Bool_val(vinterp));
+    CHECK_FLAG("MRIStepSetInterpolateStopTime", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif

@@ -1981,6 +1981,18 @@ CAMLprim value sunml_cvode_set_stop_time(value vcvode_mem, value tstop)
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_cvode_set_interpolate_stop_time(value vcvode_mem, value vinterp)
+{
+    CAMLparam2(vcvode_mem, vinterp);
+#if 660 <= SUNDIALS_LIB_VERSION
+    int flag = CVodeSetInterpolateStopTime(CVODE_MEM_FROM_ML(vcvode_mem), Bool_val(vinterp));
+    CHECK_FLAG("CVodeSetInterpolateStopTime", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value sunml_cvode_clear_stop_time(value vcvode_mem)
 {
     CAMLparam1(vcvode_mem);
