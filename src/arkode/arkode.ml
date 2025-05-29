@@ -4102,6 +4102,12 @@ type erkstep  = Arkode_impl.erkstep
 type sprkstep = Arkode_impl.sprkstep
 type mristep  = Arkode_impl.mristep
 
+type ('data, 'kind) session =
+  | ARK of ('data, 'kind, arkstep) Arkode_impl.session
+  | ERK of ('data, 'kind, erkstep) Arkode_impl.session
+  | SPRK of ('data, 'kind, sprkstep) Arkode_impl.session
+  | MRI of ('data, 'kind, mristep) Arkode_impl.session
+
 (* Let C code know about some of the values in this module.  *)
 external c_init_module : exn array -> unit =
   "sunml_arkode_init_module"

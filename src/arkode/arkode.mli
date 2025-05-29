@@ -60,6 +60,13 @@ type sprkstep = Arkode_impl.sprkstep
 (** Type argument representing the MRIStep time-stepping module. *)
 type mristep = Arkode_impl.mristep
 
+(** Sessions with a hidden module type argument. *)
+type ('data, 'kind) session =
+  | ARK of ('data, 'kind, arkstep) Arkode_impl.session
+  | ERK of ('data, 'kind, erkstep) Arkode_impl.session
+  | SPRK of ('data, 'kind, sprkstep) Arkode_impl.session
+  | MRI of ('data, 'kind, mristep) Arkode_impl.session
+
 (** Common definitions that are included in each of the time-stepping
     modules. *)
 module Common : sig (* {{{ *)
@@ -773,7 +780,7 @@ end (* }}} *)
     @arkode <Usage/ARKStep_c_interface/index.html#using-the-arkstep-time-stepping-module> Using the ARKStep time-stepping module *)
 module ARKStep : sig (* {{{ *)
 
-  include module type of Common
+  include module type of struct include Common end
 
   (** A session with the ARKStep time-stepping solver.
 
@@ -2586,7 +2593,7 @@ end (* }}} *)
     @arkode <Usage/ERKStep_c_interface/index.html#using-the-erkstep-time-stepping-module> Using the ERKStep time-stepping module *)
 module ERKStep : sig (* {{{ *)
 
-  include module type of Common
+  include module type of struct include Common end
 
   (** A session with the ERKStep time-stepping solver.
 
@@ -3344,7 +3351,7 @@ end (* }}} *)
     @arkode <Usage/SPRKStep_c_interface/index.html#using-the-sprkstep-time-stepping-module> Using the SPRKStep time-stepping module *)
 module SPRKStep : sig (* {{{ *)
 
-  include module type of Common
+  include module type of struct include Common end
 
   (** SPRK Method tables *)
   module MethodTable : sig (* {{{ *)
@@ -3510,10 +3517,10 @@ module SPRKStep : sig (* {{{ *)
       [tout] if no errors occur, and, [r], a {!Common.solver_result}.
 
       To avoid a loss of accuracy due to interpolation, call {!set_stop_time}
-      before calling an evolve function. Once {{!solver_result}StopTimeReached}
-      is returned, a new call to {!set_stop_time} is required to reactivate
-      this functionality. Interpolated results may not necessarily conserve the
-      Hamiltonian.
+      before calling an evolve function.
+      Once {{!Common.solver_result}StopTimeReached} is returned, a new call
+      to {!set_stop_time} is required to reactivate this functionality.
+      Interpolated results may not necessarily conserve the Hamiltonian.
 
       @arkode_sprk SPRKStepEvolve (ARK_NORMAL)
       @raise IllInput Missing or illegal solver inputs.
@@ -3816,7 +3823,7 @@ end (* }}} *)
     @arkode <Usage/MRIStep_c_interface/index.html#using-the-mristep-time-stepping-module> Using the MRIStep time-stepping module *)
 module MRIStep : sig (* {{{ *)
 
-  include module type of Common
+  include module type of struct include Common end
 
   (** A session with the MRIStep time-stepping solver.
 
