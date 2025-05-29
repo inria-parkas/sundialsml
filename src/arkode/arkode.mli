@@ -647,6 +647,8 @@ module ButcherTable : sig (* {{{ *)
                                 (Sundials >= 5.0.0). *)
     | ARK548L2SAb_ERK_8_4_5 (** ARK-8-4-5b ERK method.
                                 (Sundials >= 5.0.0). *)
+    | ARK2_ERK_3_1_2        (** ARK2-ERK-3-1-2 method.
+                                (Sundials >= 6.6.0). *)
 
   (** Implicit Butcher tables
 
@@ -677,6 +679,8 @@ module ButcherTable : sig (* {{{ *)
     | ESDIRK437L2SA_7_3_4   (** Kennedy & Carpenter 2016: ESDIRK4(3)7L[2]SA *)
     | ESDIRK547L2SA_7_4_5   (** Kennedy & Carpenter 2016: ESDIRK5(4)7L[2]SA *)
     | ESDIRK547L2SA2_7_4_5  (** Kennedy & Carpenter 2016: ESDIRK5(4)7L[2]SA2 *)
+    | ARK2_DIRK_3_1_2       (** ARK2-ERK-3-1-2- method.
+                                (Sundials >= 6.6.0). *)
 
   (** Additive Butcher tables
 

@@ -274,6 +274,7 @@ module ButcherTable = struct (* {{{ *)
     | Knoth_Wolke_3_3     (* >= 4.0.0 *)
     | ARK437L2SA_ERK_7_3_4  (* >= 5.0.0 *)
     | ARK548L2SAb_ERK_8_4_5 (* >= 5.0.0 *)
+    | ARK2_ERK_3_1_2        (* >= 6.6.0 *)
 
   type dirk_table =
     | SDIRK_2_1_2
@@ -299,6 +300,7 @@ module ButcherTable = struct (* {{{ *)
     | ESDIRK437L2SA_7_3_4
     | ESDIRK547L2SA_7_4_5
     | ESDIRK547L2SA2_7_4_5
+    | ARK2_DIRK_3_1_2      (* >= 6.6.0 *)
 
   type ark_table =
     | ARK_4_2_3
@@ -369,7 +371,10 @@ module ButcherTable = struct (* {{{ *)
        | Fehlberg_13_7_8       -> 11
        | Knoth_Wolke_3_3       -> 12
        | ARK437L2SA_ERK_7_3_4  -> 13
-       | ARK548L2SAb_ERK_8_4_5 -> 14)
+       | ARK548L2SAb_ERK_8_4_5 -> 14
+       | ARK2_ERK_3_1_2        -> if Sundials_impl.Version.lt660
+                                  then raise Config.NotImplementedBySundialsVersion
+                                  else 15)
 
   let int_of_dirk_table v =
     match Config.sundials_version with
@@ -459,7 +464,10 @@ module ButcherTable = struct (* {{{ *)
        | QESDIRK436L2SA_6_3_4   -> 119
        | ESDIRK437L2SA_7_3_4    -> 120
        | ESDIRK547L2SA_7_4_5    -> 121
-       | ESDIRK547L2SA2_7_4_5   -> 122)
+       | ESDIRK547L2SA2_7_4_5   -> 122
+       | ARK2_DIRK_3_1_2        -> if Sundials_impl.Version.lt660
+                                   then raise Config.NotImplementedBySundialsVersion
+                                   else 123)
 
   let ints_of_ark_table v =
     match v with
