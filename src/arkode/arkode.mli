@@ -686,12 +686,19 @@ module ButcherTable : sig (* {{{ *)
 
       @arkode <Butcher_link.html#additive-butcher-tables> Additive Butcher tables *)
   type ark_table =
-    | ARK_4_2_3             (** 3rd-order pair combining
-                                BogackiShampine_4_2_3 and ARK_4_2_3_Implicit. *)
-    | ARK_6_3_4             (** 4th-order pair combining
-                                ARK_6_3_4_Explicit and ARK_6_3_4_Implicit. *)
-    | ARK_8_4_5             (** 5th-order pair combining
-                                ARK_8_4_5_Explicit and ARK_8_4_5_Implicit. *)
+    | ARK_3_1_2             (** Default 2nd-order IMEX method from Giraldo,
+                                Kelly, and Constantinescu 2013. Combines
+                                ARK2_DIRK_3_1_2 and ARK2_ERK_3_1_2. *)
+    | ARK_4_2_3             (** Default 3rd-order pair combining
+                                ARK324L2SA_ERK_4_2_3 and ARK324L2SA_DIRK_4_2_3. *)
+    | ARK_6_3_4             (** Default 4th-order pair combining
+                                ARK436L2SA_ERK_6_3_4 and ARK436L2SA_DIRK_6_3_4. *)
+    | ARK_7_3_4             (** 4th-order pair combining
+                                ARK437L2SA_DIRK_7_3_4 and ARK437L2SA_ERK_7_3_4 *)
+    | ARK_8_4_5             (** Default 5th-order pair combining
+                                ARK548L2SA_ERK_8_4_5 and ARK548L2SA_DIRK_8_4_5. *)
+    | ARK_8_4_5b            (** 5th-order pair combining
+                                ARK548L2SAb_ERK_8_4_5 and ARK548L2SAb_DIRK_8_4_5. *)
 
   (** Retrieves an explicit Butcher table.
 

@@ -303,9 +303,12 @@ module ButcherTable = struct (* {{{ *)
     | ARK2_DIRK_3_1_2      (* >= 6.6.0 *)
 
   type ark_table =
+    | ARK_3_1_2
     | ARK_4_2_3
     | ARK_6_3_4
+    | ARK_7_3_4
     | ARK_8_4_5
+    | ARK_8_4_5b
 
   let int_of_erk_table v =
     match Config.sundials_version with
@@ -471,12 +474,27 @@ module ButcherTable = struct (* {{{ *)
 
   let ints_of_ark_table v =
     match v with
+    | ARK_3_1_2 ->
+        if Sundials_impl.Version.lt660
+        then raise Config.NotImplementedBySundialsVersion
+        else (int_of_dirk_table ARK2_DIRK_3_1_2,
+              int_of_erk_table ARK2_ERK_3_1_2)
     | ARK_4_2_3 -> (int_of_dirk_table ARK324L2SA_DIRK_4_2_3,
                     int_of_erk_table ARK324L2SA_ERK_4_2_3)
     | ARK_6_3_4 -> (int_of_dirk_table ARK436L2SA_DIRK_6_3_4,
                     int_of_erk_table ARK436L2SA_ERK_6_3_4)
+    | ARK_7_3_4 ->
+        if Sundials_impl.Version.lt500
+        then raise Config.NotImplementedBySundialsVersion
+        else (int_of_dirk_table ARK437L2SA_DIRK_7_3_4,
+              int_of_erk_table ARK437L2SA_ERK_7_3_4)
     | ARK_8_4_5 -> (int_of_dirk_table ARK548L2SA_DIRK_8_4_5,
                     int_of_erk_table ARK548L2SA_ERK_8_4_5)
+    | ARK_8_4_5b ->
+        if Sundials_impl.Version.lt500
+        then raise Config.NotImplementedBySundialsVersion
+        else (int_of_dirk_table ARK548L2SAb_DIRK_8_4_5,
+              int_of_erk_table ARK548L2SAb_ERK_8_4_5)
 
   (* }}} *)
 
