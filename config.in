@@ -33,7 +33,7 @@ else
 OK_CVodeGetSensNumNonlinSolvIters=
 endif
 
-SUNDIALS_DOC_ROOT_DEFAULT  = https://sundials.readthedocs.io/en/latest/
+SUNDIALS_DOC_ROOT_DEFAULT  = https://sundials.readthedocs.io/en/v$(SUNDIALS_VERSION)/
 OCAML_DOC_ROOT_DEFAULT  = http://caml.inria.fr/pub/docs/manual-ocaml/libref/
 MATHJAX_URL_DEFAULT     = @mathjax@
 
