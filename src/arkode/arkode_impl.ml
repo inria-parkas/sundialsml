@@ -287,6 +287,7 @@ type ('a, 'kind, 'step) session = {
   mutable error_file   : Logfile.t option;
   mutable diag_file    : Logfile.t option;
 
+  mutable adaptc       : Sundials.AdaptController.t option;
   mutable adaptfn      : 'a adaptivity_fn;
   mutable stabfn       : 'a stability_fn;
   mutable resizefn     : 'a resize_fn;

@@ -274,13 +274,12 @@ let main () =
                                prec_none)
         ~linearity
         ((if sungte500 then f else f_lt500) udata))
+      ~adaptc:AdaptController.Soderlind.(make I_defaults)
       (SStolerances (rtol, atol))
       t0
       y
   ) in
   ARKStep.set_max_num_steps arkode_mem 10000;      (* Increase max num steps  *)
-  ARKStep.(set_adaptivity_method arkode_mem
-            (Icontroller { ks = None; method_order = false}));
   ARKStep.(set_predictor_method arkode_mem TrivialPredictor);
 
   (* Main time-stepping loop: calls ARKode to perform the integration, then

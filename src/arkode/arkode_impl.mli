@@ -142,6 +142,7 @@ type ('a, 'kind, 'step) session = {
   mutable resw : 'a res_weight_fun;
   mutable error_file : Sundials.Logfile.t option;
   mutable diag_file : Sundials.Logfile.t option;
+  mutable adaptc : Sundials.AdaptController.t option;
   mutable adaptfn : 'a Global.adaptivity_fn;
   mutable stabfn : 'a Global.stability_fn;
   mutable resizefn : 'a Global.resize_fn;

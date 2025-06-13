@@ -18,6 +18,7 @@
     @profiler       link to Sundials Profiler module documentation
     @logger         link to Sundials Logger module documentation
     @context        link to Sundials Context module documentation
+    @adaptcontroller  link to Sundials AdaptController module documentation
     @cvode          link to Sundials CVODE documentation
     @cvodes         link to Sundials CVODES documentation
     @cvodes_quad    link to Sundials CVODES Quadrature documentation
@@ -117,6 +118,10 @@ struct
     method private html_of_context t =
       let (page, anchor, title) = self#split_text ~page:"SUNContext_link.html" t in
       sundials_link "sundials" (!sundials_doc_root ^ "sundials/") page anchor title
+
+    method private html_of_adaptcontroller t =
+      let (page, anchor, title) = self#split_text ~page:"SUNAdaptController_links.html" t in
+      sundials_link "sundials" (!sundials_doc_root ^ "sunadaptcontroller/") page anchor title
 
     method private html_of_cvode t =
       let (page, anchor, title) = self#split_text t in
@@ -364,6 +369,7 @@ struct
       tag_functions <- ("profiler", self#html_of_profiler) :: tag_functions;
       tag_functions <- ("logger", self#html_of_logger) :: tag_functions;
       tag_functions <- ("context", self#html_of_context) :: tag_functions;
+      tag_functions <- ("adaptcontroller", self#html_of_adaptcontroller) :: tag_functions;
       tag_functions <- ("cvode",    self#html_of_cvode) :: tag_functions;
       tag_functions <- ("cvodes",   self#html_of_cvodes) :: tag_functions;
       tag_functions <- ("cvodes_quad", self#html_of_cvodes_quad) :: tag_functions;

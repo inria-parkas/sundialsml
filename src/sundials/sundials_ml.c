@@ -45,6 +45,12 @@
 #include <sundials/sundials_context.h>
 #endif
 
+#if 670 <= SUNDIALS_LIB_VERSION
+#include <sundials/sundials_adaptcontroller.h>
+#include <sunadaptcontroller/sunadaptcontroller_soderlind.h>
+#include <sunadaptcontroller/sunadaptcontroller_imexgus.h>
+#endif
+
 #include <unistd.h>
 #if defined(SUNDIALS_HAVE_POSIX_TIMERS) && defined(_POSIX_TIMERS)
 #include <time.h>
@@ -491,6 +497,17 @@ CAMLprim value sunml_sundials_wrap_file(FILE* f)
     CAMLreturn (vro);
 }
 
+CAMLprim value sunml_sundials_wrap_file_not_null(FILE* f)
+{
+    CAMLparam0();
+    CAMLlocal1(vr);
+
+    vr = caml_alloc_final(1, NULL, 0, 1);
+    ML_CFILE(vr) = f;
+
+    CAMLreturn (vr);
+}
+
 /* Functions for profiling */
 
 #if 600 <= SUNDIALS_LIB_VERSION && defined(SUNDIALS_BUILD_WITH_PROFILING)
@@ -897,4 +914,492 @@ CAMLprim value sunml_context_create_parallel(value vcomm)
 }
 
 #endif
+
+/* Adaptivity Controllers */
+
+void sunml_adapt_check_flag( const char* call, int flag)
+{
+    switch (flag) {
+    case SUNADAPTCONTROLLER_SUCCESS:
+	return;
+
+    case SUNADAPTCONTROLLER_ILL_INPUT:
+	caml_raise_constant(SUNDIALS_EXN(AdaptController_IllInput));
+
+    case SUNADAPTCONTROLLER_MEM_FAIL:
+	caml_raise_out_of_memory();
+
+    case SUNADAPTCONTROLLER_USER_FCN_FAIL:
+	caml_raise_constant(SUNDIALS_EXN(AdaptController_UserFunctionalFailure));
+
+    case SUNADAPTCONTROLLER_OPERATION_FAIL:
+	caml_raise_constant(SUNDIALS_EXN(AdaptController_OperationFailure));
+
+    default:
+	caml_failwith("sunml_adapt_check_flag");
+    }
+}
+
+#if 670 <= SUNDIALS_LIB_VERSION
+static void finalize_adapt(value vadaptc)
+{
+    SUNAdaptController adaptc = ML_ADAPTCONTROLLER(vadaptc);
+    if (adaptc != NULL) SUNAdaptController_Destroy(adaptc);
+}
+#endif
+
+CAMLprim value sunml_adapt_soderlind_make(value vctx, value vparams)
+{
+    CAMLparam2(vctx, vparams);
+    CAMLlocal1(vadaptc);
+
+#if 670 <= SUNDIALS_LIB_VERSION
+    SUNContext ctx = ML_CCONTEXT(vctx);
+    SUNAdaptController adaptc = NULL;
+    int params = Is_long(vparams) ? Int_val(vparams) : Tag_val(vparams);
+    int r = SUNADAPTCONTROLLER_SUCCESS;
+
+    switch (params) {
+	case VARIANT_SUNDIALS_ADAPT_SODERLIND:
+	// case VARIANT_SUNDIALS_ADAPT_SODERLIND_DEFAULT: = same
+	    adaptc = SUNAdaptController_Soderlind(ctx);
+	    break;
+
+	case VARIANT_SUNDIALS_ADAPT_PID:
+	// case VARIANT_SUNDIALS_ADAPT_PID_DEFAULT: = same
+	    adaptc = SUNAdaptController_PID(ctx);
+	    break;
+
+	case VARIANT_SUNDIALS_ADAPT_PI:
+	// case VARIANT_SUNDIALS_ADAPT_PI_DEFAULT: = same
+	    adaptc = SUNAdaptController_PI(ctx);
+	    break;
+
+	case VARIANT_SUNDIALS_ADAPT_I:
+	// case VARIANT_SUNDIALS_ADAPT_I_DEFAULT: = same
+	    adaptc = SUNAdaptController_I(ctx);
+	    break;
+
+	case VARIANT_SUNDIALS_ADAPT_EXPGUS:
+	// case VARIANT_SUNDIALS_ADAPT_EXPGUS_DEFAULT: = same
+	    adaptc = SUNAdaptController_ExpGus(ctx);
+	    break;
+
+	case VARIANT_SUNDIALS_ADAPT_IMPGUS:
+	// case VARIANT_SUNDIALS_ADAPT_IMPGUS_DEFAULT: = same
+	    adaptc = SUNAdaptController_ImpGus(ctx);
+	    break;
+    }
+
+    if (adaptc == NULL) caml_raise_out_of_memory();
+
+    if (Is_block(vparams)) {
+	switch (Tag_val(vparams)) {
+	case VARIANT_SUNDIALS_ADAPT_SODERLIND:
+	    r = SUNAdaptController_SetParams_Soderlind(adaptc,
+		    Double_val(Field(vparams, 0)),
+		    Double_val(Field(vparams, 1)),
+		    Double_val(Field(vparams, 2)),
+		    Double_val(Field(vparams, 3)),
+		    Double_val(Field(vparams, 4)));
+	    break;
+
+	case VARIANT_SUNDIALS_ADAPT_PID:
+	    r = SUNAdaptController_SetParams_PID(adaptc,
+		    Double_val(Field(vparams, 0)),
+		    Double_val(Field(vparams, 1)),
+		    Double_val(Field(vparams, 2)));
+	    break;
+
+	case VARIANT_SUNDIALS_ADAPT_PI:
+	    r = SUNAdaptController_SetParams_PI(adaptc,
+		    Double_val(Field(vparams, 0)),
+		    Double_val(Field(vparams, 1)));
+	    break;
+
+	case VARIANT_SUNDIALS_ADAPT_I:
+	    r = SUNAdaptController_SetParams_I(adaptc,
+		    Double_val(Field(vparams, 0)));
+	    break;
+
+	case VARIANT_SUNDIALS_ADAPT_EXPGUS:
+	    r = SUNAdaptController_SetParams_ExpGus(adaptc,
+		    Double_val(Field(vparams, 0)),
+		    Double_val(Field(vparams, 1)));
+	    break;
+
+	case VARIANT_SUNDIALS_ADAPT_IMPGUS:
+	    r = SUNAdaptController_SetParams_ImpGus(adaptc,
+		    Double_val(Field(vparams, 0)),
+		    Double_val(Field(vparams, 1)));
+	    break;
+	}
+    }
+
+    if (r != SUNADAPTCONTROLLER_SUCCESS) {
+	SUNAdaptController_Destroy(adaptc);
+	adaptc = NULL;
+	sunml_adapt_check_flag("SUNAdaptController_SetParams_*", r);
+    }
+
+    vadaptc = caml_alloc_final(1, &finalize_adapt, 1, 10);
+    ML_ADAPTCONTROLLER(vadaptc) = adaptc;
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
+    CAMLreturn(vadaptc);
+}
+
+CAMLprim value sunml_adapt_imexgus_make(value vctx, value voparams)
+{
+    CAMLparam2(vctx, voparams);
+    CAMLlocal2(vadaptc, vparams);
+
+#if 670 <= SUNDIALS_LIB_VERSION
+    int r;
+    SUNContext ctx = ML_CCONTEXT(vctx);
+    SUNAdaptController adaptc = SUNAdaptController_ImExGus(ctx);
+    if (adaptc == NULL) caml_raise_out_of_memory();
+
+    if (Is_some(voparams)) {
+	vparams = Some_val(voparams);
+	r = SUNAdaptController_SetParams_ImExGus(adaptc,
+		Field(vparams, 0),
+		Field(vparams, 1),
+		Field(vparams, 2),
+		Field(vparams, 3));
+
+	if (r != SUNADAPTCONTROLLER_SUCCESS) {
+	    SUNAdaptController_Destroy(adaptc);
+	    adaptc = NULL;
+	    sunml_adapt_check_flag("SUNAdaptController_SetParams_ImExGus", r);
+	}
+    }
+
+    vadaptc = caml_alloc_final(1, &finalize_adapt, 1, 10);
+    ML_ADAPTCONTROLLER(vadaptc) = adaptc;
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(vadaptc);
+}
+
+#if 670 <= SUNDIALS_LIB_VERSION
+
+#define ADAPTCONTROLLER_OPS_AND_STATE(c)  ((value)((c)->content))
+#define ADAPTCONTROLLER_STATE(vc) (Field((vc), 0))
+#define ADAPTCONTROLLER_OPS(vc)  (Field((vc), 1))
+#define ADAPTCONTROLLER_GET_OP(vc, x) \
+    (Field(ADAPTCONTROLLER_OPS(vc), RECORD_ADAPTCONTROLLER_OPS_ ## x))
+
+#define ADAPTCONTROLLER_CHECK_EXCEPTION_SUCCESS(result)					 \
+    (Is_exception_result (result)					 \
+     ? adaptcontroller_translate_exception (result = Extract_exception (result)) \
+     : SUNADAPTCONTROLLER_SUCCESS)
+
+static int adaptcontroller_translate_exception(value vexn)
+{
+    CAMLparam1(vexn);
+    CAMLlocal1(vtag);
+    int r;
+
+    vtag = Field(vexn, 0);
+
+    if (vtag == SUNDIALS_EXN_TAG(AdaptController_IllInput)) {
+	r = SUNADAPTCONTROLLER_ILL_INPUT;
+    } else if (vtag == SUNDIALS_EXN_TAG(AdaptController_OperationFailure)) {
+	r = SUNADAPTCONTROLLER_USER_FCN_FAIL;
+    } else {
+	r = SUNADAPTCONTROLLER_OPERATION_FAIL;
+    }
+
+    CAMLreturnT(int, r);
+}
+
+static SUNAdaptController_Type callml_adapt_get_type(SUNAdaptController C)
+{
+    CAMLparam0();
+    CAMLlocal2(vopst, vr);
+    SUNAdaptController_Type r = SUN_ADAPTCONTROLLER_NONE;
+
+    vopst = ADAPTCONTROLLER_OPS_AND_STATE(C);
+    vr = caml_callback_exn(ADAPTCONTROLLER_GET_OP(vopst, GET_TYPE),
+			   ADAPTCONTROLLER_STATE(vopst));
+
+    if (Is_exception_result (vr)) {
+	vr = Extract_exception (vr);
+	sunml_warn_discarded_exn (vr, "custom adaptcontroller: get_type");
+    } else {
+	switch (Int_val(r)) {
+	case VARIANT_SUNDIALS_ADAPT_NO_CONTROL:
+	    r = SUN_ADAPTCONTROLLER_NONE;
+	    break;
+	case VARIANT_SUNDIALS_ADAPT_SINGLE_RATE:
+	    r = SUN_ADAPTCONTROLLER_H;
+	    break;
+	}
+    }
+
+    CAMLreturnT(SUNAdaptController_Type, r);
+}
+
+static int callml_adapt_estimate_step(SUNAdaptController C, sunrealtype h, int p,
+				      sunrealtype dsm, sunrealtype* hnew)
+{
+    CAMLparam0();
+    CAMLlocal2(vopst, vr);
+    CAMLlocalN(args, 4);
+
+    vopst = ADAPTCONTROLLER_OPS_AND_STATE(C);
+    args[0] = ADAPTCONTROLLER_STATE(vopst);
+    args[1] = caml_copy_double(h);
+    args[2] = Val_int(p);
+    args[3] = caml_copy_double(dsm);
+
+    vr = caml_callbackN_exn(ADAPTCONTROLLER_GET_OP(vopst, ESTIMATE_STEP), 4, args);
+
+    if (!Is_exception_result (vr)) {
+	*hnew = Double_val(vr);
+    }
+
+    CAMLreturnT(int, ADAPTCONTROLLER_CHECK_EXCEPTION_SUCCESS(vr));
+}
+
+static int callml_adapt_reset(SUNAdaptController C)
+{
+    CAMLparam0();
+    CAMLlocal2(vopst, vr);
+
+    vopst = ADAPTCONTROLLER_OPS_AND_STATE(C);
+    vr = caml_callback_exn(ADAPTCONTROLLER_GET_OP(vopst, RESET),
+			   ADAPTCONTROLLER_STATE(vopst));
+
+    CAMLreturnT(int, ADAPTCONTROLLER_CHECK_EXCEPTION_SUCCESS(vr));
+}
+
+static int callml_adapt_set_defaults(SUNAdaptController C)
+{
+    CAMLparam0();
+    CAMLlocal2(vopst, vr);
+
+    vopst = ADAPTCONTROLLER_OPS_AND_STATE(C);
+    vr = caml_callback_exn(ADAPTCONTROLLER_GET_OP(vopst, SET_DEFAULTS),
+			   ADAPTCONTROLLER_STATE(vopst));
+
+    CAMLreturnT(int, ADAPTCONTROLLER_CHECK_EXCEPTION_SUCCESS(vr));
+}
+
+static int callml_adapt_write(SUNAdaptController C, FILE* fptr)
+{
+    CAMLparam0();
+    CAMLlocal2(vopst, vr);
+    CAMLlocalN(args, 2);
+
+    if (fptr != NULL) {
+	vopst = ADAPTCONTROLLER_OPS_AND_STATE(C);
+	args[0] = ADAPTCONTROLLER_STATE(vopst);
+	args[1] = sunml_sundials_wrap_file_not_null(fptr);
+
+	vr = caml_callbackN_exn(ADAPTCONTROLLER_GET_OP(vopst, WRITE), 2, args);
+    } else {
+	CAMLreturnT(int, SUNADAPTCONTROLLER_ILL_INPUT);
+    }
+
+    CAMLreturnT(int, ADAPTCONTROLLER_CHECK_EXCEPTION_SUCCESS(vr));
+}
+
+static int callml_adapt_set_error_bias(SUNAdaptController C, sunrealtype bias)
+{
+    CAMLparam0();
+    CAMLlocal2(vopst, vr);
+    CAMLlocalN(args, 2);
+
+    vopst = ADAPTCONTROLLER_OPS_AND_STATE(C);
+    args[0] = ADAPTCONTROLLER_STATE(vopst);
+    args[1] = caml_copy_double(bias);
+
+    vr = caml_callbackN_exn(ADAPTCONTROLLER_GET_OP(vopst, SET_ERROR_BIAS), 2, args);
+
+    CAMLreturnT(int, ADAPTCONTROLLER_CHECK_EXCEPTION_SUCCESS(vr));
+}
+
+static int callml_adapt_update_h(SUNAdaptController C, sunrealtype h, sunrealtype dsm)
+{
+    CAMLparam0();
+    CAMLlocal2(vopst, vr);
+    CAMLlocalN(args, 3);
+
+    vopst = ADAPTCONTROLLER_OPS_AND_STATE(C);
+    args[0] = ADAPTCONTROLLER_STATE(vopst);
+    args[1] = caml_copy_double(h);
+    args[2] = caml_copy_double(dsm);
+
+    vr = caml_callbackN_exn(ADAPTCONTROLLER_GET_OP(vopst, UPDATE_H), 3, args);
+
+    CAMLreturnT(int, ADAPTCONTROLLER_CHECK_EXCEPTION_SUCCESS(vr));
+}
+
+static int callml_adapt_space(SUNAdaptController C, long int *lenrw, long int *leniw)
+{
+    CAMLparam0();
+    CAMLlocal2(vopst, vr);
+
+    vopst = ADAPTCONTROLLER_OPS_AND_STATE(C);
+    vr = caml_callback_exn(ADAPTCONTROLLER_GET_OP(vopst, SPACE),
+			   ADAPTCONTROLLER_STATE(vopst));
+
+    if (!Is_exception_result (vr)) {
+	*lenrw = Field(vr, 0);
+	*leniw = Field(vr, 0);
+    }
+
+    CAMLreturnT(int, ADAPTCONTROLLER_CHECK_EXCEPTION_SUCCESS(vr));
+}
+
+static struct _generic_SUNAdaptController_Ops sunml_adapt_custom_ops = {
+    .gettype	  = callml_adapt_get_type,
+    .destroy	  = NULL,
+    .estimatestep = callml_adapt_estimate_step,
+    .reset	  = callml_adapt_reset,
+    .setdefaults  = callml_adapt_set_defaults,
+    .write	  = callml_adapt_write,
+    .seterrorbias = callml_adapt_set_error_bias,
+    .updateh	  = callml_adapt_update_h,
+    .space        = callml_adapt_space,
+};
+
+static void finalize_adapt_custom(value vadaptc)
+{
+    SUNAdaptController adaptc = ML_ADAPTCONTROLLER(vadaptc);
+    if (adaptc != NULL) {
+	caml_remove_generational_global_root((void *)&(adaptc->content));
+	SUNAdaptController_Destroy(adaptc);
+    }
+}
+
+#endif
+
+CAMLprim value sunml_adapt_custom_make(value vctx, value vstate_ops)
+{
+    CAMLparam2(vctx, vstate_ops);
+    CAMLlocal1(vadaptc);
+
+#if 670 <= SUNDIALS_LIB_VERSION
+    SUNContext ctx = ML_CCONTEXT(vctx);
+    SUNAdaptController adaptc = SUNAdaptController_NewEmpty(ctx);
+    if (adaptc == NULL) caml_raise_out_of_memory();
+
+    adaptc->ops = &sunml_adapt_custom_ops;
+    adaptc->content = (void *)vstate_ops;
+    caml_register_generational_global_root((void *)&(adaptc->content));
+
+    vadaptc = caml_alloc_final(1, &finalize_adapt_custom, 1, 10);
+    ML_ADAPTCONTROLLER(vadaptc) = adaptc;
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(vadaptc);
+}
+
+CAMLprim value sunml_adapt_get_type(value vadaptc)
+{
+    CAMLparam1(vadaptc);
+    CAMLlocal1(vr);
+#if 670 <= SUNDIALS_LIB_VERSION
+    switch (SUNAdaptController_GetType(ML_ADAPTCONTROLLER(vadaptc))) {
+	case SUN_ADAPTCONTROLLER_NONE:
+	    vr = Val_int(VARIANT_SUNDIALS_ADAPT_NO_CONTROL);
+	case SUN_ADAPTCONTROLLER_H:
+	    vr = Val_int(VARIANT_SUNDIALS_ADAPT_SINGLE_RATE);
+	default:
+	    caml_failwith("sunml_adapt_get_type");
+    }
+#endif
+    CAMLreturn(vr);
+}
+
+CAMLprim value sunml_adapt_estimate_step(value vadaptc,
+					 value vh, value vp, value vdsm)
+{
+    CAMLparam4(vadaptc, vh, vp, vdsm);
+    CAMLlocal1(vr);
+#if 670 <= SUNDIALS_LIB_VERSION
+    sunrealtype hnew = 0.0;
+    int r = SUNAdaptController_EstimateStep(ML_ADAPTCONTROLLER(vadaptc),
+		Double_val(vh), Int_val(vp), Double_val(vdsm), &hnew);
+    CHECK_ADAPT_FLAG("SUNAdaptController_EstimateStep", r);
+    vr = caml_copy_double(hnew);
+#endif
+    CAMLreturn(vr);
+}
+
+CAMLprim value sunml_adapt_reset(value vadaptc)
+{
+    CAMLparam1(vadaptc);
+#if 670 <= SUNDIALS_LIB_VERSION
+    int r = SUNAdaptController_Reset(ML_ADAPTCONTROLLER(vadaptc));
+    CHECK_ADAPT_FLAG("SUNAdaptController_Reset", r);
+#endif
+    CAMLreturn0;
+}
+
+CAMLprim value sunml_adapt_set_defaults(value vadaptc)
+{
+    CAMLparam1(vadaptc);
+#if 670 <= SUNDIALS_LIB_VERSION
+    int r = SUNAdaptController_SetDefaults(ML_ADAPTCONTROLLER(vadaptc));
+    CHECK_ADAPT_FLAG("SUNAdaptController_SetDefaults", r);
+#endif
+    CAMLreturn0;
+}
+
+CAMLprim value sunml_adapt_write(value vadaptc, value vlog)
+{
+    CAMLparam2(vadaptc, vlog);
+#if 670 <= SUNDIALS_LIB_VERSION
+    int r = SUNAdaptController_Write(ML_ADAPTCONTROLLER(vadaptc), ML_CFILE(vlog));
+    CHECK_ADAPT_FLAG("SUNAdaptController_Write", r);
+#endif
+    CAMLreturn0;
+}
+
+CAMLprim value sunml_adapt_set_error_bias(value vadaptc, value vbias)
+{
+    CAMLparam2(vadaptc, vbias);
+#if 670 <= SUNDIALS_LIB_VERSION
+    int r = SUNAdaptController_SetErrorBias(ML_ADAPTCONTROLLER(vadaptc),
+					    Double_val(vbias));
+    CHECK_ADAPT_FLAG("SUNAdaptController_SetErrorBias", r);
+#endif
+    CAMLreturn0;
+}
+
+CAMLprim value sunml_adapt_update_h(value vadaptc, value vh, value vdsm)
+{
+    CAMLparam3(vadaptc, vh, vdsm);
+#if 670 <= SUNDIALS_LIB_VERSION
+    int r = SUNAdaptController_UpdateH(ML_ADAPTCONTROLLER(vadaptc),
+				       Double_val(vh), Double_val(vdsm));
+    CHECK_ADAPT_FLAG("SUNAdaptController_UpdateH", r);
+#endif
+    CAMLreturn0;
+}
+
+CAMLprim value sunml_adapt_space(value vadaptc)
+{
+    CAMLparam1(vadaptc);
+    CAMLlocal1(vr);
+#if 670 <= SUNDIALS_LIB_VERSION
+    long int lenrw = 0;
+    long int leniw = 0;
+    int r = SUNAdaptController_Space(ML_ADAPTCONTROLLER(vadaptc), &lenrw, &leniw);
+    CHECK_ADAPT_FLAG("SUNAdaptController_Space", r);
+
+    vr = caml_alloc_tuple(2);
+    Store_field(vr, 0, caml_copy_double(lenrw));
+    Store_field(vr, 1, caml_copy_double(leniw));
+#endif
+    CAMLreturn(vr);
+}
 

@@ -12,7 +12,6 @@ EXAMPLES_SINCE_2_5 = ark_KrylovDemo_prec.ml \
 		     ark_brusselator_fp.ml \
 		     ark_brusselator1D.ml \
 		     ark_heat1D.ml \
-		     ark_heat1D_adapt.ml \
 		     ark_robertson.ml \
 		     ark_robertson_root.ml \
 		     $(if $(KLU_ENABLED),ark_brusselator1D_klu.ml) \
@@ -40,13 +39,16 @@ EXAMPLES_SINCE_6_6_0 = ark_conserved_exp_entropy_ark.ml \
 		       ark_harmonic_symplectic.ml	\
 		       ark_damped_harmonic_symplectic.ml
 
+EXAMPLES_SINCE_6_7_0 = ark_heat1D_adapt.ml
+
 EXAMPLES = $(EXAMPLES_SINCE_2_5)				\
 	   $(if $(AT_LEAST_4_0_0),$(EXAMPLES_SINCE_4_0_0))	\
 	   $(if $(AT_LEAST_5_0_0),$(EXAMPLES_SINCE_5_0_0))	\
 	   $(if $(AT_LEAST_5_4_0),$(EXAMPLES_SINCE_5_4_0))	\
 	   $(if $(AT_LEAST_5_8_0),$(EXAMPLES_SINCE_5_8_0))      \
 	   $(if $(AT_LEAST_6_0_0),$(EXAMPLES_SINCE_6_0_0))	\
-	   $(if $(AT_LEAST_6_6_0),$(EXAMPLES_SINCE_6_6_0))
+	   $(if $(AT_LEAST_6_6_0),$(EXAMPLES_SINCE_6_6_0))	\
+	   $(if $(AT_LEAST_6_7_0),$(EXAMPLES_SINCE_6_7_0))
 
 FILES_TO_CLEAN = bruss_mesh.txt bruss_u.txt bruss_v.txt bruss_w.txt \
 		 heat1D.txt heat_mesh.txt solution.txt \

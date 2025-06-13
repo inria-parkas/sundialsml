@@ -8,6 +8,7 @@ arkode/arkode.cmo : \
     lsolvers/sundials_LinearSolver_impl.cmi \
     lsolvers/sundials_LinearSolver.cmi \
     sundials/sundials_Config.cmi \
+    sundials/sundials_AdaptController.cmi \
     sundials/sundials.cmi \
     nvectors/nvector_serial.cmi \
     nvectors/nvector.cmi \
@@ -23,6 +24,7 @@ arkode/arkode.cmx : \
     lsolvers/sundials_LinearSolver_impl.cmx \
     lsolvers/sundials_LinearSolver.cmx \
     sundials/sundials_Config.cmx \
+    sundials/sundials_AdaptController.cmx \
     sundials/sundials.cmx \
     nvectors/nvector_serial.cmx \
     nvectors/nvector.cmx \
@@ -32,7 +34,9 @@ arkode/arkode.cmi : \
     sundials/sundials_RealArray2.cmi \
     sundials/sundials_RealArray.cmi \
     lsolvers/sundials_NonlinearSolver.cmi \
+    lsolvers/sundials_Matrix.cmi \
     lsolvers/sundials_LinearSolver.cmi \
+    sundials/sundials_AdaptController.cmi \
     sundials/sundials.cmi \
     nvectors/nvector_serial.cmi \
     nvectors/nvector.cmi \
@@ -67,6 +71,7 @@ arkode/arkode_impl.cmo : \
     lsolvers/sundials_Matrix.cmi \
     lsolvers/sundials_LinearSolver_impl.cmi \
     lsolvers/sundials_LinearSolver.cmi \
+    sundials/sundials_AdaptController.cmi \
     sundials/sundials.cmi \
     nvectors/nvector_serial.cmi \
     nvectors/nvector.cmi \
@@ -79,6 +84,7 @@ arkode/arkode_impl.cmx : \
     lsolvers/sundials_Matrix.cmx \
     lsolvers/sundials_LinearSolver_impl.cmx \
     lsolvers/sundials_LinearSolver.cmx \
+    sundials/sundials_AdaptController.cmx \
     sundials/sundials.cmx \
     nvectors/nvector_serial.cmx \
     nvectors/nvector.cmx \
@@ -88,6 +94,7 @@ arkode/arkode_impl.cmi : \
     lsolvers/sundials_NonlinearSolver_impl.cmi \
     lsolvers/sundials_Matrix.cmi \
     lsolvers/sundials_LinearSolver_impl.cmi \
+    sundials/sundials_AdaptController.cmi \
     sundials/sundials.cmi \
     nvectors/nvector_serial.cmi \
     nvectors/nvector.cmi
@@ -120,6 +127,7 @@ cvode/cvode.cmx : \
 cvode/cvode.cmi : \
     sundials/sundials_RealArray.cmi \
     lsolvers/sundials_NonlinearSolver.cmi \
+    lsolvers/sundials_Matrix.cmi \
     lsolvers/sundials_LinearSolver.cmi \
     sundials/sundials.cmi \
     nvectors/nvector_serial.cmi \
@@ -264,6 +272,7 @@ ida/ida.cmx : \
 ida/ida.cmi : \
     sundials/sundials_RealArray.cmi \
     lsolvers/sundials_NonlinearSolver.cmi \
+    lsolvers/sundials_Matrix.cmi \
     lsolvers/sundials_LinearSolver.cmi \
     sundials/sundials.cmi \
     nvectors/nvector_serial.cmi \
@@ -404,6 +413,7 @@ kinsol/kinsol.cmx : \
     kinsol/kinsol.cmi
 kinsol/kinsol.cmi : \
     sundials/sundials_RealArray.cmi \
+    lsolvers/sundials_Matrix.cmi \
     lsolvers/sundials_LinearSolver.cmi \
     sundials/sundials.cmi \
     nvectors/nvector_serial.cmi \
@@ -798,6 +808,14 @@ nvectors/nvector_serial_top.cmo : \
     sundials/sundials_top.cmi
 nvectors/nvector_serial_top.cmx : \
     sundials/sundials_top.cmx
+sundials/sundials_AdaptController.cmo : \
+    sundials/sundials_impl.cmi \
+    sundials/sundials_AdaptController.cmi
+sundials/sundials_AdaptController.cmx : \
+    sundials/sundials_impl.cmx \
+    sundials/sundials_AdaptController.cmi
+sundials/sundials_AdaptController.cmi : \
+    sundials/sundials_impl.cmi
 sundials/sundials_Config.cmo : \
     sundials/sundials_configuration.cmo \
     sundials/sundials_Config.cmi
@@ -860,15 +878,19 @@ sundials/sundials_top.cmo : \
 sundials/sundials_top.cmx : \
     sundials/sundials_top.cmi
 sundials/sundials_top.cmi :
+sundials/sundials_top_findlib.cmo :
+sundials/sundials_top_findlib.cmx :
 sundials/sundials.cmo : \
     sundials/sundials_impl.cmi \
     sundials/sundials_configuration.cmo \
     sundials/sundials_Config.cmi \
+    sundials/sundials_AdaptController.cmi \
     sundials/sundials.cmi
 sundials/sundials.cmx : \
     sundials/sundials_impl.cmx \
     sundials/sundials_configuration.cmx \
     sundials/sundials_Config.cmx \
+    sundials/sundials_AdaptController.cmx \
     sundials/sundials.cmi
 sundials/sundials.cmi : \
     sundials/sundials_impl.cmi

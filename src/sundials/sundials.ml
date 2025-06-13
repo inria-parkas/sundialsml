@@ -505,6 +505,8 @@ module LinearSolver = Sundials_LinearSolver
 
 module NonlinearSolver = Sundials_NonlinearSolver
 
+module AdaptController = Sundials_AdaptController
+
 module Util = struct (* {{{ *)
 
   type error_details = {
@@ -562,5 +564,9 @@ let () =
        sundials_exn_index.  *)
     [|RecoverableFailure;
       NonPositiveEwt;
-      Config.NotImplementedBySundialsVersion|]
+      Config.NotImplementedBySundialsVersion;
+      AdaptController.IllInput;
+      AdaptController.UserFunctionFailure;
+      AdaptController.OperationFailure;
+     |]
 

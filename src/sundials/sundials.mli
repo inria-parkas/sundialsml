@@ -276,6 +276,13 @@ module Context : sig (* {{{ *)
 
 end (* }}} *)
 
+(** Accuracy-based adaptivity controllers that estimate the step sizes, and
+    other parameters, of integrators.
+
+    @adaptcontroller <index.html> Time Step Adaptivity Controllers
+    @since 6.7.0 *)
+module AdaptController = Sundials_AdaptController
+
 (** {2:exceptions Exceptions} *)
 
 (** Indicates a recoverable failure within a callback function.

@@ -194,6 +194,9 @@ enum sundials_exn_index {
   SUNDIALS_EXN_RecoverableFailure = 0,
   SUNDIALS_EXN_NonPositiveEwt,
   SUNDIALS_EXN_NotImplementedBySundialsVersion,
+  SUNDIALS_EXN_AdaptController_IllInput,
+  SUNDIALS_EXN_AdaptController_UserFunctionalFailure,
+  SUNDIALS_EXN_AdaptController_OperationFailure,
   SUNDIALS_EXN_SET_SIZE
 };
 
@@ -238,7 +241,7 @@ enum sundials_output_format_tag {
 	? SUN_OUTPUTFORMAT_CSV : SUN_OUTPUTFORMAT_TABLE)
 #endif
 
-/* Accessing SUNProfilter values */
+/* Accessing SUNProfiler values */
 #if 600 <= SUNDIALS_LIB_VERSION
 #define ML_PROFILER(v) (*(SUNProfiler *)Data_custom_val(v))
 #endif
@@ -256,6 +259,50 @@ enum sundials_logger_level_tag {
   VARIANT_SUNDIALS_LOGGER_LEVEL_WARNING,
   VARIANT_SUNDIALS_LOGGER_LEVEL_INFO,
   VARIANT_SUNDIALS_LOGGER_LEVEL_DEBUG,
+};
+
+#if 670 <= SUNDIALS_LIB_VERSION
+#define CHECK_ADAPT_FLAG(call, flag) if (flag != SUNADAPTCONTROLLER_SUCCESS) \
+				 sunml_adapt_check_flag(call, flag)
+
+// values must match LinearSolver_impl.Custom.ops type
+enum sundials_adapt_ops_index {
+    RECORD_ADAPTCONTROLLER_OPS_GET_TYPE = 0,
+    RECORD_ADAPTCONTROLLER_OPS_ESTIMATE_STEP,
+    RECORD_ADAPTCONTROLLER_OPS_RESET,
+    RECORD_ADAPTCONTROLLER_OPS_SET_DEFAULTS,
+    RECORD_ADAPTCONTROLLER_OPS_WRITE,
+    RECORD_ADAPTCONTROLLER_OPS_SET_ERROR_BIAS,
+    RECORD_ADAPTCONTROLLER_OPS_UPDATE_H,
+    RECORD_ADAPTCONTROLLER_OPS_SPACE,
+};
+#endif
+
+/* Accessing SUNAdaptController values */
+#if 670 <= SUNDIALS_LIB_VERSION
+#define ML_ADAPTCONTROLLER(v) (*(SUNAdaptController *)Data_custom_val(v))
+#endif
+
+enum sundials_adapt_soderlind_control_type_tag {
+  VARIANT_SUNDIALS_ADAPT_NO_CONTROL = 0,
+  VARIANT_SUNDIALS_ADAPT_SINGLE_RATE,
+};
+
+enum sundials_adapt_soderlind_params_tag {
+  /* untagged: */
+  VARIANT_SUNDIALS_ADAPT_SODERLIND_DEFAULT = 0,
+  VARIANT_SUNDIALS_ADAPT_PID_DEFAULT,
+  VARIANT_SUNDIALS_ADAPT_PI_DEFAULT,
+  VARIANT_SUNDIALS_ADAPT_I_DEFAULT,
+  VARIANT_SUNDIALS_ADAPT_EXPGUS_DEFAULT,
+  VARIANT_SUNDIALS_ADAPT_IMPGUS_DEFAULT,
+  /* tagged: */
+  VARIANT_SUNDIALS_ADAPT_SODERLIND = 0,
+  VARIANT_SUNDIALS_ADAPT_PID,
+  VARIANT_SUNDIALS_ADAPT_PI,
+  VARIANT_SUNDIALS_ADAPT_I,
+  VARIANT_SUNDIALS_ADAPT_EXPGUS,
+  VARIANT_SUNDIALS_ADAPT_IMPGUS,
 };
 
 /* Accessing SUNContext values */

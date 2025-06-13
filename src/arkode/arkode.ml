@@ -1724,7 +1724,10 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
   external c_set_nls_rhs_fn : ('d, 'k) session -> unit
       = "sunml_arkode_ark_set_nls_rhs_fn"
 
-  let init ?context prob tol ?restol ?order ?mass ?relax ?(roots=no_roots) t0 y0 =
+  external c_set_adapt_controller : ('d, 'k) session -> Sundials.AdaptController.t -> unit
+      = "sunml_arkode_ark_set_adapt_controller"
+
+  let init ?context prob tol ?restol ?order ?mass ?relax ?adaptc ?(roots=no_roots) t0 y0 =
     let (nroots, roots) = roots in
     let checkvec = Nvector.check y0 in
     if Sundials_configuration.safe && nroots < 0
@@ -1767,6 +1770,7 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
             error_file   = None;
             diag_file    = None;
 
+            adaptc       = adaptc;
             adaptfn      = dummy_adaptfn;
             stabfn       = dummy_stabfn;
             resizefn     = dummy_resizefn;
@@ -1830,6 +1834,7 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
     (match order with Some o -> c_set_order session o | None -> ());
     (match mass with Some msolver -> msolver session y0 | None -> ());
     (match relax with Some _ -> Relax.c_set_relax_fn session true | None -> ());
+    (match adaptc with Some c -> c_set_adapt_controller session c | None -> ());
     session
 
   let get_num_roots { nroots } = nroots
@@ -2457,7 +2462,10 @@ module ERKStep = struct (* {{{ *)
     -> (erkstep arkode_mem * c_weak_ref)
     = "sunml_arkode_erk_init"
 
-  let init ?context tol ?order f ?relax ?(roots=no_roots) t0 y0 =
+  external c_set_adapt_controller : ('d, 'k) session -> Sundials.AdaptController.t -> unit
+      = "sunml_arkode_erk_set_adapt_controller"
+
+  let init ?context tol ?order f ?relax ?adaptc ?(roots=no_roots) t0 y0 =
     let (nroots, roots) = roots in
     let checkvec = Nvector.check y0 in
     if Sundials_configuration.safe && nroots < 0 then
@@ -2489,6 +2497,7 @@ module ERKStep = struct (* {{{ *)
             error_file   = None;
             diag_file    = None;
 
+            adaptc       = adaptc;
             adaptfn      = dummy_adaptfn;
             stabfn       = dummy_stabfn;
             resizefn     = dummy_resizefn;
@@ -2525,6 +2534,7 @@ module ERKStep = struct (* {{{ *)
     set_tolerances session tol;
     (match order with Some o -> c_set_order session o | None -> ());
     (match relax with Some _ -> Relax.c_set_relax_fn session true | None -> ());
+    (match adaptc with Some c -> c_set_adapt_controller session c | None -> ());
     session
 
   let get_num_roots { nroots } = nroots
@@ -2955,6 +2965,7 @@ module SPRKStep = struct (* {{{ *)
             error_file   = None;
             diag_file    = None;
 
+            adaptc         = None;
             adaptfn        = dummy_adaptfn;
             stabfn         = dummy_stabfn;
             resizefn       = dummy_resizefn;
@@ -3733,6 +3744,7 @@ module MRIStep = struct (* {{{ *)
             error_file   = None;
             diag_file    = None;
 
+            adaptc       = None;
             adaptfn      = dummy_adaptfn;
             stabfn       = dummy_stabfn;
             resizefn     = dummy_resizefn;
