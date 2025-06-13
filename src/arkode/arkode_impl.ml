@@ -213,18 +213,6 @@ module Global = struct
   type error_handler = Util.error_details -> unit
   type 'a error_weight_fun = 'a -> 'a -> unit
 
-  type adaptivity_args = {
-      h1 : float;
-      h2 : float;
-      h3 : float;
-      e1 : float;
-      e2 : float;
-      e3 : float;
-      q  : int;
-      p  : int;
-    }
-
-  type 'd adaptivity_fn = float -> 'd -> adaptivity_args -> float
   type 'd stability_fn = float -> 'd -> float
   type 'd resize_fn = 'd -> 'd -> unit
   type 'd postprocess_fn = float -> 'd -> unit
@@ -288,7 +276,6 @@ type ('a, 'kind, 'step) session = {
   mutable diag_file    : Logfile.t option;
 
   mutable adaptc       : Sundials.AdaptController.t option;
-  mutable adaptfn      : 'a adaptivity_fn;
   mutable stabfn       : 'a stability_fn;
   mutable resizefn     : 'a resize_fn;
   mutable poststepfn   : 'a postprocess_fn;
@@ -558,8 +545,6 @@ let dummy_errw _ _ =
   Sundials_impl.crash "Internal error: dummy_errw called\n"
 let dummy_resw _ _ =
   Sundials_impl.crash "Internal error: dummy_resw called\n"
-let dummy_adaptfn _ _ _ =
-  (Sundials_impl.crash "Internal error: dummy_adaptfn called\n")
 let dummy_stabfn _ _ =
   (Sundials_impl.crash "Internal error: dummy_stabfn called\n")
 let dummy_resizefn _ _ =

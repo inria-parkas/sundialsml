@@ -108,20 +108,6 @@ module Common = struct (* {{{ *)
     | VariableOrderPredictor
     | CutoffOrderPredictor
 
-  type adaptivity_params = {
-      ks : (float * float * float) option;
-      method_order : bool;
-    }
-
-  type 'd adaptivity_method =
-    | PIDcontroller of adaptivity_params
-    | PIcontroller of adaptivity_params
-    | Icontroller of adaptivity_params
-    | ExplicitGustafsson of adaptivity_params
-    | ImplicitGustafsson of adaptivity_params
-    | ImExGustafsson of adaptivity_params
-    | AdaptivityFn of 'd adaptivity_fn
-
   (* must correspond to arkode_relax_solver_tag in arkode_ml.h *)
   type relax_solver =
     | Brent
@@ -1771,7 +1757,6 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
             diag_file    = None;
 
             adaptc       = adaptc;
-            adaptfn      = dummy_adaptfn;
             stabfn       = dummy_stabfn;
             resizefn     = dummy_resizefn;
             poststepfn   = dummy_poststepfn;
@@ -2155,16 +2140,6 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
     in
     c_set_table_name s itable etable
 
-  external c_set_adaptivity_method
-      : ('d, 'k) session -> 'd adaptivity_method -> unit
-      = "sunml_arkode_ark_set_adaptivity_method"
-
-  let set_adaptivity_method s am =
-    (match am with
-     | AdaptivityFn fn -> s.adaptfn <- fn
-     | _ -> s.adaptfn <- dummy_adaptfn);
-    c_set_adaptivity_method s am
-
   external c_set_stability_fn : ('d, 'k) session -> bool -> unit
       = "sunml_arkode_ark_set_stability_fn"
 
@@ -2243,8 +2218,6 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
       = "sunml_arkode_ark_set_lsetup_frequency"
   external set_cfl_fraction       : ('a, 'k) session -> float -> unit
       = "sunml_arkode_ark_set_cfl_fraction"
-  external set_error_bias         : ('a, 'k) session -> float -> unit
-      = "sunml_arkode_ark_set_error_bias"
   external set_fixed_step_bounds  : ('a, 'k) session -> float -> float -> unit
       = "sunml_arkode_ark_set_fixed_step_bounds"
   external set_max_cfail_growth   : ('a, 'k) session -> float -> unit
@@ -2498,7 +2471,6 @@ module ERKStep = struct (* {{{ *)
             diag_file    = None;
 
             adaptc       = adaptc;
-            adaptfn      = dummy_adaptfn;
             stabfn       = dummy_stabfn;
             resizefn     = dummy_resizefn;
             poststepfn   = dummy_poststepfn;
@@ -2710,16 +2682,6 @@ module ERKStep = struct (* {{{ *)
   external set_table_name : ('d, 'k) session -> string -> unit
       = "sunml_arkode_erk_set_table_name"
 
-  external c_set_adaptivity_method
-      : ('d, 'k) session -> 'd adaptivity_method -> unit
-      = "sunml_arkode_erk_set_adaptivity_method"
-
-  let set_adaptivity_method s am =
-    (match am with
-     | AdaptivityFn fn -> s.adaptfn <- fn
-     | _ -> s.adaptfn <- dummy_adaptfn);
-    c_set_adaptivity_method s am
-
   external c_set_stability_fn : ('d, 'k) session -> bool -> unit
       = "sunml_arkode_erk_set_stability_fn"
 
@@ -2759,8 +2721,6 @@ module ERKStep = struct (* {{{ *)
       = "sunml_arkode_erk_set_max_err_test_fails"
   external set_cfl_fraction       : ('a, 'k) session -> float -> unit
       = "sunml_arkode_erk_set_cfl_fraction"
-  external set_error_bias         : ('a, 'k) session -> float -> unit
-      = "sunml_arkode_erk_set_error_bias"
   external set_fixed_step_bounds  : ('a, 'k) session -> float -> float -> unit
       = "sunml_arkode_erk_set_fixed_step_bounds"
   external set_max_efail_growth   : ('a, 'k) session -> float -> unit
@@ -2966,7 +2926,6 @@ module SPRKStep = struct (* {{{ *)
             diag_file    = None;
 
             adaptc         = None;
-            adaptfn        = dummy_adaptfn;
             stabfn         = dummy_stabfn;
             resizefn       = dummy_resizefn;
             poststepfn     = dummy_poststepfn;
@@ -3745,7 +3704,6 @@ module MRIStep = struct (* {{{ *)
             diag_file    = None;
 
             adaptc       = None;
-            adaptfn      = dummy_adaptfn;
             stabfn       = dummy_stabfn;
             resizefn     = dummy_resizefn;
             poststepfn   = dummy_poststepfn;

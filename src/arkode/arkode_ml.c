@@ -377,44 +377,6 @@ static int resw(N_Vector y, N_Vector rwt, void *user_data)
     CAMLreturnT (int, 0);
 }
 
-static int adaptfn(N_Vector y, sunrealtype t,
-		   sunrealtype h1, sunrealtype h2, sunrealtype h3, 
-		   sunrealtype e1, sunrealtype e2, sunrealtype e3,
-		   int q, int p, 
-		   sunrealtype *hnew, void *user_data)
-{
-    CAMLparam0();
-    CAMLlocal1(session);
-    CAMLlocalN(args, 3);
-
-    value *backref = user_data;
-    WEAK_DEREF (session, *backref);
-
-    args[0] = caml_copy_double (t);
-    args[1] = NVEC_BACKLINK (y);
-    args[2] = caml_alloc_tuple(RECORD_ARKODE_ADAPTIVITY_ARGS_SIZE);
-
-    Store_field(args[2],RECORD_ARKODE_ADAPTIVITY_ARGS_H1, caml_copy_double(h1));
-    Store_field(args[2],RECORD_ARKODE_ADAPTIVITY_ARGS_H2, caml_copy_double(h2));
-    Store_field(args[2],RECORD_ARKODE_ADAPTIVITY_ARGS_H3, caml_copy_double(h3));
-    Store_field(args[2],RECORD_ARKODE_ADAPTIVITY_ARGS_E1, caml_copy_double(e1));
-    Store_field(args[2],RECORD_ARKODE_ADAPTIVITY_ARGS_E2, caml_copy_double(e2));
-    Store_field(args[2],RECORD_ARKODE_ADAPTIVITY_ARGS_E3, caml_copy_double(e3));
-    Store_field(args[2],RECORD_ARKODE_ADAPTIVITY_ARGS_Q,  Val_int(q));
-    Store_field(args[2],RECORD_ARKODE_ADAPTIVITY_ARGS_P,  Val_int(p));
-
-    /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callbackN_exn (Field(session, RECORD_ARKODE_SESSION_ADAPTFN),
-				  3, args);
-
-    /* Update hnew; leave it unchanged if an error occurred.  */
-    if (!Is_exception_result (r)) {
-	*hnew = Double_val (r);
-	CAMLreturnT(int, 0);
-    }
-    CAMLreturnT(int, 1);
-}
-
 static int stabfn(N_Vector y, sunrealtype t, sunrealtype *hstab, void *user_data)
 {
     CAMLparam0();
@@ -3404,60 +3366,6 @@ CAMLprim value sunml_arkode_ark_set_adapt_controller(value varkode_mem, value va
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_arkode_ark_set_adaptivity_method(value varkode_mem, value vmeth)
-{
-    CAMLparam2(varkode_mem, vmeth);
-    CAMLlocal2(vks, vorder);
-
-    void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
-    int flag;
-
-    if (Tag_val(vmeth) == VARIANT_ARKODE_ADAPTIVITY_METHOD_ADAPTIVITYFN) {
-#if 400 <= SUNDIALS_LIB_VERSION
-	flag = ARKStepSetAdaptivityFn(arkode_mem,
-				      adaptfn,
-				      ARKODE_BACKREF_FROM_ML(varkode_mem));
-	CHECK_FLAG("ARKStepSetAdaptivityFn", flag);
-#else
-	flag = ARKodeSetAdaptivityFn(arkode_mem,
-				     adaptfn,
-				     ARKODE_BACKREF_FROM_ML(varkode_mem));
-	CHECK_FLAG("ARKodeSetAdaptivityFn", flag);
-#endif
-
-    } else {
-	sunrealtype adapt_params[3] = { 0 };
-
-	vks = Field(Field(vmeth, 0), RECORD_ARKODE_ADAPTIVITY_PARAMS_KS);
-	vorder = Field(Field(vmeth, 0),
-			RECORD_ARKODE_ADAPTIVITY_PARAMS_METHOD_ORDER);
-
-	if (vks != Val_none) {
-	    adapt_params[0] = Double_val(Field(Some_val(vks), 0));
-	    adapt_params[1] = Double_val(Field(Some_val(vks), 1));
-	    adapt_params[2] = Double_val(Field(Some_val(vks), 2));
-	}
-
-#if 400 <= SUNDIALS_LIB_VERSION
-	flag = ARKStepSetAdaptivityMethod(arkode_mem, 
-					  Tag_val(vmeth), 
-					  vks == Val_none,
-					  Bool_val(vorder),
-					  vks != Val_none ? adapt_params : NULL);
-	CHECK_FLAG("ARKStepSetAdaptivityMethod", flag);
-#else
-	flag = ARKodeSetAdaptivityMethod(arkode_mem, 
-					 Tag_val(vmeth), 
-					 vks == Val_none,
-					 Bool_val(vorder),
-					 vks != Val_none ? adapt_params : NULL);
-	CHECK_FLAG("ARKodeSetAdaptivityMethod", flag);
-#endif
-    }
-
-    CAMLreturn (Val_unit);
-}
-
 CAMLprim value sunml_arkode_ark_set_stability_fn(value varkode_mem, value vhasf)
 {
     CAMLparam2(varkode_mem, vhasf);
@@ -4320,23 +4228,6 @@ CAMLprim value sunml_arkode_ark_set_delta_gamma_max(value varkode_mem, value var
     int flag = ARKodeSetDeltaGammaMax(ARKODE_MEM_FROM_ML(varkode_mem),
 				      Double_val(varg));
     CHECK_FLAG("ARKodeSetDeltaGammaMax", flag);
-#endif
-
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_arkode_ark_set_error_bias(value varkode_mem, value varg)
-{
-    CAMLparam2(varkode_mem, varg);
-
-#if 400 <= SUNDIALS_LIB_VERSION
-    int flag = ARKStepSetErrorBias(ARKODE_MEM_FROM_ML(varkode_mem),
-				  Double_val(varg));
-    CHECK_FLAG("ARKStepSetErrorBias", flag);
-#else
-    int flag = ARKodeSetErrorBias(ARKODE_MEM_FROM_ML(varkode_mem),
-				  Double_val(varg));
-    CHECK_FLAG("ARKodeSetErrorBias", flag);
 #endif
 
     CAMLreturn (Val_unit);
@@ -6211,48 +6102,6 @@ CAMLprim value sunml_arkode_erk_set_adapt_controller(value varkode_mem, value va
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_arkode_erk_set_adaptivity_method(value varkode_mem,
-						      value vmeth)
-{
-    CAMLparam2(varkode_mem, vmeth);
-    CAMLlocal2(vks, vorder);
-#if 400 <= SUNDIALS_LIB_VERSION
-    void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
-    int flag;
-
-    if (Tag_val(vmeth) == VARIANT_ARKODE_ADAPTIVITY_METHOD_ADAPTIVITYFN) {
-	flag = ERKStepSetAdaptivityFn(arkode_mem,
-				      adaptfn,
-				      ARKODE_BACKREF_FROM_ML(varkode_mem));
-	CHECK_FLAG("ERKStepSetAdaptivityFn", flag);
-
-    } else {
-	sunrealtype adapt_params[3] = { 0 };
-
-	vks = Field(Field(vmeth, 0), RECORD_ARKODE_ADAPTIVITY_PARAMS_KS);
-	vorder = Field(Field(vmeth, 0),
-			RECORD_ARKODE_ADAPTIVITY_PARAMS_METHOD_ORDER);
-
-	if (vks != Val_none) {
-	    adapt_params[0] = Double_val(Field(Some_val(vks), 0));
-	    adapt_params[1] = Double_val(Field(Some_val(vks), 1));
-	    adapt_params[2] = Double_val(Field(Some_val(vks), 2));
-	}
-
-	flag = ERKStepSetAdaptivityMethod(arkode_mem, 
-					  Tag_val(vmeth), 
-					  vks == Val_none,
-					  Bool_val(vorder),
-					  vks != Val_none ? adapt_params : NULL);
-	CHECK_FLAG("ERKStepSetAdaptivityMethod", flag);
-    }
-
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-    CAMLreturn (Val_unit);
-}
-
 CAMLprim value sunml_arkode_erk_set_stability_fn(value varkode_mem, value vhasf)
 {
     CAMLparam2(varkode_mem, vhasf);
@@ -6816,21 +6665,6 @@ CAMLprim value sunml_arkode_erk_set_cfl_fraction(value varkode_mem, value varg)
     int flag = ERKStepSetCFLFraction(ARKODE_MEM_FROM_ML(varkode_mem),
 				    Double_val(varg));
     CHECK_FLAG("ERKStepSetCFLFraction", flag);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_arkode_erk_set_error_bias(value varkode_mem, value varg)
-{
-    CAMLparam2(varkode_mem, varg);
-
-#if 400 <= SUNDIALS_LIB_VERSION
-    int flag = ERKStepSetErrorBias(ARKODE_MEM_FROM_ML(varkode_mem),
-				  Double_val(varg));
-    CHECK_FLAG("ERKStepSetErrorBias", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif

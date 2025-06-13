@@ -97,17 +97,6 @@ module Global :
     type 'a rootsfn = float -> 'a -> Sundials.RealArray.t -> unit
     type error_handler = Sundials.Util.error_details -> unit
     type 'a error_weight_fun = 'a -> 'a -> unit
-    type adaptivity_args = {
-      h1 : float;
-      h2 : float;
-      h3 : float;
-      e1 : float;
-      e2 : float;
-      e3 : float;
-      q : int;
-      p : int;
-    }
-    type 'd adaptivity_fn = float -> 'd -> adaptivity_args -> float
     type 'd stability_fn = float -> 'd -> float
     type 'd resize_fn = 'd -> 'd -> unit
     type 'd postprocess_fn = float -> 'd -> unit
@@ -143,7 +132,6 @@ type ('a, 'kind, 'step) session = {
   mutable error_file : Sundials.Logfile.t option;
   mutable diag_file : Sundials.Logfile.t option;
   mutable adaptc : Sundials.AdaptController.t option;
-  mutable adaptfn : 'a Global.adaptivity_fn;
   mutable stabfn : 'a Global.stability_fn;
   mutable resizefn : 'a Global.resize_fn;
   mutable poststepfn : 'a Global.postprocess_fn;
@@ -310,7 +298,6 @@ val dummy_rootsfn : 'a -> 'b -> 'c -> 'd
 val dummy_errh : 'a -> 'b
 val dummy_errw : 'a -> 'b -> 'c
 val dummy_resw : 'a -> 'b -> 'c
-val dummy_adaptfn : 'a -> 'b -> 'c -> 'd
 val dummy_stabfn : 'a -> 'b -> 'c
 val dummy_resizefn : 'a -> 'b -> 'c
 val dummy_poststepfn : 'a -> 'b -> 'c

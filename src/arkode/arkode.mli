@@ -197,66 +197,6 @@ module Common : sig (* {{{ *)
 
   (** {3:adapt Adaptivity} *)
 
-  (** Arguments for {!adaptivity_fn}s. *)
-  type adaptivity_args = {
-      h1 : float;  (** the current step size, {% $t_m - t_{m-1}$%}. *)
-      h2 : float;  (** the previous step size, {% $t_{m-1} - t_{m-2}$%}. *)
-      h3 : float;  (** the step size {% $t_{m-2} - t_{m-3}$%}. *)
-      e1 : float;  (** the error estimate from the current step, {% $m$%}. *)
-      e2 : float;  (** the error estimate from the previous step, {% $m-1$%}. *)
-      e3 : float;  (** the error estimate from the step {% $m-2$%}. *)
-      q  : int;    (** the global order of accuracy for the integration method. *)
-      p  : int;    (** the global order of accuracy for the embedding. *)
-    }
-
-  (** A function implementing a time step adaptivity algorithm that chooses an
-      $h$ that satisfies the error tolerances. The call [hnew = adapt_fn t y args]
-      has as arguments
-      - [t], the value of the independent variable,
-      - [y], the value of the dependent variable vector {% $y(t)$%}, and
-      - [args], information on step sizes, error estimates, and accuracies.
-      and returns the next step size [hnew]. The function should raise an
-      exception if it cannot set the next step size. The step size should be the
-      maximum value where the error estimates remain below 1.
-
-      This function should focus on accuracy-based time step estimation; for
-      stability based time steps, {!ARKStep.set_stability_fn} and
-      {!ERKStep.set_stability_fn} should be used.
-
-      @arkode_user ARKAdaptFn *)
-  type 'd adaptivity_fn = float -> 'd -> adaptivity_args -> float
-
-  (** Parameters for the standard adaptivity algorithms.
-      There are two:
-      - [adaptivity_ks], the [k1], [k2], and [k3] parameters, or [None]
-        to use the defaults, and
-      - [adaptivity_method_order], [true] specifies the method order of
-        accuracy $q$ and [false] specifies the embedding order of
-        accuracy $p$. *)
-  type adaptivity_params = {
-      ks : (float * float * float) option;
-      method_order : bool;
-    }
-
-  (** Asymptotic error control algorithms.
-
-      @arkode <Mathematics_link.html#time-step-adaptivity> Time step adaptivity *)
-  type 'd adaptivity_method =
-    | PIDcontroller of adaptivity_params
-          (** The default time adaptivity controller. *)
-    | PIcontroller of adaptivity_params
-          (** Uses the two most recent step sizes. *)
-    | Icontroller of adaptivity_params
-          (** Standard time adaptivity control algorithm. *)
-    | ExplicitGustafsson of adaptivity_params
-          (** Primarily used with explicit RK methods. *)
-    | ImplicitGustafsson of adaptivity_params
-          (** Primarily used with implicit RK methods. *)
-    | ImExGustafsson of adaptivity_params
-          (** An ImEx version of the two preceding controllers. *)
-    | AdaptivityFn of 'd adaptivity_fn
-          (** A custom time-step adaptivity function. *)
-
   (** Non-linear solver to use for relaxation.
 
       @arkode <Usage/ARKStep_c_interface/Relaxation.html#c.ARKStepSetRelaxSolver> ARKRelaxSolver *)
@@ -1916,24 +1856,11 @@ module ARKStep : sig (* {{{ *)
 
   (** {3:arkadapt Optional inputs for time step adaptivity} *)
 
-  (** Specifies the method and associated parameters used for time step
-      adaptivity.
-
-      @arkode_ark ARKStepSetAdaptivityMethod
-      @arkode_ark ARKStepSetAdaptivityFn *)
-  val set_adaptivity_method : ('d, 'k) session -> 'd adaptivity_method -> unit
-
   (** Specifies the fraction of the estimated explicitly stable step to use.
       Any non-positive argument resets to the default value (0.5).
 
       @arkode_ark ARKStepSetCFLFraction *)
   val set_cfl_fraction : ('d, 'k) session -> float -> unit
-
-  (** Specifies the bias to apply to the error estimates within accuracy-based
-      adaptivity strategies.
-
-      @arkode_ark ARKStepSetErrorBias *)
-  val set_error_bias : ('d, 'k) session -> float -> unit
 
   (** Specifies the step growth interval in which the step size will remain
       unchanged. In the call [set_fixed_step_bounds s lb ub], [lb] specifies a
@@ -2921,24 +2848,11 @@ module ERKStep : sig (* {{{ *)
 
   (** {3:erksetadap Optional inputs for time step adaptivity} *)
 
-  (** Specifies the method and associated parameters used for time step
-      adaptivity.
-
-      @arkode_erk ERKStepSetAdaptivityMethod
-      @arkode_user ERKStepSetAdaptivityFn *)
-  val set_adaptivity_method : ('d, 'k) session -> 'd adaptivity_method -> unit
-
   (** Specifies the fraction of the estimated explicitly stable step to use.
       Any non-positive argument resets to the default value (0.5).
 
       @arkode_erk ERKStepSetCFLFraction *)
   val set_cfl_fraction : ('d, 'k) session -> float -> unit
-
-  (** Specifies the bias to apply to the error estimates within accuracy-based
-      adaptivity strategies.
-
-      @arkode_erk ERKStepSetErrorBias *)
-  val set_error_bias : ('d, 'k) session -> float -> unit
 
   (** Specifies the step growth interval in which the step size will remain
       unchanged. In the call [set_fixed_step_bounds s lb ub], [lb] specifies a
