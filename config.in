@@ -107,6 +107,10 @@ endef
 
 OCAML_VERSION = @ocaml_version@
 OCAML_VERSION_STRING = @ocaml_version_string@
+
+OCAML_AT_LEAST_5_0_0 = @ocaml_at_least_5_0_0@
+OCAML_AT_LEAST_5_4_0 = @ocaml_at_least_5_4_0@
+
 OCAMLC ?= @ocamlc@
 OCAMLFLAGS += -no-alias-deps @ocamlflags@
 OCAML_INCLUDE := $(shell $(OCAMLC) -where)

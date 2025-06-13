@@ -799,6 +799,18 @@ else
 	warning="${warning}\n\t${msg}"
     fi
 
+    if [ $ocaml_version -ge 50000 ]; then
+	ocaml_at_least_5_0_0=1
+    else
+	ocaml_at_least_5_0_0=
+    fi
+
+    if [ $ocaml_version -ge 50400 ]; then
+	ocaml_at_least_5_4_0=1
+    else
+	ocaml_at_least_5_4_0=
+    fi
+
     Iocaml_inc_path="-isystem ${ocaml_path}"
     ocaml_libpath="${ocaml_path%/}/"
     ocaml_version_info=" (${ocaml_version_string})"
@@ -1892,6 +1904,8 @@ cat ${LOG}
 	 s#@bounds_checking@#${bounds_checking}#;
 	 s#@ocaml_version@#${ocaml_version}#;
 	 s#@ocaml_version_string@#${ocaml_version_string}#;
+	 s#@ocaml_at_least_5_0_0@#${ocaml_at_least_5_0_0}#;
+	 s#@ocaml_at_least_5_4_0@#${ocaml_at_least_5_4_0}#;
 	 s#@ocamlc@#${ocamlc}#;
 	 s#@ocamlopt@#${ocamlopt}#;
 	 s#@ocamldoc@#${ocamldoc}#;
