@@ -3380,6 +3380,17 @@ CAMLprim value sunml_arkode_ark_set_adapt_controller(value varkode_mem, value va
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_arkode_ark_set_adaptivity_adjustment(value varkode_mem, value vadjust)
+{
+    CAMLparam2(varkode_mem, vadjust);
+#if 670 <= SUNDIALS_LIB_VERSION
+    int flag = ARKStepSetAdaptivityAdjustment(ARKODE_MEM_FROM_ML(varkode_mem),
+					      Int_val(vadjust));
+    CHECK_FLAG("ARKStepSetAdaptivityAdjustment", flag);
+#endif
+    CAMLreturn (Val_unit);
+}
+
 CAMLprim value sunml_arkode_ark_set_stability_fn(value varkode_mem, value vhasf)
 {
     CAMLparam2(varkode_mem, vhasf);
@@ -6112,6 +6123,17 @@ CAMLprim value sunml_arkode_erk_set_adapt_controller(value varkode_mem, value va
     int flag = ERKStepSetAdaptController(ARKODE_MEM_FROM_ML(varkode_mem),
 					 ML_ADAPTCONTROLLER(vadaptc));
     CHECK_FLAG("ERKStepSetAdaptController", flag);
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_arkode_erk_set_adaptivity_adjustment(value varkode_mem, value vadjust)
+{
+    CAMLparam2(varkode_mem, vadjust);
+#if 670 <= SUNDIALS_LIB_VERSION
+    int flag = ERKStepSetAdaptivityAdjustment(ARKODE_MEM_FROM_ML(varkode_mem),
+					      Int_val(vadjust));
+    CHECK_FLAG("ERKStepSetAdaptivityAdjustment", flag);
 #endif
     CAMLreturn (Val_unit);
 }

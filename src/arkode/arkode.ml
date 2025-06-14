@@ -1716,7 +1716,12 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
   external c_set_adapt_controller : ('d, 'k) session -> Sundials.AdaptController.t -> unit
       = "sunml_arkode_ark_set_adapt_controller"
 
-  let init ?context prob tol ?restol ?order ?mass ?relax ?adaptc ?(roots=no_roots) t0 y0 =
+  external c_set_adaptivity_adjustment : ('d, 'k) session -> int -> unit
+      = "sunml_arkode_ark_set_adaptivity_adjustment"
+
+  let init ?context prob tol ?restol ?order ?mass ?relax
+           ?adaptc ?adaptivity_adjustment ?(roots=no_roots) t0 y0
+    =
     let (nroots, roots) = roots in
     let checkvec = Nvector.check y0 in
     if Sundials_configuration.safe && nroots < 0
@@ -1823,6 +1828,8 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
     (match mass with Some msolver -> msolver session y0 | None -> ());
     (match relax with Some _ -> Relax.c_set_relax_fn session true | None -> ());
     (match adaptc with Some c -> c_set_adapt_controller session c | None -> ());
+    (match adaptivity_adjustment with
+     | Some i -> c_set_adaptivity_adjustment session i | None -> ());
     session
 
   let get_num_roots { nroots } = nroots
@@ -1834,7 +1841,7 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
       : ('a, 'k) session -> float -> ('a, 'k) Nvector.t -> unit
       = "sunml_arkode_ark_reinit"
 
-  let reinit session ?problem ?order ?mass ?roots t0 y0 =
+  let reinit session ?problem ?order ?mass ?roots ?adaptivity_adjustment t0 y0 =
     if Sundials_configuration.safe then session.checkvec y0;
     Dls.invalidate_callback session;
     let lin, nlsolver, nlsrhsfn, lsolver =
@@ -1888,7 +1895,9 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
     (match order with Some o -> c_set_order session o | None -> ());
     (match roots with
      | None -> ()
-     | Some roots -> root_init session roots)
+     | Some roots -> root_init session roots);
+    (match adaptivity_adjustment with
+     | Some i -> c_set_adaptivity_adjustment session i | None -> ())
 
   external c_resize
       : ('a, 'k) session -> bool -> float -> float -> ('a, 'k) Nvector.t -> unit
@@ -2441,7 +2450,11 @@ module ERKStep = struct (* {{{ *)
   external c_set_adapt_controller : ('d, 'k) session -> Sundials.AdaptController.t -> unit
       = "sunml_arkode_erk_set_adapt_controller"
 
-  let init ?context tol ?order f ?relax ?adaptc ?(roots=no_roots) t0 y0 =
+  external c_set_adaptivity_adjustment : ('d, 'k) session -> int -> unit
+      = "sunml_arkode_erk_set_adaptivity_adjustment"
+
+  let init ?context tol ?order f ?relax
+            ?adaptc ?adaptivity_adjustment ?(roots=no_roots) t0 y0 =
     let (nroots, roots) = roots in
     let checkvec = Nvector.check y0 in
     if Sundials_configuration.safe && nroots < 0 then
@@ -2510,6 +2523,8 @@ module ERKStep = struct (* {{{ *)
     (match order with Some o -> c_set_order session o | None -> ());
     (match relax with Some _ -> Relax.c_set_relax_fn session true | None -> ());
     (match adaptc with Some c -> c_set_adapt_controller session c | None -> ());
+    (match adaptivity_adjustment with
+     | Some i -> c_set_adaptivity_adjustment session i | None -> ());
     session
 
   let get_num_roots { nroots } = nroots
@@ -2521,11 +2536,13 @@ module ERKStep = struct (* {{{ *)
       : ('a, 'k) session -> float -> ('a, 'k) Nvector.t -> unit
       = "sunml_arkode_erk_reinit"
 
-  let reinit session ?order ?roots t0 y0 =
+  let reinit session ?order ?roots ?adaptivity_adjustment t0 y0 =
     if Sundials_configuration.safe then session.checkvec y0;
     c_reinit session t0 y0;
     (match order with Some o -> c_set_order session o | None -> ());
-    (match roots with Some roots -> root_init session roots| None -> ())
+    (match roots with Some roots -> root_init session roots| None -> ());
+    (match adaptivity_adjustment with
+     | Some i -> c_set_adaptivity_adjustment session i | None -> ())
 
   external c_resize
       : ('a, 'k) session -> bool -> float -> float -> ('a, 'k) Nvector.t -> unit

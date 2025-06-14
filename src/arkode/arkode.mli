@@ -1414,7 +1414,7 @@ module ARKStep : sig (* {{{ *)
     -> ('data, 'kind) problem
 
   (** Creates and initializes a session with the solver. The call
-      {[init problem tol ~restol ~order ~mass:msolver ~relax:(rfn, rjfn) ~adaptc ~roots:(nroots, g) t0 y0]}
+      {[init problem tol ~restol ~order ~mass:msolver ~relax:(rfn, rjfn) ~adaptc ~adaptivity_adjustment ~roots:(nroots, g) t0 y0]}
       has as arguments:
       - [problem], specifies the problem to solve (see {!problem}),
       - [tol],     the integration tolerances,
@@ -1425,6 +1425,8 @@ module ARKStep : sig (* {{{ *)
       - [rfn, rjfn], enables relaxation with the given functions
                      (see {!Relax.enable}),
       - [adaptc],  an optional adaptivity controller for the step size,
+      - [adaptivity_adjustment], adjust the method order supplied to the
+                   adaptivity controller,
       - [nroots],  the number of root functions,
       - [g],       the root function ([(nroots, g)] defaults to
                    {!Common.no_roots}),
@@ -1452,6 +1454,7 @@ module ARKStep : sig (* {{{ *)
       @arkode_ark ARKStepSetMassLinearSolver
       @arkode_ark ARKStepSetRelaxFn
       @arkode_ark ARKStepSetAdaptController
+      @arkode_ark ARKStepSetAdaptivityAdjustment
       @arkode_ark ARKStepSetNonlinearSolver
       @arkode_ark ARKStepRootInit
       @arkode_ark ARKStepSStolerances
@@ -1471,6 +1474,7 @@ module ARKStep : sig (* {{{ *)
       -> ?mass:('data, 'kind) Mass.solver
       -> ?relax:('data relax_fn * 'data relax_jac_fn)
       -> ?adaptc:Sundials.AdaptController.t
+      -> ?adaptivity_adjustment:int
       -> ?roots:(int * 'data rootsfn)
       -> float
       -> ('data, 'kind) Nvector.t
@@ -1544,6 +1548,7 @@ module ARKStep : sig (* {{{ *)
       @arkode_ark ARKStepReInit
       @arkode_ark ARKStepRootInit
       @arkode_ark ARKStepSetOrder
+      @arkode_erk ERKStepSetAdaptivityAdjustment
       @arkode_ark ARKStepSetLinearSolver
       @arkode_ark ARKStepSetMassLinearSolver
       @arkode_ark ARKStepSetNonlinearSolver
@@ -1554,6 +1559,7 @@ module ARKStep : sig (* {{{ *)
     -> ?order:int
     -> ?mass:('d, 'k) Mass.solver
     -> ?roots:(int * 'd rootsfn)
+    -> ?adaptivity_adjustment:int
     -> float
     -> ('d, 'k) Nvector.t
     -> unit
@@ -2571,6 +2577,8 @@ module ERKStep : sig (* {{{ *)
       - [rfn, rjfn], enables relaxation with the given functions
                      (see {!Relax.enable}),
       - [adaptc],  an optional adaptivity controller for the step size,
+      - [adaptivity_adjustment], adjust the method order supplied to the
+                   adaptivity controller,
       - [nroots], the number of root functions,
       - [g],      the root function ([(nroots, g)] defaults to
                   {!Common.no_roots}),
@@ -2589,6 +2597,7 @@ module ERKStep : sig (* {{{ *)
       @arkode_erk ERKStepCreate
       @arkode_erk ERKStepSetOrder
       @arkode_erk ERKStepSetAdaptController
+      @arkode_erk ERKStepSetAdaptivityAdjustment
       @arkode_erk ERKStepRootInit
       @arkode_erk ERKStepSStolerances
       @arkode_erk ERKStepSVtolerances
@@ -2602,6 +2611,7 @@ module ERKStep : sig (* {{{ *)
       -> 'data rhsfn
       -> ?relax:('data relax_fn * 'data relax_jac_fn)
       -> ?adaptc:Sundials.AdaptController.t
+      -> ?adaptivity_adjustment:int
       -> ?roots:(int * 'data rootsfn)
       -> float
       -> ('data, 'kind) Nvector.t
@@ -2662,11 +2672,13 @@ module ERKStep : sig (* {{{ *)
 
       @arkode_erk ERKStepReInit
       @arkode_erk ERKStepRootInit
+      @arkode_erk ERKStepSetAdaptivityAdjustment
       @arkode_erk ERKStepSetOrder *)
   val reinit :
     ('d, 'k) session
     -> ?order:int
     -> ?roots:(int * 'd rootsfn)
+    -> ?adaptivity_adjustment:int
     -> float
     -> ('d, 'k) Nvector.t
     -> unit
