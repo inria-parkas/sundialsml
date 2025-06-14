@@ -589,6 +589,18 @@ module ButcherTable : sig (* {{{ *)
                                 (Sundials >= 5.0.0). *)
     | ARK2_ERK_3_1_2        (** ARK2-ERK-3-1-2 method.
                                 (Sundials >= 6.6.0). *)
+    | Sofroniou_Spaletta_5_3_4 (** Sofroniou-Spaletta-5-3-4 ERK method.
+                                   (Sundials >= 6.7.0). *)
+    | Shu_Osher_3_2_3       (** Shu-Osher-3-2-3 ERK method.
+                                (Sundials >= 6.7.0). *)
+    | Verner_9_5_6          (** Verner-9-5-6 ERK method.
+                                (Sundials >= 6.7.0). *)
+    | Verner_10_6_7          (** Verner-10-6-7 ERK method.
+                                 (Sundials >= 6.7.0). *)
+    | Verner_13_7_8          (** Verner-13-7-8 ERK method.
+                                 (Sundials >= 6.7.0). *)
+    | Verner_16_8_9          (** Verner-16-8-9 ERK method.
+                                 (Sundials >= 6.7.0). *)
 
   (** Implicit Butcher tables
 

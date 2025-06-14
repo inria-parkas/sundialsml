@@ -261,6 +261,12 @@ module ButcherTable = struct (* {{{ *)
     | ARK437L2SA_ERK_7_3_4  (* >= 5.0.0 *)
     | ARK548L2SAb_ERK_8_4_5 (* >= 5.0.0 *)
     | ARK2_ERK_3_1_2        (* >= 6.6.0 *)
+    | Sofroniou_Spaletta_5_3_4 (* >= 6.7.0) *)
+    | Shu_Osher_3_2_3          (* >= 6.7.0) *)
+    | Verner_9_5_6             (* >= 6.7.0) *)
+    | Verner_10_6_7            (* >= 6.7.0) *)
+    | Verner_13_7_8            (* >= 6.7.0) *)
+    | Verner_16_8_9            (* >= 6.7.0) *)
 
   type dirk_table =
     | SDIRK_2_1_2
@@ -363,7 +369,27 @@ module ButcherTable = struct (* {{{ *)
        | ARK548L2SAb_ERK_8_4_5 -> 14
        | ARK2_ERK_3_1_2        -> if Sundials_impl.Version.lt660
                                   then raise Config.NotImplementedBySundialsVersion
-                                  else 15)
+                                  else 15
+       | Sofroniou_Spaletta_5_3_4 -> if Sundials_impl.Version.lt670
+                                     then raise Config.NotImplementedBySundialsVersion
+                                     else 16
+       | Shu_Osher_3_2_3          -> if Sundials_impl.Version.lt670
+                                     then raise Config.NotImplementedBySundialsVersion
+                                     else 16
+       | Verner_9_5_6             -> if Sundials_impl.Version.lt670
+                                     then raise Config.NotImplementedBySundialsVersion
+                                     else 17
+       | Verner_10_6_7            -> if Sundials_impl.Version.lt670
+                                     then raise Config.NotImplementedBySundialsVersion
+                                     else 18
+       | Verner_13_7_8            -> if Sundials_impl.Version.lt670
+                                     then raise Config.NotImplementedBySundialsVersion
+                                     else 19
+       | Verner_16_8_9            -> if Sundials_impl.Version.lt670
+                                     then raise Config.NotImplementedBySundialsVersion
+                                     else 20
+      )
+
 
   let int_of_dirk_table v =
     match Config.sundials_version with
