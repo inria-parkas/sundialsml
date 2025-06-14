@@ -672,6 +672,14 @@ module ButcherTable : sig (* {{{ *)
       @since 4.0.0 *)
   val write : ?logfile:Logfile.t -> t -> unit
 
+  (** Determines whether the table is stiffly accurate.
+      That is, whether it satisfies
+      {% $\forall_i A_{stages - 1, i} \equiv B_i $ %}.
+
+      @arkode_bt ARKodeButcherTable_IsStifflyAccurate
+      @since 6.7.0 *)
+  val is_stiffly_accurate : t -> bool
+
   (** Indicates that a check on the analytic order of accuracy failed. *)
   exception ButcherTableCheckFailed
 

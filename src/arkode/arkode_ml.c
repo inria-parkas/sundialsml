@@ -3092,6 +3092,20 @@ CAMLprim value sunml_arkode_butcher_table_write(value vbt, value volog)
     CAMLreturn (Val_unit);
 }
 
+CAMLprim value sunml_arkode_butcher_table_is_stiffly_accurate(value vbt)
+{
+    CAMLparam1(vbt);
+    CAMLlocal1(vr);
+#if 670 <= SUNDIALS_LIB_VERSION
+    ARKodeButcherTable bt = butcher_table_val(vbt);
+    vr = Val_bool(ARKodeButcherTable_IsStifflyAccurate(bt));
+    ARKodeButcherTable_Free(bt);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(vr);
+}
+
 CAMLprim value sunml_arkode_butcher_table_check_order(value volog, value vbt)
 {
     CAMLparam2(volog, vbt);

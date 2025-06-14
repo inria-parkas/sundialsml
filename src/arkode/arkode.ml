@@ -506,6 +506,9 @@ module ButcherTable = struct (* {{{ *)
     if Sundials_configuration.safe then check bt;
     c_write bt logfile
 
+  external is_stiffly_accurate : t -> bool
+    = "sunml_arkode_butcher_table_is_stiffly_accurate"
+
   exception ButcherTableCheckFailed
 
   external c_check_order
