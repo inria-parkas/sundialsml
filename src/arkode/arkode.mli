@@ -1414,7 +1414,7 @@ module ARKStep : sig (* {{{ *)
     -> ('data, 'kind) problem
 
   (** Creates and initializes a session with the solver. The call
-      {[init problem tol ~restol ~order ~mass:msolver ~relax:(rfn, rjfn) ~adaptc ~adaptivity_adjustment ~roots:(nroots, g) t0 y0]}
+      {[init problem tol ~restol ~order ~mass:msolver ~relax:(rfn, rjfn) ~adapt_controller ~adaptivity_adjustment ~roots:(nroots, g) t0 y0]}
       has as arguments:
       - [problem], specifies the problem to solve (see {!problem}),
       - [tol],     the integration tolerances,
@@ -1424,7 +1424,7 @@ module ARKStep : sig (* {{{ *)
                    involves a non-identity mass matrix,
       - [rfn, rjfn], enables relaxation with the given functions
                      (see {!Relax.enable}),
-      - [adaptc],  an optional adaptivity controller for the step size,
+      - [adapt_controller],  an optional adaptivity controller for the step size,
       - [adaptivity_adjustment], adjust the method order supplied to the
                    adaptivity controller,
       - [nroots],  the number of root functions,
@@ -1473,7 +1473,7 @@ module ARKStep : sig (* {{{ *)
       -> ?order:int
       -> ?mass:('data, 'kind) Mass.solver
       -> ?relax:('data relax_fn * 'data relax_jac_fn)
-      -> ?adaptc:Sundials.AdaptController.t
+      -> ?adapt_controller:Sundials.AdaptController.t
       -> ?adaptivity_adjustment:int
       -> ?roots:(int * 'data rootsfn)
       -> float
@@ -2576,7 +2576,7 @@ module ERKStep : sig (* {{{ *)
       - [f],      the ODE right-hand side function,
       - [rfn, rjfn], enables relaxation with the given functions
                      (see {!Relax.enable}),
-      - [adaptc],  an optional adaptivity controller for the step size,
+      - [adapt_controller],  an optional adaptivity controller for the step size,
       - [adaptivity_adjustment], adjust the method order supplied to the
                    adaptivity controller,
       - [nroots], the number of root functions,
@@ -2610,7 +2610,7 @@ module ERKStep : sig (* {{{ *)
       -> ?order:int
       -> 'data rhsfn
       -> ?relax:('data relax_fn * 'data relax_jac_fn)
-      -> ?adaptc:Sundials.AdaptController.t
+      -> ?adapt_controller:Sundials.AdaptController.t
       -> ?adaptivity_adjustment:int
       -> ?roots:(int * 'data rootsfn)
       -> float

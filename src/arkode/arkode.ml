@@ -1720,7 +1720,7 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
       = "sunml_arkode_ark_set_adaptivity_adjustment"
 
   let init ?context prob tol ?restol ?order ?mass ?relax
-           ?adaptc ?adaptivity_adjustment ?(roots=no_roots) t0 y0
+           ?adapt_controller ?adaptivity_adjustment ?(roots=no_roots) t0 y0
     =
     let (nroots, roots) = roots in
     let checkvec = Nvector.check y0 in
@@ -1764,7 +1764,7 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
             error_file   = None;
             diag_file    = None;
 
-            adaptc       = adaptc;
+            adaptc       = adapt_controller;
             stabfn       = dummy_stabfn;
             resizefn     = dummy_resizefn;
             poststepfn   = dummy_poststepfn;
@@ -1827,7 +1827,7 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
     (match order with Some o -> c_set_order session o | None -> ());
     (match mass with Some msolver -> msolver session y0 | None -> ());
     (match relax with Some _ -> Relax.c_set_relax_fn session true | None -> ());
-    (match adaptc with Some c -> c_set_adapt_controller session c | None -> ());
+    (match adapt_controller with Some c -> c_set_adapt_controller session c | None -> ());
     (match adaptivity_adjustment with
      | Some i -> c_set_adaptivity_adjustment session i | None -> ());
     session
@@ -2454,7 +2454,7 @@ module ERKStep = struct (* {{{ *)
       = "sunml_arkode_erk_set_adaptivity_adjustment"
 
   let init ?context tol ?order f ?relax
-            ?adaptc ?adaptivity_adjustment ?(roots=no_roots) t0 y0 =
+            ?adapt_controller ?adaptivity_adjustment ?(roots=no_roots) t0 y0 =
     let (nroots, roots) = roots in
     let checkvec = Nvector.check y0 in
     if Sundials_configuration.safe && nroots < 0 then
@@ -2486,7 +2486,7 @@ module ERKStep = struct (* {{{ *)
             error_file   = None;
             diag_file    = None;
 
-            adaptc       = adaptc;
+            adaptc       = adapt_controller;
             stabfn       = dummy_stabfn;
             resizefn     = dummy_resizefn;
             poststepfn   = dummy_poststepfn;
@@ -2522,7 +2522,7 @@ module ERKStep = struct (* {{{ *)
     set_tolerances session tol;
     (match order with Some o -> c_set_order session o | None -> ());
     (match relax with Some _ -> Relax.c_set_relax_fn session true | None -> ());
-    (match adaptc with Some c -> c_set_adapt_controller session c | None -> ());
+    (match adapt_controller with Some c -> c_set_adapt_controller session c | None -> ());
     (match adaptivity_adjustment with
      | Some i -> c_set_adaptivity_adjustment session i | None -> ());
     session

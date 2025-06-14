@@ -274,7 +274,7 @@ let main () =
                                prec_none)
         ~linearity
         ((if sungte500 then f else f_lt500) udata))
-      ~adaptc:AdaptController.Soderlind.(make I_defaults)
+      ~adapt_controller:AdaptController.Soderlind.(make I_defaults)
       (SStolerances (rtol, atol))
       t0
       y
