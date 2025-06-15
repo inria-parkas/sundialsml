@@ -1668,10 +1668,10 @@ static bool matrix_sparse_scale_addi(sunrealtype c, value va)
     CAMLparam1(va);
     CAMLlocal2(vcptr, vpayload);
     CAMLlocal4(vdatac, vidxvalsc, vidxptrsc, vcptrc);
-    sundials_ml_smat_index j, i, p, nz, cend, newvals;
+    sundials_ml_smat_index j, i, p, nz, cend, newvals, nw;
     bool newmat, found;
-    sundials_ml_smat_index *w, *Ap, *Ai, *Cp, *Ci;
-    sunrealtype *x, *Ax, *Cx;
+    sundials_ml_smat_index *Ap, *Ai, *Cp, *Ci;
+    sunrealtype *Ax;
     sundials_ml_smat_index M, N, *A_indexptrs, *A_indexvals;
     MAT_CONTENT_SPARSE_TYPE A;
 
@@ -1700,6 +1700,11 @@ static bool matrix_sparse_scale_addi(sunrealtype c, value va)
     M = A->M;
     N = A->N;
 #endif
+
+    /* access data from (pre resize) CSR structures (return if failure) */
+    Ap = A_indexptrs;
+    Ai = A_indexvals;
+    Ax = A->data;
 
     /* determine if A already contains values on the diagonal (hence
        no memory allocation necessary), and calculate the number of non-zeroes
@@ -1739,8 +1744,10 @@ static bool matrix_sparse_scale_addi(sunrealtype c, value va)
     /*   case 2: A has sufficient storage,
                  but does not already contain a diagonal */
     } else if (!newmat) {
+      sundials_ml_smat_index *w;
+      sunrealtype *x;
 
-      /* create work arrays for nonzero indices and values in a
+      /* create work arrays for nonzero row (column) indices and values in a
          single column (row) */
       w = (sundials_ml_smat_index *) malloc(M * sizeof(sundials_ml_smat_index));
       if (w == NULL) CAMLreturnT(bool, false);
@@ -1761,31 +1768,39 @@ static bool matrix_sparse_scale_addi(sunrealtype c, value va)
       /* iterate through columns (rows) backwards */
       for (j = N-1; j >= 0; j--) {
 
-        /* clear out temporary arrays for this column (row) */
-        for (i = 0; i < M; i++) {
-          w[i] = 0;
-          x[i] = 0.0;
-        }
+	/* reset diagonal entry, in case it's not in A */
+	x[j] = 0.0;
 
         /* iterate down column (row) of A, collecting nonzeros */
-        for (p = A_indexptrs[j]; p < cend; p++) {
-          w[A_indexvals[p]] += 1;    /* indicate that row (column) is filled */
+        for (p = A_indexptrs[j], i = 0; p < cend; p++, i++) {
+	  w[i] = A_indexvals[p];	       /* collect row (column) index */
           x[A_indexvals[p]] = c * A->data[p];  /* collect/scale value */
         }
 
+	/* NNZ in this column (row) */
+	nw = cend - Ap[j];
+
         /* add identity to this column (row) */
         if (j < M) {
-          w[j] += 1;     /* indicate that row (column) is filled */
           x[j] += 1.0;   /* update value */
         }
 
         /* fill entries of A with this column's (row's) data */
-        for (i = M-1; i >= 0; i--) {
-          if (w[i] > 0) {
-            A_indexvals[--nz] = i;
-            A->data[nz] = x[i];
-          }
-        }
+	/* fill entries past diagonal */
+	for (i=nw-1; i>=0 && w[i]>j; i--) {
+	  A_indexvals[--nz] = w[i];
+	  A->data[nz] = x[w[i]];
+	}
+	/* fill diagonal if applicable */
+	if (i < 0 /* empty or insert at front */ || w[i] != j /* insert behind front */) {
+	  A_indexvals[--nz] = j;
+	  A->data[nz] = x[j];
+	}
+	/* fill entries before diagonal */
+	for (; i>=0; i--) {
+	  A_indexvals[--nz] = w[i];
+	  A->data[nz] = x[w[i]];
+	}
 
         /* store ptr past this col (row) from orig A, update value for new A */
         cend = A_indexptrs[j];
@@ -1798,24 +1813,16 @@ static bool matrix_sparse_scale_addi(sunrealtype c, value va)
 
     /*   case 3: A must be reallocated with sufficient storage */
     } else {
-	/* create work arrays for row indices and nonzero column values */
-	w = (sundials_ml_smat_index *) malloc(M * sizeof(sundials_ml_smat_index));
-	if (w == NULL) CAMLreturnT(bool, false);
+	sunrealtype *Cx;
 
-	x = (sunrealtype *) malloc(M * sizeof(sunrealtype));
+	/* create work array for nonzero values in a single column (row) */
+	sunrealtype *x = (sunrealtype *) malloc(M * sizeof(sunrealtype));
 	if (x == NULL) {
-	    free(w);
 	    CAMLreturnT(bool, false);
 	}
 
-	/* access data from (pre resize) CSR structures (return if failure) */
-	Ap = A_indexptrs;
-	Ai = A_indexvals;
-	Ax = A->data;
-
 	/* reallocate memory within A -- no-copy, no-free */
 	if (! matrix_sparse_resize(va, Ap[N] + newvals, 0, 0)) {
-	    free(w);
 	    free(x);
 	    CAMLreturnT(bool, false);
 	}
@@ -1840,30 +1847,34 @@ static bool matrix_sparse_scale_addi(sunrealtype c, value va)
 	    /* set current column (row) pointer to current # nonzeros */
 	    Cp[j] = nz;
 
-	    /* clear out temporary arrays for this column (row) */
-	    for (i=0; i < M; i++) {
-		w[i] = 0;
-		x[i] = 0.0;
-	    }
+	    /* reset diagonal entry, in case it's not in A */
+	    x[j] = 0.0;
 
 	    /* iterate down column (along row) of A, collecting nonzeros */
 	    for (p=Ap[j]; p < Ap[j+1]; p++) {
-		w[Ai[p]] += 1;         /* indicate that row is filled */
 		x[Ai[p]] = c*Ax[p];    /* collect/scale value */
 	    }
 
 	    /* add identity to this column (row) */
 	    if (j < M) {
-		w[j] += 1;     /* indicate that row is filled */
 		x[j] += 1.0;  /* update value */
 	    }
 
 	    /* fill entries of C with this column's (row's) data */
-	    for (i=0; i < M; i++) {
-		if (w[i] > 0) {
-		    Ci[nz] = i;
-		    Cx[nz++] = x[i];
-		}
+	    /* fill entries before diagonal */
+	    for (p=Ap[j]; p<Ap[j+1] && Ai[p]<j; p++) {
+	      Ci[nz] = Ai[p];
+	      Cx[nz++] = x[Ai[p]];
+	    }
+	    /* fill diagonal if applicable */
+	    if (p >= Ap[j+1] /* empty or insert at end */ ||  Ai[p] != j /* insert before end */) {
+	      Ci[nz] = j;
+	      Cx[nz++] = x[j];
+	    }
+	    /* fill entries past diagonal */
+	    for (; p<Ap[j+1]; p++) {
+	      Ci[nz] = Ai[p];
+	      Cx[nz++] = x[Ai[p]];
 	    }
 	}
 
@@ -1878,7 +1889,6 @@ static bool matrix_sparse_scale_addi(sunrealtype c, value va)
 #endif
 
 	/* clean up */
-	free(w);
 	free(x);
     }
 
