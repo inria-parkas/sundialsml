@@ -106,6 +106,24 @@ module Profiler : sig (* {{{ *)
       @profiler SUNProfiler_End *)
   external finish : t -> string -> unit = "sunml_profiler_end" [@@noalloc]
 
+  (** The time elapsed in seconds for the given timer.
+      Returns 0.0 for Sundials < 6.7.0.
+
+      @profiler SUNProfiler_GetElapsedTime
+      @since 6.7.0 *)
+  external get_elapsed_time : t -> string -> (float [@unboxed])
+    = "sunml_profiler_get_elapsed_time_byte"
+      "sunml_profiler_get_elapsed_time" [@@noalloc]
+
+  (** The timer resolution in seconds.
+      Returns 0.0 for Sundials < 6.7.0.
+
+      @profiler SUNProfiler_GetTimerResolution
+      @since 6.7.0 *)
+  external get_timer_resolution : t -> (float [@unboxed])
+    = "sunml_profiler_get_timer_resolution_byte"
+      "sunml_profiler_get_timer_resolution" [@@noalloc]
+
   (** Prints out a profiling summary.
 
       @profiler SUNProfiler_Print *)

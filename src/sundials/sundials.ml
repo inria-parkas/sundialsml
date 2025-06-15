@@ -42,6 +42,14 @@ module Profiler = struct
   external finish : t -> string -> unit
     = "sunml_profiler_end" [@@noalloc]
 
+  external get_elapsed_time : t -> string -> (float [@unboxed])
+    = "sunml_profiler_get_elapsed_time_byte"
+      "sunml_profiler_get_elapsed_time" [@@noalloc]
+
+  external get_timer_resolution : t -> (float [@unboxed])
+    = "sunml_profiler_get_timer_resolution_byte"
+      "sunml_profiler_get_timer_resolution" [@@noalloc]
+
   external print : t -> Logfile.t -> unit
     = "sunml_profiler_print"
 

@@ -552,6 +552,34 @@ CAMLprim void sunml_profiler_end(value vprofiler, value vname)
 #endif
 }
 
+CAMLprim double sunml_profiler_get_elapsed_time(value vprofiler, value vname)
+{
+#if 670 <= SUNDIALS_LIB_VERSION && defined(SUNDIALS_BUILD_WITH_PROFILING)
+    return SUNProfiler_GetElapsedTime(ML_PROFILER(vprofiler), String_val(vname));
+#else
+    return 0.0;
+#endif
+}
+
+CAMLprim value sunml_profiler_get_elapsed_time_byte(value vprofiler, value vname)
+{
+    return caml_copy_double(sunml_profiler_get_elapsed_time(vprofiler, vname));
+}
+
+CAMLprim double sunml_profiler_get_timer_resolution(value vprofiler)
+{
+#if 670 <= SUNDIALS_LIB_VERSION && defined(SUNDIALS_BUILD_WITH_PROFILING)
+    return SUNProfiler_GetTimerResolution(ML_PROFILER(vprofiler));
+#else
+    return 0.0;
+#endif
+}
+
+CAMLprim value sunml_profiler_get_timer_resolution_byte(value vprofiler)
+{
+    return caml_copy_double(sunml_profiler_get_timer_resolution(vprofiler));
+}
+
 CAMLprim value sunml_profiler_print(value vprofiler, value vfile)
 {
     CAMLparam2(vprofiler, vfile);
