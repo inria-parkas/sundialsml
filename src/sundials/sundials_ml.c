@@ -1090,7 +1090,7 @@ CAMLprim value sunml_adapt_imexgus_make(value vctx, value voparams)
     SUNAdaptController adaptc = SUNAdaptController_ImExGus(ctx);
     if (adaptc == NULL) caml_raise_out_of_memory();
 
-    if (Is_some(voparams)) {
+    if (!Is_none(voparams)) {
 	vparams = Some_val(voparams);
 	r = SUNAdaptController_SetParams_ImExGus(adaptc,
 		Field(vparams, 0),

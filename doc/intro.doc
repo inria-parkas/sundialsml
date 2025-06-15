@@ -254,7 +254,7 @@ or
 {2:install Installation}
 
 The dependencies of Sundials/ML are
-- {{:http://caml.inria.fr/ocaml/}OCaml} {b 4.03.0 or greater},
+- {{:http://caml.inria.fr/ocaml/}OCaml} {b 4.08.0 or greater},
 - {{:https://computing.llnl.gov/projects/sundials}Sundials} {b {var version}}
   (compiles with version back to 2.7.0 with less features),
 - {e Optionally}:
