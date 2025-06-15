@@ -70,6 +70,10 @@ let lt600 =
   let n, _, _ = Sundials.Config.sundials_version in
   n < 6
 
+let ge670 = match Sundials.Config.version with
+            | 6, m, _, _ -> m >= 7
+            | m, _, _, _ -> m > 6
+
 let local_array = Nvector_parallel.local_array
 let slice = Array1.sub
 let printf = Printf.printf
@@ -601,6 +605,7 @@ let main () =
       u
   ) in
   ARKStep.set_max_num_steps arkode_mem 10000;
+  if ge670 then ARKStep.set_nonlin_conv_coef arkode_mem 0.01;
 
   (* Print heading *)
   if my_pe = 0 then print_intro npes mudq mldq mukeep mlkeep;

@@ -26,6 +26,10 @@ open Sundials
 module ARKStep = Arkode.ARKStep
 module DM = Matrix.Dense
 
+let ge670 = match Sundials.Config.version with
+            | 6, m, _, _ -> m >= 7
+            | m, _, _, _ -> m > 6
+
 let printf = Printf.printf
 let fprintf = Printf.fprintf
 
@@ -123,10 +127,13 @@ let main () =
                                  (SStolerances (reltol, abstol)) t0 y)
   in
   (* Select a Butcher table with non-negative b values *)
-  if implicit then ARKStep.(set_table_name arkode_mem
-                              ~itable:"ARKODE_ARK2_DIRK_3_1_2"
-                              ~etable:"ARKODE_ERK_NONE"
-                              ());
+  if implicit then begin
+    ARKStep.(set_table_name arkode_mem
+                            ~itable:"ARKODE_ARK2_DIRK_3_1_2"
+                            ~etable:"ARKODE_ERK_NONE"
+                            ());
+    if ge670 then ARKStep.set_nonlin_conv_coef arkode_mem 0.01
+  end;
 
   (* Enable relaxation methods *)
   if relax then ARKStep.Relax.enable arkode_mem ent jac_ent;
