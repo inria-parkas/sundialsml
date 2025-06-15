@@ -1,7 +1,7 @@
 #! /bin/sh
 
 sysname='Sundials/ML'
-version=6.7.0
+version=7.0.0
 versionp=0
 contact='tim@tbrk.org'
 
@@ -514,6 +514,25 @@ case `uname -s` in
 	;;
 esac
 
+# identify mpicc
+if [ "x${mpi_lib_path}" = x ]; then
+    for d in /usr/lib64/openmpi; do
+	if [ -e "$d/lib/libsundials_nvecparallel.so" ]; then
+	    mpi_lib_path="$d/lib"
+	    Lmpi_lib_path="-L${mpi_lib_path}"
+	fi
+	if [ "x${mpicc}" = x -a -x "$d/bin/mpicc" ]; then
+	    mpicc="$d/bin/mpicc"
+	fi
+	if [ "x${mpirun}" = x -a -x "$d/bin/mpirun" ]; then
+	    mpirun="$d/bin/mpirun"
+	fi
+    done
+fi
+
+mpicc=${mpicc:-mpicc}
+mpirun=${mpirun:-mpirun}
+
 # Check for Sundials installation (and version)
 test_stem=__configure_test_file_sundialsversion0
 cat > $test_stem.c <<EOF
@@ -606,11 +625,46 @@ else
 	6.6.1) sundials=661 ;;
 	6.6.2) sundials=662 ;;
 	6.*)   sundials=670 ;;
-	7.*)   sundials=700 ;;
+	7.0.0) sundials=700 ;;
+	7.1.0) sundials=710 ;;
+	7.2.0) sundials=720 ;;
+	7.*)   sundials=730 ;;
 	8.*)   sundials=800 ;;
 	9.*)   sundials=900 ;;
 	*)     sundials=1000 ;;
     esac
+
+    # Check on Sundials MPI configuration
+    # Unfortunately, for Sundials >= 700 sundials_types.h includes mpi.h
+    # when Sundials is built with MPI support (SUNDIALS_MPI_ENABLED).
+    # When compiling our tests, we must thus ensure that mpi.h is on our
+    # include path.
+    if [ ${sundials} -ge 700 ]; then
+	include="\"sundials/sundials_config.h\""
+	test_stem=__configure_test_file__mpi_enabled
+	cat > $test_stem.c <<EOF
+// ${CPP} ${cppflags} ${Isundials_inc_path} -P $test_stem.c
+#include "sundials/sundials_config.h"
+SUNDIALS_MPI_ENABLED
+EOF
+	sundials_mpi_enabled=$(${CPP} ${cppflags} ${Isundials_inc_path} \
+				-P $test_stem.c 2>>${logfile} \
+			    | tail -1 | sed -e 's/ //g' -e 's/"//g')
+	${debug_configure} || rm -f ./$test_stem.c
+	if [ "${sundials_mpi_enabled}" = SUNDIALS_MPI_ENABLED ]; then
+	    sundials_mpi_enabled=0
+	fi
+	printf "Sundials MPI enabled?: %s\n" "${sundials_mpi_enabled}" >>${logfile}
+
+	if [ ${sundials_mpi_enabled} -eq 1 ]; then
+	    test_stem=__configure_mpicc_showme
+	    if "${mpicc}" -showme:compile >${test_stem}.log 2>>${logfile}; then
+		mpi_compile=$(${mpicc} -showme:compile 2>>${logfile})
+		Isundials_inc_path="${Isundials_inc_path} ${mpi_compile}"
+	    fi
+	    ${debug_configure} || rm -f ./$test_stem.log
+	fi
+    fi
 
     # Make sure realtype has the right size.
     test_stem=__configure_test_file__realtype
@@ -649,6 +703,9 @@ EOF
 fi
 
 if [ ${sundials} -ge 600 ]; then
+    if [ ${sundials} -ge 700 ]; then
+	sundials_at_least_7_0_0=1
+    fi
     if [ ${sundials} -ge 670 ]; then
 	sundials_at_least_6_7_0=1
     fi
@@ -1379,24 +1436,7 @@ fi
 
 ldflags="${ldflags} ${sparse_libs} ${lapack_lib} ${blas_libs}"
 
-if [ "x${mpi_lib_path}" = x ]; then
-    for d in /usr/lib64/openmpi; do
-	if [ -e "$d/lib/libsundials_nvecparallel.so" ]; then
-	    mpi_lib_path="$d/lib"
-	    Lmpi_lib_path="-L${mpi_lib_path}"
-	fi
-	if [ "x${mpicc}" = x -a -x "$d/bin/mpicc" ]; then
-	    mpicc="$d/bin/mpicc"
-	fi
-	if [ "x${mpirun}" = x -a -x "$d/bin/mpirun" ]; then
-	    mpirun="$d/bin/mpirun"
-	fi
-    done
-fi
-
 # Parallel features
-mpicc=${mpicc:-mpicc}
-mpirun=${mpirun:-mpirun}
 if [ ${enable_mpi:-1} -eq 1 ]; then
     ocamlmpi_enabled=1
 
@@ -1856,6 +1896,7 @@ cat ${LOG}
 	 s#@version@#${version}#;
 	 s#@versionp@#${versionp}#;
 	 s#@sundials_version@#${sundials_version}#;
+	 s#@sundials_at_least_7_0_0@#${sundials_at_least_7_0_0}#;
 	 s#@sundials_at_least_6_7_0@#${sundials_at_least_6_7_0}#;
 	 s#@sundials_at_least_6_6_0@#${sundials_at_least_6_6_0}#;
 	 s#@sundials_at_least_6_4_0@#${sundials_at_least_6_4_0}#;
