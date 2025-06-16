@@ -841,7 +841,7 @@ if [ $? -ne 0 ]; then
     ocaml_libpath=''
 else
     # shellcheck disable=SC2046
-    set_ocaml_version $(ocamlc -version | cut -d "~" -f 1 | cut -d + -f 1 | tr '.' ' ')
+    set_ocaml_version $(${OCAMLBIN}ocamlc -version | cut -d "~" -f 1 | cut -d + -f 1 | tr '.' ' ')
 
     if [ $ocaml_version -lt 40800 ]; then
 	    error="${error}\\n\\tocaml >= 4.08.0 required"
