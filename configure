@@ -45,7 +45,7 @@ do
             KLU_INCLUDE_DIR=
             KLU_LIBRARY_DIR=
             LAPACKLIB=
-            SUNDIALS_EXAMPLES_DIR=
+            SUNDIALS_EXAMPLES=
             OCAMLMPI=
             MPICC=
             MPIRUN=
@@ -153,7 +153,7 @@ do
 	  KLU_LIBRARY_DIR       Path to KLU (SuiteSparse) libraries
 	  LAPACKLIB             Command for linking with Lapack (default: -llapack)
 	                        (sometimes also: -lSimTKlapack)
-	  SUNDIALS_EXAMPLES_DIR Path to installed examples (for comparison with Sundials)
+	  SUNDIALS_EXAMPLES     Path to installed examples (for comparison with Sundials)
 	                        (default: \$SUNDIALS_DIR/examples)
 	  OCAMLMPI              Path to OCamlMPI installation
 	  CFLAGS_OPENMP         Compiler flag to enable OpenMP compilation
@@ -197,8 +197,8 @@ END_HELP_TEXT
         CFLAGS_OPENMP="${value}";;
     LAPACKLIB)
 	LAPACKLIB="${value}";;
-    SUNDIALS_EXAMPLES_DIR)
-	SUNDIALS_EXAMPLES_DIR="${value}";;
+    SUNDIALS_EXAMPLES)
+	SUNDIALS_EXAMPLES="${value}";;
     CC)
 	CC="${value}";;
     CPPFLAGS)
@@ -285,20 +285,20 @@ if [ x"${SUNDIALS_DIR}" != x ]; then
 	sundials_inc_path="${SUNDIALS_DIR%/}/include/"
 	Isundials_inc_path="-isystem ${sundials_inc_path}"
     fi
-    if [ x"${SUNDIALS_EXAMPLES_DIR}" = x ]; then
-	SUNDIALS_EXAMPLES_DIR="${SUNDIALS_DIR%/}/examples/"
+    if [ x"${SUNDIALS_EXAMPLES}" = x ]; then
+	SUNDIALS_EXAMPLES="${SUNDIALS_DIR%/}/examples/"
     fi
 fi
-if [ x"${SUNDIALS_EXAMPLES_DIR}" != x ]; then
-    if [ ! -d "${SUNDIALS_EXAMPLES_DIR%/}/cvode/serial" ]; then
-	msg="ignoring invalid examples directory (${SUNDIALS_EXAMPLES_DIR%})"
+if [ x"${SUNDIALS_EXAMPLES}" != x ]; then
+    if [ ! -d "${SUNDIALS_EXAMPLES%/}/cvode/serial" ]; then
+	msg="ignoring invalid examples directory (${SUNDIALS_EXAMPLES%})"
 	warning="${warning}\n\t${msg}"
-	SUNDIALS_EXAMPLES_DIR=
+	SUNDIALS_EXAMPLES=
     else
-	EXAMPLESROOT="${SUNDIALS_EXAMPLES_DIR%/}"
+	EXAMPLESROOT="${SUNDIALS_EXAMPLES%/}"
     fi
 fi
-if [ x"${SUNDIALS_EXAMPLES_DIR}" = x -a "${distribution}" = debian ]; then
+if [ x"${SUNDIALS_EXAMPLES}" = x -a "${distribution}" = debian ]; then
     if [ -d "/usr/share/doc/libsundials-serial-dev/examples/cvode/serial" ]; then
 	EXAMPLESROOT=/usr/share/doc/libsundials-serial-dev/examples
     elif [ -d "/usr/share/doc/libsundials-dev/examples/cvode/serial" ]; then
