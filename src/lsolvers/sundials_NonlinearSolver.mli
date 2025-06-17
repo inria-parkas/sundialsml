@@ -565,12 +565,18 @@ end (* }}} *)
 
 (** An error occurred in a vector operation.
 
-    @nodoc SUN_NLS_VECTOROP_ERR *)
+    if sundials version < 700
+    @nodoc SUN_NLS_VECTOROP_ERR
+    else 
+    @nodoc SUN_ERR_OP_FAIL *)
 exception VectorOpError
 
 (** Raised when a nonlinear solver is used incorrectly.
     For example, calling {!solve} without having first called {!set_sys_fn}
-    ([SUN_NLS_MEM_NULL]). *)
+    if sundials version < 700
+    ([SUN_NLS_MEM_NULL])
+    else
+    ([SUN_ERR_ARG_CORRUPT]). *)
 exception IncorrectUse
 
 (** Raised if an external library call fails. *)
