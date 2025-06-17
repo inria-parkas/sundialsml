@@ -48,6 +48,10 @@ val nvecpthreads_enabled : bool
 (** Indicates whether openmp-based nvectors are available. *)
 val nvecopenmp_enabled : bool
 
+(** The time binary available for performance measurements.
+    Returns [binary] if GNU time is available (either "time" or "gtime") *)
+val time_binary : string
+
 (** The largest value representable as a real.
 
     @cvode <node5#s:types> Data Types *)

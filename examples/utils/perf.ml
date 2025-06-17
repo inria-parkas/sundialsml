@@ -1,3 +1,6 @@
+(* Configuration for time binary *)
+let time_binary = Sundials.Config.time_binary
+
 let synopsis =
   {|perf -r <min time> <command>
 
@@ -66,7 +69,7 @@ let init_stop_watch executable args =
   and with_time_command executable args =
     (* We get the output from time(1) via a named file because in some
        cases the test program may print to stderr.  *)
-    let args = Array.append [|"time"; "-f"; "%e"; "-o"; ""; executable|] args
+    let args = Array.append [|time_binary; "-f"; "%e"; "-o"; ""; executable|] args
     and tmp_index = 4 (* the index after the "-o" *)
     in
     let with_temp_file f =
@@ -81,16 +84,17 @@ let init_stop_watch executable args =
       with_temp_file (fun tmpfile ->
         args.(tmp_index) <- tmpfile;
         env.(0) <- Printf.sprintf "NUM_REPS=%d" num_reps;
-        spawn_wait "time" args dev_null dev_null Unix.stderr;
+        spawn_wait time_binary args dev_null dev_null Unix.stderr;
         Scanf.bscanf (Scanf.Scanning.from_file tmpfile) "%f\n" (fun f -> f)
       )
   in
+
   try ignore (with_time_command "true" [||] 1);
     with_time_command executable args
   with _ ->
     prerr_string
       ("Warning: can't find time(1) that accepts -f and -o, measuring time\n" ^
-       "with OCaml.  This may be slightly less accurate than time(1).\n");
+        "with OCaml.  This may be slightly less accurate than time(1).\n");
     flush stderr;
     with_gettimeofday
 
