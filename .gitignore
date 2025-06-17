@@ -33,3 +33,5 @@ style.css
 TAGS
 tags
 config.debug
+#macos
+.DS_Store
