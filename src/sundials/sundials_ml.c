@@ -949,6 +949,7 @@ CAMLprim value sunml_context_create_parallel(value vcomm)
 
 /* Adaptivity Controllers */
 
+#if 670 <= SUNDIALS_LIB_VERSION
 void sunml_adapt_check_flag( const char* call, int flag)
 {
     switch (flag) {
@@ -971,6 +972,7 @@ void sunml_adapt_check_flag( const char* call, int flag)
 	caml_failwith("sunml_adapt_check_flag");
     }
 }
+#endif
 
 #if 670 <= SUNDIALS_LIB_VERSION
 static void finalize_adapt(value vadaptc)
@@ -1373,7 +1375,7 @@ CAMLprim value sunml_adapt_reset(value vadaptc)
     int r = SUNAdaptController_Reset(ML_ADAPTCONTROLLER(vadaptc));
     CHECK_ADAPT_FLAG("SUNAdaptController_Reset", r);
 #endif
-    CAMLreturn0;
+    CAMLreturn(Val_unit);
 }
 
 CAMLprim value sunml_adapt_set_defaults(value vadaptc)
@@ -1383,7 +1385,7 @@ CAMLprim value sunml_adapt_set_defaults(value vadaptc)
     int r = SUNAdaptController_SetDefaults(ML_ADAPTCONTROLLER(vadaptc));
     CHECK_ADAPT_FLAG("SUNAdaptController_SetDefaults", r);
 #endif
-    CAMLreturn0;
+    CAMLreturn(Val_unit);
 }
 
 CAMLprim value sunml_adapt_write(value vadaptc, value vlog)
@@ -1393,7 +1395,7 @@ CAMLprim value sunml_adapt_write(value vadaptc, value vlog)
     int r = SUNAdaptController_Write(ML_ADAPTCONTROLLER(vadaptc), ML_CFILE(vlog));
     CHECK_ADAPT_FLAG("SUNAdaptController_Write", r);
 #endif
-    CAMLreturn0;
+    CAMLreturn(Val_unit);
 }
 
 CAMLprim value sunml_adapt_set_error_bias(value vadaptc, value vbias)
@@ -1404,7 +1406,7 @@ CAMLprim value sunml_adapt_set_error_bias(value vadaptc, value vbias)
 					    Double_val(vbias));
     CHECK_ADAPT_FLAG("SUNAdaptController_SetErrorBias", r);
 #endif
-    CAMLreturn0;
+    CAMLreturn(Val_unit);
 }
 
 CAMLprim value sunml_adapt_update_h(value vadaptc, value vh, value vdsm)
@@ -1415,7 +1417,7 @@ CAMLprim value sunml_adapt_update_h(value vadaptc, value vh, value vdsm)
 				       Double_val(vh), Double_val(vdsm));
     CHECK_ADAPT_FLAG("SUNAdaptController_UpdateH", r);
 #endif
-    CAMLreturn0;
+    CAMLreturn(Val_unit);
 }
 
 CAMLprim value sunml_adapt_space(value vadaptc)

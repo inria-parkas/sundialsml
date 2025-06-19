@@ -1734,6 +1734,29 @@ else
     nvecopenmp_info='disabled'
 fi
 
+time_binary=
+time_info='not available'
+
+test_stem=__configure_test_file__time_gnu
+echo "sleep 0.1" > $test_stem.sh
+chmod +x $test_stem.sh
+if time -f "%U %S %e" ./$test_stem.sh >$test_stem.log 2>&1; then
+    time_binary='time'
+    time_info='GNU time (time -f)'
+else
+    if gtime -f "%U %S %e" ./$test_stem.sh >$test_stem.log 2>&1; then
+        time_binary='gtime'
+        time_info='GNU time (gtime -f)'
+    else
+        time_info='not available'
+        warning="${warning}\n\tNeither 'time -f' nor 'gtime -f' are available."
+        warning="${warning}\n\tPerformance tests will not be able to run."
+        warning="${warning}\n\tTo fix this on macOS, install GNU time with: brew install gnu-time"
+        time_binary='time'
+    fi
+fi
+${debug_configure} || rm -f ./$test_stem.*
+
 # Sundials examples directory
 if [ "x$EXAMPLESROOT" = x ]; then
     # Try to infer it from the include path.
@@ -1980,6 +2003,7 @@ cat ${LOG}
 	 s#@XO@#${XO}#;
 	 s#@XS@#${XS}#;
 	 s#@EXAMPLESROOT@#${EXAMPLESROOT}#;
+	 s#@time_binary@#${time_binary}#;
 	 s#@OCAMLBIN@#${OCAMLBIN}#;" config.in) > config
 
 printf "/* Automatically generated file - don't edit!  See configure.  */\\n"\
@@ -2078,6 +2102,11 @@ else
     echo "let safe = true"  >> src/sundials/sundials_configuration.ml
 fi
 
+# Add time_binary configuration
+
+echo "let time_binary = \"${time_binary}\"" >> src/sundials/sundials_configuration.ml
+
+
 # Generate sundials/sundials_Index.ml
 echo "(* Automatically generated file - don't edit!  See configure.  *)"\
     > src/sundials/sundials_Index.ml
@@ -2105,6 +2134,15 @@ else
     echo "(** Type of indexes into sparse matrices. *)" >> src/sundials/sundials_Index.mli
     echo "type index_elt = Bigarray.int32_elt" >> src/sundials/sundials_Index.mli
 fi
+
+# Show detailed debug information if requested
+${debug_configure} && (
+    echo ""
+    echo "Debug information:"
+    echo "  Time command detection: ${time_info}"
+    echo "  Time binary path: ${time_binary:-'not found'}"
+    echo ""
+)
 
 ${debug_configure} && (echo "#----${logfile}:"; cat ${logfile})
 
