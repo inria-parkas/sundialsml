@@ -1,8 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sundials/sundials_types.h>
+
+#if 600 <= SUNDIALS_LIB_VERSION
+#include <sunmatrix/sunmatrix_dense.h>
+#else
 #include <sundials/sundials_direct.h>
 #include <sundials/sundials_dense.h>
+#endif
+
 #include "../../../src/config.h"
 #include "../../../src/sundials/sundials_ml.h"
 
