@@ -1100,6 +1100,12 @@ EOF
     esac
 fi
 
+if [ ${sundials} -ge 700 ]; then
+    lsundials_core="-lsundials_core "
+else
+    lsundials_core=
+fi
+
 # Check for shared library support in Sundials/C
 enable_shared=1
 
@@ -1110,7 +1116,7 @@ test_cmd="$CC ${cflags} ${Isundials_inc_path} -o $test_c_stem$XO \
 test_ml_cmd="${ocamlc} -c $test_stem.ml"
 test_mklib_cmd="${OCAMLBIN}ocamlmklib $test_c_stem$XO $test_stem.cmo \
     -o $test_stem -oc $test_stem \
-    ${Lsundials_lib_path} -lsundials_cvode -lsundials_nvecserial ${libm}"
+    ${Lsundials_lib_path} ${lsundials_core}-lsundials_cvode -lsundials_nvecserial ${libm}"
 echo "/* ${test_cmd} */" > $test_c_stem.c
 echo 'void CVode(); void dummy () { CVode (); }' >> $test_c_stem.c
 echo "(* ${test_ml_cmd} *)" > $test_stem.ml
@@ -1459,7 +1465,7 @@ if [ ${enable_mpi:-1} -eq 1 ]; then
     # Check for nvector_parallel installation
     test_stem=__configure_test_file__parallel
     test_cmd="$mpicc -o $test_stem$XX ${Isundials_inc_path} $test_stem.c \
-	 ${Lsundials_lib_path} -lsundials_cvode -lsundials_nvecparallel \
+	 ${Lsundials_lib_path} ${lsundials_core}-lsundials_cvode -lsundials_nvecparallel \
 	 ${Lsuperlumt_lib_path} ${Lklu_lib_path} ${libm} ${sparse_libs} \
 	 ${blas_libs} ${lapack_lib}"
     if [ ${sundials} -ge 600 ]; then
@@ -1470,10 +1476,10 @@ if [ ${enable_mpi:-1} -eq 1 ]; then
 #include <nvector/nvector_parallel.h>
 int main (int argc, char *argv[])
 {
-  MPI_Comm dummy;
   SUNContext ctx;
-  SUNContext_Create(NULL, &ctx);
-  (void)N_VNewEmpty_Parallel (dummy, 0, 0, ctx);
+  MPI_Init(&argc, &argv);
+  SUNContext_Create(MPI_COMM_WORLD, &ctx);
+  (void)N_VNewEmpty_Parallel (MPI_COMM_WORLD, 0, 0, ctx);
   return 0;
 }
 EOF
@@ -1548,7 +1554,7 @@ int main (int argc, char *argv[])
 EOF
     fi
     if ! $CC -o $test_stem$XX ${Isundials_inc_path} $test_stem.c \
-	 ${Lsundials_lib_path} -lsundials_nvecserial \
+	 ${Lsundials_lib_path} ${lsundials_core}-lsundials_nvecserial \
 	 -lsundials_nvecmanyvector ${libm} \
        >>${logfile} 2>&1;
     then
@@ -1569,7 +1575,7 @@ if [ $sundials -ge 500 ] && [ ${ocamlmpi_enabled:-0} -eq 1 ]; then
     test_stem=__configure_test_file__nvecmpimanyvector
     test_cmd="$mpicc -o $test_stem$XX ${Isundials_inc_path} $test_stem.c \
 	 ${Lsundials_lib_path} \
-	 -lsundials_nvecserial -lsundials_nvecmpimanyvector \
+	 ${lsundials_core}-lsundials_nvecserial -lsundials_nvecmpimanyvector \
 	 ${libm} ${blas_libs} ${lapack_lib}"
     if [ ${sundials} -ge 600 ]; then
 	cat > $test_stem.c <<EOF
@@ -1643,7 +1649,7 @@ int main (int argc, char *argv[])
 EOF
     fi
     if ! $CC -o $test_stem$XX ${Isundials_inc_path} $test_stem.c \
-	 ${Lsundials_lib_path} -lsundials_nvecpthreads -lpthread ${libm} \
+	 ${Lsundials_lib_path} ${lsundials_core}-lsundials_nvecpthreads -lpthread ${libm} \
        >>${logfile} 2>&1;
     then
 	nvecpthreads_info='not installed'
@@ -1686,7 +1692,7 @@ int main (int argc, char *argv[])
 EOF
 	fi
 	if ! $CC -o $test_stem$XX ${Isundials_inc_path} $test_stem.c \
-	     ${Lsundials_lib_path} -lsundials_nvecopenmp ${libm} \
+	     ${Lsundials_lib_path} ${lsundials_core}-lsundials_nvecopenmp ${libm} \
 	   >>${logfile} 2>&1;
 	then
 	    nvecopenmp_info='not installed'
@@ -1991,6 +1997,7 @@ cat ${LOG}
 	 s#@sparse_libs@#${sparse_libs}#;
 	 s#@matrix_libs@#${matrix_libs}#;
 	 s#@lsolver_libs@#${lsolver_libs}#;
+	 s#@lsundials_core@#${lsundials_core}#;
 	 s#@cc@#${CC}#;
 	 s#@cpp@#${CPP}#;
 	 s#@mpicc@#${mpicc}#;
