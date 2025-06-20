@@ -890,11 +890,7 @@ exception InvalidLinearSolver
     [true] for a recoverable failure and [false] for an unrecoverable one.
 
     @nodoc SUNLS_PACKAGE_FAIL_REC
-    if sundials version is < 7.0.0
-    @nodoc SUNLS_PACKAGE_FAIL_UNREC
-    else is replaced by
-    @nodoc  SUN_ERR_EXT_FAIL
-    *)
+    @nodoc SUNLS_PACKAGE_FAIL_UNREC *)
 exception UnrecoverableFailure of bool
 
 (** Raised when creating a linear solver if the given matrix is not square. *)
@@ -946,9 +942,6 @@ exception QRSolFailure
 
 (** An error occurred in a vector operation.
 
-    if sundials version is < 7.0.0
-    @nodoc SUNLS_VECTOROP_ERR
-    else
     @nodoc SUN_ERR_OP_FAIL *)
 exception VectorOpError
 
@@ -977,10 +970,7 @@ exception LUfactFailure
     is [true] for a recoverable failure and [false] for an unrecoverable one.
 
     @nodoc SUNLS_PACKAGE_FAIL_REC
-    if sundials version is < 7.0.0
-    @nodoc SUNLS_PACKAGE_FAIL_UNREC
-    else
-    @nodoc SUN_ERR_EXT_FAIL*)
+    @nodoc SUNLS_PACKAGE_FAIL_UNREC *)
 exception PackageFailure of bool
 
 (** Raised by {!Iterative.set_prec_type} if the given type is not allowed. *)
