@@ -276,41 +276,20 @@ void sunml_nlsolver_check_flag(const char *call, int flag)
 
     switch (flag) {
 
-    #if 700 < SUNDIALS_LIB_VERSION
 	case SUN_NLS_ILL_INPUT:
-    #else
-    case SUN_ERR_ARG_CORRUPT:
-    #endif
 	    caml_invalid_argument(call);
 
-    #if 700 < SUNDIALS_LIB_VERSION
 	case SUN_NLS_VECTOROP_ERR:
-    #else
-    case SUN_ERR_OP_FAIL:
-    #endif
 	    caml_raise_constant(NLSOLVER_EXN(VectorOpError));
 
-
-    #if 700 < SUNDIALS_LIB_VERSION
 	case SUN_NLS_MEM_NULL:
-    #else
-    case SUN_ERR_ARG_CORRUPT:
-    #endif
 	    caml_raise_constant(NLSOLVER_EXN(IncorrectUse));
 
-    #if 700 < SUNDIALS_LIB_VERSION
 	case SUN_NLS_MEM_FAIL:
-    #else
-    case SUN_ERR_MEM_FAIL:
-    #endif
 	    caml_raise_out_of_memory();
 
 #if 500 <= SUNDIALS_LIB_VERSION
-    #if 700 < SUNDIALS_LIB_VERSION
 	case SUN_NLS_EXT_FAIL:
-    #else
-    case SUN_ERR_EXT_FAIL:
-    #endif
 	    caml_raise_constant(NLSOLVER_EXN(ExtFail));
 #endif
 
