@@ -942,7 +942,7 @@ exception QRSolFailure
 
 (** An error occurred in a vector operation.
 
-    @nodoc SUN_ERR_OP_FAIL *)
+    @nodoc SUNLS_VECTOROP_ERR *)
 exception VectorOpError
 
 (** Indicates that the residual is reduced but without convergence to the
