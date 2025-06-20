@@ -121,12 +121,8 @@ value sunml_lsolver_exception_from_flag(int linflag)
 		Field(vr, 1) = Val_bool(0);
 		Store_some(vro, vr);
 		break;
-        
-        #if SUNDIALS_LIB_VERSION < 700
+
 	    case SUNLS_PACKAGE_FAIL_UNREC:
-        #else
-        case SUN_ERR_EXT_FAIL:
-        #endif
 		vr = caml_alloc_small(1, 0);
 		Field(vr, 0) = LSOLVER_EXN(PackageFailure);
 		Field(vr, 1) = Val_bool(0);
@@ -142,11 +138,7 @@ value sunml_lsolver_exception_from_flag(int linflag)
 		break;
 #endif
 #if 400 <= SUNDIALS_LIB_VERSION
-        #if SUNDIALS_LIB_VERSION < 700
 	    case SUNLS_VECTOROP_ERR:
-        #else
-        case SUN_ERR_OP_FAIL:
-        #endif
 		Store_some(vro, LSOLVER_EXN(VectorOpError));
 		break;
 #endif
@@ -864,11 +856,7 @@ static int lsolver_translate_exception(value vexn)
 
     } else if (vtag == LSOLVER_EXN_TAG(VectorOpError)) {
 #if 400 <= SUNDIALS_LIB_VERSION
-    #if SUNDIALS_LIB_VERSION < 700
 	r = SUNLS_VECTOROP_ERR;
-    #else
-    r = SUN_ERR_OP_FAIL;
-    #endif
 #else
 	r = -100;
 #endif
@@ -886,21 +874,11 @@ static int lsolver_translate_exception(value vexn)
 	r = SUNLS_LUFACT_FAIL;
 
     } else if (vtag == LSOLVER_EXN_TAG(PackageFailure)) {
-	r = Bool_val(Field(vexn, 1)) ? SUNLS_PACKAGE_FAIL_REC : 
-    #if SUNDIALS_LIB_VERSION < 700    
-    SUNLS_PACKAGE_FAIL_UNREC
-    #else
-    SUN_ERR_EXT_FAIL
-    #endif
-    ;
+	r = Bool_val(Field(vexn, 1)) ? SUNLS_PACKAGE_FAIL_REC : SUNLS_PACKAGE_FAIL_UNREC;
 
     } else if (vtag == LSOLVER_EXN_TAG(InvalidArgument)) {
-    #if SUNDIALS_LIB_VERSION < 700
-	    r = SUNLS_ILL_INPUT;
-    #else
-        r = SUN_ERR_ARG_CORRUPT;
-    #endif
-
+    r = SUN_ERR_ARG_CORRUPT;
+    
     } else {
 	r = -100;
     }
