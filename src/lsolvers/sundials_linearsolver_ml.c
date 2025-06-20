@@ -874,11 +874,11 @@ static int lsolver_translate_exception(value vexn)
 	r = SUNLS_LUFACT_FAIL;
 
     } else if (vtag == LSOLVER_EXN_TAG(PackageFailure)) {
-	r = Bool_val(Field(vexn, 1)) ? SUNLS_PACKAGE_FAIL_REC : SUNLS_PACKAGE_FAIL_UNREC;
+	r = Bool_val(Field(vexn, 1)) ? SUNLS_PACKAGE_FAIL_REC
+                     : SUNLS_PACKAGE_FAIL_UNREC;
 
     } else if (vtag == LSOLVER_EXN_TAG(InvalidArgument)) {
     r = SUNLS_ILL_INPUT;
-    
     } else {
 	r = -100;
     }

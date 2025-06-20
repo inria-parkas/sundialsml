@@ -570,8 +570,7 @@ exception VectorOpError
 
 (** Raised when a nonlinear solver is used incorrectly.
     For example, calling {!solve} without having first called {!set_sys_fn}
-
-    ([SUN_NLS_MEM_NULL]) *)
+    ([SUN_NLS_MEM_NULL]). *)
 exception IncorrectUse
 
 (** Raised if an external library call fails. *)
