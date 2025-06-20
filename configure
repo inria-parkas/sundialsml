@@ -1,5 +1,4 @@
 #! /bin/sh
-
 sysname='Sundials/ML'
 version=7.0.0
 versionp=0
@@ -1100,8 +1099,16 @@ EOF
     esac
 fi
 
+lalways_mpi=
 if [ ${sundials} -ge 700 ]; then
     lsundials_core="-lsundials_core "
+    if [ ${sundials_mpi_enabled} -eq 1 ]; then
+	# When Sundials >= 700 is compiled with MPI enabled, its Logger and
+	# Profiler modules need certain symbols from libmpi even when MPI
+	# is not actually being used (e.g., SUN_COMM_NULL, MPI_Comm_dup,
+	# MPI_Comm_Free).
+	lalways_mpi="-lmpi"
+    fi
 else
     lsundials_core=
 fi
@@ -1116,7 +1123,9 @@ test_cmd="$CC ${cflags} ${Isundials_inc_path} -o $test_c_stem$XO \
 test_ml_cmd="${ocamlc} -c $test_stem.ml"
 test_mklib_cmd="${OCAMLBIN}ocamlmklib $test_c_stem$XO $test_stem.cmo \
     -o $test_stem -oc $test_stem \
-    ${Lsundials_lib_path} ${lsundials_core}-lsundials_cvode -lsundials_nvecserial ${libm}"
+    ${Lmpi_lib_path} ${Lsundials_lib_path} \
+    ${lsundials_core}-lsundials_cvode -lsundials_nvecserial \
+    ${lalways_mpi}${libm}"
 echo "/* ${test_cmd} */" > $test_c_stem.c
 echo 'void CVode(); void dummy () { CVode (); }' >> $test_c_stem.c
 echo "(* ${test_ml_cmd} *)" > $test_stem.ml
@@ -1465,26 +1474,12 @@ if [ ${enable_mpi:-1} -eq 1 ]; then
     # Check for nvector_parallel installation
     test_stem=__configure_test_file__parallel
     test_cmd="$mpicc -o $test_stem$XX ${Isundials_inc_path} $test_stem.c \
-	 ${Lsundials_lib_path} ${lsundials_core}-lsundials_cvode -lsundials_nvecparallel \
-	 ${Lsuperlumt_lib_path} ${Lklu_lib_path} ${libm} ${sparse_libs} \
+	 ${Lmpilibpath} ${Lsundials_lib_path} \
+	 ${lsundials_core}-lsundials_cvode -lsundials_nvecparallel \
+	 ${Lsuperlumt_lib_path} ${Lklu_lib_path} ${lalways_mpi}${libm} ${sparse_libs} \
 	 ${blas_libs} ${lapack_lib}"
 
-    if [ ${sundials} -ge 700 ]; then
-        cat > $test_stem.c <<EOF
-/* $test_cmd */
-#include <stdio.h>
-#include <sundials/sundials_context.h>
-#include <nvector/nvector_parallel.h>
-int main (int argc, char *argv[])
-{
-  MPI_Comm dummy;
-  SUNContext ctx;
-  SUNContext_Create(SUN_COMM_NULL, &ctx);
-  (void)N_VNewEmpty_Parallel(dummy, 0, 0, ctx);
-  return 0;
-}
-EOF
-    elif [ ${sundials} -ge 600 ]; then
+    if [ ${sundials} -ge 600 ]; then
 	cat > $test_stem.c <<EOF
 /* $test_cmd */
 #include <stdio.h>
@@ -1542,9 +1537,14 @@ nvecmanyvector_info='not available'
 nvecmanyvector_enabled=
 if [ $sundials -ge 500 ]; then
     test_stem=__configure_test_file__nvecmanyvector
+    test_cmd="$CC -o $test_stem$XX ${Isundials_inc_path} $test_stem.c \
+	 ${Lmpi_lib_path} ${Lsundials_lib_path} \
+	 ${lsundials_core}-lsundials_nvecserial \
+	 -lsundials_nvecmanyvector ${lalways_mpi}${libm}"
 
 if [ ${sundials} -ge 700 ]; then
 	cat > $test_stem.c <<EOF
+/* $test_cmd */
 #include <stdio.h>
 #include <nvector/nvector_serial.h>
 #include <nvector/nvector_manyvector.h>
@@ -1559,6 +1559,7 @@ int main (int argc, char *argv[])
 EOF
     elif [ ${sundials} -ge 600 ]; then
 	cat > $test_stem.c <<EOF
+/* $test_cmd */
 #include <stdio.h>
 #include <nvector/nvector_serial.h>
 #include <nvector/nvector_manyvector.h>
@@ -1573,6 +1574,7 @@ int main (int argc, char *argv[])
 EOF
     else
 	cat > $test_stem.c <<EOF
+/* $test_cmd */
 #include <stdio.h>
 #include <nvector/nvector_serial.h>
 #include <nvector/nvector_manyvector.h>
@@ -1584,10 +1586,7 @@ int main (int argc, char *argv[])
 }
 EOF
     fi
-    if ! $CC -o $test_stem$XX ${Isundials_inc_path} $test_stem.c \
-	 ${Lsundials_lib_path} ${lsundials_core}-lsundials_nvecserial \
-	 -lsundials_nvecmanyvector ${libm} \
-       >>${logfile} 2>&1;
+    if ! eval "${test_cmd}" >>${logfile} 2>&1;
     then
 	nvecmanyvector_info='not installed'
     else
@@ -1605,9 +1604,9 @@ nvecmpimanyvector_enabled=
 if [ $sundials -ge 500 ] && [ ${ocamlmpi_enabled:-0} -eq 1 ]; then
     test_stem=__configure_test_file__nvecmpimanyvector
     test_cmd="$mpicc -o $test_stem$XX ${Isundials_inc_path} $test_stem.c \
-	 ${Lsundials_lib_path} \
+	 ${Lmpi_lib_path} ${Lsundials_lib_path} \
 	 ${lsundials_core}-lsundials_nvecserial -lsundials_nvecmpimanyvector \
-	 ${libm} ${blas_libs} ${lapack_lib}"
+	 ${lalways_mpi}${libm} ${blas_libs} ${lapack_lib}"
     if [ ${sundials} -ge 700 ]; then
 	cat > $test_stem.c <<EOF
 /* $test_cmd */
@@ -1707,7 +1706,9 @@ int main (int argc, char *argv[])
 EOF
     fi
     if ! $CC -o $test_stem$XX ${Isundials_inc_path} $test_stem.c \
-	 ${Lsundials_lib_path} ${lsundials_core}-lsundials_nvecpthreads -lpthread ${libm} \
+	 ${Lmpi_lib_path} ${Lsundials_lib_path} \
+	 ${lsundials_core}-lsundials_nvecpthreads \
+	 -lpthread ${lalways_mpi}${libm} \
        >>${logfile} 2>&1;
     then
 	nvecpthreads_info='not installed'
@@ -1762,7 +1763,9 @@ int main (int argc, char *argv[])
 EOF
 	fi
 	if ! $CC -o $test_stem$XX ${Isundials_inc_path} $test_stem.c \
-	     ${Lsundials_lib_path} ${lsundials_core}-lsundials_nvecopenmp ${libm} \
+	     ${Lmpi_lib_path} ${Lsundials_lib_path} \
+	     ${lsundials_core}-lsundials_nvecopenmp \
+	     ${lalways_mpi}${libm} \
 	   >>${logfile} 2>&1;
 	then
 	    nvecopenmp_info='not installed'
