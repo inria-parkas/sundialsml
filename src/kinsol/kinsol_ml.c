@@ -93,39 +93,6 @@ int sunml_kinsol_translate_exception(value session, value r,
     CAMLreturnT (int, -1);
 }
 
-
-static void errh(
-	int error_code,
-	const char *module,
-	const char *func,
-	char *msg,
-	void *eh_data)
-{
-    CAMLparam0();
-    CAMLlocal2(session, a);
-    value *backref = eh_data;
-
-    a = caml_alloc_tuple(RECORD_SUNDIALS_ERROR_DETAILS_SIZE);
-    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_ERROR_CODE,
-                Val_int(error_code));
-    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_MODULE_NAME,
-                caml_copy_string(module));
-    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_FUNCTION_NAME,
-                caml_copy_string(func));
-    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_ERROR_MESSAGE,
-                caml_copy_string(msg));
-
-    WEAK_DEREF (session, *backref);
-
-    /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback_exn (Field(session, RECORD_KINSOL_SESSION_ERRH), a);
-    if (Is_exception_result (r))
-	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined error handler");
-
-    CAMLreturn0;
-}
-
 static void infoh(
 	const char *module,
 	const char *func,

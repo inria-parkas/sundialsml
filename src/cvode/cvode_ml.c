@@ -112,38 +112,6 @@ CAMLprim value sunml_cvode_init_module (value exns)
 
 /* callbacks */
 
-static void errh(int error_code,
-		 const char *module,
-		 const char *func,
-		 char *msg,
-		 void *eh_data)
-{
-    CAMLparam0();
-    CAMLlocal2(session, a);
-    value *backref = eh_data;
-
-
-    a = caml_alloc_tuple(RECORD_SUNDIALS_ERROR_DETAILS_SIZE);
-    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_ERROR_CODE,
-                Val_int(error_code));
-    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_MODULE_NAME,
-                caml_copy_string(module));
-    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_FUNCTION_NAME,
-                caml_copy_string(func));
-    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_ERROR_MESSAGE,
-                caml_copy_string(msg));
-
-    WEAK_DEREF (session, *backref);
-
-    /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback_exn (Field(session, RECORD_CVODE_SESSION_ERRH), a);
-    if (Is_exception_result (r))
-	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined error handler");
-
-    CAMLreturn0;
-}
-
 #if defined SUNDIALS_BUILD_WITH_MONITORING && (!SUNDIALSML_WITHSENS || 600 <= SUNDIALS_LIB_VERSION)
 int monitorfn(void *cvode_mem, void *user_data)
 {
@@ -1886,6 +1854,8 @@ CAMLprim value sunml_cvode_set_max_num_steps(value vcvode_mem, value mxsteps)
 }
 
 CAMLprim value sunml_cvode_set_max_hnil_warns(value vcvode_mem, value mxhnil)
+{
+    CAMLparam2(vcvode_mem, mxhnil);
 
 
     int flag = CVodeSetMaxHnilWarns(CVODE_MEM_FROM_ML(vcvode_mem), Int_val(mxhnil));
@@ -2591,8 +2561,8 @@ CAMLprim value sunml_cvode_dls_get_num_lin_rhs_evals(value vcvode_mem)
     int flag = CVodeGetNumLinRhsEvals(CVODE_MEM_FROM_ML(vcvode_mem), &r);
     CHECK_LS_FLAG("CVodeGetNumLinRhsEvals", flag);
 #else
-    int flag = CVSpilsGetNumRhsEvals(CVODE_MEM_FROM_ML(vcvode_mem), &r);
-    CHECK_SPILS_FLAG("CVSpilsGetNumRhsEvals", flag);
+    int flag = CVDlsGetNumRhsEvals(CVODE_MEM_FROM_ML(vcvode_mem), &r);
+    CHECK_DLS_FLAG("CVDlsGetNumRhsEvals", flag);
 #endif
 
     CAMLreturn(Val_long(r));
