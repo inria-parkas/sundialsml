@@ -878,7 +878,7 @@ static int lsolver_translate_exception(value vexn)
                      : SUNLS_PACKAGE_FAIL_UNREC;
 
     } else if (vtag == LSOLVER_EXN_TAG(InvalidArgument)) {
-    r = SUNLS_ILL_INPUT;
+	r = SUNLS_ILL_INPUT;
     } else {
 	r = -100;
     }
@@ -1640,18 +1640,18 @@ static void sunml_lsolver_check_flag(const char *call, int flag)
 
     switch (flag) {
 #if 400 <= SUNDIALS_LIB_VERSION
-    case SUNLS_ILL_INPUT:
+	case SUNLS_ILL_INPUT:
 	case SUNLS_MEM_NULL:
 	    caml_invalid_argument(call);
 
-    case SUNLS_MEM_FAIL:
+	case SUNLS_MEM_FAIL:
 	    caml_raise_out_of_memory();
 
-    case SUNLS_PACKAGE_FAIL_UNREC:
-        caml_raise_with_arg(LSOLVER_EXN(PackageFailure), Val_false);
+	case SUNLS_PACKAGE_FAIL_UNREC:
+	    caml_raise_with_arg(LSOLVER_EXN(PackageFailure), Val_false);
 
-    case SUNLS_VECTOROP_ERR:
-        caml_raise_constant(LSOLVER_EXN(VectorOpError));
+	case SUNLS_VECTOROP_ERR:
+	    caml_raise_constant(LSOLVER_EXN(VectorOpError));
 
 	case SUNLS_ATIMES_FAIL_UNREC:
 	    caml_raise_with_arg(LSOLVER_EXN(ATimesFailure), Val_false);
@@ -1667,7 +1667,6 @@ static void sunml_lsolver_check_flag(const char *call, int flag)
 
 	case SUNLS_QRSOL_FAIL:
 	    caml_raise_constant(LSOLVER_EXN(QRSolFailure));
-
 
 	case SUNLS_RES_REDUCED:
 	    caml_raise_constant(LSOLVER_EXN(ResReduced));
