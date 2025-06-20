@@ -270,6 +270,12 @@ void sunml_nlsolver_check_flag(const char *call, int flag)
 {
     static char exmsg[MAX_ERRMSG_LEN] = "";
 
+#if 700 <= SUNDIALS_LIB_VERSION
+    const char *error = SUNGetErrMsh(flag);
+    if (error != NULL) {
+        caml_failwith(error);
+    }
+#endif
 
     if (flag == SUN_SUCCESS
 	    || flag == SUN_NLS_CONTINUE

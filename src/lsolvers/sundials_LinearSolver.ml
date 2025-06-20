@@ -29,7 +29,7 @@ exception ResReduced
 exception ConvFailure
 exception QRfactFailure
 exception LUfactFailure
-exception PackageFailure of bool
+exception PackageFailure
 exception IllegalPrecType
 exception InternalFailure of (string * int)
 exception ZeroInDiagonal of int

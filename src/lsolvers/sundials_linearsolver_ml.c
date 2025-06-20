@@ -1662,7 +1662,7 @@ static void sunml_lsolver_check_flag(const char *call, int flag)
 	    caml_raise_with_arg(LSOLVER_EXN(PSolveFailure), Val_true);
 
 	case SUNLS_PACKAGE_FAIL_REC:
-	    caml_raise_with_arg(LSOLVER_EXN(PackageFailure), Val_true);
+	    caml_raise_constant(LSOLVER_EXN(PackageFailure));
 
 	case SUNLS_QRFACT_FAIL:
 	    caml_raise_constant(LSOLVER_EXN(QRfactFailure));
