@@ -266,5 +266,27 @@ module Context = struct
     | Some p -> p
     | None -> raise ExternalProfilerInUse
 
+  (* Error handling functions *)
+  external c_get_last_error : cptr -> int
+    = "sunml_context_get_last_error"
+
+  external c_peek_last_error : cptr -> int
+    = "sunml_context_peek_last_error"
+
+  external c_clear_err_handlers : cptr -> unit
+    = "sunml_context_clear_err_handlers"
+
+  (** Get the last error code set by a SUNDIALS function call.
+      The function then resets the last error code to SUN_SUCCESS. *)
+  let get_last_error { cptr; _ } = c_get_last_error cptr
+
+  (** Get the last error code set by a SUNDIALS function call.
+      The function does not reset the last error code to SUN_SUCCESS. *)
+  let peek_last_error { cptr; _ } = c_peek_last_error cptr
+
+  (** Clear the entire error handler stack. After doing this it is important
+      to push an error handler onto the stack otherwise errors will be ignored. *)
+  let clear_err_handlers { cptr; _ } = c_clear_err_handlers cptr
+
 end
 

@@ -350,4 +350,9 @@ void sunml_sundials_free_value(value *heapref);
 #define BYTE_STUB10(fcn_name)			\
     BYTE_STUB(fcn_name, COMMA args[6] COMMA args[7] COMMA args[8] COMMA args[9])
 
+/* Context error handling functions */
+#if 700 <= SUNDIALS_LIB_VERSION
+void sunml_context_check_flag(const char *call, SUNContext ctx, int flag);
+#endif
+
 #endif /* _SUNDIALS_ML_H__ */
