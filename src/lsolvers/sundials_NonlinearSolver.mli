@@ -190,9 +190,9 @@ val set_lsolve_fn : ('d, 'k, 's, [`Nvec]) t -> ('d, 's) lsolvefn -> unit
 (** Values returned by convergence tests.
     @nonlinsol SUNNonlinSolConvTestFn *)
 type convtest =
-  | Success  (** Converged ([SUN_NLS_SUCCESS]) *)
-  | Continue (** Not converged, keep iterating ([SUN_NLS_CONTINUE]) *)
-  | Recover  (** Appears to diverge, try to recover ([SUN_NLS_CONV_RECVR]) *)
+  | Success  (** Converged {cconst SUN_NLS_SUCCESS} *)
+  | Continue (** Not converged, keep iterating {cconst SUN_NLS_CONTINUE} *)
+  | Recover  (** Appears to diverge, try to recover {cconst SUN_NLS_CONV_RECVR} *)
 
 (** A function providing a convergence test.
     The call [convtestfn y del tol ewt mem] has as arguments
