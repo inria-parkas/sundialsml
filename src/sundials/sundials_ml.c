@@ -530,7 +530,11 @@ CAMLprim value sunml_profiler_make(value vname)
 #if 600 <= SUNDIALS_LIB_VERSION && defined(SUNDIALS_BUILD_WITH_PROFILING)
     SUNProfiler profiler = NULL;
 
+    #if 700 <= SUNDIALS_LIB_VERSION
+    SUNProfiler_Create(SUN_COMM_NULL, String_val(vname), &profiler);
+    #else
     SUNProfiler_Create(NULL, String_val(vname), &profiler);
+    #endif
     if (profiler == NULL) caml_raise_out_of_memory();
 
     vprofiler = caml_alloc_final(1, &finalize_profiler, 1, 10);
@@ -636,7 +640,11 @@ CAMLprim value sunml_logger_create(void)
     CAMLlocal1(vlogger);
 #if SUNML_HAS_LOGGING
     SUNLogger logger = NULL;
+    #if 700 <= SUNDIALS_LIB_VERSION
+    int retval = SUNLogger_Create(SUN_COMM_NULL, -1, &logger);
+    #else
     int retval = SUNLogger_Create(NULL, -1, &logger);
+    #endif
     if (retval < 0) caml_raise_out_of_memory();
     vlogger = sunml_logger_wrap(logger);
 #else
@@ -651,7 +659,11 @@ CAMLprim value sunml_logger_create_from_env(void)
     CAMLlocal1(vlogger);
 #if SUNML_HAS_LOGGING
     SUNLogger logger = NULL;
-    int retval = SUNLogger_CreateFromEnv(NULL, &logger);
+    #if 700 <= SUNDIALS_LIB_VERSION
+    int retval = SUNLogger_CreateFromEnv(SUN_COMM_NULL, -1, &logger);
+    #else
+    int retval = SUNLogger_CreateFromEnv(NULL, -1, &logger);
+    #endif
     if (retval < 0) caml_raise_out_of_memory();
     vlogger = sunml_logger_wrap(logger);
 #else
@@ -821,7 +833,11 @@ CAMLprim value sunml_context_make(void)
 #if 600 <= SUNDIALS_LIB_VERSION
     SUNContext ctx;
 
+    #if 700 <= SUNDIALS_LIB_VERSION
+    SUNContext_Create(SUN_COMM_NULL, &ctx);
+    #else
     SUNContext_Create(NULL, &ctx);
+    #endif
     if (ctx == NULL) caml_raise_out_of_memory();
 
     vctx = caml_alloc_final(1, &finalize_context, 1, 10);
