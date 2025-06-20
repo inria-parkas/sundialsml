@@ -1640,33 +1640,17 @@ static void sunml_lsolver_check_flag(const char *call, int flag)
 
     switch (flag) {
 #if 400 <= SUNDIALS_LIB_VERSION
-    #if 700 < SUNDIALS_LIB_VERSION
     case SUNLS_ILL_INPUT:
 	case SUNLS_MEM_NULL:
-    #else
-    case SUN_ERR_ARG_CORRUPT:
-    #endif // e.g., matrix = NULL for Dense linear solver
 	    caml_invalid_argument(call);
 
-    #if 700 < SUNDIALS_LIB_VERSION
     case SUNLS_MEM_FAIL:
-    #else
-    case SUN_ERR_MEM_FAIL:
-    #endif
 	    caml_raise_out_of_memory();
 
-    #if 700 < SUNDIALS_LIB_VERSION
     case SUNLS_PACKAGE_FAIL_UNREC:
-    #else
-    case SUN_ERR_EXT_FAIL:
-    #endif
         caml_raise_with_arg(LSOLVER_EXN(PackageFailure), Val_false);
 
-    #if 700 < SUNDIALS_LIB_VERSION
     case SUNLS_VECTOROP_ERR:
-    #else
-    case SUN_ERR_OP_FAIL:
-    #endif
         caml_raise_constant(LSOLVER_EXN(VectorOpError));
 
 	case SUNLS_ATIMES_FAIL_UNREC:
