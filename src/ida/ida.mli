@@ -1280,8 +1280,9 @@ exception LinearInitFailure
     If possible, the exception in the underlying linear solver is specified.
     It is typically one of
     {!Sundials_LinearSolver.ZeroInDiagonal},
-    or
     {!Sundials_LinearSolver.PSetFailure},
+    or
+    {!Sundials_LinearSolver.PackageFailure}.
 
     @ida IDAGetLastLinFlag
     @ida <Constants_link.html> IDA_LSETUP_FAIL *)
@@ -1294,8 +1295,9 @@ exception LinearSetupFailure of exn option
     {!Sundials_LinearSolver.ATimesFailure},
     {!Sundials_LinearSolver.PSolveFailure},
     {!Sundials_LinearSolver.GSFailure},
-    or
     {!Sundials_LinearSolver.QRSolFailure},
+    or
+    {!Sundials_LinearSolver.PackageFailure}.
 
     @ida IDAGetLastLinFlag
     @ida <Constants_link.html> IDA_LSOLVE_FAIL *)

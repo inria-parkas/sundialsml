@@ -271,7 +271,6 @@ void sunml_nlsolver_check_flag(const char *call, int flag)
     static char exmsg[MAX_ERRMSG_LEN] = "";
 
 
-
     if (flag == SUN_SUCCESS
 	    || flag == SUN_NLS_CONTINUE
 	    || flag == SUN_NLS_CONV_RECVR) return;
@@ -284,15 +283,6 @@ void sunml_nlsolver_check_flag(const char *call, int flag)
 #endif
 
     switch (flag) {
-
-	case SUN_NLS_ILL_INPUT:
-	    caml_invalid_argument(call);
-
-	case SUN_NLS_MEM_NULL:
-	    caml_raise_constant(NLSOLVER_EXN(IncorrectUse));
-
-	case SUN_NLS_MEM_FAIL:
-	    caml_raise_out_of_memory();
 
 #if 500 <= SUNDIALS_LIB_VERSION
 	case SUN_NLS_EXT_FAIL:

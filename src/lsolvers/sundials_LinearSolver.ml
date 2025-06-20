@@ -16,6 +16,7 @@ module LSI = Sundials_LinearSolver_impl
 open LSI
 
 exception InvalidLinearSolver
+exception UnrecoverableFailure
 exception MatrixNotSquare
 exception MatrixVectorMismatch
 exception InsufficientStorageUpperBandwidth

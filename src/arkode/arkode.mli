@@ -5009,7 +5009,7 @@ exception LinearInitFailure
     It is typically one of
     {!Sundials_LinearSolver.ZeroInDiagonal},
     or
-    {!Sundials_LinearSolver.PSetFailure},
+    {!Sundials_LinearSolver.PSetFailure}.
 
     @arkode_ark ARKStepGetLastLinFlag
     @arkode_mri MRIStepGetLastLinFlag
@@ -5055,7 +5055,7 @@ exception MassSetupFailure of exn option
     {!Sundials_LinearSolver.PSolveFailure},
     {!Sundials_LinearSolver.GSFailure},
     or
-    {!Sundials_LinearSolver.QRSolFailure},
+    {!Sundials_LinearSolver.QRSolFailure}.
 
     @arkode_ark ARKStepGetLastMassFlag
     @arkode <Constants_link.html> ARK_MASSSOLVE_FAIL *)

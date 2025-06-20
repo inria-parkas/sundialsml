@@ -955,6 +955,11 @@ exception ConvFailure
     @nodoc SUNLS_QRFACT_FAIL *)
 exception QRfactFailure
 
+(** Indicates failure in an external linear solver package.
+
+  @nodoc SUNLS_PACKAGE_FAIL_REC *)
+exception PackageFailure
+
 (** Indicates that LU factorization encountered a singular matrix.
 
     @nodoc SUNLS_LUFACT_FAIL *)

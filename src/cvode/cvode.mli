@@ -1455,8 +1455,9 @@ exception LinearInitFailure
     If possible, the exception in the underlying linear solver is specified.
     It is typically one of
     {!Sundials_LinearSolver.ZeroInDiagonal},
-    or
     {!Sundials_LinearSolver.PSetFailure},
+    or
+    {!Sundials_LinearSolver.PackageFailure}.
 
     @cvode CVodeGetLastLinFlag
     @cvode <Constants_link.html> CV_LSETUP_FAIL *)
@@ -1469,8 +1470,9 @@ exception LinearSetupFailure of exn option
     {!Sundials_LinearSolver.ATimesFailure},
     {!Sundials_LinearSolver.PSolveFailure},
     {!Sundials_LinearSolver.GSFailure},
-    or
     {!Sundials_LinearSolver.QRSolFailure},
+    or
+    {!Sundials_LinearSolver.PackageFailure}.
 
     @cvode CVodeGetLastLinFlag
     @cvode <Constants_link.html> CV_LSOLVE_FAIL *)
