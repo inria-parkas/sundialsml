@@ -16,7 +16,6 @@ module LSI = Sundials_LinearSolver_impl
 open LSI
 
 exception InvalidLinearSolver
-exception UnrecoverableFailure of bool
 exception MatrixNotSquare
 exception MatrixVectorMismatch
 exception InsufficientStorageUpperBandwidth
@@ -25,7 +24,6 @@ exception PSetFailure of bool
 exception PSolveFailure of bool
 exception GSFailure
 exception QRSolFailure
-exception VectorOpError
 exception ResReduced
 exception ConvFailure
 exception QRfactFailure
@@ -950,7 +948,6 @@ let _ =
       PSolveFailure false;
       GSFailure;
       QRSolFailure;
-      VectorOpError;
       ResReduced;
       ConvFailure;
       QRfactFailure;

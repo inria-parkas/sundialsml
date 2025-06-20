@@ -886,12 +886,10 @@ val get_work_space : ('m, 'd, 'k, 't) t -> int * int
     linear solver from {!Iterative}. *)
 exception InvalidLinearSolver
 
-(** Raised on an unrecoverable failure in a linear solver. The argument is
-    [true] for a recoverable failure and [false] for an unrecoverable one.
+(** Raised on an recoverable failure in a linear solver.
 
-    @nodoc SUNLS_PACKAGE_FAIL_REC
-    @nodoc SUNLS_PACKAGE_FAIL_UNREC *)
-exception UnrecoverableFailure of bool
+    @nodoc SUNLS_PACKAGE_FAIL_REC*)
+exception UnrecoverableFailure
 
 (** Raised when creating a linear solver if the given matrix is not square. *)
 exception MatrixNotSquare
@@ -940,10 +938,6 @@ exception GSFailure
     @nodoc SUNLS_QRSOL_FAIL *)
 exception QRSolFailure
 
-(** An error occurred in a vector operation.
-
-    @nodoc SUNLS_VECTOROP_ERR *)
-exception VectorOpError
 
 (** Indicates that the residual is reduced but without convergence to the
     desired tolerance.
@@ -966,12 +960,10 @@ exception QRfactFailure
     @nodoc SUNLS_LUFACT_FAIL *)
 exception LUfactFailure
 
-(** Indicates failure in an external linear solver package. The argument
-    is [true] for a recoverable failure and [false] for an unrecoverable one.
+(** Indicates recoverable failure in an external linear solver package.
 
-    @nodoc SUNLS_PACKAGE_FAIL_REC
-    @nodoc SUNLS_PACKAGE_FAIL_UNREC *)
-exception PackageFailure of bool
+    @nodoc SUNLS_PACKAGE_FAIL_REC*)
+exception PackageFailure
 
 (** Raised by {!Iterative.set_prec_type} if the given type is not allowed. *)
 exception IllegalPrecType

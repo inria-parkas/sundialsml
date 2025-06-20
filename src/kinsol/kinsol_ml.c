@@ -126,27 +126,6 @@ static void errh(
     CAMLreturn0;
 }
 
-CAMLprim value sunml_kinsol_set_err_handler_fn(value vdata)
-{
-    CAMLparam1(vdata);
- 
-    int flag = KINSetErrHandlerFn(KINSOL_MEM_FROM_ML(vdata), errh,
-				  KINSOL_BACKREF_FROM_ML(vdata));
-    CHECK_FLAG("KINSetErrHandlerFn", flag);
-
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_kinsol_clear_err_handler_fn(value vdata)
-{
-    CAMLparam1(vdata);
-
-    int flag = KINSetErrHandlerFn(KINSOL_MEM_FROM_ML(vdata), NULL, NULL);
-    CHECK_FLAG("KINSetErrHandlerFn", flag);
-
-    CAMLreturn (Val_unit);
-}
-
 static void infoh(
 	const char *module,
 	const char *func,
@@ -1261,16 +1240,6 @@ CAMLprim value sunml_kinsol_spils_get_num_func_evals (value vkin_mem)
 #endif
 
     CAMLreturn(Val_long(r));
-}
-
-CAMLprim value sunml_kinsol_set_error_file(value vdata, value vfile)
-{
-    CAMLparam2(vdata, vfile);
-
-    int flag = KINSetErrFile(KINSOL_MEM_FROM_ML(vdata), ML_CFILE(vfile));
-    CHECK_FLAG("KINSetErrFile", flag);
-
-    CAMLreturn (Val_unit);
 }
 
 CAMLprim value sunml_kinsol_set_info_file(value vdata, value vfile)

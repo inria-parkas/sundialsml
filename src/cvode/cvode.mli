@@ -767,24 +767,6 @@ val reinit :
     @cvode CVEwtFn *)
 val set_tolerances : ('d, 'k) session -> ('d, 'k) tolerance -> unit
 
-(** Configure the default error handler to write messages to a file.
-    By default it writes to Logfile.stderr.
-
-    @cvode CVodeSetErrFile *)
-val set_error_file : ('d, 'k) session -> Logfile.t -> unit
-
-(** Specifies a custom function for handling error messages.
-    The handler must not fail: any exceptions are trapped and discarded.
-
-    @cvode CVodeSetErrHandlerFn
-    @cvode CVErrHandlerFn *)
-val set_err_handler_fn : ('d, 'k) session -> (Util.error_details -> unit) -> unit
-
-(** Restores the default error handling function.
-
-    @cvode CVodeSetErrHandlerFn *)
-val clear_err_handler_fn : ('d, 'k) session -> unit
-
 (** Specifies a function to be called after the given number of successful
     steps.
 
@@ -1473,9 +1455,8 @@ exception LinearInitFailure
     If possible, the exception in the underlying linear solver is specified.
     It is typically one of
     {!Sundials_LinearSolver.ZeroInDiagonal},
-    {!Sundials_LinearSolver.PSetFailure},
     or
-    {!Sundials_LinearSolver.PackageFailure}.
+    {!Sundials_LinearSolver.PSetFailure},
 
     @cvode CVodeGetLastLinFlag
     @cvode <Constants_link.html> CV_LSETUP_FAIL *)
@@ -1488,9 +1469,8 @@ exception LinearSetupFailure of exn option
     {!Sundials_LinearSolver.ATimesFailure},
     {!Sundials_LinearSolver.PSolveFailure},
     {!Sundials_LinearSolver.GSFailure},
-    {!Sundials_LinearSolver.QRSolFailure},
     or
-    {!Sundials_LinearSolver.PackageFailure}.
+    {!Sundials_LinearSolver.QRSolFailure},
 
     @cvode CVodeGetLastLinFlag
     @cvode <Constants_link.html> CV_LSOLVE_FAIL *)

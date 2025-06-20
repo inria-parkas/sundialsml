@@ -270,17 +270,23 @@ void sunml_nlsolver_check_flag(const char *call, int flag)
 {
     static char exmsg[MAX_ERRMSG_LEN] = "";
 
-    if (flag == SUN_NLS_SUCCESS
+
+
+    if (flag == SUN_SUCCESS
 	    || flag == SUN_NLS_CONTINUE
 	    || flag == SUN_NLS_CONV_RECVR) return;
+
+#if 700 <= SUNDIALS_LIB_VERSION
+    const char *error = SUNGetErrMsh(flag);
+    if (error != NULL) {
+        caml_failwith(error);
+    }
+#endif
 
     switch (flag) {
 
 	case SUN_NLS_ILL_INPUT:
 	    caml_invalid_argument(call);
-
-	case SUN_NLS_VECTOROP_ERR:
-	    caml_raise_constant(NLSOLVER_EXN(VectorOpError));
 
 	case SUN_NLS_MEM_NULL:
 	    caml_raise_constant(NLSOLVER_EXN(IncorrectUse));
@@ -338,7 +344,7 @@ CAMLprim value sunml_senswrapper_wrap(N_Vector sw)
 
     vsw = caml_alloc_custom(&senswrapper_custom_ops, 1, 0, 1);
     SENSWRAPPER(vsw) = sw;
-    
+
     CAMLreturn(vsw);
 }
 

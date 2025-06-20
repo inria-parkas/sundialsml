@@ -44,10 +44,6 @@
 #if 600 <= SUNDIALS_LIB_VERSION
 #include <sundials/sundials_context.h>
 #endif
-#if 700 <= SUNDIALS_LIB_VERSION
-#include <sundials/sundials_profiler.h>
-#include <sundials/sundials_logger.h>
-#endif
 
 #if 670 <= SUNDIALS_LIB_VERSION
 #include <sundials/sundials_adaptcontroller.h>

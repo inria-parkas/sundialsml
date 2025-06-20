@@ -707,7 +707,6 @@ let _ =
   c_init_module
     (* Exceptions must be listed in the same order as lsolver_exn_index.  *)
     [|
-      VectorOpError;
       IncorrectUse;
       ExtFail;
     |]

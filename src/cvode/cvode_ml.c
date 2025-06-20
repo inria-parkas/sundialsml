@@ -32,6 +32,7 @@
 #ifdef SUNDIALSML_WITHSENS
 /* CVODES (with sensitivity) */
 
+
 #include <cvodes/cvodes.h>
 
 /* linear solvers */
@@ -141,27 +142,6 @@ static void errh(int error_code,
 					"user-defined error handler");
 
     CAMLreturn0;
-}
-
-CAMLprim value sunml_cvode_set_err_handler_fn(value vdata)
-{
-    CAMLparam1(vdata);
- 
-    int flag = CVodeSetErrHandlerFn(CVODE_MEM_FROM_ML(vdata), errh,
-				    CVODE_BACKREF_FROM_ML(vdata));
-    CHECK_FLAG("CVodeSetErrHandlerFn", flag);
-
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_cvode_clear_err_handler_fn(value vdata)
-{
-    CAMLparam1(vdata);
-
-    int flag = CVodeSetErrHandlerFn(CVODE_MEM_FROM_ML(vdata), NULL, NULL);
-    CHECK_FLAG("CVodeSetErrHandlerFn", flag);
-
-    CAMLreturn (Val_unit);
 }
 
 #if defined SUNDIALS_BUILD_WITH_MONITORING && (!SUNDIALSML_WITHSENS || 600 <= SUNDIALS_LIB_VERSION)
@@ -1497,16 +1477,6 @@ CAMLprim value sunml_cvode_get_linear_solver_stats(value vdata)
     CAMLreturn(r);
 }
 
-CAMLprim value sunml_cvode_set_error_file(value vdata, value vfile)
-{
-    CAMLparam2(vdata, vfile);
-
-    int flag = CVodeSetErrFile(CVODE_MEM_FROM_ML(vdata), ML_CFILE(vfile));
-    CHECK_FLAG("CVodeSetErrFile", flag);
-
-    CAMLreturn (Val_unit);
-}
-
 CAMLprim value sunml_cvode_set_functional (value vdata)
 {
     CAMLparam1 (vdata);
@@ -1916,8 +1886,6 @@ CAMLprim value sunml_cvode_set_max_num_steps(value vcvode_mem, value mxsteps)
 }
 
 CAMLprim value sunml_cvode_set_max_hnil_warns(value vcvode_mem, value mxhnil)
-{
-    CAMLparam2(vcvode_mem, mxhnil);
 
 
     int flag = CVodeSetMaxHnilWarns(CVODE_MEM_FROM_ML(vcvode_mem), Int_val(mxhnil));
@@ -2591,6 +2559,7 @@ CAMLprim value sunml_cvode_dls_get_work_space(value vcvode_mem)
 #endif
 
     r = caml_alloc_tuple(2);
+
     Store_field(r, 0, Val_long(lenrwLS));
     Store_field(r, 1, Val_long(leniwLS));
 
@@ -2622,8 +2591,8 @@ CAMLprim value sunml_cvode_dls_get_num_lin_rhs_evals(value vcvode_mem)
     int flag = CVodeGetNumLinRhsEvals(CVODE_MEM_FROM_ML(vcvode_mem), &r);
     CHECK_LS_FLAG("CVodeGetNumLinRhsEvals", flag);
 #else
-    int flag = CVDlsGetNumRhsEvals(CVODE_MEM_FROM_ML(vcvode_mem), &r);
-    CHECK_DLS_FLAG("CVDlsGetNumRhsEvals", flag);
+    int flag = CVSpilsGetNumRhsEvals(CVODE_MEM_FROM_ML(vcvode_mem), &r);
+    CHECK_SPILS_FLAG("CVSpilsGetNumRhsEvals", flag);
 #endif
 
     CAMLreturn(Val_long(r));

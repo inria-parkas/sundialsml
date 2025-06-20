@@ -144,27 +144,6 @@ static void errh(
     CAMLreturn0;
 }
 
-CAMLprim value sunml_ida_set_err_handler_fn(value vdata)
-{
-    CAMLparam1(vdata);
-
-    int flag = IDASetErrHandlerFn(IDA_MEM_FROM_ML(vdata), errh,
-				  IDA_BACKREF_FROM_ML(vdata));
-    CHECK_FLAG("IDASetErrHandlerFn", flag);
-
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_ida_clear_err_handler_fn(value vdata)
-{
-    CAMLparam1(vdata);
-
-    int flag = IDASetErrHandlerFn(IDA_MEM_FROM_ML(vdata), NULL, NULL);
-    CHECK_FLAG("IDASetErrHandlerFn", flag);
-
-    CAMLreturn (Val_unit);
-}
-
 static int resfn (sunrealtype t, N_Vector y, N_Vector yp,
 		  N_Vector resval, void *user_data)
 {
@@ -1418,16 +1397,6 @@ CAMLprim value sunml_ida_get_integrator_stats(value vdata)
     Store_field(r, RECORD_IDA_INTEGRATOR_STATS_INTERNAL_TIME, caml_copy_double(tcur));
 
     CAMLreturn(r);
-}
-
-CAMLprim value sunml_ida_set_error_file(value vdata, value vfile)
-{
-    CAMLparam2(vdata, vfile);
-
-    int flag = IDASetErrFile(IDA_MEM_FROM_ML(vdata), ML_CFILE(vfile));
-    CHECK_FLAG("IDASetErrFile", flag);
-
-    CAMLreturn (Val_unit);
 }
 
 CAMLprim value sunml_ida_set_root_direction(value vdata, value rootdirs)

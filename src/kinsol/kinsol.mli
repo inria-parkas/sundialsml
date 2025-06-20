@@ -625,25 +625,6 @@ val set_sys_func : ('d, 'k) session -> ('d -> 'd -> unit) -> unit
 
 (** {3:info Logging and error handling} *)
 
-(** Configure the default error handler to write messages to a file.
-    By default it writes to Logfile.stderr.
-
-    @kinsol KINSetErrFile *)
-val set_error_file : ('d, 'k) session -> Logfile.t -> unit
-
-(** Specifies a custom function for handling error messages.
-    The handler must not fail: any exceptions are trapped and discarded.
-
-    @kinsol KINSetErrHandlerFn
-    @kinsol KINErrHandlerFn *)
-val set_err_handler_fn
-  : ('d, 'k) session -> (Util.error_details -> unit) -> unit
-
-(** Restores the default error handling function.
-
-    @kinsol KINSetErrHandlerFn *)
-val clear_err_handler_fn : ('d, 'k) session -> unit
-
 (** Increasing levels of verbosity for informational messages. *)
 type print_level =
   | NoInformation     (** No information displayed. {cconst 0} *)

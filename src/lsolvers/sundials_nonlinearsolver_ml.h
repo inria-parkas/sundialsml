@@ -146,7 +146,6 @@ enum nlsolver_type {
 /* This enum must list exceptions in the same order as the call to
  * c_init_module in sundials_NonlinearSolver.ml.  */
 enum nlsolver_exn_index {
-    NLSOLVER_EXN_VectorOpError,
     NLSOLVER_EXN_IncorrectUse,
     NLSOLVER_EXN_ExtFail,
     NLSOLVER_EXN_SET_SIZE

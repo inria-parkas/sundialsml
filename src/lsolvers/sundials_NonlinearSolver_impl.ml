@@ -25,7 +25,6 @@ let e = Sundials.RecoverableFailure
    To ensure that this type will be opaque outside of Sundials/ML, we simply
    do not install the sundials_NonlinearSolver_impl.cmi file. *)
 
-exception VectorOpError
 exception IncorrectUse
 exception ExtFail
 exception NonlinearSolverInUse

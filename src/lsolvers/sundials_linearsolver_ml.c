@@ -122,24 +122,12 @@ value sunml_lsolver_exception_from_flag(int linflag)
 		Store_some(vro, vr);
 		break;
 
-	    case SUNLS_PACKAGE_FAIL_UNREC:
-		vr = caml_alloc_small(1, 0);
-		Field(vr, 0) = LSOLVER_EXN(PackageFailure);
-		Field(vr, 1) = Val_bool(0);
-		Store_some(vro, vr);
-		break;
-
 	    case SUNLS_GS_FAIL:
 		Store_some(vro, LSOLVER_EXN(GSFailure));
 		break;
 
 	    case SUNLS_QRSOL_FAIL:
 		Store_some(vro, LSOLVER_EXN(QRSolFailure));
-		break;
-#endif
-#if 400 <= SUNDIALS_LIB_VERSION
-	    case SUNLS_VECTOROP_ERR:
-		Store_some(vro, LSOLVER_EXN(VectorOpError));
 		break;
 #endif
 	    default:
@@ -854,13 +842,6 @@ static int lsolver_translate_exception(value vexn)
     } else if (vtag == LSOLVER_EXN_TAG(QRSolFailure)) {
 	r = SUNLS_QRSOL_FAIL;
 
-    } else if (vtag == LSOLVER_EXN_TAG(VectorOpError)) {
-#if 400 <= SUNDIALS_LIB_VERSION
-	r = SUNLS_VECTOROP_ERR;
-#else
-	r = -100;
-#endif
-
     } else if (vtag == LSOLVER_EXN_TAG(ResReduced)) {
 	r = SUNLS_RES_REDUCED;
 
@@ -874,8 +855,11 @@ static int lsolver_translate_exception(value vexn)
 	r = SUNLS_LUFACT_FAIL;
 
     } else if (vtag == LSOLVER_EXN_TAG(PackageFailure)) {
-	r = Bool_val(Field(vexn, 1)) ? SUNLS_PACKAGE_FAIL_REC
-                     : SUNLS_PACKAGE_FAIL_UNREC;
+    #if SUNDIALS_LIB_VERSION < 700
+    r = Bool_val(Field(vexn, 1)) ? SUNLS_PACKAGE_FAIL_REC : SUNLS_PACKAGE_FAIL_UNREC;
+    #else
+        r = SUNLS_PACKAGE_FAIL_REC;
+    #endif
 
     } else if (vtag == LSOLVER_EXN_TAG(InvalidArgument)) {
 	r = SUNLS_ILL_INPUT;
@@ -1638,21 +1622,15 @@ static void sunml_lsolver_check_flag(const char *call, int flag)
 
     if (flag == SUNLS_SUCCESS) return;
 
+#if 700 <= SUNDIALS_LIB_VERSION
+    const char *error = SUNGetErrMsh(flag);
+    if (error != NULL) {
+        caml_failwith(error);
+    }
+#endif
+
     switch (flag) {
 #if 400 <= SUNDIALS_LIB_VERSION
-	case SUNLS_ILL_INPUT:
-	case SUNLS_MEM_NULL:
-	    caml_invalid_argument(call);
-
-	case SUNLS_MEM_FAIL:
-	    caml_raise_out_of_memory();
-
-	case SUNLS_PACKAGE_FAIL_UNREC:
-	    caml_raise_with_arg(LSOLVER_EXN(PackageFailure), Val_false);
-
-	case SUNLS_VECTOROP_ERR:
-	    caml_raise_constant(LSOLVER_EXN(VectorOpError));
-
 	case SUNLS_ATIMES_FAIL_UNREC:
 	    caml_raise_with_arg(LSOLVER_EXN(ATimesFailure), Val_false);
 

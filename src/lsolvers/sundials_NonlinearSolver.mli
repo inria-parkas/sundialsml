@@ -563,11 +563,6 @@ end (* }}} *)
 
 (** {2:nlsexceptions Exceptions} *)
 
-(** An error occurred in a vector operation.
-
-    @nodoc SUN_NLS_VECTOROP_ERR *)
-exception VectorOpError
-
 (** Raised when a nonlinear solver is used incorrectly.
     For example, calling {!solve} without having first called {!set_sys_fn}
     ([SUN_NLS_MEM_NULL]). *)
