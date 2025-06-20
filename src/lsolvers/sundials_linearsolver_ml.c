@@ -67,10 +67,6 @@
 #define SUN_PREC_NONE PREC_NONE
 #endif
 
-#if SUNDIALS_LIB_VERSION < 700
-#define SUN_SUCCESS SUNLS_SUCCESS
-#endif
-
 CAMLprim value sunml_lsolver_init_module (value exns)
 {
     CAMLparam1 (exns);
@@ -835,7 +831,7 @@ CAMLprim value sunml_lsolver_pcg(value vmaxl, value vnvec, value vctx)
 #define CHECK_EXCEPTION_SUCCESS(result)					 \
     (Is_exception_result (result)					 \
      ? lsolver_translate_exception (result = Extract_exception (result)) \
-     : SUN_SUCCESS)
+     : SUNLS_SUCCESS)
 
 static int lsolver_translate_exception(value vexn)
 {
@@ -1282,7 +1278,7 @@ static int callml_custom_space(SUNLinearSolver ls,
     *lenrwLS = Long_val(Field(r, 0));
     *leniwLS = Long_val(Field(r, 1));
 
-    CAMLreturnT(int, SUN_SUCCESS);
+    CAMLreturnT(int, SUNLS_SUCCESS);
 }
 
 static int callml_custom_free(SUNLinearSolver ls)
@@ -1291,7 +1287,7 @@ static int callml_custom_free(SUNLinearSolver ls)
     if (ls->ops != NULL) free(ls->ops);
     free(ls);
 
-    return(SUN_SUCCESS);
+    return(SUNLS_SUCCESS);
 }
 
 #else // SUNDIALS_LIB_VERSION < 300
@@ -1662,7 +1658,7 @@ static void sunml_lsolver_check_flag(const char *call, int flag)
 {
     static char exmsg[MAX_ERRMSG_LEN] = "";
 
-    if (flag == SUN_SUCCESS) return;
+    if (flag == SUNLS_SUCCESS) return;
 
     switch (flag) {
 #if 400 <= SUNDIALS_LIB_VERSION
@@ -1745,7 +1741,7 @@ static void sunml_lsolver_check_flag(const char *call, int flag)
     }
 }
 
-#define CHECK_FLAG(call, flag) if (flag != SUN_SUCCESS) \
+#define CHECK_FLAG(call, flag) if (flag != SUNLS_SUCCESS) \
 				 sunml_lsolver_check_flag(call, flag)
 
 #endif
