@@ -120,17 +120,53 @@ module Logger = struct
 
 end
 
+module Vptr = Sundials_impl.Vptr
+
 module Context = struct
-  type t = Sundials_impl.Context.t
-  exception ExternalProfilerInUse = Sundials_impl.Context.ExternalProfilerInUse
-  let make    = Sundials_impl.Context.make
-  let default = Sundials_impl.Context.default
 
-  let get_profiler = Sundials_impl.Context.get_profiler
-  let set_profiler = Sundials_impl.Context.set_profiler
+  module IContext = Sundials_impl.Context
 
-  let get_logger = Sundials_impl.Context.get_logger
-  let set_logger = Sundials_impl.Context.set_logger
+  type t = IContext.t
+  exception ExternalProfilerInUse = IContext.ExternalProfilerInUse
+  let make    = IContext.make
+  let default = IContext.default
+
+  let get_profiler = IContext.get_profiler
+  let set_profiler = IContext.set_profiler
+
+  let get_logger = IContext.get_logger
+  let set_logger = IContext.set_logger
+
+  type error_details = IContext.error_details = {
+      line : int;
+      function_name : string;
+      file_name : string;
+      error_message : string;
+      error_code : int;
+  }
+
+  external c_push_err_handler : t -> (error_details -> unit) Vptr.vptr -> unit
+    = "sunml_context_push_err_handler"
+
+  let push_err_handler ctxt errh =
+    let vptr = Vptr.make errh in
+    c_push_err_handler ctxt vptr;
+    ctxt.IContext.error_handlers <- vptr :: ctxt.IContext.error_handlers
+
+  external c_pop_err_handler : t -> unit
+    = "sunml_context_pop_err_handler"
+
+  let pop_err_handler ctxt =
+    c_pop_err_handler ctxt;
+    ctxt.IContext.error_handlers <- List.tl ctxt.IContext.error_handlers
+
+  external c_clear_err_handlers : t -> unit
+    = "sunml_context_clear_err_handlers"
+
+  let clear_err_handlers ctxt =
+    c_clear_err_handlers ctxt;
+    ctxt.IContext.error_handlers <- []
+
 end
 
 exception RecoverableFailure

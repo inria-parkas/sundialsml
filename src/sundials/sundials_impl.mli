@@ -43,8 +43,16 @@ module Logger : sig type t end
 module Context :
   sig
     type cptr
+    type error_details = {
+      line : int;
+      function_name : string;
+      file_name : string;
+      error_message : string;
+      error_code : int;
+    }
     type t = {
       cptr : cptr;
+      mutable error_handlers : (error_details -> unit) Vptr.vptr list;
       mutable profiler : Profiler.t option;
       mutable logger : Logger.t;
     }

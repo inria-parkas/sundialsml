@@ -292,6 +292,38 @@ module Context : sig (* {{{ *)
       @context SUNContext_SetLogger *)
   val set_logger : t -> Logger.t -> unit
 
+  (** Information passed to error handler functions.
+      See {!push_err_handler}.
+
+      @context <Errors_link.html#error-handler-functions> Error Handler Functions *)
+  type error_details = {
+      line : int;              (** the line number at which the error occurred. *)
+      function_name : string;  (** the function in which the error occurred. *)
+      file_name : string;      (** the file in which the error occurred. *)
+      error_message : string;  (** the message to log. *)
+      error_code : int;        (** the error code for the error that occurred. *)
+    }
+
+  (** Pushes a new error handler onto the internal stack. All error handlers
+      on the stack are called when an error occurs.
+
+      @context SUNContext_PushErrHandler
+      @since 7.0.0 *)
+  val push_err_handler : t -> (error_details -> unit) -> unit
+
+  (** Pops the most recent error handler from the internal stack.
+
+      @context SUNContext_PopErrHandler
+      @since 7.0.0 *)
+  val pop_err_handler : t -> unit
+
+  (** Clears the internal stack of error handlers. Further errors will be
+      ignored unless a new error handler is pushed.
+
+      @context SUNContext_ClearErrHandlers
+      @since 7.0.0 *)
+  val clear_err_handlers: t -> unit
+
 end (* }}} *)
 
 (** Accuracy-based adaptivity controllers that estimate the step sizes, and

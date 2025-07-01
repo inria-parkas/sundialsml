@@ -963,6 +963,72 @@ CAMLprim value sunml_context_create_parallel(value vcomm)
 
 #endif
 
+#if 700 <= SUNDIALS_LIB_VERSION
+static void errh(int line,
+		 const char *func,
+		 const char *file,
+		 const char *msg,
+		 SUNErrCode err_code,
+		 void *err_user_data,
+		 SUNContext sunctx)
+{
+    CAMLparam0();
+    CAMLlocal2(session, a);
+    value *backref = err_user_data;
+
+    a = caml_alloc_tuple(RECORD_SUNDIALS_CONTEXT_ERROR_DETAILS_SIZE);
+    Store_field(a, RECORD_SUNDIALS_CONTEXT_ERROR_DETAILS_LINE, Val_int(line));
+    Store_field(a, RECORD_SUNDIALS_CONTEXT_ERROR_DETAILS_FUNCTION_NAME, caml_copy_string(func));
+    Store_field(a, RECORD_SUNDIALS_CONTEXT_ERROR_DETAILS_FILE_NAME, caml_copy_string(file));
+    Store_field(a, RECORD_SUNDIALS_CONTEXT_ERROR_DETAILS_ERROR_MESSAGE, caml_copy_string(msg));
+    Store_field(a, RECORD_SUNDIALS_CONTEXT_ERROR_DETAILS_ERROR_CODE, Val_int(err_code));
+
+    /* NB: Don't trigger GC while processing this return value!  */
+    value r = caml_callback_exn (*backref, a);
+    if (Is_exception_result (r))
+	sunml_warn_discarded_exn (Extract_exception (r),
+					"user-defined error handler");
+
+    CAMLreturn0;
+}
+#endif
+
+CAMLprim value sunml_context_push_err_handler(value vctx, value verrh)
+{
+    CAMLparam2(vctx, verrh);
+#if 700 <= SUNDIALS_LIB_VERSION
+    if (SUNContext_PushErrHandler(ML_CCONTEXT(vctx), errh, VPTRCROOT(verrh)) != SUN_SUCCESS)
+	caml_raise_out_of_memory();
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_context_pop_err_handler(value vctx)
+{
+    CAMLparam1(vctx);
+#if 700 <= SUNDIALS_LIB_VERSION
+    if (SUNContext_PopErrHandler(ML_CCONTEXT(vctx)) != SUN_SUCCESS)
+	caml_failwith("sunml_context_pop_err_handler");
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
+CAMLprim value sunml_context_clear_err_handlers(value vctx)
+{
+    CAMLparam1(vctx);
+#if 700 <= SUNDIALS_LIB_VERSION
+    if (SUNContext_ClearErrHandlers(ML_CCONTEXT(vctx)) != SUN_SUCCESS)
+	caml_failwith("sunml_context_clear_err_handlers");
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
+}
+
 /* Adaptivity Controllers */
 
 #if 670 <= SUNDIALS_LIB_VERSION

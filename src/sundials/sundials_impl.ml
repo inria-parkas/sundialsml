@@ -199,8 +199,18 @@ module Context = struct
 
   type cptr
 
+  (* synchronized with sundials_ml.h: sundials_context_error_details_index *)
+  type error_details = {
+      line : int;
+      function_name : string;
+      file_name : string;
+      error_message : string;
+      error_code : int;
+    }
+
   type t = {
     cptr : cptr;
+    mutable error_handlers : ((error_details -> unit) Vptr.vptr) list;
     mutable profiler : Profiler.t option;
     mutable logger : Logger.t;
   }
@@ -228,7 +238,7 @@ module Context = struct
 
   let make ?profiler ?logger () =
     let cptr, original_logger = c_make () in
-    let ctx = { cptr; profiler = None; logger = original_logger } in
+    let ctx = { cptr; profiler = None; logger = original_logger; error_handlers = [] } in
     (match profiler with
      | Some p -> set_profiler ctx p
      | None ->

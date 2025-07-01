@@ -120,6 +120,15 @@ value sunml_wrap_session_pointer(void *sun_mem);
 // create a Sundials.RealArray2.t from C
 CAMLprim value sunml_sundials_realarray2_create(int nc, int nr);
 
+enum sundials_context_error_details_index {
+  RECORD_SUNDIALS_CONTEXT_ERROR_DETAILS_LINE    = 0,
+  RECORD_SUNDIALS_CONTEXT_ERROR_DETAILS_FUNCTION_NAME,
+  RECORD_SUNDIALS_CONTEXT_ERROR_DETAILS_FILE_NAME,
+  RECORD_SUNDIALS_CONTEXT_ERROR_DETAILS_ERROR_MESSAGE,
+  RECORD_SUNDIALS_CONTEXT_ERROR_DETAILS_ERROR_CODE,
+  RECORD_SUNDIALS_CONTEXT_ERROR_DETAILS_SIZE /* This has to come last. */
+};
+
 enum sundials_error_details_index {
   RECORD_SUNDIALS_ERROR_DETAILS_ERROR_CODE    = 0,
   RECORD_SUNDIALS_ERROR_DETAILS_MODULE_NAME,
