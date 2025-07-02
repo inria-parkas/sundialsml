@@ -56,7 +56,7 @@ void sunml_warn_discarded_exn (value exn, const char *context);
  *    sparse matrix indices:      sunindextype
  *    dense/band matrix indices:  sunindextype
  */
-#if SUNDIALS_LIB_VERSION >= 300
+#if 300 <= SUNDIALS_LIB_VERSION
 typedef sunindextype sundials_ml_index;
 typedef sundials_ml_index sundials_ml_smat_index;
 #define SmatIndex_val(x) Index_val(x)
@@ -67,6 +67,11 @@ typedef int sundials_ml_smat_index;
 #define SmatIndex_val(x) Int_val(x)
 #define Val_SmatIndex(x) Val_int(x)
 #endif
+
+#if SUNDIALS_LIB_VERSION < 700
+typedef void SUNComm;
+#endif
+
 #define INDEX_ARRAY(v) ((sundials_ml_index *)Caml_ba_data_val(v))
 
 /* Interfacing with OCaml's bigarray infrastructure.  */
@@ -271,8 +276,13 @@ enum sundials_logger_level_tag {
 };
 
 #if 670 <= SUNDIALS_LIB_VERSION
+#if 700 <= SUNDIALS_LIB_VERSION
+#define CHECK_ADAPT_FLAG(call, flag) if (flag != SUN_SUCCESS) \
+				 sunml_adapt_check_flag(call, flag)
+#else
 #define CHECK_ADAPT_FLAG(call, flag) if (flag != SUNADAPTCONTROLLER_SUCCESS) \
 				 sunml_adapt_check_flag(call, flag)
+#endif
 
 // values must match LinearSolver_impl.Custom.ops type
 enum sundials_adapt_ops_index {
