@@ -1537,20 +1537,3 @@ CAMLprim value sunml_adapt_space(value vadaptc)
 #endif
     CAMLreturn(vr);
 }
-
-CAMLprim value sunml_context_push_err_handler(value vcptr, value vhandler, value vdata)
-{
-
-    CAMLparam3(vcptr, vhandler, vdata);
-    caml_failwith("sunml_context_push_err_handler: not implemented");
-    CAMLreturn(Val_unit);
-}
-
-CAMLprim value sunml_context_pop_err_handler(value vcptr)
-{
-
-    CAMLparam1(vcptr);
-    caml_failwith("sunml_context_pop_err_handler: not implemented");
-    CAMLreturn(Val_unit);
-}
-

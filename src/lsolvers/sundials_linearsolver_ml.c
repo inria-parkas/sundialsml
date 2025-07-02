@@ -126,10 +126,6 @@ value sunml_lsolver_exception_from_flag(int linflag)
                 Store_some(vro, vr);
                 break;
 
-            case SUNLS_PACKAGE_FAIL_UNREC:
-                Store_some(vro, LSOLVER_EXN(PackageFailure));
-                break;
-
             case SUNLS_GS_FAIL:
                 Store_some(vro, LSOLVER_EXN(GSFailure));
                 break;

@@ -501,13 +501,6 @@ let set_info_file s ?print_level lf =
   c_set_info_file s lf;
   (match print_level with None -> () | Some l -> set_print_level s l)
 
-external c_set_info_handler_fn : ('a, 'k) session -> unit
-    = "sunml_kinsol_set_info_handler_fn"
-
-external c_clear_info_handler_fn : ('a, 'k) session -> unit
-    = "sunml_kinsol_clear_info_handler_fn"
-
-
 external set_return_newest : ('a, 'k) session -> bool -> unit
     = "sunml_kinsol_set_return_newest"
 
