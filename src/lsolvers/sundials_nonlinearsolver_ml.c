@@ -75,6 +75,10 @@ typedef struct _N_VectorContent_SensWrapper *N_VectorContent_SensWrapper;
 
 #endif
 
+#if SUNDIALS_LIB_VERSION < 700
+#define SUN_SUCCESS SUN_NLS_SUCCESS
+#endif
+
 #define MAX_ERRMSG_LEN 256
 
 /* Nonlinear solvers (NLS) - use cases
@@ -270,19 +274,12 @@ void sunml_nlsolver_check_flag(const char *call, int flag)
 {
     static char exmsg[MAX_ERRMSG_LEN] = "";
 
-#if 700 <= SUNDIALS_LIB_VERSION
-    const char *error = SUNGetErrMsh(flag);
-    if (error != NULL) {
-        caml_failwith(error);
-    }
-#endif
-
     if (flag == SUN_SUCCESS
 	    || flag == SUN_NLS_CONTINUE
 	    || flag == SUN_NLS_CONV_RECVR) return;
 
 #if 700 <= SUNDIALS_LIB_VERSION
-    const char *error = SUNGetErrMsh(flag);
+    const char *error = SUNGetErrMsg(flag);
     if (error != NULL) {
         caml_failwith(error);
     }
@@ -290,7 +287,7 @@ void sunml_nlsolver_check_flag(const char *call, int flag)
 
     switch (flag) {
 
-#if 500 <= SUNDIALS_LIB_VERSION
+#if 500 <= SUNDIALS_LIB_VERSION && SUNDIALS_LIB_VERSION < 700
 	case SUN_NLS_EXT_FAIL:
 	    caml_raise_constant(NLSOLVER_EXN(ExtFail));
 #endif
@@ -530,7 +527,7 @@ static int convtest_callback(SUNNonlinearSolver nls, N_Vector y, N_Vector del,
     if (!Is_exception_result (r)) {
 	switch (Int_val(r)) {
 	case VARIANT_NLSOLVER_CONVTEST_SUCCESS:
-	    CAMLreturnT(int, SUN_NLS_SUCCESS);
+	    CAMLreturnT(int, SUN_SUCCESS);
 
 	case VARIANT_NLSOLVER_CONVTEST_CONTINUE:
 	    CAMLreturnT(int, SUN_NLS_CONTINUE);
@@ -573,7 +570,7 @@ static int convtest_callback_sens(SUNNonlinearSolver nls, N_Vector y, N_Vector d
     if (!Is_exception_result (r)) {
 	switch (Int_val(r)) {
 	case VARIANT_NLSOLVER_CONVTEST_SUCCESS:
-	    CAMLreturnT(int, SUN_NLS_SUCCESS);
+	    CAMLreturnT(int, SUN_SUCCESS);
 
 	case VARIANT_NLSOLVER_CONVTEST_CONTINUE:
 	    CAMLreturnT(int, SUN_NLS_CONTINUE);
@@ -979,7 +976,7 @@ CAMLprim value sunml_nlsolver_get_num_conv_fails(value vnls)
 CAMLprim value sunml_nlsolver_set_info_file_newton(value vnls, value vfile)
 {
     CAMLparam2(vnls, vfile);
-#if 530 <= SUNDIALS_LIB_VERSION
+#if 530 <= SUNDIALS_LIB_VERSION && 700 > SUNDIALS_LIB_VERSION
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated"
@@ -1000,7 +997,7 @@ CAMLprim value sunml_nlsolver_set_info_file_newton(value vnls, value vfile)
 CAMLprim value sunml_nlsolver_set_info_file_fixedpoint(value vnls, value vfile)
 {
     CAMLparam2(vnls, vfile);
-#if 530 <= SUNDIALS_LIB_VERSION
+#if 530 <= SUNDIALS_LIB_VERSION && 700 > SUNDIALS_LIB_VERSION
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated"
@@ -1021,7 +1018,7 @@ CAMLprim value sunml_nlsolver_set_info_file_fixedpoint(value vnls, value vfile)
 CAMLprim value sunml_nlsolver_set_print_level_newton(value vnls, value vlevel)
 {
     CAMLparam2(vnls, vlevel);
-#if 530 <= SUNDIALS_LIB_VERSION
+#if 530 <= SUNDIALS_LIB_VERSION && 700 > SUNDIALS_LIB_VERSION
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated"
@@ -1042,7 +1039,7 @@ CAMLprim value sunml_nlsolver_set_print_level_newton(value vnls, value vlevel)
 CAMLprim value sunml_nlsolver_set_print_level_fixedpoint(value vnls, value vlevel)
 {
     CAMLparam2(vnls, vlevel);
-#if 530 <= SUNDIALS_LIB_VERSION
+#if 530 <= SUNDIALS_LIB_VERSION && 700 > SUNDIALS_LIB_VERSION
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated"
@@ -1206,7 +1203,7 @@ CAMLprim value sunml_nlsolver_call_convtest_fn(value vnls, value vconvtestfn,
 
     int flag = (*convtestfn)(nls, y, del, tol, ewt, mem);
     switch (flag) {
-    case SUN_NLS_SUCCESS:
+    case SUN_SUCCESS:
 	CAMLreturn (Val_int(VARIANT_NLSOLVER_CONVTEST_SUCCESS));
 
     case SUN_NLS_CONTINUE:
@@ -1245,7 +1242,7 @@ CAMLprim value sunml_nlsolver_call_convtest_fn_sens(value vnls,
 
     int flag = (*convtestfn)(nls, y, del, tol, ewt, mem);
     switch (flag) {
-    case SUN_NLS_SUCCESS:
+    case SUN_SUCCESS:
 	CAMLreturn (Val_int(VARIANT_NLSOLVER_CONVTEST_SUCCESS));
 
     case SUN_NLS_CONTINUE:
@@ -1295,7 +1292,7 @@ static int sunml_nlsolver_wrapped_setup(SUNNonlinearSolver nls,
     };
 
 #if 500 <= SUNDIALS_LIB_VERSION
-    if (sunml_nlsolver_install_ctestfn(snls, &cbmem) != SUN_NLS_SUCCESS) goto done;
+    if (sunml_nlsolver_install_ctestfn(snls, &cbmem) != SUN_SUCCESS) goto done;
 #endif
 
     // call setup (which may invoke ctestfn callback
@@ -1335,7 +1332,7 @@ static int sunml_nlsolver_wrapped_solve(SUNNonlinearSolver nls,
     };
 
 #if 500 <= SUNDIALS_LIB_VERSION
-    if (sunml_nlsolver_install_ctestfn(snls, &cbmem) != SUN_NLS_SUCCESS) goto done;
+    if (sunml_nlsolver_install_ctestfn(snls, &cbmem) != SUN_SUCCESS) goto done;
 #endif
 
     r = snls->orig_solve(nls, y0, y, w, tol, callLSetup, &cbmem);
@@ -1853,7 +1850,7 @@ static int callml_custom_solve_sens(SUNNonlinearSolver nls,
 
 static int callml_custom_free(SUNNonlinearSolver nls)
 {
-    if (nls == NULL) return(SUN_NLS_SUCCESS);
+    if (nls == NULL) return(SUN_SUCCESS);
 
     nls->content = NULL;
     caml_remove_generational_global_root((value *)&(nls->content));
@@ -1866,7 +1863,7 @@ static int callml_custom_free(SUNNonlinearSolver nls)
 
     free(nls);
 
-    return(SUN_NLS_SUCCESS);
+    return(SUN_SUCCESS);
 }
 
 static int callml_custom_setsysfn(SUNNonlinearSolver nls,

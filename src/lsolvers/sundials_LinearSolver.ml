@@ -939,7 +939,7 @@ let _ =
     (* Exceptions must be listed in the same order as
        lsolver_exn_index.  *)
     [|InvalidLinearSolver;
-      UnrecoverableFailure false;
+      UnrecoverableFailure;
       MatrixNotSquare;
       MatrixVectorMismatch;
       InsufficientStorageUpperBandwidth;
@@ -953,7 +953,7 @@ let _ =
       ConvFailure;
       QRfactFailure;
       LUfactFailure;
-      PackageFailure false;
+      PackageFailure;
       IllegalPrecType;
       InternalFailure ("", 0);
       ZeroInDiagonal 0;

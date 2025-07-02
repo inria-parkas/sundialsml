@@ -564,12 +564,7 @@ end (* }}} *)
 (** {2:nlsexceptions Exceptions} *)
 
 (** Raised when a nonlinear solver is used incorrectly.
-<<<<<<< HEAD
-    For example, calling {!solve} without having first called {!set_sys_fn}
-    ([SUN_NLS_MEM_NULL]). *)
-=======
     For example, calling {!solve} without having first called {!set_sys_fn} *)
->>>>>>> d7d0b83c (fix linear solver error h)
 exception IncorrectUse
 
 (** Raised if an external library call fails. *)

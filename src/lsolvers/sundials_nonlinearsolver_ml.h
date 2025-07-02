@@ -93,9 +93,14 @@ void sunml_nlsolver_set_to_from_mem(SUNNonlinearSolver nls,
 #define NLS_CALLBACKS(nls) ((NLS_EXTENDED(nls))->callbacks)
 
 void sunml_nlsolver_check_flag(const char *call, int flag);
+
+#if 700 > SUNDIALS_LIB_VERSION
 #define NLS_CHECK_FLAG(call, flag) if (flag != SUN_NLS_SUCCESS) \
 				 sunml_nlsolver_check_flag(call, flag)
-
+#else
+#define NLS_CHECK_FLAG(call, flag) if (flag != SUN_SUCCESS) \
+				 sunml_nlsolver_check_flag(call, flag)
+#endif
 #endif
 
 enum nlsolver_callbacks_index {
