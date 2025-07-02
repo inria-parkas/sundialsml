@@ -655,21 +655,6 @@ val set_print_level : ('d, 'k) session -> print_level -> unit
 val set_info_file
       : ('d, 'k) session -> ?print_level:print_level -> Logfile.t -> unit
 
-(** Specifies a custom function for handling informational (non-error) messages.
-    The [error_code] field of {{!Sundials.Util.error_details}Util.error_details}
-    is [0] for such messages.
-    The handler must not fail: any exceptions are trapped and discarded.
-
-    @kinsol KINSetInfoHandlerFn
-    @kinsol KINInfoHandlerFn *)
-val set_info_handler_fn
-  : ('d, 'k) session -> (Util.error_details -> unit) -> unit
-
-(** Restores the default information handling function.
-
-    @kinsol KINSetErrHandlerFn *)
-val clear_info_handler_fn : ('d, 'k) session -> unit
-
 (** Specifies whether fixed-point iteration should return the newest
     iteration or the iteration consistent with the last function
     evaluation. The default values is false.

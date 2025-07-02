@@ -108,8 +108,6 @@ type kin_mem
 type c_weak_ref
 
 type 'a sysfn = 'a -> 'a -> unit
-type errh = Util.error_details -> unit
-type infoh = Util.error_details -> unit
 
 (* Session: here comes the big blob.  These mutually recursive types
    cannot be handed out separately to modules without menial
@@ -131,8 +129,6 @@ type ('a, 'k) session = {
   mutable exn_temp   : exn option;
 
   mutable sysfn      : 'a sysfn;
-  mutable errh       : errh;
-  mutable infoh      : infoh;
 
   mutable error_file : Logfile.t option;
   mutable info_file  : Logfile.t option;

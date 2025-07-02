@@ -2568,7 +2568,7 @@ CAMLprim value sunml_arkode_ark_set_diagnostics(value vdata, value vfile)
 {
     CAMLparam2(vdata, vfile);
 
-#if 400 <= SUNDIALS_LIB_VERSION
+#if 400 <= SUNDIALS_LIB_VERSION && SUNDIALS_LIB_VERSION < 700
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated"
@@ -2580,8 +2580,12 @@ CAMLprim value sunml_arkode_ark_set_diagnostics(value vdata, value vfile)
 #pragma GCC diagnostic pop
 
 #else
+#if 700 <= SUNDIALS_LIB_VERSION
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#else
     int flag = ARKodeSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), ML_CFILE(vfile));
     CHECK_FLAG("ARKodeSetDiagnostics", flag);
+#endif
 #endif
 
     CAMLreturn (Val_unit);
@@ -2591,7 +2595,7 @@ CAMLprim value sunml_arkode_ark_clear_diagnostics(value vdata)
 {
     CAMLparam1(vdata);
 
-#if 400 <= SUNDIALS_LIB_VERSION
+#if 400 <= SUNDIALS_LIB_VERSION && SUNDIALS_LIB_VERSION < 700
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated"
@@ -2603,8 +2607,12 @@ CAMLprim value sunml_arkode_ark_clear_diagnostics(value vdata)
 #pragma GCC diagnostic pop
 
 #else
+#if 700 <= SUNDIALS_LIB_VERSION
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#else
     int flag = ARKodeSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), NULL);
     CHECK_FLAG("ARKodeSetDiagnostics", flag);
+#endif
 #endif
 
     CAMLreturn (Val_unit);
@@ -6369,7 +6377,7 @@ CAMLprim value sunml_arkode_erk_set_diagnostics(value vdata, value vfile)
 {
     CAMLparam2(vdata, vfile);
 
-#if 400 <= SUNDIALS_LIB_VERSION
+#if 400 <= SUNDIALS_LIB_VERSION && 700 > SUNDIALS_LIB_VERSION
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated"
@@ -6391,7 +6399,7 @@ CAMLprim value sunml_arkode_erk_clear_diagnostics(value vdata)
 {
     CAMLparam1(vdata);
 
-#if 400 <= SUNDIALS_LIB_VERSION
+#if 400 <= SUNDIALS_LIB_VERSION && 700 > SUNDIALS_LIB_VERSION
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated"
@@ -7490,7 +7498,7 @@ int SPRKStepSetRootDirection(void* arkode_mem, int* rootdir);
 CAMLprim value sunml_arkode_sprk_set_root_direction(value vdata, value rootdirs)
 {
     CAMLparam2(vdata, rootdirs);
-#if 660 <= SUNDIALS_LIB_VERSION
+#if 660 <= SUNDIALS_LIB_VERSION  && 700 > SUNDIALS_LIB_VERSION
     int rootdirs_l = ARRAY1_LEN(rootdirs);
     int *rootdirs_d = INT_ARRAY(rootdirs);
 
@@ -9355,7 +9363,7 @@ CAMLprim value sunml_arkode_mri_set_diagnostics(value vdata, value vfile)
 {
     CAMLparam2(vdata, vfile);
 
-#if 400 <= SUNDIALS_LIB_VERSION
+#if 400 <= SUNDIALS_LIB_VERSION && 700 > SUNDIALS_LIB_VERSION
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated"
@@ -9377,7 +9385,7 @@ CAMLprim value sunml_arkode_mri_clear_diagnostics(value vdata)
 {
     CAMLparam1(vdata);
 
-#if 400 <= SUNDIALS_LIB_VERSION
+#if 400 <= SUNDIALS_LIB_VERSION && 700 > SUNDIALS_LIB_VERSION
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated"

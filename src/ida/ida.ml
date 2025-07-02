@@ -649,7 +649,6 @@ let init ?context tol ?nlsolver ?nlsresfn ~lsolver resfn
                   id_set     = false;
                   resfn      = resfn;
                   rootsfn    = rootsfn;
-                  errh       = dummy_errh;
                   errw       = dummy_errw;
 
                   error_file = None;
@@ -816,27 +815,6 @@ let print_integrator_stats s oc =
     Printf.fprintf oc "last_step = %e\n"           stats.last_step;
     Printf.fprintf oc "current_step = %e\n"        stats.current_step;
     Printf.fprintf oc "current_time = %e\n"        stats.current_time;
-
-external c_set_error_file : ('a, 'k) session -> Logfile.t -> unit
-    = "sunml_ida_set_error_file"
-
-let set_error_file s f =
-  s.error_file <- Some f;
-  c_set_error_file s f
-
-external set_err_handler_fn  : ('a, 'k) session -> unit
-    = "sunml_ida_set_err_handler_fn"
-
-let set_err_handler_fn s ferrh =
-  s.errh <- ferrh;
-  set_err_handler_fn s
-
-external clear_err_handler_fn  : ('a, 'k) session -> unit
-    = "sunml_ida_clear_err_handler_fn"
-
-let clear_err_handler_fn s =
-  s.errh <- dummy_errh;
-  clear_err_handler_fn s
 
 external set_delta_cj_lsetup    : ('d, 'k) session -> float -> unit
   = "sunml_ida_set_delta_cj_lsetup"

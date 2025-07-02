@@ -757,7 +757,6 @@ let init ?context lmm tol
 
           rhsfn        = f;
           rootsfn      = roots;
-          errh         = dummy_errh;
           errw         = dummy_errw;
 
           error_file   = None;
@@ -994,27 +993,6 @@ let print_integrator_stats s oc =
     Printf.fprintf oc "last_step = %e\n"           stats.last_step;
     Printf.fprintf oc "current_step = %e\n"        stats.current_step;
     Printf.fprintf oc "current_time = %e\n"        stats.current_time;
-
-external c_set_error_file : ('a, 'k) session -> Logfile.t -> unit
-    = "sunml_cvode_set_error_file"
-
-let set_error_file s f =
-  s.error_file <- Some f;
-  c_set_error_file s f
-
-external set_err_handler_fn  : ('a, 'k) session -> unit
-    = "sunml_cvode_set_err_handler_fn"
-
-let set_err_handler_fn s ferrh =
-  s.errh <- ferrh;
-  set_err_handler_fn s
-
-external clear_err_handler_fn  : ('a, 'k) session -> unit
-    = "sunml_cvode_clear_err_handler_fn"
-
-let clear_err_handler_fn s =
-  s.errh <- dummy_errh;
-  clear_err_handler_fn s
 
 external c_set_monitor_fn : ('a, 'k) session -> bool -> unit
     = "sunml_cvode_set_monitor_fn"

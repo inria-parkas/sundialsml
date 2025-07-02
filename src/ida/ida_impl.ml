@@ -316,7 +316,6 @@ type c_weak_ref
 
 type 'a resfn = float -> 'a -> 'a -> 'a -> unit
 type 'a rootsfn = float -> 'a -> 'a -> RealArray.t -> unit
-type error_handler = Util.error_details -> unit
 type 'a error_weight_fun = 'a -> 'a -> unit
 
 (* Session: here comes the big blob.  These mutually recursive types
@@ -343,7 +342,6 @@ type ('a,'kind) session = {
 
   mutable resfn      : 'a resfn;
   mutable rootsfn    : 'a rootsfn;
-  mutable errh       : error_handler;
   mutable errw       : 'a error_weight_fun;
 
   mutable error_file : Logfile.t option;

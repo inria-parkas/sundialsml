@@ -490,27 +490,6 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
   LSI.attach ls;
   session.ls_solver <- LSI.HLS hls
 
-external c_set_error_file : ('a, 'k) session -> Logfile.t -> unit
-    = "sunml_kinsol_set_error_file"
-
-let set_error_file s f =
-  s.error_file <- Some f;
-  c_set_error_file s f
-
-external c_set_err_handler_fn : ('a, 'k) session -> unit
-    = "sunml_kinsol_set_err_handler_fn"
-
-let set_err_handler_fn s ferrh =
-  s.errh <- ferrh;
-  c_set_err_handler_fn s
-
-external c_clear_err_handler_fn : ('a, 'k) session -> unit
-    = "sunml_kinsol_clear_err_handler_fn"
-
-let clear_err_handler_fn s =
-  s.errh <- dummy_errh;
-  c_clear_err_handler_fn s
-
 external set_print_level : ('a, 'k) session -> print_level -> unit
     = "sunml_kinsol_set_print_level"
 
@@ -525,16 +504,9 @@ let set_info_file s ?print_level lf =
 external c_set_info_handler_fn : ('a, 'k) session -> unit
     = "sunml_kinsol_set_info_handler_fn"
 
-let set_info_handler_fn s finfoh =
-  s.infoh <- finfoh;
-  c_set_info_handler_fn s
-
 external c_clear_info_handler_fn : ('a, 'k) session -> unit
     = "sunml_kinsol_clear_info_handler_fn"
 
-let clear_info_handler_fn s =
-  s.infoh <- dummy_infoh;
-  c_clear_info_handler_fn s
 
 external set_return_newest : ('a, 'k) session -> bool -> unit
     = "sunml_kinsol_set_return_newest"
@@ -700,8 +672,6 @@ let init ?context ?max_iters ?maa ?orthaa ?lsolver f u0 =
           neqs         = 0;
 
           sysfn        = f;
-          errh         = dummy_errh;
-          infoh        = dummy_infoh;
 
           error_file   = None;
           info_file    = None;

@@ -93,54 +93,17 @@ int sunml_kinsol_translate_exception(value session, value r,
     CAMLreturnT (int, -1);
 }
 
-static void infoh(
-	const char *module,
-	const char *func,
-	char *msg,
-	void *ih_data)
-{
-    CAMLparam0();
-    CAMLlocal2(session, a);
-    value *backref = ih_data;
-
-    a = caml_alloc_tuple(RECORD_SUNDIALS_ERROR_DETAILS_SIZE);
-    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_ERROR_CODE, Val_int(0));
-    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_MODULE_NAME,
-                caml_copy_string(module));
-    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_FUNCTION_NAME,
-                caml_copy_string(func));
-    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_ERROR_MESSAGE,
-                caml_copy_string(msg));
-
-    WEAK_DEREF (session, *backref);
-
-    /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback_exn (Field (session, RECORD_KINSOL_SESSION_INFOH),
-				 a);
-    if (Is_exception_result (r))
-	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined info handler");
-
-    CAMLreturn0;
-}
-
-CAMLprim value sunml_kinsol_set_info_handler_fn(value vdata)
-{
-    CAMLparam1(vdata);
- 
-    int flag = KINSetInfoHandlerFn(KINSOL_MEM_FROM_ML(vdata), infoh,
-				   KINSOL_BACKREF_FROM_ML(vdata));
-    CHECK_FLAG("KINSetInfoHandlerFn", flag);
-
-    CAMLreturn (Val_unit);
-}
 
 CAMLprim value sunml_kinsol_clear_info_handler_fn(value vdata)
 {
     CAMLparam1(vdata);
 
+#if 700 > SUNDIALS_LIB_VERSION
     int flag = KINSetInfoHandlerFn(KINSOL_MEM_FROM_ML(vdata), NULL, NULL);
     CHECK_FLAG("KINSetInfoHandlerFn", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
 
     CAMLreturn (Val_unit);
 }
@@ -1213,6 +1176,8 @@ CAMLprim value sunml_kinsol_set_info_file(value vdata, value vfile)
 {
     CAMLparam2(vdata, vfile);
 
+#if 700 > SUNDIALS_LIB_VERSION
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated"
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
@@ -1222,6 +1187,10 @@ CAMLprim value sunml_kinsol_set_info_file(value vdata, value vfile)
 
 #pragma GCC diagnostic pop
 
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
     CAMLreturn (Val_unit);
 }
 
@@ -1229,8 +1198,12 @@ CAMLprim value sunml_kinsol_set_print_level(value vkin_mem, value vplvl)
 {
     CAMLparam2(vkin_mem, vplvl);
 
+#if 700 > SUNDIALS_LIB_VERSION
     int flag = KINSetPrintLevel(KINSOL_MEM_FROM_ML(vkin_mem), Int_val(vplvl));
     CHECK_FLAG("KINSetPrintLevel", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
 
     CAMLreturn (Val_unit);
 }

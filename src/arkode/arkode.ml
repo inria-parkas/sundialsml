@@ -1783,7 +1783,6 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
             rhsfn2       = (match fe with Some f -> f | None -> dummy_rhsfn2);
 
             rootsfn      = roots;
-            errh         = dummy_errh;
             errw         = dummy_errw;
             resw         = dummy_resw;
 
@@ -2078,27 +2077,6 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
 
   external clear_diagnostics : ('a, 'k) session -> unit
       = "sunml_arkode_ark_clear_diagnostics"
-
-  external c_set_error_file : ('a, 'k) session -> Logfile.t -> unit
-      = "sunml_arkode_ark_set_error_file"
-
-  let set_error_file s f =
-    s.error_file <- Some f;
-    c_set_error_file s f
-
-  external c_set_err_handler_fn  : ('a, 'k) session -> unit
-      = "sunml_arkode_ark_set_err_handler_fn"
-
-  let set_err_handler_fn s ferrh =
-    s.errh <- ferrh;
-    c_set_err_handler_fn s
-
-  external clear_err_handler_fn  : ('a, 'k) session -> unit
-      = "sunml_arkode_ark_clear_err_handler_fn"
-
-  let clear_err_handler_fn s =
-    s.errh <- dummy_errh;
-    clear_err_handler_fn s
 
   external c_set_imex             : ('a, 'k) session -> unit
       = "sunml_arkode_ark_set_imex"
@@ -2505,7 +2483,6 @@ module ERKStep = struct (* {{{ *)
             rhsfn2       = dummy_rhsfn2;
 
             rootsfn      = roots;
-            errh         = dummy_errh;
             errw         = dummy_errw;
             resw         = dummy_resw;
 
@@ -2689,27 +2666,6 @@ module ERKStep = struct (* {{{ *)
 
   external set_interpolant_degree : ('d, 'k) session -> int -> unit
       = "sunml_arkode_erk_set_interpolant_degree"
-
-  external c_set_error_file : ('a, 'k) session -> Logfile.t -> unit
-      = "sunml_arkode_erk_set_error_file"
-
-  let set_error_file s f =
-    s.error_file <- Some f;
-    c_set_error_file s f
-
-  external c_set_err_handler_fn  : ('a, 'k) session -> unit
-      = "sunml_arkode_erk_set_err_handler_fn"
-
-  let set_err_handler_fn s ferrh =
-    s.errh <- ferrh;
-    c_set_err_handler_fn s
-
-  external clear_err_handler_fn  : ('a, 'k) session -> unit
-      = "sunml_arkode_erk_clear_err_handler_fn"
-
-  let clear_err_handler_fn s =
-    s.errh <- dummy_errh;
-    clear_err_handler_fn s
 
   external c_set_table
     : ('d, 'k) session -> ButcherTable.t option -> unit
@@ -2964,7 +2920,6 @@ module SPRKStep = struct (* {{{ *)
             rhsfn2       = f2;
 
             rootsfn      = roots;
-            errh         = dummy_errh;
             errw         = dummy_errw;
             resw         = dummy_resw;
 
@@ -3091,29 +3046,9 @@ module SPRKStep = struct (* {{{ *)
   external set_max_num_steps      : ('a, 'k) session -> int -> unit
       = "sunml_arkode_sprk_set_max_num_steps"
 
-  external c_set_error_file : ('a, 'k) session -> Logfile.t -> unit
-      = "sunml_arkode_sprk_set_error_file"
-
-  let set_error_file s f =
-    s.error_file <- Some f;
-    c_set_error_file s f
-
-  external c_set_err_handler_fn  : ('a, 'k) session -> unit
-      = "sunml_arkode_sprk_set_err_handler_fn"
-
-  let set_err_handler_fn s ferrh =
-    s.errh <- ferrh;
-    c_set_err_handler_fn s
-
-  external clear_err_handler_fn  : ('a, 'k) session -> unit
-      = "sunml_arkode_sprk_clear_err_handler_fn"
-
-  let clear_err_handler_fn s =
-    s.errh <- dummy_errh;
-    clear_err_handler_fn s
-
   external set_defaults           : ('a, 'k) session -> unit
       = "sunml_arkode_sprk_set_defaults"
+
   external set_stop_time          : ('a, 'k) session -> float -> unit
       = "sunml_arkode_sprk_set_stop_time"
 (*
@@ -3742,7 +3677,6 @@ module MRIStep = struct (* {{{ *)
             rhsfn2       = (match fe with Some f -> f | None -> dummy_rhsfn2);
 
             rootsfn      = roots;
-            errh         = dummy_errh;
             errw         = dummy_errw;
             resw         = dummy_resw;
 
@@ -3943,27 +3877,6 @@ module MRIStep = struct (* {{{ *)
 
   external clear_diagnostics : ('a, 'k) session -> unit
       = "sunml_arkode_mri_clear_diagnostics"
-
-  external c_set_error_file : ('a, 'k) session -> Logfile.t -> unit
-      = "sunml_arkode_mri_set_error_file"
-
-  let set_error_file s f =
-    s.error_file <- Some f;
-    c_set_error_file s f
-
-  external c_set_err_handler_fn  : ('a, 'k) session -> unit
-      = "sunml_arkode_mri_set_err_handler_fn"
-
-  let set_err_handler_fn s ferrh =
-    s.errh <- ferrh;
-    c_set_err_handler_fn s
-
-  external clear_err_handler_fn  : ('a, 'k) session -> unit
-      = "sunml_arkode_mri_clear_err_handler_fn"
-
-  let clear_err_handler_fn s =
-    s.errh <- dummy_errh;
-    clear_err_handler_fn s
 
   external set_fixed_step : ('d, 'k) session -> float -> unit
       = "sunml_arkode_mri_set_fixed_step"

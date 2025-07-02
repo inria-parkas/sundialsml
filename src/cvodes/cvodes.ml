@@ -1459,7 +1459,6 @@ module Adjoint = struct (* {{{ *)
 
             rhsfn        = dummy_rhsfn;
             rootsfn      = dummy_rootsfn;
-            errh         = dummy_errh;
             errw         = dummy_errw;
             error_file   = None;
             projfn       = dummy_projfn;

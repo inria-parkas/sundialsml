@@ -2750,7 +2750,6 @@ module ERKStep : sig (* {{{ *)
       @arkode_erk ERKStepSetDiagnostics *)
   val clear_diagnostics : ('d, 'k) session -> unit
 
-  (** Restores the default error handling function.
 
   (** Specifies the initial step size.
 
