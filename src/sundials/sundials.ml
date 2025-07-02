@@ -553,13 +553,6 @@ module AdaptController = Sundials_AdaptController
 
 module Util = struct (* {{{ *)
 
-  type error_details = {
-      error_code : int;
-      module_name : string;
-      function_name : string;
-      error_message : string;
-    }
-
   external format_float : string -> float -> string
       = "caml_format_float"
 

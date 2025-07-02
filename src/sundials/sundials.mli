@@ -647,20 +647,6 @@ module NonlinearSolver = Sundials_NonlinearSolver
 (** Shared definitions and miscellaneous utility functions. *)
 module Util : sig (* {{{ *)
 
-  (** Information passed to registered error handler functions.
-      See {!Cvode.set_err_handler_fn}, {!Ida.set_err_handler_fn}, and
-      {!Kinsol.set_err_handler_fn}.
-
-      @cvode CVodeErrHandlerFn
-      @ida IDAErrHandlerFn
-      @kinsol KINErrHandlerFn *)
-  type error_details = {
-      error_code : int;
-      module_name : string;        (** IDA, CVODE, CVSPGMR, etc. *)
-      function_name : string;
-      error_message : string;
-    }
-
   (** {2:misc Miscellaneous utility functions} *)
 
   (** [format_float fmt f] formats [f] according to the format string [fmt].
