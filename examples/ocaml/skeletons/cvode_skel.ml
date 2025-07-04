@@ -12,7 +12,7 @@ let yd = RealArray.of_list [ 10.0; 0.0 ]
 let y = Nvector_serial.wrap yd
 
 (* 4. Create and initialize a solver session.
-      This will initialize a specific linear solver and the root-finding
+      This will initialize a specific  linear solver and the root-finding
       mechanism, if necessary. *)
 let s = Cvode.(init Adams
                     (SStolerances (1e-4, 1e-8))
