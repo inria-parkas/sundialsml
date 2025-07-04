@@ -819,6 +819,22 @@ else
     sundials_indextype=64
 fi
 
+lalways_mpi=
+lalways_mpi_ocaml=
+if [ ${sundials} -ge 700 ]; then
+    lsundials_core="-lsundials_core "
+    if [ ${sundials_mpi_enabled} -eq 1 ]; then
+	# When Sundials >= 700 is compiled with MPI enabled, its Logger and
+	# Profiler modules need certain symbols from libmpi even when MPI
+	# is not actually being used (e.g., SUN_COMM_NULL, MPI_Comm_dup,
+	# MPI_Comm_Free).
+	lalways_mpi="-lmpi"
+	lalways_mpi_ocaml=" -cclib -lmpi"
+    fi
+else
+    lsundials_core=
+fi
+
 set_ocaml_version () {
     # expr may be antiquated but it can handle leading zeros, e.g.,
     # for OCaml 4.08.00 -> 10000 * 4 + 100 * 08 + 0.
@@ -872,8 +888,8 @@ else
     ocaml_version_info=" (${ocaml_version_string})"
 fi
 
-ocamlflags="${ocamlflags} -w ${ocaml_warnings} -bin-annot"
-ocamloptflags="${ocamloptflags} -w ${ocaml_warnings} -bin-annot"
+ocamlflags="${ocamlflags}${lalways_mpi_ocaml} -w ${ocaml_warnings} -bin-annot"
+ocamloptflags="${ocamloptflags}${lalways_mpi_ocaml} -w ${ocaml_warnings} -bin-annot"
 
 # Check if .opt variants are available.
 if [ "x$opt_compiler" = x1 ] && \
@@ -1097,20 +1113,6 @@ EOF
 	*) error="${error}\n\terror interpreting sundials_config.h"
 	   error="${error} (SUNDIALS_USE_GENERIC_MATH)" ;;
     esac
-fi
-
-lalways_mpi=
-if [ ${sundials} -ge 700 ]; then
-    lsundials_core="-lsundials_core "
-    if [ ${sundials_mpi_enabled} -eq 1 ]; then
-	# When Sundials >= 700 is compiled with MPI enabled, its Logger and
-	# Profiler modules need certain symbols from libmpi even when MPI
-	# is not actually being used (e.g., SUN_COMM_NULL, MPI_Comm_dup,
-	# MPI_Comm_Free).
-	lalways_mpi="-lmpi"
-    fi
-else
-    lsundials_core=
 fi
 
 # Check for shared library support in Sundials/C
