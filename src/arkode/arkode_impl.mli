@@ -293,7 +293,6 @@ val dummy_rhsfn1 : 'a -> 'b -> 'c -> 'd
 val dummy_rhsfn2 : 'a -> 'b -> 'c -> 'd
 val dummy_nlsrhsfn : 'a -> 'b -> 'c -> 'd
 val dummy_rootsfn : 'a -> 'b -> 'c -> 'd
-val dummy_errh : 'a -> 'b
 val dummy_errw : 'a -> 'b -> 'c
 val dummy_resw : 'a -> 'b -> 'c
 val dummy_stabfn : 'a -> 'b -> 'c

@@ -608,8 +608,6 @@ let dummy_nlsresfn _ _ _ _ =
   Sundials_impl.crash "Internal error: dummy_nlsresfn called\n"
 let dummy_rootsfn _ _ _ _ =
   Sundials_impl.crash "Internal error: dummy_rootsfn called\n"
-let dummy_errh _ =
-  Sundials_impl.crash "Internal error: dummy_errh called\n"
 let dummy_errw _ _ =
   Sundials_impl.crash "Internal error: dummy_errw called\n"
 let dummy_bresfn_no_sens _ _ =

@@ -94,7 +94,7 @@ void sunml_nlsolver_set_to_from_mem(SUNNonlinearSolver nls,
 
 void sunml_nlsolver_check_flag(const char *call, int flag);
 
-#if 700 > SUNDIALS_LIB_VERSION
+#if SUNDIALS_LIB_VERSION < 700
 #define NLS_CHECK_FLAG(call, flag) if (flag != SUN_NLS_SUCCESS) \
 				 sunml_nlsolver_check_flag(call, flag)
 #else

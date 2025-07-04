@@ -402,7 +402,6 @@ val read_weak_ref : ('a, 'kind) session Weak.t -> ('a, 'kind) session
 val dummy_resfn : 'a -> 'b -> 'c -> 'd -> 'e
 val dummy_nlsresfn : 'a -> 'b -> 'c -> 'd -> 'e
 val dummy_rootsfn : 'a -> 'b -> 'c -> 'd -> 'e
-val dummy_errh : 'a -> 'b
 val dummy_errw : 'a -> 'b -> 'c
 val dummy_bresfn_no_sens : 'a -> 'b -> 'c
 val dummy_bresfn_with_sens : 'a -> 'b -> 'c -> 'd -> 'e

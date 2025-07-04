@@ -2068,16 +2068,6 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
   let print_step_stats s oc =
     print_step_stats oc (get_step_stats s)
 
-  external c_set_diagnostics : ('a, 'k) session -> Logfile.t -> unit
-      = "sunml_arkode_ark_set_diagnostics"
-
-  let set_diagnostics ?(logfile=Logfile.stdout) s =
-    s.diag_file <- Some logfile;
-    c_set_diagnostics s logfile
-
-  external clear_diagnostics : ('a, 'k) session -> unit
-      = "sunml_arkode_ark_clear_diagnostics"
-
   external c_set_imex             : ('a, 'k) session -> unit
       = "sunml_arkode_ark_set_imex"
 
@@ -2651,16 +2641,6 @@ module ERKStep = struct (* {{{ *)
   let print_step_stats s oc =
     print_step_stats oc (get_step_stats s)
 
-  external c_set_diagnostics : ('a, 'k) session -> Logfile.t -> unit
-      = "sunml_arkode_erk_set_diagnostics"
-
-  let set_diagnostics ?(logfile=Logfile.stdout) s =
-    s.diag_file <- Some logfile;
-    c_set_diagnostics s logfile
-
-  external clear_diagnostics : ('a, 'k) session -> unit
-      = "sunml_arkode_erk_clear_diagnostics"
-
   external set_interpolant_type : ('d, 'k) session -> interpolant_type -> unit
       = "sunml_arkode_erk_set_interpolant_type"
 
@@ -3065,10 +3045,10 @@ module SPRKStep = struct (* {{{ *)
   external get_current_method : ('d, 'k) session -> MethodTable.t
       = "sunml_arkode_sprk_get_current_method"
 
-  external c_set_postprocess_step_fn : ('a, 'k) session -> bool -> unit
+      external c_set_postprocess_step_fn : ('a, 'k) session -> bool -> unit
       = "sunml_arkode_sprk_set_postprocess_step_fn"
 
-  let set_postprocess_step_fn s fn =
+      let set_postprocess_step_fn s fn =
     s.poststepfn <- fn;
     c_set_postprocess_step_fn s true
 
@@ -3867,16 +3847,6 @@ module MRIStep = struct (* {{{ *)
 
   external get_current_time       : ('a, 'k) session -> float
       = "sunml_arkode_mri_get_current_time"
-
-  external c_set_diagnostics : ('a, 'k) session -> Logfile.t -> unit
-      = "sunml_arkode_mri_set_diagnostics"
-
-  let set_diagnostics ?(logfile=Logfile.stdout) s =
-    s.diag_file <- Some logfile;
-    c_set_diagnostics s logfile
-
-  external clear_diagnostics : ('a, 'k) session -> unit
-      = "sunml_arkode_mri_clear_diagnostics"
 
   external set_fixed_step : ('d, 'k) session -> float -> unit
       = "sunml_arkode_mri_set_fixed_step"

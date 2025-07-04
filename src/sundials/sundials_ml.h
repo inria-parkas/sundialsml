@@ -202,6 +202,8 @@ void sunml_register_exns (enum sundials_exn_set_index index, value exns);
  * raised by extracting the tag with REGISTERED_EXN_TAG.  */
 #define REGISTERED_EXN(MODULE, name) REGISTERED_EXN_OBJ(MODULE, name)
 
+#define ASSERT_SESSION_EXNS(MODULE, exns) (assert(Wosize_val (exns) == RECORD_ ## MODULE ## _SESSION_SIZE))
+
 /* This enum must list exceptions in the same order as the call to
  * c_init_module in sundials.ml.  */
 enum sundials_exn_index {
@@ -359,10 +361,5 @@ void sunml_sundials_free_value(value *heapref);
     BYTE_STUB(fcn_name, COMMA args[6] COMMA args[7] COMMA args[8])
 #define BYTE_STUB10(fcn_name)			\
     BYTE_STUB(fcn_name, COMMA args[6] COMMA args[7] COMMA args[8] COMMA args[9])
-
-/* Context error handling functions */
-#if 700 <= SUNDIALS_LIB_VERSION
-void sunml_context_check_flag(const char *call, SUNContext ctx, int flag);
-#endif
 
 #endif /* _SUNDIALS_ML_H__ */

@@ -490,17 +490,6 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
   LSI.attach ls;
   session.ls_solver <- LSI.HLS hls
 
-external set_print_level : ('a, 'k) session -> print_level -> unit
-    = "sunml_kinsol_set_print_level"
-
-external c_set_info_file : ('a, 'k) session -> Logfile.t -> unit
-    = "sunml_kinsol_set_info_file"
-
-let set_info_file s ?print_level lf =
-  s.info_file <- Some lf;
-  c_set_info_file s lf;
-  (match print_level with None -> () | Some l -> set_print_level s l)
-
 external set_return_newest : ('a, 'k) session -> bool -> unit
     = "sunml_kinsol_set_return_newest"
 

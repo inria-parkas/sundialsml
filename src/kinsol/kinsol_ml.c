@@ -93,21 +93,6 @@ int sunml_kinsol_translate_exception(value session, value r,
     CAMLreturnT (int, -1);
 }
 
-
-CAMLprim value sunml_kinsol_clear_info_handler_fn(value vdata)
-{
-    CAMLparam1(vdata);
-
-#if 700 > SUNDIALS_LIB_VERSION
-    int flag = KINSetInfoHandlerFn(KINSOL_MEM_FROM_ML(vdata), NULL, NULL);
-    CHECK_FLAG("KINSetInfoHandlerFn", flag);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-
-    CAMLreturn (Val_unit);
-}
-
 static int sysfn(N_Vector uu, N_Vector val, void *user_data)
 {
     CAMLparam0();
@@ -1172,41 +1157,8 @@ CAMLprim value sunml_kinsol_spils_get_num_func_evals (value vkin_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value sunml_kinsol_set_info_file(value vdata, value vfile)
-{
-    CAMLparam2(vdata, vfile);
 
-#if 700 > SUNDIALS_LIB_VERSION
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated"
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-
-    int flag = KINSetInfoFile(KINSOL_MEM_FROM_ML(vdata), ML_CFILE(vfile));
-    CHECK_FLAG("KINSetInfoFile", flag);
-
-#pragma GCC diagnostic pop
-
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_kinsol_set_print_level(value vkin_mem, value vplvl)
-{
-    CAMLparam2(vkin_mem, vplvl);
-
-#if 700 > SUNDIALS_LIB_VERSION
-    int flag = KINSetPrintLevel(KINSOL_MEM_FROM_ML(vkin_mem), Int_val(vplvl));
-    CHECK_FLAG("KINSetPrintLevel", flag);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-
-    CAMLreturn (Val_unit);
-}
 
 CAMLprim value sunml_kinsol_set_return_newest(value vkin_mem, value vrnewest)
 {

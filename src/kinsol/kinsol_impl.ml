@@ -217,7 +217,3 @@ let read_weak_ref x : ('a, 'k) session =
 
 let dummy_sysfn _ _ =
   Sundials_impl.crash "Internal error: dummy_sysfn called\n"
-let dummy_errh _ =
-  Sundials_impl.crash "Internal error: dummy_errh called\n"
-let dummy_infoh _ =
-  Sundials_impl.crash "Internal error: dummy_infoh called\n"

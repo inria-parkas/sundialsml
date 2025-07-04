@@ -103,5 +103,3 @@ module SpilsTypes :
   end
 val read_weak_ref : ('a, 'k) session Weak.t -> ('a, 'k) session
 val dummy_sysfn : 'a -> 'b -> 'c
-val dummy_errh : 'a -> 'b
-val dummy_infoh : 'a -> 'b
