@@ -19,6 +19,11 @@
 #include <caml/fail.h>
 #include <caml/bigarray.h>
 
+#if OCAML_VERSION < 50000
+#undef CAML_DEPRECATED
+#define CAML_DEPRECATED(name1, name2)
+#endif
+
 #include <sundials/sundials_config.h>
 #include <sundials/sundials_types.h>
 #include <sundials/sundials_nvector.h>
@@ -60,6 +65,7 @@ static int bbdcomm(sundials_ml_index nlocal, N_Vector u, void *user_data)
     CAMLparam0();
     CAMLlocal2(session, cb);
 
+    WEAK_DEREF (session, *(value*)user_data);
     cb = KINSOL_LS_PRECFNS_FROM_ML (session);
     cb = Field (cb, 0);
     cb = Field (cb, RECORD_KINSOL_BBD_PRECFNS_LOCAL_FN);

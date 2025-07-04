@@ -24,6 +24,11 @@
 #include <caml/fail.h>
 #include <caml/bigarray.h>
 
+#if OCAML_VERSION < 50000
+#undef CAML_DEPRECATED
+#define CAML_DEPRECATED(name1, name2)
+#endif
+
 /* linear solvers */
 #if   400 <= SUNDIALS_LIB_VERSION
 #include <idas/idas_ls.h>

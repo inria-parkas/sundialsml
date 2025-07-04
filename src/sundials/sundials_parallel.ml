@@ -39,7 +39,7 @@ module Context = struct
   let make ?profiler ?logger comm =
     let cptr, original_logger = c_make comm in
     let ctx = { I.cptr = cptr; I.profiler = None;
-                I.logger = original_logger }
+                I.logger = original_logger; I.error_handlers = [] }
     in
     (match profiler with
      | Some p -> Sundials.Context.set_profiler ctx p

@@ -13,13 +13,6 @@
 
 #include "../config.h"
 
-#include <caml/alloc.h>
-#include <caml/memory.h>
-#include <caml/callback.h>
-#include <caml/custom.h>
-#include <caml/fail.h>
-#include <caml/bigarray.h>
-
 /* ARKODE */
 
 #include <arkode/arkode.h>
@@ -54,6 +47,13 @@
 #if SUNDIALS_LIB_VERSION < 300 && defined SUNDIALS_ML_LAPACK
 #include <arkode/arkode_lapack.h>
 #endif
+
+#include <caml/alloc.h>
+#include <caml/memory.h>
+#include <caml/callback.h>
+#include <caml/custom.h>
+#include <caml/fail.h>
+#include <caml/bigarray.h>
 
 #include "../lsolvers/sundials_matrix_ml.h"
 #include "../lsolvers/sundials_linearsolver_ml.h"

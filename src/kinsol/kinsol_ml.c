@@ -24,6 +24,11 @@
 #include <caml/fail.h>
 #include <caml/bigarray.h>
 
+#if OCAML_VERSION < 50000
+#undef CAML_DEPRECATED
+#define CAML_DEPRECATED(name1, name2)
+#endif
+
 /* linear solvers */
 #if   400 <= SUNDIALS_LIB_VERSION
 #include <kinsol/kinsol_ls.h>
@@ -354,7 +359,7 @@ static int jactimesvecsysfn(N_Vector uu, N_Vector val, void *user_data)
     vval = NVEC_BACKLINK(val);
 
     WEAK_DEREF (session, *(value*)user_data);
-    KINSOL_LS_CALLBACKS_FROM_ML(session);
+    cb = KINSOL_LS_CALLBACKS_FROM_ML(session);
     cb = Field (cb, 0);
 
     // The data payloads inside vuu and vval are only valid during this

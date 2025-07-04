@@ -26,6 +26,11 @@
 #include <caml/fail.h>
 #include <caml/bigarray.h>
 
+#if OCAML_VERSION < 50000
+#undef CAML_DEPRECATED
+#define CAML_DEPRECATED(name1, name2)
+#endif
+
 #include "../sundials/sundials_ml.h"
 #include "../cvode/cvode_ml.h"
 #include "cvodes_ml.h"

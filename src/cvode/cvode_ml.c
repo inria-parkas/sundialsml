@@ -20,6 +20,9 @@
 #include <caml/fail.h>
 #include <caml/bigarray.h>
 
+#undef CAML_DEPRECATED
+#define CAML_DEPRECATED(name1, name2)
+
 // When we compile with sensitivity (CVODES), we are obliged to use the
 // cvodes/cvodes_* header files. In fact, nearly everything functions
 // correctly if the cvode/cvode_* header files are used instead (the
