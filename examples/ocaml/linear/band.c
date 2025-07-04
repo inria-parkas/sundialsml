@@ -18,7 +18,11 @@
 #define MU 1
 #define SMU 2	/* min(SIZE -1, MU + ML) */
 
+#if 700 <= SUNDIALS_LIB_VERSION
+void print_mat(SUNDlsMat m) {
+#else
 void print_mat(DlsMat m) {
+#endif
     int i, j;
 
     for (i=0; i < m->M; ++i) {
@@ -26,24 +30,39 @@ void print_mat(DlsMat m) {
 	    if ((i > j + m->ml) || (j > i + m->mu)) {
 		printf("       --     ");
 	    } else {
-		printf(" % e", BAND_ELEM(m, i, j));
+#if 700 <= SUNDIALS_LIB_VERSION
+            printf(" % e", SUNDLS_BAND_ELEM(m, i, j));
+#else
+            printf(" % e", BAND_ELEM(m, i, j));
+#endif
 	    }
 	}
 	printf("\n");
     }
 }
-
+#if 700 <= SUNDIALS_LIB_VERSION
+void print_factored_mat(SUNDlsMat m) {
+#else
 void print_factored_mat(DlsMat m) {
+#endif
     int i, j;
 
     for (i=0; i < m->M; ++i) {
 	for (j=0; j < m->N; ++j) {
 	    if ((j > i + m->mu) && (j <= i + m->s_mu)) {
-		printf(" (% e)", BAND_ELEM(m, i, j));
+#if 700 <= SUNDIALS_LIB_VERSION
+            printf(" (% e)", SUNDLS_BAND_ELEM(m, i, j));
+#else
+            printf(" (% e)", BAND_ELEM(m, i, j));
+#endif
 	    } else if ((i > j + m->ml) || (j > i + m->s_mu)) {
 		printf("        --      ");
 	    } else {
-		printf("  % e ", BAND_ELEM(m, i, j));
+#if 700 <= SUNDIALS_LIB_VERSION
+            printf("  % e ", SUNDLS_BAND_ELEM(m, i, j));
+#else
+            printf("  % e ", BAND_ELEM(m, i, j));
+#endif
 	    }
 	}
 	printf("\n");
@@ -72,7 +91,10 @@ void print_pivots(sundials_ml_index* m, sundials_ml_index nr)
 
 int main(int argc, char** argv)
 {
-#if 600 <= SUNDIALS_LIB_VERSION
+#if 700 <= SUNDIALS_LIB_VERSION
+    SUNDlsMat a = SUNDlsMat_NewBandMat(SIZE, MU, ML, SMU);
+    SUNDlsMat b = SUNDlsMat_NewBandMat(SIZE, MU, ML, SMU);
+#elif 600 <= SUNDIALS_LIB_VERSION
     DlsMat a = SUNDlsMat_NewBandMat(SIZE, MU, ML, SMU);
     DlsMat b = SUNDlsMat_NewBandMat(SIZE, MU, ML, SMU);
 #else
@@ -82,6 +104,25 @@ int main(int argc, char** argv)
     sundials_ml_index p[SIZE] = { 0.0 };
     sunrealtype s[SIZE] = { 5.0, 15.0, 31.0, 53.0, 45.0 };
 
+#if 700 <= SUNDIALS_LIB_VERSION
+    SUNDLS_BAND_ELEM(a,0,0) = 1.0;
+    SUNDLS_BAND_ELEM(a,0,1) = 2.0;
+
+    SUNDLS_BAND_ELEM(a,1,0) = 2.0;
+    SUNDLS_BAND_ELEM(a,1,1) = 2.0;
+    SUNDLS_BAND_ELEM(a,1,2) = 3.0;
+
+    SUNDLS_BAND_ELEM(a,2,1) = 3.0;
+    SUNDLS_BAND_ELEM(a,2,2) = 3.0;
+    SUNDLS_BAND_ELEM(a,2,3) = 4.0;
+
+    SUNDLS_BAND_ELEM(a,3,2) = 4.0;
+    SUNDLS_BAND_ELEM(a,3,3) = 4.0;
+    SUNDLS_BAND_ELEM(a,3,4) = 5.0;
+
+    SUNDLS_BAND_ELEM(a,4,3) = 5.0;
+    SUNDLS_BAND_ELEM(a,4,4) = 5.0;
+#else
     BAND_ELEM(a,0,0) = 1.0;
     BAND_ELEM(a,0,1) = 2.0;
 
@@ -99,6 +140,7 @@ int main(int argc, char** argv)
 
     BAND_ELEM(a,4,3) = 5.0;
     BAND_ELEM(a,4,4) = 5.0;
+#endif
 
     printf("initially: a=\n");
     print_mat(a);

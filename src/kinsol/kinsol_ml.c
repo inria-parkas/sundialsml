@@ -93,112 +93,6 @@ int sunml_kinsol_translate_exception(value session, value r,
     CAMLreturnT (int, -1);
 }
 
-
-static void errh(
-	int error_code,
-	const char *module,
-	const char *func,
-	char *msg,
-	void *eh_data)
-{
-    CAMLparam0();
-    CAMLlocal2(session, a);
-    value *backref = eh_data;
-
-    a = caml_alloc_tuple(RECORD_SUNDIALS_ERROR_DETAILS_SIZE);
-    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_ERROR_CODE,
-                Val_int(error_code));
-    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_MODULE_NAME,
-                caml_copy_string(module));
-    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_FUNCTION_NAME,
-                caml_copy_string(func));
-    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_ERROR_MESSAGE,
-                caml_copy_string(msg));
-
-    WEAK_DEREF (session, *backref);
-
-    /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback_exn (Field(session, RECORD_KINSOL_SESSION_ERRH), a);
-    if (Is_exception_result (r))
-	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined error handler");
-
-    CAMLreturn0;
-}
-
-CAMLprim value sunml_kinsol_set_err_handler_fn(value vdata)
-{
-    CAMLparam1(vdata);
- 
-    int flag = KINSetErrHandlerFn(KINSOL_MEM_FROM_ML(vdata), errh,
-				  KINSOL_BACKREF_FROM_ML(vdata));
-    CHECK_FLAG("KINSetErrHandlerFn", flag);
-
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_kinsol_clear_err_handler_fn(value vdata)
-{
-    CAMLparam1(vdata);
-
-    int flag = KINSetErrHandlerFn(KINSOL_MEM_FROM_ML(vdata), NULL, NULL);
-    CHECK_FLAG("KINSetErrHandlerFn", flag);
-
-    CAMLreturn (Val_unit);
-}
-
-static void infoh(
-	const char *module,
-	const char *func,
-	char *msg,
-	void *ih_data)
-{
-    CAMLparam0();
-    CAMLlocal2(session, a);
-    value *backref = ih_data;
-
-    a = caml_alloc_tuple(RECORD_SUNDIALS_ERROR_DETAILS_SIZE);
-    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_ERROR_CODE, Val_int(0));
-    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_MODULE_NAME,
-                caml_copy_string(module));
-    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_FUNCTION_NAME,
-                caml_copy_string(func));
-    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_ERROR_MESSAGE,
-                caml_copy_string(msg));
-
-    WEAK_DEREF (session, *backref);
-
-    /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback_exn (Field (session, RECORD_KINSOL_SESSION_INFOH),
-				 a);
-    if (Is_exception_result (r))
-	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined info handler");
-
-    CAMLreturn0;
-}
-
-CAMLprim value sunml_kinsol_set_info_handler_fn(value vdata)
-{
-    CAMLparam1(vdata);
- 
-    int flag = KINSetInfoHandlerFn(KINSOL_MEM_FROM_ML(vdata), infoh,
-				   KINSOL_BACKREF_FROM_ML(vdata));
-    CHECK_FLAG("KINSetInfoHandlerFn", flag);
-
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_kinsol_clear_info_handler_fn(value vdata)
-{
-    CAMLparam1(vdata);
-
-    int flag = KINSetInfoHandlerFn(KINSOL_MEM_FROM_ML(vdata), NULL, NULL);
-    CHECK_FLAG("KINSetInfoHandlerFn", flag);
-
-    CAMLreturn (Val_unit);
-}
-
 static int sysfn(N_Vector uu, N_Vector val, void *user_data)
 {
     CAMLparam0();
@@ -1263,41 +1157,8 @@ CAMLprim value sunml_kinsol_spils_get_num_func_evals (value vkin_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value sunml_kinsol_set_error_file(value vdata, value vfile)
-{
-    CAMLparam2(vdata, vfile);
 
-    int flag = KINSetErrFile(KINSOL_MEM_FROM_ML(vdata), ML_CFILE(vfile));
-    CHECK_FLAG("KINSetErrFile", flag);
 
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_kinsol_set_info_file(value vdata, value vfile)
-{
-    CAMLparam2(vdata, vfile);
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated"
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-
-    int flag = KINSetInfoFile(KINSOL_MEM_FROM_ML(vdata), ML_CFILE(vfile));
-    CHECK_FLAG("KINSetInfoFile", flag);
-
-#pragma GCC diagnostic pop
-
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_kinsol_set_print_level(value vkin_mem, value vplvl)
-{
-    CAMLparam2(vkin_mem, vplvl);
-
-    int flag = KINSetPrintLevel(KINSOL_MEM_FROM_ML(vkin_mem), Int_val(vplvl));
-    CHECK_FLAG("KINSetPrintLevel", flag);
-
-    CAMLreturn (Val_unit);
-}
 
 CAMLprim value sunml_kinsol_set_return_newest(value vkin_mem, value vrnewest)
 {

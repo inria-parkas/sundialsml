@@ -625,25 +625,6 @@ val set_sys_func : ('d, 'k) session -> ('d -> 'd -> unit) -> unit
 
 (** {3:info Logging and error handling} *)
 
-(** Configure the default error handler to write messages to a file.
-    By default it writes to Logfile.stderr.
-
-    @kinsol KINSetErrFile *)
-val set_error_file : ('d, 'k) session -> Logfile.t -> unit
-
-(** Specifies a custom function for handling error messages.
-    The handler must not fail: any exceptions are trapped and discarded.
-
-    @kinsol KINSetErrHandlerFn
-    @kinsol KINErrHandlerFn *)
-val set_err_handler_fn
-  : ('d, 'k) session -> (Util.error_details -> unit) -> unit
-
-(** Restores the default error handling function.
-
-    @kinsol KINSetErrHandlerFn *)
-val clear_err_handler_fn : ('d, 'k) session -> unit
-
 (** Increasing levels of verbosity for informational messages. *)
 type print_level =
   | NoInformation     (** No information displayed. {cconst 0} *)
@@ -660,34 +641,6 @@ type print_level =
   | ShowGlobalValues  (** Additionally display the values used by the global
                           strategy and statistical information for the linear
                           solver. {cconst 3} *)
-
-(** Sets the level of verbosity of informational messages.
-
-    @kinsol KINSetPrintLevel *)
-val set_print_level : ('d, 'k) session -> print_level -> unit
-
-(** Write informational (non-error) messages to the given file.
-    By default they are written to Logfile.stdout.
-    The optional argument is a convenience for invoking {!set_print_level}.
-
-    @kinsol KINSetInfoFile *)
-val set_info_file
-      : ('d, 'k) session -> ?print_level:print_level -> Logfile.t -> unit
-
-(** Specifies a custom function for handling informational (non-error) messages.
-    The [error_code] field of {{!Sundials.Util.error_details}Util.error_details}
-    is [0] for such messages.
-    The handler must not fail: any exceptions are trapped and discarded.
-
-    @kinsol KINSetInfoHandlerFn
-    @kinsol KINInfoHandlerFn *)
-val set_info_handler_fn
-  : ('d, 'k) session -> (Util.error_details -> unit) -> unit
-
-(** Restores the default information handling function.
-
-    @kinsol KINSetErrHandlerFn *)
-val clear_info_handler_fn : ('d, 'k) session -> unit
 
 (** Specifies whether fixed-point iteration should return the newest
     iteration or the iteration consistent with the last function

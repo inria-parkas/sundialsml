@@ -21,12 +21,20 @@ sunrealtype a_init[NROWS][NCOLS] = {
     {  3.0, -9.0, -3.0}
 };
 
+#if 700 <= SUNDIALS_LIB_VERSION
+void print_mat(SUNDlsMat m, sundials_ml_index nr, sundials_ml_index nc) {
+#else
 void print_mat(DlsMat m, sundials_ml_index nr, sundials_ml_index nc) {
+#endif
     int i, j;
 
     for (i=0; i < nr; ++i) {
 	for (j=0; j < nc; ++j) {
-	    printf(" % e", DENSE_ELEM(m, i, j));
+#if 700 <= SUNDIALS_LIB_VERSION
+        printf(" % e", SUNDLS_DENSE_ELEM(m, i, j));
+#else
+        printf(" % e", DENSE_ELEM(m, i, j));
+#endif
 	}
 	printf("\n");
     }
@@ -52,7 +60,10 @@ void print_pivots(sundials_ml_index* m, sundials_ml_index nr) {
 
 int main(int argc, char** argv)
 {
-#if 600 <= SUNDIALS_LIB_VERSION
+#if 700 <= SUNDIALS_LIB_VERSION
+    SUNDlsMat a = SUNDlsMat_NewDenseMat(NROWS, NCOLS);
+    SUNDlsMat b = SUNDlsMat_NewDenseMat(NROWS, NCOLS);
+#elif 600 <= SUNDIALS_LIB_VERSION
     DlsMat a = SUNDlsMat_NewDenseMat(NROWS, NCOLS);
     DlsMat b = SUNDlsMat_NewDenseMat(NROWS, NCOLS);
 #else
@@ -65,7 +76,11 @@ int main(int argc, char** argv)
 
     for (i=0; i < NROWS; ++i) {
 	for (j=0; j < NCOLS; ++j) {
-	    DENSE_ELEM(a, i, j) = a_init[i][j];
+#if 700 <= SUNDIALS_LIB_VERSION
+        SUNDLS_DENSE_ELEM(a, i, j) = a_init[i][j];
+#else
+        DENSE_ELEM(a, i, j) = a_init[i][j];
+#endif
 	}
     }
 

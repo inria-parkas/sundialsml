@@ -32,6 +32,7 @@
 #ifdef SUNDIALSML_WITHSENS
 /* CVODES (with sensitivity) */
 
+
 #include <cvodes/cvodes.h>
 
 /* linear solvers */
@@ -110,59 +111,6 @@ CAMLprim value sunml_cvode_init_module (value exns)
 
 
 /* callbacks */
-
-static void errh(int error_code,
-		 const char *module,
-		 const char *func,
-		 char *msg,
-		 void *eh_data)
-{
-    CAMLparam0();
-    CAMLlocal2(session, a);
-    value *backref = eh_data;
-
-
-    a = caml_alloc_tuple(RECORD_SUNDIALS_ERROR_DETAILS_SIZE);
-    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_ERROR_CODE,
-                Val_int(error_code));
-    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_MODULE_NAME,
-                caml_copy_string(module));
-    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_FUNCTION_NAME,
-                caml_copy_string(func));
-    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_ERROR_MESSAGE,
-                caml_copy_string(msg));
-
-    WEAK_DEREF (session, *backref);
-
-    /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback_exn (Field(session, RECORD_CVODE_SESSION_ERRH), a);
-    if (Is_exception_result (r))
-	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined error handler");
-
-    CAMLreturn0;
-}
-
-CAMLprim value sunml_cvode_set_err_handler_fn(value vdata)
-{
-    CAMLparam1(vdata);
- 
-    int flag = CVodeSetErrHandlerFn(CVODE_MEM_FROM_ML(vdata), errh,
-				    CVODE_BACKREF_FROM_ML(vdata));
-    CHECK_FLAG("CVodeSetErrHandlerFn", flag);
-
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_cvode_clear_err_handler_fn(value vdata)
-{
-    CAMLparam1(vdata);
-
-    int flag = CVodeSetErrHandlerFn(CVODE_MEM_FROM_ML(vdata), NULL, NULL);
-    CHECK_FLAG("CVodeSetErrHandlerFn", flag);
-
-    CAMLreturn (Val_unit);
-}
 
 #if defined SUNDIALS_BUILD_WITH_MONITORING && (!SUNDIALSML_WITHSENS || 600 <= SUNDIALS_LIB_VERSION)
 int monitorfn(void *cvode_mem, void *user_data)
@@ -1497,16 +1445,6 @@ CAMLprim value sunml_cvode_get_linear_solver_stats(value vdata)
     CAMLreturn(r);
 }
 
-CAMLprim value sunml_cvode_set_error_file(value vdata, value vfile)
-{
-    CAMLparam2(vdata, vfile);
-
-    int flag = CVodeSetErrFile(CVODE_MEM_FROM_ML(vdata), ML_CFILE(vfile));
-    CHECK_FLAG("CVodeSetErrFile", flag);
-
-    CAMLreturn (Val_unit);
-}
-
 CAMLprim value sunml_cvode_set_functional (value vdata)
 {
     CAMLparam1 (vdata);
@@ -2591,6 +2529,7 @@ CAMLprim value sunml_cvode_dls_get_work_space(value vcvode_mem)
 #endif
 
     r = caml_alloc_tuple(2);
+
     Store_field(r, 0, Val_long(lenrwLS));
     Store_field(r, 1, Val_long(leniwLS));
 

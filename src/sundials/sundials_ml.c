@@ -44,15 +44,17 @@
 #if 600 <= SUNDIALS_LIB_VERSION
 #include <sundials/sundials_context.h>
 #endif
-#if 700 <= SUNDIALS_LIB_VERSION
-#include <sundials/sundials_profiler.h>
-#include <sundials/sundials_logger.h>
-#endif
 
 #if 670 <= SUNDIALS_LIB_VERSION
 #include <sundials/sundials_adaptcontroller.h>
 #include <sunadaptcontroller/sunadaptcontroller_soderlind.h>
 #include <sunadaptcontroller/sunadaptcontroller_imexgus.h>
+#endif
+
+#if 700 <= SUNDIALS_LIB_VERSION
+#include <sundials/sundials_logger.h>
+#else
+#define SUN_SUCCESS SUNADAPTCONTROLLER_SUCCESS
 #endif
 
 #include <unistd.h>
@@ -660,7 +662,7 @@ CAMLprim value sunml_logger_create_from_env(void)
 #if SUNML_HAS_LOGGING
     SUNLogger logger = NULL;
 #if 700 <= SUNDIALS_LIB_VERSION
-    int retval = SUNLogger_CreateFromEnv(SUN_COMM_NULL, -1, &logger);
+    int retval = SUNLogger_CreateFromEnv(SUN_COMM_NULL, &logger);
 #else
     int retval = SUNLogger_CreateFromEnv(NULL, -1, &logger);
 #endif
@@ -1034,10 +1036,15 @@ CAMLprim value sunml_context_clear_err_handlers(value vctx)
 #if 670 <= SUNDIALS_LIB_VERSION
 void sunml_adapt_check_flag( const char* call, int flag)
 {
+    if (flag == SUN_SUCCESS)
+        return;
+#if 700 <= SUNDIALS_LIB_VERSION
+    const char *error = SUNGetErrMsg(flag);
+    if (error != NULL) {
+        caml_failwith(error);
+    }
+#else
     switch (flag) {
-    case SUNADAPTCONTROLLER_SUCCESS:
-	return;
-
     case SUNADAPTCONTROLLER_ILL_INPUT:
 	caml_raise_constant(SUNDIALS_EXN(AdaptController_IllInput));
 
@@ -1053,6 +1060,7 @@ void sunml_adapt_check_flag( const char* call, int flag)
     default:
 	caml_failwith("sunml_adapt_check_flag");
     }
+#endif
 }
 #endif
 
@@ -1073,7 +1081,7 @@ CAMLprim value sunml_adapt_soderlind_make(value vctx, value vparams)
     SUNContext ctx = ML_CCONTEXT(vctx);
     SUNAdaptController adaptc = NULL;
     int params = Is_long(vparams) ? Int_val(vparams) : Tag_val(vparams);
-    int r = SUNADAPTCONTROLLER_SUCCESS;
+    int r = SUN_SUCCESS;
 
     switch (params) {
 	case VARIANT_SUNDIALS_ADAPT_SODERLIND:
@@ -1152,7 +1160,7 @@ CAMLprim value sunml_adapt_soderlind_make(value vctx, value vparams)
 	}
     }
 
-    if (r != SUNADAPTCONTROLLER_SUCCESS) {
+    if (r != SUN_SUCCESS) {
 	SUNAdaptController_Destroy(adaptc);
 	adaptc = NULL;
 	sunml_adapt_check_flag("SUNAdaptController_SetParams_*", r);
@@ -1186,7 +1194,7 @@ CAMLprim value sunml_adapt_imexgus_make(value vctx, value voparams)
 		Field(vparams, 2),
 		Field(vparams, 3));
 
-	if (r != SUNADAPTCONTROLLER_SUCCESS) {
+	if (r != SUN_SUCCESS) {
 	    SUNAdaptController_Destroy(adaptc);
 	    adaptc = NULL;
 	    sunml_adapt_check_flag("SUNAdaptController_SetParams_ImExGus", r);
@@ -1212,7 +1220,7 @@ CAMLprim value sunml_adapt_imexgus_make(value vctx, value voparams)
 #define ADAPTCONTROLLER_CHECK_EXCEPTION_SUCCESS(result)					 \
     (Is_exception_result (result)					 \
      ? adaptcontroller_translate_exception (result = Extract_exception (result)) \
-     : SUNADAPTCONTROLLER_SUCCESS)
+     : SUN_SUCCESS)
 
 static int adaptcontroller_translate_exception(value vexn)
 {
@@ -1221,7 +1229,13 @@ static int adaptcontroller_translate_exception(value vexn)
     int r;
 
     vtag = Field(vexn, 0);
-
+#if 700 <= SUNDIALS_LIB_VERSION
+    if (vtag == SUNDIALS_EXN_TAG(AdaptController_IllInput)) {
+	r = SUN_ERR_ARG_CORRUPT;
+    } else {
+	r = SUN_ERR_OP_FAIL;
+    }
+#else
     if (vtag == SUNDIALS_EXN_TAG(AdaptController_IllInput)) {
 	r = SUNADAPTCONTROLLER_ILL_INPUT;
     } else if (vtag == SUNDIALS_EXN_TAG(AdaptController_OperationFailure)) {
@@ -1229,6 +1243,7 @@ static int adaptcontroller_translate_exception(value vexn)
     } else {
 	r = SUNADAPTCONTROLLER_OPERATION_FAIL;
     }
+#endif
 
     CAMLreturnT(int, r);
 }
@@ -1319,7 +1334,11 @@ static int callml_adapt_write(SUNAdaptController C, FILE* fptr)
 
 	vr = caml_callbackN_exn(ADAPTCONTROLLER_GET_OP(vopst, WRITE), 2, args);
     } else {
+#if 700 <= SUNDIALS_LIB_VERSION
+        CAMLreturnT(int, SUN_ERR_ARG_CORRUPT);
+#else
 	CAMLreturnT(int, SUNADAPTCONTROLLER_ILL_INPUT);
+#endif
     }
 
     CAMLreturnT(int, ADAPTCONTROLLER_CHECK_EXCEPTION_SUCCESS(vr));
@@ -1518,4 +1537,3 @@ CAMLprim value sunml_adapt_space(value vadaptc)
 #endif
     CAMLreturn(vr);
 }
-

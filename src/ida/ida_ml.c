@@ -112,59 +112,6 @@ int sunml_ida_translate_exception(value session, value exn,
 
 /* callbacks */
 
-static void errh(
-	int error_code,
-	const char *module,
-	const char *func,
-	char *msg,
-	void *eh_data)
-{
-    CAMLparam0();
-    CAMLlocal2(session, a);
-    value *backref = eh_data;
-
-    a = caml_alloc_tuple(RECORD_SUNDIALS_ERROR_DETAILS_SIZE);
-    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_ERROR_CODE,
-		Val_int(error_code));
-    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_MODULE_NAME,
-		caml_copy_string(module));
-    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_FUNCTION_NAME,
-		caml_copy_string(func));
-    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_ERROR_MESSAGE,
-		caml_copy_string(msg));
-
-    WEAK_DEREF (session, *backref);
-
-    /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback_exn (Field(session, RECORD_IDA_SESSION_ERRH), a);
-    if (Is_exception_result (r))
-	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined error handler");
-
-    CAMLreturn0;
-}
-
-CAMLprim value sunml_ida_set_err_handler_fn(value vdata)
-{
-    CAMLparam1(vdata);
-
-    int flag = IDASetErrHandlerFn(IDA_MEM_FROM_ML(vdata), errh,
-				  IDA_BACKREF_FROM_ML(vdata));
-    CHECK_FLAG("IDASetErrHandlerFn", flag);
-
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_ida_clear_err_handler_fn(value vdata)
-{
-    CAMLparam1(vdata);
-
-    int flag = IDASetErrHandlerFn(IDA_MEM_FROM_ML(vdata), NULL, NULL);
-    CHECK_FLAG("IDASetErrHandlerFn", flag);
-
-    CAMLreturn (Val_unit);
-}
-
 static int resfn (sunrealtype t, N_Vector y, N_Vector yp,
 		  N_Vector resval, void *user_data)
 {
@@ -1418,16 +1365,6 @@ CAMLprim value sunml_ida_get_integrator_stats(value vdata)
     Store_field(r, RECORD_IDA_INTEGRATOR_STATS_INTERNAL_TIME, caml_copy_double(tcur));
 
     CAMLreturn(r);
-}
-
-CAMLprim value sunml_ida_set_error_file(value vdata, value vfile)
-{
-    CAMLparam2(vdata, vfile);
-
-    int flag = IDASetErrFile(IDA_MEM_FROM_ML(vdata), ML_CFILE(vfile));
-    CHECK_FLAG("IDASetErrFile", flag);
-
-    CAMLreturn (Val_unit);
 }
 
 CAMLprim value sunml_ida_set_root_direction(value vdata, value rootdirs)

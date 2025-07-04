@@ -767,25 +767,6 @@ val clear_constraints : ('d, 'k) session -> unit
 
 (** {3:set_main Main solver optional input functions} *)
 
-(** Configure the default error handler to write messages to a file.
-    By default it writes to Logfile.stderr.
-
-    @ida IDASetErrFile *)
-val set_error_file : ('d, 'k) session -> Logfile.t -> unit
-
-(** Specifies a custom function for handling error messages.
-    The handler must not fail: any exceptions are trapped and discarded.
-
-    @ida IDASetErrHandlerFn
-    @ida IDAErrHandlerFn *)
-val set_err_handler_fn
-  : ('d, 'k) session -> (Util.error_details -> unit) -> unit
-
-(** Restores the default error handling function.
-
-    @ida IDASetErrHandlerFn *)
-val clear_err_handler_fn : ('d, 'k) session -> unit
-
 (** Specifies the maximum order of the linear multistep method.
 
     @ida IDASetMaxOrd *)

@@ -172,7 +172,6 @@ type ida_mem
 type c_weak_ref
 type 'a resfn = float -> 'a -> 'a -> 'a -> unit
 type 'a rootsfn = float -> 'a -> 'a -> Sundials.RealArray.t -> unit
-type error_handler = Sundials.Util.error_details -> unit
 type 'a error_weight_fun = 'a -> 'a -> unit
 type ('a, 'kind) session = {
   ida : ida_mem;
@@ -184,7 +183,6 @@ type ('a, 'kind) session = {
   mutable id_set : bool;
   mutable resfn : 'a resfn;
   mutable rootsfn : 'a rootsfn;
-  mutable errh : error_handler;
   mutable errw : 'a error_weight_fun;
   mutable error_file : Sundials.Logfile.t option;
   mutable ls_solver : LSI.held_linear_solver;
@@ -404,7 +402,6 @@ val read_weak_ref : ('a, 'kind) session Weak.t -> ('a, 'kind) session
 val dummy_resfn : 'a -> 'b -> 'c -> 'd -> 'e
 val dummy_nlsresfn : 'a -> 'b -> 'c -> 'd -> 'e
 val dummy_rootsfn : 'a -> 'b -> 'c -> 'd -> 'e
-val dummy_errh : 'a -> 'b
 val dummy_errw : 'a -> 'b -> 'c
 val dummy_bresfn_no_sens : 'a -> 'b -> 'c
 val dummy_bresfn_with_sens : 'a -> 'b -> 'c -> 'd -> 'e

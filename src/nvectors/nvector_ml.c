@@ -575,7 +575,11 @@ static sunbooleantype callml_vconstrmask(N_Vector c, N_Vector x, N_Vector m);
 static sunrealtype callml_vminquotient(N_Vector num, N_Vector denom);
 
 #if 500 <= SUNDIALS_LIB_VERSION
+#if 700 <= SUNDIALS_LIB_VERSION
+static SUNComm *callml_vgetcommunicator(N_Vector x);
+#else
 static void *callml_vgetcommunicator(N_Vector x);
+#endif
 #endif
 
 /* Custom fused vector operations */
@@ -723,7 +727,7 @@ CAMLprim value sunml_nvec_wrap_custom(value mlops, value payload,
 
     ops->nvgetcommunicator  = NULL;
     if (HAS_OP(mlops, NVECTOR_OPS_NVGETCOMMUNICATOR))
-	ops->nvgetcommunicator = callml_vgetcommunicator;
+	ops->nvgetcommunicator = (void *) callml_vgetcommunicator;
 
     ops->nvdotprodlocal     = NULL;
     if (HAS_OP(mlops, NVECTOR_OPS_NVDOTPROD_LOCAL))
@@ -1584,7 +1588,7 @@ static int callml_vlinearcombinationvectorarray(int nvec, int nsum, sunrealtype*
 /* Must correspond with camlmpi.h after replacing MPI_Comm* by void* */
 #define Comm_val_addr(comm) ((void *) &Field(comm, 1))
 
-static void *callml_vgetcommunicator(N_Vector x)
+static SUNComm *callml_vgetcommunicator(N_Vector x)
 {
     CAMLparam0();
     CAMLlocal1(mlop);
@@ -1596,7 +1600,7 @@ static void *callml_vgetcommunicator(N_Vector x)
 	sunml_warn_discarded_exn (Extract_exception (r),
 					"user-defined getcommunicator");
 
-    CAMLreturnT(void *, Comm_val_addr(r));
+    CAMLreturnT(SUNComm *, Comm_val_addr(r));
 }
 #endif
 

@@ -210,7 +210,6 @@ module Global = struct
 
   type 'a rhsfn = float -> 'a -> 'a -> unit
   type 'a rootsfn = float -> 'a -> RealArray.t -> unit
-  type error_handler = Util.error_details -> unit
   type 'a error_weight_fun = 'a -> 'a -> unit
 
   type 'd stability_fn = float -> 'd -> float
@@ -268,7 +267,6 @@ type ('a, 'kind, 'step) session = {
   mutable rhsfn2       : 'a rhsfn;  (* ARK: explicit; ERK: unused; MRI: unused *)
 
   mutable rootsfn      : 'a rootsfn;
-  mutable errh         : error_handler;
   mutable errw         : 'a error_weight_fun;
   mutable resw         : 'a res_weight_fun;  (* ARK only *)
 
@@ -539,8 +537,6 @@ let dummy_nlsrhsfn _ _ _ =
   Sundials_impl.crash "Internal error: dummy_nlsrhsfn called\n"
 let dummy_rootsfn _ _ _ =
   Sundials_impl.crash "Internal error: dummy_rootsfn called\n"
-let dummy_errh _ =
-  Sundials_impl.crash "Internal error: dummy_errh called\n"
 let dummy_errw _ _ =
   Sundials_impl.crash "Internal error: dummy_errw called\n"
 let dummy_resw _ _ =

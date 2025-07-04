@@ -1651,12 +1651,6 @@ module ARKStep : sig (* {{{ *)
       @arkode_ark ARKStepSetDefaults *)
   val set_defaults : ('d, 'k) session -> unit
 
-  (** Write step adaptivity and solver diagnostics on the standard output
-      (or given file).
-
-      @arkode_ark ARKStepSetDiagnostics *)
-  val set_diagnostics : ?logfile:Logfile.t -> ('d, 'k) session -> unit
-
   (** Specifies the interpolation module used for output value interpolation
       and implicit method predictors.
 
@@ -1670,30 +1664,6 @@ module ARKStep : sig (* {{{ *)
       @arkode_ark ARKStepSetInterpolantDegree
       @since 5.2.0 *)
   val set_interpolant_degree : ('d, 'k) session -> int -> unit
-
-  (** Do not write step adaptivity or solver diagnostics of a file.
-
-      @arkode_ark ARKStepSetDiagnostics *)
-  val clear_diagnostics : ('d, 'k) session -> unit
-
-  (** Configure the default error handler to write messages to a file.
-      By default it writes to Logfile.stderr.
-
-      @arkode_ark ARKStepSetErrFile *)
-  val set_error_file : ('d, 'k) session -> Logfile.t -> unit
-
-  (** Specifies a custom function for handling error messages.
-      The handler must not fail: any exceptions are trapped and discarded.
-
-      @arkode_ark ARKStepSetErrHandlerFn
-      @arkode_user ARKErrHandlerFn *)
-  val set_err_handler_fn
-    : ('d, 'k) session -> (Util.error_details -> unit) -> unit
-
-  (** Restores the default error handling function.
-
-      @arkode_ark ARKStepSetErrHandlerFn *)
-  val clear_err_handler_fn : ('d, 'k) session -> unit
 
   (** Specifies the initial step size.
 
@@ -2744,12 +2714,6 @@ module ERKStep : sig (* {{{ *)
       @arkode_erk ERKStepSetDefaults *)
   val set_defaults : ('d, 'k) session -> unit
 
-  (** Write step adaptivity and solver diagnostics on the standard output
-      (or given file).
-
-      @arkode_erk ERKStepSetDiagnostics *)
-  val set_diagnostics : ?logfile:Logfile.t -> ('d, 'k) session -> unit
-
   (** Specifies the interpolation module used for output value interpolation
       and implicit method predictors.
 
@@ -2763,30 +2727,6 @@ module ERKStep : sig (* {{{ *)
       @arkode_erk ERKStepSetInterpolantDegree
       @since 5.2.0 *)
   val set_interpolant_degree : ('d, 'k) session -> int -> unit
-
-  (** Do not write step adaptivity or solver diagnostics of a file.
-
-      @arkode_erk ERKStepSetDiagnostics *)
-  val clear_diagnostics : ('d, 'k) session -> unit
-
-  (** Configure the default error handler to write messages to a file.
-      By default it writes to Logfile.stderr.
-
-      @arkode_erk ERKStepSetErrFile *)
-  val set_error_file : ('d, 'k) session -> Logfile.t -> unit
-
-  (** Specifies a custom function for handling error messages.
-      The handler must not fail: any exceptions are trapped and discarded.
-
-      @arkode_erk ERKStepSetErrHandlerFn
-      @arkode_user ARKErrHandlerFn *)
-  val set_err_handler_fn
-    : ('d, 'k) session -> (Util.error_details -> unit) -> unit
-
-  (** Restores the default error handling function.
-
-      @arkode_erk ERKStepSetErrHandlerFn *)
-  val clear_err_handler_fn : ('d, 'k) session -> unit
 
   (** Specifies the initial step size.
 
@@ -3603,25 +3543,6 @@ module SPRKStep : sig (* {{{ *)
 
       @arkode_sprk SPRKStepSetMaxNumSteps *)
   val set_max_num_steps : ('d, 'k) session -> int -> unit
-
-  (** Configure the default error handler to write messages to a file.
-      By default it writes to Logfile.stderr.
-
-      @arkode_sprk SPRKStepSetErrFile *)
-  val set_error_file : ('d, 'k) session -> Logfile.t -> unit
-
-  (** Specifies a custom function for handling error messages.
-      The handler must not fail: any exceptions are trapped and discarded.
-
-      @arkode_sprk SPRKStepSetErrHandlerFn
-      @arkode_user ARKErrHandlerFn *)
-  val set_err_handler_fn
-    : ('d, 'k) session -> (Util.error_details -> unit) -> unit
-
-  (** Restores the default error handling function.
-
-      @arkode_sprk SPRKStepSetErrHandlerFn *)
-  val clear_err_handler_fn : ('d, 'k) session -> unit
 
   (** Sets the time step.
 
@@ -4550,36 +4471,6 @@ module MRIStep : sig (* {{{ *)
       @since 5.2.0 *)
   val set_interpolant_degree : ('d, 'k) session -> int -> unit
 
-  (** Write step adaptivity and solver diagnostics on the standard output
-      (or given file).
-
-      @arkode_mri MRIStepSetDiagnostics *)
-  val set_diagnostics : ?logfile:Logfile.t -> ('d, 'k) session -> unit
-
-  (** Do not write step adaptivity or solver diagnostics of a file.
-
-      @arkode_mri MRIStepSetDiagnostics *)
-  val clear_diagnostics : ('d, 'k) session -> unit
-
-  (** Configure the default error handler to write messages to a file.
-      By default it writes to Logfile.stderr.
-
-      @arkode_mri MRIStepSetErrFile *)
-  val set_error_file : ('d, 'k) session -> Logfile.t -> unit
-
-  (** Specifies a custom function for handling error messages.
-      The handler must not fail: any exceptions are trapped and discarded.
-
-      @arkode_mri MRIStepSetErrHandlerFn
-      @arkode_user ARKErrHandlerFn *)
-  val set_err_handler_fn
-    : ('d, 'k) session -> (Util.error_details -> unit) -> unit
-
-  (** Restores the default error handling function.
-
-      @arkode_mri MRIStepSetErrHandlerFn *)
-  val clear_err_handler_fn : ('d, 'k) session -> unit
-
   (** Disables time step adaptivity and fix the step size for all internal
       steps. See the notes under {!init}.
 
@@ -5082,9 +4973,8 @@ exception LinearInitFailure
     If possible, the exception in the underlying linear solver is specified.
     It is typically one of
     {!Sundials_LinearSolver.ZeroInDiagonal},
-    {!Sundials_LinearSolver.PSetFailure},
     or
-    {!Sundials_LinearSolver.PackageFailure}.
+    {!Sundials_LinearSolver.PSetFailure}.
 
     @arkode_ark ARKStepGetLastLinFlag
     @arkode_mri MRIStepGetLastLinFlag
@@ -5098,9 +4988,8 @@ exception LinearSetupFailure of exn option
     {!Sundials_LinearSolver.ATimesFailure},
     {!Sundials_LinearSolver.PSolveFailure},
     {!Sundials_LinearSolver.GSFailure},
-    {!Sundials_LinearSolver.QRSolFailure},
     or
-    {!Sundials_LinearSolver.PackageFailure}.
+    {!Sundials_LinearSolver.QRSolFailure},
 
     @arkode_ark ARKStepGetLastLinFlag
     @arkode_mri MRIStepGetLastLinFlag
@@ -5116,9 +5005,8 @@ exception MassInitFailure
     If possible, the exception in the underlying linear solver is specified.
     It is typically one of
     {!Sundials_LinearSolver.ZeroInDiagonal},
-    {!Sundials_LinearSolver.PSetFailure},
     or
-    {!Sundials_LinearSolver.PackageFailure}.
+    {!Sundials_LinearSolver.PSetFailure},
 
     @arkode_ark ARKStepGetLastMassFlag
     @arkode <Constants_link.html> ARK_MASSSETUP_FAIL *)
@@ -5131,9 +5019,8 @@ exception MassSetupFailure of exn option
     {!Sundials_LinearSolver.ATimesFailure},
     {!Sundials_LinearSolver.PSolveFailure},
     {!Sundials_LinearSolver.GSFailure},
-    {!Sundials_LinearSolver.QRSolFailure},
     or
-    {!Sundials_LinearSolver.PackageFailure}.
+    {!Sundials_LinearSolver.QRSolFailure}.
 
     @arkode_ark ARKStepGetLastMassFlag
     @arkode <Constants_link.html> ARK_MASSSOLVE_FAIL *)

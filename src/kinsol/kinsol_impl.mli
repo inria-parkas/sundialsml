@@ -40,8 +40,6 @@ module KinsolBbdTypes :
 type kin_mem
 type c_weak_ref
 type 'a sysfn = 'a -> 'a -> unit
-type errh = Sundials.Util.error_details -> unit
-type infoh = Sundials.Util.error_details -> unit
 type ('a, 'k) session = {
   kinsol : kin_mem;
   backref : c_weak_ref;
@@ -51,8 +49,6 @@ type ('a, 'k) session = {
   mutable neqs : int;
   mutable exn_temp : exn option;
   mutable sysfn : 'a sysfn;
-  mutable errh : errh;
-  mutable infoh : infoh;
   mutable error_file : Sundials.Logfile.t option;
   mutable info_file : Sundials.Logfile.t option;
   mutable ls_solver : LSI.held_linear_solver;
@@ -107,5 +103,3 @@ module SpilsTypes :
   end
 val read_weak_ref : ('a, 'k) session Weak.t -> ('a, 'k) session
 val dummy_sysfn : 'a -> 'b -> 'c
-val dummy_errh : 'a -> 'b
-val dummy_infoh : 'a -> 'b

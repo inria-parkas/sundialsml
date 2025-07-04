@@ -87,70 +87,6 @@ CAMLprim value sunml_arkode_init_module (value exns)
 
 /* callbacks */
 
-static void errh(int error_code,
-		 const char *module,
-		 const char *func,
-		 char *msg,
-		 void *eh_data)
-{
-    CAMLparam0();
-    CAMLlocal2(session, a);
-    value *backref = eh_data;
-
-
-    a = caml_alloc_tuple(RECORD_SUNDIALS_ERROR_DETAILS_SIZE);
-    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_ERROR_CODE,
-                Val_int(error_code));
-    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_MODULE_NAME,
-                caml_copy_string(module));
-    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_FUNCTION_NAME,
-                caml_copy_string(func));
-    Store_field(a, RECORD_SUNDIALS_ERROR_DETAILS_ERROR_MESSAGE,
-                caml_copy_string(msg));
-
-    WEAK_DEREF (session, *backref);
-
-    /* NB: Don't trigger GC while processing this return value!  */
-    value r = caml_callback_exn (Field(session, RECORD_ARKODE_SESSION_ERRH), a);
-    if (Is_exception_result (r))
-	sunml_warn_discarded_exn (Extract_exception (r),
-					"user-defined error handler");
-
-    CAMLreturn0;
-}
-
-CAMLprim value sunml_arkode_ark_set_err_handler_fn(value vdata)
-{
-    CAMLparam1(vdata);
- 
-#if 400 <= SUNDIALS_LIB_VERSION
-    int flag = ARKStepSetErrHandlerFn(ARKODE_MEM_FROM_ML(vdata), errh,
-				      ARKODE_BACKREF_FROM_ML(vdata));
-    CHECK_FLAG("ARKStepSetErrHandlerFn", flag);
-#else
-    int flag = ARKodeSetErrHandlerFn(ARKODE_MEM_FROM_ML(vdata), errh,
-				     ARKODE_BACKREF_FROM_ML(vdata));
-    CHECK_FLAG("ARKodeSetErrHandlerFn", flag);
-#endif
-
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_arkode_ark_clear_err_handler_fn(value vdata)
-{
-    CAMLparam1(vdata);
-
-#if 400 <= SUNDIALS_LIB_VERSION
-    int flag = ARKStepSetErrHandlerFn(ARKODE_MEM_FROM_ML(vdata), NULL, NULL);
-    CHECK_FLAG("ARKStepSetErrHandlerFn", flag);
-#else
-    int flag = ARKodeSetErrHandlerFn(ARKODE_MEM_FROM_ML(vdata), NULL, NULL);
-    CHECK_FLAG("ARKodeSetErrHandlerFn", flag);
-#endif
-
-    CAMLreturn (Val_unit);
-}
-
 int sunml_arkode_translate_exception (value session, value exn,
 				      recoverability recoverable)
 {
@@ -2623,67 +2559,6 @@ CAMLprim value sunml_arkode_ark_print_all_stats(value vdata,
     CHECK_FLAG("ARKStepPrintAllStats", flag);
 #else
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_arkode_ark_set_error_file(value vdata, value vfile)
-{
-    CAMLparam2(vdata, vfile);
-
-#if 400 <= SUNDIALS_LIB_VERSION
-    int flag = ARKStepSetErrFile(ARKODE_MEM_FROM_ML(vdata), ML_CFILE(vfile));
-    CHECK_FLAG("ARKStepSetErrFile", flag);
-#else
-    int flag = ARKodeSetErrFile(ARKODE_MEM_FROM_ML(vdata), ML_CFILE(vfile));
-    CHECK_FLAG("ARKodeSetErrFile", flag);
-#endif
-
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_arkode_ark_set_diagnostics(value vdata, value vfile)
-{
-    CAMLparam2(vdata, vfile);
-
-#if 400 <= SUNDIALS_LIB_VERSION
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated"
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-
-    int flag = ARKStepSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), ML_CFILE(vfile));
-    CHECK_FLAG("ARKStepSetDiagnostics", flag);
-
-#pragma GCC diagnostic pop
-
-#else
-    int flag = ARKodeSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), ML_CFILE(vfile));
-    CHECK_FLAG("ARKodeSetDiagnostics", flag);
-#endif
-
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_arkode_ark_clear_diagnostics(value vdata)
-{
-    CAMLparam1(vdata);
-
-#if 400 <= SUNDIALS_LIB_VERSION
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated"
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-
-    int flag = ARKStepSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), NULL);
-    CHECK_FLAG("ARKStepSetDiagnostics", flag);
-
-#pragma GCC diagnostic pop
-
-#else
-    int flag = ARKodeSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), NULL);
-    CHECK_FLAG("ARKodeSetDiagnostics", flag);
 #endif
 
     CAMLreturn (Val_unit);
@@ -6443,92 +6318,6 @@ CAMLprim value sunml_arkode_erk_set_defaults(value varkode_mem)
     CAMLreturn (Val_unit);
 }
 
-
-CAMLprim value sunml_arkode_erk_set_diagnostics(value vdata, value vfile)
-{
-    CAMLparam2(vdata, vfile);
-
-#if 400 <= SUNDIALS_LIB_VERSION
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated"
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-
-    int flag = ERKStepSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), ML_CFILE(vfile));
-    CHECK_FLAG("ERKStepSetDiagnostics", flag);
-
-#pragma GCC diagnostic pop
-
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_arkode_erk_clear_diagnostics(value vdata)
-{
-    CAMLparam1(vdata);
-
-#if 400 <= SUNDIALS_LIB_VERSION
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated"
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-
-    int flag = ERKStepSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), NULL);
-    CHECK_FLAG("ERKStepSetDiagnostics", flag);
-
-#pragma GCC diagnostic pop
-
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_arkode_erk_set_error_file(value vdata, value vfile)
-{
-    CAMLparam2(vdata, vfile);
-
-#if 400 <= SUNDIALS_LIB_VERSION
-    int flag = ERKStepSetErrFile(ARKODE_MEM_FROM_ML(vdata), ML_CFILE(vfile));
-    CHECK_FLAG("ERKStepSetErrFile", flag);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_arkode_erk_set_err_handler_fn(value vdata)
-{
-    CAMLparam1(vdata);
- 
-#if 400 <= SUNDIALS_LIB_VERSION
-    int flag = ERKStepSetErrHandlerFn(ARKODE_MEM_FROM_ML(vdata), errh,
-				      ARKODE_BACKREF_FROM_ML(vdata));
-    CHECK_FLAG("ERKStepSetErrHandlerFn", flag);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_arkode_erk_clear_err_handler_fn(value vdata)
-{
-    CAMLparam1(vdata);
-#if 400 <= SUNDIALS_LIB_VERSION
-    int flag = ERKStepSetErrHandlerFn(ARKODE_MEM_FROM_ML(vdata), NULL, NULL);
-    CHECK_FLAG("ERKStepSetErrHandlerFn", flag);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-    CAMLreturn (Val_unit);
-}
-
 CAMLprim value sunml_arkode_erk_set_fixed_step(value varkode_mem, value varg)
 {
     CAMLparam2(varkode_mem, varg);
@@ -7610,7 +7399,7 @@ int SPRKStepSetRootDirection(void* arkode_mem, int* rootdir);
 CAMLprim value sunml_arkode_sprk_set_root_direction(value vdata, value rootdirs)
 {
     CAMLparam2(vdata, rootdirs);
-#if 660 <= SUNDIALS_LIB_VERSION
+#if 660 <= SUNDIALS_LIB_VERSION  && 700 > SUNDIALS_LIB_VERSION
     int rootdirs_l = ARRAY1_LEN(rootdirs);
     int *rootdirs_d = INT_ARRAY(rootdirs);
 
@@ -7850,46 +7639,6 @@ CAMLprim value sunml_arkode_sprk_set_defaults(value varkode_mem)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_arkode_sprk_set_error_file(value vdata, value vfile)
-{
-    CAMLparam2(vdata, vfile);
-
-#if 660 <= SUNDIALS_LIB_VERSION
-    int flag = SPRKStepSetErrFile(ARKODE_MEM_FROM_ML(vdata), ML_CFILE(vfile));
-    CHECK_FLAG("SPRKStepSetErrFile", flag);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_arkode_sprk_set_err_handler_fn(value vdata)
-{
-    CAMLparam1(vdata);
- 
-#if 660 <= SUNDIALS_LIB_VERSION
-    int flag = SPRKStepSetErrHandlerFn(ARKODE_MEM_FROM_ML(vdata), errh,
-				       ARKODE_BACKREF_FROM_ML(vdata));
-    CHECK_FLAG("SPRKStepSetErrHandlerFn", flag);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_arkode_sprk_clear_err_handler_fn(value vdata)
-{
-    CAMLparam1(vdata);
-#if 660 <= SUNDIALS_LIB_VERSION
-    int flag = SPRKStepSetErrHandlerFn(ARKODE_MEM_FROM_ML(vdata), NULL, NULL);
-    CHECK_FLAG("SPRKStepSetErrHandlerFn", flag);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-    CAMLreturn (Val_unit);
-}
 
 CAMLprim value sunml_arkode_sprk_set_stop_time(value varkode_mem, value tstop)
 {
@@ -9508,91 +9257,6 @@ CAMLprim value sunml_arkode_mri_set_interpolant_degree(value varkode_mem,
     caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
 
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_arkode_mri_set_diagnostics(value vdata, value vfile)
-{
-    CAMLparam2(vdata, vfile);
-
-#if 400 <= SUNDIALS_LIB_VERSION
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated"
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-
-    int flag = MRIStepSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), ML_CFILE(vfile));
-    CHECK_FLAG("MRIStepSetDiagnostics", flag);
-
-#pragma GCC diagnostic pop
-
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_arkode_mri_clear_diagnostics(value vdata)
-{
-    CAMLparam1(vdata);
-
-#if 400 <= SUNDIALS_LIB_VERSION
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated"
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-
-    int flag = MRIStepSetDiagnostics(ARKODE_MEM_FROM_ML(vdata), NULL);
-    CHECK_FLAG("MRIStepSetDiagnostics", flag);
-
-#pragma GCC diagnostic pop
-
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_arkode_mri_set_error_file(value vdata, value vfile)
-{
-    CAMLparam2(vdata, vfile);
-
-#if 400 <= SUNDIALS_LIB_VERSION
-    int flag = MRIStepSetErrFile(ARKODE_MEM_FROM_ML(vdata), ML_CFILE(vfile));
-    CHECK_FLAG("MRIStepSetErrFile", flag);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_arkode_mri_set_err_handler_fn(value vdata)
-{
-    CAMLparam1(vdata);
- 
-#if 400 <= SUNDIALS_LIB_VERSION
-    int flag = MRIStepSetErrHandlerFn(ARKODE_MEM_FROM_ML(vdata), errh,
-				      ARKODE_BACKREF_FROM_ML(vdata));
-    CHECK_FLAG("MRIStepSetErrHandlerFn", flag);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_arkode_mri_clear_err_handler_fn(value vdata)
-{
-    CAMLparam1(vdata);
-#if 400 <= SUNDIALS_LIB_VERSION
-    int flag = MRIStepSetErrHandlerFn(ARKODE_MEM_FROM_ML(vdata), NULL, NULL);
-    CHECK_FLAG("MRIStepSetErrHandlerFn", flag);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
     CAMLreturn (Val_unit);
 }
 

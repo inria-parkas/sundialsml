@@ -16,7 +16,7 @@ module LSI = Sundials_LinearSolver_impl
 open LSI
 
 exception InvalidLinearSolver
-exception UnrecoverableFailure of bool
+exception UnrecoverableFailure
 exception MatrixNotSquare
 exception MatrixVectorMismatch
 exception InsufficientStorageUpperBandwidth
@@ -25,12 +25,11 @@ exception PSetFailure of bool
 exception PSolveFailure of bool
 exception GSFailure
 exception QRSolFailure
-exception VectorOpError
 exception ResReduced
 exception ConvFailure
 exception QRfactFailure
 exception LUfactFailure
-exception PackageFailure of bool
+exception PackageFailure
 exception IllegalPrecType
 exception InternalFailure of (string * int)
 exception ZeroInDiagonal of int
@@ -331,29 +330,6 @@ module Iterative = struct (* {{{ *)
     if not (check_prec_type prec_type) then raise IllegalPrecType;
     if Sundials_impl.Version.in_compat_mode2 then compat.set_prec_type prec_type
     else impl_set_prec_type rawptr solver prec_type true
-
-  external c_set_print_level
-   : ('m, 'nd, 'nk) cptr
-     -> ('m, 'nd, 'nk, [> `Iter]) solver_data
-     -> int
-     -> unit
-   = "sunml_lsolver_set_print_level"
-
-  let set_print_level (LS { rawptr; solver; _ }) level =
-    c_set_print_level rawptr solver (if level then 1 else 0)
-
-  external c_set_info_file
-   : ('m, 'nd, 'nk) cptr
-     -> ('m, 'nd, 'nk, [> `Iter]) solver_data
-     -> Logfile.t
-     -> unit
-   = "sunml_lsolver_set_info_file"
-
-  let set_info_file (LS ({ rawptr; solver; _ } as lsdata)) ?print_level file =
-    lsdata.info_file <- Some file;
-    c_set_info_file rawptr solver file;
-    (match print_level with None -> ()
-     | Some level -> c_set_print_level rawptr solver (if level then 1 else 0))
 
   let default = function
     | Some x -> x
@@ -940,7 +916,7 @@ let _ =
     (* Exceptions must be listed in the same order as
        lsolver_exn_index.  *)
     [|InvalidLinearSolver;
-      UnrecoverableFailure false;
+      UnrecoverableFailure;
       MatrixNotSquare;
       MatrixVectorMismatch;
       InsufficientStorageUpperBandwidth;
@@ -950,12 +926,11 @@ let _ =
       PSolveFailure false;
       GSFailure;
       QRSolFailure;
-      VectorOpError;
       ResReduced;
       ConvFailure;
       QRfactFailure;
       LUfactFailure;
-      PackageFailure false;
+      PackageFailure;
       IllegalPrecType;
       InternalFailure ("", 0);
       ZeroInDiagonal 0;

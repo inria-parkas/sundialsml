@@ -1,5 +1,4 @@
 val e : exn
-exception VectorOpError
 exception IncorrectUse
 exception ExtFail
 exception NonlinearSolverInUse

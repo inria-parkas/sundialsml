@@ -93,9 +93,14 @@ void sunml_nlsolver_set_to_from_mem(SUNNonlinearSolver nls,
 #define NLS_CALLBACKS(nls) ((NLS_EXTENDED(nls))->callbacks)
 
 void sunml_nlsolver_check_flag(const char *call, int flag);
+
+#if SUNDIALS_LIB_VERSION < 700
 #define NLS_CHECK_FLAG(call, flag) if (flag != SUN_NLS_SUCCESS) \
 				 sunml_nlsolver_check_flag(call, flag)
-
+#else
+#define NLS_CHECK_FLAG(call, flag) if (flag != SUN_SUCCESS) \
+				 sunml_nlsolver_check_flag(call, flag)
+#endif
 #endif
 
 enum nlsolver_callbacks_index {
@@ -146,7 +151,6 @@ enum nlsolver_type {
 /* This enum must list exceptions in the same order as the call to
  * c_init_module in sundials_NonlinearSolver.ml.  */
 enum nlsolver_exn_index {
-    NLSOLVER_EXN_VectorOpError,
     NLSOLVER_EXN_IncorrectUse,
     NLSOLVER_EXN_ExtFail,
     NLSOLVER_EXN_SET_SIZE

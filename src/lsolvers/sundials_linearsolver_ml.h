@@ -156,7 +156,6 @@ enum lsolver_preconditioning_type_tag {
  * c_init_module in lsolver.ml.  */
 enum lsolver_exn_index {
     LSOLVER_EXN_InvalidLinearSolver = 0,
-    LSOLVER_EXN_UnrecoverableFailure,
     LSOLVER_EXN_MatrixNotSquare,
     LSOLVER_EXN_MatrixVectorMismatch,
     LSOLVER_EXN_InsufficientStorageUpperBandwidth,
@@ -166,7 +165,6 @@ enum lsolver_exn_index {
     LSOLVER_EXN_PSolveFailure,
     LSOLVER_EXN_GSFailure,
     LSOLVER_EXN_QRSolFailure,
-    LSOLVER_EXN_VectorOpError,
     LSOLVER_EXN_ResReduced,
     LSOLVER_EXN_ConvFailure,
     LSOLVER_EXN_QRfactFailure,

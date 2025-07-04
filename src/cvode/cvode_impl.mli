@@ -190,7 +190,6 @@ type cvode_mem
 type c_weak_ref
 type 'a rhsfn = float -> 'a -> 'a -> unit
 type 'a rootsfn = float -> 'a -> Sundials.RealArray.t -> unit
-type error_handler = Sundials.Util.error_details -> unit
 type 'a error_weight_fun = 'a -> 'a -> unit
 type 'd proj_fn = float -> 'd -> 'd -> float -> 'd option -> unit
 val no_rhsfn : 'a -> 'b -> 'c -> 'd
@@ -203,7 +202,6 @@ type ('a, 'kind) session = {
   mutable exn_temp : exn option;
   mutable rhsfn : 'a rhsfn;
   mutable rootsfn : 'a rootsfn;
-  mutable errh : error_handler;
   mutable errw : 'a error_weight_fun;
   mutable error_file : Sundials.Logfile.t option;
   mutable projfn : 'a proj_fn;
@@ -446,7 +444,6 @@ val read_weak_ref : ('a, 'kind) session Weak.t -> ('a, 'kind) session
 val dummy_rhsfn : 'a -> 'b -> 'c -> 'd
 val dummy_nlsrhsfn : 'a -> 'b -> 'c -> 'd
 val dummy_rootsfn : 'a -> 'b -> 'c -> 'd
-val dummy_errh : 'a -> 'b
 val dummy_errw : 'a -> 'b -> 'c
 val dummy_projfn : 'a -> 'b -> 'c -> 'd -> 'e -> 'f
 val dummy_monitorfn : 'a -> 'b

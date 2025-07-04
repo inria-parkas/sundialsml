@@ -67,6 +67,10 @@
 #define SUN_PREC_NONE PREC_NONE
 #endif
 
+#if SUNDIALS_LIB_VERSION < 700
+#define SUN_SUCCESS SUNLS_SUCCESS
+#endif
+
 CAMLprim value sunml_lsolver_init_module (value exns)
 {
     CAMLparam1 (exns);
@@ -94,57 +98,45 @@ value sunml_lsolver_exception_from_flag(int linflag)
     CAMLlocal2(vro, vr);
 
     if (linflag > 0) {
-	vr = caml_alloc_small(1, 0);
-	Field(vr, 0) = LSOLVER_EXN(ZeroInDiagonal);
-	Field(vr, 1) = Val_int(linflag);
-	Store_some(vro, vr);
+        vr = caml_alloc_small(2, 0);
+        Field(vr, 0) = LSOLVER_EXN(ZeroInDiagonal);
+        Field(vr, 1) = Val_int(linflag);
+        Store_some(vro, vr);
     } else {
-	switch (linflag) {
+        switch (linflag) {
 #if 300 <= SUNDIALS_LIB_VERSION
-	    case SUNLS_ATIMES_FAIL_UNREC:
-		vr = caml_alloc_small(1, 0);
-		Field(vr, 0) = LSOLVER_EXN(ATimesFailure);
-		Field(vr, 1) = Val_bool(0);
-		Store_some(vro, vr);
-		break;
+            case SUNLS_ATIMES_FAIL_UNREC:
+                vr = caml_alloc_small(2, 0);
+                Field(vr, 0) = LSOLVER_EXN(ATimesFailure);
+                Field(vr, 1) = Val_bool(0);
+                Store_some(vro, vr);
+                break;
 
-	    case SUNLS_PSET_FAIL_UNREC:
-		vr = caml_alloc_small(1, 0);
-		Field(vr, 0) = LSOLVER_EXN(PSetFailure);
-		Field(vr, 1) = Val_bool(0);
-		Store_some(vro, vr);
-		break;
+            case SUNLS_PSET_FAIL_UNREC:
+                vr = caml_alloc_small(2, 0);
+                Field(vr, 0) = LSOLVER_EXN(PSetFailure);
+                Field(vr, 1) = Val_bool(0);
+                Store_some(vro, vr);
+                break;
 
-	    case SUNLS_PSOLVE_FAIL_UNREC:
-		vr = caml_alloc_small(1, 0);
-		Field(vr, 0) = LSOLVER_EXN(PSolveFailure);
-		Field(vr, 1) = Val_bool(0);
-		Store_some(vro, vr);
-		break;
+            case SUNLS_PSOLVE_FAIL_UNREC:
+                vr = caml_alloc_small(2, 0);
+                Field(vr, 0) = LSOLVER_EXN(PSolveFailure);
+                Field(vr, 1) = Val_bool(0);
+                Store_some(vro, vr);
+                break;
 
-	    case SUNLS_PACKAGE_FAIL_UNREC:
-		vr = caml_alloc_small(1, 0);
-		Field(vr, 0) = LSOLVER_EXN(PackageFailure);
-		Field(vr, 1) = Val_bool(0);
-		Store_some(vro, vr);
-		break;
+            case SUNLS_GS_FAIL:
+                Store_some(vro, LSOLVER_EXN(GSFailure));
+                break;
 
-	    case SUNLS_GS_FAIL:
-		Store_some(vro, LSOLVER_EXN(GSFailure));
-		break;
-
-	    case SUNLS_QRSOL_FAIL:
-		Store_some(vro, LSOLVER_EXN(QRSolFailure));
-		break;
+            case SUNLS_QRSOL_FAIL:
+                Store_some(vro, LSOLVER_EXN(QRSolFailure));
+                break;
 #endif
-#if 400 <= SUNDIALS_LIB_VERSION
-	    case SUNLS_VECTOROP_ERR:
-		Store_some(vro, LSOLVER_EXN(VectorOpError));
-		break;
-#endif
-	    default:
-		vro = Val_none;
-	}
+            default:
+                vro = Val_none;
+        }
     }
 
     CAMLreturn(vro);
@@ -823,7 +815,7 @@ CAMLprim value sunml_lsolver_pcg(value vmaxl, value vnvec, value vctx)
 #define CHECK_EXCEPTION_SUCCESS(result)					 \
     (Is_exception_result (result)					 \
      ? lsolver_translate_exception (result = Extract_exception (result)) \
-     : SUNLS_SUCCESS)
+     : SUN_SUCCESS)
 
 static int lsolver_translate_exception(value vexn)
 {
@@ -854,13 +846,6 @@ static int lsolver_translate_exception(value vexn)
     } else if (vtag == LSOLVER_EXN_TAG(QRSolFailure)) {
 	r = SUNLS_QRSOL_FAIL;
 
-    } else if (vtag == LSOLVER_EXN_TAG(VectorOpError)) {
-#if 400 <= SUNDIALS_LIB_VERSION
-	r = SUNLS_VECTOROP_ERR;
-#else
-	r = -100;
-#endif
-
     } else if (vtag == LSOLVER_EXN_TAG(ResReduced)) {
 	r = SUNLS_RES_REDUCED;
 
@@ -874,11 +859,13 @@ static int lsolver_translate_exception(value vexn)
 	r = SUNLS_LUFACT_FAIL;
 
     } else if (vtag == LSOLVER_EXN_TAG(PackageFailure)) {
-	r = Bool_val(Field(vexn, 1)) ? SUNLS_PACKAGE_FAIL_REC
-                     : SUNLS_PACKAGE_FAIL_UNREC;
-
+        r = SUNLS_PACKAGE_FAIL_REC;
     } else if (vtag == LSOLVER_EXN_TAG(InvalidArgument)) {
+#if SUNDIALS_LIB_VERSION < 700
 	r = SUNLS_ILL_INPUT;
+#else
+    r = SUN_ERR_ARG_CORRUPT;
+#endif
     } else {
 	r = -100;
     }
@@ -1256,7 +1243,7 @@ static int callml_custom_space(SUNLinearSolver ls,
     *lenrwLS = Long_val(Field(r, 0));
     *leniwLS = Long_val(Field(r, 1));
 
-    CAMLreturnT(int, SUNLS_SUCCESS);
+    CAMLreturnT(int, SUN_SUCCESS);
 }
 
 static int callml_custom_free(SUNLinearSolver ls)
@@ -1265,7 +1252,7 @@ static int callml_custom_free(SUNLinearSolver ls)
     if (ls->ops != NULL) free(ls->ops);
     free(ls);
 
-    return(SUNLS_SUCCESS);
+    return(SUN_SUCCESS);
 }
 
 #else // SUNDIALS_LIB_VERSION < 300
@@ -1636,23 +1623,17 @@ static void sunml_lsolver_check_flag(const char *call, int flag)
 {
     static char exmsg[MAX_ERRMSG_LEN] = "";
 
-    if (flag == SUNLS_SUCCESS) return;
+    if (flag == SUN_SUCCESS) return;
+
+#if 700 <= SUNDIALS_LIB_VERSION
+    const char *error = SUNGetErrMsg(flag);
+    if (error != NULL) {
+        caml_failwith(error);
+    }
+#endif
 
     switch (flag) {
 #if 400 <= SUNDIALS_LIB_VERSION
-	case SUNLS_ILL_INPUT:
-	case SUNLS_MEM_NULL:
-	    caml_invalid_argument(call);
-
-	case SUNLS_MEM_FAIL:
-	    caml_raise_out_of_memory();
-
-	case SUNLS_PACKAGE_FAIL_UNREC:
-	    caml_raise_with_arg(LSOLVER_EXN(PackageFailure), Val_false);
-
-	case SUNLS_VECTOROP_ERR:
-	    caml_raise_constant(LSOLVER_EXN(VectorOpError));
-
 	case SUNLS_ATIMES_FAIL_UNREC:
 	    caml_raise_with_arg(LSOLVER_EXN(ATimesFailure), Val_false);
 
@@ -1684,7 +1665,7 @@ static void sunml_lsolver_check_flag(const char *call, int flag)
 	    caml_raise_with_arg(LSOLVER_EXN(PSolveFailure), Val_true);
 
 	case SUNLS_PACKAGE_FAIL_REC:
-	    caml_raise_with_arg(LSOLVER_EXN(PackageFailure), Val_true);
+	    caml_raise_constant(LSOLVER_EXN(PackageFailure));
 
 	case SUNLS_QRFACT_FAIL:
 	    caml_raise_constant(LSOLVER_EXN(QRfactFailure));
@@ -1702,7 +1683,7 @@ static void sunml_lsolver_check_flag(const char *call, int flag)
     }
 }
 
-#define CHECK_FLAG(call, flag) if (flag != SUNLS_SUCCESS) \
+#define CHECK_FLAG(call, flag) if (flag != SUN_SUCCESS) \
 				 sunml_lsolver_check_flag(call, flag)
 
 #endif
@@ -1976,107 +1957,3 @@ CAMLprim value sunml_lsolver_space(value vcptr)
 #endif
     CAMLreturn(r);
 }
-
-CAMLprim value sunml_lsolver_set_info_file(value vcptr, value vsolver,
-					  value vfile)
-{
-    CAMLparam3(vcptr, vsolver, vfile);
-#if 530 <= SUNDIALS_LIB_VERSION
-    SUNLinearSolver lsolv = LSOLVER_VAL(vcptr);
-    const char* interrmsg = "internal error in sunml_lsolver_set_info_file";
-    FILE *file = ML_CFILE(vfile);
-    int flag;
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated"
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-
-    switch (Int_val(vsolver)) {
-    case VARIANT_LSOLVER_SOLVER_DATA_SPFGMR:
-	flag = SUNLinSolSetInfoFile_SPFGMR(lsolv, file);
-	CHECK_FLAG("SUNLinSolSetInfofile_SPFGMR", flag);
-	break;
-
-    case VARIANT_LSOLVER_SOLVER_DATA_SPGMR:
-	flag = SUNLinSolSetInfoFile_SPGMR(lsolv, file);
-	CHECK_FLAG("SUNLinSolSetInfofile_SPGMR", flag);
-	break;
-
-    case VARIANT_LSOLVER_SOLVER_DATA_SPBCGS:
-	flag = SUNLinSolSetInfoFile_SPBCGS(lsolv, file);
-	CHECK_FLAG("SUNLinSolSetInfofile_SPBCGS", flag);
-	break;
-
-    case VARIANT_LSOLVER_SOLVER_DATA_SPTFQMR:
-	flag = SUNLinSolSetInfoFile_SPTFQMR(lsolv, file);
-	CHECK_FLAG("SUNLinSolSetInfofile_SPTFQMR", flag);
-	break;
-
-    case VARIANT_LSOLVER_SOLVER_DATA_PCG:
-	flag = SUNLinSolSetInfoFile_PCG(lsolv, file);
-	CHECK_FLAG("SUNLinSolSetInfofile_PCG", flag);
-	break;
-
-    default:
-	caml_failwith(interrmsg);
-    }
-
-#pragma GCC diagnostic pop
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-    CAMLreturn (Val_unit);
-}
-
-CAMLprim value sunml_lsolver_set_print_level(value vcptr, value vsolver,
-					    value vlevel)
-{
-    CAMLparam3(vcptr, vsolver, vlevel);
-#if 530 <= SUNDIALS_LIB_VERSION
-    SUNLinearSolver lsolv = LSOLVER_VAL(vcptr);
-    const char* interrmsg = "internal error in sunml_lsolver_set_print_level";
-    int level = Int_val(vlevel);
-    int flag;
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated"
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-
-    switch (Int_val(vsolver)) {
-    case VARIANT_LSOLVER_SOLVER_DATA_SPFGMR:
-	flag = SUNLinSolSetPrintLevel_SPFGMR(lsolv, level);
-	CHECK_FLAG("SUNLinSolSetInfofile_SPFGMR", flag);
-	break;
-
-    case VARIANT_LSOLVER_SOLVER_DATA_SPGMR:
-	flag = SUNLinSolSetPrintLevel_SPGMR(lsolv, level);
-	CHECK_FLAG("SUNLinSolSetInfofile_SPGMR", flag);
-	break;
-
-    case VARIANT_LSOLVER_SOLVER_DATA_SPBCGS:
-	flag = SUNLinSolSetPrintLevel_SPBCGS(lsolv, level);
-	CHECK_FLAG("SUNLinSolSetInfofile_SPBCGS", flag);
-	break;
-
-    case VARIANT_LSOLVER_SOLVER_DATA_SPTFQMR:
-	flag = SUNLinSolSetPrintLevel_SPTFQMR(lsolv, level);
-	CHECK_FLAG("SUNLinSolSetInfofile_SPTFQMR", flag);
-	break;
-
-    case VARIANT_LSOLVER_SOLVER_DATA_PCG:
-	flag = SUNLinSolSetPrintLevel_PCG(lsolv, level);
-	CHECK_FLAG("SUNLinSolSetInfofile_PCG", flag);
-	break;
-
-    default:
-	caml_failwith(interrmsg);
-    }
-
-#pragma GCC diagnostic pop
-
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-    CAMLreturn (Val_unit);
-}
-

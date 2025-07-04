@@ -310,31 +310,6 @@ end (* }}} *)
     @nonlinsol SUNNonlinSolSetMaxIters *)
 val set_max_iters : ('d, 'k, 's, 'v) t -> int -> unit
 
-(** Sets the output file for informative (non-error) messages. The default
-    is to send such messages to stdout.
-    The optional argument is a convenience for invoking {!set_print_level}.
-
-    Sundials must be built with {cconst SUNDIALS_BUILD_WITH_MONITORING} to
-    use this function.
-
-    @nonlinsol_module SUNNonlinSolSetInfoFile_Newton
-    @nonlinsol_module SUNNonlinSolSetInfoFile_FixedPoint
-    @since 5.3.0 *)
-val set_info_file
-  : ('d, 'k, 's, 'v) t -> ?print_level:bool -> Sundials.Logfile.t -> unit
-
-(** Sets the level of output verbosity. When [false] (the default) no
-    information is printed, when [true] the residual norm is printed for
-    each nonlinear iteration.
-
-    Sundials must be built with {cconst SUNDIALS_BUILD_WITH_MONITORING} to
-    use this function.
-
-    @nonlinsol_module SUNNonlinSolSetPrintLevel_Newton
-    @nonlinsol_module SUNNonlinSolSetPrintLevel_FixedPoint
-    @since 5.3.0 *)
-val set_print_level : ('d, 'k, 's, 'v) t -> bool -> unit
-
 (** {2:nlsget Get functions} *)
 
 (** Returns the number of nonlinear solver iterations in the most recent solve.
@@ -563,14 +538,8 @@ end (* }}} *)
 
 (** {2:nlsexceptions Exceptions} *)
 
-(** An error occurred in a vector operation.
-
-    @nodoc SUN_NLS_VECTOROP_ERR *)
-exception VectorOpError
-
 (** Raised when a nonlinear solver is used incorrectly.
-    For example, calling {!solve} without having first called {!set_sys_fn}
-    ([SUN_NLS_MEM_NULL]). *)
+    For example, calling {!solve} without having first called {!set_sys_fn} *)
 exception IncorrectUse
 
 (** Raised if an external library call fails. *)

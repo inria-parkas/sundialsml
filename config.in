@@ -113,7 +113,7 @@ OCAML_AT_LEAST_5_0_0 = @ocaml_at_least_5_0_0@
 OCAML_AT_LEAST_5_4_0 = @ocaml_at_least_5_4_0@
 
 OCAMLC ?= @ocamlc@
-OCAMLFLAGS += -no-alias-deps @ocamlflags@
+OCAMLFLAGS += -no-alias-deps -I +unix @ocamlflags@
 OCAML_INCLUDE := $(shell $(OCAMLC) -where)
 OCAML_ALL_LIBLINK = $(strip $(call common, $(CVODE_LDFLAGS) $(CVODES_LDFLAGS) \
 		    			   $(ARKODE_LDFLAGS)		      \
@@ -145,7 +145,7 @@ DOCDIR = @docdir@
 INSTALL_DOCS = @install_docs@
 
 OCAMLOPT ?= @ocamlopt@
-OCAMLOPTFLAGS += -no-alias-deps @ocamloptflags@
+OCAMLOPTFLAGS += -no-alias-deps -I +unix @ocamloptflags@
 
 OCAMLDEP ?= @ocamldep@
 OCAMLDOC ?= @ocamldoc@

@@ -95,7 +95,6 @@ module Global :
   sig
     type 'a rhsfn = float -> 'a -> 'a -> unit
     type 'a rootsfn = float -> 'a -> Sundials.RealArray.t -> unit
-    type error_handler = Sundials.Util.error_details -> unit
     type 'a error_weight_fun = 'a -> 'a -> unit
     type 'd stability_fn = float -> 'd -> float
     type 'd resize_fn = 'd -> 'd -> unit
@@ -126,7 +125,6 @@ type ('a, 'kind, 'step) session = {
   mutable rhsfn1 : 'a Global.rhsfn;
   mutable rhsfn2 : 'a Global.rhsfn;
   mutable rootsfn : 'a Global.rootsfn;
-  mutable errh : Global.error_handler;
   mutable errw : 'a Global.error_weight_fun;
   mutable resw : 'a res_weight_fun;
   mutable error_file : Sundials.Logfile.t option;
@@ -295,7 +293,6 @@ val dummy_rhsfn1 : 'a -> 'b -> 'c -> 'd
 val dummy_rhsfn2 : 'a -> 'b -> 'c -> 'd
 val dummy_nlsrhsfn : 'a -> 'b -> 'c -> 'd
 val dummy_rootsfn : 'a -> 'b -> 'c -> 'd
-val dummy_errh : 'a -> 'b
 val dummy_errw : 'a -> 'b -> 'c
 val dummy_resw : 'a -> 'b -> 'c
 val dummy_stabfn : 'a -> 'b -> 'c
