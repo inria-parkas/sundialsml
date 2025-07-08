@@ -155,6 +155,8 @@ do
 	  SUNDIALS_EXAMPLES     Path to installed examples (for comparison with Sundials)
 	                        (default: \$SUNDIALS_DIR/examples)
 	  OCAMLMPI              Path to OCamlMPI installation
+	  CFLAGS		Additional flags for the C compiler
+	  CFLAGS_OVERRIDE	Override the flags for the C compiler
 	  CFLAGS_OPENMP         Compiler flag to enable OpenMP compilation
 	  MPICC                 Name of the MPI compiler (default: mpicc)
 	  MPIRUN                Name of MPI program launcher (default: mpirun)
@@ -204,6 +206,8 @@ END_HELP_TEXT
 	CPPFLAGS="${value}";;
     CFLAGS)
 	CFLAGS="${value}";;
+    CFLAGS_OVERRIDE)
+	CFLAGS_OVERRIDE="${value}";;
     LDFLAGS)
 	LDFLAGS="${value}";;
     OCAMLMPI)
@@ -343,9 +347,6 @@ fi
 if [ x"${CPPFLAGS}" != x ]; then
     cppflags="${CPPFLAGS}"
 fi
-if [ x"${CFLAGS}" != x ]; then
-    cflags="${CFLAGS}"
-fi
 if [ x"${LDFLAGS}" != x ]; then
     ldflags="${LDFLAGS}"
 fi
@@ -443,7 +444,9 @@ else
     c_suppress_warnings=
 fi
 
-if [ "x${cflags}" = x ]; then    # Don't touch CFLAGS if explicitly given.
+if [ "x${CFLAGS_OVERRIDE}" = x ]; then  # Don't touch CFLAGS if explicitly given.
+    cflags_argv="${CFLAGS}"
+
     if [ $using_gcc = true ]; then
 	optflags="-O3"
 
@@ -465,14 +468,16 @@ if [ "x${cflags}" = x ]; then    # Don't touch CFLAGS if explicitly given.
 	fi
 
         if [ "x$enable_debug" = x1 ]; then
-            cflags="-O0 -Wall -Werror -g3"
+            cflags="-O0 -Wall -Werror -g3 $cflags_argv"
         else
-            cflags="$optflags -Wall -Werror -Wno-error=deprecated-declarations"
+            cflags="$optflags -Wall -Werror -Wno-error=deprecated-declarations $cflags_argv"
         fi
     else
         echo "<info> Your C compiler seems to be different from gcc.  Make"
         echo "<info> sure you set optimization flags explicitly with CFLAGS."
     fi
+else
+    cflags="${CFLAGS_OVERRIDE}"
 fi
 
 if [ "x$enable_debug" = x1 ]; then
