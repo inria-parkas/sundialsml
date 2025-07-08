@@ -1,6 +1,6 @@
 #! /bin/sh
 sysname='Sundials/ML'
-version=7.0.0
+version=7.1.0
 versionp=0
 contact='tim@tbrk.org'
 
@@ -632,7 +632,8 @@ else
 	7.0.0) sundials=700 ;;
 	7.1.0) sundials=710 ;;
 	7.2.0) sundials=720 ;;
-	7.*)   sundials=730 ;;
+	7.3.0) sundials=730 ;;
+	7.*)   sundials=740 ;;
 	8.*)   sundials=800 ;;
 	9.*)   sundials=900 ;;
 	*)     sundials=1000 ;;
