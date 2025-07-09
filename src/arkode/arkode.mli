@@ -4223,6 +4223,31 @@ module MRIStep : sig (* {{{ *)
       | IMEX_GARK4      (** Diagonally-implicit, solve-decoupled IMEX-MRI-GARK
                             coupling table of order 4 with 5 implicit solves.
                             (Sundials >= 6.0.0) *)
+      | GARK_ForwardEuler     (** Forward Euler explicit MRI-GARK method
+                                  (Sundials >= 7.1.0) *)
+      | GARK_Ralston2         (** Second-order Ralston explicit MRI-GARK method
+                                  (Sundials >= 7.1.0) *)
+      | GARK_ERK22a           (** ERK22a explicit MRI-GARK method
+                                  (Sundials >= 7.1.0) *)
+      | GARK_ERK22b           (** ERK22b explicit MRI-GARK method
+                                  (Sundials >= 7.1.0) *)
+      | GARK_Ralston3         (** Third-order Ralston explicit MRI-GARK method
+                                  (Sundials >= 7.1.0) *)
+      | GARK_BackwardEuler    (** Backward-Euler diagonally-implicit,
+                                  solve-decoupled MRI-GARK method
+                                  (Sundials >= 7.1.0) *)
+      | GARK_ImplicitMidpoint (** Implicit-midpoint diagonally-implicit,
+                                  solve-decoupled MRI-GARK method
+                                  (Sundials >= 7.1.0) *)
+      | IMEX_GARK_Euler       (** Euler diagonally-implicit,
+                                  solve-decoupled IMEX-MRI-GARK method
+                                  (Sundials >= 7.1.0) *)
+      | IMEX_GARK_Trapezoidal (** Trapezoidal rule diagonally-implicit,
+                                  solve-decoupled IMEX-MRI-GARK method
+                                  (Sundials >= 7.1.0) *)
+      | IMEX_GARK_Midpoint    (** Midpoint rule diagonally-implicit,
+                                  solve-decoupled IMEX-MRI-GARK method
+                                  (Sundials >= 7.1.0) *)
 
     (** Retrieves a copy of a specific coupling table.
 

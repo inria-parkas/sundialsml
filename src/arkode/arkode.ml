@@ -3556,6 +3556,16 @@ module MRIStep = struct (* {{{ *)
       | IMEX_GARK3a    (* 6.0.0 <= Sundials *)
       | IMEX_GARK3b    (* 6.0.0 <= Sundials *)
       | IMEX_GARK4     (* 6.0.0 <= Sundials *)
+      | GARK_ForwardEuler     (** 7.1.0 <= Sundials *)
+      | GARK_Ralston2         (** 7.1.0 <= Sundials *)
+      | GARK_ERK22a           (** 7.1.0 <= Sundials *)
+      | GARK_ERK22b           (** 7.1.0 <= Sundials *)
+      | GARK_Ralston3         (** 7.1.0 <= Sundials *)
+      | GARK_BackwardEuler    (** 7.1.0 <= Sundials *)
+      | GARK_ImplicitMidpoint (** 7.1.0 <= Sundials *)
+      | IMEX_GARK_Euler       (** 7.1.0 <= Sundials *)
+      | IMEX_GARK_Trapezoidal (** 7.1.0 <= Sundials *)
+      | IMEX_GARK_Midpoint    (** 7.1.0 <= Sundials *)
 
     external load_table : coupling_table -> t
       = "sunml_arkode_mri_coupling_load_table"

@@ -8370,6 +8370,79 @@ CAMLprim value sunml_arkode_mri_coupling_load_table(value vtable)
     case VARIANT_ARKODE_MRI_COUPLING_IMEX_GARK4:
 	imethod = ARKODE_IMEX_MRI_GARK4;
 	break;
+
+#if SUNDIALS_LIB_VERSION < 710
+    case VARIANT_ARKODE_MRI_COUPLING_GARK_ForwardEuler:
+	imethod = ARKODE_MRI_GARK_FORWARD_EULER;
+	break;
+
+    case VARIANT_ARKODE_MRI_COUPLING_GARK_Ralston2:
+	imethod = ARKODE_MRI_GARK_RALSTON2;
+	break;
+
+    case VARIANT_ARKODE_MRI_COUPLING_GARK_ERK22a:
+	imethod = ARKODE_MRI_GARK_ERK22a;
+	break;
+
+    case VARIANT_ARKODE_MRI_COUPLING_GARK_ERK22b:
+	imethod = ARKODE_MRI_GARK_ERK22b;
+	break;
+
+    case VARIANT_ARKODE_MRI_COUPLING_GARK_Ralston3:
+	imethod = ARKODE_MRI_GARK_RALSTON3;
+	break;
+
+    case VARIANT_ARKODE_MRI_COUPLING_GARK_BackwardEuler:
+	imethod = ARKODE_MRI_GARK_BACKWARD_EULER;
+	break;
+
+    case VARIANT_ARKODE_MRI_COUPLING_GARK_ImplicitMidpoint:
+	imethod = ARKODE_MRI_GARK_IMPLICIT_MIDPOINT;
+	break;
+
+    case VARIANT_ARKODE_MRI_COUPLING_IMEX_GARK_Euler:
+	imethod = ARKODE_IMEX_MRI_GARK_EULER;
+	break;
+
+    case VARIANT_ARKODE_MRI_COUPLING_IMEX_GARK_Trapezoidal:
+	imethod = ARKODE_IMEX_MRI_GARK_TRAPEZOIDAL;
+	break;
+
+    case VARIANT_ARKODE_MRI_COUPLING_IMEX_GARK_Midpoint:
+	imethod = ARKODE_IMEX_MRI_GARK_MIDPOINT;
+	break;
+#else
+    case VARIANT_ARKODE_MRI_COUPLING_GARK_ForwardEuler:
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+
+    case VARIANT_ARKODE_MRI_COUPLING_GARK_Ralston2:
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+
+    case VARIANT_ARKODE_MRI_COUPLING_GARK_ERK22a:
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+
+    case VARIANT_ARKODE_MRI_COUPLING_GARK_ERK22b:
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+
+    case VARIANT_ARKODE_MRI_COUPLING_GARK_Ralston3:
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+
+    case VARIANT_ARKODE_MRI_COUPLING_GARK_BackwardEuler:
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+
+    case VARIANT_ARKODE_MRI_COUPLING_GARK_ImplicitMidpoint:
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+
+    case VARIANT_ARKODE_MRI_COUPLING_IMEX_GARK_Euler:
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+
+    case VARIANT_ARKODE_MRI_COUPLING_IMEX_GARK_Trapezoidal:
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+
+    case VARIANT_ARKODE_MRI_COUPLING_IMEX_GARK_Midpoint:
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+
 #else
     case VARIANT_ARKODE_MRI_COUPLING_KW3:
 	imethod = MIS_KW3;
@@ -8400,6 +8473,36 @@ CAMLprim value sunml_arkode_mri_coupling_load_table(value vtable)
 	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 
     case VARIANT_ARKODE_MRI_COUPLING_IMEX_GARK4:
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+
+    case VARIANT_ARKODE_MRI_COUPLING_GARK_ForwardEuler:
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+
+    case VARIANT_ARKODE_MRI_COUPLING_GARK_Ralston2:
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+
+    case VARIANT_ARKODE_MRI_COUPLING_GARK_ERK22a:
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+
+    case VARIANT_ARKODE_MRI_COUPLING_GARK_ERK22b:
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+
+    case VARIANT_ARKODE_MRI_COUPLING_GARK_Ralston3:
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+
+    case VARIANT_ARKODE_MRI_COUPLING_GARK_BackwardEuler:
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+
+    case VARIANT_ARKODE_MRI_COUPLING_GARK_ImplicitMidpoint:
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+
+    case VARIANT_ARKODE_MRI_COUPLING_IMEX_GARK_Euler:
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+
+    case VARIANT_ARKODE_MRI_COUPLING_IMEX_GARK_Trapezoidal:
+	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+
+    case VARIANT_ARKODE_MRI_COUPLING_IMEX_GARK_Midpoint:
 	caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
 
