@@ -232,10 +232,6 @@ let main () =
   let fnormtol  = ftol in
   Kinsol.set_func_norm_tol kmem fnormtol;
 
-  (* Set information file *)
-  let infofp = Logfile.openfile "KINSOL.log" in
-  Kinsol.(set_info_file kmem ~print_level:ShowGlobalValues infofp);
-
   (* -------------
    * Initial guess
    * ------------- *)
