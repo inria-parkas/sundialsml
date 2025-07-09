@@ -4323,21 +4323,6 @@ CAMLprim value sunml_arkode_ark_set_nonlin_rdiv(value varkode_mem, value varg)
     CAMLreturn (Val_unit);
 }
 
-CAMLprim value sunml_arkode_ark_set_optimal_params(value varkode_mem)
-{
-    CAMLparam1(varkode_mem);
-
-#if 400 <= SUNDIALS_LIB_VERSION
-    int flag = ARKStepSetOptimalParams(ARKODE_MEM_FROM_ML(varkode_mem));
-    CHECK_FLAG("ARKStepSetOptimalParams", flag);
-#else
-    int flag = ARKodeSetOptimalParams(ARKODE_MEM_FROM_ML(varkode_mem));
-    CHECK_FLAG("ARKodeSetOptimalParams", flag);
-#endif
-
-    CAMLreturn (Val_unit);
-}
-
 CAMLprim value sunml_arkode_ark_set_order(value varkode_mem, value varg)
 {
     CAMLparam2(varkode_mem, varg);

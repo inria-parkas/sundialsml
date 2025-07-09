@@ -1727,14 +1727,6 @@ module ARKStep : sig (* {{{ *)
       @arkode_ark ARKStepSetMaxStep *)
   val set_max_step : ('d, 'k) session -> float -> unit
 
-  (** Sets all adaptivity and solver parameters to ‘best guess’ values. This
-      routine takes into account the integration method (ERK, DIRK, or ARK)
-      and a given method order; it should only be called after these have
-      been set.
-
-      @arkode_ark ARKStepSetOptimalParams *)
-  val set_optimal_params : ('d, 'k) session -> unit
-
   (** Limits the value of the independent variable [t] when solving.
       By default no stop time is imposed.
 

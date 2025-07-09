@@ -2224,8 +2224,6 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
       = "sunml_arkode_ark_clear_stop_time"
   external set_interpolate_stop_time : ('a, 'k) session -> bool -> unit
       = "sunml_arkode_ark_set_interpolate_stop_time"
-  external set_optimal_params     : ('a, 'k) session -> unit
-      = "sunml_arkode_ark_set_optimal_params"
   external set_max_err_test_fails : ('a, 'k) session -> int -> unit
       = "sunml_arkode_ark_set_max_err_test_fails"
   external set_max_nonlin_iters   : ('a, 'k) session -> int -> unit
