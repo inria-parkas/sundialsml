@@ -678,6 +678,12 @@ module ButcherTable : sig (* {{{ *)
       @since 6.4.0 *)
   val load_erk_by_name : string -> t option
 
+  (** Return a string representing the given ERK table.
+
+      @arkode_bt ARKodeButcherTable_ERKIDToName
+      @since 7.1.0 *)
+  val erk_to_name : erk_table -> string
+
   (** Retrieves a diagonally-implicit Butcher table.
 
       @arkode_bt ARKodeButcherTable_LoadDIRK
@@ -690,6 +696,12 @@ module ButcherTable : sig (* {{{ *)
       @arkode <Butcher_link.html#butcher> Appendix: Butcher Tables
       @since 6.4.0 *)
   val load_dirk_by_name : string -> t option
+
+  (** Return a string representing the given DIRK table.
+
+      @arkode_bt ARKodeButcherTable_DIRKIDToName
+      @since 7.1.0 *)
+  val dirk_to_name : dirk_table -> string
 
   (** Writes a Butcher table on the standard output (or given file).
 

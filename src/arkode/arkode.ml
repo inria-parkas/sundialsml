@@ -549,6 +549,14 @@ module ButcherTable = struct (* {{{ *)
   external load_dirk_by_name : string -> t option
     = "sunml_arkode_butcher_table_load_dirk_by_name"
 
+  external c_erk_to_name : int -> string
+    = "sunml_arkode_butcher_table_erk_to_name"
+  external c_dirk_to_name : int -> string
+    = "sunml_arkode_butcher_table_dirk_to_name"
+
+  let erk_to_name v = c_erk_to_name (int_of_erk_table v)
+  let dirk_to_name v = c_dirk_to_name (int_of_dirk_table v)
+
   external c_write : t -> Logfile.t -> unit
     = "sunml_arkode_butcher_table_write"
 

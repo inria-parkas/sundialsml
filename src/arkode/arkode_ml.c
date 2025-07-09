@@ -2919,6 +2919,32 @@ CAMLprim value sunml_arkode_butcher_table_load_dirk_by_name(value vmethod)
     CAMLreturn(vobt);
 }
 
+CAMLprim value sunml_arkode_butcher_table_erk_to_name(value vmethod)
+{
+    CAMLparam1(vmethod);
+    CAMLlocal1(vnm);
+
+#if 710 <= SUNDIALS_LIB_VERSION
+    vnm = caml_copy_string(ARKodeButcherTable_ERKIDToName(Int_val(vmethod)));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(vnm);
+}
+
+CAMLprim value sunml_arkode_butcher_table_dirk_to_name(value vmethod)
+{
+    CAMLparam1(vmethod);
+    CAMLlocal1(vnm);
+
+#if 710 <= SUNDIALS_LIB_VERSION
+    vnm = caml_copy_string(ARKodeButcherTable_DIRKIDToName(Int_val(vmethod)));
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn(vnm);
+}
+
 #if 400 <= SUNDIALS_LIB_VERSION
 static ARKodeButcherTable butcher_table_val(value vob)
 {
