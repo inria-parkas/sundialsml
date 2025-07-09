@@ -50,6 +50,10 @@ let printf = Printf.printf
 
 let option_map f = function None -> () | Some x -> f x
 
+let compat_ge7 =
+  let n, _, _ = Config.sundials_version in
+  n >= 7
+
 (* Problem Constants *)
 
 let zero  = 0.0
@@ -465,13 +469,16 @@ let main () =
     if Array.length Sys.argv > 2 then int_of_string Sys.argv.(2) <> 0 else false
   in
 
-  let infofp =
-    if monitor then Some (Logfile.openfile "cvKrylovDemo_ls-info.txt")
-    else None
-  in
-
   let nlsolver = NonlinearSolver.Newton.make u in
-  option_map (NonlinearSolver.set_info_file nlsolver ~print_level:true) infofp;
+
+  (* Create logger and context if monitoring is enabled and SUNDIALS >= 7 *)
+  let context =
+    if monitor && compat_ge7 then
+      let logger = Sundials.Logger.make ~info_filename:"cvKrylovDemo_ls-info.txt" () in
+      Some (Sundials.Context.make ~logger ())
+    else
+      None
+  in
 
   (* Call CVodeCreate to create the solver memory and specify the
    * Backward Differentiation Formula and the use of a Newton iteration *)
@@ -482,11 +489,13 @@ let main () =
    * user's right hand side function in u'=f(t,u), the inital time T0, and
    * the initial dependent variable vector u. *)
   let cvode_mem =
-    Cvode.(init BDF (SStolerances (reltol, abstol)) ~nlsolver (f data) t0 u)
+    match context with
+    | Some ctx -> Cvode.(init ~context:ctx BDF (SStolerances (reltol, abstol)) ~nlsolver (f data) t0 u)
+    | None -> Cvode.(init BDF (SStolerances (reltol, abstol)) ~nlsolver (f data) t0 u)
   in
-  if monitor
-    then Cvode.set_monitor_fn cvode_mem 50 (my_monitor_function data (unvec u));
-
+  if monitor then begin
+    Cvode.set_monitor_fn cvode_mem 50 (my_monitor_function data (unvec u));
+  end;
   (* START: Loop through SPGMR, SPBCG and SPTFQMR linear solver modules *)
   let run cvode_mem linsolver =
     data.linsolver <- linsolver;
@@ -514,7 +523,6 @@ let main () =
               ^ " -------\n"
         in
         print_string h;
-        option_map (fun oc -> Logfile.output_string oc h) infofp;
 
         (* Call CVSpgmr to specify the linear solver CVSPGMR
            with left preconditioning and the maximum Krylov dimension maxl *)
@@ -522,13 +530,10 @@ let main () =
            setup and solve routines Precond and PSolve, and the pointer
            to the user-defined block data *)
         let lsolver = LinearSolver.Iterative.(spgmr ~gs_type:ModifiedGS u) in
-        option_map
-          (LinearSolver.Iterative.set_info_file lsolver ~print_level:true) infofp;
         Cvode.(reinit cvode_mem t0 u
-                 ~lsolver:Spils.(solver lsolver
+                ~lsolver:Spils.(solver lsolver
                                   (prec_left ~setup:(precond data) (psolve data))))
       end
-
     (* (b) SPFGMR *)
     | UseSpfgmr -> begin
         (* Print header *)
@@ -537,19 +542,15 @@ let main () =
               ^ " ---------\n"
         in
         print_string h;
-        option_map (fun oc -> Logfile.output_string oc h) infofp;
 
         (* Call CVSpgmr to specify the linear solver CVSPGMR
            with left preconditioning and the maximum Krylov dimension maxl *)
         (* Set modified Gram-Schmidt orthogonalization, preconditioner
            setup and solve routines Precond and PSolve, and the pointer
-           to the user-defined block data *)
-        let lsolver = LinearSolver.Iterative.spfgmr u in
-        option_map
-          (LinearSolver.Iterative.set_info_file lsolver ~print_level:true) infofp;
+           to the user-defined block data *)        let lsolver = LinearSolver.Iterative.spfgmr u in
         Cvode.(reinit cvode_mem t0 u
-                 ~lsolver:Spils.(solver lsolver
-                            (prec_left ~setup:(precond data) (psolve data))))
+                ~lsolver:Spils.(solver lsolver
+                          (prec_left ~setup:(precond data) (psolve data))))
       end
 
     (* (c) SPBCG *)
@@ -565,16 +566,13 @@ let main () =
                     ^ " -------\n");
         in
         print_string h;
-        option_map (fun oc -> Logfile.output_string oc h) infofp;
 
         (* Call CVSpbcg to specify the linear solver CVSPBCG
            with left preconditioning and the maximum Krylov dimension maxl *)
         let lsolver = Cvode.Spils.spbcgs u in
-        option_map
-          (LinearSolver.Iterative.set_info_file lsolver ~print_level:true) infofp;
         Cvode.(reinit cvode_mem t0 u
           ~lsolver:Spils.(solver lsolver
-                                 (prec_left ~setup:(precond data) (psolve data))));
+                                 (prec_left ~setup:(precond data) (psolve data))))
       end
 
     (* (d) SPTFQMR *)
@@ -589,16 +587,13 @@ let main () =
                     ^ " ---------\n";
         in
         print_string h;
-        option_map (fun oc -> Logfile.output_string oc h) infofp;
 
         (* Call CVSptfqmr to specify the linear solver CVSPTFQMR
            with left preconditioning and the maximum Krylov dimension maxl *)
         let lsolver = Cvode.Spils.sptfqmr u in
-        option_map
-          (LinearSolver.Iterative.set_info_file lsolver ~print_level:true) infofp;
-        Cvode.(reinit cvode_mem t0 u
-          ~lsolver:Spils.(solver lsolver
-                                 (prec_left ~setup:(precond data) (psolve data))))
+          Cvode.(reinit cvode_mem t0 u
+            ~lsolver:Spils.(solver lsolver
+                                  (prec_left ~setup:(precond data) (psolve data))))
       end);
 
     if not Sundials_impl.Version.lt500 then begin
@@ -624,8 +619,7 @@ let main () =
     if monitor then print_output cvode_mem (unvec u) !tout;
     print_stats cvode_mem linsolver
 
-  in  (* END: Loop through SPGMR, SPBCG and SPTFQMR linear solver modules *)
-
+  in
   ignore (List.iter (run cvode_mem)
             (if Sundials_impl.Version.lt500 then [UseSpgmr; UseSpbcg; UseSptfqmr]
              else [UseSpgmr; UseSpfgmr; UseSpbcg; UseSptfqmr]))
