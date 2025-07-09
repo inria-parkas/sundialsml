@@ -261,12 +261,15 @@ module ButcherTable = struct (* {{{ *)
     | ARK437L2SA_ERK_7_3_4  (* >= 5.0.0 *)
     | ARK548L2SAb_ERK_8_4_5 (* >= 5.0.0 *)
     | ARK2_ERK_3_1_2        (* >= 6.6.0 *)
-    | Sofroniou_Spaletta_5_3_4 (* >= 6.7.0) *)
-    | Shu_Osher_3_2_3          (* >= 6.7.0) *)
+    | SofroniouSpaletta_5_3_4  (* >= 6.7.0) *)
+    | ShuOsher_3_2_3           (* >= 6.7.0) *)
     | Verner_9_5_6             (* >= 6.7.0) *)
     | Verner_10_6_7            (* >= 6.7.0) *)
     | Verner_13_7_8            (* >= 6.7.0) *)
     | Verner_16_8_9            (* >= 6.7.0) *)
+    | ForwardEuler_1_1         (* >= 7.1.0) *)
+    | RalstonEuler_2_1_2       (* >= 7.1.0) *)
+    | ExplicitMidpointEuler_2_1_2 (* >= 7.1.0) *)
 
   type dirk_table =
     | SDIRK_2_1_2
@@ -293,6 +296,9 @@ module ButcherTable = struct (* {{{ *)
     | ESDIRK547L2SA_7_4_5
     | ESDIRK547L2SA2_7_4_5
     | ARK2_DIRK_3_1_2      (* >= 6.6.0 *)
+    | BackwardEuler_1_1    (* >= 7.1.0 *)
+    | ImplicitMidpoint_1_2 (* >= 7.1.0 *)
+    | ImplicitTrapezoidal_2_2 (* >= 7.1.0 *)
 
   type ark_table =
     | ARK_3_1_2
@@ -370,24 +376,33 @@ module ButcherTable = struct (* {{{ *)
        | ARK2_ERK_3_1_2        -> if Sundials_impl.Version.lt660
                                   then raise Config.NotImplementedBySundialsVersion
                                   else 15
-       | Sofroniou_Spaletta_5_3_4 -> if Sundials_impl.Version.lt670
-                                     then raise Config.NotImplementedBySundialsVersion
-                                     else 16
-       | Shu_Osher_3_2_3          -> if Sundials_impl.Version.lt670
-                                     then raise Config.NotImplementedBySundialsVersion
-                                     else 16
-       | Verner_9_5_6             -> if Sundials_impl.Version.lt670
+       | SofroniouSpaletta_5_3_4 -> if Sundials_impl.Version.lt670
+                                    then raise Config.NotImplementedBySundialsVersion
+                                    else 16
+       | ShuOsher_3_2_3           -> if Sundials_impl.Version.lt670
                                      then raise Config.NotImplementedBySundialsVersion
                                      else 17
-       | Verner_10_6_7            -> if Sundials_impl.Version.lt670
+       | Verner_9_5_6             -> if Sundials_impl.Version.lt670
                                      then raise Config.NotImplementedBySundialsVersion
                                      else 18
-       | Verner_13_7_8            -> if Sundials_impl.Version.lt670
+       | Verner_10_6_7            -> if Sundials_impl.Version.lt670
                                      then raise Config.NotImplementedBySundialsVersion
                                      else 19
-       | Verner_16_8_9            -> if Sundials_impl.Version.lt670
+       | Verner_13_7_8            -> if Sundials_impl.Version.lt670
                                      then raise Config.NotImplementedBySundialsVersion
                                      else 20
+       | Verner_16_8_9            -> if Sundials_impl.Version.lt670
+                                     then raise Config.NotImplementedBySundialsVersion
+                                     else 21
+       | ForwardEuler_1_1         -> if Sundials_impl.Version.lt710
+                                     then raise Config.NotImplementedBySundialsVersion
+                                     else 22
+       | RalstonEuler_2_1_2       -> if Sundials_impl.Version.lt710
+                                     then raise Config.NotImplementedBySundialsVersion
+                                     else 23
+       | ExplicitMidpointEuler_2_1_2 -> if Sundials_impl.Version.lt710
+                                     then raise Config.NotImplementedBySundialsVersion
+                                     else 24
       )
 
 
@@ -482,7 +497,16 @@ module ButcherTable = struct (* {{{ *)
        | ESDIRK547L2SA2_7_4_5   -> 122
        | ARK2_DIRK_3_1_2        -> if Sundials_impl.Version.lt660
                                    then raise Config.NotImplementedBySundialsVersion
-                                   else 123)
+                                   else 123
+       | BackwardEuler_1_1      -> if Sundials_impl.Version.lt710
+                                   then raise Config.NotImplementedBySundialsVersion
+                                   else 124
+       | ImplicitMidpoint_1_2   -> if Sundials_impl.Version.lt710
+                                   then raise Config.NotImplementedBySundialsVersion
+                                   else 125
+       | ImplicitTrapezoidal_2_2 -> if Sundials_impl.Version.lt710
+                                   then raise Config.NotImplementedBySundialsVersion
+                                   else 126)
 
   let ints_of_ark_table v =
     match v with

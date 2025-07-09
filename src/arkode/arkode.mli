@@ -583,24 +583,31 @@ module ButcherTable : sig (* {{{ *)
     | Fehlberg_13_7_8       (** Default 8th order explicit method. *)
     | Knoth_Wolke_3_3       (** Default 3rd order slow and fast method
                                 (Sundials >= 4.0.0). *)
-    | ARK437L2SA_ERK_7_3_4  (** ARK-7-3-4 ERK method.
+    | ARK437L2SA_ERK_7_3_4  (** ARK-7-3-4 ERK method
                                 (Sundials >= 5.0.0). *)
-    | ARK548L2SAb_ERK_8_4_5 (** ARK-8-4-5b ERK method.
+    | ARK548L2SAb_ERK_8_4_5 (** ARK-8-4-5b ERK method
                                 (Sundials >= 5.0.0). *)
-    | ARK2_ERK_3_1_2        (** ARK2-ERK-3-1-2 method.
+    | ARK2_ERK_3_1_2        (** ARK2-ERK-3-1-2 method
                                 (Sundials >= 6.6.0). *)
-    | Sofroniou_Spaletta_5_3_4 (** Sofroniou-Spaletta-5-3-4 ERK method.
+    | SofroniouSpaletta_5_3_4 (** Sofroniou-Spaletta-5-3-4 ERK method
                                    (Sundials >= 6.7.0). *)
-    | Shu_Osher_3_2_3       (** Shu-Osher-3-2-3 ERK method.
+    | ShuOsher_3_2_3       (** Shu-Osher-3-2-3 ERK method
                                 (Sundials >= 6.7.0). *)
-    | Verner_9_5_6          (** Verner-9-5-6 ERK method.
+    | Verner_9_5_6          (** Verner-9-5-6 ERK method
                                 (Sundials >= 6.7.0). *)
-    | Verner_10_6_7          (** Verner-10-6-7 ERK method.
+    | Verner_10_6_7          (** Verner-10-6-7 ERK method
                                  (Sundials >= 6.7.0). *)
-    | Verner_13_7_8          (** Verner-13-7-8 ERK method.
+    | Verner_13_7_8          (** Verner-13-7-8 ERK method
                                  (Sundials >= 6.7.0). *)
-    | Verner_16_8_9          (** Verner-16-8-9 ERK method.
+    | Verner_16_8_9          (** Verner-16-8-9 ERK method
                                  (Sundials >= 6.7.0). *)
+    | ForwardEuler_1_1      (** 1st order explicit method
+                                 from {i Institutiones calculi integralis}
+                                 (Sundials >= 7.1.0). *)
+    | RalstonEuler_2_1_2    (** Ralston-Euler-2-1-2 ERK method
+                                 (Sundials >= 7.1.0). *)
+    | ExplicitMidpointEuler_2_1_2 (** Explicit-Midpoint-Euler-2-1-2 ERK method
+                                      (Sundials >= 7.1.0). *)
 
   (** Implicit Butcher tables
 
@@ -631,8 +638,14 @@ module ButcherTable : sig (* {{{ *)
     | ESDIRK437L2SA_7_3_4   (** Kennedy & Carpenter 2016: ESDIRK4(3)7L[2]SA *)
     | ESDIRK547L2SA_7_4_5   (** Kennedy & Carpenter 2016: ESDIRK5(4)7L[2]SA *)
     | ESDIRK547L2SA2_7_4_5  (** Kennedy & Carpenter 2016: ESDIRK5(4)7L[2]SA2 *)
-    | ARK2_DIRK_3_1_2       (** ARK2-ERK-3-1-2- method.
+    | ARK2_DIRK_3_1_2       (** ARK2-ERK-3-1-2- method
                                 (Sundials >= 6.6.0). *)
+    | BackwardEuler_1_1     (** Backward-Euler-1-1 SDIRK method
+                                (Sundials >= 7.1.0). *)
+    | ImplicitMidpoint_1_2  (** Implicit-Midpoint-1-2 SDIRK method
+                                (Sundials >= 7.1.0). *)
+    | ImplicitTrapezoidal_2_2 (** Implicit-Trapezoidal-2-2 ESDIRK method
+                                  (Sundials >= 7.1.0). *)
 
   (** Additive Butcher tables
 
