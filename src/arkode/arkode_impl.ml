@@ -252,9 +252,16 @@ type 'a res_weight_fun = 'a -> 'a -> unit
    solver is not garbage collected while still being used by a session.
 *)
 
+type 'step step_type =
+  | ARKStep : arkstep step_type
+  | ERKStep : erkstep step_type
+  | SPRKStep : sprkstep step_type
+  | MRIStep : mristep step_type
+
 type ('a, 'kind, 'step) session = {
   arkode     : 'step arkode_mem;
   backref    : c_weak_ref;
+  step_type : 'step step_type;
   nroots     : int;
   mutable checkvec     : (('a, 'kind) Nvector.t -> unit);
   mutable uses_resv    : bool;

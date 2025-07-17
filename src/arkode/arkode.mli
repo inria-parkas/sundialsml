@@ -67,6 +67,23 @@ type ('data, 'kind) session =
   | SPRK of ('data, 'kind, sprkstep) Arkode_impl.session
   | MRI of ('data, 'kind, mristep) Arkode_impl.session
 
+
+(* Common fonctions available for each time-stepping module *)
+
+(* ARKodeGetDky *)
+val get_dky :
+    ('a, 'k) session -> ('a, 'k) Nvector.t -> t:float -> k:int -> unit
+
+(** Resets the state to the given independent variable value and dependent
+    variable vector. All previously set options, internal counter values,
+    and step-size/error histories are retained.
+
+    @arkode Reset
+    @since 7.1.0 *)
+    val reset : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
+
+
+
 (** Common definitions that are included in each of the time-stepping
     modules. *)
 module Common : sig (* {{{ *)
@@ -1555,23 +1572,6 @@ module ARKStep : sig (* {{{ *)
   val evolve_one_step : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
                           -> float * solver_result
 
-  (** Returns the interpolated solution or derivatives.
-      [get_dky s dky t k] computes the [k]th derivative of the function
-      at time [t], i.e.,
-      {% $\frac{d^\mathtt{k}}{\mathit{dt}^\mathtt{k}}y(\mathtt{t})$%},
-      and stores it in [dky]. The arguments must satisfy
-      {% $t_n - h_n \leq \mathtt{t} \leq t_n$%}—where $t_n$
-      denotes {!get_current_time} and $h_n$ denotes {!get_last_step},—
-      and {% $0 \leq \mathtt{k} \leq 3$%}.
-
-      This function may only be called after a successful return from either
-      {!evolve_normal} or {!evolve_one_step}.
-
-      @arkode_ark ARKStepGetDky
-      @raise BadT [t] is not in the interval {% $[t_n - h_n, t_n]$ %}.
-      @raise BadK [k] is not in the range {% $\{0, 1, ..., dord\}$ %}. *)
-  val get_dky : ('d, 'k) session -> ('d, 'k) Nvector.t -> float -> int -> unit
-
   (** Reinitializes the solver with new parameters and state values. The
       values of the independent variable, i.e., the simulation time, and the
       state variables must be given. If given, [problem] specifies new
@@ -1600,14 +1600,6 @@ module ARKStep : sig (* {{{ *)
     -> float
     -> ('d, 'k) Nvector.t
     -> unit
-
-  (** Resets the state to the given independent variable value and dependent
-      variable vector. All previously set options, internal counter values,
-      and step-size/error histories are retained.
-
-      @arkode_ark ARKStepReset
-      @since 5.4.0 *)
-  val reset : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
 
   (** Change the number of equations and unknowns between integrator steps.
       The call
@@ -2644,23 +2636,6 @@ module ERKStep : sig (* {{{ *)
   val evolve_one_step : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
                           -> float * solver_result
 
-  (** Returns the interpolated solution or derivatives.
-      [get_dky s dky t k] computes the [k]th derivative of the function
-      at time [t], i.e.,
-      {% $\frac{d^\mathtt{k}}{\mathit{dt}^\mathtt{k}}y(\mathtt{t})$%},
-      and stores it in [dky]. The arguments must satisfy
-      {% $t_n - h_n \leq \mathtt{t} \leq t_n$%}—where $t_n$
-      denotes {!get_current_time} and $h_n$ denotes {!get_last_step},—
-      and {% $0 \leq \mathtt{k} \leq 3$%}.
-
-      This function may only be called after a successful return from either
-      {!evolve_normal} or {!evolve_one_step}.
-
-      @arkode_erk ERKStepGetDky
-      @raise BadT [t] is not in the interval {% $[t_n - h_n, t_n]$%}.
-      @raise BadK [k] is not in the range {% $\{0, 1, ..., dord\}$ %}. *)
-  val get_dky : ('d, 'k) session -> ('d, 'k) Nvector.t -> float -> int -> unit
-
   (** Reinitializes the solver with new parameters and state values. The
       values of the independent variable, i.e., the simulation time, and the
       state variables must be given. If given, [order] changes the order of
@@ -2681,14 +2656,6 @@ module ERKStep : sig (* {{{ *)
     -> float
     -> ('d, 'k) Nvector.t
     -> unit
-
-  (** Resets the state to the given independent variable value and dependent
-      variable vector. All previously set options, internal counter values,
-      and step-size/error histories are retained.
-
-      @arkode_erk ERKStepReset
-      @since 5.4.0 *)
-  val reset : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
 
   (** Change the number of equations and unknowns between integrator steps.
       The call
@@ -3477,24 +3444,6 @@ module SPRKStep : sig (* {{{ *)
   val evolve_one_step : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
                           -> float * solver_result
 
-  (** Returns the interpolated solution or derivatives.
-      [get_dky s dky t k] computes the [k]th derivative of the function
-        at time [t], i.e., {% y^{(k)}(t) %},
-      and stores it in [dky]. The arguments must satisfy
-      {% $t_n - h_n \leq \mathtt{t} \leq t_n$%}—where $t_n$
-      denotes {!get_current_time} and $h_n$ denotes {!get_last_step},—
-      and {% $0 \leq \mathtt{k} \leq \mathit{kmax}$ %},
-      where {% $\mathit{kmax} = 5 %} for Hermite interpolants and
-      {% $\mathit{kmax} = 3 %} for Lagrange interpolants.
-
-      This function may only be called after a successful return from either
-      {!evolve_normal} or {!evolve_one_step}.
-
-      @arkode_sprk SPRKStepGetDky
-      @raise BadT [t] is not in the interval {% $[t_n - h_n, t_n]$%}.
-      @raise BadK [k] is not in the range {% $\{0, 1, ..., \mathit{kmax}\}$ %}. *)
-  val get_dky : ('d, 'k) session -> ('d, 'k) Nvector.t -> float -> int -> unit
-
   (** Reinitializes the solver with new parameters and state values. The
       values of the independent variable, i.e., the simulation time, and the
       state variables must be given. If given, [order] changes the order of
@@ -3518,20 +3467,6 @@ module SPRKStep : sig (* {{{ *)
     -> float
     -> ('d, 'k) Nvector.t
     -> unit
-
-  (** Resets the state to the given independent variable value and dependent
-      variable vector. All internal counter values are retained. Any stop time
-      value is forgotten and thus {!set_stop_time} should be called again if
-      needed.
-
-      Note: by default, the next call to {!evolve_normal} or {!evolve_one_step}
-      will use the step size calculated prior to the reset.
-
-      {warning Prior to Sundials 7.3.0, this function causes a segmentation
-      fault unless compensated sums are in use ({!set_use_compensated_sums}). }
-
-      @arkode_sprk SPRKStepReset *)
-  val reset : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
 
   (** {2:sprkset Modifying the solver} *)
 
@@ -4423,23 +4358,6 @@ module MRIStep : sig (* {{{ *)
   val evolve_one_step : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
                           -> float * solver_result
 
-  (** Returns the interpolated solution or derivatives.
-      [get_dky s dky t k] computes the [k]th derivative of the function
-      at time [t], i.e.,
-      {% $\frac{d^\mathtt{k}}{\mathit{dt}^\mathtt{k}}y(\mathtt{t})$%},
-      and stores it in [dky]. The arguments must satisfy
-      {% $t_n - h_n \leq \mathtt{t} \leq t_n$%}—where $t_n$
-      denotes {!get_current_time} and $h_n$ denotes {!get_last_step},—
-      and {% $0 \leq \mathtt{k} \leq 3$%}.
-
-      This function may only be called after a successful return from either
-      {!evolve_normal} or {!evolve_one_step}.
-
-      @arkode_mri MRIStepGetDky
-      @raise BadT [t] is not in the interval {% $[t_n - h_n, t_n]$ %}.
-      @raise BadK [k] is not in the range {% $\{0, 1, ..., dord\}$ %}. *)
-  val get_dky : ('d, 'k) session -> ('d, 'k) Nvector.t -> float -> int -> unit
-
   (** Reinitializes the solver with new parameters and state values. The
       values of the independent variable, i.e., the simulation time, and the
       state variables must be given. If given, [problem] specifies new
@@ -4452,7 +4370,7 @@ module MRIStep : sig (* {{{ *)
       @arkode_mri MRIStepSetNonlinearSolver
       @arkode_mri MRIStepSetLinearSolver
       @arkode_mri MRIStepSetLinear
-      @arkode_mri MRIStepSetNonlinear
+      @arkode_mri MRIStepSetNonlineara
       @arkode_mri MRIStepReInit
       @arkode_mri MRIStepRootInit
       @arkode_mri MRIStepSetNlsRhsFn *)
@@ -4463,14 +4381,6 @@ module MRIStep : sig (* {{{ *)
     -> float
     -> ('d, 'k) Nvector.t
     -> unit
-
-  (** Resets the state to the given independent variable value and dependent
-      variable vector. All previously set options, internal counter values,
-      and step-size/error histories are retained.
-
-      @arkode_mri MRIStepReset
-      @since 5.4.0 *)
-  val reset : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
 
   (** Change the number of equations and unknowns between integrator steps.
       The call
@@ -5142,14 +5052,12 @@ exception UserPredictFailure
     @arkode <Constants_link.html> ARK_INVALID_TABLE *)
 exception InvalidTable
 
-(** Raised by {!ARKStep.get_dky}, {!ERKStep.get_dky}, and
-    {!MRIStep.get_dky} for invalid order values.
+(** Raised by {!get_dky} for invalid order values.
 
     @arkode_ark ARKStepGetDky (ARK_BAD_K) *)
 exception BadK
 
-(** Raised by {!ARKStep.get_dky}, {!ERKStep.get_dky}, and
-    {!MRIStep.get_dky} for invalid time values.
+(** Raised by {!get_dky}for invalid time values.
 
     @arkode_ark ARKStepGetDky (ARK_BAD_T) *)
 exception BadT

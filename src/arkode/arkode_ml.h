@@ -138,11 +138,22 @@ int sunml_arkode_translate_exception (value session, value exn_result,
 
 /* Interface with OCaml types */
 
+/*
+ * */
+enum step_type_index {
+    ARKODE_VARIANT_ARKSTEP = 0,
+    ARKODE_VARIANT_ERKSTEP,
+    ARKODE_VARIANT_SPRKSTEP,
+    ARKODE_VARIANT_MRISTEP,
+    ARKODE_VARIANT_SIZE
+};
+
 /* Indices into the Arkode_*.session type.  This enum must be in the same order
  * as the session type's member declaration.  */
 enum arkode_session_index {
     RECORD_ARKODE_SESSION_ARKODE = 0,
     RECORD_ARKODE_SESSION_BACKREF,
+    RECORD_ARKODE_SESSION_STEP_TYPE,
     RECORD_ARKODE_SESSION_NROOTS,
     RECORD_ARKODE_SESSION_CHECKVEC,
     RECORD_ARKODE_SESSION_USES_RESV,

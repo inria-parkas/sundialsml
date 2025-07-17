@@ -113,9 +113,15 @@ type 'd inner_stepper_callbacks = {
   reset_fn : float -> 'd -> unit;
 }
 type 'a res_weight_fun = 'a -> 'a -> unit
+type 'step step_type =
+    ARKStep : arkstep step_type
+  | ERKStep : erkstep step_type
+  | SPRKStep : sprkstep step_type
+  | MRIStep : mristep step_type
 type ('a, 'kind, 'step) session = {
   arkode : 'step arkode_mem;
   backref : c_weak_ref;
+  step_type : 'step step_type;
   nroots : int;
   mutable checkvec : ('a, 'kind) Nvector.t -> unit;
   mutable uses_resv : bool;

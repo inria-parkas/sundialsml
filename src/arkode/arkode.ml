@@ -1803,6 +1803,7 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
     let session = {
             arkode       = arkode_mem;
             backref      = backref;
+            step_type    = ARKStep;
             nroots       = nroots;
             checkvec     = checkvec;
             uses_resv    = false;
@@ -1890,9 +1891,6 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
     session
 
   let get_num_roots { nroots } = nroots
-
-  external reset : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
-      = "sunml_arkode_ark_reset"
 
   external c_reinit
       : ('a, 'k) session -> float -> ('a, 'k) Nvector.t -> unit
@@ -1994,14 +1992,6 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
   let evolve_one_step s t y =
     if Sundials_configuration.safe then s.checkvec y;
     c_evolve_one_step s t y
-
-  external c_get_dky
-      : ('a, 'k) session -> float -> int -> ('a, 'k) Nvector.t -> unit
-      = "sunml_arkode_ark_get_dky"
-
-  let get_dky s y =
-    if Sundials_configuration.safe then s.checkvec y;
-    fun t k -> c_get_dky s t k y
 
   (* Synchronized with arkode_timestepper_stats_index in arkode_ml.h *)
   type timestepper_stats = {
@@ -2491,6 +2481,7 @@ module ERKStep = struct (* {{{ *)
     let session = {
             arkode       = arkode_mem;
             backref      = backref;
+            step_type    = ERKStep;
             nroots       = nroots;
             checkvec     = checkvec;
             uses_resv    = false;
@@ -2552,9 +2543,6 @@ module ERKStep = struct (* {{{ *)
 
   let get_num_roots { nroots } = nroots
 
-  external reset : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
-      = "sunml_arkode_erk_reset"
-
   external c_reinit
       : ('a, 'k) session -> float -> ('a, 'k) Nvector.t -> unit
       = "sunml_arkode_erk_reinit"
@@ -2596,14 +2584,6 @@ module ERKStep = struct (* {{{ *)
   let evolve_one_step s t y =
     if Sundials_configuration.safe then s.checkvec y;
     c_evolve_one_step s t y
-
-  external c_get_dky
-      : ('a, 'k) session -> float -> int -> ('a, 'k) Nvector.t -> unit
-      = "sunml_arkode_erk_get_dky"
-
-  let get_dky s y =
-    if Sundials_configuration.safe then s.checkvec y;
-    fun t k -> c_get_dky s t k y
 
   (* Synchronized with arkode_timestepper_stats_index in arkode_ml.h *)
   type timestepper_stats = {
@@ -2918,6 +2898,7 @@ module SPRKStep = struct (* {{{ *)
     let session = {
             arkode       = arkode_mem;
             backref      = backref;
+            step_type    = SPRKStep;
             nroots       = nroots;
             checkvec     = checkvec;
             uses_resv    = false;
@@ -2975,9 +2956,6 @@ module SPRKStep = struct (* {{{ *)
 
   let get_num_roots { nroots } = nroots
 
-  external reset : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
-      = "sunml_arkode_sprk_reset"
-
   external c_reinit
       : ('a, 'k) session -> float -> ('a, 'k) Nvector.t -> unit
       = "sunml_arkode_sprk_reinit"
@@ -3008,14 +2986,6 @@ module SPRKStep = struct (* {{{ *)
   let evolve_one_step s t y =
     if Sundials_configuration.safe then s.checkvec y;
     c_evolve_one_step s t y
-
-  external c_get_dky
-      : ('a, 'k) session -> float -> int -> ('a, 'k) Nvector.t -> unit
-      = "sunml_arkode_sprk_get_dky"
-
-  let get_dky s y =
-    if Sundials_configuration.safe then s.checkvec y;
-    fun t k -> c_get_dky s t k y
 
   external get_step_stats : ('a, 'k) session -> step_stats
       = "sunml_arkode_sprk_get_step_stats"
@@ -3685,6 +3655,7 @@ module MRIStep = struct (* {{{ *)
     let session = {
             arkode       = arkode_mem;
             backref      = backref;
+            step_type    = MRIStep;
             nroots       = nroots;
             checkvec     = checkvec;
             uses_resv    = false;
@@ -3759,9 +3730,6 @@ module MRIStep = struct (* {{{ *)
     session
 
   let get_num_roots { nroots } = nroots
-
-  external reset : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
-      = "sunml_arkode_mri_reset"
 
   external c_reinit
       : ('a, 'k) session -> float
@@ -3851,14 +3819,6 @@ module MRIStep = struct (* {{{ *)
   let evolve_one_step s t y =
     if Sundials_configuration.safe then s.checkvec y;
     c_evolve_one_step s t y
-
-  external c_get_dky
-      : ('a, 'k) session -> float -> int -> ('a, 'k) Nvector.t -> unit
-      = "sunml_arkode_mri_get_dky"
-
-  let get_dky s y =
-    if Sundials_configuration.safe then s.checkvec y;
-    fun t k -> c_get_dky s t k y
 
   external get_work_space         : ('a, 'k) session -> int * int
       = "sunml_arkode_mri_get_work_space"
@@ -4078,6 +4038,27 @@ type ('data, 'kind) session =
   | ERK of ('data, 'kind, erkstep) Arkode_impl.session
   | SPRK of ('data, 'kind, sprkstep) Arkode_impl.session
   | MRI of ('data, 'kind, mristep) Arkode_impl.session
+
+(* Common functions for stepper*)
+
+let get_checkvec = function
+  | ARK s -> Arkode_impl.(s.checkvec)
+  | ERK s -> Arkode_impl.(s.checkvec)
+  | SPRK s -> Arkode_impl.(s.checkvec)
+  | MRI s -> Arkode_impl.(s.checkvec)
+
+external c_get_dky
+  : ('a, 'k) session -> float -> int -> ('a, 'k) Nvector.t -> unit
+  = "sunml_arkode_get_dky"
+
+let get_dky s y =
+  if Sundials_configuration.safe then (get_checkvec s) y;
+  fun ~t ~k -> c_get_dky s t k y
+
+external reset
+  : ('d, 'k) session -> float -> ('d, 'k) Nvector.t
+  = "sunml_arkode_reset"
+
 
 (* Let C code know about some of the values in this module.  *)
 external c_init_module : exn array -> unit =
