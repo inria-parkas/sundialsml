@@ -1441,6 +1441,7 @@ static value sunml_arkode_last_mass_exception(void *arkode_mem)
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             long int mlsflag;
@@ -1451,17 +1452,22 @@ static value sunml_arkode_last_mass_exception(void *arkode_mem)
 #endif
 
             break;
+            }
         case ARKODE_VARIANT_ERKSTEP:
+        {        c
+    aml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_last_mass_exception");
+        }
     }
 #endif
 
@@ -1481,6 +1487,9 @@ void sunml_arkode_check_flag(const char *call, int flag, void *arkode_mem)
     switch (flag) {
 	case ARK_ILL_INPUT:
 	    caml_raise_constant(ARKODE_EXN(IllInput));
+
+    case ARK_STEPPER_UNSUPPORTED:
+        caml_raise_constant(ARKODE_EXN(StepperUnsupported));
 
 	case ARK_TOO_CLOSE:
 	    caml_raise_constant(ARKODE_EXN(TooClose));
@@ -1602,7 +1611,6 @@ void sunml_arkode_check_flag(const char *call, int flag, void *arkode_mem)
 	case ARK_RELAX_JAC_FAIL:
 	    caml_raise_constant(ARKODE_EXN(RelaxationFuncFailure));
 #endif
-
 
 	default:
 
@@ -2823,7 +2831,6 @@ CAMLprim value sunml_arkode_spils_set_mass_prec_type(value varkode_mem,
     CAMLreturn (Val_unit);
 }
 
-
 /* statistic accessor functions */
 
 CAMLprim value sunml_arkode_dls_get_mass_work_space(value varkode_mem)
@@ -3212,19 +3219,6 @@ CAMLprim value sunml_arkode_spils_get_mass_work_space(value varkode_mem)
     CAMLreturn(r);
 }
 
-CAMLprim value sunml_arkode_ark_write_butcher(value varkode_mem, value vlog)
-{
-    CAMLparam2(varkode_mem, vlog);
-#if 410 <= SUNDIALS_LIB_VERSION
-    int flag = ARKStepWriteButcher(ARKODE_MEM_FROM_ML(varkode_mem),
-				   ML_CFILE(vlog));
-    CHECK_FLAG("ARKStepWriteButcher", flag);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-
-    CAMLreturn(Val_unit);
-}
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * ERKStep basic interface
@@ -3508,23 +3502,6 @@ CAMLprim value sunml_arkode_erk_get_num_rhs_evals(value varkode_mem)
 #endif
 
     CAMLreturn(r);
-}
-/* optional inputs for ERKStep */
-
-/* Optional inputs for time-step adaptivity */
-
-CAMLprim value sunml_arkode_erk_write_butcher(value varkode_mem, value vlog)
-{
-    CAMLparam2(varkode_mem, vlog);
-#if 410 <= SUNDIALS_LIB_VERSION
-    int flag = ERKStepWriteButcher(ARKODE_MEM_FROM_ML(varkode_mem),
-				   ML_CFILE(vlog));
-    CHECK_FLAG("ERKStepWriteButcher", flag);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-
-    CAMLreturn(Val_unit);
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -4633,19 +4610,6 @@ CAMLprim value sunml_arkode_mri_get_current_coupling(value varkode_mem)
     CAMLreturn(vr);
 }
 
-CAMLprim value sunml_arkode_mri_write_coupling(value varkode_mem, value vlog)
-{
-    CAMLparam2(varkode_mem, vlog);
-#if 540 <= SUNDIALS_LIB_VERSION
-    int flag = MRIStepWriteCoupling(ARKODE_MEM_FROM_ML (varkode_mem),
-				    ML_CFILE(vlog));
-    CHECK_FLAG("MRIStepWriteCoupling", flag);
-#else
-    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-#endif
-    CAMLreturn(Val_unit);
-}
-
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * MRIStep Inner Stepper interface.
  */
@@ -4966,6 +4930,7 @@ CAMLprim value sunml_arkode_get_dky(value vdata, value vt, value vk, value vy)
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepGetDky(ARKODE_MEM_FROM_ML(vdata), Double_val(vt),
@@ -4978,7 +4943,9 @@ CAMLprim value sunml_arkode_get_dky(value vdata, value vt, value vk, value vy)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepGetDky(ARKODE_MEM_FROM_ML(vdata), Double_val(vt),
@@ -4989,7 +4956,9 @@ CAMLprim value sunml_arkode_get_dky(value vdata, value vt, value vk, value vy)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = SPRKStepGetDky(ARKODE_MEM_FROM_ML(vdata), Double_val(vt),
@@ -5000,7 +4969,9 @@ CAMLprim value sunml_arkode_get_dky(value vdata, value vt, value vk, value vy)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepGetDky(ARKODE_MEM_FROM_ML(vdata), Double_val(vt),
@@ -5011,8 +4982,7 @@ CAMLprim value sunml_arkode_get_dky(value vdata, value vt, value vk, value vy)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_dky");
+        }
     }
 #endif
     CAMLreturn(Val_unit);
@@ -5039,6 +5009,7 @@ CAMLprim value sunml_arkode_resize(value varkode_mem,
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
@@ -5063,7 +5034,9 @@ CAMLprim value sunml_arkode_resize(value varkode_mem,
 #endif
 
             break;
+            }
         case ARKODE_VARIANT_ERKSTEP:
+            {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
@@ -5080,10 +5053,14 @@ CAMLprim value sunml_arkode_resize(value varkode_mem,
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             // When using the MRI solver with Sundials versions between 4.0.0 and 7.0.0 inclusive, the vhscale parameter does not affect the result.
@@ -5101,8 +5078,7 @@ CAMLprim value sunml_arkode_resize(value varkode_mem,
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_resize");
+        }
     }
 #endif
     CAMLreturn(Val_unit);
@@ -5121,6 +5097,7 @@ CAMLprim value sunml_arkode_reset(value varkode_mem, value vt, value vy)
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepReset(ARKODE_MEM_FROM_ML(varkode_mem), Double_val(vt),
@@ -5131,7 +5108,9 @@ CAMLprim value sunml_arkode_reset(value varkode_mem, value vt, value vy)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepReset(ARKODE_MEM_FROM_ML(varkode_mem), Double_val(vt),
@@ -5142,7 +5121,9 @@ CAMLprim value sunml_arkode_reset(value varkode_mem, value vt, value vy)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
     int flag = SPRKStepReset(ARKODE_MEM_FROM_ML(varkode_mem), Double_val(vt),
@@ -5153,7 +5134,9 @@ CAMLprim value sunml_arkode_reset(value varkode_mem, value vt, value vy)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepReset(ARKODE_MEM_FROM_ML(varkode_mem), Double_val(vt),
@@ -5163,8 +5146,7 @@ CAMLprim value sunml_arkode_reset(value varkode_mem, value vt, value vy)
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_reset");
+        }
     }
 #endif
     CAMLreturn (Val_unit);
@@ -5185,6 +5167,7 @@ CAMLprim value sunml_arkode_ss_tolerances(value vdata, value reltol,
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSStolerances(ARKODE_MEM_FROM_ML(vdata),
@@ -5199,7 +5182,9 @@ CAMLprim value sunml_arkode_ss_tolerances(value vdata, value reltol,
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepSStolerances(ARKODE_MEM_FROM_ML(vdata),
@@ -5211,10 +5196,14 @@ CAMLprim value sunml_arkode_ss_tolerances(value vdata, value reltol,
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepSStolerances(ARKODE_MEM_FROM_ML(vdata),
@@ -5226,8 +5215,7 @@ CAMLprim value sunml_arkode_ss_tolerances(value vdata, value reltol,
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_ss_tolerances");
+        }
     }
 #endif
     CAMLreturn (Val_unit);
@@ -5249,6 +5237,7 @@ CAMLprim value sunml_arkode_sv_tolerances(value vdata, value reltol,
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
             N_Vector atol_nv = NVEC_VAL(abstol);
 
 #if 400 <= SUNDIALS_LIB_VERSION
@@ -5262,7 +5251,9 @@ CAMLprim value sunml_arkode_sv_tolerances(value vdata, value reltol,
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             N_Vector atol_nv = NVEC_VAL(abstol);
@@ -5275,10 +5266,14 @@ CAMLprim value sunml_arkode_sv_tolerances(value vdata, value reltol,
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             N_Vector atol_nv = NVEC_VAL(abstol);
@@ -5291,8 +5286,7 @@ CAMLprim value sunml_arkode_sv_tolerances(value vdata, value reltol,
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_sv_tolerances");
+        }
     }
 #endif
     CAMLreturn(Val_unit);
@@ -5309,6 +5303,7 @@ CAMLprim value sunml_arkode_wf_tolerances (value vdata)
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepWFtolerances(ARKODE_MEM_FROM_ML(vdata), errw);
@@ -5319,7 +5314,9 @@ CAMLprim value sunml_arkode_wf_tolerances (value vdata)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepWFtolerances(ARKODE_MEM_FROM_ML(vdata), errw);
@@ -5329,10 +5326,14 @@ CAMLprim value sunml_arkode_wf_tolerances (value vdata)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepWFtolerances(ARKODE_MEM_FROM_ML(vdata), errw);
@@ -5342,8 +5343,7 @@ CAMLprim value sunml_arkode_wf_tolerances (value vdata)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_wf_tolerances");
+        }
     }
 #endif
     CAMLreturn (Val_unit);
@@ -5362,6 +5362,7 @@ CAMLprim value sunml_arkode_ress_tolerance(value vdata, value abstol)
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepResStolerance(ARKODE_MEM_FROM_ML(vdata),
@@ -5374,17 +5375,22 @@ CAMLprim value sunml_arkode_ress_tolerance(value vdata, value abstol)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_ress_tolerance");
+        }
     }
 #endif
     CAMLreturn (Val_unit);
@@ -5402,6 +5408,7 @@ CAMLprim value sunml_arkode_resv_tolerance(value vdata, value abstol)
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
     int flag = ARKStepResVtolerance(ARKODE_MEM_FROM_ML(vdata), NVEC_VAL(abstol));
@@ -5412,17 +5419,22 @@ CAMLprim value sunml_arkode_resv_tolerance(value vdata, value abstol)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_resv_tolerance");
+        }
     }
 #endif
     CAMLreturn (Val_unit);
@@ -5439,6 +5451,7 @@ CAMLprim value sunml_arkode_resf_tolerance(value vdata)
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepResFtolerance(ARKODE_MEM_FROM_ML(vdata), resw);
@@ -5449,22 +5462,26 @@ CAMLprim value sunml_arkode_resf_tolerance(value vdata)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_resf_tolerance");
+        }
     }
 #endif
     CAMLreturn (Val_unit);
 }
-
 
 CAMLprim value sunml_arkode_set_linear_solver (value varkode_mem,
 						   value vlsolv,
@@ -5491,10 +5508,11 @@ CAMLprim value sunml_arkode_set_linear_solver (value varkode_mem,
     }
 
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
@@ -5519,13 +5537,19 @@ CAMLprim value sunml_arkode_set_linear_solver (value varkode_mem,
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
@@ -5547,13 +5571,11 @@ CAMLprim value sunml_arkode_set_linear_solver (value varkode_mem,
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_linear_solver");
+        }
     }
 #endif
     CAMLreturn (Val_unit);
 }
-
 
 CAMLprim value sunml_arkode_set_mass_linear_solver (value varkode_mem,
 							value vlsolv,
@@ -5572,10 +5594,11 @@ CAMLprim value sunml_arkode_set_mass_linear_solver (value varkode_mem,
                     Bool_val(vtimedep));
     CHECK_LS_FLAG ("ARKodeSetMassLinearSolver", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
@@ -5591,17 +5614,22 @@ CAMLprim value sunml_arkode_set_mass_linear_solver (value varkode_mem,
 #endif
 
             break;
+            }
         case ARKODE_VARIANT_ERKSTEP:
+        {        c
+    aml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_mass_linear_solver");
+        }
     }
 #endif
     CAMLreturn (Val_unit);
@@ -5624,6 +5652,7 @@ CAMLprim value sunml_arkode_root_init (value varkode_mem, value vnroots)
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
             void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
             int nroots = Int_val (vnroots);
 #if 400 <= SUNDIALS_LIB_VERSION
@@ -5636,7 +5665,9 @@ CAMLprim value sunml_arkode_root_init (value varkode_mem, value vnroots)
             Store_field (varkode_mem, RECORD_ARKODE_SESSION_NROOTS, vnroots);
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
@@ -5649,7 +5680,9 @@ CAMLprim value sunml_arkode_root_init (value varkode_mem, value vnroots)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
@@ -5662,7 +5695,9 @@ CAMLprim value sunml_arkode_root_init (value varkode_mem, value vnroots)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
@@ -5675,8 +5710,7 @@ CAMLprim value sunml_arkode_root_init (value varkode_mem, value vnroots)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_root_init");
+        }
     }
 #endif
 
@@ -5690,10 +5724,11 @@ CAMLprim value sunml_arkode_set_defaults(value varkode_mem)
     int flag = ARKodeSetDefaults(ARKODE_MEM_FROM_ML(varkode_mem));
     CHECK_FLAG("ARKodeSetDefaults", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetDefaults(ARKODE_MEM_FROM_ML(varkode_mem));
             CHECK_FLAG("ARKStepSetDefaults", flag);
@@ -5702,7 +5737,9 @@ CAMLprim value sunml_arkode_set_defaults(value varkode_mem)
             CHECK_FLAG("ARKodeSetDefaults", flag);
 #endif
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepSetDefaults(ARKODE_MEM_FROM_ML(varkode_mem));
@@ -5712,7 +5749,9 @@ CAMLprim value sunml_arkode_set_defaults(value varkode_mem)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = SPRKStepSetDefaults(ARKODE_MEM_FROM_ML(varkode_mem));
@@ -5722,7 +5761,9 @@ CAMLprim value sunml_arkode_set_defaults(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepSetDefaults(ARKODE_MEM_FROM_ML(varkode_mem));
@@ -5732,8 +5773,7 @@ CAMLprim value sunml_arkode_set_defaults(value varkode_mem)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_defaults");
+        }
     }
 #endif
     CAMLreturn (Val_unit);
@@ -5747,10 +5787,11 @@ CAMLprim value sunml_arkode_set_order(value varkode_mem, value varg)
     int flag = ARKodeSetOrder(ARKODE_MEM_FROM_ML(varkode_mem), Int_val(varg));
     CHECK_FLAG("ARKodeSetOrder", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetOrder(ARKODE_MEM_FROM_ML(varkode_mem), Int_val(varg));
@@ -5761,7 +5802,9 @@ CAMLprim value sunml_arkode_set_order(value varkode_mem, value varg)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepSetOrder(ARKODE_MEM_FROM_ML(varkode_mem), Int_val(varg));
@@ -5771,7 +5814,9 @@ CAMLprim value sunml_arkode_set_order(value varkode_mem, value varg)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = SPRKStepSetOrder(ARKODE_MEM_FROM_ML(varkode_mem), Int_val(varg));
@@ -5781,7 +5826,9 @@ CAMLprim value sunml_arkode_set_order(value varkode_mem, value varg)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 620 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepSetOrder(ARKODE_MEM_FROM_ML(varkode_mem), Int_val(vord));
@@ -5791,8 +5838,7 @@ CAMLprim value sunml_arkode_set_order(value varkode_mem, value varg)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_order");
+        }
     }
 #endif
 
@@ -5809,10 +5855,11 @@ CAMLprim value sunml_arkode_set_interpolant_type(value varkode_mem,
                 ark_interpolant_types[Int_val(vinterptype)]);
     CHECK_FLAG("ARKodeSetInterpolantType", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 520 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetInterpolantType(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -5823,7 +5870,9 @@ CAMLprim value sunml_arkode_set_interpolant_type(value varkode_mem,
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 520 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepSetInterpolantType(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -5834,7 +5883,9 @@ CAMLprim value sunml_arkode_set_interpolant_type(value varkode_mem,
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = SPRKStepSetInterpolantType(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -5845,7 +5896,9 @@ CAMLprim value sunml_arkode_set_interpolant_type(value varkode_mem,
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 520 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepSetInterpolantType(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -5856,8 +5909,7 @@ CAMLprim value sunml_arkode_set_interpolant_type(value varkode_mem,
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_interpolant_type");
+        }
     }
 #endif
     CAMLreturn (Val_unit);
@@ -5873,10 +5925,11 @@ CAMLprim value sunml_arkode_set_interpolant_degree(value varkode_mem,
                     Int_val(vinterpdegree));
     CHECK_FLAG("ARKodeSetInterpolantDegree", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 520 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetInterpolantDegree(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -5887,7 +5940,9 @@ CAMLprim value sunml_arkode_set_interpolant_degree(value varkode_mem,
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 520 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepSetInterpolantDegree(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -5898,7 +5953,9 @@ CAMLprim value sunml_arkode_set_interpolant_degree(value varkode_mem,
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = SPRKStepSetInterpolantDegree(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -5909,7 +5966,9 @@ CAMLprim value sunml_arkode_set_interpolant_degree(value varkode_mem,
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 520 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepSetInterpolantDegree(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -5920,8 +5979,7 @@ CAMLprim value sunml_arkode_set_interpolant_degree(value varkode_mem,
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_interpolant_degree");
+        }
     }
 #endif
 
@@ -5937,10 +5995,11 @@ static value sunml_arkode_session_to_value(void *arkode_mem)
     ARKodeGetUserData(arkode_mem, &user_data);
     WEAK_DEREF (session, *(value*)user_data);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(arkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 630 <= SUNDIALS_LIB_VERSION
             void *user_data = NULL;
@@ -5951,13 +6010,19 @@ static value sunml_arkode_session_to_value(void *arkode_mem)
             WEAK_DEREF (session, *(value*)user_data);
 d
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
 #if 630 <= SUNDIALS_LIB_VERSION
@@ -5972,8 +6037,7 @@ d
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_session_to_value");
+        }
     }
 #endif
 
@@ -5996,10 +6060,11 @@ CAMLprim value sunml_arkode_set_nonlinear_solver(value varkode_mem,
     int flag = ARKodeSetNonlinearSolver(arkode_mem, nlsolv);
     CHECK_FLAG ("ARKodeSetNonlinearSolver", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
@@ -6016,13 +6081,19 @@ CAMLprim value sunml_arkode_set_nonlinear_solver(value varkode_mem,
 #endif
 
             break;
+            }
         case ARKODE_VARIANT_ERKSTEP:
+        {        c
+    aml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
@@ -6039,8 +6110,7 @@ CAMLprim value sunml_arkode_set_nonlinear_solver(value varkode_mem,
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_nonlinear_solver");
+        }
     }
 #endif
     CAMLreturn (Val_unit);
@@ -6056,10 +6126,11 @@ CAMLprim value sunml_arkode_set_nls_rhs_fn(value varkode_mem)
     flag = ARKodeSetNlsRhsFn(ARKODE_MEM_FROM_ML(varkode_mem), nlsrhsfn);
     CHECK_FLAG ("ARKodeSetNlsRhsFn", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 580 <= SUNDIALS_LIB_VERSION
             int flag;
@@ -6071,13 +6142,19 @@ CAMLprim value sunml_arkode_set_nls_rhs_fn(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 580 <= SUNDIALS_LIB_VERSION
             int flag;
@@ -6089,8 +6166,7 @@ CAMLprim value sunml_arkode_set_nls_rhs_fn(value varkode_mem)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_nls_rhs_fn");
+        }
     }
 #endif
     CAMLreturn (Val_unit);
@@ -6104,10 +6180,11 @@ CAMLprim value sunml_arkode_set_linear(value varkode_mem, value vtimedepend)
                     Bool_val(vtimedepend));
     CHECK_FLAG("ARKodeSetLinear", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetLinear(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -6120,13 +6197,19 @@ CAMLprim value sunml_arkode_set_linear(value varkode_mem, value vtimedepend)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepSetLinear(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -6137,8 +6220,7 @@ CAMLprim value sunml_arkode_set_linear(value varkode_mem, value vtimedepend)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_linear");
+        }
     }
 #endif
 
@@ -6153,10 +6235,11 @@ CAMLprim value sunml_arkode_set_nonlinear(value varkode_mem)
     int flag = ARKodeSetNonlinear(ARKODE_MEM_FROM_ML(varkode_mem));
     CHECK_FLAG("ARKodeSetNonlinear", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetNonlinear(ARKODE_MEM_FROM_ML(varkode_mem));
@@ -6167,13 +6250,19 @@ CAMLprim value sunml_arkode_set_nonlinear(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepSetNonlinear(ARKODE_MEM_FROM_ML(varkode_mem));
             CHECK_FLAG("MRIStepSetNonlinear", flag);
@@ -6181,8 +6270,7 @@ CAMLprim value sunml_arkode_set_nonlinear(value varkode_mem)
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_nonlinear");
+        }
     }
 #endif
     CAMLreturn (Val_unit);
@@ -6198,10 +6286,11 @@ CAMLprim value sunml_arkode_set_deduce_implicit_rhs(value varkode_mem,
                     Bool_val(vdeduce));
     CHECK_FLAG("ARKodeSetDeduceImplicitRhs", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 620 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetDeduceImplicitRhs(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -6212,13 +6301,19 @@ CAMLprim value sunml_arkode_set_deduce_implicit_rhs(value varkode_mem,
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 620 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepSetDeduceImplicitRhs(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -6229,8 +6324,7 @@ CAMLprim value sunml_arkode_set_deduce_implicit_rhs(value varkode_mem,
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_deduce_implicit_rhs");
+        }
     }
 #endif
 
@@ -6245,10 +6339,11 @@ CAMLprim value sunml_arkode_set_adapt_controller(value varkode_mem, value vadapt
                     ML_ADAPTCONTROLLER(vadaptc));
     CHECK_FLAG("ARKodeSetAdaptController", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 670 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetAdaptController(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -6259,8 +6354,9 @@ CAMLprim value sunml_arkode_set_adapt_controller(value varkode_mem, value vadapt
 #endif
 
             break;
-        case ARKODE_VARIANT_ERKSTEP:
-#if 670 <= SUNDIALS_LIB_VERSION
+        }
+            {case ARKODE_VARIANT_ERKSTEP:
+#if 670 = SUNDIALS_LIB_VERSION
             int flag = ERKStepSetAdaptController(ARKODE_MEM_FROM_ML(varkode_mem),
                             ML_ADAPTCONTROLLER(vadaptc));
             CHECK_FLAG("ERKStepSetAdaptController", flag);
@@ -6268,14 +6364,17 @@ CAMLprim value sunml_arkode_set_adapt_controller(value varkode_mem, value vadapt
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_adapt_controller");
+        }
     }
 #endif
     CAMLreturn (Val_unit);
@@ -6289,10 +6388,11 @@ CAMLprim value sunml_arkode_set_adaptivity_adjustment(value varkode_mem, value v
                     Int_val(vadjust));
     CHECK_FLAG("ARKodeSetAdaptivityAdjustment", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 670 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetAdaptivityAdjustment(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -6302,8 +6402,9 @@ CAMLprim value sunml_arkode_set_adaptivity_adjustment(value varkode_mem, value v
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
             break;
-        case ARKODE_VARIANT_ERKSTEP:
-#if 670 <= SUNDIALS_LIB_VERSION
+        }
+            {case ARKODE_VARIANT_ERKSTEP:
+#if 670 = SUNDIALS_LIB_VERSION
             int flag = ERKStepSetAdaptivityAdjustment(ARKODE_MEM_FROM_ML(varkode_mem),
                                 Int_val(vadjust));
             CHECK_FLAG("ERKStepSetAdaptivityAdjustment", flag);
@@ -6311,14 +6412,17 @@ CAMLprim value sunml_arkode_set_adaptivity_adjustment(value varkode_mem, value v
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_adaptivity_adjustment");
+        }
     }
 #endif
     CAMLreturn (Val_unit);
@@ -6333,10 +6437,11 @@ CAMLprim value sunml_arkode_set_cfl_fraction(value varkode_mem, value varg)
                     Double_val(varg));
     CHECK_FLAG("ARKodeSetCFLFraction", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetCFLFraction(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -6348,7 +6453,9 @@ CAMLprim value sunml_arkode_set_cfl_fraction(value varkode_mem, value varg)
             CHECK_FLAG("ARKodeSetCFLFraction", flag);
 #endif
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepSetCFLFraction(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -6359,14 +6466,17 @@ CAMLprim value sunml_arkode_set_cfl_fraction(value varkode_mem, value varg)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_cfl_fraction");
+        }
     }
 #endif
 
@@ -6382,10 +6492,11 @@ CAMLprim value sunml_arkode_set_safety_factor(value varkode_mem, value varg)
                     Double_val(varg));
     CHECK_FLAG("ARKodeSetSafetyFactor", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetSafetyFactor(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -6398,7 +6509,9 @@ CAMLprim value sunml_arkode_set_safety_factor(value varkode_mem, value varg)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepSetSafetyFactor(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -6409,12 +6522,15 @@ CAMLprim value sunml_arkode_set_safety_factor(value varkode_mem, value varg)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_safety_factor");
+        }
     }
 #endif
 
@@ -6430,10 +6546,11 @@ CAMLprim value sunml_arkode_set_max_growth(value varkode_mem, value varg)
                     Double_val(varg));
     CHECK_FLAG("ARKodeSetMaxGrowth", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetMaxGrowth(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -6446,7 +6563,9 @@ CAMLprim value sunml_arkode_set_max_growth(value varkode_mem, value varg)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepSetMaxGrowth(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -6457,14 +6576,17 @@ CAMLprim value sunml_arkode_set_max_growth(value varkode_mem, value varg)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
              caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
              caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_max_growth");
+        }
     }
 #endif
     CAMLreturn (Val_unit);
@@ -6479,10 +6601,11 @@ CAMLprim value sunml_arkode_set_min_reduction(value varkode_mem, value varg)
                     Double_val(varg));
     CHECK_FLAG("ARKodeSetMinReduction", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 530 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetMinReduction(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -6493,7 +6616,9 @@ CAMLprim value sunml_arkode_set_min_reduction(value varkode_mem, value varg)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 530 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepSetMinReduction(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -6504,14 +6629,17 @@ CAMLprim value sunml_arkode_set_min_reduction(value varkode_mem, value varg)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_min_reduction");
+        }
     }
 #endif
     CAMLreturn (Val_unit);
@@ -6527,10 +6655,11 @@ CAMLprim value sunml_arkode_set_fixed_step_bounds(value varkode_mem,
                     Double_val(vlb), Double_val(vub));
     CHECK_FLAG("ARKodeSetFixedStepBounds", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetFixedStepBounds(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -6542,8 +6671,9 @@ CAMLprim value sunml_arkode_set_fixed_step_bounds(value varkode_mem,
             CHECK_FLAG("ARKodeSetFixedStepBounds", flag);
 #endif
             break;
-        case ARKODE_VARIANT_ERKSTEP:
-#if 400 <= SUNDIALS_LIB_VERSION
+        }
+            {case ARKODE_VARIANT_ERKSTEP:
+#if 400 = SUNDIALS_LIB_VERSION
             int flag = ERKStepSetFixedStepBounds(ARKODE_MEM_FROM_ML(varkode_mem),
                             Double_val(vlb), Double_val(vub));
             CHECK_FLAG("ERKStepSetFixedStepBounds", flag);
@@ -6551,20 +6681,22 @@ CAMLprim value sunml_arkode_set_fixed_step_bounds(value varkode_mem,
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_fixed_step_bounds");
+        }
     }
 #endif
 
     CAMLreturn (Val_unit);
 }
-
 
 CAMLprim value sunml_arkode_set_max_first_growth(value varkode_mem, value varg)
 {
@@ -6575,10 +6707,11 @@ CAMLprim value sunml_arkode_set_max_first_growth(value varkode_mem, value varg)
                     Double_val(varg));
     CHECK_FLAG("ARKodeSetMaxFirstGrowth", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetMaxFirstGrowth(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -6590,7 +6723,9 @@ CAMLprim value sunml_arkode_set_max_first_growth(value varkode_mem, value varg)
             CHECK_FLAG("ARKodeSetMaxFirstGrowth", flag);
 #endif
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepSetMaxFirstGrowth(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -6601,14 +6736,17 @@ CAMLprim value sunml_arkode_set_max_first_growth(value varkode_mem, value varg)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_max_first_growth");
+        }
     }
 #endif
 
@@ -6624,10 +6762,11 @@ CAMLprim value sunml_arkode_set_max_efail_growth(value varkode_mem, value varg)
                     Double_val(varg));
     CHECK_FLAG("ARKodeSetMaxEFailGrowth", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetMaxEFailGrowth(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -6640,7 +6779,9 @@ CAMLprim value sunml_arkode_set_max_efail_growth(value varkode_mem, value varg)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepSetMaxEFailGrowth(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -6651,14 +6792,17 @@ CAMLprim value sunml_arkode_set_max_efail_growth(value varkode_mem, value varg)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_max_efail_growth");
+        }
     }
 #endif
     CAMLreturn (Val_unit);
@@ -6670,13 +6814,14 @@ CAMLprim value sunml_arkode_set_small_num_efails(value varkode_mem, value varg)
 
 #if 710 <= SUNDIALS_LIB_VERSION
     int flag = ARKodeSetSmallNumEFails(ARKODE_MEM_FROM_ML(varkode_mem),
-                    Int_val(varg));
+                Int_val(varg));
     CHECK_FLAG("ARKodeSetSmallNumEFails", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetSmallNumEFails(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -6689,7 +6834,9 @@ CAMLprim value sunml_arkode_set_small_num_efails(value varkode_mem, value varg)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepSetSmallNumEFails(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -6700,19 +6847,21 @@ CAMLprim value sunml_arkode_set_small_num_efails(value varkode_mem, value varg)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_small_num_efails");
+        }
     }
 #endif
     CAMLreturn (Val_unit);
 }
-
 
 CAMLprim value sunml_arkode_set_max_cfail_growth(value varkode_mem, value varg)
 {
@@ -6722,10 +6871,11 @@ CAMLprim value sunml_arkode_set_max_cfail_growth(value varkode_mem, value varg)
                     Double_val(varg));
     CHECK_FLAG("ARKodeSetMaxCFailGrowth", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetMaxCFailGrowth(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -6738,17 +6888,22 @@ CAMLprim value sunml_arkode_set_max_cfail_growth(value varkode_mem, value varg)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_max_cfail_growth");
+        }
     }
 #endif
 
@@ -6764,10 +6919,11 @@ CAMLprim value sunml_arkode_set_nonlin_crdown(value varkode_mem, value varg)
                     Double_val(varg));
     CHECK_FLAG("ARKodeSetNonlinCRDown", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetNonlinCRDown(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -6780,13 +6936,19 @@ CAMLprim value sunml_arkode_set_nonlin_crdown(value varkode_mem, value varg)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepSetNonlinCRDown(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -6797,8 +6959,7 @@ CAMLprim value sunml_arkode_set_nonlin_crdown(value varkode_mem, value varg)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type insunml_arkode_set_nonlin_crdown ");
+        }
     }
 #endif
 
@@ -6814,10 +6975,11 @@ CAMLprim value sunml_arkode_set_nonlin_rdiv(value varkode_mem, value varg)
                     Double_val(varg));
     CHECK_FLAG("ARKodeSetNonlinRDiv", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
     int flag = ARKStepSetNonlinRDiv(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -6830,13 +6992,19 @@ CAMLprim value sunml_arkode_set_nonlin_rdiv(value varkode_mem, value varg)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepSetNonlinRDiv(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -6847,14 +7015,12 @@ CAMLprim value sunml_arkode_set_nonlin_rdiv(value varkode_mem, value varg)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_nonlin_rdiv");
+        }
     }
 #endif
 
     CAMLreturn (Val_unit);
 }
-
 
 CAMLprim value sunml_arkode_set_delta_gamma_max(value varkode_mem, value varg)
 {
@@ -6865,10 +7031,11 @@ CAMLprim value sunml_arkode_set_delta_gamma_max(value varkode_mem, value varg)
                     Double_val(varg));
     CHECK_FLAG("ARKodeSetDeltaGammaMax", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetDeltaGammaMax(ARKODE_MEM_FROM_ML(varkode_mem),
                             Double_val(varg));
@@ -6879,13 +7046,19 @@ CAMLprim value sunml_arkode_set_delta_gamma_max(value varkode_mem, value varg)
             CHECK_FLAG("ARKodeSetDeltaGammaMax", flag);
 #endif
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepSetDeltaGammaMax(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -6896,8 +7069,7 @@ CAMLprim value sunml_arkode_set_delta_gamma_max(value varkode_mem, value varg)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_delta_gamma_max");
+        }
     }
 #endif
 
@@ -6914,10 +7086,11 @@ CAMLprim value sunml_arkode_set_lsetup_frequency(value varkode_mem,
                         Int_val(varg));
     CHECK_FLAG("ARKodeSetLSetupFrequency", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetLSetupFrequency(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -6934,13 +7107,19 @@ CAMLprim value sunml_arkode_set_lsetup_frequency(value varkode_mem,
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepSetLSetupFrequency(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -6951,29 +7130,27 @@ CAMLprim value sunml_arkode_set_lsetup_frequency(value varkode_mem,
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_lsetup_frequency");
+        }
     }
 #endif
 
     CAMLreturn (Val_unit);
 }
 
-
 CAMLprim value sunml_arkode_set_predictor_method(value varkode_mem, value vmethod)
 {
     CAMLparam2(varkode_mem, vmethod);
-
 
 #if 710 <= SUNDIALS_LIB_VERSION
     int flag = ARKodeSetPredictorMethod(ARKODE_MEM_FROM_ML(varkode_mem),
                         Int_val(vmethod));
     CHECK_FLAG("ARKodeSetPredictorMethod", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetPredictorMethod(ARKODE_MEM_FROM_ML(varkode_mem),
                                 Int_val(vmethod));
@@ -6988,13 +7165,19 @@ CAMLprim value sunml_arkode_set_predictor_method(value varkode_mem, value vmetho
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepSetPredictorMethod(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -7005,8 +7188,7 @@ CAMLprim value sunml_arkode_set_predictor_method(value varkode_mem, value vmetho
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_predictor_method");
+        }
     }
 #endif
 
@@ -7024,10 +7206,11 @@ CAMLprim value sunml_arkode_set_stability_fn(value varkode_mem, value vhasf)
                     ARKODE_BACKREF_FROM_ML(varkode_mem));
     CHECK_FLAG("ARKodeSetStabilityFn", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
         void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
 
@@ -7044,8 +7227,9 @@ CAMLprim value sunml_arkode_set_stability_fn(value varkode_mem, value vhasf)
 #endif
 
             break;
-        case ARKODE_VARIANT_ERKSTEP:
-#if 400 <= SUNDIALS_LIB_VERSION
+            }
+        case    { ARKODE_VARIANT_ERKSTEP:
+#if 400 <= SNDIALS_LIB_VERSION
             void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
 
             int flag = ERKStepSetStabilityFn(arkode_mem,
@@ -7056,14 +7240,17 @@ CAMLprim value sunml_arkode_set_stability_fn(value varkode_mem, value vhasf)
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_stability_fn");
+        }
     }
 #endif
     CAMLreturn (Val_unit);
@@ -7078,10 +7265,11 @@ CAMLprim value sunml_arkode_set_max_err_test_fails(value varkode_mem, value maxn
                     Int_val(maxnef));
     CHECK_FLAG("ARKodeSetMaxErrTestFails", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetMaxErrTestFails(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -7093,8 +7281,9 @@ CAMLprim value sunml_arkode_set_max_err_test_fails(value varkode_mem, value maxn
             CHECK_FLAG("ARKodeSetMaxErrTestFails", flag);
 #endif
             break;
-        case ARKODE_VARIANT_ERKSTEP:
-#if 400 <= SUNDIALS_LIB_VERSION
+        }
+            {case ARKODE_VARIANT_ERKSTEP:
+#if 400 = SUNDIALS_LIB_VERSION
             int flag = ERKStepSetMaxErrTestFails(ARKODE_MEM_FROM_ML(varkode_mem),
                             Int_val(maxnef));
             CHECK_FLAG("ERKStepSetMaxErrTestFails", flag);
@@ -7102,14 +7291,17 @@ CAMLprim value sunml_arkode_set_max_err_test_fails(value varkode_mem, value maxn
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_max_err_test_fails");
+        }
     }
 #endif
 
@@ -7125,10 +7317,11 @@ CAMLprim value sunml_arkode_set_max_nonlin_iters(value varkode_mem, value maxcor
                     Int_val(maxcor));
     CHECK_FLAG("ARKodeSetMaxNonlinIters", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetMaxNonlinIters(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -7140,13 +7333,19 @@ CAMLprim value sunml_arkode_set_max_nonlin_iters(value varkode_mem, value maxcor
             CHECK_FLAG("ARKodeSetMaxNonlinIters", flag);
 #endif
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepSetMaxNonlinIters(ARKODE_MEM_FROM_ML(varkode_mem),
                                 Int_val(maxcor));
@@ -7155,8 +7354,7 @@ CAMLprim value sunml_arkode_set_max_nonlin_iters(value varkode_mem, value maxcor
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_max_nonlin_iters");
+        }
     }
 #endif
 
@@ -7172,10 +7370,11 @@ CAMLprim value sunml_arkode_set_max_conv_fails(value varkode_mem, value maxncf)
                     Int_val(maxncf));
     CHECK_FLAG("ARKodeSetMaxConvFails", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetMaxConvFails(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -7187,17 +7386,22 @@ CAMLprim value sunml_arkode_set_max_conv_fails(value varkode_mem, value maxncf)
             CHECK_FLAG("ARKodeSetMaxConvFails", flag);
 #endif
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_max_conv_fails");
+        }
     }
 #endif
 
@@ -7213,10 +7417,11 @@ CAMLprim value sunml_arkode_set_nonlin_conv_coef(value varkode_mem, value nlscoe
                     Double_val(nlscoef));
     CHECK_FLAG("ARKodeSetNonlinConvCoef", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
     int flag = ARKStepSetNonlinConvCoef(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -7229,13 +7434,19 @@ CAMLprim value sunml_arkode_set_nonlin_conv_coef(value varkode_mem, value nlscoe
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepSetNonlinConvCoef(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -7246,8 +7457,7 @@ CAMLprim value sunml_arkode_set_nonlin_conv_coef(value varkode_mem, value nlscoe
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_nonlin_conv_coef");
+        }
     }
 #endif
 
@@ -7263,10 +7473,11 @@ CAMLprim value sunml_arkode_set_constraints(value varkode_mem, value vnv)
                     NVEC_VAL(vnv));
     CHECK_FLAG("ARKStepSetConstraints", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 500 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetConstraints(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -7277,7 +7488,9 @@ CAMLprim value sunml_arkode_set_constraints(value varkode_mem, value vnv)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 500 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepSetConstraints(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -7288,14 +7501,17 @@ CAMLprim value sunml_arkode_set_constraints(value varkode_mem, value vnv)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_constraints");
+        }
     }
 #endif
 
@@ -7311,10 +7527,11 @@ CAMLprim value sunml_arkode_set_max_num_steps(value varkode_mem, value mxsteps)
                     Long_val(mxsteps));
     CHECK_FLAG("ARKodeSetMaxNumSteps", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetMaxNumSteps(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -7327,7 +7544,9 @@ CAMLprim value sunml_arkode_set_max_num_steps(value varkode_mem, value mxsteps)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepSetMaxNumSteps(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -7338,7 +7557,9 @@ CAMLprim value sunml_arkode_set_max_num_steps(value varkode_mem, value mxsteps)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = SPRKStepSetMaxNumSteps(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -7349,7 +7570,9 @@ CAMLprim value sunml_arkode_set_max_num_steps(value varkode_mem, value mxsteps)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepSetMaxNumSteps(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -7360,8 +7583,7 @@ CAMLprim value sunml_arkode_set_max_num_steps(value varkode_mem, value mxsteps)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_max_num_steps");
+        }
     }
 #endif
 
@@ -7377,10 +7599,11 @@ CAMLprim value sunml_arkode_set_max_hnil_warns(value varkode_mem, value mxhnil)
                     Int_val(mxhnil));
     CHECK_FLAG("ARKodeSetMaxHnilWarns", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetMaxHnilWarns(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -7393,7 +7616,9 @@ CAMLprim value sunml_arkode_set_max_hnil_warns(value varkode_mem, value mxhnil)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepSetMaxHnilWarns(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -7404,10 +7629,14 @@ CAMLprim value sunml_arkode_set_max_hnil_warns(value varkode_mem, value mxhnil)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepSetMaxHnilWarns(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -7418,29 +7647,27 @@ CAMLprim value sunml_arkode_set_max_hnil_warns(value varkode_mem, value mxhnil)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_max_hnil_warns");
+        }
     }
 #endif
 
     CAMLreturn (Val_unit);
 }
 
-
 CAMLprim value sunml_arkode_set_init_step(value varkode_mem, value hin)
 {
     CAMLparam2(varkode_mem, hin);
-
 
 #if 710 <= SUNDIALS_LIB_VERSION
     int flag = ARKodeSetInitStep(ARKODE_MEM_FROM_ML(varkode_mem),
                 Double_val(hin));
     CHECK_FLAG("ARKodeSetInitStep", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetInitStep(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -7453,7 +7680,9 @@ CAMLprim value sunml_arkode_set_init_step(value varkode_mem, value hin)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepSetInitStep(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -7464,14 +7693,17 @@ CAMLprim value sunml_arkode_set_init_step(value varkode_mem, value hin)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_init_step");
+        }
     }
 #endif
 
@@ -7487,10 +7719,11 @@ CAMLprim value sunml_arkode_set_min_step(value varkode_mem, value hmin)
 				Double_val(hmin));
     CHECK_FLAG("ARKodeSetMinStep", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetMinStep(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -7503,7 +7736,9 @@ CAMLprim value sunml_arkode_set_min_step(value varkode_mem, value hmin)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepSetMinStep(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -7514,14 +7749,17 @@ CAMLprim value sunml_arkode_set_min_step(value varkode_mem, value hmin)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_min_step");
+        }
     }
 #endif
 
@@ -7537,10 +7775,11 @@ CAMLprim value sunml_arkode_set_max_step(value varkode_mem, value hmax)
                 Double_val(hmax));
     CHECK_FLAG("ARKodeSetMaxStep", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetMaxStep(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -7553,7 +7792,9 @@ CAMLprim value sunml_arkode_set_max_step(value varkode_mem, value hmax)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepSetMaxStep(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -7564,14 +7805,17 @@ CAMLprim value sunml_arkode_set_max_step(value varkode_mem, value hmax)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_max_step");
+        }
     }
 #endif
 
@@ -7588,10 +7832,11 @@ CAMLprim value sunml_arkode_set_interpolate_stop_time(value varkode_mem,
                     Bool_val(vinterp));
     CHECK_FLAG("ARKodeSetInterpolateStopTime", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetInterpolateStopTime(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -7602,8 +7847,9 @@ CAMLprim value sunml_arkode_set_interpolate_stop_time(value varkode_mem,
 #endif
 
             break;
-        case ARKODE_VARIANT_ERKSTEP:
-#if 660 <= SUNDIALS_LIB_VERSION
+        }
+            {case ARKODE_VARIANT_ERKSTEP:
+#if 660 = SUNDIALS_LIB_VERSION
             int flag = ERKStepSetInterpolateStopTime(ARKODE_MEM_FROM_ML(varkode_mem),
                             Bool_val(vinterp));
             CHECK_FLAG("ERKStepSetInterpolateStopTime", flag);
@@ -7612,10 +7858,14 @@ CAMLprim value sunml_arkode_set_interpolate_stop_time(value varkode_mem,
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepSetInterpolateStopTime(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -7626,8 +7876,7 @@ CAMLprim value sunml_arkode_set_interpolate_stop_time(value varkode_mem,
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_interpolate_stop_time");
+        }
     }
 #endif
 
@@ -7638,16 +7887,16 @@ CAMLprim value sunml_arkode_set_stop_time(value varkode_mem, value tstop)
 {
     CAMLparam2(varkode_mem, tstop);
 
-
 #if 710 <= SUNDIALS_LIB_VERSION
     int flag = ARKodeSetStopTime(ARKODE_MEM_FROM_ML(varkode_mem),
                 Double_val(tstop));
     CHECK_FLAG("ARKodeSetStopTime", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetStopTime(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -7660,7 +7909,9 @@ CAMLprim value sunml_arkode_set_stop_time(value varkode_mem, value tstop)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepSetStopTime(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -7671,7 +7922,9 @@ CAMLprim value sunml_arkode_set_stop_time(value varkode_mem, value tstop)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = SPRKStepSetStopTime(ARKODE_MEM_FROM_ML(varkode_mem),
                         Double_val(tstop));
@@ -7681,7 +7934,9 @@ CAMLprim value sunml_arkode_set_stop_time(value varkode_mem, value tstop)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepSetStopTime(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -7692,8 +7947,7 @@ CAMLprim value sunml_arkode_set_stop_time(value varkode_mem, value tstop)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_stop_time");
+        }
     }
 #endif
 
@@ -7708,10 +7962,11 @@ CAMLprim value sunml_arkode_clear_stop_time(value varkode_mem)
     int flag = ARKodeClearStopTime(ARKODE_MEM_FROM_ML(varkode_mem));
     CHECK_FLAG("ARKodeClearStopTime", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 651 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepClearStopTime(ARKODE_MEM_FROM_ML(varkode_mem));
@@ -7721,7 +7976,9 @@ CAMLprim value sunml_arkode_clear_stop_time(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 651 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepClearStopTime(ARKODE_MEM_FROM_ML(varkode_mem));
@@ -7731,10 +7988,14 @@ CAMLprim value sunml_arkode_clear_stop_time(value varkode_mem)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 651 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepClearStopTime(ARKODE_MEM_FROM_ML(varkode_mem));
@@ -7744,8 +8005,7 @@ CAMLprim value sunml_arkode_clear_stop_time(value varkode_mem)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_clear_stop_time");
+        }
     }
 #endif
 
@@ -7761,10 +8021,11 @@ CAMLprim value sunml_arkode_set_fixed_step(value varkode_mem, value varg)
                     Double_val(varg));
     CHECK_FLAG("ARKodeSetFixedStep", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetFixedStep(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -7777,7 +8038,9 @@ CAMLprim value sunml_arkode_set_fixed_step(value varkode_mem, value varg)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepSetFixedStep(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -7788,7 +8051,9 @@ CAMLprim value sunml_arkode_set_fixed_step(value varkode_mem, value varg)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = SPRKStepSetFixedStep(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -7798,7 +8063,9 @@ CAMLprim value sunml_arkode_set_fixed_step(value varkode_mem, value varg)
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 500 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepSetFixedStep(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -7809,8 +8076,7 @@ CAMLprim value sunml_arkode_set_fixed_step(value varkode_mem, value varg)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_fixed_step");
+        }
     }
 #endif
 
@@ -7827,10 +8093,11 @@ CAMLprim value sunml_arkode_set_max_num_constr_fails(value varkode_mem,
                     Int_val(vmaxfails));
     CHECK_FLAG("ARKodeSetMaxNumConstrFails", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 500 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetMaxNumConstrFails(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -7841,7 +8108,9 @@ CAMLprim value sunml_arkode_set_max_num_constr_fails(value varkode_mem,
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 500 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepSetMaxNumConstrFails(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -7852,20 +8121,22 @@ CAMLprim value sunml_arkode_set_max_num_constr_fails(value varkode_mem,
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_max_num_constr_fails");
+        }
     }
 #endif
 
     CAMLreturn (Val_unit);
 }
-
 
 CAMLprim value sunml_arkode_set_root_direction(value vdata, value rootdirs)
 {
@@ -7885,6 +8156,7 @@ CAMLprim value sunml_arkode_set_root_direction(value vdata, value rootdirs)
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
             int rootdirs_l = ARRAY1_LEN(rootdirs);
             int *rootdirs_d = INT_ARRAY(rootdirs);
 
@@ -7901,7 +8173,9 @@ CAMLprim value sunml_arkode_set_root_direction(value vdata, value rootdirs)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int rootdirs_l = ARRAY1_LEN(rootdirs);
@@ -7918,7 +8192,9 @@ CAMLprim value sunml_arkode_set_root_direction(value vdata, value rootdirs)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION  && 700 > SUNDIALS_LIB_VERSION
             int rootdirs_l = ARRAY1_LEN(rootdirs);
@@ -7935,7 +8211,9 @@ CAMLprim value sunml_arkode_set_root_direction(value vdata, value rootdirs)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 #if 400 <= SUNDIALS_LIB_VERSION
             int rootdirs_l = ARRAY1_LEN(rootdirs);
             int *rootdirs_d = INT_ARRAY(rootdirs);
@@ -7950,8 +8228,7 @@ CAMLprim value sunml_arkode_set_root_direction(value vdata, value rootdirs)
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_root_direction");
+        }
     }
 #endif
 
@@ -7966,10 +8243,11 @@ CAMLprim value sunml_arkode_set_no_inactive_root_warn(value varkode_mem)
     int flag = ARKodeSetNoInactiveRootWarn(ARKODE_MEM_FROM_ML(varkode_mem));
     CHECK_FLAG("ARKodeSetNoInactiveRootWarn", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetNoInactiveRootWarn(ARKODE_MEM_FROM_ML(varkode_mem));
@@ -7980,7 +8258,9 @@ CAMLprim value sunml_arkode_set_no_inactive_root_warn(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepSetNoInactiveRootWarn(ARKODE_MEM_FROM_ML(varkode_mem));
@@ -7990,7 +8270,9 @@ CAMLprim value sunml_arkode_set_no_inactive_root_warn(value varkode_mem)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = SPRKStepSetNoInactiveRootWarn(ARKODE_MEM_FROM_ML(varkode_mem));
@@ -8000,7 +8282,9 @@ CAMLprim value sunml_arkode_set_no_inactive_root_warn(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepSetNoInactiveRootWarn(ARKODE_MEM_FROM_ML(varkode_mem));
@@ -8010,8 +8294,7 @@ CAMLprim value sunml_arkode_set_no_inactive_root_warn(value varkode_mem)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_no_inactive_root_warn");
+        }
     }
 #endif
 
@@ -8030,10 +8313,11 @@ CAMLprim value sunml_arkode_set_postprocess_step_fn(value varkode_mem,
                     Bool_val(vhasf) ? poststepfn : NULL);
     CHECK_FLAG("ARKodeSetPostprocessStepFn", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
@@ -8052,7 +8336,9 @@ CAMLprim value sunml_arkode_set_postprocess_step_fn(value varkode_mem,
 #endif
 
             break;
+            }
         case ARKODE_VARIANT_ERKSTEP:
+            {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
@@ -8065,7 +8351,9 @@ CAMLprim value sunml_arkode_set_postprocess_step_fn(value varkode_mem,
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
@@ -8078,7 +8366,9 @@ CAMLprim value sunml_arkode_set_postprocess_step_fn(value varkode_mem,
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
@@ -8091,14 +8381,12 @@ CAMLprim value sunml_arkode_set_postprocess_step_fn(value varkode_mem,
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_postprocess_step_fn");
+        }
     }
 #endif
 
     CAMLreturn (Val_unit);
 }
-
 
 CAMLprim value sunml_arkode_set_stage_predict_fn(value varkode_mem,
 						     value vset)
@@ -8110,10 +8398,11 @@ CAMLprim value sunml_arkode_set_stage_predict_fn(value varkode_mem,
                     Bool_val(vset) ? stagepredictfn : NULL);
     CHECK_FLAG("ARKodeSetStagePredictFn", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 500 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetStagePredictFn(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -8124,13 +8413,19 @@ CAMLprim value sunml_arkode_set_stage_predict_fn(value varkode_mem,
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepSetStagePredictFn(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -8141,8 +8436,7 @@ CAMLprim value sunml_arkode_set_stage_predict_fn(value varkode_mem,
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_stage_predict_fn");
+        }
     }
 #endif
 
@@ -8153,15 +8447,15 @@ CAMLprim value sunml_arkode_set_mass_fn(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
 
-
 #if 710 <= SUNDIALS_LIB_VERSION
     int flag = ARKodeSetMassFn(ARKODE_MEM_FROM_ML (varkode_mem), massfn);
     CHECK_LS_FLAG("ARKodeSetMassFn", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetMassFn(ARKODE_MEM_FROM_ML (varkode_mem), massfn);
@@ -8171,17 +8465,22 @@ CAMLprim value sunml_arkode_set_mass_fn(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_mass_fn");
+        }
     }
 #endif
 
@@ -8193,17 +8492,16 @@ CAMLprim value sunml_arkode_set_jac_eval_frequency(value varkode_mem,
 {
     CAMLparam2(varkode_mem, vevalfreq);
 
-
 #if 710 <= SUNDIALS_LIB_VERSION
     int flag = ARKodeSetJacEvalFrequency(ARKODE_MEM_FROM_ML(varkode_mem),
                     Long_val(vevalfreq));
     CHECK_LS_FLAG("ARKodeSetJacEvalFrequency", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
-
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetJacEvalFrequency(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -8218,13 +8516,19 @@ CAMLprim value sunml_arkode_set_jac_eval_frequency(value varkode_mem,
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepSetJacEvalFrequency(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -8235,14 +8539,12 @@ CAMLprim value sunml_arkode_set_jac_eval_frequency(value varkode_mem,
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_jac_eval_frequency");
+        }
     }
 #endif
 
     CAMLreturn (Val_unit);
 }
-
 
 CAMLprim value sunml_arkode_set_linear_solution_scaling(value varkode_mem,
 							    value vonoff)
@@ -8254,10 +8556,11 @@ CAMLprim value sunml_arkode_set_linear_solution_scaling(value varkode_mem,
                         Bool_val(vonoff));
     CHECK_FLAG("ARKodeSetLinearSolutionScaling", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 520 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetLinearSolutionScaling(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -8268,13 +8571,19 @@ CAMLprim value sunml_arkode_set_linear_solution_scaling(value varkode_mem,
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepSetLinearSolutionScaling(ARKODE_MEM_FROM_ML(varkode_mem),
                                 Bool_val(vonoff));
@@ -8283,14 +8592,12 @@ CAMLprim value sunml_arkode_set_linear_solution_scaling(value varkode_mem,
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_linear_solution_scaling");
+        }
     }
 #endif
 
     CAMLreturn (Val_unit);
 }
-
 
 CAMLprim value sunml_arkode_set_eps_lin(value varkode_mem, value eplifac)
 {
@@ -8301,10 +8608,11 @@ CAMLprim value sunml_arkode_set_eps_lin(value varkode_mem, value eplifac)
                 Double_val(eplifac));
     CHECK_FLAG("ARKodeSetEpsLin", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetEpsLin(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -8317,13 +8625,19 @@ CAMLprim value sunml_arkode_set_eps_lin(value varkode_mem, value eplifac)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepSetEpsLin(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -8334,8 +8648,7 @@ CAMLprim value sunml_arkode_set_eps_lin(value varkode_mem, value eplifac)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_eps_lin");
+        }
     }
 #endif
 
@@ -8351,10 +8664,11 @@ CAMLprim value sunml_arkode_set_mass_eps_lin(value varkode_mem, value eplifac)
                     Double_val(eplifac));
     CHECK_FLAG("ARKodeSetMassEpsLin", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetMassEpsLin(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -8367,17 +8681,22 @@ CAMLprim value sunml_arkode_set_mass_eps_lin(value varkode_mem, value eplifac)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_mass_eps_lin");
+        }
     }
 #endif
 
@@ -8393,10 +8712,11 @@ CAMLprim value sunml_arkode_set_ls_norm_factor(value varkode_mem, value vfac)
                     Double_val(vfac));
     CHECK_FLAG("ARKodeSetLSNormFactor", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetLSNormFactor(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -8407,13 +8727,19 @@ CAMLprim value sunml_arkode_set_ls_norm_factor(value varkode_mem, value vfac)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepSetLSNormFactor(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -8424,8 +8750,7 @@ CAMLprim value sunml_arkode_set_ls_norm_factor(value varkode_mem, value vfac)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_ls_norm_factor");
+        }
     }
 #endif
 
@@ -8442,10 +8767,11 @@ CAMLprim value sunml_arkode_set_mass_ls_norm_factor(value varkode_mem,
                     Double_val(vfac));
     CHECK_FLAG("ARKodeSetMassLSNormFactor", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetMassLSNormFactor(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -8456,17 +8782,22 @@ CAMLprim value sunml_arkode_set_mass_ls_norm_factor(value varkode_mem,
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_mass_ls_norm_factor");
+        }
     }
 #endif
 
@@ -8483,10 +8814,11 @@ CAMLprim value sunml_arkode_set_preconditioner (value vsession,
     int flag = ARKodeSetPreconditioner(ARKODE_MEM_FROM_ML(vsession), setup, precsolvefn);
     CHECK_FLAG ("ARKodeSetPreconditioner", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(vsession, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
             void *mem = ARKODE_MEM_FROM_ML (vsession);
 #if 400 <= SUNDIALS_LIB_VERSION
@@ -8500,13 +8832,19 @@ CAMLprim value sunml_arkode_set_preconditioner (value vsession,
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 #if 540 <= SUNDIALS_LIB_VERSION
             void *mem = ARKODE_MEM_FROM_ML (vsession);
             ARKLsPrecSetupFn setup = Bool_val (vset_precsetup) ? precsetupfn : NULL;
@@ -8516,8 +8854,7 @@ CAMLprim value sunml_arkode_set_preconditioner (value vsession,
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_preconditioner");
+        }
     }
 #endif
 
@@ -8536,10 +8873,11 @@ CAMLprim value sunml_arkode_set_mass_preconditioner(value vsession,
     int flag = ARKodeSetMassPreconditioner (mem, setup, massprecsolvefn);
     CHECK_FLAG ("ARKodeSetMassPreconditioner", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(vsession, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
             void *mem = ARKODE_MEM_FROM_ML (vsession);
 #if 400 <= SUNDIALS_LIB_VERSION
@@ -8554,17 +8892,22 @@ CAMLprim value sunml_arkode_set_mass_preconditioner(value vsession,
             CHECK_FLAG ("ARKSpilsSetMassPreconditioner", flag);
 #endif
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_mass_preconditioner");
+        }
     }
 #endif
     CAMLreturn (Val_unit);
@@ -8574,7 +8917,6 @@ CAMLprim value sunml_arkode_set_jac_times(value vdata, value vhas_setup,
 					      value vhas_times)
 {
     CAMLparam3(vdata, vhas_setup, vhas_times);
-
 
 #if 710 <= SUNDIALS_LIB_VERSION
     ARKLsJacTimesSetupFn setup = Bool_val (vhas_setup) ? jacsetupfn : NULL;
@@ -8587,6 +8929,7 @@ CAMLprim value sunml_arkode_set_jac_times(value vdata, value vhas_setup,
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             ARKLsJacTimesSetupFn setup = Bool_val (vhas_setup) ? jacsetupfn : NULL;
@@ -8607,13 +8950,19 @@ CAMLprim value sunml_arkode_set_jac_times(value vdata, value vhas_setup,
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             ARKLsJacTimesSetupFn setup = Bool_val (vhas_setup) ? jacsetupfn : NULL;
@@ -8626,14 +8975,12 @@ CAMLprim value sunml_arkode_set_jac_times(value vdata, value vhas_setup,
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_jac_times");
+        }
     }
 #endif
 
     CAMLreturn (Val_unit);
 }
-
 
 CAMLprim value sunml_arkode_set_jac_times_rhsfn(value vdata,
 						    value vhas_rhsfn)
@@ -8650,6 +8997,7 @@ CAMLprim value sunml_arkode_set_jac_times_rhsfn(value vdata,
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 530 <= SUNDIALS_LIB_VERSION
             ARKRhsFn rhsfn = Bool_val (vhas_rhsfn) ? jactimesrhsfn : NULL;
@@ -8661,13 +9009,19 @@ CAMLprim value sunml_arkode_set_jac_times_rhsfn(value vdata,
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             ARKRhsFn rhsfn = Bool_val (vhas_rhsfn) ? jactimesrhsfn : NULL;
@@ -8679,13 +9033,11 @@ CAMLprim value sunml_arkode_set_jac_times_rhsfn(value vdata,
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_jac_times_rhsfn");
+        }
     }
 #endif
     CAMLreturn (Val_unit);
 }
-
 
 CAMLprim value sunml_arkode_set_mass_times(value varkode_mem,
 					       value vhassetup)
@@ -8702,10 +9054,11 @@ CAMLprim value sunml_arkode_set_mass_times(value varkode_mem,
             (void *)Field(arkode_mem, RECORD_ARKODE_SESSION_BACKREF));
     CHECK_FLAG ("ARKodeSetMassTimes", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
@@ -8730,38 +9083,42 @@ CAMLprim value sunml_arkode_set_mass_times(value varkode_mem,
 #endif
 
             break;
+            }
         case ARKODE_VARIANT_ERKSTEP:
+        {        c
+    aml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_mass_times");
+        }
     }
 #endif
     CAMLreturn (Val_unit);
 }
-
 
 CAMLprim value sunml_arkode_compute_state(value varkode_mem,
 					      value vzcor, value vz)
 {
     CAMLparam3(varkode_mem, vzcor, vz);
 
-
 #if 710 <= SUNDIALS_LIB_VERSION
     int flag = ARKodeComputeState(ARKODE_MEM_FROM_ML(varkode_mem),
                 NVEC_VAL(vzcor), NVEC_VAL(vz));
     CHECK_FLAG("ARKodeComputeState", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepComputeState(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -8772,13 +9129,19 @@ CAMLprim value sunml_arkode_compute_state(value varkode_mem,
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepComputeState(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -8789,8 +9152,7 @@ CAMLprim value sunml_arkode_compute_state(value varkode_mem,
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_compute_state");
+        }
     }
 #endif
 
@@ -8806,10 +9168,11 @@ CAMLprim value sunml_arkode_get_num_exp_steps(value varkode_mem)
     int flag = ARKodeGetNumExpSteps(ARKODE_MEM_FROM_ML(varkode_mem), &v);
     CHECK_FLAG("ARKodeGetNumExpSteps", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
             int flag;
             long int v;
@@ -8823,8 +9186,10 @@ CAMLprim value sunml_arkode_get_num_exp_steps(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
-            long int v = 0;
+    {
+long int v = 0;
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepGetNumExpSteps(ARKODE_MEM_FROM_ML(varkode_mem), &v);
@@ -8834,20 +9199,22 @@ CAMLprim value sunml_arkode_get_num_exp_steps(value varkode_mem)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_num_exp_steps");
+        }
     }
 #endif
 
     CAMLreturn(Val_long(v));
 }
-
 
 CAMLprim value sunml_arkode_get_num_acc_steps(value varkode_mem)
 {
@@ -8858,10 +9225,11 @@ CAMLprim value sunml_arkode_get_num_acc_steps(value varkode_mem)
     int flag = ARKodeGetNumAccSteps(ARKODE_MEM_FROM_ML(varkode_mem), &v);
     CHECK_FLAG("ARKodeGetNumAccSteps", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
             int flag;
             long int v;
@@ -8875,8 +9243,10 @@ CAMLprim value sunml_arkode_get_num_acc_steps(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
-            long int v = 0;
+    {
+    long int v = 0;
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepGetNumAccSteps(ARKODE_MEM_FROM_ML(varkode_mem), &v);
@@ -8885,14 +9255,17 @@ CAMLprim value sunml_arkode_get_num_acc_steps(value varkode_mem)
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_num_acc_steps");
+        }
     }
 #endif
 
@@ -8908,10 +9281,11 @@ CAMLprim value sunml_arkode_get_num_step_attempts(value varkode_mem)
     int flag = ARKodeGetNumStepAttempts(ARKODE_MEM_FROM_ML(varkode_mem), &v);
     CHECK_FLAG("ARKodeGetNumStepAttempts", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
             int flag;
             long int v;
@@ -8925,7 +9299,9 @@ CAMLprim value sunml_arkode_get_num_step_attempts(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
             long int v = 0;
 
@@ -8937,7 +9313,9 @@ CAMLprim value sunml_arkode_get_num_step_attempts(value varkode_mem)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
 
             long int v = 0;
 
@@ -8949,11 +9327,12 @@ CAMLprim value sunml_arkode_get_num_step_attempts(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_num_step_attempts");
+        }
     }
 #endif
     CAMLreturn(Val_long(v));
@@ -8962,19 +9341,19 @@ CAMLprim value sunml_arkode_get_num_step_attempts(value varkode_mem)
 CAMLprim value sunml_arkode_get_num_lin_solv_setups(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
+    long int v = 0;
 
 #if 710 <= SUNDIALS_LIB_VERSION
-    long int v;
     int flag = ARKodeGetNumLinSolvSetups(ARKODE_MEM_FROM_ML(varkode_mem), &v);
     CHECK_FLAG("ARKodeGetNumLinSolvSetups", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
             int flag;
-            long int v;
 
 #if 400 <= SUNDIALS_LIB_VERSION
             flag = ARKStepGetNumLinSolvSetups(ARKODE_MEM_FROM_ML(varkode_mem), &v);
@@ -8985,13 +9364,19 @@ CAMLprim value sunml_arkode_get_num_lin_solv_setups(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
             long int v;
 #if 540 <= SUNDIALS_LIB_VERSION
@@ -9002,8 +9387,7 @@ CAMLprim value sunml_arkode_get_num_lin_solv_setups(value varkode_mem)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_num_lin_solv_setups");
+        }
     }
 #endif
 
@@ -9019,10 +9403,11 @@ CAMLprim value sunml_arkode_get_num_err_test_fails(value varkode_mem)
     int flag = ARKodeGetNumErrTestFails(ARKODE_MEM_FROM_ML(varkode_mem), &v);
     CHECK_FLAG("ARKodeGetNumErrTestFails", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
             int flag;
 
@@ -9035,7 +9420,9 @@ CAMLprim value sunml_arkode_get_num_err_test_fails(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepGetNumErrTestFails(ARKODE_MEM_FROM_ML(varkode_mem), &v);
@@ -9045,14 +9432,17 @@ CAMLprim value sunml_arkode_get_num_err_test_fails(value varkode_mem)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_num_err_test_fails");
+        }
     }
 #endif
 
@@ -9068,10 +9458,11 @@ CAMLprim value sunml_arkode_get_est_local_errors(value varkode_mem,
     int flag = ARKodeGetEstLocalErrors(ARKODE_MEM_FROM_ML(varkode_mem),  NVEC_VAL(vele));
     CHECK_FLAG("ARKodeGetEstLocalErrors", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
             N_Vector ele_nv = NVEC_VAL(vele);
 
@@ -9084,7 +9475,9 @@ CAMLprim value sunml_arkode_get_est_local_errors(value varkode_mem,
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepGetEstLocalErrors(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -9095,14 +9488,17 @@ CAMLprim value sunml_arkode_get_est_local_errors(value varkode_mem,
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_est_local_errors");
+        }
     }
 #endif
 
@@ -9127,10 +9523,11 @@ CAMLprim value sunml_arkode_get_work_space(value varkode_mem)
     Store_field(r, 0, Val_long(lenrw));
     Store_field(r, 1, Val_long(leniw));
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
             int flag;
             long int lenrw;
@@ -9150,7 +9547,9 @@ CAMLprim value sunml_arkode_get_work_space(value varkode_mem)
             Store_field(r, 1, Val_long(leniw));
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
 
@@ -9170,10 +9569,14 @@ CAMLprim value sunml_arkode_get_work_space(value varkode_mem)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
 
@@ -9193,8 +9596,7 @@ CAMLprim value sunml_arkode_get_work_space(value varkode_mem)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_work_space");
+        }
     }
 #endif
 
@@ -9211,10 +9613,11 @@ CAMLprim value sunml_arkode_get_num_steps(value varkode_mem)
     int flag = ARKodeGetNumSteps(ARKODE_MEM_FROM_ML(varkode_mem), &v);
     CHECK_FLAG("ARKodeGetNumSteps", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
             int flag;
 
@@ -9227,7 +9630,9 @@ CAMLprim value sunml_arkode_get_num_steps(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepGetNumSteps(ARKODE_MEM_FROM_ML(varkode_mem), &v);
@@ -9237,7 +9642,9 @@ CAMLprim value sunml_arkode_get_num_steps(value varkode_mem)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = SPRKStepGetNumSteps(ARKODE_MEM_FROM_ML(varkode_mem), &v);
@@ -9247,7 +9654,9 @@ CAMLprim value sunml_arkode_get_num_steps(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 500 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepGetNumSteps(ARKODE_MEM_FROM_ML(varkode_mem), &v);
@@ -9257,8 +9666,7 @@ CAMLprim value sunml_arkode_get_num_steps(value varkode_mem)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_num_steps");
+        }
     }
 #endif
 
@@ -9274,10 +9682,11 @@ CAMLprim value sunml_arkode_get_actual_init_step(value varkode_mem)
     int flag = ARKodeGetActualInitStep(ARKODE_MEM_FROM_ML(varkode_mem), &v);
     CHECK_FLAG("ARKodeGetActualInitStep", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
             int flag;
 
@@ -9290,7 +9699,9 @@ CAMLprim value sunml_arkode_get_actual_init_step(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepGetActualInitStep(ARKODE_MEM_FROM_ML(varkode_mem), &v);
@@ -9300,14 +9711,17 @@ CAMLprim value sunml_arkode_get_actual_init_step(value varkode_mem)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_actual_init_step");
+        }
     }
 #endif
 
@@ -9323,10 +9737,11 @@ CAMLprim value sunml_arkode_get_last_step(value varkode_mem)
     int flag = ARKodeGetLastStep(ARKODE_MEM_FROM_ML(varkode_mem), &v);
     CHECK_FLAG("ARKodeGetLastStep", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
             int flag;
 
@@ -9339,7 +9754,9 @@ CAMLprim value sunml_arkode_get_last_step(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepGetLastStep(ARKODE_MEM_FROM_ML(varkode_mem), &v);
@@ -9349,7 +9766,9 @@ CAMLprim value sunml_arkode_get_last_step(value varkode_mem)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = SPRKStepGetLastStep(ARKODE_MEM_FROM_ML(varkode_mem), &v);
@@ -9359,7 +9778,9 @@ CAMLprim value sunml_arkode_get_last_step(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepGetLastStep(ARKODE_MEM_FROM_ML(varkode_mem), &v);
@@ -9369,8 +9790,7 @@ CAMLprim value sunml_arkode_get_last_step(value varkode_mem)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in ");
+        }
     }
 #endif
 
@@ -9386,10 +9806,11 @@ CAMLprim value sunml_arkode_get_current_step(value varkode_mem)
     int flag = ARKodeGetCurrentStep(ARKODE_MEM_FROM_ML(varkode_mem), &v);
     CHECK_FLAG("ARKodeGetCurrentStep", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
             int flag;
 
@@ -9402,7 +9823,9 @@ CAMLprim value sunml_arkode_get_current_step(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepGetCurrentStep(ARKODE_MEM_FROM_ML(varkode_mem), &v);
@@ -9412,7 +9835,9 @@ CAMLprim value sunml_arkode_get_current_step(value varkode_mem)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = SPRKStepGetCurrentStep(ARKODE_MEM_FROM_ML(varkode_mem), &v);
@@ -9422,11 +9847,12 @@ CAMLprim value sunml_arkode_get_current_step(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_current_step");
+        }
     }
 #endif
 
@@ -9442,10 +9868,11 @@ CAMLprim value sunml_arkode_get_current_time(value varkode_mem)
     int flag = ARKodeGetCurrentTime(ARKODE_MEM_FROM_ML(varkode_mem), &v);
     CHECK_FLAG("ARKodeGetCurrentTime", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
             int flag;
 
 #if 400 <= SUNDIALS_LIB_VERSION
@@ -9457,7 +9884,9 @@ CAMLprim value sunml_arkode_get_current_time(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepGetCurrentTime(ARKODE_MEM_FROM_ML(varkode_mem), &v);
@@ -9467,7 +9896,9 @@ CAMLprim value sunml_arkode_get_current_time(value varkode_mem)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = SPRKStepGetCurrentTime(ARKODE_MEM_FROM_ML(varkode_mem), &v);
@@ -9477,7 +9908,9 @@ CAMLprim value sunml_arkode_get_current_time(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepGetCurrentTime(ARKODE_MEM_FROM_ML(varkode_mem), &v);
@@ -9487,8 +9920,7 @@ CAMLprim value sunml_arkode_get_current_time(value varkode_mem)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_current_time");
+        }
     }
 #endif
 
@@ -9507,10 +9939,11 @@ CAMLprim value sunml_arkode_get_current_state(value varkode_mem)
 
     vnv = NVEC_BACKLINK(nv);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 500 <= SUNDIALS_LIB_VERSION
             N_Vector nv;
@@ -9523,10 +9956,14 @@ CAMLprim value sunml_arkode_get_current_state(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             N_Vector nv;
@@ -9539,7 +9976,9 @@ CAMLprim value sunml_arkode_get_current_state(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 500 <= SUNDIALS_LIB_VERSION
             N_Vector nv;
@@ -9552,16 +9991,12 @@ CAMLprim value sunml_arkode_get_current_state(value varkode_mem)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_current_state");
+        }
     }
 #endif
 
-
-
     CAMLreturn(vnv);
 }
-
 
 CAMLprim value sunml_arkode_get_current_gamma(value varkode_mem)
 {
@@ -9572,10 +10007,11 @@ CAMLprim value sunml_arkode_get_current_gamma(value varkode_mem)
      int flag = ARKodeGetCurrentGamma(ARKODE_MEM_FROM_ML(varkode_mem), &gamma);
     CHECK_FLAG("ARKodeGetCurrentGamma", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 500 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepGetCurrentGamma(ARKODE_MEM_FROM_ML(varkode_mem), &gamma);
@@ -9585,13 +10021,19 @@ CAMLprim value sunml_arkode_get_current_gamma(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepGetCurrentGamma(ARKODE_MEM_FROM_ML(varkode_mem), &gamma);
@@ -9601,8 +10043,7 @@ CAMLprim value sunml_arkode_get_current_gamma(value varkode_mem)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_current_gamma");
+        }
     }
 #endif
 
@@ -9619,10 +10060,11 @@ CAMLprim value sunml_arkode_get_tol_scale_factor(value varkode_mem)
     int flag = ARKodeGetTolScaleFactor(ARKODE_MEM_FROM_ML(varkode_mem), &r);
     CHECK_FLAG("ARKodeGetTolScaleFactor", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepGetTolScaleFactor(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -9633,7 +10075,9 @@ CAMLprim value sunml_arkode_get_tol_scale_factor(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepGetTolScaleFactor(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -9643,10 +10087,14 @@ CAMLprim value sunml_arkode_get_tol_scale_factor(value varkode_mem)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepGetTolScaleFactor(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -9656,8 +10104,7 @@ CAMLprim value sunml_arkode_get_tol_scale_factor(value varkode_mem)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_tol_scale_factor");
+        }
     }
 #endif
 
@@ -9672,10 +10119,11 @@ CAMLprim value sunml_arkode_get_err_weights(value varkode_mem, value verrws)
     int flag = ARKodeGetErrWeights(ARKODE_MEM_FROM_ML(varkode_mem), NVEC_VAL(verrws));
     CHECK_FLAG("ARKodeGetErrWeights", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
             N_Vector errws_nv = NVEC_VAL(verrws);
 
@@ -9688,7 +10136,9 @@ CAMLprim value sunml_arkode_get_err_weights(value varkode_mem, value verrws)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             N_Vector errws_nv = NVEC_VAL(verrws);
@@ -9699,10 +10149,14 @@ CAMLprim value sunml_arkode_get_err_weights(value varkode_mem, value verrws)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             N_Vector errws_nv = NVEC_VAL(verrws);
@@ -9713,8 +10167,7 @@ CAMLprim value sunml_arkode_get_err_weights(value varkode_mem, value verrws)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_err_weights");
+        }
     }
 #endif
 
@@ -9729,10 +10182,11 @@ CAMLprim value sunml_arkode_get_res_weights(value varkode_mem, value vresws)
     int flag = ARKodeGetResWeights(ARKODE_MEM_FROM_ML(varkode_mem),  NVEC_VAL(vresws));
     CHECK_FLAG("ARKodeGetResWeights", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             N_Vector resws_nv = NVEC_VAL(vresws);
@@ -9747,17 +10201,22 @@ CAMLprim value sunml_arkode_get_res_weights(value varkode_mem, value vresws)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_res_weights");
+        }
     }
 #endif
 
@@ -9773,10 +10232,11 @@ CAMLprim value sunml_arkode_get_num_g_evals(value varkode_mem)
     int flag = ARKodeGetNumGEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
     CHECK_FLAG("ARKodeGetNumGEvals", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepGetNumGEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -9787,7 +10247,9 @@ CAMLprim value sunml_arkode_get_num_g_evals(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepGetNumGEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -9797,10 +10259,14 @@ CAMLprim value sunml_arkode_get_num_g_evals(value varkode_mem)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepGetNumGEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -9810,8 +10276,7 @@ CAMLprim value sunml_arkode_get_num_g_evals(value varkode_mem)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_num_g_evals");
+        }
     }
 #endif
 
@@ -9836,6 +10301,7 @@ CAMLprim value sunml_arkode_get_root_info(value vdata, value roots)
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
             int roots_l = ARRAY1_LEN(roots);
             int *roots_d = INT_ARRAY(roots);
@@ -9853,7 +10319,9 @@ CAMLprim value sunml_arkode_get_root_info(value vdata, value roots)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int roots_l = ARRAY1_LEN(roots);
@@ -9870,7 +10338,9 @@ CAMLprim value sunml_arkode_get_root_info(value vdata, value roots)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int roots_l = ARRAY1_LEN(roots);
@@ -9887,7 +10357,9 @@ CAMLprim value sunml_arkode_get_root_info(value vdata, value roots)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int roots_l = ARRAY1_LEN(roots);
@@ -9904,8 +10376,7 @@ CAMLprim value sunml_arkode_get_root_info(value vdata, value roots)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_root_info");
+        }
     }
 #endif
 
@@ -9922,10 +10393,11 @@ CAMLprim value sunml_arkode_get_num_constr_fails(value varkode_mem)
     int flag = ARKodeGetNumConstrFails(ARKODE_MEM_FROM_ML(varkode_mem), &r);
     CHECK_FLAG("ARKodeGetNumConstrFails", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 500 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepGetNumConstrFails(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -9935,7 +10407,9 @@ CAMLprim value sunml_arkode_get_num_constr_fails(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 500 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepGetNumConstrFails(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -9945,14 +10419,17 @@ CAMLprim value sunml_arkode_get_num_constr_fails(value varkode_mem)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_num_constr_fails");
+        }
     }
 #endif
 
@@ -9974,6 +10451,7 @@ CAMLprim value sunml_arkode_print_all_stats(value vdata,
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 620 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepPrintAllStats(ARKODE_MEM_FROM_ML(vdata),
@@ -9984,7 +10462,9 @@ CAMLprim value sunml_arkode_print_all_stats(value vdata,
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 620 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepPrintAllStats(ARKODE_MEM_FROM_ML(vdata),
@@ -9996,7 +10476,9 @@ CAMLprim value sunml_arkode_print_all_stats(value vdata,
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = SPRKStepPrintAllStats(ARKODE_MEM_FROM_ML(vdata),
@@ -10008,7 +10490,9 @@ CAMLprim value sunml_arkode_print_all_stats(value vdata,
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 620 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepPrintAllStats(ARKODE_MEM_FROM_ML(vdata),
@@ -10020,8 +10504,7 @@ CAMLprim value sunml_arkode_print_all_stats(value vdata,
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type insunml_arkode_print_all_stats ");
+        }
     }
 #endif
 
@@ -10037,10 +10520,11 @@ CAMLprim value sunml_arkode_write_parameters(value varkode_mem, value vlog)
                     ML_CFILE(vlog));
     CHECK_FLAG("ARKodeWriteParameters", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 410 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepWriteParameters(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -10051,7 +10535,9 @@ CAMLprim value sunml_arkode_write_parameters(value varkode_mem, value vlog)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+        {
 
 #if 410 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepWriteParameters(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -10062,7 +10548,9 @@ CAMLprim value sunml_arkode_write_parameters(value varkode_mem, value vlog)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = SPRKStepWriteParameters(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -10073,7 +10561,9 @@ CAMLprim value sunml_arkode_write_parameters(value varkode_mem, value vlog)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 410 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepWriteParameters(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -10084,8 +10574,7 @@ CAMLprim value sunml_arkode_write_parameters(value varkode_mem, value vlog)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_write_parameters");
+        }
     }
 #endif
 
@@ -10096,7 +10585,6 @@ CAMLprim value sunml_arkode_get_step_stats(value vdata)
 {
     CAMLparam1(vdata);
     CAMLlocal1(r);
-
 
 #if 710 <= SUNDIALS_LIB_VERSION
     int flag;
@@ -10129,6 +10617,7 @@ CAMLprim value sunml_arkode_get_step_stats(value vdata)
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
             int flag;
 
@@ -10183,7 +10672,9 @@ CAMLprim value sunml_arkode_get_step_stats(value vdata)
                                     caml_copy_double(tcur));
 
             break;
+            }
         case ARKODE_VARIANT_ERKSTEP:
+            {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             long int nsteps;
@@ -10215,7 +10706,9 @@ CAMLprim value sunml_arkode_get_step_stats(value vdata)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             long int nsteps;
@@ -10247,11 +10740,12 @@ CAMLprim value sunml_arkode_get_step_stats(value vdata)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_step_stats");
+        }
     }
 #endif
 
@@ -10286,10 +10780,11 @@ CAMLprim value sunml_arkode_get_nonlin_system_data(value varkode_mem)
     Store_field(vnv, RECORD_ARKODE_NONLIN_SYSTEM_DATA_SDATA,
         NVEC_BACKLINK(sdata));
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             sunrealtype tcur, gamma;
@@ -10318,13 +10813,19 @@ CAMLprim value sunml_arkode_get_nonlin_system_data(value varkode_mem)
 #endif
 
             break;
+            }
         case ARKODE_VARIANT_ERKSTEP:
+        {        c
+    aml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             sunrealtype tcur, gamma;
@@ -10353,8 +10854,7 @@ CAMLprim value sunml_arkode_get_nonlin_system_data(value varkode_mem)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_nonlin_system_data");
+        }
     }
 #endif
 
@@ -10370,10 +10870,11 @@ CAMLprim value sunml_arkode_get_num_nonlin_solv_iters(value varkode_mem)
     int flag = ARKodeGetNumNonlinSolvIters(ARKODE_MEM_FROM_ML(varkode_mem), &r);
     CHECK_FLAG("ARKodeGetNumNonlinSolvIters", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepGetNumNonlinSolvIters(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -10384,13 +10885,19 @@ CAMLprim value sunml_arkode_get_num_nonlin_solv_iters(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepGetNumNonlinSolvIters(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -10400,8 +10907,7 @@ CAMLprim value sunml_arkode_get_num_nonlin_solv_iters(value varkode_mem)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_num_nonlin_solv_iters");
+        }
     }
 #endif
 
@@ -10418,10 +10924,11 @@ CAMLprim value sunml_arkode_get_num_nonlin_solv_conv_fails(value varkode_mem)
     int flag = ARKodeGetNumNonlinSolvConvFails(ARKODE_MEM_FROM_ML(varkode_mem), &r);
     CHECK_FLAG("ARKodeGetNumNonlinSolvConvFails", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepGetNumNonlinSolvConvFails(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -10432,13 +10939,19 @@ CAMLprim value sunml_arkode_get_num_nonlin_solv_conv_fails(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepGetNumNonlinSolvConvFails(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -10448,8 +10961,7 @@ CAMLprim value sunml_arkode_get_num_nonlin_solv_conv_fails(value varkode_mem)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_num_nonlin_solv_conv_fails");
+        }
     }
 #endif
 
@@ -10470,10 +10982,11 @@ CAMLprim value sunml_arkode_get_nonlin_solv_stats(value varkode_mem)
     Store_field(r, 0, Val_long(nniters));
     Store_field(r, 1, Val_long(nncfails));
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
             long int nniters, nncfails;
 #if 400 <= SUNDIALS_LIB_VERSION
@@ -10491,13 +11004,19 @@ CAMLprim value sunml_arkode_get_nonlin_solv_stats(value varkode_mem)
             Store_field(r, 1, Val_long(nncfails));
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             long int nniters, nncfails;
@@ -10513,8 +11032,7 @@ CAMLprim value sunml_arkode_get_nonlin_solv_stats(value varkode_mem)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_nonlin_solv_stats");
+        }
     }
 #endif
 
@@ -10528,10 +11046,11 @@ CAMLprim value sunml_arkode_get_num_step_solve_fails(value varkode_mem)
 
 #if 710 <= SUNDIALS_LIB_VERSION
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 620 <= SUNDIALS_LIB_VERSION
             int flag;
@@ -10542,13 +11061,19 @@ CAMLprim value sunml_arkode_get_num_step_solve_fails(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 #if 620 <= SUNDIALS_LIB_VERSION
             int flag;
             flag = MRIStepGetNumStepSolveFails(ARKODE_MEM_FROM_ML(varkode_mem), &v);
@@ -10558,8 +11083,7 @@ CAMLprim value sunml_arkode_get_num_step_solve_fails(value varkode_mem)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_num_step_solve_fails");
+        }
     }
 #endif
 
@@ -10583,10 +11107,11 @@ CAMLprim value sunml_arkode_get_jac(value varkode_mem)
         Store_some(vr, vm);
     }
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 650 <= SUNDIALS_LIB_VERSION
             SUNMatrix j;
@@ -10604,13 +11129,19 @@ CAMLprim value sunml_arkode_get_jac(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 650 <= SUNDIALS_LIB_VERSION
             SUNMatrix j;
@@ -10628,8 +11159,7 @@ CAMLprim value sunml_arkode_get_jac(value varkode_mem)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_jac");
+        }
     }
 #endif
 
@@ -10647,10 +11177,11 @@ CAMLprim value sunml_arkode_get_jac_time(value varkode_mem)
     CHECK_FLAG("ARKodeGetJacTime", flag);
     vr = caml_copy_double(tj);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 650 <= SUNDIALS_LIB_VERSION
             sunrealtype tj = 0.0;
@@ -10662,13 +11193,19 @@ CAMLprim value sunml_arkode_get_jac_time(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 650 <= SUNDIALS_LIB_VERSION
             sunrealtype tj = 0.0;
@@ -10680,14 +11217,12 @@ CAMLprim value sunml_arkode_get_jac_time(value varkode_mem)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_jac_time");
+        }
     }
 #endif
 
     CAMLreturn(vr);
 }
-
 
 CAMLprim value sunml_arkode_get_jac_num_steps(value varkode_mem)
 {
@@ -10698,10 +11233,11 @@ CAMLprim value sunml_arkode_get_jac_num_steps(value varkode_mem)
     int flag = ARKodeGetJacNumSteps(ARKODE_MEM_FROM_ML(varkode_mem), &nstj);
     CHECK_FLAG("ARKodeGetJacNumSteps", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 650 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepGetJacNumSteps(ARKODE_MEM_FROM_ML(varkode_mem), &nstj);
@@ -10711,11 +11247,17 @@ CAMLprim value sunml_arkode_get_jac_num_steps(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 650 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepGetJacNumSteps(ARKODE_MEM_FROM_ML(varkode_mem), &nstj);
@@ -10725,16 +11267,14 @@ CAMLprim value sunml_arkode_get_jac_num_steps(value varkode_mem)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_jac_num_steps");
+        }
     }
 #endif
 
     CAMLreturn(Val_int(nstj));
 }
 
-
-CAMLprim value sunml_arkode_get_lin_work_space(value varkode_mem)
+CAMLprim value get_lin_work_space(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
     CAMLlocal1(r);
@@ -10751,10 +11291,11 @@ CAMLprim value sunml_arkode_get_lin_work_space(value varkode_mem)
     Store_field(r, 0, Val_long(lenrwLS));
     Store_field(r, 1, Val_long(leniwLS));
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
             long int lenrwLS;
             long int leniwLS;
@@ -10773,11 +11314,17 @@ CAMLprim value sunml_arkode_get_lin_work_space(value varkode_mem)
             Store_field(r, 1, Val_long(leniwLS));
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             long int lenrwLS;
@@ -10795,8 +11342,7 @@ CAMLprim value sunml_arkode_get_lin_work_space(value varkode_mem)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_lin_work_space");
+        }
     }
 #endif
     CAMLreturn(r);
@@ -10812,10 +11358,11 @@ CAMLprim value sunml_arkode_get_num_jac_evals(value varkode_mem)
     int flag = ARKodeGetNumJacEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
     CHECK_FLAG("ARKodeGetNumJacEvals", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepGetNumJacEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -10826,13 +11373,19 @@ CAMLprim value sunml_arkode_get_num_jac_evals(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepGetNumJacEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -10842,8 +11395,7 @@ CAMLprim value sunml_arkode_get_num_jac_evals(value varkode_mem)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_num_jac_evals");
+        }
     }
 #endif
 
@@ -10860,10 +11412,11 @@ CAMLprim value sunml_arkode_get_num_prec_evals(value varkode_mem)
     int flag = ARKodeGetNumPrecEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
     CHECK_FLAG("ARKodeGetNumPrecEvals", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepGetNumPrecEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -10874,13 +11427,19 @@ CAMLprim value sunml_arkode_get_num_prec_evals(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepGetNumPrecEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -10890,8 +11449,7 @@ CAMLprim value sunml_arkode_get_num_prec_evals(value varkode_mem)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_num_prec_evals");
+        }
     }
 #endif
 
@@ -10908,10 +11466,11 @@ CAMLprim value sunml_arkode_get_num_prec_solves(value varkode_mem)
     int flag = ARKodeGetNumPrecSolves(ARKODE_MEM_FROM_ML(varkode_mem), &r);
     CHECK_FLAG("ARKodeGetNumPrecSolves", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepGetNumPrecSolves(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -10922,13 +11481,19 @@ CAMLprim value sunml_arkode_get_num_prec_solves(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepGetNumPrecSolves(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -10938,8 +11503,7 @@ CAMLprim value sunml_arkode_get_num_prec_solves(value varkode_mem)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_num_prec_solves");
+        }
     }
 #endif
 
@@ -10956,10 +11520,11 @@ CAMLprim value sunml_arkode_get_num_lin_iters(value varkode_mem)
     int flag = ARKodeGetNumLinIters(ARKODE_MEM_FROM_ML(varkode_mem), &r);
     CHECK_FLAG("ARKodeGetNumLinIters", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepGetNumLinIters(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -10970,13 +11535,19 @@ CAMLprim value sunml_arkode_get_num_lin_iters(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepGetNumLinIters(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -10986,8 +11557,7 @@ CAMLprim value sunml_arkode_get_num_lin_iters(value varkode_mem)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_num_lin_iters");
+        }
     }
 #endif
 
@@ -11004,10 +11574,11 @@ CAMLprim value sunml_arkode_get_num_lin_conv_fails(value varkode_mem)
     int flag = ARKodeGetNumLinConvFails(ARKODE_MEM_FROM_ML(varkode_mem), &r);
     CHECK_FLAG("ARKodeGetNumLinConvFails", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepGetNumLinConvFails(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -11018,13 +11589,19 @@ CAMLprim value sunml_arkode_get_num_lin_conv_fails(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepGetNumLinConvFails(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -11034,8 +11611,7 @@ CAMLprim value sunml_arkode_get_num_lin_conv_fails(value varkode_mem)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_num_lin_conv_fails");
+        }
     }
 #endif
 
@@ -11051,10 +11627,11 @@ CAMLprim value sunml_arkode_get_num_jtsetup_evals(value varkode_mem)
     int flag = ARKodeGetNumJTSetupEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
     CHECK_FLAG("ARKodeGetNumJTSetupEvals", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if   400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepGetNumJTSetupEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -11067,13 +11644,19 @@ CAMLprim value sunml_arkode_get_num_jtsetup_evals(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepGetNumJTSetupEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -11083,14 +11666,12 @@ CAMLprim value sunml_arkode_get_num_jtsetup_evals(value varkode_mem)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_num_jtsetup_evals");
+        }
     }
 #endif
 
     CAMLreturn(Val_long(r));
 }
-
 
 CAMLprim value sunml_arkode_get_num_jtimes_evals(value varkode_mem)
 {
@@ -11102,10 +11683,11 @@ CAMLprim value sunml_arkode_get_num_jtimes_evals(value varkode_mem)
     int flag = ARKodeGetNumJtimesEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
     CHECK_FLAG("ARKodeGetNumJtimesEvals", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepGetNumJtimesEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -11116,13 +11698,19 @@ CAMLprim value sunml_arkode_get_num_jtimes_evals(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepGetNumJtimesEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -11132,8 +11720,7 @@ CAMLprim value sunml_arkode_get_num_jtimes_evals(value varkode_mem)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_num_jtimes_evals");
+        }
     }
 #endif
 
@@ -11146,15 +11733,15 @@ CAMLprim value sunml_arkode_get_num_mass_setups(value varkode_mem)
 
     long int r = 0;
 
-
 #if 710 <= SUNDIALS_LIB_VERSION
      int flag = ARKodeGetNumMassSetups(ARKODE_MEM_FROM_ML(varkode_mem), &r);
     CHECK_FLAG("ARKodeGetNumMassSetups", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepGetNumMassSetups(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -11167,17 +11754,22 @@ CAMLprim value sunml_arkode_get_num_mass_setups(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_num_mass_setups");
+        }
     }
 #endif
 
@@ -11194,10 +11786,11 @@ CAMLprim value sunml_arkode_get_num_mass_mult_setups(value varkode_mem)
     int flag = ARKodeGetNumMassMultSetups(ARKODE_MEM_FROM_ML(varkode_mem), &r);
     CHECK_FLAG("ARKodeGetNumMassMultSetups", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 500 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepGetNumMassMultSetups(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -11207,17 +11800,22 @@ CAMLprim value sunml_arkode_get_num_mass_mult_setups(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_num_mass_mult_setups");
+        }
     }
 #endif
 
@@ -11234,10 +11832,11 @@ CAMLprim value sunml_arkode_get_num_mass_solves(value varkode_mem)
     int flag = ARKodeGetNumMassSolves(ARKODE_MEM_FROM_ML(varkode_mem), &r);
     CHECK_FLAG("ARKodeGetNumMassSolves", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepGetNumMassSolves(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -11251,17 +11850,22 @@ CAMLprim value sunml_arkode_get_num_mass_solves(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_num_mass_solves");
+        }
     }
 #endif
 
@@ -11278,10 +11882,11 @@ CAMLprim value sunml_arkode_get_num_mass_prec_evals(value varkode_mem)
     int flag = ARKodeGetNumMassPrecEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
     CHECK_FLAG("ARKodeGetNumMassPrecEvals", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepGetNumMassPrecEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -11292,17 +11897,22 @@ CAMLprim value sunml_arkode_get_num_mass_prec_evals(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_num_mass_prec_evals");
+        }
     }
 #endif
 
@@ -11319,10 +11929,11 @@ CAMLprim value sunml_arkode_get_num_mass_prec_solves(value varkode_mem)
     int flag = ARKodeGetNumMassPrecSolves(ARKODE_MEM_FROM_ML(varkode_mem), &r);
     CHECK_FLAG("ARKodeGetNumMassPrecSolves", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepGetNumMassPrecSolves(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -11333,17 +11944,22 @@ CAMLprim value sunml_arkode_get_num_mass_prec_solves(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_num_mass_prec_solves");
+        }
     }
 #endif
 
@@ -11360,10 +11976,11 @@ CAMLprim value sunml_arkode_get_num_mass_iters(value varkode_mem)
     int flag = ARKodeGetNumMassIters(ARKODE_MEM_FROM_ML(varkode_mem), &r);
     CHECK_FLAG("ARKodeGetNumMassIters", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepGetNumMassIters(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -11374,17 +11991,22 @@ CAMLprim value sunml_arkode_get_num_mass_iters(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_num_mass_iters");
+        }
     }
 #endif
 
@@ -11401,10 +12023,11 @@ CAMLprim value sunml_arkode_get_num_mass_conv_fails(value varkode_mem)
     int flag = ARKodeGetNumMassConvFails(ARKODE_MEM_FROM_ML(varkode_mem), &r);
     CHECK_FLAG("ARKodeGetNumMassConvFails", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepGetNumMassConvFails(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -11415,17 +12038,22 @@ CAMLprim value sunml_arkode_get_num_mass_conv_fails(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_num_mass_conv_fails");
+        }
     }
 #endif
 
@@ -11441,10 +12069,11 @@ CAMLprim value sunml_arkode_get_num_mtsetups(value varkode_mem)
     int flag = ARKodeGetNumMTSetups(ARKODE_MEM_FROM_ML(varkode_mem), &r);
     CHECK_FLAG("ARKodeGetNumMTSetups", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if   400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepGetNumMTSetups(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -11457,17 +12086,22 @@ CAMLprim value sunml_arkode_get_num_mtsetups(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_num_mtsetups");
+        }
     }
 #endif
 
@@ -11482,10 +12116,11 @@ CAMLprim value sunml_arkode_print_mem(value varkode_mem, value volog)
     FILE *vlog = (volog == Val_none) ? NULL : ML_CFILE(Some_val(volog));
     ARKodePrintMem(ARKODE_MEM_FROM_ML(varkode_mem), vlog);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 500 <= SUNDIALS_LIB_VERSION
             FILE *vlog = (volog == Val_none) ? NULL : ML_CFILE(Some_val(volog));
@@ -11495,7 +12130,9 @@ CAMLprim value sunml_arkode_print_mem(value varkode_mem, value volog)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
 
 #if 500 <= SUNDIALS_LIB_VERSION
             FILE *vlog = (volog == Val_none) ? NULL : ML_CFILE(Some_val(volog));
@@ -11505,10 +12142,14 @@ CAMLprim value sunml_arkode_print_mem(value varkode_mem, value volog)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 500 <= SUNDIALS_LIB_VERSION
             FILE *vlog = (volog == Val_none) ? NULL : ML_CFILE(Some_val(volog));
@@ -11518,8 +12159,7 @@ CAMLprim value sunml_arkode_print_mem(value varkode_mem, value volog)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_print_mem");
+        }
     }
 #endif
 
@@ -11537,10 +12177,11 @@ CAMLprim value sunml_arkode_set_relax_fn(value varkode_mem, value venable)
             (Bool_val(venable) ? relaxjacfn : NULL));
     CHECK_FLAG("ARKodeSetRelaxFn", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag;
@@ -11554,7 +12195,9 @@ CAMLprim value sunml_arkode_set_relax_fn(value varkode_mem, value venable)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag;
@@ -11568,14 +12211,17 @@ CAMLprim value sunml_arkode_set_relax_fn(value varkode_mem, value venable)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_relax_fn");
+        }
     }
 #endif
 
@@ -11591,10 +12237,11 @@ CAMLprim value sunml_arkode_set_relax_eta_fail(value varkode_mem, value vv)
                     Double_val(vv));
     CHECK_FLAG("ARKodeSetRelaxEtaFail", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetRelaxEtaFail(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -11605,7 +12252,9 @@ CAMLprim value sunml_arkode_set_relax_eta_fail(value varkode_mem, value vv)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepSetRelaxEtaFail(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -11616,14 +12265,17 @@ CAMLprim value sunml_arkode_set_relax_eta_fail(value varkode_mem, value vv)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_relax_eta_fail");
+        }
     }
 #endif
 
@@ -11639,10 +12291,11 @@ CAMLprim value sunml_arkode_set_relax_lower_bound(value varkode_mem, value vv)
                     Double_val(vv));
     CHECK_FLAG("ARKodeSetRelaxLowerBound", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetRelaxLowerBound(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -11653,7 +12306,9 @@ CAMLprim value sunml_arkode_set_relax_lower_bound(value varkode_mem, value vv)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepSetRelaxLowerBound(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -11664,14 +12319,17 @@ CAMLprim value sunml_arkode_set_relax_lower_bound(value varkode_mem, value vv)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_relax_lower_bound");
+        }
     }
 #endif
 
@@ -11686,10 +12344,11 @@ CAMLprim value sunml_arkode_set_relax_max_fails(value varkode_mem, value vv)
     int flag = ARKodeSetRelaxMaxFails(ARKODE_MEM_FROM_ML(varkode_mem), Int_val(vv));
     CHECK_FLAG("ARKodeSetRelaxMaxFails", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetRelaxMaxFails(ARKODE_MEM_FROM_ML(varkode_mem), Int_val(vv));
@@ -11699,7 +12358,9 @@ CAMLprim value sunml_arkode_set_relax_max_fails(value varkode_mem, value vv)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepSetRelaxMaxFails(ARKODE_MEM_FROM_ML(varkode_mem), Int_val(vv));
@@ -11709,14 +12370,17 @@ CAMLprim value sunml_arkode_set_relax_max_fails(value varkode_mem, value vv)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_relax_max_fails");
+        }
     }
 #endif
 
@@ -11731,10 +12395,11 @@ CAMLprim value sunml_arkode_set_relax_max_iters(value varkode_mem, value vv)
     int flag = ARKodeSetRelaxMaxIters(ARKODE_MEM_FROM_ML(varkode_mem), Int_val(vv));
     CHECK_FLAG("ARKodeSetRelaxMaxIters", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetRelaxMaxIters(ARKODE_MEM_FROM_ML(varkode_mem), Int_val(vv));
@@ -11744,7 +12409,9 @@ CAMLprim value sunml_arkode_set_relax_max_iters(value varkode_mem, value vv)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepSetRelaxMaxIters(ARKODE_MEM_FROM_ML(varkode_mem), Int_val(vv));
@@ -11754,20 +12421,22 @@ CAMLprim value sunml_arkode_set_relax_max_iters(value varkode_mem, value vv)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_relax_max_iters");
+        }
     }
 #endif
 
     CAMLreturn (Val_unit);
 }
-
 
 CAMLprim value sunml_arkode_set_relax_solver(value varkode_mem, value vv)
 {
@@ -11775,10 +12444,11 @@ CAMLprim value sunml_arkode_set_relax_solver(value varkode_mem, value vv)
 
 #if 710 <= SUNDIALS_LIB_VERSION
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             ARKRelaxSolver solver;
@@ -11802,7 +12472,9 @@ CAMLprim value sunml_arkode_set_relax_solver(value varkode_mem, value vv)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             ARKRelaxSolver solver;
@@ -11826,14 +12498,17 @@ CAMLprim value sunml_arkode_set_relax_solver(value varkode_mem, value vv)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_relax_solver");
+        }
     }
 #endif
 
@@ -11849,10 +12524,11 @@ CAMLprim value sunml_arkode_set_relax_res_tol(value varkode_mem, value vv)
                     Double_val(vv));
     CHECK_FLAG("ARKodeSetRelaxResTol", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetRelaxResTol(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -11863,7 +12539,9 @@ CAMLprim value sunml_arkode_set_relax_res_tol(value varkode_mem, value vv)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepSetRelaxResTol(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -11874,14 +12552,17 @@ CAMLprim value sunml_arkode_set_relax_res_tol(value varkode_mem, value vv)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_relax_res_tol");
+        }
     }
 #endif
 
@@ -11898,10 +12579,11 @@ CAMLprim value sunml_arkode_set_relax_tol(value varkode_mem,
                 Double_val(vrel), Double_val(vabs));
     CHECK_FLAG("ARKodeSetRelaxTol", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetRelaxTol(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -11912,7 +12594,9 @@ CAMLprim value sunml_arkode_set_relax_tol(value varkode_mem,
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepSetRelaxTol(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -11923,14 +12607,17 @@ CAMLprim value sunml_arkode_set_relax_tol(value varkode_mem,
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_relax_tol");
+        }
     }
 #endif
 
@@ -11946,10 +12633,11 @@ CAMLprim value sunml_arkode_set_relax_upper_bound(value varkode_mem, value vv)
                     Double_val(vv));
     CHECK_FLAG("ARKodeSetRelaxUpperBound", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepSetRelaxUpperBound(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -11960,7 +12648,9 @@ CAMLprim value sunml_arkode_set_relax_upper_bound(value varkode_mem, value vv)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepSetRelaxUpperBound(ARKODE_MEM_FROM_ML(varkode_mem),
@@ -11971,14 +12661,17 @@ CAMLprim value sunml_arkode_set_relax_upper_bound(value varkode_mem, value vv)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_relax_upper_bound");
+        }
     }
 #endif
 
@@ -11994,10 +12687,11 @@ CAMLprim value sunml_arkode_get_num_relax_fn_evals(value varkode_mem)
     int flag = ARKodeGetNumRelaxFnEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
     CHECK_FLAG("ARKodeGetNumRelaxFnEvals", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepGetNumRelaxFnEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -12007,7 +12701,9 @@ CAMLprim value sunml_arkode_get_num_relax_fn_evals(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepGetNumRelaxFnEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -12017,14 +12713,17 @@ CAMLprim value sunml_arkode_get_num_relax_fn_evals(value varkode_mem)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_num_relax_fn_evals");
+        }
     }
 #endif
 
@@ -12040,10 +12739,11 @@ CAMLprim value sunml_arkode_get_num_relax_jac_evals(value varkode_mem)
     int flag = ARKodeGetNumRelaxJacEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
     CHECK_FLAG("ARKodeGetNumRelaxJacEvals", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepGetNumRelaxJacEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -12053,7 +12753,9 @@ CAMLprim value sunml_arkode_get_num_relax_jac_evals(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepGetNumRelaxJacEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -12063,14 +12765,17 @@ CAMLprim value sunml_arkode_get_num_relax_jac_evals(value varkode_mem)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_num_relax_jac_evals");
+        }
     }
 #endif
 
@@ -12086,10 +12791,11 @@ CAMLprim value sunml_arkode_get_num_relax_fails(value varkode_mem)
     int flag = ARKodeGetNumRelaxFails(ARKODE_MEM_FROM_ML(varkode_mem), &r);
     CHECK_FLAG("ARKodeGetNumRelaxFails", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepGetNumRelaxFails(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -12099,7 +12805,9 @@ CAMLprim value sunml_arkode_get_num_relax_fails(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepGetNumRelaxFails(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -12109,14 +12817,17 @@ CAMLprim value sunml_arkode_get_num_relax_fails(value varkode_mem)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_num_relax_fails");
+        }
     }
 #endif
 
@@ -12132,10 +12843,11 @@ CAMLprim value sunml_arkode_get_num_relax_bound_fails(value varkode_mem)
     int flag = ARKodeGetNumRelaxBoundFails(ARKODE_MEM_FROM_ML(varkode_mem), &r);
     CHECK_FLAG("ARKodeGetNumRelaxBoundFails", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepGetNumRelaxBoundFails(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -12145,7 +12857,9 @@ CAMLprim value sunml_arkode_get_num_relax_bound_fails(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepGetNumRelaxBoundFails(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -12155,14 +12869,17 @@ CAMLprim value sunml_arkode_get_num_relax_bound_fails(value varkode_mem)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_num_relax_bound_fails");
+        }
     }
 #endif
 
@@ -12178,10 +12895,11 @@ CAMLprim value sunml_arkode_get_num_relax_solve_fails(value varkode_mem)
     int flag = ARKodeGetNumRelaxSolveFails(ARKODE_MEM_FROM_ML(varkode_mem), &r);
     CHECK_FLAG("ARKodeGetNumRelaxSolveFails", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepGetNumRelaxSolveFails(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -12191,7 +12909,9 @@ CAMLprim value sunml_arkode_get_num_relax_solve_fails(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepGetNumRelaxSolveFails(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -12201,14 +12921,17 @@ CAMLprim value sunml_arkode_get_num_relax_solve_fails(value varkode_mem)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_num_relax_solve_fails");
+        }
     }
 #endif
 
@@ -12224,10 +12947,11 @@ CAMLprim value sunml_arkode_get_num_relax_solve_iters(value varkode_mem)
     int flag = ARKodeGetNumRelaxSolveIters(ARKODE_MEM_FROM_ML(varkode_mem), &r);
     CHECK_FLAG("ARKodeGetNumRelaxSolveIters", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepGetNumRelaxSolveIters(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -12237,7 +12961,9 @@ CAMLprim value sunml_arkode_get_num_relax_solve_iters(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             int flag = ERKStepGetNumRelaxSolveIters(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -12247,14 +12973,17 @@ CAMLprim value sunml_arkode_get_num_relax_solve_iters(value varkode_mem)
 #endif
 
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_get_num_relax_solve_iters");
+        }
     }
 #endif
 
@@ -12272,16 +13001,21 @@ CAMLprim value sunml_arkode_set_postprocess_stage_fn(value varkode_mem,
                         Bool_val(vhasf) ? poststepfn : NULL);
     CHECK_FLAG("ARKodeSetPostprocessStageFn", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
 
 #if 660 <= SUNDIALS_LIB_VERSION
             void *arkode_mem = ARKODE_MEM_FROM_ML (varkode_mem);
@@ -12293,11 +13027,12 @@ CAMLprim value sunml_arkode_set_postprocess_stage_fn(value varkode_mem,
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
 #endif
             break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        default:
-            caml_failwith("Unknown step_type in sunml_arkode_set_postprocess_stage_fn");
+        }
     }
 #endif
 
@@ -12313,10 +13048,11 @@ CAMLprim value sunml_arkode_get_num_lin_rhs_evals(value varkode_mem)
     int flag = ARKodeGetNumLinRhsEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
     CHECK_FLAG("ARKodeGetNumLinRhsEvals", flag);
 #else
-    value vstep_type = Field(vdata, RECORD_ARKODE_SESSION_STEP_TYPE);
+    value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);
 
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
+        {
 
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepGetNumLinRhsEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -12326,13 +13062,19 @@ CAMLprim value sunml_arkode_get_num_lin_rhs_evals(value varkode_mem)
 #endif
 
             break;
+        }
         case ARKODE_VARIANT_ERKSTEP:
+    {
+caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+            break;
+        }
+            case ARKODE_VARIANT_SPRKSTEP:
+        {
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        case ARKODE_VARIANT_SPRKSTEP:
-            caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
-            break;
+        }
         case ARKODE_VARIANT_MRISTEP:
+        {
 
 #if 540 <= SUNDIALS_LIB_VERSION
             int flag = MRIStepGetNumLinRhsEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
@@ -12342,12 +13084,23 @@ CAMLprim value sunml_arkode_get_num_lin_rhs_evals(value varkode_mem)
 #endif
 
             break;
-        default:
-            caml_failwith("Unknown step_type in ");
+        }
     }
 #endif
 
     CAMLreturn(Val_long(r));
+}
+
+CAMLprim value sunml_arkode_set_autonomous(value varkode_mem, value vautonomous)
+{
+    CAMLparam2(varkode_mem, vautonomous);
+#if 710 <= SUNDIALS_LIB_VERSION
+    int flag = ARKodeSetAutonomous(ARKODE_MEM_FROM_ML(varkode_mem), Bool_val(vautonomous));
+    CHECK_FLAG("ARKodeSetAutonomous", flag);
+#else
+    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+#endif
+    CAMLreturn (Val_unit);
 }
 
 // // TEMPLATE TODO REMOVE:
@@ -12358,12 +13111,14 @@ CAMLprim value sunml_arkode_get_num_lin_rhs_evals(value varkode_mem)
 
 //     switch (Int_val(vstep_type)) {
 //         case ARKODE_VARIANT_ARKSTEP:
+
 //             break;
 //         case ARKODE_VARIANT_ERKSTEP:
 //             break;
+
 //         case ARKODE_VARIANT_SPRKSTEP:
-//             break;
-//         case ARKODE_VARIANT_MRISTEP:
+//             break;}
+//         case ARKODE_VARIANT_MRISTEP:     {
 //             break;
 //         default:
 //             caml_failwith("Unknown step_type in ");

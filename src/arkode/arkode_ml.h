@@ -499,6 +499,7 @@ enum arkode_mri_istepper_forcing_data_index {
  * c_register_exns in arkode.ml.  */
 enum arkode_exn_index {
     ARKODE_EXN_IllInput = 0,
+    ARKODE_EXN_StepperUnsupported,
     ARKODE_EXN_TooClose,
     ARKODE_EXN_TooMuchWork,
     ARKODE_EXN_TooMuchAccuracy,

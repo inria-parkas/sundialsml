@@ -287,7 +287,7 @@ let precond wdata jacarg _ gamma =
     | Some c -> c | None -> assert false
   and rewtdata  = Nvector.unwrap wdata.rewt
   in
-  ARKStep.get_err_weights arkode_mem wdata.rewt;
+  Arkode.get_err_weights arkode_mem wdata.rewt;
 
   let uround = Config.unit_roundoff
   and p      = wdata.p
@@ -813,10 +813,10 @@ let print_all_species (cdata : RealArray.t) ns mxns t =
   done
 
 let print_output s t =
-  let nst     = ARKStep.get_num_steps s
+  let nst     = Arkode.get_num_steps s
   and nfe,nfi = ARKStep.get_num_rhs_evals s
-  and nni     = ARKStep.get_num_nonlin_solv_iters s
-  and hu      = ARKStep.get_last_step s
+  and nni     = Arkode.get_num_nonlin_solv_iters s
+  and hu      = Arkode.get_last_step s
   in
   printf "t = %10.2e  nst = %d  nfe = %d  nfi = %d  nni = %d" t nst nfe nfi nni;
   printf "  hu = %11.2e\n\n" hu
@@ -833,19 +833,19 @@ let lsolver, _lsolver =
 
 let print_final_stats s =
   let open ARKStep in
-  let lenrw, leniw = get_work_space s
-  and nst          = get_num_steps s
+  let lenrw, leniw = Arkode.get_work_space s
+  and nst          = Arkode.get_num_steps s
   and nfe, nfi     = get_num_rhs_evals s
-  and nsetups      = get_num_lin_solv_setups s
-  and netf         = get_num_err_test_fails s
-  and nni          = get_num_nonlin_solv_iters s
-  and ncfn         = get_num_nonlin_solv_conv_fails s
+  and nsetups      = Arkode.get_num_lin_solv_setups s
+  and netf         = Arkode.get_num_err_test_fails s
+  and nni          = Arkode.get_num_nonlin_solv_iters s
+  and ncfn         = Arkode.get_num_nonlin_solv_conv_fails s
   in
-  let lenrwLS, leniwLS = Spils.get_work_space s
-  and nli   = Spils.get_num_lin_iters s
-  and npe   = Spils.get_num_prec_evals s
-  and nps   = Spils.get_num_prec_solves s
-  and ncfl  = Spils.get_num_lin_conv_fails s
+  let lenrwLS, leniwLS = Arkode.get_lin_work_space s
+  and nli   = Arkode.get_num_lin_iters s
+  and npe   = Arkode.get_num_prec_evals s
+  and nps   = Arkode.get_num_prec_solves s
+  and ncfl  = Arkode.get_num_lin_conv_fails s
   and nfeLS = Spils.get_num_lin_rhs_evals s
   in
   printf "\n\n Final statistics for this run:\n\n";
@@ -902,10 +902,10 @@ let main () =
       c
   ) in
   wdata.arkode_mem <- Some arkode_mem;
-  ARKStep.set_max_num_steps arkode_mem 1000;
-  ARKStep.set_nonlin_conv_coef arkode_mem 1.0e-3;
+  Arkode.set_max_num_steps arkode_mem 1000;
+  Arkode.set_nonlin_conv_coef arkode_mem 1.0e-3;
   ARKStep.Spils.(set_gs_type lsolver ModifiedGS);
-  ARKStep.Spils.set_eps_lin arkode_mem delt;
+  Arkode.set_eps_lin arkode_mem delt;
 
   let ns   = wdata.ns
   and mxns = wdata.mxns
