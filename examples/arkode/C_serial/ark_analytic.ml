@@ -119,14 +119,14 @@ let main () =
 
   (* Get/print some final statistics on how the solve progressed *)
   let open ARKStep in
-  let nst      = get_num_steps arkode_mem in
-  let nst_a    = get_num_step_attempts arkode_mem in
+  let nst      = Arkode.get_num_steps arkode_mem in
+  let nst_a    = Arkode.get_num_step_attempts arkode_mem in
   let nfe, nfi = get_num_rhs_evals arkode_mem in
-  let nsetups  = get_num_lin_solv_setups arkode_mem in
-  let netf     = get_num_err_test_fails arkode_mem in
-  let nni      = get_num_nonlin_solv_iters arkode_mem in
-  let ncfn     = get_num_nonlin_solv_conv_fails arkode_mem in
-  let nje      = Dls.get_num_jac_evals arkode_mem in
+  let nsetups  = Arkode.get_num_lin_solv_setups arkode_mem in
+  let netf     = Arkode.get_num_err_test_fails arkode_mem in
+  let nni      = Arkode.get_num_nonlin_solv_iters arkode_mem in
+  let ncfn     = Arkode.get_num_nonlin_solv_conv_fails arkode_mem in
+  let nje      = Arkode.get_num_jac_evals arkode_mem in
   let nfeLS    = Dls.get_num_lin_rhs_evals arkode_mem in
 
   printf "\nFinal Solver Statistics:\n";

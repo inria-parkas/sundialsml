@@ -32,6 +32,7 @@
  *-----------------------------------------------------------------*)
 
 open Sundials
+open Arkode
 module ARKStep = Arkode.ARKStep
 
 let printf = Printf.printf
@@ -65,7 +66,7 @@ let matrix_embedded_ls_solve content _m (x : RealArray.t) (b : RealArray.t) _ =
       exit(-1)
   | Some arkode_mem ->
       (* retrieve implicit system data from ARKStep *)
-      let { ARKStep.gamma; _ } = ARKStep.get_nonlin_system_data arkode_mem in
+      let { gamma; _ } = get_nonlin_system_data arkode_mem in
       (* extract stiffness parameter from user_data *)
       (* perform linear solve: (1-gamma*lamda)*x = b *)
       x.{0} <- b.{0} /. (1.0 -. gamma *. lambda)
@@ -152,14 +153,14 @@ let main () =
   printf "   ---------------------\n";
 
   (* Get/print some final statistics on how the solve progressed *)
-  let nst = ARKStep.get_num_steps arkode_mem in
-  let nst_a = ARKStep.get_num_step_attempts arkode_mem in
+  let nst = get_num_steps arkode_mem in
+  let nst_a = get_num_step_attempts arkode_mem in
   let nfe, nfi = ARKStep.get_num_rhs_evals arkode_mem in
-  let nsetups = ARKStep.get_num_lin_solv_setups arkode_mem in
-  let netf = ARKStep.get_num_err_test_fails arkode_mem in
-  let nni = ARKStep.get_num_nonlin_solv_iters arkode_mem in
-  let ncfn = ARKStep.get_num_nonlin_solv_conv_fails arkode_mem in
-  let nje = ARKStep.Dls.get_num_jac_evals arkode_mem in
+  let nsetups = get_num_lin_solv_setups arkode_mem in
+  let netf = get_num_err_test_fails arkode_mem in
+  let nni = get_num_nonlin_solv_iters arkode_mem in
+  let ncfn = get_num_nonlin_solv_conv_fails arkode_mem in
+  let nje = get_num_jac_evals arkode_mem in
   let nfeLS = ARKStep.Dls.get_num_lin_rhs_evals arkode_mem in
 
   printf "\nFinal Solver Statistics:\n";

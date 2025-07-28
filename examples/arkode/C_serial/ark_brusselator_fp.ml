@@ -57,6 +57,7 @@
  *-----------------------------------------------------------------*)
 
 open Sundials
+open Arkode
 module ARKStep = Arkode.ARKStep
 
 let printf = Printf.printf
@@ -160,7 +161,7 @@ let main () =
       t0
       y
   ) in
-  ARKStep.set_max_nonlin_iters arkode_mem maxcor;
+  set_max_nonlin_iters arkode_mem maxcor;
 
   (* Open output stream for results, output comment line *)
   let ufid = open_out "solution.txt" in

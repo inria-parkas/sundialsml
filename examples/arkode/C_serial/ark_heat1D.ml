@@ -40,6 +40,7 @@
  *---------------------------------------------------------------*)
 
 open Sundials
+open Arkode
 module ARKStep = Arkode.ARKStep
 
 let printf = Printf.printf
@@ -123,7 +124,7 @@ let main () =
   let arkode_mem = ARKStep.(
     init
       (implicit
-         ~lsolver:Spils.(solver (pcg ~maxl:mesh_n y)
+         ~lsolver:Arkode.ARKStep.Spils.(solver (pcg ~maxl:mesh_n y)
                                 ~jac_times_vec:(None, jac udata)
                                 prec_none)
          ~linearity:(Linear true)
@@ -133,10 +134,10 @@ let main () =
       y
   ) in
   (* Set routines *)
-  ARKStep.set_max_num_steps arkode_mem 10000;   (* Increase max num steps  *)
+  set_max_num_steps arkode_mem 10000;   (* Increase max num steps  *)
 
   if sundials_270_or_later then
-    ARKStep.(set_predictor_method arkode_mem MaximumOrderPredictor);
+    set_predictor_method arkode_mem MaximumOrderPredictor;
 
   (* output mesh to disk *)
   let fid = open_out "heat_mesh.txt" in
@@ -193,9 +194,9 @@ let main () =
   let netf     = get_num_err_test_fails arkode_mem in
   let nni      = get_num_nonlin_solv_iters arkode_mem in
   let ncfn     = get_num_nonlin_solv_conv_fails arkode_mem in
-  let nli      = Spils.get_num_lin_iters arkode_mem in
-  let nJv      = Spils.get_num_jtimes_evals arkode_mem in
-  let nlcf     = Spils.get_num_lin_conv_fails arkode_mem in
+  let nli      = get_num_lin_iters arkode_mem in
+  let nJv      = get_num_jtimes_evals arkode_mem in
+  let nlcf     = get_num_lin_conv_fails arkode_mem in
 
   printf "\nFinal Solver Statistics:\n";
   printf "   Internal solver steps = %d (attempted = %d)\n" nst nst_a;

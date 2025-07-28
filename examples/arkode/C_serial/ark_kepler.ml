@@ -63,6 +63,7 @@
  * --------------------------------------------------------------------------*)
 
 open Sundials
+open Arkode
 module ARKStep = Arkode.ARKStep
 module SPRKStep = Arkode.SPRKStep
 module SPRKTable = Arkode.SPRKStep.MethodTable
@@ -268,8 +269,8 @@ let solve_problem { count_orbits; step_mode; stepper;
        in
        SPRKStep.set_method_name arkode_mem method_name;
        SPRKStep.set_use_compensated_sums arkode_mem use_compsums;
-       SPRKStep.set_max_num_steps arkode_mem (int_of_float (ceil(tf /. dt)) + 1);
-       Arkode.SPRK arkode_mem
+       set_max_num_steps arkode_mem (int_of_float (ceil(tf /. dt)) + 1);
+       `SPRK arkode_mem
     end
     | Erk -> begin
        (* Optional: enable temporal root-finding *)
@@ -279,9 +280,9 @@ let solve_problem { count_orbits; step_mode; stepper;
        in
        ARKStep.set_table_name arkode_mem
          ~itable:"ARKODE_DIRK_NONE" ~etable:method_name ();
-       ARKStep.set_max_num_steps arkode_mem (int_of_float (ceil(tf /. dt)) + 1);
-       (if step_mode = Fixed then ARKStep.set_fixed_step arkode_mem (Some dt));
-       Arkode.ARK arkode_mem
+       set_max_num_steps arkode_mem (int_of_float (ceil(tf /. dt)) + 1);
+       (if step_mode = Fixed then set_fixed_step arkode_mem (Some dt));
+       `ARK arkode_mem
     end
   in
 
@@ -351,17 +352,17 @@ let solve_problem { count_orbits; step_mode; stepper;
 
   (* Do integration *)
   (match session with
-   | Arkode.SPRK arkode_mem ->
-       loop (SPRKStep.set_stop_time arkode_mem)
-            (SPRKStep.evolve_normal arkode_mem)
-            (SPRKStep.get_root_info arkode_mem);
-       SPRKStep.print_all_stats arkode_mem OutputTable
-   | Arkode.ARK arkode_mem ->
-       loop (ARKStep.set_stop_time arkode_mem)
-            (ARKStep.evolve_normal arkode_mem)
-            (ARKStep.get_root_info arkode_mem);
-       ARKStep.print_all_stats arkode_mem OutputTable
-  | _ -> assert false);
+    | `SPRK arkode_mem ->
+        loop (set_stop_time arkode_mem)
+              (SPRKStep.evolve_normal arkode_mem)
+              (get_root_info arkode_mem);
+        print_all_stats arkode_mem OutputTable
+    | `ARK arkode_mem ->
+        loop (set_stop_time arkode_mem)
+              (ARKStep.evolve_normal arkode_mem)
+              (get_root_info arkode_mem);
+        print_all_stats arkode_mem OutputTable
+    | _ -> assert false);
 
   Nvector.Ops.scale 1.0 y sol;
   (* return the energy_error *)

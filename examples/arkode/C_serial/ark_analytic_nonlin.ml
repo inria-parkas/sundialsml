@@ -30,6 +30,7 @@
  *-----------------------------------------------------------------*)
 
 open Sundials
+open Arkode
 module ERKStep = Arkode.ERKStep
 
 let printf = Printf.printf
@@ -109,9 +110,9 @@ let main () =
     printf "   Total number of error test failures = %d\n\n" netf
   end else begin
     printf "\nFinal Statistics:\n";
-    ERKStep.print_all_stats arkode_mem Sundials.OutputTable;
+    print_all_stats arkode_mem Sundials.OutputTable;
     let fid = Logfile.openfile "ark_analytic_nonlin_stats.csv" in
-    ERKStep.print_all_stats ~logfile:fid arkode_mem Sundials.OutputCSV;
+    print_all_stats ~logfile:fid arkode_mem Sundials.OutputCSV;
     Logfile.close fid
   end
 

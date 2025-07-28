@@ -1,4 +1,5 @@
 open Sundials
+open Arkode
 module ARKStep = Arkode.ARKStep
 
 (* 1. Define right-hand-side functions. *)
@@ -31,8 +32,8 @@ let s = ARKStep.(
 
 (* 5. Set optional inputs, e.g.,
       call [set_*] functions to change solver parameters. *)
-ARKStep.set_stop_time s 10.0;;
-ARKStep.set_all_root_directions s RootDirs.Increasing;;
+set_stop_time s 10.0;;
+set_all_root_directions s RootDirs.Increasing;;
 
 (* 6. Advance the solution in time,
       by repeatedly calling [evolve_normal] or [evolve_one_step]. *)
@@ -52,4 +53,4 @@ go (0.0, ARKStep.Success);;
 
 (* 7. Get optional outputs,
       call the [get_*] functions to examine solver statistics. *)
-let ns = ARKStep.get_num_steps s
+let ns = get_num_steps s

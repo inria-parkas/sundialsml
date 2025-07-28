@@ -36,6 +36,7 @@
  *--------------------------------------------------------------- }}} *)
 
 open Sundials
+open Arkode
 module ARKStep = Arkode.ARKStep
 
 let printf = Printf.printf
@@ -151,18 +152,18 @@ let main () =
   (* Set the Jacobian routine *)
  (* Specify tolerances *)
   let arkode_mem = ARKStep.(init
-                             (implicit ~lsolver:(Dls.solver ~jac ls) f)
+                             (implicit ~lsolver:(Arkode.ARKStep.Dls.solver ~jac ls) f)
                              (SStolerances (reltol, abstol))
                              t0 y)
   in
-  ARKStep.set_init_step arkode_mem h0;            (* Set custom initial step *)
-  ARKStep.set_max_err_test_fails arkode_mem 20;   (* Increase max error test fails *)
-  ARKStep.set_max_nonlin_iters arkode_mem 8;      (* Increase max nonlin iters  *)
-  ARKStep.set_nonlin_conv_coef arkode_mem 1.e-7;  (* Set nonlinear convergence coeff. *)
-  ARKStep.set_max_num_steps arkode_mem 100000;    (* Increase max num steps *)
-  ARKStep.(set_predictor_method arkode_mem MaximumOrderPredictor);
+  set_init_step arkode_mem h0;            (* Set custom initial step *)
+  set_max_err_test_fails arkode_mem 20;   (* Increase max error test fails *)
+  set_max_nonlin_iters arkode_mem 8;      (* Increase max nonlin iters  *)
+  set_nonlin_conv_coef arkode_mem 1.e-7;  (* Set nonlinear convergence coeff. *)
+  set_max_num_steps arkode_mem 100000;    (* Increase max num steps *)
+  set_predictor_method arkode_mem MaximumOrderPredictor;
                                                   (* Specify maximum-order predictor *)
-  ARKStep.set_constraints arkode_mem constraints; (* Set constraints *)
+  set_constraints arkode_mem constraints; (* Set constraints *)
 
   (* Open output stream for results, output comment line *)
   let ufid = open_out "solution.txt" in
@@ -193,16 +194,15 @@ let main () =
   close_out ufid;
 
   (* Print some final statistics *)
-  let open ARKStep in
   let nst      = get_num_steps arkode_mem in
   let nst_a    = get_num_step_attempts arkode_mem in
-  let nfe, nfi = get_num_rhs_evals arkode_mem in
+  let nfe, nfi = Arkode.ARKStep.get_num_rhs_evals arkode_mem in
   let nsetups  = get_num_lin_solv_setups arkode_mem in
   let netf     = get_num_err_test_fails arkode_mem in
   let nni      = get_num_nonlin_solv_iters arkode_mem in
   let nnf      = get_num_nonlin_solv_conv_fails arkode_mem in
-  let nje      = Dls.get_num_jac_evals arkode_mem in
-  let nfeLS    = Dls.get_num_lin_rhs_evals arkode_mem in
+  let nje      = get_num_jac_evals arkode_mem in
+  let nfeLS    = Arkode.ARKStep.Dls.get_num_lin_rhs_evals arkode_mem in
   let nctf     = get_num_constr_fails arkode_mem in
 
   printf "\nFinal Solver Statistics:\n";

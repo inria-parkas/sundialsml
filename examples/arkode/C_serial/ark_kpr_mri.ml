@@ -73,6 +73,7 @@
  * ---------------------------------------------------------------- }}}*)
 
 open Sundials
+open Arkode
 module ARKStep = Arkode.ARKStep
 module MRIStep = Arkode.MRIStep
 
@@ -415,7 +416,7 @@ let main () =
         let ls_f = LinearSolver.Direct.dense y a_f in
         let inner_arkode_mem =
           ARKStep.(init (implicit
-                           ~lsolver:(Dls.solver ~jac:(jn rpar) ls_f)
+                           ~lsolver:(Arkode.ARKStep.Dls.solver ~jac:(jn rpar) ls_f)
                            (fn rpar))
                         (SStolerances (reltol, abstol))
                         t0 y)
@@ -463,7 +464,7 @@ let main () =
     | _ -> assert false
   in
   (* Set the fast step size *)
-  ARKStep.set_fixed_step inner_arkode_mem (Some hf);
+  set_fixed_step inner_arkode_mem (Some hf);
 
   (*
    * Create the slow integrator and set options
@@ -522,7 +523,7 @@ let main () =
         let a_s = Matrix.dense neq in
         let ls_s = LinearSolver.Direct.dense y a_s in
         MRIStep.(init
-          (implicit ~lsolver:(Dls.solver ~jac:(jn rpar) ls_s) (fn rpar))
+          (implicit ~lsolver:(Arkode.MRIStep.Dls.solver ~jac:(jn rpar) ls_s) (fn rpar))
           (SStolerances (reltol, abstol))
           (InnerStepper.from_arkstep inner_arkode_mem)
           ~coupling:Coupling.(load_table GARK_IRK21a)
@@ -533,7 +534,7 @@ let main () =
         let a_s = Matrix.dense neq in
         let ls_s = LinearSolver.Direct.dense y a_s in
         MRIStep.(init
-          (implicit ~lsolver:(Dls.solver ~jac:(js rpar) ls_s) (fs rpar))
+          (implicit ~lsolver:(Arkode.MRIStep.Dls.solver ~jac:(js rpar) ls_s) (fs rpar))
           (SStolerances (reltol, abstol))
           (InnerStepper.from_arkstep inner_arkode_mem)
           ~coupling:Coupling.(load_table GARK_ESDIRK34a)
@@ -544,7 +545,7 @@ let main () =
         let a_s = Matrix.dense neq in
         let ls_s = LinearSolver.Direct.dense y a_s in
         MRIStep.(init
-          (imex ~lsolver:(Dls.solver ~jac:(jsi rpar) ls_s)
+          (imex ~lsolver:(Arkode.MRIStep.Dls.solver ~jac:(jsi rpar) ls_s)
                 ~fsi:(fsi rpar) ~fse:(fse rpar) ())
           (SStolerances (reltol, abstol))
           (InnerStepper.from_arkstep inner_arkode_mem)
@@ -556,7 +557,7 @@ let main () =
         let a_s = Matrix.dense neq in
         let ls_s = LinearSolver.Direct.dense y a_s in
         MRIStep.(init
-          (imex ~lsolver:(Dls.solver ~jac:(jsi rpar) ls_s)
+          (imex ~lsolver:(Arkode.MRIStep.Dls.solver ~jac:(jsi rpar) ls_s)
                 ~fsi:(fsi rpar) ~fse:(fse rpar) ())
           (SStolerances (reltol, abstol))
           (InnerStepper.from_arkstep inner_arkode_mem)
@@ -627,11 +628,11 @@ let main () =
    *)
 
   (* Get some slow integrator statistics *)
-  let nsts = MRIStep.get_num_steps arkode_mem in
+  let nsts = get_num_steps arkode_mem in
   let nfse, nfsi = MRIStep.get_num_rhs_evals arkode_mem in
 
   (* Get some fast integrator statistics *)
-  let nstf = ARKStep.get_num_steps inner_arkode_mem in
+  let nstf = get_num_steps inner_arkode_mem in
   let nff, _ = ARKStep.get_num_rhs_evals inner_arkode_mem in
 
   (* Print some final statistics *)
@@ -649,8 +650,8 @@ let main () =
   (* Get/print slow integrator decoupled implicit solver statistics *)
   if solve_type = 4 || solve_type = 7 || solve_type = 8 || solve_type = 9 then
   begin
-    let nnis, nncs = MRIStep.get_nonlin_solv_stats arkode_mem in
-    let njes = MRIStep.Dls.get_num_jac_evals arkode_mem in
+    let nnis, nncs = get_nonlin_solv_stats arkode_mem in
+    let njes = get_num_jac_evals arkode_mem in
     printf "   Slow Newton iters = %d\n" nnis;
     printf "   Slow Newton conv fails = %d\n" nncs;
     printf "   Slow Jacobian evals = %d\n" njes
@@ -658,8 +659,8 @@ let main () =
 
   (* Get/print fast integrator implicit solver statistics *)
   if solve_type = 2 then begin
-    let nnif, nncf = ARKStep.get_nonlin_solv_stats inner_arkode_mem in
-    let njef = ARKStep.Dls.get_num_jac_evals inner_arkode_mem in
+    let nnif, nncf = get_nonlin_solv_stats inner_arkode_mem in
+    let njef = get_num_jac_evals inner_arkode_mem in
     printf "   Fast Newton iters = %d\n" nnif;
     printf "   Fast Newton conv fails = %d\n" nncf;
     printf "   Fast Jacobian evals = %d\n" njef

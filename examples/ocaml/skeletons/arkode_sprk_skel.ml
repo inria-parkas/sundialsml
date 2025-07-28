@@ -1,4 +1,5 @@
 open Sundials
+open Arkode
 module SPRKStep = Arkode.SPRKStep
 
 (* 1. Define right-hand-side functions. *)
@@ -19,9 +20,9 @@ let s = SPRKStep.(init ~step:0.01 ~order:4 ~f1 ~f2 ~roots:(1, g) 0.0 ynv);;
 
 (* 5. Set optional inputs, e.g.,
       call [set_*] functions to change solver parameters. *)
-SPRKStep.set_stop_time s 100.0;;
+set_stop_time s 100.0;;
 SPRKStep.set_use_compensated_sums s true;;
-SPRKStep.set_all_root_directions s RootDirs.Increasing;;
+set_all_root_directions s RootDirs.Increasing;;
 
 (* 6. Advance the solution in time,
       by repeatedly calling [evolve_normal] or [evolve_one_step]. *)

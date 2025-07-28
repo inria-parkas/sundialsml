@@ -1,4 +1,5 @@
 open Sundials
+open Arkode
 module ERKStep = Arkode.ERKStep
 
 (* 1. Define right-hand-side functions. *)
@@ -18,8 +19,8 @@ let s = ERKStep.(init (SStolerances (1e-4, 1e-9)) f ~roots:(1, g) 0.0 y);;
 
 (* 5. Set optional inputs, e.g.,
       call [set_*] functions to change solver parameters. *)
-ERKStep.set_stop_time s 10.0;;
-ERKStep.set_all_root_directions s RootDirs.Increasing;;
+set_stop_time s 10.0;;
+set_all_root_directions s RootDirs.Increasing;;
 
 (* 6. Advance the solution in time,
       by repeatedly calling [evolve_normal] or [evolve_one_step]. *)
@@ -39,4 +40,4 @@ go (0.0, ERKStep.Success);;
 
 (* 7. Get optional outputs,
       call the [get_*] functions to examine solver statistics. *)
-let ns = ERKStep.get_num_steps s
+let ns = get_num_steps s

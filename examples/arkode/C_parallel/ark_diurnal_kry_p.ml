@@ -270,7 +270,7 @@ let print_output s my_pe comm u t =
       RealArray.blitn ~src:buf ~dst:tempu 2
     end;
 
-    let nst = ARKStep.get_num_steps s
+    let nst = get_num_steps s
     and hu  = ARKStep.get_last_step s
     in
     printf "t = %.2e   no. steps = %d   stepsize = %.2e\n" t nst hu;

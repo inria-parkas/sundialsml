@@ -64,6 +64,7 @@
  * ---------------------------------------------------------------------------*)
 
 open Sundials
+open Arkode
 module ARKStep = Arkode.ARKStep
 module MRIStep = Arkode.MRIStep
 
@@ -537,10 +538,10 @@ let main () =
       let lsf = LinearSolver.Direct.band ~context y af in
       let inner_arkode_mem =
         ARKStep.(init ~context
-          (implicit ~lsolver:(Dls.solver ~jac:(jf udata) lsf) (ff udata))
+          (implicit ~lsolver:(Arkode.ARKStep.Dls.solver ~jac:(jf udata) lsf) (ff udata))
           (SStolerances (reltol, abstol)) t0 y)
       in
-      ARKStep.set_max_nonlin_iters inner_arkode_mem 10;
+      set_max_nonlin_iters inner_arkode_mem 10;
       let beta  = (sqrt 3.0) /. 6.0 +. 0.5 in
       let gamma = (-1.0 /. 8.0) *. ((sqrt 3.0) +. 1.0) in
       let implicit_table = Arkode.ButcherTable.{
@@ -563,7 +564,7 @@ let main () =
       let af = Matrix.band ~context ~mu:4 ~ml:4 neq in
       let lsf = LinearSolver.Direct.band ~context y af in
       ARKStep.(init ~context
-        (implicit ~lsolver:(Dls.solver ~jac:(jac udata) lsf) (f udata))
+        (implicit ~lsolver:(Arkode.ARKStep.Dls.solver ~jac:(jac udata) lsf) (f udata))
         (SStolerances (reltol, abstol)) ~order:5 t0 y)
 
     | 2 | 4 -> (* erk-3-3 fast solver *)
@@ -612,17 +613,17 @@ let main () =
       let lsf = LinearSolver.Direct.band ~context y af in
       let inner_arkode_mem =
         ARKStep.(init ~context
-          (implicit ~lsolver:(Dls.solver ~jac:(jf udata) lsf) (ff udata))
+          (implicit ~lsolver:(Arkode.ARKStep.Dls.solver ~jac:(jf udata) lsf) (ff udata))
           (SStolerances (reltol, abstol)) t0 y)
       in
-      ARKStep.set_max_nonlin_iters inner_arkode_mem 10;
+      set_max_nonlin_iters inner_arkode_mem 10;
       ARKStep.set_dirk_table_num inner_arkode_mem Arkode.ButcherTable.Cash_5_3_4;
       inner_arkode_mem
 
     | _ -> assert false
   in
   (* Set the fast step size *)
-  ARKStep.set_fixed_step inner_arkode_mem (Some hf);
+  set_fixed_step inner_arkode_mem (Some hf);
   (* Create inner stepper *)
   let inner_stepper = MRIStep.InnerStepper.from_arkstep inner_arkode_mem in
 
@@ -661,7 +662,7 @@ let main () =
       let ls_s = LinearSolver.Direct.band ~context y a_s in
       let coupling = MRIStep.Coupling.(load_table GARK_ESDIRK34a) in
       MRIStep.(init ~context
-        (implicit ~lsolver:(Dls.solver ~jac:(js udata) ls_s) (fs udata))
+        (implicit ~lsolver:(Arkode.MRIStep.Dls.solver ~jac:(js udata) ls_s) (fs udata))
         (SStolerances (reltol, abstol))
         inner_stepper ~coupling ~slowstep:hs t0 y)
 
@@ -670,7 +671,7 @@ let main () =
       let ls_s = LinearSolver.Direct.band ~context y a_s in
       let coupling = MRIStep.Coupling.(load_table IMEX_GARK3b) in
       MRIStep.(init ~context
-                    (imex ~lsolver:(Dls.solver ~jac:(jsi udata) ls_s)
+                    (imex ~lsolver:(Arkode.MRIStep.Dls.solver ~jac:(jsi udata) ls_s)
                            ~fse:(fse udata) ~fsi:(fsi udata) ())
                     (SStolerances (reltol, abstol))
                     inner_stepper ~coupling ~slowstep:hs t0 y)
@@ -680,7 +681,7 @@ let main () =
       let ls_s = LinearSolver.Direct.band ~context y a_s in
       let coupling = MRIStep.Coupling.(load_table IMEX_GARK4) in
       MRIStep.(init ~context
-                    (imex ~lsolver:(Dls.solver ~jac:(jsi udata) ls_s)
+                    (imex ~lsolver:(Arkode.MRIStep.Dls.solver ~jac:(jsi udata) ls_s)
                            ~fse:(fse udata) ~fsi:(fsi udata) ())
                     (SStolerances (reltol, abstol))
                     inner_stepper ~coupling ~slowstep:hs t0 y)
@@ -688,7 +689,7 @@ let main () =
     | _ -> assert false
   in
   (* Set maximum number of steps taken by solver *)
-  MRIStep.set_max_num_steps arkode_mem 1000000;
+  set_max_num_steps arkode_mem 1000000;
 
   (*
    * Integrate ODE
@@ -776,11 +777,11 @@ let main () =
    *)
 
   (* Get some slow integrator statistics *)
-  let nsts = MRIStep.get_num_steps arkode_mem in
+  let nsts = get_num_steps arkode_mem in
   let nfse, nfsi = MRIStep.get_num_rhs_evals arkode_mem in
 
   (* Get some fast integrator statistics *)
-  let nstf = ARKStep.get_num_steps inner_arkode_mem in
+  let nstf = get_num_steps inner_arkode_mem in
   let nffe, nffi = ARKStep.get_num_rhs_evals inner_arkode_mem in
 
   (* Print some final statistics *)
@@ -805,8 +806,8 @@ let main () =
 
   (* Get/print slow integrator decoupled implicit solver statistics *)
   if solve_type > 1 then begin
-    let nnis, nncs = MRIStep.get_nonlin_solv_stats arkode_mem in
-    let njes = MRIStep.Dls.get_num_jac_evals arkode_mem in
+    let nnis, nncs = get_nonlin_solv_stats arkode_mem in
+    let njes = get_num_jac_evals arkode_mem in
     printf "   Slow Newton iters = %d\n" nnis;
     printf "   Slow Newton conv fails = %d\n" nncs;
     printf "   Slow Jacobian evals = %d\n" njes
@@ -814,8 +815,8 @@ let main () =
 
   (* Get/print fast integrator implicit solver statistics *)
   if solve_type=0 || solve_type=1 || solve_type=3 || solve_type=5 || solve_type=7 then begin
-    let nnif, nncf = ARKStep.get_nonlin_solv_stats inner_arkode_mem in
-    let njef = ARKStep.Dls.get_num_jac_evals inner_arkode_mem in
+    let nnif, nncf = get_nonlin_solv_stats inner_arkode_mem in
+    let njef = get_num_jac_evals inner_arkode_mem in
     printf "   Fast Newton iters = %d\n" nnif;
     printf "   Fast Newton conv fails = %d\n" nncf;
     printf "   Fast Jacobian evals = %d\n" njef

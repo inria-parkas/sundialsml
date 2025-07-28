@@ -58,6 +58,7 @@
  *-----------------------------------------------------------------*)
 
 open Sundials
+open Arkode
 module ARKStep = Arkode.ARKStep
 
 let compat2_3 =
@@ -174,18 +175,18 @@ let main () =
      the initial dependent variable vector y.  Note: since this
      problem is fully implicit, we set f_E to NULL and f_I to f. *)
   let m = Matrix.dense 3 in
-  let arkode_mem = ARKStep.(
-    init (implicit (f rdata)
-                   ~lsolver:Dls.(solver ~jac:(jac rdata) (dense y m)))
-         (SStolerances (reltol, abstol))
-         t0
-         y
-  ) in
+  let arkode_mem =
+  let open ARKStep in
+  init (implicit (f rdata)
+        ~lsolver:Arkode.ARKStep.Dls.(solver ~jac:(jac rdata) (dense y m)))
+       (SStolerances (reltol, abstol))
+       t0
+       y in
 
   (* Specify stiff interpolant *)
-  if sungte500 then ARKStep.(set_interpolant_type arkode_mem Lagrange);
+  if sungte500 then (set_interpolant_type arkode_mem Lagrange);
   if not Sundials_impl.Version.lt620
-  then ARKStep.set_deduce_implicit_rhs arkode_mem true;
+  then set_deduce_implicit_rhs arkode_mem true;
 
   (* Open output stream for results, output comment line *)
   let ufid = open_out "solution.txt" in
@@ -219,16 +220,15 @@ let main () =
   close_out ufid;
 
   (* Print some final statistics *)
-  let open ARKStep in
   let nst      = get_num_steps arkode_mem in
   let nst_a    = get_num_step_attempts arkode_mem in
-  let nfe, nfi = get_num_rhs_evals arkode_mem in
+  let nfe, nfi = ARKStep.get_num_rhs_evals arkode_mem in
   let nsetups  = get_num_lin_solv_setups arkode_mem in
   let netf     = get_num_err_test_fails arkode_mem in
   let nni      = get_num_nonlin_solv_iters arkode_mem in
   let nnf      = get_num_nonlin_solv_conv_fails arkode_mem in
-  let nje      = Dls.get_num_jac_evals arkode_mem in
-  let nfeLS    = Dls.get_num_lin_rhs_evals arkode_mem in
+  let nje      = get_num_jac_evals arkode_mem in
+  let nfeLS    = ARKStep.Dls.get_num_lin_rhs_evals arkode_mem in
 
   printf "\nFinal Solver Statistics:\n";
   printf "   Internal solver steps = %d (attempted = %d)\n" nst nst_a;

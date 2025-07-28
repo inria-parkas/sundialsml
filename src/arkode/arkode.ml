@@ -397,7 +397,7 @@ external set_nonlinear
   : ('a, 'k, 's) session -> unit
   = "sunml_arkode_set_nonlinear"
 
-external c_set_order
+external set_order
   : ('a, 'k, 's) session -> int -> unit
   = "sunml_arkode_set_order"
 
@@ -406,7 +406,8 @@ external get_step_stats : ('a, 'k, 's) session -> step_stats
 
 external c_print_all_stats
     : ('d, 'k, 's) session -> Logfile.t -> Sundials.output_format -> unit
-    = "sunml_arkode_print_all_stats"
+    = "sunml_arkode_print_all_stats" 
+
 let print_all_stats ?(logfile=Sundials.Logfile.stdout) s fmt =
   c_print_all_stats s logfile fmt
 
@@ -700,7 +701,7 @@ let get_res_weights s rw =
 
 external c_get_est_local_errors
   : ('a, 'k, 's) session -> ('a, 'k) Nvector.t -> unit
-  = "sunml_arkode_ark_get_est_local_errors"
+  = "sunml_arkode_get_est_local_errors"
 
 let get_est_local_errors s ew =
   if Sundials_configuration.safe then s.checkvec ew;
@@ -742,6 +743,44 @@ let write_session ?logfile session = c_print_mem session logfile
 external set_autonomous
   : ('d, 'k, 's) session -> bool -> unit
   = "sunml_arkode_set_autonomous"
+
+external get_root_info  : ('a, 'k, 's) session -> Roots.t -> unit
+      = "sunml_arkode_get_root_info"
+
+external get_num_lin_rhs_evals  : ('a, 'k, 's) session -> int
+  = "sunml_arkode_get_num_lin_rhs_evals"
+
+let get_num_lin_rhs_evals s =
+  ls_check_spils s;
+  get_num_lin_rhs_evals s
+
+external c_resize
+  : ('a, 'k, 's) session -> bool -> float -> float -> ('a, 'k) Nvector.t -> unit
+  = "sunml_arkode_resize"
+
+external c_set_nls_rhs_fn : ('d, 'k, 's) session -> unit
+  = "sunml_arkode_set_nls_rhs_fn"
+
+external c_set_adapt_controller : ('d, 'k, 's) session -> Sundials.AdaptController.t -> unit
+  = "sunml_arkode_set_adapt_controller"
+
+
+external c_set_postprocess_stage_fn : ('a, 'k, 's) session -> bool -> unit
+  = "sunml_arkode_set_postprocess_stage_fn"
+
+let set_postprocess_stage_fn s fn =
+  s.poststagefn <- fn;
+  c_set_postprocess_stage_fn s true
+
+let clear_postprocess_stage_fn s =
+  s.poststagefn <- dummy_poststagefn;
+  c_set_postprocess_stage_fn s false
+
+external c_set_adaptivity_adjustment : ('d, 'k, 's) session -> int -> unit
+  = "sunml_arkode_set_adaptivity_adjustment"
+
+external c_set_relax_fn : ('d, 'k, 's) session -> bool -> unit
+  = "sunml_arkode_set_relax_fn"
 
 
 module Common = struct (* {{{ *)
@@ -2087,9 +2126,6 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
 
   module Relax = struct (* {{{ *)
 
-    external c_set_relax_fn : ('d, 'k) session -> bool -> unit
-      = "sunml_arkode_ark_set_relax_fn"
-
     let enable s fn jacfn =
       s.relax_fn <- fn;
       s.relax_jac_fn <- jacfn;
@@ -2157,15 +2193,6 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
     -> (arkstep arkode_mem * c_weak_ref)
     = "sunml_arkode_ark_init_byte"
       "sunml_arkode_ark_init"
-
-  external c_set_nls_rhs_fn : ('d, 'k) session -> unit
-      = "sunml_arkode_ark_set_nls_rhs_fn"
-
-  external c_set_adapt_controller : ('d, 'k) session -> Sundials.AdaptController.t -> unit
-      = "sunml_arkode_ark_set_adapt_controller"
-
-  external c_set_adaptivity_adjustment : ('d, 'k) session -> int -> unit
-      = "sunml_arkode_ark_set_adaptivity_adjustment"
 
   let init ?context prob tol ?restol ?order ?mass ?relax
            ?adapt_controller ?adaptivity_adjustment ?(roots=no_roots) t0 y0
@@ -2272,9 +2299,9 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
      | Some (Linear timedepend) -> set_linear session timedepend
      | _ -> ());
     (match restol with Some rtol -> set_res_tolerance session rtol | None -> ());
-    (match order with Some o -> c_set_order session o | None -> ());
+    (match order with Some o -> set_order session o | None -> ());
     (match mass with Some msolver -> msolver session y0 | None -> ());
-    (match relax with Some _ -> Relax.c_set_relax_fn session true | None -> ());
+    (match relax with Some _ -> c_set_relax_fn session true | None -> ());
     (match adapt_controller with Some c -> c_set_adapt_controller session c | None -> ());
     (match adaptivity_adjustment with
      | Some i -> c_set_adaptivity_adjustment session i | None -> ());
@@ -2337,16 +2364,12 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
     session.linsolver <- lsolver;
     (match mass with Some msolver -> msolver session y0 | None -> ());
     c_reinit session t0 y0;
-    (match order with Some o -> c_set_order session o | None -> ());
+    (match order with Some o -> set_order session o | None -> ());
     (match roots with
      | None -> ()
      | Some roots -> root_init session roots);
     (match adaptivity_adjustment with
      | Some i -> c_set_adaptivity_adjustment session i | None -> ())
-
-  external c_resize
-      : ('a, 'k) session -> bool -> float -> float -> ('a, 'k) Nvector.t -> unit
-      = "sunml_arkode_ark_resize"
 
   let resize session ?resize_nvec ?lsolver ?mass tol ?restol hscale ynew t0 =
     session.checkvec <- Nvector.check ynew;
@@ -2363,9 +2386,6 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
      | _ -> ());
     (match session.linsolver with Some ls -> ls session ynew | None -> ());
     (match mass with Some msolver -> msolver session ynew | None -> ())
-
-  external get_root_info  : ('a, 'k) session -> Roots.t -> unit
-      = "sunml_arkode_ark_get_root_info"
 
   external c_evolve_normal : ('a, 'k) session -> float -> ('a, 'k) Nvector.t
                                 -> float * solver_result
@@ -2506,9 +2526,6 @@ module ERKStep = struct (* {{{ *)
 
   module Relax = struct (* {{{ *)
 
-    external c_set_relax_fn : ('d, 'k) session -> bool -> unit
-      = "sunml_arkode_erk_set_relax_fn"
-
     let enable s fn jacfn =
       s.relax_fn <- fn;
       s.relax_jac_fn <- jacfn;
@@ -2532,9 +2549,6 @@ module ERKStep = struct (* {{{ *)
                                   s.errw <- dummy_errw; sv_tolerances s rel abs)
     | WFtolerances ferrw -> (s.errw <- ferrw; wf_tolerances s)
 
-  external c_set_order : ('a, 'k) session -> int -> unit
-    = "sunml_arkode_erk_set_order"
-
   external session_finalize : ('a, 'k) session -> unit
       = "sunml_arkode_erk_session_finalize"
 
@@ -2545,12 +2559,6 @@ module ERKStep = struct (* {{{ *)
     -> Context.t
     -> (erkstep arkode_mem * c_weak_ref)
     = "sunml_arkode_erk_init"
-
-  external c_set_adapt_controller : ('d, 'k) session -> Sundials.AdaptController.t -> unit
-      = "sunml_arkode_erk_set_adapt_controller"
-
-  external c_set_adaptivity_adjustment : ('d, 'k) session -> int -> unit
-      = "sunml_arkode_erk_set_adaptivity_adjustment"
 
   let init ?context tol ?order f ?relax
             ?adapt_controller ?adaptivity_adjustment ?(roots=no_roots) t0 y0 =
@@ -2619,8 +2627,8 @@ module ERKStep = struct (* {{{ *)
     if nroots > 0 then
       c_root_init session nroots;
     set_tolerances session tol;
-    (match order with Some o -> c_set_order session o | None -> ());
-    (match relax with Some _ -> Relax.c_set_relax_fn session true | None -> ());
+    (match order with Some o -> set_order session o | None -> ());
+    (match relax with Some _ -> c_set_relax_fn session true | None -> ());
     (match adapt_controller with Some c -> c_set_adapt_controller session c | None -> ());
     (match adaptivity_adjustment with
      | Some i -> c_set_adaptivity_adjustment session i | None -> ());
@@ -2635,14 +2643,10 @@ module ERKStep = struct (* {{{ *)
   let reinit session ?order ?roots ?adaptivity_adjustment t0 y0 =
     if Sundials_configuration.safe then session.checkvec y0;
     c_reinit session t0 y0;
-    (match order with Some o -> c_set_order session o | None -> ());
+    (match order with Some o -> set_order session o | None -> ());
     (match roots with Some roots -> root_init session roots| None -> ());
     (match adaptivity_adjustment with
      | Some i -> c_set_adaptivity_adjustment session i | None -> ())
-
-  external c_resize
-      : ('a, 'k) session -> bool -> float -> float -> ('a, 'k) Nvector.t -> unit
-      = "sunml_arkode_erk_resize"
 
   let resize session ?resize_nvec tol hscale ynew t0 =
     session.checkvec <- Nvector.check ynew;
@@ -2650,9 +2654,6 @@ module ERKStep = struct (* {{{ *)
     c_resize session (resize_nvec <> None) hscale t0 ynew;
     session.resizefn <- dummy_resizefn;
     set_tolerances session tol
-
-  external get_root_info  : ('a, 'k) session -> Roots.t -> unit
-      = "sunml_arkode_erk_get_root_info"
 
   external c_evolve_normal : ('a, 'k) session -> float -> ('a, 'k) Nvector.t
                                 -> float * solver_result
@@ -2681,21 +2682,6 @@ module ERKStep = struct (* {{{ *)
 
   external get_timestepper_stats : ('a, 'k) session -> timestepper_stats
       = "sunml_arkode_erk_get_timestepper_stats"
-
-  external get_step_stats : ('a, 'k) session -> step_stats
-      = "sunml_arkode_erk_get_step_stats"
-
-  external c_print_all_stats
-      : ('d, 'k) session -> Logfile.t -> Sundials.output_format -> unit
-      = "sunml_arkode_erk_print_all_stats"
-  let print_all_stats ?(logfile=Sundials.Logfile.stdout) s fmt =
-    c_print_all_stats s logfile fmt
-
-  external get_work_space         : ('a, 'k) session -> int * int
-      = "sunml_arkode_erk_get_work_space"
-
-  external get_num_exp_steps      : ('d, 'k) session -> int
-      = "sunml_arkode_erk_get_num_exp_steps"
 
   external get_num_rhs_evals      : ('a, 'k) session -> int
       = "sunml_arkode_erk_get_num_rhs_evals"
@@ -2728,9 +2714,6 @@ module ERKStep = struct (* {{{ *)
 
   external set_table_name : ('d, 'k) session -> string -> unit
       = "sunml_arkode_erk_set_table_name"
-
-  external set_defaults           : ('a, 'k) session -> unit
-      = "sunml_arkode_erk_set_defaults"
 
   external get_current_butcher_table
       : ('d, 'k) session -> ButcherTable.t
@@ -2800,9 +2783,6 @@ module SPRKStep = struct (* {{{ *)
   let root_init session (nroots, rootsfn) =
     c_root_init session nroots;
     session.rootsfn <- rootsfn
-
-  external c_set_order : ('a, 'k) session -> int -> unit
-    = "sunml_arkode_sprk_set_order"
 
   external session_finalize : ('a, 'k) session -> unit
       = "sunml_arkode_sprk_session_finalize"
@@ -2881,7 +2861,7 @@ module SPRKStep = struct (* {{{ *)
     if nroots > 0 then
       c_root_init session nroots;
     set_fixed_step session step;
-    (match order with Some o -> c_set_order session o | None -> ());
+    (match order with Some o -> set_order session o | None -> ());
     session
 
   let get_num_roots { nroots } = nroots
@@ -2893,13 +2873,10 @@ module SPRKStep = struct (* {{{ *)
   let reinit session ?order ?roots ?f1 ?f2 t0 y0 =
     if Sundials_configuration.safe then session.checkvec y0;
     c_reinit session t0 y0;
-    (match order with Some o -> c_set_order session o | None -> ());
+    (match order with Some o -> set_order session o | None -> ());
     (match roots with Some roots -> root_init session roots| None -> ());
     (match f1 with Some f1 -> session.rhsfn1 <- f1 | None -> ());
     (match f2 with Some f2 -> session.rhsfn2 <- f2 | None -> ())
-
-  external get_root_info  : ('a, 'k) session -> Roots.t -> unit
-      = "sunml_arkode_sprk_get_root_info"
 
   external c_evolve_normal : ('a, 'k) session -> float -> ('a, 'k) Nvector.t
                                 -> float * solver_result
@@ -2917,23 +2894,11 @@ module SPRKStep = struct (* {{{ *)
     if Sundials_configuration.safe then s.checkvec y;
     c_evolve_one_step s t y
 
-  external get_step_stats : ('a, 'k) session -> step_stats
-      = "sunml_arkode_sprk_get_step_stats"
-
-  external c_print_all_stats
-      : ('d, 'k) session -> Logfile.t -> Sundials.output_format -> unit
-      = "sunml_arkode_sprk_print_all_stats"
-  let print_all_stats ?(logfile=Sundials.Logfile.stdout) s fmt =
-    c_print_all_stats s logfile fmt
-
   external get_num_rhs_evals      : ('a, 'k) session -> int * int
       = "sunml_arkode_sprk_get_num_rhs_evals"
 
   let print_step_stats s oc =
     print_step_stats oc (get_step_stats s)
-
-  external set_defaults           : ('a, 'k) session -> unit
-      = "sunml_arkode_sprk_set_defaults"
 
   external set_method : ('d, 'k) session -> MethodTable.t -> unit
       = "sunml_arkode_sprk_set_method"
@@ -2943,17 +2908,6 @@ module SPRKStep = struct (* {{{ *)
       = "sunml_arkode_sprk_set_use_compensated_sums"
   external get_current_method : ('d, 'k) session -> MethodTable.t
       = "sunml_arkode_sprk_get_current_method"
-
-  external c_set_postprocess_stage_fn : ('a, 'k) session -> bool -> unit
-      = "sunml_arkode_sprk_set_postprocess_stage_fn"
-
-  let set_postprocess_stage_fn s fn =
-    s.poststagefn <- fn;
-    c_set_postprocess_stage_fn s true
-
-  let clear_postprocess_stage_fn s =
-    s.poststagefn <- dummy_poststagefn;
-    c_set_postprocess_stage_fn s false
 
 end (* }}} *)
 
@@ -3058,23 +3012,11 @@ module MRIStep = struct (* {{{ *)
       LSI.attach ls;
       session.ls_solver <- LSI.HLS hls
 
-    external get_work_space : 'k serial_session -> int * int
-      = "sunml_arkode_mri_get_lin_work_space"
-
-    external get_num_lin_rhs_evals : 'k serial_session -> int
-      = "sunml_arkode_mri_get_num_lin_rhs_evals"
-
   end (* }}} *)
 
   module Spils = struct (* {{{ *)
     include Spils
     include LinearSolver.Iterative
-
-    external c_set_jac_times : ('a, 'k) session -> bool -> bool -> unit
-      = "sunml_arkode_mri_set_jac_times"
-
-    external c_set_jac_times_rhsfn : ('a, 'k) session -> bool -> unit
-      = "sunml_arkode_mri_set_jac_times_rhsfn"
 
     let init_preconditioner solve setup session _ =
       c_set_preconditioner session (setup <> None);
@@ -3150,22 +3092,6 @@ module MRIStep = struct (* {{{ *)
           s.ls_precfns <- PrecFns { prec_setup_fn = setup;
                                     prec_solve_fn = solve }
       | _ -> raise LinearSolver.InvalidLinearSolver
-
-    external get_num_lin_iters      : ('a, 'k) session -> int
-      = "sunml_arkode_mri_get_num_lin_iters"
-
-    external get_num_lin_conv_fails : ('a, 'k) session -> int
-      = "sunml_arkode_mri_get_num_lin_conv_fails"
-
-    external get_work_space         : ('a, 'k) session -> int * int
-      = "sunml_arkode_mri_get_lin_work_space"
-
-    external get_num_lin_rhs_evals  : ('a, 'k) session -> int
-      = "sunml_arkode_mri_get_num_lin_rhs_evals"
-
-    let get_num_lin_rhs_evals s =
-      ls_check_spils s;
-      get_num_lin_rhs_evals s
 
   end (* }}} *)
 
@@ -3406,9 +3332,6 @@ module MRIStep = struct (* {{{ *)
     = "sunml_arkode_mri_init_byte"
       "sunml_arkode_mri_init"
 
-  external c_set_nls_rhs_fn : ('d, 'k) session -> unit
-      = "sunml_arkode_mri_set_nls_rhs_fn"
-
   external set_coupling : ('d, 'k) session -> Coupling.t -> unit
     = "sunml_arkode_mri_set_coupling"
 
@@ -3576,18 +3499,12 @@ module MRIStep = struct (* {{{ *)
                  c_set_nls_rhs_fn session);
     (match roots with Some roots -> root_init session roots| None -> ())
 
-  external c_resize
-      : ('a, 'k) session -> bool -> float -> ('a, 'k) Nvector.t -> unit
-      = "sunml_arkode_mri_resize"
-
   let resize session ?resize_nvec ynew t0 =
     session.checkvec <- Nvector.check ynew;
     (match resize_nvec with None -> () | Some f -> session.resizefn <- f);
-    c_resize session (resize_nvec <> None) t0 ynew;
+    (* In MRI the vhscale is useless so 0.0 is ignored *)
+    c_resize session (resize_nvec <> None) 0.0 t0 ynew;
     session.resizefn <- dummy_resizefn
-
-  external get_root_info  : ('a, 'k) session -> Roots.t -> unit
-      = "sunml_arkode_mri_get_root_info"
 
   external c_evolve_normal : ('a, 'k) session -> float -> ('a, 'k) Nvector.t
                                 -> float * solver_result
@@ -3605,9 +3522,6 @@ module MRIStep = struct (* {{{ *)
     if Sundials_configuration.safe then s.checkvec y;
     c_evolve_one_step s t y
 
-  external get_work_space         : ('a, 'k) session -> int * int
-      = "sunml_arkode_mri_get_work_space"
-
   external c_get_num_rhs_evals    : ('a, 'k) session -> int * int
       = "sunml_arkode_mri_get_num_rhs_evals"
 
@@ -3620,12 +3534,6 @@ module MRIStep = struct (* {{{ *)
       | ExplicitOnly -> n, 0
     end
     else c_get_num_rhs_evals s
-
-  external set_defaults           : ('a, 'k) session -> unit
-      = "sunml_arkode_mri_set_defaults"
-
-  external set_order              : ('a, 'k) session -> int -> unit
-      = "sunml_arkode_mri_set_order"
 
   external c_set_pre_inner_fn : ('a, 'k) session -> bool -> unit
       = "sunml_arkode_mri_set_pre_inner_fn"
@@ -3651,18 +3559,6 @@ module MRIStep = struct (* {{{ *)
 
   external get_current_coupling : ('d, 'k) session -> Coupling.t
     = "sunml_arkode_mri_get_current_coupling"
-
-  external c_write_coupling : ('d, 'k) session -> Logfile.t -> unit
-    = "sunml_arkode_mri_write_coupling"
-
-  let write_coupling ?(logfile=Logfile.stdout) s =
-    c_write_coupling s logfile
-
-  external c_print_all_stats
-      : ('d, 'k) session -> Logfile.t -> Sundials.output_format -> unit
-      = "sunml_arkode_mri_print_all_stats"
-  let print_all_stats ?(logfile=Sundials.Logfile.stdout) s fmt =
-    c_print_all_stats s logfile fmt
 
 end (* }}} *)
 

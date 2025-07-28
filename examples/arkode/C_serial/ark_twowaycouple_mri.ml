@@ -34,6 +34,7 @@
  * ----------------------------------------------------------------*)
 
 open Sundials
+open Arkode
 module ARKStep = Arkode.ARKStep
 module MRIStep = Arkode.MRIStep
 
@@ -94,7 +95,7 @@ let main () =
   let inner_arkode_mem = ARKStep.(init (explicit ff) default_tolerances t0 y) in
   ARKStep.set_erk_table_num inner_arkode_mem
     Arkode.ButcherTable.Knoth_Wolke_3_3;
-  ARKStep.set_fixed_step inner_arkode_mem (Some hf);
+  set_fixed_step inner_arkode_mem (Some hf);
 
   (* Call MRIStepCreate to initialize the MRI timestepper module and
      specify the right-hand side functions in y'=fs(t,y)+ff(t,y),
@@ -151,9 +152,9 @@ let main () =
    *)
 
   (* Print some final statistics *)
-  let nsts = MRIStep.get_num_steps arkode_mem in
+  let nsts = get_num_steps arkode_mem in
   let nfse, _ = MRIStep.get_num_rhs_evals arkode_mem in
-  let nstf = ARKStep.get_num_steps inner_arkode_mem in
+  let nstf = get_num_steps inner_arkode_mem in
   let nff, _ = ARKStep.get_num_rhs_evals inner_arkode_mem in
   printf "\nFinal Solver Statistics:\n";
   printf "   Steps: nsts = %d, nstf = %d\n" nsts nstf;

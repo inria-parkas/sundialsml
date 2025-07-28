@@ -40,6 +40,7 @@
  *---------------------------------------------------------------*)
 
 open Sundials
+open Arkode
 module ARKStep = Arkode.ARKStep
 
 let sungte500 =
@@ -266,10 +267,10 @@ let main () =
                   | 2,_,_ -> ARKStep.Nonlinear
                   | _ -> ARKStep.Linear true
   in
-  let arkode_mem = Arkode.ARKStep.(
+  let arkode_mem = ARKStep.(
     init
       (implicit
-        ~lsolver:Spils.(solver (pcg ~maxl:n_mesh y)
+        ~lsolver:Arkode.ARKStep.Spils.(solver (pcg ~maxl:n_mesh y)
                                ~jac_times_vec:(None, jac)
                                prec_none)
         ~linearity
@@ -279,8 +280,8 @@ let main () =
       t0
       y
   ) in
-  ARKStep.set_max_num_steps arkode_mem 10000;      (* Increase max num steps  *)
-  ARKStep.(set_predictor_method arkode_mem TrivialPredictor);
+  set_max_num_steps arkode_mem 10000;      (* Increase max num steps  *)
+  set_predictor_method arkode_mem TrivialPredictor;
 
   (* Main time-stepping loop: calls ARKode to perform the integration, then
      prints results.  Stops when the final time has been reached *)
@@ -293,18 +294,18 @@ let main () =
     if t >= tf then iout, nni_tot, nli_tot
     else begin
       (* "set" routines *)
-      ARKStep.set_stop_time arkode_mem tf;
+      set_stop_time arkode_mem tf;
       if Sundials_impl.Version.lt530 then
-        ARKStep.set_init_step arkode_mem newdt;
+        set_init_step arkode_mem newdt;
 
       (* call integrator *)
       let t, _ = ARKStep.evolve_one_step arkode_mem tf y in
 
       (* "get" routines *)
-      let olddt = ARKStep.get_last_step arkode_mem in
-      let newdt = ARKStep.get_current_step arkode_mem in
-      let nni   = ARKStep.get_num_nonlin_solv_iters arkode_mem in
-      let nli   = ARKStep.Spils.get_num_lin_iters arkode_mem in
+      let olddt = get_last_step arkode_mem in
+      let newdt = get_current_step arkode_mem in
+      let nni   = get_num_nonlin_solv_iters arkode_mem in
+      let nli   = get_num_lin_iters arkode_mem in
 
       let nni_cur = if Sundials_impl.Version.lt400 then nni_cur else 0 in
 
@@ -340,7 +341,7 @@ let main () =
                  | _ -> n_mesh
       in
       ARKStep.(resize arkode_mem
-        ~lsolver:Spils.(solver (pcg ~maxl y2) ~jac_times_vec:(None, jac)
+        ~lsolver:Arkode.ARKStep.Spils.(solver (pcg ~maxl y2) ~jac_times_vec:(None, jac)
                                prec_none)
         (SStolerances (rtol, atol))
         hscale y2 t);

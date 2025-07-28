@@ -23,6 +23,7 @@
  * ---------------------------------------------------------------------------*)
 
 open Sundials
+open Arkode
 module ARKStep = Arkode.ARKStep
 module DM = Matrix.Dense
 
@@ -132,13 +133,13 @@ let main () =
                             ~itable:"ARKODE_ARK2_DIRK_3_1_2"
                             ~etable:"ARKODE_ERK_NONE"
                             ());
-    if ge670 then ARKStep.set_nonlin_conv_coef arkode_mem 0.01
+    if ge670 then set_nonlin_conv_coef arkode_mem 0.01
   end;
 
   (* Enable relaxation methods *)
   if relax then ARKStep.Relax.enable arkode_mem ent jac_ent;
 
-  if fixed_h > 0.0 then ARKStep.set_fixed_step arkode_mem (Some fixed_h);
+  if fixed_h > 0.0 then set_fixed_step arkode_mem (Some fixed_h);
 
   (* Open output stream for results, output comment line *)
   let ufid = open_out "ark_dissipated_exp_entropy.txt" in
@@ -175,7 +176,7 @@ let main () =
       let u_err = ydata.{0} -. ytdata.{0} in
 
       (* Output to the screen periodically *)
-      let nst = ARKStep.get_num_steps arkode_mem in
+      let nst = get_num_steps arkode_mem in
 
       if nst mod 40 = 0 then
         printf "%5d %14.6e %14.6e %14.6e %14.6e %14.6e\n"
@@ -194,9 +195,9 @@ let main () =
    * ------------ *)
 
   (* Get final statistics on how the solve progressed *)
-  let nst = ARKStep.get_num_steps arkode_mem
-  and nst_a = ARKStep.get_num_step_attempts arkode_mem
-  and netf = ARKStep.get_num_err_test_fails arkode_mem
+  let nst = get_num_steps arkode_mem
+  and nst_a = get_num_step_attempts arkode_mem
+  and netf = get_num_err_test_fails arkode_mem
   and nfe, nfi = ARKStep.get_num_rhs_evals arkode_mem
   in
   printf "\nFinal Solver Statistics:\n";
@@ -205,10 +206,10 @@ let main () =
   printf "   Total RHS evals:  Fe = %d,  Fi = %d\n" nfe nfi;
 
   if implicit then begin
-    let nni     = ARKStep.get_num_nonlin_solv_iters arkode_mem
-    and ncfn    = ARKStep.get_num_nonlin_solv_conv_fails arkode_mem
-    and nsetups = ARKStep.get_num_lin_solv_setups arkode_mem
-    and nje     = ARKStep.Dls.get_num_jac_evals arkode_mem
+    let nni     = get_num_nonlin_solv_iters arkode_mem
+    and ncfn    = get_num_nonlin_solv_conv_fails arkode_mem
+    and nsetups = get_num_lin_solv_setups arkode_mem
+    and nje     = get_num_jac_evals arkode_mem
     and nfeLS   = ARKStep.Dls.get_num_lin_rhs_evals arkode_mem
     in
     printf "   Total number of Newton iterations = %d\n" nni;
@@ -219,12 +220,12 @@ let main () =
   end;
 
   if relax then begin
-    let nre    = ARKStep.Relax.get_num_fn_evals arkode_mem
-    and nrje   = ARKStep.Relax.get_num_jac_evals arkode_mem
-    and nrf    = ARKStep.Relax.get_num_fails arkode_mem
-    and nrbf   = ARKStep.Relax.get_num_bound_fails arkode_mem
-    and nrnlsf = ARKStep.Relax.get_num_solve_fails arkode_mem
-    and nrnlsi = ARKStep.Relax.get_num_solve_iters arkode_mem
+    let nre    = get_num_fn_evals arkode_mem
+    and nrje   = get_num_jac_evals arkode_mem
+    and nrf    = get_num_relax_fails arkode_mem
+    and nrbf   = get_num_relax_bound_fails arkode_mem
+    and nrnlsf = get_num_relax_solve_fails arkode_mem
+    and nrnlsi = get_num_relax_solve_iters arkode_mem
     in
     printf "   Total Relaxation Fn evals    = %d\n" nre;
     printf "   Total Relaxation Jac evals   = %d\n" nrje;

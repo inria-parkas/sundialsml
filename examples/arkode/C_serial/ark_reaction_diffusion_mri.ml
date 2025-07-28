@@ -43,6 +43,7 @@
  * ----------------------------------------------------------------*)
 
 open Sundials
+open Arkode
 module ARKStep = Arkode.ARKStep
 module MRIStep = Arkode.MRIStep
 
@@ -137,7 +138,7 @@ let main () =
   let inner_arkode_mem = ARKStep.(init (explicit (ff udata)) default_tolerances t0 y) in
   ARKStep.set_erk_table_num inner_arkode_mem
     Arkode.ButcherTable.Knoth_Wolke_3_3;
-  ARKStep.set_fixed_step inner_arkode_mem (Some hf);
+  set_fixed_step inner_arkode_mem (Some hf);
 
   (* Call MRIStepCreate to initialize the MRI timestepper module and
      specify the right-hand side function in y'=f(t,y), the inital time
@@ -152,7 +153,7 @@ let main () =
                               ~slowstep:hs t0 y)
   in
   (* Increase max num steps  *)
-  MRIStep.set_max_num_steps arkode_mem 10000;
+  set_max_num_steps arkode_mem 10000;
 
   (*
    * Integrate ODE
@@ -205,9 +206,9 @@ let main () =
   printf "   -------------------------\n";
 
   (* Print some final statistics *)
-  let nsts = MRIStep.get_num_steps arkode_mem in
+  let nsts = get_num_steps arkode_mem in
   let nfse, _ = MRIStep.get_num_rhs_evals arkode_mem in
-  let nstf = ARKStep.get_num_steps inner_arkode_mem in
+  let nstf = get_num_steps inner_arkode_mem in
   let nff, _ = ARKStep.get_num_rhs_evals inner_arkode_mem in
   if Sundials_impl.Version.lt620 then begin
     printf "\nFinal Solver Statistics:\n";
@@ -216,19 +217,19 @@ let main () =
   end else begin
     printf "\nFinal Slow Statistics:\n";
     flush stdout;
-    MRIStep.print_all_stats arkode_mem Sundials.OutputTable;
+    print_all_stats arkode_mem Sundials.OutputTable;
     Logfile.flush Logfile.stdout;
     printf "\nFinal Fast Statistics:\n";
     flush stdout;
-    ARKStep.print_all_stats inner_arkode_mem Sundials.OutputTable;
+    print_all_stats inner_arkode_mem Sundials.OutputTable;
     Logfile.flush Logfile.stdout;
 
     let fid = Logfile.openfile "ark_reaction_diffusion_mri_slow_stats.csv" in
-    MRIStep.print_all_stats ~logfile:fid arkode_mem Sundials.OutputCSV;
+    print_all_stats ~logfile:fid arkode_mem Sundials.OutputCSV;
     Logfile.close fid;
 
     let fid = Logfile.openfile "ark_reaction_diffusion_mri_fast_stats.csv" in
-    ARKStep.print_all_stats ~logfile:fid inner_arkode_mem Sundials.OutputCSV;
+    print_all_stats ~logfile:fid inner_arkode_mem Sundials.OutputCSV;
     Logfile.close fid
   end
 

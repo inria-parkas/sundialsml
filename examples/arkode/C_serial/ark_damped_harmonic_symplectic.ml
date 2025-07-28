@@ -39,6 +39,7 @@
  * --------------------------------------------------------------------------*)
 
 open Sundials
+open Arkode
 module SPRKStep = Arkode.SPRKStep
 
 let printf = Printf.printf
@@ -125,7 +126,7 @@ let main () =
     SPRKStep.init ~context ~step:dt ~order ~f1:qdot ~f2:pdot t0 y
   in
   SPRKStep.set_use_compensated_sums arkode_mem use_compsums;
-  SPRKStep.set_max_num_steps arkode_mem (int_of_float (ceil(tf /. dt)) + 2);
+  set_max_num_steps arkode_mem (int_of_float (ceil(tf /. dt)) + 2);
 
   (* Print out starting Hamiltonian before integrating *)
   let tret = t0 in
@@ -135,7 +136,7 @@ let main () =
 
   (* Do integration *)
   for _iout = 0 to num_output_times - 1 do
-    if !use_tstop then SPRKStep.set_stop_time arkode_mem !tout;
+    if !use_tstop then set_stop_time arkode_mem !tout;
     let tret, _ =SPRKStep.evolve_normal arkode_mem !tout y in
 
     (* Output current integration status *)
@@ -146,7 +147,7 @@ let main () =
   done;
 
   printf "\n%!";
-  SPRKStep.print_all_stats arkode_mem OutputTable
+  print_all_stats arkode_mem OutputTable
 
 (* Check environment variables for extra arguments.  *)
 let reps =

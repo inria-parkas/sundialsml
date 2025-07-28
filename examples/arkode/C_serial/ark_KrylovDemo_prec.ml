@@ -16,7 +16,7 @@
  * For details, see the LICENSE file.
  *---------------------------------------------------------------
  * Demonstration program for ARKODE - Krylov linear solver.
- * ODE system from ns-species interaction PDE in 2 dimensions.
+ * ODE system from ns-species interaction PDEw in 2 dimensions.
  *
  * This program solves a stiff ODE system that arises from a system
  * of partial differential equations. The PDE system is a food web

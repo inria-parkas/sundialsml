@@ -271,7 +271,7 @@ val get_dky :
 (** Returns the cumulative number of calls to the setup function with
     [jok=false].
 
-    @arkode ARKStepGetNumPrecEvals
+    @arkode ARKodeGetNumPrecEvals
     @since 7.1.0 *)
     val get_num_prec_evals
         : ('d, 'k, 's) session -> int
@@ -1176,7 +1176,7 @@ val get_dky :
 
 (** Returns the total number of times applying relaxation failed.
     The counter includes the sum of the number of nonlinear solver
-    failures (see {!get_num_solve_fails}) and the number of failures due
+    failures (see {!get_num_relax_solve_fails}) and the number of failures due
     an unacceptable relaxation value.
 
     @arkode ARKodeGetNumRelaxFails
@@ -1221,17 +1221,44 @@ val get_dky :
 
     @arkode ARKodeSetAutonomous
     @since 7.1.0 *)
-val set_autonomous : ('d, 'k, 's) session -> bool -> unit
+    val set_autonomous : ('d, 'k, 's) session -> bool -> unit
 
 
+(** Fills an array showing which functions were found to have a root.
+
+    @arkode ARKodeGetRootInfo
+    @since 7.1.0 *)
+    val get_root_info : ('d, 'k, 's) session -> Roots.t -> unit
 
 
+(** Select the default MRI method of a given order. The default is 3.
+    An order less than 3 or greater than 4 will result in using the default.
+
+    @arkode ARKodeSetOrder
+    @since 7.1.0 *)
+    val set_order : ('d, 'k, 's) session -> int -> unit
 
 
+(** Set a post processing stage function.
+
+    @arkode ARKodeSetPostprocessStageFn
+    @since 7.1.0 *)
+    val set_postprocess_stage_fn : ('d, 'k, 's) session -> 'd postprocess_fn -> unit
 
 
+(** Clear the post processing stage function.
+
+    @arkode ARKodeSetPostprocessStageFn
+    @since 7.1.0 *)
+    val clear_postprocess_stage_fn : ('d, 'k, 's) session -> unit
 
 
+(** Returns the number of calls to the right-hand side callback due to
+    the finite difference Jacobian approximation.
+
+    @arkode ARKodeGetNumLinRhsEvals
+    @since 7.1.0 *)
+    val get_num_lin_rhs_evals : ('a, 'k, 's) session -> int
 
 
 (** Common definitions that are included in each of the time-stepping modules. *)
@@ -1287,7 +1314,6 @@ module Common : sig (* {{{ *)
   (** A default relative tolerance of 1.0e-4 and absolute tolerance of 1.0e-9. *)
   val default_tolerances : ('data, 'kind) tolerance
 
-
   (** {3:roots Roots} *)
 
   (** Called by the solver to calculate the values of root functions. These
@@ -1305,8 +1331,6 @@ module Common : sig (* {{{ *)
 
   (** A convenience value for signalling that there are no roots to monitor. *)
   val no_roots : (int * 'd rootsfn)
-
-  (** {3:adapt Adaptivity} *)
 
   (** {3:callbacks Callback functions} *)
 
@@ -1909,6 +1933,11 @@ module ARKStep : sig (* {{{ *)
 
     (** {3:arkdlsstats Solver statistics} *)
 
+    (** Returns the number of calls made by a direct linear solver to the
+        Jacobian approximation function.
+
+        @arkode_ark ARKodeGetNumJacEvals *)
+    val get_num_jac_evals : 'k serial_session -> int
 
     (** Returns the number of calls to the right-hand side callback due to
         the finite difference Jacobian approximation.
@@ -2737,11 +2766,6 @@ module ARKStep : sig (* {{{ *)
   (** Returns the number of root functions. *)
   val get_num_roots : ('d, 'k) session -> int
 
-  (** Fills an array showing which functions were found to have a root.
-
-      @arkode_ark ARKStepGetRootInfo *)
-  val get_root_info : ('d, 'k) session -> Roots.t -> unit
-
   (** {2:arkrelax Relaxation Methods}
 
       Relaxation methods ensure dissipation or preservation of the global
@@ -2928,13 +2952,6 @@ module ERKStep : sig (* {{{ *)
       @arkode_erk ERKStepWFtolerances *)
   val set_tolerances : ('d, 'k) session -> ('d, 'k) tolerance -> unit
 
-  (** Resets all optional input parameters to their default values. Neither
-      the problem-defining functions nor the root-finding functions are
-      changed.
-
-      @arkode_erk ERKStepSetDefaults *)
-  val set_defaults : ('d, 'k) session -> unit
-
   (** {3:erksetivp Optional inputs for IVP method selection} *)
 
   (** Specifies a customized Butcher table.
@@ -2958,13 +2975,6 @@ module ERKStep : sig (* {{{ *)
   val set_table_name : ('d, 'k) session -> string -> unit
 
   (** {2:erkget Querying the solver (optional output functions)} *)
-
-  (** Returns the cumulative number of stability-limited steps taken by the
-      solver.
-
-      @arkode_erk ERKStepGetNumExpSteps *)
-  val get_num_exp_steps       : ('d, 'k) session -> int
-
 
   (** Returns the number of calls to the right-hand side function.
 
@@ -2997,19 +3007,6 @@ module ERKStep : sig (* {{{ *)
       @arkode_erk ERKStepGetTimestepperStats *)
   val get_timestepper_stats    : ('d, 'k) session -> timestepper_stats
 
-  (** Returns a grouped set of integrator statistics.
-
-      @arkode_erk ERKStepGetStepStats *)
-  val get_step_stats           : ('d, 'k) session -> step_stats
-
-  (** Outputs all of the integrator, nonlinear solver, linear solver, and other
-      statistics.
-
-      @arkode_erk ERKStepPrintAllStats
-      @since 6.2.0 *)
-  val print_all_stats
-        : ?logfile:Logfile.t -> ('d, 'k) session -> Sundials.output_format -> unit
-
   (** Prints time-stepper statistics on the given channel.
 
       @arkode_erk ERKStepGetTimestepperStats *)
@@ -3024,11 +3021,6 @@ module ERKStep : sig (* {{{ *)
 
   (** Returns the number of root functions. *)
   val get_num_roots : ('d, 'k) session -> int
-
-  (** Fills an array showing which functions were found to have a root.
-
-      @arkode_erk ERKStepGetRootInfo *)
-  val get_root_info : ('d, 'k) session -> Roots.t -> unit
 
   (** {2:arkrelax Relaxation Methods}
 
@@ -3290,15 +3282,6 @@ module SPRKStep : sig (* {{{ *)
     -> ('d, 'k) Nvector.t
     -> unit
 
-  (** {2:sprkset Modifying the solver} *)
-
-  (** Resets all optional input parameters to their default values. Neither
-      the problem-defining functions nor the root-finding functions are
-      changed.
-
-      @arkode_sprk SPRKStepSetDefaults *)
-  val set_defaults : ('d, 'k) session -> unit
-
   (** {3:sprksetivp Optional inputs for IVP method selection} *)
 
   (** Specifies the SPRK method.
@@ -3320,18 +3303,6 @@ module SPRKStep : sig (* {{{ *)
       @arkode_sprk SPRKStepSetUseCompensatedSums *)
   val set_use_compensated_sums : ('d, 'k) session -> bool -> unit
 
-  (** {3:sprksetadap Optional inputs for time step adaptivity} *)
-
-  (** Set a post processing stage function.
-
-      @arkode_sprk SPRKStepSetPostprocessStageFn *)
-  val set_postprocess_stage_fn : ('d, 'k) session -> 'd postprocess_fn -> unit
-
-  (** Clear the post processing stage function.
-
-      @arkode_sprk SPRKStepSetPostprocessStageFn *)
-  val clear_postprocess_stage_fn : ('d, 'k) session -> unit
-
   (** {2:sprkget Querying the solver} *)
 
   (** Returns the SPRK method coefficient table currently in use by the solver.
@@ -3345,32 +3316,15 @@ module SPRKStep : sig (* {{{ *)
       @arkode_sprk SPRKStepGetNumRhsEvals *)
   val get_num_rhs_evals       : ('d, 'k) session -> int * int
 
-
-  (** Returns a grouped set of integrator statistics.
-
-      @arkode_sprk SPRKStepGetStepStats *)
-  val get_step_stats           : ('d, 'k) session -> step_stats
-
   (** Prints integrator statistics on the given channel.
 
       @arkode_sprk SPRKStepGetStepStats *)
   val print_step_stats  : ('d, 'k) session -> out_channel -> unit
 
-  (** Outputs all of the integrator statistics.
-
-      @arkode_sprk SPRKStepPrintAllStats *)
-  val print_all_stats
-        : ?logfile:Logfile.t -> ('d, 'k) session -> Sundials.output_format -> unit
-
   (** {2:sprkroots Additional root-finding functions} *)
 
   (** Returns the number of root functions. *)
   val get_num_roots : ('d, 'k) session -> int
-
-  (** Fills an array showing which functions were found to have a root.
-
-      @arkode_sprk SPRKStepGetRootInfo *)
-  val get_root_info : ('d, 'k) session -> Roots.t -> unit
 
 end (* }}} *)
 
@@ -3440,22 +3394,6 @@ module MRIStep : sig (* {{{ *)
       ('m, RealArray.t, 'kind, [>`Dls]) LinearSolver.t ->
       'kind serial_linear_solver
 
-    (** {3:mridlsstats Solver statistics} *)
-
-    (** Returns the sizes of the real and integer workspaces used by a direct
-        linear solver.
-
-        @arkode_mri MRIStepGetLinWorkSpace
-        @return ([real_size], [integer_size])
-        @since 5.4.0 *)
-    val get_work_space : 'k serial_session -> int * int
-
-    (** Returns the number of calls to the right-hand side callback due to
-        the finite difference Jacobian approximation.
-
-        @arkode_mri MRIStepGetNumLinRhsEvals
-        @since 5.4.0 *)
-    val get_num_lin_rhs_evals : 'k serial_session -> int
 
   end (* }}} *)
 
@@ -3525,38 +3463,6 @@ module MRIStep : sig (* {{{ *)
       -> ?jac_times_rhs:'d rhsfn
       -> ('d, 'k, mristep) preconditioner
       -> ('d, 'k) linear_solver
-
-    (** {3:mrispilsset Solver parameters} *)
-
-    (** {3:mrispilsstats Solver statistics} *)
-
-    (** Returns the sizes of the real and integer workspaces used by the spils
-        linear solver.
-
-        @arkode_mri MRIStepGetLinWorkSpace
-        @return ([real_size], [integer_size])
-        @since 5.4.0 *)
-    val get_work_space       : ('d, 'k) session -> int * int
-
-    (** Returns the cumulative number of linear iterations.
-
-        @arkode_mri MRIStepGetNumLinIters
-        @since 5.4.0 *)
-    val get_num_lin_iters    : ('d, 'k) session -> int
-
-    (** Returns the cumulative number of linear convergence failures.
-
-        @arkode_mri MRIStepGetNumLinConvFails
-        @since 5.4.0 *)
-    val get_num_lin_conv_fails   : ('d, 'k) session -> int
-
-    (** Returns the number of calls to the right-hand side callback for
-        finite difference Jacobian-vector product approximation. This counter is
-        only updated if the default difference quotient function is used.
-
-        @arkode_mri MRIStepGetNumLinRhsEvals
-        @since 5.4.0 *)
-    val get_num_lin_rhs_evals    : ('d, 'k) session -> int
 
     (** {3:mrispilslowlevel Low-level solver manipulation}
 
@@ -4046,20 +3952,6 @@ module MRIStep : sig (* {{{ *)
 
   (** {2:mriset Modifying the solver (optional input functions)} *)
 
-  (** Resets all optional input parameters to their default values. Neither
-      the problem-defining functions nor the root-finding functions are
-      changed.
-
-      @arkode_mri MRIStepSetDefaults *)
-  val set_defaults : ('d, 'k) session -> unit
-
-  (** Select the default MRI method of a given order. The default is 3.
-      An order less than 3 or greater than 4 will result in using the default.
-
-      @arkode_mri MRIStepSetOrder
-      @since 6.2.0 *)
-  val set_order : ('d, 'k) session -> int -> unit
-
   (** A function to be called {e before} each inner integration. This function
       may be used, for instance, to perform communications or memory transfers
       of forcing data supplied by the outer integrator to the inner
@@ -4150,34 +4042,11 @@ module MRIStep : sig (* {{{ *)
       @since 5.4.0 *)
   val get_current_coupling : ('d, 'k) session -> Coupling.t
 
-  (** Output the current coupling table on the standard output (or given file).
-
-      @arkode_mri MRIStepWriteCoupling
-      @since 5.4.0 *)
-  val write_coupling : ?logfile:Logfile.t -> ('d, 'k) session -> unit
-
-  (** Outputs all of the integrator, nonlinear solver, linear solver, and other
-      statistics.
-
-      @arkode_mri MRIStepPrintAllStats
-      @since 6.2.0 *)
-  val print_all_stats
-        : ?logfile:Logfile.t -> ('d, 'k) session -> Sundials.output_format -> unit
-
-  (** {3:mrigetimplicit Implicit solver optional output functions} *)
-
-
   (** {2:mriroots Additional root-finding functions} *)
 
 
   (** Returns the number of root functions. *)
   val get_num_roots : ('d, 'k) session -> int
-
-  (** Fills an array showing which functions were found to have a root.
-
-      @arkode_mri MRIStepGetRootInfo *)
-  val get_root_info : ('d, 'k) session -> Roots.t -> unit
-
 end (* }}} *)
 
 (** {2:exceptions Exceptions} *)

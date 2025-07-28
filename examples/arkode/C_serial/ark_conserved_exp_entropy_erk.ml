@@ -47,6 +47,7 @@
  * ---------------------------------------------------------------------------*)
 
 open Sundials
+open Arkode
 module ERKStep = Arkode.ERKStep
 module DM = Matrix.Dense
 
@@ -140,7 +141,7 @@ let main () =
   (* Enable relaxation methods *)
   if relax then ERKStep.Relax.enable arkode_mem ent jac_ent;
 
-  if fixed_h > 0.0 then ERKStep.set_fixed_step arkode_mem (Some fixed_h);
+  if fixed_h > 0.0 then set_fixed_step arkode_mem (Some fixed_h);
 
   (* Open output stream for results, output comment line *)
   let ufid = open_out "ark_conserved_exp_entropy_erk.txt" in
@@ -176,7 +177,7 @@ let main () =
       let v_err = ydata.{1} -. ytdata.{1} in
 
       (* Output to the screen periodically *)
-      let nst = ERKStep.get_num_steps arkode_mem in
+      let nst = get_num_steps arkode_mem in
 
       if nst mod 40 = 0 then
         printf "%5d %14.6e %14.6e %14.6e %14.6e %14.6e\n"
@@ -196,9 +197,9 @@ let main () =
    * ------------ *)
 
   (* Get final statistics on how the solve progressed *)
-  let nst = ERKStep.get_num_steps arkode_mem
-  and nst_a = ERKStep.get_num_step_attempts arkode_mem
-  and netf = ERKStep.get_num_err_test_fails arkode_mem
+  let nst = get_num_steps arkode_mem
+  and nst_a = get_num_step_attempts arkode_mem
+  and netf = get_num_err_test_fails arkode_mem
   and nfe = ERKStep.get_num_rhs_evals arkode_mem
   in
   printf "\nFinal Solver Statistics:\n";
@@ -207,12 +208,12 @@ let main () =
   printf "   Total RHS evals = %d\n" nfe;
 
   if relax then begin
-    let nre    = ERKStep.Relax.get_num_fn_evals arkode_mem
-    and nrje   = ERKStep.Relax.get_num_jac_evals arkode_mem
-    and nrf    = ERKStep.Relax.get_num_fails arkode_mem
-    and nrbf   = ERKStep.Relax.get_num_bound_fails arkode_mem
-    and nrnlsf = ERKStep.Relax.get_num_solve_fails arkode_mem
-    and nrnlsi = ERKStep.Relax.get_num_solve_iters arkode_mem
+    let nre    = get_num_fn_evals arkode_mem
+    and nrje   = get_num_jac_evals arkode_mem
+    and nrf    = get_num_relax_fails arkode_mem
+    and nrbf   = get_num_relax_bound_fails arkode_mem
+    and nrnlsf = get_num_relax_solve_fails arkode_mem
+    and nrnlsi = get_num_relax_solve_iters arkode_mem
     in
     printf "   Total Relaxation Fn evals    = %d\n" nre;
     printf "   Total Relaxation Jac evals   = %d\n" nrje;

@@ -11274,7 +11274,7 @@ break;
     CAMLreturn(Val_int(nstj));
 }
 
-CAMLprim value get_lin_work_space(value varkode_mem)
+CAMLprim value sunml_arkode_get_lin_work_space(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
     CAMLlocal1(r);
@@ -13111,16 +13111,24 @@ CAMLprim value sunml_arkode_set_autonomous(value varkode_mem, value vautonomous)
 
 //     switch (Int_val(vstep_type)) {
 //         case ARKODE_VARIANT_ARKSTEP:
+//             {
 
+//             }
 //             break;
 //         case ARKODE_VARIANT_ERKSTEP:
-//             break;
+//             {
 
-//         case ARKODE_VARIANT_SPRKSTEP:
-//             break;}
-//         case ARKODE_VARIANT_MRISTEP:     {
+//             }
 //             break;
-//         default:
-//             caml_failwith("Unknown step_type in ");
+//         case ARKODE_VARIANT_SPRKSTEP:
+//             {
+
+//             }
+//             break;
+//         case ARKODE_VARIANT_MRISTEP:
+//             {
+
+//             }
+//             break;
 //     }
 // #endif

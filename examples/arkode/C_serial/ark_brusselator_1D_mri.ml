@@ -52,6 +52,7 @@
  * are printed at the end.
  * -------------------------------------------------------------- }}} *)
 
+open Arkode
 open Sundials
 module ARKStep = Arkode.ARKStep
 module MRIStep = Arkode.MRIStep
@@ -252,7 +253,7 @@ let main () =
   (* Specify fast tolerances *)
   (* Attach user data to fast integrator *)
   let inner_arkode_mem =
-    ARKStep.(init (implicit ~lsolver:(Dls.solver ~jac:(jf udata) ls) (ff udata))
+    ARKStep.(init (implicit ~lsolver:(Arkode.ARKStep.Dls.solver ~jac:(jf udata) ls) (ff udata))
                   (SStolerances (reltol, abstol))
                   t0 y)
   in
@@ -362,14 +363,14 @@ let main () =
   let nfse, _ = get_num_rhs_evals arkode_mem in
 
   (* Get some fast integrator statistics *)
-  let nstf    = ARKStep.get_num_steps inner_arkode_mem in
-  let nstf_a  = ARKStep.get_num_step_attempts inner_arkode_mem in
+  let nstf    = get_num_steps inner_arkode_mem in
+  let nstf_a  = get_num_step_attempts inner_arkode_mem in
   let _, nffi = ARKStep.get_num_rhs_evals inner_arkode_mem in
-  let nsetups = ARKStep.get_num_lin_solv_setups inner_arkode_mem in
-  let netf    = ARKStep.get_num_err_test_fails inner_arkode_mem in
-  let nni     = ARKStep.get_num_nonlin_solv_iters inner_arkode_mem in
-  let ncfn    = ARKStep.get_num_nonlin_solv_conv_fails inner_arkode_mem in
-  let nje     = ARKStep.Dls.get_num_jac_evals inner_arkode_mem in
+  let nsetups = get_num_lin_solv_setups inner_arkode_mem in
+  let netf    = get_num_err_test_fails inner_arkode_mem in
+  let nni     = get_num_nonlin_solv_iters inner_arkode_mem in
+  let ncfn    = get_num_nonlin_solv_conv_fails inner_arkode_mem in
+  let nje     = get_num_jac_evals inner_arkode_mem in
   let nfeLS   = ARKStep.Dls.get_num_lin_rhs_evals inner_arkode_mem in
 
   (* Print some final statistics *)

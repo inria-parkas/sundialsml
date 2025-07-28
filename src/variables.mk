@@ -44,7 +44,7 @@ MLOBJ_MAIN =	sundials/sundials_configuration.cmo	\
 		sundials/sundials_LintArray.cmo		\
 		sundials/sundials_ROArray.cmo		\
 		sundials/sundials_AdaptController.cmo   \
-	     	sundials/sundials.cmo			\
+		sundials/sundials.cmo			\
 		nvectors/nvector.cmo			\
 		nvectors/nvector_serial.cmo		\
 		$(if $(NVECMANYVECTOR_ENABLED),nvectors/nvector_many.cmo) \
