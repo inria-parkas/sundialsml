@@ -1488,8 +1488,8 @@ void sunml_arkode_check_flag(const char *call, int flag, void *arkode_mem)
 	case ARK_ILL_INPUT:
 	    caml_raise_constant(ARKODE_EXN(IllInput));
 
-    case ARK_STEPPER_UNSUPPORTED:
-        caml_raise_constant(ARKODE_EXN(StepperUnsupported));
+	case ARK_STEPPER_UNSUPPORTED:
+	    caml_raise_constant(ARKODE_EXN(StepperUnsupported));
 
 	case ARK_TOO_CLOSE:
 	    caml_raise_constant(ARKODE_EXN(TooClose));
@@ -2884,25 +2884,6 @@ CAMLprim value sunml_arkode_dls_get_num_mass_mult(value varkode_mem)
     CAMLreturn(Val_long(r));
 }
 
-CAMLprim value sunml_arkode_dls_get_num_lin_rhs_evals(value varkode_mem)
-{
-    CAMLparam1(varkode_mem);
-
-    long int r = 0;
-#if 710 <= SUNDIALS_LIB_VERSION
-    int flag = ARKodeGetNumLinRhsEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
-    CHECK_FLAG("ARKodeGetNumLinRhsEvals", flag);
-#elif 400 <= SUNDIALS_LIB_VERSION
-    int flag = ARKStepGetNumLinRhsEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
-    CHECK_FLAG("ARKStepGetNumLinRhsEvals", flag);
-#else
-    int flag = ARKDlsGetNumRhsEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
-    CHECK_FLAG("ARKDlsGetNumRhsEvals", flag);
-#endif
-
-    CAMLreturn(Val_long(r));
-}
-
 CAMLprim value sunml_arkode_bandprec_get_work_space(value varkode_mem)
 {
     CAMLparam1(varkode_mem);
@@ -3069,26 +3050,6 @@ CAMLprim value sunml_arkode_spils_get_work_space(value varkode_mem)
     Store_field(r, 1, Val_long(leniw));
 
     CAMLreturn(r);
-}
-
-CAMLprim value sunml_arkode_spils_get_num_lin_rhs_evals (value varkode_mem)
-{
-    CAMLparam1(varkode_mem);
-
-    long int r = 0;
-
-#if 710 <= SUNDIALS_LIB_VERSION
-    int flag = ARKodeGetNumLinRhsEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
-    CHECK_FLAG("ARKodeGetNumLinRhsEvals", flag);
-#elif 400 <= SUNDIALS_LIB_VERSION
-    int flag = ARKStepGetNumLinRhsEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
-    CHECK_FLAG("ARKStepGetNumLinRhsEvals", flag);
-#else
-    int flag = ARKSpilsGetNumRhsEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
-    CHECK_FLAG("ARKSpilsGetNumRhsEvals", flag);
-#endif
-
-    CAMLreturn(Val_long(r));
 }
 
 /* spils mass functions */
@@ -11363,7 +11324,6 @@ CAMLprim value sunml_arkode_get_num_jac_evals(value varkode_mem)
     switch (Int_val(vstep_type)) {
         case ARKODE_VARIANT_ARKSTEP:
         {
-
 #if 400 <= SUNDIALS_LIB_VERSION
             int flag = ARKStepGetNumJacEvals(ARKODE_MEM_FROM_ML(varkode_mem), &r);
             CHECK_FLAG("ARKStepGetNumJacEvals", flag);
@@ -11374,16 +11334,15 @@ CAMLprim value sunml_arkode_get_num_jac_evals(value varkode_mem)
 
             break;
         }
+
         case ARKODE_VARIANT_ERKSTEP:
-    {
-caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
+	    caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        }
-            case ARKODE_VARIANT_SPRKSTEP:
-        {
+
+	case ARKODE_VARIANT_SPRKSTEP:
             caml_raise_constant(SUNDIALS_EXN(NotImplementedBySundialsVersion));
             break;
-        }
+
         case ARKODE_VARIANT_MRISTEP:
         {
 
@@ -11734,7 +11693,7 @@ CAMLprim value sunml_arkode_get_num_mass_setups(value varkode_mem)
     long int r = 0;
 
 #if 710 <= SUNDIALS_LIB_VERSION
-     int flag = ARKodeGetNumMassSetups(ARKODE_MEM_FROM_ML(varkode_mem), &r);
+    int flag = ARKodeGetNumMassSetups(ARKODE_MEM_FROM_ML(varkode_mem), &r);
     CHECK_FLAG("ARKodeGetNumMassSetups", flag);
 #else
     value vstep_type = Field(varkode_mem, RECORD_ARKODE_SESSION_STEP_TYPE);

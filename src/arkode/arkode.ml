@@ -1526,32 +1526,6 @@ module ARKStep = struct (* {{{ *)
             cb.jmat <- None
         | _ -> ()
 
-    (* Sundials < 3.0.0 *)
-    external c_klu_get_num_jac_evals : 'k serial_session -> int
-      = "sunml_arkode_klu_get_num_jac_evals"
-
-    (* Sundials < 3.0.0 *)
-    external c_superlumt_get_num_jac_evals : 'k serial_session -> int
-      = "sunml_arkode_superlumt_get_num_jac_evals"
-
-    let compat_get_num_jac_evals s =
-      match s.ls_callbacks with
-      | SlsKluCallback _ -> c_klu_get_num_jac_evals s
-      | SlsSuperlumtCallback _ -> c_superlumt_get_num_jac_evals s
-      | _ -> get_num_jac_evals s
-
-    let get_num_jac_evals s =
-      if Sundials_impl.Version.in_compat_mode2_3 then ls_check_direct s;
-      if Sundials_impl.Version.in_compat_mode2 then compat_get_num_jac_evals s else
-      get_num_jac_evals s
-
-    external get_num_lin_rhs_evals : 'k serial_session -> int
-        = "sunml_arkode_dls_get_num_lin_rhs_evals"
-
-    let get_num_lin_rhs_evals s =
-      if Sundials_impl.Version.in_compat_mode2_3 then ls_check_direct s;
-      get_num_lin_rhs_evals s
-
   end (* }}} *)
 
   module Spils = struct (* {{{ *)
@@ -1729,13 +1703,6 @@ module ARKStep = struct (* {{{ *)
           s.ls_precfns <- PrecFns { prec_setup_fn = setup;
                                     prec_solve_fn = solve }
       | _ -> raise LinearSolver.InvalidLinearSolver
-
-    external get_num_lin_rhs_evals  : ('a, 'k) session -> int
-      = "sunml_arkode_spils_get_num_lin_rhs_evals"
-
-    let get_num_lin_rhs_evals s =
-      ls_check_spils s;
-      get_num_lin_rhs_evals s
 
   end (* }}} *)
 
@@ -3571,6 +3538,7 @@ let _ =
     (* Exceptions must be listed in the same order as
        arkode_exn_index.  *)
     [|IllInput;
+      StepperUnsupported;
       TooClose;
       TooMuchWork;
       TooMuchAccuracy;
