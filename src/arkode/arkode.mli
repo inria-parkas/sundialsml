@@ -30,7 +30,6 @@
     stiff/nonstiff systems of ODE initial value problems with zero-crossing
     detection.
 
-    (* TODO *)
     The interface is structured as follows.
     {ol
       {- {{:#generic}Generic constants and types}}
@@ -49,6 +48,7 @@
 
     @version VERSION()
     @author Timothy Bourke (Inria/ENS)
+    @author Alexandre Douard (Inria/ENS de Lyon)
     @author Jun Inoue (Inria/ENS)
     @author Marc Pouzet (UPMC/ENS/Inria) *)
 
@@ -71,16 +71,14 @@ type mristep = Arkode_impl.mristep
 (** Sessions with a hidden module type argument. *)
 type ('data, 'kind, 'step) session = ('data, 'kind, 'step) Arkode_impl.session 
 
+(** Sessions based on serial nvectors. *)
 type ('k, 's) serial_session = (Nvector_serial.data, 'k, 's) session
                           constraint 'k = [>Nvector_serial.kind]
 
 (** Values returned by the step functions. Failures are indicated by
     exceptions.
 
-    @arkode_ark ARKStepEvolve
-    @arkode_erk ERKStepEvolve
-    @arkode_sprk SPRKStepEvolve
-    @arkode_mri MRIStepEvolve *)
+    @arkode_user ARKodeEvolve *)
 type solver_result =
   | Success             (** The solution was advanced. {cconst ARK_SUCCESS} *)
   | RootsFound          (** A root was found. See {!ARKStep.get_root_info},
@@ -133,7 +131,7 @@ val default_tolerances : ('data, 'kind) tolerance
     {warning [y] and [gout] should not be accessed after the function has
              returned.}
 
-    @arkode_user ARKRootFn *)
+    @arkode_ufun ARKRootFn *)
 type 'd rootsfn = float -> 'd -> RealArray.t -> unit
 
 (** A convenience value for signalling that there are no roots to monitor. *)
@@ -153,7 +151,7 @@ val no_roots : (int * 'd rootsfn)
 
     {warning [y] and [y'] should not be accessed after the function returns.}
 
-    @arkode_user ARKRhsFn *)
+    @arkode_ufun ARKRhsFn *)
 type 'd rhsfn = float -> 'd -> 'd -> unit
 
 (** Called to resize a vector to match the dimensions of another. The call
@@ -162,7 +160,7 @@ type 'd rhsfn = float -> 'd -> 'd -> unit
     {warning [y] and [ytemplate] should not be accessed after the function
              has returned.}
 
-    @arkode_user ARKVecResizeFn *)
+    @arkode_ufun ARKVecResizeFn *)
 type 'd resize_fn = 'd -> 'd -> unit
 
 (** Workspaces with three temporary vectors. *)
@@ -170,10 +168,10 @@ type 'd triple = 'd * 'd * 'd
 
 (** Arguments common to Jacobian callback functions.
 
-    @arkode_user ARKLsJacFn
-    @arkode_user ARKLsJacTimesVecFn
-    @arkode_user ARKLsPrecSolveFn
-    @arkode_user ARKLsPrecSetupFn *)
+    @arkode_ufun ARKLsJacFn
+    @arkode_ufun ARKLsJacTimesVecFn
+    @arkode_ufun ARKLsPrecSolveFn
+    @arkode_ufun ARKLsPrecSetupFn *)
 type ('t, 'd) jacobian_arg = ('t, 'd) Arkode_impl.jacobian_arg =
   {
     jac_t   : float;        (** The independent variable. *)
@@ -196,7 +194,7 @@ type ('t, 'd) jacobian_arg = ('t, 'd) Arkode_impl.jacobian_arg =
     This function may only be called after a successful return from either
     {!evolve_normal} or {!evolve_one_step}.
 
-    @arkode_ark ARKStepGetDky
+    @arkode_user ARKodeGetDky
     @raise BadT [t] is not in the interval {% $[t_n - h_n, t_n]$ %}.
     @raise BadK [k] is not in the range {% $\{0, 1, ..., dord\}$ %}. *)
 val get_dky : ('d, 'k, 's) session -> ('d, 'k) Nvector.t -> t:float -> k:int -> unit
@@ -205,18 +203,18 @@ val get_dky : ('d, 'k, 's) session -> ('d, 'k) Nvector.t -> t:float -> k:int -> 
     variable vector. All previously set options, internal counter values,
     and step-size/error histories are retained.
 
-    @arkode ARKodeReset
+    @arkode_user ARKodeReset
     @since 7.1.0 *)
 val reset : ('d, 'k ,'s) session -> float -> ('d, 'k) Nvector.t
 
 (** Summarize the session on the standard output (or given file).
 
-    @arkode ARKodePrintMem *)
+    @arkode_user ARKodePrintMem *)
 val write_session : ?logfile:Logfile.t -> ('d, 'k, 's) session -> unit
 
 (** Outputs all the solver parameters on the standard output (or given file).
 
-    @arkode ARKodeWriteParameters
+    @arkode_user ARKodeWriteParameters
     @since 7.1.0 *)
 val write_parameters : ?logfile:Logfile.t -> ('d, 'k, 's) session -> unit
 
@@ -227,13 +225,13 @@ val write_parameters : ?logfile:Logfile.t -> ('d, 'k, 's) session -> unit
     the problem-defining functions nor the root-finding functions are
     changed.
 
-    @arkode ARKodeSetDefaults *)
+    @arkode_user ARKodeSetDefaults *)
 val set_defaults : ('d, 'k, 's) session -> unit
 
 (** Select the default MRI method of a given order. The default is 3.
     An order less than 3 or greater than 4 will result in using the default.
 
-    @arkode ARKodeSetOrder
+    @arkode_user ARKodeSetOrder
     @since 7.1.0 *)
 val set_order : ('d, 'k, 's) session -> int -> unit
 
@@ -250,20 +248,20 @@ type interpolant_type =
 (** Specifies the interpolation module used for output value interpolation
     and implicit method predictors.
 
-    @arkode ARKodeSetInterpolantType
+    @arkode_user ARKodeSetInterpolantType
     @since 5.2.0 *)
 val set_interpolant_type : ('d, 'k, 's) session -> interpolant_type -> unit
 
 (** Specifies the degree of the polynomial interpolant used for output
     values and implicit method predictors.
 
-    @arkode ARKodeSetInterpolantDegree
+    @arkode_user ARKodeSetInterpolantDegree
     @since 5.2.0 *)
 val set_interpolant_degree : ('d, 'k, 's) session -> int -> unit
 
 (** Specifies the initial step size.
 
-    @arkode ARKodeSetInitStep *)
+    @arkode_user ARKodeSetInitStep *)
 val set_init_step : ('d, 'k, 's) session -> float -> unit
 
 (** Disables time step adaptivity and fix the step size for all internal
@@ -272,73 +270,72 @@ val set_init_step : ('d, 'k, 's) session -> float -> unit
     solutions. It is provided primarily for code-to-code verification
     testing. Use in conjunction with {!set_min_step} or {!set_max_step}.
 
-    @arkode ARKodeSetFixedStep *)
+    @arkode_user ARKodeSetFixedStep *)
 val set_fixed_step : ('d, 'k, 's) session -> float option -> unit
 
 
 (** Specifies the maximum number of messages warning that [t + h = t] on
     the next internal step.
 
-    @arkode ARKodeSetMaxHnilWarns *)
+    @arkode_user ARKodeSetMaxHnilWarns *)
 val set_max_hnil_warns : ('d, 'k, 's) session -> int -> unit
 
 (** Specifies the maximum number of steps taken in attempting to reach
     a given output time.
 
-    @arkode ARKodeSetMaxNumSteps *)
+    @arkode_user ARKodeSetMaxNumSteps *)
 val set_max_num_steps : ('d, 'k, 's) session -> int -> unit
 
 (** Specifies a lower bound on the magnitude of the step size.
 
-    @arkode ARKodeSetMinStep
+    @arkode_user ARKodeSetMinStep
     @since 7.1.0 *)
 val set_min_step : ('d, 'k, 's) session -> float -> unit
 
 (** Specifies an upper bound on the magnitude of the step size.
 
-    @arkode ARKodeSetMaxStep
+    @arkode_user ARKodeSetMaxStep
     @since 7.1.0 *)
 val set_max_step : ('d, 'k, 's) session -> float -> unit
 
 (** Limits the value of the independent variable [t] when solving.
     By default no stop time is imposed.
 
-    @arkode ARKodeSetStopTime
+    @arkode_user ARKodeSetStopTime
     @since 7.1.0 *)
 val set_stop_time : ('d, 'k, 's) session -> float -> unit
 
+(** Disables any stop time previously set with {!set_stop_time}.
+
+    @arkode_user ARKodeClearStopTime
+    @since 7.1.0 *)
+val clear_stop_time : ('d, 'k, 's) session -> unit
 
 (** Specifies whether the output solution should be interpolated ([true]) or
     copied ([false], default) when the stop time is reached.
 
-    @arkode ARKodeSetInterpolateStopTime
+    @arkode_user ARKodeSetInterpolateStopTime
     @since 7.1.0 *)
 val set_interpolate_stop_time : ('d, 'k, 's) session -> bool -> unit
-
-(** Disables any stop time previously set with {!set_stop_time}.
-
-    @arkode ARKodeClearStopTime
-    @since 7.1.0 *)
-val clear_stop_time : ('d, 'k, 's) session -> unit
 
 (** Specifies the maximum number of error test failures permitted in
     attempting one step.
 
-    @arkode ARKodeSetMaxErrTestFails
+    @arkode_user ARKodeSetMaxErrTestFails
     @since 7.1.0 *)
 val set_max_err_test_fails : ('d, 'k, 's) session -> int -> unit
 
 (** Specifies a vector defining inequality constraints for each
     component of the solution vector.  See {!Sundials.Constraint}.
 
-    @arkode ARKodeSetConstraints
+    @arkode_user ARKodeSetConstraints
     @since 5.0.0 *)
 val set_constraints : ('d, 'k, 's) session -> ('d, 'k) Nvector.t -> unit
 
 (** Specifies the maximum number of constraint failures in a step before an
     error is signalled.
 
-    @arkode ARKodeSetMaxNumConstrFails
+    @arkode_user ARKodeSetMaxNumConstrFails
     @since 5.0.0 *)
 val set_max_num_constr_fails : ('d, 'k, 's) session -> int -> unit
 
@@ -348,7 +345,7 @@ val set_max_num_constr_fails : ('d, 'k, 's) session -> int -> unit
 (** Specifies the fraction of the estimated explicitly stable step to use.
     Any non-positive argument resets to the default value (0.5).
 
-    @arkode ARKodeSetCFLFraction
+    @arkode_user ARKodeSetCFLFraction
     @since 7.1.0 *)
 val set_cfl_fraction : ('d, 'k, 's) session -> float -> unit
 
@@ -358,14 +355,14 @@ val set_cfl_fraction : ('d, 'k, 's) session -> float -> unit
     specifies an upper bound. Any interval not containing 1.0 resets to
     default values.
 
-    @arkode ARKodeSetFixedStepBounds
+    @arkode_user ARKodeSetFixedStepBounds
     @since 7.1.0 *)
 val set_fixed_step_bounds : ('d, 'k, 's) session -> float -> float -> unit
 
 (** Specifies the maximum allowed step size change following the very first
     integration step. Any value $\le 1$ resets to the default value.
 
-    @arkode ARKodeSetMaxFirstGrowth
+    @arkode_user ARKodeSetMaxFirstGrowth
     @since 7.1.0 *)
 val set_max_first_growth : ('d, 'k, 's) session -> float -> unit
 
@@ -373,7 +370,7 @@ val set_max_first_growth : ('d, 'k, 's) session -> float -> unit
     failure on a stage solve within a step. Any value outside the
     interval {% $(0, 1]$%} resets to the default value.
 
-    @arkode ARKodeSetMaxCFailGrowth
+    @arkode_user ARKodeSetMaxCFailGrowth
     @since 7.1.0 *)
 val set_max_cfail_growth : ('d, 'k, 's) session -> float -> unit
 
@@ -381,14 +378,14 @@ val set_max_cfail_growth : ('d, 'k, 's) session -> float -> unit
     accuracy-based error failures in the solver. Any value outside the
     interval {% $(0, 1]$%} resets to the default value.
 
-    @arkode ARKodeSetMaxEFailGrowth
+    @arkode_user ARKodeSetMaxEFailGrowth
     @since 7.1.0 *)
 val set_max_efail_growth : ('d, 'k, 's) session -> float -> unit
 
 (** Specifies the maximum growth of the step size between consecutive time
     steps. Any value $\le 1$ resets to the default value.
 
-    @arkode ARKodeSetMaxGrowth
+    @arkode_user ARKodeSetMaxGrowth
     @since 7.1.0 *)
 val set_max_growth : ('d, 'k, 's) session -> float -> unit
 
@@ -396,21 +393,21 @@ val set_max_growth : ('d, 'k, 's) session -> float -> unit
     step attempts that result from a temporal error failure in the
     integration process.
 
-    @arkode ARKodeSetMinReduction
+    @arkode_user ARKodeSetMinReduction
     @since 7.1.0 *)
 val set_min_reduction : ('d, 'k, 's) session -> float -> unit
 
 (** Specifies the safety factor to be applied to the accuracy-based
     estimated step. Any non-positive value resets to the default value.
 
-    @arkode ARKodeSetSafetyFactor *)
+    @arkode_user ARKodeSetSafetyFactor *)
 val set_safety_factor : ('d, 'k, 's) session -> float -> unit
 
 (** Specifies the threshold for “multiple” successive error failures
     before the factor from {!set_max_efail_growth} is applied. Any
     non-positive value resets to the default value.
 
-    @arkode ARKodeSetSmallNumEFails
+    @arkode_user ARKodeSetSmallNumEFails
     @since 7.1.0 *)
 val set_small_num_efails : ('d, 'k, 's) session -> float -> unit
 
@@ -424,13 +421,13 @@ val set_small_num_efails : ('d, 'k, 's) session -> float -> unit
     stability restriction on the time step size. The function should raise
     an exception if it cannot set the next step size.
 
-    @arkode_user ARKExpStabFn *)
+    @arkode_ufun ARKExpStabFn *)
 type 'd stability_fn = float -> 'd -> float
 
 (** Sets a problem-dependent function to estimate a stable time step size
     for the explicit portion of the ODE system.
 
-    @arkode ARKodeSetStabilityFn
+    @arkode_user ARKodeSetStabilityFn
     @since 7.1.0 *)
 val set_stability_fn : ('d, 'k, 's) session -> 'd stability_fn -> unit
 
@@ -441,18 +438,18 @@ val set_stability_fn : ('d, 'k, 's) session -> 'd stability_fn -> unit
     iterative linear solver, the preconditioner is time-dependent ([true])
     or not ([false]).
 
-    @arkode ARKodeSetLinear *)
+    @arkode_user ARKodeSetLinear *)
 val set_linear : ('d, 'k, 's) session -> bool -> unit
 
 (** Specifies that the implicit portion of the problem is nonlinear.
 
-    @arkode ARKodeSetNonlinear *)
+    @arkode_user ARKodeSetNonlinear *)
 val set_nonlinear : ('d, 'k, 's) session -> unit
 
 (** Specifies that the implicit portion is autonomous (time-independent).
     Enables reuse of implicit RHS evaluations to reduce function calls.
 
-    @arkode ARKodeSetAutonomous
+    @arkode_user ARKodeSetAutonomous
     @since 7.1.0 *)
 val set_autonomous : ('d, 'k, 's) session -> bool -> unit
 
@@ -471,7 +468,7 @@ type predictor_method =
 
 (** Specifies the method for predicting implicit solutions.
 
-    @arkode ARKodeSetPredictorMethod *)
+    @arkode_user ARKodeSetPredictorMethod *)
 val set_predictor_method : ('d, 'k, 's) session -> predictor_method -> unit
 
 (** A function to be called {e after} the predictor algorithm to update the
@@ -485,7 +482,7 @@ val set_predictor_method : ('d, 'k, 's) session -> predictor_method -> unit
 
     All exceptions are treated as unrecoverable errors.
 
-    @arkode ARKodeStagePredictFn *)
+    @arkode_ufun ARKStagePredictFn *)
 type 'd stage_predict_fn = float -> 'd -> unit
 
 (** Set the function called after the predictor algorithm and before the
@@ -496,39 +493,39 @@ type 'd stage_predict_fn = float -> 'd -> unit
     {{!predictor_method}MinimumCorrectionPredictor}, then the
     {{!predictor_method}TrivialPredictor} will be used instead.
 
-    @arkode ARKodeSetStagePredictFn
+    @arkode_user ARKodeSetStagePredictFn
     @since 7.1.0 *)
 val set_stage_predict_fn : ('d, 'k, 's) session -> 'd stage_predict_fn -> unit
 
 (** Specifies the maximum number of nonlinear solver iterations permitted
     per RK stage at each step.
 
-    @arkode ARKodeSetMaxNonlinIters
+    @arkode_user ARKodeSetMaxNonlinIters
     @raise NonlinearOperationError Nonlinear solver not configured *)
 val set_max_nonlin_iters : ('d, 'k, 's) session -> int -> unit
 
 
 (** Specifies the safety factor used in the nonlinear convergence test.
 
-    @arkode ARKodeSetNonlinConvCoef *)
+    @arkode_user ARKodeSetNonlinConvCoef *)
 val set_nonlin_conv_coef : ('d, 'k, 's) session -> float -> unit
 
 (** Specifies the constant used in estimating the nonlinear solver
     convergence rate.
 
-    @arkode ARKodeSetNonlinCRDown *)
+    @arkode_user ARKodeSetNonlinCRDown *)
 val set_nonlin_crdown : ('d, 'k, 's) session -> float -> unit
 
 (** Specifies the nonlinear correction threshold beyond which the iteration
     will be declared divergent.
 
-    @arkode ARKodeSetNonlinRDiv *)
+    @arkode_user ARKodeSetNonlinRDiv *)
 val set_nonlin_rdiv : ('d, 'k, 's) session -> float -> unit
 
 (** Specifies the maximum number of nonlinear solver convergence failures
     permitted during one step.
 
-    @arkode ARKodeSetMaxConvFails *)
+    @arkode_user ARKodeSetMaxConvFails *)
 val set_max_conv_fails : ('d, 'k, 's) session -> int -> unit
 
 (** Specifies if implicit stage derivatives are deduced without
@@ -537,7 +534,7 @@ val set_max_conv_fails : ('d, 'k, 's) session -> int -> unit
     nonlinear solver. If [true], the stage derivative is deduced without an
     additional evaluation of {% $f^I$ %}.
 
-    @arkode ARKodeSetDeduceImplicitRhs
+    @arkode_user ARKodeSetDeduceImplicitRhs
     @arkode <Mathematics_link.html#nonlinear-solver-methods> Nonlinear solver methods
     @since 6.2.0 *)
 val set_deduce_implicit_rhs : ('d, 'k, 's) session -> bool -> unit
@@ -548,7 +545,7 @@ val set_deduce_implicit_rhs : ('d, 'k, 's) session -> bool -> unit
 (** Specifies a scaled step size ratio tolerance beyond which the linear
     solver setup routine will be signalled.
 
-    @arkode ARKodeSetDeltaGammaMax *)
+    @arkode_user ARKodeSetDeltaGammaMax *)
 val set_delta_gamma_max : ('d, 'k, 's) session -> float -> unit
 
 (** Specifies the frequency of calls to the linear solver setup routine.
@@ -556,7 +553,7 @@ val set_delta_gamma_max : ('d, 'k, 's) session -> float -> unit
     negative values force recomputation at each Newton step, and zero values
     reset to the default (20).
 
-    @arkode ARKodeSetLSetupFrequency *)
+    @arkode_user ARKodeSetLSetupFrequency *)
 val set_lsetup_frequency : ('d, 'k, 's) session -> int -> unit
 
 (** Sets the maximum number of time steps to wait before recomputation of
@@ -564,7 +561,7 @@ val set_lsetup_frequency : ('d, 'k, 's) session -> int -> unit
     integer argument is less than or equal to 0, a default value of 50 is
     used.
 
-    @arkode ARKodeSetJacEvalFrequency
+    @arkode_user ARKodeSetJacEvalFrequency
     @since 7.1.0 *)
 val set_jac_eval_frequency : ('d, 'k, 's) session -> int -> unit
 
@@ -573,7 +570,7 @@ val set_jac_eval_frequency : ('d, 'k, 's) session -> int -> unit
 (** Like {!set_root_direction} but specifies a single direction for all root
     functions.
 
-    @arkode ARKodeSetRootDirection
+    @arkode_user ARKodeSetRootDirection
     @since 7.1.0 *)
 val set_all_root_directions : ('d, 'k, 's) session -> RootDirs.d -> unit
 
@@ -581,14 +578,14 @@ val set_all_root_directions : ('d, 'k, 's) session -> RootDirs.d -> unit
     be located and returned. [dir] may contain one entry for each root
     function.
 
-    @arkode ARKodeStepSetRootDirection
+    @arkode_user ARKodeSetRootDirection
     @since 7.1.0 *)
 val set_root_direction : ('d, 'k, 's) session -> RootDirs.d array -> unit
 
 (** Disables issuing a warning if some root function appears to be
     identically zero at the beginning of the integration.
 
-    @arkode ARKodeSetNoInactiveRootWarn
+    @arkode_user ARKodeSetNoInactiveRootWarn
     @since 7.1.0 *)
 val set_no_inactive_root_warn : ('d, 'k, 's) session -> unit
 
@@ -596,48 +593,48 @@ val set_no_inactive_root_warn : ('d, 'k, 's) session -> unit
 
 (** Returns the real and integer workspace sizes.
 
-    @arkode ARKodeGetWorkSpace
+    @arkode_user ARKodeGetWorkSpace
     @return ([real_size], [integer_size])
     @since 7.1.0 *)
 val get_work_space : ('d, 'k, 's) session -> int * int
 
 (** Returns the cumulative number of internal steps taken by the solver.
 
-    @arkode ARKodeGetNumSteps
+    @arkode_user ARKodeGetNumSteps
     @since 7.1.0 *)
 val get_num_steps : ('d, 'k, 's) session -> int
 
 (** Returns the the value of the integration step size used on the first
     step.
 
-    @arkode ARKodeGetActualInitStep
+    @arkode_user ARKodeGetActualInitStep
     @since 7.1.0 *)
 val get_actual_init_step : ('d, 'k, 's) session -> float
 
 (** Returns the integration step size taken on the last successful internal
     step.
 
-    @arkode ARKodeGetLastStep
+    @arkode_user ARKodeGetLastStep
     @since 7.1.0 *)
 val get_last_step : ('d, 'k, 's) session -> float
 
 (** Returns the integration step size to be attempted on the next internal
     step.
 
-    @arkode ARKodeGetCurrentStep
+    @arkode_user ARKodeGetCurrentStep
     @since 7.1.0 *)
 val get_current_step : ('d, 'k, 's) session -> float
 
 (** Returns the the current internal time reached by the solver.
 
-    @arkode ARKodeGetCurrentTime
+    @arkode_user ARKodeGetCurrentTime
     @since 7.1.0 *)
 val get_current_time : ('d, 'k, 's) session -> float
 
 (** Returns the current state vector. This vector provides direct access to
     the data within the integrator.
 
-    @arkode ARKodeGetCurrentState
+    @arkode_user ARKodeGetCurrentState
     @since 7.1.0 *)
 val get_current_state : ('d, 'k, 's) session -> 'd
 
@@ -645,26 +642,26 @@ val get_current_state : ('d, 'k, 's) session -> 'd
     This scalar appears in the internal Newton equation, either
     {% $A = I - \gamma J$ %} or {% $A = M - \gamma J$ %}.
 
-    @arkode ARKodeGetCurrentGamma
+    @arkode_user ARKodeGetCurrentGamma
     @since 7.1.0 *)
 val get_current_gamma : ('d, 'k, 's) session -> float
 
 (** Returns a suggested factor by which the user's tolerances should be
     scaled when too much accuracy has been requested for some internal step.
 
-    @arkode ARKodeGetTolScaleFactor
+    @arkode_user ARKodeGetTolScaleFactor
     @since 7.1.0 *)
 val get_tol_scale_factor : ('d, 'k, 's) session -> float
 
 (** Returns the solution error weights at the current time.
 
-    @arkode ARKodeGetErrWeights
+    @arkode_user ARKodeGetErrWeights
     @since 7.1.0 *)
 val get_err_weights : ('d, 'k, 's) session -> ('d, 'k) Nvector.t -> unit
 
 (** Returns the residual error weights at the current time.
 
-    @arkode ARKodeGetResWeights
+    @arkode_user ARKodeGetResWeights
     @since 7.1.0 *)
 val get_res_weights : ('d, 'k, 's) session -> ('d, 'k) Nvector.t -> unit
 
@@ -684,52 +681,52 @@ type step_stats = {
 
 (** Returns a grouped set of integrator statistics.
 
-    @arkode ARKodeGetStepStats
+    @arkode_user ARKodeGetStepStats
     @since 7.1.0 *)
 val get_step_stats : ('d, 'k, 's) session -> step_stats
 
 (** Outputs all of the integrator, nonlinear solver, linear solver, and other
     statistics.
 
-    @arkode ARKodePrintAllStats
+    @arkode_user ARKodePrintAllStats
     @since 7.1.0 *)
 val print_all_stats : ?logfile:Logfile.t -> ('d, 'k, 's) session -> Sundials.output_format -> unit
 
 (** Returns the cumulative number of stability-limited steps taken by the
     solver.
 
-    @arkode ARKodeGetNumExpSteps
+    @arkode_user ARKodeGetNumExpSteps
     @since 7.1.0 *)
 val get_num_exp_steps : ('d, 'k, 's) session -> int
 
 (** Returns the cumulative number of accuracy-limited steps taken by the
     solver.
 
-    @arkode ARKodeGetNumAccSteps
+    @arkode_user ARKodeGetNumAccSteps
     @since 7.1.0 *)
 val get_num_acc_steps : ('d, 'k, 's) session -> int
 
 (** Returns the cumulative number of steps attempted by the solver.
 
-    @arkode ARKodeGetNumStepAttempts
+    @arkode_user ARKodeGetNumStepAttempts
     @since 7.1.0 *)
 val get_num_step_attempts : ('d, 'k, 's) session -> int
 
 (** Returns the number of failed steps due to a nonlinear solver failure.
 
-    @arkode ARKodeGetNumStepSolveFails
+    @arkode_user ARKodeGetNumStepSolveFails
     @since 7.1.0 *)
 val get_num_step_solve_fails : ('d, 'k, 's) session -> int
 
 (** Returns the vector of estimated local errors.
 
-    @arkode ARKodeGetEstLocalErrors
+    @arkode_user ARKodeGetEstLocalErrors
     @since 7.1.0 *)
 val get_est_local_errors : ('d, 'k, 's) session -> ('d, 'k) Nvector.t -> unit
 
 (** Returns the cumulative number of test failures.
 
-    @arkode ARKodeGetNumConstrFails
+    @arkode_user ARKodeGetNumConstrFails
     @since 7.1.0 *)
 val get_num_constr_fails : ('d, 'k, 's) session -> int
 
@@ -740,7 +737,7 @@ val get_num_constr_fails : ('d, 'k, 's) session -> int
     [compute_state s zcor z] computes {% $z_i(t) = z_{\mathit{pred}}
     + z_{\mathit{cor}}$ %}.
 
-    @arkode ARKodeComputeState
+    @arkode_nonlin ARKodeComputeState
     @since 7.1.0 *)
 val compute_state : ('d, 'k, 's) session -> ('d, 'k) Nvector.t  -> ('d, 'k) Nvector.t -> unit
 
@@ -779,26 +776,29 @@ type 'd nonlin_system_data = {
     linear solver, then the vectors [zi] and [fi] are only current after
     an evaluation of the nonlinear system function.
 
-    @arkode ARKodeGetNonlinearSystemData
+    @arkode_nonlin ARKodeGetNonlinearSystemData
     @since 7.1.0 *)
 val get_nonlin_system_data : ('d, 'k, 's) session -> 'd nonlin_system_data
 
+(* TODO: Add ARKodeGetCurrentMassMatrix
+   (https://sundials.readthedocs.io/en/latest/sunnonlinsol/SUNNonlinSol_package_links.html#c.ARKodeGetCurrentMassMatrix) *)
+
 (** Returns the number of calls made to the linear solver's setup function.
 
-    @arkode ARKodeGetNumLinSolvSetups *)
+    @arkode_user ARKodeGetNumLinSolvSetups *)
 val get_num_lin_solv_setups : ('d, 'k, 's) session -> int
 
 (** Returns the cumulative number of nonlinear (functional or Newton)
     iterations.
 
-    @arkode ARKodeGetNumNonlinSolvIters
+    @arkode_user ARKodeGetNumNonlinSolvIters
     @raise NonlinearOperationError Nonlinear solver not configured *)
 val get_num_nonlin_solv_iters : ('d, 'k, 's) session -> int
 
 (** Returns both the numbers of nonlinear iterations performed [nniters] and
     nonlinear convergence failures [nncfails].
 
-    @arkode ARKodeGetNonlinSolvStats
+    @arkode_user ARKodeGetNonlinSolvStats
     @raise NonlinearOperationError Nonlinear solver not configured
     @return ([nniters], [nncfails])
     @since 7.1.0 *)
@@ -808,14 +808,14 @@ val get_nonlin_solv_stats : ('d, 'k, 's) session -> int * int
 
 (** Fills an array showing which functions were found to have a root.
 
-    @arkode ARKodeGetRootInfo
+    @arkode_user ARKodeGetRootInfo
     @since 7.1.0 *)
 val get_root_info : ('d, 'k, 's) session -> Roots.t -> unit
 
 (** Returns the cumulative number of calls made to the user-supplied root
     function g.
 
-    @arkode ARKodeGetNumGEvals
+    @arkode_user ARKodeGetNumGEvals
     @since 7.1.0 *)
 val get_num_g_evals : ('d, 'k, 's) session -> int
 
@@ -827,14 +827,14 @@ val get_num_g_evals : ('d, 'k, 's) session -> int
     This function is only provided for debugging, the returned matrix
     should not be modified.
 
-    @arkode ARKodeGetJac
+    @arkode_user ARKodeGetJac
     @since 7.1.0 *)
 val get_jac : ('d, 'k, 's) session -> ('d, 'k) Matrix.any option
 
 (** Returns the time at which the internal Jacobian matrix of the ODE
     implicit right-hand-side function was evaluated.
 
-    @arkode ARKodeGetJacTime
+    @arkode_user ARKodeGetJacTime
     @since 7.1.0 *)
 val get_jac_time : ('d, 'k, 's) session -> float
 
@@ -842,14 +842,14 @@ val get_jac_time : ('d, 'k, 's) session -> float
     Jacobian matrix of the ODE implicit right-hand-side function was
     evaluated.
 
-    @arkode ARKodeGetJacNumSteps
+    @arkode_user ARKodeGetJacNumSteps
     @since 7.1.0 *)
 val get_jac_num_steps : ('d, 'k, 's) session -> int
 
 (** Returns the sizes of the real and integer workspaces used by a direct
     linear solver.
 
-    @arkode ARKodeGetLinWorkSpace
+    @arkode_user ARKodeGetLinWorkSpace
     @return ([real_size], [integer_size])
     @since 7.1.0 *)
 val get_lin_work_space : ('k, 's) serial_session -> int * int
@@ -857,53 +857,53 @@ val get_lin_work_space : ('k, 's) serial_session -> int * int
 (** Returns the number of calls made by a direct linear solver to the
     Jacobian approximation function.
 
-    @arkode ARKodeGetNumJacEvals
+    @arkode_user ARKodeGetNumJacEvals
     @since 7.1.0 *)
 val get_num_jac_evals : ('k, 's) serial_session -> int
 
 (** Returns the cumulative number of calls to the preconditioner solve
     function.
 
-    @arkode ARKodeGetNumPrecSolves
+    @arkode_user ARKodeGetNumPrecSolves
     @since 7.1.0 *)
 val get_num_prec_solves : ('d, 'k, 's) session -> int
 
 (** Returns the cumulative number of calls to the setup function with
     [jok=false].
 
-    @arkode ARKodeGetNumPrecEvals
+    @arkode_user ARKodeGetNumPrecEvals
     @since 7.1.0 *)
 val get_num_prec_evals : ('d, 'k, 's) session -> int
 
 (** Returns the cumulative number of linear iterations.
 
-    @arkode ARKodeGetNumLinIters
+    @arkode_user ARKodeGetNumLinIters
     @since 7.1.0 *)
 val get_num_lin_iters : ('d, 'k, 's) session -> int
 
 (** Returns the cumulative number of linear convergence failures.
 
-    @arkode ARKodeGetNumLinConvFails
+    @arkode_user ARKodeGetNumLinConvFails
     @since 7.1.0 *)
 val get_num_lin_conv_fails : ('d, 'k, 's) session -> int
 
 (** Returns the cumulative number of calls to the Jacobian-vector
     setup function.
 
-    @arkode ARKodeGetNumJTSetupEvals
+    @arkode_user ARKodeGetNumJTSetupEvals
     @since 7.1.0 *)
 val get_num_jtsetup_evals : ('d, 'k, 's) session -> int
 
 (** Returns the cumulative number of calls to the Jacobian-vector
     function.
 
-    @arkode ARKodeGetNumJtimesEvals *)
+    @arkode_user ARKodeGetNumJtimesEvals *)
 val get_num_jtimes_evals : ('d, 'k, 's) session -> int
 
 (** Returns the number of calls to the right-hand side callback due to
     the finite difference Jacobian approximation.
 
-    @arkode ARKodeGetNumLinRhsEvals
+    @arkode_user ARKodeGetNumLinRhsEvals
     @since 7.1.0 *)
 val get_num_lin_rhs_evals : ('a, 'k, 's) session -> int
 
@@ -918,7 +918,7 @@ val get_num_lin_rhs_evals : ('a, 'k, 's) session -> int
     If it is less than zero, then the square root of the dot product of a
     state vector full of ones with itself is used.
 
-    @arkode ARKodeSetLSNormFactor
+    @arkode_user ARKodeSetLSNormFactor
     @since 7.1.0 *)
 val set_ls_norm_factor : ('d, 'k, 's) session -> float -> unit
 
@@ -927,7 +927,7 @@ val set_ls_norm_factor : ('d, 'k, 's) session -> float -> unit
     Linear solution scaling is enabled by default when a matrix-based
     linear solver is attached.
 
-    @arkode_ark ARKodeSetLinearSolutionScaling
+    @arkode_user ARKodeSetLinearSolutionScaling
     @since 7.1.0 *)
 val set_linear_solution_scaling : ('d, 'k, 's) session -> bool -> unit
 
@@ -935,32 +935,32 @@ val set_linear_solution_scaling : ('d, 'k, 's) session -> bool -> unit
     constant is reduced from the Newton iteration test constant.
     This factor must be >= 0; passing 0 specifies the default (0.05).
 
-    @arkode_ark ARKStepSetEpsLin
+    @arkode_user ARKodeSetEpsLin
     @since 7.1.0 *)
 val set_eps_lin : ('d, 'k, 's) session -> float -> unit
 
 (** Clears the problem-dependent function that estimates a stable time step
     size for the explicit portion of the ODE system.
 
-    @arkode ARKodeSetStabilityFn *)
+    @arkode_user ARKodeSetStabilityFn *)
 val clear_stability_fn : ('d, 'k, 's) session -> unit
 
-(** {3: Linear solver optional output functions} *)
+(** {3:optoutlinear Linear solver optional output functions} *)
 
 (** Returns the cumulative number of nonlinear convergence failures.
 
-    @arkode ARKodeGetNumNonlinSolvConvFails *)
+    @arkode_user ARKodeGetNumNonlinSolvConvFails *)
 val get_num_nonlin_solv_conv_fails : ('d, 'k, 's) session -> int
 
 (** Clear the function called after the predictor algorithm.
 
-    @arkode ARKodeSetStagePredictFn
+    @arkode_user ARKodeSetStagePredictFn
     @since 5.0.0 *)
 val clear_stage_predict_fn : ('d, 'k, 's) session -> unit
 
 (** Returns the number of local error test failures that have occurred.
 
-    @arkode ARKodeGetNumErrTestFails
+    @arkode_user ARKodeGetNumErrTestFails
     @since 7.1.0 *)
 val get_num_err_test_fails : ('d, 'k, 's) session -> int
 
@@ -969,32 +969,32 @@ val get_num_err_test_fails : ('d, 'k, 's) session -> int
     - [t], the value of the independent variable, and
     - [y], the value of the dependent variable vector {% $y(t)$%}.
 
-    @arkode_user ARKPostprocessFn *)
+    @arkode_ufun ARKPostprocessFn *)
 type 'd postprocess_fn = float -> 'd -> unit
 
 (** Set a post processing step function.
 
-    @arkode ARKodeSetPostprocessStepFn
+    @arkode_user ARKodeSetPostprocessStepFn
     @raise Config.NotImplementedBySundialsVersion Post processing not available
     @since 7.1.0 *)
 val set_postprocess_step_fn : ('d, 'k, 's) session -> 'd postprocess_fn -> unit
 
 (** Clear the post processing step function.
 
-    @arkode ARKodeSetPostprocessStepFn
+    @arkode_user ARKodeSetPostprocessStepFn
     @raise Config.NotImplementedBySundialsVersion Post processing not available
     @since 7.1.0 *)
 val clear_postprocess_step_fn : ('d, 'k, 's) session -> unit
 
 (** Set a post processing stage function.
 
-    @arkode ARKodeSetPostprocessStageFn
+    @arkode_user ARKodeSetPostprocessStageFn
     @since 7.1.0 *)
 val set_postprocess_stage_fn : ('d, 'k, 's) session -> 'd postprocess_fn -> unit
 
 (** Clear the post processing stage function.
 
-    @arkode ARKodeSetPostprocessStageFn
+    @arkode_user ARKodeSetPostprocessStageFn
     @since 7.1.0 *)
 val clear_postprocess_stage_fn : ('d, 'k, 's) session -> unit
 
@@ -1014,7 +1014,7 @@ module Relax : sig (* {{{ *)
       {warning [y] and [r] should not be accessed after the function
                has returns.}
 
-      @arkode_user ARKRelaxFn *)
+      @arkode_ufun ARKRelaxFn *)
   type 'd fn = 'd -> float
 
   (** Relaxation Jacobian function that computes {% $\Xi'(y)$ %}.
@@ -1025,14 +1025,14 @@ module Relax : sig (* {{{ *)
       {warning [y] and [r] should not be accessed after the function
                has returns.}
 
-      @arkode_user ARKRelaxJacFn *)
+      @arkode_ufun ARKRelaxJacFn *)
   type 'd jac_fn = 'd -> 'd -> unit
 
   (** Sets the step size reduction factor applied after a failed relaxation
       application. If the argument is outside of the range [0, 1], the
       default of 0.25 is used.
 
-      @arkode ARKodeSetRelaxEtaFail
+      @arkode_relax ARKodeSetRelaxEtaFail
       @raise NoRelaxation Relaxation is not enabled.
       @since 6.6.0 *)
   val set_eta_fail : ('d, 'k, 's) session -> float -> unit
@@ -1043,7 +1043,7 @@ module Relax : sig (* {{{ *)
       (set by {!set_eta_fail}).
       If the arguemnt is outside the range [0, 1], the default of 0.8 is used.
 
-      @arkode ARKodeSetRelaxLowerBound
+      @arkode_relax ARKodeSetRelaxLowerBound
       @raise NoRelaxation Relaxation is not enabled.
       @since 6.6.0 *)
   val set_lower_bound : ('d, 'k, 's) session -> float -> unit
@@ -1054,7 +1054,7 @@ module Relax : sig (* {{{ *)
       (set by {!set_eta_fail}).
       If the argument is <= 1, the default of 1.2 is used.
 
-      @arkode ARKodeSetRelaxUpperBound
+      @arkode_relax ARKodeSetRelaxUpperBound
       @raise NoRelaxation Relaxation is not enabled.
       @since 6.6.0 *)
   val set_upper_bound : ('d, 'k, 's) session -> float -> unit
@@ -1063,7 +1063,7 @@ module Relax : sig (* {{{ *)
       step attempt before integration fails.
       If the argument is <= 0, the default of 10 is used.
 
-      @arkode ARKodeSetRelaxMaxFails
+      @arkode_relax ARKodeSetRelaxMaxFails
       @raise NoRelaxation Relaxation is not enabled.
       @since 6.6.0 *)
   val set_max_fails : ('d, 'k, 's) session -> int -> unit
@@ -1075,7 +1075,7 @@ module Relax : sig (* {{{ *)
       with a smaller step size (determined by {!set_eta_fail}).
       If the argument is <= 0, the default of 10 is used.
 
-      @arkode ARKodeSetRelaxMaxIters
+      @arkode_relax ARKodeSetRelaxMaxIters
       @raise NoRelaxation Relaxation is not enabled.
       @since 6.6.0 *)
   val set_max_iters : ('d, 'k, 's) session -> int ->unit
@@ -1090,7 +1090,7 @@ module Relax : sig (* {{{ *)
   (** Sets the nonlinear solver method for computing the relaxation
       parameter. The default is {{!relax_solver}Newton}.
 
-      @arkode ARKodeSetRelaxSolver
+      @arkode_relax ARKodeSetRelaxSolver
       @raise NoRelaxation Relaxation is not enabled.
       @since 6.6.0 *)
   val set_solver : ('d, 'k, 's) session -> relax_solver -> unit
@@ -1102,7 +1102,7 @@ module Relax : sig (* {{{ *)
       If the argument is <= 0, the default of {% $4\epsilon$ %}, where
       {% $\epsilon$ %} is the floating-point precision, will be used.
 
-      @arkode ARKodeSetRelaxResTol
+      @arkode_relax ARKodeSetRelaxResTol
       @raise NoRelaxation Relaxation is not enabled.
       @since 6.6.0 *)
   val set_res_tol : ('d, 'k, 's) session -> float -> unit
@@ -1116,7 +1116,7 @@ module Relax : sig (* {{{ *)
       $10^{-14}$ %}, where {% $\epsilon$ %} is the floating-point precision,
       will be used.
 
-      @arkode ARKodeSetRelaxTol
+      @arkode_relax ARKodeSetRelaxTol
       @raise NoRelaxation Relaxation is not enabled.
       @since 6.6.0 *)
   val set_tol : ('d, 'k, 's) session -> rel:float -> abs:float -> unit
@@ -1124,7 +1124,7 @@ module Relax : sig (* {{{ *)
   (** Returns the number of times the provided relaxation function was
       evaluated.
 
-      @arkode ARKodeGetNumRelaxFnEvals
+      @arkode_relax ARKodeGetNumRelaxFnEvals
       @raise NoRelaxation Relaxation is not enabled.
       @since 6.6.0 *)
   val get_num_fn_evals : ('d, 'k, 's) session -> int
@@ -1132,7 +1132,7 @@ module Relax : sig (* {{{ *)
   (** Returns the number of times the provided relaxation Jacobian was
       evaluated.
 
-      @arkode ARKodeGetNumRelaxJacEvals
+      @arkode_relax ARKodeGetNumRelaxJacEvals
       @raise NoRelaxation Relaxation is not enabled.
       @since 6.6.0 *)
   val get_num_jac_evals : ('d, 'k, 's) session -> int
@@ -1142,7 +1142,7 @@ module Relax : sig (* {{{ *)
       failures (see {!get_num_solve_fails}) and the number of failures due
       an unacceptable relaxation value.
 
-      @arkode ARKodeGetNumRelaxFails
+      @arkode_relax ARKodeGetNumRelaxFails
       @raise NoRelaxation Relaxation is not enabled.
       @since 6.6.0 *)
   val get_num_fails : ('d, 'k, 's) session -> int
@@ -1150,7 +1150,7 @@ module Relax : sig (* {{{ *)
   (** Returns the number of times the relaxation parameter was deemed
       unacceptable.
 
-      @arkode ARKodeGetNumRelaxBoundFails
+      @arkode_relax ARKodeGetNumRelaxBoundFails
       @raise NoRelaxation Relaxation is not enabled.
       @since 6.6.0 *)
   val get_num_bound_fails : ('d, 'k, 's) session -> int
@@ -1158,7 +1158,7 @@ module Relax : sig (* {{{ *)
   (** Returns the number of times the relaxation parameter nonlinear solver
       failed.
 
-      @arkode ARKodeGetNumRelaxSolveFails
+      @arkode_relax ARKodeGetNumRelaxSolveFails
       @raise NoRelaxation Relaxation is not enabled.
       @since 6.6.0 *)
   val get_num_solve_fails : ('d, 'k, 's) session -> int
@@ -1166,7 +1166,7 @@ module Relax : sig (* {{{ *)
   (** Returns the number of relaxation parameter nonlinear solver
       iterations.
 
-      @arkode ARKodeGetNumRelaxSolveIters
+      @arkode_relax ARKodeGetNumRelaxSolveIters
       @raise NoRelaxation Relaxation is not enabled.
       @since 6.6.0 *)
   val get_num_solve_iters : ('d, 'k, 's) session -> int
@@ -1194,7 +1194,7 @@ module Dls : sig (* {{{ *)
       {warning Neither the elements of [arg] nor the matrix [jm] should
                be accessed after the function has returned.}
 
-      @arkode_user ARKLsJacFn *)
+      @arkode_ufun ARKLsJacFn *)
   type 'm jac_fn = (RealArray.t triple, RealArray.t) jacobian_arg
                    -> 'm -> unit
 
@@ -1220,7 +1220,7 @@ module Dls : sig (* {{{ *)
                [a] and [m] should be accessed after the function has
                returned.}
 
-      @arkode_user ARKLsLinSysFn
+      @arkode_ufun ARKLsLinSysFn
       @since 5.0.0 *)
   type 'm linsys_fn =
     (RealArray.t triple, RealArray.t) jacobian_arg
@@ -1239,7 +1239,7 @@ module Spils : sig (* {{{ *)
 
   (** Arguments passed to the preconditioner solver function.
 
-      @arkode_user ARKLsPrecSolveFn *)
+      @arkode_ufun ARKLsPrecSolveFn *)
   type 'd prec_solve_arg =
     {
       rhs   : 'd;         (** Right-hand side vector of the linear system. *)
@@ -1265,7 +1265,7 @@ module Spils : sig (* {{{ *)
       {warning The elements of [jac], [arg], and [z] should not
                be accessed after the function has returned.}
 
-      @arkode_user ARKLsPrecSolveFn *)
+      @arkode_ufun ARKLsPrecSolveFn *)
   type 'd prec_solve_fn =
     (unit, 'd) jacobian_arg
     -> 'd prec_solve_arg
@@ -1287,7 +1287,7 @@ module Spils : sig (* {{{ *)
       {warning The elements of [jac] should not be accessed after the
                function has returned.}
 
-      @arkode_user ARKLsPrecSetupFn *)
+      @arkode_ufun ARKLsPrecSetupFn *)
   type 'd prec_setup_fn =
     (unit, 'd) jacobian_arg
     -> bool
@@ -1302,8 +1302,8 @@ module Spils : sig (* {{{ *)
       The {!prec_solve_fn} is usually mandatory. The {!prec_setup_fn} can be
       omitted if not needed.
 
-      @arkode_user ARKLsPrecSetupFn
-      @arkode_user ARKLsPrecSolveFn *)
+      @arkode_ufun ARKLsPrecSetupFn
+      @arkode_ufun ARKLsPrecSolveFn *)
   type ('d, 'k, 's) preconditioner
     = ('d, 'k, 's) Arkode_impl.SpilsTypes.preconditioner
 
@@ -1378,7 +1378,7 @@ module Spils : sig (* {{{ *)
       {warning The elements of [arg] should not be accessed after the
                function has returned.}
 
-      @arkode_user ARKLsJacTimesSetupFn *)
+      @arkode_ufun ARKLsJacTimesSetupFn *)
   type 'd jac_times_setup_fn = (unit, 'd) jacobian_arg -> unit
 
   (** Callback functions that compute the Jacobian times a vector. In the
@@ -1393,7 +1393,7 @@ module Spils : sig (* {{{ *)
       {warning Neither the elements of [arg] nor [v] or [jv] should be
                accessed after the function has returned.}
 
-      @arkode_user ARKLsJacTimesVecFn *)
+      @arkode_ufun ARKLsJacTimesVecFn *)
   type 'd jac_times_vec_fn =
     ('d, 'd) jacobian_arg
     -> 'd (* v *)
@@ -1840,7 +1840,7 @@ module ARKStep : sig (* {{{ *)
           {warning Neither the elements of [work] nor the matrix [m]
                    should be accessed after the function has returned.}
 
-          @arkode_user ARKLsMassFn *)
+          @arkode_ufun ARKLsMassFn *)
       type 'm mass_fn = float -> RealArray.t triple -> 'm -> unit
 
       (** Create an Arkode-specific mass linear solver from a mass-matrix
@@ -1853,7 +1853,7 @@ module ARKStep : sig (* {{{ *)
           {{!Sundials_Config.sundials_version}Config.sundials_version} < 3.0.0.
 
           @arkode_ark ARKStepSetMassLinearSolver
-          @arkode_user ARKStepSetMassFn *)
+          @arkode_ufun ARKStepSetMassFn *)
       val solver :
         'm mass_fn
         -> bool
@@ -1906,7 +1906,7 @@ module ARKStep : sig (* {{{ *)
 
       (** Arguments passed to the mass matrix preconditioner solver function.
 
-          @arkode_user ARKLsMassPrecSolveFn *)
+          @arkode_ufun ARKLsMassPrecSolveFn *)
       type 'd prec_solve_arg =
         {
           rhs   : 'd;      (** Right-hand side vector of the linear system. *)
@@ -1930,7 +1930,7 @@ module ARKStep : sig (* {{{ *)
           {warning The elements of [arg] and [z] should not
                    be accessed after the function has returned.}
 
-          @arkode_user ARKLsMassPrecSolveFn *)
+          @arkode_ufun ARKLsMassPrecSolveFn *)
       type 'd prec_solve_fn =
            float
         -> 'd prec_solve_arg
@@ -1944,7 +1944,7 @@ module ARKStep : sig (* {{{ *)
           Raising {!Sundials.RecoverableFailure} indicates a recoverable
           error. Any other exception is treated as an unrecoverable error.
 
-          @arkode_user ARKLsMassPrecSetupFn *)
+          @arkode_ufun ARKLsMassPrecSetupFn *)
       type 'd prec_setup_fn =
            float
         -> unit
@@ -1954,8 +1954,8 @@ module ARKStep : sig (* {{{ *)
           The following functions construct preconditioners.
 
           @arkode_ark ARKStepSetMassPreconditioner
-          @arkode_user ARKLsMassPrecSetupFn
-          @arkode_user ARKLsMassPrecSolveFn *)
+          @arkode_ufun ARKLsMassPrecSetupFn
+          @arkode_ufun ARKLsMassPrecSolveFn *)
       type ('d, 'k) preconditioner
 
       (** No preconditioning.  *)
@@ -1989,7 +1989,7 @@ module ARKStep : sig (* {{{ *)
           Raising {!Sundials.RecoverableFailure} indicates a recoverable
           error. Any other exception is treated as an unrecoverable error.
 
-          @arkode_user ARKLsMassTimesSetupFn *)
+          @arkode_ufun ARKLsMassTimesSetupFn *)
       type mass_times_setup_fn = float -> unit
 
       (** Callback functions that compute the mass matrix times a vector. In
@@ -2005,7 +2005,7 @@ module ARKStep : sig (* {{{ *)
           {warning Neither the elements of [v] nor [mv] should be
                    accessed after the function has returned.}
 
-          @arkode_user ARKLsMassTimesVecFn *)
+          @arkode_ufun ARKLsMassTimesVecFn *)
       type 'd mass_times_vec_fn =
            float (* t *)
         -> 'd    (* v *)
@@ -2111,8 +2111,8 @@ module ARKStep : sig (* {{{ *)
       (** Change the preconditioner functions.
 
           @arkode_ark ARKStepSetMassPreconditioner
-          @arkode_user ARKLsMassPrecSolveFn
-          @arkode_user ARKLsMassPrecSetupFn *)
+          @arkode_ufun ARKLsMassPrecSolveFn
+          @arkode_ufun ARKLsMassPrecSetupFn *)
       val set_preconditioner :
         ('d, 'k) session
         -> ?setup:'d prec_setup_fn
@@ -2122,7 +2122,7 @@ module ARKStep : sig (* {{{ *)
       (** Change the mass matrix-times-vector function.
 
           @arkode_ark ARKStepSetMassTimes
-          @arkode_user ARKLsMassTimesVecFn *)
+          @arkode_ufun ARKLsMassTimesVecFn *)
       val set_times :
         ('d, 'k) session
         -> ?mass_times_setup:mass_times_setup_fn
@@ -3247,8 +3247,8 @@ module MRIStep : sig (* {{{ *)
     (** Change the preconditioner functions.
 
         @arkode_mri MRIStepSetPreconditioner
-        @arkode_user ARKLsPrecSolveFn
-        @arkode_user ARKLsPrecSetupFn
+        @arkode_ufun ARKLsPrecSolveFn
+        @arkode_ufun ARKLsPrecSetupFn
         @since 5.4.0 *)
     val set_preconditioner :
       ('d, 'k) session
@@ -3259,7 +3259,7 @@ module MRIStep : sig (* {{{ *)
     (** Change the Jacobian-times-vector function.
 
         @arkode_mri MRIStepSetJacTimes
-        @arkode_user ARKLsJacTimesVecFn
+        @arkode_ufun ARKLsJacTimesVecFn
         @since 5.4.0 *)
     val set_jac_times :
       ('d, 'k) session

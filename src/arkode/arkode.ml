@@ -1753,18 +1753,6 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
         Arkode_impl.mass_check_direct s;
         c_get_num_mass_solves s
 
-      external set_mass_ls_norm_factor
-        : ('d, 'k) session -> float -> unit
-        = "sunml_arkode_set_mass_ls_norm_factor"
-
-      external c_get_num_iters
-        : ('a, 'k) session -> int
-          = "sunml_arkode_get_num_mass_iters"
-
-      let get_num_iters s =
-        Arkode_impl.mass_check_spils s;
-        c_get_num_iters s
-
       (* Sundials < 3.0.0 *)
       let klu_reinit session n onnz =
         match session.mass_callbacks with
@@ -1995,8 +1983,12 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
         Arkode_impl.mass_check_spils s;
         get_num_conv_fails s
 
-      external get_num_iters : ('a, 'k) session -> int
+      external c_get_num_iters : ('a, 'k) session -> int
           = "sunml_arkode_get_num_mass_iters"
+
+      let get_num_iters s =
+        Arkode_impl.mass_check_spils s;
+        c_get_num_iters s
 
       let old_set_gs_type s t =
         mass_check_spils s;
