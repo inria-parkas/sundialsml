@@ -89,7 +89,7 @@ let f rdata _ (y : RealArray.t) (ydot : RealArray.t) =
   ydot.{2} <- (b-.w)/.ep -. w*.u
 
 (* Jacobian routine to compute J(t,y) = df/dy. *)
-let jac rdata { ARKStep.jac_y = y } j =
+let jac rdata { Arkode.jac_y = y } j =
   let ep = rdata.(2) in   (* access data entries *)
   let u = y.{0} in        (* access solution values *)
   let v = y.{1} in
@@ -228,7 +228,7 @@ let main () =
   let nni      = get_num_nonlin_solv_iters arkode_mem in
   let nnf      = get_num_nonlin_solv_conv_fails arkode_mem in
   let nje      = get_num_jac_evals arkode_mem in
-  let nfeLS    = ARKStep.Dls.get_num_lin_rhs_evals arkode_mem in
+  let nfeLS    = Arkode.get_num_lin_rhs_evals arkode_mem in
 
   printf "\nFinal Solver Statistics:\n";
   printf "   Internal solver steps = %d (attempted = %d)\n" nst nst_a;

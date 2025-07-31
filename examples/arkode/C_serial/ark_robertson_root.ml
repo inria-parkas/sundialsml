@@ -70,7 +70,7 @@ let g _ (y : RealArray.t) (gout : RealArray.t) =
   gout.{1} <- w -. 0.01     (* check for w == 1e-2 *)
 
 (* Jacobian routine to compute J(t,y) = df/dy. *)
-let jac { ARKStep.jac_y = (y : RealArray.t) } j =
+let jac { jac_y = (y : RealArray.t) } j =
   let v = y.{1} in   (* access current solution *)
   let w = y.{2} in
 
@@ -158,7 +158,7 @@ let main () =
        printf "  %12.5e  %12.5e  %12.5e  %12.5e\n" t y.{0} y.{1} y.{2};
        fprintf ufid " %.16e %.16e %.16e %.16e\n" t y.{0} y.{1} y.{2};
 
-       if flag = ARKStep.RootsFound then begin
+       if flag =Arkode.RootsFound then begin
          get_root_info arkode_mem rootsfound;
          printf "      rootsfound[] = %3d %3d\n" (root 0) (root 1)
        end;
@@ -178,7 +178,7 @@ let main () =
   let nni      = get_num_nonlin_solv_iters arkode_mem in
   let nnf      = get_num_nonlin_solv_conv_fails arkode_mem in
   let nje      = get_num_jac_evals arkode_mem in
-  let nfeLS    = Arkode.ARKStep.Dls.get_num_lin_rhs_evals arkode_mem in
+  let nfeLS    = Arkode.get_num_lin_rhs_evals arkode_mem in
   let nge      = get_num_g_evals arkode_mem in
 
   printf "\nFinal Solver Statistics:\n";

@@ -341,7 +341,7 @@ let f0 _ _ (_ : RealArray.t) (ydot : RealArray.t) =
   RealArray.fill ydot 0.0
 
 (* Jf routine to compute Jacobian of the fast portion of the ODE RHS *)
-let jf udata { MRIStep.jac_y = y; _ } j =
+let jf udata { jac_y = y; _ } j =
   Matrix.Band.set_to_zero j; (* Initialize Jacobian to zero *)
   (* Add in the Jacobian of the reaction terms matrix *)
   reaction_jac udata 1.0 y j
@@ -361,7 +361,7 @@ let js udata _ j =
   advection_jac udata 1.0 j
 
 (* Jac routine to compute the Jacobian of the full ODE RHS. *)
-let jac udata { ARKStep.jac_y = y; _ } j =
+let jac udata { jac_y = y; _ } j =
   Matrix.Band.set_to_zero j; (* Initialize Jacobian to zero *)
   (* Fill in the Laplace matrix *)
   laplace_matrix udata 1.0 j;

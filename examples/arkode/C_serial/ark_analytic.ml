@@ -83,9 +83,9 @@ let main () =
     init
       (implicit
         ~lsolver:Dls.(solver ~jac:(jac lamda) (dense y m))
-        ~linearity:(Linear false)
+        ~linearity:(Arkode.Linear false)
         (f lamda))
-      (SStolerances (reltol, abstol))
+      (Arkode.SStolerances (reltol, abstol))
       t0
       y
   ) in
@@ -127,7 +127,7 @@ let main () =
   let nni      = Arkode.get_num_nonlin_solv_iters arkode_mem in
   let ncfn     = Arkode.get_num_nonlin_solv_conv_fails arkode_mem in
   let nje      = Arkode.get_num_jac_evals arkode_mem in
-  let nfeLS    = Dls.get_num_lin_rhs_evals arkode_mem in
+  let nfeLS    = Arkode.get_num_lin_rhs_evals arkode_mem in
 
   printf "\nFinal Solver Statistics:\n";
   printf "   Internal solver steps = %d (attempted = %d)\n" nst nst_a;

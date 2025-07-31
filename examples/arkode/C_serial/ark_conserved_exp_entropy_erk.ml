@@ -139,7 +139,7 @@ let main () =
   let arkode_mem = ERKStep.(init ~context (SStolerances (reltol, abstol)) f t0 y) in
 
   (* Enable relaxation methods *)
-  if relax then ERKStep.Relax.enable arkode_mem ent jac_ent;
+  if relax then ERKStep.enable_relaxation arkode_mem ent jac_ent;
 
   if fixed_h > 0.0 then set_fixed_step arkode_mem (Some fixed_h);
 
@@ -208,12 +208,12 @@ let main () =
   printf "   Total RHS evals = %d\n" nfe;
 
   if relax then begin
-    let nre    = get_num_fn_evals arkode_mem
+    let nre    = Relax.get_num_fn_evals arkode_mem
     and nrje   = get_num_jac_evals arkode_mem
-    and nrf    = get_num_relax_fails arkode_mem
-    and nrbf   = get_num_relax_bound_fails arkode_mem
-    and nrnlsf = get_num_relax_solve_fails arkode_mem
-    and nrnlsi = get_num_relax_solve_iters arkode_mem
+    and nrf    = Relax.get_num_fails arkode_mem
+    and nrbf   = Relax.get_num_bound_fails arkode_mem
+    and nrnlsf = Relax.get_num_solve_fails arkode_mem
+    and nrnlsi = Relax.get_num_solve_iters arkode_mem
     in
     printf "   Total Relaxation Fn evals    = %d\n" nre;
     printf "   Total Relaxation Jac evals   = %d\n" nrje;

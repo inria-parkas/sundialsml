@@ -166,8 +166,8 @@ let fn (rpar : RealArray.t) t (y : RealArray.t) (ydot : RealArray.t) =
 
 let f0 _ _ _ (ydot : RealArray.t) = RealArray.fill ydot 0.0
 
-let js (rpar : RealArray.t) { MRIStep.jac_t = t;
-                              MRIStep.jac_y = (y : RealArray.t); _ }
+let js (rpar : RealArray.t) {jac_t = t;
+                             jac_y = (y : RealArray.t); _ }
                             jmat =
   let g = rpar.{0} in
   let e = rpar.{2} in
@@ -181,9 +181,9 @@ let js (rpar : RealArray.t) { MRIStep.jac_t = t;
   DM.set jmat 1 0 0.0;
   DM.set jmat 1 1 0.0
 
-let jsi (rpar : RealArray.t) { MRIStep.jac_t = t;
-                               MRIStep.jac_y = (y : RealArray.t); _ }
-                             jmat =
+let jsi (rpar : RealArray.t) {jac_t = t;
+                              jac_y = (y : RealArray.t); _ }
+                              jmat =
   let g = rpar.{0} in
   let e = rpar.{2} in
   let u = y.{0} in
@@ -196,9 +196,9 @@ let jsi (rpar : RealArray.t) { MRIStep.jac_t = t;
   DM.set jmat 1 0 0.0;
   DM.set jmat 1 1 0.0
 
-let jn (rpar : RealArray.t) { MRIStep.jac_t = t;
-                              MRIStep.jac_y = (y : RealArray.t); _ }
-                            jmat =
+let jn (rpar : RealArray.t) { jac_t = t;
+                              jac_y = (y : RealArray.t); _ }
+                              jmat =
   let g = rpar.{0} in
   let e = rpar.{2} in
   let u = y.{0} in

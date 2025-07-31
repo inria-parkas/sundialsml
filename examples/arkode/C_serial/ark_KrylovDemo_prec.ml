@@ -277,9 +277,9 @@ let v_sum_prods ((u : RealArray.t), u_off) p ((q : RealArray.t), q_off) v
  there are ngrp=ngx*ngy blocks computed in the block-grouping scheme.
 *)
 let precond wdata jacarg _ gamma =
-  let { ARKStep.jac_t   = t;
-        ARKStep.jac_y   = (cdata : RealArray.t);
-        ARKStep.jac_fy  = fc } = jacarg
+  let { Arkode.jac_t   = t;
+        jac_y   = (cdata : RealArray.t);
+        jac_fy  = fc } = jacarg
   in
   let f1 = wdata.tmp in
   let arkode_mem =
@@ -846,7 +846,7 @@ let print_final_stats s =
   and npe   = Arkode.get_num_prec_evals s
   and nps   = Arkode.get_num_prec_solves s
   and ncfl  = Arkode.get_num_lin_conv_fails s
-  and nfeLS = Spils.get_num_lin_rhs_evals s
+  and nfeLS = Arkode.get_num_lin_rhs_evals s
   in
   printf "\n\n Final statistics for this run:\n\n";
   (match Config.sundials_version with
@@ -897,7 +897,7 @@ let main () =
         ~lsolver:Spils.(solver lsolver
                           (prec_left ~setup:(precond wdata) (psolve wdata)))
         (f wdata))
-      (SStolerances (reltol, abstol))
+      (Arkode.SStolerances (reltol, abstol))
       t0
       c
   ) in

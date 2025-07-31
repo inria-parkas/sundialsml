@@ -43,7 +43,7 @@ let f _t (ydata : RealArray.t) (fdata : RealArray.t) =
   fdata.{0} <- -. exp(ydata.{0})
 
 (* ODE RHS Jacobian function J(t,y) = df/dy. *)
-let jac ARKStep.{ jac_y = (ydata : RealArray.t); _ } jdata =
+let jac Arkode.{ jac_y = (ydata : RealArray.t); _ } jdata =
   DM.set jdata 0 0 (-. exp(ydata.{0}))
 
 (* Entropy function e(y) *)
@@ -137,7 +137,7 @@ let main () =
   end;
 
   (* Enable relaxation methods *)
-  if relax then ARKStep.Relax.enable arkode_mem ent jac_ent;
+  if relax then ARKStep.enable_relaxation arkode_mem ent jac_ent;
 
   if fixed_h > 0.0 then set_fixed_step arkode_mem (Some fixed_h);
 
@@ -210,7 +210,7 @@ let main () =
     and ncfn    = get_num_nonlin_solv_conv_fails arkode_mem
     and nsetups = get_num_lin_solv_setups arkode_mem
     and nje     = get_num_jac_evals arkode_mem
-    and nfeLS   = ARKStep.Dls.get_num_lin_rhs_evals arkode_mem
+    and nfeLS   = get_num_lin_rhs_evals arkode_mem
     in
     printf "   Total number of Newton iterations = %d\n" nni;
     printf "   Total number of linear solver convergence failures = %d\n" ncfn;
@@ -220,12 +220,12 @@ let main () =
   end;
 
   if relax then begin
-    let nre    = get_num_fn_evals arkode_mem
+    let nre    = Relax.get_num_fn_evals arkode_mem
     and nrje   = get_num_jac_evals arkode_mem
-    and nrf    = get_num_relax_fails arkode_mem
-    and nrbf   = get_num_relax_bound_fails arkode_mem
-    and nrnlsf = get_num_relax_solve_fails arkode_mem
-    and nrnlsi = get_num_relax_solve_iters arkode_mem
+    and nrf    = Relax.get_num_fails arkode_mem
+    and nrbf   = Relax.get_num_bound_fails arkode_mem
+    and nrnlsf = Relax.get_num_solve_fails arkode_mem
+    and nrnlsi = Relax.get_num_solve_iters arkode_mem
     in
     printf "   Total Relaxation Fn evals    = %d\n" nre;
     printf "   Total Relaxation Jac evals   = %d\n" nrje;

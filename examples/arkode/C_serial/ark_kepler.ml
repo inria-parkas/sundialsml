@@ -319,7 +319,7 @@ let solve_problem { count_orbits; step_mode; stepper;
         (if !use_tstop then set_stop_time tout);
         let tret, retval = evolve_normal tout y in
         (match retval with
-         | Arkode.Common.RootsFound -> begin
+         | Arkode.RootsFound -> begin
              let num_orbits = num_orbits +. 0.5 in
 
              printf "ROOT RETURN:\t";
@@ -332,7 +332,7 @@ let solve_problem { count_orbits; step_mode; stepper;
 
              go iout tout num_orbits
            end
-         | Arkode.Common.Success | Arkode.Common.StopTimeReached -> begin
+         | Arkode.Success | Arkode.StopTimeReached -> begin
              (* Output current integration status *)
              printf "t = %.4f, H(p,q)-H0 = %.16e, L(p,q)-L0 = %.16e\n"
                  tret (hamiltonian ydata -. h0)

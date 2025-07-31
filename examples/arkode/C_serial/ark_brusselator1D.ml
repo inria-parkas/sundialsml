@@ -150,7 +150,7 @@ let reaction_jac ud c (y : RealArray.t) jac =
   done
 
 (* Jacobian routine to compute J(t,y) = df/dy. *)
-let jac ud { ARKStep.jac_y = (y : RealArray.t) } j =
+let jac ud { Arkode.jac_y = (y : RealArray.t) } j =
   (* Fill in the Laplace matrix *)
   laplace_matrix ud 1.0 j;
   (* Add in the Jacobian of the reaction terms matrix *)
@@ -309,7 +309,7 @@ let main () =
   let nni      = get_num_nonlin_solv_iters arkode_mem in
   let ncfn     = get_num_nonlin_solv_conv_fails arkode_mem in
   let nje      = get_num_jac_evals arkode_mem in
-  let nfeLS    = ARKStep.Dls.get_num_lin_rhs_evals arkode_mem in
+  let nfeLS    = Arkode.get_num_lin_rhs_evals arkode_mem in
 
   printf "\nFinal Solver Statistics:\n";
   printf "   Internal solver steps = %d (attempted = %d)\n" nst nst_a;

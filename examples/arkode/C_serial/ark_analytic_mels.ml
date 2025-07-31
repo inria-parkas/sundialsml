@@ -161,7 +161,7 @@ let main () =
   let nni = get_num_nonlin_solv_iters arkode_mem in
   let ncfn = get_num_nonlin_solv_conv_fails arkode_mem in
   let nje = get_num_jac_evals arkode_mem in
-  let nfeLS = ARKStep.Dls.get_num_lin_rhs_evals arkode_mem in
+  let nfeLS = get_num_lin_rhs_evals arkode_mem in
 
   printf "\nFinal Solver Statistics:\n";
   printf "   Internal solver steps = %d (attempted = %d)\n" nst nst_a;

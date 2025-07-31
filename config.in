@@ -65,7 +65,12 @@ MPI_LIBLINK=@parallel_nvec_libs@
 # https://stackoverflow.com/a/16151140/
 uniq = $(if $1,$(firstword $1) $(call uniq,$(filter-out $(firstword $1),$1)))
 
+reverse = $(if $(1),$(call reverse,$(wordlist 2,$(words $(1)),$(1))) $(firstword $(1)))
+
 LIB_PATH = $(call uniq, @sundials_lib_path@ @superlumt_lib_path@ @klu_lib_path@)
+
+# Pending resolution of https://github.com/ocaml/ocaml/pull/14173
+LIB_PATH_OCAMLMKLIB = $(call reverse, $(LIB_PATH))
 INC_PATH = @sundials_inc_path@
 CVODE_LDFLAGS = -lsundials_cvode @serial_nvec_libs@ @sparse_libs@ @matrix_libs@ @lsolver_libs@ @lsundials_core@-lm $(LDFLAGS)
 CVODE_CFLAGS = $(INC_PATH) $(CFLAGS)

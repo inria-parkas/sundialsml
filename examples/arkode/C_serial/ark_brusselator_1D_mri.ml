@@ -135,7 +135,7 @@ let fs { n; c; dx; _ } _ (ydata : RealArray.t) (dydata : RealArray.t) =
 
 (* Js routine to compute the Jacobian of the fast portion of the ODE RHS. *)
 
-let jf {n; ep; _} { MRIStep.jac_y = (ydata : RealArray.t) } jac =
+let jf {n; ep; _} { jac_y = (ydata : RealArray.t) } jac =
   (* iterate over nodes, filling in Jacobian entries *)
   for i = 0 to n -1 do
     (* set nodal value shortcuts (shifted index due to start at first interior node) *)
@@ -371,7 +371,7 @@ let main () =
   let nni     = get_num_nonlin_solv_iters inner_arkode_mem in
   let ncfn    = get_num_nonlin_solv_conv_fails inner_arkode_mem in
   let nje     = get_num_jac_evals inner_arkode_mem in
-  let nfeLS   = ARKStep.Dls.get_num_lin_rhs_evals inner_arkode_mem in
+  let nfeLS   = get_num_lin_rhs_evals inner_arkode_mem in
 
   (* Print some final statistics *)
   printf "\nFinal Solver Statistics:\n";

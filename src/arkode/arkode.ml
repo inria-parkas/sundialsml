@@ -86,11 +86,6 @@ type 'd postprocess_fn = 'd Arkode_impl.Global.postprocess_fn
       current_time        : float
     }
 
-(* must correspond to arkode_relax_solver_tag in arkode_ml.h *)
-type relax_solver =
-  | Brent
-  | Newton
-
 (* must correspond to arkode_nonlin_system_data_index in arkode_ml.h *)
   type 'd nonlin_system_data = {
     tcur  : float;
@@ -157,10 +152,6 @@ external get_num_jac_evals
   : ('d, 'k, 's) session -> int
   = "sunml_arkode_get_num_jac_evals"
 
-external get_num_relax_jac_evals
-  : ('d, 'k, 's) session -> int
-  = "sunml_arkode_get_num_relax_jac_evals"
-
 external c_set_jac_times
   : ('a, 'k, 's) session -> bool -> bool -> unit
   = "sunml_arkode_set_jac_times"
@@ -213,7 +204,7 @@ let get_num_lin_conv_fails s =
   if Sundials_impl.Version.in_compat_mode2_3 then Arkode_impl.ls_check_spils s;
   get_num_lin_conv_fails s
 
-external get_num_prec_evals
+  external get_num_prec_evals
   : ('a, 'k, 's) session -> int
   = "sunml_arkode_get_num_prec_evals"
 
@@ -228,21 +219,6 @@ external get_num_prec_solves
 let get_num_prec_solves s =
   Arkode_impl.ls_check_spils s;
   get_num_prec_solves s
-
-(* 4.0.0 <= Sundials *)
-(* 7.1.0 <= Sundials *)
-external c_set_mass_fn
-  : ('a, 'k, 's) session -> unit
-  = "sunml_arkode_set_mass_fn"
-
-external c_get_num_mass_setups
-  : ('k, 's) serial_session -> int
-  = "sunml_arkode_get_num_mass_setups"
-
-let get_num_setups s =
-  Arkode_impl.mass_check_direct s;
-  c_get_num_mass_setups s
-
 (* 4.0.0 <= Sundials *)
 (* 7.1.0 <= Sundials *)
 external c_set_mass_linear_solver
@@ -261,27 +237,6 @@ let get_num_jtsetup_evals s =
   Arkode_impl.ls_check_spils s;
   get_num_jtsetup_evals s
 
-external set_mass_ls_norm_factor
-  : ('d, 'k, 's) session -> float -> unit
-  = "sunml_arkode_set_mass_ls_norm_factor"
-
-external c_set_mass_times
-  : ('a, 'k, 's) session -> bool -> unit
-  = "sunml_arkode_set_mass_times"
-
-
-external get_num_mass_iters
-  : ('a, 'k, 's) session -> int
-    = "sunml_arkode_get_num_mass_iters"
-
-let get_num_mass_iters s =
-  Arkode_impl.mass_check_spils s;
-  get_num_mass_iters s
-
-external set_eta_fail
-  : ('d, 'k, 's) session -> float -> unit
-  = "sunml_arkode_set_relax_eta_fail"
-
 external get_num_jtimes_evals
   : ('a, 'k, 's) session -> int
   = "sunml_arkode_get_num_jtimes_evals"
@@ -290,69 +245,9 @@ let get_num_jtimes_evals s =
   Arkode_impl.ls_check_spils s;
   get_num_jtimes_evals s
 
-external set_lower_bound
-  : ('d, 'k, 's) session -> float -> unit
-  = "sunml_arkode_set_relax_lower_bound"
-
-external set_upper_bound
-  : ('d, 'k, 's) session -> float -> unit
-  = "sunml_arkode_set_relax_upper_bound"
-
-external set_max_fails
-  : ('d, 'k, 's) session -> int -> unit
-  = "sunml_arkode_set_relax_max_fails"
-
-external set_max_iters
-  : ('d, 'k, 's) session -> int ->unit
-  = "sunml_arkode_set_relax_max_iters"
-
-external set_solver
-  : ('d, 'k, 's) session -> relax_solver -> unit
-  = "sunml_arkode_set_relax_solver"
-
-external set_res_tol
-  : ('d, 'k, 's) session -> float -> unit
-  = "sunml_arkode_set_relax_res_tol"
-
-external set_tol
-  : ('d, 'k, 's) session -> rel:float -> abs:float -> unit
-  = "sunml_arkode_set_relax_tol"
-
-external get_num_fn_evals
-  : ('d, 'k, 's) session -> int
-  = "sunml_arkode_get_num_relax_fn_evals"
-
-external get_num_relax_fails
-  : ('d, 'k, 's) session -> int
-  = "sunml_arkode_get_num_relax_fails"
-
-external get_num_relax_bound_fails
-  : ('d, 'k, 's) session -> int
-  = "sunml_arkode_get_num_relax_bound_fails"
-
-external get_num_relax_solve_fails
-  : ('d, 'k, 's) session -> int
-  = "sunml_arkode_get_num_relax_solve_fails"
-
-external get_num_relax_solve_iters
-  : ('d, 'k, 's) session -> int
-  = "sunml_arkode_get_num_relax_solve_iters"
-
 external c_set_mass_preconditioner
   : ('a, 'k, 's) session -> bool -> unit
   = "sunml_arkode_set_mass_preconditioner"
-
-external get_num_mass_mult_setups
-  : ('k, 's) serial_session -> int
-  = "sunml_arkode_get_num_mass_mult_setups"
-
-external c_get_num_mass_solves
-  : ('k, 's) serial_session -> int
-  = "sunml_arkode_get_num_mass_solves"
-
-let get_num_mass_solves s =
-  Arkode_impl.mass_check_direct s;
-  c_get_num_mass_solves s
 
 (* 4.0.0 <= Sundials *)
 external c_set_nonlinear_solver
@@ -360,22 +255,6 @@ external c_set_nonlinear_solver
     -> ('d, 'k, ('d, 'k, 's) session, [`Nvec]) Sundials_NonlinearSolver_impl.cptr
     -> unit
   = "sunml_arkode_set_nonlinear_solver"
-
-external get_num_mass_conv_fails
-  : ('a, 'k, 's) session -> int
-  = "sunml_arkode_get_num_mass_conv_fails"
-
-let get_num_mass_conv_fails s =
-  Arkode_impl.mass_check_spils s;
-  get_num_mass_conv_fails s
-
-external get_num_mtsetups
-  : ('a, 'k, 's) session -> int
-    = "sunml_arkode_get_num_mtsetups"
-
-  let get_num_mtsetups s =
-    Arkode_impl.mass_check_spils s;
-    get_num_mtsetups s
 
 external ress_tolerance
   : ('a, 'k, 's) session -> float -> unit
@@ -783,47 +662,116 @@ external c_set_relax_fn : ('d, 'k, 's) session -> bool -> unit
   = "sunml_arkode_set_relax_fn"
 
 
-module Common = struct (* {{{ *)
+module Relax = struct (* {{{ *)
 
-  include Arkode_impl.Global
+  type 'd fn = 'd -> float
+  type 'd jac_fn = 'd -> 'd -> unit
 
-  let no_roots = (0, Arkode_impl.dummy_rootsfn)
+  type relax_solver =
+    | Brent
+    | Newton
 
-  let print_step_stats oc stats =
-    Printf.fprintf oc "num_steps = %d\n"           stats.num_steps;
-    Printf.fprintf oc "actual_init_step = %e\n"    stats.actual_init_step;
-    Printf.fprintf oc "last_step = %e\n"           stats.last_step;
-    Printf.fprintf oc "current_step = %e\n"        stats.current_step;
-    Printf.fprintf oc "current_time = %e\n"        stats.current_time
+  external set_eta_fail
+    : ('d, 'k, 's) session -> float -> unit
+    = "sunml_arkode_set_relax_eta_fail"
 
-  (* Synchronized with arkode_solver_result_tag in arkode_ml.h *)
-  type solver_result =
-    | Success             (** ARK_SUCCESS *)
-    | RootsFound          (** ARK_ROOT_RETURN *)
-    | StopTimeReached     (** ARK_TSTOP_RETURN *)
+  external set_lower_bound
+    : ('d, 'k, 's) session -> float -> unit
+    = "sunml_arkode_set_relax_lower_bound"
 
-  type linearity =
-    | Linear of bool
-    | Nonlinear
+  external set_upper_bound
+    : ('d, 'k, 's) session -> float -> unit
+    = "sunml_arkode_set_relax_upper_bound"
 
-  type ('a, 'k) tolerance =
-    | SStolerances of float * float
-    | SVtolerances of float * ('a, 'k) Nvector.t
-    | WFtolerances of 'a error_weight_fun
+  external set_max_fails
+    : ('d, 'k, 's) session -> int -> unit
+    = "sunml_arkode_set_relax_max_fails"
 
-  let default_tolerances = SStolerances (1.0e-4, 1.0e-9)
+  external set_max_iters
+    : ('d, 'k, 's) session -> int ->unit
+    = "sunml_arkode_set_relax_max_iters"
 
-  type 'd triple = 'd * 'd * 'd
+  external set_solver
+    : ('d, 'k, 's) session -> relax_solver -> unit
+    = "sunml_arkode_set_relax_solver"
 
-  type ('t, 'd) jacobian_arg = ('t, 'd) Arkode_impl.jacobian_arg =
-    {
-      jac_t   : float;
-      jac_y   : 'd;
-      jac_fy  : 'd;
-      jac_tmp : 't;
-    }
+  external set_res_tol
+    : ('d, 'k, 's) session -> float -> unit
+    = "sunml_arkode_set_relax_res_tol"
+
+  external set_tol
+    : ('d, 'k, 's) session -> rel:float -> abs:float -> unit
+    = "sunml_arkode_set_relax_tol"
+
+  external get_num_fn_evals
+    : ('d, 'k, 's) session -> int
+    = "sunml_arkode_get_num_relax_fn_evals"
+
+  external get_num_fails
+    : ('d, 'k, 's) session -> int
+    = "sunml_arkode_get_num_relax_fails"
+
+  external get_num_bound_fails
+    : ('d, 'k, 's) session -> int
+    = "sunml_arkode_get_num_relax_bound_fails"
+
+  external get_num_solve_fails
+    : ('d, 'k, 's) session -> int
+    = "sunml_arkode_get_num_relax_solve_fails"
+
+  external get_num_solve_iters
+    : ('d, 'k, 's) session -> int
+    = "sunml_arkode_get_num_relax_solve_iters"
+
+  external get_num_jac_evals
+    : ('d, 'k, 's) session -> int
+    = "sunml_arkode_get_num_relax_jac_evals"
 
 end (* }}} *)
+
+type 'd rootsfn = float -> 'd -> RealArray.t -> unit
+
+let no_roots = (0, Arkode_impl.dummy_rootsfn)
+
+let print_step_stats oc stats =
+  Printf.fprintf oc "num_steps = %d\n"           stats.num_steps;
+  Printf.fprintf oc "actual_init_step = %e\n"    stats.actual_init_step;
+  Printf.fprintf oc "last_step = %e\n"           stats.last_step;
+  Printf.fprintf oc "current_step = %e\n"        stats.current_step;
+  Printf.fprintf oc "current_time = %e\n"        stats.current_time
+
+(* Synchronized with arkode_solver_result_tag in arkode_ml.h *)
+type solver_result =
+  | Success             (** ARK_SUCCESS *)
+  | RootsFound          (** ARK_ROOT_RETURN *)
+  | StopTimeReached     (** ARK_TSTOP_RETURN *)
+
+type linearity =
+  | Linear of bool
+  | Nonlinear
+
+type 'data error_weight_fun = 'data -> 'data -> unit
+
+type ('a, 'k) tolerance =
+  | SStolerances of float * float
+  | SVtolerances of float * ('a, 'k) Nvector.t
+  | WFtolerances of 'a error_weight_fun
+
+let default_tolerances = SStolerances (1.0e-4, 1.0e-9)
+
+type 'd rhsfn = float -> 'd -> 'd -> unit
+
+type 'd resize_fn = 'd -> 'd -> unit
+
+type 'd triple = 'd * 'd * 'd
+
+type ('t, 'd) jacobian_arg = ('t, 'd) Arkode_impl.jacobian_arg =
+  {
+    jac_t   : float;
+    jac_y   : 'd;
+    jac_fy  : 'd;
+    jac_tmp : 't;
+  }
 
 module Dls = struct
   include Arkode_impl.DirectTypes
@@ -1280,7 +1228,6 @@ module ButcherTable = struct (* {{{ *)
 end (* }}} *)
 
 module ARKStep = struct (* {{{ *)
-  include Common
 
   type ('d, 'k) session = ('d, 'k, arkstep) Arkode_impl.session
 
@@ -1322,6 +1269,16 @@ module ARKStep = struct (* {{{ *)
   let root_init session (nroots, rootsfn) =
     c_root_init session nroots;
     session.rootsfn <- rootsfn
+
+  let enable_relaxation s fn jacfn =
+    s.relax_fn <- fn;
+    s.relax_jac_fn <- jacfn;
+    c_set_relax_fn s true
+
+  let disable_relaxation s =
+    s.relax_fn <- dummy_relax_fn;
+    s.relax_jac_fn <- dummy_relax_jac_fn;
+    c_set_relax_fn s false
 
   module Dls = struct (* {{{ *)
     include Dls
@@ -1703,7 +1660,6 @@ module ARKStep = struct (* {{{ *)
           s.ls_precfns <- PrecFns { prec_setup_fn = setup;
                                     prec_solve_fn = solve }
       | _ -> raise LinearSolver.InvalidLinearSolver
-
   end (* }}} *)
 
 let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
@@ -1770,6 +1726,44 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
         match session.mass_callbacks with
         | SlsKluMassCallback _ -> c_klu_set_ordering session ordering
         | _ -> ()
+
+      (* 4.0.0 <= Sundials *)
+      (* 7.1.0 <= Sundials *)
+      external c_set_mass_fn
+        : ('a, 'k) session -> unit
+        = "sunml_arkode_set_mass_fn"
+
+      external c_get_num_mass_setups
+        : ('k) serial_session -> int
+        = "sunml_arkode_get_num_mass_setups"
+
+      let get_num_setups s =
+        Arkode_impl.mass_check_direct s;
+        c_get_num_mass_setups s
+
+      external get_num_mult_setups
+        : ('k) serial_session -> int
+        = "sunml_arkode_get_num_mass_mult_setups"
+
+      external c_get_num_mass_solves
+        : 'k serial_session -> int
+        = "sunml_arkode_get_num_mass_solves"
+
+      let get_num_solves s =
+        Arkode_impl.mass_check_direct s;
+        c_get_num_mass_solves s
+
+      external set_mass_ls_norm_factor
+        : ('d, 'k) session -> float -> unit
+        = "sunml_arkode_set_mass_ls_norm_factor"
+
+      external c_get_num_iters
+        : ('a, 'k) session -> int
+          = "sunml_arkode_get_num_mass_iters"
+
+      let get_num_iters s =
+        Arkode_impl.mass_check_spils s;
+        c_get_num_iters s
 
       (* Sundials < 3.0.0 *)
       let klu_reinit session n onnz =
@@ -1900,13 +1894,13 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
         mass_check_direct s;
         get_work_space s
 
-      external c_get_num_mass_mult
+      external c_get_num_mult
         : 'k serial_session -> int
         = "sunml_arkode_dls_get_num_mass_mult"
 
       let get_num_mult s =
         mass_check_direct s;
-        c_get_num_mass_mult s
+        c_get_num_mult s
 
     end (* }}} *)
 
@@ -1958,6 +1952,51 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
       external c_set_prec_type
         : ('a, 'k) session -> LSI.Iterative.preconditioning_type -> unit
         = "sunml_arkode_spils_set_mass_prec_type"
+
+      external c_set_mass_times
+        : ('a, 'k) session -> bool -> unit
+        = "sunml_arkode_set_mass_times"
+
+      external get_num_mtsetups : ('a, 'k) session -> int
+        = "sunml_arkode_get_num_mtsetups"
+
+      let get_num_mtsetups s =
+        Arkode_impl.mass_check_spils s;
+        get_num_mtsetups s
+
+      external get_num_conv_fails : ('a, 'k) session -> int
+        = "sunml_arkode_get_num_mass_conv_fails"
+
+      external get_num_prec_evals : ('a, 'k) session -> int
+        = "sunml_arkode_get_num_mass_prec_evals"
+
+      external set_eps_lin : ('a, 'k) session -> float -> unit
+          = "sunml_arkode_set_mass_eps_lin"
+
+      let set_eps_lin s epsl =
+        mass_check_spils s;
+        set_eps_lin s epsl
+
+      external set_ls_norm_factor : ('d, 'k) session -> float -> unit
+        = "sunml_arkode_set_mass_ls_norm_factor"
+
+      let get_num_prec_evals s =
+        mass_check_spils s;
+        get_num_prec_evals s
+
+      external get_num_prec_solves    : ('a, 'k) session -> int
+          = "sunml_arkode_get_num_mass_prec_solves"
+
+      let get_num_prec_solves s =
+        mass_check_spils s;
+        get_num_prec_solves s
+
+      let get_num_conv_fails s =
+        Arkode_impl.mass_check_spils s;
+        get_num_conv_fails s
+
+      external get_num_iters : ('a, 'k) session -> int
+          = "sunml_arkode_get_num_mass_iters"
 
       let old_set_gs_type s t =
         mass_check_spils s;
@@ -2088,20 +2127,6 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
       c_set_mass_linear_solver session rawptr None false;
       LSI.attach ls;
       session.ls_solver <- LSI.HLS hls
-
-  end (* }}} *)
-
-  module Relax = struct (* {{{ *)
-
-    let enable s fn jacfn =
-      s.relax_fn <- fn;
-      s.relax_jac_fn <- jacfn;
-      c_set_relax_fn s true
-
-    let disable s =
-      s.relax_fn <- dummy_relax_fn;
-      s.relax_jac_fn <- dummy_relax_jac_fn;
-      c_set_relax_fn s false
 
   end (* }}} *)
 
@@ -2487,23 +2512,8 @@ let matrix_embedded_solver (LSI.LS ({ LSI.rawptr; _ } as hls) as ls) session _ =
 end (* }}} *)
 
 module ERKStep = struct (* {{{ *)
-  include Common
 
   type ('d, 'k) session = ('d, 'k, erkstep) Arkode_impl.session
-
-  module Relax = struct (* {{{ *)
-
-    let enable s fn jacfn =
-      s.relax_fn <- fn;
-      s.relax_jac_fn <- jacfn;
-      c_set_relax_fn s true
-
-    let disable s =
-      s.relax_fn <- dummy_relax_fn;
-      s.relax_jac_fn <- dummy_relax_jac_fn;
-      c_set_relax_fn s false
-
-  end (* }}} *)
 
   let root_init session (nroots, rootsfn) =
     c_root_init session nroots;
@@ -2686,10 +2696,19 @@ module ERKStep = struct (* {{{ *)
       : ('d, 'k) session -> ButcherTable.t
       = "sunml_arkode_erk_get_current_butcher_table"
 
+  let enable_relaxation s fn jacfn =
+    s.relax_fn <- fn;
+    s.relax_jac_fn <- jacfn;
+    c_set_relax_fn s true
+
+  let disable_relaxation s =
+    s.relax_fn <- dummy_relax_fn;
+    s.relax_jac_fn <- dummy_relax_jac_fn;
+    c_set_relax_fn s false
+
 end (* }}} *)
 
 module SPRKStep = struct (* {{{ *)
-  include Common
 
   module MethodTable = struct (* {{{ *)
 
@@ -2879,12 +2898,14 @@ module SPRKStep = struct (* {{{ *)
 end (* }}} *)
 
 module MRIStep = struct (* {{{ *)
-  include Common
 
   type ('d, 'k) session = ('d, 'k, mristep) Arkode_impl.session
 
   type 'k serial_session = (Nvector_serial.data, 'k) session
                            constraint 'k = [>Nvector_serial.kind]
+
+  type 'd pre_inner_fn = 'd Arkode_impl.Global.pre_inner_fn
+  type 'd post_inner_fn = 'd Arkode_impl.Global.post_inner_fn
 
   type ('d, 'k) linear_solver = ('d, 'k, mristep) lin_solver
 

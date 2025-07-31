@@ -264,8 +264,8 @@ let main () =
   (* Initialize the integrator memory *)
   let jac = jac udata in
   let linearity = match Config.sundials_version with
-                  | 2,_,_ -> ARKStep.Nonlinear
-                  | _ -> ARKStep.Linear true
+                  | 2,_,_ -> Arkode.Nonlinear
+                  | _ -> Arkode.Linear true
   in
   let arkode_mem = ARKStep.(
     init

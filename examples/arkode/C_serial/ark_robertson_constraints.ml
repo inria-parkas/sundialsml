@@ -59,7 +59,7 @@ let f _ (y : RealArray.t) (ydot : RealArray.t) =
   ydot.{2} <- 3.e7 *. v *. v
 
 (* Jacobian routine to compute J(t,y) = df/dy. *)
-let jac { ARKStep.jac_y = (y : RealArray.t); _ } jac =
+let jac { jac_y = (y : RealArray.t); _ } jac =
   let v = y.{1} in   (* access current solution *)
   let w = y.{2} in
   Matrix.Dense.set_to_zero jac; (* initialize Jacobian to zero *)
@@ -185,7 +185,7 @@ let main () =
     printf "  %10.3e  %12.5e  %12.5e  %12.5e\n" t yd.{0} yd.{1} yd.{2}; (* access/print solution *)
     fprintf ufid " %.16e %.16e %.16e %.16e\n" t yd.{0} yd.{1} yd.{2};
     (match flag with
-     | ARKStep.Success ->           (* successful solve: update time *)
+     | Success ->           (* successful solve: update time *)
         tout := min tf (!tout +. dTout);
      | _ ->                         (* unsuccessful solve: break *)
       eprintf "Solver failure, stopping integration\n")
@@ -202,7 +202,7 @@ let main () =
   let nni      = get_num_nonlin_solv_iters arkode_mem in
   let nnf      = get_num_nonlin_solv_conv_fails arkode_mem in
   let nje      = get_num_jac_evals arkode_mem in
-  let nfeLS    = Arkode.ARKStep.Dls.get_num_lin_rhs_evals arkode_mem in
+  let nfeLS    = get_num_lin_rhs_evals arkode_mem in
   let nctf     = get_num_constr_fails arkode_mem in
 
   printf "\nFinal Solver Statistics:\n";
