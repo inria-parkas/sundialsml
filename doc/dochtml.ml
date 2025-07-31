@@ -25,12 +25,15 @@
     @cvodes_sens    link to Sundials CVODES Sensitivity documentation
     @cvodes_adj     link to Sundials CVODES Adjoint documentation
     @arkode         link to Sundials ARKODE documentation
+    @arkode_user    link to Sundials ARKODE User-callable functions documentation
     @arkode_ark     link to Sundials ARKODE ARKStep documentation
     @arkode_erk     link to Sundials ARKODE ERKStep documentation
     @arkode_sprk    link to Sundials ARKODE SPRKStep documentation
     @arkode_mri     link to Sundials ARKODE MRIStep documentation
     @arkode_bt      link to Sundials ARKODE Butcher Table documentation
-    @arkode_user    link to Sundials ARKODE User-supplied functions documentation
+    @arkode_ufun    link to Sundials ARKODE User-supplied functions documentation
+    @arkode_nonlin  link to Sundials ARKODE SUNNonlinearSolver interface documentation
+    @arkode_relax   link to Sundials ARKODE Relaxation Methods documentation
     @arkode_precond link to Sundials ARKODE Preconditioners documentation
     @arkode_innerstepper link to Sundials ARKODE Innerstepper documentation
     @arkode_coupling link to Sundials ARKODE Coupling documentation
@@ -147,27 +150,33 @@ struct
       let (page, anchor, title) = self#split_text t in
       sundials_link "arkode" (!sundials_doc_root ^ "arkode/") page anchor title
 
+    method private html_of_arkode_user t =
+      let (page, anchor, title) =
+        self#split_text ~page:"Usage/User_callable.html" t
+      in
+      sundials_link "arkode" (!sundials_doc_root ^ "arkode/") page anchor title
+
     method private html_of_arkode_ark t =
       let (page, anchor, title) =
-        self#split_text ~page:"Usage/ARKStep_c_interface/User_callable.html" t
+        self#split_text ~page:"Usage/ARKStep/User_callable.html" t
       in
       sundials_link "arkode" (!sundials_doc_root ^ "arkode/") page anchor title
 
     method private html_of_arkode_erk t =
       let (page, anchor, title) =
-        self#split_text ~page:"Usage/ERKStep_c_interface/User_callable.html" t
+        self#split_text ~page:"Usage/ERKStep/User_callable.html" t
       in
       sundials_link "arkode" (!sundials_doc_root ^ "arkode/") page anchor title
 
     method private html_of_arkode_sprk t =
       let (page, anchor, title) =
-        self#split_text ~page:"Usage/SPRKStep_c_interface/User_callable.html" t
+        self#split_text ~page:"Usage/SPRKStep/User_callable.html" t
       in
       sundials_link "arkode" (!sundials_doc_root ^ "arkode/") page anchor title
 
     method private html_of_arkode_mri t =
       let (page, anchor, title) =
-        self#split_text ~page:"Usage/MRIStep_c_interface/User_callable.html" t
+        self#split_text ~page:"Usage/MRIStep/User_callable.html" t
       in
       sundials_link "arkode" (!sundials_doc_root ^ "arkode/") page anchor title
 
@@ -177,10 +186,20 @@ struct
       in
       sundials_link "arkode" (!sundials_doc_root ^ "arkode/") page anchor title
 
-    method private html_of_arkode_user t =
+    method private html_of_arkode_ufun t =
       let (page, anchor, title) =
         self#split_text ~page:"Usage/User_supplied.html" t
       in
+      sundials_link "arkode" (!sundials_doc_root ^ "arkode/") page anchor title
+
+    method private html_of_arkode_nonlin t =
+      let (page, anchor, title) =
+        self#split_text ~page:"SUNNonlinSol_package_links.html" t
+      in
+      sundials_link "arkode" (!sundials_doc_root ^ "sunnonlinsol/") page anchor title
+
+    method private html_of_arkode_relax t =
+      let (page, anchor, title) = self#split_text ~page:"Usage/Relaxation.html" t in
       sundials_link "arkode" (!sundials_doc_root ^ "arkode/") page anchor title
 
     method private html_of_arkode_precond t =
@@ -376,12 +395,15 @@ struct
       tag_functions <- ("cvodes_sens", self#html_of_cvodes_sens) :: tag_functions;
       tag_functions <- ("cvodes_adj",  self#html_of_cvodes_adj)  :: tag_functions;
       tag_functions <- ("arkode",   self#html_of_arkode) :: tag_functions;
+      tag_functions <- ("arkode_user", self#html_of_arkode_user) :: tag_functions;
       tag_functions <- ("arkode_ark", self#html_of_arkode_ark) :: tag_functions;
       tag_functions <- ("arkode_erk", self#html_of_arkode_erk) :: tag_functions;
       tag_functions <- ("arkode_sprk", self#html_of_arkode_sprk) :: tag_functions;
       tag_functions <- ("arkode_mri", self#html_of_arkode_mri) :: tag_functions;
       tag_functions <- ("arkode_bt",  self#html_of_arkode_bt) :: tag_functions;
-      tag_functions <- ("arkode_user",self#html_of_arkode_user) :: tag_functions;
+      tag_functions <- ("arkode_ufun",self#html_of_arkode_ufun) :: tag_functions;
+      tag_functions <- ("arkode_nonlin",self#html_of_arkode_nonlin) :: tag_functions;
+      tag_functions <- ("arkode_relax",self#html_of_arkode_relax) :: tag_functions;
       tag_functions <- ("arkode_precond",self#html_of_arkode_precond) :: tag_functions;
       tag_functions <- ("arkode_innerstepper",self#html_of_arkode_innerstepper) :: tag_functions;
       tag_functions <- ("arkode_coupling",self#html_of_arkode_coupling) :: tag_functions;
