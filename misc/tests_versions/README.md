@@ -4,37 +4,14 @@ Ce système de queue de jobs permet d'automatiser les tests de compatibilité en
 
 # Installation
 
-Placez vous dans le dossier ou vous souhaitez installer le tester puis executer l'une des commandes suivantes
-
-## En utilisant curl
-
-```sh
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/inria-parkas/sundialsml/refs/heads/7.1.0-dev/misc/tests_versions/install.sh)"
-```
-
-## En utilisant wget
-
-```sh
-sh -c "$(wget https://raw.githubusercontent.com/inria-parkas/sundialsml/refs/heads/7.1.0-dev/misc/tests_versions/install.sh -O -)"
-```
-
 ## Structure du projet
 
 ```
 jobqueue/
-├── job_runner.py           # Script principal du runner de jobs
-├── current/                # Répertoire de travail du job en cours
-|   ├── sundials/           # Répertoire regroupant toutes les versions de sundials testé
-|   |   └── sundials-X.X.X
-|   ├── .opam/              # Opam local regroupant toutes les versions d'OCaml testé
-│   └── test.py             # Script de test
-├── queue/                  # Queue des jobs en attente
-├── result/                 # Résultats archivés des jobs terminés
-│   ├── job_*.tar.gz        # Archives complètes des jobs
-│   └── job_*_result.csv    # Fichiers de résultats CSV
-└── logs/                   # Logs des jobs
-    ├── current_status.log  # Statut du job en cours
-    └── job_*.log           # Logs individuels des jobs
+├── sundials/           # Répertoire regroupant toutes les versions de sundials testé
+|   └── sundials-X.X.X
+├── .opam/              # Opam local regroupant toutes les versions d'OCaml testé
+└── test.py             # Script de test
 ```
 
 ## Configuration
@@ -48,22 +25,6 @@ jobqueue/
 Optionnellement nous pouvons configurer l'envoie d'un message sur un groupe ou à numéro sur signal lorsque le programme est fini
 - signal-cli (pour les notifications)
 
-### 2. Configuration des notifications Signal
-
-Modifiez les constantes dans `job_runner.py` :
-
-```python
-# Options for the script
-# SIGNAL SETTINGS
-PHONE_NUMBER = "+33XXXXXXXXX"          # Votre numéro de téléphone
-GROUP_ID = "...................."  # ID du groupe Signal (base64)
-```
-
-Pour obtenir l'ID du groupe Signal :
-1. Configurez signal-cli avec votre compte
-2. Rejoignez le groupe souhaité
-3. Utilisez `signal-cli -a [votre_numero] listGroups` pour obtenir l'ID
-
 ### 3. Structure des répertoires Sundials
 
 Organisez vos versions de Sundials comme suit :
@@ -76,39 +37,44 @@ sundials/
 └── ...
 ```
 
+Nous pouvons utiliser ces scripts bash afin de pouvoir installer les différentes versions voulu de Sundials:
+
+
+Compiler toutes les versions de sundials:
+
+```bash
+versions=(v7.4.0 v7.3.0 v7.2.0 v7.2.1 v7.1.1 v7.1.0 v7.0.0 v6.7.0 v6.6.2 v6.6.1 v6.6.0 v6.5.1 v6.5.0 v6.4.1 v6.4.0 v6.3.0 v6.2.0 v6.1.1 v6.1.0 v6.0.0 v5.8.0 v5.7.0)
+for i in "${versions[@]}"; do
+  echo "$i"
+  url="https://github.com/LLNL/sundials/archive/refs/tags/$i.zip"
+  wget "$url" -O "$i.zip"
+  unzip "$i.zip"
+  dir="sundials-${i#v}"
+  if [ -d "$dir" ]; then
+    (
+      cd "$dir"
+      mkdir build install
+      cd build
+      cmake ..  -DCMAKE_INSTALL_PREFIX=$(pwd)/../install
+      sudo make install
+      cd ../..
+    )
+  else
+    echo "$dir folder not found"
+  fi
+done
+```
+
+Installer les différents switch:
+
+```bash
+versions=(5.4.0~alpha1 5.3.0 5.2.1 5.2.0 5.1.1 5.1.0 5.0.0 4.14.2 4.14.1 4.14.0 4.13.1 4.13.0 4.12.1 4.12.0 4.10.2)
+for v in "${versions[@]}"; do
+  opam switch create "$v" "$v"
+done
+```
+
 ## Utilisation
-
-### 1. Démarrer le runner
-
-```bash
-python3 job_runner.py
-```
-
-Le runner se lance en mode daemon et traite automatiquement les jobs de la queue.
-
-### 2. Créer un job
-
-Un job est simplement un répertoire dans le dossier `queue/` avec un nom commençant par `job_`. Le nom du job doit correspondre au nom du répertoire contenant le code OCaml à tester.
-
-Exemple :
-```bash
-# Créer un job pour tester le répertoire "sundialsml"
-mkdir queue/job_sundialsml
-# Copier le code source dans ce répertoire
-cp -r /path/to/sundialsml/* queue/job_sundialsml/
-```
-
-### 3. Gérer le runner
-
-#### Réveiller le runner
-```bash
-kill -USR1 $(cat job_runner.pid)
-```
-
-#### Arrêter le runner
-```bash
-kill $(cat job_runner.pid)
-```
 
 ## Script de test (test.py)
 
@@ -145,11 +111,7 @@ python3 test.py \
 
 Les résultats sont sauvegardés sous plusieurs formats :
 
-- `result.csv` : Tableau des résultats (OCaml × Sundials)
-- `job_*_result.csv` : Copie des résultats dans le dossier result/
-- `job_*.tar.gz` : Archive complète du job
-- `job_*.log` : Logs détaillés de l'exécution
-
+- `result.csv` : Copie des résultats dans ./result.csv
 ### Format du CSV
 
 ```csv
@@ -164,30 +126,3 @@ Les valeurs possibles sont :
 - `make` : Échec lors de la compilation
 - `make examples` : Échec lors de la compilation des exemples
 - `exec tests` : Échec lors de l'exécution des tests
-
-## Notifications
-
-Le système envoie des notifications Signal à la fin de chaque job via signal-cli.
-
-## Dépannage
-
-### Le runner ne démarre pas
-- Vérifiez que tous les répertoires existent
-- Vérifiez les permissions d'écriture
-- Consultez les logs d'erreur
-
-### Les notifications ne fonctionnent pas
-- Vérifiez que signal-cli est installé et configuré
-- Testez manuellement : `signal-cli -a [numero] send -g [group_id] -m "test"`
-- Vérifiez l'ID du groupe (doit être en base64)
-
-### Les tests échouent
-- Vérifiez que opam est configuré
-- Vérifiez que les versions Sundials sont installées
-- Consultez les logs détaillés dans `logs/job_*.log`
-
-## Maintenance
-
-- Les archives et logs s'accumulent : pensez à nettoyer régulièrement
-- Surveillez l'espace disque
-- Vérifiez périodiquement que signal-cli fonctionne toujours
